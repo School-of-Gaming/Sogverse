@@ -35,8 +35,8 @@ import type { NotificationState } from "./state";
  *
  * **The state leads as a section, not an alert block.** Slack's alert block
  * renders in modals only; a message carrying one is refused as
- * `invalid_blocks`. The offers are cards in a carousel and the gedus a data
- * table — both message blocks. Slack documents no fallback for a client that
+ * `invalid_blocks`. The offers are cards in a carousel, and the session's
+ * facts and the gedus are two data tables — all message blocks. Slack documents no fallback for a client that
  * cannot draw them, so the top-level `text` (what notifications and screen
  * readers read) says on its own what the request is and where it stands.
  *
@@ -57,7 +57,10 @@ const CARD_SUBTITLE_MAX = 150;
 const CAROUSEL_MAX_CARDS = 10;
 /** A data table holds 200 rows under its header… */
 const TABLE_MAX_ROWS = 200;
-/** …and 20,000 characters across its cells; the margin is for the header. */
+/**
+ * …and a message 20,000 characters across the cells of all its tables, the
+ * facts table's included; the margin is for the gedus table's header.
+ */
 const TABLE_TEXT_BUDGET = 19_500;
 /** A name longer than this is cut in its cell, so one name cannot eat the table. */
 const TABLE_NAME_MAX = 100;
@@ -167,18 +170,21 @@ function fallbackText(product: string, group: string, when: string, state: Notif
   }
 }
 
-/** One cell of the data table: unformatted, so nothing in it needs escaping. */
+/**
+ * One cell of a data table: unformatted, so nothing in it needs escaping.
+ * Slack refuses an empty cell, so an empty value is a dash.
+ */
 function cell(value: string): { type: "raw_text"; text: string } {
-  return { type: "raw_text", text: value };
+  return { type: "raw_text", text: value === "" ? "—" : value };
 }
 
 /**
  * The channel's message about one request.
  *
  * Laid out top to bottom: where the request stands; the product as the
- * header; the group and when; the facts as fields (absent gedu, role, reason,
- * where, language, topic, required qualifications, fee) with the reason's note
- * under them; the offers as cards, oldest first, each with an Accept that asks
+ * header; the group and when; the facts as a two-column table (absent gedu,
+ * role, reason, where, language, topic, required qualifications, fee) with the
+ * reason's note under it; the offers as cards, oldest first, each with an Accept that asks
  * before it seats anybody — only while the request is open; then every gedu
  * the request concerns as a table — offers, declines, then those yet to
  * answer.
@@ -207,30 +213,39 @@ export function buildSubstitutionSlackMessage({
   const productName = facts.productName || "Session";
   const where = facts.isRemote ? "Remote" : (facts.siteName ?? "Place to be confirmed");
 
-  const fields = [
-    `*Absent*\n${escapeSlack(fullName(request.requester))}`,
-    `*Role*\n${request.role === "primary" ? "Primary" : "Assistant"}`,
-    `*Reason*\n${REASON_LABEL[request.reason]}`,
-    `*Where*\n${escapeSlack(where)}`,
-    `*Language*\n${languageNameIn(facts.spokenLanguageCode, LOCALE)}`,
-    `*Topic*\n${escapeSlack(PRODUCT_TOPICS[facts.topic].label)}`,
-    `*Qualifications*\n${
+  const factRows: [string, string][] = [
+    ["Detail", "Value"],
+    ["Absent", clipText(fullName(request.requester), TABLE_NAME_MAX)],
+    ["Role", request.role === "primary" ? "Primary" : "Assistant"],
+    ["Reason", REASON_LABEL[request.reason]],
+    ["Where", clipText(where, TABLE_NAME_MAX)],
+    ["Language", languageNameIn(facts.spokenLanguageCode, LOCALE)],
+    ["Topic", PRODUCT_TOPICS[facts.topic].label],
+    [
+      "Qualifications",
       snapshot.required_qualifications.length === 0
         ? "None"
-        : snapshot.required_qualifications.map((q) => QUALIFICATION_LABEL[q]).join(", ")
-    }`,
-    `*Fee*\n${
+        : snapshot.required_qualifications.map((q) => QUALIFICATION_LABEL[q]).join(", "),
+    ],
+    [
+      "Fee",
       request.fee_cents === null
         ? "Not set"
-        : `${formatCurrencyFromCents(request.fee_cents, DEFAULT_CURRENCY, LOCALE)} per session`
-    }`,
+        : `${formatCurrencyFromCents(request.fee_cents, DEFAULT_CURRENCY, LOCALE)} per session`,
+    ],
   ];
 
   const blocks: SlackBlock[] = [
     section(stateLine(state)),
     { type: "header", text: plain(productName, HEADER_TEXT_MAX) },
     section(`*${escapeSlack(request.group_name)}* · ${escapeSlack(when)}`),
-    { type: "section", fields: fields.map((field) => mrkdwn(field)) },
+    {
+      type: "data_table",
+      caption: "About this request",
+      // Every fact on one page: Slack's default page is five rows.
+      page_size: factRows.length,
+      rows: factRows.map((row) => row.map(cell)),
+    },
   ];
   if (request.reason_note !== null && request.reason_note.trim() !== "") {
     blocks.push(section(`*Note:* ${escapeSlack(request.reason_note)}`));
@@ -296,7 +311,8 @@ export function buildSubstitutionSlackMessage({
   } else {
     const header = ["Gedu", "Discord", "Answer"];
     const rows: { type: "raw_text"; text: string }[][] = [header.map(cell)];
-    let used = header.join("").length;
+    // Slack's character cap is per message, so the facts table spends it first.
+    let used = factRows.flat().join("").length + header.join("").length;
     for (const candidate of concerned) {
       const row = [
         clipText(fullName(candidate) || "—", TABLE_NAME_MAX),

@@ -56,9 +56,12 @@ function cardTitle(card: Record<string, unknown>): unknown {
   return isRecord(card.title) ? card.title.text : undefined;
 }
 
-/** The data table's rows as plain strings, header first. */
-function tableRows(blocks: SlackBlock[]): string[][] {
-  const table = blocks.find((block) => block.type === "data_table");
+const GEDUS_CAPTION = "Gedus this request concerns";
+const FACTS_CAPTION = "About this request";
+
+/** A data table's rows as plain strings, header first — the gedus' by default. */
+function tableRows(blocks: SlackBlock[], caption = GEDUS_CAPTION): string[][] {
+  const table = blocks.find((block) => block.type === "data_table" && block.caption === caption);
   if (!table || !Array.isArray(table.rows)) return [];
   return table.rows.map((row: unknown) =>
     records(row).map((cell) => (typeof cell.text === "string" ? cell.text : "")),
@@ -97,13 +100,30 @@ describe("buildSubstitutionSlackMessage", () => {
     const body = allText(blocks);
     expect(blocks[0]).toMatchObject({ type: "section", text: { text: expect.stringContaining("Needs a substitute") } });
     expect(blocks[1]).toMatchObject({ type: "header", text: { text: "Minecraft Club" } });
-    expect(body).toContain("Ville Virtanen");
-    expect(body).toContain("Other");
+    expect(blocks[3]).toMatchObject({ type: "data_table", caption: FACTS_CAPTION });
+    const facts = tableRows(blocks, FACTS_CAPTION);
+    expect(facts.map((row) => row[0])).toEqual([
+      "Detail",
+      "Absent",
+      "Role",
+      "Reason",
+      "Where",
+      "Language",
+      "Topic",
+      "Qualifications",
+      "Fee",
+    ]);
+    expect(Object.fromEntries(facts)).toMatchObject({
+      Absent: "Ville Virtanen",
+      Reason: "Other",
+      Where: "Kallio School",
+      Language: "Finnish",
+      Qualifications: "Neuroinclusive",
+      Fee: "€45.00 per session",
+    });
+    // Every fact on the table's one page.
+    expect(blocks[3].page_size).toBe(facts.length);
     expect(body).toContain("Family matter");
-    expect(body).toContain("Kallio School");
-    expect(body).toContain("Finnish");
-    expect(body).toContain("Neuroinclusive");
-    expect(body).toContain("€45.00 per session");
     expect(body).toMatch(/Wed, Oct 14, 16:00.*17:30/);
     expect(text).toMatch(/^Substitute needed: Minecraft Club – A, Wed, Oct 14/);
   });
@@ -241,7 +261,9 @@ describe("buildSubstitutionSlackMessage", () => {
 
     const rows = tableRows(blocks);
     expect(rows.length).toBeLessThanOrEqual(201);
-    expect(rows.flat().join("").length).toBeLessThanOrEqual(20_000);
+    // Slack's character cap is across every table in the message.
+    const facts = tableRows(blocks, FACTS_CAPTION);
+    expect([...facts, ...rows].flat().join("").length).toBeLessThanOrEqual(20_000);
     expect(new Set(rows.map((row) => row.length))).toEqual(new Set([3]));
     expect(allText(blocks)).toMatch(/\+\d+ more gedus/);
   });
