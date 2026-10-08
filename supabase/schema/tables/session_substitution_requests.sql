@@ -80,6 +80,13 @@ CREATE UNIQUE INDEX session_substitution_requests_live_seat ON public.session_su
 
 
 --
+-- Name: session_substitution_requests session_substitution_requests_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_substitution_requests_notify AFTER INSERT OR UPDATE ON public.session_substitution_requests FOR EACH ROW EXECUTE FUNCTION public.notify_substitution_request_changed();
+
+
+--
 -- Name: session_substitution_requests session_substitution_requests_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 

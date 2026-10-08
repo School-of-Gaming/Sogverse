@@ -555,6 +555,16 @@ export type SubstitutionReason = Database["public"]["Enums"]["substitution_reaso
 // request whose date has passed, and the date already says it.
 export type SubstitutionRequestStatus = Database["public"]["Enums"]["substitution_request_status"];
 
+// The notification sync's own tables, all service role only: the outbox of
+// requests with something not yet told (worked through the claim and finish
+// RPCs, never written directly), the record that a request was announced with
+// its Slack message, and each gedu's Discord DM about it.
+export type SubstitutionNotificationOutboxRow = Database["public"]["Tables"]["substitution_notification_outbox"]["Row"];
+export type SubstitutionNotification = Database["public"]["Tables"]["substitution_notifications"]["Row"];
+export type SubstitutionNotificationInsert = Database["public"]["Tables"]["substitution_notifications"]["Insert"];
+export type SubstitutionNotificationDm = Database["public"]["Tables"]["substitution_notification_dms"]["Row"];
+export type SubstitutionNotificationDmInsert = Database["public"]["Tables"]["substitution_notification_dms"]["Insert"];
+
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)
 // ---------------------------------------------------------------------------

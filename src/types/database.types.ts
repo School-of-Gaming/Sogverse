@@ -3225,6 +3225,137 @@ export type Database = {
           },
         ]
       }
+      substitution_notification_dms: {
+        Row: {
+          accepted_dm_claimed_at: string | null
+          accepted_dm_message_id: string | null
+          accepted_dm_sent_at: string | null
+          channel_id: string | null
+          delivery_error: string | null
+          discord_user_id: string | null
+          gedu_id: string
+          message_id: string | null
+          rendered_hash: string | null
+          request_id: string
+        }
+        Insert: {
+          accepted_dm_claimed_at?: string | null
+          accepted_dm_message_id?: string | null
+          accepted_dm_sent_at?: string | null
+          channel_id?: string | null
+          delivery_error?: string | null
+          discord_user_id?: string | null
+          gedu_id: string
+          message_id?: string | null
+          rendered_hash?: string | null
+          request_id: string
+        }
+        Update: {
+          accepted_dm_claimed_at?: string | null
+          accepted_dm_message_id?: string | null
+          accepted_dm_sent_at?: string | null
+          channel_id?: string | null
+          delivery_error?: string | null
+          discord_user_id?: string | null
+          gedu_id?: string
+          message_id?: string | null
+          rendered_hash?: string | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitution_notification_dms_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "substitution_notification_dms_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "substitution_notification_dms_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "session_substitution_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      substitution_notification_outbox: {
+        Row: {
+          attempts: number
+          last_error: string | null
+          leased_until: string | null
+          next_attempt_at: string
+          request_id: string
+          seq: number
+        }
+        Insert: {
+          attempts?: number
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          request_id: string
+          seq?: number
+        }
+        Update: {
+          attempts?: number
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          request_id?: string
+          seq?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitution_notification_outbox_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "session_substitution_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      substitution_notifications: {
+        Row: {
+          announced_at: string
+          request_id: string
+          slack_channel_id: string | null
+          slack_message_ts: string | null
+          slack_rendered_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          announced_at: string
+          request_id: string
+          slack_channel_id?: string | null
+          slack_message_ts?: string | null
+          slack_rendered_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          announced_at?: string
+          request_id?: string
+          slack_channel_id?: string | null
+          slack_message_ts?: string | null
+          slack_rendered_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitution_notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "session_substitution_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_profile_translations: {
         Row: {
           created_at: string
@@ -3848,6 +3979,13 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
+      claim_substitution_notification_jobs: {
+        Args: { p_limit: number; p_request_ids?: string[] }
+        Returns: {
+          request_id: string
+          seq: number
+        }[]
+      }
       clear_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -3984,6 +4122,14 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
+      enqueue_passed_substitution_notifications: {
+        Args: never
+        Returns: number
+      }
+      enqueue_substitution_notification: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       ensure_chat_channel: {
         Args: { p_group_id: string }
         Returns: {
@@ -4014,6 +4160,10 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      finish_substitution_notification_job: {
+        Args: { p_error?: string; p_request_id: string; p_seq: number }
+        Returns: boolean
       }
       forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
       gedu_assigned_products: {
@@ -4288,6 +4438,10 @@ export type Database = {
           session_date: string
         }[]
       }
+      get_substitution_notification_snapshot: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       get_trainee_assigned_product: {
         Args: { p_group_id?: string; p_product_id: string }
         Returns: Json
@@ -4371,6 +4525,11 @@ export type Database = {
           p_product_id: string
         }
         Returns: Json
+      }
+      kick_substitution_notification_sync: { Args: never; Returns: undefined }
+      kick_substitution_notification_sync_if_due: {
+        Args: never
+        Returns: undefined
       }
       landing_button_is_valid: { Args: { p_button: Json }; Returns: boolean }
       landing_sections_problem: { Args: { p_sections: Json }; Returns: string }

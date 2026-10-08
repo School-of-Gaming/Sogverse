@@ -50,6 +50,13 @@ ALTER TABLE ONLY public.session_substitution_offers
 
 
 --
+-- Name: session_substitution_offers session_substitution_offers_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_substitution_offers_notify AFTER INSERT OR DELETE OR UPDATE ON public.session_substitution_offers FOR EACH ROW EXECUTE FUNCTION public.notify_substitution_offer_changed();
+
+
+--
 -- Name: session_substitution_offers session_substitution_offers_gedu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
