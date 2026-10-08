@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { CreateInstantRoomCardView } from "./CreateInstantRoomCardView";
 
@@ -19,24 +18,29 @@ import { CreateInstantRoomCardView } from "./CreateInstantRoomCardView";
  * State".
  */
 export function CreateInstantRoomCard() {
-  const t = useTranslations("voice.instant.createPage");
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [createFailed, setCreateFailed] = useState(false);
   const [joining, setJoining] = useState(false);
 
+  // Any failure shows the one translated line: the route's refusals and a
+  // thrown fetch are English written for a log, and go to the console.
   const handleCreate = async () => {
     if (creating) return;
     setCreating(true);
-    setError(null);
+    setCreateFailed(false);
     try {
       const response = await fetch("/api/voice/instant/create", {
         method: "POST",
       });
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        setError(typeof data.error === "string" ? data.error : t("createFailed"));
+        console.error(
+          "[instant-voice] create refused:",
+          response.status,
+          await response.text().catch(() => ""),
+        );
+        setCreateFailed(true);
         setCreating(false);
         return;
       }
@@ -44,7 +48,8 @@ export function CreateInstantRoomCard() {
       setCreatedCode(code);
       setCreating(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("createFailed"));
+      console.error("[instant-voice] create failed:", err);
+      setCreateFailed(true);
       setCreating(false);
     }
   };
@@ -61,7 +66,7 @@ export function CreateInstantRoomCard() {
       createdCode={createdCode}
       creating={creating}
       joining={joining}
-      error={error}
+      createFailed={createFailed}
       onCreate={() => void handleCreate()}
       onJoin={handleJoin}
     />

@@ -470,8 +470,8 @@ export function SignupPanel({
    * the pick the picker handed us. Fire it, catch it, and let the page carry on
    * saying what it already knows to be true.
    *
-   * Rejections of the write itself propagate: the dialog re-enables its button
-   * and shows why.
+   * Rejections of the write itself propagate: the dialog re-enables its button,
+   * shows a generic failure and logs the reason to the console.
    */
   const saveHomeLocation = async (pick: LocationPick) => {
     // Structurally unreachable: the gate only asks for a location when the

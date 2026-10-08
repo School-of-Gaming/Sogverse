@@ -865,19 +865,22 @@ export type Database = {
       }
       gamer_profiles: {
         Row: {
-          date_of_birth: string
+          birth_month: number
+          birth_year: number
           gender: Database["public"]["Enums"]["gender_type"] | null
           sign_in: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Insert: {
-          date_of_birth: string
+          birth_month: number
+          birth_year: number
           gender?: Database["public"]["Enums"]["gender_type"] | null
           sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Update: {
-          date_of_birth?: string
+          birth_month?: number
+          birth_year?: number
           gender?: Database["public"]["Enums"]["gender_type"] | null
           sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id?: string
@@ -4004,7 +4007,8 @@ export type Database = {
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
-          p_date_of_birth: string
+          p_birth_month: number
+          p_birth_year: number
           p_first_name: string
           p_gamer_id: string
           p_gender?: Database["public"]["Enums"]["gender_type"]

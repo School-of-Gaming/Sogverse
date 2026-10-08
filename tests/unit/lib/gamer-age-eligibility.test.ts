@@ -5,10 +5,9 @@ import { gamerAgeBlock } from "@/lib/gamer-age-eligibility";
  * **Which children a product's age band refuses, and — the part worth the
  * test — which ones it must not.**
  *
- * Two things make this more than subtraction. The stored birth date is the 1st
- * of a month because nothing in the product ever asks for the day, so every
- * child's real age today is one of two adjacent numbers and the helper has to
- * pick a side deliberately at each end. And the two ends read the calendar at
+ * Two things make this more than subtraction. The stored birth is a year and a
+ * month, with no day, so every child's real age today is one of two adjacent
+ * numbers and the helper has to pick a side deliberately at each end. And the two ends read the calendar at
  * different dates: the minimum is measured at the later of today and the
  * product's start date, the maximum today. Both choices favour the family, and
  * the cases below are written so that a change to either shows up as a child
@@ -24,17 +23,17 @@ const BAND = { minAge: 8, maxAge: 12, startDate: null };
 describe("inside the band", () => {
   it("passes a child comfortably in range", () => {
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2016-03-01", today: "2026-09-10" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2016, month: 3 }, today: "2026-09-10" }),
     ).toBeNull();
   });
 
   it("passes a child at each end of it", () => {
     // Exactly 8, and exactly 12 with the month still to run.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2018-09-01", today: "2026-09-10" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2018, month: 9 }, today: "2026-09-10" }),
     ).toBeNull();
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2014-09-01", today: "2026-09-10" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2014, month: 9 }, today: "2026-09-10" }),
     ).toBeNull();
   });
 });
@@ -43,7 +42,7 @@ describe("the lower end resolves the unknown day in the child's favour", () => {
   it("refuses a child who cannot be old enough on any day of their month", () => {
     // Born some time in September 2019: seven whichever day it was.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2019-09-01", today: "2026-09-10" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2019, month: 9 }, today: "2026-09-10" }),
     ).toBe("under");
   });
 
@@ -54,23 +53,14 @@ describe("the lower end resolves the unknown day in the child's favour", () => {
     // are in — and a helper measuring the youngest would lock them out for
     // three weeks of the month they turn eight in.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2018-09-01", today: "2026-09-10" }),
-    ).toBeNull();
-  });
-
-  it("reads the month alone when a row carries a later day", () => {
-    // Nothing enforces the 1st. A row stored as the 20th is still "born some
-    // time in September 2018", so it is admitted exactly as the 1st is —
-    // reading the stored day would lock the child out until the 20th.
-    expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2018-09-20", today: "2026-09-10" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2018, month: 9 }, today: "2026-09-10" }),
     ).toBeNull();
   });
 
   it("refuses them on the last day before that month", () => {
     // One day earlier and no day of September can have happened yet.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2018-09-01", today: "2026-08-31" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2018, month: 9 }, today: "2026-08-31" }),
     ).toBe("under");
   });
 });
@@ -84,7 +74,7 @@ describe("the lower end is measured at the start date, not at the click", () => 
       gamerAgeBlock({
         minAge: 8,
         maxAge: 12,
-        dateOfBirth: "2018-11-01",
+        birth: { year: 2018, month: 11 },
         today: "2026-09-10",
         startDate: "2027-01-15",
       }),
@@ -98,7 +88,7 @@ describe("the lower end is measured at the start date, not at the click", () => 
       gamerAgeBlock({
         minAge: 8,
         maxAge: 12,
-        dateOfBirth: "2019-01-01",
+        birth: { year: 2019, month: 1 },
         today: "2026-09-10",
         startDate: "2027-01-01",
       }),
@@ -110,7 +100,7 @@ describe("the lower end is measured at the start date, not at the click", () => 
       gamerAgeBlock({
         minAge: 8,
         maxAge: 12,
-        dateOfBirth: "2019-02-01",
+        birth: { year: 2019, month: 2 },
         today: "2026-09-10",
         startDate: "2027-01-01",
       }),
@@ -125,7 +115,7 @@ describe("the lower end is measured at the start date, not at the click", () => 
       gamerAgeBlock({
         minAge: 8,
         maxAge: 12,
-        dateOfBirth: "2018-06-01",
+        birth: { year: 2018, month: 6 },
         today: "2026-09-10",
         startDate: "2026-03-01",
       }),
@@ -139,14 +129,14 @@ describe("the upper end resolves the unknown day in the child's favour", () => {
     // nine days ago; born on the 30th they are still twelve. The youngest they
     // could be is what the maximum is tested against, so they are in.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2013-09-01", today: "2026-09-10" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2013, month: 9 }, today: "2026-09-10" }),
     ).toBeNull();
   });
 
   it("refuses them once the month is over", () => {
     // October: no day of September 2013 leaves them under thirteen any more.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2013-09-01", today: "2026-10-01" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2013, month: 9 }, today: "2026-10-01" }),
     ).toBe("over");
   });
 
@@ -156,10 +146,10 @@ describe("the upper end resolves the unknown day in the child's favour", () => {
     // thirteen. The day after, the youngest of them has had their birthday and
     // the band has nothing left to be generous with.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2013-09-01", today: "2026-09-29" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2013, month: 9 }, today: "2026-09-29" }),
     ).toBeNull();
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2013-09-01", today: "2026-09-30" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2013, month: 9 }, today: "2026-09-30" }),
     ).toBe("over");
   });
 
@@ -170,10 +160,10 @@ describe("the upper end resolves the unknown day in the child's favour", () => {
     // long — or as any length past the 28th — this pair would come out the
     // other way round.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2014-02-01", today: "2027-02-27" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2014, month: 2 }, today: "2027-02-27" }),
     ).toBeNull();
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2014-02-01", today: "2027-02-28" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2014, month: 2 }, today: "2027-02-28" }),
     ).toBe("over");
   });
 
@@ -184,12 +174,12 @@ describe("the upper end resolves the unknown day in the child's favour", () => {
     // A month taken as 28 days long (2029's own February) would refuse them a
     // day early; the length has to come from the BIRTH month.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2016-02-01", today: "2029-02-28" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2016, month: 2 }, today: "2029-02-28" }),
     ).toBeNull();
     // The 1st of March is the first day past every possible birthday in that
     // month, leap day included.
     expect(
-      gamerAgeBlock({ ...BAND, dateOfBirth: "2016-02-01", today: "2029-03-01" }),
+      gamerAgeBlock({ ...BAND, birth: { year: 2016, month: 2 }, today: "2029-03-01" }),
     ).toBe("over");
   });
 
@@ -201,7 +191,7 @@ describe("the upper end resolves the unknown day in the child's favour", () => {
       gamerAgeBlock({
         minAge: 8,
         maxAge: 12,
-        dateOfBirth: "2013-12-01",
+        birth: { year: 2013, month: 12 },
         today: "2026-09-10",
         startDate: "2027-06-01",
       }),
@@ -215,7 +205,7 @@ describe("a null bound never blocks", () => {
       gamerAgeBlock({
         minAge: null,
         maxAge: 12,
-        dateOfBirth: "2023-05-01",
+        birth: { year: 2023, month: 5 },
         today: "2026-09-10",
         startDate: null,
       }),
@@ -227,7 +217,7 @@ describe("a null bound never blocks", () => {
       gamerAgeBlock({
         minAge: 8,
         maxAge: null,
-        dateOfBirth: "2008-05-01",
+        birth: { year: 2008, month: 5 },
         today: "2026-09-10",
         startDate: null,
       }),
@@ -239,7 +229,7 @@ describe("a null bound never blocks", () => {
       gamerAgeBlock({
         minAge: null,
         maxAge: null,
-        dateOfBirth: "2008-05-01",
+        birth: { year: 2008, month: 5 },
         today: "2026-09-10",
         startDate: null,
       }),

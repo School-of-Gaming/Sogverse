@@ -1131,10 +1131,9 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // No adminClient entry: the session gating that read the database was removed
-  // when it became unportable, so the route reaches nothing. It authenticates,
-  // validates the uuid, and answers 501.
   "src/app/api/minecraft/join-check/route.ts": {
+    adminClient:
+      "the game server holds no Sogverse session for a row policy to evaluate, so the join check reads as the service role once the API key has authenticated it: the Minecraft accounts linked to the asked-about uuid with their owners' first names and roles, then the linked gamers' active seats with their products' type, billing mode, dates, zone and names. It only reads, and answers with nothing beyond the gamers' first names, Minecraft usernames and those seats — a gedu who linked the uuid is counted, never named",
     handlers: {
       GET: {
         posture: {
@@ -1145,7 +1144,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           // also change its error bodies, which the game server reads.
           primitive: "timingSafeEqual",
           reason:
-            "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and the endpoint fails closed — it admits nobody at all until the gating is rebuilt",
+            "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and every refusal of the key or the uuid is answered before the database is touched",
         },
         body: { kind: "none" },
         test: TESTS.minecraftJoinCheck,

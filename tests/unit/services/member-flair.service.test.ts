@@ -12,19 +12,12 @@ import {
  * ============================================================================
  *
  * Both writes on this service — the private note and the creations list beside
- * it in the same dialog — are refused the same two ways and share one mapping,
- * which is why they are asserted together here.
- *
- * A save can be refused for real, not only in theory: an admin moves a
- * member out of a group while a Gedu has a stale roster open, and the Gedu's
- * next save meets the RPC's target check. Postgres answers `42501` with the
- * message `Forbidden` — English, untranslated, written for a log — and all
- * three surfaces (the gedu page, the voice room, the admin group details page) hand
- * the rejection to the same dialog, which prints an `Error`'s own message.
- *
- * So the mapping lives here, at the one point all three inherit: a known raw-SQL
- * refusal arrives with **no message**, which is what makes the dialog fall back
- * to its localized copy, and anything that does carry a usable message keeps it.
+ * it in the same dialog — hand a refusal up exactly as PostgREST described it,
+ * code and message both. The message is raw database English (`Forbidden` for
+ * a `42501`, a constraint name for a CHECK), and the dialog every surface
+ * mounts never prints it: it logs the error and shows its own sentence, which
+ * the wiring suite asserts. Keeping the code intact is what lets that log say
+ * which refusal it was.
  *
  * The real client runs over a fake fetch transport (`tests/mocks/postgrest-fetch`),
  * so the PostgrestError under test is the one supabase-js actually builds — code
@@ -55,60 +48,14 @@ describe("MemberFlairService.setGamerGroupNote — refusals", () => {
       note: "Pair her with Emil this week.",
     });
 
-  it("strips the database's own words off a 42501, keeping the cause", async () => {
+  it("throws a refusal as it came, SQLSTATE and message intact", async () => {
+    // A real path: an admin moves a member out of a group while a Gedu has a
+    // stale roster open, and the Gedu's next save meets the RPC's target check.
     fetchMock.mockResolvedValue(sqlError("42501", "Forbidden", 403));
 
     const err = await save().catch((e: unknown) => e);
 
-    expect(err).toBeInstanceOf(Error);
-    // The whole claim: nothing for the dialog to print, so it prints its own
-    // localized line instead of the SQL string.
-    expect(err instanceof Error ? err.message : "unreachable").toBe("");
-    // The refusal itself is not lost — a console, and any future logging, still
-    // sees the SQLSTATE.
-    expect(err instanceof Error ? err.cause : null).toMatchObject({
-      code: "42501",
-      message: "Forbidden",
-    });
-  });
-
-  it("strips them off the length CHECK too", async () => {
-    // Only a non-UI caller can trip this (the dialog caps at 2000 characters),
-    // and a constraint name is no more readable than `Forbidden` is.
-    fetchMock.mockResolvedValue(
-      sqlError(
-        "23514",
-        'new row for relation "gamer_group_notes" violates check constraint "chk_gamer_group_notes_length"',
-        400,
-      ),
-    );
-
-    const err = await save().catch((e: unknown) => e);
-
-    expect(err instanceof Error ? err.message : "unreachable").toBe("");
-  });
-
-  it("leaves an error it does not name alone, code and message intact", async () => {
-    // The mapping is a named list, not a blanket: anything else reaches the
-    // caller exactly as PostgREST described it, message and SQLSTATE both.
-    //
-    // Worth knowing while reading this: without `.throwOnError()` the library
-    // hands back the parsed error *body* — a plain object that is not an
-    // `Error` instance, however the types read — so a message reaching the
-    // dialog through this path is already the exception rather than the rule.
-    // That is exactly why the two refusals above are mapped explicitly instead
-    // of being left to that accident, which one `.throwOnError()` or one
-    // library release would reverse.
-    fetchMock.mockResolvedValue(
-      sqlError("P0001", "Deliberate, and worth reading", 400),
-    );
-
-    const err = await save().catch((e: unknown) => e);
-
-    expect(err).toMatchObject({
-      code: "P0001",
-      message: "Deliberate, and worth reading",
-    });
+    expect(err).toMatchObject({ code: "42501", message: "Forbidden" });
   });
 
   it("returns the written note when the RPC accepts it", async () => {
@@ -150,25 +97,14 @@ describe("MemberFlairService.setGamerGroupCreations", () => {
       creations,
     });
 
-  it("shares the note write's refusal mapping", async () => {
-    // The two writes sit side by side in one dialog and are refused the same two
-    // ways, so a raw SQL message must be stopped at the same point for both —
-    // this is the assertion that keeps the creations write from growing its own
-    // (missing) mapping.
-    for (const [code, message] of [
-      ["42501", "Forbidden"],
-      [
-        "23514",
-        'new row for relation "gamer_group_creations" violates check constraint "chk_gamer_group_creations_shape"',
-      ],
-    ]) {
-      fetchMock.mockResolvedValue(sqlError(code, message, 400));
+  it("throws a refusal as it came, as the note write does", async () => {
+    const message =
+      'new row for relation "gamer_group_creations" violates check constraint "chk_gamer_group_creations_shape"';
+    fetchMock.mockResolvedValue(sqlError("23514", message, 400));
 
-      const err = await save().catch((e: unknown) => e);
+    const err = await save().catch((e: unknown) => e);
 
-      expect(err instanceof Error ? err.message : "unreachable").toBe("");
-      expect(err instanceof Error ? err.cause : null).toMatchObject({ code });
-    }
+    expect(err).toMatchObject({ code: "23514", message });
   });
 
   it("refuses a malformed list before it costs a round trip", async () => {

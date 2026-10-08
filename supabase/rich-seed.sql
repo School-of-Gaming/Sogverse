@@ -553,7 +553,10 @@ BEGIN
       (SELECT id FROM public.profiles WHERE email = r.email),
       (SELECT id FROM public.profiles WHERE email = r.parent_email),
       r.first_name, r.last_name,
-      (current_date - make_interval(years => r.age, days => 40))::date,
+      -- A birth month that began more than a month ago, so the age shown is
+      -- the one in the row above.
+      EXTRACT(YEAR FROM current_date - make_interval(years => r.age, days => 40))::smallint,
+      EXTRACT(MONTH FROM current_date - make_interval(years => r.age, days => 40))::smallint,
       r.gender::public.gender_type,
       r.minecraft, NULL, r.roblox, NULL,
       'parent'::public.gamer_sign_in, true

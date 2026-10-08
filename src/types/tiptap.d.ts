@@ -20,3 +20,17 @@ declare module "@tiptap/core" {
     markdown: MarkdownStorage;
   }
 }
+
+/**
+ * The markdown extension's parser, which its storage carries and its declared
+ * shape leaves out. The rich-text editor reads pasted plain text through this
+ * same parser, so a paste is read in the one dialect a stored value is.
+ */
+declare module "tiptap-markdown" {
+  interface MarkdownStorage {
+    parser: {
+      /** Markdown in, the HTML the editor's schema parses. */
+      parse(content: string, options?: { inline?: boolean }): string;
+    };
+  }
+}

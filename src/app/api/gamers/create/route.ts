@@ -62,7 +62,8 @@ export const POST = defineRoute({
     const admin = createAdminClient();
     const {
       firstName,
-      dateOfBirth,
+      birthYear,
+      birthMonth,
       gender: providedGender,
       minecraftUsername,
       robloxUsername,
@@ -73,10 +74,17 @@ export const POST = defineRoute({
       guardianAttested,
     } = body;
 
-    const dobDate = new Date(dateOfBirth + "T00:00:00");
-    if (isNaN(dobDate.getTime()) || dobDate > new Date()) {
+    // Against the month the database's own CHECK compares with: its
+    // CURRENT_DATE, which reads the database's UTC clock.
+    const now = new Date();
+    const currentYear = now.getUTCFullYear();
+    const currentMonth = now.getUTCMonth() + 1;
+    if (
+      birthYear > currentYear ||
+      (birthYear === currentYear && birthMonth > currentMonth)
+    ) {
       return NextResponse.json(
-        { error: "Date of birth cannot be in the future" },
+        { error: "Birth month cannot be in the future" },
         { status: 400 },
       );
     }
@@ -226,7 +234,8 @@ export const POST = defineRoute({
         p_parent_id: user.id,
         p_first_name: firstName,
         p_last_name: inheritedLastName,
-        p_date_of_birth: dateOfBirth,
+        p_birth_year: birthYear,
+        p_birth_month: birthMonth,
         // Omit (→ undefined) rather than pass null: the RPC params default to
         // null, and the generated Args type accepts undefined, not null. A null
         // account key still inserts the row (username present, key null) on

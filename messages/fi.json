@@ -39,7 +39,7 @@
       "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
       "library": "Kirjasto",
-      "minecraftApi": "Minecraft Server API",
+      "minecraftApi": "Minecraft-palvelimen API",
       "lynxApi": "Lynx Educaten kumppani-API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "adminMunicipalityInvoicing": "Kuntalaskutus",
@@ -1765,13 +1765,13 @@
       "loadError": "Tuurauksia ei voitu ladata.",
       "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}",
       "approveConfirmTitle": "Hyväksytäänkö {name} tuuraajaksi?",
-      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu muiden tarjoutuneiden listalta, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu muiden tarjoutuneiden listalta, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
       "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
       "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
       "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
       "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa.",
       "seatConfirmTitle": "Asetetaanko {name} tuuraajaksi?",
-      "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja My SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+      "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
       "seatConfirm": "Aseta tuuraaja",
       "seatReasonLabel": "Ilmoitettu syy",
       "seatFailed": "Tuuraajan asettaminen epäonnistui – yritä uudelleen.",
@@ -1930,7 +1930,8 @@
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "weakPassword": "Salasana on liian helppo arvata — kokeile pidempää tai sellaista, jota et käytä muualla",
-      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
+      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>",
+      "failed": "Tätä sähköpostiosoitetta ei voitu rekisteröidä. Jos sinulla on jo tili, kirjaudu sisään."
     },
     "forgotPassword": {
       "title": "Unohditko salasanan?",
@@ -1982,8 +1983,17 @@
       "submit": "Viimeistele",
       "finishing": "Viimeistellään...",
       "alreadyComplete": "Tämä tili on jo valmis. Kirjaudu uudelleen sisään jatkaaksesi.",
-      "switchToParent": "Etkö ole pelikasvattaja? <link>Luo sen sijaan vanhemman tili</link>"
-    }
+      "switchToParent": "Etkö ole pelikasvattaja? <link>Luo sen sijaan vanhemman tili</link>",
+      "failed": "Tilin viimeistely epäonnistui. Yritä uudelleen."
+    },
+    "validation": {
+      "emailInvalid": "Anna kelvollinen sähköpostiosoite.",
+      "firstNameTooShort": "Etunimessä on oltava vähintään {min} merkkiä.",
+      "firstNameTooLong": "Etunimessä saa olla enintään {max} merkkiä.",
+      "lastNameTooShort": "Sukunimessä on oltava vähintään {min} merkkiä.",
+      "lastNameTooLong": "Sukunimessä saa olla enintään {max} merkkiä."
+    },
+    "signInAfterRegisterFailed": "Tilisi on valmis, mutta sisäänkirjautuminen ei onnistunut. Kirjaudu sisään sähköpostiosoitteellasi ja salasanallasi."
   },
   "pin": {
     "create": {
@@ -2114,9 +2124,18 @@
   "docs": {
     "minecraftApi": {
       "title": "Minecraft-palvelimen API",
-      "description": "Käytä tätä päätepistettä tarkistaaksesi, onko yhdistävällä pelaajalla lupa liittyä Minecraft-maailmaan. Palvelin lähettää pelaajan Minecraft UUID:n ja saa salli/estä-päätöksen istunnon ajoitustiedoilla.",
+      "description": "School of Gamingin Minecraft-palvelimet kutsuvat tätä päätepistettä, kun pelaaja yrittää liittyä. Palvelin lähettää pelaajan Minecraft-UUID:n, ja Sogverse vastaa, päästetäänkö pelaaja sisään, sekä kertoo syyn ja paikat, joihin päätös perustuu.",
+      "eligibility": {
+        "heading": "Kuka pääsee sisään",
+        "intro": "Minecraft-tili pääsee sisään, kun se on linkitetty Sogversen pelaajatiliin, jolla on tällä hetkellä paikka perheen maksamassa tuotteessa.",
+        "paidProducts": "Maksulliset tuotteet lasketaan: kerhotilaus, maksullinen leiri tai maksullinen tapahtuma.",
+        "notCounted": "Maksuttomia tuotteita ja kuntien kerhoja ei lasketa, vaikka pelaajalla olisi niissä paikka.",
+        "current": "Paikka lasketaan tuotteen päivinä alkupäivästä loppupäivään. Kerho, jolla ei ole loppupäivää, lasketaan alkupäivästä alkaen.",
+        "sharedAccounts": "Useampi Sogverse-tili voi linkittää saman Minecraft-tilin, sillä sisarukset käyttävät usein yhteistä tiliä. Pelaaja pääsee sisään, jos yksikin linkitetyistä pelaajista täyttää ehdot.",
+        "gedus": "Minecraft-tili, joka on linkitetty vain Gedun tiliin, ei pääse sisään tämän tarkistuksen kautta."
+      },
       "authentication": {
-        "heading": "Autentikointi",
+        "heading": "Tunnistautuminen",
         "description": "Kaikki pyynnöt vaativat staattisen API-avaimen Bearer-tokenina <code>Authorization</code>-otsakkeessa.",
         "contactNote": "Ota yhteyttä Sogverse-tiimiin, jos tarvitset avaimen tai sen vaihdon."
       },
@@ -2124,39 +2143,59 @@
         "heading": "Päätepiste",
         "queryParams": "Kyselyparametrit",
         "uuidType": "merkkijono (pakollinen)",
-        "uuidDescription": "Pelaajan Minecraft UUID. Sekä viivoitettu (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivottamaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
+        "uuidDescription": "Pelaajan Minecraft Java Editionin UUID. Sekä viivallinen (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
       },
       "responses": {
         "heading": "Vastaukset",
-        "playerAllowed": "Pelaaja sallittu",
-        "playerDenied": "Pelaaja estetty",
-        "errorResponses": "Virheresponssit",
-        "notImplementedTitle": "Ei vielä toteutettu",
-        "notImplementedBody": "Istuntojen käyttöoikeustarkistusta rakennetaan parhaillaan uudelleen nykyisen tuotejärjestelmän pohjalta. Jokainen tunnistautunut ja oikein muotoiltu pyyntö palauttaa tällä hetkellä koodin 501 – yhtään pelaajaa ei päästetä sisään. Alla kuvatut vastaukset kertovat, millaisen rajapinnan tämä päätepiste palauttaa käyttöönoton jälkeen. Toteuta integraatio niiden mukaan, mutta varaudu siihen asti 501-vastaukseen.",
-        "error501": "Istuntojen käyttöoikeustarkistusta ei ole vielä rakennettu. Pyyntö oli kelvollinen ja tunnistautuminen onnistui, mutta pääsystä ei voida tehdä päätöstä – estä pääsy oletusarvoisesti äläkä tulkitse tätä epäämiseksi.",
-        "deniedDescription": "Pelaaja löytyy Sogversesta, mutta hänellä ei ole aktiivista istuntoa juuri nyt. <code>endTime</code>-kenttää ei sisällytetä.",
-        "fields": {
-          "allowedTrue": "Pelaajalla on aktiivinen istunto juuri nyt.",
-          "role": "Pelaajan rooli Sogversessa.",
-          "firstName": "Pelaajan etunimi.",
-          "endTime": "Milloin istuntoikkuna sulkeutuu (sisältää 5 minuutin puskurin suunnitellun lopun jälkeen). Käytä tätä ajoittaaksesi poiston tai uudelleentarkistuksen.",
-          "reason": "Ihmisluettava kuvaus: tuotteen nimi ja Gedun nimi."
+        "intro": "Jokaiseen tunnistautuneeseen pyyntöön, jossa on kelvollinen <code>uuid</code>, vastataan koodilla 200, pääsi pelaaja sisään tai ei. Tuntematon UUID on epääminen eikä virhe.",
+        "playerAllowed": "Pelaaja päästetään sisään",
+        "playerDenied": "Pelaajaa ei päästetä sisään",
+        "deniedDescription": "Eerolla on paikka kunnan kerhossa, jota ei lasketa, joten paikka palautuu arvolla <code1>qualifies: false</code1> ja syy on <code2>no_paid_enrollment</code2>.",
+        "errorResponses": "Virhevastaukset",
+        "error401": "<code>Authorization</code>-otsake puuttuu tai on virheellinen, tai avain on väärä.",
+        "error400": "<code>uuid</code>-kyselyparametri puuttuu, tai se ei ole kelvollinen Minecraft-UUID.",
+        "error500": "Palvelimen asetukset ovat virheelliset tai haku epäonnistui. Päätöstä ei tehty.",
+        "errorShape": "Jokainen virhevastaus on muotoa <code>'{ \"error\": \"message\" }'</code>."
+      },
+      "fields": {
+        "heading": "Vastauksen kentät",
+        "allowed": "Päästetäänkö pelaaja sisään. Tosi täsmälleen silloin, kun <code1>reason</code1> on <code2>paid_enrollment</code2>.",
+        "reason": "Miksi pelaaja päästettiin sisään tai miksi ei. Jokin alla olevista arvoista.",
+        "message": "Yksi päätöksen selittävä virke palvelimen ylläpitäjän lokeihin tai poistoviestiin. Aina englanniksi, millä kielellä tahansa tätä sivua luetaan.",
+        "gamers": "Kaikki tähän Minecraft-UUID:hen linkitetyt pelaajatilit. Tyhjä, kun syy on <code1>no_linked_account</code1> tai <code2>no_linked_gamer</code2>.",
+        "reasonsHeading": "Syyt",
+        "reasons": {
+          "paidEnrollment": "Linkitetyllä pelaajalla on tällä hetkellä paikka perheen maksamassa tuotteessa.",
+          "noLinkedAccount": "Mikään Sogverse-tili ei ole linkittänyt tätä Minecraft-UUID:tä.",
+          "noLinkedGamer": "UUID on linkitetty, mutta vain tileihin, jotka eivät ole pelaajatilejä, kuten Gedun tiliin.",
+          "noPaidEnrollment": "Linkitettyjä pelaajia on, mutta kenelläkään heistä ei ole ehdot täyttävää paikkaa."
         },
-        "error401": "Puuttuva, virheellinen tai kelvoton API-avain.",
-        "error400": "Puuttuva tai kelvoton <code>uuid</code>-kyselyparametri.",
-        "error404": "Tähän Minecraft UUID:hen ei ole liitetty Sogverse-tiliä.",
-        "error500": "Palvelinvirhe. Yritä uudelleen viiveellä."
+        "gamerHeading": "Pelaajan kentät",
+        "gamer": {
+          "firstName": "Pelaajan etunimi.",
+          "minecraftUsername": "Pelaajatiliin linkitetty Minecraft-käyttäjänimi.",
+          "enrollments": "Kaikki pelaajan tämänhetkiset paikat, täyttävät ne ehdot tai eivät."
+        },
+        "enrollmentHeading": "Ilmoittautumisen kentät",
+        "enrollment": {
+          "product": "Tuotteen nimi.",
+          "productType": "Minkä tyyppisessä tuotteessa paikka on. Vain kuluttajakerhot, leirit ja tapahtumat voivat täyttää ehdot.",
+          "billingMode": "Miten tuote maksetaan. Vain maksulliset tuotteet täyttävät ehdot, maksuttomat tuotteet ja kuntasopimukset eivät.",
+          "startDate": "Tuotteen alkamispäivä.",
+          "endDate": "Tuotteen päättymispäivä tai <code>null</code>, jos kerho jatkuu toistaiseksi.",
+          "qualifies": "Päästääkö tämä paikka pelaajan sisään."
+        }
       },
       "example": {
         "heading": "Esimerkki"
       },
       "integrationNotes": {
         "heading": "Integraatio-ohjeet",
-        "note1": "Kutsu tätä päätepistettä jokaisella pelaajan liittymisellä. Sekä Gedut että pelaajat ovat istuntorajoitettuja — he voivat liittyä vain ajoitetun istuntoikkunan aikana.",
-        "note2": "Istuntoikkuna aukeaa 5 minuuttia ennen suunniteltua alkua ja sulkeutuu 5 minuuttia suunnitellun lopun jälkeen.",
-        "note3": "Kun <code1>allowed: true</code1>, käytä <code2>endTime</code2>-arvoa ajoittaaksesi uudelleentarkistuksen tai poiston. Jos peräkkäisiä istuntoja on (esim. yksi päättyy 14:00, seuraava alkaa 14:05), pelaaja poistetaan ensimmäisen istunnon päättyessä ja liittyy uudelleen seuraavaan.",
-        "note4": "<code>404</code> tarkoittaa, ettei pelaaja ole vielä linkittänyt Minecraft-tiliään Sogversessä. Voit näyttää viestin, joka kehottaa linkittämään tilin profiiliasetuksissa.",
-        "note5": "Kaikki virheresponssit noudattavat muotoa <code>'{ \"error\": \"viesti\" }'</code>."
+        "branchOnAllowed": "Kutsu tätä päätepistettä jokaisella liittymiskerralla ja tee päätös pelkän <code1>allowed</code1>-kentän perusteella. Käytä <code2>reason</code2>- ja <code3>message</code3>-kenttiä lokeihin ja poistoviesteihin.",
+        "failClosed": "Estä pääsy virhetilanteissa: jos vastaus on 5xx, pyyntö aikakatkaistaan tai yhteys katkeaa, älä päästä pelaajaa sisään. Epäonnistunut tarkistus ei ole koskaan syy päästää ketään sisään.",
+        "noLongCache": "Älä säilytä päätöstä välimuistissa pitkään. Paikka voi alkaa tai päättyä milloin tahansa, joten tallennettu vastaus vanhenee. Turvallisinta on tarkistaa jokaisella liittymiskerralla.",
+        "notLinked": "<code>no_linked_account</code> tarkoittaa, ettei kukaan ole vielä linkittänyt tätä Minecraft-tiliä Sogversessa. Poistoviestissä voit pyytää pelaajaa linkittämään Minecraft-tilinsä Sogverse-tiliinsä.",
+        "keyServerSide": "API-avain kuuluu vain palvelimelle. Älä koskaan laita sitä asiakasmodiin, pelaajien luettavissa olevaan asetustiedostoon tai julkiseen repositorioon."
       }
     },
     "lynxApi": {
@@ -2608,7 +2647,8 @@
       "chooseAreas": "Valitse alueet",
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
-      "saving": "Tallennetaan..."
+      "saving": "Tallennetaan...",
+      "saveFailed": "Alueiden tallennus ei onnistunut. Yritä uudelleen."
     },
     "groupWorkspace": {
       "staffNoteWithheld": "Vain ryhmään nimetyt Gedut ja ylläpitäjät voivat lukea tämän muistiinpanon.",
@@ -3030,7 +3070,8 @@
     "creationTitlePlaceholder": "Mitä hän teki",
     "creationUrlLabel": "Teoksen linkki",
     "creationUrlPlaceholder": "Linkki teokseen",
-    "creationIncomplete": "Teos tarvitsee sekä nimen että linkin."
+    "creationIncomplete": "Teos tarvitsee sekä nimen että linkin.",
+    "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen."
   },
   "richText": {
     "bold": "Lihavointi",
@@ -3288,7 +3329,7 @@
         "gamerPhoto": {
           "lynxEducate": "Lapsestani otettuja valokuvia ja videoita saa liittää kertaraportteihin, jakaa Lynx Educaten ja Robloxin kanssa vaikuttavuusraportointia varten sekä käyttää School of Gamingin, Lynx Educaten ja Robloxin verkkosivuilla ja sosiaalisessa mediassa. Tarkemmat tiedot ovat <privacy>Luojien akatemian tietosuojaselosteessa</privacy>.",
           "lynxEducateTitle": "Lapsesi valokuvat ja videot",
-          "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa lapsesi sivulla My SOG -näkymässä."
+          "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa lapsesi sivulla Oma SOG -näkymässä."
         },
         "marketing": {
           "lynxEducate": "Sähköpostiosoitteeni saa jakaa <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia tulevista tapahtumista ja pelaamiseen liittyvistä aineistoista. Voin peruuttaa tilauksen milloin tahansa.",
@@ -3789,7 +3830,7 @@
       "items": {
         "joiningSession": {
           "question": "Miten pelaajani pääsee mukaan, kun kerta alkaa?",
-          "answer": "<p>Se riippuu siitä, missä kerta pidetään, ja Oma SOG -sivusi kortti kertoo sen: verkossa pidettävän kerran kortissa on painike, ja paikan päällä pidettävän kerran kortissa lukee paikan nimi.</p><p>Verkossa kerta pidetään selaimessa äänihuoneessa, eikä mitään tarvitse asentaa:</p><steps><step>Etsi Oma SOG -sivultasi kortti lapsesi nimen alta. Ennen kerran alkua kortin painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Huoneeseen pääsevät vain ryhmään kuuluvat, joten tililtäsi sinua pyydetään ensin vaihtamaan lapsesi profiiliin – samalla sinut kirjataan ulos vanhemman tililtä – ja huone avautuu lapsesi nimissä.</step><step>Salli mikrofonin käyttö, jos selain kysyy sitä.</step></steps><p>Omaan profiiliisi palaamiseen tarvitset jälkeenpäin vanhemman PIN-koodin. Jos lapsesi kirjautuu omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, hän voi myös avata oman Oma SOG -sivunsa ja napauttaa samaa painiketta siellä. Huone pysyy auki viisi minuuttia kerran päättymisen jälkeen.</p><p>Paikan päällä pidettävässä kerrassa painiketta ei ole. Kerhon, leirin tai tapahtuman sivulla näkyy paikka osoitteineen sekä perheille tarkoitettu huomautus paikasta, jos sellainen on – tuo siis lapsesi sinne kerran alkuun mennessä.</p><p>Jos kortissa lukee sen sijaan, että etsimme lapsellesi Gedua ja ryhmää, liityttävää ei vielä ole: se tapahtuu ennen ensimmäistä kertaa, ja sen jälkeen kortissa näkyy painike tai paikka.</p>"
+          "answer": "<p>Se riippuu siitä, missä kerta pidetään, ja Oma SOG -sivusi kortti kertoo sen: verkossa pidettävän kerran kortissa on painike, ja paikan päällä pidettävän kerran kortissa lukee paikan nimi.</p><p>Verkossa kerta pidetään selaimessa äänihuoneessa, eikä mitään tarvitse asentaa:</p><steps><step>Etsi Oma SOG -sivultasi kortti lapsesi nimen alta. Ennen kerran alkua kortin painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Huoneeseen pääsevät vain ryhmään kuuluvat, joten tililtäsi sinua pyydetään ensin vaihtamaan lapsesi profiiliin – samalla sinut kirjataan ulos vanhemman tililtä – ja huone avautuu lapsesi nimissä.</step><step>Salli mikrofonin käyttö, jos selain kysyy sitä.</step></steps><p>Omaan profiiliisi palaamiseen tarvitset jälkeenpäin vanhemman PIN-koodin. Jos lapsesi kirjautuu omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, hän voi myös avata Oma SOG -sivunsa ja napauttaa samaa painiketta siellä. Huone pysyy auki viisi minuuttia kerran päättymisen jälkeen.</p><p>Paikan päällä pidettävässä kerrassa painiketta ei ole. Kerhon, leirin tai tapahtuman sivulla näkyy paikka osoitteineen sekä perheille tarkoitettu huomautus paikasta, jos sellainen on – tuo siis lapsesi sinne kerran alkuun mennessä.</p><p>Jos kortissa lukee sen sijaan, että etsimme lapsellesi Gedua ja ryhmää, liityttävää ei vielä ole: se tapahtuu ennen ensimmäistä kertaa, ja sen jälkeen kortissa näkyy painike tai paikka.</p>"
         },
         "parentPin": {
           "question": "Mikä vanhemman PIN on, ja mitä jos unohdan sen?",
@@ -3797,7 +3838,7 @@
         },
         "sessionReports": {
           "question": "Kuulenko, miten kerrat sujuivat?",
-          "answer": "<p>Kuulet. Kerran jälkeen lapsesi pelikasvattaja kirjoittaa siitä raportin – mitä ryhmä teki, miten meni ja mitkä hetket kannattaa muistaa – usein kuvien kera.</p><p>Raportti näkyy kyseisen kerhon, leirin tai tapahtuman sivulla Oma SOG -osiossa kohdassa Kerrat, kaikkien aiempien raporttien ja vielä tulevien kertojen rinnalla, ja lapsesi näkee samat raportit omalla Oma SOG -sivullaan. Kun Gedu lähettää raportin, se saapuu myös sähköpostitse ja on osoitettu vain sinulle – jokainen perhe saa oman erillisen viestinsä, eikä yksikään perhe näe toisen viestiä.</p><p>Näet samalla sivulla myös oman lapsesi läsnäolomerkinnän jokaiselta kerralta; lapsesi ei näe läsnäoloja, eikä yksikään perhe näe koskaan toisen lapsen merkintöjä.</p>"
+          "answer": "<p>Kuulet. Kerran jälkeen lapsesi pelikasvattaja kirjoittaa siitä raportin – mitä ryhmä teki, miten meni ja mitkä hetket kannattaa muistaa – usein kuvien kera.</p><p>Raportti näkyy kyseisen kerhon, leirin tai tapahtuman sivulla Oma SOG -osiossa kohdassa Kerrat, kaikkien aiempien raporttien ja vielä tulevien kertojen rinnalla, ja lapsesi näkee samat raportit Oma SOG -sivullaan. Kun Gedu lähettää raportin, se saapuu myös sähköpostitse ja on osoitettu vain sinulle – jokainen perhe saa oman erillisen viestinsä, eikä yksikään perhe näe toisen viestiä.</p><p>Näet samalla sivulla myös oman lapsesi läsnäolomerkinnän jokaiselta kerralta; lapsesi ei näe läsnäoloja, eikä yksikään perhe näe koskaan toisen lapsen merkintöjä.</p>"
         },
         "missedSessions": {
           "question": "Mitä jos jäämme pois yhdeltä kerralta tai liitymme kerhoon kesken kauden?",
@@ -3859,7 +3900,7 @@
       "saveFailed": "Ilmoitusasetusten tallentaminen epäonnistui. Yritä uudelleen."
     },
     "usernameLabel": "Käyttäjätunnus",
-    "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan omasta Oma SOG -näkymästään.",
+    "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan Oma SOG -näkymästään.",
     "photoConsent": {
       "title": "Kuvat ja videot",
       "granted": "Vanhempasi on sallinut, että sinusta otettuja kuvia ja videoita saa käyttää kertojen raporteissa ja että School of Gaming, Lynx Educate ja Roblox saavat käyttää niitä. Gedu kysyy silti sinulta ennen kuin ottaa sinusta kuvan.",
@@ -4101,7 +4142,8 @@
       "audience": "Gedusi ja School of Gamingin tiimi lukevat palautteesi. Kiitos!",
       "saveFailed": "Vastauksiasi ei tallennettu. Paina Valmis ja yritä uudelleen.",
       "done": "Valmis"
-    }
+    },
+    "zoneSaveFailed": "Alueen tallennus ei onnistunut. Yritä uudelleen."
   },
   "voiceButton": {
     "joinVoice": "Liity äänihuoneeseen",
@@ -4530,7 +4572,7 @@
           "Kahteen asiaan voit vastata kyllä tai ei:"
         ],
         "bullets": [
-          "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten oma My SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
+          "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten Oma SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
           "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta ja Google – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Googlen tunnisteet tulevat selaimeesi tunnistehallinnan kautta, jonka ansiosta me ja kampanjoitamme hoitava kumppani voimme lisätä tai poistaa alustan muuttamatta sivustoa; kulloinkin mukana olevat alustat on nimetty yllä olevassa luettelossa, ja luettelossa on päivämäärä. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota nämä skriptit säilyttävät selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
         ]
       },
@@ -4876,7 +4918,7 @@
         },
         "media": {
           "question": "Valokuvataanko tai videoidaanko lastani?",
-          "answer": "<p>Tapaamisissa voidaan ottaa valokuvia. Lapsesi näkyy valokuvassa vain, jos rastitat vapaaehtoisen mediavalinnan ilmoittaessasi hänet mukaan, ja voit muuttaa vastausta milloin tahansa lapsesi sivulla My SOG -näkymässä.</p>"
+          "answer": "<p>Tapaamisissa voidaan ottaa valokuvia. Lapsesi näkyy valokuvassa vain, jos rastitat vapaaehtoisen mediavalinnan ilmoittaessasi hänet mukaan, ja voit muuttaa vastausta milloin tahansa lapsesi sivulla Oma SOG -näkymässä.</p>"
         },
         "facilitators": {
           "question": "Ketkä tapaamiset ohjaavat, ja miten heidät on tarkistettu?",
@@ -5164,7 +5206,7 @@
       "mediaChanging": {
         "heading": "Mediavalinnan muuttaminen",
         "blocks": [
-          "Vanhempi tai lapsi voi peruuttaa medialuvan ottamalla yhteyttä osoitteeseen {supportEmail}, tai vanhempi voi muuttaa sitä milloin tahansa lapsen sivulla My SOG -näkymässä.",
+          "Vanhempi tai lapsi voi peruuttaa medialuvan ottamalla yhteyttä osoitteeseen {supportEmail}, tai vanhempi voi muuttaa sitä milloin tahansa lapsen sivulla Oma SOG -näkymässä.",
           "Peruuttamisen jälkeen lopetamme uuden käytön ja poistamme aineiston hallinnassamme olevista kanavista, jos se on kohtuudella mahdollista. Peruuttaminen ei voi tehdä aiemmasta lainmukaisesta käytöstä lainvastaista, perua jo jaettuja painotuotteita eikä taata sitä, että kolmansien osapuolten jo jakamat kopiot poistetaan."
         ]
       },
@@ -5359,7 +5401,7 @@
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Lapsi näkyy valokuvassa tunnistettavasti vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla My SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+          "Lapsi näkyy valokuvassa tunnistettavasti vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla Oma SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
         ]
       },
       "review": {
@@ -5425,7 +5467,7 @@
       "media": {
         "heading": "Valokuvat, video ja markkinointi",
         "blocks": [
-          "Se, valokuvataanko tai videokuvataanko lastasi ja käytetäänkö kuvia markkinointiin, riippuu kokonaan niistä valinnoista, jotka teet ilmoittautumisen yhteydessä. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa lapsesi sivulla My SOG -näkymässä."
+          "Se, valokuvataanko tai videokuvataanko lastasi ja käytetäänkö kuvia markkinointiin, riippuu kokonaan niistä valinnoista, jotka teet ilmoittautumisen yhteydessä. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa lapsesi sivulla Oma SOG -näkymässä."
         ]
       },
       "concern": {

@@ -61,6 +61,7 @@ const safetyFacts = [
 ] as const;
 
 const trustKeys = ["cancel", "guarantee"] as const;
+const stepKeys = ["step1", "step2", "step3"] as const;
 
 /**
  * Every call to action on this page goes to the shop, not to signup, and
@@ -297,33 +298,17 @@ export default function HomePage() {
             </p>
           </div>
           <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-act text-2xl font-bold text-act-foreground">
-                1
+            {stepKeys.map((key, i) => (
+              <div key={key} className="text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-act text-xl font-bold text-act-foreground">
+                  {i + 1}
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">{t(`howItWorks.${key}.title`)}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t(`howItWorks.${key}.description`)}
+                </p>
               </div>
-              <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step1.title')}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('howItWorks.step1.description')}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-world text-2xl font-bold text-world-foreground">
-                2
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step2.title')}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('howItWorks.step2.description')}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-act text-2xl font-bold text-act-foreground">
-                3
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{t('howItWorks.step3.title')}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t('howItWorks.step3.description')}
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>

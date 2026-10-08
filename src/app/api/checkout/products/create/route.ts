@@ -594,8 +594,8 @@ export const POST = defineRoute({
         // **The anchor is stamped once, here, and never revisited.** An admin who
         // later moves the product's start date does NOT move the first-charge
         // date of subscriptions that already exist — that correction is manual in
-        // the Stripe dashboard for now (the sync is a recorded TODO.md
-        // follow-up). The admin start-date field carries a hint saying so; this
+        // the Stripe dashboard for now (the sync is GitHub issue #154,
+        // deprioritized). The admin start-date field carries a hint saying so; this
         // comment is the other end of the same gap, at the site where the anchor
         // is born.
         const anchor = firstChargeAnchor(

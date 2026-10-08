@@ -4,6 +4,7 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { possibleAgeOnDate } from "@/lib/gamer-age-eligibility";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 import { walkPages } from "@/lib/supabase/paging";
 import { escapeLikePattern } from "@/lib/utils";
 import {
@@ -15,7 +16,7 @@ import {
 import { readInScopeSeats } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
 import {
-  readBirthDates,
+  readBirths,
   readParentGamerLinks,
 } from "./partner-shared-lookups.server";
 import { PROGRAMME_AGE_RANGE } from "./partner-shared-values";
@@ -139,8 +140,8 @@ function shown(count: number): number | null {
  * birth month allows two adjacent ages, and the child counts when either one is
  * in range — the same generous reading enrolment makes.
  */
-function possiblyProgrammeAge(dateOfBirth: string, day: string): boolean {
-  const age = possibleAgeOnDate(dateOfBirth, day);
+function possiblyProgrammeAge(birth: GamerBirthMonthYear, day: string): boolean {
+  const age = possibleAgeOnDate(birth, day);
   return age.min <= PROGRAMME_AGE_RANGE.max && age.max >= PROGRAMME_AGE_RANGE.min;
 }
 
@@ -154,7 +155,7 @@ function possiblyProgrammeAge(dateOfBirth: string, day: string): boolean {
  * - `children_added`: the distinct gamers linked to those accounts now,
  *   whenever they were linked.
  * - `children_eligible`: those gamers possibly aged 13 to 17 on the request's
- *   UTC day. A gamer whose birth date could not be read — deleted while
+ *   UTC day. A gamer whose birth could not be read — deleted while
  *   the request was reading — is not counted as eligible.
  * - `enrolled`: those accounts where the account itself or a linked gamer holds
  *   a live seat on a Programme product.
@@ -175,7 +176,7 @@ export async function readPartnerCampaigns(
   const childIds = [...new Set([...children.values()].flat())];
 
   const [births, seats] = await Promise.all([
-    readBirthDates(db, childIds),
+    readBirths(db, childIds),
     readInScopeSeats(db, { participantIds: [...accountIds, ...childIds] }),
   ]);
   const seated = new Set(seats.map((seat) => seat.participant_id));
