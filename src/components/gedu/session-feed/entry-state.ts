@@ -377,7 +377,7 @@ export function entryNeedsAttention(
   roster: readonly SessionFeedGamer[],
   creations: CreationsObligation | null = null,
 ): boolean {
-  // Reads the state rather than re-deriving it, so the epoch and empty-roster
+  // Reads the state rather than re-deriving it, so the epoch and nobody-expected
   // exemptions above are applied exactly once and the badge can never disagree
   // with the card.
   return entryCompleteness(entry, roster, creations) === "needs_attention";

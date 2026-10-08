@@ -926,11 +926,11 @@ export function SessionFeed({
  *
  * The neutral dot is what is left when a past session says nothing about
  * itself: a pre-epoch week, a session still under way, an unfinished sheet on a
- * session nobody in the group was expected at. A session marked off but never written up is **not**
- * one of them any more — the report is owed work now, so that dot takes the
- * warning tone like any other gap. The run of grey is what the green and the
- * warning are measured
- * against, and it is the run that shrinks when the standard rises. The two greys
+ * session nobody in the group was expected at. A session marked off but never
+ * written up is **not** one of them any more — the report is owed work now, so
+ * that dot takes the warning tone like any other gap. The run of grey is what
+ * the green and the warning are measured against, and it is the run that
+ * shrinks when the standard rises. The two greys
  * are two tokens, not two steps of one: the ordinary dot is the ink
  * (`muted-foreground`), and a week with no record at all takes `border`, the
  * quietest neutral the palette has. Neither is a weakened anything.
