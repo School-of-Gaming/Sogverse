@@ -739,7 +739,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   ensure_chat_channel: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
-    why: "materializes the current session window's channel for a group the CALLER may join, guarded on is_voice_group_member. The interesting scope property is what it does NOT take: both window instants are derived here from the product's schedule and never accepted from the caller, because they feed the family read bound — a client-supplied value would let a member mint an arbitrary read window over the group's whole history. It also deliberately never calls ensure_group_session, so no chat action can manufacture a session row in the staff feeds",
+    why: "materializes the current session window's channel for a group the CALLER may join, guarded on is_voice_group_member. The interesting scope property is what it does NOT take: both window instants are derived in the database from the product's plan and never accepted from the caller, because they feed the family read bound — a client-supplied value would let a member mint an arbitrary read window over the group's whole history. It also deliberately never calls ensure_group_session, so no chat action can manufacture a session row in the staff feeds",
   },
   get_chat_channel_roster: {
     scopeTest: "tests/db/chat-rpcs.test.ts",

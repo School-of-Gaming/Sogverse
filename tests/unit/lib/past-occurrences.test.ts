@@ -12,7 +12,7 @@ import {
  * the session feed needed and the dashboards never did.
  *
  * The forward walk has long-standing TZ regression tests — the enrollment
- * timezone suites, and the spring-forward case in `session-schedule.test.ts` —
+ * timezone suites, and the spring-forward case in `forward-occurrences.test.ts` —
  * because a naive week step lands an hour out on a DST transition and quietly
  * drops or duplicates an occurrence. The backward walk
  * takes exactly the same risk in the other direction, so it gets the same

@@ -4476,6 +4476,17 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: string
       }
+      group_open_session_windows: {
+        Args: { p_at?: string; p_group_id: string }
+        Returns: {
+          cancelled: boolean
+          closes_at: string
+          ends_at: string
+          opens_at: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
       group_session_date_is_scheduled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean

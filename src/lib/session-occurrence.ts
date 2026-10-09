@@ -150,9 +150,8 @@ function utcCalendarDate(instant: Date): string {
  *
  * Why this exists at all: `getNextSessionStart` always returns a
  * *future* occurrence — once today's start has passed, it skips to next
- * week. That hides currently-in-progress sessions from upcoming lists.
- * Mirroring `computeSessionWindow`, we check the prev-week candidate
- * explicitly.
+ * week. That hides currently-in-progress sessions from upcoming lists, so
+ * the prev-week candidate is checked explicitly.
  *
  * Why the DST-safe back-step (`stepBackOneWeek`): a flat `now - 7×24h`
  * lands one hour off on the DST-transition Wednesday (Helsinki
@@ -160,10 +159,8 @@ function utcCalendarDate(instant: Date): string {
  * last week's slot start in local time, so `getNextSessionStart`
  * returns last week's already-finished session and the in-window check
  * fails. Today's in-progress session disappears from the dashboard.
- * The regression is pinned in `tests/unit/session-schedule.test.ts`, by
- * the spring-forward case that reads a room's state mid-session: revert
- * the week step to a flat 7×24h and that file — and only that file —
- * goes red.
+ * The regression is pinned in `tests/unit/lib/forward-occurrences.test.ts`,
+ * by the spring-forward case that reads an occurrence mid-session.
  *
  * Returns null when the product hasn't started yet
  * (`startBoundary > now`) — no prev-week occurrence can be in

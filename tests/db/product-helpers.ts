@@ -192,12 +192,15 @@ import { TEST_IDS } from "./constants";
  *                  is not there. Declared here for the reason 6ff and 6ee are:
  *                  allocate either to a real fixture and those cases quietly
  *                  start pointing at rows that exist
- *   7f1-7f4        chat-session-window.test.ts (four products because the thing
- *                  under test is the TIMEZONE and no single product can hold
- *                  four: UTC, a northern DST zone, a southern one — one of the
- *                  two is always on summer time — and a fixed-offset zone in
- *                  which it is just after local midnight, which is what
- *                  exercises the SQL window search's adjacent-day probe)
+ *   7f1-7f4, 7e4   chat-session-window.test.ts (one product per zone the open
+ *                  session window is read in, because a product has one zone:
+ *                  7f1 in UTC carries the midnight, term, overlap and
+ *                  cancellation cases, 7f2 and 7f3 are a northern and a
+ *                  southern DST zone, and 7f4 is the northern zone again with a
+ *                  slot at the wall clock its transitions skip and repeat. 7e4
+ *                  is the one whose session is in progress while the file runs,
+ *                  for the case that reads the real clock — kept apart so no
+ *                  fixed slot can share its window)
  *   7f7-7fd        admin-municipality-invoicing.test.ts (five municipality
  *                  clubs, two of them with a group: 7fa/7fb recorded a session
  *                  inside the month under test, 7fc/7fd sit wholly outside it in

@@ -181,6 +181,29 @@ describe("a session stops being in progress when its window closes", () => {
   });
 });
 
+describe("the in-progress look-back steps a calendar week, not 168 hours", () => {
+  it("finds the session in progress on the first Tuesday after spring-forward", () => {
+    // Europe/Helsinki springs forward on Sunday 2026-03-29, so the Tuesday
+    // after it (Mar 31, 14:00 EEST = 11:00Z) is the one a flat `now - 7×24h`
+    // breaks: 168 real hours back from mid-session crosses the transition and
+    // lands at Tue Mar 24 13:30 EET — before last week's 14:00 start — so the
+    // look-back resolves last week's finished session and today's in-progress
+    // one disappears. A calendar-week step lands at 14:30 and finds it.
+    const slot = { weekday: 1, startTime: "14:00", durationMinutes: 60 };
+
+    expect(
+      getCurrentInProgressOccurrence({
+        slot,
+        timezone: HELSINKI,
+        now: new Date("2026-03-31T11:30:00Z"), // 14:30 EEST, mid-session
+        startBoundary: null,
+        endBoundary: null,
+        windowCloseMs: WINDOW_CLOSE_MS,
+      })?.start.toISOString(),
+    ).toBe("2026-03-31T11:00:00.000Z");
+  });
+});
+
 describe("isVoiceWindowOpen pins both ends of the join window", () => {
   const start = new Date("2026-02-25T15:00:00Z");
   const end = new Date("2026-02-25T16:00:00Z");

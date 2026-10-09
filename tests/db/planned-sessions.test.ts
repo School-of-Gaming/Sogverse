@@ -486,8 +486,6 @@ describe("the session plan", () => {
      */
     const EXPANDERS: Record<string, string> = {
       planned_session_dates: "the plan itself",
-      ensure_chat_channel:
-        "temporary: its voice-window search moves onto the plan in the next piece of this refactor (P2), which deletes this entry",
     };
 
     it("no other function maps dates to weekdays or steps through days", async () => {
@@ -504,8 +502,7 @@ describe("the session plan", () => {
         .sort();
 
       // Both directions: a new walker fails, and so does an entry whose
-      // function stopped walking, so the temporary one cannot outlive its
-      // reason.
+      // function stopped walking, so an allowance cannot outlive its reason.
       expect(walkers).toEqual(Object.keys(EXPANDERS).sort());
     });
   });
