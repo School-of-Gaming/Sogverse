@@ -219,15 +219,17 @@ export function ConsentBannerView({
               </Button>
             </div>
             {/* Not the third half of a pair, so outside the reversed group:
-                beside the pair in a row, under it in a stack, where a quiet
-                way onward is expected. A button wearing the body link's
-                styling, because it opens the panel here rather than
-                navigating. */}
+                under the pair in a stack, where a quiet way onward is
+                expected, and at the strip's far left in a row, away from the
+                answers so it never reads as a third one. Last in the DOM, so
+                the stack needs no reversal; the row moves it with `order`. A
+                button wearing the body link's styling, because it opens the
+                panel here rather than navigating. */}
             <button
               type="button"
               disabled={committing}
               onClick={() => setCustomising(true)}
-              className="h-9 px-1 text-xs text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+              className="h-9 px-1 text-xs sm:order-first sm:mr-auto text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
             >
               {t("customise")}
             </button>
