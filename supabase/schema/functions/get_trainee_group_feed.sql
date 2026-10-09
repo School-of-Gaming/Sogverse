@@ -226,7 +226,7 @@ BEGIN
     -- The plan and the final session, as the gedu document carries them: the
     -- schedule is no secret from anyone on the group.
     'planned_sessions', public.planned_sessions_document(
-                          v_product_id, public.session_plan_horizon(v_product_id)
+                          v_product_id, public.session_plan_horizon(v_product_id, p_group_id)
                         ),
     'final_session_date', public.group_final_session_date(p_group_id)
   );

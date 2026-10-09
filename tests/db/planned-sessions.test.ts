@@ -31,8 +31,8 @@ import {
  * plan expanded in one place.
  *
  * Every dated fixture sits in 2030, so the plan's answers do not depend on when
- * this runs; only the horizon cases read "today", and they accept either side
- * of a midnight the run might cross.
+ * this runs; only the horizon cases and one live parity case read "today", and
+ * each holds on either side of a midnight the run might cross.
  */
 
 const TERM = "00000000-0000-0000-0000-000000000850";
@@ -48,6 +48,8 @@ const GROUP_HORIZON = "00000000-0000-0000-0000-000000000859";
 const CROSS_HELSINKI = "00000000-0000-0000-0000-00000000085a";
 const CROSS_AUCKLAND = "00000000-0000-0000-0000-00000000085b";
 const CROSS_LOS_ANGELES = "00000000-0000-0000-0000-00000000085c";
+const LATE_START = "00000000-0000-0000-0000-00000000085d";
+const LIVE = "00000000-0000-0000-0000-00000000085e";
 
 const ALL_PRODUCTS = [
   TERM,
@@ -60,6 +62,8 @@ const ALL_PRODUCTS = [
   CROSS_HELSINKI,
   CROSS_AUCKLAND,
   CROSS_LOS_ANGELES,
+  LATE_START,
+  LIVE,
 ];
 
 const plannedGroupRows = z.array(
@@ -199,10 +203,25 @@ describe("the session plan", () => {
       [{ weekday: 0, startTime: "10:00", durationMinutes: 60 }],
     );
 
-    // Open-ended and running since 2020, every day.
+    // Open-ended and running since 2020, every day, each session ending on
+    // the stroke of midnight: whatever the hour, yesterday's has ended and
+    // today's has not, so "the sessions that have not ended" start today.
     await seed(
       HORIZON,
       { timezone: "UTC", startDate: "2020-01-06", endDate: null },
+      [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+        weekday,
+        startTime: "23:00",
+        durationMinutes: 60,
+      })),
+    );
+
+    // Open-ended, every day, starting 360 days from now: seven sessions fall
+    // inside the year the horizon searches (eight when a run crosses midnight
+    // after seeding, which puts the eighth on the year's last day).
+    await seed(
+      LATE_START,
+      { timezone: "UTC", startDate: utcDate(360), endDate: null },
       [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
         weekday,
         startTime: "10:00",
@@ -288,19 +307,24 @@ describe("the session plan", () => {
       expect(datedFrom).toEqual([]);
     });
 
-    it("clamps the span to 3660 days", async () => {
-      // Every day is planned, so the last row is the last day the clamp lets
-      // through: the term's first day plus 3660.
-      const { data, error } = await admin
-        .rpc("planned_session_dates", {
-          p_product_id: OPEN,
-          p_from: "2000-01-01",
-          p_to: "2100-01-01",
-        })
-        .order("session_date", { ascending: false })
-        .limit(1);
-      expect(error).toBeNull();
-      expect(data?.map((row) => row.session_date)).toEqual([addDays("2030-01-07", 3660)]);
+    it("clamps the span to the 3660 days before its end, keeping the newest dates", async () => {
+      // Every day is planned, so the rows run from the first day the clamp
+      // lets through, the span's end less 3660 days, to the span's end itself.
+      // Read one row from each end: the Data API caps a response at 1000 rows.
+      async function edge(ascending: boolean) {
+        const { data, error } = await admin
+          .rpc("planned_session_dates", {
+            p_product_id: OPEN,
+            p_from: "2000-01-01",
+            p_to: "2100-01-01",
+          })
+          .order("session_date", { ascending })
+          .limit(1);
+        expect(error).toBeNull();
+        return data?.map((row) => row.session_date);
+      }
+      expect(await edge(true)).toEqual([addDays("2100-01-01", -3660)]);
+      expect(await edge(false)).toEqual(["2100-01-01"]);
     });
 
     it("resolves wall clocks across a European spring-forward, and keeps a session that crosses midnight on the date it starts", async () => {
@@ -444,10 +468,11 @@ describe("the session plan", () => {
     async function expectHorizon(
       args: { p_group_id?: string; p_at_least?: string },
       expected: () => string,
+      product: string = HORIZON,
     ) {
       const before = expected();
       const { data, error } = await admin.rpc("session_plan_horizon", {
-        p_product_id: HORIZON,
+        p_product_id: product,
         ...args,
       });
       expect(error).toBeNull();
@@ -462,15 +487,19 @@ describe("the session plan", () => {
       expect(data).toBe("2030-01-21");
     });
 
-    it("is the ninth planned date from yesterday on, open-ended", async () => {
-      // A session every day: yesterday plus eight.
+    it("is the eighth session that has not ended, open-ended", async () => {
+      // Yesterday's has ended and today's has not: today plus seven.
       await expectHorizon({}, () => utcDate(7));
     });
 
     it("skips the dates the group cancelled", async () => {
-      // Yesterday, today, +2, +4, +5, +6, +7, +8 and +9: the group cancelled
-      // +1 and +3, so its ninth is two days later.
+      // Today, +2, +4, +5, +6, +7, +8 and +9: the group cancelled +1 and +3,
+      // so its eighth is two days later.
       await expectHorizon({ p_group_id: GROUP_HORIZON }, () => utcDate(9));
+    });
+
+    it("is the last day of the year it searches when fewer than eight fall inside it", async () => {
+      await expectHorizon({}, () => utcDate(366), LATE_START);
     });
 
     it("is raised to p_at_least, and never lowered by it", async () => {
@@ -619,6 +648,49 @@ describe("the session plan", () => {
         .sort((a, b) => a.start.getTime() - b.start.getTime())
         .map((o) => [o.start.toISOString(), o.end.toISOString()]);
     }
+
+    it("read to session_plan_horizon, holds every session the walk shows when yesterday's and today's have both ended", async () => {
+      // Every day at 00:00 for a minute: a daily club after today's session,
+      // so the day before and the day itself both hold finished sessions.
+      const fixture: Fixture = {
+        id: LIVE,
+        timezone: "UTC",
+        startDate: utcDate(-20),
+        endDate: null,
+        slots: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+          weekday,
+          startTime: "00:00",
+          durationMinutes: 1,
+        })),
+        moments: [],
+      };
+      await seed(
+        fixture.id,
+        { timezone: fixture.timezone, startDate: fixture.startDate, endDate: null },
+        fixture.slots,
+      );
+
+      // Taken before the database reads its own clock: the horizon only grows
+      // with time, so a plan read a moment later still holds everything the
+      // walk at this instant shows.
+      const now = new Date();
+      const horizon = await admin.rpc("session_plan_horizon", { p_product_id: LIVE });
+      expect(horizon.error).toBeNull();
+      const { data, error } = await admin.rpc("planned_session_dates", {
+        p_product_id: LIVE,
+        p_from: fixture.startDate,
+        p_to: z.string().parse(horizon.data),
+      });
+      expect(error).toBeNull();
+      const planned = plannedSessionRows.parse(data);
+
+      expect(
+        trimOpenEndedFuture(planned, now, OPEN_ENDED_OCCURRENCE_CAP, MARGIN_MS).map((s) => [
+          s.startsAt.toISOString(),
+          s.endsAt.toISOString(),
+        ]),
+      ).toEqual(walked(fixture, now));
+    });
 
     it.each(FIXTURES.map((fixture) => [fixture.timezone, fixture] as const))(
       "%s",

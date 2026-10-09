@@ -50,13 +50,20 @@ CREATE FUNCTION public.planned_session_dates(p_product_id uuid, p_from date, p_t
          -- The requested span clipped to the term, both ends inclusive. An
          -- open-ended product's term has no end, so the span's own end stands.
    CROSS JOIN LATERAL (
-         SELECT GREATEST(p_from, p.start_date)                AS first_day,
-                LEAST(p_to, COALESCE(p.end_date, p_to))       AS last_day
+         SELECT LEAST(p_to, COALESCE(p.end_date, p_to))       AS last_day
+         ) AS term_end
+         -- At most the 3661 days ending at last_day: anon can call this, and
+         -- ten years is past any term while bounding what one call can ask
+         -- for. The clamp moves the START, so a span reaching back to the
+         -- start_date of a product older than that loses its oldest dates,
+         -- never its newest.
+   CROSS JOIN LATERAL (
+         SELECT GREATEST(p_from, p.start_date, term_end.last_day - 3660) AS first_day,
+                term_end.last_day                                         AS last_day
          ) AS span
          -- Calendar days as offsets from the first one, so stepping a day is
-         -- exact. At most 3660 of them: anon can call this, and ten years is
-         -- past any term while bounding what one call can ask for.
-   CROSS JOIN LATERAL generate_series(0, LEAST(span.last_day - span.first_day, 3660)) AS step(n)
+         -- exact.
+   CROSS JOIN LATERAL generate_series(0, span.last_day - span.first_day) AS step(n)
     JOIN public.schedule_slots s
       ON s.product_id = p.id
      -- schedule_slots.weekday is 0 = Monday; ISODOW is 1 = Monday.
@@ -69,7 +76,7 @@ CREATE FUNCTION public.planned_session_dates(p_product_id uuid, p_from date, p_t
    ORDER BY session_date, starts_at;
 $$;
 
-COMMENT ON FUNCTION public.planned_session_dates(p_product_id uuid, p_from date, p_to date) IS 'The ONLY expansion of a product''s plan into dated sessions: every date in [p_from, p_to] that falls inside the product''s term (start_date to end_date, both inclusive, end open for an open-ended club) on a weekday its schedule has a slot for, with the session''s start and end instants. Instants are resolved in products.timezone, so they are DST-correct, and a session that crosses midnight belongs to the date it starts on. No rows when either bound is NULL, and the span is clamped to 3660 days. SECURITY INVOKER over products and schedule_slots, which every caller, anon included, already reads in full — so it answers every caller identically. Every other reader of the plan asks this function; a catalog test fails on any other function that walks weekdays.';
+COMMENT ON FUNCTION public.planned_session_dates(p_product_id uuid, p_from date, p_to date) IS 'The ONLY expansion of a product''s plan into dated sessions: every date in [p_from, p_to] that falls inside the product''s term (start_date to end_date, both inclusive, end open for an open-ended club) on a weekday its schedule has a slot for, with the session''s start and end instants. Instants are resolved in products.timezone, so they are DST-correct, and a session that crosses midnight belongs to the date it starts on. No rows when either bound is NULL. The span is clamped at its start, to no earlier than 3660 days before its last day, so an over-long span loses its oldest dates and keeps its newest. SECURITY INVOKER over products and schedule_slots, which every caller, anon included, already reads in full — so it answers every caller identically. Every other reader of the plan asks this function; a catalog test fails on any other function that walks weekdays.';
 
 REVOKE ALL ON FUNCTION public.planned_session_dates(p_product_id uuid, p_from date, p_to date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.planned_session_dates(p_product_id uuid, p_from date, p_to date) TO anon;
@@ -117,34 +124,46 @@ CREATE FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid D
            WHEN p.end_date IS NOT NULL THEN p.end_date
            ELSE GREATEST(
                   p_at_least,
-                  -- The ninth planned date from yesterday on that the group
-                  -- has not cancelled: an open-ended list shows eight upcoming
-                  -- sessions (OPEN_ENDED_OCCURRENCE_CAP), and starting a day
-                  -- back keeps one still running past midnight inside the
-                  -- span, so one more guarantees the next running session is.
-                  (SELECT planned.session_date
-                     FROM public.planned_session_dates(
-                            p.id,
-                            (now() AT TIME ZONE p.timezone)::date - 1,
-                            (now() AT TIME ZONE p.timezone)::date - 1 + 3660
-                          ) AS planned
-                    WHERE p_group_id IS NULL
-                       OR NOT EXISTS (
-                            SELECT 1
-                              FROM public.session_cancellations c
-                             WHERE c.group_id     = p_group_id
-                               AND c.session_date = planned.session_date
-                          )
-                    ORDER BY planned.session_date
-                   OFFSET 8
-                    LIMIT 1)
+                  COALESCE(
+                    -- The eighth session that has not ended and that the group
+                    -- has not cancelled: an open-ended list shows the first
+                    -- eight sessions that have not closed
+                    -- (OPEN_ENDED_OCCURRENCE_CAP), so the span holds all of
+                    -- them, and skipping the group's cancellations keeps its
+                    -- next running session inside. The read starts a day back
+                    -- so a session still running past midnight counts.
+                    (SELECT planned.session_date
+                       FROM public.planned_session_dates(
+                              p.id,
+                              product_local.today - 1,
+                              product_local.today + 366
+                            ) AS planned
+                      WHERE planned.ends_at > now()
+                        AND (p_group_id IS NULL
+                             OR NOT EXISTS (
+                                  SELECT 1
+                                    FROM public.session_cancellations c
+                                   WHERE c.group_id     = p_group_id
+                                     AND c.session_date = planned.session_date
+                                ))
+                      ORDER BY planned.session_date
+                     OFFSET 7
+                      LIMIT 1),
+                    -- Fewer than eight within the year: the year's end, so
+                    -- the span holds every one there is.
+                    product_local.today + 366
+                  )
                 )
          END
     FROM public.products p
+         -- The product-local today. The search reads one year ahead of it:
+         -- slots are weekly, so eight are inside unless the product starts
+         -- late in that year or a year of the group's sessions is cancelled.
+   CROSS JOIN LATERAL (SELECT (now() AT TIME ZONE p.timezone)::date AS today) AS product_local
    WHERE p.id = p_product_id;
 $$;
 
-COMMENT ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) IS 'The last date worth reading a product''s plan to. A dated product''s end_date; for an open-ended one, the ninth planned date on or after product-local yesterday that p_group_id has not cancelled (every planned date when p_group_id is NULL) — eight upcoming sessions plus one, so the next session that actually runs is always inside — raised to p_at_least when that is later. NULL for an open-ended product with no slots and no p_at_least.';
+COMMENT ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) IS 'The last date worth reading a product''s plan to. A dated product''s end_date; for an open-ended one, the date of the eighth planned session that has not ended and that p_group_id has not cancelled (every planned session when p_group_id is NULL) — an open-ended list shows the first eight sessions that have not closed (OPEN_ENDED_OCCURRENCE_CAP in src/lib/session-occurrence.ts), so the span holds all of them, and skipping the group''s cancellations keeps its next running session inside — raised to p_at_least when that is later. The search reads one year past the product-local today; when fewer than eight qualify inside it (a product starting late in that year, a year of the group''s sessions cancelled, or no slots at all) the answer is that day, product-local today + 366, so the span holds every one there is.';
 
 REVOKE ALL ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) TO service_role;
