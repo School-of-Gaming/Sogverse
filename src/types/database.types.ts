@@ -4401,6 +4401,16 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_planned_sessions: {
+        Args: never
+        Returns: {
+          cancelled: boolean
+          ends_at: string
+          participation_id: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
       get_my_session_cancellations: {
         Args: never
         Returns: {

@@ -16,6 +16,7 @@ import type {
 } from "@/services/participations";
 import type { ProductTranslation } from "@/types";
 import { INERT_HREF, type AppHref } from "@/lib/constants/routes";
+import { planSessions } from "../../mocks/planned-sessions";
 
 /**
  * The order of a child's cards is the order their week actually runs, and it is
@@ -238,37 +239,63 @@ function translations(name: string): ProductTranslation[] {
   ];
 }
 
+/**
+ * Where a fixture's plan starts when its product states no start date: well
+ * before any seat stamp a case uses, as the database's span reaches back to the
+ * day the seat became the family's.
+ */
+const PLAN_FROM = "2025-10-01";
+
+/**
+ * One seat. Its plan is laid out from the fixture's slots and date bounds the
+ * way the database plans them, with `cancelledDates` — the dates the seat's
+ * group cancelled — flagged in it, so a case states a schedule and a
+ * cancellation rather than a list of instants.
+ */
 function sessionRow(
-  overrides: Partial<Omit<MyUpcomingSessionRow, "product">> & {
+  overrides: Partial<Omit<MyUpcomingSessionRow, "product" | "plan">> & {
     product?: Partial<MyUpcomingSessionRow["product"]>;
+    cancelledDates?: readonly string[];
   } = {},
 ): MyUpcomingSessionRow {
-  const { product, ...rest } = overrides;
+  const { product: productOverrides, cancelledDates = [], ...rest } = overrides;
+  const product: MyUpcomingSessionRow["product"] = {
+    id: "product-1",
+    type: "consumer_club",
+    topic: "minecraft_java",
+    timezone: PRODUCT_TZ,
+    startDate: null,
+    endDate: null,
+    isRemote: true,
+    site: null,
+    translations: translations("Minecraft Explorers Club"),
+    ...(productOverrides ?? {}),
+  };
+  const slots = rest.slots ?? [FRIDAY_SLOT];
+  const cancelled = new Set(cancelledDates);
+  const plan = planSessions({
+    timezone: product.timezone,
+    slots,
+    startDate: product.startDate ?? PLAN_FROM,
+    endDate: product.endDate,
+    now: NOW,
+  }).map((session) =>
+    cancelled.has(session.date) ? { ...session, cancelled: true } : session,
+  );
   return {
     participationId: "participation-1",
     participant: { id: AINO, firstName: "Aino" },
-    product: {
-      id: "product-1",
-      type: "consumer_club",
-      topic: "minecraft_java",
-      timezone: PRODUCT_TZ,
-      startDate: null,
-      endDate: null,
-      isRemote: true,
-      site: null,
-      translations: translations("Minecraft Explorers Club"),
-      ...(product ?? {}),
-    },
+    product,
     groupId: overrides.groupId === undefined ? GROUP : overrides.groupId,
     // A seat taken a fortnight ago and placed the same day — the ordinary
     // shape, and far enough back that the prep window's own cases can move it
     // without the other cases caring.
     signedUpAt: new Date("2026-01-28T09:00:00.000Z"),
     groupJoinedAt: new Date("2026-01-28T09:00:00.000Z"),
-    slots: [FRIDAY_SLOT],
+    slots,
     paymentProblem: false,
     subscriptionEndsAt: null,
-    cancelledDates: [],
+    plan,
     ...rest,
   };
 }

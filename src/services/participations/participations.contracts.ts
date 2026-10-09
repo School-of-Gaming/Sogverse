@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { Constants, type PurchaseShape } from "@/types";
+import { plannedSessionRow } from "@/lib/planned-sessions";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -261,6 +262,29 @@ export const mySessionCancellations = z.array(
       session_date: z.string(),
     })
     .strict(),
+);
+
+/**
+ * `get_my_planned_sessions` rows: one per (seat, planned session) the caller is
+ * party to, each with whether the seat's group cancelled it. Strict for the
+ * same reason as the cancellations above — a family learns only that a date is
+ * cancelled. The session itself is parsed by the shared plan row schema, so
+ * the cards read the same `PlannedSession` every other reader of the plan does.
+ */
+export const myPlannedSessions = z.array(
+  z
+    .object({
+      participation_id: z.string(),
+      session_date: z.string(),
+      starts_at: z.string(),
+      ends_at: z.string(),
+      cancelled: z.boolean(),
+    })
+    .strict()
+    .transform(({ participation_id, ...session }) => ({
+      participationId: participation_id,
+      session: plannedSessionRow.parse(session),
+    })),
 );
 
 export const myWaitlistPositions = z.array(

@@ -20,7 +20,7 @@ import {
   createParticipationResponse,
   joinWaitlistResponse,
   leaveWaitlistResponse,
-  mySessionCancellations,
+  myPlannedSessions,
   myWaitlistPositions,
   waitlistPositionResult,
   type CreateParticipationResponse,
@@ -33,6 +33,7 @@ import {
   type SeatOfferRespondResponse,
   type SeatOfferSweepResponse,
 } from "./seat-offer.contracts";
+import type { PlannedSession } from "@/lib/planned-sessions";
 
 /**
  * A site's name as it comes off the row — the canonical `name` plus the
@@ -50,9 +51,10 @@ export interface ProductSiteName {
 
 /**
  * Row shape returned by `getMyUpcomingSessions()`. The family dashboards roll
- * one of these up into a single enrollment card, so we need the per-product
- * slot list, the date-range bounds (for camp/event termination) and the
- * timezone (so occurrences can be computed in product-local wall time).
+ * one of these up into a single enrollment card, so we need the seat's planned
+ * sessions (what is next, and when the prep window closes), the per-product
+ * slot list and date bounds (the schedule sentence and whether the run has
+ * ended) and the timezone those are stated in.
  *
  * Filtered to active participations (assigned and unassigned alike);
  * waitlisted rows are excluded since they have no placement. `groupId` is
@@ -88,16 +90,14 @@ export interface MyUpcomingSessionRow {
     topic: ProductTopic;
     timezone: string;
     /**
-     * Inclusive start date in the product's local calendar (YYYY-MM-DD).
-     * Used to clamp the upcoming-sessions list so a camp that has slots on
-     * "this week's weekday" but whose start_date is still in the future
-     * doesn't emit phantom in-progress sessions.
+     * Inclusive start date in the product's local calendar (YYYY-MM-DD). Read
+     * by the schedule sentence, which anchors a dated run's slots to it.
      */
     startDate: string | null;
     /**
-     * Inclusive end date in the product's local calendar (YYYY-MM-DD).
-     * Null for ongoing clubs; the dashboard caps those at the next N
-     * occurrences instead.
+     * Inclusive end date in the product's local calendar (YYYY-MM-DD), null
+     * for ongoing clubs. Read by the schedule sentence and by whether the run
+     * has ended; the plan below already stops at it.
      */
     endDate: string | null;
     /**
@@ -153,6 +153,10 @@ export interface MyUpcomingSessionRow {
    * joined the queue.
    */
   groupJoinedAt: Date | null;
+  /**
+   * The product's weekly slots, for the schedule sentence alone: which
+   * sessions are planned comes from `plan`, never from walking these.
+   */
   slots: Array<{
     weekday: number;
     startTime: string;
@@ -170,20 +174,23 @@ export interface MyUpcomingSessionRow {
    * When the parent has cancelled this club's subscription (Stripe
    * `cancel_at_period_end` → our `canceling` status), the instant their paid
    * access ends (`current_period_end`). `null` for healthy/past_due subs and
-   * non-subscription products. Drives two things: the expander clamps the
-   * session list to occurrences on or before this instant (both audiences),
+   * non-subscription products. Drives two things: the card reads only the
+   * planned sessions starting on or before this instant (both audiences),
    * and the parent dashboard shows an "access until {date}" badge. Sourced
    * from `get_my_participation_subscription_states` — see
    * `getMyUpcomingSessions`.
    */
   subscriptionEndsAt: Date | null;
   /**
-   * The seat's group's cancelled session dates, product-local `YYYY-MM-DD`,
-   * from the day before today onwards; empty on an unplaced seat. The card
-   * skips them when naming the next session and names the ones before it.
-   * Sourced from `get_my_session_cancellations` — see `getMyUpcomingSessions`.
+   * The seat's planned sessions, soonest first, each flagged when the seat's
+   * group cancelled it (never on an unplaced seat). The span runs from the day
+   * before the earlier of today and the day the seat became the family's, to
+   * the plan's horizon raised to a cancelled membership's paid-through date —
+   * enough for the next session that runs, every session a winding-down
+   * membership still covers, and the prep window. Sourced from
+   * `get_my_planned_sessions` — see `getMyUpcomingSessions`.
    */
-  cancelledDates: readonly string[];
+  plan: readonly PlannedSession[];
 }
 
 /**
@@ -472,10 +479,10 @@ export class ParticipationsService {
    * a parent sees their purchase reflected immediately instead of an empty
    * section while an admin places the gamer in a group.
    *
-   * Expansion into concrete (start, end) pairs belongs to the client-side
-   * roll-up, which needs the viewer's locale and zone and has to re-derive on
-   * the shared clock; this method just hands back the raw rows with everything
-   * that expansion needs in one round trip.
+   * Each row carries its planned sessions as the database expands them; what
+   * is next is the client-side roll-up's to decide, because it re-derives on
+   * the shared clock. This method hands back the raw rows with everything the
+   * roll-up needs in one round trip.
    *
    * Audience selects which column the row is keyed off:
    *   - 'customer' → `customer_id = auth.uid()`: every participation the
@@ -506,33 +513,30 @@ export class ParticipationsService {
     const [
       { data, error },
       { data: subRows, error: subError },
-      { data: cancellationRows, error: cancellationError },
+      { data: planRows, error: planError },
     ] = await Promise.all([
       buildMyUpcomingSessionsQuery(this.supabase, audienceColumn, userId),
       this.supabase.rpc("get_my_participation_subscription_states"),
-      // Cancelled dates come from their own self-scoped read: no client role
-      // can read the cancellations table, so the select above cannot embed it.
-      this.supabase.rpc("get_my_session_cancellations"),
+      // The plan comes from its own self-scoped read: the database expands it,
+      // and the cancellations folded into it are a table no client role can
+      // read, so the select above cannot embed it.
+      this.supabase.rpc("get_my_planned_sessions"),
     ]);
 
     if (error) throw error;
+    // Not secondary like the badges: without the plan no card can name a
+    // session, and an empty one would tell a family nothing is ahead of them.
+    if (planError) throw planError;
 
-    // Secondary like the badges: a failed read degrades to "nothing
-    // cancelled", which is the card as it was before cancellations existed —
-    // and the voice room itself still refuses a cancelled session's token.
-    if (cancellationError) {
-      console.error(
-        "[getMyUpcomingSessions] session cancellations failed:",
-        cancellationError,
-      );
-    }
-    const cancelledByParticipation = new Map<string, string[]>();
-    for (const row of cancellationError
-      ? []
-      : mySessionCancellations.parse(cancellationRows)) {
-      const dates = cancelledByParticipation.get(row.participation_id);
-      if (dates) dates.push(row.session_date);
-      else cancelledByParticipation.set(row.participation_id, [row.session_date]);
+    // The read answers for every seat the caller is party to, in either role;
+    // the rows above are one audience's, so only their plans are picked up.
+    const planByParticipation = new Map<string, PlannedSession[]>();
+    for (const { participationId, session } of myPlannedSessions.parse(
+      planRows,
+    )) {
+      const plan = planByParticipation.get(participationId);
+      if (plan) plan.push(session);
+      else planByParticipation.set(participationId, [session]);
     }
 
     // The badges are a secondary signal — if the state query fails, degrade to
@@ -564,7 +568,7 @@ export class ParticipationsService {
         row,
         problemIds.has(row.id),
         cancelEnds.get(row.id) ?? null,
-        cancelledByParticipation.get(row.id) ?? [],
+        planByParticipation.get(row.id) ?? [],
       ),
     );
   }
@@ -1144,7 +1148,7 @@ function toMyUpcomingSessionRow(
   row: RawMyUpcomingSessionRow,
   paymentProblem: boolean,
   subscriptionEndsAt: Date | null,
-  cancelledDates: readonly string[],
+  plan: readonly PlannedSession[],
 ): MyUpcomingSessionRow {
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
   const { product, participant } = row;
@@ -1182,7 +1186,7 @@ function toMyUpcomingSessionRow(
     })),
     paymentProblem,
     subscriptionEndsAt,
-    cancelledDates,
+    plan,
   };
 }
 

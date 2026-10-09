@@ -15,7 +15,8 @@ import {
 } from "@/lib/session-occurrence";
 import type { ProductTopic, ProductType } from "@/types";
 import {
-  topicPrepWindowEndFromSchedule,
+  TOPIC_PREP_WINDOW_SESSIONS,
+  topicPrepWindowEnd,
   type FamilyEnrollmentSummary,
 } from "./enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
@@ -205,14 +206,13 @@ export function buildEnrollmentFixture(
     prepWindowEnd:
       spec.awaiting === true
         ? null
-        : topicPrepWindowEndFromSchedule({
+        : prepWindowEndFromSchedule({
             slots: spec.slots,
-            timezone: FIXTURE_TIMEZONE,
             startMoment: new Date(
               now.getTime() - (spec.enrolledDaysAgo ?? 0) * 86_400_000,
             ),
-            startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
-            endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
+            startDate,
+            endDate,
           }),
     // A label-only topic by default: it brings no steps of its own, so an
     // untouched in-person fixture draws no prep affordance and a remote one
@@ -308,4 +308,34 @@ function nextOccurrence({
     ].slice(0, cancelledUpcoming),
   );
   return splitAtNextRunning(occurrences, FIXTURE_TIMEZONE, cancelledDates);
+}
+
+/**
+ * The prep window's end for a fixture: the shared rule over the sessions the
+ * schedule walk finds from the moment the seat became theirs. The cap is the
+ * window plus one per slot, because the walk also emits a session already in
+ * progress at that moment — at most one per slot — which the rule discards for
+ * having started before the seat was theirs.
+ */
+function prepWindowEndFromSchedule({
+  slots,
+  startMoment,
+  startDate,
+  endDate,
+}: {
+  slots: FixtureSlot[];
+  startMoment: Date;
+  startDate: string;
+  endDate: string | null;
+}): Date | null {
+  const occurrences = enumerateRowOccurrences({
+    slots,
+    timezone: FIXTURE_TIMEZONE,
+    now: startMoment,
+    startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
+    endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
+    cap: TOPIC_PREP_WINDOW_SESSIONS + slots.length,
+    windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
+  });
+  return topicPrepWindowEnd(occurrences, startMoment);
 }
