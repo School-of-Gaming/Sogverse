@@ -8,7 +8,11 @@ import {
   type ProductConfirmationEmailOptions,
   type ProductConfirmationOverviewInput,
 } from "@/lib/email-templates/product-confirmation";
-import type { ProductConfirmationInvitationInput } from "@/lib/email-templates/product-confirmation-invitation";
+import {
+  invitationPlanWindow,
+  type ProductConfirmationInvitationInput,
+} from "@/lib/email-templates/product-confirmation-invitation";
+import { expandPlan } from "../../helpers/expanded-plan";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -47,9 +51,16 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
   productType: "consumer_club",
   shortDescription: null,
   timezone: "Europe/Helsinki",
-  startDate: "2027-01-04",
   endDate: null,
   slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+  // What the database plans for it over the composer's window: every Monday.
+  plannedSessions: expandPlan({
+    slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+    startDate: "2027-01-04",
+    endDate: null,
+    timezone: "Europe/Helsinki",
+    ...invitationPlanWindow({ now: NOW, timezone: "Europe/Helsinki", endDate: null }),
+  }),
   isRemote: true,
   siteName: null,
   siteAddress: null,

@@ -11,7 +11,12 @@ import {
   PRODUCT_CONFIRMATION_MODES,
   type ProductConfirmationEmailOptions,
 } from "./product-confirmation";
-import type { InvitationSlot } from "./product-confirmation-invitation";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import {
+  invitationPlanWindow,
+  type InvitationPlannedSession,
+  type InvitationSlot,
+} from "./product-confirmation-invitation";
 import { formatProductLocation } from "@/lib/products/format-product-location";
 import {
   fail,
@@ -517,6 +522,54 @@ function parseInvitationSlots(value: string): InvitationSlot[] {
 }
 
 /**
+ * The plan a test send's invitation is composed from.
+ *
+ * **The form has no product row, so there is no database plan to read.** It
+ * stands in with what `planned_session_dates` answers for a product with these
+ * slots and dates — every date in the span the composer walks on which the typed
+ * schedule has a slot, soonest first — which is the plan of a product nothing
+ * has taken a day out of. A test send therefore never states an `EXDATE`; that
+ * shape is the live send's, and the unit tests are where it is exercised.
+ */
+function formPlannedSessions({
+  slots,
+  startDate,
+  endDate,
+  timezone,
+  now,
+}: {
+  slots: readonly InvitationSlot[];
+  startDate: string | null;
+  endDate: string | null;
+  timezone: string;
+  now: Date;
+}): InvitationPlannedSession[] {
+  if (startDate === null) return [];
+  const window = invitationPlanWindow({ now, timezone, endDate });
+  const first = Date.parse(`${startDate > window.from ? startDate : window.from}T00:00:00Z`);
+  const last = Date.parse(`${window.to}T00:00:00Z`);
+  const sessions: InvitationPlannedSession[] = [];
+  // UTC-pinned calendar days, so the walk cannot repeat or skip a date at a
+  // daylight-saving transition; only the instants are read in the zone.
+  for (let day = first; day <= last; day += 86_400_000) {
+    const date = formatInTimeZone(new Date(day), "UTC", "yyyy-MM-dd");
+    const weekday = (new Date(day).getUTCDay() + 6) % 7;
+    const onTheDay = slots
+      .filter((slot) => slot.weekday === weekday)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    for (const slot of onTheDay) {
+      const startsAt = fromZonedTime(`${date}T${slot.startTime}:00`, timezone);
+      sessions.push({
+        date,
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + slot.durationMinutes * 60_000),
+      });
+    }
+  }
+  return sessions;
+}
+
+/**
  * The form's strings as the options the mail is built from, resolved once.
  *
  * `now` is the resolver's own — the live sends read the clock at the moment
@@ -617,13 +670,19 @@ function resolveProductConfirmationOptions(
       // text input posts its placeholder.
       shortDescription: noneOrText(params.shortDescription),
       timezone: params.timezone,
-      startDate,
       // Three more of the token fields, alongside the description above and the
       // schedule below. Every one of them is a text input, so the absence is a
       // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
       // empty one cannot carry it.
       endDate,
       slots,
+      plannedSessions: formPlannedSessions({
+        slots,
+        startDate,
+        endDate,
+        timezone: params.timezone,
+        now,
+      }),
       isRemote,
       siteName,
       siteAddress: noneOrText(params.siteAddress),

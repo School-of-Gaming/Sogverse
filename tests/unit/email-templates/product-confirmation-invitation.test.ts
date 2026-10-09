@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import {
   composeProductConfirmationInvitation,
+  invitationPlanWindow,
   type ProductConfirmationInvitationInput,
 } from "@/lib/email-templates/product-confirmation-invitation";
+import { expandPlan } from "../../helpers/expanded-plan";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { SUPPORT_EMAIL } from "@/lib/constants";
@@ -36,7 +38,32 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const base: ProductConfirmationInvitationInput = {
+/**
+ * A product as the test states it: the composer's input with the product's start
+ * date in place of its plan. The plan is what the database would answer for it
+ * over the composer's own window — `withPlan` builds it — unless a test hands
+ * one in, which is how a day the term does not explain goes missing.
+ */
+type ProductFixture = Omit<ProductConfirmationInvitationInput, "plannedSessions"> & {
+  startDate: string;
+  plannedSessions?: ProductConfirmationInvitationInput["plannedSessions"];
+};
+
+function withPlan({
+  startDate,
+  plannedSessions,
+  ...input
+}: ProductFixture): ProductConfirmationInvitationInput {
+  const window = invitationPlanWindow(input);
+  return {
+    ...input,
+    plannedSessions:
+      plannedSessions ??
+      expandPlan({ ...input, startDate, from: window.from, to: window.to }),
+  };
+}
+
+const base: ProductFixture = {
   participationId: PARTICIPATION_ID,
   participantName: "Aino",
   isSelfSeat: false,
@@ -57,8 +84,8 @@ const base: ProductConfirmationInvitationInput = {
   now: NOW,
 };
 
-function compose(overrides: Partial<ProductConfirmationInvitationInput> = {}) {
-  return composeProductConfirmationInvitation(t, "en", { ...base, ...overrides });
+function compose(overrides: Partial<ProductFixture> = {}) {
+  return composeProductConfirmationInvitation(t, "en", withPlan({ ...base, ...overrides }));
 }
 
 /**
@@ -407,13 +434,86 @@ describe("the weekday DTSTART lands on", () => {
   });
 });
 
+/**
+ * The rule states the run's shape and the plan states its dates, so a day the
+ * rule produces and the plan does not hold — a holiday, once the plan knows
+ * about them — is an `EXDATE`. Today the two always agree, which is the first
+ * case; the others take a day out of the plan by hand.
+ */
+describe("the days the plan does not hold", () => {
+  const term: Partial<ProductFixture> = {
+    productType: "municipality_club",
+    endDate: "2027-02-01",
+  };
+
+  /** The fixture's own plan with the named dates taken out. */
+  function planWithout(overrides: Partial<ProductFixture>, dates: readonly string[]) {
+    return withPlan({ ...base, ...overrides }).plannedSessions.filter(
+      (session) => !dates.includes(session.date),
+    );
+  }
+
+  it("excludes nothing where the plan holds every day the rule states", () => {
+    expect(linesStartingWith(compose(term)!.ics, "EXDATE")).toEqual([]);
+    expect(linesStartingWith(compose()!.ics, "EXDATE")).toEqual([]);
+  });
+
+  it("excludes a day the rule states and the plan lacks, in DTSTART's own form", () => {
+    const invitation = compose({
+      ...term,
+      plannedSessions: planWithout(term, ["2027-01-18"]),
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20270104T160000",
+    );
+    expect(lineStartingWith(invitation!.ics, "RRULE")).toBe(
+      "RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20270201T215959Z",
+    );
+    expect(linesStartingWith(invitation!.ics, "EXDATE")).toEqual([
+      "EXDATE;TZID=Europe/Helsinki:20270118T160000",
+    ]);
+  });
+
+  it("states a UTC product's excluded day as an instant, as its start is", () => {
+    const invitation = compose({
+      ...term,
+      timezone: "UTC",
+      plannedSessions: planWithout({ ...term, timezone: "UTC" }, ["2027-01-11", "2027-01-25"]),
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART")).toBe("DTSTART:20270104T160000Z");
+    expect(linesStartingWith(invitation!.ics, "EXDATE")).toEqual([
+      "EXDATE:20270111T160000Z,20270125T160000Z",
+    ]);
+  });
+
+  it("starts at the first planned day rather than excluding it", () => {
+    const invitation = compose({
+      ...term,
+      plannedSessions: planWithout(term, ["2027-01-04"]),
+    });
+
+    expect(lineStartingWith(invitation!.ics, "DTSTART")).toBe(
+      "DTSTART;TZID=Europe/Helsinki:20270111T160000",
+    );
+    expect(linesStartingWith(invitation!.ics, "EXDATE")).toEqual([]);
+  });
+
+  it("excludes a missing day of an open-ended club inside the year the plan covers", () => {
+    const invitation = compose({ plannedSessions: planWithout({}, ["2027-06-07"]) });
+
+    expect(lineStartingWith(invitation!.ics, "RRULE")).toBe("RRULE:FREQ=WEEKLY;BYDAY=MO");
+    expect(linesStartingWith(invitation!.ics, "EXDATE")).toEqual([
+      // A wall clock under the zone, so summer's offset does not move it.
+      "EXDATE;TZID=Europe/Helsinki:20270607T160000",
+    ]);
+  });
+});
+
 describe("the products that carry no invitation at all", () => {
   it("has none for a product with no schedule slots", () => {
     expect(compose({ slots: [] })).toBeNull();
-  });
-
-  it("has none for a product with no start date", () => {
-    expect(compose({ startDate: null })).toBeNull();
   });
 
   it("has none for a run whose last day is behind us", () => {
@@ -760,10 +860,11 @@ describe("every locale composes a whole document", () => {
 
   it.each(SUPPORTED_LOCALES)("%s", async (locale) => {
     const translator = await getEmailTranslator(locale);
-    const invitation = composeProductConfirmationInvitation(translator, locale, {
-      ...base,
-      siteNote: "The door on the north side.",
-    });
+    const invitation = composeProductConfirmationInvitation(
+      translator,
+      locale,
+      withPlan({ ...base, siteNote: "The door on the north side." }),
+    );
 
     expect(invitation).not.toBeNull();
     expect(invitation!.ics).not.toContain("productConfirmation.");

@@ -97,6 +97,23 @@ faces. The day something can, an override list is the wrong answer to it, becaus
 no last occurrence to stop writing overrides at: the invitation splits instead into one
 series per distinct time, each its own rule under its own identifier.
 
+## The signup confirmation's dates come from the plan
+
+**The rule states the run's shape and the database's plan states its dates.** The
+signup confirmation's composer takes `BYDAY` from the slots and `UNTIL` from the end
+date, and everything about which days happen from `planned_session_dates`, read from
+product-local today to the end date: `DTSTART` is the first planned session not yet
+begun, an override is a planned session at another clock face or length than the
+master's, and an `EXDATE` is a day the rule states inside that span and the plan does
+not hold — at `DTSTART`'s own clock face, in its own value form. Today the plan is the
+term crossed with the slots, which is exactly what the rule states, so the list is
+empty; a day the plan loses later leaves the family's calendar through it without the
+composer changing. Cancellations are not excluded: they are a group's, and the plan is
+read without them.
+
+**An open-ended club's span stops a year and a day on**, so its `EXDATE` list covers
+only that window, and past it the rule stands alone.
+
 ## Times, zones and the three forms
 
 **A weekly slot promises a clock face, so the default is a wall clock under a `TZID`** —
@@ -154,9 +171,10 @@ our engineering vocabulary and an unresolvable clock face is worse than silence.
 **The day walk that enumerates the rule's occurrences is UTC-pinned end to end**, which
 is the only shape that survives a daylight-saving transition inside a run: stepping a
 zoned wall clock by 24 hours repeats or skips a calendar date once a year, and UTC has no
-transitions for the arithmetic to fall into. One walk answers both questions asked of the
-rule — whether anything survives the excluded list, and which day it stops on — so the
-two can never disagree about which days the rule states.
+transitions for the arithmetic to fall into. One walk answers every question asked of
+the rule — whether anything survives the excluded list, which day it stops on, and which
+days it states up to a cut, which is what the signup confirmation compares its plan
+against — so they can never disagree about which days the rule states.
 
 ## Presence, absence, and the baseline
 

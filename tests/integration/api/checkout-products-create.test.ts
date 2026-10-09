@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fromZonedTime } from "date-fns-tz";
+import { invitationPlanWindow } from "@/lib/email-templates/product-confirmation-invitation";
+import { expandPlan } from "../../helpers/expanded-plan";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
@@ -98,10 +100,20 @@ vi.mock("@/lib/auth", () => ({
 
 const mockAdminFrom = vi.fn();
 const mockAdminRpc = vi.fn();
+/**
+ * The confirmation mail's plan read, answered apart from the RPCs this file is
+ * about so their call counts stay theirs. No planned sessions by default, for
+ * the same reason the schedule read below has no slots.
+ */
+const mockPlannedSessions = vi.fn<(args: unknown) => Promise<{ data: unknown[]; error: null }>>();
 /** Records the arguments the products select's `.order()` was called with. */
 const mockProductsOrder = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({ from: mockAdminFrom, rpc: mockAdminRpc })),
+  createAdminClient: vi.fn(() => ({
+    from: mockAdminFrom,
+    rpc: (name: string, args: unknown) =>
+      name === "planned_session_dates" ? mockPlannedSessions(args) : mockAdminRpc(name, args),
+  })),
 }));
 
 // --- participation-prices helpers ---
@@ -402,6 +414,7 @@ describe("POST /api/checkout/products/create", () => {
     mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
     mockEnsureStripeProductForProduct.mockResolvedValue(STRIPE_PRODUCT_ID);
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
+    mockPlannedSessions.mockResolvedValue({ data: [], error: null });
   });
 
   afterEach(settleDeferred);
@@ -2131,6 +2144,26 @@ describe("POST /api/checkout/products/create", () => {
         product: FREE_CLUB,
         scheduleSlots: [{ weekday: 0, start_time: "16:00:00", duration_minutes: 60 }],
         gamerContact: { email: "aino@example.test", locale: "en", sign_in: "email" },
+      });
+      // The plan the database would answer for that slot over the span the
+      // send reads, off the real clock like the send itself: every Monday.
+      const span = invitationPlanWindow({
+        now: new Date(),
+        timezone: FREE_CLUB.timezone,
+        endDate: FREE_CLUB.end_date,
+      });
+      mockPlannedSessions.mockResolvedValue({
+        data: expandPlan({
+          slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+          startDate: span.from,
+          endDate: span.to,
+          timezone: FREE_CLUB.timezone,
+        }).map((session) => ({
+          session_date: session.date,
+          starts_at: session.startsAt.toISOString(),
+          ends_at: session.endsAt.toISOString(),
+        })),
+        error: null,
       });
       mockAdminRpc.mockResolvedValueOnce({
         data: { kind: "free_active", participation_id: PARTICIPATION_ID },

@@ -9,6 +9,7 @@ import {
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
+import { expandPlan } from "../../helpers/expanded-plan";
 
 /**
  * **A product page as crawlers meet it** (`docs/architecture/site-quality.md`):
@@ -112,7 +113,22 @@ let listing: Listing;
 const IMAGE_PATH =
   "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae.jpg";
 
+/** The plan's rows for the club's whole term, as `planned_session_dates` answers. */
+const PLAN_ROWS = expandPlan({
+  slots: [{ weekday: 2, startTime: "17:00", durationMinutes: 60 }],
+  startDate: DETAIL_ROW.start_date,
+  endDate: DETAIL_ROW.end_date,
+  timezone: DETAIL_ROW.timezone,
+}).map((session) => ({
+  session_date: session.date,
+  starts_at: session.startsAt.toISOString(),
+  ends_at: session.endsAt.toISOString(),
+}));
+
+const PLAN_PATH = "/rest/v1/rpc/planned_session_dates";
+
 function respond(input: Parameters<typeof fetch>[0]): Response {
+  if (requestedUrl(input).pathname === PLAN_PATH) return postgrestJson(PLAN_ROWS);
   const select = requestedUrl(input).searchParams.get("select") ?? "";
   if (select.startsWith("id,start_date")) {
     switch (listing) {
@@ -384,6 +400,23 @@ describe("ListedProductJsonLd", () => {
       url: `${SITE}/en/shop/${ID}`,
       provider: { "@id": `${SITE}/#organization` },
     });
+  });
+
+  it("counts a dated club's sessions off its plan", async () => {
+    expect(await emittedJsonLd()).toMatchObject({
+      hasCourseInstance: { courseSchedule: [{ repeatCount: 15 }] },
+    });
+  });
+
+  it("emits nothing when the plan read fails", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockImplementation(async (input) =>
+      requestedUrl(input).pathname === PLAN_PATH
+        ? postgrestError("boom", 500)
+        : respond(input),
+    );
+    expect(await emittedJsonLd()).toBeNull();
+    quiet.mockRestore();
   });
 
   it("emits nothing for an unlisted, ended or school product", async () => {

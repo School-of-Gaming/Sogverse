@@ -32,7 +32,13 @@ const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: mockAdminFrom,
-    rpc: mockAdminRpc,
+    // The confirmation mail's plan read is answered apart from the RPCs this
+    // file is about, so their call counts stay theirs. The fixture product has
+    // no slots, so its plan is empty.
+    rpc: (name: string, args: unknown) =>
+      name === "planned_session_dates"
+        ? Promise.resolve({ data: [], error: null })
+        : mockAdminRpc(name, args),
   })),
 }));
 

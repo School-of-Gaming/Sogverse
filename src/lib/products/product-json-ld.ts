@@ -36,9 +36,10 @@ import type { ProductDetailRow } from "@/services/products/products.service";
  *   `courseSchedule` says: each schedule slot becomes a `Schedule` repeating
  *   `Weekly` on its weekday, at its wall-clock start time in the product's own
  *   timezone, for its duration, between the term's dates — and, for a term
- *   with an end date, `repeatCount` times: the number of that weekday the
- *   stated term holds. An open-ended club states no count, because none
- *   exists. Google stopped showing its Course info rich result in 2025, so
+ *   with an end date, `repeatCount` times: the number of planned sessions on
+ *   that weekday, read off the database's plan, so a date the plan drops is a
+ *   session the count no longer claims. An open-ended club states no count,
+ *   because none exists. Google stopped showing its Course info rich result in 2025, so
  *   this block is for every other schema.org consumer; it still carries the
  *   fields that result read (a description, the provider, an offer with its
  *   category, the course mode and schedule). **A club whose page shows no
@@ -89,6 +90,12 @@ export interface ProductJsonLdInput {
   product: ProductJsonLdSubject;
   /** The locale the page is read at. */
   locale: SupportedLocale;
+  /**
+   * The dates of the product's planned sessions across its whole term, where
+   * `statesSessionCount` says the block needs them — `null` otherwise, and the
+   * schedule then states no `repeatCount`.
+   */
+  plannedDates: readonly string[] | null;
 }
 
 /** schema.org's day-of-week values, Monday first — the schedule slots' 0..6. */
@@ -176,25 +183,35 @@ function placeOf(product: ProductJsonLdSubject, locale: SupportedLocale) {
   };
 }
 
-const DAY_MS = 86_400_000;
+/**
+ * Whether a product's structured data states a count of its sessions, and so
+ * whether the page has to read its plan: a club with an end date. An event or a
+ * camp states dates, not a weekly schedule, and an open-ended club has no
+ * count to state.
+ */
+export function statesSessionCount(
+  product: Pick<ProductJsonLdSubject, "product_type" | "end_date">,
+): boolean {
+  return isClub(product) && product.end_date !== null;
+}
+
+function isClub(product: Pick<ProductJsonLdSubject, "product_type">): boolean {
+  return product.product_type === "consumer_club" || product.product_type === "municipality_club";
+}
 
 /**
- * How many times a weekday falls between two calendar dates, both inclusive —
- * the sessions a weekly slot holds across a term. The dates are bare calendar
- * dates, so the walk is UTC-pinned day arithmetic, which is exact.
+ * How many distinct planned dates fall on each weekday — the sessions a weekly
+ * slot holds across the term, counted off the plan rather than walked here, so
+ * a date the plan does not hold is a session the count does not claim.
  */
-export function weekdayOccurrences(
-  startDate: string,
-  endDate: string,
-  weekday: number,
-): number {
-  const start = Date.parse(`${startDate}T00:00:00Z`);
-  const end = Date.parse(`${endDate}T00:00:00Z`);
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
-  const startIso = new Date(start).getUTCDay(); // 0=Sun..6=Sat
-  const startWeekday = startIso === 0 ? 6 : startIso - 1; // → 0=Mon..6=Sun
-  const first = start + ((weekday - startWeekday + 7) % 7) * DAY_MS;
-  return first > end ? 0 : Math.floor((end - first) / (7 * DAY_MS)) + 1;
+function plannedCountsByWeekday(plannedDates: readonly string[]): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (const date of new Set(plannedDates)) {
+    // A bare calendar date, read UTC-pinned: `0` = Monday … `6` = Sunday.
+    const weekday = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7;
+    counts.set(weekday, (counts.get(weekday) ?? 0) + 1);
+  }
+  return counts;
 }
 
 
@@ -229,6 +246,7 @@ export function productJsonLd({
   canonicalPath,
   product,
   locale,
+  plannedDates,
 }: ProductJsonLdInput) {
   const url = `${siteUrl}${canonicalPath}`;
   const shown = resolveTranslation(
@@ -258,16 +276,16 @@ export function productJsonLd({
     ...(offer !== null && { offers: offer }),
   };
 
-  if (product.product_type === "consumer_club" || product.product_type === "municipality_club") {
+  if (isClub(product)) {
     // A Course needs a description, and the page shows none to state.
     if (description === "") return null;
     const endDate = product.end_date;
+    const counts =
+      endDate !== null && plannedDates !== null ? plannedCountsByWeekday(plannedDates) : null;
     const courseSchedule = product.schedule_slots.map((slot) => ({
       "@type": "Schedule",
       repeatFrequency: "Weekly",
-      ...(endDate !== null && {
-        repeatCount: weekdayOccurrences(product.start_date, endDate, slot.weekday),
-      }),
+      ...(counts !== null && { repeatCount: counts.get(slot.weekday) ?? 0 }),
       byDay: SCHEMA_WEEKDAYS[slot.weekday],
       startTime: slot.start_time,
       duration: `PT${slot.duration_minutes}M`,

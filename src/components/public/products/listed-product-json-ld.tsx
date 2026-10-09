@@ -3,7 +3,8 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { resolveLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { translatedCanonicalPath } from "@/lib/metadata/translated-page";
-import { productJsonLd } from "@/lib/products/product-json-ld";
+import { plannedSessionRows } from "@/lib/planned-sessions";
+import { productJsonLd, statesSessionCount } from "@/lib/products/product-json-ld";
 import {
   isListedInShop,
   productPagePath,
@@ -17,6 +18,30 @@ async function readProductDetail(productId: string) {
     return await new ProductsService(await createClient()).getDetailById(productId);
   } catch (error) {
     console.error("[product-json-ld] the product read failed", error);
+    return null;
+  }
+}
+
+/**
+ * The dates of a product's planned sessions across its term, or `null` when the
+ * read fails. Only a dated club is asked about (`statesSessionCount`), so the
+ * term always has both ends.
+ */
+async function readPlannedDates(
+  productId: string,
+  startDate: string,
+  endDate: string,
+): Promise<string[] | null> {
+  try {
+    const { data, error } = await (await createClient()).rpc("planned_session_dates", {
+      p_product_id: productId,
+      p_from: startDate,
+      p_to: endDate,
+    });
+    if (error) throw error;
+    return plannedSessionRows.parse(data).map((session) => session.date);
+  } catch (error) {
+    console.error("[product-json-ld] the plan read failed", error);
     return null;
   }
 }
@@ -36,7 +61,12 @@ async function readProductDetail(productId: string) {
  * scripts reads. The listing check and the product read start together, and
  * the read is discarded when the product is not listed.
  *
- * **A failed read emits nothing** and leaves the page itself alone — the body
+ * A dated club's count of sessions comes from its plan, read once the product
+ * row has said the product is one; that read waits on the product read, which
+ * the page shell does not.
+ *
+ * **A failed read emits nothing**, the plan's as well as the product's, and
+ * leaves the page itself alone — the body
  * is fetched client-side and has its own error state, so structured data
  * missing for one response costs nothing the next crawl does not restore. A
  * failed listing check answers "not listed", so it emits nothing too.
@@ -47,6 +77,12 @@ export async function ListedProductJsonLd({ productId }: { productId: string }) 
     readProductDetail(productId),
   ]);
   if (!listed || product === null) return null;
+
+  let plannedDates: string[] | null = null;
+  if (statesSessionCount(product) && product.end_date !== null) {
+    plannedDates = await readPlannedDates(productId, product.start_date, product.end_date);
+    if (plannedDates === null) return null;
+  }
 
   const locale = resolveLocale(await getLocale());
   const translations = inLocaleOrder(product.product_translations);
@@ -60,6 +96,7 @@ export async function ListedProductJsonLd({ productId }: { productId: string }) 
     canonicalPath,
     product: { ...product, product_translations: translations },
     locale,
+    plannedDates,
   });
 
   return data === null ? null : <JsonLd data={data} />;

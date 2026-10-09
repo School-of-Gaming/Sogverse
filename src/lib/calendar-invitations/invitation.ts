@@ -431,7 +431,7 @@ function* weeklyOccurrences(
   let produced = 1;
 
   for (let day = first + DAY_MS; ; day += DAY_MS) {
-    if (count !== null ? produced >= count : last === null || day > last) return;
+    if (count !== null ? produced >= count : last !== null && day > last) return;
     if (!weekdaySet.has(weekdayOf(day))) continue;
     if (interval > 1 && ((weekStartOf(day) - firstWeek) / (7 * DAY_MS)) % interval !== 0) {
       continue;
@@ -458,6 +458,29 @@ export function lastOccurrenceDate(
   let last = startDate;
   for (const date of weeklyOccurrences(startDate, recurrence)) last = date;
   return last;
+}
+
+/**
+ * Every day a weekly rule produces up to and including `through`, `DTSTART`'s
+ * own day first — the same walk the two answers above rest on, cut at a day the
+ * caller names. That cut is what makes it usable on a rule with no last day,
+ * and what lets a caller compare the rule's days against a list of its own:
+ * whatever the rule states inside the window and the list lacks is exactly what
+ * an `EXDATE` has to take off.
+ */
+export function occurrenceDatesThrough(
+  startDate: string,
+  recurrence: Extract<InvitationRecurrence, { kind: "weekly" }>,
+  through: string,
+): string[] {
+  const dates: string[] = [];
+  // Bare-date string comparison is calendar comparison: the format is
+  // fixed-width and zero-padded.
+  for (const date of weeklyOccurrences(startDate, recurrence)) {
+    if (date > through) break;
+    dates.push(date);
+  }
+  return dates;
 }
 
 /**
