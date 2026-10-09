@@ -993,6 +993,18 @@ describe("session cancellation", () => {
     return product;
   }
 
+  /** Every (group, date) the product's planned sessions name as cancelled. */
+  function cancelledPairs(
+    product: Awaited<ReturnType<typeof dashboardScheduleProduct>>,
+  ) {
+    return product.planned_sessions.flatMap((session) =>
+      session.cancelled_group_ids.map((groupId) => ({
+        group_id: groupId,
+        session_date: session.session_date,
+      })),
+    );
+  }
+
   it("hands the admin dashboard every cancelled pair in its window, past as well as future", async () => {
     for (const date of [LAST_WEEK, TOMORROW, IN_THREE_DAYS]) {
       expect((await cancel(date)).error).toBeNull();
@@ -1002,7 +1014,7 @@ describe("session cancellation", () => {
     expect(product.group_ids).toEqual([GROUP]);
     // Unlike the My SOG reads, the dashboard's window reaches thirty days
     // back, so last week's cancellation is carried too.
-    expect(product.cancelled_sessions).toEqual([
+    expect(cancelledPairs(product)).toEqual([
       { group_id: GROUP, session_date: LAST_WEEK },
       { group_id: GROUP, session_date: TOMORROW },
       { group_id: GROUP, session_date: IN_THREE_DAYS },
@@ -1014,7 +1026,7 @@ describe("session cancellation", () => {
     // still needs it to know a date one group cancelled is not every group's.
     const club = await dashboardScheduleProduct(CLUB);
     expect(club.group_ids).toEqual([CLUB_GROUP, CLUB_SILENT_GROUP]);
-    expect(club.cancelled_sessions).toEqual([]);
+    expect(cancelledPairs(club)).toEqual([]);
   });
 
   it("drops an inert cancellation from the admin dashboard", async () => {
@@ -1029,7 +1041,7 @@ describe("session cancellation", () => {
 
     try {
       expect(
-        (await dashboardScheduleProduct(PRODUCT)).cancelled_sessions,
+        cancelledPairs(await dashboardScheduleProduct(PRODUCT)),
       ).toEqual([]);
     } finally {
       await createScheduleSlot(admin, PRODUCT, {
@@ -1040,7 +1052,7 @@ describe("session cancellation", () => {
     }
 
     expect(
-      (await dashboardScheduleProduct(PRODUCT)).cancelled_sessions,
+      cancelledPairs(await dashboardScheduleProduct(PRODUCT)),
     ).toEqual([{ group_id: GROUP, session_date: IN_THREE_DAYS }]);
   });
 

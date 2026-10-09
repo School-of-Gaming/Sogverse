@@ -175,13 +175,19 @@ export const adminDashboardScheduleSlot = z.object({
 });
 
 /**
- * One cancelled session in effect: a (group, date) on which the database's
- * cancellation predicate holds. The date is a bare calendar date in the
- * product's own zone, the zone its slots are authored in.
+ * One planned session inside the product's window, from the database's plan.
+ *
+ * `session_date` is the bare calendar date in the product's own zone — the
+ * date a cancellation names — and the two instants are the session's start
+ * and end, so the page converts them into the reader's zone with no wall clock
+ * of its own. `cancelled_group_ids` is every group of the product that
+ * cancelled this date, empty when none did.
  */
-export const adminDashboardCancelledSession = z.object({
-  group_id: z.string(),
-  session_date: z.string(),
+export const adminDashboardPlannedSession = z.object({
+  session_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  starts_at: z.string(),
+  ends_at: z.string(),
+  cancelled_group_ids: z.array(z.string()),
 });
 
 /**
@@ -214,12 +220,12 @@ export const adminDashboardScheduleProduct = z.object({
    */
   group_ids: z.array(z.string()),
   /**
-   * Every cancelled session in effect inside the schedule window, over the
-   * groups above. A cancellation is per group while this page is per product,
-   * so the page decides each date from the two together: every group
-   * cancelled, some of them, or none.
+   * Every planned session inside the schedule window, soonest first, the term
+   * already applied. A cancellation is per group while this page is per
+   * product, so the page decides each date from these and the groups above
+   * together: every group cancelled, some of them, or none.
    */
-  cancelled_sessions: z.array(adminDashboardCancelledSession),
+  planned_sessions: z.array(adminDashboardPlannedSession),
 });
 
 /** The whole document `get_admin_dashboard` returns. */
@@ -251,8 +257,8 @@ export type AdminDashboardAttentionProduct = z.infer<
 export type AdminDashboardScheduleSlot = z.infer<
   typeof adminDashboardScheduleSlot
 >;
-export type AdminDashboardCancelledSession = z.infer<
-  typeof adminDashboardCancelledSession
+export type AdminDashboardPlannedSession = z.infer<
+  typeof adminDashboardPlannedSession
 >;
 export type AdminDashboardScheduleProduct = z.infer<
   typeof adminDashboardScheduleProduct

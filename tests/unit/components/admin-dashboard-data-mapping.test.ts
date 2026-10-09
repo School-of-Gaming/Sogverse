@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { formatInTimeZone } from "date-fns-tz";
+import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
+import { planSessions } from "../../mocks/planned-sessions";
 import {
   buildAdminDashboardData,
   buildCertificationQueue,
@@ -32,24 +35,74 @@ const LOS_ANGELES = "America/Los_Angeles";
 const NOW = new Date("2026-08-17T09:20:00+03:00");
 const TODAY = "2026-08-17";
 
+interface Cancellation {
+  group_id: string;
+  session_date: string;
+}
+
+/**
+ * A schedule product as the RPC sends it, its `planned_sessions` laid out from
+ * its slots and term the way the database plans them: over the product's own
+ * window, `[product-local today − 30 days, + 4 months)` at `now`, each date
+ * carrying the groups `cancellations` names on it.
+ */
 function scheduleProduct(
-  overrides: Partial<AdminDashboardScheduleProduct> & { id: string },
+  overrides: Partial<Omit<AdminDashboardScheduleProduct, "planned_sessions">> & {
+    id: string;
+    cancellations?: readonly Cancellation[];
+  },
+  now: Date = NOW,
 ): AdminDashboardScheduleProduct {
-  return {
-    product_type: "consumer_club",
+  const { cancellations = [], ...fields } = overrides;
+  const product = {
+    product_type: "consumer_club" as const,
     translations: [{ locale: "en", name: `Product ${overrides.id}` }],
     timezone: HELSINKI,
-    start_date: "2026-08-10",
-    end_date: null,
-    seat_count: 12,
+    start_date: "2026-08-10" as string | null,
+    end_date: null as string | null,
+    seat_count: 12 as number | null,
     active_count: 9,
     waitlist_count: 0,
     schedule_slots: [
       { weekday: 0, start_time: "17:00", duration_minutes: 90 },
     ],
-    group_ids: [],
-    cancelled_sessions: [],
-    ...overrides,
+    group_ids: [] as string[],
+    ...fields,
+  };
+
+  const productToday = formatInTimeZone(now, product.timezone, "yyyy-MM-dd");
+  const windowStart = addCalendarDays(productToday, -30);
+  const windowLast = addCalendarDays(addCalendarMonths(productToday, 4), -1);
+  const plan =
+    product.start_date === null
+      ? []
+      : planSessions({
+          timezone: product.timezone,
+          slots: product.schedule_slots.map((slot) => ({
+            weekday: slot.weekday,
+            startTime: slot.start_time,
+            durationMinutes: slot.duration_minutes,
+          })),
+          startDate:
+            product.start_date > windowStart ? product.start_date : windowStart,
+          endDate:
+            product.end_date !== null && product.end_date < windowLast
+              ? product.end_date
+              : windowLast,
+          now,
+        });
+
+  return {
+    ...product,
+    planned_sessions: plan.map((session) => ({
+      session_date: session.date,
+      starts_at: session.startsAt.toISOString(),
+      ends_at: session.endsAt.toISOString(),
+      cancelled_group_ids: cancellations
+        .filter((one) => one.session_date === session.date)
+        .map((one) => one.group_id)
+        .sort(),
+    })),
   };
 }
 
@@ -154,7 +207,7 @@ describe("the week window", () => {
     const data = build(
       snapshot({
         schedule_products: [
-          scheduleProduct({ id: "club", start_date: "2026-06-01" }),
+          scheduleProduct({ id: "club", start_date: "2026-06-01" }, now),
         ],
       }),
       LOS_ANGELES,
@@ -186,7 +239,7 @@ describe("the week window", () => {
             timezone: LOS_ANGELES,
             start_date: "2026-01-05",
             end_date: "2026-12-14",
-          }),
+          }, now),
         ],
       }),
       HELSINKI,
@@ -279,8 +332,8 @@ describe("cancelled sessions", () => {
 
   /** A Monday-and-Wednesday club with two groups. */
   function twoGroupClub(
-    cancelled: { group_id: string; session_date: string }[],
-    overrides: Partial<AdminDashboardScheduleProduct> = {},
+    cancelled: Cancellation[],
+    overrides: Partial<Parameters<typeof scheduleProduct>[0]> = {},
   ) {
     return scheduleProduct({
       id: "club",
@@ -289,7 +342,7 @@ describe("cancelled sessions", () => {
         { weekday: 2, start_time: "17:00", duration_minutes: 90 },
       ],
       group_ids: [GROUP_A, GROUP_B],
-      cancelled_sessions: cancelled,
+      cancellations: cancelled,
       ...overrides,
     });
   }
@@ -376,7 +429,7 @@ describe("cancelled sessions", () => {
               { weekday: 0, start_time: "09:00", duration_minutes: 60 },
             ],
             group_ids: [GROUP_A],
-            cancelled_sessions: [
+            cancellations: [
               { group_id: GROUP_A, session_date: "2026-08-24" },
             ],
           }),
@@ -422,7 +475,7 @@ describe("cancelled sessions", () => {
               { weekday: 2, start_time: "17:00", duration_minutes: 240 },
             ],
             group_ids: [GROUP_A],
-            cancelled_sessions: [
+            cancellations: [
               { group_id: GROUP_A, session_date: "2026-08-19" },
             ],
           }),
@@ -448,8 +501,13 @@ describe("cancelled sessions", () => {
   it("ignores a cancellation naming a group outside the product's list", () => {
     const decide = productCancellations({
       group_ids: [GROUP_A],
-      cancelled_sessions: [
-        { group_id: GROUP_B, session_date: "2026-08-19" },
+      planned_sessions: [
+        {
+          session_date: "2026-08-19",
+          starts_at: "2026-08-19T14:00:00.000Z",
+          ends_at: "2026-08-19T15:30:00.000Z",
+          cancelled_group_ids: [GROUP_B],
+        },
       ],
     });
     expect(decide("2026-08-19")).toEqual({ kind: "none" });

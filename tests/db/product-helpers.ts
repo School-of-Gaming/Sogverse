@@ -343,6 +343,11 @@ import { TEST_IDS } from "./constants";
  *                  open-ended weekly club 873 with group 874, the seeded
  *                  family's cancelled-membership seat 875 and the second
  *                  family's unplaced seat 876)
+ *   880-883        admin-dashboard.test.ts's plan fixtures (the daily club 880
+ *                  whose term the window clips at both ends, with groups 881
+ *                  and 882 so a date can be cancelled by one or by both; the
+ *                  open-ended daily club 883). Apart from that file's 620-629
+ *                  block because the block was full when they arrived
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls
