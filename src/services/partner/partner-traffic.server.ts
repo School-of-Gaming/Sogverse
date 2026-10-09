@@ -5,6 +5,7 @@ import { unstable_cache } from "next/cache";
 import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
+  MAX_FILTER_LENGTH,
   VercelAnalyticsClient,
   odataString,
   type PageviewsGroup,
@@ -46,13 +47,6 @@ const SHOP_ROUTE = "/shop";
  * on, so every filter says it.
  */
 const PRODUCTION = `environment eq ${odataString("production")}`;
-
-/**
- * Programme products per discovery read. A product has one path per locale
- * plus its legacy one, so ten products are sixty paths: a filter that stays
- * well inside a URL, and a response that can never reach the 100-group fold.
- */
-const DISCOVERY_CHUNK = 10;
 
 /** The documented default window: the last thirty UTC days, today included. */
 const DEFAULT_RANGE_DAYS = 30;
@@ -210,10 +204,29 @@ function collapse<T extends { pageviews: number }>(
   return [...byLabel.values()];
 }
 
-function chunks<T>(items: readonly T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
+/**
+ * The Programme products in batches whose discovery filter fits Vercel's limit
+ * on its length. A product has one path per locale plus its legacy one, about
+ * three hundred characters of filter, so a batch is a handful of products —
+ * sized by the filter it builds rather than by a count, because a count that
+ * fits today stops fitting when a locale or a longer slug is added. A batch
+ * names at most a few dozen paths, so its response can never reach the
+ * 100-group fold.
+ */
+export function discoveryBatches(productIds: readonly string[]): string[][] {
+  const batches: string[][] = [];
+  let batch: string[] = [];
+  for (const id of productIds) {
+    const widened = [...batch, id];
+    if (batch.length > 0 && pathsFilter(widened.flatMap(productPagePaths)).length > MAX_FILTER_LENGTH) {
+      batches.push(batch);
+      batch = [id];
+    } else {
+      batch = widened;
+    }
+  }
+  if (batch.length > 0) batches.push(batch);
+  return batches;
 }
 
 const sum = (entries: readonly { pageviews: number }[]) =>
@@ -319,7 +332,7 @@ async function readPage(
 
 /**
  * The Programme products whose page had at least one view in the range,
- * ascending by id. One `requestPath` read per chunk of products narrows the
+ * ascending by id. One `requestPath` read per batch of products narrows the
  * split reads to the pages that have something to split.
  */
 async function readViewedProducts(
@@ -329,9 +342,9 @@ async function readViewedProducts(
 ): Promise<string[]> {
   const viewed = new Set<string>();
   await Promise.all(
-    chunks(productIds, DISCOVERY_CHUNK).map(async (chunk) => {
+    discoveryBatches(productIds).map(async (batch) => {
       const productByPath = new Map<string, string>();
-      for (const id of chunk) {
+      for (const id of batch) {
         for (const path of productPagePaths(id)) productByPath.set(path, id);
       }
       const groups = await client.aggregatePageviews({
