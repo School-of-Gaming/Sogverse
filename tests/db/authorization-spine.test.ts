@@ -829,6 +829,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/location-search.test.ts",
     why: "SECURITY INVOKER over `locations` and `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
   },
+  planned_session_dates: {
+    scopeTest: "tests/db/planned-sessions.test.ts",
+    why: "public catalogue facts over two anon-readable tables, identical for every caller. SECURITY INVOKER over `products` and `schedule_slots`, whose read policies admit every row to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — it only expands a product's term and weekly slots into dated sessions. It names no user and reads no uid; its arguments only pick a product and narrow a date span, clamped to 3660 days. The scope test proves an anonymous caller and the service role get identical rows",
+  },
   // The three fold primitives below are a third shape the category has to
   // admit, and the widest reading of it: they read *no table at all*. Each is a
   // pure function of its arguments — strip diacritics, return a constant
@@ -923,10 +927,15 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * approved profiles narrowed to what the page shows, and `is_public_team_photo`
  * is the team-photos public read policy's predicate, which anon evaluates
  * itself when the public photo route reads with no session.
+ *
+ * `planned_session_dates` is the session plan a public product page shows: a
+ * SECURITY INVOKER expansion of `products` and `schedule_slots`, which anon
+ * already reads in full, so it narrows that surface rather than widening it.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
+  "planned_session_dates",
   "immutable_unaccent",
   "location_search_separator",
   "list_public_team_profiles",

@@ -1171,6 +1171,33 @@ describe("session substitutions", () => {
       expect(await substitutesGroup(subAuth, GROUP_ORPHAN)).toBe(true);
     });
 
+    it("falls OPEN on a date past the end of the term", async () => {
+      // The evening club whose start the case above counts back from, with its
+      // term ended the day before that date: the plan holds no session there,
+      // exactly as on a weekday the schedule dropped, so the same midnight
+      // fallback applies. A term cut short after the substitution was arranged
+      // must not lock the sub out of a session they ran.
+      const date = middayDate(2);
+      await admin
+        .from("products")
+        .update({ end_date: middayDate(1) })
+        .eq("id", LATE_PRODUCT);
+      try {
+        await seedRequest({
+          groupId: GROUP_LATE,
+          date,
+          absent: thirdId,
+          substituteId: subId,
+        });
+        expect(await substitutesGroup(subAuth, GROUP_LATE)).toBe(true);
+      } finally {
+        await admin
+          .from("products")
+          .update({ end_date: middayDate(60) })
+          .eq("id", LATE_PRODUCT);
+      }
+    });
+
     it("opens a retroactive substitution on a past session at once", async () => {
       // The office-arranged path: an admin records a substitution that already
       // happened, and the sub needs the workspace now — the register and the

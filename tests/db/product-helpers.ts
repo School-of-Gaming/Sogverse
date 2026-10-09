@@ -326,6 +326,12 @@ import { TEST_IDS } from "./constants";
  *                  841, whose minted gedu files every request the file
  *                  enqueues; 842 is a substitution request id that must NEVER
  *                  exist, backing the "unknown request" snapshot case)
+ *   850-85c        planned-sessions.test.ts (one product per shape of plan —
+ *                  a dated term 850, a camp week 851, an open-ended daily club
+ *                  852, the two DST zones 853/854, the cancelling product 855
+ *                  with its groups 856/857, the horizon club 858 with its group
+ *                  859 — and 85a-85c, the zones the plan is cross-checked
+ *                  against the TypeScript walks in)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

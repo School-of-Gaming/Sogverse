@@ -4472,6 +4472,10 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_final_session_date: {
+        Args: { p_group_id: string }
+        Returns: string
+      }
       group_session_date_is_scheduled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -4618,6 +4622,23 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
+      planned_group_sessions: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: {
+          cancelled_group_ids: string[]
+          ends_at: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
+      planned_session_dates: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: {
+          ends_at: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
       product_required_qualifications: {
         Args: {
           p_product_type: Database["public"]["Enums"]["product_type"]
@@ -4829,6 +4850,10 @@ export type Database = {
           p_include_detail: boolean
         }
         Returns: Json
+      }
+      session_plan_horizon: {
+        Args: { p_at_least?: string; p_group_id?: string; p_product_id: string }
+        Returns: string
       }
       session_product_document: {
         Args: { p_product: Database["public"]["Tables"]["products"]["Row"] }
