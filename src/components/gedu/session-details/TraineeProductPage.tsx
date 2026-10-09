@@ -163,14 +163,8 @@ export function TraineeWorkspace({
     () =>
       buildGeduSessionFeed({
         groupId,
-        timezone: feed.product.timezone,
-        slots: feed.product.schedule_slots.map((slot) => ({
-          weekday: slot.weekday,
-          startTime: slot.start_time,
-          durationMinutes: slot.duration_minutes,
-        })),
-        startDate: feed.product.start_date,
-        endDate: feed.product.end_date,
+        plannedSessions: feed.planned_sessions,
+        openEnded: feed.product.end_date === null,
         sessions: feed.sessions,
         gedus: feed.gedus,
         // A trainee is nobody's substitute and nobody's absence is theirs to
@@ -183,7 +177,15 @@ export function TraineeWorkspace({
         now,
         reach: "redacted",
       }),
-    [groupId, feed.product, feed.sessions, feed.gedus, feed.cancellations, now],
+    [
+      groupId,
+      feed.planned_sessions,
+      feed.product.end_date,
+      feed.sessions,
+      feed.gedus,
+      feed.cancellations,
+      now,
+    ],
   );
 
   const handleEditEntry = (entryId: string | null) => {

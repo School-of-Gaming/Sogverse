@@ -12,6 +12,7 @@ import type {
   FamilySessionEntry,
 } from "./types";
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
+import type { PlannedSession } from "@/lib/planned-sessions";
 import { ROUTES } from "@/lib/constants";
 
 /**
@@ -99,6 +100,8 @@ export interface FamilyProductPageFixture {
   site: FamilyProductSite | null;
   voiceHref: MaybeInertHrefObject;
   entries: FamilySessionEntry[];
+  /** The plan the Join reads: the feed's own sessions, soonest first. */
+  plannedSessions: PlannedSession[];
   sourceTimeZone: string;
 }
 
@@ -976,6 +979,16 @@ export function buildFamilyProductPageFixture(
     site: config.site,
     voiceHref: ROUTES.voice.groupSession(GROUP_ID),
     entries,
+    // The feed's sessions are the plan the page was given: the next session
+    // the Join names is then always one the feed beneath it shows.
+    plannedSessions: starts
+      .map((startsAt) => ({
+        date: dateIn(startsAt),
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + durationMs),
+        cancelled: false,
+      }))
+      .reverse(),
     sourceTimeZone: TIMEZONE,
   };
 }

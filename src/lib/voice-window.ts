@@ -1,11 +1,10 @@
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
-  endDateToCutoff,
-  enumerateRowOccurrences,
-  OPEN_ENDED_OCCURRENCE_CAP,
-  productLocalDate,
-  startDateToCutoff,
-} from "@/lib/session-occurrence";
+  nextRunning,
+  trimOpenEndedFuture,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 import { formatDate, formatTime } from "@/lib/utils";
 
 /**
@@ -20,9 +19,9 @@ import { formatDate, formatTime } from "@/lib/utils";
  * the arithmetic here means the boundary can never drift between those
  * surfaces.
  *
- * Note this only answers "is the window open"; callers still feed
- * `SESSION_WINDOW_AFTER_MINUTES` into `enumerateRowOccurrences` separately to
- * drop already-closed occurrences from their lists.
+ * Note this only answers "is the window open"; callers still use
+ * `SESSION_WINDOW_AFTER_MINUTES` separately as the margin that drops
+ * already-closed sessions from their lists.
  */
 export function isVoiceWindowOpen(start: Date, end: Date, now: Date): boolean {
   const { SESSION_WINDOW_BEFORE_MINUTES, SESSION_WINDOW_AFTER_MINUTES } =
@@ -34,90 +33,59 @@ export function isVoiceWindowOpen(start: Date, end: Date, now: Date): boolean {
 }
 
 /**
- * The minimal product shape `computeVoiceState` needs: the schedule slots
- * plus the boundaries used to clip them. Deliberately structural so both the
- * gedu `GeduAssignedProductShell` and the admin `ProductAdminDetailRow`
- * satisfy it without a shared nominal type.
- */
-export interface VoiceWindowProduct {
-  timezone: string;
-  start_date: string | null;
-  end_date: string | null;
-  schedule_slots: {
-    weekday: number;
-    start_time: string;
-    duration_minutes: number;
-  }[];
-}
-
-/**
- * Resolve the next session occurrence + voice-window state for a product.
- * Every group on a product shares the same schedule, so callers compute this
- * once at the page level and thread the same `(voiceIsOpen, opensDate,
- * opensTime)` triple into every group card. Reuses the same primitive
- * (`enumerateRowOccurrences`) and the shared `isVoiceWindowOpen` helper the
- * dashboard expansions use, so the lock-state windows can never drift between
- * the dashboard cards, the gedu session-details page, and the admin product
- * page.
+ * Resolve the next session + voice-window state from a product's planned
+ * sessions. Every group on a product shares the same plan, so a page computes
+ * this once and threads the same `(voiceIsOpen, opensDate, opensTime)` triple
+ * into every group card. It answers from the shared `isVoiceWindowOpen`
+ * helper, so the lock-state windows can never drift between the dashboard
+ * cards, the gedu session-details page, and the admin product page.
  *
- * When the product has no future occurrence in the iteration window (camp
- * ended, no remaining slots) `hasUpcomingSession` is false and the labels are
- * empty — there's no room to join ever again, so callers should hide the Join
- * affordance entirely rather than render a label-less "Opens  at " button.
- * Surfaces that only ever show this for a *future* session (the parent/gamer
- * and gedu dashboard cards) never hit that branch; the admin product page can,
- * since it lists groups for completed products too.
+ * An open-ended plan is first cut to the horizon every session list shows —
+ * the next eight sessions still open — and only then are cancelled sessions
+ * dropped, so the room looks exactly as far ahead as the feed beside it: eight
+ * cancelled sessions in a row leave no upcoming session, as they leave no
+ * running one on the feed.
  *
- * Answers "is the *window* open" from the schedule alone, independent of
+ * When the plan has no session still open (camp ended, no remaining slots)
+ * `hasUpcomingSession` is false and the labels are empty — there's no room to
+ * join ever again, so callers should hide the Join affordance entirely rather
+ * than render a label-less "Opens  at " button. Surfaces that only ever show
+ * this for a *future* session (the parent/gamer and gedu dashboard cards) never
+ * hit that branch; the admin product page can, since it lists groups for
+ * completed products too.
+ *
+ * Answers "is the *window* open" from the plan alone, independent of
  * `is_remote`. In-person products have no voice room, so callers gate the
  * Join affordance on `is_remote` themselves rather than relying on this.
  *
- * `cancelledDates` are one group's cancelled sessions, and a surface that knows
- * them passes them: a cancelled session opens no room — the voice token route
- * refuses its token and the database refuses its chat — so the next occurrence
- * is the soonest one that is not cancelled.
+ * A session marked `cancelled` is one group's cancelled date, and a surface
+ * that knows them marks them: a cancelled session opens no room — the voice
+ * token route refuses its token and the database refuses its chat — so the next
+ * session is the soonest one that is not cancelled.
  */
 export function computeVoiceState(args: {
-  product: VoiceWindowProduct;
+  /** The product's planned sessions, soonest first, cancellations marked. */
+  plan: readonly PlannedSession[];
+  /** The product has no end date, so its plan is cut to the shared horizon. */
+  openEnded: boolean;
   now: Date;
   locale: string;
   timeZone: string;
-  /** Product-local `YYYY-MM-DD` dates of the group's cancelled sessions. */
-  cancelledDates?: ReadonlySet<string>;
 }): {
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
   hasUpcomingSession: boolean;
 } {
-  const { product, now, locale, timeZone, cancelledDates } = args;
+  const { plan, openEnded, now, locale, timeZone } = args;
   const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
-  const slots = product.schedule_slots.map((s) => ({
-    weekday: s.weekday,
-    startTime: s.start_time,
-    durationMinutes: s.duration_minutes,
-  }));
+  const inView = openEnded
+    ? trimOpenEndedFuture(plan, now, OPEN_ENDED_OCCURRENCE_CAP, windowCloseMs)
+    : plan;
+  const { next } = nextRunning(inView, now, windowCloseMs);
 
-  const occurrences = enumerateRowOccurrences({
-    slots,
-    timezone: product.timezone,
-    now,
-    startBoundary: startDateToCutoff(product.start_date, product.timezone),
-    endBoundary: endDateToCutoff(product.end_date, product.timezone),
-    cap:
-      product.end_date === null
-        ? OPEN_ENDED_OCCURRENCE_CAP
-        : Number.POSITIVE_INFINITY,
-    windowCloseMs,
-  }).filter(
-    (occurrence) =>
-      cancelledDates === undefined ||
-      !cancelledDates.has(productLocalDate(occurrence.start, product.timezone)),
-  );
-  occurrences.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-  if (occurrences.length === 0) {
+  if (next === null) {
     return {
       voiceIsOpen: false,
       opensDate: "",
@@ -126,17 +94,29 @@ export function computeVoiceState(args: {
     };
   }
 
-  const next = occurrences[0];
-
   return {
-    voiceIsOpen: isVoiceWindowOpen(next.start, next.end, now),
-    opensDate: formatDate(next.start, locale, {
+    voiceIsOpen: isVoiceWindowOpen(next.startsAt, next.endsAt, now),
+    opensDate: formatDate(next.startsAt, locale, {
       weekday: "short",
       month: "short",
       day: "numeric",
       timeZone,
     }),
-    opensTime: formatTime(next.start, locale, timeZone),
+    opensTime: formatTime(next.startsAt, locale, timeZone),
     hasUpcomingSession: true,
   };
+}
+
+/**
+ * A plan with one group's cancelled dates marked, for `computeVoiceState`.
+ * The plan rows documents carry are unmarked; each surface overlays the
+ * cancellations it holds.
+ */
+export function markCancelled<T extends PlannedSession>(
+  plan: readonly T[],
+  cancelledDates: ReadonlySet<string>,
+): T[] {
+  return plan.map((session) =>
+    cancelledDates.has(session.date) ? { ...session, cancelled: true } : session,
+  );
 }

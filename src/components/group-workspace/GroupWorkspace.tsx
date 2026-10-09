@@ -27,9 +27,9 @@ import {
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import { cn } from "@/lib/utils";
-import { computeVoiceState } from "@/lib/voice-window";
+import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type {
   GameAccountStatus,
@@ -600,9 +600,9 @@ export function GroupWorkspace({
   const rosterRedacted = (assignedGroup?.roster ?? []).some(isRedactedMember);
 
   /**
-   * This group's cancelled dates, read off its own feed. On a dated run the
-   * feed holds every projected date from the start to the end, so nothing the
-   * final-session walk below can land on is missing from it.
+   * This group's cancelled dates, read off its own feed. The feed shows the
+   * same cut of the plan the room looks across, so every cancelled date the
+   * room could land on is in it.
    */
   const cancelledDates = useMemo(
     () =>
@@ -616,21 +616,29 @@ export function GroupWorkspace({
 
   // Two answers, because cancellation is per group: this group's room skips
   // its own cancelled dates, and the peer rows — whose cancellations this page
-  // does not hold — keep the schedule's.
+  // does not hold — keep the plan's.
+  const openEnded = data.product.end_date === null;
   const voiceState = useMemo(
-    () => computeVoiceState({ product: data.product, now, locale, timeZone }),
-    [data.product, now, locale, timeZone],
+    () =>
+      computeVoiceState({
+        plan: data.planned_sessions,
+        openEnded,
+        now,
+        locale,
+        timeZone,
+      }),
+    [data.planned_sessions, openEnded, now, locale, timeZone],
   );
   const ownVoiceState = useMemo(
     () =>
       computeVoiceState({
-        product: data.product,
+        plan: markCancelled(data.planned_sessions, cancelledDates),
+        openEnded,
         now,
         locale,
         timeZone,
-        cancelledDates,
       }),
-    [data.product, now, locale, timeZone, cancelledDates],
+    [data.planned_sessions, openEnded, now, locale, timeZone, cancelledDates],
   );
 
   /**
@@ -655,23 +663,19 @@ export function GroupWorkspace({
    * **Derived here rather than by either shell**, for the same reason the roster
    * flair maps are: the gedu's workspace and the admin's group page must reach
    * the same answer, and it is assembled from things this body already holds —
-   * the product's flag and schedule, and the roster's creations map. A second
-   * copy in each shell would be a second place for a Gedu and an admin to
-   * disagree about whether the last session of a term is finished.
+   * the product's flag, the document's final session, and the roster's
+   * creations map. A second copy in each shell would be a second place for a
+   * Gedu and an admin to disagree about whether the last session of a term is
+   * finished.
    *
-   * The final session is the schedule's last occurrence on or before the end
-   * date that this group has not had cancelled, which is exactly what the
-   * dashboard's SQL computes; an open-ended product has none and therefore
-   * never owes.
+   * The final session is the plan's last date on or before the end date that
+   * this group has not had cancelled, and the document carries it from the
+   * same database function the dashboard's count reads; an open-ended product
+   * has none and therefore never owes.
    */
   const creationsObligation = useMemo<CreationsObligation | null>(() => {
     if (!data.product.requires_gamer_creations || rosterRedacted) return null;
-    const date = finalSessionDate({
-      slots: data.product.schedule_slots,
-      startDate: data.product.start_date,
-      endDate: data.product.end_date,
-      cancelledDates,
-    });
+    const date = data.final_session_date;
     return {
       finalEntryId:
         date === null ? null : sessionEntryId(data.my_group_id, date),
@@ -685,10 +689,10 @@ export function GroupWorkspace({
       ),
     };
   }, [
-    data.product,
+    data.product.requires_gamer_creations,
+    data.final_session_date,
     data.my_group_id,
     memberFlair.creations,
-    cancelledDates,
     rosterRedacted,
   ]);
 

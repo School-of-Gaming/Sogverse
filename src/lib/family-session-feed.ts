@@ -1,16 +1,11 @@
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
-  earlierBoundary,
-  endDateToCutoff,
-  enumeratePastRowOccurrences,
-  enumerateRowOccurrences,
-  MAX_PAST_OCCURRENCES_PER_SLOT,
+  trimOpenEndedFuture,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
+import {
   OPEN_ENDED_OCCURRENCE_CAP,
-  productLocalDate,
   sessionEntryId,
-  startDateToCutoff,
-  undatedPastFloor,
-  type SlotShape,
 } from "@/lib/session-occurrence";
 import type {
   FamilyProductGedu,
@@ -22,11 +17,11 @@ import type {
 } from "@/services/family-product-feed/family-product-feed.contracts";
 
 /**
- * Turning one group's stored session rows and its product's weekly schedule
+ * Turning one group's stored session rows and its product's planned sessions
  * into the feed a **family** reads.
  *
  * **Why this is a second builder rather than a widened first one.** The gedu's
- * workspace builds the same two walks over the same primitives, and generalizing
+ * workspace lays the same records over the same plan, and generalizing
  * that function over both surfaces was considered and rejected: the shape it
  * emits is where the privacy line is drawn. Its entry union carries a gedu note,
  * the whole group's attendance map and an `owed` flag; this one carries a report
@@ -34,25 +29,25 @@ import type {
  * builder generic over its output type would have to take them all as optional
  * and trust each caller to pass the right subset — which is exactly the
  * remember-the-rule arrangement the split exists to replace. What the two do
- * share is the arithmetic, and that lives in `session-occurrence` where both
+ * share is the plan's shaping, and that lives in `planned-sessions` where both
  * read it.
  *
- * **The RPC returns data; this module does the calendar math.** Nothing on the
- * server expands a schedule. What comes back is the schedule parameters and the
- * stored rows; the walk forward, the walk backward, the merge of rows over
- * projections and the derivation of what kind of entry each date is all happen
- * here, once, in front of one clock.
+ * **The database plans the dates; this module lays the records over them.** The
+ * document arrives with the product's planned sessions already expanded and
+ * the stored rows beside them; the cut of an open-ended plan, the merge of rows
+ * over the planned sessions and the derivation of what kind of entry each date
+ * is all happen here, once, in front of one clock.
  *
  * Three ideas do the work, and two of them are the gedu builder's:
  *
  * - **A session is a (group, product-local date).** That is the row's unique key
- *   in Postgres and the entry's identity here, so a projection and a row for the
- *   same day meet on the same map key.
- * - **Records beat projections.** Where both exist the row wins outright,
+ *   in Postgres and the entry's identity here, so a planned session and a row
+ *   for the same day meet on the same map key.
+ * - **Records beat the plan.** Where both exist the row wins outright,
  *   including its snapshotted start and end — a row was written about a session
  *   that ran at a particular hour, and an admin moving the club an hour later
  *   next term must not retroactively rewrite what happened last term. A row the
- *   schedule no longer projects at all still renders, for the same reason.
+ *   plan no longer holds at all still renders, for the same reason.
  * - **Kind is only whether the evening is over.** There are two family kinds,
  *   not three: the gedu's `no_record` exists to hold the enforcement epoch,
  *   which decides what *staff* are owed and means nothing to a parent. To a
@@ -69,12 +64,15 @@ import type {
 export interface FamilySessionFeedArgs {
   /** Half of every entry id, and the group whose rows these are. */
   groupId: string;
-  /** The product's authoring zone — every session date is local to it. */
-  timezone: string;
-  slots: readonly SlotShape[];
-  /** Product-local `YYYY-MM-DD`, or `null` on an open-ended product. */
-  startDate: string | null;
-  endDate: string | null;
+  /**
+   * The product's planned sessions as the family document carries them,
+   * soonest first: to the end date on a dated product, past the shared horizon
+   * on an open-ended one, and in either case on to the paid-through date of a
+   * cancelled membership.
+   */
+  plannedSessions: readonly PlannedSession[];
+  /** The product has no end date. */
+  openEnded: boolean;
   /** Every stored row for the group, in any order. */
   sessions: readonly FamilyFeedSession[];
   /**
@@ -115,71 +113,43 @@ export function buildFamilySessionFeed(
 ): FamilySessionEntry[] {
   const {
     groupId,
-    timezone,
-    slots,
-    startDate,
-    endDate,
+    plannedSessions,
+    openEnded,
     sessions,
     cancellations,
     now,
     accessUntil = null,
   } = args;
 
-  const startBoundary = startDateToCutoff(startDate, timezone);
-  // Whichever runs out first. A cancelled open-ended club has no end date and
-  // still has a last day; a cancelled camp keeps whichever of the two is
-  // sooner. Both walks take the same boundary, so the clamp is one decision
-  // rather than a rule applied twice and eventually only once.
-  const endBoundary = earlierBoundary(
-    endDateToCutoff(endDate, timezone),
-    accessUntil,
-  );
-  const slotList = [...slots];
-
   /**
-   * Projected occurrences, keyed by product-local date. First writer wins,
-   * which matters exactly once: a session already in progress is emitted by
-   * both walks (the forward one surfaces it deliberately, the backward one
-   * because it has already started), and the two agree on the instant anyway.
+   * The planned sessions the feed shows, keyed by product-local date.
+   *
+   * Uncut whenever something terminal bounds the run — the product's end date,
+   * or a cancellation's paid-through instant — so the run reads to its actual
+   * last session. Only a genuinely open-ended, uncancelled product is cut to
+   * the shared horizon: everything that has started plus the next eight still
+   * open, the same number of future sessions every other surface in the app
+   * shows. A session stays open for the voice room's closing margin after it
+   * ends, so one that has just finished is not missing from the feed.
    */
-  const projected = new Map<string, { startsAt: Date; endsAt: Date }>();
-  const project = (occurrence: { start: Date; end: Date }) => {
-    const date = productLocalDate(occurrence.start, timezone);
-    if (projected.has(date)) return;
-    projected.set(date, { startsAt: occurrence.start, endsAt: occurrence.end });
-  };
-
-  if (slotList.length > 0) {
-    for (const occurrence of enumerateRowOccurrences({
-      slots: slotList,
-      timezone,
-      now,
-      startBoundary,
-      endBoundary,
-      // Uncapped whenever something terminal bounds the walk — the product's
-      // end date, or a cancellation's paid-through instant — so the run reads
-      // to its actual last session. Only a genuinely open-ended, uncancelled
-      // product needs the shared horizon, which is the same number of future
-      // sessions every other surface in the app shows.
-      cap:
-        endBoundary === null
-          ? OPEN_ENDED_OCCURRENCE_CAP
-          : Number.POSITIVE_INFINITY,
-      windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
-    })) {
-      project(occurrence);
-    }
-
-    for (const occurrence of enumeratePastRowOccurrences({
-      slots: slotList,
-      timezone,
-      now,
-      floor: startBoundary ?? undatedPastFloor(now),
-      endBoundary,
-      maxOccurrences: MAX_PAST_OCCURRENCES_PER_SLOT,
-    })) {
-      project(occurrence);
-    }
+  const shown =
+    openEnded && accessUntil === null
+      ? trimOpenEndedFuture(
+          plannedSessions,
+          now,
+          OPEN_ENDED_OCCURRENCE_CAP,
+          VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
+        )
+      : plannedSessions;
+  // First writer wins, so two slots on one weekday are the date's earlier
+  // session: the plan is soonest first, and an entry is one per date.
+  const planned = new Map<string, { startsAt: Date; endsAt: Date }>();
+  for (const session of shown) {
+    if (planned.has(session.date)) continue;
+    planned.set(session.date, {
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+    });
   }
 
   const rowsByDate = new Map(
@@ -189,26 +159,26 @@ export function buildFamilySessionFeed(
     cancellations.map((cancellation) => cancellation.session_date),
   );
 
-  const dates = new Set([...projected.keys(), ...rowsByDate.keys()]);
+  const dates = new Set([...planned.keys(), ...rowsByDate.keys()]);
   const entries: FamilySessionEntry[] = [];
 
   for (const date of dates) {
     const row = rowsByDate.get(date);
 
     // The row's snapshot wins outright when there is one. A date reached this
-    // loop because at least one of the two produced it, so the projection is
-    // there whenever the row is not — the guard is for the compiler, and it
+    // loop because at least one of the two produced it, so the planned session
+    // is there whenever the row is not — the guard is for the compiler, and it
     // costs nothing to let it also be true.
     const when =
       row === undefined
-        ? projected.get(date)
+        ? planned.get(date)
         : { startsAt: new Date(row.starts_at), endsAt: new Date(row.ends_at) };
     if (when === undefined) continue;
 
-    // A stored row past the paid window is still a row the family may not see
-    // *as theirs to come*, so the clamp applies to rows as well as projections.
-    // Both walks already stop there; this is the case they cannot catch,
-    // because a row exists whether or not anything projected it.
+    // Nothing past the paid window renders, planned or stored. The plan runs
+    // to the paid-through *date*, so a session later that day is cut here; and
+    // a stored row past the window is still a row the family may not see *as
+    // theirs to come*, because a row exists whether or not the plan holds it.
     if (
       accessUntil !== null &&
       when.startsAt.getTime() > accessUntil.getTime()
@@ -221,7 +191,7 @@ export function buildFamilySessionFeed(
     // cancellation wins over any stored row on the date: the family document
     // already leaves such a row out, and the entry carries nothing of one if
     // it arrives anyway, so a report on a cancelled session never shows. A
-    // cancelled record the schedule no longer projects has no instants here
+    // cancelled record the plan no longer holds has no instants here
     // at all — its row does not travel — so that date simply is not drawn.
     if (cancelledDates.has(date)) {
       entries.push({
@@ -292,8 +262,8 @@ export function buildFamilySessionFeed(
  * about the evening. Stretching the future kind to `endsAt + windowClose` would
  * manufacture exactly the dead zone the paragraph above rules out: entries that
  * are `future` but not live, tagged "Next session" for a club that finished
- * twenty minutes ago. It still governs the forward *walk* — a just-finished
- * occurrence is surfaced so it is not missing from the feed — but what kind it
+ * twenty minutes ago. It still governs the cut of an open-ended plan — a
+ * just-finished session is kept so it is not missing from the feed — but what kind it
  * then is, is decided here, by the clock alone.
  *
  * **A report is passed through verbatim, `null` included.** Whether one *exists*

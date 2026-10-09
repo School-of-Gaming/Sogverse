@@ -113,9 +113,10 @@ export function buildTraineeWorkspaceFixture(now: Date): {
             is_my_group: false as const,
           },
     ),
-    // No reader takes the plan from this document yet.
-    planned_sessions: [],
-    final_session_date: null,
+    // The workspace fixture's plan, which is its feed's own sessions — so
+    // the trainee's feed lays its rows over the same dates the gedu's does.
+    planned_sessions: data.planned_sessions,
+    final_session_date: data.final_session_date,
   };
 
   const feed: TraineeGroupFeed = {
@@ -150,9 +151,10 @@ export function buildTraineeWorkspaceFixture(now: Date): {
     gedus,
     cancellations,
     trainees: [{ id: TRAINEE_ID, first_name: "Veera" }],
-    // No reader takes the plan from this document yet.
-    planned_sessions: [],
-    final_session_date: null,
+    // The workspace fixture's plan, which is its feed's own sessions — so
+    // the trainee's feed lays its rows over the same dates the gedu's does.
+    planned_sessions: data.planned_sessions,
+    final_session_date: data.final_session_date,
   };
 
   return { product, feed };

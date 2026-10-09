@@ -36,7 +36,9 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import { cn, formatCurrencyFromCents, formatDate, formatDateOnly } from "@/lib/utils";
-import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
+import { formatInTimeZone } from "date-fns-tz";
+import { addCalendarDays } from "@/lib/calendar-date";
+import type { PlannedSession } from "@/lib/planned-sessions";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
@@ -56,6 +58,7 @@ import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
 import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents";
 import { useInvoiceCustomer } from "@/services/invoice-customers";
 import {
+  usePlannedSessions,
   useProductAdmin,
   type ProductAdminDetailRow,
 } from "@/services/products";
@@ -78,6 +81,30 @@ interface ProductDetailsPageProps {
   productId: string;
 }
 
+/**
+ * How much of the plan this page reads: the whole term of a dated product, and
+ * on an open-ended one from its start to a year past today — or past its start,
+ * when that is later — which reaches the first session and is far beyond the
+ * eight upcoming ones the Join looks across.
+ */
+const OPEN_ENDED_PLAN_DAYS = 366;
+
+function plannedSessionsWindow(
+  product: Pick<ProductAdminDetailRow, "start_date" | "end_date" | "timezone">,
+  now: Date,
+): { from: string; to: string } {
+  if (product.end_date !== null) {
+    return { from: product.start_date, to: product.end_date };
+  }
+  // Product-local today: the plan's dates are in the product's zone.
+  const today = formatInTimeZone(now, product.timezone, "yyyy-MM-dd");
+  const reference = today > product.start_date ? today : product.start_date;
+  return {
+    from: product.start_date,
+    to: addCalendarDays(reference, OPEN_ENDED_PLAN_DAYS),
+  };
+}
+
 export function ProductDetailsPage({
   productType,
   productId,
@@ -94,6 +121,10 @@ export function ProductDetailsPage({
   const plural = t(`types.${config.i18nKey}.plural`);
 
   const { data: product, isLoading } = useProductAdmin(productId);
+  const { data: plannedSessions } = usePlannedSessions(
+    productId,
+    product ? plannedSessionsWindow(product, now) : null,
+  );
 
   const listHref = ROUTES.admin.productList(productType);
   const editHref = ROUTES.admin.productEdit(productType, productId);
@@ -136,14 +167,21 @@ export function ProductDetailsPage({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const status = effectiveStatus(product, now);
-  // Every group on the product shares one schedule, so resolve the voice
-  // window once here and thread it into each group's Join button. `useNow`
-  // ticks so the live/locked flip happens without a reload. A room only
-  // exists for a remote product with a session still ahead of it — a
-  // completed product (no future occurrence) has nothing to join, so
-  // `voiceAvailable` is false and GroupsPanel hides the button entirely
-  // rather than render a label-less "Opens at" state.
-  const voice = computeVoiceState({ product, now, locale, timeZone });
+  // Every group on the product shares one plan, so resolve the voice window
+  // once here and thread it into each group's Join button. `useNow` ticks so
+  // the live/locked flip happens without a reload. A room only exists for a
+  // remote product with a session still ahead of it — a completed product (no
+  // session still open) has nothing to join, so `voiceAvailable` is false and
+  // GroupsPanel hides the button entirely rather than render a label-less
+  // "Opens at" state. No group's cancellations are in view on this page, so
+  // the plan goes in unmarked.
+  const voice = computeVoiceState({
+    plan: plannedSessions ?? [],
+    openEnded: product.end_date === null,
+    now,
+    locale,
+    timeZone,
+  });
   const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
   const topicName = topicLabel(product.topic);
 
@@ -179,6 +217,7 @@ export function ProductDetailsPage({
 
       <OperationalFacts
         product={product}
+        plannedSessions={plannedSessions}
         topicName={topicName}
         uiLocale={uiLocale}
         timeZone={timeZone}
@@ -314,6 +353,7 @@ const SESSION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
 
 function OperationalFacts({
   product,
+  plannedSessions,
   topicName,
   uiLocale,
   timeZone,
@@ -321,6 +361,8 @@ function OperationalFacts({
   c,
 }: {
   product: ProductAdminDetailRow;
+  /** The product's plan, `undefined` until the read lands. */
+  plannedSessions: readonly PlannedSession[] | undefined;
   topicName: string | null;
   uiLocale: string;
   timeZone: string;
@@ -428,28 +470,23 @@ function OperationalFacts({
    * readable on the details page, so checking what a family is told costs a
    * glance rather than opening the edit form (a write surface) to infer it.
    *
-   * Events are excluded because their single date *is* the session — snapping
-   * it to a weekday pattern would restate the term dates fact one row down.
+   * Both are read off the product's plan, the same dates every other surface
+   * lists. Events are excluded because their single date *is* the session —
+   * it would restate the term dates fact one row down.
+   *
+   * Whether each row exists is decided from the product row alone, so the rows
+   * hold their place while the plan is read and only their dates arrive.
    */
-  const sessionWeekdays = product.schedule_slots.map((slot) => slot.weekday);
   const showSessionDates =
-    product.product_type !== "event" && sessionWeekdays.length > 0;
-  const firstSession =
-    showSessionDates && product.start_date
-      ? formatDateOnly(
-          firstSessionDate(product.start_date, sessionWeekdays),
-          uiLocale,
-          SESSION_DATE_FORMAT,
-        )
-      : null;
-  const lastSession =
-    showSessionDates && product.end_date
-      ? formatDateOnly(
-          lastSessionDate(product.end_date, sessionWeekdays),
-          uiLocale,
-          SESSION_DATE_FORMAT,
-        )
-      : null;
+    product.product_type !== "event" && product.schedule_slots.length > 0;
+  const showFirstSession = showSessionDates;
+  const showLastSession = showSessionDates && product.end_date !== null;
+  const formatSessionDate = (session: PlannedSession | undefined) =>
+    session === undefined
+      ? null
+      : formatDateOnly(session.date, uiLocale, SESSION_DATE_FORMAT);
+  const firstSession = formatSessionDate(plannedSessions?.[0]);
+  const lastSession = formatSessionDate(plannedSessions?.at(-1));
 
   // Where a family meets this product. `null` only for a municipality club with
   // no location at all — there is no school page to point at, and a `/shop`
@@ -509,7 +546,7 @@ function OperationalFacts({
 
         {/* Directly after the term range: the same span, read as the days a
             family is actually expected. */}
-        {firstSession && (
+        {showFirstSession && (
           <Fact
             icon={CalendarCheck}
             label={t("detailsPage.fields.firstSession")}
@@ -518,7 +555,7 @@ function OperationalFacts({
           </Fact>
         )}
 
-        {lastSession && (
+        {showLastSession && (
           <Fact
             icon={CalendarCheck}
             label={t("detailsPage.fields.lastSession")}

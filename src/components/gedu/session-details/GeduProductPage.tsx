@@ -283,14 +283,8 @@ function Workspace({
     () =>
       buildGeduSessionFeed({
         groupId,
-        timezone: feed.product.timezone,
-        slots: feed.product.schedule_slots.map((slot) => ({
-          weekday: slot.weekday,
-          startTime: slot.start_time,
-          durationMinutes: slot.duration_minutes,
-        })),
-        startDate: feed.product.start_date,
-        endDate: feed.product.end_date,
+        plannedSessions: feed.planned_sessions,
+        openEnded: feed.product.end_date === null,
         sessions: feed.sessions,
         // The staffing derivation's two inputs, straight off the same document
         // the sessions come from — and the viewer, which is what decides whether
@@ -303,7 +297,8 @@ function Workspace({
       }),
     [
       groupId,
-      feed.product,
+      feed.planned_sessions,
+      feed.product.end_date,
       feed.sessions,
       feed.gedus,
       feed.substitutions,

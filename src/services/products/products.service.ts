@@ -19,6 +19,10 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
+import {
+  plannedSessionRows,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
 import { productIdResponse } from "./products.contracts";
 
 // ---------------------------------------------------------------------------
@@ -632,6 +636,27 @@ export class ProductsService {
 
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * A product's planned sessions in `[from, to]` (product-local `YYYY-MM-DD`,
+   * both inclusive), soonest first — the database's one expansion of the plan,
+   * which answers every caller identically. The admin product page reads it
+   * because no document it holds carries the plan.
+   */
+  async getPlannedSessions(
+    productId: string,
+    from: string,
+    to: string,
+  ): Promise<PlannedSession[]> {
+    const { data, error } = await this.supabase.rpc("planned_session_dates", {
+      p_product_id: productId,
+      p_from: from,
+      p_to: to,
+    });
+
+    if (error) throw error;
+    return plannedSessionRows.parse(data);
   }
 
   async updateProduct(

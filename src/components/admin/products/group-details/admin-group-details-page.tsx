@@ -449,14 +449,8 @@ function Workspace({
     () =>
       buildGeduSessionFeed({
         groupId,
-        timezone: sessions.product.timezone,
-        slots: sessions.product.schedule_slots.map((slot) => ({
-          weekday: slot.weekday,
-          startTime: slot.start_time,
-          durationMinutes: slot.duration_minutes,
-        })),
-        startDate: sessions.product.start_date,
-        endDate: sessions.product.end_date,
+        plannedSessions: sessions.planned_sessions,
+        openEnded: sessions.product.end_date === null,
         sessions: group.sessions,
         // The staffing derivation's two inputs, from the admin product
         // document's own copy of them — same shapes as the gedu feed's, because
@@ -474,7 +468,8 @@ function Workspace({
       }),
     [
       groupId,
-      sessions.product,
+      sessions.planned_sessions,
+      sessions.product.end_date,
       group.sessions,
       group.gedus,
       group.substitutions,
@@ -590,10 +585,15 @@ function Workspace({
         })),
         roster: candidate.id === groupId ? feed.roster : null,
       })),
+      // The plan is the product's and travels once on the session record; the
+      // final session is this group's, because its cancellations can move it.
+      planned_sessions: sessions.planned_sessions,
+      final_session_date: group.final_session_date,
     }),
     [
       product,
       sessions,
+      group.final_session_date,
       feed.product.translations,
       feed.product.requires_gamer_creations,
       feed.roster,

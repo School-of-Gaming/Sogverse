@@ -4,18 +4,18 @@ import {
   OPEN_ENDED_OCCURRENCE_CAP,
   productLocalDate,
   sessionEntryId,
-  UNDATED_PRODUCT_PAST_HORIZON_DAYS,
 } from "@/lib/session-occurrence";
 import type { FamilyFeedSession } from "@/services/family-product-feed";
 import type { FamilySessionEntry } from "@/components/family/product-page";
 import { partitionFeedEntries } from "@/components/session-feed";
+import { planSessions } from "../../mocks/planned-sessions";
 
 /**
- * The merge that makes a family's feed: the schedule walked both ways, stored
- * rows laid over the projections, and two entry kinds derived from nothing but
- * which side of `now` a session falls on.
+ * The merge that makes a family's feed: the planned sessions cut to the
+ * open-ended horizon, stored rows laid over them, and two entry kinds derived
+ * from nothing but which side of `now` a session falls on.
  *
- * It shares its arithmetic with the gedu builder and deliberately not its
+ * It shares its plan shaping with the gedu builder and deliberately not its
  * output, so what is worth testing here is the divergence: two kinds instead of
  * three, one child's mark instead of a roster, and the cancellation clamp the
  * staff feed has no reason to know about.
@@ -31,19 +31,45 @@ const NOW = new Date("2026-03-18T10:00:00.000Z");
 /** 0 = Monday, matching the schedule_slots convention. */
 const MONDAY_SLOT = { weekday: 0, startTime: "16:30", durationMinutes: 90 };
 
+type FeedArgs = Parameters<typeof buildFamilySessionFeed>[0];
+
+/**
+ * The product's schedule, which the test turns into the planned sessions the
+ * document would carry — the database's expansion, done test-side. Its
+ * open-ended span runs well past every paid-through date below, as the
+ * document's horizon is raised to one.
+ */
+interface Schedule {
+  slots?: { weekday: number; startTime: string; durationMinutes: number }[];
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
 function build(
-  overrides: Partial<Parameters<typeof buildFamilySessionFeed>[0]> = {},
+  overrides: Partial<Omit<FeedArgs, "plannedSessions" | "openEnded">> &
+    Schedule = {},
 ) {
+  const {
+    slots = [MONDAY_SLOT],
+    startDate = "2026-01-05",
+    endDate = null,
+    ...rest
+  } = overrides;
+  const now = rest.now ?? NOW;
   return buildFamilySessionFeed({
     groupId: GROUP,
-    timezone: TZ,
-    slots: [MONDAY_SLOT],
-    startDate: "2026-01-05",
-    endDate: null,
+    plannedSessions: planSessions({
+      timezone: TZ,
+      slots,
+      startDate,
+      endDate,
+      now,
+    }),
+    openEnded: endDate === null,
     sessions: [],
     cancellations: [],
-    now: NOW,
-    ...overrides,
+    now,
+    ...rest,
   });
 }
 
@@ -109,16 +135,6 @@ describe("buildFamilySessionFeed — ordering and horizon", () => {
     const emitted = dates(build({ startDate: "2026-03-02" }));
     expect(emitted.at(-1)).toBe("2026-03-02");
     expect(emitted).not.toContain("2026-02-23");
-  });
-
-  it("bounds an undated product's past at the documented horizon", () => {
-    const oldest = dates(build({ startDate: null })).at(-1);
-    const floor = new Date(
-      NOW.getTime() - UNDATED_PRODUCT_PAST_HORIZON_DAYS * 86_400_000,
-    );
-    expect(oldest?.localeCompare(productLocalDate(floor, TZ))).toBeGreaterThan(
-      -1,
-    );
   });
 
   it("emits nothing at all for a product with no slots and no rows", () => {

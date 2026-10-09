@@ -13,6 +13,7 @@ import type { Database, Json } from "./database.types";
 // member-flair types.
 import type { GamerCreation } from "@/services/member-flair/member-flair.contracts";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
+import type { PlannedSession } from "@/lib/planned-sessions";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases
@@ -874,6 +875,13 @@ export interface GeduAssignedProduct {
   product: GeduAssignedProductShell;
   my_group_id: string;
   groups: GeduAssignedProductGroup[];
+  /** The product's planned sessions, soonest first, cancellations unmarked. */
+  planned_sessions: PlannedSession[];
+  /**
+   * The run's last session the reader's group has not cancelled,
+   * product-local `YYYY-MM-DD`; null on an open-ended product.
+   */
+  final_session_date: string | null;
 }
 
 // whatsapp_contacts

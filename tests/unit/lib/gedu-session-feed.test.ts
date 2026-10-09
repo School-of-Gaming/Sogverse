@@ -5,16 +5,16 @@ import {
   OPEN_ENDED_OCCURRENCE_CAP,
   productLocalDate,
   sessionEntryId,
-  UNDATED_PRODUCT_PAST_HORIZON_DAYS,
 } from "@/lib/session-occurrence";
 import type { GeduFeedSession } from "@/services/gedu-sessions";
 import type { SubstitutionRequestDocument } from "@/services/session-substitution";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";
+import { planSessions } from "../../mocks/planned-sessions";
 
 /**
- * The merge that makes the workspace's feed: schedule walked both ways, stored
- * rows laid over the projections, entry kind derived from now / the epoch / the
- * product start.
+ * The merge that makes the workspace's feed: the planned sessions cut to the
+ * open-ended horizon, stored rows laid over them, entry kind derived from now /
+ * the epoch.
  *
  * Everything is pinned to a fixed `now` well inside a term so the arithmetic is
  * reproducible. The club meets Mondays at 16:30 Helsinki time; `NOW` is a
@@ -73,13 +73,35 @@ function substitution(
   };
 }
 
-function build(overrides: Partial<Parameters<typeof buildGeduSessionFeed>[0]> = {}) {
-  return buildGeduSessionFeed({
+type FeedArgs = Parameters<typeof buildGeduSessionFeed>[0];
+
+/**
+ * The product's schedule, which the test turns into the planned sessions the
+ * document would carry — the database's expansion, done test-side.
+ */
+interface Schedule {
+  timezone?: string;
+  slots?: { weekday: number; startTime: string; durationMinutes: number }[];
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
+function feedArgs(
+  overrides: Partial<Omit<FeedArgs, "plannedSessions" | "openEnded">> &
+    Schedule = {},
+): FeedArgs {
+  const {
+    timezone = TZ,
+    slots = [MONDAY_SLOT],
+    startDate = "2026-01-05",
+    endDate = null,
+    ...rest
+  } = overrides;
+  const now = rest.now ?? NOW;
+  return {
     groupId: GROUP,
-    timezone: TZ,
-    slots: [MONDAY_SLOT],
-    startDate: "2026-01-05",
-    endDate: null,
+    plannedSessions: planSessions({ timezone, slots, startDate, endDate, now }),
+    openEnded: endDate === null,
     sessions: [],
     // Staffed by one primary and nobody absent, which is what most cases here
     // are about: they test the calendar merge, and a case about substitutions says so
@@ -87,10 +109,14 @@ function build(overrides: Partial<Parameters<typeof buildGeduSessionFeed>[0]> = 
     gedus: [GEDU_A],
     substitutions: [],
     cancellations: [],
-    now: NOW,
+    now,
     epoch: EPOCH,
-    ...overrides,
-  });
+    ...rest,
+  };
+}
+
+function build(overrides: Parameters<typeof feedArgs>[0] = {}) {
+  return buildGeduSessionFeed(feedArgs(overrides));
 }
 
 function row(
@@ -174,17 +200,6 @@ describe("buildGeduSessionFeed — ordering and horizon", () => {
     const emitted = dates(build({ startDate: "2026-03-02" }));
     expect(emitted.at(-1)).toBe("2026-03-02");
     expect(emitted).not.toContain("2026-02-23");
-  });
-
-  it("bounds an undated product's past at the documented horizon", () => {
-    // `start_date` is nullable, and a missing one cannot mean "walk to the
-    // beginning of time" — that would hand the feed a decade of placeholder
-    // lines for a club nobody claims ran that long.
-    const oldest = dates(build({ startDate: null })).at(-1);
-    const floor = new Date(
-      NOW.getTime() - UNDATED_PRODUCT_PAST_HORIZON_DAYS * 86_400_000,
-    );
-    expect(oldest?.localeCompare(productLocalDate(floor, TZ))).toBeGreaterThan(-1);
   });
 
   it("emits nothing at all for a product with no slots and no rows", () => {
@@ -430,25 +445,13 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
   const JUST_AFTER = new Date("2026-03-16T16:01:00.000Z");
 
   function at(now: Date) {
-    return buildGeduSessionFeed({
-      groupId: GROUP,
-      timezone: TZ,
-      slots: [MONDAY_SLOT],
-      startDate: "2026-01-05",
-      endDate: null,
-      sessions: [],
-      gedus: [GEDU_A],
-      substitutions: [],
-      cancellations: [],
-      now,
-      epoch: EPOCH,
-    });
+    return build({ now });
   }
 
   it("appears exactly once, and is the current session rather than history", () => {
-    // The forward walk surfaces a session still inside its voice window and the
-    // backward walk emits anything already started, so the same occurrence
-    // reaches the merge twice. It shares one date key, so it lands once.
+    // The open-ended cut keeps a session still inside its voice window and
+    // also anything already started, so the same session qualifies twice. It
+    // is one planned date, so it lands once.
     const entries = at(DURING);
     expect(dates(entries).filter((d) => d === "2026-03-16")).toHaveLength(1);
     // Future, because the kind flips at the END. The gedu is standing in this
@@ -496,20 +499,14 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
   it("classifies a long camp day as current, live-taggable, and not yet owed", () => {
     const CAMP_TZ = "Europe/Helsinki";
     // 8:00-23:00 Helsinki on Monday 16 March: a 15-hour day.
-    const campDay = buildGeduSessionFeed({
-      groupId: GROUP,
+    const campDay = build({
       timezone: CAMP_TZ,
       // Weekday 0 is Monday in this codebase, matching MONDAY_SLOT above.
       slots: [{ weekday: 0, startTime: "08:00", durationMinutes: 15 * 60 }],
       startDate: "2026-03-02",
       endDate: null,
-      sessions: [],
-      gedus: [GEDU_A],
-      substitutions: [],
-      cancellations: [],
       // 14:00 Helsinki - six hours in, nine hours to go.
       now: new Date("2026-03-16T12:00:00.000Z"),
-      epoch: EPOCH,
     });
 
     const entry = byDate(campDay, "2026-03-16");

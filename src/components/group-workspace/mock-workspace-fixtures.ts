@@ -1754,6 +1754,31 @@ export function buildGroupWorkspaceFixture(
       },
       my_group_id: assignedGroup.id,
       groups: [assignedGroup, ...peerGroups],
+      // The feed's own sessions are the plan the page was given, soonest
+      // first, so the room's next session is always one the feed shows.
+      planned_sessions: [...entries].reverse().map((entry) => ({
+        date: dateOf(entry.startsAt),
+        startsAt: entry.startsAt,
+        endsAt: entry.endsAt,
+        cancelled: false,
+      })),
+      // What the database answers for this run: the last date on or before the
+      // end date that the group has not cancelled, read off the same feed — so
+      // the final-session derivation finds the entry it names.
+      final_session_date:
+        endDate === null
+          ? null
+          : (entries
+              .map((entry) => ({
+                date: dateOf(entry.startsAt),
+                cancelled: entry.kind === "cancelled",
+              }))
+              .find(
+                (entry) =>
+                  !entry.cancelled &&
+                  entry.date <= endDate &&
+                  entry.date >= startDate,
+              )?.date ?? null),
     },
     entries,
     feedRoster: feed.roster,

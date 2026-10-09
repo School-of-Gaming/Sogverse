@@ -26,6 +26,10 @@ export const productKeys = {
     [...productKeys.all, "detail", id] as const,
   adminDetail: (id: string | undefined) =>
     [...productKeys.all, "admin-detail", id] as const,
+  plannedSessions: (id: string | undefined) =>
+    [...productKeys.all, "planned-sessions", id] as const,
+  plannedSessionsIn: (id: string | undefined, from: string, to: string) =>
+    [...productKeys.plannedSessions(id), { from, to }] as const,
 };
 
 export function useProductDetail(id: string | undefined) {
@@ -90,6 +94,30 @@ export function useProductAdmin(id: string | undefined) {
   });
 }
 
+/**
+ * A product's planned sessions in `[from, to]`, or nothing while any of the
+ * three is unknown — the caller usually learns the window from the product
+ * read.
+ */
+export function usePlannedSessions(
+  productId: string | undefined,
+  window: { from: string; to: string } | null,
+) {
+  const supabase = getClient();
+  const service = new ProductsService(supabase);
+
+  return useQuery({
+    queryKey: productKeys.plannedSessionsIn(
+      productId,
+      window?.from ?? "",
+      window?.to ?? "",
+    ),
+    queryFn: () =>
+      service.getPlannedSessions(productId!, window!.from, window!.to),
+    enabled: !!productId && window !== null,
+  });
+}
+
 // Both writers below also invalidate the admin dashboard, which is a separate
 // cache entry built from these very rows: whether a product is live at all, its
 // schedule and term dates, its seat cap, and whether its gedu/municipality fees
@@ -127,6 +155,10 @@ export function useUpdateProduct(id: string) {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: productKeys.adminDetail(id) });
+      // The term and the slots are the plan, so a saved edit moves its dates.
+      queryClient.invalidateQueries({
+        queryKey: productKeys.plannedSessions(id),
+      });
       queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
       queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey });

@@ -101,14 +101,8 @@ describe("the trainee shell's mapping", () => {
   it("builds a redacted feed: every gedu note withheld, nothing owed", () => {
     const entries = buildGeduSessionFeed({
       groupId: feed.group.id,
-      timezone: feed.product.timezone,
-      slots: feed.product.schedule_slots.map((slot) => ({
-        weekday: slot.weekday,
-        startTime: slot.start_time,
-        durationMinutes: slot.duration_minutes,
-      })),
-      startDate: feed.product.start_date,
-      endDate: feed.product.end_date,
+      plannedSessions: feed.planned_sessions,
+      openEnded: feed.product.end_date === null,
       sessions: feed.sessions,
       gedus: feed.gedus,
       substitutions: [],

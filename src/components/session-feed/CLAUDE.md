@@ -295,21 +295,14 @@ the dashboard badge — and a change to one is a change to both, in the same
 commit.** They answer the same question for two surfaces, and a badge counting a
 session the card calls finished is worse than either being wrong alone. The two
 places already share the whitespace-trimmed test for "has a report"; they also
-share the emailed test and its epoch gate, and now the creations condition —
-which means they share a **third** derivation as well, the one that says which
-occurrence is a run's last. Both walk the year ending at the end date, floored at
-the start date, and take the greatest date whose weekday a slot names and the
-group has not cancelled; a year is enough because slots are weekly, unless a whole
-year of the group's sessions is cancelled. A cancelled date is never owed on
-either side. The creations condition sits inside
+share the emailed test and its epoch gate, and now the creations condition. Which
+session is a run's last is *not* derived twice: the database answers it once, the
+count reads that answer and the card reads it from its document, so the two
+cannot name different final sessions. A cancelled date is never owed on either
+side. The creations condition sits inside
 the epoch-floored half on both sides, exactly as the emailed test does, so a
 pre-epoch final session keeps its check rather than losing it to a term that
-finished before the platform asked. There is a **fourth** thing they must agree
-on and it is easy to miss because neither side states it as a rule: the floor an
-undated run's occurrence walk starts from — a constant in the TypeScript, a
-`COALESCE` on the start date in the SQL — and the two numbers have to be the
-same number, because a product with no start date otherwise has a different
-history on the card than in the count.
+finished before the platform asked.
 
 ## The attribution chip
 
@@ -550,7 +543,7 @@ that itself, because it does not know which thumbnail that was.
   Reveals are instant — no
   spinner, no skeleton — because the data is already in memory: feeds arrive as one
   document (a weekly club is ~52 sessions/year; paged fetching was rejected because the
-  client projects past occurrences from the schedule, and a partial fetch makes stored
+  client lays the stored rows over the whole plan, and a partial fetch makes stored
   reports silently render as "no write-up").
 - **The report clamp is arithmetic, never measured**, so server and first client paint
   agree; the tolerance is documented beside the constants. In practice only the gedu feed

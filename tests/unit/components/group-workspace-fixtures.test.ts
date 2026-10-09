@@ -28,8 +28,8 @@ import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
  *
  * **One line is restated rather than imported, deliberately.** `obligationFor`
  * below rebuilds the obligation the workspace body derives, and every part of
- * it but one is the real thing — `finalSessionDate` and `sessionEntryId` are
- * the functions the page calls. The exception is the `withCreations` set, whose
+ * it but one is the real thing — the document's final session and
+ * `sessionEntryId` are what the page reads. The exception is the `withCreations` set, whose
  * derivation in the body is a one-line filter over a map the shell has already
  * built; extracting a shared helper for it would cost a module and an import to
  * spare a single `list.length > 0`. The drift it leaves exposed is
@@ -46,17 +46,8 @@ function obligationFor(
 ): CreationsObligation | null {
   const { product, my_group_id: groupId } = fixture.data;
   if (!product.requires_gamer_creations) return null;
-  const date = finalSessionDate({
-    slots: product.schedule_slots,
-    startDate: product.start_date,
-    endDate: product.end_date,
-    // Read off the fixture's own feed, exactly as the workspace body reads it.
-    cancelledDates: new Set(
-      fixture.entries.flatMap((entry) =>
-        entry.kind === "cancelled" ? [entry.sessionDate] : [],
-      ),
-    ),
-  });
+  // The document's final session, exactly as the workspace body reads it.
+  const date = fixture.data.final_session_date;
   return {
     finalEntryId: date === null ? null : sessionEntryId(groupId, date),
     withCreations: new Set(
@@ -88,6 +79,28 @@ describe("every workspace scenario", () => {
       // the (group, date) key guarantees in the database too.
       expect(new Set(fixture.entries.map((e) => e.id)).size).toBe(
         fixture.entries.length,
+      );
+    });
+
+    /**
+     * The fixture states the run's final session the way the database hands
+     * it over, so it has to be the one the schedule, the end date and the
+     * feed's own cancellations name — or the obligation hangs off a day the
+     * scenario never meant.
+     */
+    it(`${scenario}: names the final session the schedule names`, () => {
+      const { data, entries } = buildGroupWorkspaceFixture(NOW, scenario);
+      expect(data.final_session_date).toBe(
+        finalSessionDate({
+          slots: data.product.schedule_slots,
+          startDate: data.product.start_date,
+          endDate: data.product.end_date,
+          cancelledDates: new Set(
+            entries.flatMap((entry) =>
+              entry.kind === "cancelled" ? [entry.sessionDate] : [],
+            ),
+          ),
+        }),
       );
     });
   }
