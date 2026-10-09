@@ -88,8 +88,8 @@ interface ClubSpec {
   feeCents?: number | null;
   invoiceCustomer?: InvoiceCustomerRow | null;
   /**
-   * Monday 14:15 for 75 minutes unless a case wants something else. An empty
-   * list projects nothing, so the club bills its stored rows and no more.
+   * Monday 14:15 for 75 minutes unless a case wants something else. A club
+   * with no slots has nothing planned, so it bills its stored rows and no more.
    */
   slots?: MunicipalityInvoicingClub["schedule_slots"];
   /** Dates with a stored row. Mondays in May 2026 are 4, 11, 18 and 25. */
@@ -99,6 +99,9 @@ interface ClubSpec {
   /** The term's last day — the end of May unless a case stops it earlier. */
   endDate?: string;
 }
+
+/** The Monday club's planned dates in May 2026. */
+const MAY_MONDAYS = ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25"];
 
 function club(spec: ClubSpec): MunicipalityInvoicingClub {
   return {
@@ -111,6 +114,7 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
     schedule_slots: spec.slots ?? [
       { weekday: 0, start_time: "14:15", duration_minutes: 75 },
     ],
+    planned_dates: spec.slots?.length === 0 ? [] : MAY_MONDAYS,
     location:
       spec.location === undefined
         ? {
@@ -919,12 +923,30 @@ describe("a period customer's file", () => {
     billing_cadence: "half_yearly",
   });
 
-  /** One month's document holding the clubs given. */
+  /** The Monday clubs' planned dates, month by month, from the 12 January start. */
+  const MONDAYS_BY_MONTH: Record<string, string[]> = {
+    "2026-01-01": ["2026-01-12", "2026-01-19", "2026-01-26"],
+    "2026-02-01": ["2026-02-02", "2026-02-09", "2026-02-16", "2026-02-23"],
+    "2026-03-01": ["2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30"],
+    "2026-04-01": ["2026-04-06", "2026-04-13", "2026-04-20", "2026-04-27"],
+    "2026-05-01": MAY_MONDAYS,
+  };
+
+  /**
+   * One month's document holding the clubs given, each carrying that month's
+   * Mondays as its plan.
+   */
   function monthOf(
     month: string,
     clubs: MunicipalityInvoicingClub[],
   ): MunicipalityInvoicingSnapshot {
-    return { month_start: month, clubs };
+    return {
+      month_start: month,
+      clubs: clubs.map((one) => ({
+        ...one,
+        planned_dates: MONDAYS_BY_MONTH[month] ?? [],
+      })),
+    };
   }
 
   /** A Monday club of `buyer`'s that recorded nothing — it bills every date it was due. */

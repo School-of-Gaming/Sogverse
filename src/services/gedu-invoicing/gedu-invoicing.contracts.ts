@@ -117,8 +117,9 @@ export const geduInvoicingGroup = z.object({
 });
 
 /**
- * A product one of those groups belongs to: what projection needs (timezone,
- * term, weekly slots), what pays (both current fees — null means not set, never
+ * A product one of those groups belongs to: when it was due (its planned
+ * dates in the month) and whose today decides what has passed (timezone),
+ * what pays (both current fees — null means not set, never
  * zero), what splits the totals (`product_type`: a municipality club against
  * everything else), and what labels it (names, location, municipality — the
  * last null where the location chain reaches none, which a consumer club may).
@@ -133,6 +134,11 @@ export const geduInvoicingProduct = z.object({
   assistant_gedu_fee_cents: z.number().nullable(),
   product_translations: z.array(productName),
   schedule_slots: z.array(municipalityInvoicingScheduleSlot),
+  /**
+   * The dates its seats were due: the product's planned session dates inside
+   * the month, already clipped to its term, one per date, ascending.
+   */
+  planned_dates: z.array(z.string()),
   location: municipalityInvoicingLocation.nullable(),
   municipality: municipalityInvoicingMunicipality.nullable(),
 });

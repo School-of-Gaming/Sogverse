@@ -379,6 +379,31 @@ describe("get_admin_municipality_invoicing", () => {
     ]);
   });
 
+  it("carries the club's planned dates inside the month, and none outside it", () => {
+    // The weekly Wednesday slot over March: the 4th to the 25th, and neither
+    // the last Wednesday of February nor the first of April.
+    expect(invoiced(P_IN_MONTH)?.planned_dates).toEqual([
+      "2026-03-04",
+      "2026-03-11",
+      "2026-03-18",
+      "2026-03-25",
+    ]);
+  });
+
+  it("clips the planned dates to the term inside a month", async () => {
+    // The term starts on Monday 12 January, so January's first Wednesday, the
+    // 7th, is before it and is not planned.
+    const { data, error } = await adminUser.rpc(
+      "get_admin_municipality_invoicing",
+      { p_month_start: "2026-01-01" },
+    );
+    expect(error).toBeNull();
+    const january = municipalityInvoicingSnapshot.parse(data);
+    expect(
+      january.clubs.find((club) => club.id === P_IN_MONTH)?.planned_dates,
+    ).toEqual(["2026-01-14", "2026-01-21", "2026-01-28"]);
+  });
+
   it("omits a club whose sessions and term both fall outside the month", () => {
     expect(invoiced(P_OUT_OF_MONTH)).toBeUndefined();
   });
@@ -474,6 +499,7 @@ describe("get_admin_municipality_invoicing", () => {
     // the one where a `jsonb_agg` over nothing would have produced null and
     // broken the parse.
     expect(club?.schedule_slots).toEqual([]);
+    expect(club?.planned_dates).toEqual([]);
     expect(club?.sessions).toEqual([]);
   });
 });

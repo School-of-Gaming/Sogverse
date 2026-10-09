@@ -104,6 +104,7 @@ BEGIN
                'municipality_fee_cents', c.municipality_fee_cents,
                'product_translations',   tr.items,
                'schedule_slots',         sl.items,
+               'planned_dates',          pd.items,
                'location',
                  CASE WHEN l.id IS NULL THEN NULL
                       ELSE jsonb_build_object(
@@ -175,6 +176,17 @@ BEGIN
                     WHERE ss.product_id = c.id
                  ), '[]'::jsonb) AS items
         ) sl
+        -- The plan: every date planned_session_dates puts inside the month,
+        -- clipped to the club's term by that function — one per date, since a
+        -- product has at most one slot per weekday. These are the dates the
+        -- club was due to meet; the page sets them beside the stored rows and
+        -- the cancellations.
+        CROSS JOIN LATERAL (
+          SELECT COALESCE((
+                   SELECT jsonb_agg(psd.session_date ORDER BY psd.session_date)
+                     FROM public.planned_session_dates(c.id, p_month_start, v_month_end) psd
+                 ), '[]'::jsonb) AS items
+        ) pd
         -- Raw rows, one per (group, date). The page collapses two groups on one
         -- date into the single session the club is paid for, and can still say
         -- which groups met — an aggregate here would have thrown that away.
@@ -275,7 +287,7 @@ $$;
 -- Name: FUNCTION get_admin_municipality_invoicing(p_month_start date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_municipality_invoicing(p_month_start date) IS 'One calendar month of municipality-club invoicing, as a single document: every municipality club that either recorded a session in the month or could have (a term that overlaps it), each with its timezone, term dates, current municipality_fee_cents, the whole product_translations array, its weekly schedule slots, its own location row, the nearest ancestor-or-self location of type municipality, the FENNOA INVOICE CUSTOMER it is billed to, every stored group_sessions row in the month as a raw (group_id, session_date) pair, the month''s cancelled (group_id, session_date) pairs in effect, and every group id the club has. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input. p_month_start must be the first day of a month; anything else raises check_violation. A stored row on a date a cancellation covers is left out of sessions, so no reader can bill a cancelled session. The candidate test is the TERM alone and the document carries no lifecycle column. The municipality walk climbs parent_id THROUGH retired rows and never filters them, because a school that has since closed still sat in its municipality. Every club in the document HAS a municipality: a club whose chain reaches none cannot be invoiced to anybody, so the whole read raises check_violation naming those product ids rather than shipping a null the caller would have to render somewhere outside every total. Each club also carries invoice_customer — the WHOLE customer row (number, invoice name, address, optional reference and invoice text, and the billing cadence that decides whether its file covers a month, a quarter or a half-year) rather than an id, because the caller turns it into a Finvoice file — or null where nobody has said who pays yet. A null customer is NOT refused, unlike a null municipality: such a club renders on the page perfectly well and only its own file is blocked, so refusing the month would take every other file down with it. The link is the club''s own column and is never derived from its location, because one city can be two customers and an association can buy clubs sited in a municipality it is not. The fee is the current column value with no snapshotting, and NULL means unset — the client shows that as a blank to fix, never as zero. A quarterly or half-yearly file is built by reading this document once per month of the period. Every array ships as [] rather than null.';
+COMMENT ON FUNCTION public.get_admin_municipality_invoicing(p_month_start date) IS 'One calendar month of municipality-club invoicing, as a single document: every municipality club that either recorded a session in the month or could have (a term that overlaps it), each with its timezone, term dates, current municipality_fee_cents, the whole product_translations array, its weekly schedule slots (for the schedule summary), planned_dates — the club''s planned session dates inside the month, as planned_session_dates answers them over the month (so clipped to the term), ascending, which are the dates the club was due to meet — its own location row, the nearest ancestor-or-self location of type municipality, the FENNOA INVOICE CUSTOMER it is billed to, every stored group_sessions row in the month as a raw (group_id, session_date) pair, the month''s cancelled (group_id, session_date) pairs in effect, and every group id the club has. Admin-only, guard-first on assert_admin, and deliberately not STRICT so the guard cannot be skipped on NULL input. p_month_start must be the first day of a month; anything else raises check_violation. A stored row on a date a cancellation covers is left out of sessions, so no reader can bill a cancelled session. The candidate test is the TERM alone and the document carries no lifecycle column. The municipality walk climbs parent_id THROUGH retired rows and never filters them, because a school that has since closed still sat in its municipality. Every club in the document HAS a municipality: a club whose chain reaches none cannot be invoiced to anybody, so the whole read raises check_violation naming those product ids rather than shipping a null the caller would have to render somewhere outside every total. Each club also carries invoice_customer — the WHOLE customer row (number, invoice name, address, optional reference and invoice text, and the billing cadence that decides whether its file covers a month, a quarter or a half-year) rather than an id, because the caller turns it into a Finvoice file — or null where nobody has said who pays yet. A null customer is NOT refused, unlike a null municipality: such a club renders on the page perfectly well and only its own file is blocked, so refusing the month would take every other file down with it. The link is the club''s own column and is never derived from its location, because one city can be two customers and an association can buy clubs sited in a municipality it is not. The fee is the current column value with no snapshotting, and NULL means unset — the client shows that as a blank to fix, never as zero. A quarterly or half-yearly file is built by reading this document once per month of the period. Every array ships as [] rather than null.';
 
 
 --

@@ -48,8 +48,9 @@ function club(
     end_date: "2026-12-18",
     municipality_fee_cents: 8_750,
     product_translations: [{ locale: "en", name: `Club ${overrides.id}` }],
-    // Wednesdays (weekday 2), which September 2026 has five of: 2, 9, 16, 23, 30.
     schedule_slots: [{ weekday: 2, start_time: "16:00", duration_minutes: 90 }],
+    // Its Wednesdays, which September 2026 has five of: 2, 9, 16, 23, 30.
+    planned_dates: ["2026-09-02", "2026-09-09", "2026-09-16", "2026-09-23", "2026-09-30"],
     location: {
       id: "aaaaaaaa-0000-0000-0000-000000000001",
       name: "Test School",
@@ -105,14 +106,14 @@ function build(
 
 /**
  * A club that bills its stored rows and nothing else: no weekly slots, so
- * nothing is projected and no passed date is billed on assumption. For the cases
- * about arithmetic, customers and totals, where a projected Wednesday billing
+ * nothing is planned and no passed date is billed on assumption. For the cases
+ * about arithmetic, customers and totals, where a planned Wednesday billing
  * beside the rows would be a second rule in a case about something else.
  */
 function rowsOnly(
   overrides: Partial<MunicipalityInvoicingClub> & { id: string },
 ): MunicipalityInvoicingClub {
-  return club({ schedule_slots: [], ...overrides });
+  return club({ schedule_slots: [], planned_dates: [], ...overrides });
 }
 
 /** The one club of the one municipality, for the single-club cases. */
@@ -146,8 +147,8 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.totalCents).toBe(8_750);
     });
 
-    it("counts a stored row the schedule never projected", () => {
-      // Records beat projections. A club that met on a Friday because the hall
+    it("counts a stored row the plan never held", () => {
+      // Records beat the plan. A club that met on a Friday because the hall
       // was unavailable on the Wednesday still met, and the row is the evidence
       // — so it bills, and it is not reported as anything unusual. It bills on
       // top of the two passed Wednesdays, which were due and bill unrecorded.
@@ -164,7 +165,7 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.unrecordedCount).toBe(2);
     });
 
-    it("prefers the record over the projection on a date that has both", () => {
+    it("prefers the record over the plan on a date that has both", () => {
       const built = onlyClub([
         club({
           id: "a",
@@ -173,7 +174,7 @@ describe("buildMunicipalityInvoicing", () => {
       ]);
 
       const dates = built.sessions.map((s) => s.date);
-      // One line for the 2nd, not two — the projection and the row are the same
+      // One line for the 2nd, not two — the planned date and the row are the same
       // session met on the same key.
       expect(dates.filter((d) => d === "2026-09-02")).toHaveLength(1);
       expect(
@@ -183,7 +184,7 @@ describe("buildMunicipalityInvoicing", () => {
   });
 
   describe("unrecorded versus upcoming", () => {
-    it("splits the projected dates at the club's own today", () => {
+    it("splits the planned dates at the club's own today", () => {
       const built = onlyClub([club({ id: "a" })]);
 
       // Wednesdays in September 2026: 2, 9, 16, 23, 30. "Today" is the 16th, so
@@ -203,7 +204,7 @@ describe("buildMunicipalityInvoicing", () => {
     it("refuses to bill a stored row dated after the club's today", () => {
       // The database lets a gedu write a note against a session that has not
       // happened yet. Such a row is evidence of nothing, so the 23rd reads as
-      // upcoming exactly like the projection it sits on, and only the 9th bills.
+      // upcoming exactly like the planned date it sits on, and only the 9th bills.
       const built = onlyClub([
         rowsOnly({
           id: "a",
@@ -258,12 +259,12 @@ describe("buildMunicipalityInvoicing", () => {
 
   describe("the sessions billed without a record", () => {
     // A municipality is billed for every session that was due and not
-    // cancelled, so a passed projected date with no row bills at the fee. The
+    // cancelled, so a passed planned date with no row bills at the fee. The
     // club's own line still counts them, so a missing write-up can be chased
     // without opening a single club. The count is on the view model rather than
     // filtered out of the session lines by the component, because there has to
     // be exactly one definition of it.
-    it("bills every passed projected date with no stored row, and counts it", () => {
+    it("bills every passed planned date with no stored row, and counts it", () => {
       // Wednesdays: 2, 9, 16, 23, 30; today is the 16th. Nothing is recorded, so
       // the 2nd and the 9th bill unrecorded and the rest are merely still ahead.
       const built = onlyClub([club({ id: "a" })]);
@@ -316,22 +317,24 @@ describe("buildMunicipalityInvoicing", () => {
     });
 
     it("never counts a date still ahead of the club", () => {
-      // A club whose term starts after today has projected dates and not one of
+      // A club whose term starts after today has planned dates and not one of
       // them bills: a session that has not happened yet is not owed.
-      const built = onlyClub([club({ id: "a", start_date: "2026-09-20" })]);
+      const built = onlyClub([
+        club({ id: "a", planned_dates: ["2026-09-23", "2026-09-30"] }),
+      ]);
 
       expect(built.sessions.every((s) => s.kind === "upcoming")).toBe(true);
       expect(built.unrecordedCount).toBe(0);
       expect(built.billedCount).toBe(0);
     });
 
-    it("counts none for a club with nothing to project", () => {
-      // No weekly slots is no claim, so nothing is due beyond its rows and
+    it("counts none for a club with nothing planned", () => {
+      // Nothing planned is no claim, so nothing is due beyond its rows and
       // nothing is billed on assumption.
       const built = onlyClub([
         club({
           id: "a",
-          schedule_slots: [],
+          planned_dates: [],
           sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
         }),
       ]);
@@ -410,7 +413,7 @@ describe("buildMunicipalityInvoicing", () => {
       expect(kindOn(built, "2026-09-30")).toBe("upcoming");
     });
 
-    it("ignores a cancellation on a date the schedule does not project", () => {
+    it("ignores a cancellation on a date the plan does not hold", () => {
       // A Thursday, orphaned by a schedule that now meets on Wednesdays: no
       // line at all, and the club's own dates are untouched by it.
       const built = onlyClub([
@@ -431,11 +434,11 @@ describe("buildMunicipalityInvoicing", () => {
       ]);
     });
 
-    it("ignores a cancellation outside the club's term", () => {
+    it("ignores a cancellation after the club's term has ended", () => {
       const built = onlyClub([
         club({
           id: "a",
-          end_date: "2026-09-20",
+          planned_dates: ["2026-09-02", "2026-09-09", "2026-09-16"],
           cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-23" }],
         }),
       ]);
@@ -536,10 +539,10 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.totalCents).toBe(8_750);
     });
 
-    it("never bills a cancelled record the schedule no longer projects", () => {
+    it("never bills a cancelled record the plan no longer holds", () => {
       // A Thursday session was recorded, cancelled, and then the club moved to
       // Wednesdays. The cancellation holds over the record whatever the
-      // schedule did next: the Thursday does not bill, and with no projection
+      // schedule did next: the Thursday does not bill, and with no planned date
       // there is no line to mark cancelled either. Only the two passed
       // Wednesdays bill, unrecorded.
       const built = onlyClub([
@@ -555,7 +558,7 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.unrecordedCount).toBe(2);
     });
 
-    it("bills a sibling group's row beside another group's cancelled record off the projection", () => {
+    it("bills a sibling group's row beside another group's cancelled record off the plan", () => {
       // g1's Thursday record is cancelled; g2 recorded the same Thursday and
       // was never cancelled, so the club still delivered the date.
       const built = onlyClub([
@@ -595,8 +598,7 @@ describe("buildMunicipalityInvoicing", () => {
       const built = onlyClub([
         club({
           id: "a",
-          start_date: "2026-09-08",
-          end_date: "2026-09-10",
+          planned_dates: ["2026-09-09"],
           cancelled_sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
         }),
       ]);
@@ -607,90 +609,14 @@ describe("buildMunicipalityInvoicing", () => {
     });
   });
 
-  describe("the term clips the projection", () => {
-    it("starts projecting at the club's start date", () => {
-      const built = onlyClub([club({ id: "a", start_date: "2026-09-10" })]);
-
-      expect(built.sessions.map((s) => s.date)).toEqual([
-        "2026-09-16",
-        "2026-09-23",
-        "2026-09-30",
-      ]);
-    });
-
-    it("stops projecting after the club's end date, inclusive", () => {
-      // The 16th is the end date and is a Wednesday, so it is in; the 23rd is
-      // past the end and is not.
-      const built = onlyClub([club({ id: "a", end_date: "2026-09-16" })]);
-
-      expect(built.sessions.map((s) => s.date)).toEqual([
-        "2026-09-02",
-        "2026-09-09",
-        "2026-09-16",
-      ]);
-    });
-
-    it("projects nothing for a club with no start date", () => {
-      // There is no day to start walking from, and guessing one would invent
-      // sessions. Its stored rows still count.
-      const built = onlyClub([
-        club({
-          id: "a",
-          start_date: null,
-          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
-        }),
-      ]);
-
-      expect(built.sessions).toEqual([
-        { date: "2026-09-09", isoWeek: 37, kind: "recorded" },
-      ]);
-    });
-  });
-
-  describe("the start date is the whole of the has-it-begun rule", () => {
-    // There is no lifecycle state anywhere in this arithmetic, and that is the
-    // point: a stored one used to gate projection here, it never advanced past
-    // its initial value, and projection — and with it every date billed without
-    // a record — would be dead for every club on the invoice.
-    it("projects a full month for a club whose term spans it, however long ago it began", () => {
-      expect(
-        onlyClub([club({ id: "a", start_date: "2020-01-06" })]).sessions,
-      ).toHaveLength(5);
-    });
-
-    it("projects for a club whose term has already finished, up to its last day", () => {
-      const built = onlyClub([club({ id: "a", end_date: "2026-09-09" })]);
-      expect(built.sessions.map((session) => session.date)).toEqual([
-        "2026-09-02",
-        "2026-09-09",
-      ]);
-    });
-
-    it("projects nothing for a club whose term starts after the month, and keeps its rows", () => {
-      const built = onlyClub([
-        club({
-          id: "a",
-          start_date: "2026-11-02",
-          end_date: null,
-          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
-        }),
-      ]);
-
-      expect(built.sessions).toEqual([
-        { date: "2026-09-09", isoWeek: 37, kind: "recorded" },
-      ]);
-      expect(built.totalCents).toBe(8_750);
-    });
-  });
-
   describe("a month with nothing in it", () => {
-    it("omits a club whose term does not reach the month", () => {
+    it("omits a club with nothing planned and nothing stored in the month", () => {
       // The RPC can hand back a club on the strength of a row in another month
       // or a term that has since been edited; a club with nothing in THIS month
       // is not on this invoice, because an empty row would say it did nothing
       // in a month it was never running in.
       const view = build([
-        club({ id: "a", start_date: "2026-10-05", end_date: "2026-12-18" }),
+        club({ id: "a", planned_dates: [] }),
       ]);
 
       expect(view.municipalities).toEqual([]);
@@ -932,7 +858,7 @@ describe("buildMunicipalityInvoicing", () => {
 
     it("leaves a fee-less club with nothing billed out of that count", () => {
       // The count is about what a FILE would be wrong about. A club with
-      // nothing billed — its term starts after today, so every date it projects
+      // nothing billed — its term starts after today, so every date it plans
       // is still ahead — puts no row and no money on the invoice whatever its
       // price, so it cannot make one short — while the month's own
       // `clubsWithoutFee`, which is about the data, still reports it.
@@ -943,7 +869,7 @@ describe("buildMunicipalityInvoicing", () => {
           id: "b",
           invoice_customer: buyer,
           municipality_fee_cents: null,
-          start_date: "2026-09-20",
+          planned_dates: ["2026-09-23", "2026-09-30"],
         }),
       ]);
 
@@ -1054,6 +980,7 @@ describe("buildMunicipalityInvoicing", () => {
         club({
           id: "a",
           schedule_slots: [],
+          planned_dates: [],
           sessions: [{ group_id: "g1", session_date: "2026-09-02" }],
         }),
       ]);
@@ -1202,6 +1129,7 @@ describe("buildMunicipalityInvoicing", () => {
       club({
         id: "a",
         schedule_slots: [],
+        planned_dates: [],
         sessions: [
           { group_id: "g1", session_date: "2026-09-02" },
           { group_id: "g1", session_date: "2026-09-09" },
@@ -1226,17 +1154,17 @@ describe("buildMunicipalityInvoicing", () => {
       expect(onlyClub([slotless()]).scheduleSummary).toBeNull();
     });
 
-    it("projects nothing, so it contributes no unrecorded lines", () => {
+    it("plans nothing, so it contributes no unrecorded lines", () => {
       const built = onlyClub([slotless()]);
 
       expect(built.sessions.every((s) => s.kind === "recorded")).toBe(true);
     });
 
     it("is left off the invoice when it has no rows either", () => {
-      // Nothing stored and nothing to project is a club that did nothing in a
+      // Nothing stored and nothing planned is a club that did nothing in a
       // month it may not even have been running in. An empty row would say
       // otherwise.
-      const view = build([club({ id: "a", schedule_slots: [], sessions: [] })]);
+      const view = build([club({ id: "a", schedule_slots: [], planned_dates: [], sessions: [] })]);
 
       expect(view.municipalities).toHaveLength(0);
       expect(view.totalCents).toBe(0);

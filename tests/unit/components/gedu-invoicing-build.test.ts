@@ -50,8 +50,9 @@ function product(
     primary_gedu_fee_cents: 6_000,
     assistant_gedu_fee_cents: 4_000,
     product_translations: [{ locale: "en", name: `Club ${overrides.id}` }],
-    // Wednesdays (weekday 2): 2, 9, 16, 23, 30 September.
     schedule_slots: [{ weekday: 2, start_time: "16:00", duration_minutes: 90 }],
+    // Its Wednesdays: 2, 9, 16, 23, 30 September.
+    planned_dates: ["2026-09-02", "2026-09-09", "2026-09-16", "2026-09-23", "2026-09-30"],
     location: {
       id: "loc-school",
       name: "Test School",
@@ -156,7 +157,7 @@ describe("buildGeduInvoicing", () => {
           group({ id: "g1", product_id: "p1", sessions: ["2026-09-02", "2026-09-09"] }),
           group({ id: "g2", product_id: "p2" }),
         ],
-        products: [product({ id: "p1" }), product({ id: "p2", schedule_slots: [] })],
+        products: [product({ id: "p1" }), product({ id: "p2", planned_dates: [] })],
       });
 
       const ben = geduOf(view, BENJAMIN);
@@ -346,15 +347,15 @@ describe("buildGeduInvoicing", () => {
       expect(club.lines.find((line) => line.date === "2026-09-16")?.kind).toBe("paid");
     });
 
-    it("renders stored rows alone for a product with no slots", () => {
+    it("renders stored rows alone for a product with nothing planned", () => {
       const club = geduOf(
-        build(assigned(["2026-09-04"], { schedule_slots: [] })),
+        build(assigned(["2026-09-04"], { planned_dates: [] })),
         AINO,
       ).clubs[0];
       expect(kinds(club)).toEqual([["2026-09-04", "paid"]]);
     });
 
-    it("pays a stored row the schedule never projected", () => {
+    it("pays a stored row the plan never held", () => {
       const club = geduOf(build(assigned(["2026-09-04"])), AINO).clubs[0];
       expect(club.lines.find((line) => line.date === "2026-09-04")?.kind).toBe("paid");
     });
@@ -401,8 +402,8 @@ describe("buildGeduInvoicing", () => {
     });
   });
 
-  describe("an absence the schedule does not project", () => {
-    // Friday the 4th: the weekly Wednesday slot never lands on it, and no row
+  describe("an absence the plan does not hold", () => {
+    // Friday the 4th: the plan never holds it, and no row
     // was stored — Celia's page shows it, so Aino's must too.
     function absentOnThe4th(cancelled: string[]) {
       return build({
@@ -617,7 +618,7 @@ describe("buildGeduInvoicing", () => {
       const view = build({
         gedus: [gedu({ id: AINO, assignments: [{ group_id: "g1", role: "primary" }] })],
         groups: [group({ id: "g1", product_id: "p1" })],
-        products: [product({ id: "p1", start_date: "2026-10-05" })],
+        products: [product({ id: "p1", planned_dates: [] })],
       });
       expect(view.gedus).toEqual([]);
       expect(view.totalCents).toBe(0);

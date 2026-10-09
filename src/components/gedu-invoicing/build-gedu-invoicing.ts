@@ -2,8 +2,6 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
-  monthEndOf,
-  projectMonthDates,
   recordHasHappened,
   unrecordedOrUpcoming,
 } from "@/lib/invoicing/month";
@@ -46,12 +44,12 @@ import type {
  * is — in the role recorded on the substitution. The fee is the product's
  * *current* fee for that role, read with the page.
  *
- * **A schedule is a claim, not a session** — the municipality rules, per seat.
- * The product's weekly slots are projected across the month, clipped to its
- * term; a gedu's own substitution and absence dates are claims too, because a
- * request is a statement that a session was due that day. A claim the gedu was expected at,
- * with no row, is `unrecorded` before the product's own today and `upcoming`
- * from today on. **Records beat projections**: a row on a date nothing projects
+ * **A plan is a claim, not a session** — the municipality rules, per seat.
+ * The product's planned dates in the month — the database's plan, already
+ * clipped to its term — are claims; a gedu's own substitution and absence
+ * dates are claims too, because a request is a statement that a session was
+ * due that day. A claim the gedu was expected at, with no row, is `unrecorded` before the product's own today and `upcoming`
+ * from today on. **Records beat the plan**: a row on a date nothing claims
  * still pays. A row dated after today is `upcoming`, never paid.
  *
  * **A cancelled date is never paid and never missed**, and only a claimed date
@@ -196,13 +194,10 @@ export function buildGeduInvoicing({
   now,
 }: BuildGeduInvoicingArgs): GeduInvoicingView {
   const monthStart = snapshot.month_start;
-  const monthEnd = monthEndOf(monthStart);
 
   const context: BuildContext = {
     locale,
     now,
-    monthStart,
-    monthEnd,
     groups: new Map(snapshot.groups.map((group) => [group.id, group])),
     products: new Map(snapshot.products.map((product) => [product.id, product])),
   };
@@ -249,8 +244,6 @@ export function buildGeduInvoicing({
 interface BuildContext {
   locale: SupportedLocale;
   now: Date;
-  monthStart: string;
-  monthEnd: string;
   groups: ReadonlyMap<string, GeduInvoicingGroup>;
   products: ReadonlyMap<string, GeduInvoicingProduct>;
 }
@@ -392,16 +385,14 @@ function groupLines(
   const today = productLocalDate(context.now, product.timezone);
   const inputs = staffingInputs(gedu, group.id);
 
-  // A claim says a session was due: the product's projection, or a date on a
+  // A claim says a session was due: the product's plan, or a date on a
   // request the gedu is party to — booked in as a sub, or away on their own
   // absence. Both halves of one request claim its date, so the absent gedu's
-  // page shows every date the sub's does: an absence the schedule no longer
-  // projects still renders as an absent line, or a cancelled one where the date
+  // page shows every date the sub's does: an absence the plan no longer holds
+  // still renders as an absent line, or a cancelled one where the date
   // was cancelled, exactly as the sub sees it. An absence can only ever produce
   // one of those two kinds — a live request takes its filer out of the seat.
-  const claims = new Set(
-    projectMonthDates(product, context.monthStart, context.monthEnd),
-  );
+  const claims = new Set(product.planned_dates);
   for (const seat of [...gedu.substitutions, ...gedu.absences]) {
     if (seat.group_id === group.id) claims.add(seat.session_date);
   }
@@ -454,7 +445,7 @@ function groupLines(
 
     if (cancelled.has(date)) {
       // Only a claimed date carries a cancelled line; a cancellation over a
-      // record nothing projects keeps it from paying and renders nothing.
+      // record nothing claims keeps it from paying and renders nothing.
       if (claims.has(date)) lines.push(line("cancelled"));
       continue;
     }

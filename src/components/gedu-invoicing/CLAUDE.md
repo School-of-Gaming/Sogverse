@@ -21,11 +21,12 @@ which collapses a club's groups on one date into one session. A gedu at two grou
 club on the same afternoon held two seats and is paid for two.
 
 "Expected" is the substitution feature's own derivation, run over the seats the document
-carries, so the two features cannot disagree about who was meant to be there. A schedule is
-a claim, not a session, exactly as in the municipality invoice: projected dates and a sub's
-booked dates with no row are **not recorded** before the product's local today (warning
-tone, zero) and **upcoming** from today on (no amount); a row dated after today is upcoming
-and never pays. A cancelled date is never paid and never missed, and only a claimed date
+carries, so the two features cannot disagree about who was meant to be there. A plan is a
+claim, not a session, exactly as in the municipality invoice: the product's planned dates in
+the month — which the document carries from the database, already clipped to its term —
+and a sub's booked dates with no row are **not recorded** before the product's local today
+(warning tone, zero) and **upcoming** from today on (no amount); a row dated after today is
+upcoming and never pays. A cancelled date is never paid and never missed, and only a claimed date
 gets a cancelled line.
 
 ## Roles and fees
@@ -58,7 +59,7 @@ An absent gedu's own date renders as a quiet zero line — "away, and who substi
 "away, no substitute" — so they can see why a date they hold did not pay. A sub's lines
 name the gedu they stood in for, whatever became of the date. An absence claims its date
 just as the sub's booking does, so the two gedus' pages show the same dates even where the
-schedule no longer projects one, and a cancelled one reads cancelled on both.
+plan no longer holds one, and a cancelled one reads cancelled on both.
 
 **Both names are shown on both pages, and that is consistent with the substitution
 feature's disclosure rules rather than an exception to them.** The absent gedu is disclosed
