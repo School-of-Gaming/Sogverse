@@ -274,8 +274,8 @@ interface ScenarioConfig {
    * feed's own dates agree only by accident: the feed pins its sessions to the
    * schedule's weekday and `now` is whatever day it is, so counting back whole
    * weeks lands up to a cadence step *after* the oldest session the feed
-   * carries. Nothing breaks — the final-session derivation only needs the start
-   * date at or below the last session — but a run whose start date sits after
+   * carries. Nothing breaks — the final session is read off the end date, never
+   * the start date — but a run whose start date sits after
    * its own first card is a fixture contradicting itself on screen. Read off
    * the feed, it cannot.
    */

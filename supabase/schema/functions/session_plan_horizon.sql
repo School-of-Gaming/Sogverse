@@ -14,10 +14,11 @@ CREATE FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid D
                     -- The eighth session that has not ended and that the group
                     -- has not cancelled: an open-ended list shows the first
                     -- eight sessions that have not closed
-                    -- (OPEN_ENDED_OCCURRENCE_CAP), so the span holds all of
-                    -- them, and skipping the group's cancellations keeps its
-                    -- next running session inside. The read starts a day back
-                    -- so a session still running past midnight counts.
+                    -- (OPEN_ENDED_OCCURRENCE_CAP in src/lib/planned-sessions.ts),
+                    -- so the span holds all of them, and skipping the group's
+                    -- cancellations keeps its next running session inside. The
+                    -- read starts a day back so a session still running past
+                    -- midnight counts.
                     (SELECT planned.session_date
                        FROM public.planned_session_dates(
                               p.id,
@@ -54,7 +55,7 @@ $$;
 -- Name: FUNCTION session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) IS 'The last date worth reading a product''s plan to. A dated product''s end_date; for an open-ended one, the date of the eighth planned session that has not ended and that p_group_id has not cancelled (every planned session when p_group_id is NULL) — an open-ended list shows the first eight sessions that have not closed (OPEN_ENDED_OCCURRENCE_CAP in src/lib/session-occurrence.ts), so the span holds all of them, and skipping the group''s cancellations keeps its next running session inside — raised to p_at_least when that is later. The search reads one year past the product-local today; when fewer than eight qualify inside it (a product starting late in that year, a year of the group''s sessions cancelled, or no slots at all) the answer is that day, product-local today + 366, so the span holds every one there is.';
+COMMENT ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) IS 'The last date worth reading a product''s plan to. A dated product''s end_date; for an open-ended one, the date of the eighth planned session that has not ended and that p_group_id has not cancelled (every planned session when p_group_id is NULL) — an open-ended list shows the first eight sessions that have not closed (OPEN_ENDED_OCCURRENCE_CAP in src/lib/planned-sessions.ts), so the span holds all of them, and skipping the group''s cancellations keeps its next running session inside — raised to p_at_least when that is later. The search reads one year past the product-local today; when fewer than eight qualify inside it (a product starting late in that year, a year of the group''s sessions cancelled, or no slots at all) the answer is that day, product-local today + 366, so the span holds every one there is.';
 
 
 --

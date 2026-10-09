@@ -289,7 +289,7 @@ describe("get_my_planned_sessions", () => {
     expect(unplaced.at(-1)?.date).toBe(await horizon(WEEKLY, null));
   });
 
-  it("reaches a cancelled membership's paid-through date beyond the ninth session", async () => {
+  it("reaches a cancelled membership's paid-through date beyond the eighth session", async () => {
     const plan = await planFor(customerAuth, WEEKLY_SEAT);
     const upcoming = plan.filter((session) => session.date >= TODAY);
 

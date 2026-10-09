@@ -376,8 +376,8 @@ export const geduGroupFeed = z.object({
   trainees: z.array(groupTrainee),
   /**
    * The product's planned sessions from its start date to its horizon — the
-   * end date of a dated product, the ninth upcoming session of an open-ended
-   * one — soonest first. Plain plan rows: `cancelled` is always `false` here,
+   * end date of a dated product; on an open-ended one, the eighth session that
+   * has not ended and that the group has not cancelled — soonest first. Plain plan rows: `cancelled` is always `false` here,
    * and the cancellations above are laid over them by date.
    */
   planned_sessions: plannedSessionRows,

@@ -327,8 +327,8 @@ export const familyProductFeed = z
     cancellations: z.array(familyFeedCancellation),
     /**
      * The product's planned sessions from its start date to its horizon for
-     * this group — on an open-ended product the ninth upcoming session the
-     * group has not cancelled — raised to the date a cancelled membership is
+     * this group — on an open-ended product the eighth session that has not
+     * ended and that the group has not cancelled — raised to the date a cancelled membership is
      * paid through, so the plan reaches the last session the family may
      * attend. Soonest first, plain plan rows: `cancelled` is always `false`,
      * and the cancellations above are laid over them by date.

@@ -54,7 +54,7 @@ CREATE FUNCTION public.planned_sessions_document(p_product_id uuid, p_to date) R
    WHERE p.id = p_product_id;
 $$;
 
-COMMENT ON FUNCTION public.planned_sessions_document(p_product_id uuid, p_to date) IS 'A product''s planned sessions from its start_date to p_to (planned_session_dates), as the `planned_sessions` member every session document carries: a JSON array of {session_date, starts_at, ends_at}, soonest first, and [] when the span plans nothing — including when p_to is NULL, which is the horizon of an open-ended product with no slots. Plain plan rows: cancellations are not folded in. Service role only; the documents that call it are SECURITY DEFINER.';
+COMMENT ON FUNCTION public.planned_sessions_document(p_product_id uuid, p_to date) IS 'A product''s planned sessions from its start_date to p_to (planned_session_dates), as the `planned_sessions` member every session document carries: a JSON array of {session_date, starts_at, ends_at}, soonest first, and [] when the span plans nothing — including when p_to is NULL, which session_plan_horizon answers only for a product that does not exist. Plain plan rows: cancellations are not folded in. Service role only; the documents that call it are SECURITY DEFINER.';
 
 REVOKE ALL ON FUNCTION public.planned_sessions_document(p_product_id uuid, p_to date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.planned_sessions_document(p_product_id uuid, p_to date) TO service_role;
@@ -1181,8 +1181,8 @@ BEGIN
     'sessions',    v_sessions,
     'cancellations', v_cancellations,
     -- The plan from the product's start to its horizon for THIS group — the
-    -- ninth upcoming session the group has not cancelled, on an open-ended
-    -- product — raised to the paid-through date, so a cancelled membership's
+    -- eighth session that has not ended and that the group has not cancelled,
+    -- on an open-ended product — raised to the paid-through date, so a cancelled membership's
     -- plan reaches the last session the family may still attend. Plain plan
     -- rows; the cancellations above are laid over them by date.
     'planned_sessions', public.planned_sessions_document(

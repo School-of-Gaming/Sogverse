@@ -22,7 +22,7 @@ $$;
 -- Name: FUNCTION group_final_session_date(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.group_final_session_date(p_group_id uuid) IS 'The group''s FINAL session: the last planned date on or before end_date that the group has not cancelled, so a cancelled last session hands the role to the one before it. NULL for an open-ended product and for a run that plans nothing. The search is the year ending at end_date: slots are weekly, so the answer is the run''s unless a whole year of the group''s sessions is cancelled. Its TypeScript twin is the final-session derivation in src/lib/session-occurrence.ts, and the two change together.';
+COMMENT ON FUNCTION public.group_final_session_date(p_group_id uuid) IS 'The group''s FINAL session: the last planned date on or before end_date that the group has not cancelled, so a cancelled last session hands the role to the one before it. NULL for an open-ended product and for a run that plans nothing. The search is the year ending at end_date: slots are weekly, so the answer is the run''s unless a whole year of the group''s sessions is cancelled.';
 
 
 --

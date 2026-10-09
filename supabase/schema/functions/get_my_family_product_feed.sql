@@ -270,8 +270,8 @@ BEGIN
     'sessions',    v_sessions,
     'cancellations', v_cancellations,
     -- The plan from the product's start to its horizon for THIS group — the
-    -- ninth upcoming session the group has not cancelled, on an open-ended
-    -- product — raised to the paid-through date, so a cancelled membership's
+    -- eighth session that has not ended and that the group has not cancelled,
+    -- on an open-ended product — raised to the paid-through date, so a cancelled membership's
     -- plan reaches the last session the family may still attend. Plain plan
     -- rows; the cancellations above are laid over them by date.
     'planned_sessions', public.planned_sessions_document(

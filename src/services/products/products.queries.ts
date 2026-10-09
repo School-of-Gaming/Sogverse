@@ -1,6 +1,11 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
@@ -98,6 +103,12 @@ export function useProductAdmin(id: string | undefined) {
  * A product's planned sessions in `[from, to]`, or nothing while any of the
  * three is unknown — the caller usually learns the window from the product
  * read.
+ *
+ * A window that moves (an open-ended product's reaches a year past today, so it
+ * moves at midnight) keeps the previous window's sessions on screen while the
+ * new one is read, so the query is pending only before its first answer — the
+ * admin product page waits on exactly that, and must not fall back to its
+ * loading state at midnight.
  */
 export function usePlannedSessions(
   productId: string | undefined,
@@ -115,6 +126,7 @@ export function usePlannedSessions(
     queryFn: () =>
       service.getPlannedSessions(productId!, window!.from, window!.to),
     enabled: !!productId && window !== null,
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -16,7 +16,8 @@ import { describe, expect, it } from "vitest";
  * **What it looks for is the one ingredient every walk needs: turning a date
  * into a weekday.** A schedule is weekdays and clock faces, so a walk has to ask
  * of each date it steps over which weekday that is — through `getDay()`,
- * `getUTCDay()`, the calendar-date helper `weekdayOf`, or the schedule
+ * `getUTCDay()`, date-fns' `getDay`/`getISODay` or a weekday format token,
+ * the calendar-date helper `weekdayOf`, or the schedule
  * resolvers in `src/lib/schedule-occurrence.ts`. Not every such read is a walk,
  * so the check classifies rather than bans: every file that reads one either
  * carries a written reason here, or fails. The enumeration is a filesystem
@@ -34,12 +35,19 @@ const EXTENSIONS = [".ts", ".tsx"];
 /** Reads that turn a date into a weekday — the ingredient of every walk. */
 const WEEKDAY_READS: readonly RegExp[] = [
   /\.get(?:UTC)?Day\(\)/,
+  // date-fns' `getDay(date)` and `getISODay(date)`.
+  /\bget(?:ISO)?Day\(/,
+  // A date-fns format string carrying a weekday token (`E`, `e`, `c`, `i`
+  // runs), as a string argument of `format` or `formatInTimeZone`. The token
+  // must stand alone between non-alphanumerics, so a zone name or a
+  // `yyyy-MM-dd` pattern never matches.
+  /\bformat(?:InTimeZone)?\((?:(?:[^();]|\([^();]*\))*?,\s*)?["'`][^"'`\n]*(?<![A-Za-z0-9#])(?:E{1,5}|e{1,5}|c{1,5}|i{1,5})(?![A-Za-z0-9])[^"'`\n]*["'`]/,
   /\bweekdayOf\(/,
   /\bnextOccurrenceInstant\(/,
   /\bviewerWeekdayIndex\(/,
 ];
 
-/** The expanders the plan replaced, and the module that held the first of them. */
+/** The expanders the plan replaced, and the modules that held them. */
 const RETIRED: readonly RegExp[] = [
   /\bgetNextSessionStart\b/,
   /\bstepBackOneWeek\b/,
@@ -49,7 +57,14 @@ const RETIRED: readonly RegExp[] = [
   /\bfinalSessionDate\b/,
   /\bcapPastCancellations\b/,
   /\bsplitAtNextRunning\b/,
+  /\boccurrenceOnDate\b/,
+  /\bcomputeSessionWindow\b/,
+  /\bprojectMonthDates\b/,
+  /\bweekdayOccurrences\b/,
+  /\btopicPrepWindowEndFromSchedule\b/,
   /["']@\/lib\/enrollment["']/,
+  /["']@\/lib\/session-schedule["']/,
+  /["']@\/lib\/session-date-occurrence["']/,
 ];
 
 const FIXTURE =

@@ -120,11 +120,21 @@ export function ProductDetailsPage({
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
 
-  const { data: product, isLoading } = useProductAdmin(productId);
-  const { data: plannedSessions } = usePlannedSessions(
+  const { data: product, isLoading: productLoading } =
+    useProductAdmin(productId);
+  const { data: plannedSessions, isPending: planPending } = usePlannedSessions(
     productId,
     product ? plannedSessionsWindow(product, now) : null,
   );
+  // The page holds its loading state until the plan has landed too, so it
+  // paints once, in its final form. The plan decides whether each group card's
+  // header carries a Join button, and a button arriving after the cards have
+  // painted would rewrap the group name beside it — a shift on the data's
+  // schedule rather than the admin's. The product row cannot carry the plan
+  // (it is a table select, not a document), so the wait is a second round trip
+  // behind the first; the plan read is one bounded RPC. A failed plan read
+  // ends the wait like a landed one, and the page renders with no plan.
+  const isLoading = productLoading || (product != null && planPending);
 
   const listHref = ROUTES.admin.productList(productType);
   const editHref = ROUTES.admin.productEdit(productType, productId);
@@ -361,7 +371,7 @@ function OperationalFacts({
   c,
 }: {
   product: ProductAdminDetailRow;
-  /** The product's plan, `undefined` until the read lands. */
+  /** The product's plan; `undefined` only when the read failed. */
   plannedSessions: readonly PlannedSession[] | undefined;
   topicName: string | null;
   uiLocale: string;
@@ -474,8 +484,8 @@ function OperationalFacts({
    * lists. Events are excluded because their single date *is* the session —
    * it would restate the term dates fact one row down.
    *
-   * Whether each row exists is decided from the product row alone, so the rows
-   * hold their place while the plan is read and only their dates arrive.
+   * Whether each row exists is decided from the product row alone, so a plan
+   * read that failed leaves the rows in place with no date in them.
    */
   const showSessionDates =
     product.product_type !== "event" && product.schedule_slots.length > 0;

@@ -128,10 +128,11 @@ CREATE FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid D
                     -- The eighth session that has not ended and that the group
                     -- has not cancelled: an open-ended list shows the first
                     -- eight sessions that have not closed
-                    -- (OPEN_ENDED_OCCURRENCE_CAP), so the span holds all of
-                    -- them, and skipping the group's cancellations keeps its
-                    -- next running session inside. The read starts a day back
-                    -- so a session still running past midnight counts.
+                    -- (OPEN_ENDED_OCCURRENCE_CAP in src/lib/planned-sessions.ts),
+                    -- so the span holds all of them, and skipping the group's
+                    -- cancellations keeps its next running session inside. The
+                    -- read starts a day back so a session still running past
+                    -- midnight counts.
                     (SELECT planned.session_date
                        FROM public.planned_session_dates(
                               p.id,
@@ -163,7 +164,7 @@ CREATE FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid D
    WHERE p.id = p_product_id;
 $$;
 
-COMMENT ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) IS 'The last date worth reading a product''s plan to. A dated product''s end_date; for an open-ended one, the date of the eighth planned session that has not ended and that p_group_id has not cancelled (every planned session when p_group_id is NULL) — an open-ended list shows the first eight sessions that have not closed (OPEN_ENDED_OCCURRENCE_CAP in src/lib/session-occurrence.ts), so the span holds all of them, and skipping the group''s cancellations keeps its next running session inside — raised to p_at_least when that is later. The search reads one year past the product-local today; when fewer than eight qualify inside it (a product starting late in that year, a year of the group''s sessions cancelled, or no slots at all) the answer is that day, product-local today + 366, so the span holds every one there is.';
+COMMENT ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) IS 'The last date worth reading a product''s plan to. A dated product''s end_date; for an open-ended one, the date of the eighth planned session that has not ended and that p_group_id has not cancelled (every planned session when p_group_id is NULL) — an open-ended list shows the first eight sessions that have not closed (OPEN_ENDED_OCCURRENCE_CAP in src/lib/planned-sessions.ts), so the span holds all of them, and skipping the group''s cancellations keeps its next running session inside — raised to p_at_least when that is later. The search reads one year past the product-local today; when fewer than eight qualify inside it (a product starting late in that year, a year of the group''s sessions cancelled, or no slots at all) the answer is that day, product-local today + 366, so the span holds every one there is.';
 
 REVOKE ALL ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.session_plan_horizon(p_product_id uuid, p_group_id uuid, p_at_least date) TO service_role;
@@ -183,7 +184,7 @@ CREATE FUNCTION public.group_final_session_date(p_group_id uuid) RETURNS date
      AND NOT (g.id = ANY (planned.cancelled_group_ids));
 $$;
 
-COMMENT ON FUNCTION public.group_final_session_date(p_group_id uuid) IS 'The group''s FINAL session: the last planned date on or before end_date that the group has not cancelled, so a cancelled last session hands the role to the one before it. NULL for an open-ended product and for a run that plans nothing. The search is the year ending at end_date: slots are weekly, so the answer is the run''s unless a whole year of the group''s sessions is cancelled. Its TypeScript twin is the final-session derivation in src/lib/session-occurrence.ts, and the two change together.';
+COMMENT ON FUNCTION public.group_final_session_date(p_group_id uuid) IS 'The group''s FINAL session: the last planned date on or before end_date that the group has not cancelled, so a cancelled last session hands the role to the one before it. NULL for an open-ended product and for a run that plans nothing. The search is the year ending at end_date: slots are weekly, so the answer is the run''s unless a whole year of the group''s sessions is cancelled.';
 
 REVOKE ALL ON FUNCTION public.group_final_session_date(p_group_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.group_final_session_date(p_group_id uuid) TO service_role;
