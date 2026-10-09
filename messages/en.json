@@ -5810,11 +5810,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add your title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language you write in to be able to tick this.",
+          "text": "Fill in “One-line introduction” and “Bio” in every language you write in to be able to tick this.",
           "photoTitle": "Add a photo and your title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
-          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
-          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this."
+          "photoText": "Add a photo, and fill in “One-line introduction” and “Bio” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “One-line introduction” and “Bio” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “One-line introduction” and “Bio” in every language you write in, to be able to tick this."
         }
       },
       "photo": {
@@ -5856,14 +5856,47 @@
       },
       "writing": {
         "heading": "In your own words",
+        "guidance": {
+          "lead": "Once the profile is public, it appears on the Team page of School of Gaming’s website, where both gamers and parents read it. Parents often want to know who leads their child’s sessions, what kind of person they are and what matters to them when working with children and young people.",
+          "thirdPerson": "Write the bio in the third person, like an introduction, but let it sound like the person it introduces rather than a CV.",
+          "doHeading": "Do",
+          "dontHeading": "Don’t",
+          "do": {
+            "tone": "A relaxed, personal tone",
+            "humour": "Humour, where it comes naturally",
+            "details": "A few meaningful details",
+            "sentences": "Complete, polished sentences"
+          },
+          "dont": {
+            "cv": "A CV or a long list of facts",
+            "slang": "Heavy slang or abbreviations",
+            "jokes": "Inside jokes a new reader won’t get",
+            "typos": "Spelling and punctuation mistakes"
+          },
+          "ideas": {
+            "summary": "Need ideas?",
+            "intro": "There is no single right way to write a profile, and no two need look alike. If getting started is hard, these questions can help.",
+            "questions": {
+              "games": "What kinds of games do you enjoy, and why?",
+              "memory": "Is there a game, gaming memory or community that has been especially meaningful to you?",
+              "outside": "What do you enjoy doing outside of work or gaming?",
+              "players": "What do you value when working with players?",
+              "atmosphere": "What kind of atmosphere do you want to create?",
+              "why": "Why is game education meaningful to you?",
+              "topics": "Are there particular topics or skills you are especially interested in?",
+              "background": "Is there something from your own background that influences the way you work?"
+            }
+          }
+        },
         "languages": "Languages",
+        "languagesHint": "The website doesn’t translate the profile. Add each language it should appear in, and write it under that language’s tab.",
         "addLocale": "Add a language",
         "removeLocale": "Remove {locale}",
-        "shortDescription": "Introduce yourself in one line",
+        "shortDescription": "One-line introduction",
         "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
         "longDescription": "Bio",
-        "longDescriptionHint": "What you do in sessions, what you play, and what families might like to know about you. Write it in the third person, as if someone were introducing you: “Anna has led Minecraft clubs since 2023 and loves teaching redstone.”",
-        "longDescriptionPlaceholder": "Tell families about yourself, in the third person",
+        "longDescriptionHint": "In the third person, like an introduction.",
+        "longDescriptionPlaceholder": "Anna has led clubs since 2023 and loves teaching redstone.",
         "funFact": "Fun fact",
         "funFactPlaceholder": "Once built a working calculator in Minecraft.",
         "count": "{count}/{max}"
@@ -5898,11 +5931,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add a title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language written to be able to tick this.",
+          "text": "Fill in “One-line introduction” and “Bio” in every language written to be able to tick this.",
           "photoTitle": "Add a photo and a title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
-          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
-          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this."
+          "photoText": "Add a photo, and fill in “One-line introduction” and “Bio” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “One-line introduction” and “Bio” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “One-line introduction” and “Bio” in every language written, to be able to tick this."
         }
       },
       "userPage": {
