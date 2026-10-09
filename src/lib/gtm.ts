@@ -147,20 +147,24 @@ const ALL_DENIED: ConsentSignals = {
 /**
  * What a stored answer grants.
  *
- * The container loads only for a visitor who granted marketing, and marketing
- * is offered only together with analytics, so all four signals are `granted`
- * every time in practice. They are derived from the answer rather than written
- * as a constant because what travels to Google should be the answer the visitor
- * gave: this function is a statement about the answer, and the gate above it is
- * the statement about who reaches it.
+ * Every signal follows marketing, `analytics_storage` included. The container
+ * is the marketing purpose's recipient and nothing else: `analytics` covers
+ * Vercel's cookieless counting alone, so nothing in the container reads it,
+ * and a visitor who granted marketing without analytics has still agreed to
+ * everything the container stores. The container loads only where marketing
+ * is granted, so all four are `granted` every time in practice. They are
+ * derived from the answer rather than written as a constant because what
+ * travels to Google should be the answer the visitor gave: this function is a
+ * statement about the answer, and the gate above it is the statement about who
+ * reaches it.
  */
 function signalsFor(consent: ConsentState): ConsentSignals {
-  const advertising: ConsentSignal = consent.marketing ? "granted" : "denied";
+  const granted: ConsentSignal = consent.marketing ? "granted" : "denied";
   return {
-    ad_storage: advertising,
-    ad_user_data: advertising,
-    ad_personalization: advertising,
-    analytics_storage: consent.analytics ? "granted" : "denied",
+    ad_storage: granted,
+    ad_user_data: granted,
+    ad_personalization: granted,
+    analytics_storage: granted,
   };
 }
 

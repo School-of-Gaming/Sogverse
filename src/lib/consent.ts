@@ -50,7 +50,7 @@ export const CONSENT_MAX_AGE_SECONDS = 180 * 24 * 60 * 60;
 
 /**
  * The name prefixes the advertising scripts write their cookies under, cleared
- * when a granted purpose is taken away again. Not ours, which is exactly why
+ * when marketing is taken away again. Not ours, which is exactly why
  * they are named here: a script that has already run keeps whatever it wrote
  * until something removes it.
  *
@@ -104,8 +104,8 @@ export function advertisingCookieNames(cookies: string): string[] {
 }
 
 /**
- * What the advertising libraries keep in web storage, removed on withdrawal
- * beside the cookies above.
+ * What the advertising libraries keep in web storage, removed when marketing is
+ * withdrawn beside the cookies above.
  *
  * Easy to miss, and the reason it matters is that none of these is a cookie: a
  * click id deleted from `_gcl_aw` or `_fbp` and left behind here is the same
@@ -175,7 +175,7 @@ export interface ConsentState {
   decidedAt: string;
 }
 
-/** What an answer grants: one switch per purpose, and nothing else. */
+/** What an answer grants: one yes or no per purpose, and nothing else. */
 export type ConsentPurposes = Pick<ConsentState, "analytics" | "marketing">;
 
 /** Builds the state an answer given *now* stores. */

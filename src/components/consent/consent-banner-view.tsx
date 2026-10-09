@@ -24,10 +24,10 @@ export type ConsentBannerPlacement = "fixed" | "inline";
 interface ConsentBannerViewProps {
   onChoose: (purposes: ConsentPurposes) => void;
   /**
-   * The answer already stored, which the customise panel's switches start
+   * The answer already stored, which the customise panel's checkboxes start
    * from — so reopening the strip to change one purpose does not silently
    * propose taking the other away. `null` for a visitor who has not answered,
-   * whose switches all start off.
+   * whose checkboxes all start off.
    */
   current?: ConsentPurposes | null;
   placement?: ConsentBannerPlacement;
@@ -52,9 +52,9 @@ function ignoreChange(): void {
  *
  * **Two screens in one strip.** The first offers Reject all and Accept all,
  * with Customise beside them; Customise swaps the buttons for a panel in the
- * same strip — Necessary shown on and unchangeable, a switch each for
+ * same strip — Necessary shown on and unchangeable, a checkbox each for
  * analytics and marketing, and Save choices, which stores exactly what the
- * switches say. The panel is not a second surface: the strip stays non-modal
+ * checkboxes say. The panel is not a second surface: the strip stays non-modal
  * and the heading and body stay above it.
  *
  * **Reject all and Accept all are the same variant and the same size.**
@@ -97,13 +97,13 @@ export function ConsentBannerView({
   // this strip inline, and the real one is mounted globally, so a fixed id
   // would be duplicated on that page the moment the banner is reopened.
   const headingId = useId();
-  const firstSwitch = useRef<HTMLInputElement>(null);
+  const firstCheckbox = useRef<HTMLInputElement>(null);
 
   // Customise unmounts the control that was focused, which would drop focus to
-  // the document. The first switch the reader can change is where they were
+  // the document. The first checkbox the reader can change is where they were
   // headed, so focus lands there.
   useEffect(() => {
-    if (customising) firstSwitch.current?.focus();
+    if (customising) firstCheckbox.current?.focus();
   }, [customising]);
 
   function commit(purposes: ConsentPurposes) {
@@ -163,7 +163,7 @@ export function ConsentBannerView({
                 }
               />
               <CheckboxRow
-                ref={firstSwitch}
+                ref={firstCheckbox}
                 size="xs"
                 checked={analytics}
                 disabled={committing}

@@ -378,8 +378,9 @@ Re-check before building on one.
   Finnish), hiding everything under the home hero's button. Re-pull with the
   `page-screenshots` preset before acting; the figures were taken at 390 px, not the
   repo's 360. A layout change (spacing, type size, Reject all and Accept all compact but
-  equally weighted) is safe; rewording is not, because a change to what the visitor agrees to is
-  a consent-version bump that asks everyone again (`src/components/consent/CLAUDE.md`).
+  equally weighted) is safe, and so is rewording that keeps the same two purposes; a purpose
+  added, withdrawn or widened is a consent-version bump that asks everyone again
+  (`src/components/consent/CLAUDE.md`).
 - **Home:** no lesson is shown (the loop is a game build, the safety photo a room); the
   differentiators (neuroinclusive clubs, language immersion, Fortnite esports, Roblox
   game-making, in person in Lauttasaari) are still only shop listings; "designed to build

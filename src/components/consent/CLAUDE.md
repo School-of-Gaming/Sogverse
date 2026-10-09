@@ -234,10 +234,13 @@ each script is handed the new answer as it loads.
 
 **Revoking one is not the mirror image of that, and no message can stand in for it.** A
 script that has already installed itself on the document goes on running whatever it has
-installed, and what it has already sent has already been sent — so a withdrawal deletes
-the advertising scripts' own cookies, clears what either of them keeps in web storage, and
-reloads. The new document has neither script in it, and starts from everything denied like
-any other.
+installed, and what it has already sent has already been sent — so any withdrawal reloads.
+Withdrawing marketing also deletes the advertising scripts' own cookies and clears what
+either of them keeps in web storage first; the new document has neither script in it, and
+starts from everything denied like any other. Withdrawing analytics alone reloads and
+clears nothing: Vercel's components leave their scripts installed when they unmount, so
+only a new document stops them, while the advertising scripts' state belongs to marketing,
+which is unchanged.
 
 **There is deliberately no way to tell a running script that the answer grew**, and it is
 worth knowing why rather than adding one back. Both advertising scripts load on marketing

@@ -22,14 +22,15 @@ import { getCookie } from "@/lib/cookies";
  *     and the DOM order is what puts Accept all rightmost in a row and topmost
  *     in a stack. A future tidy-up that reorders them on aesthetic grounds
  *     breaks both at once, silently.
- *   - **The customise panel stores exactly what its switches say**, in every
+ *   - **The customise panel stores exactly what its checkboxes say**, in every
  *     combination, and starts from the stored answer when the strip is
  *     reopened — a reopen that started from off would propose a withdrawal the
  *     reader never asked for.
  *   - **An upgrade is state; a withdrawal is a new document.** Granting a
  *     purpose only has to mount something. Revoking one cannot unmount a script
- *     that already installed itself on this page, so the page reloads and the
- *     pixels' own cookies go with it. Getting this wrong looks like it worked:
+ *     that already installed itself on this page, so the page reloads — and
+ *     where marketing is what was revoked, the pixels' own cookies go with it,
+ *     while analytics alone leaves them be. Getting this wrong looks like it worked:
  *     the banner closes either way.
  *   - **The buttons never come back.** The strip's own committing flag has to
  *     hold across the reload, which is the one outcome slow enough for a second
@@ -75,7 +76,7 @@ function press(name: string) {
   fireEvent.click(within(strip()).getByRole("button", { name }));
 }
 
-function purposeSwitch(title: string) {
+function purposeCheckbox(title: string) {
   return within(strip()).getByRole<HTMLInputElement>("checkbox", {
     name: title,
   });
@@ -188,20 +189,20 @@ describe("ConsentBanner", () => {
     expect(screen.queryByRole("region")).toBeNull();
   });
 
-  it("Customise opens the panel in the same strip, every switch off for a first answer", () => {
+  it("Customise opens the panel in the same strip, every checkbox off for a first answer", () => {
     render(<Harness initial={null} />);
 
     press(messages.consent.customise);
 
     // Necessary is shown on and cannot be changed; the two purposes start off.
-    const necessary = purposeSwitch(PURPOSES.necessary.title);
+    const necessary = purposeCheckbox(PURPOSES.necessary.title);
     expect(necessary.checked).toBe(true);
     expect(necessary.disabled).toBe(true);
-    expect(purposeSwitch(PURPOSES.analytics.title).checked).toBe(false);
-    expect(purposeSwitch(PURPOSES.marketing.title).checked).toBe(false);
+    expect(purposeCheckbox(PURPOSES.analytics.title).checked).toBe(false);
+    expect(purposeCheckbox(PURPOSES.marketing.title).checked).toBe(false);
     // Focus follows the reader into the panel rather than dropping to the page.
     expect(document.activeElement).toBe(
-      purposeSwitch(PURPOSES.analytics.title),
+      purposeCheckbox(PURPOSES.analytics.title),
     );
     // Still the one non-modal strip, with the answers swapped for the panel.
     expect(screen.getAllByRole("region")).toHaveLength(1);
@@ -218,13 +219,13 @@ describe("ConsentBanner", () => {
     [false, true],
     [true, true],
   ])(
-    "Save choices stores analytics %s and marketing %s exactly as switched",
+    "Save choices stores analytics %s and marketing %s exactly as ticked",
     (analytics, marketing) => {
       render(<Harness initial={null} />);
       press(messages.consent.customise);
 
-      if (analytics) fireEvent.click(purposeSwitch(PURPOSES.analytics.title));
-      if (marketing) fireEvent.click(purposeSwitch(PURPOSES.marketing.title));
+      if (analytics) fireEvent.click(purposeCheckbox(PURPOSES.analytics.title));
+      if (marketing) fireEvent.click(purposeCheckbox(PURPOSES.marketing.title));
       press(messages.consent.saveChoices);
 
       expect(storedAnswer()).toMatchObject({ analytics, marketing });
@@ -238,8 +239,8 @@ describe("ConsentBanner", () => {
 
     press(messages.consent.customise);
 
-    expect(purposeSwitch(PURPOSES.analytics.title).checked).toBe(false);
-    expect(purposeSwitch(PURPOSES.marketing.title).checked).toBe(true);
+    expect(purposeCheckbox(PURPOSES.analytics.title).checked).toBe(false);
+    expect(purposeCheckbox(PURPOSES.marketing.title).checked).toBe(true);
 
     // Saving it untouched takes nothing away, so nothing reloads.
     press(messages.consent.saveChoices);
@@ -261,15 +262,39 @@ describe("ConsentBanner", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
-  it("switching one purpose off in the panel is a withdrawal, and reloads", () => {
+  it("unticking marketing in the panel clears the advertising cookies and reloads", () => {
+    document.cookie = "_fbp=fb.1.abc;path=/";
     render(<Harness initial={GRANTED_BOTH} />);
     fireEvent.click(screen.getByRole("button", { name: "reopen" }));
 
     press(messages.consent.customise);
-    fireEvent.click(purposeSwitch(PURPOSES.marketing.title));
+    fireEvent.click(purposeCheckbox(PURPOSES.marketing.title));
     press(messages.consent.saveChoices);
 
     expect(storedAnswer()).toMatchObject({ analytics: true, marketing: false });
+    expect(document.cookie).not.toContain("_fbp");
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // Analytics is Vercel's counting and nothing of either advertising vendor's,
+  // so taking it away leaves what marketing granted exactly where it was. It
+  // still reloads: Vercel's scripts stay installed on the document after their
+  // components unmount.
+  it("unticking analytics alone reloads and leaves the advertising cookies alone", () => {
+    document.cookie = "_fbp=fb.1.abc;path=/";
+    document.cookie = "_ga=GA1.1.1234567890.1790250509;path=/";
+    window.localStorage.setItem("_gcl_ls", '{"schema":"gcl"}');
+    render(<Harness initial={GRANTED_BOTH} />);
+    fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+    press(messages.consent.customise);
+    fireEvent.click(purposeCheckbox(PURPOSES.analytics.title));
+    press(messages.consent.saveChoices);
+
+    expect(storedAnswer()).toMatchObject({ analytics: false, marketing: true });
+    expect(document.cookie).toContain("_fbp");
+    expect(document.cookie).toContain("_ga=");
+    expect(window.localStorage.getItem("_gcl_ls")).not.toBeNull();
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
@@ -327,7 +352,7 @@ describe("ConsentBanner", () => {
     render(<Harness initial={GRANTED_BOTH} />);
     fireEvent.click(screen.getByRole("button", { name: "reopen" }));
     press(messages.consent.customise);
-    fireEvent.click(purposeSwitch(PURPOSES.marketing.title));
+    fireEvent.click(purposeCheckbox(PURPOSES.marketing.title));
 
     press(messages.consent.saveChoices);
 

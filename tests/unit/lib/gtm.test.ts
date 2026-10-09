@@ -59,6 +59,7 @@ const GRANTED_BOTH: ConsentState = {
 };
 
 const ANALYTICS_ONLY: ConsentState = { ...GRANTED_BOTH, marketing: false };
+const MARKETING_ONLY: ConsentState = { ...GRANTED_BOTH, analytics: false };
 
 /**
  * A fresh copy of the module per case.
@@ -215,7 +216,10 @@ describe("loadGtm", () => {
   // caller's gate implies. The gate is marketing, so this state does not reach
   // it through the app — which is exactly why the value that travels is derived
   // from the cookie and not written as a constant that agrees with the gate.
-  it("derives every signal from the answer it is handed", () => {
+  // Analytics is Vercel's cookieless counting and nothing in the container, so
+  // granting it alone grants the container nothing, `analytics_storage`
+  // included.
+  it("denies every signal when analytics is granted without marketing", () => {
     void gtm.loadGtm(CONTAINER_ID, ANALYTICS_ONLY);
 
     expect(commandValues(queue()[2])).toEqual([
@@ -225,6 +229,23 @@ describe("loadGtm", () => {
         ad_storage: "denied",
         ad_user_data: "denied",
         ad_personalization: "denied",
+        analytics_storage: "denied",
+      },
+    ]);
+  });
+
+  // The container belongs wholly to marketing, so a visitor who granted
+  // marketing and refused analytics has granted everything it stores.
+  it("grants every signal when marketing is granted without analytics", () => {
+    void gtm.loadGtm(CONTAINER_ID, MARKETING_ONLY);
+
+    expect(commandValues(queue()[2])).toEqual([
+      "consent",
+      "update",
+      {
+        ad_storage: "granted",
+        ad_user_data: "granted",
+        ad_personalization: "granted",
         analytics_storage: "granted",
       },
     ]);
