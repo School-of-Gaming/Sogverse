@@ -147,7 +147,7 @@ function request(
   if (marketing !== undefined) {
     const value = encodeURIComponent(
       JSON.stringify({
-        v: 2,
+        v: 1,
         at: "2026-09-03T10:15:00.000Z",
         analytics: true,
         marketing,

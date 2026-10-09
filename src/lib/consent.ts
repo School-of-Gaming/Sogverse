@@ -36,7 +36,7 @@ export const CONSENT_COOKIE_NAME = "sog_consent";
  * is unchanged, and re-asking would put the banner back up to collect the same
  * answer to the same words.
  */
-export const CONSENT_VERSION = 2;
+export const CONSENT_VERSION = 1;
 
 /**
  * Six months, in seconds.

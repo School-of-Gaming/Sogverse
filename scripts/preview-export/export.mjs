@@ -1301,7 +1301,7 @@ async function prepareContext(context, { storeRefusal }) {
         name: "sog_consent",
         value: encodeURIComponent(
           JSON.stringify({
-            v: 2,
+            v: 1,
             at: new Date().toISOString(),
             analytics: false,
             marketing: false,

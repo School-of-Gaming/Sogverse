@@ -102,7 +102,7 @@ function registerRequestWithConsent(
 ): Request {
   const value = encodeURIComponent(
     JSON.stringify({
-      v: 2,
+      v: 1,
       at: "2026-09-14T10:15:00.000Z",
       analytics: consent.analytics,
       marketing: consent.marketing,

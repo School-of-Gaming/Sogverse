@@ -5766,7 +5766,7 @@
   },
   "consent": {
     "heading": "Vos choix de confidentialité",
-    "body": "Nous utilisons des cookies pour faire fonctionner le site. Avec votre accord, nous mesurons aussi la façon dont il est utilisé et partageons des données avec nos partenaires publicitaires à des fins de publicité ciblée et de mesure. Vous pouvez modifier votre choix à tout moment en bas de page. Plus de détails dans notre <link>politique de confidentialité</link>.",
+    "body": "Nous utilisons des cookies pour faire fonctionner le site. Avec votre accord, nous mesurons également son utilisation et partageons des données avec nos partenaires publicitaires à des fins de publicité ciblée et de mesure de performance. Vous pouvez modifier votre choix à tout moment en bas de page. Détails dans notre <link>politique de confidentialité</link>.",
     "rejectAll": "Tout refuser",
     "acceptAll": "Tout accepter",
     "customise": "Personnaliser",
