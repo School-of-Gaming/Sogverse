@@ -15,10 +15,10 @@ import {
   CONSENT_COOKIE_NAME,
   CONSENT_MAX_AGE_SECONDS,
   clearAdvertisingStorage,
-  consentForChoice,
+  consentForPurposes,
   isWithdrawal,
   serialiseConsent,
-  type ConsentChoice,
+  type ConsentPurposes,
   type ConsentState,
 } from "@/lib/consent";
 
@@ -38,7 +38,7 @@ interface ConsentContextValue {
   /** Re-ask. What the footer's Privacy choices link calls. */
   open: () => void;
   /** Record an answer. Writes the cookie; see the withdrawal note below. */
-  choose: (choice: ConsentChoice) => void;
+  choose: (purposes: ConsentPurposes) => void;
 }
 
 const ConsentContext = createContext<ConsentContextValue | undefined>(
@@ -97,8 +97,8 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   }, []);
 
   const choose = useCallback(
-    (choice: ConsentChoice) => {
-      const next = consentForChoice(choice);
+    (purposes: ConsentPurposes) => {
+      const next = consentForPurposes(purposes);
       setCookie(CONSENT_COOKIE_NAME, serialiseConsent(next), {
         maxAge: CONSENT_MAX_AGE_SECONDS,
       });
@@ -133,9 +133,9 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       // Nothing was taken away, so this document keeps everything it already
       // has and the state update is the whole of what an addition needs: the
       // gated components mount, and each script is handed the new answer as it
-      // loads. Nothing has to be told anything after the fact — an advertising
-      // script only ever runs here under the fullest answer, so an addition is
-      // always an addition to a document that had none of them running.
+      // loads. Nothing has to be told anything after the fact — every script
+      // reads its own purpose and no other, and a purpose being added was off
+      // until now, so none of the scripts it covers is running yet.
       setConsent(next);
       setIsOpen(false);
     },

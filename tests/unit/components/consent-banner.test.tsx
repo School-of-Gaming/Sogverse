@@ -12,16 +12,20 @@ import { getCookie } from "@/lib/cookies";
 
 /**
  * ============================================================================
- * The consent strip: the three answers, and the two ways one takes effect.
+ * The consent strip: its two screens, and the two ways an answer takes effect.
  * ============================================================================
  *
- * Three things are worth a test here and the rest is markup.
+ * Four things are worth a test here and the rest is markup.
  *
- *   - **Three buttons, and the order they sit in.** Refusing has to be exactly
+ *   - **Two answers, and the order they sit in.** Refusing has to be exactly
  *     as easy as accepting, which is a legal requirement rather than a taste,
- *     and the DOM order is what puts the fullest answer rightmost in a row and
- *     topmost in a stack. A future tidy-up that reorders them on aesthetic
- *     grounds breaks both at once, silently.
+ *     and the DOM order is what puts Accept all rightmost in a row and topmost
+ *     in a stack. A future tidy-up that reorders them on aesthetic grounds
+ *     breaks both at once, silently.
+ *   - **The customise panel stores exactly what its switches say**, in every
+ *     combination, and starts from the stored answer when the strip is
+ *     reopened — a reopen that started from off would propose a withdrawal the
+ *     reader never asked for.
  *   - **An upgrade is state; a withdrawal is a new document.** Granting a
  *     purpose only has to mount something. Revoking one cannot unmount a script
  *     that already installed itself on this page, so the page reloads and the
@@ -67,6 +71,22 @@ function strip() {
   return screen.getByRole("region", { name: messages.consent.heading });
 }
 
+function press(name: string) {
+  fireEvent.click(within(strip()).getByRole("button", { name }));
+}
+
+function purposeSwitch(title: string) {
+  return within(strip()).getByRole<HTMLInputElement>("checkbox", {
+    name: title,
+  });
+}
+
+const PURPOSES = messages.consent.purposes;
+
+function storedAnswer() {
+  return parseConsentCookie(getCookie(CONSENT_COOKIE_NAME));
+}
+
 function clearCookies() {
   for (const pair of document.cookie.split(";")) {
     const name = pair.split("=")[0].trim();
@@ -101,15 +121,19 @@ describe("ConsentBanner", () => {
     expect(screen.queryByRole("region")).toBeNull();
   });
 
-  it("offers exactly three answers, negative first and fullest last", () => {
+  it("offers two answers, refusal first, with Customise after them", () => {
     render(<Harness initial={null} />);
 
     const buttons = within(strip()).getAllByRole("button");
     expect(buttons.map((button) => button.textContent)).toEqual([
       messages.consent.rejectAll,
-      messages.consent.analyticsOnly,
-      messages.consent.analyticsAndMarketing,
+      messages.consent.acceptAll,
+      messages.consent.customise,
     ]);
+    // The pair carries identical classes, so neither is the one we would like
+    // pressed; Customise is a quiet text control, not a third answer.
+    expect(buttons[0].className).toBe(buttons[1].className);
+    expect(buttons[2].className).not.toBe(buttons[1].className);
   });
 
   // The policy link is inside the sentence, not on a row of its own — so it is
@@ -145,20 +169,81 @@ describe("ConsentBanner", () => {
     expect(text).not.toContain("Instagram");
   });
 
-  it("stores the chosen purposes and closes, without reloading", () => {
+  it("Accept all grants both purposes and closes, without reloading", () => {
     render(<Harness initial={null} />);
 
-    fireEvent.click(
-      within(strip()).getByRole("button", {
-        name: messages.consent.analyticsOnly,
-      }),
-    );
+    press(messages.consent.acceptAll);
 
-    expect(parseConsentCookie(getCookie(CONSENT_COOKIE_NAME))).toMatchObject({
-      analytics: true,
-      marketing: false,
-    });
+    expect(storedAnswer()).toMatchObject({ analytics: true, marketing: true });
     expect(screen.queryByRole("region")).toBeNull();
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("Reject all grants nothing", () => {
+    render(<Harness initial={null} />);
+
+    press(messages.consent.rejectAll);
+
+    expect(storedAnswer()).toMatchObject({ analytics: false, marketing: false });
+    expect(screen.queryByRole("region")).toBeNull();
+  });
+
+  it("Customise opens the panel in the same strip, every switch off for a first answer", () => {
+    render(<Harness initial={null} />);
+
+    press(messages.consent.customise);
+
+    // Necessary is shown on and cannot be changed; the two purposes start off.
+    const necessary = purposeSwitch(PURPOSES.necessary.title);
+    expect(necessary.checked).toBe(true);
+    expect(necessary.disabled).toBe(true);
+    expect(purposeSwitch(PURPOSES.analytics.title).checked).toBe(false);
+    expect(purposeSwitch(PURPOSES.marketing.title).checked).toBe(false);
+    // Focus follows the reader into the panel rather than dropping to the page.
+    expect(document.activeElement).toBe(
+      purposeSwitch(PURPOSES.analytics.title),
+    );
+    // Still the one non-modal strip, with the answers swapped for the panel.
+    expect(screen.getAllByRole("region")).toHaveLength(1);
+    expect(
+      within(strip()).queryByRole("button", {
+        name: messages.consent.acceptAll,
+      }),
+    ).toBeNull();
+  });
+
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])(
+    "Save choices stores analytics %s and marketing %s exactly as switched",
+    (analytics, marketing) => {
+      render(<Harness initial={null} />);
+      press(messages.consent.customise);
+
+      if (analytics) fireEvent.click(purposeSwitch(PURPOSES.analytics.title));
+      if (marketing) fireEvent.click(purposeSwitch(PURPOSES.marketing.title));
+      press(messages.consent.saveChoices);
+
+      expect(storedAnswer()).toMatchObject({ analytics, marketing });
+      expect(screen.queryByRole("region")).toBeNull();
+    },
+  );
+
+  it("a reopened panel starts from the stored answer", () => {
+    render(<Harness initial={{ ...GRANTED_BOTH, analytics: false }} />);
+    fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+    press(messages.consent.customise);
+
+    expect(purposeSwitch(PURPOSES.analytics.title).checked).toBe(false);
+    expect(purposeSwitch(PURPOSES.marketing.title).checked).toBe(true);
+
+    // Saving it untouched takes nothing away, so nothing reloads.
+    press(messages.consent.saveChoices);
+    expect(storedAnswer()).toMatchObject({ analytics: false, marketing: true });
     expect(reload).not.toHaveBeenCalled();
   });
 
@@ -170,17 +255,22 @@ describe("ConsentBanner", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "reopen" }));
 
-    fireEvent.click(
-      within(strip()).getByRole("button", {
-        name: messages.consent.analyticsAndMarketing,
-      }),
-    );
+    press(messages.consent.acceptAll);
 
-    expect(parseConsentCookie(getCookie(CONSENT_COOKIE_NAME))).toMatchObject({
-      analytics: true,
-      marketing: true,
-    });
+    expect(storedAnswer()).toMatchObject({ analytics: true, marketing: true });
     expect(reload).not.toHaveBeenCalled();
+  });
+
+  it("switching one purpose off in the panel is a withdrawal, and reloads", () => {
+    render(<Harness initial={GRANTED_BOTH} />);
+    fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+    press(messages.consent.customise);
+    fireEvent.click(purposeSwitch(PURPOSES.marketing.title));
+    press(messages.consent.saveChoices);
+
+    expect(storedAnswer()).toMatchObject({ analytics: true, marketing: false });
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it("withdrawing a granted purpose clears what both vendors left and reloads", () => {
@@ -201,14 +291,9 @@ describe("ConsentBanner", () => {
     render(<Harness initial={GRANTED_BOTH} />);
     fireEvent.click(screen.getByRole("button", { name: "reopen" }));
 
-    fireEvent.click(
-      within(strip()).getByRole("button", { name: messages.consent.rejectAll }),
-    );
+    press(messages.consent.rejectAll);
 
-    expect(parseConsentCookie(getCookie(CONSENT_COOKIE_NAME))).toMatchObject({
-      analytics: false,
-      marketing: false,
-    });
+    expect(storedAnswer()).toMatchObject({ analytics: false, marketing: false });
     expect(document.cookie).not.toContain("_fbp");
     expect(document.cookie).not.toContain("_fbc");
     expect(document.cookie).not.toContain("_fbleid");
@@ -235,6 +320,22 @@ describe("ConsentBanner", () => {
     // land in.
     for (const button of within(strip()).getAllByRole("button")) {
       expect(button).toHaveProperty("disabled", true);
+    }
+  });
+
+  it("keeps the panel disabled once Save choices is pressed", () => {
+    render(<Harness initial={GRANTED_BOTH} />);
+    fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+    press(messages.consent.customise);
+    fireEvent.click(purposeSwitch(PURPOSES.marketing.title));
+
+    press(messages.consent.saveChoices);
+
+    for (const control of [
+      ...within(strip()).getAllByRole("button"),
+      ...within(strip()).getAllByRole("checkbox"),
+    ]) {
+      expect(control).toHaveProperty("disabled", true);
     }
   });
 });

@@ -5,14 +5,13 @@
  * browser writes (`consent.server.ts` is the thin `cookies()` wrapper), and the
  * register API route has to read a decision without mounting anything.
  *
- * **Two purposes, three answers.** `analytics` covers Vercel Web Analytics and
- * Speed Insights, which count visits without a cookie and without an
- * identifier; `marketing` covers the Meta Pixel in the browser, the conversions
- * our servers report to Meta, and the Tag Manager container, which mints a
- * persistent client id and carries advertising tags. Marketing without
- * analytics is deliberately not offered — it would be a fourth button answering
- * a question nobody asks, and the advertising side already reports a superset
- * of what the analytics pair does.
+ * **Two purposes, each answered on its own.** `analytics` covers Vercel Web
+ * Analytics and Speed Insights, which count visits without a cookie and without
+ * an identifier; `marketing` covers the Meta Pixel in the browser, the
+ * conversions our servers report to Meta, and the Tag Manager container, which
+ * mints a persistent client id and carries advertising tags. The strip's first
+ * screen grants both or neither; its customise panel sets each one separately,
+ * so every combination of the two is an answer the cookie can hold.
  */
 
 /** The cookie that remembers the answer. Named like `sog_pin_verified`. */
@@ -37,7 +36,7 @@ export const CONSENT_COOKIE_NAME = "sog_consent";
  * is unchanged, and re-asking would put the banner back up to collect the same
  * answer to the same words.
  */
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2;
 
 /**
  * Six months, in seconds.
@@ -163,12 +162,6 @@ export function clearAdvertisingStorage(storage: Storage): void {
   for (const key of doomed) storage.removeItem(key);
 }
 
-/** The three buttons, in the order the banner offers them. */
-export type ConsentChoice =
-  | "reject_all"
-  | "analytics_only"
-  | "analytics_and_marketing";
-
 /** What a stored answer says, once parsed. */
 export interface ConsentState {
   /** Vercel Web Analytics and Speed Insights. */
@@ -182,26 +175,19 @@ export interface ConsentState {
   decidedAt: string;
 }
 
-/** The purposes each button grants. */
-export function purposesForChoice(
-  choice: ConsentChoice,
-): Pick<ConsentState, "analytics" | "marketing"> {
-  switch (choice) {
-    case "reject_all":
-      return { analytics: false, marketing: false };
-    case "analytics_only":
-      return { analytics: true, marketing: false };
-    case "analytics_and_marketing":
-      return { analytics: true, marketing: true };
-  }
-}
+/** What an answer grants: one switch per purpose, and nothing else. */
+export type ConsentPurposes = Pick<ConsentState, "analytics" | "marketing">;
 
-/** Builds the state a choice made *now* stores. */
-export function consentForChoice(
-  choice: ConsentChoice,
+/** Builds the state an answer given *now* stores. */
+export function consentForPurposes(
+  purposes: ConsentPurposes,
   decidedAt: Date = new Date(),
 ): ConsentState {
-  return { ...purposesForChoice(choice), decidedAt: decidedAt.toISOString() };
+  return {
+    analytics: purposes.analytics,
+    marketing: purposes.marketing,
+    decidedAt: decidedAt.toISOString(),
+  };
 }
 
 /**

@@ -5766,10 +5766,26 @@
   },
   "consent": {
     "heading": "Your privacy choices",
-    "body": "Necessary cookies keep the site working. Analytics counts visits and how fast pages load, without knowing who you are. Marketing lets the advertising platforms we work with see how you use our site, so they can show you our ads and we can tell which ones work. Marketing never runs while a gamer is signed in. You can change your answer any time from the footer. Details are in our <link>privacy policy</link>.",
+    "body": "We use cookies to run the site. With your consent, we also measure how it is used and share data with our advertising partners for targeted advertising and measurement. You can change your choice at any time at the bottom of the page. Details in our <link>privacy policy</link>.",
     "rejectAll": "Reject all",
-    "analyticsOnly": "Analytics only",
-    "analyticsAndMarketing": "Marketing and analytics"
+    "acceptAll": "Accept all",
+    "customise": "Customise",
+    "saveChoices": "Save choices",
+    "alwaysOn": "Always on",
+    "purposes": {
+      "necessary": {
+        "title": "Necessary",
+        "description": "Keep the site working and remember this choice."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Counts visits and how fast pages load, without knowing who you are."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "description": "Lets the advertising platforms we work with see how you use our site, so they can show you our ads and we can tell which ones work. Never runs while a gamer is signed in."
+      }
+    }
   },
   "team": {
     "profile": {

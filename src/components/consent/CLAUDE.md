@@ -240,12 +240,11 @@ reloads. The new document has neither script in it, and starts from everything d
 any other.
 
 **There is deliberately no way to tell a running script that the answer grew**, and it is
-worth knowing why rather than adding one back. Both advertising scripts load on marketing,
-which is the fullest of the three answers the strip offers — so a document with either of
-them running is a document whose visitor has already said everything there is to say. Any
-later change to that answer takes a purpose away, which is the paragraph above. An
-addition is therefore always an addition to a document that had neither script in it, and
-the answer travels with the load.
+worth knowing why rather than adding one back. Both advertising scripts load on marketing
+and read no other purpose, so a document with either of them running has nothing left to
+tell them: the one change they could need to hear is marketing taken away, which is the
+paragraph above. A purpose being added was off until then, so the scripts it covers are
+not in the document yet, and the answer travels with their load.
 
 Two things about the cookies. They are walked across every domain the page could have set
 them on, because both vendors write on the registrable domain while our pages are served

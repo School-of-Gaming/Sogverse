@@ -5766,10 +5766,26 @@
   },
   "consent": {
     "heading": "Yksityisyysvalintasi",
-    "body": "Välttämättömät evästeet pitävät sivuston toiminnassa. Analytiikka laskee käynnit ja mittaa sivujen latausnopeuden tietämättä, kuka olet. Markkinointi antaa mainosalustoille, joiden kanssa teemme yhteistyötä, nähdä, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä niistä toimivat. Markkinointi ei ole koskaan päällä, kun pelaaja on kirjautuneena. Voit vaihtaa vastaustasi milloin tahansa sivun alalaidasta. Tarkemmat tiedot ovat <link>tietosuojaselosteessamme</link>.",
+    "body": "Käytämme evästeitä sivuston toimintaan. Suostumuksellasi mittaamme myös, miten sivustoa käytetään, ja jaamme tietoja mainoskumppaneillemme kohdennettua mainontaa ja sen mittaamista varten. Voit muuttaa valintaasi milloin tahansa sivun alalaidasta. Lisätietoja on <link>tietosuojaselosteessamme</link>.",
     "rejectAll": "Hylkää kaikki",
-    "analyticsOnly": "Vain analytiikka",
-    "analyticsAndMarketing": "Markkinointi ja analytiikka"
+    "acceptAll": "Hyväksy kaikki",
+    "customise": "Muokkaa valintoja",
+    "saveChoices": "Tallenna valinnat",
+    "alwaysOn": "Aina päällä",
+    "purposes": {
+      "necessary": {
+        "title": "Välttämättömät",
+        "description": "Pitävät sivuston toiminnassa ja muistavat tämän valinnan."
+      },
+      "analytics": {
+        "title": "Analytiikka",
+        "description": "Laskee käynnit ja mittaa sivujen latausnopeuden tietämättä, kuka olet."
+      },
+      "marketing": {
+        "title": "Markkinointi",
+        "description": "Antaa mainosalustoille, joiden kanssa teemme yhteistyötä, nähdä, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä niistä toimivat. Ei koskaan päällä, kun pelaaja on kirjautuneena."
+      }
+    }
   },
   "team": {
     "profile": {

@@ -334,11 +334,11 @@ function pinGtmPage(internalPath: string, search: string): void {
  * the container can fire a tag that would otherwise assume it may store.
  *
  * **The answer travels with the load and is never sent again.** A container
- * loads only for a visitor who granted marketing, which is the fullest of the
- * three answers the strip offers — so every later change to that answer is a
- * purpose taken away, and a purpose taken away cannot be sent to a script that
- * has already fired its tags. The strip reloads instead, and the fresh document
- * starts from denied like any other.
+ * loads only for a visitor who granted marketing, and marketing is the only
+ * purpose it reads — so the one later change it could need to hear is
+ * marketing taken away, and a purpose taken away cannot be sent to a script
+ * that has already fired its tags. The strip reloads instead, and the fresh
+ * document starts from denied like any other.
  */
 export function loadGtm(
   containerId: string,

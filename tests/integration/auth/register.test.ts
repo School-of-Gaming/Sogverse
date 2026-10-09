@@ -170,7 +170,7 @@ function registerRequestWithConsent(
     marketing: boolean;
   },
   body: unknown = validBody,
-  version = 1,
+  version = 2,
 ): Request {
   const value = encodeURIComponent(
     JSON.stringify({
@@ -561,7 +561,7 @@ describe("POST /api/auth/register", () => {
     // route, with the bytes a returning visitor's browser would actually carry
     // — a grant on every purpose, stamped with a version we no longer honour.
     const response = await POST(
-      registerRequestWithConsent({ analytics: true, marketing: true }, UTM_BODY, 0),
+      registerRequestWithConsent({ analytics: true, marketing: true }, UTM_BODY, 1),
     );
 
     expect(response.status).toBe(200);

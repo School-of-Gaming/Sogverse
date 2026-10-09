@@ -5766,10 +5766,26 @@
   },
   "consent": {
     "heading": "Vos choix de confidentialité",
-    "body": "Les cookies nécessaires font fonctionner le site. Les statistiques comptent les visites et mesurent la vitesse de chargement des pages, sans savoir qui vous êtes. Le marketing permet aux plateformes publicitaires avec lesquelles nous travaillons de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Le marketing n’est jamais actif pendant qu’un joueur est connecté. Vous pouvez changer votre réponse à tout moment en bas de page. Le détail se trouve dans notre <link>politique de confidentialité</link>.",
+    "body": "Nous utilisons des cookies pour faire fonctionner le site. Avec votre accord, nous mesurons aussi la façon dont il est utilisé et partageons des données avec nos partenaires publicitaires à des fins de publicité ciblée et de mesure. Vous pouvez modifier votre choix à tout moment en bas de page. Plus de détails dans notre <link>politique de confidentialité</link>.",
     "rejectAll": "Tout refuser",
-    "analyticsOnly": "Statistiques uniquement",
-    "analyticsAndMarketing": "Marketing et statistiques"
+    "acceptAll": "Tout accepter",
+    "customise": "Personnaliser",
+    "saveChoices": "Enregistrer mes choix",
+    "alwaysOn": "Toujours actifs",
+    "purposes": {
+      "necessary": {
+        "title": "Nécessaires",
+        "description": "Font fonctionner le site et retiennent ce choix."
+      },
+      "analytics": {
+        "title": "Statistiques",
+        "description": "Comptent les visites et mesurent la vitesse de chargement des pages, sans savoir qui vous êtes."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "description": "Permet aux plateformes publicitaires avec lesquelles nous travaillons de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Jamais actif pendant qu’un joueur est connecté."
+      }
+    }
   },
   "team": {
     "profile": {
