@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import { GET } from "@/app/api/partner/v1/traffic/route";
+import { MAX_FILTER_LENGTH } from "@/lib/vercel-analytics.server";
 import {
   partnerTrafficResponse,
   type PartnerTrafficResponse,
@@ -149,7 +150,12 @@ function fakeVercel(views: readonly Views[], adjust?: (url: URL, rows: Record<st
     const until = Number(url.searchParams.get("until"));
     const by = url.searchParams.getAll("by");
     const limit = Number(url.searchParams.get("limit"));
-    const clauses = parseFilter(url.searchParams.get("filter") ?? "");
+    const filter = url.searchParams.get("filter") ?? "";
+    if (filter.length > MAX_FILTER_LENGTH) {
+      const message = `Invalid request: \`filter\` should NOT be longer than ${MAX_FILTER_LENGTH} characters.`;
+      return new Response(JSON.stringify({ error: { code: "bad_request", message } }), { status: 400 });
+    }
+    const clauses = parseFilter(filter);
 
     const groups = new Map<string, Record<string, unknown>>();
     for (const bucket of views) {
@@ -191,11 +197,11 @@ function vercelCalls(fetchMock: ReturnType<typeof fakeVercel>): URL[] {
   );
 }
 
-function tables() {
+function tables(programme: readonly string[] = PROGRAMME_PRODUCTS) {
   return postgrestTables({
     product_required_consents: (url) =>
       url.searchParams.get("document_slug") === "eq.roblox-programme-terms"
-        ? PROGRAMME_PRODUCTS.map((product_id) => ({ product_id }))
+        ? programme.map((product_id) => ({ product_id }))
         : [],
   });
 }
@@ -375,6 +381,30 @@ describe("GET /api/partner/v1/traffic", () => {
       { page: "landing", product_id: null, pageviews: 0, by_campaign: [], by_source_medium: [], by_day: [] },
       { page: "shop", product_id: null, pageviews: 0, by_campaign: [], by_source_medium: [], by_day: [] },
     ]);
+  });
+
+  it("finds the viewed products among more Programme products than one filter can name", async () => {
+    const many = Array.from(
+      { length: 40 },
+      (_, i) => `20000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
+    );
+    db.fetch = tables(many);
+    vi.stubGlobal(
+      "fetch",
+      (vercel = fakeVercel([
+        ...VIEWS,
+        { path: `/fr/boutique/${many[0]}`, route: PRODUCT_ROUTE, day: "2026-09-04", views: 3 },
+        { path: `/fi/kauppa/${many[39]}`, route: PRODUCT_ROUTE, day: "2026-09-04", views: 2 },
+      ])),
+    );
+
+    const body = await read("?page=product");
+    expect(body.pages.map((page) => [page.product_id, page.pageviews])).toEqual([
+      [many[0], 3],
+      [many[39], 2],
+    ]);
+    const filters = vercelCalls(vercel).map((url) => url.searchParams.get("filter") ?? "");
+    expect(Math.max(...filters.map((filter) => filter.length))).toBeLessThanOrEqual(MAX_FILTER_LENGTH);
   });
 
   it("chunks a long range's day reads into the 62-day windows Vercel accepts", async () => {

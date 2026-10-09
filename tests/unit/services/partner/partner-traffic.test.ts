@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 
 import { PartnerQueryError } from "@/lib/api/partner-auth.server";
+import { MAX_FILTER_LENGTH } from "@/lib/vercel-analytics.server";
 import {
   buildTrafficPage,
+  discoveryBatches,
   earliestTrafficDay,
   productPagePaths,
   resolveTrafficRange,
@@ -99,6 +101,37 @@ describe("productPagePaths", () => {
         `/shop/${PRODUCT}`,
       ].sort(),
     );
+  });
+});
+
+describe("discoveryBatches", () => {
+  const ids = Array.from(
+    { length: 25 },
+    (_, i) => `30000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
+  );
+  /** The filter a batch's discovery read sends, as the reader builds it. */
+  const filterFor = (batch: readonly string[]) =>
+    `environment eq 'production' and requestPath in (${batch
+      .flatMap(productPagePaths)
+      .map((path) => `'${path}'`)
+      .join(", ")})`;
+
+  it("keeps every batch's filter within Vercel's limit, and every product in exactly one batch, in order", () => {
+    const batches = discoveryBatches(ids);
+    expect(batches.length).toBeGreaterThan(1);
+    expect(batches.flat()).toEqual(ids);
+    for (const batch of batches) expect(filterFor(batch).length).toBeLessThanOrEqual(MAX_FILTER_LENGTH);
+  });
+
+  it("fills each batch as far as the limit allows", () => {
+    const batches = discoveryBatches(ids);
+    for (const [i, batch] of batches.slice(0, -1).entries()) {
+      expect(filterFor([...batch, batches[i + 1][0]]).length).toBeGreaterThan(MAX_FILTER_LENGTH);
+    }
+  });
+
+  it("is no batches for no products", () => {
+    expect(discoveryBatches([])).toEqual([]);
   });
 });
 
