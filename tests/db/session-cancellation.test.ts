@@ -14,7 +14,6 @@ import { familyProductFeed } from "@/services/family-product-feed/family-product
 import { municipalityInvoicingSnapshot } from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 import { adminSubstitutionRequests } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
-import { mySessionCancellations } from "@/services/participations/participations.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
@@ -942,41 +941,6 @@ describe("session cancellation", () => {
     }
   });
 
-  it("hands a family its own seats' upcoming cancelled dates and nothing more", async () => {
-    for (const date of [LAST_WEEK, TOMORROW]) {
-      expect((await cancel(date, "Holiday")).error).toBeNull();
-    }
-
-    const customerAuth = await createAuthenticatedClient(
-      TEST_CREDENTIALS.CUSTOMER.email,
-      TEST_CREDENTIALS.CUSTOMER.password,
-    );
-    const strangerAuth = await createAuthenticatedClient(
-      TEST_CREDENTIALS.CUSTOMER_2.email,
-      TEST_CREDENTIALS.CUSTOMER_2.password,
-    );
-
-    // The child in the seat and the parent who pays for it get the same
-    // answer; the strict parse fails if a reason or an author rides along.
-    for (const client of [gamerAuth, customerAuth]) {
-      const { data, error } = await client.rpc("get_my_session_cancellations");
-      expect(error).toBeNull();
-      expect(
-        mySessionCancellations
-          .parse(data)
-          .filter((row) => row.participation_id === PARTICIPATION),
-      ).toEqual([{ participation_id: PARTICIPATION, session_date: TOMORROW }]);
-    }
-
-    const stranger = await strangerAuth.rpc("get_my_session_cancellations");
-    expect(stranger.error).toBeNull();
-    expect(
-      mySessionCancellations
-        .parse(stranger.data)
-        .filter((row) => row.participation_id === PARTICIPATION),
-    ).toEqual([]);
-  });
-
   // -------------------------------------------------------------------------
   // the admin dashboard's schedule
   // -------------------------------------------------------------------------
@@ -1054,13 +1018,6 @@ describe("session cancellation", () => {
     expect(
       cancelledPairs(await dashboardScheduleProduct(PRODUCT)),
     ).toEqual([{ group_id: GROUP, session_date: IN_THREE_DAYS }]);
-  });
-
-  it("keeps the shared window helper private", async () => {
-    const { error } = await gamerAuth.rpc("group_upcoming_cancelled_dates", {
-      p_group_id: GROUP,
-    });
-    expect(error?.code).toBe("42501");
   });
 
   it("keeps the partner API's cancellation read to the service role", async () => {

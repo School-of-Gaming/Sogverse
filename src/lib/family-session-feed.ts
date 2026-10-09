@@ -1,12 +1,10 @@
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
+  OPEN_ENDED_OCCURRENCE_CAP,
   trimOpenEndedFuture,
   type PlannedSession,
 } from "@/lib/planned-sessions";
-import {
-  OPEN_ENDED_OCCURRENCE_CAP,
-  sessionEntryId,
-} from "@/lib/session-occurrence";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import type {
   FamilyProductGedu,
   FamilySessionEntry,

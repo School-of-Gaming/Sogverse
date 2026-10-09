@@ -43,6 +43,13 @@ export type PlannedSession = z.output<typeof plannedSessionRow>;
 export const plannedSessionRows = z.array(plannedSessionRow);
 
 /**
+ * How many sessions that have not yet closed an open-ended product's lists
+ * show — the family's and the gedu's alike, so both see the same horizon. A
+ * dated product shows its whole term instead.
+ */
+export const OPEN_ENDED_OCCURRENCE_CAP = 8;
+
+/**
  * An open-ended plan cut to what a session list shows: **every session that has
  * started, plus the first `cap` that have not yet closed.**
  *

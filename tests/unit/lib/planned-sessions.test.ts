@@ -9,8 +9,7 @@ import {
 /**
  * The shaping the app does over the database's session plan. The plan itself
  * is the database's and is tested there (`tests/db/planned-sessions.test.ts`);
- * these cases hold the two helpers to what the occurrence walks they replace
- * answer — a list keeps every started session plus the next `cap` still open,
+ * these cases hold the two helpers to their contract — a list keeps every started session plus the next `cap` still open,
  * and the next session is the first open one nobody cancelled.
  */
 

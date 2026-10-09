@@ -251,25 +251,12 @@ export const waitlistPositionResult = z.number().int().positive().nullable();
  * output through it.
  */
 /**
- * `get_my_session_cancellations` rows: one per (seat, cancelled upcoming date)
- * the caller is party to. Strict, because a family learns only that a date is
- * cancelled — a reason or an author riding along fails the parse.
- */
-export const mySessionCancellations = z.array(
-  z
-    .object({
-      participation_id: z.string(),
-      session_date: z.string(),
-    })
-    .strict(),
-);
-
-/**
  * `get_my_planned_sessions` rows: one per (seat, planned session) the caller is
- * party to, each with whether the seat's group cancelled it. Strict for the
- * same reason as the cancellations above — a family learns only that a date is
- * cancelled. The session itself is parsed by the shared plan row schema, so
- * the cards read the same `PlannedSession` every other reader of the plan does.
+ * party to, each with whether the seat's group cancelled it. Strict, because a
+ * family learns only that a date is cancelled — a reason or an author riding
+ * along fails the parse. The session itself is parsed by the shared plan row
+ * schema, so the cards read the same `PlannedSession` every other reader of the
+ * plan does.
  */
 export const myPlannedSessions = z.array(
   z

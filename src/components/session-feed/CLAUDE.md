@@ -27,6 +27,19 @@ is the *current* session, not history. The builders stay separate — they emit 
 shapes, and that is where the privacy line is drawn — but they must never disagree about
 which side of the present a session is on. They are one timeline read by two audiences.
 
+**Rule: the feeds read the dates they are handed and never expand a schedule.** Each
+feed document carries the product's planned sessions — expanded once, in the database,
+from the term and the slots — and a feed lays its stored rows over them on the
+(group, product-local date) key, a row winning outright where both exist. The term
+bounds the plan, so a date outside it is in no feed, and every question about one date —
+may it be written, is its cancellation in effect, is its room open — is answered against
+the same plan in the database rather than by weekday arithmetic here. A date taken out of
+the plan therefore leaves every surface at once. Turning a date into a weekday anywhere
+under `src/` needs a written reason in the unit suite's plan-expansion guard, and the
+DB suite fails on any function besides the plan that walks dates; the shaping both feeds
+share — the open-ended cut and the next running session — lives with the plan's row
+schema in `src/lib/planned-sessions.ts`.
+
 **Rule: a cancelled session keeps its dated place on both feeds, drawn as the shared
 cancelled line, and is never the next session.** It is its own entry kind rather than a
 flag on the others, so no card, editor, register or send can be offered on a date the
@@ -52,10 +65,10 @@ written up, and the cancelled line replaces the card: nothing recorded on the da
 report, photos, attendance — is drawn on either feed, and the family document does not
 carry the row at all. The record stays in the database, frozen, and a restore brings the
 card back as it was, because the admin's word that the session did not happen is trusted
-over anything written about it. That holds after the schedule stops projecting the date:
+over anything written about it. That holds after the plan stops holding the date:
 the staff feed still gets the cancellation and draws the cancelled line at the record's
-own instants, while the family feed, which has neither the row nor a projection to place
-the date by, draws nothing there rather than the report. The feeds draw whatever
+own instants, while the family feed, which has neither the row nor a planned session to
+place the date by, draws nothing there rather than the report. The feeds draw whatever
 cancellations the document carries on a date they show; which cancellations are in effect
 is decided in the database, never re-derived here.
 
@@ -158,8 +171,8 @@ gets nothing.
 
 **Rule: exactly one session of a run can owe a fourth thing, and it is the last
 one.** On a product flagged as requiring a creation from every member, the run's
-**final session** — the last occurrence the schedule projects on or before the
-end date that the group has not cancelled — is not finished until every roster
+**final session** — the last date of the plan on or before the end date that
+the group has not cancelled, which the feed document names — is not finished until every roster
 member that session EXPECTED has
 at least one (the join-date rule below scopes this exactly as it scopes the
 register).
@@ -270,7 +283,7 @@ mark. Two rosters that visibly differ invite being collapsed into one; that
 collapse is the bug this corollary exists to prevent.
 
 **Corollary: a session that expected NOBODY drops the whole register block, not
-just its rows.** A group formed mid-term has occurrences every seat postdates,
+just its rows.** A group formed mid-term has sessions every seat postdates,
 and the editor there used to draw an "Attendance" heading, "0 of 0 marked", the
 hint explaining how to clear a mark, and then an empty list — four promises of a
 list and no list. The heading stays, because the editor's sections keep one

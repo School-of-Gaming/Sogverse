@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fromZonedTime } from "date-fns-tz";
 import { invitationPlanWindow } from "@/lib/email-templates/product-confirmation-invitation";
-import { expandPlan } from "../../helpers/expanded-plan";
+import { planRows, planSessions } from "../../mocks/planned-sessions";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
@@ -2153,16 +2153,14 @@ describe("POST /api/checkout/products/create", () => {
         endDate: FREE_CLUB.end_date,
       });
       mockPlannedSessions.mockResolvedValue({
-        data: expandPlan({
-          slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
-          startDate: span.from,
-          endDate: span.to,
-          timezone: FREE_CLUB.timezone,
-        }).map((session) => ({
-          session_date: session.date,
-          starts_at: session.startsAt.toISOString(),
-          ends_at: session.endsAt.toISOString(),
-        })),
+        data: planRows(
+          planSessions({
+            slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+            startDate: span.from,
+            endDate: span.to,
+            timezone: FREE_CLUB.timezone,
+          }),
+        ),
         error: null,
       });
       mockAdminRpc.mockResolvedValueOnce({

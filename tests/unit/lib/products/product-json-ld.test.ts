@@ -4,7 +4,7 @@ import {
   statesSessionCount,
   type ProductJsonLdSubject,
 } from "@/lib/products/product-json-ld";
-import { expandPlan } from "../../../helpers/expanded-plan";
+import { planSessions } from "../../../mocks/planned-sessions";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 afterAll(() => vi.unstubAllEnvs());
@@ -73,7 +73,7 @@ const SITE_ROW = {
  */
 function plannedDatesOf(subject: ProductJsonLdSubject): string[] | null {
   if (!statesSessionCount(subject)) return null;
-  return expandPlan({
+  return planSessions({
     slots: subject.schedule_slots.map((slot) => ({
       weekday: slot.weekday,
       startTime: slot.start_time,

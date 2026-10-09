@@ -55,7 +55,6 @@ const PRODUCTS: GeduInvoicingProduct[] = [
     primary_gedu_fee_cents: 6_500,
     assistant_gedu_fee_cents: 4_500,
     product_translations: [{ locale: "fi", name: "Pelikerho Kivikko" }],
-    schedule_slots: [{ weekday: 0, start_time: "14:15", duration_minutes: 75 }],
     planned_dates: ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25"],
     location: {
       id: "preview-loc-kivikko",
@@ -75,7 +74,6 @@ const PRODUCTS: GeduInvoicingProduct[] = [
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: 4_500,
     product_translations: [{ locale: "fi", name: "Rakentajakerho Mäntyranta" }],
-    schedule_slots: [{ weekday: 2, start_time: "15:00", duration_minutes: 90 }],
     planned_dates: ["2026-05-06", "2026-05-13", "2026-05-20", "2026-05-27"],
     location: {
       id: "preview-loc-mantyranta",
@@ -98,7 +96,6 @@ const PRODUCTS: GeduInvoicingProduct[] = [
       { locale: "fi", name: "Minecraft-seikkailijat" },
       { locale: "en", name: "Minecraft adventurers" },
     ],
-    schedule_slots: [{ weekday: 1, start_time: "17:00", duration_minutes: 60 }],
     planned_dates: ["2026-05-05", "2026-05-12", "2026-05-19", "2026-05-26"],
     location: null,
     municipality: null,

@@ -2,11 +2,12 @@ import { formatInTimeZone } from "date-fns-tz";
 import { addCalendarDays, mondayOf } from "@/lib/calendar-date";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { trimOpenEndedFuture, type PlannedSession } from "@/lib/planned-sessions";
 import {
   OPEN_ENDED_OCCURRENCE_CAP,
-  sessionEntryId,
-} from "@/lib/session-occurrence";
+  trimOpenEndedFuture,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import type { GeduAssignmentRow } from "@/lib/gedu-assignment-rollup";
 import type { ProductType } from "@/types";
 

@@ -2,16 +2,11 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
-import { plannedSessionRows, trimOpenEndedFuture } from "@/lib/planned-sessions";
 import {
-  endDateToCutoff,
-  enumeratePastRowOccurrences,
-  enumerateRowOccurrences,
-  MAX_PAST_OCCURRENCES_PER_SLOT,
   OPEN_ENDED_OCCURRENCE_CAP,
-  startDateToCutoff,
-  type SlotShape,
-} from "@/lib/session-occurrence";
+  plannedSessionRows,
+  trimOpenEndedFuture,
+} from "@/lib/planned-sessions";
 import {
   callServiceRoleRpcRaw,
   createAdminTestClient,
@@ -31,7 +26,7 @@ import {
  * plan expanded in one place.
  *
  * Every dated fixture sits in 2030, so the plan's answers do not depend on when
- * this runs; only the horizon cases and one live parity case read "today", and
+ * this runs; only the horizon cases and the live list case read "today", and
  * each holds on either side of a midnight the run might cross.
  */
 
@@ -45,9 +40,6 @@ const GROUP_ONE = "00000000-0000-0000-0000-000000000856";
 const GROUP_TWO = "00000000-0000-0000-0000-000000000857";
 const HORIZON = "00000000-0000-0000-0000-000000000858";
 const GROUP_HORIZON = "00000000-0000-0000-0000-000000000859";
-const CROSS_HELSINKI = "00000000-0000-0000-0000-00000000085a";
-const CROSS_AUCKLAND = "00000000-0000-0000-0000-00000000085b";
-const CROSS_LOS_ANGELES = "00000000-0000-0000-0000-00000000085c";
 const LATE_START = "00000000-0000-0000-0000-00000000085d";
 const LIVE = "00000000-0000-0000-0000-00000000085e";
 
@@ -59,9 +51,6 @@ const ALL_PRODUCTS = [
   AUCKLAND,
   CANCELLING,
   HORIZON,
-  CROSS_HELSINKI,
-  CROSS_AUCKLAND,
-  CROSS_LOS_ANGELES,
   LATE_START,
   LIVE,
 ];
@@ -74,6 +63,13 @@ const plannedGroupRows = z.array(
     cancelled_group_ids: z.array(z.string()),
   }),
 );
+
+/** One weekly slot, 0 = Monday, as the fixtures seed it. */
+interface SlotShape {
+  weekday: number;
+  startTime: string;
+  durationMinutes: number;
+}
 
 const functionBodies = z.array(
   z.object({ function_name: z.string(), body: z.string() }),
@@ -536,187 +532,55 @@ describe("the session plan", () => {
     });
   });
 
-  /**
-   * TRANSITIONAL: the SQL plan against the TypeScript occurrence walks it
-   * replaces, over a matrix of zones, schedules and moments. It proves the move
-   * from one to the other changes no session, and it is deleted with those
-   * walks in the last piece of this refactor (P7).
-   */
-  describe("the plan agrees with the TypeScript occurrence walks", () => {
+  describe("an open-ended list read to session_plan_horizon", () => {
     const MARGIN_MS = 5 * 60_000;
 
-    interface Fixture {
-      id: string;
-      timezone: string;
-      startDate: string;
-      endDate: string | null;
-      slots: SlotShape[];
-      moments: string[];
-    }
-
-    const FIXTURES: Fixture[] = [
-      {
-        id: CROSS_HELSINKI,
-        timezone: "Europe/Helsinki",
-        startDate: "2030-02-01",
-        endDate: "2030-05-31",
-        slots: [
-          { weekday: 0, startTime: "17:30", durationMinutes: 90 },
-          { weekday: 3, startTime: "17:30", durationMinutes: 90 },
-        ],
-        moments: [
-          "2030-01-15T12:00:00.000Z",
-          "2030-03-28T16:00:00.000Z", // Thursday 18:00 EET: in progress.
-          "2030-04-01T12:00:00.000Z",
-          "2030-07-01T12:00:00.000Z",
-        ],
-      },
-      {
-        id: CROSS_AUCKLAND,
-        timezone: "Pacific/Auckland",
-        startDate: "2030-03-01",
-        endDate: null,
-        slots: [
-          { weekday: 2, startTime: "23:30", durationMinutes: 120 },
-          { weekday: 6, startTime: "10:00", durationMinutes: 60 },
-        ],
-        moments: [
-          "2030-02-01T00:00:00.000Z",
-          "2030-04-03T11:00:00.000Z", // Wednesday 23:30 NZDT has just begun.
-          "2030-04-10T00:00:00.000Z",
-          "2030-06-15T00:00:00.000Z",
-        ],
-      },
-      {
-        id: CROSS_LOS_ANGELES,
-        timezone: "America/Los_Angeles",
-        startDate: "2030-10-28",
-        endDate: "2030-11-10",
-        slots: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
-          weekday,
-          startTime: "08:00",
-          durationMinutes: 45,
-        })),
-        moments: [
-          "2030-10-01T00:00:00.000Z",
-          "2030-11-03T16:20:00.000Z", // Sunday 08:20 PST, the day it falls back.
-          "2030-11-20T00:00:00.000Z",
-        ],
-      },
-    ];
-
-    beforeAll(async () => {
-      for (const fixture of FIXTURES) {
-        await seed(
-          fixture.id,
-          {
-            timezone: fixture.timezone,
-            startDate: fixture.startDate,
-            endDate: fixture.endDate,
-          },
-          fixture.slots,
-        );
-      }
-    });
-
-    /** The started sessions and the open ones, as the feeds walk them today. */
-    function walked(fixture: Fixture, now: Date) {
-      const startBoundary = startDateToCutoff(fixture.startDate, fixture.timezone);
-      const endBoundary = endDateToCutoff(fixture.endDate, fixture.timezone);
-      const past = enumeratePastRowOccurrences({
-        slots: fixture.slots,
-        timezone: fixture.timezone,
-        now,
-        floor: startBoundary ?? now,
-        endBoundary,
-        maxOccurrences: MAX_PAST_OCCURRENCES_PER_SLOT,
-      });
-      const ahead = enumerateRowOccurrences({
-        slots: fixture.slots,
-        timezone: fixture.timezone,
-        now,
-        startBoundary,
-        endBoundary,
-        cap: fixture.endDate === null ? OPEN_ENDED_OCCURRENCE_CAP : Infinity,
-        windowCloseMs: MARGIN_MS,
-      });
-      const byStart = new Map<number, { start: Date; end: Date }>();
-      for (const occurrence of [...past, ...ahead]) {
-        byStart.set(occurrence.start.getTime(), occurrence);
-      }
-      return [...byStart.values()]
-        .sort((a, b) => a.start.getTime() - b.start.getTime())
-        .map((o) => [o.start.toISOString(), o.end.toISOString()]);
-    }
-
-    it("read to session_plan_horizon, holds every session the walk shows when yesterday's and today's have both ended", async () => {
+    it("holds eight sessions that have not closed, after every one that has started, when yesterday's and today's have both ended", async () => {
       // Every day at 00:00 for a minute: a daily club after today's session,
       // so the day before and the day itself both hold finished sessions.
-      const fixture: Fixture = {
-        id: LIVE,
-        timezone: "UTC",
-        startDate: utcDate(-20),
-        endDate: null,
-        slots: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+      const startDate = utcDate(-20);
+      await seed(
+        LIVE,
+        { timezone: "UTC", startDate, endDate: null },
+        [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
           weekday,
           startTime: "00:00",
           durationMinutes: 1,
         })),
-        moments: [],
-      };
-      await seed(
-        fixture.id,
-        { timezone: fixture.timezone, startDate: fixture.startDate, endDate: null },
-        fixture.slots,
       );
 
       // Taken before the database reads its own clock: the horizon only grows
-      // with time, so a plan read a moment later still holds everything the
-      // walk at this instant shows.
+      // with time, so a plan read a moment later still holds everything a list
+      // at this instant shows.
       const now = new Date();
       const horizon = await admin.rpc("session_plan_horizon", { p_product_id: LIVE });
       expect(horizon.error).toBeNull();
       const { data, error } = await admin.rpc("planned_session_dates", {
         p_product_id: LIVE,
-        p_from: fixture.startDate,
+        p_from: startDate,
         p_to: z.string().parse(horizon.data),
       });
       expect(error).toBeNull();
-      const planned = plannedSessionRows.parse(data);
+      const shown = trimOpenEndedFuture(
+        plannedSessionRows.parse(data),
+        now,
+        OPEN_ENDED_OCCURRENCE_CAP,
+        MARGIN_MS,
+      );
 
+      // One session a day from the first, with no gap…
+      expect(shown.map((session) => session.date)).toEqual(
+        shown.map((_, index) => addDays(startDate, index)),
+      );
       expect(
-        trimOpenEndedFuture(planned, now, OPEN_ENDED_OCCURRENCE_CAP, MARGIN_MS).map((s) => [
-          s.startsAt.toISOString(),
-          s.endsAt.toISOString(),
-        ]),
-      ).toEqual(walked(fixture, now));
+        shown.map((session) => session.startsAt.toISOString()),
+      ).toEqual(shown.map((session) => `${session.date}T00:00:00.000Z`));
+      // …and the cap's worth still open at the end of it.
+      expect(
+        shown.filter(
+          (session) => session.endsAt.getTime() + MARGIN_MS > now.getTime(),
+        ),
+      ).toHaveLength(OPEN_ENDED_OCCURRENCE_CAP);
     });
-
-    it.each(FIXTURES.map((fixture) => [fixture.timezone, fixture] as const))(
-      "%s",
-      async (_zone, fixture) => {
-        const to = fixture.endDate ?? "2031-12-31";
-        const { data, error } = await admin.rpc("planned_session_dates", {
-          p_product_id: fixture.id,
-          p_from: fixture.startDate,
-          p_to: to,
-        });
-        expect(error).toBeNull();
-        const planned = plannedSessionRows.parse(data);
-        expect(planned.length).toBeGreaterThan(0);
-
-        for (const moment of fixture.moments) {
-          const now = new Date(moment);
-          const shown =
-            fixture.endDate === null
-              ? trimOpenEndedFuture(planned, now, OPEN_ENDED_OCCURRENCE_CAP, MARGIN_MS)
-              : planned;
-          expect(
-            shown.map((s) => [s.startsAt.toISOString(), s.endsAt.toISOString()]),
-            moment,
-          ).toEqual(walked(fixture, now));
-        }
-      },
-    );
   });
 });

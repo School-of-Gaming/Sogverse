@@ -781,10 +781,6 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
-  get_my_session_cancellations: {
-    scopeTest: "tests/db/session-cancellation.test.ts",
-    why: "takes no argument at all: the seats it answers for are the active, placed participations whose customer_id or participant_id is auth.uid(), so a caller learns the cancelled upcoming dates of their own seats' groups and of nobody else's. It returns dates only — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, and requires the third to see nothing",
-  },
   get_my_planned_sessions: {
     scopeTest: "tests/db/my-planned-sessions.test.ts",
     why: "takes no argument at all: the seats it answers for are the active participations whose customer_id or participant_id is auth.uid(), so a caller reads the planned sessions of their own seats and of nobody else's. SECURITY DEFINER only to fold in which dates the seat's group cancelled, and it carries that as a bare flag — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, requires the third to see nothing of the first family's seats, and asks the reverse for the second family's own seat",

@@ -9,7 +9,7 @@ import {
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
-import { expandPlan } from "../../helpers/expanded-plan";
+import { planRows, planSessions } from "../../mocks/planned-sessions";
 
 /**
  * **A product page as crawlers meet it** (`docs/architecture/site-quality.md`):
@@ -114,16 +114,14 @@ const IMAGE_PATH =
   "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae.jpg";
 
 /** The plan's rows for the club's whole term, as `planned_session_dates` answers. */
-const PLAN_ROWS = expandPlan({
-  slots: [{ weekday: 2, startTime: "17:00", durationMinutes: 60 }],
-  startDate: DETAIL_ROW.start_date,
-  endDate: DETAIL_ROW.end_date,
-  timezone: DETAIL_ROW.timezone,
-}).map((session) => ({
-  session_date: session.date,
-  starts_at: session.startsAt.toISOString(),
-  ends_at: session.endsAt.toISOString(),
-}));
+const PLAN_ROWS = planRows(
+  planSessions({
+    slots: [{ weekday: 2, startTime: "17:00", durationMinutes: 60 }],
+    startDate: DETAIL_ROW.start_date,
+    endDate: DETAIL_ROW.end_date,
+    timezone: DETAIL_ROW.timezone,
+  }),
+);
 
 const PLAN_PATH = "/rest/v1/rpc/planned_session_dates";
 

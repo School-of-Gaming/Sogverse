@@ -1,11 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { partitionFeedEntries } from "@/components/session-feed";
-import {
-  OPEN_ENDED_OCCURRENCE_CAP,
-  productLocalDate,
-  sessionEntryId,
-} from "@/lib/session-occurrence";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
+import { productLocalDate, sessionEntryId } from "@/lib/session-occurrence";
 import type { GeduFeedSession } from "@/services/gedu-sessions";
 import type { SubstitutionRequestDocument } from "@/services/session-substitution";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";

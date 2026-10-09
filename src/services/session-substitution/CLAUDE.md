@@ -269,11 +269,11 @@ divergence would survive.
 
 **The picker lists the viewer's own upcoming sessions, read from the planned
 sessions the seats they already hold carry**, under the app's one forward-looking
-rule and not a horizon of its own: an open-ended product projects its next eight
-occurrences and a dated one projects everything to its end date, which is what
-every other list of what is coming shows. The session card carries the same
-action under the same rule by construction rather than by a second test — a card
-exists only for an entry the feed projected.
+rule and not a horizon of its own: an open-ended product lists its next eight
+sessions and a dated one everything to its end date, which is what every other
+list of what is coming shows. The session card carries the same action under the
+same rule by construction rather than by a second test — a card exists only for a
+date the plan holds.
 
 **The gedus' pool has no horizon.** It lists every open request dated today or
 later that the gedu could take, however far ahead — as the admin page's queue
@@ -375,7 +375,7 @@ appearing with it.
 
 Two consequences worth knowing before reading a surface:
 
-- **A date the schedule no longer projects has no start, so the 48 hours run back from
+- **A date the plan no longer holds has no start, so the 48 hours run back from
   product-local midnight of that date.** That is earlier than any real session on it
   would have opened — an admin moving a group's weekday must not lock a sub out of an
   afternoon they actually ran and still owe a report for — but it is **not** "open now":

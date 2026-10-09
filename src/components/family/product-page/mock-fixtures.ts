@@ -1,5 +1,8 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
-import { getNextSessionStart } from "@/lib/enrollment";
+import {
+  fixtureNextSlotStart,
+  fixtureSlotStarts,
+} from "@/components/preview/fixture-clock";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type {
   FamilyProductCancellation,
@@ -1148,16 +1151,15 @@ function clockFace(minutes: number): string {
 }
 
 /**
- * The instant the run is pinned to — resolved from the slot through the same
- * helper the voice window resolves its occurrences with.
+ * The instant the run is pinned to — resolved from the slot by the fixture
+ * clock, which resolves each date's clock face in the product's zone the way
+ * the database's plan does.
  *
- * That sharing is the point. The masthead's Join asks "is an occurrence of this
- * slot open right now?" and the feed asks "when is the next occurrence of this
- * slot?", and a fixture that answered the second question with its own
- * arithmetic would eventually disagree with the first. It did: flooring `now` to
- * a half hour and calling that the session start put the two an hour apart on
- * the autumn night when 03:00 happens twice in Helsinki, so the page showed a
- * locked room over a session that was running.
+ * Flooring `now` to a half hour and calling that the session start once put
+ * the masthead's Join and the feed an hour apart on the autumn night when 03:00
+ * happens twice in Helsinki, so the page showed a locked room over a session
+ * that was running. Resolving the slot on its date is what keeps the two
+ * agreeing.
  */
 function resolveAnchor(
   now: Date,
@@ -1165,11 +1167,6 @@ function resolveAnchor(
   slot: SlotTime,
   durationMs: number,
 ): Date {
-  const schedule = {
-    dayOfWeek: slot.weekday,
-    startTime: slot.startTime,
-    timezone: TIMEZONE,
-  };
   switch (anchor.kind) {
     // The same answer for both, and deliberately: "the next session" means the
     // one running right now when there is one. A club meeting as somebody opens
@@ -1178,10 +1175,10 @@ function resolveAnchor(
     // or not the scenario was written to be live.
     case "live":
     case "next-occurrence":
-      return currentOrNextOccurrence(now, schedule, durationMs);
+      return currentOrNextOccurrence(now, slot, durationMs);
     case "finished":
       return shiftZonedDays(
-        getNextSessionStart(schedule, { now }),
+        fixtureNextSlotStart(now, slot, TIMEZONE),
         -7 * anchor.weeksAgo,
       );
   }
@@ -1189,35 +1186,18 @@ function resolveAnchor(
 
 /**
  * The occurrence of a slot that is under way right now, or the next one if none
- * is.
- *
- * The running one is looked for from a search point a week back, which is
- * exactly how the voice window finds an in-progress session: the schedule
- * resolver only ever returns a *future* start, so asking it from `now` would
- * skip the session currently happening.
- *
- * **The answer is checked before it is trusted.** That resolver can hand back a
- * start earlier than the point it was asked from: on the day the clocks go back
- * the local day is twenty-five hours long, so its "one day later" candidate
- * lands on the same weekday again, matches, and returns *last week's* session.
- * Taken at face value that would date the head of this feed a week in the past
- * while labelling it upcoming. Anything not genuinely running is therefore
- * discarded in favour of the next future occurrence, which costs the live
- * scenario its lit Join for that one day — honest, and the same conclusion the
- * voice window reaches on its own.
+ * is: the slot's starts over the past week, the running one taken first.
  */
 function currentOrNextOccurrence(
   now: Date,
-  schedule: { dayOfWeek: number; startTime: string; timezone: string },
+  slot: SlotTime,
   durationMs: number,
 ): Date {
-  const candidate = getNextSessionStart(schedule, {
-    now: shiftZonedDays(now, -7),
-  });
-  const start = candidate.getTime();
-  return start <= now.getTime() && now.getTime() < start + durationMs
-    ? candidate
-    : getNextSessionStart(schedule, { now });
+  const nowMs = now.getTime();
+  const running = fixtureSlotStarts(now, slot, TIMEZONE, -7, 0).find(
+    (start) => start.getTime() <= nowMs && nowMs < start.getTime() + durationMs,
+  );
+  return running ?? fixtureNextSlotStart(now, slot, TIMEZONE);
 }
 
 /**

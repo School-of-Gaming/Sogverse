@@ -86,7 +86,7 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
-import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 import { INERT_HREF } from "@/lib/constants/routes";
 

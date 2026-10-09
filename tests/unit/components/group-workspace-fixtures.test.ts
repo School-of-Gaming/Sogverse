@@ -8,7 +8,7 @@ import {
   buildGroupWorkspaceFixture,
   GROUP_WORKSPACE_SCENARIOS,
 } from "@/components/group-workspace/mock-workspace-fixtures";
-import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
+import { sessionEntryId } from "@/lib/session-occurrence";
 
 /**
  * ============================================================================
@@ -84,24 +84,39 @@ describe("every workspace scenario", () => {
 
     /**
      * The fixture states the run's final session the way the database hands
-     * it over, so it has to be the one the schedule, the end date and the
-     * feed's own cancellations name — or the obligation hangs off a day the
-     * scenario never meant.
+     * it over: the last date of its plan inside the term that the feed has not
+     * cancelled, on a weekday the schedule names — or the obligation hangs off
+     * a day the scenario never meant. An open-ended run has none.
      */
-    it(`${scenario}: names the final session the schedule names`, () => {
+    it(`${scenario}: names the final session its plan names`, () => {
       const { data, entries } = buildGroupWorkspaceFixture(NOW, scenario);
-      expect(data.final_session_date).toBe(
-        finalSessionDate({
-          slots: data.product.schedule_slots,
-          startDate: data.product.start_date,
-          endDate: data.product.end_date,
-          cancelledDates: new Set(
-            entries.flatMap((entry) =>
-              entry.kind === "cancelled" ? [entry.sessionDate] : [],
-            ),
-          ),
-        }),
+      const { start_date: startDate, end_date: endDate } = data.product;
+      if (endDate === null) {
+        expect(data.final_session_date).toBeNull();
+        return;
+      }
+      const cancelled = new Set(
+        entries.flatMap((entry) =>
+          entry.kind === "cancelled" ? [entry.sessionDate] : [],
+        ),
       );
+      const running = data.planned_sessions
+        .map((session) => session.date)
+        .filter(
+          (date) =>
+            (startDate === null || date >= startDate) &&
+            date <= endDate &&
+            !cancelled.has(date),
+        );
+      expect(data.final_session_date).toBe(running.at(-1) ?? null);
+      if (data.final_session_date !== null) {
+        // 0 = Monday, as the slots store it; the bare date is UTC-pinned.
+        const weekday =
+          (new Date(`${data.final_session_date}T00:00:00Z`).getUTCDay() + 6) % 7;
+        expect(
+          data.product.schedule_slots.map((slot) => slot.weekday),
+        ).toContain(weekday);
+      }
     });
   }
 

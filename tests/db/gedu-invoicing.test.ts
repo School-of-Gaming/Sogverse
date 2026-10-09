@@ -416,7 +416,7 @@ describe("gedu invoicing", () => {
       expect(group?.cancelled_sessions).toEqual([CANCELLED]);
     });
 
-    it("carries each product's fees, type, schedule and term", () => {
+    it("carries each product's fees, type and term", () => {
       const consumer = adminDoc.products.find((p) => p.id === CONSUMER);
       expect(consumer).toMatchObject({
         product_type: "consumer_club",
@@ -425,7 +425,6 @@ describe("gedu invoicing", () => {
         end_date: "2026-06-24",
         primary_gedu_fee_cents: 5000,
         assistant_gedu_fee_cents: 3000,
-        schedule_slots: [{ weekday: 2, start_time: "14:00", duration_minutes: 60 }],
         location: null,
         municipality: null,
       });

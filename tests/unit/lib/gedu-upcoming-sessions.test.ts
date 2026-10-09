@@ -8,7 +8,7 @@ import {
   weekHeadingKind,
   type GeduUpcomingSession,
 } from "@/lib/gedu-upcoming-sessions";
-import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
 import { planSessions } from "../../mocks/planned-sessions";
 
 /**

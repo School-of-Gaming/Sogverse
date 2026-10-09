@@ -50,7 +50,6 @@ function product(
     primary_gedu_fee_cents: 6_000,
     assistant_gedu_fee_cents: 4_000,
     product_translations: [{ locale: "en", name: `Club ${overrides.id}` }],
-    schedule_slots: [{ weekday: 2, start_time: "16:00", duration_minutes: 90 }],
     // Its Wednesdays: 2, 9, 16, 23, 30 September.
     planned_dates: ["2026-09-02", "2026-09-09", "2026-09-16", "2026-09-23", "2026-09-30"],
     location: {

@@ -1,10 +1,10 @@
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
   nextRunning,
+  OPEN_ENDED_OCCURRENCE_CAP,
   trimOpenEndedFuture,
   type PlannedSession,
 } from "@/lib/planned-sessions";
-import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 import { formatDate, formatTime } from "@/lib/utils";
 
 /**

@@ -83,9 +83,9 @@ export interface GeduSubstitutionsFixture {
    * The viewer's **own** upcoming sessions — what the "Can't make a session?"
    * picker is a list of.
    *
-   * Expanded from the seats below by the live helper, so the scene shows the
-   * real schedule walk — a term of five weekly clubs, one of them stopping at
-   * its end date — rather than a hand-written list that could not be wrong.
+   * Read off the seats' plans below by the live helper, so the scene shows the
+   * real list — a term of five weekly clubs, one of them stopping at its end
+   * date — rather than a hand-written list that could not be wrong.
    */
   upcomingSessions: GeduUpcomingSession[];
   /**

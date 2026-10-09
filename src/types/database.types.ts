@@ -4185,7 +4185,6 @@ export type Database = {
       gedu_assigned_products: {
         Args: { p_gedu_id: string }
         Returns: {
-          cancelled_dates: string[]
           group_count: number
           group_id: string
           kind: string
@@ -4276,7 +4275,6 @@ export type Database = {
       get_assigned_products_for_discord_user: {
         Args: { p_discord_user_id: string }
         Returns: {
-          cancelled_dates: string[]
           group_count: number
           group_id: string
           kind: string
@@ -4323,7 +4321,6 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
-          cancelled_dates: string[]
           group_count: number
           group_id: string
           kind: string
@@ -4420,13 +4417,6 @@ export type Database = {
           starts_at: string
         }[]
       }
-      get_my_session_cancellations: {
-        Args: never
-        Returns: {
-          participation_id: string
-          session_date: string
-        }[]
-      }
       get_my_waitlist_positions: {
         Args: never
         Returns: {
@@ -4517,10 +4507,6 @@ export type Database = {
       group_session_is_cancelled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
-      }
-      group_upcoming_cancelled_dates: {
-        Args: { p_group_id: string }
-        Returns: string[]
       }
       group_upcoming_planned_sessions: {
         Args: { p_group_id: string }

@@ -12,7 +12,7 @@ import {
   invitationPlanWindow,
   type ProductConfirmationInvitationInput,
 } from "@/lib/email-templates/product-confirmation-invitation";
-import { expandPlan } from "../../helpers/expanded-plan";
+import { planSessions } from "../../mocks/planned-sessions";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -54,7 +54,7 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
   endDate: null,
   slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
   // What the database plans for it over the composer's window: every Monday.
-  plannedSessions: expandPlan({
+  plannedSessions: planSessions({
     slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
     startDate: "2027-01-04",
     endDate: null,

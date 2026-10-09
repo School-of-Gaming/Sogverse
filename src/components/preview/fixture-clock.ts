@@ -180,6 +180,50 @@ export function fixtureSessionWindow(
 }
 
 /**
+ * Every start of one weekly slot on the dates `fromDay` to `toDay` days from
+ * today — today as it falls in the product's zone — soonest first, each clock
+ * face resolved in that zone on its own date, so a DST transition between two
+ * of them moves neither. Fixtures only, like the rest of this module.
+ */
+export function fixtureSlotStarts(
+  now: Date,
+  slot: { weekday: number; startTime: string },
+  timeZone: string,
+  fromDay: number,
+  toDay: number,
+): Date[] {
+  const starts: Date[] = [];
+  for (let offset = fromDay; offset <= toDay; offset++) {
+    const window = fixtureSessionWindow(
+      calendarDate(now, offset, timeZone),
+      [{ ...slot, durationMinutes: 0 }],
+      timeZone,
+    );
+    if (window !== null) starts.push(window.startsAt);
+  }
+  return starts;
+}
+
+/**
+ * The first start of a weekly slot strictly after `now`. A week and a day of
+ * dates always holds one: today's, if it has not started, or the same weekday
+ * a week on.
+ */
+export function fixtureNextSlotStart(
+  now: Date,
+  slot: { weekday: number; startTime: string },
+  timeZone: string,
+): Date {
+  const next = fixtureSlotStarts(now, slot, timeZone, 0, 7).find(
+    (start) => start.getTime() > now.getTime(),
+  );
+  if (next === undefined) {
+    throw new Error("fixtureNextSlotStart: no start in the coming week");
+  }
+  return next;
+}
+
+/**
  * {@link fixtureSessionWindow} as a read carries it on the wire: timestamps,
  * both `null` on a date no slot names.
  */

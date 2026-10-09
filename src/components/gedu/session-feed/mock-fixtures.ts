@@ -1,5 +1,5 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
-import { getNextSessionStart } from "@/lib/enrollment";
+import { fixtureNextSlotStart } from "@/components/preview/fixture-clock";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import { isExpectedOnEntry } from "./entry-state";
@@ -813,10 +813,7 @@ export function sessionStartsForCadence(opts: {
 
   const next =
     cadence === "weekly"
-      ? getNextSessionStart(
-          { dayOfWeek: weekday, startTime, timezone: timeZone },
-          { now },
-        )
+      ? fixtureNextSlotStart(now, { weekday, startTime }, timeZone)
       : nextWeekdayStart(now, startTime, timeZone);
 
   const forward = (from: Date) =>

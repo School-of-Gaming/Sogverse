@@ -4,7 +4,7 @@ import {
   invitationPlanWindow,
   type ProductConfirmationInvitationInput,
 } from "@/lib/email-templates/product-confirmation-invitation";
-import { expandPlan } from "../../helpers/expanded-plan";
+import { planSessions } from "../../mocks/planned-sessions";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { SUPPORT_EMAIL } from "@/lib/constants";
@@ -59,7 +59,7 @@ function withPlan({
     ...input,
     plannedSessions:
       plannedSessions ??
-      expandPlan({ ...input, startDate, from: window.from, to: window.to }),
+      planSessions({ ...input, startDate, from: window.from, to: window.to }),
   };
 }
 
