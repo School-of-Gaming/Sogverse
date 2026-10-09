@@ -5810,11 +5810,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää tittelisi, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja tittelisi, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "titleText": "Lisää tittelisi ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "titleText": "Lisää tittelisi ja täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja tittelisi sekä täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kielellä, jolla kirjoitat, jotta voit rastittaa tämän."
         }
       },
       "photo": {
@@ -5857,8 +5857,8 @@
       "writing": {
         "heading": "Omin sanoin",
         "guidance": {
-          "lead": "Kun profiili on julkinen, se näkyy School of Gamingin verkkosivuston Tiimi-sivulla, ja sitä lukevat sekä pelaajat että vanhemmat. Vanhemmat haluavat usein tietää, kuka ohjaa heidän lapsensa sessioita, millainen ihminen hän on ja mikä hänelle on tärkeää lasten ja nuorten kanssa työskennellessä. Profiili voi jopa auttaa perhettä valitsemaan sopivan kerhon, leirin tai tapahtuman.",
-          "thirdPerson": "Kirjoita kuvaus kolmannessa persoonassa kuin esittely, mutta niin, että se kuulostaa esiteltävältä ihmiseltä eikä ansioluettelolta.",
+          "lead": "Kun profiili on julkinen, se näkyy School of Gamingin verkkosivuston Tiimi-sivulla, ja sitä lukevat sekä pelaajat että vanhemmat. Vanhemmat haluavat usein tietää, kuka ohjaa heidän lapsensa kertoja, millainen ihminen hän on ja mikä hänelle on tärkeää lasten ja nuorten kanssa työskennellessä.",
+          "thirdPerson": "Kirjoita kuvaus kolmannessa persoonassa esittelyn tapaan, mutta niin, että se kuulostaa esiteltävältä ihmiseltä eikä ansioluettelolta.",
           "doHeading": "Tee näin",
           "dontHeading": "Vältä",
           "do": {
@@ -5892,10 +5892,10 @@
         "languagesHint": "Verkkosivusto ei käännä profiilia. Lisää jokainen kieli, jolla profiilin pitäisi näkyä, ja kirjoita se kyseisen kielen välilehdelle.",
         "addLocale": "Lisää kieli",
         "removeLocale": "Poista {locale}",
-        "shortDescription": "Esittele itsesi yhdellä rivillä",
+        "shortDescription": "Yhden rivin esittely",
         "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
         "longDescription": "Kuvaus",
-        "longDescriptionHint": "Kolmannessa persoonassa, kuin esittely.",
+        "longDescriptionHint": "Kolmannessa persoonassa, esittelyn tapaan.",
         "longDescriptionPlaceholder": "Anna on ohjannut kerhoja vuodesta 2023 lähtien ja opettaa mielellään redstonea.",
         "funFact": "Hauska fakta",
         "funFactPlaceholder": "Rakensi kerran toimivan laskimen Minecraftissa.",
@@ -5931,11 +5931,11 @@
         "missing": {
           "photo": "Lisää kuva, jotta voit rastittaa tämän.",
           "title": "Lisää titteli, jotta voit rastittaa tämän.",
-          "text": "Täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "text": "Täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
           "photoTitle": "Lisää kuva ja titteli, jotta voit rastittaa tämän.",
-          "photoText": "Lisää kuva ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "titleText": "Lisää titteli ja täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
-          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Esittele itsesi yhdellä rivillä” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
+          "photoText": "Lisää kuva ja täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "titleText": "Lisää titteli ja täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän.",
+          "photoTitleText": "Lisää kuva ja titteli sekä täytä ”Yhden rivin esittely” ja ”Kuvaus” jokaisella kirjoitetulla kielellä, jotta voit rastittaa tämän."
         }
       },
       "userPage": {

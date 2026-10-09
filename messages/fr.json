@@ -5810,11 +5810,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez votre titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentation en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et votre titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez votre titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentation en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez votre titre et remplissez « Présentation en une ligne » et « Bio » dans chaque langue où vous écrivez pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et votre titre, et remplissez « Présentation en une ligne » et « Bio » dans chaque langue où vous écrivez, pour pouvoir cocher cette case."
         }
       },
       "photo": {
@@ -5857,8 +5857,8 @@
       "writing": {
         "heading": "Avec vos propres mots",
         "guidance": {
-          "lead": "Une fois public, le profil apparaît sur la page Équipe du site de School of Gaming, où le lisent à la fois les gamers et les parents. Les parents veulent souvent savoir qui anime les sessions de leur enfant, quel genre de personne c’est et ce qui compte pour elle auprès des enfants et des jeunes. Un profil peut même aider une famille à choisir le bon club, stage ou événement.",
-          "thirdPerson": "Rédigez la bio à la troisième personne, comme une présentation, mais qu’elle ressemble à la personne qu’elle présente plutôt qu’à un CV.",
+          "lead": "Une fois public, le profil apparaît sur la page Équipe du site de School of Gaming, où le lisent à la fois les gamers et les parents. Les parents veulent souvent savoir qui anime les séances de leur enfant, quel genre de personne c’est et ce qui compte pour elle auprès des enfants et des jeunes.",
+          "thirdPerson": "Rédigez la bio à la troisième personne, comme une présentation, mais faites en sorte qu’elle ressemble à la personne présentée plutôt qu’à un CV.",
           "doHeading": "À faire",
           "dontHeading": "À éviter",
           "do": {
@@ -5882,7 +5882,7 @@
               "outside": "Qu’aimez-vous faire en dehors du travail et du jeu ?",
               "players": "Qu’est-ce qui compte pour vous quand vous travaillez avec des joueurs ?",
               "atmosphere": "Quelle ambiance voulez-vous créer ?",
-              "why": "Pourquoi l’éducation par le jeu a-t-elle du sens pour vous ?",
+              "why": "Pourquoi accompagner les jeunes dans le jeu vidéo a-t-il du sens pour vous ?",
               "topics": "Y a-t-il des sujets ou des compétences qui vous intéressent particulièrement ?",
               "background": "Y a-t-il quelque chose dans votre parcours qui influence votre façon de travailler ?"
             }
@@ -5892,7 +5892,7 @@
         "languagesHint": "Le site ne traduit pas le profil. Ajoutez chaque langue dans laquelle il doit apparaître, et rédigez-le sous l’onglet de cette langue.",
         "addLocale": "Ajouter une langue",
         "removeLocale": "Supprimer {locale}",
-        "shortDescription": "Présentez-vous en une ligne",
+        "shortDescription": "Présentation en une ligne",
         "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
         "longDescription": "Bio",
         "longDescriptionHint": "À la troisième personne, comme une présentation.",
@@ -5931,11 +5931,11 @@
         "missing": {
           "photo": "Ajoutez une photo pour pouvoir cocher cette case.",
           "title": "Ajoutez un titre pour pouvoir cocher cette case.",
-          "text": "Remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "text": "Remplissez « Présentation en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
           "photoTitle": "Ajoutez une photo et un titre pour pouvoir cocher cette case.",
-          "photoText": "Ajoutez une photo et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "titleText": "Ajoutez un titre et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
-          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentez-vous en une ligne » et « Bio » dans chaque langue rédigée, pour pouvoir cocher cette case."
+          "photoText": "Ajoutez une photo et remplissez « Présentation en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "titleText": "Ajoutez un titre et remplissez « Présentation en une ligne » et « Bio » dans chaque langue rédigée pour pouvoir cocher cette case.",
+          "photoTitleText": "Ajoutez une photo et un titre, et remplissez « Présentation en une ligne » et « Bio » dans chaque langue rédigée, pour pouvoir cocher cette case."
         }
       },
       "userPage": {

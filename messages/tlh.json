@@ -4911,11 +4911,11 @@
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "title": "patlhlIj yIghItlh, vaj DawIvlaH.",
-          "text": "“wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
           "photoTitle": "mIllogh yIlab ’ej patlhlIj yIghItlh, vaj DawIvlaH.",
-          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "photo": {
@@ -4993,7 +4993,7 @@
         "languagesHint": "Hol mughlu’be’. Hoch Hol yIchel ’ej Hol tetlhDaq yIghItlh.",
         "addLocale": "Hol chu’",
         "removeLocale": "{locale} yIteq",
-        "shortDescription": "wa’ tlhegh: jIH",
+        "shortDescription": "wa’ tlhegh QIn",
         "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
         "longDescription": "ghaH",
         "longDescriptionHint": "ghaH yIjatlh, jIH yIjatlhQo’.",
@@ -5032,11 +5032,11 @@
         "missing": {
           "photo": "mIllogh yIlab, vaj DawIvlaH.",
           "title": "patlh yIghItlh, vaj DawIvlaH.",
-          "text": "“wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "text": "“wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
           "photoTitle": "mIllogh yIlab ’ej patlh yIghItlh, vaj DawIvlaH.",
-          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
-          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh: jIH” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+          "photoText": "mIllogh yIlab ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "titleText": "patlh yIghItlh ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+          "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
         }
       },
       "userPage": {

@@ -5810,11 +5810,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add your title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language you write in to be able to tick this.",
+          "text": "Fill in “One-line introduction” and “Bio” in every language you write in to be able to tick this.",
           "photoTitle": "Add a photo and your title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
-          "titleText": "Add your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this.",
-          "photoTitleText": "Add a photo and your title, and fill in “Introduce yourself in one line” and “Bio” in every language you write in, to be able to tick this."
+          "photoText": "Add a photo, and fill in “One-line introduction” and “Bio” in every language you write in, to be able to tick this.",
+          "titleText": "Add your title, and fill in “One-line introduction” and “Bio” in every language you write in, to be able to tick this.",
+          "photoTitleText": "Add a photo and your title, and fill in “One-line introduction” and “Bio” in every language you write in, to be able to tick this."
         }
       },
       "photo": {
@@ -5857,7 +5857,7 @@
       "writing": {
         "heading": "In your own words",
         "guidance": {
-          "lead": "Once the profile is public, it appears on the Team page of School of Gaming’s website, where both gamers and parents read it. Parents often want to know who leads their child’s sessions, what kind of person they are and what matters to them when working with children and young people. A profile can even help a family choose the right club, camp or event.",
+          "lead": "Once the profile is public, it appears on the Team page of School of Gaming’s website, where both gamers and parents read it. Parents often want to know who leads their child’s sessions, what kind of person they are and what matters to them when working with children and young people.",
           "thirdPerson": "Write the bio in the third person, like an introduction, but let it sound like the person it introduces rather than a CV.",
           "doHeading": "Do",
           "dontHeading": "Don’t",
@@ -5892,7 +5892,7 @@
         "languagesHint": "The website doesn’t translate the profile. Add each language it should appear in, and write it under that language’s tab.",
         "addLocale": "Add a language",
         "removeLocale": "Remove {locale}",
-        "shortDescription": "Introduce yourself in one line",
+        "shortDescription": "One-line introduction",
         "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
         "longDescription": "Bio",
         "longDescriptionHint": "In the third person, like an introduction.",
@@ -5931,11 +5931,11 @@
         "missing": {
           "photo": "Add a photo to be able to tick this.",
           "title": "Add a title to be able to tick this.",
-          "text": "Fill in “Introduce yourself in one line” and “Bio” in every language written to be able to tick this.",
+          "text": "Fill in “One-line introduction” and “Bio” in every language written to be able to tick this.",
           "photoTitle": "Add a photo and a title to be able to tick this.",
-          "photoText": "Add a photo, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
-          "titleText": "Add a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this.",
-          "photoTitleText": "Add a photo and a title, and fill in “Introduce yourself in one line” and “Bio” in every language written, to be able to tick this."
+          "photoText": "Add a photo, and fill in “One-line introduction” and “Bio” in every language written, to be able to tick this.",
+          "titleText": "Add a title, and fill in “One-line introduction” and “Bio” in every language written, to be able to tick this.",
+          "photoTitleText": "Add a photo and a title, and fill in “One-line introduction” and “Bio” in every language written, to be able to tick this."
         }
       },
       "userPage": {
