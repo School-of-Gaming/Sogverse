@@ -116,6 +116,13 @@ export type VisitsDimension =
   | "utmSource"
   | "utmMedium";
 
+/**
+ * The longest `filter` the endpoint accepts, in characters: it answers 400
+ * past this. A caller that builds a filter from a list it does not control
+ * sizes its batches against this rather than against a count of items.
+ */
+export const MAX_FILTER_LENGTH = 2048;
+
 export interface PageviewsQuery {
   /** One or two dimensions; the endpoint refuses a third. */
   by: readonly [VisitsDimension] | readonly [VisitsDimension, VisitsDimension];
