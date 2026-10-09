@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { GeduSubstitutionPoolSection } from "@/components/gedu/GeduSubstitutionPoolSection";
+import { wireSessionWindow } from "../../mocks/planned-sessions";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
@@ -74,15 +75,7 @@ function request(
   name: string,
   myResponse: OpenSubstitutionRequest["my_response"] = null,
 ): OpenSubstitutionRequest {
-  return {
-    request_id: id,
-    group_id: `group-${id}`,
-    group_name: `Group ${id}`,
-    session_date: "2026-03-17",
-    role: "primary",
-    fee_cents: 6500,
-    my_response: myResponse,
-    product: {
+  const product: OpenSubstitutionRequest["product"] = {
       id: `product-${id}`,
       product_type: "consumer_club",
       tag: null,
@@ -97,7 +90,17 @@ function request(
       schedule_slots: [
         { weekday: 2, start_time: "17:00", duration_minutes: 90 },
       ],
-    },
+  };
+  return {
+    request_id: id,
+    group_id: `group-${id}`,
+    group_name: `Group ${id}`,
+    session_date: "2026-03-17",
+    ...wireSessionWindow(product, "2026-03-17"),
+    role: "primary",
+    fee_cents: 6500,
+    my_response: myResponse,
+    product,
   };
 }
 

@@ -9,14 +9,15 @@ import {
   type GeduUpcomingSession,
 } from "@/lib/gedu-upcoming-sessions";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
+import { planSessions } from "../../mocks/planned-sessions";
 
 /**
  * **What the Substitutions page's picker is a list of**: the sessions the
  * viewer holds a seat at and could still file an absence for.
  *
- * It is the app's one schedule expansion over the seat rows the page already
- * has, so what is worth pinning is not the walk — that has its own tests — but
- * the four decisions made around it:
+ * It reads the planned sessions on the seat rows the page already has, so what
+ * is worth pinning is not the plan — the database owns it — but the four
+ * decisions made around it:
  *
  * - the **horizon**, which is not this module's own: it is the app's forward
  *   rule, an open-ended run projecting the shared next-eight and a dated one
@@ -43,12 +44,30 @@ function row(overrides: {
   isRemote?: boolean;
   cancelledDates?: string[];
 }): GeduAssignmentRow {
+  const startDate = overrides.startDate ?? "2026-01-05";
+  const endDate = overrides.endDate ?? null;
+  const cancelled = new Set(overrides.cancelledDates ?? []);
+  const kind = overrides.kind ?? "assignment";
+  const substitutionDate = overrides.substitutionDate ?? null;
+  // The read's window for a substitution's date: the plan's session on it, or
+  // none on a date no slot names.
+  const substituted = (
+    substitutionDate === null
+      ? []
+      : planSessions({
+          timezone: TIME_ZONE,
+          slots: overrides.slots,
+          startDate: substitutionDate,
+          endDate: substitutionDate,
+          now: NOW,
+        })
+  ).at(0);
   return {
     product: {
       id: overrides.productId,
       timezone: TIME_ZONE,
-      startDate: overrides.startDate ?? "2026-01-05",
-      endDate: overrides.endDate ?? null,
+      startDate,
+      endDate,
       isRemote: overrides.isRemote ?? true,
       siteName: null,
       topic: "minecraft_java",
@@ -63,10 +82,25 @@ function row(overrides: {
       ],
     },
     groupId: overrides.groupId,
-    kind: overrides.kind ?? "assignment",
-    substitutionDate: overrides.substitutionDate ?? null,
-    cancelledDates: overrides.cancelledDates ?? [],
-    substitutionCancelled: false,
+    kind,
+    substitutionDate,
+    upcomingSessions:
+      kind === "substitution"
+        ? []
+        : planSessions({
+            timezone: TIME_ZONE,
+            slots: overrides.slots,
+            startDate,
+            endDate,
+            now: NOW,
+          }).map((session) => ({
+            ...session,
+            cancelled: cancelled.has(session.date),
+          })),
+    substitutionCancelled:
+      substitutionDate !== null && cancelled.has(substitutionDate),
+    substitutionStartsAt: substituted?.startsAt ?? null,
+    substitutionEndsAt: substituted?.endsAt ?? null,
     slots: overrides.slots,
     groupCount: 1,
     participantCount: 8,

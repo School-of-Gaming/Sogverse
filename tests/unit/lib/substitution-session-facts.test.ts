@@ -3,6 +3,7 @@ import {
   buildSessionFacts,
   sessionClockFace,
   sessionFactsProduct,
+  sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import type { SessionProductDocument } from "@/services/session-substitution";
 
@@ -13,14 +14,28 @@ import type { SessionProductDocument } from "@/services/session-substitution";
  *    named site; and in person with no site recorded, which must stay in person
  *    — `siteName: null` alone never means online.
  * 2. **A remote product never carries a building**, whatever the row says.
- * 3. **An orphaned date keeps its date and loses its instants**, so every
- *    surface still shows it, by its date alone.
+ * 3. **An orphaned date keeps its date and has no instants** — the read
+ *    carries none for a date the plan no longer has — so every surface still
+ *    shows it, by its date alone.
  * 4. **The name is the reader's locale's**, through the usual fallback.
  */
 
 /** 0 = Monday, the app's own convention. 2026-08-17 is a Monday. */
 const MONDAY = "2026-08-17";
 const TUESDAY = "2026-08-18";
+
+/**
+ * The instants a read carries for each date, as the plan states them: the
+ * Monday session at 17:00–18:30 Helsinki, and nothing for the Tuesday, which
+ * the plan does not have.
+ */
+const WIRE_WINDOWS: Record<string, { starts_at: string | null; ends_at: string | null }> = {
+  [MONDAY]: {
+    starts_at: "2026-08-17T17:00:00+03:00",
+    ends_at: "2026-08-17T18:30:00+03:00",
+  },
+  [TUESDAY]: { starts_at: null, ends_at: null },
+};
 
 function document(
   overrides: Partial<SessionProductDocument> = {},
@@ -52,12 +67,13 @@ function facts(
   return buildSessionFacts({
     product: sessionFactsProduct(document(overrides)),
     sessionDate,
+    ...sessionWindowOf(WIRE_WINDOWS[sessionDate]),
     locale: "fi",
   });
 }
 
 describe("buildSessionFacts", () => {
-  it("states an in-person session at its site, on the slot its date falls on", () => {
+  it("states an in-person session at its site, between the instants the read carries", () => {
     const result = facts();
 
     expect(result).toMatchObject({
@@ -90,7 +106,8 @@ describe("buildSessionFacts", () => {
   });
 
   it("keeps an orphaned date's date and gives it no instants", () => {
-    // The schedule meets on Mondays; a request on a Tuesday is an orphan.
+    // The schedule meets on Mondays; a request on a Tuesday is an orphan, and
+    // the read carries no instants for it.
     const result = facts({}, TUESDAY);
 
     expect(result.sessionDate).toBe(TUESDAY);
@@ -102,6 +119,7 @@ describe("buildSessionFacts", () => {
     const result = buildSessionFacts({
       product: sessionFactsProduct(document()),
       sessionDate: MONDAY,
+      ...sessionWindowOf(WIRE_WINDOWS[MONDAY]),
       locale: "sv",
     });
 

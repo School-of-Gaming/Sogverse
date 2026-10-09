@@ -1,6 +1,8 @@
 import { previewSceneHref } from "@/components/preview/href";
 import {
   calendarDate,
+  fixturePlan,
+  fixtureSessionWindow,
   futureSlot,
   liveNowSlot,
 } from "@/components/preview/fixture-clock";
@@ -719,15 +721,29 @@ function assignmentRow(opts: {
   /** The group's cancelled upcoming dates, product-local `YYYY-MM-DD`. */
   cancelledDates?: readonly string[];
 }): GeduAssignmentRow {
+  const startDate = calendarDate(
+    opts.now,
+    -opts.startedDaysAgo,
+    SESSION_FEED_TIMEZONE,
+  );
+  const endDate =
+    opts.endsInDays === null
+      ? null
+      : calendarDate(opts.now, opts.endsInDays, SESSION_FEED_TIMEZONE);
+  const substitutionWindow =
+    opts.substitutionDate === undefined
+      ? null
+      : fixtureSessionWindow(
+          opts.substitutionDate,
+          opts.slots,
+          SESSION_FEED_TIMEZONE,
+        );
   return {
     product: {
       id: opts.id,
       timezone: SESSION_FEED_TIMEZONE,
-      startDate: calendarDate(opts.now, -opts.startedDaysAgo, SESSION_FEED_TIMEZONE),
-      endDate:
-        opts.endsInDays === null
-          ? null
-          : calendarDate(opts.now, opts.endsInDays, SESSION_FEED_TIMEZONE),
+      startDate,
+      endDate,
       isRemote: opts.isRemote,
       // Remote products have no building, whatever a fixture passes — the
       // read applies the same test.
@@ -743,8 +759,22 @@ function assignmentRow(opts: {
     // with its own date, and the pair of fields below is what makes one.
     kind: opts.kind ?? "assignment",
     substitutionDate: opts.substitutionDate ?? null,
-    cancelledDates: opts.cancelledDates ?? [],
+    // A substitution is one afternoon, so it carries its own instants and no
+    // plan, exactly as the read hands it over.
+    upcomingSessions:
+      opts.substitutionDate === undefined
+        ? fixturePlan({
+            slots: opts.slots,
+            timeZone: SESSION_FEED_TIMEZONE,
+            startDate,
+            endDate,
+            now: opts.now,
+            cancelledDates: opts.cancelledDates,
+          })
+        : [],
     substitutionCancelled: false,
+    substitutionStartsAt: substitutionWindow?.startsAt ?? null,
+    substitutionEndsAt: substitutionWindow?.endsAt ?? null,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

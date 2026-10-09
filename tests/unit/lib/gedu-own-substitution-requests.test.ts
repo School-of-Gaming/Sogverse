@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildOwnSubstitutionRequestRows } from "@/lib/gedu-own-substitution-requests";
 import type { LiveSubstitutionRequest } from "@/services/session-substitution";
+import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**
  * The Substitutions page's "Your requests": the gedu's live requests turned into
@@ -14,7 +15,8 @@ const SUB = "8d2c4e6f-0a1b-4c3d-9e5f-7a9b1c3d5e7f";
 function request(
   fields: Partial<LiveSubstitutionRequest> & Pick<LiveSubstitutionRequest, "id">,
 ): LiveSubstitutionRequest {
-  return {
+  const merged: Omit<LiveSubstitutionRequest, "starts_at" | "ends_at"> &
+    Partial<LiveSubstitutionRequest> = {
     group_id: "5b7d9f1a-3c5e-4a7b-8c9d-0e1f2a3b4c5d",
     group_name: "Ryhmä A",
     session_date: "2026-10-12",
@@ -50,6 +52,11 @@ function request(
       ],
     },
     ...fields,
+  };
+  // The read's instants for the request's date, unless the case states its own.
+  return {
+    ...wireSessionWindow(merged.product, merged.session_date),
+    ...merged,
   };
 }
 

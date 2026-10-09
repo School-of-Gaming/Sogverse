@@ -7,6 +7,7 @@ import {
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**
  * **The Substitutions page is read for urgency, and the order is how it says
@@ -175,15 +176,7 @@ function wireRequest(
   sessionDate: string,
   weekday: number,
 ): OpenSubstitutionRequest {
-  return {
-    request_id: id,
-    group_id: `group-${id}`,
-    group_name: `Group ${id}`,
-    session_date: sessionDate,
-    role: "primary",
-    fee_cents: 6500,
-    my_response: null,
-    product: {
+  const product: OpenSubstitutionRequest["product"] = {
       id: `product-${id}`,
       product_type: "consumer_club",
       tag: null,
@@ -198,6 +191,16 @@ function wireRequest(
       schedule_slots: [
         { weekday, start_time: "17:00", duration_minutes: 90 },
       ],
-    },
+  };
+  return {
+    request_id: id,
+    group_id: `group-${id}`,
+    group_name: `Group ${id}`,
+    session_date: sessionDate,
+    ...wireSessionWindow(product, sessionDate),
+    role: "primary",
+    fee_cents: 6500,
+    my_response: null,
+    product,
   };
 }

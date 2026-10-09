@@ -4193,6 +4193,9 @@ export type Database = {
           product: Json
           substitution_cancelled: boolean
           substitution_date: string
+          substitution_ends_at: string
+          substitution_starts_at: string
+          upcoming_sessions: Json
         }[]
       }
       gedu_assignment_summaries: {
@@ -4281,6 +4284,9 @@ export type Database = {
           product: Json
           substitution_cancelled: boolean
           substitution_date: string
+          substitution_ends_at: string
+          substitution_starts_at: string
+          upcoming_sessions: Json
         }[]
       }
       get_chat_channel_roster: {
@@ -4325,6 +4331,9 @@ export type Database = {
           product: Json
           substitution_cancelled: boolean
           substitution_date: string
+          substitution_ends_at: string
+          substitution_starts_at: string
+          upcoming_sessions: Json
         }[]
       }
       get_my_family_product_feed: {
@@ -4512,6 +4521,10 @@ export type Database = {
       group_upcoming_cancelled_dates: {
         Args: { p_group_id: string }
         Returns: string[]
+      }
+      group_upcoming_planned_sessions: {
+        Args: { p_group_id: string }
+        Returns: Json
       }
       has_active_participation_in_group: {
         Args: { p_group_id: string }

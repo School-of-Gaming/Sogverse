@@ -5,6 +5,7 @@ import type {
   OpenAdminSubstitutionRequest,
   SubstitutedAdminSubstitutionRequest,
 } from "@/services/session-substitution";
+import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**
  * The Substitutions page's mapping: the four claims the page's whole reading
@@ -82,6 +83,7 @@ function openRequest(args: {
     group_id: `group-${args.id}`,
     group_name: `Group ${args.id}`,
     session_date: args.sessionDate,
+    ...wireSessionWindow(args.product, args.sessionDate),
     role: "primary",
     reason: "sick",
     reason_note: null,

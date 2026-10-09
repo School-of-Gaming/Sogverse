@@ -1,10 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import {
-  occurrenceOnDate,
-  type SessionDateSlot,
-} from "@/lib/session-date-occurrence";
 import type { SessionProductDocument } from "@/services/session-substitution";
 import type {
   ProductTopic,
@@ -41,9 +37,9 @@ export interface SessionFacts {
   /** The product's own zone, which `sessionDate` is a date in. */
   timezone: string;
   /**
-   * When the session runs, or `null` where the schedule no longer puts a slot
-   * on that weekday — an orphaned date, which every surface still shows, by
-   * its date alone.
+   * When the session runs, or `null` where the plan has no session on that
+   * date — an orphaned date, after the schedule moved off its weekday, or one
+   * outside the term — which every surface still shows, by its date alone.
    */
   startsAt: Date | null;
   endsAt: Date | null;
@@ -78,7 +74,6 @@ export interface SessionFactsProduct {
   isRemote: boolean;
   siteName: string | null;
   translations: readonly { locale: string; name: string }[];
-  slots: readonly SessionDateSlot[];
 }
 
 /** The wire document, in the shape {@link buildSessionFacts} reads. */
@@ -93,43 +88,51 @@ export function sessionFactsProduct(
     isRemote: document.is_remote,
     siteName: document.site_name,
     translations: document.translations,
-    slots: document.schedule_slots.map((slot) => ({
-      weekday: slot.weekday,
-      startTime: slot.start_time,
-      durationMinutes: slot.duration_minutes,
-    })),
+  };
+}
+
+/**
+ * A read's session instants, as the database's plan states them, back as
+ * `Date`s — both `null` on a date the plan no longer has.
+ */
+export function sessionWindowOf(row: {
+  starts_at: string | null;
+  ends_at: string | null;
+}): { startsAt: Date | null; endsAt: Date | null } {
+  return {
+    startsAt: row.starts_at === null ? null : new Date(row.starts_at),
+    endsAt: row.ends_at === null ? null : new Date(row.ends_at),
   };
 }
 
 /**
  * One session's facts: the product it belongs to, on the product-local date it
- * is keyed by.
+ * is keyed by, running between the instants the read carried for it.
  *
- * The instants come from the shared one-date occurrence resolution — the
- * inverse of the feeds' forward walk — so the pool, the admin page and the
- * sub's card resolve a date exactly alike, orphan included.
+ * The instants are the database's — every read behind these surfaces states
+ * the session's window from the plan — so the pool, the admin page and the
+ * sub's card cannot disagree about when a session is, orphan included.
  */
 export function buildSessionFacts({
   product,
   sessionDate,
+  startsAt,
+  endsAt,
   locale,
 }: {
   product: SessionFactsProduct;
   /** Product-local `YYYY-MM-DD`. */
   sessionDate: string;
+  /** `null`, both of them, on a date the plan no longer has. */
+  startsAt: Date | null;
+  endsAt: Date | null;
   locale: SupportedLocale;
 }): SessionFacts {
-  const occurrence = occurrenceOnDate({
-    sessionDate,
-    slots: product.slots,
-    timezone: product.timezone,
-  });
-
   return {
     sessionDate,
     timezone: product.timezone,
-    startsAt: occurrence?.start ?? null,
-    endsAt: occurrence?.end ?? null,
+    startsAt,
+    endsAt,
     productName: resolveTranslation(product.translations, locale)?.name ?? "",
     productType: product.productType,
     topic: product.topic,

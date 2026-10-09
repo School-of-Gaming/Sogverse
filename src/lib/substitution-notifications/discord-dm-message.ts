@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { createTranslator } from "use-intl/core";
 import { addCalendarDays } from "@/lib/calendar-date";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -20,6 +20,7 @@ import { PRODUCT_TOPICS } from "@/lib/products/topics";
 import {
   buildSessionFacts,
   sessionFactsProduct,
+  sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import { formatCurrencyFromCents, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
@@ -145,6 +146,7 @@ export function substitutionDmSession(
     facts: buildSessionFacts({
       product: sessionFactsProduct(snapshot.product),
       sessionDate: snapshot.request.session_date,
+      ...sessionWindowOf(snapshot.request),
       locale,
     }),
     role: snapshot.request.role,
@@ -349,6 +351,7 @@ export function buildSubstitutionPreviewSession(
   locale: SupportedLocale,
 ): SubstitutionDmSession {
   const sessionDate = addCalendarDays(formatInTimeZone(now, DEFAULT_TIMEZONE, "yyyy-MM-dd"), 7);
+  const startsAt = fromZonedTime(`${sessionDate}T16:00:00`, DEFAULT_TIMEZONE);
   return {
     requestId: PREVIEW_REQUEST_ID,
     groupName: "A",
@@ -361,16 +364,10 @@ export function buildSubstitutionPreviewSession(
         isRemote: false,
         siteName: "Sample School",
         translations: [{ locale: "en", name: "Minecraft Club" }],
-        slots: [
-          {
-            // Monday is 0, as the schedule slots count.
-            weekday: (new Date(`${sessionDate}T00:00:00Z`).getUTCDay() + 6) % 7,
-            startTime: "16:00",
-            durationMinutes: 90,
-          },
-        ],
       },
       sessionDate,
+      startsAt,
+      endsAt: new Date(startsAt.getTime() + 90 * 60_000),
       locale,
     }),
     role: "primary",

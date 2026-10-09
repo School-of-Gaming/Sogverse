@@ -67,3 +67,46 @@ function addDays(date: string, days: number): string {
   const day = String(next.getUTCDate()).padStart(2, "0");
   return `${next.getUTCFullYear()}-${month}-${day}`;
 }
+
+/**
+ * The instants a substitution read carries for `date` on a fixture product in
+ * its wire shape: the plan's earliest session on that date, or both `null` on a
+ * date no slot names — the orphan a moved schedule leaves. A dated fixture's
+ * term bounds it, as the database's plan does.
+ */
+export function wireSessionWindow(
+  product: {
+    timezone: string;
+    start_date?: string | null;
+    end_date?: string | null;
+    schedule_slots: readonly {
+      weekday: number;
+      start_time: string;
+      duration_minutes: number;
+    }[];
+  },
+  date: string,
+): { starts_at: string | null; ends_at: string | null } {
+  const inTerm =
+    (product.start_date == null || product.start_date <= date) &&
+    (product.end_date == null || date <= product.end_date);
+  const session = (
+    inTerm
+      ? planSessions({
+        timezone: product.timezone,
+        slots: product.schedule_slots.map((slot) => ({
+          weekday: slot.weekday,
+          startTime: slot.start_time,
+          durationMinutes: slot.duration_minutes,
+        })),
+        startDate: date,
+        endDate: date,
+        now: new Date(`${date}T00:00:00.000Z`),
+      })
+      : []
+  ).at(0);
+  return {
+    starts_at: session?.startsAt.toISOString() ?? null,
+    ends_at: session?.endsAt.toISOString() ?? null,
+  };
+}

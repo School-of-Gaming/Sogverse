@@ -10,6 +10,7 @@ DECLARE
   v_row     public.session_substitution_requests;
   v_group   public.product_groups;
   v_product public.products;
+  v_window  tstzrange;
 BEGIN
   SELECT * INTO v_row
     FROM public.session_substitution_requests r
@@ -20,6 +21,8 @@ BEGIN
 
   SELECT * INTO v_group FROM public.product_groups g WHERE g.id = v_row.group_id;
   SELECT * INTO v_product FROM public.products p WHERE p.id = v_group.product_id;
+  -- The session's instants from the plan; NULL on a date the plan no longer has.
+  v_window := public.derive_group_session_window(v_row.group_id, v_row.session_date);
 
   RETURN jsonb_build_object(
     'request', jsonb_build_object(
@@ -28,6 +31,8 @@ BEGIN
       'group_id',     v_row.group_id,
       'group_name',   v_group.name,
       'session_date', v_row.session_date,
+      'starts_at',    lower(v_window),
+      'ends_at',      upper(v_window),
       'role',         v_row.role,
       -- The fee for THIS role, null when the product has not set one — the
       -- pool's own rule.
@@ -157,7 +162,7 @@ $$;
 -- Name: FUNCTION get_substitution_notification_snapshot(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) IS 'Everything the notification sync renders a substitution request''s Slack message and Discord DMs from, or NULL when the request does not exist. `request`: the row with its group name, the fee for its role (null when unset), the reason and note, the substitute and approver as {id, first_name, last_name} (null when unset), and the requester as {id, first_name, last_name, locale, discord_user_id}, the last non-null only when that Discord account acts as the requester (discord_acting_gedu). `product`: session_product_document, the shell every substitution surface shares. `required_qualifications`, `is_cancelled` (group_session_is_cancelled), and `product_today`, the date in the product''s zone, which tells a passed request from an open one. `candidates`: every gedu eligible now — exactly the pool''s four tests, gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — together with every gedu who has answered, every gedu who was sent a DM and the seated substitute, each with their name, locale, phone (E.164 digits, no plus; null when unset), `eligible`, their answer (response, offer_id, responded_at; null when none) and discord_user_id, which is non-null only when that Discord account acts as this gedu (discord_acting_gedu). `notification` and `dms`: the message records as stored. Carries the reason and phone numbers, so it is for the service role alone.';
+COMMENT ON FUNCTION public.get_substitution_notification_snapshot(p_request_id uuid) IS 'Everything the notification sync renders a substitution request''s Slack message and Discord DMs from, or NULL when the request does not exist. `request`: the row with its group name, the session''s instants `starts_at`/`ends_at` (derive_group_session_window''s bounds, NULL where the plan has no session on the date), the fee for its role (null when unset), the reason and note, the substitute and approver as {id, first_name, last_name} (null when unset), and the requester as {id, first_name, last_name, locale, discord_user_id}, the last non-null only when that Discord account acts as the requester (discord_acting_gedu). `product`: session_product_document, the shell every substitution surface shares. `required_qualifications`, `is_cancelled` (group_session_is_cancelled), and `product_today`, the date in the product''s zone, which tells a passed request from an open one. `candidates`: every gedu eligible now — exactly the pool''s four tests, gedu_may_substitute_session, gedu_holds_session_qualifications, gedu_speaks_session_language and gedu_covers_product_site — together with every gedu who has answered, every gedu who was sent a DM and the seated substitute, each with their name, locale, phone (E.164 digits, no plus; null when unset), `eligible`, their answer (response, offer_id, responded_at; null when none) and discord_user_id, which is non-null only when that Discord account acts as this gedu (discord_acting_gedu). `notification` and `dms`: the message records as stored. Carries the reason and phone numbers, so it is for the service role alone.';
 
 
 --

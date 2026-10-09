@@ -6,9 +6,11 @@ import {
   adminSubstitutionRequests,
   anonymousSubstitutionRequestDocument,
   substitutionRequestDocument,
+  liveSubstitutionRequests,
   openSubstitutionRequests,
   sessionStaffGedu,
 } from "@/services/session-substitution/session-substitution.contracts";
+import { substitutionNotificationSnapshot } from "@/lib/substitution-notifications/snapshot.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import {
   createAdminTestClient,
@@ -3571,6 +3573,166 @@ describe("session substitutions", () => {
         .from("product_groups")
         .delete()
         .in("id", [rolesGroup, legacyGroup]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // The session's instants, read from the plan
+  // -------------------------------------------------------------------------
+
+  describe("every substitution read carries its session's instants from the plan", () => {
+    type Window = { starts_at: string | null; ends_at: string | null };
+
+    /** The instants as ISO strings, whatever offset PostgREST rendered them in. */
+    function asInstants(window: Window | undefined): Window | undefined {
+      if (window === undefined) return undefined;
+      return {
+        starts_at: window.starts_at === null ? null : new Date(window.starts_at).toISOString(),
+        ends_at: window.ends_at === null ? null : new Date(window.ends_at).toISOString(),
+      };
+    }
+
+    /** The 10:00–11:00 UTC session every UTC club here has on `date`. */
+    const planned = (date: string): Window => slotInstants(date);
+    const none: Window = { starts_at: null, ends_at: null };
+
+    it("gives the admin queue the planned window, and none for an orphan or a date past the term", async () => {
+      const inTerm = utcDate(3);
+      const pastTerm = utcDate(61);
+      const orphan = middayDate(2);
+      await seedRequest({ date: inTerm });
+      await seedRequest({ date: pastTerm });
+      await seedRequest({ groupId: GROUP_ORPHAN, date: orphan, absent: thirdId });
+      await seedRequest({ groupId: GROUP_LATE, date: orphan, absent: thirdId });
+
+      const { data, error } = await adminAuth.rpc("get_admin_substitution_requests");
+      expect(error).toBeNull();
+      const windows = new Map(
+        adminSubstitutionRequests
+          .parse(data)
+          .map((row) => [`${row.group_id}:${row.session_date}`, asInstants(row)]),
+      );
+      expect(windows.get(`${GROUP_A}:${inTerm}`)).toEqual(planned(inTerm));
+      // The term ends at utcDate(60): the plan has no session after it.
+      expect(windows.get(`${GROUP_A}:${pastTerm}`)).toEqual(none);
+      // The weekday the twin's schedule skips: the row stays, with no instants.
+      expect(windows.get(`${GROUP_ORPHAN}:${orphan}`)).toEqual(none);
+      // The same date on the club that does meet then: its evening slot, an
+      // hour long, in its own zone.
+      const late = windows.get(`${GROUP_LATE}:${orphan}`);
+      expect(late?.starts_at).not.toBeNull();
+      expect(
+        new Date(late?.ends_at ?? 0).getTime() - new Date(late?.starts_at ?? 0).getTime(),
+      ).toBe(60 * 60_000);
+    });
+
+    it("gives the pool the planned window", async () => {
+      const date = utcDate(3);
+      await seedRequest({ date });
+      const { data, error } = await subAuth.rpc("get_open_substitution_requests");
+      expect(error).toBeNull();
+      const row = openSubstitutionRequests
+        .parse(data)
+        .find((request) => request.group_id === GROUP_A && request.session_date === date);
+      expect(asInstants(row)).toEqual(planned(date));
+    });
+
+    it("gives the requester's own live requests the planned window, and none past the term", async () => {
+      const inTerm = utcDate(3);
+      const pastTerm = utcDate(61);
+      await seedRequest({ date: inTerm });
+      await seedRequest({ date: pastTerm });
+      const { data, error } = await geduAuth.rpc("get_my_live_substitution_requests");
+      expect(error).toBeNull();
+      const byDate = new Map(
+        liveSubstitutionRequests
+          .parse(data)
+          .filter((request) => request.group_id === GROUP_A)
+          .map((request) => [request.session_date, asInstants(request)]),
+      );
+      expect(byDate.get(inTerm)).toEqual(planned(inTerm));
+      expect(byDate.get(pastTerm)).toEqual(none);
+    });
+
+    it("gives the notification snapshot the planned window, and none for an orphan", async () => {
+      const date = utcDate(3);
+      const plannedId = await seedRequest({ date });
+      const orphanedId = await seedRequest({
+        groupId: GROUP_ORPHAN,
+        date: middayDate(2),
+        absent: thirdId,
+      });
+      const read = async (id: string) => {
+        const { data, error } = await admin.rpc("get_substitution_notification_snapshot", {
+          p_request_id: id,
+        });
+        expect(error).toBeNull();
+        return asInstants(substitutionNotificationSnapshot.parse(data).request);
+      };
+      expect(await read(plannedId)).toEqual(planned(date));
+      expect(await read(orphanedId)).toEqual(none);
+    });
+
+    it("gives a substitution seat its session's window and no plan, and an orphan none", async () => {
+      const date = utcDate(3);
+      await seedRequest({ date, substituteId: subId });
+      await seedRequest({
+        groupId: GROUP_ORPHAN,
+        date: middayDate(2),
+        absent: thirdId,
+        substituteId: subId,
+      });
+
+      const { data, error } = await subAuth.rpc("get_my_assigned_products");
+      expect(error).toBeNull();
+      const seats = myAssignedProductRows
+        .parse(data)
+        .filter((row) => row.kind === "substitution");
+      const seatWindow = (group: string) => {
+        const seat = seats.find((row) => row.group_id === group);
+        expect(seat).toBeDefined();
+        return asInstants({
+          starts_at: seat?.substitution_starts_at ?? null,
+          ends_at: seat?.substitution_ends_at ?? null,
+        });
+      };
+      expect(seatWindow(GROUP_A)).toEqual(planned(date));
+      expect(seatWindow(GROUP_ORPHAN)).toEqual(none);
+      // One afternoon, not a run: the seat carries no plan.
+      expect(seats.every((row) => row.upcoming_sessions.length === 0)).toBe(true);
+    });
+
+    it("gives an assignment seat its group's plan from yesterday to the term's end, flagging only its group's cancellations", async () => {
+      const cancelledHere = utcDate(2);
+      const cancelledOnSister = utcDate(4);
+      const { error: cancelError } = await admin.from("session_cancellations").insert([
+        { group_id: GROUP_A, session_date: cancelledHere, cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_B, session_date: cancelledOnSister, cancelled_by: TEST_IDS.ADMIN },
+      ]);
+      expect(cancelError).toBeNull();
+      try {
+        const { data, error } = await geduAuth.rpc("get_my_assigned_products");
+        expect(error).toBeNull();
+        const seat = myAssignedProductRows
+          .parse(data)
+          .find((row) => row.group_id === GROUP_A && row.kind === "assignment");
+        const plan = seat?.upcoming_sessions ?? [];
+        // A slot every day: every date from the day before today to the term's
+        // last day, one session each.
+        expect(plan.map((session) => session.date)).toEqual(
+          Array.from({ length: 62 }, (_, index) => utcDate(index - 1)),
+        );
+        expect(plan[0].startsAt.toISOString()).toBe(planned(utcDate(-1)).starts_at);
+        expect(plan[0].endsAt.toISOString()).toBe(planned(utcDate(-1)).ends_at);
+        // The sister group's cancellation is not this group's.
+        expect(plan.filter((session) => session.cancelled).map((session) => session.date)).toEqual([
+          cancelledHere,
+        ]);
+        expect(seat?.substitution_starts_at).toBeNull();
+        expect(seat?.substitution_ends_at).toBeNull();
+      } finally {
+        await admin.from("session_cancellations").delete().in("group_id", [GROUP_A, GROUP_B]);
+      }
     });
   });
 });

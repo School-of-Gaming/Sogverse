@@ -2,14 +2,10 @@ import { formatInTimeZone } from "date-fns-tz";
 import { addCalendarDays, mondayOf } from "@/lib/calendar-date";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { occurrenceOnDate } from "@/lib/session-date-occurrence";
+import { trimOpenEndedFuture, type PlannedSession } from "@/lib/planned-sessions";
 import {
   OPEN_ENDED_OCCURRENCE_CAP,
-  endDateToCutoff,
-  enumerateRowOccurrences,
-  productLocalDate,
   sessionEntryId,
-  startDateToCutoff,
 } from "@/lib/session-occurrence";
 import type { GeduAssignmentRow } from "@/lib/gedu-assignment-rollup";
 import type { ProductType } from "@/types";
@@ -20,12 +16,11 @@ import type { ProductType } from "@/types";
  *
  * The Substitutions page offers a second way into "I can't make this session" —
  * a picker, for a gedu who knows the date they cannot make and does not want to
- * go and find its card — and this is the list that picker is over. It is the
- * *same* schedule expansion every other surface uses (`session-occurrence`),
- * handed the *same* assignment rows the dashboard's roll-up consumes, so the
- * picker cannot offer a session the group's own feed does not have: the client
- * owns the calendar math here as it does everywhere, and a second expansion is
- * exactly what this module exists not to be.
+ * go and find its card — and this is the list that picker is over. It reads
+ * the *same* planned sessions the database hands every other surface, off the
+ * *same* assignment rows the dashboard's roll-up consumes, so the picker cannot
+ * offer a session the group's own feed does not have: nothing here expands a
+ * schedule.
  *
  * Pure, and the clock enters as an argument.
  */
@@ -75,8 +70,8 @@ export interface GeduUpcomingSession {
  *
  * A cancelled session is not in the list either, on either kind of seat.
  *
- * A session already finished is not in the list: the walk carries no window
- * past an occurrence's end (`windowCloseMs: 0`), which is the card's rule too —
+ * A session already finished is not in the list: no window is kept past a
+ * session's end (a close margin of 0), which is the card's rule too —
  * the entry's kind flips at the session's end, and a finished card offers
  * nothing. A session **in progress** is still offered, on both surfaces, for
  * the same reason the write accepts it: the database's test is the date.
@@ -103,50 +98,31 @@ export function buildGeduUpcomingSessions({
     // picker over "sessions I could be absent from" does not offer theirs.
     if (row.kind === "trainee") continue;
     const timezone = row.product.timezone;
-    const occurrences =
+    const sessions =
       row.kind === "substitution"
-        ? substitutionOccurrence(row, now)
-        : enumerateRowOccurrences({
-            slots: row.slots,
-            timezone,
-            now,
-            startBoundary: startDateToCutoff(row.product.startDate, timezone),
-            endBoundary: endDateToCutoff(row.product.endDate, timezone),
-            // The app's forward-looking rule, both halves of it: a run with a
-            // last day is walked to that day, and an open-ended one stops at
-            // the cap — which is also what stops the uncapped walk from being
-            // an unbounded one.
-            cap:
-              row.product.endDate === null
-                ? OPEN_ENDED_OCCURRENCE_CAP
-                : Number.POSITIVE_INFINITY,
-            // No grace after the end: a session that has finished is not one
-            // anybody can be absent from, and the card stops offering at the
-            // same instant.
-            windowCloseMs: 0,
-          });
+        ? substitutionSession(row, now)
+        : upcomingSessions(row, now);
 
-    for (const occurrence of occurrences) {
-      const sessionDate = productLocalDate(occurrence.start, timezone);
+    for (const session of sessions) {
       // A cancelled session is not one anybody is expected at, and the write
       // is refused on it — so it is not offered. It still counts towards an
       // open-ended run's cap, as it does in the group's feed, where it stands
       // as a cancelled line: the picker's horizon stays the feed's.
-      if (row.cancelledDates.includes(sessionDate)) continue;
-      const key = sessionEntryId(row.groupId, sessionDate);
+      if (session.cancelled) continue;
+      const key = sessionEntryId(row.groupId, session.date);
       const existing = bySession.get(key);
       if (
         existing !== undefined &&
-        existing.startsAt.getTime() <= occurrence.start.getTime()
+        existing.startsAt.getTime() <= session.startsAt.getTime()
       ) {
         continue;
       }
       bySession.set(key, {
         key,
         groupId: row.groupId,
-        sessionDate,
-        startsAt: occurrence.start,
-        endsAt: occurrence.end,
+        sessionDate: session.date,
+        startsAt: session.startsAt,
+        endsAt: session.endsAt,
         timezone,
         productId: row.product.id,
         productName:
@@ -187,6 +163,31 @@ export function alreadyRequestedSessionKeys(
 }
 
 /**
+ * A standing seat's planned sessions that have not yet ended, under the app's
+ * forward-looking rule: a run with a last day is read to that day — its plan
+ * already stops there — and an open-ended one stops at the cap, cancelled
+ * sessions counted.
+ *
+ * No grace after the end: a session that has finished is not one anybody can
+ * be absent from, and the card stops offering at the same instant.
+ */
+function upcomingSessions(
+  row: GeduAssignmentRow,
+  now: Date,
+): readonly PlannedSession[] {
+  const plan =
+    row.product.endDate === null
+      ? trimOpenEndedFuture(
+          row.upcomingSessions,
+          now,
+          OPEN_ENDED_OCCURRENCE_CAP,
+          0,
+        )
+      : row.upcomingSessions;
+  return plan.filter((session) => session.endsAt.getTime() > now.getTime());
+}
+
+/**
  * The one afternoon a substitution seat covers, if it is still ahead —
  * otherwise nothing.
  *
@@ -194,24 +195,31 @@ export function alreadyRequestedSessionKeys(
  * nothing to say about it: what bounds it is the substitution's own date, and
  * the database stopped returning the seat once it expired.
  *
- * A date the schedule no longer projects resolves to no occurrence at all, and
- * such a seat is left out rather than offered dateless: the write is refused
- * for a session the schedule does not name, so a row for it could only ever
- * fail.
+ * A date the plan no longer has carries no instants, and such a seat is left
+ * out rather than offered dateless: the write is refused for a session the
+ * plan does not name, so a row for it could only ever fail.
  */
-function substitutionOccurrence(
+function substitutionSession(
   row: GeduAssignmentRow,
   now: Date,
-): Array<{ start: Date; end: Date }> {
-  if (row.substitutionDate === null) return [];
-  const occurrence = occurrenceOnDate({
-    sessionDate: row.substitutionDate,
-    slots: row.slots,
-    timezone: row.product.timezone,
-  });
-  if (occurrence === null) return [];
-  if (occurrence.end.getTime() <= now.getTime()) return [];
-  return [occurrence];
+): PlannedSession[] {
+  const { substitutionDate, substitutionStartsAt, substitutionEndsAt } = row;
+  if (
+    substitutionDate === null ||
+    substitutionStartsAt === null ||
+    substitutionEndsAt === null
+  ) {
+    return [];
+  }
+  if (substitutionEndsAt.getTime() <= now.getTime()) return [];
+  return [
+    {
+      date: substitutionDate,
+      startsAt: substitutionStartsAt,
+      endsAt: substitutionEndsAt,
+      cancelled: row.substitutionCancelled,
+    },
+  ];
 }
 
 /** Soonest first, then by product name, then by group — a total order. */

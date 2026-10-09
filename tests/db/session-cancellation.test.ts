@@ -823,7 +823,7 @@ describe("session cancellation", () => {
   // the My SOG cards' reads
   // -------------------------------------------------------------------------
 
-  it("hands the gedu's seat its group's upcoming cancelled dates, from yesterday on", async () => {
+  it("flags the gedu's seat's planned sessions its group cancelled, from yesterday on", async () => {
     for (const date of [LAST_WEEK, YESTERDAY, TOMORROW, IN_THREE_DAYS]) {
       expect((await cancel(date, "Holiday")).error).toBeNull();
     }
@@ -835,7 +835,11 @@ describe("session cancellation", () => {
       .find((row) => row.group_id === GROUP && row.kind === "assignment");
     // The day before today is kept, for a session still running past local
     // midnight; anything earlier is no card's business.
-    expect(seat?.cancelled_dates).toEqual([YESTERDAY, TOMORROW, IN_THREE_DAYS]);
+    expect(
+      seat?.upcoming_sessions
+        .filter((session) => session.cancelled)
+        .map((session) => session.date),
+    ).toEqual([YESTERDAY, TOMORROW, IN_THREE_DAYS]);
   });
 
   it("drops an inert cancellation from the gedu's seat", async () => {
@@ -854,7 +858,12 @@ describe("session cancellation", () => {
       const seat = myAssignedProductRows
         .parse(data)
         .find((row) => row.group_id === GROUP && row.kind === "assignment");
-      expect(seat?.cancelled_dates).toEqual([]);
+      // The date is not in the plan at all, so nothing on it reads cancelled.
+      expect(
+        seat?.upcoming_sessions.some(
+          (session) => session.date === IN_THREE_DAYS || session.cancelled,
+        ),
+      ).toBe(false);
     } finally {
       await createScheduleSlot(admin, PRODUCT, {
         weekday,
@@ -865,7 +874,7 @@ describe("session cancellation", () => {
   });
 
   it("keeps a substitution card's date cancelled after it leaves the upcoming window", async () => {
-    // The card stands for days after its date, and `cancelled_dates` starts
+    // The card stands for days after its date, and the seat's plan starts
     // the day before today, so the substitution row asks of its own date. The
     // seeded gedu's certification belongs to another file, so the sub is a
     // certified gedu minted here.
@@ -919,8 +928,9 @@ describe("session cancellation", () => {
         [LAST_WEEK, true],
         [SIX_DAYS_AGO, false],
       ]);
-      // Out of the window the next-session reads use, and cancelled all the same.
-      expect(cards.every((row) => !row.cancelled_dates.includes(LAST_WEEK))).toBe(
+      // A substitution carries no plan to read the flag from; its own date
+      // answers, outside any window.
+      expect(cards.every((row) => row.upcoming_sessions.length === 0)).toBe(
         true,
       );
     } finally {
