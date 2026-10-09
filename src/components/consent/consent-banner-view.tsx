@@ -148,7 +148,7 @@ export function ConsentBannerView({
         </div>
         {customising ? (
           <div className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2">
               <CheckboxRow
                 size="xs"
                 checked
