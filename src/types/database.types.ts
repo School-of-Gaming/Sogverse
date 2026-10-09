@@ -4650,6 +4650,10 @@ export type Database = {
           starts_at: string
         }[]
       }
+      planned_sessions_document: {
+        Args: { p_product_id: string; p_to: string }
+        Returns: Json
+      }
       product_required_qualifications: {
         Args: {
           p_product_type: Database["public"]["Enums"]["product_type"]

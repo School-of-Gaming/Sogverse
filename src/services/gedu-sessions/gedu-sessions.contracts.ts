@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
+import { plannedSessionRows } from "@/lib/planned-sessions";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   substitutionRequestDocument,
@@ -300,10 +301,9 @@ export const groupTrainee = z.object({
 /**
  * Everything the group workspace renders for one group.
  *
- * There is no derived occurrence list in here on purpose: the RPC returns data
- * and TypeScript does the calendar math, so the merge of stored rows over
- * projected occurrences happens in one place on the client rather than twice in
- * two languages.
+ * The planned sessions arrive already expanded, from the database's one
+ * expansion of the plan; the merge of stored rows and cancellations over them
+ * happens on the client.
  */
 export const geduGroupFeed = z.object({
   product: z.object({
@@ -374,6 +374,18 @@ export const geduGroupFeed = z.object({
    * silently missing.
    */
   trainees: z.array(groupTrainee),
+  /**
+   * The product's planned sessions from its start date to its horizon — the
+   * end date of a dated product, the ninth upcoming session of an open-ended
+   * one — soonest first. Plain plan rows: `cancelled` is always `false` here,
+   * and the cancellations above are laid over them by date.
+   */
+  planned_sessions: plannedSessionRows,
+  /**
+   * The run's last session this group has not cancelled, product-local
+   * `YYYY-MM-DD`; null on an open-ended product, which has none.
+   */
+  final_session_date: z.string().nullable(),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
@@ -466,6 +478,8 @@ export const traineeGroupFeed = z.object({
   gedus: z.array(sessionStaffGedu),
   cancellations: z.array(sessionCancellation),
   trainees: z.array(groupTrainee),
+  planned_sessions: geduGroupFeed.shape.planned_sessions,
+  final_session_date: geduGroupFeed.shape.final_session_date,
 });
 
 export type TraineeGroupFeed = z.infer<typeof traineeGroupFeed>;

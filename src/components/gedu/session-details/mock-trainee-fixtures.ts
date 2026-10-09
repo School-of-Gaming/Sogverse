@@ -113,6 +113,9 @@ export function buildTraineeWorkspaceFixture(now: Date): {
             is_my_group: false as const,
           },
     ),
+    // No reader takes the plan from this document yet.
+    planned_sessions: [],
+    final_session_date: null,
   };
 
   const feed: TraineeGroupFeed = {
@@ -147,6 +150,9 @@ export function buildTraineeWorkspaceFixture(now: Date): {
     gedus,
     cancellations,
     trainees: [{ id: TRAINEE_ID, first_name: "Veera" }],
+    // No reader takes the plan from this document yet.
+    planned_sessions: [],
+    final_session_date: null,
   };
 
   return { product, feed };

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { plannedSessionRows } from "@/lib/planned-sessions";
 import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
@@ -324,6 +325,15 @@ export const familyProductFeed = z
     sessions: z.array(familyFeedSession),
     /** The group's cancelled sessions, newest first. */
     cancellations: z.array(familyFeedCancellation),
+    /**
+     * The product's planned sessions from its start date to its horizon for
+     * this group — on an open-ended product the ninth upcoming session the
+     * group has not cancelled — raised to the date a cancelled membership is
+     * paid through, so the plan reaches the last session the family may
+     * attend. Soonest first, plain plan rows: `cancelled` is always `false`,
+     * and the cancellations above are laid over them by date.
+     */
+    planned_sessions: plannedSessionRows,
   })
   .strict();
 

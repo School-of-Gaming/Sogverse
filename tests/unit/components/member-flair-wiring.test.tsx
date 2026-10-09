@@ -322,6 +322,8 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     substitutions: [],
     cancellations: [],
     trainees: [],
+    planned_sessions: [],
+    final_session_date: null,
   };
 }
 

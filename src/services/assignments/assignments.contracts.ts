@@ -5,7 +5,10 @@ import {
   sessionProductDocument,
   sessionStaffGedu,
 } from "@/services/session-substitution/session-substitution.contracts";
-import { traineeRosterEntry } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import {
+  geduGroupFeed,
+  traineeRosterEntry,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -176,6 +179,12 @@ export const geduAssignedProduct = z.object({
         .nullable(),
     })
   ),
+  /**
+   * The plan and the caller's group's final session, in the gedu group
+   * feed's shapes and in parity with it: the page composes both documents.
+   */
+  planned_sessions: geduGroupFeed.shape.planned_sessions,
+  final_session_date: geduGroupFeed.shape.final_session_date,
 });
 
 /**
@@ -212,6 +221,8 @@ export const traineeAssignedProduct = z.object({
       }),
     ]),
   ),
+  planned_sessions: geduAssignedProduct.shape.planned_sessions,
+  final_session_date: geduAssignedProduct.shape.final_session_date,
 });
 
 export type TraineeAssignedProduct = z.infer<typeof traineeAssignedProduct>;

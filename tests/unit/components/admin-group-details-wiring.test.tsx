@@ -352,6 +352,7 @@ function adminSessions(): AdminProductSessions {
         gedus: [],
         substitutions: [],
         cancellations: [],
+        final_session_date: null,
       },
       {
         id: IDS.peerGroup,
@@ -366,8 +367,10 @@ function adminSessions(): AdminProductSessions {
         gedus: [],
         substitutions: [],
         cancellations: [],
+        final_session_date: null,
       },
     ],
+    planned_sessions: [],
   };
 }
 
@@ -409,6 +412,8 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     // One trainee, so the suite can see the admin shell hand the feed's
     // trainees to the body rather than leave them behind.
     trainees: [{ id: IDS.trainee, first_name: "Oliver" }],
+    planned_sessions: [],
+    final_session_date: null,
   };
 }
 

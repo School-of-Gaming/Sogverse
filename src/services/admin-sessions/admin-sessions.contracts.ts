@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   geduFeedSession,
+  geduGroupFeed,
   geduFeedSite,
   scheduleSlotSummary,
   sessionCancellation,
@@ -75,16 +76,21 @@ export const adminSessionGroup = z.object({
    * document is admin-only end to end.
    */
   cancellations: z.array(sessionCancellation),
+  /**
+   * The run's last session this group has not cancelled, product-local
+   * `YYYY-MM-DD`; null on an open-ended product. Per group, because each
+   * group's cancellations can move it.
+   */
+  final_session_date: geduGroupFeed.shape.final_session_date,
 });
 
 /**
  * Everything the admin product page's Sessions panel renders, for every group
  * on the product, in one read.
  *
- * There is no derived occurrence list in here, for the same reason the gedu
- * feed has none: the RPC returns rows and schedule parameters, and the calendar
- * merge that lays stored rows over projected occurrences happens once, on the
- * client, in the module both surfaces call.
+ * The planned sessions arrive expanded, once for every group, as on the gedu
+ * feed; the merge that lays each group's stored rows and cancellations over
+ * them happens on the client, in the module both surfaces call.
  */
 export const adminProductSessions = z.object({
   product: z.object({
@@ -99,6 +105,12 @@ export const adminProductSessions = z.object({
   /** The site, on in-person products. `null` on anything remote. */
   site: geduFeedSite.nullable(),
   groups: z.array(adminSessionGroup),
+  /**
+   * The product's planned sessions from its start date to its horizon, in the
+   * gedu feed's shape. The plan is the product's, so it travels once rather
+   * than on every group.
+   */
+  planned_sessions: geduGroupFeed.shape.planned_sessions,
 });
 
 /**

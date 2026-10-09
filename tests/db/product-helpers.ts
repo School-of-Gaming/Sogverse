@@ -335,6 +335,9 @@ import { TEST_IDS } from "./constants";
  *                  with its groups 856/857, the horizon club 858 with its group
  *                  859 — and 85a-85c, the zones the plan is cross-checked
  *                  against the TypeScript walks in)
+ *   860-864        session-documents-plan.test.ts (the dated club 860 with its
+ *                  groups 861/862, the open-ended daily club 863 with its group
+ *                  864)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls
