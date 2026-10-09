@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/person-chip";
 import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
 import { ConsentBannerView } from "@/components/consent";
-import type { ConsentChoice } from "@/lib/consent";
+import type { ConsentPurposes } from "@/lib/consent";
 import {
   HelpRequestCardView,
   type HelpRequestAudience,
@@ -3392,12 +3392,15 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           Rendered inline here; on the site it is fixed to the bottom of the
           viewport, over the page, so its arrival moves nothing. Clicking an
-          answer disables all three buttons and remounts the strip, which is
-          how the live one behaves &mdash; the commit is never handed back.
+          answer disables the strip and remounts it, which is how the live one
+          behaves &mdash; the commit is never handed back. The remounted strip
+          is handed the last answer, as a reopened one is, so Customise opens
+          on it.
         </p>
         <p className="text-sm text-muted-foreground">
-          All three buttons are one variant and one size on purpose: refusing
-          has to be exactly as easy and exactly as visible as accepting.
+          Reject all and Accept all are one variant and one size on purpose:
+          refusing has to be exactly as easy and exactly as visible as
+          accepting.
         </p>
         <ConsentBannerDemo />
       </Section>
@@ -3416,23 +3419,28 @@ export default function AdminUIComponentsPage() {
  * The remount key is what keeps it usable: the view's committing flag is
  * deliberately never cleared (every real outcome ends the component's life), so
  * without a fresh mount the second click in a design session would land on
- * three disabled buttons.
+ * disabled buttons.
  */
 function ConsentBannerDemo() {
   const [answers, setAnswers] = useState(0);
-  const [choice, setChoice] = useState<ConsentChoice | null>(null);
+  const [choice, setChoice] = useState<ConsentPurposes | null>(null);
 
   return (
     <div className="space-y-3">
       <ConsentBannerView
         key={answers}
         placement="inline"
+        current={choice}
         onChoose={(next) => {
           setChoice(next);
           setAnswers((count) => count + 1);
         }}
       />
-      <DemoCaption>{choice ?? "no answer yet"}</DemoCaption>
+      <DemoCaption>
+        {choice === null
+          ? "no answer yet"
+          : `analytics ${choice.analytics ? "on" : "off"}, marketing ${choice.marketing ? "on" : "off"}`}
+      </DemoCaption>
     </div>
   );
 }

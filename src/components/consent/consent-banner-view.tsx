@@ -1,11 +1,12 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { ROUTES } from "@/lib/constants";
-import type { ConsentChoice } from "@/lib/consent";
+import type { ConsentPurposes } from "@/lib/consent";
 
 /**
  * Where the strip is drawn.
@@ -21,8 +22,23 @@ import type { ConsentChoice } from "@/lib/consent";
 export type ConsentBannerPlacement = "fixed" | "inline";
 
 interface ConsentBannerViewProps {
-  onChoose: (choice: ConsentChoice) => void;
+  onChoose: (purposes: ConsentPurposes) => void;
+  /**
+   * The answer already stored, which the customise panel's checkboxes start
+   * from — so reopening the strip to change one purpose does not silently
+   * propose taking the other away. `null` for a visitor who has not answered,
+   * whose checkboxes all start off.
+   */
+  current?: ConsentPurposes | null;
   placement?: ConsentBannerPlacement;
+}
+
+const REJECT_ALL: ConsentPurposes = { analytics: false, marketing: false };
+const ACCEPT_ALL: ConsentPurposes = { analytics: true, marketing: true };
+
+/** The necessary row cannot be changed, so a change to it means nothing. */
+function ignoreChange(): void {
+  // Deliberately nothing: the row is disabled and always on.
 }
 
 /**
@@ -34,26 +50,34 @@ interface ConsentBannerViewProps {
  * right. It is a `region` with an accessible name so a screen-reader user can
  * jump to it and answer whenever they like.
  *
- * **All three buttons are the same variant and the same size.** Refusing has to
- * be exactly as easy and exactly as visible as accepting — that is the legal
- * requirement, not a matter of taste — so no button here is styled as the one
- * we would like pressed.
+ * **Two screens in one strip.** The first offers Reject all and Accept all,
+ * with Customise beside them; Customise swaps the buttons for a panel in the
+ * same strip — Necessary shown on and unchangeable, a checkbox each for
+ * analytics and marketing, and Save choices, which stores exactly what the
+ * checkboxes say. The panel is not a second surface: the strip stays non-modal
+ * and the heading and body stay above it.
+ *
+ * **Reject all and Accept all are the same variant and the same size.**
+ * Refusing has to be exactly as easy and exactly as visible as accepting —
+ * that is the legal requirement, not a matter of taste — so neither is styled
+ * as the one we would like pressed. Customise is a quiet text control rather
+ * than a third button: it answers nothing, it only opens the panel.
  *
  * **The body names no advertising platform, and that is a decision, not an
  * omission.** The advertising platform is identified in the privacy policy,
  * which is where recipients belong and which carries the last-updated date
- * that makes a change to the list visible. Adding a platform is therefore a policy edit plus
- * a `CONSENT_VERSION` bump — a new recipient is a new consent, and an answer
- * given to the old question is not an answer to the new one.
+ * that makes a change to the list visible. What forces a `CONSENT_VERSION`
+ * bump is the question changing — a purpose added, withdrawn or widened — and
+ * that rule is stated beside the constant.
  *
- * **One block, full width, buttons in a row underneath.** An earlier shape put
- * the buttons in a column beside the text; on a wide viewport that column was
- * mostly empty and the strip was taller than its own content. The copy reads
- * across the strip and the answers sit under it, right-aligned, which is also
- * the shortest the strip can be.
+ * **One block, full width, actions underneath.** The copy reads across the
+ * strip and the answers sit under it, right-aligned, which is the shortest the
+ * strip can be. The panel makes it taller, so the fixed strip is capped at the
+ * viewport's height and scrolls inside itself on a short phone.
  */
 export function ConsentBannerView({
   onChoose,
+  current = null,
   placement = "fixed",
 }: ConsentBannerViewProps) {
   const t = useTranslations("consent");
@@ -64,14 +88,27 @@ export function ConsentBannerView({
   // timer or in an effect would let a fast second click land on a strip whose
   // first answer is already in flight.
   const [committing, setCommitting] = useState(false);
+  const [customising, setCustomising] = useState(false);
+  // Seeded once, at mount: the strip unmounts whenever it closes, so a reopen
+  // is a fresh mount and reads the answer stored by then.
+  const [analytics, setAnalytics] = useState(current?.analytics ?? false);
+  const [marketing, setMarketing] = useState(current?.marketing ?? false);
   // Generated rather than a literal: the style guide renders a second copy of
   // this strip inline, and the real one is mounted globally, so a fixed id
   // would be duplicated on that page the moment the banner is reopened.
   const headingId = useId();
+  const firstCheckbox = useRef<HTMLInputElement>(null);
 
-  function commit(choice: ConsentChoice) {
+  // Customise unmounts the control that was focused, which would drop focus to
+  // the document. The first checkbox the reader can change is where they were
+  // headed, so focus lands there.
+  useEffect(() => {
+    if (customising) firstCheckbox.current?.focus();
+  }, [customising]);
+
+  function commit(purposes: ConsentPurposes) {
     setCommitting(true);
-    onChoose(choice);
+    onChoose(purposes);
   }
 
   return (
@@ -80,7 +117,7 @@ export function ConsentBannerView({
       aria-labelledby={headingId}
       className={
         placement === "fixed"
-          ? "fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card shadow-lg"
+          ? "fixed inset-x-0 bottom-0 z-50 max-h-dvh overflow-y-auto overscroll-contain border-t border-border bg-card shadow-lg"
           : "border border-border bg-card"
       }
     >
@@ -109,39 +146,95 @@ export function ConsentBannerView({
             })}
           </p>
         </div>
-        {/* `[negative, affirmative]` in the DOM, reversed in a stack: the
-            fullest answer is last, so it is rightmost in the row and topmost on
-            a phone. Identical variant and size across all three is what keeps
-            "reversed" from meaning "preferred". */}
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={committing}
-            onClick={() => commit("reject_all")}
-          >
-            {t("rejectAll")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={committing}
-            onClick={() => commit("analytics_only")}
-          >
-            {t("analyticsOnly")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={committing}
-            onClick={() => commit("analytics_and_marketing")}
-          >
-            {t("analyticsAndMarketing")}
-          </Button>
-        </div>
+        {customising ? (
+          <div className="space-y-3">
+            <div className="grid gap-2">
+              <CheckboxRow
+                size="xs"
+                checked
+                disabled
+                onCheckedChange={ignoreChange}
+                title={t("purposes.necessary.title")}
+                label={t("purposes.necessary.description")}
+                trailing={
+                  <span className="text-muted-foreground">
+                    {t("alwaysOn")}
+                  </span>
+                }
+              />
+              <CheckboxRow
+                ref={firstCheckbox}
+                size="xs"
+                checked={analytics}
+                disabled={committing}
+                onCheckedChange={setAnalytics}
+                title={t("purposes.analytics.title")}
+                label={t("purposes.analytics.description")}
+              />
+              <CheckboxRow
+                size="xs"
+                checked={marketing}
+                disabled={committing}
+                onCheckedChange={setMarketing}
+                title={t("purposes.marketing.title")}
+                label={t("purposes.marketing.description")}
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={committing}
+                onClick={() => commit({ analytics, marketing })}
+              >
+                {t("saveChoices")}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            {/* `[negative, affirmative]` in the DOM, reversed in a stack: Accept
+                all is last, so it is rightmost in the row and topmost on a
+                phone. Identical variant and size across the pair is what keeps
+                "reversed" from meaning "preferred". */}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={committing}
+                onClick={() => commit(REJECT_ALL)}
+              >
+                {t("rejectAll")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={committing}
+                onClick={() => commit(ACCEPT_ALL)}
+              >
+                {t("acceptAll")}
+              </Button>
+            </div>
+            {/* Not the third half of a pair, so outside the reversed group:
+                under the pair in a stack, where a quiet way onward is
+                expected, and first in a row, just left of Reject all, away from
+                Accept all so it never reads as a third answer. Last in the DOM, so
+                the stack needs no reversal; the row moves it with `order`. A
+                button wearing the body link's styling, because it opens the
+                panel here rather than navigating. */}
+            <button
+              type="button"
+              disabled={committing}
+              onClick={() => setCustomising(true)}
+              className="h-9 px-1 text-xs sm:order-first text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            >
+              {t("customise")}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import {
   CONSENT_COOKIE_NAME,
   CONSENT_VERSION,
   clearAdvertisingStorage,
-  consentForChoice,
+  consentForPurposes,
   cookieValueFromHeader,
   isWithdrawal,
   parseConsentCookie,
@@ -93,24 +93,19 @@ describe("consent cookie", () => {
     expect(parseConsentCookieHeader(header)).toBeNull();
   });
 
-  it("grants exactly the purposes each button names", () => {
+  // Every combination is an answer the customise panel can give, marketing
+  // without analytics included — so each one has to round-trip as itself.
+  it.each([
+    [false, false],
+    [true, false],
+    [false, true],
+    [true, true],
+  ])("stores analytics %s and marketing %s as given", (analytics, marketing) => {
     const at = new Date("2026-09-03T10:15:00.000Z");
+    const state = consentForPurposes({ analytics, marketing }, at);
 
-    expect(consentForChoice("reject_all", at)).toEqual({
-      analytics: false,
-      marketing: false,
-      decidedAt: at.toISOString(),
-    });
-    expect(consentForChoice("analytics_only", at)).toEqual({
-      analytics: true,
-      marketing: false,
-      decidedAt: at.toISOString(),
-    });
-    expect(consentForChoice("analytics_and_marketing", at)).toEqual({
-      analytics: true,
-      marketing: true,
-      decidedAt: at.toISOString(),
-    });
+    expect(state).toEqual({ analytics, marketing, decidedAt: at.toISOString() });
+    expect(parseConsentCookie(serialiseConsent(state))).toEqual(state);
   });
 });
 

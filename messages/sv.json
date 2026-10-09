@@ -5766,10 +5766,26 @@
   },
   "consent": {
     "heading": "Dina integritetsval",
-    "body": "Nödvändiga cookies får webbplatsen att fungera. Analys räknar besök och hur snabbt sidorna laddas, utan att veta vem du är. Marknadsföring låter de annonsplattformar vi samarbetar med se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka som fungerar. Marknadsföring är aldrig igång medan en spelare är inloggad. Du kan ändra ditt svar när som helst längst ner på sidan. Detaljerna finns i vår <link>integritetspolicy</link>.",
+    "body": "Vi använder cookies för att webbplatsen ska fungera. Med ditt samtycke mäter vi också hur den används och delar data med våra annonspartner för riktad annonsering och mätning. Du kan ändra ditt val när som helst längst ner på sidan. Mer information finns i vår <link>integritetspolicy</link>.",
     "rejectAll": "Neka alla",
-    "analyticsOnly": "Endast analys",
-    "analyticsAndMarketing": "Marknadsföring och analys"
+    "acceptAll": "Godkänn alla",
+    "customise": "Anpassa",
+    "saveChoices": "Spara val",
+    "alwaysOn": "Alltid på",
+    "purposes": {
+      "necessary": {
+        "title": "Nödvändiga",
+        "description": "Får webbplatsen att fungera och kommer ihåg det här valet."
+      },
+      "analytics": {
+        "title": "Analys",
+        "description": "Räknar besök och hur snabbt sidorna laddas, utan att veta vem du är."
+      },
+      "marketing": {
+        "title": "Marknadsföring",
+        "description": "Låter de annonsplattformar vi samarbetar med se hur du använder vår webbplats, så att de kan visa dig våra annonser och vi kan se vilka som fungerar. Är aldrig igång medan en spelare är inloggad."
+      }
+    }
   },
   "team": {
     "profile": {
