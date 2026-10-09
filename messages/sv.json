@@ -5856,14 +5856,47 @@
       },
       "writing": {
         "heading": "Med egna ord",
+        "guidance": {
+          "lead": "När profilen är offentlig visas den på Team-sidan på School of Gamings webbplats, och både gamers och föräldrar läser den. Föräldrar vill ofta veta vem som leder deras barns sessioner, vilken sorts person det är och vad som är viktigt för hen i arbetet med barn och unga. En profil kan till och med hjälpa en familj att välja rätt klubb, läger eller evenemang.",
+          "thirdPerson": "Skriv beskrivningen i tredje person, som en presentation, men låt den låta som personen den presenterar och inte som ett cv.",
+          "doHeading": "Gör så här",
+          "dontHeading": "Undvik",
+          "do": {
+            "tone": "En avslappnad, personlig ton",
+            "humour": "Humor, när den kommer naturligt",
+            "details": "Några betydelsefulla detaljer",
+            "sentences": "Hela, välskrivna meningar"
+          },
+          "dont": {
+            "cv": "Ett cv eller en lång lista med fakta",
+            "slang": "Mycket slang eller förkortningar",
+            "jokes": "Interna skämt som en ny läsare inte förstår",
+            "typos": "Stavfel och fel i interpunktionen"
+          },
+          "ideas": {
+            "summary": "Behöver du idéer?",
+            "intro": "Det finns inget enda rätt sätt att skriva en profil, och ingen behöver se ut som någon annans. Om det är svårt att komma igång kan de här frågorna hjälpa.",
+            "questions": {
+              "games": "Vilka sorters spel tycker du om, och varför?",
+              "memory": "Finns det ett spel, ett spelminne eller en gemenskap som har betytt särskilt mycket för dig?",
+              "outside": "Vad tycker du om att göra utanför jobbet och spelandet?",
+              "players": "Vad värdesätter du i arbetet med spelare?",
+              "atmosphere": "Vilken sorts stämning vill du skapa?",
+              "why": "Varför är spelfostran meningsfullt för dig?",
+              "topics": "Finns det ämnen eller färdigheter som intresserar dig särskilt?",
+              "background": "Finns det något i din egen bakgrund som påverkar hur du arbetar?"
+            }
+          }
+        },
         "languages": "Språk",
+        "languagesHint": "Webbplatsen översätter inte profilen. Lägg till varje språk den ska finnas på och skriv den under det språkets flik.",
         "addLocale": "Lägg till språk",
         "removeLocale": "Ta bort {locale}",
         "shortDescription": "Presentera dig på en rad",
         "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
         "longDescription": "Beskrivning",
-        "longDescriptionHint": "Vad du gör på sessionerna, vad du spelar och vad familjer kan vilja veta om dig. Skriv i tredje person, som om någon annan presenterade dig: ”Anna har lett Minecraft-klubbar sedan 2023 och älskar att lära ut redstone.”",
-        "longDescriptionPlaceholder": "Berätta om dig själv för familjerna, i tredje person",
+        "longDescriptionHint": "I tredje person, som en presentation.",
+        "longDescriptionPlaceholder": "Anna har lett klubbar sedan 2023 och älskar att lära ut redstone.",
         "funFact": "Kul fakta",
         "funFactPlaceholder": "Har byggt en fungerande miniräknare i Minecraft.",
         "count": "{count}/{max}"

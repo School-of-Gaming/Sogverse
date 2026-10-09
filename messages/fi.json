@@ -5856,14 +5856,47 @@
       },
       "writing": {
         "heading": "Omin sanoin",
+        "guidance": {
+          "lead": "Kun profiili on julkinen, se näkyy School of Gamingin verkkosivuston Tiimi-sivulla, ja sitä lukevat sekä pelaajat että vanhemmat. Vanhemmat haluavat usein tietää, kuka ohjaa heidän lapsensa sessioita, millainen ihminen hän on ja mikä hänelle on tärkeää lasten ja nuorten kanssa työskennellessä. Profiili voi jopa auttaa perhettä valitsemaan sopivan kerhon, leirin tai tapahtuman.",
+          "thirdPerson": "Kirjoita kuvaus kolmannessa persoonassa kuin esittely, mutta niin, että se kuulostaa esiteltävältä ihmiseltä eikä ansioluettelolta.",
+          "doHeading": "Tee näin",
+          "dontHeading": "Vältä",
+          "do": {
+            "tone": "Rento ja henkilökohtainen sävy",
+            "humour": "Huumoria, kun se tulee luontevasti",
+            "details": "Muutama merkityksellinen yksityiskohta",
+            "sentences": "Kokonaisia, huoliteltuja virkkeitä"
+          },
+          "dont": {
+            "cv": "Ansioluetteloa tai pitkää faktalistaa",
+            "slang": "Runsasta slangia tai lyhenteitä",
+            "jokes": "Sisäpiirin vitsejä, joita uusi lukija ei ymmärrä",
+            "typos": "Kirjoitus- ja välimerkkivirheitä"
+          },
+          "ideas": {
+            "summary": "Tarvitsetko ideoita?",
+            "intro": "Profiilin kirjoittamiseen ei ole yhtä oikeaa tapaa, eikä kahden profiilin tarvitse näyttää samalta. Jos alkuun pääseminen tuntuu vaikealta, nämä kysymykset voivat auttaa.",
+            "questions": {
+              "games": "Millaisista peleistä pidät ja miksi?",
+              "memory": "Onko jokin peli, pelimuisto tai yhteisö ollut sinulle erityisen merkityksellinen?",
+              "outside": "Mitä teet mielelläsi työn ja pelaamisen ulkopuolella?",
+              "players": "Mitä arvostat työskennellessäsi pelaajien kanssa?",
+              "atmosphere": "Millaista ilmapiiriä haluat luoda?",
+              "why": "Miksi pelikasvatus on sinulle merkityksellistä?",
+              "topics": "Kiinnostavatko sinua erityisesti jotkin aiheet tai taidot?",
+              "background": "Onko taustassasi jotain, mikä vaikuttaa tapaasi tehdä työtä?"
+            }
+          }
+        },
         "languages": "Kielet",
+        "languagesHint": "Verkkosivusto ei käännä profiilia. Lisää jokainen kieli, jolla profiilin pitäisi näkyä, ja kirjoita se kyseisen kielen välilehdelle.",
         "addLocale": "Lisää kieli",
         "removeLocale": "Poista {locale}",
         "shortDescription": "Esittele itsesi yhdellä rivillä",
         "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
         "longDescription": "Kuvaus",
-        "longDescriptionHint": "Mitä teet sessioissa, mitä pelaat ja mitä perheet voisivat haluta tietää sinusta. Kirjoita kolmannessa persoonassa, ikään kuin joku muu esittelisi sinut: ”Anna on ohjannut Minecraft-kerhoja vuodesta 2023 lähtien ja opettaa mielellään redstonea.”",
-        "longDescriptionPlaceholder": "Kerro perheille itsestäsi kolmannessa persoonassa",
+        "longDescriptionHint": "Kolmannessa persoonassa, kuin esittely.",
+        "longDescriptionPlaceholder": "Anna on ohjannut kerhoja vuodesta 2023 lähtien ja opettaa mielellään redstonea.",
         "funFact": "Hauska fakta",
         "funFactPlaceholder": "Rakensi kerran toimivan laskimen Minecraftissa.",
         "count": "{count}/{max}"
