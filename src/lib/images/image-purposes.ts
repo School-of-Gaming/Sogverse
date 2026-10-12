@@ -1,7 +1,7 @@
 /**
  * What one image purpose is: the bucket its objects live in, who may read them,
- * the size they are stored at, and whether they are entries of the admin image
- * catalogue.
+ * the size they are stored at, the largest upload its route accepts, and
+ * whether they are entries of the admin image catalogue.
  */
 export interface ImagePurposeSpec {
   /** The storage bucket every image of this purpose has its object in. */
@@ -21,6 +21,14 @@ export interface ImagePurposeSpec {
    * down is its feature's own limit.
    */
   readonly storedSize: { readonly width: number; readonly height: number } | "as-uploaded";
+  /**
+   * The largest upload, in bytes, the purpose's route accepts. A browser that
+   * checks before posting reads the same figure, so the person is told the real
+   * reason instead of meeting a bare refusal. Every figure sits under the
+   * platform's ~4.5 MB request body limit, which refuses a larger body before
+   * any route runs.
+   */
+  readonly maxBytes: number;
   /**
    * Whether this purpose's pictures are entries of the admin image catalogue
    * (the `catalogue_images` table), chosen and reused across the site. A
@@ -53,36 +61,42 @@ export const IMAGE_PURPOSES = {
     bucket: "product-images",
     visibility: "public",
     storedSize: { width: 1200, height: 800 },
+    maxBytes: 4 * 1024 * 1024,
     catalogue: true,
   },
   library_cover: {
     bucket: "library-covers",
     visibility: "public",
     storedSize: { width: 1600, height: 900 },
+    maxBytes: 4 * 1024 * 1024,
     catalogue: true,
   },
   landing_image: {
     bucket: "landing-images",
     visibility: "public",
     storedSize: { width: 1600, height: 900 },
+    maxBytes: 4 * 1024 * 1024,
     catalogue: true,
   },
   team_photo: {
     bucket: "team-photos",
     visibility: "private",
     storedSize: { width: 800, height: 1000 },
+    maxBytes: 2 * 1024 * 1024,
     catalogue: false,
   },
   session_photo: {
     bucket: "session-images",
     visibility: "public",
     storedSize: "as-uploaded",
+    maxBytes: 3 * 1024 * 1024,
     catalogue: false,
   },
   chat_image: {
     bucket: "chat-images",
     visibility: "private",
     storedSize: "as-uploaded",
+    maxBytes: 3 * 1024 * 1024,
     catalogue: false,
   },
 } as const satisfies Record<string, ImagePurposeSpec>;

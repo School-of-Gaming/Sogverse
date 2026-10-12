@@ -20,6 +20,26 @@ picture and never a catalogue entry. The catalogue's purpose map is the slice of
 registry marked catalogue, not a second list, and the compiler refuses a catalogue purpose
 without a fixed size, since the catalogue's crop and upload routes demand an exact one.
 
+**Every purpose declares the largest upload its route accepts**, and the route and any
+browser check before posting read that figure from the registry.
+
+## Server uploads
+
+**A server upload route takes its bytes through the shared ingest steps in
+`ingest-image.server.ts`**: the byte cap from the purpose's registry entry, a sniff of the
+JPEG start-of-image marker (the declared content type is never consulted), then a
+re-encode that bakes the orientation into the pixels and drops all metadata, GPS
+included, and last a check of the measured size against the registry — exactly the
+stored size for a fixed-size purpose, no edge past the platform maximum for one kept as
+uploaded. What is stored is the re-encoded bytes, and what a row records is their
+measured size, never a size the client claimed. The steps answer a refusal with a reason
+and a status rather than throwing, so a route can put its own work between them (a cheap
+authorization read before the decode) and answers each reason in its own vocabulary. The
+route keeps its own authorization, the order of row and object, the compensation when a
+half fails, the object's name and its error codes. The image catalogue's writers stand
+outside the re-encode: they store an admin's cropped JPEG byte for byte, named by its hash,
+after checking its cap, type and exact size (`src/services/catalogue-images/`).
+
 ## The preview budget
 
 **Every image a link preview fetches from us is at most 250 KB and at most 1200 px wide,

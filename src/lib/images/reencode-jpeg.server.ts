@@ -29,8 +29,9 @@ import sharp from "sharp";
  *
  * **It re-encodes; it does not rescue.** There is no downscale here, on
  * purpose: the honest path arrives already inside the edge cap, and an image
- * whose true dimensions are implausible is *refused* by the send RPC's bound
- * rather than quietly resized into one. That is the same posture the routes
+ * whose true dimensions are implausible is *refused* — by the shared ingest
+ * step's size check, and behind it the database's own bound — rather than
+ * quietly resized into one. That is the same posture the routes
  * take about the bytes themselves — verify, never rescue — and it keeps this
  * helper a single fact about a single pass.
  */
@@ -44,6 +45,14 @@ import sharp from "sharp";
  * on a number that is really just the same choice spelled twice.
  */
 const JPEG_QUALITY = 80;
+
+/**
+ * The longest edge a stored picture may have, in pixels, and the side of the
+ * square `MAX_INPUT_PIXELS` bounds. The pixel bound alone admits a strip one
+ * pixel tall and millions wide, so a picture kept at its uploaded shape is
+ * also held to this edge once its re-encode has measured it.
+ */
+export const MAX_IMAGE_EDGE = 4096;
 
 /**
  * The largest picture this pass will decode at all, in pixels.
@@ -64,7 +73,7 @@ const JPEG_QUALITY = 80;
  *
  * Any other server-side decode of an image a user stored takes the same bound.
  */
-export const MAX_INPUT_PIXELS = 4096 * 4096;
+export const MAX_INPUT_PIXELS = MAX_IMAGE_EDGE * MAX_IMAGE_EDGE;
 
 /** One re-encoded image: the bytes to store, and their measured size. */
 export interface ReencodedJpeg {

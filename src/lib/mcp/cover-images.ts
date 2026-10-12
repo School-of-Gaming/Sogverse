@@ -5,6 +5,7 @@ import type {
 } from "@modelcontextprotocol/server";
 import sharp from "sharp";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
+import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import type { CatalogueImagePurpose } from "@/types";
 
 /*
@@ -44,9 +45,6 @@ export const MAX_IMAGES_PER_RESULT = 20;
  * thumbnails come to about a quarter of it; a preview to a tenth.
  */
 export const IMAGE_BUDGET_CHARS = 600_000;
-
-/** Far above any cover's size; keeps a hostile header from being taken at its word. */
-const MAX_INPUT_PIXELS = 4096 * 4096;
 
 /** Long enough for a large original over a slow link, short enough to fail a call rather than hang it. */
 const FETCH_TIMEOUT_MS = 10_000;
