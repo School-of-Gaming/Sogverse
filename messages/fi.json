@@ -818,9 +818,7 @@
       },
       "translations": {
         "label": "Kielet",
-        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty.",
-        "addLocale": "+ Lisää kieli",
-        "removeLocale": "Poista {locale}"
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty."
       },
       "newPage": {
         "back": "Takaisin: {plural}",

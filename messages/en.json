@@ -818,9 +818,7 @@
       },
       "translations": {
         "label": "Languages",
-        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in.",
-        "addLocale": "+ Add language",
-        "removeLocale": "Remove {locale}"
+        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in."
       },
       "newPage": {
         "back": "Back to {plural}",
