@@ -1395,6 +1395,94 @@ export type Database = {
           },
         ]
       }
+      holiday_break_translations: {
+        Row: {
+          break_id: string
+          created_at: string
+          locale: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          break_id: string
+          created_at?: string
+          locale: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          break_id?: string
+          created_at?: string
+          locale?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holiday_break_translations_break_id_fkey"
+            columns: ["break_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_breaks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holiday_breaks: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          end_date: string
+          id: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holiday_breaks_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holiday_calendars: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_customers: {
         Row: {
           billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -2299,6 +2387,36 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_groups_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_holiday_calendars: {
+        Row: {
+          calendar_id: string
+          product_id: string
+        }
+        Insert: {
+          calendar_id: string
+          product_id: string
+        }
+        Update: {
+          calendar_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_holiday_calendars_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_holiday_calendars_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -4035,6 +4153,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_holiday_calendar: {
+        Args: { p_breaks: Json; p_name: string }
+        Returns: string
+      }
       create_invoice_customer: {
         Args: {
           p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -4079,6 +4201,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_holiday_calendar_ids?: string[]
           p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
@@ -4496,6 +4619,10 @@ export type Database = {
           starts_at: string
         }[]
       }
+      group_session_date_is_holiday: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       group_session_date_is_scheduled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -4652,9 +4779,15 @@ export type Database = {
         }[]
       }
       planned_session_dates: {
-        Args: { p_from: string; p_product_id: string; p_to: string }
+        Args: {
+          p_from: string
+          p_include_holidays?: boolean
+          p_product_id: string
+          p_to: string
+        }
         Returns: {
           ends_at: string
+          holiday_break_id: string
           session_date: string
           starts_at: string
         }[]
@@ -4662,6 +4795,15 @@ export type Database = {
       planned_sessions_document: {
         Args: { p_product_id: string; p_to: string }
         Returns: Json
+      }
+      product_holiday_breaks: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: {
+          break_id: string
+          calendar_id: string
+          end_date: string
+          start_date: string
+        }[]
       }
       product_required_qualifications: {
         Args: {
@@ -4787,6 +4929,10 @@ export type Database = {
       restore_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      save_holiday_calendar: {
+        Args: { p_breaks: Json; p_id: string; p_name: string }
+        Returns: string
       }
       save_landing_page: {
         Args: { p_id: string; p_sections: Json; p_versions: Json }
@@ -4985,6 +5131,10 @@ export type Database = {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
       }
+      set_product_holiday_calendars: {
+        Args: { p_calendar_ids: string[]; p_product_id: string }
+        Returns: undefined
+      }
       set_product_required_consents: {
         Args: { p_product_id: string; p_slugs: string[] }
         Returns: undefined
@@ -5032,6 +5182,10 @@ export type Database = {
       }
       unpublish_landing_page: { Args: { p_id: string }; Returns: string }
       unpublish_library_article: { Args: { p_id: string }; Returns: string }
+      update_holiday_calendar: {
+        Args: { p_breaks: Json; p_id: string; p_name: string }
+        Returns: undefined
+      }
       update_invoice_customer: {
         Args: {
           p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -5054,6 +5208,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_holiday_calendar_ids?: string[]
           p_id: string
           p_invoice_customer_id?: string
           p_is_remote: boolean

@@ -135,6 +135,16 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // forbidden role never reaches the validation at all.
   create_invoice_customer: { permittedRoles: ["admin"] },
   update_invoice_customer: { permittedRoles: ["admin"] },
+  // The three writers of holiday calendars — the calendars, their breaks and
+  // the breaks' names, and which calendars a club follows. None of the four
+  // tables carries a write grant, so these guarded functions are the only way
+  // in. The positive half IS assertable with no fixture: past the guard,
+  // all-NULL arguments are refused by the name check with `check_violation`
+  // (create), by the calendar lookup with `no_data_found` (update), or do
+  // nothing at all (set_product_holiday_calendars on an empty set).
+  create_holiday_calendar: { permittedRoles: ["admin"] },
+  update_holiday_calendar: { permittedRoles: ["admin"] },
+  set_product_holiday_calendars: { permittedRoles: ["admin"] },
   // The four writers of the Library — the working copy's create and save, and
   // publish and unpublish, which copy it over or remove its public published
   // copy. Neither table carries a write grant for `authenticated`, so these are
@@ -833,6 +843,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/planned-sessions.test.ts",
     why: "public catalogue facts over two anon-readable tables, identical for every caller. SECURITY INVOKER over `products` and `schedule_slots`, whose read policies admit every row to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — it only expands a product's term and weekly slots into dated sessions. It names no user and reads no uid; its arguments only pick a product and narrow a date span, clamped to 3660 days. The scope test proves an anonymous caller and the service role get identical rows",
   },
+  product_holiday_breaks: {
+    scopeTest: "tests/db/holiday-calendars.test.ts",
+    why: "public catalogue facts, identical for every caller: the breaks of the holiday calendars a product follows, which planned_session_dates subtracts from the plan. SECURITY INVOKER over `product_holiday_calendars` and `holiday_breaks`, whose read policies admit every followed calendar's breaks to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — and it never reads a calendar's admin-only name or an unattached calendar's breaks, since it reaches breaks only through a product's link. It names no user and reads no uid; its arguments only pick a product and narrow a date span. The scope test proves an anonymous caller and an admin get identical rows",
+  },
   // The three fold primitives below are a third shape the category has to
   // admit, and the widest reading of it: they read *no table at all*. Each is a
   // pure function of its arguments — strip diacritics, return a constant
@@ -931,11 +945,15 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * `planned_session_dates` is the session plan a public product page shows: a
  * SECURITY INVOKER expansion of `products` and `schedule_slots`, which anon
  * already reads in full, so it narrows that surface rather than widening it.
+ * It subtracts the product's holiday breaks, read through
+ * `product_holiday_breaks` as its caller — so anon needs that one too, and it
+ * returns only breaks anon may already select from the breaks table.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
   "planned_session_dates",
+  "product_holiday_breaks",
   "immutable_unaccent",
   "location_search_separator",
   "list_public_team_profiles",

@@ -299,6 +299,19 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 // also where the trimming and country-code rules are stated.
 export type InvoiceCustomer =
   Database["public"]["Tables"]["invoice_customers"]["Row"];
+
+// Holiday calendars — Row aliases only, for the same reason as InvoiceCustomer:
+// none of the four tables carries a write grant, and the writers are
+// create_holiday_calendar, update_holiday_calendar and
+// set_product_holiday_calendars.
+export type HolidayCalendar =
+  Database["public"]["Tables"]["holiday_calendars"]["Row"];
+export type HolidayBreak =
+  Database["public"]["Tables"]["holiday_breaks"]["Row"];
+export type HolidayBreakTranslation =
+  Database["public"]["Tables"]["holiday_break_translations"]["Row"];
+export type ProductHolidayCalendar =
+  Database["public"]["Tables"]["product_holiday_calendars"]["Row"];
 /**
  * How often an invoice customer is invoiced: every calendar month, quarter or
  * half-year. The period arithmetic lives in `@/lib/finvoice`.

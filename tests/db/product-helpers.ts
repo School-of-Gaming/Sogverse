@@ -348,6 +348,15 @@ import { TEST_IDS } from "./constants";
  *                  and 882 so a date can be cancelled by one or by both; the
  *                  open-ended daily club 883). Apart from that file's 620-629
  *                  block because the block was full when they arrived
+ *   890-895        holiday-calendars.test.ts (the dated Monday club 890 with
+ *                  its group 891, which follows the file's two overlapping
+ *                  calendars; the camp 892 a calendar is refused on; the
+ *                  open-ended daily club 893 with its group 894, taught by the
+ *                  seeded gedu, for the substitution case; 895 is a break and
+ *                  calendar id that must NEVER exist, backing the "unknown id"
+ *                  cases — declared here for the same reason 6ee and 6ff are.
+ *                  The calendars themselves are minted by the RPC under test
+ *                  and found by a name prefix only that file uses)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls
