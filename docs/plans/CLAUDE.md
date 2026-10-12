@@ -136,7 +136,8 @@ early, and both are rules because each was nearly got wrong the first time:
   freezes `dev` for every other piece of work until it is cleared. When an operator step
   (a data backfill, a link pass) must run before the new code goes live, it needs the live
   schema and the *old* app — not the new code on `dev` — so sequence it *before* the
-  feature merges, and inspect it through the branch's preview deployment. The feature then
+  feature merges, and inspect it through a preview of the branch deployed by hand with
+  `vercel deploy` (only `main` and `dev` deploy on push). The feature then
   merges and releases like any other work.
 
 **Staging must not cost the feature its one whole-feature review.** A plan reviewed in

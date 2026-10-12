@@ -36,9 +36,9 @@ customer.subscription.deleted
 
 Local CLI auth (device key provisioning, live-mode grants) is per-machine setup, not repo procedure — it isn't covered here.
 
-## 1. Preview (feature branch on PR open)
+## 1. Preview (feature branch)
 
-Repeat this if a future feature branch needs its own webhook.
+Repeat this if a future feature branch needs its own webhook. A feature branch has no preview until one is deployed by hand with `vercel deploy` from its checkout — only `main` and `dev` deploy on push (`git.deploymentEnabled` in `vercel.json`).
 
 ```bash
 # Test-mode webhook pointing at the branch preview URL
