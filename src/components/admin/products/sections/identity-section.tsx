@@ -1,27 +1,35 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  AuthoredBodyEditor,
+  type AuthoredBodiesHandle,
+} from "@/components/ui/authored-body-editor";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { LocaleTabs } from "@/components/ui/locale-tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
-import { cn, findOption } from "@/lib/utils";
 import {
-  LOCALE_CONFIG,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+  activeLocaleDraft,
+  addLocaleTab,
+  editActiveLocaleDraft,
+  removeLocaleTab,
+  selectLocaleTab,
+  writtenLocales,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
+import { findOption } from "@/lib/utils";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
 import type { ProductImageSelection } from "../product-image-selection";
-import { LongDescriptionEditor } from "../long-description-editor";
 import {
+  EMPTY_TRANSLATION,
+  isCompleteTranslation,
   type FormState,
   type TranslationDraft,
 } from "../product-form-state";
@@ -32,6 +40,8 @@ interface IdentitySectionProps {
   setState: React.Dispatch<React.SetStateAction<FormState>>;
   config: ProductTypeConfig;
   uiLocale: SupportedLocale;
+  /** The form's body record, which the long description's editor fills. */
+  bodies: AuthoredBodiesHandle;
   /** The catalogue entry `state.imageId` points at, resolved by whoever holds
    *  the product read. Derived, so it travels beside form state rather than
    *  inside it. */
@@ -48,68 +58,30 @@ export function IdentitySection({
   setState,
   config,
   uiLocale,
+  bodies,
   currentImage,
   onImageChange,
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
   const topicLabel = useTopicLabel();
-  const languageName = useLanguageNames();
 
-  const addedLocales = SUPPORTED_LOCALES.filter(
-    (l) => state.translations[l] !== undefined,
-  );
-  const addableLocales = SUPPORTED_LOCALES.filter(
-    (l) => state.translations[l] === undefined,
-  );
-  const emptyDraft: TranslationDraft = {
-    name: "",
-    shortDescription: "",
-    longDescription: "",
-  };
-  const activeDraft: TranslationDraft =
-    // exact-locale: the editor shows the active tab's own version
-    state.translations[state.activeLocale] ?? emptyDraft;
+  const tabs = state.translations;
+  const locale = tabs.active;
+  const activeDraft = activeLocaleDraft(tabs, EMPTY_TRANSLATION);
+
+  /** Apply a tab-set change to the form's languages. */
+  function setTabs(
+    change: (
+      current: LocaleTabState<TranslationDraft>,
+    ) => LocaleTabState<TranslationDraft>,
+  ) {
+    setState((s) => ({ ...s, translations: change(s.translations) }));
+  }
 
   function setActiveTranslation(patch: Partial<TranslationDraft>) {
-    setState((s) => ({
-      ...s,
-      translations: {
-        ...s.translations,
-        [s.activeLocale]: {
-          // exact-locale: the editor edits the active tab's own version
-          ...(s.translations[s.activeLocale] ?? emptyDraft),
-          ...patch,
-        },
-      },
-    }));
-  }
-
-  function addLocaleTab(locale: SupportedLocale) {
-    setState((s) => ({
-      ...s,
-      translations: {
-        ...s.translations,
-        [locale]: { name: "", shortDescription: "", longDescription: "" },
-      },
-      activeLocale: locale,
-    }));
-  }
-
-  function removeLocaleTab(locale: SupportedLocale) {
-    setState((s) => {
-      const next = { ...s.translations };
-      delete next[locale];
-      return {
-        ...s,
-        translations: next,
-        activeLocale: localeTabAfterRemoving(
-          next,
-          s.activeLocale,
-          locale,
-          uiLocale,
-        ),
-      };
-    });
+    setTabs((current) =>
+      editActiveLocaleDraft(current, patch, EMPTY_TRANSLATION),
+    );
   }
 
   return (
@@ -117,112 +89,83 @@ export function IdentitySection({
       title={t("sections.identity")}
       description={t("sections.identityDescription")}
     >
-      {/* Language tabs — at least one filled locale required. The hint below
-          spells the rule out. Switching tabs preserves what's typed in each. */}
+      {/* Language tabs — at least one complete locale required, and a tab left
+          blank is not saved. The hint below spells the rule out. Switching
+          tabs preserves what's typed in each. */}
       <Field label={t("translations.label")} hint={t("translations.hint")}>
-        <div className="flex flex-wrap items-center gap-1 border-b border-border">
-          {addedLocales.map((locale) => {
-            // exact-locale: highlights the tab being edited
-            const isActive = state.activeLocale === locale;
-            const canRemove = addedLocales.length > 1;
-            return (
-              <span
-                key={locale}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "text-act"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => setState({ ...state, activeLocale: locale })}
-                >
-                  {LOCALE_CONFIG[locale].nativeLabel}
-                </button>
-                {canRemove && (
-                  <button
-                    type="button"
-                    onClick={() => removeLocaleTab(locale)}
-                    className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                    aria-label={t("translations.removeLocale", {
-                      locale: languageName(locale, LOCALE_CONFIG[locale].label),
-                    })}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
-            );
-          })}
-          {addableLocales.length > 0 && (
-            <select
-              value=""
-              onChange={(e) => {
-                const locale = findOption(addableLocales, e.target.value);
-                if (locale) addLocaleTab(locale);
-              }}
-              className="ml-1 mb-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-            >
-              <option value="">{t("translations.addLocale")}</option>
-              {addableLocales.map((l) => (
-                <option key={l} value={l}>
-                  {languageName(l, LOCALE_CONFIG[l].label)}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        <LocaleTabs
+          written={writtenLocales(tabs.drafts)}
+          active={locale}
+          onSelect={(next) => setTabs((current) => selectLocaleTab(current, next))}
+          onAdd={(next) =>
+            setTabs((current) => addLocaleTab(current, next, EMPTY_TRANSLATION))
+          }
+          onRemove={(gone) =>
+            setTabs((current) => removeLocaleTab(current, gone, uiLocale))
+          }
+          isComplete={(l) =>
+            isCompleteTranslation(tabs.drafts[l] ?? EMPTY_TRANSLATION)
+          }
+        />
       </Field>
 
-      <Field label={t("labels.name")} htmlFor={`p-name-${state.activeLocale}`}>
+      {/* No `required` on the name and the short description: a tab left blank
+          is dropped at save rather than refused, so whether this tab must be
+          filled in is `validate()`'s to say, for every tab at once. */}
+      <Field label={t("labels.name")} htmlFor={`p-name-${locale}`}>
         <Input
-          id={`p-name-${state.activeLocale}`}
+          id={`p-name-${locale}`}
           value={activeDraft.name}
+          lang={locale}
           placeholder={t(`placeholders.name.${config.i18nKey}`)}
           onChange={(e) => setActiveTranslation({ name: e.target.value })}
-          required
           maxLength={100}
         />
       </Field>
 
       <Field
         label={t("labels.shortDescription")}
-        htmlFor={`p-short-description-${state.activeLocale}`}
+        htmlFor={`p-short-description-${locale}`}
         hint={t("hints.shortDescription")}
       >
         <Textarea
-          id={`p-short-description-${state.activeLocale}`}
+          id={`p-short-description-${locale}`}
           placeholder={t(`placeholders.description.${config.i18nKey}`)}
           value={activeDraft.shortDescription}
+          lang={locale}
           onChange={(e) =>
             setActiveTranslation({ shortDescription: e.target.value })
           }
           rows={3}
-          required
         />
       </Field>
 
-      {/* The editor reads its content once at mount, so the locale is its
-          React key: switching tabs remounts it against that locale's draft
-          rather than leaving the previous language's copy in the box. */}
+      {/* The marketing long description, edited as rich text in the
+          `marketing` use case — the one the public product page renders it
+          with, links and headings included. The rich editor is loaded on
+          demand, and only the shown tab's is ever mounted: it reads its content
+          once at mount, so the locale is its React key and switching tabs
+          remounts it against that locale's draft. */}
       <Field
         label={t("labels.longDescription")}
         optional
         hint={t("hints.longDescription")}
       >
         {({ hintId }) => (
-          <LongDescriptionEditor
-            key={state.activeLocale}
-            value={activeDraft.longDescription}
-            placeholder={t("longDescription.placeholder")}
-            ariaLabel={t("labels.longDescription")}
-            describedBy={hintId}
-            onChange={(longDescription) =>
-              setActiveTranslation({ longDescription })
-            }
-          />
+          <div lang={locale}>
+            <AuthoredBodyEditor
+              key={locale}
+              bodies={bodies}
+              useCase="marketing"
+              value={activeDraft.longDescription}
+              placeholder={t("longDescription.placeholder")}
+              ariaLabel={t("labels.longDescription")}
+              describedBy={hintId}
+              onChange={(longDescription) =>
+                setActiveTranslation({ longDescription })
+              }
+            />
+          </div>
         )}
       </Field>
 
@@ -243,13 +186,11 @@ export function IdentitySection({
         <select
           id="p-topic"
           value={state.topic}
-          onChange={(e) =>
-            setState({
-              ...state,
-              topic:
-                findOption(Constants.public.Enums.product_topic, e.target.value) ?? "",
-            })
-          }
+          onChange={(e) => {
+            const topic =
+              findOption(Constants.public.Enums.product_topic, e.target.value) ?? "";
+            setState((s) => ({ ...s, topic }));
+          }}
           required
           className="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         >
@@ -280,7 +221,10 @@ export function IdentitySection({
           type="url"
           placeholder={t("placeholders.materialUrl")}
           value={state.materialUrl}
-          onChange={(e) => setState({ ...state, materialUrl: e.target.value })}
+          onChange={(e) => {
+            const materialUrl = e.target.value;
+            setState((s) => ({ ...s, materialUrl }));
+          }}
         />
       </Field>
 
@@ -299,7 +243,7 @@ export function IdentitySection({
       <CheckboxRow
         checked={state.requiresGamerCreations}
         onCheckedChange={(requiresGamerCreations) =>
-          setState({ ...state, requiresGamerCreations })
+          setState((s) => ({ ...s, requiresGamerCreations }))
         }
         label={t("labels.requiresGamerCreations")}
         hint={t("hints.requiresGamerCreationsHint")}

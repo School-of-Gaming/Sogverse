@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
         "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
       },
-      "versionComplete": "färdig",
-      "versionIncomplete": "inte färdig än",
-      "addLocale": "Lägg till språk",
-      "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk"
     },
     "landingPages": {
@@ -822,9 +818,7 @@
       },
       "translations": {
         "label": "Språk",
-        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt.",
-        "addLocale": "+ Lägg till språk",
-        "removeLocale": "Ta bort {locale}"
+        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt."
       },
       "newPage": {
         "back": "Tillbaka till {plural}",
@@ -3089,6 +3083,12 @@
     "linkCancel": "Avbryt",
     "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen.",
     "opensInNewTab": "(öppnas i en ny flik)"
+  },
+  "localeTabs": {
+    "addLanguage": "Lägg till språk",
+    "removeLanguage": "Ta bort {language}",
+    "complete": "färdig",
+    "notComplete": "inte färdig än"
   },
   "header": {
     "nav": {
@@ -5906,8 +5906,7 @@
         },
         "languages": "Språk",
         "languagesHint": "Webbplatsen översätter inte profilen. Lägg till varje språk den ska finnas på och skriv den under det språkets flik.",
-        "addLocale": "Lägg till språk",
-        "removeLocale": "Ta bort {locale}",
+        "bioTooLong": "Beskrivningen är för lång för att sparas. Korta den till högst {max} tecken.",
         "shortDescription": "Presentation på en rad",
         "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
         "longDescription": "Beskrivning",

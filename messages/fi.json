@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}",
         "versionTitleRequired": "{language}: kieliversiolta puuttuu otsikko."
       },
-      "versionComplete": "valmis",
-      "versionIncomplete": "kesken",
-      "addLocale": "Lisää kieli",
-      "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet"
     },
     "landingPages": {
@@ -822,9 +818,7 @@
       },
       "translations": {
         "label": "Kielet",
-        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty.",
-        "addLocale": "+ Lisää kieli",
-        "removeLocale": "Poista {locale}"
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty."
       },
       "newPage": {
         "back": "Takaisin: {plural}",
@@ -3089,6 +3083,12 @@
     "linkCancel": "Peruuta",
     "linkInvalid": "Tätä osoitetta ei voi linkittää. Käytä verkko-osoitetta, sähköpostiosoitetta tai tämän sivuston sisäistä polkua.",
     "opensInNewTab": "(avautuu uuteen välilehteen)"
+  },
+  "localeTabs": {
+    "addLanguage": "Lisää kieli",
+    "removeLanguage": "Poista {language}",
+    "complete": "valmis",
+    "notComplete": "kesken"
   },
   "header": {
     "nav": {
@@ -5906,8 +5906,7 @@
         },
         "languages": "Kielet",
         "languagesHint": "Verkkosivusto ei käännä profiilia. Lisää jokainen kieli, jolla profiilin pitäisi näkyä, ja kirjoita se kyseisen kielen välilehdelle.",
-        "addLocale": "Lisää kieli",
-        "removeLocale": "Poista {locale}",
+        "bioTooLong": "Kuvaus on liian pitkä tallennettavaksi. Lyhennä se enintään {max} merkkiin.",
         "shortDescription": "Yhden rivin esittely",
         "shortDescriptionPlaceholder": "Redstone-nörtti ja speedrun-fani",
         "longDescription": "Kuvaus",

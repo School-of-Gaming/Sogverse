@@ -78,6 +78,7 @@ none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and b
 - Within `[locale]`, routes are grouped: `(auth)`, `(dashboard)`, `(public)`, `(voice)`, `(preview)`
 - **Name a route through the app's wrapped navigation module (`src/i18n/navigation.tsx`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
+- **An editor that writes content per locale** is composed from the shared per-locale pieces — the rules, and what each editor decides for itself, are in `src/i18n/CLAUDE.md`.
 - Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `anon.ts` (identity-free server reads), `bearer.ts` (a caller's bearer token, for the MCP endpoint), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
