@@ -53,15 +53,19 @@ const SHAPES: readonly { readonly name: string; readonly pattern: RegExp }[] = [
   },
   {
     name: "the first of a list of versions",
-    pattern: /(?:translations|versions)(?:\[0\]|\.at\(0\))/i,
+    pattern: /(?:translations|versions)(?:\?\.)?(?:\[0\]|\.at\(0\))/i,
   },
   {
     name: "versions keyed by locale",
     pattern: /\b\w*(?:translations|versions|names)\[\s*[\w.]*[lL]ocale\s*\]/i,
   },
   {
+    name: "versions in a map keyed by locale",
+    pattern: /\.get\(\s*[\w.]*[lL]ocale\s*\)/,
+  },
+  {
     name: "a query filtered to one locale",
-    pattern: /\.(?:eq|neq|in|match)\(\s*["'`]\w*locale["'`]|\blocale=(?:eq|neq|in)\./,
+    pattern: /\.(?:eq|neq|in|match)\(\s*["'`][\w.]*locale["'`]|\blocale=(?:eq|neq|in)\./,
   },
 ];
 
@@ -144,7 +148,10 @@ describe("per-locale lookups go through resolveTranslation() or say why they are
   const finding = sweep();
 
   it("marks every hand-written per-locale lookup with `exact-locale: <reason>`", () => {
-    expect(finding.unmarked).toEqual([]);
+    expect(
+      finding.unmarked,
+      "Show content written per locale with resolveTranslation(); mark a lookup that is exact on purpose `exact-locale: <reason>` (src/i18n/CLAUDE.md, \"Content written per locale\")",
+    ).toEqual([]);
   });
 
   it("gives every mark a reason", () => {
@@ -159,7 +166,10 @@ describe("per-locale lookups go through resolveTranslation() or say why they are
     expect(isHit(`rows.find((row) => row.locale === locale)`)).toBe(true);
     expect(isHit(`const first = article.versions[0]?.title;`)).toBe(true);
     expect(isHit(`return names[row.locale];`)).toBe(true);
+    expect(isHit(`const name = row.product_translations?.[0]?.name;`)).toBe(true);
+    expect(isHit(`const live = published.get(version.locale);`)).toBe(true);
     expect(isHit(`.eq("locale", locale)`)).toBe(true);
+    expect(isHit(`.eq("product_translations.locale", "en")`)).toBe(true);
     expect(isHit("`product_translations?locale=eq.en`")).toBe(true);
     expect(isHit(`if (profile.locale !== null) {`)).toBe(false);
     expect(isHit(`// a row whose locale === the reader's`)).toBe(false);

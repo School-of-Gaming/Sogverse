@@ -372,6 +372,7 @@ export function hasUnpublishedChanges(
   }
   const live = new Map(publication.versions.map((v) => [v.locale, v]));
   return draft.versions.some((version) => {
+    // exact-locale: each working version is compared with the published version of the same language
     const published = live.get(version.locale);
     return (
       published === undefined ||

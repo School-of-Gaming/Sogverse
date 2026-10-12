@@ -52,10 +52,9 @@ half-written new language is therefore no change; a live language whose working 
 no longer complete is one, since publishing would take it down.
 
 **Readers fall back from their locale to English to the earliest version written** in
-`SUPPORTED_LOCALES` order (`src/i18n/CLAUDE.md`, "Content written per locale"). Each page picks one per article, for a list card by
-card. The admin preview
-shows the page locale's working version, the one the editor's Preview opens on, blanks
-and all.
+`SUPPORTED_LOCALES` order (`src/i18n/CLAUDE.md`, "Content written per locale"). Each page
+picks one per article, for a list card by card. The admin preview shows the page locale's
+working version, the one the editor's Preview opens on, blanks and all.
 
 **A cover is a `library_cover` entry of the shared image catalogue**
 (`src/services/catalogue-images/`), its object in the `library-covers` bucket, linked by id

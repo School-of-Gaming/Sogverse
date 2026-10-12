@@ -555,6 +555,7 @@ async function shoot(page, shot) {
 const bannerStrings = new Map();
 
 function bannerStringsFor(locale) {
+  // exact-locale: a memo of the banner strings per page locale, which fall back to English below
   if (bannerStrings.has(locale)) return bannerStrings.get(locale);
   const read = (l) => {
     try {

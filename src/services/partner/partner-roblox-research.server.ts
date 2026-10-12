@@ -3,9 +3,7 @@ import "server-only";
 import { z } from "zod";
 
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
-import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { possibleAgeOnDate } from "@/lib/gamer-age-eligibility";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   PartnerResearchRow,
   PartnerRobloxResearchQuery,
@@ -53,26 +51,29 @@ import {
  * The child's embed is inner so filtering on its role narrows the seats; the
  * activity's is inner so `from`/`to` on its start date do.
  */
-const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SCOPE_SEAT_EMBED}, child:profiles!participations_participant_id_fkey!inner(role, gamer_profiles(birth_year, birth_month)), holder:profiles!participations_customer_id_fkey(home_location_id), activity:products!inner(product_type, is_remote, start_date)`;
+const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SCOPE_SEAT_EMBED}, child:profiles!participations_participant_id_fkey!inner(role, gamer_profiles(birth_year, birth_month)), holder:profiles!participations_customer_id_fkey(home_location_id), activity:products!inner(product_type, is_remote, start_date, spoken_language_code)`;
 
 const seatId = z.string().uuid();
 
 /**
- * The activity's name, as the site shows it to an English reader. Every
- * product carries at least one name, so none is a broken product.
+ * The activity's name: English where one has been written, else the
+ * language the product is delivered in, else the locale whose code sorts
+ * first. Every product carries at least one name, so none is a broken product.
  */
 function activityName(
   productId: string,
   names: Record<string, string> | undefined,
+  spokenLanguage: string,
 ): string {
-  const shown = resolveTranslation(
-    Object.entries(names ?? {}).map(([locale, name]) => ({ locale, name })),
-    DEFAULT_LOCALE,
-  );
-  if (shown === null) {
+  const locales = Object.keys(names ?? {}).sort();
+  if (names === undefined || locales.length === 0) {
     throw new Error(`partner /roblox-research: product ${productId} has no name`);
   }
-  return shown.name;
+  const written = new Set(locales);
+  const locale =
+    ["en", spokenLanguage].find((candidate) => written.has(candidate)) ?? locales[0];
+  // exact-locale: the partner API's published contract names the activity in English, else its delivery language, else the first locale by code
+  return names[locale];
 }
 
 export async function readRobloxResearch(
@@ -163,7 +164,11 @@ export async function readRobloxResearch(
         ),
         activity: {
           product_id: row.product_id,
-          name: activityName(row.product_id, names.get(row.product_id)),
+          name: activityName(
+            row.product_id,
+            names.get(row.product_id),
+            row.activity.spoken_language_code,
+          ),
           type: row.activity.product_type,
           delivery: productDelivery(row.activity.is_remote),
           start_date,
