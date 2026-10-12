@@ -99,3 +99,17 @@ export function nextRunning<T extends PlannedSession>(
   }
   return { next: null, cancelledAhead };
 }
+
+/**
+ * Where a cut plan stops: the start of the first session the cut left out, or
+ * `null` when it kept them all. Anything planned from this instant on is beyond
+ * the list's horizon — which is how a feed decides that a holiday break whose
+ * withdrawn sessions all lie past it is not worth a line.
+ */
+export function cutStartsAt<T extends PlannedSession>(
+  plan: readonly T[],
+  kept: readonly T[],
+): Date | null {
+  const keptSessions = new Set(kept);
+  return plan.find((session) => !keptSessions.has(session))?.startsAt ?? null;
+}

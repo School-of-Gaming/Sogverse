@@ -107,6 +107,7 @@ describe("the trainee shell's mapping", () => {
       gedus: feed.gedus,
       substitutions: [],
       cancellations: feed.cancellations,
+      holidayBreaks: feed.holiday_breaks,
       now: NOW,
       reach: "redacted",
     });

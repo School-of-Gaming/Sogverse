@@ -171,6 +171,7 @@ export function TraineeWorkspace({
         // know; the document carries none, so nothing is invented here.
         substitutions: [],
         cancellations: feed.cancellations,
+        holidayBreaks: feed.holiday_breaks,
         // Nobody: a trainee holds no staff seat, so no card may offer them an
         // absence of their own — the locked row below stands in its place.
         viewerId: null,
@@ -184,6 +185,7 @@ export function TraineeWorkspace({
       feed.sessions,
       feed.gedus,
       feed.cancellations,
+      feed.holiday_breaks,
       now,
     ],
   );

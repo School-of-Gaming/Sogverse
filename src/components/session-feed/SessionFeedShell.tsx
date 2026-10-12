@@ -162,7 +162,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
   /** Named so the divider's toggle can say which region it reveals into. */
   const listId = useId();
 
-  const { laterFuture, nextSession, soonerCancelled, past } = useMemo(
+  const { laterFuture, nextSession, soonerNotRunning, past } = useMemo(
     () => partitionFeedEntries(entries),
     [entries],
   );
@@ -187,7 +187,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
     const visible: T[] = [
       ...(laterOpen ? laterFuture : []),
       ...(nextSession === null ? [] : [nextSession]),
-      ...soonerCancelled,
+      ...soonerNotRunning,
       ...past.slice(0, pastWindow.visible),
     ];
     const dated = withMonthDividers(visible, timeZone);
@@ -210,7 +210,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
     laterOpen,
     laterFuture,
     nextSession,
-    soonerCancelled,
+    soonerNotRunning,
     past,
     pastWindow.visible,
     timeZone,

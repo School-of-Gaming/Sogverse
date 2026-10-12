@@ -315,11 +315,26 @@ type FamilyEntrySpec =
       photos?: readonly SessionPhoto[];
       attendance?: AttendanceMark;
       lastEditedBy?: FamilyProductGedu;
+    }
+  | {
+      /**
+       * A holiday break over the week this slot would have met: the calm line,
+       * in its place, and no session in the plan for that week.
+       */
+      kind: "holiday";
+      names: readonly { locale: string; name: string }[];
     };
+
+/** The break the active club's history carries, written in three locales. */
+const AUTUMN_BREAK_NAMES = [
+  { locale: "en", name: "Autumn break" },
+  { locale: "fi", name: "Syysloma" },
+  { locale: "sv", name: "Höstlov" },
+] as const;
 
 /**
  * The active club's run: seven sessions ahead (so the divider reads "6 upcoming
- * sessions" and the reveal is judged against a screenful) and seventeen behind,
+ * sessions" and the reveal is judged against a screenful) and eighteen behind,
  * which is four months and therefore three or four month dividers plus a
  * history the scroll sentinel has to feed in more than one chunk.
  *
@@ -394,6 +409,8 @@ const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
     // card and wraps at the 360 px floor.
     photos: [PHOTO_ART.parkour, PHOTO_ART.tower],
   },
+  // A holiday week: never planned, so one calm line rather than a session.
+  { kind: "holiday", names: AUTUMN_BREAK_NAMES },
   {
     kind: "past",
     report: SHORT_REPORTS[4],
@@ -720,7 +737,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink**, and the only scenario with a live room: a remote
    * weekly club four months into its run, with a session in progress, seven
-   * more ahead of it and seventeen behind.
+   * more ahead of it and eighteen behind.
    *
    * The club is named for what it builds rather than for a weekday, and that is
    * load-bearing: the run is anchored to *today* so the room can be open while
@@ -933,6 +950,20 @@ export function buildFamilyProductPageFixture(
   const entries = config.specs.map((spec, index) => {
     const startsAt = starts[index];
     const endsAt = new Date(startsAt.getTime() + durationMs);
+    if (spec.kind === "holiday") {
+      // The break is the slot's whole week, so the line names a range; the
+      // session it withdrew is what places it.
+      return {
+        kind: "holiday" as const,
+        id: `mock-family-holiday-${index}`,
+        startsAt,
+        endsAt,
+        startDate: dateIn(startsAt),
+        endDate: dateIn(shiftZonedDays(startsAt, 4)),
+        names: spec.names,
+        upcoming: endsAt.getTime() > now.getTime(),
+      };
+    }
     // Index-keyed rather than date-keyed, so an entry keeps its identity across
     // the `useNow()` tick and React never re-creates a row mid-scroll.
     return toEntry(spec, `mock-family-session-${index}`, startsAt, endsAt);
@@ -984,7 +1015,9 @@ export function buildFamilyProductPageFixture(
     entries,
     // The feed's sessions are the plan the page was given: the next session
     // the Join names is then always one the feed beneath it shows.
+    // A holiday week is not in the plan, exactly as the database leaves it out.
     plannedSessions: starts
+      .filter((_, index) => config.specs[index].kind !== "holiday")
       .map((startsAt) => ({
         date: dateIn(startsAt),
         startsAt,
@@ -1019,7 +1052,7 @@ function countLeadingFutureSpecs(specs: readonly FamilyEntrySpec[]): number {
 }
 
 function toEntry(
-  spec: FamilyEntrySpec,
+  spec: Exclude<FamilyEntrySpec, { kind: "holiday" }>,
   id: string,
   startsAt: Date,
   endsAt: Date,

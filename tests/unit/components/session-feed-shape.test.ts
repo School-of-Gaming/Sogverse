@@ -87,7 +87,7 @@ describe("partitionFeedEntries", () => {
     expect(partitionFeedEntries([])).toEqual({
       laterFuture: [],
       nextSession: null,
-      soonerCancelled: [],
+      soonerNotRunning: [],
       past: [],
     });
   });
@@ -104,7 +104,7 @@ describe("partitionFeedEntries", () => {
     ]);
     expect(partition.laterFuture.map((e) => e.id)).toEqual(["f3", "c2"]);
     expect(partition.nextSession?.id).toBe("f1");
-    expect(partition.soonerCancelled.map((e) => e.id)).toEqual(["c0"]);
+    expect(partition.soonerNotRunning.map((e) => e.id)).toEqual(["c0"]);
     expect(partition.past.map((e) => e.id)).toEqual(["p1"]);
   });
 
@@ -116,7 +116,7 @@ describe("partitionFeedEntries", () => {
     ]);
     expect(partition.laterFuture).toEqual([]);
     expect(partition.nextSession).toBeNull();
-    expect(partition.soonerCancelled.map((e) => e.id)).toEqual(["c2", "c1"]);
+    expect(partition.soonerNotRunning.map((e) => e.id)).toEqual(["c2", "c1"]);
     expect(partition.past.map((e) => e.id)).toEqual(["p1"]);
   });
 
@@ -127,7 +127,7 @@ describe("partitionFeedEntries", () => {
       past("p1"),
     ]);
     expect(partition.nextSession?.id).toBe("f1");
-    expect(partition.soonerCancelled).toEqual([]);
+    expect(partition.soonerNotRunning).toEqual([]);
     expect(partition.past.map((e) => e.id)).toEqual(["c1", "p1"]);
   });
 });

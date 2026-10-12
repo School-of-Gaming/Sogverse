@@ -1,10 +1,12 @@
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { breaksInFeed, type HolidayBreak } from "@/lib/holiday-breaks";
 import {
   OPEN_ENDED_OCCURRENCE_CAP,
+  cutStartsAt,
   trimOpenEndedFuture,
   type PlannedSession,
 } from "@/lib/planned-sessions";
-import { sessionEntryId } from "@/lib/session-occurrence";
+import { holidayEntryId, sessionEntryId } from "@/lib/session-occurrence";
 import type {
   FamilyProductGedu,
   FamilySessionEntry,
@@ -55,6 +57,10 @@ import type {
  *   between the two kinds is drawn at the session's **end**, not its start, and
  *   the gedu builder now draws it in the same place — see `toFamilyEntry`.
  *
+ * A holiday break is the one entry that is not a session: the plan never held
+ * its dates, so it arrives beside the plan rather than in it, and is drawn as
+ * one line per break, in date order by the sessions it withdrew.
+ *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
  */
@@ -79,6 +85,12 @@ export interface FamilySessionFeedArgs {
    * inert.
    */
   cancellations: readonly FamilyFeedCancellation[];
+  /**
+   * The holiday breaks of the calendars the product follows, as the document
+   * carries them. Each becomes one line where it withdrew a session the feed
+   * would otherwise show, and none where it did not.
+   */
+  holidayBreaks: readonly HolidayBreak[];
   now: Date;
   /**
    * The instant paid access ends, when the parent has cancelled this
@@ -115,6 +127,7 @@ export function buildFamilySessionFeed(
     openEnded,
     sessions,
     cancellations,
+    holidayBreaks,
     now,
     accessUntil = null,
   } = args;
@@ -220,6 +233,33 @@ export function buildFamilySessionFeed(
   // product-local date, so there is at most one per day and no two can overlap
   // in time. Ordering by start and ordering by end are therefore the same
   // ordering, and a future entry can never sort below a past one.
+  // A holiday break is one line, placed by the sessions it withdrew, and only
+  // where at least one of them is inside what the feed shows: before the
+  // open-ended cut, and inside the paid window. A break whose every withdrawn
+  // session lies past either is not this family's to read about — the paid
+  // window is the same hard clamp it is for sessions. Withdrawn sessions were
+  // never in the plan, so they took no slot from the open-ended cap.
+  const cut = cutStartsAt(plannedSessions, shown);
+  const breaks = breaksInFeed(
+    holidayBreaks,
+    (session) =>
+      (cut === null || session.startsAt.getTime() < cut.getTime()) &&
+      (accessUntil === null ||
+        session.startsAt.getTime() <= accessUntil.getTime()),
+  );
+  for (const { row, startsAt, endsAt } of breaks) {
+    entries.push({
+      kind: "holiday",
+      id: holidayEntryId(row.id),
+      startsAt,
+      endsAt,
+      startDate: row.startDate,
+      endDate: row.endDate,
+      names: row.names,
+      upcoming: endsAt.getTime() > now.getTime(),
+    });
+  }
+
   entries.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());
   return entries;
 }

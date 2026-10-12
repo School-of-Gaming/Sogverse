@@ -45,6 +45,14 @@ export function sessionEntryId(groupId: string, sessionDate: string): string {
 }
 
 /**
+ * A holiday line's stable id: its break. A break is not a session and has no
+ * date of its own to key on, and one line per break is what the feeds draw.
+ */
+export function holidayEntryId(breakId: string): string {
+  return `holiday:${breakId}`;
+}
+
+/**
  * Inclusive UTC cutoff for `endDate`'s local end-of-day in `timezone`: the
  * last moment of a product's term. End-of-day rather than start-of-day keeps a
  * session that falls on `end_date` itself inside the term.

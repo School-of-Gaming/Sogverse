@@ -169,13 +169,39 @@ export interface FamilyCancelledSessionEntry {
 }
 
 /**
- * One occurrence in a family's feed: which side of now it is on, or that it
- * has been called off.
+ * A holiday break that took sessions out of this club's plan — one line per
+ * break, in date order by the sessions it withdrew.
+ *
+ * **Never planned, not cancelled.** A cancellation is an admin calling off a
+ * session that was going to run; a holiday date was never going to run at all,
+ * so it carries none of a session's fields and is never the next session.
+ */
+export interface FamilyHolidayEntry {
+  kind: "holiday";
+  /** Keyed by the break, so two lines can never share one. */
+  id: string;
+  /** The start of the first session the break withdrew inside the feed. */
+  startsAt: Date;
+  /** The end of the last session the break withdrew inside the feed. */
+  endsAt: Date;
+  /** The break's own bare dates, both inclusive — what the line names. */
+  startDate: string;
+  endDate: string;
+  /** Every locale the name is written in; the line picks the reader's. */
+  names: readonly { locale: string; name: string }[];
+  /** Whether the last withdrawn session had not yet ended at the feed's `now`. */
+  upcoming: boolean;
+}
+
+/**
+ * One occurrence in a family's feed: which side of now it is on, that it has
+ * been called off, or a holiday break where no session was planned.
  */
 export type FamilySessionEntry =
   | FamilyFutureSessionEntry
   | FamilyPastSessionEntry
-  | FamilyCancelledSessionEntry;
+  | FamilyCancelledSessionEntry
+  | FamilyHolidayEntry;
 
 /**
  * The site an in-person product runs at, as a family may read it.

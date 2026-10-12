@@ -73,7 +73,10 @@ describe("every workspace scenario", () => {
 
       expect(fixture.entries.length).toBeGreaterThan(0);
       for (const entry of fixture.entries) {
-        expect(entry.id.startsWith(`${groupId}:`)).toBe(true);
+        // A holiday line is keyed by its break, as the builder keys it.
+        expect(
+          entry.id.startsWith(entry.kind === "holiday" ? "holiday:" : `${groupId}:`),
+        ).toBe(true);
       }
       // Unique, or two sessions would share a card's identity — which is what
       // the (group, date) key guarantees in the database too.

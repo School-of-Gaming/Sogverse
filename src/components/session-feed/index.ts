@@ -26,6 +26,7 @@
 
 export { NowDivider } from "./NowDivider";
 export { SessionCancelledLine } from "./SessionCancelledLine";
+export { SessionHolidayLine } from "./SessionHolidayLine";
 export { SessionAttributionChip } from "./SessionAttributionChip";
 export { SessionPhotoGallery } from "./SessionPhotoGallery";
 export { SessionPhotoViewer } from "./SessionPhotoViewer";

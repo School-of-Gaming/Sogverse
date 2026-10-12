@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { plannedSessionRow } from "@/lib/planned-sessions";
+import { plannedSessionRow, type PlannedSession } from "@/lib/planned-sessions";
 
 /**
  * The app's side of a club's holiday breaks.
@@ -52,7 +52,10 @@ export const holidayBreakRows = z.array(holidayBreakRow);
  * first one written. Empty only for a break with no name at all, which the
  * calendar writers refuse.
  */
-export function breakName(row: Pick<HolidayBreak, "names">, locale: SupportedLocale): string {
+export function breakName(
+  row: { names: readonly { locale: string; name: string }[] },
+  locale: SupportedLocale,
+): string {
   return resolveTranslation(row.names, locale)?.name ?? "";
 }
 
@@ -66,4 +69,43 @@ export function breakContaining<T extends Pick<HolidayBreak, "startDate" | "endD
   date: string,
 ): T | null {
   return rows.find((row) => row.startDate <= date && date <= row.endDate) ?? null;
+}
+
+/**
+ * One break as a session feed draws it: the break, and the instants of the
+ * first and last session it withdrew that the feed would otherwise have shown.
+ */
+export interface HolidayFeedBreak {
+  row: HolidayBreak;
+  /** The start of the first withdrawn session the feed keeps. */
+  startsAt: Date;
+  /** The end of the last withdrawn session the feed keeps. */
+  endsAt: Date;
+}
+
+/**
+ * The breaks a feed shows, each placed by the sessions it withdrew.
+ *
+ * A break is drawn only where it took away a session the reader would have
+ * seen, so `inSpan` is asked of every withdrawn session — the feed's own
+ * horizon (an open-ended product's cut, a cancelled membership's paid window)
+ * — and a break left with none is dropped. Its instants are the first kept
+ * session's start and the last kept one's end, which is what places it in
+ * date order among the sessions and on one side of the present.
+ */
+export function breaksInFeed(
+  rows: readonly HolidayBreak[],
+  inSpan: (session: PlannedSession) => boolean,
+): HolidayFeedBreak[] {
+  const shown: HolidayFeedBreak[] = [];
+  for (const row of rows) {
+    const kept = row.withdrawnSessions.filter(inSpan);
+    if (kept.length === 0) continue;
+    shown.push({
+      row,
+      startsAt: new Date(Math.min(...kept.map((session) => session.startsAt.getTime()))),
+      endsAt: new Date(Math.max(...kept.map((session) => session.endsAt.getTime()))),
+    });
+  }
+  return shown;
 }

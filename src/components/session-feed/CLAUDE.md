@@ -13,8 +13,8 @@ the admin rule below.
 - **Shared (here):** the feed shell (one keyed list: entries, month dividers, the
   now-divider, rail markers), the feed-shaping helpers (partition, past window, newest
   past), month labels and session labels, the scroll-anchor machinery, the report
-  renderer and its clamp arithmetic, the now-divider, the attendance tone tokens, and the
-  `AttendanceMark` type.
+  renderer and its clamp arithmetic, the now-divider, the cancelled and holiday lines, the
+  attendance tone tokens, and the `AttendanceMark` type.
 - **Gedu-only (stays in `gedu/session-feed/`):** the editors, the completeness ladder and
   owed/attention derivation, attendance rosters and summaries, the staff-note block, the
   alert badge, partial-save handling, and the workspace's mock fixtures.
@@ -59,6 +59,22 @@ ahead is off" wherever it is met — and its rail marker takes the warning hue. 
 per date; and it carries no badge of its own, because a pill inside the panel's edge
 doubles the border and reads as noise rather than emphasis. A past cancellation is history
 with nothing left to act on. Both are the same on both feeds and in both future slots.
+
+**Rule: a holiday break is never planned, not cancelled — one calm line per break, on
+every feed.** A break's dates are absent from the plan the document carries, and the
+document names the break beside the plan with the sessions it withdrew. Each feed draws
+one line per break — "No session", the break's name in the reader's locale and its own
+dates, one date for a one-day break — in the quiet ink, with no edge, no tag and no
+control on any surface, an admin's included: a holiday was never going to run, so there
+is nothing to warn about and nothing to act on. It is its own entry kind with no session
+fields, so no card, register, substitution or menu can reach it. A break shows only where
+it withdrew a session the feed would otherwise show — before the open-ended cut, and on
+the family feed inside a cancelled membership's paid window — and it is placed by those
+sessions, from the first one's start to the last one's end, which decides its date order
+and its side of the present. It is never the next session; one sooner than the next sits
+between it and the past like a cancelled date, so a gap of weeks is explained where it is
+met. The withdrawn sessions were never in the plan, so they take no slot from the
+open-ended cap.
 
 **Rule: a cancellation beats a record.** An admin may cancel a date that was already
 written up, and the cancelled line replaces the card: nothing recorded on the date —

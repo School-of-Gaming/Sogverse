@@ -1,11 +1,13 @@
 import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { breaksInFeed, type HolidayBreak } from "@/lib/holiday-breaks";
 import {
   OPEN_ENDED_OCCURRENCE_CAP,
+  cutStartsAt,
   trimOpenEndedFuture,
   type PlannedSession,
 } from "@/lib/planned-sessions";
-import { sessionEntryId } from "@/lib/session-occurrence";
+import { holidayEntryId, sessionEntryId } from "@/lib/session-occurrence";
 import {
   deriveSessionStaffing,
   type SubstitutionRequestInput,
@@ -69,6 +71,10 @@ import type {
  *   it directly rather than reading it off the kind. The plan begins at the
  *   product's start date, which is how far back the feed goes at all.
  *
+ * A holiday break is the one entry that is not a session: the plan never held
+ * its dates, so it arrives beside the plan rather than in it, and is drawn as
+ * one line per break, in date order by the sessions it withdrew.
+ *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
  */
@@ -109,6 +115,12 @@ export interface GeduSessionFeedArgs {
    * to the entry unchanged.
    */
   cancellations: readonly SessionCancellation[];
+  /**
+   * The holiday breaks of the calendars the product follows, as every staff
+   * document carries them. Each becomes one line where it withdrew a session
+   * the feed would otherwise show, and none where it did not.
+   */
+  holidayBreaks: readonly HolidayBreak[];
   /**
    * The signed-in gedu, where the surface has one. `null` on the admin shell
    * and in the preview scenes, which is the honest answer rather than a guess:
@@ -154,6 +166,7 @@ export function buildGeduSessionFeed(
     gedus,
     substitutions,
     cancellations,
+    holidayBreaks,
     viewerId = null,
     now,
     epoch = SESSION_RECORDING_EPOCH,
@@ -271,6 +284,29 @@ export function buildGeduSessionFeed(
         redacted: reach === "redacted",
       }),
     );
+  }
+
+  // A holiday break is one line, placed by the sessions it withdrew, and only
+  // where at least one of them falls before the open-ended cut — the same
+  // horizon the sessions stop at. Withdrawn sessions were never in the plan,
+  // so they took no slot from the cap, and the line carries no staffing: a
+  // date nobody planned has nobody to run it and nothing to substitute.
+  const cut = cutStartsAt(plannedSessions, shown);
+  const breaks = breaksInFeed(
+    holidayBreaks,
+    (session) => cut === null || session.startsAt.getTime() < cut.getTime(),
+  );
+  for (const { row, startsAt, endsAt } of breaks) {
+    entries.push({
+      kind: "holiday",
+      id: holidayEntryId(row.id),
+      startsAt,
+      endsAt,
+      startDate: row.startDate,
+      endDate: row.endDate,
+      names: row.names,
+      upcoming: endsAt.getTime() > now.getTime(),
+    });
   }
 
   entries.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());

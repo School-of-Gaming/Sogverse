@@ -76,7 +76,7 @@ import type {
   ProductGroupsSnapshot,
   ProductType,
 } from "@/types";
-import type { SessionFeedEntry } from "@/components/gedu/session-feed";
+import type { DatedSessionFeedEntry } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { sessionRequirements } from "@/lib/products/session-requirements";
 import type { AppHref } from "@/lib/constants/routes";
@@ -459,6 +459,8 @@ function Workspace({
         substitutions: group.substitutions,
         // With every admin field filled — this document is admin-only.
         cancellations: group.cancellations,
+        // The product's breaks, like its plan: one copy for every group.
+        holidayBreaks: sessions.holiday_breaks,
         // **No viewer.** An admin is not a member of the group's staff, so
         // there is nobody here for "am I expected" to be about: the shell
         // supplies the staffing editor in that slot instead, as it already does
@@ -474,6 +476,7 @@ function Workspace({
       group.gedus,
       group.substitutions,
       group.cancellations,
+      sessions.holiday_breaks,
       now,
     ],
   );
@@ -757,7 +760,7 @@ function Workspace({
    * keyed by in Postgres, so the two agree by construction and cannot drift if a
    * snapshot's instant ever disagrees with the date it was filed under.
    */
-  const renderSessionMenu = (entry: SessionFeedEntry) => {
+  const renderSessionMenu = (entry: DatedSessionFeedEntry) => {
     const sessionDate = entry.id.slice(sessionEntryId(groupId, "").length);
     const handleCancelSession = async (reason: string) => {
       await cancelSession.mutateAsync({ sessionDate, reason });

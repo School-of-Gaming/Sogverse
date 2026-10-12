@@ -7,6 +7,7 @@ import { lockOf, type Locked } from "@/components/ui/locked-control";
 import { cn, formatDate } from "@/lib/utils";
 import {
   SessionFeedShell,
+  SessionHolidayLine,
   editToggleAnchor,
   formatSessionLabels,
   useViewportAnchor,
@@ -38,6 +39,7 @@ import {
   type SessionReportSendResult,
 } from "./send-report";
 import type {
+  DatedSessionFeedEntry,
   SessionEntryDraft,
   SessionFeedEntry,
   SessionFeedGamer,
@@ -175,7 +177,7 @@ interface SessionFeedProps {
    */
   onRequestSubstitution?:
     | ((
-        entry: SessionFeedEntry,
+        entry: DatedSessionFeedEntry,
         draft: SessionSubstitutionRequestDraft,
       ) => void | Promise<void>)
     | Locked;
@@ -190,7 +192,7 @@ interface SessionFeedProps {
    * A surface with no such tool omits it, which is the gedu answer and the
    * default.
    */
-  renderSessionMenu?: (entry: SessionFeedEntry) => ReactNode;
+  renderSessionMenu?: (entry: DatedSessionFeedEntry) => ReactNode;
   className?: string;
 }
 
@@ -760,7 +762,9 @@ export function SessionFeed({
     { prominent }: SessionFeedRowContext,
   ) =>
     cn(
-      entry.kind === "no_record" || entry.kind === "cancelled"
+      entry.kind === "no_record" ||
+        entry.kind === "cancelled" ||
+        entry.kind === "holiday"
         ? "top-3.5"
         : "top-5",
       markerTone(entry, completenessById.get(entry.id) ?? null, prominent),
@@ -776,6 +780,18 @@ export function SessionFeed({
       }}
       markerClass={markerClass}
       renderItem={(entry, { prominent, newestPast }) => {
+        // A break where nothing was planned: one calm line and no controls —
+        // no editor, no register, no substitution and no admin menu, on any
+        // surface, because there is no session on it to act on.
+        if (entry.kind === "holiday") {
+          return (
+            <SessionHolidayLine
+              names={entry.names}
+              startDate={entry.startDate}
+              endDate={entry.endDate}
+            />
+          );
+        }
         if (entry.kind === "cancelled") {
           return (
             <CancelledSessionItem
@@ -957,6 +973,9 @@ function markerTone(
       // warning tone; behind, it is as quiet as a week with no record.
       return entry.upcoming ? "bg-warning" : "bg-border";
     case "no_record":
+    case "holiday":
+      // A holiday break is never news to act on: the quietest neutral, ahead
+      // of now or behind it.
       return "bg-border";
   }
 }

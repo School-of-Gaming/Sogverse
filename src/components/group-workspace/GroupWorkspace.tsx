@@ -20,6 +20,7 @@ import {
   type CreationsObligation,
   type SessionSubstitutionRequestDraft,
   type SessionEntryDraft,
+  type DatedSessionFeedEntry,
   type SessionFeedEntry,
   type SessionFeedGamer,
   type SessionReportSendResult,
@@ -376,7 +377,7 @@ interface GroupWorkspaceProps {
    */
   onRequestSubstitution?:
     | ((
-        entry: SessionFeedEntry,
+        entry: DatedSessionFeedEntry,
         draft: SessionSubstitutionRequestDraft,
       ) => void | Promise<void>)
     | Locked;
@@ -394,7 +395,7 @@ interface GroupWorkspaceProps {
    * it lands in the same region as the gedu action, because the two are
    * different answers to one question.
    */
-  renderSessionMenu?: (entry: SessionFeedEntry) => ReactNode;
+  renderSessionMenu?: (entry: DatedSessionFeedEntry) => ReactNode;
   /**
    * Save a roster member's game username, on whichever platform this product's
    * topic is about. A gedu is the person who finds out a name is wrong —

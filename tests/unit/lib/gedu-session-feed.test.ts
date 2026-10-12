@@ -5,7 +5,10 @@ import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
 import { productLocalDate, sessionEntryId } from "@/lib/session-occurrence";
 import type { GeduFeedSession } from "@/services/gedu-sessions";
 import type { SubstitutionRequestDocument } from "@/services/session-substitution";
-import type { SessionFeedEntry } from "@/components/gedu/session-feed";
+import type {
+  DatedSessionFeedEntry,
+  SessionFeedEntry,
+} from "@/components/gedu/session-feed";
 import { planSessions } from "../../mocks/planned-sessions";
 
 /**
@@ -106,6 +109,7 @@ function feedArgs(
     gedus: [GEDU_A],
     substitutions: [],
     cancellations: [],
+    holidayBreaks: [],
     now,
     epoch: EPOCH,
     ...rest,
@@ -154,8 +158,11 @@ function dates(entries: readonly SessionFeedEntry[]): string[] {
 function byDate(
   entries: readonly SessionFeedEntry[],
   date: string,
-): SessionFeedEntry | undefined {
-  return entries.find((entry) => entry.id === sessionEntryId(GROUP, date));
+): DatedSessionFeedEntry | undefined {
+  return entries.find(
+    (entry): entry is DatedSessionFeedEntry =>
+      entry.kind !== "holiday" && entry.id === sessionEntryId(GROUP, date),
+  );
 }
 
 describe("sessionEntryId", () => {
@@ -594,6 +601,7 @@ describe("buildGeduSessionFeed — staffing", () => {
     });
     expect(entries.length).toBeGreaterThan(0);
     for (const entry of entries) {
+      if (entry.kind === "holiday") throw new Error("no breaks in this feed");
       expect(entry.staffing.expected).toEqual([
         { id: GEDU_A.id, firstName: GEDU_A.first_name, role: "primary" },
       ]);
@@ -734,7 +742,7 @@ describe("buildGeduSessionFeed — cancelled sessions", () => {
       build({ cancellations: [cancellation("2026-03-23", false)] }),
     );
     expect(partition.nextSession?.id).toBe(sessionEntryId(GROUP, "2026-03-30"));
-    expect(partition.soonerCancelled.map((entry) => entry.id)).toEqual([
+    expect(partition.soonerNotRunning.map((entry) => entry.id)).toEqual([
       sessionEntryId(GROUP, "2026-03-23"),
     ]);
   });
@@ -800,6 +808,109 @@ describe("buildGeduSessionFeed — cancelled sessions", () => {
     // Restored, the record is back as it was.
     const restored = byDate(build({ sessions: [stored] }), "2026-03-09");
     expect(restored).toMatchObject({ kind: "past", report: "We built a castle." });
+  });
+});
+
+/**
+ * A holiday break is one calm line per break on the staff feed too — placed by
+ * the sessions it withdrew, carrying no staffing, never the next session and
+ * never counted against the open-ended cap.
+ */
+describe("buildGeduSessionFeed — holiday breaks", () => {
+  const AUTUMN = [
+    { locale: "en", name: "Autumn break" },
+    { locale: "fi", name: "Syysloma" },
+  ];
+
+  interface BreakSpec {
+    id: string;
+    startDate: string;
+    endDate: string;
+  }
+
+  function feed(breaks: BreakSpec[], endDate: string | null = null) {
+    const full = planSessions({
+      timezone: TZ,
+      slots: [MONDAY_SLOT],
+      startDate: "2026-01-05",
+      endDate,
+      now: NOW,
+    });
+    const inside = (spec: BreakSpec, date: string) =>
+      spec.startDate <= date && date <= spec.endDate;
+    return buildGeduSessionFeed({
+      ...feedArgs({ endDate }),
+      plannedSessions: full.filter(
+        (session) => !breaks.some((spec) => inside(spec, session.date)),
+      ),
+      holidayBreaks: breaks.map((spec) => ({
+        ...spec,
+        names: AUTUMN,
+        withdrawnSessions: full.filter((session) => inside(spec, session.date)),
+      })),
+    });
+  }
+
+  const holidayIds = (entries: readonly SessionFeedEntry[]) =>
+    entries.filter((entry) => entry.kind === "holiday").map((entry) => entry.id);
+
+  it("draws one line per break, in date order, with no staffing on it", () => {
+    const entries = feed([
+      { id: "winter", startDate: "2026-02-23", endDate: "2026-02-27" },
+      { id: "easter", startDate: "2026-03-30", endDate: "2026-04-10" },
+    ]);
+    expect(holidayIds(entries)).toEqual(["holiday:easter", "holiday:winter"]);
+    const winter = entries.find((entry) => entry.id === "holiday:winter");
+    expect(winter).toEqual({
+      kind: "holiday",
+      id: "holiday:winter",
+      startsAt: new Date("2026-02-23T14:30:00.000Z"),
+      endsAt: new Date("2026-02-23T16:00:00.000Z"),
+      startDate: "2026-02-23",
+      endDate: "2026-02-27",
+      names: AUTUMN,
+      upcoming: false,
+    });
+    const starts = entries.map((entry) => entry.startsAt.getTime());
+    expect(starts).toEqual([...starts].sort((a, b) => b - a));
+  });
+
+  it("leaves out a break that withdrew no session", () => {
+    expect(
+      holidayIds(feed([{ id: "midweek", startDate: "2026-03-24", endDate: "2026-03-27" }])),
+    ).toEqual([]);
+  });
+
+  it("is never the next session", () => {
+    const partition = partitionFeedEntries(
+      feed([{ id: "week", startDate: "2026-03-23", endDate: "2026-03-27" }]),
+    );
+    expect(partition.nextSession?.id).toBe(sessionEntryId(GROUP, "2026-03-30"));
+    expect(partition.soonerNotRunning.map((entry) => entry.id)).toEqual([
+      "holiday:week",
+    ]);
+  });
+
+  it("takes no slot from the open-ended cap, and stops at the cut", () => {
+    const entries = feed([
+      { id: "week", startDate: "2026-03-23", endDate: "2026-03-27" },
+      { id: "summer", startDate: "2026-06-29", endDate: "2026-07-03" },
+    ]);
+    expect(entries.filter((entry) => entry.kind === "future")).toHaveLength(
+      OPEN_ENDED_OCCURRENCE_CAP,
+    );
+    expect(holidayIds(entries)).toEqual(["holiday:week"]);
+  });
+
+  it("shows a dated product's every break inside its term", () => {
+    const entries = feed(
+      [
+        { id: "week", startDate: "2026-03-23", endDate: "2026-03-27" },
+        { id: "summer", startDate: "2026-06-29", endDate: "2026-07-03" },
+      ],
+      "2026-07-31",
+    );
+    expect(holidayIds(entries)).toEqual(["holiday:summer", "holiday:week"]);
   });
 });
 
