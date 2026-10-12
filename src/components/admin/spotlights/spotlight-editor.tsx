@@ -182,8 +182,9 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
             />
 
             <div className="space-y-1">
-              <label className="inline-flex items-center gap-2 text-sm">
+              <label className="flex cursor-pointer items-start gap-2 text-sm">
                 <Checkbox
+                  className="mt-0.5"
                   checked={form.enabled}
                   disabled={form.picture === null}
                   aria-describedby={
