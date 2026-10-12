@@ -13,8 +13,7 @@ import {
   openDiscordDmChannel,
   sendDiscordChannelMessage,
 } from "@/lib/discord-api.server";
-import { discordSubLogoUrl } from "@/lib/discord-substitution-message";
-import { sendableImageOrigin } from "@/lib/email-templates/render-context";
+import { discordSubLogoUrl, sendableImageOrigin } from "@/lib/discord-substitution-message";
 import {
   isSlackSubstitutionsConfigured,
   postSlackBlocks,

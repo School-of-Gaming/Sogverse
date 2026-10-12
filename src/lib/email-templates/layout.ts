@@ -5,7 +5,6 @@ import {
   MAIL_FONT_STACK,
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
-import { sendableImageOrigin } from "./render-context";
 import { GROUND_TONES, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -172,31 +171,24 @@ export const BRAND_MARK = {
  * mail at production, and the canonical per-environment URL is precisely that
  * value — the one `getOrigin` itself treats as the safe answer.
  *
+ * **Whatever that origin is, the mark is on it** — a dev machine's included. A
+ * mail built there carries a `localhost` src that no inbox can fetch, and that
+ * is a complete render: the box is held open by attributes and the lockup
+ * beneath it says everything the badge said (see `CLAUDE.md`, "Images").
+ *
  * **No origin, no image, no broken `src`.** An unset or malformed env yields the
- * text-only header rather than an `undefined/email/…` that resolves to nothing
- * and paints the exact broken box this feature exists to avoid. It is the same
- * degradation as a blocked image, one level up, and it is why unit tests that do
- * not stub the env still render — and still assert — the header as it has always
- * been.
- *
- * **A loopback origin counts as no origin.** A mail sent from a dev machine
- * (the admin testing tool runs locally too) would otherwise carry a
- * `localhost` src that no recipient's client can ever fetch — and a *failed*
- * fetch is worse than a blocked one: Gmail's proxy draws its broken-image
- * glyph inside the reserved box, which is exactly the nasty render the whole
- * design exists to avoid, and it was observed doing so in a real inbox. An
- * unreachable-by-construction src is morally a malformed one, so it takes the
- * same branch.
- *
- * Both halves of that are `sendableImageOrigin()`, shared with the Discord
- * messages' header logo. The mark keeps one shape in a preview too: a mail
- * previewed from a dev machine shows the header the same send would arrive
- * with, which is the honest render and costs nothing, because the lockup
- * underneath already says everything the badge said.
+ * text-only header rather than an `undefined/email/…`: there is no absolute URL
+ * to write, and a relative one would resolve against whatever page the mail is
+ * opened in.
  */
 function brandMarkSrc(): string | null {
-  const origin = sendableImageOrigin();
-  return origin ? new URL(BRAND_MARK.path, origin).toString() : null;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) return null;
+  try {
+    return new URL(BRAND_MARK.path, siteUrl).toString();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -375,11 +367,10 @@ ${groundToneRules}
            is restored by the media query above, on this cell's class. -->
       <td class="${SHELL_CLASS.gutter}" align="center" style="padding:24px 16px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-          <!-- The brand mark, above the lockup and never instead of it. Its row
-               is absent entirely when no origin can be built, so this header
-               has exactly two shapes: mark-over-lockup, and the lockup alone
-               that every mail carried before the mark existed. See BRAND_MARK
-               and brandMarkRow() for why an image here is allowed to vanish. -->
+          <!-- The brand mark, above the lockup and never instead of it. A
+               render where it does not arrive is the lockup alone that every
+               mail carried before the mark existed. See BRAND_MARK and
+               brandMarkRow() for why an image here is allowed to vanish. -->
           ${brandMarkRow()}<!-- Lockup: brand first, platform second, spaced en dash between them.
                "brand-act" is what puts the brand half through the Gmail
                background-clip rule above — this header is one of the two places

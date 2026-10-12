@@ -8,8 +8,8 @@ import {
   buildSubPreviewFlow,
   discordSubLogoUrl,
   loadDiscordSubCopy,
+  sendableImageOrigin,
 } from "@/lib/discord-substitution-message";
-import { sendableImageOrigin } from "@/lib/email-templates/render-context";
 import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {

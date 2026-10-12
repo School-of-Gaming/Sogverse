@@ -33,6 +33,7 @@ import {
   parseSessionValue,
   parseSubCustomId,
   pickedSessionOption,
+  sendableImageOrigin,
   type DiscordComponentsMessage,
   type DiscordContentMessage,
   type DiscordSubCopy,
@@ -58,7 +59,6 @@ import {
 import { deriveNotificationState } from "@/lib/substitution-notifications/state";
 import { drainSubstitutionNotifications } from "@/lib/substitution-notifications/sync.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendableImageOrigin } from "@/lib/email-templates/render-context";
 import { getOrigin } from "@/lib/url";
 // The module by name rather than the package index: that re-exports
 // `"use client"` query hooks, which a route has no business loading.

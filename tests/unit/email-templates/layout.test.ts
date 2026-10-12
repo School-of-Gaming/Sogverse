@@ -322,18 +322,14 @@ describe("the mark's origin", () => {
   });
 
   /**
-   * A loopback origin is unreachable by construction for every recipient, and a
-   * *failed* fetch is worse than a blocked one: Gmail's proxy draws its
-   * broken-image glyph inside the reserved box (observed in a real inbox, from
-   * a dev-machine send via the admin testing tool). So localhost takes the
-   * no-origin branch and a dev-sent mail degrades to the clean text header.
+   * No template special-cases a dev machine: a mail built there carries the
+   * mark on its `localhost` origin like any other. No inbox can fetch it, and
+   * that render is the text header the box was always allowed to fall back to.
    */
-  it("treats a loopback origin as no origin", () => {
-    for (const value of ["http://localhost:3000", "http://127.0.0.1:3000"]) {
+  it("keeps the mark on a loopback origin", () => {
+    for (const value of ["http://localhost:3000", "http://127.0.0.1:3005"]) {
       vi.stubEnv("NEXT_PUBLIC_SITE_URL", value);
-      const html = render();
-      expect(markTag(html), `origin ${JSON.stringify(value)} produced an image`).toBeNull();
-      expect(html).toContain(BRAND_LOCKUP.slice(-8));
+      expect(markTag(render())).toContain(`src="${value}${BRAND_MARK.path}"`);
     }
   });
 });
