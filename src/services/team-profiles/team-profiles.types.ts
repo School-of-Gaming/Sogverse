@@ -46,8 +46,9 @@ export function isPublicTeamPhotoUrl(src: string): boolean {
 /**
  * The person's photo. Uploads are cropped to the team photo purpose's stored
  * size in the image purpose registry (`src/lib/images/`), a 4:5 portrait,
- * before they are stored, and the frame covers whatever it is handed, so a photo of another shape (the preview
- * art the fixtures borrow) is cropped to the middle rather than distorted.
+ * before they are stored, and the frame covers whatever it is handed, so a
+ * photo of another shape (the preview art the fixtures borrow) is cropped to
+ * the middle rather than distorted.
  */
 export interface TeamProfilePhoto {
   src: string;

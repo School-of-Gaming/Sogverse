@@ -17,7 +17,8 @@ export interface ImagePurposeSpec {
    * The exact pixel size every image of this purpose is stored at: whatever
    * crops a picture to it, and whatever checks a stored picture against it,
    * reads it here. `"as-uploaded"` is a purpose that keeps the shape its
-   * picture was uploaded in — it may be scaled down, but it is never cropped.
+   * picture was uploaded in: it is never cropped, and how far it may be scaled
+   * down is its feature's own limit.
    */
   readonly storedSize: { readonly width: number; readonly height: number } | "as-uploaded";
   /**

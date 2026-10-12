@@ -9,9 +9,10 @@ no purpose, a purpose naming no bucket, or a visibility that disagrees with the 
 `public` flag — so a new bucket gets its purpose in the same change.
 
 **Every purpose declares the size its pictures are stored at**, or that they keep the shape
-they were uploaded in (scaled down at most, never cropped). Whatever crops a picture to its
-size, and whatever checks a stored picture against it, reads the size from the registry —
-no feature declares a purpose's size of its own.
+they were uploaded in. Whatever crops a picture to a fixed size, and whatever checks a
+stored picture against it, reads the size from the registry — no feature declares a fixed
+size of its own. A picture that keeps its shape is never cropped; how far it may be scaled
+down is its feature's own limit, not the registry's.
 
 **Whether a purpose belongs to the admin image catalogue is a separate declaration**, not
 implied by a fixed size: a team photo is cropped to its frame but is one person's own

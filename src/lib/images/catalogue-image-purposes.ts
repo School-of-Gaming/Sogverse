@@ -16,18 +16,8 @@ type RegistryCataloguePurpose = {
   [P in ImagePurpose]: (typeof IMAGE_PURPOSES)[P]["catalogue"] extends true ? P : never;
 }[ImagePurpose];
 
-/** The registry's purposes stored at a fixed size rather than as uploaded. */
-type FixedSizePurpose = {
-  [P in ImagePurpose]: (typeof IMAGE_PURPOSES)[P]["storedSize"] extends "as-uploaded"
-    ? never
-    : P;
-}[ImagePurpose];
-
 /** `true` exactly when the two unions have the same members. */
 type SameMembers<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
-
-/** `true` exactly when every member of `A` is a member of `B`. */
-type EveryMemberOf<A, B> = [A] extends [B] ? true : false;
 
 /**
  * **The registry's catalogue purposes and the database enum are one set.**
@@ -46,19 +36,11 @@ const CATALOGUE_PURPOSES_MATCH_THE_ENUM: SameMembers<
 void CATALOGUE_PURPOSES_MATCH_THE_ENUM;
 
 /**
- * **Every catalogue purpose is stored at a fixed size.** The catalogue's crop
- * draws to an exact size and its upload routes refuse anything else, so a
- * catalogue purpose that kept the uploaded shape would leave both with no size
- * to read. Marking such a purpose catalogue turns this conditional type
- * `false`, and the `true` assigned to it stops type-checking.
+ * One catalogue purpose's bucket and size, read from the registry. Reading the
+ * size's width and height here is what refuses a catalogue purpose stored as
+ * uploaded: the catalogue's crop draws to an exact size and its upload routes
+ * refuse anything else, so such a purpose stops this from type-checking.
  */
-const CATALOGUE_PURPOSES_HAVE_A_FIXED_SIZE: EveryMemberOf<
-  RegistryCataloguePurpose,
-  FixedSizePurpose
-> = true;
-void CATALOGUE_PURPOSES_HAVE_A_FIXED_SIZE;
-
-/** One catalogue purpose's bucket and size, read from the registry. */
 function cataloguePurposeSpec(purpose: CatalogueImagePurpose): CatalogueImagePurposeSpec {
   const { bucket, storedSize } = IMAGE_PURPOSES[purpose];
   return { bucket, width: storedSize.width, height: storedSize.height };

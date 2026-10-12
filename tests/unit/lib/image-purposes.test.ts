@@ -121,14 +121,9 @@ describe("the catalogue purposes derived from the registry", () => {
   it("carry each catalogue purpose's bucket and its fixed stored size", () => {
     const derived = new Map<string, unknown>(Object.entries(CATALOGUE_IMAGE_PURPOSES));
     for (const [purpose, registered] of cataloguePurposes) {
-      const size = registered.storedSize;
-      expect(size, `${purpose} is a catalogue purpose with no fixed size`).not.toBe("as-uploaded");
-      if (size === "as-uploaded") continue;
-      expect(derived.get(purpose), purpose).toEqual({
-        bucket: registered.bucket,
-        width: size.width,
-        height: size.height,
-      });
+      expect(derived.get(purpose), purpose).toEqual(
+        Object.assign({ bucket: registered.bucket }, registered.storedSize),
+      );
     }
   });
 
