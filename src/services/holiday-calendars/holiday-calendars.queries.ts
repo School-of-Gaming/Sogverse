@@ -1,20 +1,8 @@
 "use client";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
-import { adminSessionKeys } from "@/services/admin-sessions/admin-sessions.keys";
-import { geduInvoicingKeys } from "@/services/gedu-invoicing/gedu-invoicing.keys";
-import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
-import { municipalityInvoicingKeys } from "@/services/municipality-invoicing/municipality-invoicing.keys";
-import { participationKeys } from "@/services/participations/participations.keys";
-import { productKeys } from "@/services/products/products.queries";
-import { sessionSubstitutionKeys } from "@/services/session-substitution/session-substitution.keys";
+import { invalidatePlanReaders } from "@/services/products/plan-readers";
 import { holidayCalendarKeys } from "./holiday-calendars.keys";
 import { HolidayCalendarsService } from "./holiday-calendars.service";
 import type {
@@ -23,32 +11,6 @@ import type {
 } from "./holiday-calendars.contracts";
 
 export { holidayCalendarKeys };
-
-/**
- * Everything a saved calendar can change, refreshed together.
- *
- * A calendar's breaks are dates missing from every club that follows it, past
- * months included, so a save moves what each of those clubs' plans project,
- * which sessions a family and a gedu see, what a month invoices and pays, which
- * substitution requests have a session, and what the admin dashboard counts.
- * Each of those reads keys under one of these roots; invalidating the roots
- * costs nothing for the ones not in this admin's cache.
- */
-function invalidateCalendarReaders(queryClient: QueryClient) {
-  return Promise.all(
-    [
-      holidayCalendarKeys.all,
-      productKeys.all,
-      participationKeys.all,
-      geduSessionKeys.all,
-      adminSessionKeys.all,
-      sessionSubstitutionKeys.all,
-      municipalityInvoicingKeys.all,
-      geduInvoicingKeys.all,
-      adminDashboardKeys.all,
-    ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
-  );
-}
 
 /**
  * Every calendar, ordered by name. Admin-only by RLS. `enabled: false` keeps
@@ -94,8 +56,10 @@ export function useUpdateHolidayCalendar() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: HolidayCalendarInput }) =>
       service.updateHolidayCalendar(id, input),
-    // Returned, so mutateAsync resolves only once the reads have followed.
-    onSuccess: () => invalidateCalendarReaders(queryClient),
+    // A calendar's breaks are dates missing from every club that follows it,
+    // past months included, so a save moves every plan reader. Returned, so
+    // mutateAsync resolves only once the reads have followed.
+    onSuccess: () => invalidatePlanReaders(queryClient),
   });
 }
 

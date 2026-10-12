@@ -39,7 +39,7 @@ $$;
 -- Name: FUNCTION group_session_date_is_writable(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_session_date date) IS 'Loose write validation for a session date: the current plan has a session on it (inside the term, on a slot weekday), and an open-ended product''s date is within ninety days of product-local today.';
+COMMENT ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_session_date date) IS 'Loose write validation for a session date: the current plan has a session on it (inside the term, on a slot weekday, outside every holiday break the product follows), and an open-ended product''s date is within ninety days of product-local today.';
 
 
 --

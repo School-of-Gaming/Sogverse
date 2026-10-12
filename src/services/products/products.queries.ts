@@ -7,31 +7,15 @@ import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-im
 import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
 import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
 import type { ProductType, ProductBrowseRow } from "@/types";
+import { invalidatePlanReaders } from "./plan-readers";
+import { productKeys } from "./products.keys";
 import {
   ProductsService,
   type CreateProductInput,
   type UpdateProductInput,
 } from "./products.service";
 
-export const productKeys = {
-  all: ["products"] as const,
-  lists: () => [...productKeys.all, "list"] as const,
-  listByType: (type: ProductType) =>
-    [...productKeys.lists(), { type }] as const,
-  // Sort the types so the key is order-independent — callers passing the same
-  // set in a different order hit the same cache entry (matches countsByProducts
-  // in participations.queries.ts).
-  visibleByTypes: (types: ProductType[]) =>
-    [...productKeys.lists(), "visible", { types: [...types].sort() }] as const,
-  detail: (id: string | undefined) =>
-    [...productKeys.all, "detail", id] as const,
-  adminDetail: (id: string | undefined) =>
-    [...productKeys.all, "admin-detail", id] as const,
-  plannedSessions: (id: string | undefined) =>
-    [...productKeys.all, "planned-sessions", id] as const,
-  plannedSessionsIn: (id: string | undefined, from: string, to: string) =>
-    [...productKeys.plannedSessions(id), { from, to }] as const,
-};
+export { productKeys };
 
 export function useProductDetail(id: string | undefined) {
   const supabase = getClient();
@@ -167,17 +151,12 @@ export function useUpdateProduct(id: string) {
   return useMutation({
     mutationFn: (input: UpdateProductInput) => service.updateProduct(id, input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: productKeys.adminDetail(id) });
-      // The term and the slots are the plan, so a saved edit moves its dates.
-      queryClient.invalidateQueries({
-        queryKey: productKeys.plannedSessions(id),
-      });
-      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
-      queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
+      // The term, the slots and the calendar followed are the plan, so a saved
+      // edit moves every reader of it — the product's own detail and lists
+      // among them.
+      invalidatePlanReaders(queryClient);
+      // The image catalogue's usage map is read from the products' pictures.
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey });
-      queryClient.invalidateQueries({ queryKey: holidayCalendarKeys.all });
     },
   });
 }

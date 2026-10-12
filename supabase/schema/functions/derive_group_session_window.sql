@@ -19,7 +19,7 @@ $$;
 -- Name: FUNCTION derive_group_session_window(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_session_date date) IS 'A session''s scheduled instants from the CURRENT plan (planned_session_dates). NULL when the plan has no session on the date: outside the product''s term, or on a weekday it has no slot for. Term-bounded since the plan became the database''s, where it used to answer for any matching weekday.';
+COMMENT ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_session_date date) IS 'A session''s scheduled instants from the CURRENT plan (planned_session_dates). NULL when the plan has no session on the date: outside the product''s term, on a weekday it has no slot for, or inside a break of a holiday calendar the product follows.';
 
 
 --

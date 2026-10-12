@@ -14,7 +14,7 @@ $$;
 -- Name: FUNCTION group_session_date_is_scheduled(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT plan have a session on this date: inside the product''s term and on a weekday it has a slot for (planned_session_dates, through derive_group_session_window). The writable-date check minus its visible horizon — what a new cancellation is validated against, and one of the two ways a stored cancellation stays in effect (group_session_is_cancelled).';
+COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT plan have a session on this date: inside the product''s term, on a weekday it has a slot for, and outside every break of the holiday calendars it follows (planned_session_dates, through derive_group_session_window). The writable-date check minus its visible horizon — what a new cancellation is validated against, and one of the two ways a stored cancellation stays in effect (group_session_is_cancelled).';
 
 
 --

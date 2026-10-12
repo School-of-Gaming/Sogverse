@@ -3,7 +3,8 @@ import { z } from "zod";
 /**
  * The app's side of the database's session plan.
  *
- * A product's planned sessions — its term crossed with its weekly slots — are
+ * A product's planned sessions — its term crossed with its weekly slots, less
+ * the product's holiday breaks — are
  * expanded in exactly one place, the `planned_session_dates` function, and
  * `planned_group_sessions` adds which groups cancelled each date. This module
  * parses those rows and holds the two pieces of shaping every reader of them

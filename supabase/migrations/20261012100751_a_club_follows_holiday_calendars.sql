@@ -1097,6 +1097,29 @@ COMMENT ON FUNCTION public.group_session_date_is_holiday(uuid, date) IS
 REVOKE EXECUTE ON FUNCTION public.group_session_date_is_holiday(uuid, date) FROM PUBLIC, anon, authenticated;
 GRANT  EXECUTE ON FUNCTION public.group_session_date_is_holiday(uuid, date) TO service_role;
 
+-- The plan's other readers go on asking planned_session_dates, which now leaves
+-- a holiday out, so their comments name a break as a date the plan holds no
+-- session on.
+COMMENT ON FUNCTION public.derive_group_session_window(uuid, date) IS
+  'A session''s scheduled instants from the CURRENT plan (planned_session_dates). '
+  'NULL when the plan has no session on the date: outside the product''s term, on '
+  'a weekday it has no slot for, or inside a break of a holiday calendar the '
+  'product follows.';
+
+COMMENT ON FUNCTION public.group_session_date_is_scheduled(uuid, date) IS
+  'Does the CURRENT plan have a session on this date: inside the product''s term, '
+  'on a weekday it has a slot for, and outside every break of the holiday calendars '
+  'it follows (planned_session_dates, through derive_group_session_window). The '
+  'writable-date check minus its visible horizon — what a new cancellation is '
+  'validated against, and one of the two ways a stored cancellation stays in '
+  'effect (group_session_is_cancelled).';
+
+COMMENT ON FUNCTION public.group_session_date_is_writable(uuid, date) IS
+  'Loose write validation for a session date: the current plan has a session on '
+  'it (inside the term, on a slot weekday, outside every holiday break the product '
+  'follows), and an open-ended product''s date is within ninety days of '
+  'product-local today.';
+
 CREATE OR REPLACE FUNCTION public.group_session_is_cancelled(p_group_id uuid, p_session_date date) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''

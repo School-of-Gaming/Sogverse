@@ -2,15 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { holidayBreakKeys } from "./holiday-breaks.keys";
 import { HolidayBreaksService } from "./holiday-breaks.service";
 
-export const holidayBreakKeys = {
-  all: ["holiday-breaks"] as const,
-  byProduct: (productId: string) =>
-    [...holidayBreakKeys.all, "product", productId] as const,
-  forSpan: (productId: string, from: string, to: string) =>
-    [...holidayBreakKeys.byProduct(productId), from, to] as const,
-};
+export { holidayBreakKeys };
 
 /**
  * A product's holiday breaks over a span, or nothing at all while `span` is

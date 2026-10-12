@@ -218,9 +218,10 @@ interface ResolvedSchedule {
  *   face, and RFC 5545's answer is an extra component per disagreeing
  *   occurrence under the same identifier.
  * - An `EXDATE` is a day the rule states inside the plan's window that the plan
- *   does not hold. Today the plan is the term crossed with the slots, which is
- *   exactly what the rule states, so the list is empty; a day the plan loses
- *   later leaves the calendar through this list with nothing here changing.
+ *   does not hold. The plan is the term crossed with the slots, less the
+ *   club's holiday breaks, so the list is exactly the slot days those breaks
+ *   cover inside the plan's window, and a club following no calendar states
+ *   none. Nothing here knows of breaks, only of days the plan does not hold.
  *
  * A cancelled session is not excluded: a cancellation is a group's, not the
  * plan's, and the plan is read without them.

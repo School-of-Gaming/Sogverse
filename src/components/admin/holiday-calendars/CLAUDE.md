@@ -45,10 +45,12 @@ not zero. A new calendar, or one nobody follows, never previews.
 **A session on a club's today counts as still to come** in the dialog's split between
 future and past, and two slots on one day are one date to a family.
 
-**The save invalidates every root a calendar can move** — products and their plans,
-participations (the family feed nests under it), the gedu feed, the admin session
-document, substitutions, both invoicing ledgers and the admin dashboard — not only its
-own keys.
+**The save invalidates every plan reader, not only its own keys** — products and their
+plans, the holiday breaks a product page lists, the calendars, participations (the family
+feed nests under it), the gedu feed, the admin session document, substitutions, both
+invoicing ledgers and the admin dashboard. The set is one shared invalidation in
+`src/services/products/`, which a product save runs too, since a term, slot or calendar
+edit moves the same readers; a new reader of a plan joins that set.
 
 ## The write path
 

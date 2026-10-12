@@ -189,8 +189,8 @@ ask that one too, and a clause there would turn the warning into a refusal.
 
 **Every read carries its session's instants from the database's plan** — the pool, the admin
 queue, the gedu's own live requests, a sub's seat and the notification snapshot alike. Both
-are null on a date the plan no longer has (an orphan, or a date outside the term), and every
-reader still shows such a row by its date alone.
+are null on a date the plan no longer has (an orphan, a date outside the term, or one on a
+holiday break), and every reader still shows such a row by its date alone.
 
 **Every surface describes the session the same way.** The pool, the admin page and a
 sub's own card on My SOG state the session's product — type, topic, language, timezone,

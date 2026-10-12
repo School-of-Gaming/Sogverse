@@ -98,8 +98,8 @@ export interface MyAssignedProductSessionRow {
   substitutionCancelled: boolean;
   /**
    * When a `substitution` row's session runs, from the plan — `null` on a date
-   * the plan no longer has (an orphan, or a date outside the term), and on the
-   * other kinds.
+   * the plan no longer has (an orphan, a date outside the term, or one on a
+   * holiday break), and on the other kinds.
    */
   substitutionStartsAt: Date | null;
   substitutionEndsAt: Date | null;
