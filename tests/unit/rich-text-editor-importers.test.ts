@@ -60,14 +60,6 @@ const IMPORTERS: Readonly<Record<string, Classification>> = {
     kind: "notPerLocale",
     reason: "The style guide's demo of the rich editor itself, over fixture text that is never saved.",
   },
-  "src/components/admin/products/long-description-editor.tsx": {
-    kind: "notYetMigrated",
-    reason: "A product's long description, written per locale; moves onto the shared editor with the product form.",
-  },
-  "src/components/team/team-profile-form.tsx": {
-    kind: "notYetMigrated",
-    reason: "A team profile's bio, written per locale; moves onto the shared editor with the team profile form.",
-  },
 };
 
 /** Every source file under `src/`, repo-relative with forward slashes. */

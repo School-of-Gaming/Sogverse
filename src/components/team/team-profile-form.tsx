@@ -1,26 +1,36 @@
 "use client";
 
 import { useId } from "react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Check, ChevronDown, Lightbulb, Trash2, Upload, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { PICKS, type PickId } from "@sog/ui";
+import {
+  AuthoredBodyEditor,
+  type AuthoredBodiesHandle,
+} from "@/components/ui/authored-body-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { LocaleTabs } from "@/components/ui/locale-tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ZoneColorPicker } from "@/components/voice/ZoneColorPicker";
-import { useLanguageNames } from "@/hooks/use-language-names";
+import type { AuthoredBodies } from "@/lib/authored-bodies";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import {
-  LOCALE_CONFIG,
-  resolveLocale,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
-import { localeTabAfterRemoving, openingLocaleTab } from "@/lib/i18n/locale-tabs";
-import { cn, findOption } from "@/lib/utils";
+  activeLocaleDraft,
+  addLocaleTab,
+  draftsToSave,
+  editActiveLocaleDraft,
+  openLocaleTabs,
+  removeLocaleTab,
+  sameLocaleDrafts,
+  selectLocaleTab,
+  writtenLocales,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
+import { cn } from "@/lib/utils";
 import {
   TEAM_PHOTO_HEIGHT,
   TEAM_PHOTO_WIDTH,
@@ -61,8 +71,8 @@ const NICKNAME_MAX_LENGTH = 32;
 const TITLE_MAX_LENGTH = 60;
 
 /**
- * One locale's text as typed. The product form's `TranslationDraft` shape with
- * this profile's fields: two required descriptions and an optional fun fact.
+ * One locale's text as typed: two required descriptions and an optional fun
+ * fact, the bio as the rich editor's markdown.
  */
 export interface TeamProfileTranslationDraft {
   shortDescription: string;
@@ -77,12 +87,22 @@ const EMPTY_TRANSLATION: TeamProfileTranslationDraft = {
 };
 
 /**
+ * Whether a language has both descriptions, which is what a public profile
+ * needs in every language it is written in. The fun fact never counts.
+ */
+function hasBothDescriptions(
+  text: Pick<TeamProfileTranslationDraft, "shortDescription" | "longDescription">,
+): boolean {
+  return text.shortDescription.trim() !== "" && text.longDescription.trim() !== "";
+}
+
+/**
  * What the person is typing, as they type it — untrimmed — so the form never
  * rewrites a field under the cursor. It becomes a profile through
  * `contentFromForm`, which is where trimming happens.
  *
- * The translations are the product form's per-locale map, with the open tab
- * beside it, so switching tabs keeps what was typed in each.
+ * The text is written per language, in the shared locale tabs, so switching
+ * tabs keeps what was typed in each.
  */
 export interface TeamProfileForm {
   nickname: string;
@@ -91,13 +111,12 @@ export interface TeamProfileForm {
   /** The person's accent colour, or `null` for none. */
   pick: PickId | null;
   photo: TeamProfilePhoto | null;
-  translations: Partial<Record<SupportedLocale, TeamProfileTranslationDraft>>;
-  activeLocale: SupportedLocale;
+  tabs: LocaleTabState<TeamProfileTranslationDraft>;
 }
 
 /**
- * The part of a profile a person writes, normalised: what gets saved and
- * compared. `title` is `null` for a Gedu.
+ * The part of a profile a person writes, normalised: what gets saved.
+ * `title` is `null` for a Gedu.
  *
  * A language tab with nothing typed in it is not content — it is a tab the
  * person opened and has not used — so it is dropped here, and a brand-new
@@ -112,34 +131,31 @@ export interface TeamProfileContent {
   translations: readonly TeamProfileTranslation[];
 }
 
-export function formFromProfile(
+/** A saved profile's text, one draft per language written. */
+function savedDrafts(
   profile: TeamProfile,
-  uiLocale: SupportedLocale,
-): TeamProfileForm {
-  const translations: TeamProfileForm["translations"] = {};
+): Partial<Record<SupportedLocale, TeamProfileTranslationDraft>> {
+  const drafts: Partial<Record<SupportedLocale, TeamProfileTranslationDraft>> = {};
   for (const row of profile.translations) {
-    translations[row.locale] = {
+    drafts[row.locale] = {
       shortDescription: row.shortDescription,
       longDescription: row.longDescription,
       funFact: row.funFact ?? "",
     };
   }
-  // A profile opens on the tab a reader of the admin's UI locale would be
-  // shown, and one with nothing written on one tab in that locale, exactly as
-  // a product does (`openingLocaleTab`).
-  if (profile.translations.length === 0) {
-    translations[uiLocale] = EMPTY_TRANSLATION;
-  }
+  return drafts;
+}
+
+export function formFromProfile(
+  profile: TeamProfile,
+  uiLocale: SupportedLocale,
+): TeamProfileForm {
   return {
     nickname: profile.nickname ?? "",
     title: profile.kind === "admin" ? profile.title : "",
     pick: profile.pick,
     photo: profile.photo,
-    translations,
-    activeLocale: openingLocaleTab(
-      profile.translations.map((row) => row.locale),
-      uiLocale,
-    ),
+    tabs: openLocaleTabs(savedDrafts(profile), uiLocale, EMPTY_TRANSLATION),
   };
 }
 
@@ -147,40 +163,45 @@ export function contentFromForm(
   form: TeamProfileForm,
   profile: Pick<TeamProfile, "kind">,
 ): TeamProfileContent {
-  const translations: TeamProfileTranslation[] = [];
-  for (const locale of SUPPORTED_LOCALES) {
-    const draft = form.translations[locale];
-    if (draft === undefined) continue;
-    const shortDescription = draft.shortDescription.trim();
-    const longDescription = draft.longDescription.trim();
-    const funFact = draft.funFact.trim();
-    if (shortDescription === "" && longDescription === "" && funFact === "") {
-      continue;
-    }
-    translations.push({
-      locale,
-      shortDescription,
-      longDescription,
-      funFact: funFact === "" ? null : funFact,
-    });
-  }
   return {
     nickname: form.nickname.trim() || null,
     title: profile.kind === "admin" ? form.title.trim() : null,
     pick: form.pick,
     photo: form.photo,
-    translations,
+    translations: draftsToSave(form.tabs.drafts).map(({ locale, draft }) => {
+      const funFact = draft.funFact.trim();
+      return {
+        locale,
+        shortDescription: draft.shortDescription.trim(),
+        longDescription: draft.longDescription.trim(),
+        funFact: funFact === "" ? null : funFact,
+      };
+    }),
   };
 }
 
-export function contentFromProfile(profile: TeamProfile): TeamProfileContent {
-  // The locale only picks an empty first tab, which is not content.
-  return contentFromForm(formFromProfile(profile, "en"), profile);
-}
-
-/** Whether two profiles say the same thing. */
-export function sameContent(a: TeamProfileContent, b: TeamProfileContent): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+/**
+ * Whether the form holds exactly what `profile` saved: the same nickname,
+ * title, colour and photo, and the same text in the same languages — a bio
+ * also when it is the rich editor's own respelling of the saved one, so an
+ * untouched bio is never an unsaved change.
+ */
+export function sameAsSaved(
+  form: TeamProfileForm,
+  profile: TeamProfile,
+  bodies: AuthoredBodies,
+): boolean {
+  const content = contentFromForm(form, profile);
+  return (
+    content.nickname === (profile.nickname?.trim() || null) &&
+    content.title === (profile.kind === "admin" ? profile.title.trim() : null) &&
+    content.pick === profile.pick &&
+    content.photo?.src === profile.photo?.src &&
+    sameLocaleDrafts(form.tabs.drafts, savedDrafts(profile), {
+      fields: ["longDescription"],
+      bodies,
+    })
+  );
 }
 
 /** The profile as the public page would render it, with this content in it. */
@@ -226,9 +247,7 @@ export function teamProfileGap(content: TeamProfileContent): TeamProfileGap {
   const missingTitle = content.title === "";
   const missingText =
     content.translations.length === 0 ||
-    content.translations.some(
-      (row) => row.shortDescription === "" || row.longDescription === "",
-    );
+    content.translations.some((row) => !hasBothDescriptions(row));
   if (missingPhoto && missingTitle && missingText) return "photoTitleText";
   if (missingPhoto && missingTitle) return "photoTitle";
   if (missingPhoto && missingText) return "photoText";
@@ -252,30 +271,6 @@ export function teamProfileTooLong(content: TeamProfileContent): boolean {
 // ---------------------------------------------------------------------------
 // The sections
 // ---------------------------------------------------------------------------
-
-/**
- * Height of the writing surface, matched by the placeholder that stands in for
- * it while the chunk is in flight: the toolbar (`h-10`) plus the editor body's
- * `min-h-40`, so the box does not change size when the editor arrives.
- */
-const RICH_EDITOR_MIN_HEIGHT = "min-h-[12.5rem]";
-
-/**
- * The rich editor, loaded on demand and never rendered on the server: it is
- * the heaviest thing on the page, and only the open language tab mounts one.
- */
-const BioEditor = dynamic(
-  () => import("@/components/ui/rich-text-editor").then((m) => m.RichTextEditor),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        aria-hidden
-        className={`w-full rounded-md border border-border bg-background ${RICH_EDITOR_MIN_HEIGHT}`}
-      />
-    ),
-  },
-);
 
 type FormUpdate = (update: (form: TeamProfileForm) => TeamProfileForm) => void;
 
@@ -569,19 +564,18 @@ export function TeamProfileAboutSection({
 /**
  * What the person writes about themselves, per locale.
  *
- * **The language tabs are the product form's, mirrored rather than imported.**
- * The admin product form draws them inline in its identity section rather than
- * as a component, so there is nothing to import without first extracting it
- * from a form this change does not otherwise touch. The interaction is the
- * same: a tab per locale written, a remove control on each while more than one
- * remains, an "add a language" select for the rest, and the rule of at least
- * one — here enforced by the ready switch rather than by the save.
+ * **The language tabs are the shared locale tab bar.** Each tab is marked
+ * complete once it has both descriptions — what the public profile needs in
+ * every language written — and a tab whose bio is too long to save is drawn
+ * in the destructive hue with the reason read out, since Save waits on it
+ * while another tab is open.
  *
- * **The bio is the shared rich-text editor in its `profile` variant** — no
- * links and no headings, matching the public page's renderer of the same name
- * — loaded on demand behind a same-sized placeholder. The editor reads its
- * content once, at mount, so the locale is its key and switching tabs remounts
- * it on that locale's draft.
+ * **The bio is the shared authored body editor in the `profile` use case** —
+ * no links and no headings, matching the public page's renderer of the same
+ * name. The editor reads its content once, at mount, so the locale is its key
+ * and switching tabs remounts it on that locale's draft; the form's body
+ * record (`bodies`) is how an untouched bio never reads as a change, and its
+ * reset is how a Discard re-seeds it.
  *
  * **The section carries the guidance for what is written in it**, as the photo
  * section does for the photo: who reads the profile, the third-person rule and
@@ -596,130 +590,55 @@ export function TeamProfileAboutSection({
 export function TeamProfileWritingSection({
   form,
   update,
+  bodies,
 }: {
   form: TeamProfileForm;
   update: FormUpdate;
+  /** The form's body record, which the bio editor fills. */
+  bodies: AuthoredBodiesHandle;
 }) {
   const t = useTranslations("team.edit.writing");
   const uiLocale = resolveLocale(useLocale());
-  const languageName = useLanguageNames();
   const shortId = useId();
   const funFactId = useId();
 
-  const locale = form.activeLocale;
-  const addedLocales = SUPPORTED_LOCALES.filter(
-    (l) => form.translations[l] !== undefined,
-  );
-  const addableLocales = SUPPORTED_LOCALES.filter(
-    (l) => form.translations[l] === undefined,
-  );
-  const draft = form.translations[locale] ?? EMPTY_TRANSLATION;
-
-  function setActive(patch: Partial<TeamProfileTranslationDraft>) {
-    update((prev) => ({
-      ...prev,
-      translations: {
-        ...prev.translations,
-        [prev.activeLocale]: {
-          ...(prev.translations[prev.activeLocale] ?? EMPTY_TRANSLATION),
-          ...patch,
-        },
-      },
-    }));
-  }
-
-  function addLocale(next: SupportedLocale) {
-    update((prev) => ({
-      ...prev,
-      translations: { ...prev.translations, [next]: EMPTY_TRANSLATION },
-      activeLocale: next,
-    }));
-  }
-
-  function removeLocale(gone: SupportedLocale) {
-    update((prev) => {
-      const next = { ...prev.translations };
-      delete next[gone];
-      return {
-        ...prev,
-        translations: next,
-        activeLocale: localeTabAfterRemoving(
-          next,
-          prev.activeLocale,
-          gone,
-          uiLocale,
-        ),
-      };
-    });
-  }
+  const { tabs } = form;
+  const locale = tabs.active;
+  const draft = activeLocaleDraft(tabs, EMPTY_TRANSLATION);
+  const setTabs = (
+    change: (
+      current: LocaleTabState<TeamProfileTranslationDraft>,
+    ) => LocaleTabState<TeamProfileTranslationDraft>,
+  ) => update((prev) => ({ ...prev, tabs: change(prev.tabs) }));
+  const setActive = (patch: Partial<TeamProfileTranslationDraft>) =>
+    setTabs((current) =>
+      editActiveLocaleDraft(current, patch, EMPTY_TRANSLATION),
+    );
 
   return (
     <FormSection heading={t("heading")}>
       <WritingGuidance />
 
       <Field label={t("languages")} hint={t("languagesHint")}>
-        <div className="flex flex-wrap items-center gap-1 border-b border-border">
-          {addedLocales.map((l) => {
-            const isActive = locale === l;
-            const canRemove = addedLocales.length > 1;
-            // A language whose bio is too long to save is marked on
-            // its tab, since Save waits on it while another tab is open.
-            const tooLong = longDescriptionTooLong(
-              form.translations[l]?.longDescription ?? "",
-            );
-            return (
-              <span
-                key={l}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
-                  tooLong
-                    ? "text-destructive"
-                    : isActive
-                      ? "text-act"
-                      : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <button
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => update((prev) => ({ ...prev, activeLocale: l }))}
-                >
-                  {LOCALE_CONFIG[l].nativeLabel}
-                </button>
-                {canRemove && (
-                  <button
-                    type="button"
-                    onClick={() => removeLocale(l)}
-                    className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                    aria-label={t("removeLocale", {
-                      locale: languageName(l, LOCALE_CONFIG[l].label),
-                    })}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
-            );
-          })}
-          {addableLocales.length > 0 && (
-            <select
-              value=""
-              aria-label={t("addLocale")}
-              onChange={(e) => {
-                const next = findOption(addableLocales, e.target.value);
-                if (next) addLocale(next);
-              }}
-              className="mb-1 ml-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-            >
-              <option value="">{t("addLocale")}</option>
-              {addableLocales.map((l) => (
-                <option key={l} value={l}>
-                  {languageName(l, LOCALE_CONFIG[l].label)}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        <LocaleTabs
+          written={writtenLocales(tabs.drafts)}
+          active={locale}
+          onSelect={(next) => setTabs((current) => selectLocaleTab(current, next))}
+          onAdd={(next) =>
+            setTabs((current) => addLocaleTab(current, next, EMPTY_TRANSLATION))
+          }
+          onRemove={(gone) =>
+            setTabs((current) => removeLocaleTab(current, gone, uiLocale))
+          }
+          isComplete={(l) =>
+            hasBothDescriptions(tabs.drafts[l] ?? EMPTY_TRANSLATION)
+          }
+          attention={(l) =>
+            longDescriptionTooLong(tabs.drafts[l]?.longDescription ?? "")
+              ? t("bioTooLong", { max: LONG_DESCRIPTION_MAX_LENGTH })
+              : null
+          }
+        />
       </Field>
 
       <Field
@@ -768,15 +687,18 @@ export function TeamProfileWritingSection({
         }
       >
         {({ hintId }) => (
-          <BioEditor
-            key={locale}
-            variant="profile"
-            initialValue={draft.longDescription}
-            placeholder={t("longDescriptionPlaceholder")}
-            ariaLabel={t("longDescription")}
-            describedBy={hintId}
-            onChange={(longDescription) => setActive({ longDescription })}
-          />
+          <div lang={locale}>
+            <AuthoredBodyEditor
+              key={locale}
+              bodies={bodies}
+              useCase="profile"
+              value={draft.longDescription}
+              placeholder={t("longDescriptionPlaceholder")}
+              ariaLabel={t("longDescription")}
+              describedBy={hintId}
+              onChange={(longDescription) => setActive({ longDescription })}
+            />
+          </div>
         )}
       </Field>
 
