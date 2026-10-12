@@ -55,7 +55,12 @@ export const POST = defineRoute({
   response: storeTeamPhotoResponse,
 
   handler: async ({ request, supabase, params }) => {
-    const { userId } = params;
+    // The UUID's canonical, lowercase spelling, for the check and the path
+    // alike. The check casts to uuid and so accepts any case, but the folder is
+    // the string as written: an uppercase one would hold an object that the
+    // bucket's delete policy, the save's folder sweep and an erasure's folder
+    // listing, which all spell the id in lowercase, never reach.
+    const userId = params.userId.toLowerCase();
 
     // --- 1. Who may store into this folder ------------------------------
     const { data: mayEdit, error: authError } = await supabase.rpc(

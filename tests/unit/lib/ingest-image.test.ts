@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { reencodeForPurpose } from "@/lib/images/ingest-image.server";
 import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
-import { MAX_IMAGE_EDGE } from "@/lib/images/reencode-jpeg.server";
+import { MAX_IMAGE_EDGE } from "@/lib/images/image-purposes";
 
 /**
  * The size half of the shared ingest step, which no route test reaches: a

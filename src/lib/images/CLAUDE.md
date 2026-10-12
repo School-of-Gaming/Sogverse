@@ -20,8 +20,13 @@ picture and never a catalogue entry. The catalogue's purpose map is the slice of
 registry marked catalogue, not a second list, and the compiler refuses a catalogue purpose
 without a fixed size, since the catalogue's crop and upload routes demand an exact one.
 
-**Every purpose declares the largest upload its route accepts**, and the route and any
-browser check before posting read that figure from the registry.
+**Every purpose declares the largest upload its route accepts**, and the route reads that
+figure from the registry, as does any browser check before posting.
+
+**The platform's maximum edge is declared once, beside the registry**: a picture kept as
+uploaded is held to it, the server decode bounds its input to its square, and a feature's
+check on a claimed size reads it. The database's dimension CHECKs state the same figure as
+their own bound.
 
 ## Server uploads
 
@@ -37,8 +42,10 @@ and a status rather than throwing, so a route can put its own work between them 
 authorization read before the decode) and answers each reason in its own vocabulary. The
 route keeps its own authorization, the order of row and object, the compensation when a
 half fails, the object's name and its error codes. The image catalogue's writers stand
-outside the re-encode: they store an admin's cropped JPEG byte for byte, named by its hash,
-after checking its cap, type and exact size (`src/services/catalogue-images/`).
+outside these steps by design: their uploads come only from admins and are mostly graphics
+rather than camera photos, and the browser crop that produced them has already dropped the
+metadata, so they store the cropped JPEG byte for byte, named by its hash, after checking
+its cap, type and exact size (`src/services/catalogue-images/`).
 
 ## The preview budget
 

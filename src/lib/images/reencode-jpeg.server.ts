@@ -1,5 +1,6 @@
 import "server-only";
 import sharp from "sharp";
+import { MAX_IMAGE_EDGE } from "./image-purposes";
 
 /**
  * The server-side half of image normalization: one re-encode that makes the
@@ -47,14 +48,6 @@ import sharp from "sharp";
 const JPEG_QUALITY = 80;
 
 /**
- * The longest edge a stored picture may have, in pixels, and the side of the
- * square `MAX_INPUT_PIXELS` bounds. The pixel bound alone admits a strip one
- * pixel tall and millions wide, so a picture kept at its uploaded shape is
- * also held to this edge once its re-encode has measured it.
- */
-export const MAX_IMAGE_EDGE = 4096;
-
-/**
  * The largest picture this pass will decode at all, in pixels.
  *
  * **The byte cap does not bound the decoded size — compression ratio is the
@@ -66,7 +59,7 @@ export const MAX_IMAGE_EDGE = 4096;
  * serverless function, and on the chat route the decode happens *before* the
  * membership RPC — so an unbounded one is reachable pre-authorization.
  *
- * 4096 × 4096 is the platform's own maximum edge, the bound the image row's
+ * The square of the platform's own maximum edge, the bound the image row's
  * dimension CHECK already refuses past. Honest clients normalize to 2048 before
  * uploading, so nothing a real composer produces comes near this; a picture
  * that does is refused here rather than decoded and then refused by the RPC.

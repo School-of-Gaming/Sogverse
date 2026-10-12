@@ -1,15 +1,16 @@
 import "server-only";
-import { IMAGE_PURPOSES, type ImagePurpose } from "./image-purposes";
-import {
-  MAX_IMAGE_EDGE,
-  reencodeJpeg,
-  type ReencodedJpeg,
-} from "./reencode-jpeg.server";
+import { IMAGE_PURPOSES, MAX_IMAGE_EDGE, type ImagePurpose } from "./image-purposes";
+import { reencodeJpeg, type ReencodedJpeg } from "./reencode-jpeg.server";
 
 /**
- * The bytes-in half every server upload route shares: take the file out of the
+ * The bytes-in half the server upload routes share: take the file out of the
  * form, refuse what the bucket must not hold, re-encode what it may, and check
  * the result against the purpose's declared size.
+ *
+ * The image catalogue's writers stand outside it by design. Their uploads come
+ * only from admins and are mostly graphics rather than camera photos, and the
+ * browser crop that produced them has already dropped the metadata, so they
+ * are stored byte for byte after their own cap, type and exact-size checks.
  *
  * Steps rather than one call, because routes put their own work between them:
  * one reads a channel row as a cost gate after reading the form and before

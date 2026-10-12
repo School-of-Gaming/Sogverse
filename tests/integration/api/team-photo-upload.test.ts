@@ -270,6 +270,22 @@ describe("POST /api/team/profiles/[userId]/photo", () => {
     });
   });
 
+  it("stores an uppercase id under its lowercase folder, and checks that id", async () => {
+    mockEditor();
+
+    const response = await call({ userId: TARGET_ID.toUpperCase() });
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith("can_edit_team_profile", {
+      p_user_id: TARGET_ID,
+    });
+    const { path } = storeTeamPhotoResponse.parse(await response.json());
+    expect(path).toMatch(
+      new RegExp(`^${TARGET_ID}/[0-9a-f-]{36}\\.jpg$`),
+    );
+    expect(mockUpload).toHaveBeenCalledWith(path, expect.anything(), expect.anything());
+  });
+
   it("strips EXIF and GPS from the bytes it stores", async () => {
     mockEditor();
     // The fixture really does carry what it claims to — a test asserting the

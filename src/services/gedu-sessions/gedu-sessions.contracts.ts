@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { MAX_IMAGE_EDGE } from "@/lib/images/image-purposes";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
@@ -729,22 +730,6 @@ export const SESSION_PHOTO_MAX_EDGE = 2048;
 export const SESSION_PHOTO_JPEG_QUALITY = 0.8;
 
 /**
- * The plausibility bound on an image's dimensions, and the code-side twin of
- * the table's CHECK.
- *
- * **Deliberately looser than the edge cap above, and not derived from it.** The
- * client normalizes to ~2048 px; this is a sanity bound, not a restatement of a
- * derived value. What it defends is layout arithmetic — the stored dimensions
- * are what the gallery and the email size their boxes from. The route applies
- * it to the claimed pair on the way in, so an obviously wrong form is refused
- * before any decode work; what the re-encode measured, the number that reaches
- * the row, is held to the shared ingest step's maximum edge, the same 4096.
- * Both refusals carry a stable code rather than a raw 23514, and the CHECK
- * still stands behind them.
- */
-export const SESSION_PHOTO_MAX_DIMENSION = 4096;
-
-/**
  * The SQLSTATE `add_group_session_image` refuses with when the session already
  * holds its cap, beside the `42501` every gedu RPC raises for a group the
  * caller does not teach.
@@ -778,8 +763,8 @@ export const SESSION_PHOTO_CAP_REACHED_SQLSTATE = "P0023";
  *   the one refusal whose copy tells the gedu to convert and try again.
  * - `tooLarge` — over the session photo purpose's byte cap in the image
  *   purpose registry.
- * - `badDimensions` — the claimed width/height are missing or outside
- *   {@link SESSION_PHOTO_MAX_DIMENSION}.
+ * - `badDimensions` — the claimed width/height are missing or past the
+ *   platform's maximum edge.
  * - `capReached` — the session already holds {@link SESSION_PHOTO_CAP} photos.
  *   Reachable despite the editor hiding its add control, because two tabs can
  *   race and the RPC is what actually decides.
@@ -838,7 +823,7 @@ export function isSessionPhotoErrorCode(
  * The dimensions are the CLIENT'S claim about the JPEG it just encoded, and
  * they are **an early plausibility refusal and nothing else** — what the row
  * stores is what the route's own `sharp` re-encode measured. They are still
- * sent, and still bounded here, because refusing an implausible claim before
+ * sent, and still bounded here by the platform's maximum edge, because refusing an implausible claim before
  * any decode work happens is what gives the gedu the dimension copy rather than
  * a generic failure; a claim that passes this check and then decodes to
  * something else is refused just the same, by the route, against the measured
@@ -854,12 +839,12 @@ export const addSessionImageFields = z.object({
     .number()
     .int()
     .positive()
-    .max(SESSION_PHOTO_MAX_DIMENSION),
+    .max(MAX_IMAGE_EDGE),
   height: z.coerce
     .number()
     .int()
     .positive()
-    .max(SESSION_PHOTO_MAX_DIMENSION),
+    .max(MAX_IMAGE_EDGE),
 });
 
 export type AddSessionImageFields = z.infer<typeof addSessionImageFields>;

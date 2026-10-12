@@ -22,8 +22,8 @@ export interface ImagePurposeSpec {
    */
   readonly storedSize: { readonly width: number; readonly height: number } | "as-uploaded";
   /**
-   * The largest upload, in bytes, the purpose's route accepts. A browser that
-   * checks before posting reads the same figure, so the person is told the real
+   * The largest upload, in bytes, the purpose's route accepts. Any browser
+   * check before posting reads this figure, so the person is told the real
    * reason instead of meeting a bare refusal. Every figure sits under the
    * platform's ~4.5 MB request body limit, which refuses a larger body before
    * any route runs.
@@ -100,6 +100,15 @@ export const IMAGE_PURPOSES = {
     catalogue: false,
   },
 } as const satisfies Record<string, ImagePurposeSpec>;
+
+/**
+ * The longest edge a stored picture may have, in pixels: the platform's own
+ * maximum. A purpose kept as uploaded is held to it once its re-encode has
+ * measured it, the server decode bounds its input to its square, and a
+ * feature's own checks on a claimed size read it rather than restating it.
+ * The database's dimension CHECKs state the same figure as their own bound.
+ */
+export const MAX_IMAGE_EDGE = 4096;
 
 /** One of the purposes declared in `IMAGE_PURPOSES`. */
 export type ImagePurpose = keyof typeof IMAGE_PURPOSES;
