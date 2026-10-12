@@ -4,7 +4,9 @@ import { escapeHtml, groundFill } from "./utils";
 
 /**
  * The session report's photo grid — the one block in this directory whose
- * content is pictures.
+ * content is pictures. The report's spotlights draw their picture through it
+ * too, as a column of one, so every content picture a mail carries is boxed by
+ * the same arithmetic.
  *
  * **One photo per row, at every width.** It used to be two to a row, with an
  * odd tail spanning and a media query in the shell stacking the pairs on a

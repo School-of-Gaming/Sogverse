@@ -1,3 +1,5 @@
+import type { MarkdownUseCase } from "@/lib/authored-markdown";
+
 /**
  * A stand-in for the rich-text editor, for the tests that treat a note field as
  * an opaque box. Applied with a factory naming this module:
@@ -40,7 +42,7 @@ export function RichTextEditor({
   placeholder?: string;
   ariaLabel: string;
   describedBy?: string;
-  variant?: "feed" | "marketing" | "profile" | "article" | "landing";
+  variant?: MarkdownUseCase;
   className?: string;
   disabled?: boolean;
 }) {

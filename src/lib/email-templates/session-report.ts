@@ -1,5 +1,5 @@
 import { wrapInLayout } from "./layout";
-import { escapeHtml, paragraph, styledName, styledProductName } from "./utils";
+import { escapeHtml, heading, paragraph, styledName, styledProductName } from "./utils";
 import { calloutPanel, ctaButton, factList, sectionLabel } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
 import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
@@ -70,7 +70,39 @@ import type { EmailTranslator } from "./translator";
  * photos and the closing are the same bytes, and the button goes to the
  * child's own page in My SOG — the caller passes that URL, because a `/parent`
  * link bounces a signed-in child off it.
+ *
+ * **The mail ends with the enabled spotlights**, newest first — admin-written
+ * notes, each a picture, a title and a short markdown body, in all three
+ * variants alike. They come after the closing, because the report and what it
+ * asks are the mail and the spotlights are what the platform adds beneath it.
+ * **They are laid out open, not boxed**: the shell is itself a card on a wide
+ * viewport and a card in a card is the one arrangement this directory forbids,
+ * so each is ruled off by the same hairline that separates the report from its
+ * button. The picture is the photo column's (`session-photos.ts`), boxed from
+ * the stored dimensions like any photo; the title is the shell's own section
+ * heading; the body renders under the `spotlight` use case, which keeps links —
+ * an admin is trusted with what they publish to every family, where a gedu's
+ * report keeps none. Every value arrives resolved: the version for this
+ * reader's locale and the picture's public URL are the caller's to pick.
  */
+
+/**
+ * One spotlight, as the mail draws it: the reader's version, already picked,
+ * and a picture whose URL the caller composed.
+ */
+export interface SessionReportSpotlight {
+  /** Plain text; escaped here. */
+  title: string;
+  /** Authored markdown, rendered under the `spotlight` use case. */
+  body: string;
+  image: {
+    /** Absolute, unauthenticated URL — composed by the caller. */
+    url: string;
+    /** The stored pixel size, which the reserved box is built from. */
+    width: number;
+    height: number;
+  };
+}
 
 export interface SessionReportEmailOptions {
   /** The child the report concerns, as the family knows them. */
@@ -113,6 +145,11 @@ export interface SessionReportEmailOptions {
    * family mail and a staff copy leave it unset.
    */
   gamerCopy?: boolean;
+  /**
+   * Every enabled spotlight, newest first, each in this reader's version.
+   * Absent or empty is the mail with nothing beneath the closing.
+   */
+  spotlights?: readonly SessionReportSpotlight[];
 }
 
 export function sessionReportSubject(
@@ -137,6 +174,7 @@ export function buildSessionReportEmail(
     photos = [],
     staffCopy = false,
     gamerCopy = false,
+    spotlights = [],
   }: SessionReportEmailOptions,
 ): string {
   // The banner carries its own leading break, so the family mail's content is
@@ -165,6 +203,7 @@ export function buildSessionReportEmail(
     ${rule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
+    ${spotlights.map(spotlightSection).join("")}
   `;
   return wrapInLayout({ title: t("sessionReport.title"), content, locale, t });
 }
@@ -214,6 +253,26 @@ function photosSection(
   if (photos.length === 0) return "";
   return `${sectionLabel(t("sessionReport.photosHeading"))}
     ${sessionPhotoGrid(photos)}`;
+}
+
+/**
+ * One spotlight: the hairline, the picture, the title, the body.
+ *
+ * Open rather than boxed, because the shell is already the card — see the
+ * module comment. The picture is a photo column of one, so it gets the same
+ * box arithmetic, painted well, Outlook pixel pair and empty `alt` as a session
+ * photo rather than a second image block that could drift from it. The title
+ * is `heading()`, the shell's section heading, since a spotlight is a section
+ * of the mail under its title; the body carries no headings of its own to
+ * compete with it.
+ */
+function spotlightSection({ title, body, image }: SessionReportSpotlight): string {
+  return `${rule()}
+    ${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
+    ${heading(escapeHtml(title))}
+    <div style="margin:0 0 24px;">
+      ${renderMarkdownForEmail(body, "spotlight")}
+    </div>`;
 }
 
 /** A hairline between the report and what the mail asks afterwards. */

@@ -291,7 +291,8 @@ export type MarkdownUseCase =
   | "marketing"
   | "profile"
   | "article"
-  | "landing";
+  | "landing"
+  | "spotlight";
 
 export interface MarkdownUseCaseDefinition {
   /** Every flag, stated — a new flag is a decision for every use case. */
@@ -341,6 +342,13 @@ export const MARKDOWN_USE_CASES: Record<MarkdownUseCase, MarkdownUseCaseDefiniti
    * from a search, so links are part of its job.
    */
   landing: defineUseCase({ headings: true, links: true }, "section"),
+  /**
+   * **A spotlight's body**: admin-authored, appended to every family's
+   * session report. Links are its point and an admin is trusted with them;
+   * no headings, since the spotlight's own title is the heading it sits under.
+   * No heading survives, so its outline is never reached; `section` is nominal.
+   */
+  spotlight: defineUseCase({ headings: false, links: true }, "section"),
 };
 
 /**

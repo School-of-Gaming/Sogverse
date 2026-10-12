@@ -80,6 +80,11 @@ import {
   SESSION_REPORT_PHOTO_COUNT_LABELS,
   sessionReportPhotoFixtures,
 } from "./fixtures/session-report-photos";
+import {
+  SESSION_REPORT_SPOTLIGHT_CHOICES,
+  SESSION_REPORT_SPOTLIGHT_LABELS,
+  sessionReportSpotlightFixtures,
+} from "./fixtures/session-report-spotlights";
 import type { EmailRenderContext } from "./render-context";
 import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator, TopicPrepTranslator } from "./translator";
@@ -720,6 +725,12 @@ const SESSION_REPORT_PHOTO_OPTIONS = SESSION_REPORT_PHOTO_COUNTS.map((value) => 
   value,
 }));
 
+/** Whether to hang the demo spotlights under the mail. */
+const SESSION_REPORT_SPOTLIGHT_OPTIONS = SESSION_REPORT_SPOTLIGHT_CHOICES.map((value) => ({
+  label: SESSION_REPORT_SPOTLIGHT_LABELS[value],
+  value,
+}));
+
 function resolveSessionReport(
   {
     sample: sampleId,
@@ -727,6 +738,7 @@ function resolveSessionReport(
     reportMarkdown,
     copy,
     photoCount,
+    spotlights,
     ...rest
   }: SessionReportParams,
   locale: string,
@@ -750,6 +762,7 @@ function resolveSessionReport(
     sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
     photos: sessionReportPhotoFixtures(Number(photoCount), context),
+    spotlights: sessionReportSpotlightFixtures(spotlights, context),
   };
 }
 
@@ -962,6 +975,8 @@ const sessionReportParamsSchema = z.object({
   copy: z.enum(SESSION_REPORT_COPIES),
   /** How many demo photos to attach. Required for the same reason `copy` is. */
   photoCount: z.enum(SESSION_REPORT_PHOTO_COUNTS),
+  /** Whether to attach the demo spotlights. Required for the same reason `copy` is. */
+  spotlights: z.enum(SESSION_REPORT_SPOTLIGHT_CHOICES),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -1774,6 +1789,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
       { key: "photoCount", label: "Photos", type: "select", options: SESSION_REPORT_PHOTO_OPTIONS },
+      { key: "spotlights", label: "Spotlights", type: "select", options: SESSION_REPORT_SPOTLIGHT_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",

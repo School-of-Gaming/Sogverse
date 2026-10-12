@@ -722,11 +722,67 @@ describe("templateRegistry sessionReport", () => {
     groupName: "Usvalaakso: Kettukallio",
     copy: "family",
     photoCount: "0",
+    spotlights: "none",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
     productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   };
+
+  /**
+   * The spotlights select hangs the two demo spotlights under the mail — the
+   * pictures on committed art at the stored 1200×600, absolute on the render's
+   * reachable origin, and the first body's link kept and made absolute.
+   */
+  it("hangs the demo spotlights under the mail when asked", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    try {
+      const none = templateRegistry.sessionReport.render(params, t, "en");
+      expect(none.html).not.toContain("/preview-art/spotlight-");
+
+      const { html } = templateRegistry.sessionReport.render(
+        { ...params, spotlights: "two" },
+        t,
+        "en",
+      );
+      expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\/spotlight-[a-z]+\.jpg"/g))
+        .toHaveLength(2);
+      expect(html).toContain('href="https://sogverse.sog.gg/shop"');
+      expect(html.indexOf("Autumn camps are open")).toBeLessThan(
+        html.indexOf("A new Roblox club this term"),
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  /** The pictures take the photos' origin rule, and a spotlight never goes without its picture. */
+  it("sends no spotlights from a dev machine, and keeps them in its preview", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
+    try {
+      const sent = templateRegistry.sessionReport.render(
+        { ...params, spotlights: "two" },
+        t,
+        "en",
+        { to: "send" },
+      );
+      expect(sent.html).not.toContain("Autumn camps are open");
+      expect(sent.html).not.toContain("/preview-art/");
+
+      const previewed = templateRegistry.sessionReport.render(
+        { ...params, spotlights: "two" },
+        t,
+        "en",
+        { to: "preview", origin: "http://localhost:3010" },
+      );
+      expect(previewed.html).toContain("Autumn camps are open");
+      expect(previewed.html).toContain(
+        '<img src="http://localhost:3010/preview-art/spotlight-arena.jpg"',
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 
   it("formats the sample's date and time in the parent's zone for the locale", async () => {
     const { subject, html } = templateRegistry.sessionReport.render(params, t, "en");
@@ -1367,6 +1423,7 @@ describe("every template renders in every locale", () => {
       // Photos, so the locale sweep also reaches the one section with a
       // translated line of its own above it.
       photoCount: "3",
+      spotlights: "two",
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",

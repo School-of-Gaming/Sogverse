@@ -16,6 +16,7 @@ import {
   calendarInvitationStartDate,
   calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
+import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 
@@ -222,6 +223,9 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     // to answer to the same rules as everything else in a mail. The stub above
     // is what makes the fixture URLs resolvable, exactly as it does the mark's.
     photoCount: "3",
+    // Both demo spotlights, so the sweep sees a markdown link reach a mail —
+    // the one anchor no button or inline-link helper builds.
+    spotlights: "two",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -450,11 +454,18 @@ describe("completeness", () => {
 describe("house style, over every mail we can send", () => {
   /**
    * Anchor provenance. Every link in a mail comes from `ctaButton`,
-   * `ctaButtonRow` or `inlineLink`, so the set of styles an anchor can carry is
-   * small and closed. A hand-rolled anchor is what bypassed every colour rule
-   * we had; this is the assertion that makes bypassing visible.
+   * `ctaButtonRow` or `inlineLink` — or from the markdown renderer, for an
+   * authored body whose use case keeps links (a spotlight's) — so the set of
+   * styles an anchor can carry is small and closed. A hand-rolled anchor is
+   * what bypassed every colour rule we had; this is the assertion that makes
+   * bypassing visible.
    */
   it("emits no anchor a helper did not build", () => {
+    const markdownLinkStyle =
+      /<a [^>]*style="([^"]*)"/.exec(
+        renderMarkdownForEmail("[a](https://example.com)", "spotlight"),
+      )?.[1] ?? null;
+    expect(markdownLinkStyle, "the markdown renderer drew no styled link").not.toBeNull();
     for (const [name, html] of allMails()) {
       // A mail with no link is fine — the help-request mail is written to us about
       // a person and asks the reader for nothing.
@@ -464,8 +475,9 @@ describe("house style, over every mail we can send", () => {
           style,
         );
         const isInlineLink = style === `color:${BRAND.act};text-decoration:underline;`;
+        const isMarkdownLink = style === markdownLinkStyle;
         expect(
-          isButton || isInlineLink,
+          isButton || isInlineLink || isMarkdownLink,
           `${name}: hand-rolled anchor — use ctaButton/ctaButtonRow/inlineLink.\n  ${style}`,
         ).toBe(true);
       }

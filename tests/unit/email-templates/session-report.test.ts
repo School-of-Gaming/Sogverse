@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import {
   buildSessionReportEmail,
   sessionReportSubject,
+  type SessionReportSpotlight,
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import {
@@ -541,6 +542,91 @@ describe("the child's own copy", () => {
 
   it("renders the family mail when the flag is absent or false", () => {
     expect(buildSessionReportEmail(t, "en", { ...base, gamerCopy: false })).toBe(family());
+  });
+});
+
+/**
+ * The spotlights: every enabled one at the foot of the mail, newest first as
+ * given, each a picture, a title and a body — open, ruled off, never boxed.
+ */
+describe("the spotlights at the foot of the mail", () => {
+  const BUCKET = "https://xyz.supabase.co/storage/v1/object/public/spotlight-images";
+
+  const SPOTLIGHTS: SessionReportSpotlight[] = [
+    {
+      title: "Autumn camps <open>",
+      body: "Book a place [in the shop](https://sogverse.sog.gg/shop).",
+      image: { url: `${BUCKET}/a.jpg`, width: 1200, height: 600 },
+    },
+    {
+      title: "A new Roblox club",
+      body: "# Not a heading\n\nStarts next month.",
+      image: { url: `${BUCKET}/b.jpg`, width: 1200, height: 600 },
+    },
+  ];
+
+  const withSpotlights = (spotlights: SessionReportSpotlight[], extra = {}) =>
+    buildSessionReportEmail(t, "en", { ...base, spotlights, ...extra });
+
+  it("leaves a report with none exactly as it was", () => {
+    expect(withSpotlights([])).toBe(buildSessionReportEmail(t, "en", base));
+  });
+
+  it("puts every spotlight after the closing, in the order given", () => {
+    const html = withSpotlights(SPOTLIGHTS);
+    const closing = html.indexOf(t("sessionReport.closing", { productName: "" }).slice(0, 12));
+    const first = html.indexOf("Autumn camps");
+    const second = html.indexOf("A new Roblox club");
+    expect(closing).toBeGreaterThan(-1);
+    expect(first).toBeGreaterThan(closing);
+    expect(second).toBeGreaterThan(first);
+  });
+
+  it("draws the picture, then the title, then the body", () => {
+    const html = withSpotlights(SPOTLIGHTS.slice(0, 1));
+    const image = html.indexOf(`<img src="${BUCKET}/a.jpg"`);
+    const title = html.indexOf("Autumn camps");
+    const body = html.indexOf("Book a place");
+    expect(image).toBeGreaterThan(-1);
+    expect(title).toBeGreaterThan(image);
+    expect(body).toBeGreaterThan(title);
+  });
+
+  it("boxes the picture from its stored size, like a session photo", () => {
+    const html = withSpotlights(SPOTLIGHTS.slice(0, 1));
+    const box = sessionPhotoBox(1200, 600);
+    expect(html).toContain(
+      `<img src="${BUCKET}/a.jpg" width="${box.phoneWidth}" height="${box.wellHeight}" alt=""`,
+    );
+    expect(html).toContain(`width:100%;height:auto;max-width:${box.maxWidth}px`);
+  });
+
+  it("escapes the title and sets it as the mail's section heading", () => {
+    const html = withSpotlights(SPOTLIGHTS.slice(0, 1));
+    expect(html).toContain("Autumn camps &lt;open&gt;</h2>");
+    expect(html).not.toContain("<open>");
+  });
+
+  it("keeps a link in the body, and no heading", () => {
+    const html = withSpotlights(SPOTLIGHTS);
+    expect(html).toMatch(/<a href="https:\/\/sogverse\.sog\.gg\/shop"[^>]*>in the shop<\/a>/);
+    expect(html).not.toMatch(/<h[1-6][^>]*>Not a heading/);
+    expect(html).toContain("Not a heading");
+  });
+
+  it("rules each one off with the report's hairline and boxes none of them", () => {
+    const rule = `border-top:1px solid ${DARK_THEME.border};font-size:0;line-height:0;`;
+    const count = (html: string) => html.split(rule).length - 1;
+    expect(count(withSpotlights(SPOTLIGHTS))).toBe(
+      count(buildSessionReportEmail(t, "en", base)) + SPOTLIGHTS.length,
+    );
+  });
+
+  it("carries the same spotlights into the staff copy and the child's copy", () => {
+    const from = (html: string) => html.slice(html.indexOf("Autumn camps"));
+    const family = from(withSpotlights(SPOTLIGHTS));
+    expect(from(withSpotlights(SPOTLIGHTS, { staffCopy: true }))).toBe(family);
+    expect(from(withSpotlights(SPOTLIGHTS, { gamerCopy: true }))).toBe(family);
   });
 });
 
