@@ -628,6 +628,7 @@
       "backToList": "Back to spotlights",
       "notFound": "There is no spotlight with this id.",
       "loadError": "Could not load this spotlight. Refresh to try again.",
+      "listLoadError": "Could not load the spotlights. Refresh to try again.",
       "newPage": {
         "title": "New spotlight",
         "submit": "Save"

@@ -628,6 +628,7 @@
       "backToList": "Tillbaka till spotlights",
       "notFound": "Det finns ingen spotlight med det här id:t.",
       "loadError": "Spotlighten kunde inte laddas. Uppdatera sidan för att försöka igen.",
+      "listLoadError": "Spotlightsen kunde inte laddas. Uppdatera sidan för att försöka igen.",
       "newPage": {
         "title": "Ny spotlight",
         "submit": "Spara"

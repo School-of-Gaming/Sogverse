@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Clock, Languages, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { StatusLine } from "@/components/ui/alert";
+import { Alert, AlertDescription, StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,9 +34,10 @@ export interface AdminSpotlightsActions {
  * delete it.
  *
  * **Presentational**: the rows and the writes arrive as props, and the live
- * page hands it a read and the mutations. `settled` is separate from the rows
- * because "no spotlights yet" and "the read has not answered" are different
- * pages, and only the first may print an empty state.
+ * page hands it a read and the mutations. The read's status is separate from
+ * the rows because "no spotlights yet", "the read has not answered" and "the
+ * read failed" all arrive as no rows, and only the first may print an empty
+ * state.
  *
  * **No loading affordance.** The read is one walk over a handful of rows an
  * office writes by hand, and lands in a frame or two. Until it does, nothing
@@ -49,13 +50,13 @@ export interface AdminSpotlightsActions {
  */
 export function AdminSpotlightsPage({
   spotlights,
-  settled,
+  status,
   actions,
 }: {
   /** Newest first — the order the read delivers. */
   spotlights: readonly AdminSpotlight[];
-  /** Whether the read has answered. Only then may the empty state appear. */
-  settled: boolean;
+  /** The read's state. Only a read that succeeded may print the empty state. */
+  status: "pending" | "error" | "success";
   actions: AdminSpotlightsActions;
 }) {
   const t = useTranslations("admin.spotlights");
@@ -74,7 +75,15 @@ export function AdminSpotlightsPage({
         </Link>
       </div>
 
-      {settled && spotlights.length === 0 && (
+      {/* A failed refetch under a painted list keeps the rows it had, so the
+          line is only for a page that has nothing to show. */}
+      {status === "error" && spotlights.length === 0 && (
+        <Alert variant="destructive">
+          <AlertDescription>{t("listLoadError")}</AlertDescription>
+        </Alert>
+      )}
+
+      {status === "success" && spotlights.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             {t("empty")}

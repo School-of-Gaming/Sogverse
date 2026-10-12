@@ -672,6 +672,7 @@
       "backToList": "Hovmey yIchegh",
       "notFound": "ID’vam ghajbogh Hov tu’lu’be’.",
       "loadError": "Hov’e’ laHlaHbe’. nIDqa’meH yIchu’qa’.",
+      "listLoadError": "Hovmey laHlaHbe’. nIDqa’meH yIchu’qa’. batlh yIvang.",
       "newPage": {
         "title": "Hov chu’",
         "submit": "yIpol"

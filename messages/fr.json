@@ -628,6 +628,7 @@
       "backToList": "Retour aux mises en avant",
       "notFound": "Aucune mise en avant ne correspond à cet identifiant.",
       "loadError": "Impossible de charger cette mise en avant. Actualisez la page pour réessayer.",
+      "listLoadError": "Impossible de charger les mises en avant. Actualisez la page pour réessayer.",
       "newPage": {
         "title": "Nouvelle mise en avant",
         "submit": "Enregistrer"

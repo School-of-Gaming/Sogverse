@@ -14,7 +14,8 @@ import {
  * text, and the picture taken off a spotlight that is switched on — and
  * whether the form holds anything unsaved. The list's: a spotlight with no
  * picture cannot be switched on and says why in place, one that is on can
- * always be switched off, and a refused switch is named in the row.
+ * always be switched off, a refused switch is named in the row, and a failed
+ * read says so rather than claiming there are no spotlights.
  *
  * Translations echo their key, so nothing here depends on wording.
  */
@@ -119,7 +120,7 @@ describe("the spotlight list", () => {
     render(
       <AdminSpotlightsPage
         spotlights={[ON, NO_PICTURE]}
-        settled
+        status="success"
         actions={{ setEnabled, remove: vi.fn(async () => {}) }}
       />,
     );
@@ -158,10 +159,25 @@ describe("the spotlight list", () => {
   it("shows the empty state only once the read has answered", () => {
     const actions = { setEnabled: vi.fn(), remove: vi.fn() };
     const { rerender } = render(
-      <AdminSpotlightsPage spotlights={[]} settled={false} actions={actions} />,
+      <AdminSpotlightsPage spotlights={[]} status="pending" actions={actions} />,
     );
     expect(screen.queryByText("empty")).toBeNull();
-    rerender(<AdminSpotlightsPage spotlights={[]} settled actions={actions} />);
+    expect(screen.queryByText("listLoadError")).toBeNull();
+    rerender(<AdminSpotlightsPage spotlights={[]} status="success" actions={actions} />);
     expect(screen.getByText("empty")).toBeTruthy();
+    expect(screen.queryByText("listLoadError")).toBeNull();
+  });
+
+  it("says a failed read failed, never that there are no spotlights", () => {
+    const actions = { setEnabled: vi.fn(), remove: vi.fn() };
+    const { rerender } = render(
+      <AdminSpotlightsPage spotlights={[]} status="error" actions={actions} />,
+    );
+    expect(screen.getByText("listLoadError")).toBeTruthy();
+    expect(screen.queryByText("empty")).toBeNull();
+    // A failed refetch keeps the rows it had and prints no line over them.
+    rerender(<AdminSpotlightsPage spotlights={[ON]} status="error" actions={actions} />);
+    expect(screen.queryByText("listLoadError")).toBeNull();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 });

@@ -628,6 +628,7 @@
       "backToList": "Takaisin nostoihin",
       "notFound": "Tällä tunnisteella ei ole nostoa.",
       "loadError": "Nostoa ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "listLoadError": "Nostoja ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
       "newPage": {
         "title": "Uusi nosto",
         "submit": "Tallenna"
