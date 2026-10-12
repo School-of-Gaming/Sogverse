@@ -43,23 +43,7 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
-vi.mock("@/components/admin/library/article-body-editor", () => ({
-  ArticleBodyEditor: ({
-    value,
-    onChange,
-    ariaLabel,
-  }: {
-    value: string;
-    onChange: (markdown: string) => void;
-    ariaLabel: string;
-  }) => (
-    <textarea
-      aria-label={ariaLabel}
-      defaultValue={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  ),
-}));
+vi.mock("@/components/ui/rich-text-editor", () => import("../../../mocks/rich-text-editor"));
 
 import {
   LibraryArticleEditor,
@@ -639,7 +623,7 @@ describe("the Library article editor", () => {
     const tab = (name: RegExp) => screen.getByRole("button", { name });
 
     function addLanguage(locale: string) {
-      fireEvent.change(screen.getByRole("combobox", { name: "addLocale" }), {
+      fireEvent.change(screen.getByRole("combobox", { name: "addLanguage" }), {
         target: { value: locale },
       });
     }
@@ -647,10 +631,11 @@ describe("the Library article editor", () => {
     it("opens on the saved language and marks whether it is complete", () => {
       renderEditor(LIVE);
       expect(tab(/^English/).getAttribute("aria-pressed")).toBe("true");
-      expect(tab(/^English/).textContent).toContain("versionComplete");
+      expect(tab(/^English/).textContent).toContain("complete");
+      expect(tab(/^English/).textContent).not.toContain("notComplete");
 
       cleanupAndRender(ARTICLE);
-      expect(tab(/^English/).textContent).toContain("versionIncomplete");
+      expect(tab(/^English/).textContent).toContain("notComplete");
     });
 
     it("keeps what was typed in each language across a switch", () => {
@@ -728,10 +713,10 @@ describe("the Library article editor", () => {
     it("removes a language, and keeps the last one", () => {
       renderEditor(LIVE);
       addLanguage("fi");
-      fireEvent.click(screen.getByRole("button", { name: "removeLocale language=Finnish" }));
+      fireEvent.click(screen.getByRole("button", { name: "removeLanguage language=Finnish" }));
       expect(screen.queryByRole("button", { name: /^Suomi/ })).toBeNull();
       expect(
-        screen.queryByRole("button", { name: /^removeLocale/ }),
+        screen.queryByRole("button", { name: /^removeLanguage/ }),
       ).toBeNull();
     });
   });

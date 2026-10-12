@@ -29,14 +29,13 @@ const campConfig = PRODUCT_TYPE_CONFIG.camp;
  *  and break exactly one rule at a time. */
 function validConsumerState(): FormState {
   const s = initialState(consumerConfig, "en");
-  s.translations = {
+  s.translations.drafts = {
     en: {
       name: "Test Club",
       shortDescription: "A great club",
       longDescription: "",
     },
   };
-  s.activeLocale = "en";
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
@@ -61,10 +60,9 @@ function validConsumerState(): FormState {
 // contract so no price is collected.
 function validMuniState(): FormState {
   const s = initialState(muniConfig, "en");
-  s.translations = {
+  s.translations.drafts = {
     en: { name: "Muni Club", shortDescription: "A muni club", longDescription: "" },
   };
-  s.activeLocale = "en";
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
@@ -81,10 +79,9 @@ function validMuniState(): FormState {
 // paid by default, so it carries the upfront total in the `session` slot.
 function validCampState(): FormState {
   const s = initialState(campConfig, "en");
-  s.translations = {
+  s.translations.drafts = {
     en: { name: "Test Camp", shortDescription: "A great camp", longDescription: "" },
   };
-  s.activeLocale = "en";
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
@@ -102,10 +99,9 @@ function validCampState(): FormState {
 // free by default — the paid cases below opt in and add a total.
 function validEventState(): FormState {
   const s = initialState(eventConfig, "en");
-  s.translations = {
+  s.translations.drafts = {
     en: { name: "Test Event", shortDescription: "A great event", longDescription: "" },
   };
-  s.activeLocale = "en";
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
@@ -119,7 +115,7 @@ describe("validate", () => {
   describe("translations", () => {
     it("requires at least one filled locale", () => {
       const s = validConsumerState();
-      s.translations = {
+      s.translations.drafts = {
         en: { name: "", shortDescription: "", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
@@ -132,7 +128,7 @@ describe("validate", () => {
       // user-locale → en → first available, so a Swedish-only product
       // still resolves for any viewer.
       const s = validConsumerState();
-      s.translations = {
+      s.translations.drafts = {
         sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toBeNull();
@@ -140,7 +136,7 @@ describe("validate", () => {
 
     it("rejects a half-filled locale tab", () => {
       const s = validConsumerState();
-      s.translations = {
+      s.translations.drafts = {
         en: {
           name: "Test Club",
           shortDescription: "A great club",
@@ -159,11 +155,48 @@ describe("validate", () => {
 
     it("accepts whitespace-only as empty (trims for emptiness check)", () => {
       const s = validConsumerState();
-      s.translations = {
+      s.translations.drafts = {
         en: { name: "   ", shortDescription: "   ", longDescription: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
+      });
+    });
+
+    // A tab opened and not used is not a version: it is ignored here and left
+    // out of the save, rather than refused as a half-filled one.
+    it("ignores a blank tab beside a complete one", () => {
+      const s = validConsumerState();
+      s.translations.drafts = {
+        ...s.translations.drafts,
+        fi: { name: " ", shortDescription: "", longDescription: "\n" },
+      };
+      expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    it("refuses a tab with only a long description as incomplete", () => {
+      const s = validConsumerState();
+      s.translations.drafts = {
+        ...s.translations.drafts,
+        fi: { name: "", shortDescription: "", longDescription: "Pitkä kuvaus" },
+      };
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "translationIncomplete",
+        values: { locale: "fi" },
+      });
+    });
+
+    it("names the first incomplete tab in locale order", () => {
+      const s = validConsumerState();
+      s.translations.drafts = {
+        fr: { name: "Club", shortDescription: "", longDescription: "" },
+        en: { name: "Club", shortDescription: "A club", longDescription: "" },
+        sv: { name: "", shortDescription: "En klubb", longDescription: "" },
+      };
+      // SUPPORTED_LOCALES puts sv before fr.
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "translationIncomplete",
+        values: { locale: "sv" },
       });
     });
   });
@@ -850,7 +883,7 @@ describe("buildCreateInput", () => {
 
   it("trims translation name and description", () => {
     const s = validConsumerState();
-    s.translations = {
+    s.translations.drafts = {
       en: {
         name: "  Padded Club  ",
         shortDescription: "  Padded desc  ",
@@ -864,6 +897,34 @@ describe("buildCreateInput", () => {
       short_description: "Padded desc",
       long_description: null,
     });
+  });
+
+  it("sends every written tab in locale order and leaves a blank one out", () => {
+    const s = validConsumerState();
+    s.translations.drafts = {
+      sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "" },
+      fi: { name: "  ", shortDescription: "", longDescription: "\n\n" },
+      en: {
+        name: "Club",
+        shortDescription: "A club",
+        longDescription: "# About\n",
+      },
+    };
+    const out = buildUpdateInput(s, consumerConfig);
+    expect(out.translations).toEqual([
+      {
+        locale: "en",
+        name: "Club",
+        short_description: "A club",
+        long_description: "# About",
+      },
+      {
+        locale: "sv",
+        name: "Klubb",
+        short_description: "En klubb",
+        long_description: null,
+      },
+    ]);
   });
 
   // Staff-facing, and it lands in its own table rather than on the product —
@@ -1627,12 +1688,12 @@ describe("cloneFormState", () => {
       "en",
       " (Copy)",
     );
-    expect(state.translations.en).toEqual({
+    expect(state.translations.drafts.en).toEqual({
       name: "Summer Club (Copy)",
       shortDescription: "A great club",
       longDescription: "",
     });
-    expect(state.translations.fi).toEqual({
+    expect(state.translations.drafts.fi).toEqual({
       name: "Kesäkerho (Copy)",
       shortDescription: "Mahtava kerho",
       longDescription: "",
@@ -1712,7 +1773,7 @@ describe("cloneFormState", () => {
 describe("long description", () => {
   function payloadFor(longDescription: string) {
     const state = validConsumerState();
-    state.translations = {
+    state.translations.drafts = {
       en: {
         name: "Test Club",
         shortDescription: "A great club",
@@ -1757,10 +1818,10 @@ describe("long description", () => {
       consumerConfig,
       "en",
     );
-    expect(withCopy.translations.en?.longDescription).toBe(markdown);
+    expect(withCopy.translations.drafts.en?.longDescription).toBe(markdown);
 
     const withNone = existingFormState(mockDetailRow(), consumerConfig, "en");
-    expect(withNone.translations.en?.longDescription).toBe("");
+    expect(withNone.translations.drafts.en?.longDescription).toBe("");
   });
 });
 

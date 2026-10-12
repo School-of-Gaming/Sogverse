@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}",
         "versionTitleRequired": "La version en {language} doit avoir un titre."
       },
-      "versionComplete": "complète",
-      "versionIncomplete": "pas encore complète",
-      "addLocale": "Ajouter une langue",
-      "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues"
     },
     "landingPages": {
@@ -822,9 +818,7 @@
       },
       "translations": {
         "label": "Langues",
-        "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée.",
-        "addLocale": "+ Ajouter une langue",
-        "removeLocale": "Retirer {locale}"
+        "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée."
       },
       "newPage": {
         "back": "Retour aux {plural}",
@@ -3089,6 +3083,12 @@
     "linkCancel": "Annuler",
     "linkInvalid": "Cette adresse ne peut pas servir de lien. Utilisez une adresse web, une adresse e-mail ou un chemin interne à ce site.",
     "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
+  },
+  "localeTabs": {
+    "addLanguage": "Ajouter une langue",
+    "removeLanguage": "Supprimer {language}",
+    "complete": "complète",
+    "notComplete": "pas encore complète"
   },
   "header": {
     "nav": {
@@ -5906,8 +5906,7 @@
         },
         "languages": "Langues",
         "languagesHint": "Le site ne traduit pas le profil. Ajoutez chaque langue dans laquelle il doit apparaître, et rédigez-le sous l’onglet de cette langue.",
-        "addLocale": "Ajouter une langue",
-        "removeLocale": "Supprimer {locale}",
+        "bioTooLong": "La bio est trop longue pour être enregistrée. Raccourcissez-la à {max} caractères maximum.",
         "shortDescription": "Présentation en une ligne",
         "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
         "longDescription": "Bio",
