@@ -18,7 +18,7 @@ export const catalogueImageKeys = {
  * entry. Derived from a read of each together, so a write to any can change
  * the answer: every catalogue mutation invalidates it, and so do a product's
  * create and update, every Library and landing page write, and every
- * spotlight write (create, save, switch, delete). A map left stale would show a live cover as unused, and offer to
+ * spotlight write (create, save, delete). A map left stale would show a live cover as unused, and offer to
  * remove it without a word about who uses it.
  */
 export const catalogueImageUsageKey = [

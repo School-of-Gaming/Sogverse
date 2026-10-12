@@ -33,7 +33,7 @@ import {
   parseSessionValue,
   parseSubCustomId,
   pickedSessionOption,
-  sendableImageOrigin,
+  discordReachableOrigin,
   type DiscordComponentsMessage,
   type DiscordContentMessage,
   type DiscordSubCopy,
@@ -544,7 +544,7 @@ async function sendSubStep(
  * Discord could not fetch it, as from a dev machine.
  */
 function subLogoUrl(): string | null {
-  return discordSubLogoUrl(sendableImageOrigin());
+  return discordSubLogoUrl(discordReachableOrigin());
 }
 
 /**

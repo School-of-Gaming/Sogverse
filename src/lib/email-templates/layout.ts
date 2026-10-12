@@ -172,9 +172,12 @@ export const BRAND_MARK = {
  * value — the one `getOrigin` itself treats as the safe answer.
  *
  * **Whatever that origin is, the mark is on it** — a dev machine's included. A
- * mail built there carries a `localhost` src that no inbox can fetch, and that
- * is a complete render: the box is held open by attributes and the lockup
- * beneath it says everything the badge said (see `CLAUDE.md`, "Images").
+ * mail built there carries a `localhost` src that no inbox can fetch. The layout
+ * still holds — the box is held open by attributes and the lockup beneath it
+ * says everything the badge said — though a client may draw its broken-image
+ * glyph in the box, as Gmail's proxy does. Only a dev-machine or test send gets
+ * one at send time: real mail is sent with reachable URLs (see `CLAUDE.md`, "Where a render
+ * is going").
  *
  * **No origin, no image, no broken `src`.** An unset or malformed env yields the
  * text-only header rather than an `undefined/email/…`: there is no absolute URL

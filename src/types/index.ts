@@ -353,7 +353,7 @@ export type LibraryArticleTranslationRow =
 export type LibraryArticlePublicationTranslationRow =
   Database["public"]["Tables"]["library_article_publication_translations"]["Row"];
 
-// Spotlights — admin-written notes appended to every session report email:
+// Spotlights — admin-written notes appended to every parent's session report email:
 // the picture and the enabled switch in `spotlights`, the title and body per
 // site locale in `spotlight_translations`. Row aliases only: neither table
 // carries a write grant for any Data API role, and the spotlight RPCs — with

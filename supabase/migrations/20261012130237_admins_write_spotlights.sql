@@ -1,8 +1,8 @@
 -- Admins write spotlights.
 --
 -- A spotlight is a short admin-written note with a picture. Every enabled one
--- is appended to the bottom of every session report email — the parents',
--- the gamers' and the staff copy alike — newest first.
+-- is appended to the bottom of every parent's session report email and its
+-- staff copy, never the child's copy — newest first.
 --
 -- THE SHAPE
 --
@@ -55,7 +55,7 @@ CREATE TABLE public.spotlights (
   CONSTRAINT chk_spotlights_enabled_has_image CHECK (NOT enabled OR image_id IS NOT NULL)
 );
 
-COMMENT ON TABLE public.spotlights IS 'Admin-written notes appended to every session report email, newest first: the picture and whether the spotlight is enabled here, the title and body per language in spotlight_translations. A single copy — enabled is what makes one live, with no publishing step, no dates and no position. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_spotlight, save_spotlight and delete_spotlight, and the catalogue''s repoint_spotlight_images and removal trigger. The session report email reads the enabled ones with the service role.';
+COMMENT ON TABLE public.spotlights IS 'Admin-written notes appended to every parent''s session report email, newest first: the picture and whether the spotlight is enabled here, the title and body per language in spotlight_translations. A single copy — enabled is what makes one live, with no publishing step, no dates and no position. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_spotlight, save_spotlight and delete_spotlight, and the catalogue''s repoint_spotlight_images and removal trigger. The session report email reads the enabled ones with the service role.';
 
 COMMENT ON COLUMN public.spotlights.image_id IS 'The picture: a spotlight_image entry in the shared image catalogue, or NULL for none. Moved to the new entry by the catalogue''s replace (repoint_spotlight_images). The catalogue''s removal nulls it and switches the spotlight off in one statement (unlink_removed_spotlight_image), before the entry goes — which is why the foreign key takes no action of its own.';
 COMMENT ON COLUMN public.spotlights.image_path IS 'The picture''s object name in the spotlight-images bucket, derived from image_id by apply_spotlight_image_path and never written by anything else. NULL exactly when image_id is.';

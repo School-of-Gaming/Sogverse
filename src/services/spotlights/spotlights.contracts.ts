@@ -6,7 +6,7 @@ import {
 
 /**
  * Contracts for spotlights — admin-written notes appended, with a picture, to
- * every session report email.
+ * every parent's session report email.
  *
  * There is no API route here: the writes are admin-guarded RPCs the admin's
  * own session calls, and the reads are plain table reads — under the admin

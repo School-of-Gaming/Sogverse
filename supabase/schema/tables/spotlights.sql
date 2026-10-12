@@ -16,7 +16,7 @@ CREATE TABLE public.spotlights (
 -- Name: TABLE spotlights; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.spotlights IS 'Admin-written notes appended to every session report email, newest first: the picture and whether the spotlight is enabled here, the title and body per language in spotlight_translations. A single copy — enabled is what makes one live, with no publishing step, no dates and no position. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_spotlight, save_spotlight and delete_spotlight, and the catalogue''s repoint_spotlight_images and removal trigger. The session report email reads the enabled ones with the service role.';
+COMMENT ON TABLE public.spotlights IS 'Admin-written notes appended to every parent''s session report email, newest first: the picture and whether the spotlight is enabled here, the title and body per language in spotlight_translations. A single copy — enabled is what makes one live, with no publishing step, no dates and no position. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_spotlight, save_spotlight and delete_spotlight, and the catalogue''s repoint_spotlight_images and removal trigger. The session report email reads the enabled ones with the service role.';
 
 
 --

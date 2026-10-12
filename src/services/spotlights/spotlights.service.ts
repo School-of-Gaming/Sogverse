@@ -34,7 +34,8 @@ function versionsOf(
 }
 
 /**
- * Spotlights: the admin's notes appended to every session report email, and
+ * Spotlights: the admin's notes appended to every parent's session report
+ * email, and
  * the read the email makes of them.
  *
  * Every method runs on the injected client and nothing here calls `fetch()`.

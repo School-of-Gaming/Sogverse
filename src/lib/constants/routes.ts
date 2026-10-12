@@ -760,7 +760,7 @@ export const ROUTES = {
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
     /**
      * Every spotlight, switched on or not — the notes with a picture appended
-     * to every session report email — and where each is switched on and off.
+     * to every parent's session report email — and where each is switched on and off.
      */
     spotlights: "/admin/spotlights",
     /** The form a new spotlight is written in. */

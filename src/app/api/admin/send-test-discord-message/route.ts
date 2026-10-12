@@ -8,7 +8,7 @@ import {
   buildSubPreviewFlow,
   discordSubLogoUrl,
   loadDiscordSubCopy,
-  sendableImageOrigin,
+  discordReachableOrigin,
 } from "@/lib/discord-substitution-message";
 import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
@@ -89,8 +89,8 @@ async function buildPreviewSet(
 ): Promise<[unknown, ...unknown[]]> {
   // This environment's own site, or none where Discord could not fetch the
   // logo or open the link — a send from a dev machine.
-  const sendableOrigin = sendableImageOrigin();
-  const logoUrl = discordSubLogoUrl(sendableOrigin);
+  const reachableOrigin = discordReachableOrigin();
+  const logoUrl = discordSubLogoUrl(reachableOrigin);
   const now = new Date();
   const offerCopy = await loadDiscordSubOfferCopy(locale);
   return [
@@ -105,9 +105,9 @@ async function buildPreviewSet(
       logoUrl,
       now,
       mySogUrl:
-        sendableOrigin === null
+        reachableOrigin === null
           ? null
-          : new URL(ROUTES.gedu.dashboard, sendableOrigin).toString(),
+          : new URL(ROUTES.gedu.dashboard, reachableOrigin).toString(),
       refusalLine: offerCopy.pool("poolActionFailed"),
     }),
   ];

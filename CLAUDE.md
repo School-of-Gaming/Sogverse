@@ -120,7 +120,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Image catalogue — product pictures and Library covers | `src/services/catalogue-images/` |
 | Library — articles, their working and published copies | `src/services/library/` |
 | Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
-| Spotlights — the admin notes appended to every session report email | `src/services/spotlights/` |
+| Spotlights — the admin notes appended to every parent's session report email | `src/services/spotlights/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |

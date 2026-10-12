@@ -13,7 +13,7 @@ import {
   openDiscordDmChannel,
   sendDiscordChannelMessage,
 } from "@/lib/discord-api.server";
-import { discordSubLogoUrl, sendableImageOrigin } from "@/lib/discord-substitution-message";
+import { discordSubLogoUrl, discordReachableOrigin } from "@/lib/discord-substitution-message";
 import {
   isSlackSubstitutionsConfigured,
   postSlackBlocks,
@@ -205,7 +205,7 @@ class DmSync {
   ) {
     // Discord fetches the logo and opens the button's link itself, so both
     // need an origin it can reach — a dev machine's has neither.
-    const origin = sendableImageOrigin();
+    const origin = discordReachableOrigin();
     this.logoUrl = discordSubLogoUrl(origin);
     this.mySogUrl = origin === null ? null : new URL(ROUTES.gedu.dashboard, origin).toString();
   }

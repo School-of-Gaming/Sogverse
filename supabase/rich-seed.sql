@@ -3001,7 +3001,7 @@ COMMIT;
 -- 14b. Spotlights
 -- =============================================================================
 -- Two spotlights, each in English and Finnish, the newer one with a link in its
--- body — what every session report email appends. Written through the admin
+-- body — what every parent's session report email appends. Written through the admin
 -- RPC, each created switched off and with no picture: the pictures are not
 -- here, for the reason the products' are not.
 -- `rich-images.sh` uploads supabase/seed-images/spotlight-<n>.jpg, links the
