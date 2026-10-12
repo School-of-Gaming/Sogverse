@@ -5,36 +5,43 @@ import { Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  AuthoredBodyEditor,
+  useAuthoredBodies,
+  type AuthoredBodiesHandle,
+} from "@/components/ui/authored-body-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { LocaleTabs } from "@/components/ui/locale-tabs";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
-import { AuthoredBodyEditor } from "@/components/admin/authored-body-editor";
-import { LocaleVersionTabs } from "@/components/admin/locale-version-tabs";
 import { ImagePicker } from "@/components/admin/products/image-picker";
 import { useLanguageNames } from "@/hooks/use-language-names";
+import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import {
-  LOCALE_CONFIG,
-  resolveLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
-import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
+  activeLocaleDraft,
+  addLocaleTab,
+  editActiveLocaleDraft,
+  removeLocaleTab,
+  selectLocaleTab,
+  writtenLocales,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
 import {
   spotlightWriteFailure,
   type AdminSpotlight,
   type SpotlightInput,
 } from "@/services/spotlights";
 import {
+  EMPTY_VERSION,
   emptySpotlightForm,
-  formLocales,
   isBlankSpotlightForm,
   isCompleteSpotlightVersion,
   sameAsSaved,
   spotlightFormFromSaved,
   spotlightInputFromForm,
   spotlightSaveBlocker,
-  versionOf,
   withPicture,
   type SpotlightForm,
   type SpotlightVersionDraft,
@@ -90,26 +97,9 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const enabledReasonId = useId();
 
-  // Each body the rich editor has been seeded with, mapped to the editor's own
-  // serialisation of it — how an untouched body comes back out of the editor.
-  const [editorBodies, setEditorBodies] = useState<ReadonlyMap<string, string>>(
-    () => new Map(),
-  );
-  const recordEditorBody = ({
-    value,
-    markdown,
-  }: {
-    value: string;
-    markdown: string;
-  }) =>
-    setEditorBodies((current) =>
-      current.get(value) === markdown
-        ? current
-        : new Map(current).set(value, markdown),
-    );
+  const bodies = useAuthoredBodies();
 
-  const dirty =
-    spotlight === null || !sameAsSaved(form, spotlight, editorBodies);
+  const dirty = spotlight === null || !sameAsSaved(form, spotlight, bodies);
   // What leaving would lose. A new spotlight's save leaves the page on
   // purpose, so from the press on there is nothing to ask about.
   const unsaved =
@@ -159,9 +149,11 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
         <Card>
           <CardContent className="space-y-5 p-6">
             <SpotlightVersionsSection
-              form={form}
-              setForm={setForm}
-              onSeeded={recordEditorBody}
+              tabs={form.tabs}
+              setTabs={(update) =>
+                setForm((current) => ({ ...current, tabs: update(current.tabs) }))
+              }
+              bodies={bodies}
             />
 
             <ImagePicker
@@ -238,79 +230,50 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
 }
 
 /**
- * **A spotlight's text, one tab per language**, in the language tabs the
- * per-locale admin editors share. Each tab says whether its version is
- * complete — a title and a body — because the save refuses one that is not.
+ * **A spotlight's text, one tab per language**, under the shared locale tab
+ * bar. Each tab says whether its version is complete — a title and a body —
+ * because the save refuses one that is not.
  *
  * The body editor reads its content once, at mount, so the locale is its key
  * and switching tabs remounts it on that language's draft.
  */
 function SpotlightVersionsSection({
-  form,
-  setForm,
-  onSeeded,
+  tabs,
+  setTabs,
+  bodies,
 }: {
-  form: SpotlightForm;
-  setForm: React.Dispatch<React.SetStateAction<SpotlightForm>>;
-  onSeeded: (seed: { value: string; markdown: string }) => void;
+  tabs: LocaleTabState<SpotlightVersionDraft>;
+  setTabs: (
+    update: (
+      tabs: LocaleTabState<SpotlightVersionDraft>,
+    ) => LocaleTabState<SpotlightVersionDraft>,
+  ) => void;
+  bodies: AuthoredBodiesHandle;
 }) {
   const t = useTranslations("admin.spotlights");
   const uiLocale = resolveLocale(useLocale());
 
-  const locale = form.activeLocale;
-  const draft = versionOf(form, locale);
-
-  function setActive(patch: Partial<SpotlightVersionDraft>) {
-    setForm((prev) => ({
-      ...prev,
-      versions: {
-        ...prev.versions,
-        [prev.activeLocale]: { ...versionOf(prev, prev.activeLocale), ...patch },
-      },
-    }));
-  }
-
-  function addLocale(next: SupportedLocale) {
-    setForm((prev) => ({
-      ...prev,
-      versions: { ...prev.versions, [next]: versionOf(prev, next) },
-      activeLocale: next,
-    }));
-  }
-
-  function removeLocale(gone: SupportedLocale) {
-    setForm((prev) => {
-      const next = { ...prev.versions };
-      delete next[gone];
-      return {
-        ...prev,
-        versions: next,
-        activeLocale: localeTabAfterRemoving(
-          next,
-          prev.activeLocale,
-          gone,
-          uiLocale,
-        ),
-      };
-    });
-  }
+  const locale = tabs.active;
+  const draft = activeLocaleDraft(tabs, EMPTY_VERSION);
+  const edit = (patch: Partial<SpotlightVersionDraft>) =>
+    setTabs((current) => editActiveLocaleDraft(current, patch, EMPTY_VERSION));
 
   return (
     <div className="space-y-5">
       <Field label={t("fields.languages")} hint={t("hints.languages")}>
-        <LocaleVersionTabs
-          open={formLocales(form)}
+        <LocaleTabs
+          written={writtenLocales(tabs.drafts)}
           active={locale}
-          isComplete={(l) => isCompleteSpotlightVersion(versionOf(form, l))}
-          onSelect={(l) => setForm((prev) => ({ ...prev, activeLocale: l }))}
-          onAdd={addLocale}
-          onRemove={removeLocale}
-          labels={{
-            addLocale: t("addLocale"),
-            removeLocale: (language) => t("removeLocale", { language }),
-            complete: t("versionComplete"),
-            incomplete: t("versionIncomplete"),
-          }}
+          onSelect={(next) => setTabs((current) => selectLocaleTab(current, next))}
+          onAdd={(next) =>
+            setTabs((current) => addLocaleTab(current, next, EMPTY_VERSION))
+          }
+          onRemove={(gone) =>
+            setTabs((current) => removeLocaleTab(current, gone, uiLocale))
+          }
+          isComplete={(l) =>
+            isCompleteSpotlightVersion(tabs.drafts[l] ?? EMPTY_VERSION)
+          }
         />
       </Field>
 
@@ -319,7 +282,7 @@ function SpotlightVersionsSection({
           id="spotlight-title"
           value={draft.title}
           lang={locale}
-          onChange={(event) => setActive({ title: event.target.value })}
+          onChange={(event) => edit({ title: event.target.value })}
           autoComplete="off"
         />
       </Field>
@@ -328,11 +291,11 @@ function SpotlightVersionsSection({
         {({ hintId }) => (
           <div lang={locale}>
             <AuthoredBodyEditor
-              useCase="spotlight"
               key={locale}
+              bodies={bodies}
+              useCase="spotlight"
               value={draft.body}
-              onChange={(body) => setActive({ body })}
-              onSeeded={onSeeded}
+              onChange={(body) => edit({ body })}
               placeholder={t("bodyPlaceholder")}
               ariaLabel={t("fields.body")}
               describedBy={hintId}

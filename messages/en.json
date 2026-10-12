@@ -657,10 +657,6 @@
         "deleteFailed": "The spotlight could not be deleted. Try again.",
         "deleteFailedWithReason": "The spotlight could not be deleted — {reason}"
       },
-      "versionComplete": "complete",
-      "versionIncomplete": "not complete yet",
-      "addLocale": "Add a language",
-      "removeLocale": "Remove {language}",
       "languagesLabel": "Languages",
       "created": "Created {date}",
       "status": {

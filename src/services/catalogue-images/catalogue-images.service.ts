@@ -213,8 +213,8 @@ export class CatalogueImagesService {
         kind: "spotlight",
         id: row.id,
         title:
-          resolveTranslation(inLocaleOrder(row.spotlight_translations), DEFAULT_LOCALE)
-            ?.title ?? "",
+          resolveTranslation(row.spotlight_translations, DEFAULT_LOCALE)?.title ??
+          "",
         is_live: row.enabled,
       });
     }

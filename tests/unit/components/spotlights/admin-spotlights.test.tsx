@@ -40,7 +40,8 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
-vi.mock("@/components/admin/authored-body-editor", () => ({
+vi.mock("@/components/ui/authored-body-editor", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/ui/authored-body-editor")>()),
   AuthoredBodyEditor: ({
     value,
     onChange,
@@ -99,7 +100,11 @@ import {
   spotlightSaveBlocker,
   withPicture,
 } from "@/components/admin/spotlights/spotlight-form";
+import type { AuthoredBodies } from "@/lib/authored-bodies";
 import type { AdminSpotlight, SpotlightInput } from "@/services/spotlights";
+
+/** A body record holding no respellings: every body compared as typed. */
+const UNTOUCHED: AuthoredBodies = { serialised: new Map() };
 
 const ON: AdminSpotlight = {
   id: "a5717a61-d273-4041-b9b4-1abfb039694d",
@@ -143,7 +148,7 @@ describe("the spotlight form", () => {
 
   it("refuses a language with a title and no text", () => {
     const form = emptySpotlightForm("en");
-    form.versions.en = { title: "Hello", body: "  " };
+    form.tabs.drafts.en = { title: "Hello", body: "  " };
     expect(spotlightSaveBlocker(form)).toEqual({
       kind: "incomplete",
       locale: "en",
@@ -158,9 +163,9 @@ describe("the spotlight form", () => {
 
   it("opens a saved spotlight on the admin's language and holds nothing unsaved", () => {
     const form = spotlightFormFromSaved(ON, "fi");
-    expect(form.activeLocale).toBe("fi");
+    expect(form.tabs.active).toBe("fi");
     expect(form.enabled).toBe(true);
-    expect(sameAsSaved(form, ON)).toBe(true);
+    expect(sameAsSaved(form, ON, UNTOUCHED)).toBe(true);
     expect(spotlightInputFromForm(form)).toEqual({
       versions: ON.versions,
       imageId: ON.imageId,
@@ -170,13 +175,13 @@ describe("the spotlight form", () => {
 
   it("counts the switch as a change", () => {
     const form = { ...spotlightFormFromSaved(ON, "en"), enabled: false };
-    expect(sameAsSaved(form, ON)).toBe(false);
+    expect(sameAsSaved(form, ON, UNTOUCHED)).toBe(false);
   });
 
   it("leaves an untouched empty tab out of the save", () => {
     const form = spotlightFormFromSaved(ON, "en");
-    form.versions.sv = { title: "", body: "" };
-    expect(sameAsSaved(form, ON)).toBe(true);
+    form.tabs.drafts.sv = { title: "", body: "" };
+    expect(sameAsSaved(form, ON, UNTOUCHED)).toBe(true);
   });
 });
 

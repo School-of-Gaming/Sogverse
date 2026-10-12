@@ -657,10 +657,6 @@
         "deleteFailed": "La mise en avant n’a pas pu être supprimée. Réessayez.",
         "deleteFailedWithReason": "La mise en avant n’a pas pu être supprimée — {reason}"
       },
-      "versionComplete": "complète",
-      "versionIncomplete": "pas encore complète",
-      "addLocale": "Ajouter une langue",
-      "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues",
       "created": "Créée le {date}",
       "status": {

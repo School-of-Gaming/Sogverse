@@ -657,10 +657,6 @@
         "deleteFailed": "Nostoa ei voitu poistaa. Yritä uudelleen.",
         "deleteFailedWithReason": "Nostoa ei voitu poistaa — {reason}"
       },
-      "versionComplete": "valmis",
-      "versionIncomplete": "kesken",
-      "addLocale": "Lisää kieli",
-      "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet",
       "created": "Luotu {date}",
       "status": {

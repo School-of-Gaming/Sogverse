@@ -701,10 +701,6 @@
         "deleteFailed": "Hov teqlaHbe’. yInIDqa’.",
         "deleteFailedWithReason": "Hov teqlaHbe’ — {reason}"
       },
-      "versionComplete": "naQ",
-      "versionIncomplete": "naQbe’ wej",
-      "addLocale": "Hol chu’",
-      "removeLocale": "{language} yIteq",
       "languagesLabel": "Holmey",
       "created": "chenmoHlu’: {date}",
       "status": {

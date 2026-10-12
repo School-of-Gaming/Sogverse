@@ -657,10 +657,6 @@
         "deleteFailed": "Spotlighten kunde inte tas bort. Försök igen.",
         "deleteFailedWithReason": "Spotlighten kunde inte tas bort — {reason}"
       },
-      "versionComplete": "färdig",
-      "versionIncomplete": "inte färdig än",
-      "addLocale": "Lägg till språk",
-      "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk",
       "created": "Skapad {date}",
       "status": {
