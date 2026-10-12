@@ -13,47 +13,6 @@ import {
 } from "./member-flair.contracts";
 
 /**
- * The SQLSTATEs a flair write can come back with whose `message` is a raw
- * database string, written for a log and never for a Gedu.
- *
- * `42501` is a RPC's own refusal and reads as the literal word `Forbidden`;
- * `23514` is a CHECK — the note's length, or the creations list's whole shape —
- * and reads as a constraint name. Both are real paths on both writes: an admin
- * can move a member out of a group while a Gedu has a stale roster open, and
- * the Gedu's next save is refused. Either would otherwise be printed,
- * untranslated, into a dialog in a Finnish or French session.
- */
-const OPAQUE_FLAIR_WRITE_SQLSTATES = new Set(["42501", "23514"]);
-
-/**
- * A write refusal the surface has nothing true to say about — shared by both
- * writes on this service, because both are refused the same two ways and the
- * dialog that shows them is one dialog.
- *
- * It carries **no message on purpose**. The only alternatives were showing the
- * database's own English words or inventing a locale string per SQLSTATE for a
- * distinction a Gedu cannot act on differently — the roster moved under them,
- * and reopening the page is the answer either way. So the failure arrives with
- * nothing to print, and the dialog falls back to the localized copy it already
- * has; an error that *does* carry a message still shows what it said, because
- * the mapping is a named list rather than a blanket. The original rides on
- * `cause`, so a console and any future logging keep the SQLSTATE.
- *
- * **This is deliberate rather than accidental, which is the point.** Without
- * `.throwOnError()` the client hands back the parsed error *body* — a plain
- * object that is not an `Error` instance, however `PostgrestError` types it —
- * so today a raw SQL message happens to miss the dialog's `err.message` branch
- * anyway. One `.throwOnError()`, or one library release that always constructs
- * the class, and `Forbidden` would be on a Gedu's screen in a Finnish session.
- */
-class UnexplainedFlairWriteError extends Error {
-  constructor(cause: unknown) {
-    super("", { cause });
-    this.name = "UnexplainedFlairWriteError";
-  }
-}
-
-/**
  * The per-member marks that have no other home — the group staff overlay, the
  * (group, member) note write, and the (group, member) creations write.
  *
@@ -132,10 +91,9 @@ export class MemberFlairService {
    * of a row is what "no note" means on every surface. The trimming happens
    * server-side, so a caller may hand over whatever is in the box.
    *
-   * **A refusal is mapped here, once, for all three surfaces.** The gedu page,
-   * the voice room and the admin group details page all hand the rejection straight
-   * to the same dialog, so this is the single point where a raw SQL message is
-   * stopped from reaching a reader — see {@link UnexplainedFlairWriteError}.
+   * A refusal is thrown as it came. Its message is raw database English (a
+   * `42501` reads `Forbidden`, a CHECK reads a constraint name), so the dialog
+   * every surface mounts logs it and shows its own sentence instead.
    */
   async setGamerGroupNote({
     groupId,
@@ -152,12 +110,7 @@ export class MemberFlairService {
       p_note: note,
     });
 
-    if (error) {
-      if (OPAQUE_FLAIR_WRITE_SQLSTATES.has(error.code)) {
-        throw new UnexplainedFlairWriteError(error);
-      }
-      throw error;
-    }
+    if (error) throw error;
 
     return gamerGroupNoteResult.parse(data);
   }
@@ -180,8 +133,7 @@ export class MemberFlairService {
    * same list written twice is the same row, so a save that got one half in and
    * lost the other can simply be repeated.
    *
-   * A refusal is mapped through the same named list the note write uses — see
-   * {@link UnexplainedFlairWriteError}.
+   * A refusal is thrown as it came, as the note write's is.
    */
   async setGamerGroupCreations({
     groupId,
@@ -210,12 +162,7 @@ export class MemberFlairService {
       },
     );
 
-    if (error) {
-      if (OPAQUE_FLAIR_WRITE_SQLSTATES.has(error.code)) {
-        throw new UnexplainedFlairWriteError(error);
-      }
-      throw error;
-    }
+    if (error) throw error;
 
     return gamerGroupCreationsResult.parse(data);
   }

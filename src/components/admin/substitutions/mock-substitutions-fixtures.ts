@@ -184,7 +184,20 @@ function offer(args: {
     gedu_id: args.geduId,
     first_name: args.first,
     last_name: args.last,
-    created_at: "2026-08-16T18:05:00+03:00",
+    responded_at: "2026-08-16T18:05:00+03:00",
+  };
+}
+
+function decline(args: {
+  geduId: string;
+  first: string;
+  last: string;
+}): OpenAdminSubstitutionRequest["declines"][number] {
+  return {
+    gedu_id: args.geduId,
+    first_name: args.first,
+    last_name: args.last,
+    responded_at: "2026-08-16T18:20:00+03:00",
   };
 }
 
@@ -202,8 +215,8 @@ const NOT_SUBSTITUTED = {
 
 /**
  * Four sessions nobody is teaching, holding every state an open row can be in:
- * inside the urgent day and outside it, several offers and none at all, both
- * roles, and the orphan whose date the schedule no longer projects — and two
+ * inside the urgent day and outside it, several offers and none at all, with
+ * and without declines (beside offers, and beside none), both roles, and the orphan whose date the schedule no longer projects — and two
  * sessions that already have a substitute, on different days, one approved
  * minutes ago and one the evening before.
  *
@@ -248,6 +261,9 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
         last: "Nieminen",
       }),
     ],
+    declines: [
+      decline({ geduId: PERSON_IDS.ainoLehtonen, first: "Aino", last: "Lehtonen" }),
+    ],
   },
   {
     ...NOT_SUBSTITUTED,
@@ -271,6 +287,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
         last: "Heikkilä",
       }),
     ],
+    declines: [],
   },
   {
     id: "substitution-request-5",
@@ -294,6 +311,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     approved_by_last_name: APPROVER.lastName,
     product: VANTAA_CLUB,
     offers: [],
+    declines: [],
   },
   {
     ...NOT_SUBSTITUTED,
@@ -317,6 +335,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
         last: "Virtanen",
       }),
     ],
+    declines: [],
   },
   {
     id: "substitution-request-6",
@@ -340,6 +359,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     approved_by_last_name: APPROVER.lastName,
     product: ESPOO_CLUB,
     offers: [],
+    declines: [],
   },
   {
     ...NOT_SUBSTITUTED,
@@ -357,6 +377,10 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     requested_by_last_name: "Korhonen",
     product: ROBLOX_CAMP,
     offers: [],
+    declines: [
+      decline({ geduId: PERSON_IDS.eeliVirtanen, first: "Eeli", last: "Virtanen" }),
+      decline({ geduId: PERSON_IDS.saanaNieminen, first: "Saana", last: "Nieminen" }),
+    ],
   },
 ];
 
@@ -381,7 +405,8 @@ export function buildAdminSubstitutionsFixture(
  * An open fixture request as the read would return it once `sub` had been
  * seated on it — from an offer or from the full list of gedus, which the
  * database records identically: substituted, the scene's admin as approver at
- * the scene's clock, the offers gone, and the reason the gedu gave kept.
+ * the scene's clock, the offers and declines gone, and the reason the gedu
+ * gave kept.
  *
  * The scene's stand-in for the refetch, so a seat pressed in the preview moves
  * the session into the second section exactly as the live page does.
@@ -401,5 +426,6 @@ export function seatFixtureSubstitute(
     approved_by_first_name: APPROVER.firstName,
     approved_by_last_name: APPROVER.lastName,
     offers: [],
+    declines: [],
   };
 }

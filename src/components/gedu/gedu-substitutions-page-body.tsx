@@ -3,33 +3,41 @@
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { GeduAssignmentsSectionView } from "./GeduAssignmentsSectionView";
+import { GeduOwnSubstitutionRequestsSection } from "./GeduOwnSubstitutionRequestsSection";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
+import type { OwnSubstitutionRequestRow } from "@/lib/gedu-own-substitution-requests";
 
 /**
  * The Substitutions page's body — everything below the route's data shell.
  *
- * **One page, two questions, in the order they matter.** Sessions needing a
- * substitute come first: they are other people's absences, they expire, and a
- * session nobody answers has nobody in the room — which is the thing this page
- * exists to prevent. What the reader has already taken comes second, because it
- * is settled: it is on My SOG as well, among the gedu's own groups, and it is
- * here so that everything the word *substitution* means to them is in one
- * place.
+ * **The reader's own absences, then the two questions, in the order they
+ * matter.** The gedu's own live requests come first where there are any — a
+ * gedu who has asked for a substitute comes here to see whether anybody is
+ * coming *(owner, 2026-10)* — and the section is not drawn at all where there
+ * are none, because it is about something the reader did rather than a list
+ * they are owed an all-clear on. Sessions needing a substitute come next: they
+ * are other people's absences, they expire, and a session nobody answers has
+ * nobody in the room — which is the thing this page exists to prevent. What the
+ * reader has already taken comes last, because it is settled: it is on My SOG as
+ * well, among the gedu's own groups, and it is here so that everything the word
+ * *substitution* means to them is in one place.
  *
  * It lives apart from the route so the page is only a data shell (auth,
  * prefetch) and the body is a plain component: that is what lets a full-page
  * preview scene render it exactly as a gedu meets it, with fixtures in place of
  * the server reads.
  *
- * **No section pill.** Two sections fit on one screen at the width this page is
- * designed for, and a nav bar over a page you can already see the whole of is
+ * **No section pill.** Each section is a handful of cards at the width this page
+ * is designed for, and a nav bar over a page you can take in at a scroll is
  * furniture with nothing to do.
  */
 export function GeduSubstitutionsPageBody({
   pool,
   fileAbsence = null,
+  ownRequests,
+  onWithdrawOwnRequest,
   substitutions,
 }: {
   /**
@@ -44,6 +52,19 @@ export function GeduSubstitutionsPageBody({
    * is asking for is offering to substitute.
    */
   fileAbsence?: React.ReactNode | null;
+  /**
+   * The reader's own live requests, soonest first — or `null` while the read
+   * behind them has not answered.
+   *
+   * Empty and `null` draw the same thing, which is nothing, heading included:
+   * the section exists only while the reader has a request to follow.
+   */
+  ownRequests: readonly OwnSubstitutionRequestRow[] | null;
+  /**
+   * Take one of them back — see the section for when it resolves. The page's
+   * one withdraw write, handed in finished so a preview scene can make it inert.
+   */
+  onWithdrawOwnRequest: (requestId: string) => Promise<void>;
   /**
    * The open queue's body, or `null` for a gedu who has no business seeing it.
    *
@@ -88,6 +109,26 @@ export function GeduSubstitutionsPageBody({
         <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
         {fileAbsence}
       </div>
+
+      {/* Drawn only while there is something in it: no heading and no
+          all-clear line for a gedu who has asked for nothing. */}
+      {ownRequests !== null && ownRequests.length > 0 && (
+        <section
+          aria-labelledby="substitution-own-requests-heading"
+          className="space-y-4"
+        >
+          <h2
+            id="substitution-own-requests-heading"
+            className="text-xl font-semibold"
+          >
+            {t("ownRequestsHeading")}
+          </h2>
+          <GeduOwnSubstitutionRequestsSection
+            rows={ownRequests}
+            onWithdraw={onWithdrawOwnRequest}
+          />
+        </section>
+      )}
 
       {/* Withheld whole for an account that may substitute for nothing —
           heading included, because a heading over a queue this gedu is not in

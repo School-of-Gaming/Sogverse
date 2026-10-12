@@ -4,19 +4,21 @@ import {
 } from "@/lib/constants/gamer-age";
 
 /**
- * The month+year granularity a gamer's birth date is authored at.
+ * A gamer's birth, as the year and month `gamer_profiles` stores.
  *
- * `gamer_profiles.date_of_birth` is a full `date`, but nothing in the product
- * ever asks for the day — a parent creating a child picks a month and a year,
- * and an admin correcting one picks the same two. These helpers are the seam
- * between that pair and the stored string, and they live here rather than beside
+ * The table holds `birth_year` and `birth_month` and nothing finer: families
+ * are told we hold the month and never the day, and the columns have nowhere to
+ * put one. A parent creating a child picks a month and a year, and an admin
+ * correcting one picks the same two. These helpers live here rather than beside
  * either form because both surfaces reach for them: the parent's Add Gamer
  * dialog writes a new row, the admin's user page edits an existing one, and a
  * helper owned by one of them would make the other look like it was borrowing.
+ * How old a birth month makes a child is `ageOnDate`'s rule, in
+ * `gamer-age-eligibility.ts`.
  */
 
 /**
- * Returns the rolling list of valid birth years for the birth-date selectors,
+ * Returns the rolling list of valid birth years for the birth year selects,
  * given a reference date (defaults to today).
  *
  * Window: the enrollment age band from `@/lib/constants/gamer-age`
@@ -36,7 +38,7 @@ export function gamerBirthYearOptions(today: Date = new Date()): number[] {
 /**
  * The same window, guaranteed to contain `year`.
  *
- * For **editing** a stored birth date rather than choosing a new one. The band
+ * For **editing** a stored birth rather than choosing a new one. The band
  * above is a rolling window, so a row written years ago — or one belonging to an
  * adult seat-holder, or to a child who has since aged out — can hold a year the
  * window no longer offers. A `<select>` whose value matches no option renders as
@@ -55,11 +57,33 @@ export function gamerBirthYearOptionsIncluding(
   return [...years, year].sort((a, b) => b - a);
 }
 
-/** A stored birth date, split back into the two values a form edits. */
+/** A gamer's birth: `gamer_profiles.birth_year` and `birth_month`. */
 export interface GamerBirthMonthYear {
   year: number;
-  /** 1–12, matching the value `assembleGamerDateOfBirth` takes. */
+  /** 1–12. */
   month: number;
+}
+
+/**
+ * The birth a nullable pair names, or null when it names none.
+ *
+ * For the rosters, which carry `birth_year` and `birth_month` side by side and
+ * null together on an adult seat: the columns are NOT NULL on the table, so a
+ * row that has one has both, and a half pair is read as no birth at all rather
+ * than guessed at.
+ */
+export function gamerBirthOf(
+  year: number | null,
+  month: number | null,
+): GamerBirthMonthYear | null {
+  return year === null || month === null ? null : { year, month };
+}
+
+/**
+ * The birth as `YYYY-MM` — the shape the partner API publishes a birth month in.
+ */
+export function formatGamerBirthMonth(birth: GamerBirthMonthYear): string {
+  return `${birth.year}-${String(birth.month).padStart(2, "0")}`;
 }
 
 /** One entry of a birth-month select: the 1–12 value and its name in the locale. */
@@ -95,11 +119,12 @@ export interface GamerBirthMonthClamp {
 /**
  * The months a birth-month select offers, labelled in the caller's locale.
  *
- * **Why a clamp at all.** `date_of_birth` carries a `<= CURRENT_DATE` CHECK, and
- * the year select can legitimately offer the current year (never from the
- * rolling enrollment band — `MIN_ENROLLMENT_AGE` puts its youngest year six back
- * — but `gamerBirthYearOptionsIncluding` carries a stored one). With the current
- * year chosen, every month after this one assembles a future date that the
+ * **Why a clamp at all.** The birth year and month may not be in the future (a
+ * CHECK on `gamer_profiles`), and the year select can legitimately offer the
+ * current year (never from the rolling enrollment band — `MIN_ENROLLMENT_AGE`
+ * puts its youngest year six back — but `gamerBirthYearOptionsIncluding`
+ * carries a stored one). With the current
+ * year chosen, every month after this one is a future birth month that the
  * database rejects, and all the admin gets back is the generic save error. So
  * when the selected year *is* the current year, only months up to this one are
  * offered and the invalid choice cannot be made.
@@ -143,27 +168,4 @@ function selectableBirthMonths(clamp?: GamerBirthMonthClamp): number[] {
     months.push(stored.month);
   }
   return months;
-}
-
-/**
- * Composes the gamer's date_of_birth from a separate month + year selection.
- * The DB stores a full DATE; we anchor to the first of the selected month since
- * no form asks for the day.
- */
-export function assembleGamerDateOfBirth(year: number, month: number): string {
-  return `${year}-${String(month).padStart(2, "0")}-01`;
-}
-
-/**
- * The inverse of `assembleGamerDateOfBirth`: reads the month and year back out
- * of a stored `YYYY-MM-DD` value.
- *
- * **Split textually, never parsed as a Date.** `new Date("2017-03-01")` is UTC
- * midnight, and reading `getFullYear()`/`getMonth()` off it answers in the
- * runtime's zone — which lands on February for any viewer west of UTC. A bare
- * calendar date carries no instant to convert, so the digits are the answer.
- */
-export function splitGamerDateOfBirth(dateOfBirth: string): GamerBirthMonthYear {
-  const [year, month] = dateOfBirth.split("-").map(Number);
-  return { year, month };
 }

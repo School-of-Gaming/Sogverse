@@ -10,6 +10,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { GameUsernameRow } from "@/components/game-account";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { computeAge, cn } from "@/lib/utils";
+import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
 import type { ChipGameIdentity } from "./panel-rules";
@@ -32,7 +33,9 @@ const GENDER_KEY = {
 interface ContentProps extends ChipGameIdentity {
   participantId: string;
   firstName: string;
-  dateOfBirth: string | null;
+  /** The child's birth year and month; null together on an adult seat. */
+  birthYear: number | null;
+  birthMonth: number | null;
   gender: GenderType | null;
   parentFirstName: string | null;
   parentLastName: string | null;
@@ -49,7 +52,8 @@ interface ContentProps extends ChipGameIdentity {
 const ChipContent = memo(function ChipContent({
   participantId,
   firstName,
-  dateOfBirth,
+  birthYear,
+  birthMonth,
   gender,
   parentFirstName,
   parentLastName,
@@ -66,8 +70,9 @@ const ChipContent = memo(function ChipContent({
   const isAdult = participantEmail !== null;
 
   const detailParts: string[] = [];
-  if (dateOfBirth) {
-    detailParts.push(t("chip.age", { age: computeAge(dateOfBirth, timeZone) }));
+  const birth = gamerBirthOf(birthYear, birthMonth);
+  if (birth) {
+    detailParts.push(t("chip.age", { age: computeAge(birth, timeZone) }));
   }
   if (gender) {
     detailParts.push(t(GENDER_KEY[gender]));
@@ -187,7 +192,8 @@ export function ParticipantChip({
   participationId,
   participantId,
   firstName,
-  dateOfBirth,
+  birthYear,
+  birthMonth,
   gender,
   parentFirstName,
   parentLastName,
@@ -225,7 +231,8 @@ export function ParticipantChip({
       <ChipContent
         participantId={participantId}
         firstName={firstName}
-        dateOfBirth={dateOfBirth}
+        birthYear={birthYear}
+        birthMonth={birthMonth}
         gender={gender}
         parentFirstName={parentFirstName}
         parentLastName={parentLastName}

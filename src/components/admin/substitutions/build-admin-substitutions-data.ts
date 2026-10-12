@@ -15,6 +15,7 @@ import type {
 import type {
   AdminSubstitutionsData,
   SubstitutedSession,
+  SubstitutionDecline,
   SubstitutionOffer,
   SubstitutionRequest,
   SubstitutionSession,
@@ -138,6 +139,12 @@ function toSubstitutionRequest(
         id: offer.id,
         geduId: offer.gedu_id,
         name: personName(offer.first_name, offer.last_name),
+      }),
+    ),
+    declines: request.declines.map(
+      (decline): SubstitutionDecline => ({
+        geduId: decline.gedu_id,
+        name: personName(decline.first_name, decline.last_name),
       }),
     ),
   };

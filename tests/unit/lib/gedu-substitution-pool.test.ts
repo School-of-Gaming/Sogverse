@@ -45,7 +45,7 @@ function row(
     },
     role: "primary",
     feeCents: 6500,
-    hasOffered: false,
+    response: null,
   };
 }
 
@@ -182,7 +182,7 @@ function wireRequest(
     session_date: sessionDate,
     role: "primary",
     fee_cents: 6500,
-    has_offered: false,
+    my_response: null,
     product: {
       id: `product-${id}`,
       product_type: "consumer_club",

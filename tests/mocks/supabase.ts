@@ -66,7 +66,8 @@ export function createMockGamerExtProfile(
 ): GamerProfile {
   return {
     user_id: "test-gamer-id",
-    date_of_birth: "2015-01-01",
+    birth_year: 2015,
+    birth_month: 1,
     gender: "boy",
     // The default a gamer is created with: switch-only from the parent, no
     // credential of their own.

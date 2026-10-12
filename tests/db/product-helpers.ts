@@ -322,6 +322,10 @@ import { TEST_IDS } from "./constants";
  *                  exist, and 837-83b catalogue entries — four landing
  *                  pictures (two removed during the run) and one product
  *                  picture a landing page may not show
+ *   840-842        substitution-notifications.test.ts (the club 840 with group
+ *                  841, whose minted gedu files every request the file
+ *                  enqueues; 842 is a substitution request id that must NEVER
+ *                  exist, backing the "unknown request" snapshot case)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

@@ -200,7 +200,7 @@ const DEMO_GAMERS = [
 // render, and split across links they would have to be compared from memory.
 //
 // Their `ageBlock` is a literal here, not a computed one. The live page derives
-// it from a stored birth date and today's date; a fixture that recomputed it
+// it from a stored birth month and today's date; a fixture that recomputed it
 // would be a scene whose picker changes shape on somebody's birthday.
 const DEMO_GAMERS_OUT_OF_BAND = [
   {

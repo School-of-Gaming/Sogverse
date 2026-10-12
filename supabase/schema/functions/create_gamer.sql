@@ -1,8 +1,8 @@
 --
--- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint, public.gamer_sign_in, boolean); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_gamer(uuid, uuid, text, text, smallint, smallint, public.gender_type, text, text, text, bigint, public.gamer_sign_in, boolean); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in, p_guardian_attested boolean DEFAULT false) RETURNS void
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in, p_guardian_attested boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -62,8 +62,8 @@ begin
   -- `sign_in` rides along rather than being written afterwards: the route has
   -- already created the auth user with whichever address the chosen mode calls
   -- for, so the mode and the address it describes land in one transaction.
-  insert into public.gamer_profiles (user_id, date_of_birth, gender, sign_in)
-  values (p_gamer_id, p_date_of_birth, p_gender, p_sign_in);
+  insert into public.gamer_profiles (user_id, birth_year, birth_month, gender, sign_in)
+  values (p_gamer_id, p_birth_year, p_birth_month, p_gender, p_sign_in);
 
   -- The declaration, against the wording that is current right now. It has to
   -- follow the gamer_profiles insert above, because that is what the row's
@@ -115,17 +115,17 @@ $$;
 
 
 --
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer in the parent''s locale, writes the gamer row with its chosen sign-in mode, records the parent''s guardian declaration about THIS child, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. Refuses with a plain raise when p_guardian_attested is not true — false and NULL alike, because a three-valued answer to "are you this child''s parent or guardian" is not an answer — and the declaration is written against the CURRENT version of the guardian-declaration document, resolved here and never supplied by a caller. The locale is copied from the parent once and never synced; the child changes it like anyone else. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed; `p_guardian_attested` defaults to false so an untaught caller is refused rather than admitted.';
+COMMENT ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer in the parent''s locale, writes the gamer row with its birth year and month and its chosen sign-in mode, records the parent''s guardian declaration about THIS child, links the optional game accounts, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. Refuses with a plain raise when p_guardian_attested is not true — false and NULL alike, because a three-valued answer to "are you this child''s parent or guardian" is not an answer — and the declaration is written against the CURRENT version of the guardian-declaration document, resolved here and never supplied by a caller. The locale is copied from the parent once and never synced; the child changes it like anyone else. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed; `p_guardian_attested` defaults to false so an untaught caller is refused rather than admitted.';
 
 
 --
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) TO service_role;
+REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint, p_sign_in public.gamer_sign_in, p_guardian_attested boolean) TO service_role;
 
 

@@ -496,7 +496,7 @@ function toReportEmailedAt(
  * the question for the caller it was served to, and an explicit id, where the
  * surface has one, is the stronger answer and wins.
  */
-function toSubstitutionRequestInput(request: SubstitutionRequestDocument): SubstitutionRequestInput {
+export function toSubstitutionRequestInput(request: SubstitutionRequestDocument): SubstitutionRequestInput {
   return {
     id: request.id,
     sessionDate: request.session_date,

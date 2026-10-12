@@ -82,14 +82,18 @@ this feature needs, for the admin writes as much as the gedu ones. Nothing here 
 server-side secret, so nothing here is worth a route: a route would add a hop and a second
 place to get the authorization wrong.
 
-**The Discord bot's `/sub` command is the one caller with no session, and it reaches the
-same bodies.** Filing an absence, the two seat reads behind the picker and the read of
-the gedu's own live requests each live in an internal function that takes the gedu as
-an argument; the web's RPC calls it with `auth.uid()` after its role guard, and a `…_for_discord_user` wrapper, granted to the
-service role alone, calls it with the gedu linked to the caller's Discord id (refusing
-with P0031 when there is none). A rule about who may file, or what a seat read returns,
+**The Discord bot and the Slack app are the callers with no session, and they reach the
+same bodies.** Filing an absence, the two seat reads behind the picker, the read of the
+gedu's own live requests, answering a request (offer or decline) and approving an offer
+each live in an internal function that takes the acting person as an argument; the web's
+RPC calls it with `auth.uid()` after its role guard, and a wrapper granted to the service
+role alone calls it with the person linked to the caller's chat account — a
+`…_for_discord_user` wrapper with the gedu linked to the Discord id (refusing with P0031
+when there is none), the `…_for_slack_user` approval with the admin linked to the Slack
+id (P0034). A rule about who may file, answer or approve, or what a seat read returns,
 is changed in the internal body, never in a wrapper — a check added to one wrapper is a
-check the other way in does not make. The bot's side is `src/lib/discord-substitution.server.ts`.
+check the other way in does not make. The bot's side is
+`src/lib/discord-substitution.server.ts`; the Slack side is `src/app/api/slack/`.
 
 **Refusals throw.** Every write is somebody pressing a button, and every refusal is news
 they have to be told — the session was substituted while the dialog was open, the offer
@@ -141,11 +145,12 @@ entitled and they are entitled for different reasons, so the rule is stated per 
 - **The requester** sees their own name, on their own request, by the same arm.
 
 **A volunteer never does.** The pool list omits the absent gedu, and so does the document
-the offer and the offer-withdrawal return — otherwise the anonymity would be one
-button-press deep, which is exactly what it was until it was fixed. Those two writes parse
-their result through a separate schema whose requester fields are nullable, so the
-difference is a type rather than a comment; a withdrawal by somebody holding no offer is
-**refused** rather than answered, because a write that writes nothing must not be a read.
+the offer and the decline return — otherwise the anonymity would be one button-press deep,
+which is exactly what it was until it was fixed. Those two writes parse their result
+through a separate schema whose requester fields are nullable, so the difference is a type
+rather than a comment; a decline by somebody the request could not have been asked of,
+holding no answer on it, is **refused** rather than answered, because a write that answers
+nothing must not be a read.
 
 The SQL flag that reveals the requester **defaults to closed**, so a caller added later
 that forgets it conceals — a missing name on a screen, rather than a disclosure.
@@ -175,8 +180,10 @@ seating and approval do not ask — seating because the admin is warned in the U
 proceed, approval because none is realistically taken away between the offer and its
 approval (`../gedu/CLAUDE.md`, Qualifications). The one way it happens is accepted rather
 than handled *(owner, 2026-10)*: a gedu who offers and then removes that language or area
-in their settings loses the request from their pool, and with it the only Withdraw, while
-the offer stays approvable without a warning — the office withdraws it on request. That is
+in their settings loses the request from their pool, and with it the web's Decline, while
+the offer stays approvable without a warning. The decline write itself still takes their
+answer — it asks only that the gedu could be asked *or* already holds an answer on the
+request — so the gap is the pool's and not the database's. That is
 why each test is its own predicate and never a clause of *may substitute*: the admin writes
 ask that one too, and a clause there would turn the warning into a refusal.
 
@@ -237,6 +244,19 @@ the seat is still open, because a session with nobody in it is the thing this
 feature exists to prevent, and the *informational* one once a sub is approved,
 because that is settled. No colour is invented for either.
 
+**A gedu also sees their own requests on the Substitutions page**, under "Your
+requests" above the pool *(owner, 2026-10)*: one card per live request — the
+session in the shared session facts, and the **same panel component** the
+session card draws, withdraw included, so the two cannot disagree. Its rows are
+the caller's live-requests read, which carries each request's group name,
+product shell and whether the session is cancelled; a cancelled session's
+request is left out there, as everywhere a request is described. The section is
+not drawn at all — no heading, no empty line — while the gedu has no live
+request. A request filed or settled elsewhere while the page is open therefore
+adds or removes the section above the pool on the next refetch and moves the
+pool's cards: that shift is accepted *(owner, 2026-10-08)* — it needs action on
+another surface mid-visit, and a misplaced answer is switched straight back.
+
 **The two can never be on one card**, and nothing checks for that: a gedu
 holding a non-withdrawn request is not expected at the session, so the menu's
 own condition already excludes them. Do not add a second test for it — a card
@@ -253,11 +273,10 @@ every other list of what is coming shows. The session card carries the same
 action under the same rule by construction rather than by a second test — a card
 exists only for an entry the feed projected.
 
-**A request filed beyond the queue's own window is not lost.** The gedus' pool
-reads open requests dated **today or inside the next sixty days**, while the
-admin page's queue has a lower bound and no upper one — so an absence filed
-further ahead reaches the office immediately and joins the gedus' queue when its
-date comes into range.
+**The gedus' pool has no horizon.** It lists every open request dated today or
+later that the gedu could take, however far ahead — as the admin page's queue
+does, and as the notification DMs do, which go out when a request is filed
+whatever its date.
 
 **A term of weekly clubs is a long list, so the picker is grouped by week** — the
 viewer's week, Monday to Sunday — and opens on this week and next, which is
@@ -320,13 +339,23 @@ comparator inside a component. A session inside the next day is drawn with the a
 existing warning status; nothing else about the card changes, because a queue that shouts
 in several registers at once is a queue nobody reads.
 
-**Offering asks a confirm question and holds it open until the write settles; withdrawing
-an offer does not ask at all.** Offering is refusable — the request may have been filled,
-the session may have started — and the refusal is news the volunteer needs before they
-move on, which is what the holding mode is for. The question is also where the volunteer
-learns the offer's weight: once approved, the session is theirs under their gedu contract and
-there is no taking it back, so its wording states that plainly. Withdrawing is the undo of a decision
-already made, so a question in front of it would be a question about a question.
+**A gedu answers a request with Offer or Decline, one answer per (request, gedu), and the
+two replace each other freely until an admin approves somebody.** Declining after offering
+is how an offer is taken back — there is no separate withdrawal. A declined request stays
+in the gedu's pool, marked as declined with Offer still on it *(owner, 2026-10)*: the mark
+tells them their answer was sent, and a misclick or a change of mind is one press from
+being undone. Only the office sees who declined, as one line under the offers; the
+offer count every other reader may see counts offers alone.
+
+**Offering asks a confirm question and holds it open until the write settles; declining
+does not ask at all.** Offering is refusable — the request may have been filled, the
+session may have started — and the refusal is news the volunteer needs before they move
+on, which is what the holding mode is for. The question is also where the volunteer
+learns the offer's weight: once approved, the session is theirs under their gedu contract
+and there is no taking it back, so its wording states that plainly. A decline commits the
+gedu to nothing and the other button undoes it, so a question in front of it would guard
+nothing. Both answers read their refusals through one mapper, because one database body
+writes both.
 
 ## Access, and the two places it is narrower
 
@@ -397,6 +426,9 @@ the request was withdrawn. A request another admin settled meanwhile is not refu
 write re-points the substitution they made at this sub. Closing that half means the write
 taking the request's id — a database change not yet made.
 
+**Who declined is listed under the offers, by name, with no actions** — the office reads
+it to know whom asking again is pointless. A substituted row carries neither list.
+
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
 certification queue's two standings so the page could draw the same chips, and they are
 gone for a reason about the data rather than the design: *an uncertified gedu cannot hold
@@ -445,7 +477,11 @@ hook.
 
 ## What this directory deliberately does not do
 
-- **No notifications**, on any channel. In-app only.
+- **No notifying.** Nothing here sends a DM or a Slack message: the database announces
+  each change to a request and `src/lib/substitution-notifications/` draws the Discord DMs
+  and the staff channel's Slack message from it, so a write here never waits on Discord
+  or Slack and never needs to know they exist. There is no email and no in-app
+  notification.
 - **No ranking and no eligibility beyond certification, qualifications, spoken language
   and coverage.**
 - **No per-request fee override.** The role's fee is the product's, and a sub fee above

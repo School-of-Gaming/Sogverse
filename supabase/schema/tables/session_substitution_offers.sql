@@ -6,7 +6,9 @@ CREATE TABLE public.session_substitution_offers (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     request_id uuid NOT NULL,
     gedu_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    response public.substitution_offer_response DEFAULT 'offer'::public.substitution_offer_response NOT NULL,
+    responded_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -14,7 +16,21 @@ CREATE TABLE public.session_substitution_offers (
 -- Name: TABLE session_substitution_offers; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.session_substitution_offers IS '"Offer to substitute" — one row per (request, offering gedu). Offering is idempotent on the unique key and WITHDRAWING AN OFFER DELETES THE ROW, because an offer nobody accepted is not a fact worth keeping. Approving one offer does not touch the others: "not selected" is DERIVED from the request being substituted by somebody else, and which offer was approved is the substituting gedu''s own row — which is why there is no approved_offer_id anywhere. Offerers never learn who else offered; only the admin queue reads this table, and it reads it through get_admin_substitution_requests. No updated_at and no trigger: a row is created and deleted, never edited. Nothing is granted to `authenticated` or `anon`.';
+COMMENT ON TABLE public.session_substitution_offers IS 'A gedu''s answer to a substitution request — one row per (request, gedu), carrying `offer` or `decline`. Written only by respond_to_session_substitution, which UPDATES the row when the gedu changes their mind: the two answers switch freely until an admin approves somebody, and a gedu never deletes a row. created_at is when the gedu first answered and responded_at when they last changed it. Approving one offer does not touch the others: "not selected" is DERIVED from the request being substituted by somebody else, and which offer was approved is the substituting gedu''s own row — which is why there is no approved_offer_id anywhere. Only an `offer` row can be approved. Answerers never learn who else answered; only the admin page reads this table, through get_admin_substitution_requests. Nothing is granted to `authenticated` or `anon`.';
+
+
+--
+-- Name: COLUMN session_substitution_offers.response; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.session_substitution_offers.response IS 'The gedu''s current answer: `offer` or `decline`.';
+
+
+--
+-- Name: COLUMN session_substitution_offers.responded_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.session_substitution_offers.responded_at IS 'When the gedu last changed their answer (clock_timestamp at the write). The admin page orders offers by it.';
 
 
 --
@@ -31,6 +47,13 @@ ALTER TABLE ONLY public.session_substitution_offers
 
 ALTER TABLE ONLY public.session_substitution_offers
     ADD CONSTRAINT session_substitution_offers_request_id_gedu_id_key UNIQUE (request_id, gedu_id);
+
+
+--
+-- Name: session_substitution_offers session_substitution_offers_notify; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_substitution_offers_notify AFTER INSERT OR DELETE OR UPDATE ON public.session_substitution_offers FOR EACH ROW EXECUTE FUNCTION public.notify_substitution_offer_changed();
 
 
 --

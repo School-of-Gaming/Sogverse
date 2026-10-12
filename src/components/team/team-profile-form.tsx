@@ -3,7 +3,7 @@
 import { useId } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { Check, Trash2, Upload, X } from "lucide-react";
+import { Check, ChevronDown, Lightbulb, Trash2, Upload, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { PICKS, type PickId } from "@sog/ui";
 import { Button } from "@/components/ui/button";
@@ -437,6 +437,12 @@ function PhotoGuidance() {
   );
 }
 
+/**
+ * One half of a do-and-don't pair: a heading and its lines, each marked by a
+ * check or a cross in the success or destructive hue. The photo's pair leads
+ * each half with small drawn examples; the writing's has nothing to draw, so
+ * `examples` is optional.
+ */
 function GuidanceList({
   heading,
   tone,
@@ -445,7 +451,7 @@ function GuidanceList({
 }: {
   heading: string;
   tone: "do" | "dont";
-  examples: readonly ("you" | "plain" | "group" | "hidden")[];
+  examples?: readonly ("you" | "plain" | "group" | "hidden")[];
   items: readonly { key: string; text: string }[];
 }) {
   const headingId = useId();
@@ -453,19 +459,21 @@ function GuidanceList({
   const ink = tone === "do" ? "text-success" : "text-destructive";
   return (
     <section aria-labelledby={headingId}>
-      <div className="flex gap-2" aria-hidden>
-        {examples.map((kind) => (
-          <div
-            key={kind}
-            className="aspect-[4/5] w-12 overflow-hidden rounded-md border border-border"
-          >
-            <TeamPhotoPlaceholder kind={kind} className="h-full w-full" />
-          </div>
-        ))}
-      </div>
+      {examples && (
+        <div className="mb-3 flex gap-2" aria-hidden>
+          {examples.map((kind) => (
+            <div
+              key={kind}
+              className="aspect-[4/5] w-12 overflow-hidden rounded-md border border-border"
+            >
+              <TeamPhotoPlaceholder kind={kind} className="h-full w-full" />
+            </div>
+          ))}
+        </div>
+      )}
       <h3
         id={headingId}
-        className="mt-3 flex items-center gap-1.5 text-sm font-semibold"
+        className="flex items-center gap-1.5 text-sm font-semibold"
       >
         <Glyph className={cn("h-4 w-4", ink)} aria-hidden />
         {heading}
@@ -574,6 +582,16 @@ export function TeamProfileAboutSection({
  * — loaded on demand behind a same-sized placeholder. The editor reads its
  * content once, at mount, so the locale is its key and switching tabs remounts
  * it on that locale's draft.
+ *
+ * **The section carries the guidance for what is written in it**, as the photo
+ * section does for the photo: who reads the profile, the third-person rule and
+ * a do-and-don't pair at its head (`WritingGuidance`); that the website does
+ * not translate it, at the language tabs; and starter questions behind a
+ * closed disclosure under the bio (`BioIdeas`). The bio's own hint and
+ * placeholder repeat only the third-person rule, the one most needed in view
+ * while typing. Every word is the same whether the person writes their own
+ * profile or an admin writes it for them, so the copy talks about "the
+ * profile" and "the bio" rather than to either writer.
  */
 export function TeamProfileWritingSection({
   form,
@@ -637,7 +655,9 @@ export function TeamProfileWritingSection({
 
   return (
     <FormSection heading={t("heading")}>
-      <Field label={t("languages")}>
+      <WritingGuidance />
+
+      <Field label={t("languages")} hint={t("languagesHint")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-border">
           {addedLocales.map((l) => {
             const isActive = locale === l;
@@ -760,6 +780,7 @@ export function TeamProfileWritingSection({
         )}
       </Field>
 
+      <BioIdeas />
       <Field
         label={t("funFact")}
         htmlFor={funFactId}
@@ -785,5 +806,87 @@ export function TeamProfileWritingSection({
         />
       </Field>
     </FormSection>
+  );
+}
+
+const WRITING_DOS = ["tone", "humour", "details", "sentences"] as const;
+const WRITING_DONTS = ["cv", "slang", "jokes", "typos"] as const;
+
+/**
+ * How to write the profile, at the head of the section it governs: who reads
+ * it and what a parent wants from it, then the third-person rule set apart in
+ * the ink, then the photo's do-and-don't pair without its drawn examples. The
+ * pair keeps the photo's discipline — the same number of short lines in each.
+ *
+ * Whether a profile needs approval, and when, is the "Public profile"
+ * section's to say, so nothing here repeats it.
+ */
+function WritingGuidance() {
+  const t = useTranslations("team.edit.writing.guidance");
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2 text-sm">
+        <p className="text-muted-foreground">{t("lead")}</p>
+        <p className="font-medium">{t("thirdPerson")}</p>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <GuidanceList
+          heading={t("doHeading")}
+          tone="do"
+          items={WRITING_DOS.map((key) => ({ key, text: t(`do.${key}`) }))}
+        />
+        <GuidanceList
+          heading={t("dontHeading")}
+          tone="dont"
+          items={WRITING_DONTS.map((key) => ({ key, text: t(`dont.${key}`) }))}
+        />
+      </div>
+    </div>
+  );
+}
+
+const BIO_QUESTIONS = [
+  "games",
+  "memory",
+  "outside",
+  "players",
+  "atmosphere",
+  "why",
+  "topics",
+  "background",
+] as const;
+
+/**
+ * Starter questions for a bio, closed until asked for so they never push the
+ * fields down for someone who already knows what to write.
+ *
+ * Native `<details>`, as the FAQ's rows are: it opens by keyboard and before
+ * hydration with no state of its own, and opening it moves only what is below
+ * it, on the reader's own tap. The questions are put to the person the profile
+ * is about, so they read the same to an admin gathering the answers for them.
+ */
+function BioIdeas() {
+  const t = useTranslations("team.edit.writing.guidance.ideas");
+  return (
+    <details className="group">
+      {/* `list-none` and the webkit marker rule hide the native triangle; the
+          chevron replaces it. */}
+      <summary className="-mx-2 inline-flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act [&::-webkit-details-marker]:hidden">
+        <Lightbulb className="h-4 w-4 text-muted-foreground" aria-hidden />
+        {t("summary")}
+        <ChevronDown
+          className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      <div className="mt-2 space-y-2 text-sm text-muted-foreground">
+        <p>{t("intro")}</p>
+        <ul className="list-disc space-y-1 pl-5">
+          {BIO_QUESTIONS.map((key) => (
+            <li key={key}>{t(`questions.${key}`)}</li>
+          ))}
+        </ul>
+      </div>
+    </details>
   );
 }

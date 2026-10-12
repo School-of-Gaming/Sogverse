@@ -188,7 +188,7 @@ export function GamerFlairDialog({
     seedCreationDraft(creations),
   );
   const [committing, setCommitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
   /**
    * Whether exactly one of the two creation fields is filled — set by a refused
    * Save, cleared by editing either of them.
@@ -228,7 +228,7 @@ export function GamerFlairDialog({
       setDraft(storedNote);
       setCreationDraft(seedCreationDraft(creations));
       setCommitting(false);
-      setError(null);
+      setSaveFailed(false);
       setIncomplete(false);
       setCommitted({ note: storedNote, creations });
     }
@@ -300,7 +300,7 @@ export function GamerFlairDialog({
       creationDraft.title !== seeded.title || creationDraft.url !== seeded.url;
 
     setCommitting(true);
-    setError(null);
+    setSaveFailed(false);
 
     // A local copy rather than the state directly: two awaits happen before any
     // re-render, so reading `committed` back between them would read the value
@@ -330,14 +330,13 @@ export function GamerFlairDialog({
       onOpenChange(false);
     } catch (err) {
       setCommitted(done);
-      // A message is shown only when there is one to show. Both flair writes map
-      // a database refusal — a `42501` reading `Forbidden`, a CHECK violation
-      // reading a constraint name — to an error carrying no message at all,
-      // precisely so this falls back to the localized copy; a failure that does
-      // have something to say still says it. Which failures those are is the
-      // service's call, once, for all three surfaces that mount this dialog.
-      const message = err instanceof Error ? err.message : "";
-      setError(message.length > 0 ? message : c("unexpectedError"));
+      // Every failure shows the one translated line. A refusal's own message is
+      // database English — a `42501` reading `Forbidden`, a CHECK violation
+      // reading a constraint name — and the Gedu's answer is the same whatever
+      // it says: the roster moved under them, or the save can be retried. So
+      // the original goes to the console, for all three surfaces at once.
+      console.error("[gamer-flair-dialog] save failed:", err);
+      setSaveFailed(true);
       setCommitting(false);
     }
   };
@@ -436,8 +435,8 @@ export function GamerFlairDialog({
             )}
           </StaffOnlyBlock>
 
-          {error !== null && (
-            <StatusLine status="destructive">{error}</StatusLine>
+          {saveFailed && (
+            <StatusLine status="destructive">{t("saveFailed")}</StatusLine>
           )}
         </div>
 

@@ -116,7 +116,8 @@ export const geduAssignedProduct = z.object({
           z.object({
             participant_id: z.string(),
             first_name: z.string(),
-            date_of_birth: z.string().nullable(),
+            birth_year: z.number().nullable(),
+            birth_month: z.number().nullable(),
             minecraft_username: z.string().nullable(),
             minecraft_uuid: z.string().nullable(),
             /**

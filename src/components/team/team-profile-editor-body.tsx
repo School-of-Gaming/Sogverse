@@ -97,8 +97,11 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
  * complete, and while it is ticked the profile has to stay complete to save.
  *
  * **No introduction.** The page explains itself: the title, the preview
- * beside the form and its caption, and the "Public profile" section, whose
- * checkbox hint is the one place the two-switch model is spelt out.
+ * beside the form, and guidance inside the section each piece governs — what
+ * makes a good photo in the photo section; who reads the profile, the
+ * third-person bio and starter questions in the writing section — and the
+ * "Public profile" section, whose checkbox hint is the one place the
+ * two-switch model is spelt out.
  *
  * Desktop-default, as a Gedu and admin surface is: the form on one side and
  * the live preview on the other, sticky, so what the public will see is in

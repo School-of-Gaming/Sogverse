@@ -72,7 +72,7 @@ function SetLocationForm({
   const c = useTranslations("common");
 
   const [pick, setPick] = useState<LocationPick | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   // Flipped synchronously before the save, so there is no render between the
   // click and the outcome where the button is live again. Cleared only on the
   // failure path, which is the one outcome that leaves the parent here with
@@ -82,13 +82,15 @@ function SetLocationForm({
 
   const handleSave = () => {
     if (pick === null) return;
-    setError(null);
+    setFailed(false);
     setSaving(true);
     onSave(pick)
       .then(() => onOpenChange(false))
       .catch((err: unknown) => {
+        // The profile write's own reason is Postgres English, for the log.
+        console.error("[set-location-dialog] home location save failed:", err);
         setSaving(false);
-        setError(err instanceof Error ? err.message : c("somethingWentWrong"));
+        setFailed(true);
       });
   };
 
@@ -111,14 +113,14 @@ function SetLocationForm({
           </Field>
         </div>
 
-        {error !== null && (
+        {failed && (
           <StatusLine
             status="destructive"
             size="xs"
             role="alert"
             className="mt-3"
           >
-            {error}
+            {c("somethingWentWrong")}
           </StatusLine>
         )}
 

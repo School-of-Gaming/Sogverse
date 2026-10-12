@@ -373,6 +373,27 @@ describe("the marketing preferences group", () => {
     expect(marketingBoxes()[0].checked).toBe(true);
   });
 
+  it("shows the same sentence, not the database's English, when the profile write itself fails", async () => {
+    // The profile half is a direct `.update()`, so its refusal is a
+    // PostgrestError too — a plain object with a `message`, not an Error.
+    updateProfileAsync.mockRejectedValue({
+      message: 'new row for relation "profiles" violates check constraint',
+      code: "23514",
+    });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderSettings();
+
+    fireEvent.click(saveButton());
+
+    await screen.findByText(PROFILE_SAVE_FAILED);
+    expect(
+      screen.queryByText(/violates check constraint/i),
+      "raw Postgres English reached the page",
+    ).toBeNull();
+    expect(setConsentAsync).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
   it("retries only what still differs after a partial failure", async () => {
     // Ours is switched ON and the partner's OFF in one edit, so the save has
     // two writes to make. The first lands; the second is refused.

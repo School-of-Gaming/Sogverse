@@ -229,7 +229,7 @@ describe("preselection skips a refused row", () => {
 
   it("drops a user pick the band refuses back to the first selectable row", () => {
     // The rows are not static: a parent can pick a child, and the panel can
-    // then learn — from a birth date landing, or from the parent editing one —
+    // then learn — from a birth year and month landing, or from the parent editing them —
     // that the row they picked is out of band. A selection the CTA would
     // refuse is a panel that looks ready and is not, so the pick is discarded
     // rather than held, and the default takes over.

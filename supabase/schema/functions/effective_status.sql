@@ -48,10 +48,6 @@ $$;
 COMMENT ON FUNCTION public.effective_status(p_product_id uuid) IS 'The lifecycle of one product, derived from its own two dates. Nothing about the answer is stored, so nothing can be stale: a product is pending until its start date arrives, running from then on, and completed once its end date has passed; one with no end date never leaves running. Every comparison is against today in the product''s OWN timezone, because start_date and end_date are calendar dates in that zone rather than instants. There is deliberately no answer for "ended without ever starting": start_date is NOT NULL and chk_products_date_range keeps end_date on or after it, so today < start_date <= end_date and the state cannot arise. SECURITY DEFINER with search_path pinned, and granted to service_role alone — the browser never asks this question, and a policy that needs it answered asks the date comparison inline rather than dragging a DEFINER function into the authorization spine to decide what two columns already decide (see can_read_product).';
 
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
 --
 -- Name: FUNCTION effective_status(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --

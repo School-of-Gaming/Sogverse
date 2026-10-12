@@ -13,7 +13,7 @@ import {
 import { SessionSubstitutionService } from "@/services/session-substitution/session-substitution.service";
 import type {
   OpenSubstitutionRequest,
-  SubstitutionRequestDocument,
+  LiveSubstitutionRequest,
 } from "@/services/session-substitution/session-substitution.contracts";
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 
@@ -99,15 +99,15 @@ export async function getInitialSubstitutionRequests(
 }
 
 /**
- * Prefetch the gedu's own live substitution requests — the sessions the absence
- * picker shows as already asked for.
+ * Prefetch the gedu's own live substitution requests — the "Your requests"
+ * cards, and the sessions the absence picker shows as already asked for.
  *
  * **Failure answers `null`, not an empty list**, for the reason the two above
  * give: an empty list would claim the gedu has filed nothing, and the picker
  * would offer every session again. `null` sends the client to ask again.
  */
 export async function getInitialLiveSubstitutionRequests(): Promise<
-  SubstitutionRequestDocument[] | null
+  LiveSubstitutionRequest[] | null
 > {
   try {
     const supabase = await createClient();

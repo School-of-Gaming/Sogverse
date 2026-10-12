@@ -93,6 +93,22 @@ const avatarResponse = z.object({
   ),
 });
 
+/**
+ * The fixed prefixes of the failure log lines — greppable, and carrying nothing
+ * about the account asked for.
+ */
+const USERNAME_LOOKUP_FAILED = "[roblox] username lookup failed";
+const THUMBNAIL_FETCH_FAILED = "[roblox] thumbnail fetch failed";
+
+/** `kind=http status=429 retryAfter=30` — `retryAfter` only when Roblox sent one. */
+function describeHttpFailure(res: Response): string {
+  const retryAfter = res.headers.get("retry-after");
+  return (
+    `kind=http status=${res.status}` +
+    (retryAfter ? ` retryAfter=${retryAfter}` : "")
+  );
+}
+
 /** A Roblox account, with its avatar resolved if one could be. */
 export interface RobloxProfile {
   /** The unique handle, correctly cased as Roblox returns it. */
@@ -131,6 +147,16 @@ export interface RobloxProfile {
  * than by Roblox. The name travels in a JSON body, so nothing here needs a shape
  * for it; what is left is the shared normalization and a length no request
  * should carry, both rules about the request rather than about the name.
+ *
+ * **A failure is logged at `error`; a miss is not logged at all.** Both return
+ * null, so without the log a rate limit and a nonexistent account are the same
+ * answer — and the caller tells the parent the account does not exist either
+ * way. A failure therefore means a family was just told something false, which
+ * is why it is an error rather than a warning (the thumbnail failures below are
+ * warnings: they cost a picture, not a verification). One line per failure,
+ * carrying its kind and, for an HTTP failure, the status and `Retry-After`, so a
+ * search of the logs can say whether Roblox has ever rate-limited us. The name
+ * is never logged — it is a child's account name.
  */
 export async function lookupRobloxUser(
   username: string,
@@ -159,11 +185,21 @@ export async function lookupRobloxUser(
       excludeBannedUsers: true,
     }),
   }).catch(() => null);
-  if (!res?.ok) return null;
+  if (!res) {
+    console.error(`${USERNAME_LOOKUP_FAILED} kind=network`);
+    return null;
+  }
+  if (!res.ok) {
+    console.error(`${USERNAME_LOOKUP_FAILED} ${describeHttpFailure(res)}`);
+    return null;
+  }
 
   // External API — anything that isn't the expected shape counts as not found.
   const parsed = usernamesResponse.safeParse(await res.json().catch(() => null));
-  if (!parsed.success) return null;
+  if (!parsed.success) {
+    console.error(`${USERNAME_LOOKUP_FAILED} kind=parse`);
+    return null;
+  }
 
   // The endpoint takes a batch, so a hit is the first (and only) entry. A miss
   // is an empty array on an otherwise successful 200 — this is the branch that
@@ -199,7 +235,9 @@ export const ROBLOX_THUMBNAIL_BATCH_MAX = 100;
  * come back as "no picture" for the ids it could not answer, never as a failure
  * of the call that asked. Every failure mode — a rejected fetch, a non-OK
  * status, an unparseable body, an id the response simply omits — lands as a
- * `null` against that id.
+ * `null` against that id. The first three are logged at `warn`, one line each:
+ * the same per-IP bucket serves the username lookup, so a 429 here is the same
+ * rate-limit signal, but a lost picture is not a failure a family meets.
  */
 async function resolveRobloxThumbnails(
   api: string,
@@ -220,10 +258,20 @@ async function resolveRobloxThumbnails(
     // short-lived, so there is nothing here worth a cached read.
     cache: "no-store",
   }).catch(() => null);
-  if (!res?.ok) return resolved;
+  if (!res) {
+    console.warn(`${THUMBNAIL_FETCH_FAILED} kind=network`);
+    return resolved;
+  }
+  if (!res.ok) {
+    console.warn(`${THUMBNAIL_FETCH_FAILED} ${describeHttpFailure(res)}`);
+    return resolved;
+  }
 
   const parsed = avatarResponse.safeParse(await res.json().catch(() => null));
-  if (!parsed.success) return resolved;
+  if (!parsed.success) {
+    console.warn(`${THUMBNAIL_FETCH_FAILED} kind=parse`);
+    return resolved;
+  }
 
   for (const thumbnail of parsed.data.data) {
     // Keyed by the id the *response* names rather than by position: the endpoint

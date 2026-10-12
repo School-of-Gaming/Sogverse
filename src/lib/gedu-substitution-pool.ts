@@ -6,7 +6,7 @@ import {
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
-import type { GeduAssignmentRole } from "@/types";
+import type { GeduAssignmentRole, SubstitutionOfferResponse } from "@/types";
 
 /**
  * The pool a certified gedu picks a substitution out of — the wire rows turned into
@@ -14,8 +14,8 @@ import type { GeduAssignmentRole } from "@/types";
  *
  * **The session itself is described by the shared session facts**, as on every
  * other substitution surface — the date and slots becoming instants included.
- * What is the pool's own is the frame around it: the role, its fee, whether
- * the caller has offered, and the order.
+ * What is the pool's own is the frame around it: the role, its fee, the
+ * caller's own answer, and the order.
  *
  * **What is deliberately not here is the absent gedu.** The read does not name
  * them and never will: naming the person half-reveals a private reason —
@@ -25,9 +25,9 @@ import type { GeduAssignmentRole } from "@/types";
  * which language, and what the role pays.
  *
  * Pure, and clock-free. Whether a request is still worth offering on is the
- * database's answer — it returns open requests dated today or later inside a
- * sixty-day window — and a second filter here would be the page disagreeing
- * with the write it is about to make.
+ * database's answer — it returns open requests dated today or later — and a
+ * second filter here would be the page disagreeing with the write it is about
+ * to make.
  */
 
 /** One offerable session, in the shape the section renders it. */
@@ -51,8 +51,12 @@ export interface SubstitutionPoolRow {
    * fee.
    */
   feeCents: number | null;
-  /** Whether the caller has already offered — the button's two resting states. */
-  hasOffered: boolean;
+  /**
+   * The caller's own answer — `offer`, `decline`, or `null` before they have
+   * given one. The card's three resting states; a declined request stays in
+   * the pool so the gedu can still offer.
+   */
+  response: SubstitutionOfferResponse | null;
 }
 
 /**
@@ -86,6 +90,15 @@ export function isSubstitutionUrgent(
 }
 
 /**
+ * What the soonest-first order reads off a row — the pool's, and the gedu's own
+ * requests on the same page, which are ordered the same way.
+ */
+export interface SortableSubstitutionRow {
+  requestId: string;
+  session: Pick<SessionFacts, "startsAt" | "sessionDate" | "timezone">;
+}
+
+/**
  * The instant a row is ordered by: when its session starts, or — for a date the
  * schedule no longer projects — the last moment of that day in the product's own
  * zone.
@@ -94,7 +107,7 @@ export function isSubstitutionUrgent(
  * only honest place for it: it is somewhere on that date, so it sorts after
  * every session that day whose time is known and before the next day's.
  */
-function poolSortInstant({ session }: SubstitutionPoolRow): number {
+function poolSortInstant({ session }: SortableSubstitutionRow): number {
   if (session.startsAt !== null) return session.startsAt.getTime();
   return fromZonedTime(
     `${session.sessionDate}T23:59:59.999`,
@@ -111,9 +124,9 @@ function poolSortInstant({ session }: SubstitutionPoolRow): number {
  * grid under a reader's pointer. Pure, and clock-free: what makes a row urgent
  * is a question for the moment of render, and it is asked separately.
  */
-export function sortSubstitutionPoolRows(
-  rows: readonly SubstitutionPoolRow[],
-): SubstitutionPoolRow[] {
+export function sortSubstitutionPoolRows<Row extends SortableSubstitutionRow>(
+  rows: readonly Row[],
+): Row[] {
   return [...rows].sort((a, b) => {
     const byMoment = poolSortInstant(a) - poolSortInstant(b);
     if (byMoment !== 0) return byMoment;
@@ -148,7 +161,7 @@ export function buildSubstitutionPoolRows(
       }),
       role: request.role,
       feeCents: request.fee_cents,
-      hasOffered: request.has_offered,
+      response: request.my_response,
     }),
   );
 

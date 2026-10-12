@@ -10,7 +10,7 @@ import type { OpenSubstitutionRequest } from "@/services/session-substitution";
 
 /**
  * ============================================================================
- * Sessions needing a substitute: the two writes, answered in two places
+ * Sessions needing a substitute: the two answers, given in two places
  * ============================================================================
  *
  * **Offering asks first.** It can be refused — the request filled while the
@@ -20,10 +20,10 @@ import type { OpenSubstitutionRequest } from "@/services/session-substitution";
  * been read again. A volunteer must never walk away from a dialog that closed
  * on the press believing they had offered.
  *
- * **Withdrawing does not.** It is the undo of a decision already made, so it
- * keeps the inline flag, and the flag's *release* is the whole behaviour:
- * nothing here unmounts when a withdrawal lands, so a flag cleared only on a
- * refusal would freeze the queue for the rest of the visit.
+ * **Declining does not.** It commits the gedu to nothing and the other button
+ * undoes it, so it keeps the inline flag, and the flag's *release* is the
+ * whole behaviour: nothing here unmounts when a decline lands, so a flag
+ * cleared only on a refusal would freeze the queue for the rest of the visit.
  *
  * Both writes are deferred by hand so the in-flight frame can be asserted on
  * before it is let go, which is the frame the discipline exists for.
@@ -57,7 +57,7 @@ vi.mock("@/services/session-substitution", async (importOriginal) => ({
       return deferred.promise ?? Promise.resolve();
     },
   }),
-  useWithdrawSessionSubstitutionOffer: () => ({
+  useDeclineSessionSubstitution: () => ({
     mutateAsync: () => deferred.promise ?? Promise.resolve(),
   }),
 }));
@@ -72,7 +72,7 @@ const NOW = new Date("2026-03-10T09:00:00Z");
 function request(
   id: string,
   name: string,
-  hasOffered = false,
+  myResponse: OpenSubstitutionRequest["my_response"] = null,
 ): OpenSubstitutionRequest {
   return {
     request_id: id,
@@ -81,7 +81,7 @@ function request(
     session_date: "2026-03-17",
     role: "primary",
     fee_cents: 6500,
-    has_offered: hasOffered,
+    my_response: myResponse,
     product: {
       id: `product-${id}`,
       product_type: "consumer_club",
@@ -226,37 +226,73 @@ describe("offering to substitute", () => {
   });
 });
 
-describe("withdrawing an offer", () => {
-  function withdrawButtons(): HTMLElement[] {
-    return screen.queryAllByRole("button", { name: copy.poolWithdrawAction });
+describe("the card's three answers", () => {
+  it("offers both answers before any is given, Decline first and Offer last", () => {
+    const { container } = renderSection([request("a", "Redstone Club")]);
+    const labels = within(container)
+      .getAllByRole("button")
+      .map((button) => button.textContent.trim());
+    // DOM order is the button-order rule's one authoring shape: the negative
+    // first, the affirmative last.
+    expect(labels).toEqual([copy.poolDeclineAction, copy.poolOfferAction]);
+    expect(screen.queryByText(copy.poolOffered)).toBeNull();
+    expect(screen.queryByText(copy.poolDeclined)).toBeNull();
+  });
+
+  it("says the offer was sent, and leaves only Decline", () => {
+    const { container } = renderSection([request("a", "Redstone Club", "offer")]);
+    expect(screen.getByText(copy.poolOffered)).toBeTruthy();
+    expect(
+      within(container)
+        .getAllByRole("button")
+        .map((button) => button.textContent.trim()),
+    ).toEqual([copy.poolDeclineAction]);
+  });
+
+  it("keeps a declined card, says so, and leaves Offer on it", () => {
+    const { container } = renderSection([request("a", "Redstone Club", "decline")]);
+    expect(screen.getByText(copy.poolDeclined)).toBeTruthy();
+    expect(
+      within(container)
+        .getAllByRole("button")
+        .map((button) => button.textContent.trim()),
+    ).toEqual([copy.poolOfferAction]);
+  });
+});
+
+describe("declining", () => {
+  function declineButtons(): HTMLElement[] {
+    return screen.queryAllByRole("button", { name: copy.poolDeclineAction });
   }
 
   it("goes straight through, with no question in front of it", () => {
     armWrite();
-    renderSection([request("a", "Redstone Club", true)]);
+    renderSection([request("a", "Redstone Club", "offer")]);
 
-    const [withdraw] = withdrawButtons();
-    expect(withdraw.querySelector("svg")).toBeNull();
+    const [decline] = declineButtons();
+    expect(decline.querySelector("svg")).toBeNull();
 
-    fireEvent.click(withdraw);
+    fireEvent.click(decline);
     expect(dialogIsOpen()).toBe(false);
   });
 
-  it("gives every card back once the withdrawal has landed", async () => {
+  it("gives every card back once the decline has landed", async () => {
     armWrite();
-    renderSection([
-      request("a", "Redstone Club", true),
-      request("b", "Builders", true),
+    const { container } = renderSection([
+      request("a", "Redstone Club", "offer"),
+      request("b", "Builders"),
     ]);
 
-    const [first, second] = withdrawButtons();
+    const [first] = declineButtons();
     fireEvent.click(first);
 
     // In flight: the pressed card says so and its neighbour is held with it.
     expect(
-      screen.getByRole("button", { name: copy.poolWithdrawPending }),
+      screen.getByRole("button", { name: copy.poolDeclinePending }),
     ).toBeTruthy();
-    expect(isDisabled(second)).toBe(true);
+    for (const button of cardOfferButtons(container)) {
+      expect(isDisabled(button)).toBe(true);
+    }
 
     await act(async () => {
       deferred.resolve();
@@ -264,28 +300,35 @@ describe("withdrawing an offer", () => {
 
     // The section is still on screen — the pool is what it was, minus this
     // gedu's press — so the flag has to come back off by itself.
-    for (const button of withdrawButtons()) {
+    for (const button of within(container).getAllByRole("button")) {
       expect(isDisabled(button)).toBe(false);
     }
     expect(
-      screen.queryByRole("button", { name: copy.poolWithdrawPending }),
+      screen.queryByRole("button", { name: copy.poolDeclinePending }),
     ).toBeNull();
   });
 
   it("gives every card back when the write is refused, and names it on its own card", async () => {
     armWrite();
     renderSection([
-      request("a", "Redstone Club", true),
-      request("b", "Builders", true),
+      request("a", "Redstone Club", "offer"),
+      request("b", "Builders", "offer"),
     ]);
 
-    fireEvent.click(withdrawButtons()[0]);
+    fireEvent.click(declineButtons()[0]);
     await act(async () => {
-      deferred.reject(new Error("nope"));
+      deferred.reject(
+        Object.assign(new Error("closed"), {
+          code: "23514",
+          message:
+            "this substitution request is substituted and is no longer taking offers",
+        }),
+      );
     });
 
-    expect(screen.getByText(copy.poolActionFailed)).toBeTruthy();
-    for (const button of withdrawButtons()) {
+    // The refusal is read, not "try again": the request closed under the card.
+    expect(screen.getByText(copy.poolAnswerFailedClosed)).toBeTruthy();
+    for (const button of declineButtons()) {
       expect(isDisabled(button)).toBe(false);
     }
   });

@@ -28,13 +28,23 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 const mockFetch = vi.fn();
 
+/**
+ * Silenced and recorded: a failed upstream call logs one line, and the cases
+ * below assert on which level it went to and what it carries.
+ */
+let errorSpy: ReturnType<typeof vi.spyOn>;
+let warnSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
   mockFetch.mockReset();
   vi.stubGlobal("fetch", mockFetch);
+  errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("lookupRobloxUser", () => {
@@ -74,6 +84,10 @@ describe("lookupRobloxUser", () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({ data: [] }));
 
     await expect(lookupRobloxUser("definitelynobody")).resolves.toBeNull();
+    // A miss is an answer, not a failure: logging it would bury the rate-limit
+    // lines the failure log exists to surface.
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
   // The decision, at this layer: Roblox is the only authority on which handles
@@ -146,10 +160,33 @@ describe("lookupRobloxUser", () => {
     });
   });
 
-  it("returns null on a non-ok response", async () => {
-    mockFetch.mockResolvedValueOnce(jsonResponse({ errors: [] }, 429));
+  // A failure returns the same null as a miss — the caller is unchanged — but
+  // logs at error, because the parent has just been told a real account does
+  // not exist. The status and Retry-After are what tell a rate limit apart.
+  it("returns null on a rate limit and logs an error carrying the status", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ errors: [] }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", "Retry-After": "30" },
+      }),
+    );
+
+    await expect(lookupRobloxUser("SecretChildName")).resolves.toBeNull();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[roblox] username lookup failed kind=http status=429 retryAfter=30",
+    );
+    expect(String(errorSpy.mock.calls[0][0])).not.toContain("SecretChildName");
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns null on a rejected fetch and logs it as a network failure", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("ECONNRESET"));
 
     await expect(lookupRobloxUser("Roblox")).resolves.toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[roblox] username lookup failed kind=network",
+    );
   });
 
   it("returns null when the payload is not the expected shape", async () => {
@@ -169,6 +206,9 @@ describe("lookupRobloxUser", () => {
     );
 
     await expect(lookupRobloxUser("Roblox")).resolves.toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      "[roblox] username lookup failed kind=parse",
+    );
   });
 });
 
@@ -234,6 +274,23 @@ describe("resolveRobloxAvatarUrl", () => {
 
     mockFetch.mockRejectedValueOnce(new Error("ECONNRESET"));
     await expect(resolveRobloxAvatarUrl(5)).resolves.toBeNull();
+  });
+
+  // A lost picture is a warning, not an error: verification still succeeds. But
+  // it draws on the same per-IP bucket, so a 429 here is the same signal.
+  it("warns on a failure but not on a render that simply is not there", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ data: [{ targetId: 6, state: "Pending", imageUrl: "" }] }),
+    );
+    await expect(resolveRobloxAvatarUrl(6)).resolves.toBeNull();
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    mockFetch.mockResolvedValueOnce(jsonResponse({ errors: [] }, 429));
+    await expect(resolveRobloxAvatarUrl(6)).resolves.toBeNull();
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[roblox] thumbnail fetch failed kind=http status=429",
+    );
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 });
 

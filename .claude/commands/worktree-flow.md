@@ -286,7 +286,8 @@ not when review comes back clean.
 **And never a branch whose plan says "merge to `dev` but do not release."** `dev`
 is released whole, so a merged stage that must not ship freezes it for every
 other piece of work. An operator step that has to run before the code goes live
-belongs *before* the merge, run against the branch's preview deployment
+belongs *before* the merge, run against the branch's preview deployment — deployed by
+hand with `vercel deploy`, since only `main` and `dev` deploy on push
 (`docs/plans/CLAUDE.md`, "Landing in stages"). If the plan sequences it
 afterwards, stop and say so rather than landing the freeze.
 

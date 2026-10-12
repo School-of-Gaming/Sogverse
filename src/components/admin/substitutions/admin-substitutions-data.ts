@@ -41,6 +41,17 @@ export interface SubstitutionOffer {
 }
 
 /**
+ * One gedu who has said they cannot stand in. Listed so the office knows whom
+ * asking again is pointless; nothing on the page acts on it, so it carries no
+ * id of its own.
+ */
+export interface SubstitutionDecline {
+  geduId: string;
+  /** `null` where the account carries no name; the row words the stand-in. */
+  name: string | null;
+}
+
+/**
  * One session somebody cannot make, as either section of the page states it:
  * which session, how soon, whose seat and why — sorted soonest-first and
  * carrying what makes that sort legible.
@@ -127,8 +138,10 @@ export interface SubstitutionRequest extends SubstitutionSession {
    * which the picker behind "Seat someone else" warns about.
    */
   requirements: SessionRequirements;
-  /** As delivered: the read orders by date then product, and so does the list. */
+  /** As delivered: the read orders offers by when they were given. */
   offers: readonly SubstitutionOffer[];
+  /** Who has declined, in the order they answered. */
+  declines: readonly SubstitutionDecline[];
 }
 
 /**

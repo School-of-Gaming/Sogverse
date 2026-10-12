@@ -47,8 +47,10 @@ const SEPARATOR = 14;
 const CONTAINER = 17;
 const LABEL = 18;
 
-const BUTTON_SECONDARY = 2;
-const BUTTON_LINK = 5;
+/** Button styles: blurple, grey, and a link that raises no interaction. */
+export const BUTTON_PRIMARY = 1;
+export const BUTTON_SECONDARY = 2;
+export const BUTTON_LINK = 5;
 const TEXT_INPUT_PARAGRAPH = 2;
 
 /** Discord's caps, which a longer string is refused for rather than cut at. */
@@ -202,24 +204,29 @@ export async function loadDiscordSubCopy(
 
 // ---------------------------------------------------------------- building blocks
 
-function text(content: string): DiscordComponent {
+export function text(content: string): DiscordComponent {
   return { type: TEXT_DISPLAY, content };
 }
 
-function divider(): DiscordComponent {
+export function divider(): DiscordComponent {
   return { type: SEPARATOR, divider: true, spacing: 1 };
 }
 
-function row(components: DiscordComponent[]): DiscordComponent {
+export function row(components: DiscordComponent[]): DiscordComponent {
   return { type: ACTION_ROW, components };
 }
 
-function button(customId: string, label: string, style: number): DiscordComponent {
+export function button(customId: string, label: string, style: number): DiscordComponent {
   return { type: BUTTON, custom_id: customId, label: clip(label, 80), style };
 }
 
+/** A button that opens a URL and raises no interaction. */
+export function linkButton(label: string, url: string): DiscordComponent {
+  return { type: BUTTON, style: BUTTON_LINK, label: clip(label, 80), url };
+}
+
 /** Cut a string to a Discord cap, with an ellipsis where it was cut. */
-function clip(value: string, max: number): string {
+export function clip(value: string, max: number): string {
   return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
 }
 
@@ -231,9 +238,21 @@ function clip(value: string, max: number): string {
 function message(
   copy: DiscordSubCopy,
   logoUrl: string | null,
+  parts: { head?: DiscordComponent[]; body: DiscordComponent[] },
+): DiscordComponentsMessage {
+  return brandedMessage(copy.picker("pageTitle"), logoUrl, parts);
+}
+
+/**
+ * The container itself, under the brand line `School of Gaming · <title>` —
+ * shared with the substitution DMs, which are drawn in the same frame.
+ */
+export function brandedMessage(
+  title: string,
+  logoUrl: string | null,
   { head = [], body }: { head?: DiscordComponent[]; body: DiscordComponent[] },
 ): DiscordComponentsMessage {
-  const lines = [text(`# School of Gaming · ${copy.picker("pageTitle")}`), ...head];
+  const lines = [text(`# School of Gaming · ${title}`), ...head];
   const header =
     logoUrl === null
       ? lines

@@ -23,5 +23,5 @@ export {
   useUpdateGamerProfile,
   useSendGamerVerificationEmail,
   useGamerProfile,
-  useGamerBirthDates,
+  useGamerBirths,
 } from "./gamers.queries";

@@ -13,7 +13,7 @@ import {
   sessionFactsWhen,
 } from "@/components/session-substitution/SubstitutionSessionFacts";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
-import { substitutionOfferFailureKey } from "@/services/session-substitution";
+import { substitutionAnswerFailureKey } from "@/services/session-substitution";
 import {
   isSubstitutionUrgent,
   type SubstitutionPoolRow,
@@ -33,7 +33,7 @@ export interface GeduSubstitutionPoolSectionViewProps {
    */
   rows: readonly SubstitutionPoolRow[] | null;
   /**
-   * Which request's **withdrawal** is in the air, or `null`. One id rather than
+   * Which request's **decline** is in the air, or `null`. One id rather than
    * a set: every button on the section goes disabled while one runs, so a
    * second cannot be started under it.
    *
@@ -42,7 +42,7 @@ export interface GeduSubstitutionPoolSectionViewProps {
    * reachable while it lasts.
    */
   committingRequestId: string | null;
-  /** Why the last withdrawal was refused, and which card it was on. */
+  /** Why the last decline was refused, and which card it was on. */
   error: { requestId: string; message: string } | null;
   /**
    * "Offer to substitute", confirmed.
@@ -52,8 +52,11 @@ export interface GeduSubstitutionPoolSectionViewProps {
    * the dialog reads out, so this one does not swallow its own refusals.
    */
   onOffer: (requestId: string) => Promise<void>;
-  /** Take the offer back — keyed on the request, as this card knows it. */
-  onWithdraw: (requestId: string) => void;
+  /**
+   * "I cannot" — keyed on the request, as this card knows it. It replaces an
+   * offer the caller holds, so it is also how an offer is taken back.
+   */
+  onDecline: (requestId: string) => void;
 }
 
 /**
@@ -83,18 +86,22 @@ export interface GeduSubstitutionPoolSectionViewProps {
  * says it as a warning rather than as a quiet line — the facts draw both, and
  * the pool's own threshold decides which.
  *
- * **One control per card, in two resting states**: offer, and — once the offer
- * is in — the withdrawal, because an offer that cannot be taken back is a
- * commitment nobody agreed to make. It is the same button in the same slot at
- * every moment and neither state carries a glyph, so the card's height never
- * changes and nothing in the grid moves when an offer lands.
+ * **The card has three resting states, keyed by the caller's own answer.**
+ * Before answering, both answers: Decline and Offer, as one negative and
+ * affirmative pair. Once offered, a status line saying so and Decline, which
+ * is how the offer is taken back — an offer that cannot be taken back is a
+ * commitment nobody agreed to make. Once declined, a quiet line saying so and
+ * Offer: the card stays in the pool, so a gedu who misclicked or changed their
+ * mind can still offer, and the line tells them their answer was sent. The
+ * office sees who declined; nobody else does.
  *
- * **Offering asks first; withdrawing does not.** An offer can be refused — the
+ * **Offering asks first; declining does not.** An offer can be refused — the
  * request may have been filled, the session may have started — and a volunteer
  * needs that answer before they move on, so it goes through the shared confirm
  * dialog in its holding mode: the dialog owns the latch, holds itself open
- * while the write is in the air and reads the refusal out in place. The
- * withdrawal is the undo of that decision and is answered on the card itself.
+ * while the write is in the air and reads the refusal out in place. A decline
+ * commits the gedu to nothing and is undone by the other button, so it is
+ * answered on the card itself.
  *
  * **Empty is an all-clear line, not an absence.** A certified gedu who sees
  * nothing here has been told that nothing is outstanding — which is a real
@@ -108,7 +115,7 @@ export function GeduSubstitutionPoolSectionView({
   committingRequestId,
   error,
   onOffer,
-  onWithdraw,
+  onDecline,
 }: GeduSubstitutionPoolSectionViewProps) {
   const t = useTranslations("gedu.substitution");
   /**
@@ -140,7 +147,7 @@ export function GeduSubstitutionPoolSectionView({
             key={row.requestId}
             row={row}
             committing={committingRequestId === row.requestId}
-            // Every button on the section is held while a withdrawal runs: the
+            // Every button on the section is held while a decline runs: the
             // offers move each other (an approval shortens the queue), and a
             // second press before the first has landed is a request to act on a
             // list that is already stale. An offer in flight needs no such flag
@@ -148,7 +155,7 @@ export function GeduSubstitutionPoolSectionView({
             disabled={committingRequestId !== null}
             error={error?.requestId === row.requestId ? error.message : null}
             onOffer={() => setConfirming(row)}
-            onWithdraw={() => onWithdraw(row.requestId)}
+            onDecline={() => onDecline(row.requestId)}
           />
         ))}
       </div>
@@ -211,7 +218,7 @@ function OfferConfirmDialog({
       confirmVariant="default"
       holdWhileCommitting
       onConfirm={onConfirm}
-      describeError={(error) => t(substitutionOfferFailureKey(error))}
+      describeError={(error) => t(substitutionAnswerFailureKey(error))}
     />
   );
 }
@@ -222,14 +229,14 @@ function SubstitutionPoolCard({
   disabled,
   error,
   onOffer,
-  onWithdraw,
+  onDecline,
 }: {
   row: SubstitutionPoolRow;
   committing: boolean;
   disabled: boolean;
   error: string | null;
   onOffer: () => void;
-  onWithdraw: () => void;
+  onDecline: () => void;
 }) {
   const t = useTranslations("gedu.substitution");
   const p = useTranslations("productType");
@@ -281,33 +288,55 @@ function SubstitutionPoolCard({
           )}
         </SubstitutionSessionFacts>
 
-        <div className="mt-auto flex flex-col gap-1 pt-1">
-          <Button
-            type="button"
-            // The act colour while there is something to offer, outlined once
-            // the offer is in — the same weight change the report send makes,
-            // for the same reason: a finished action is a record rather than an
-            // invitation. Offering is the thing this page is asking for, so it
-            // wears the colour a press wears.
-            variant={row.hasOffered ? "outline" : "default"}
-            size="sm"
-            disabled={disabled}
-            // Offering opens the question; withdrawing is the undo and is
-            // answered here. Neither resting state carries a glyph — the label
-            // is the whole control, and the spinner below is the one mark
-            // either of them ever shows.
-            onClick={row.hasOffered ? onWithdraw : onOffer}
-            className="w-full gap-1.5"
-          >
-            {committing && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+        <div className="mt-auto flex flex-col gap-2 pt-1">
+          {/* The answer already given, above the button that changes it. The
+              line is the gedu's receipt — the answer was sent — so an offer
+              wears the confirmation glyph and a decline the quiet one. */}
+          {row.response === "offer" && (
+            <StatusLine status="success" size="xs">
+              {t("poolOffered")}
+            </StatusLine>
+          )}
+          {row.response === "decline" && (
+            <StatusLine status="info" size="xs" muted>
+              {t("poolDeclined")}
+            </StatusLine>
+          )}
+          {/* Negative first, affirmative last, under the app's one button-order
+              shape: before any answer the two sit as a pair, Offer on the
+              right in a row and on top in a stack. Once an answer is given only
+              the other one is left. */}
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            {row.response !== "decline" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={disabled}
+                onClick={onDecline}
+                className="gap-1.5 sm:flex-1"
+              >
+                {committing && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                )}
+                {committing ? t("poolDeclinePending") : t("poolDeclineAction")}
+              </Button>
             )}
-            {row.hasOffered
-              ? committing
-                ? t("poolWithdrawPending")
-                : t("poolWithdrawAction")
-              : t("poolOfferAction")}
-          </Button>
+            {row.response !== "offer" && (
+              <Button
+                type="button"
+                // Offering is the thing this page is asking for, so it wears
+                // the colour a press wears, in every state it appears in.
+                variant="default"
+                size="sm"
+                disabled={disabled}
+                onClick={onOffer}
+                className="sm:flex-1"
+              >
+                {t("poolOfferAction")}
+              </Button>
+            )}
+          </div>
           {error !== null && (
             <StatusLine status="destructive" size="xs" role="alert">
               {error}

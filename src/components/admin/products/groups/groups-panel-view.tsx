@@ -209,7 +209,8 @@ function DragOverlayContent({
         participantId={overlay.participant_id}
         participantEmail={overlay.participant_email}
         firstName={overlay.participant_first_name}
-        dateOfBirth={overlay.participant_date_of_birth}
+        birthYear={overlay.participant_birth_year}
+        birthMonth={overlay.participant_birth_month}
         gender={overlay.participant_gender}
         parentFirstName={overlay.parent_first_name}
         parentLastName={overlay.parent_last_name}

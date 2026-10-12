@@ -368,6 +368,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // refused with P0029 rather than a second 42501 and the positive half is
   // assertable with no fixture. discord-links.test.ts drives the real path.
   consume_discord_link_token: { permittedRoles: ["gedu", "admin"] },
+  // Links the calling admin's own profile to the Slack user a token names.
+  // Admin-only, and assertable on both halves for the same reason: a NULL
+  // token matches no pending token, so an admin is refused with P0032 rather
+  // than a second 42501. slack-link.test.ts drives the real path.
+  consume_slack_link_token: { permittedRoles: ["admin"] },
 
   // --- the gedu half of session substitutions ------------------------------
   //
@@ -408,12 +413,13 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "distinguishing itself from a request the caller may not see. Positive " +
       "path: session-substitution.test.ts.",
   },
-  withdraw_session_substitution_offer: {
+  decline_session_substitution: {
     permittedRoles: ["gedu"],
     permittedAlsoForbiddenOnNullArgs:
-      "keyed on the REQUEST rather than the offer, so a NULL argument is the " +
-      "same no-such-row 42501 as the two above. Positive path: " +
-      "session-substitution.test.ts.",
+      "the same no-such-row refusal as the offer above, and for the same " +
+      "anti-oracle reason: a NULL request id answers 42501 rather than " +
+      "distinguishing itself from a request the caller may not see. Positive " +
+      "path: session-substitution.test.ts.",
   },
   // The four writers below — and the site-notes writer further
   // down — admit an ADMIN beside the assigned gedu. The guard itself is one
@@ -1009,8 +1015,8 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
  *
  * `gamer_profiles` is column-scoped for the reason column scoping exists: the
  * table carries `sign_in`, which decides whether a child can sign in without
- * their parent at all. The self-update policy reaches only the two columns
- * left, which are the child's own facts.
+ * their parent at all. The columns left are the child's birth year and month and
+ * their gender, which only the admin policy admits a row for.
  */
 const COLUMN_SCOPED_UPDATE_TABLES: Record<string, readonly string[]> = {
   profiles: [
@@ -1021,7 +1027,7 @@ const COLUMN_SCOPED_UPDATE_TABLES: Record<string, readonly string[]> = {
     "locale",
     "home_location_id",
   ],
-  gamer_profiles: ["date_of_birth", "gender"],
+  gamer_profiles: ["birth_year", "birth_month", "gender"],
 };
 
 // ---------------------------------------------------------------------------

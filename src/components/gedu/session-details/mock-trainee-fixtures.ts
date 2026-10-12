@@ -2,6 +2,7 @@ import { buildGroupWorkspaceFixture } from "@/components/group-workspace/mock-wo
 import { isRedactedMember } from "@/components/group-workspace/types";
 import { productLocalDate } from "@/lib/session-occurrence";
 import { computeAge } from "@/lib/utils";
+import { gamerBirthOf } from "@/lib/gamer-birth";
 import type { TraineeAssignedProduct } from "@/services/assignments";
 import type {
   TraineeFeedSession,
@@ -36,15 +37,13 @@ export function buildTraineeWorkspaceFixture(now: Date): {
 
   const roster = (own.roster ?? []).map((member) => {
     if (isRedactedMember(member)) return member;
+    const birth = gamerBirthOf(member.birth_year, member.birth_month);
     return {
       participant_id: member.participant_id,
       first_name: member.first_name,
       signed_up_at: member.group_joined_at ?? data.product.start_date ?? "",
       group_joined_at: member.group_joined_at,
-      age:
-        member.date_of_birth === null
-          ? null
-          : computeAge(member.date_of_birth, timeZone),
+      age: birth === null ? null : computeAge(birth, timeZone),
       gender: member.gender,
       minecraft_username: member.minecraft_username,
       minecraft_uuid: member.minecraft_uuid,

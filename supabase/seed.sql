@@ -208,15 +208,15 @@ VALUES ('00000000-0000-0000-0000-000000000003', true, now());
 UPDATE profiles SET role = 'gamer'
 WHERE id = '00000000-0000-0000-0000-000000000004';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000004';
-INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
-VALUES ('00000000-0000-0000-0000-000000000004', '2015-06-15', 'boy');
+INSERT INTO gamer_profiles (user_id, birth_year, birth_month, gender)
+VALUES ('00000000-0000-0000-0000-000000000004', 2015, 6, 'boy');
 
 -- Promote gamer 2 (mirrors gamer 1 promotion)
 UPDATE profiles SET role = 'gamer'
 WHERE id = '00000000-0000-0000-0000-000000000006';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000006';
-INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
-VALUES ('00000000-0000-0000-0000-000000000006', '2016-03-20', 'girl');
+INSERT INTO gamer_profiles (user_id, birth_year, birth_month, gender)
+VALUES ('00000000-0000-0000-0000-000000000006', 2016, 3, 'girl');
 
 -- =============================================================================
 -- 4. Parent-Gamer Link

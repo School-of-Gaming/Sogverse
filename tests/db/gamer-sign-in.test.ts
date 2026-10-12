@@ -19,7 +19,7 @@ import {
  * preference, and the two halves of this file are the two things that follow.
  *
  *   1. **Nobody in the family writes it.** `authenticated` holds column-scoped
- *      UPDATE on this table — date_of_birth and gender, the child's own facts —
+ *      UPDATE on this table — birth year, birth month and gender, the child's own facts —
  *      and `sign_in` is deliberately outside the grant, so neither the child nor
  *      their parent can hand the child a login from the browser. Only the API
  *      routes, on the service-role client, after the PIN check they make.
@@ -137,7 +137,8 @@ describe("gamer sign-in mode", () => {
       p_guardian_attested: true,
       p_first_name: "Boundary",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
       p_sign_in: "email",
     });
     expect(createError).toBeNull();
@@ -189,9 +190,9 @@ describe("gamer sign-in mode", () => {
     });
 
     it("refuses the gamer flipping their own mode", async () => {
-      // The self-update policy still admits this row — what stops the statement
-      // is the grant, which reaches date_of_birth and gender and nothing else.
-      // So the refusal is an error rather than zero rows affected.
+      // The grant stops the statement before any policy is consulted: it
+      // reaches the birth year and month and gender and nothing else. So the refusal is an
+      // error rather than zero rows affected.
       const { error } = await gamerAuth
         .from("gamer_profiles")
         .update({ sign_in: "username" })
@@ -225,16 +226,17 @@ describe("gamer sign-in mode", () => {
       expect(data?.sign_in).toBe("parent");
     });
 
-    it("still lets the gamer edit their own facts", async () => {
-      // The other direction, and it is what keeps the case above from passing
+    it("still lets an admin edit the child's facts", async () => {
+      // The other direction, and it is what keeps the cases above from passing
       // for the wrong reason: the grant was narrowed, not withdrawn.
-      const { error } = await gamerAuth
+      const { data, error } = await adminAuth
         .from("gamer_profiles")
         .update({ gender: "non_binary" })
         .eq("user_id", TEST_IDS.GAMER)
         .select("user_id");
 
       expect(error).toBeNull();
+      expect(data).toHaveLength(1);
 
       await admin
         .from("gamer_profiles")

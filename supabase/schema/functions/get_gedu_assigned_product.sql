@@ -150,7 +150,8 @@ BEGIN
                        jsonb_build_object(
                          'participant_id',     part.participant_id,
                          'first_name',         gmp.first_name,
-                         'date_of_birth',      gprof.date_of_birth,
+                         'birth_year',         gprof.birth_year,
+                         'birth_month',        gprof.birth_month,
                          'gender',             gprof.gender,
                          'minecraft_username', mca.minecraft_username,
                          'minecraft_uuid',     mca.minecraft_uuid,

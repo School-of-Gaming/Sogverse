@@ -229,7 +229,7 @@ describe("gamer photo consents", () => {
     await admin.from("customer_profiles").delete().eq("user_id", userId);
     const profile = await admin
       .from("gamer_profiles")
-      .insert({ user_id: userId, date_of_birth: "2014-01-01" });
+      .insert({ user_id: userId, birth_year: 2014, birth_month: 1 });
     expect(profile.error).toBeNull();
     const link = await admin
       .from("parent_gamer")

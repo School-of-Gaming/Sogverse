@@ -195,7 +195,7 @@ export function FamilyProfileSelector({
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>{error.message || t("loadFailed")}</AlertDescription>
+        <AlertDescription>{t("loadFailed")}</AlertDescription>
       </Alert>
     );
   }

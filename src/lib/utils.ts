@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type SupportedCurrency } from "@/lib/constants/currency";
+import { ageOnDate } from "@/lib/gamer-age-eligibility";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -263,30 +265,25 @@ export function parseEmails(input: string): string[] {
 
 
 /**
- * Compute age in whole years from a date-of-birth string (YYYY-MM-DD).
+ * A gamer's age in whole years today, by `ageOnDate`'s rule: a year older from
+ * the 1st of their birth month.
  *
  * `timeZone` is required: "today" is the viewer's calendar date in their
- * IANA zone (e.g. `Europe/Helsinki`), not the runtime's. Passing the
- * server's local zone — or worse, parsing the DOB string with `new Date()`
- * and calling `.getFullYear()` — gives wrong answers across midnight
- * boundaries. Client callers pass `useTimezone()`; server callers pass
- * `await getServerTimezone()` (see `src/lib/timezone.server.ts`).
+ * IANA zone (e.g. `Europe/Helsinki`), not the runtime's, and the 1st of a
+ * month begins at a different instant in each. Client callers pass
+ * `useTimezone()`; server callers pass `await getServerTimezone()` (see
+ * `src/lib/timezone.server.ts`).
  */
-export function computeAge(dateOfBirth: string, timeZone: string): number {
-  const [dobY, dobM, dobD] = dateOfBirth.split("-").map(Number);
+export function computeAge(birth: GamerBirthMonthYear, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(new Date());
-  const todayY = Number(parts.find((p) => p.type === "year")!.value);
-  const todayM = Number(parts.find((p) => p.type === "month")!.value);
-  const todayD = Number(parts.find((p) => p.type === "day")!.value);
-
-  let age = todayY - dobY;
-  if (todayM < dobM || (todayM === dobM && todayD < dobD)) age--;
-  return age;
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)!.value;
+  return ageOnDate(birth, `${part("year")}-${part("month")}-${part("day")}`);
 }
 
 /** Monday = 0, Sunday = 6 (matches DB day_of_week column) */

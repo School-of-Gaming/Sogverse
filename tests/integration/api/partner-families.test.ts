@@ -66,7 +66,7 @@ interface World {
   seats: Seat[];
   links: Link[];
   profiles: Record<string, unknown>[];
-  gamerProfiles: { user_id: string; date_of_birth: string }[];
+  gamerProfiles: { user_id: string; birth_year: number; birth_month: number }[];
   marketing: Consent[];
   photo: Consent[];
   roblox: { user_id: string; roblox_username: string | null; roblox_user_id: number | null }[];
@@ -148,9 +148,9 @@ function world(): World {
       gamerProfile(G3),
     ],
     gamerProfiles: [
-      { user_id: G1, date_of_birth: "2012-03-01" },
-      { user_id: G2, date_of_birth: "2013-11-01" },
-      { user_id: G3, date_of_birth: "2011-01-01" },
+      { user_id: G1, birth_year: 2012, birth_month: 3 },
+      { user_id: G2, birth_year: 2013, birth_month: 11 },
+      { user_id: G3, birth_year: 2011, birth_month: 1 },
     ],
     marketing: [
       { id: P1, granted: true, updated_at: "2026-09-02T18:43:12+00:00" },
@@ -410,7 +410,7 @@ describe("GET /api/partner/v1/families", () => {
     state.seats.push(seat(7, P0, P0), seat(8, G5, P2));
     state.links.push({ parent_id: P2, gamer_id: G5 });
     state.profiles.push(parentProfile(P0), gamerProfile(G5));
-    state.gamerProfiles.push({ user_id: G5, date_of_birth: "2012-06-01" });
+    state.gamerProfiles.push({ user_id: G5, birth_year: 2012, birth_month: 6 });
 
     const second = await readPage(`?limit=1&cursor=${first.next_cursor}`);
     expect(members(second)).toEqual([[[P2], [G5]]]);

@@ -1,28 +1,31 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  buildJoinCheckResponse,
+  normalizeMinecraftUuid,
+  type JoinCheckResponse,
+} from "@/lib/minecraft/join-check";
+import { loadJoinCheck } from "@/lib/minecraft/join-check.server";
 
 /**
- * GET /api/minecraft/join-check — asks whether a Minecraft player may be on the
- * server right now. Not implemented: it authenticates the caller, validates the
- * UUID, and then answers 501 to every well-formed request.
+ * GET /api/minecraft/join-check?uuid=… — the gate every School of Gaming
+ * Minecraft server asks when a player joins.
  *
- * The original gating queried the legacy product / product_groups /
- * group_enrollments tables, which have been dropped, so it has not been able to
- * authorize anyone since — and it was never wired in production. What remains
- * is the shell: the API-key check and the UUID format check, so the URL, its
- * auth contract, and the public docs page describing it stay live while the
- * gating is rebuilt.
+ * A Minecraft account is let in when it is linked to a gamer holding a
+ * qualifying seat; which seats qualify is decided by one predicate in
+ * `src/lib/minecraft/join-check.ts`, and nowhere else. Every well-formed,
+ * authenticated request answers 200 with `allowed`, a machine-readable
+ * `reason`, an English `message` for the server's admin, and the linked gamers
+ * with their active seats — a denial is an answer, not an error.
  *
- * **When rebuilding, this is an entitlement question, not an identity one.**
- * `minecraft_accounts.minecraft_uuid` is not unique: two Sogverse accounts may
- * link the same Minecraft account (siblings share them), so a lookup by UUID
- * returns a set of rows, not one. Ask "does anyone holding this UUID have
- * access right now?" and allow if any of them qualifies — a single-row read
- * breaks the moment a shared account appears. Nothing can tell the server
- * *which* sibling is at the keyboard; a feature needing that needs its own
- * mechanism, not a database constraint. Full spec in TODO.md.
+ * The game server holds no user session, so the caller is authenticated by its
+ * API key and the reads run on the service-role client. The error bodies are
+ * read by the game server, so their wording is part of the contract.
  */
-export function GET(request: Request) {
+export async function GET(
+  request: Request,
+): Promise<NextResponse<JoinCheckResponse | { error: string }>> {
   // --- API key auth ---
   const apiKey = process.env.MINECRAFT_SERVER_API_KEY;
   if (!apiKey) {
@@ -55,21 +58,24 @@ export function GET(request: Request) {
     );
   }
 
-  if (!/^[0-9a-f]{32}$/i.test(rawUuid.replace(/-/g, ""))) {
+  // Dashed or undashed, either case: matched in the form it is stored in.
+  const minecraftUuid = normalizeMinecraftUuid(rawUuid);
+  if (!minecraftUuid) {
     return NextResponse.json(
       { error: "Invalid Minecraft UUID format" },
       { status: 400 },
     );
   }
 
-  // 501, not a denial: the caller has to be able to tell "Sogverse cannot answer
-  // this yet" from "this player is not allowed on", and fail closed without
-  // concluding the player was rejected.
-  return NextResponse.json(
-    {
-      error:
-        "Minecraft session access is pending migration to the current product system",
-    },
-    { status: 501 },
-  );
+  // --- Decide ---
+  const lookup = await loadJoinCheck(createAdminClient(), minecraftUuid);
+  if ("error" in lookup) {
+    console.error("Minecraft join check lookup failed:", lookup.error);
+    return NextResponse.json(
+      { error: "Failed to check access" },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json(buildJoinCheckResponse(lookup.data, new Date()));
 }

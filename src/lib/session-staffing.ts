@@ -235,7 +235,12 @@ export function holdsLiveSubstitutionRequest(
   );
 }
 
-function toRequestState(
+/**
+ * One request as a card states it. Exported for the Substitutions page's "Your
+ * requests", which draws the same panel as a session card from the gedu's own
+ * live requests and must read them exactly as the derivation does.
+ */
+export function toRequestState(
   request: SubstitutionRequestInput,
   viewerId: string | null,
 ): SubstitutionRequestState {

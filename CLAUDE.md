@@ -110,6 +110,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Parent PIN | `src/services/pin/` |
 | Gedu profiles, certification and the record check | `src/services/gedu/` |
 | Session substitutions — absences, offers and the sub an admin seats | `src/services/session-substitution/` |
+| Substitution notifications — the Discord DMs, the Slack message, the outbox and the operator setup | `src/lib/substitution-notifications/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
 | Calendar invitations (the mailed `.ics`) | `src/lib/calendar-invitations/` |
@@ -131,6 +132,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
+| Slack app — the link command and Accept | `src/app/api/slack/` |
 | Partner API (Lynx Educate) | `src/app/api/partner/` |
 | MCP server — AI apps acting as an admin, its OAuth gate and consent page | `src/lib/mcp/` |
 | SOG-UI — the UI language package and its demo | `packages/sog-ui/` |
@@ -150,6 +152,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 ## Environment Variables
 
 All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
+
+**Rule: a change that introduces an env var writes its line into both `.env.local` and `.env.local.example` itself, rather than asking the owner to.** The example gets a placeholder value and a comment saying what the var is; `.env.local` gets the line with an empty value, which the owner fills in by hand — a secret is never written there by a session. From a worktree, the line goes into the main checkout's `.env.local` first and is then copied into the worktree's, since the worktree's copy dies at teardown. An agent launched inside the worktree cannot write the main checkout, so it hands the line to the session that launched it.
 
 ## Database
 

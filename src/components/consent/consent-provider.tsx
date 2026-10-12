@@ -15,10 +15,10 @@ import {
   CONSENT_COOKIE_NAME,
   CONSENT_MAX_AGE_SECONDS,
   clearAdvertisingStorage,
-  consentForChoice,
+  consentForPurposes,
   isWithdrawal,
   serialiseConsent,
-  type ConsentChoice,
+  type ConsentPurposes,
   type ConsentState,
 } from "@/lib/consent";
 
@@ -38,7 +38,7 @@ interface ConsentContextValue {
   /** Re-ask. What the footer's Privacy choices link calls. */
   open: () => void;
   /** Record an answer. Writes the cookie; see the withdrawal note below. */
-  choose: (choice: ConsentChoice) => void;
+  choose: (purposes: ConsentPurposes) => void;
 }
 
 const ConsentContext = createContext<ConsentContextValue | undefined>(
@@ -97,8 +97,8 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   }, []);
 
   const choose = useCallback(
-    (choice: ConsentChoice) => {
-      const next = consentForChoice(choice);
+    (purposes: ConsentPurposes) => {
+      const next = consentForPurposes(purposes);
       setCookie(CONSENT_COOKIE_NAME, serialiseConsent(next), {
         maxAge: CONSENT_MAX_AGE_SECONDS,
       });
@@ -107,12 +107,18 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       // gated component is enough to start a script; unmounting it is not
       // enough to stop one, because the script has already installed its own
       // listeners, timers and globals on this document and will go on using
-      // them. The only thing that reliably unloads it is a new document — so a
-      // purpose that was granted and is now refused takes the advertising
-      // scripts' own cookies and stored state with it and reloads. Granting a
-      // purpose needs none of that:
-      // the gated components mount and the scripts arrive.
+      // them. That holds for every purpose: Vercel's components inject their
+      // scripts with no clean-up on unmount, and the global they leave behind
+      // is what the app's own analytics events are sent through. The only
+      // thing that reliably unloads a script is a new document — so a purpose
+      // that was granted and is now refused reloads. Granting a purpose needs
+      // none of that: the gated components mount and the scripts arrive.
       if (isWithdrawal(consent, next)) {
+        // The advertising scripts' cookies and stored state go only with
+        // marketing, the one purpose that loads those scripts. A visitor who
+        // withdraws analytics alone keeps them, because what they granted the
+        // scripts is unchanged.
+        //
         // Best-effort and immediate, which is the half of the pair this one
         // can be: it races the very scripts it is clearing up after. A tag
         // container writes its session cookie on activity, including as the
@@ -121,7 +127,9 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
         // the window to a few hundred milliseconds, and for the pixel, which
         // does not rewrite on unload, it is the whole of the clean-up. The
         // guarantee is the mount effect below, in the document after this one.
-        clearAdvertisingTraces();
+        if (consent?.marketing === true && !next.marketing) {
+          clearAdvertisingTraces();
+        }
         // Deliberately no `setConsent`/`setIsOpen` before this: the document is
         // on its way out, and the banner's own committing flag is what keeps
         // its buttons disabled until it goes. A state update here would repaint
@@ -133,9 +141,10 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       // Nothing was taken away, so this document keeps everything it already
       // has and the state update is the whole of what an addition needs: the
       // gated components mount, and each script is handed the new answer as it
-      // loads. Nothing has to be told anything after the fact — an advertising
-      // script only ever runs here under the fullest answer, so an addition is
-      // always an addition to a document that had none of them running.
+      // loads. Nothing has to be told anything after the fact — every script
+      // reads its own purpose and no other (the advertising scripts marketing,
+      // Vercel's analytics), and a purpose being added was off until now, so
+      // none of the scripts it covers is running yet.
       setConsent(next);
       setIsOpen(false);
     },

@@ -211,12 +211,13 @@ write path. The access-control test now audits `anon` grants alongside
 `authenticated` and pins the write surface at zero; `anon` keeps `SELECT` for the
 public catalog policies.
 
-**Column-level grants are in use on `profiles`**, and it is the only table where they
-are: `authenticated` holds `UPDATE` on exactly the safe columns (name, phone, spoken
+**Column-level grants are in use on `profiles` and `gamer_profiles`.** On `profiles`,
+`authenticated` holds `UPDATE` on exactly the safe columns (name, phone, spoken
 languages, locale) — `role` is not grantable — and the self-update policy's `WITH CHECK`
-additionally pins `role` to its current value. The §3.4 column-grant audit asserts this
-state holds, and asserts that `profiles` is still the only member; it does not need to
-construct either.
+additionally pins `role` to its current value. On `gamer_profiles` it holds `UPDATE` on
+`birth_year`, `birth_month` and `gender` only, so `sign_in` sits outside the grant; the only policy
+that admits an update there is the admin's. The §3.4 column-grant audit asserts each
+table's updatable columns and that no other table carries a column-level write grant.
 
 ### Existing verification
 
@@ -765,7 +766,7 @@ policy re-derives an ownership question a predicate already answers.
   and would refuse an admin's legitimate role correction.
 - **A drift between the hosted databases and migration history surfaced here and was
   repaired.** Two admin full-access policies — on the tables holding the parent PIN hash
-  and a child's date of birth — existed on the hosted databases but had never been
+  and a child's birth — existed on the hosted databases but had never been
   written into a migration, so a database built from migrations alone did not have them.
   CI builds exactly such a database, which means the DB suite had been verifying a
   different RLS surface from the one that runs in production on those two tables. The

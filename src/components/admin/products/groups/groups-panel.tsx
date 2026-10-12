@@ -33,6 +33,7 @@ import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
 import { computeAge } from "@/lib/utils";
+import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
@@ -187,16 +188,17 @@ export function GroupsPanel({
     ];
     const row = active.find((p) => p.id === switchingId);
     if (!row) return null;
+    // Null on an adult seat, which carries no birth month — the sheet then
+    // states the club's age range alone rather than beside a guessed age.
+    const birth = gamerBirthOf(
+      row.participant_birth_year,
+      row.participant_birth_month,
+    );
     return {
       id: row.id,
       participantId: row.participant_id,
       name: row.participant_first_name,
-      // Null on an adult seat, which carries no date of birth — the sheet then
-      // states the club's age range alone rather than beside a guessed age.
-      age:
-        row.participant_date_of_birth === null
-          ? null
-          : computeAge(row.participant_date_of_birth, timeZone),
+      age: birth === null ? null : computeAge(birth, timeZone),
     };
   }, [snapshot, switchingId, timeZone]);
 

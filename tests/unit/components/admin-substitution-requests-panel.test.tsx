@@ -51,13 +51,18 @@ import { sessionFacts } from "../../mocks/session-facts";
  * the relative-time formatter echoes a fixed phrase: what this file is about is
  * the panel's behaviour, and the phrasing is `Intl`'s own.
  */
+/** The list formatter, observed: the declines line hands it the names. */
+const formatList = vi.hoisted(() =>
+  vi.fn((items: Iterable<string>) => [...items].join(", ")),
+);
+
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => {
     const t = (key: string) => (namespace ? `${namespace}.${key}` : key);
     t.rich = (key: string) => key;
     return t;
   },
-  useFormatter: () => ({ relativeTime: () => "in 3 hours" }),
+  useFormatter: () => ({ relativeTime: () => "in 3 hours", list: formatList }),
   useLocale: () => "en",
 }));
 
@@ -166,6 +171,7 @@ const WITH_OFFERS: SubstitutionRequest = {
     offer("offer-a", IDS.offererA, "Eeli Virtanen"),
     offer("offer-b", IDS.offererB, "Saana Nieminen"),
   ],
+  declines: [],
 };
 
 const WITHOUT_OFFERS: SubstitutionRequest = {
@@ -311,6 +317,40 @@ describe("the admin Substitutions page's queue panel", () => {
     // who did not offer.
     expect(
       screen.getAllByRole("button").map((button) => button.textContent),
+    ).toEqual(["admin.substitutions.seatSomeoneElse"]);
+  });
+
+  it("names who declined in one quiet line, and draws nothing when nobody has", () => {
+    formatList.mockClear();
+    renderPanel(
+      [
+        {
+          ...WITHOUT_OFFERS,
+          declines: [
+            { geduId: IDS.offererA, name: "Eeli Virtanen" },
+            { geduId: IDS.offererB, name: null },
+          ],
+        },
+        WITH_OFFERS,
+      ],
+      () => Promise.resolve(),
+    );
+
+    // One line across two cards: the card with nobody declining draws none.
+    const lines = screen.getAllByText("admin.substitutions.declinedBy");
+    expect(lines).toHaveLength(1);
+    const declined = requestCards().find((card) => card.contains(lines[0]));
+    if (declined === undefined) throw new Error("the line is on no card");
+    expect(within(declined).getByText("admin.substitutions.noOffers")).toBeTruthy();
+    expect(formatList).toHaveBeenCalledWith(
+      ["Eeli Virtanen", "admin.substitutions.unnamed"],
+      { type: "conjunction" },
+    );
+    // A line and no actions: the only presses on the card are the ones it had.
+    expect(
+      within(declined)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
     ).toEqual(["admin.substitutions.seatSomeoneElse"]);
   });
 

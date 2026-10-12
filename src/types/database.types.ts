@@ -865,19 +865,22 @@ export type Database = {
       }
       gamer_profiles: {
         Row: {
-          date_of_birth: string
+          birth_month: number
+          birth_year: number
           gender: Database["public"]["Enums"]["gender_type"] | null
           sign_in: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Insert: {
-          date_of_birth: string
+          birth_month: number
+          birth_year: number
           gender?: Database["public"]["Enums"]["gender_type"] | null
           sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id: string
         }
         Update: {
-          date_of_birth?: string
+          birth_month?: number
+          birth_year?: number
           gender?: Database["public"]["Enums"]["gender_type"] | null
           sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
           user_id?: string
@@ -2957,18 +2960,24 @@ export type Database = {
           gedu_id: string
           id: string
           request_id: string
+          responded_at: string
+          response: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Insert: {
           created_at?: string
           gedu_id: string
           id?: string
           request_id: string
+          responded_at?: string
+          response?: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Update: {
           created_at?: string
           gedu_id?: string
           id?: string
           request_id?: string
+          responded_at?: string
+          response?: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Relationships: [
           {
@@ -3149,6 +3158,215 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: true
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slack_link_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          slack_team_id?: string
+          slack_user_id?: string
+          slack_username?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
+      slack_links: {
+        Row: {
+          linked_at: string
+          profile_id: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+        }
+        Insert: {
+          linked_at?: string
+          profile_id: string
+          slack_team_id: string
+          slack_user_id: string
+          slack_username: string
+        }
+        Update: {
+          linked_at?: string
+          profile_id?: string
+          slack_team_id?: string
+          slack_user_id?: string
+          slack_username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_links_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      substitution_notification_dms: {
+        Row: {
+          accepted_dm_claimed_at: string | null
+          accepted_dm_message_id: string | null
+          accepted_dm_sent_at: string | null
+          channel_id: string | null
+          delivery_error: string | null
+          discord_user_id: string | null
+          gedu_id: string
+          message_id: string | null
+          rendered_hash: string | null
+          request_id: string
+        }
+        Insert: {
+          accepted_dm_claimed_at?: string | null
+          accepted_dm_message_id?: string | null
+          accepted_dm_sent_at?: string | null
+          channel_id?: string | null
+          delivery_error?: string | null
+          discord_user_id?: string | null
+          gedu_id: string
+          message_id?: string | null
+          rendered_hash?: string | null
+          request_id: string
+        }
+        Update: {
+          accepted_dm_claimed_at?: string | null
+          accepted_dm_message_id?: string | null
+          accepted_dm_sent_at?: string | null
+          channel_id?: string | null
+          delivery_error?: string | null
+          discord_user_id?: string | null
+          gedu_id?: string
+          message_id?: string | null
+          rendered_hash?: string | null
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitution_notification_dms_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "substitution_notification_dms_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "substitution_notification_dms_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "session_substitution_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      substitution_notification_outbox: {
+        Row: {
+          attempts: number
+          last_error: string | null
+          leased_until: string | null
+          next_attempt_at: string
+          request_id: string
+          seq: number
+        }
+        Insert: {
+          attempts?: number
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          request_id: string
+          seq?: number
+        }
+        Update: {
+          attempts?: number
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          request_id?: string
+          seq?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitution_notification_outbox_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "session_substitution_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      substitution_notifications: {
+        Row: {
+          announced_at: string
+          request_id: string
+          requester_dm_claimed_at: string | null
+          requester_dm_error: string | null
+          requester_dm_message_id: string | null
+          requester_dm_sent_at: string | null
+          slack_channel_id: string | null
+          slack_message_ts: string | null
+          slack_rendered_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          announced_at: string
+          request_id: string
+          requester_dm_claimed_at?: string | null
+          requester_dm_error?: string | null
+          requester_dm_message_id?: string | null
+          requester_dm_sent_at?: string | null
+          slack_channel_id?: string | null
+          slack_message_ts?: string | null
+          slack_rendered_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          announced_at?: string
+          request_id?: string
+          requester_dm_claimed_at?: string | null
+          requester_dm_error?: string | null
+          requester_dm_message_id?: string | null
+          requester_dm_sent_at?: string | null
+          slack_channel_id?: string | null
+          slack_message_ts?: string | null
+          slack_rendered_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitution_notifications_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "session_substitution_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -3724,6 +3942,14 @@ export type Database = {
         Args: { p_offer_id: string }
         Returns: Json
       }
+      approve_session_substitution_offer_for_slack_user: {
+        Args: { p_offer_id: string; p_slack_user_id: string }
+        Returns: Json
+      }
+      approve_substitution_offer_as: {
+        Args: { p_admin_id: string; p_offer_id: string }
+        Returns: Json
+      }
       assert_admin: { Args: never; Returns: undefined }
       assert_can_delete_session_image: {
         Args: { p_image_id: string }
@@ -3768,6 +3994,13 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
+      claim_substitution_notification_jobs: {
+        Args: { p_limit: number; p_request_ids?: string[] }
+        Returns: {
+          request_id: string
+          seq: number
+        }[]
+      }
       clear_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -3782,10 +4015,12 @@ export type Database = {
         Returns: Json
       }
       consume_discord_link_token: { Args: { p_token: string }; Returns: string }
+      consume_slack_link_token: { Args: { p_token: string }; Returns: string }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
-          p_date_of_birth: string
+          p_birth_month: number
+          p_birth_year: number
           p_first_name: string
           p_gamer_id: string
           p_gender?: Database["public"]["Enums"]["gender_type"]
@@ -3871,6 +4106,14 @@ export type Database = {
         }
         Returns: string
       }
+      decline_session_substitution: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
+      decline_session_substitution_for_discord_user: {
+        Args: { p_discord_user_id: string; p_request_id: string }
+        Returns: Json
+      }
       delete_group_session_image: {
         Args: { p_image_id: string }
         Returns: undefined
@@ -3883,6 +4126,10 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: unknown
       }
+      discord_acting_gedu: {
+        Args: { p_discord_user_id: string }
+        Returns: string
+      }
       edit_chat_message: {
         Args: { p_body: string; p_id: string }
         Returns: string
@@ -3890,6 +4137,14 @@ export type Database = {
       effective_status: {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
+      }
+      enqueue_passed_substitution_notifications: {
+        Args: never
+        Returns: number
+      }
+      enqueue_substitution_notification: {
+        Args: { p_request_id: string }
+        Returns: undefined
       }
       ensure_chat_channel: {
         Args: { p_group_id: string }
@@ -3921,6 +4176,10 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      finish_substitution_notification_job: {
+        Args: { p_error?: string; p_request_id: string; p_seq: number }
+        Returns: boolean
       }
       forfeit_password: { Args: { p_user_id: string }; Returns: undefined }
       gedu_assigned_products: {
@@ -4195,6 +4454,10 @@ export type Database = {
           session_date: string
         }[]
       }
+      get_substitution_notification_snapshot: {
+        Args: { p_request_id: string }
+        Returns: Json
+      }
       get_trainee_assigned_product: {
         Args: { p_group_id?: string; p_product_id: string }
         Returns: Json
@@ -4279,6 +4542,11 @@ export type Database = {
         }
         Returns: Json
       }
+      kick_substitution_notification_sync: { Args: never; Returns: undefined }
+      kick_substitution_notification_sync_if_due: {
+        Args: never
+        Returns: undefined
+      }
       landing_button_is_valid: { Args: { p_button: Json }; Returns: boolean }
       landing_sections_problem: { Args: { p_sections: Json }; Returns: string }
       landing_sections_repointed: {
@@ -4336,6 +4604,10 @@ export type Database = {
       mark_chat_image_stored: { Args: { p_id: string }; Returns: string }
       offer_session_substitution: {
         Args: { p_request_id: string }
+        Returns: Json
+      }
+      offer_session_substitution_for_discord_user: {
+        Args: { p_discord_user_id: string; p_request_id: string }
         Returns: Json
       }
       participation_state: {
@@ -4446,11 +4718,23 @@ export type Database = {
         Args: { p_discord_user_id: string }
         Returns: string
       }
+      require_slack_linked_admin: {
+        Args: { p_slack_user_id: string }
+        Returns: string
+      }
       respond_seat_offer: {
         Args: {
           p_accept: boolean
           p_offer_sent_at: string
           p_participation_id: string
+        }
+        Returns: Json
+      }
+      respond_to_session_substitution: {
+        Args: {
+          p_gedu_id: string
+          p_request_id: string
+          p_response: Database["public"]["Enums"]["substitution_offer_response"]
         }
         Returns: Json
       }
@@ -4753,10 +5037,6 @@ export type Database = {
         Args: { p_pin: string; p_user_ids: string[] }
         Returns: string
       }
-      withdraw_session_substitution_offer: {
-        Args: { p_request_id: string }
-        Returns: Json
-      }
       withdraw_session_substitution_request: {
         Args: { p_request_id: string }
         Returns: Json
@@ -4822,6 +5102,7 @@ export type Database = {
         | "digital_safety"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       spoken_language: "fi" | "sv" | "en" | "fr"
+      substitution_offer_response: "offer" | "decline"
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
@@ -4998,6 +5279,7 @@ export const Constants = {
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       spoken_language: ["fi", "sv", "en", "fr"],
+      substitution_offer_response: ["offer", "decline"],
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],

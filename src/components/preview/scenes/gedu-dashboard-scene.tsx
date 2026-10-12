@@ -69,7 +69,7 @@ export function GeduDashboardScene({
           createdCode={null}
           creating={false}
           joining={false}
-          error={null}
+          createFailed={false}
           onCreate={noop}
           onJoin={noop}
         />

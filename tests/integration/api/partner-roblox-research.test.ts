@@ -82,7 +82,8 @@ function seat(
     group_id?: string | null;
     status?: string;
     role?: string;
-    date_of_birth?: string;
+    birth_year?: number;
+    birth_month?: number;
     home_location_id?: string | null;
   },
 ) {
@@ -97,7 +98,10 @@ function seat(
       role: fields.role ?? "gamer",
       gamer_profiles:
         fields.role === undefined || fields.role === "gamer"
-          ? { date_of_birth: fields.date_of_birth ?? "2012-03-01" }
+          ? {
+              birth_year: fields.birth_year ?? 2012,
+              birth_month: fields.birth_month ?? 3,
+            }
           : null,
     },
     holder: { home_location_id: fields.home_location_id ?? null },
@@ -113,7 +117,8 @@ const SEATS = [
     product_id: P_CAMP,
     participant_id: GAMER_A,
     group_id: GROUP_1,
-    date_of_birth: "2012-10-01",
+    birth_year: 2012,
+    birth_month: 10,
     home_location_id: L_SITE,
   }),
   // No group, no home location, an unverified username.
@@ -294,31 +299,6 @@ describe("GET /api/partner/v1/roblox-research", () => {
     expect(url.searchParams.get("child.role")).toBe("eq.gamer");
     expect(url.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
     expect(url.searchParams.get("order")).toBe("id.asc");
-  });
-
-  it("reads the age from the birth month alone, whatever day the row stores", async () => {
-    // The camp starts on 19 October, inside an October birth month. A stored
-    // day before the start and one after it must answer the same range as the
-    // 1st: read as a date, the 25th would make the child only ever 13, and the
-    // range would tell a reader which side of the start their birthday fell.
-    for (const date_of_birth of ["2012-10-01", "2012-10-05", "2012-10-25"]) {
-      db.fetch = postgrestTables({
-        ...TABLES,
-        participations: filteringTable([
-          seat(R1, {
-            product_id: P_CAMP,
-            participant_id: GAMER_A,
-            group_id: GROUP_1,
-            date_of_birth,
-            home_location_id: L_SITE,
-          }),
-        ]),
-      });
-      const { response, body } = await get();
-
-      expect(response.status).toBe(200);
-      expect(body.data.map((row: { age: unknown }) => row.age)).toEqual([{ min: 13, max: 14 }]);
-    }
   });
 
   it("carries no identifier of the child, the family or the seat", async () => {

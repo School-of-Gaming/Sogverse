@@ -1,24 +1,31 @@
 import { describe, it, expect } from "vitest";
 import {
-  assembleGamerDateOfBirth,
+  formatGamerBirthMonth,
   gamerBirthMonthOptions,
+  gamerBirthOf,
   gamerBirthYearOptions,
   gamerBirthYearOptionsIncluding,
-  splitGamerDateOfBirth,
 } from "@/lib/gamer-birth";
 
-describe("assembleGamerDateOfBirth", () => {
+describe("formatGamerBirthMonth", () => {
   it("zero-pads single-digit months", () => {
-    expect(assembleGamerDateOfBirth(2017, 3)).toBe("2017-03-01");
+    expect(formatGamerBirthMonth({ year: 2017, month: 3 })).toBe("2017-03");
   });
 
   it("leaves two-digit months alone", () => {
-    expect(assembleGamerDateOfBirth(2014, 11)).toBe("2014-11-01");
+    expect(formatGamerBirthMonth({ year: 2014, month: 11 })).toBe("2014-11");
+  });
+});
+
+describe("gamerBirthOf", () => {
+  it("pairs a year and a month", () => {
+    expect(gamerBirthOf(2017, 3)).toEqual({ year: 2017, month: 3 });
   });
 
-  it("always anchors the day to the 1st", () => {
-    expect(assembleGamerDateOfBirth(2020, 1)).toBe("2020-01-01");
-    expect(assembleGamerDateOfBirth(2020, 12)).toBe("2020-12-01");
+  it("is no birth when either half is missing", () => {
+    expect(gamerBirthOf(null, null)).toBeNull();
+    expect(gamerBirthOf(2017, null)).toBeNull();
+    expect(gamerBirthOf(null, 3)).toBeNull();
   });
 });
 
@@ -134,25 +141,5 @@ describe("gamerBirthMonthOptions", () => {
         stored: { year: 2025, month: 11 },
       }),
     ).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-  });
-});
-
-describe("splitGamerDateOfBirth", () => {
-  it("round-trips what assembleGamerDateOfBirth composes", () => {
-    expect(splitGamerDateOfBirth(assembleGamerDateOfBirth(2017, 3))).toEqual({
-      year: 2017,
-      month: 3,
-    });
-  });
-
-  it("reads the digits rather than the runtime's calendar", () => {
-    // January 1st is the case a Date-based parse gets wrong west of UTC: the
-    // UTC-midnight instant is still December 31st there.
-    expect(splitGamerDateOfBirth("2019-01-01")).toEqual({ year: 2019, month: 1 });
-    expect(splitGamerDateOfBirth("2019-12-01")).toEqual({ year: 2019, month: 12 });
-  });
-
-  it("ignores the day, which no form ever sets", () => {
-    expect(splitGamerDateOfBirth("2013-07-24")).toEqual({ year: 2013, month: 7 });
   });
 });

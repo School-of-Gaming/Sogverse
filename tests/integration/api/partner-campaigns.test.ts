@@ -90,14 +90,14 @@ const LINKS = [
 ];
 
 const BIRTHS: Record<string, string> = {
-  [C(1)]: "2012-03-01", // 14
-  [C(2)]: "2013-10-01", // 12 on 30 September, possibly 13 from 1 October
-  [C(3)]: "2010-05-01", // 16
-  [C(4)]: "2008-10-01", // 17, and possibly still 17 through October
-  [C(5)]: "2011-01-01", // 15
-  [C(6)]: "2013-09-01", // 13 on the last day of their birth month
-  [C(7)]: "2012-01-01",
-  [C(8)]: "2008-08-01", // 18 whatever day of August they were born
+  [C(1)]: "2012-03", // 14
+  [C(2)]: "2013-10", // 12 on 30 September, possibly 13 from 1 October
+  [C(3)]: "2010-05", // 16
+  [C(4)]: "2008-10", // 17, and possibly still 17 through October
+  [C(5)]: "2011-01", // 15
+  [C(6)]: "2013-09", // 13 on the last day of their birth month
+  [C(7)]: "2012-01",
+  [C(8)]: "2008-08", // 18 whatever day of August they were born
 };
 
 /** Live Programme seats, by participant. */
@@ -146,8 +146,13 @@ function tables(
       const parents = inList(url, "parent_id");
       return links.filter((link) => parents.includes(link.parent_id));
     },
+    // Births are written `YYYY-MM` here for reading; the table holds the two
+    // numbers.
     gamer_profiles: (url) =>
-      inList(url, "user_id").map((user_id) => ({ user_id, date_of_birth: births[user_id] })),
+      inList(url, "user_id").map((user_id) => {
+        const [birth_year, birth_month] = births[user_id].split("-").map(Number);
+        return { user_id, birth_year, birth_month };
+      }),
     participations: (url) => {
       const participants = inList(url, "participant_id");
       return SEATS.filter((row) => participants.includes(row.participant_id)).map(
@@ -230,20 +235,18 @@ describe("GET /api/partner/v1/campaigns", () => {
     });
   });
 
-  it("reads a child's possible age from the birth month alone, whatever day the row stores", async () => {
+  it("counts a child either age their birth month allows could make them", async () => {
     // 10 September, inside every September birth month below. Each account
     // brings one child and holds no seat.
     vi.setSystemTime(new Date("2026-09-10T12:00:00Z"));
     const midMonth: Record<string, string> = {
-      // Born 20 September 2013: read as a date, only ever 12 today. Born any
-      // day of that September, possibly 13 — so eligible.
-      [C(11)]: "2013-09-20",
-      [C(12)]: "2013-09-05", // possibly 13
-      [C(13)]: "2008-09-20", // possibly still 17
-      [C(14)]: "2008-09-05", // possibly still 17
-      [C(15)]: "2010-05-15", // 16
-      [C(16)]: "2014-09-20", // 12 whatever day of September
-      [C(17)]: "2007-09-05", // 18 whatever day of September
+      [C(11)]: "2013-09", // 12, or 13 if their birthday has passed
+      [C(12)]: "2008-09", // 18, or still 17 if it has not
+      [C(13)]: "2010-05", // 16
+      [C(14)]: "2012-01", // 14
+      [C(15)]: "2011-11", // 14
+      [C(16)]: "2014-09", // 12 whatever day of September
+      [C(17)]: "2007-09", // 18 whatever day of September
     };
     const children = Object.keys(midMonth);
     db.fetch = tables(
@@ -257,7 +260,8 @@ describe("GET /api/partner/v1/campaigns", () => {
         utm_campaign: "lynx-midmonth",
         accounts_created: 7,
         children_added: 7,
-        // Five exactly: C11 read by its stored day would withhold the count.
+        // Five exactly: C11 and C12 counted on one of their two possible ages
+        // each, without which the count would fall under the minimum.
         children_eligible: 5,
         enrolled: null,
       },

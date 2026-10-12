@@ -480,7 +480,7 @@ const partnerResearchRow = z.object({
   /**
    * The child's age in whole years on the start date, as a range. Always
    * present: the product names the day it starts, and a seat held by a gamer
-   * with no profile to read a birth date from throws rather than reporting an
+   * with no profile to read a birth from throws rather than reporting an
    * age it does not know.
    */
   age: z.object({ min: z.number().int(), max: z.number().int() }),

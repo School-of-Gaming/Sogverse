@@ -1609,6 +1609,39 @@ describe("gedu session feed", () => {
       expect(await countFrom(YESTERDAY)).toBe(1);
     });
 
+    /**
+     * A session nobody in the group was expected at owes nothing — not the
+     * register, and not the report or the send either, which are unscoped by
+     * who joined and would otherwise keep it on the list.
+     *
+     * GAMER is moved to join at noon yesterday: after two days ago's session
+     * ended (at midnight), before yesterday's did. The group has a roster the
+     * whole time, so a guard reading the current roster would count both; the
+     * one reading who each occurrence expected counts yesterday's alone.
+     */
+    it("owes nothing for a session that ran before anybody in the group had joined", async () => {
+      await admin
+        .from("participations")
+        .update({ group_joined_at: `${YESTERDAY}T12:00:00.000Z` })
+        .eq("group_id", GROUP_MINE);
+      try {
+        const { data } = await geduAuth.rpc(
+          "get_my_gedu_assignment_summaries",
+          { p_epoch_date: TWO_DAYS_AGO },
+        );
+        const summaries = geduAssignmentSummaries.parse(data);
+
+        expect(
+          summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
+        ).toBe(1);
+      } finally {
+        await admin
+          .from("participations")
+          .update({ group_joined_at: JOINED_AT_BACKDATE })
+          .eq("group_id", GROUP_MINE);
+      }
+    });
+
     it("owes nothing for sessions before the epoch, however incomplete", async () => {
       // The epoch gates what is OWED and nothing else — the same two sessions
       // are still fully recordable, they simply stop being asked for.

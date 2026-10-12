@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
+import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode } from "@/components/ui/inline-code";
 import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
@@ -53,7 +54,7 @@ import {
 } from "@/components/ui/person-chip";
 import { GamerFlairDialog, NewcomerBadge } from "@/components/member-flair";
 import { ConsentBannerView } from "@/components/consent";
-import type { ConsentChoice } from "@/lib/consent";
+import type { ConsentPurposes } from "@/lib/consent";
 import {
   HelpRequestCardView,
   type HelpRequestAudience,
@@ -2518,6 +2519,32 @@ export default function AdminUIComponentsPage() {
         </div>
       </Section>
 
+      <Section title="Code — inline and block">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>Inline</DemoCaption>
+            <p className="text-sm leading-relaxed">
+              Send the key in the <InlineCode>Authorization</InlineCode> header;
+              a refused join answers <InlineCode>allowed: false</InlineCode>{" "}
+              with a <InlineCode>reason</InlineCode>.
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              To link your Discord account, type <InlineCode>/link</InlineCode>{" "}
+              in the School of Gaming Discord server.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Block, untitled</DemoCaption>
+            <CodeBlock>{`Authorization: Bearer <key>`}</CodeBlock>
+          </div>
+          <div className="space-y-2 lg:col-span-2">
+            <DemoCaption>Block, titled, long line</DemoCaption>
+            <CodeBlock title="curl">{`curl -H "Authorization: Bearer <key>" \\
+  "https://sogverse.example/api/minecraft/join-check?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5"`}</CodeBlock>
+          </div>
+        </div>
+      </Section>
+
       <Section title="Input & Label">
         <SubSection title="Field — the canonical labelled-field wrapper">
           <p className="text-sm text-muted-foreground mb-4">
@@ -3365,12 +3392,15 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           Rendered inline here; on the site it is fixed to the bottom of the
           viewport, over the page, so its arrival moves nothing. Clicking an
-          answer disables all three buttons and remounts the strip, which is
-          how the live one behaves &mdash; the commit is never handed back.
+          answer disables the strip and remounts it, which is how the live one
+          behaves &mdash; the commit is never handed back. The remounted strip
+          is handed the last answer, as a reopened one is, so Customise opens
+          on it.
         </p>
         <p className="text-sm text-muted-foreground">
-          All three buttons are one variant and one size on purpose: refusing
-          has to be exactly as easy and exactly as visible as accepting.
+          Reject all and Accept all are one variant and one size on purpose:
+          refusing has to be exactly as easy and exactly as visible as
+          accepting.
         </p>
         <ConsentBannerDemo />
       </Section>
@@ -3389,23 +3419,28 @@ export default function AdminUIComponentsPage() {
  * The remount key is what keeps it usable: the view's committing flag is
  * deliberately never cleared (every real outcome ends the component's life), so
  * without a fresh mount the second click in a design session would land on
- * three disabled buttons.
+ * disabled buttons.
  */
 function ConsentBannerDemo() {
   const [answers, setAnswers] = useState(0);
-  const [choice, setChoice] = useState<ConsentChoice | null>(null);
+  const [choice, setChoice] = useState<ConsentPurposes | null>(null);
 
   return (
     <div className="space-y-3">
       <ConsentBannerView
         key={answers}
         placement="inline"
+        current={choice}
         onChoose={(next) => {
           setChoice(next);
           setAnswers((count) => count + 1);
         }}
       />
-      <DemoCaption>{choice ?? "no answer yet"}</DemoCaption>
+      <DemoCaption>
+        {choice === null
+          ? "no answer yet"
+          : `analytics ${choice.analytics ? "on" : "off"}, marketing ${choice.marketing ? "on" : "off"}`}
+      </DemoCaption>
     </div>
   );
 }
@@ -4609,7 +4644,7 @@ function GameAccountDemo() {
  * renders a degenerate square and a freshly generated one gives the same person
  * a different face on every reload.
  *
- * `marja` is an adult holding a seat of her own. She has no date of birth, no
+ * `marja` is an adult holding a seat of her own. She has no birth month, no
  * gender and no game account on purpose — those live on `gamer_profiles` and
  * the per-platform account tables, and an adult seat has none of those rows.
  *
@@ -4703,7 +4738,8 @@ function ParticipantChipRow() {
           participationId="demo-1"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
@@ -4714,7 +4750,8 @@ function ParticipantChipRow() {
           participationId="demo-2"
           participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
-          dateOfBirth="2012-09-02"
+          birthYear={2012}
+          birthMonth={9}
           gender="boy"
           parentFirstName="Petra"
           parentLastName="Nieminen"
@@ -4725,7 +4762,8 @@ function ParticipantChipRow() {
           participationId="demo-3"
           participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
-          dateOfBirth={null}
+          birthYear={null}
+          birthMonth={null}
           gender={null}
           parentFirstName={null}
           parentLastName={null}
@@ -4741,7 +4779,8 @@ function ParticipantChipRow() {
           participationId="demo-5"
           participantId={CHIP_PEOPLE.marja}
           firstName="Marja"
-          dateOfBirth={null}
+          birthYear={null}
+          birthMonth={null}
           gender={null}
           parentFirstName={null}
           parentLastName={null}
@@ -4759,7 +4798,8 @@ function ParticipantChipRow() {
           participationId="demo-6"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
@@ -4770,7 +4810,8 @@ function ParticipantChipRow() {
           participationId="demo-7"
           participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
-          dateOfBirth="2012-09-02"
+          birthYear={2012}
+          birthMonth={9}
           gender="boy"
           parentFirstName="Petra"
           parentLastName="Nieminen"
@@ -4788,7 +4829,8 @@ function ParticipantChipRow() {
           participationId="demo-8"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"
@@ -4799,7 +4841,8 @@ function ParticipantChipRow() {
           participationId="demo-9"
           participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
-          dateOfBirth={null}
+          birthYear={null}
+          birthMonth={null}
           gender={null}
           parentFirstName={null}
           parentLastName={null}
@@ -4814,7 +4857,8 @@ function ParticipantChipRow() {
           participationId="demo-4"
           participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
-          dateOfBirth="2014-03-11"
+          birthYear={2014}
+          birthMonth={3}
           gender="girl"
           parentFirstName="Sanna"
           parentLastName="Virtanen"

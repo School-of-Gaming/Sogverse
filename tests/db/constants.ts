@@ -47,4 +47,6 @@ export const SEED = {
   // fixtures were the same string.
   ROBLOX_USERNAME_GEDU: "TestGeduRoblox",
   ROBLOX_USERNAME_GAMER: "TestGamerRoblox",
+  /** TEST_IDS.GAMER's birth, as `gamer_profiles` stores it. */
+  GAMER_BIRTH: { birth_year: 2015, birth_month: 6 },
 } as const;

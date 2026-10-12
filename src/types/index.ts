@@ -12,6 +12,7 @@ import type { Database, Json } from "./database.types";
 // shape the zod contracts do. Re-exported further down with the rest of the
 // member-flair types.
 import type { GamerCreation } from "@/services/member-flair/member-flair.contracts";
+import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases
@@ -323,6 +324,14 @@ export type DiscordLink = Database["public"]["Tables"]["discord_links"]["Row"];
 // and `consume_discord_link_token` spends it.
 export type DiscordLinkTokenInsert =
   Database["public"]["Tables"]["discord_link_tokens"]["Insert"];
+// slack_links — an admin's linked Slack account, at most one per profile. Row
+// alias only: no write grant for any Data API role, and
+// `consume_slack_link_token` is its only writer.
+export type SlackLink = Database["public"]["Tables"]["slack_links"]["Row"];
+// slack_link_tokens — the one-time tokens the Slack webhook inserts with the
+// service-role client, spent by `consume_slack_link_token`.
+export type SlackLinkTokenInsert =
+  Database["public"]["Tables"]["slack_link_tokens"]["Insert"];
 
 // The Library — `library_articles` is an article's admin-only working copy and
 // `library_article_publications` its public published copy, whose row existing
@@ -530,11 +539,13 @@ export type SessionSubstitutionRequest = Database["public"]["Tables"]["session_s
 export type SessionSubstitutionRequestInsert = Database["public"]["Tables"]["session_substitution_requests"]["Insert"];
 export type SessionSubstitutionRequestUpdate = Database["public"]["Tables"]["session_substitution_requests"]["Update"];
 
-// session_substitution_offers — "Offer to substitute", one row per (request, gedu).
-// Withdrawing an offer DELETES the row, so there is no status column and no
-// Update alias worth having.
+// session_substitution_offers — a gedu's answer to a request, one row per
+// (request, gedu), carrying `offer` or `decline`. Only
+// `respond_to_session_substitution` writes it, updating the row when the gedu
+// changes their answer, so there is no Update alias worth having.
 export type SessionSubstitutionOffer = Database["public"]["Tables"]["session_substitution_offers"]["Row"];
 export type SessionSubstitutionOfferInsert = Database["public"]["Tables"]["session_substitution_offers"]["Insert"];
+export type SubstitutionOfferResponse = Database["public"]["Enums"]["substitution_offer_response"];
 
 // Why the gedu is away — admin-visible only, and nullable on the row because
 // the gedu path requires it (RPC-enforced) while an admin recording an
@@ -544,6 +555,16 @@ export type SubstitutionReason = Database["public"]["Enums"]["substitution_reaso
 // off). "Unfilled" is deliberately NOT a value: it is a derived state of an open
 // request whose date has passed, and the date already says it.
 export type SubstitutionRequestStatus = Database["public"]["Enums"]["substitution_request_status"];
+
+// The notification sync's own tables, all service role only: the outbox of
+// requests with something not yet told (worked through the claim and finish
+// RPCs, never written directly), the record that a request was announced with
+// its Slack message, and each gedu's Discord DM about it.
+export type SubstitutionNotificationOutboxRow = Database["public"]["Tables"]["substitution_notification_outbox"]["Row"];
+export type SubstitutionNotification = Database["public"]["Tables"]["substitution_notifications"]["Row"];
+export type SubstitutionNotificationInsert = Database["public"]["Tables"]["substitution_notifications"]["Insert"];
+export type SubstitutionNotificationDm = Database["public"]["Tables"]["substitution_notification_dms"]["Row"];
+export type SubstitutionNotificationDmInsert = Database["public"]["Tables"]["substitution_notification_dms"]["Insert"];
 
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)
@@ -738,7 +759,8 @@ export interface GeduAssignedProductRosterEntry {
    * `gamer_profiles` row and no linked game account. Rendered as a deliberate
    * absence, not as missing data.
    */
-  date_of_birth: string | null;
+  birth_year: number | null;
+  birth_month: number | null;
   minecraft_username: string | null;
   /** UUID present only when the account's Minecraft username is *verified*. */
   minecraft_uuid: string | null;
@@ -946,7 +968,7 @@ export type AppSupabaseClient = Omit<SupabaseClient<Database>, "auth"> & {
 
 export interface CreateGamerInput {
   firstName: string;
-  dateOfBirth: string;
+  birth: GamerBirthMonthYear;
   gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
   robloxUsername?: string;

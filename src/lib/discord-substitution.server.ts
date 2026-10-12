@@ -20,7 +20,12 @@ import {
   substitutionRequestDocument,
   type SubstitutionRequestDocument,
 } from "@/services/session-substitution/session-substitution.contracts";
-import type { SubstitutionReason } from "@/types";
+import {
+  substitutionNotificationSnapshot,
+  type SnapshotCandidate,
+  type SubstitutionNotificationSnapshot,
+} from "@/lib/substitution-notifications/snapshot.contracts";
+import type { SubstitutionOfferResponse, SubstitutionReason } from "@/types";
 import {
   DISCORD_GEDU_NOT_LINKED_SQLSTATE,
   discordLinkedGedu,
@@ -185,4 +190,64 @@ export async function fileDiscordSubstitutionRequest({
   );
   if (error) throw error;
   return substitutionRequestDocument.parse(data);
+}
+
+// ---------------------------------------------------------------- the DM buttons
+
+/**
+ * Answer a substitution request from its Discord DM — Offer or Decline — as
+ * this Discord user's gedu. The very body the pool's two buttons reach, so the
+ * same refusals: every one throws the Supabase error unchanged for the web's
+ * own mapper (`substitutionAnswerFailureKey`), and the not-linked refusal for
+ * {@link isDiscordGeduNotLinked}.
+ */
+export async function answerDiscordSubstitutionRequest({
+  discordUserId,
+  requestId,
+  response,
+}: {
+  discordUserId: string;
+  requestId: string;
+  response: SubstitutionOfferResponse;
+}): Promise<void> {
+  const { error } = await createAdminClient().rpc(
+    response === "offer"
+      ? "offer_session_substitution_for_discord_user"
+      : "decline_session_substitution_for_discord_user",
+    { p_discord_user_id: discordUserId, p_request_id: requestId },
+  );
+  if (error) throw error;
+}
+
+/**
+ * What a substitution DM is redrawn from after a press: the request's
+ * notification snapshot, and the candidate this Discord user acts as on it —
+ * `null` where they are none (not linked, or not a gedu the request concerns).
+ * `null` altogether when the request is gone.
+ *
+ * The snapshot carries the absence reason, but nothing of it reaches a DM: the
+ * DM builder reads only the pool's session facts and the presser's own answer.
+ */
+export async function readDiscordSubstitutionDm({
+  discordUserId,
+  requestId,
+}: {
+  discordUserId: string;
+  requestId: string;
+}): Promise<{
+  snapshot: SubstitutionNotificationSnapshot;
+  candidate: SnapshotCandidate | null;
+} | null> {
+  const { data, error } = await createAdminClient().rpc(
+    "get_substitution_notification_snapshot",
+    { p_request_id: requestId },
+  );
+  if (error) throw error;
+  if (data === null) return null;
+  const snapshot = substitutionNotificationSnapshot.parse(data);
+  // The snapshot names a candidate's Discord id only where that id acts as
+  // them, so at most one candidate matches.
+  const candidate =
+    snapshot.candidates.find((c) => c.discord_user_id === discordUserId) ?? null;
+  return { snapshot, candidate };
 }

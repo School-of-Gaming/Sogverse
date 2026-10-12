@@ -4,10 +4,13 @@
 
 CREATE TABLE public.gamer_profiles (
     user_id uuid NOT NULL,
-    date_of_birth date NOT NULL,
     gender public.gender_type,
     sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in NOT NULL,
-    CONSTRAINT gamer_profiles_date_of_birth_check CHECK ((date_of_birth <= CURRENT_DATE))
+    birth_year smallint NOT NULL,
+    birth_month smallint NOT NULL,
+    CONSTRAINT gamer_profiles_birth_month_check CHECK (((birth_month >= 1) AND (birth_month <= 12))),
+    CONSTRAINT gamer_profiles_birth_not_future_check CHECK ((ROW(birth_year, birth_month) <= ROW((EXTRACT(year FROM CURRENT_DATE))::smallint, (EXTRACT(month FROM CURRENT_DATE))::smallint))),
+    CONSTRAINT gamer_profiles_birth_year_check CHECK ((birth_year >= 1900))
 );
 
 
@@ -15,7 +18,21 @@ CREATE TABLE public.gamer_profiles (
 -- Name: COLUMN gamer_profiles.sign_in; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gamer_profiles.sign_in IS 'How this child reaches their own account, chosen by their PARENT and written only by the API routes on the service-role client — never by the account holder, and not by the parent''s own session either: `authenticated` holds column-scoped UPDATE on this table (date_of_birth, gender) and this column is deliberately not among them. Three modes. `parent` is the default and the behaviour every gamer had before the modes existed: the auth email is a random synthetic `<token>@gamer.sogverse.internal` handle, there is no password, and the only way in is an account switch from the parent. `username` means the parent picked a lowercase [a-z0-9]{3,20} handle and a password; the auth email becomes `<username>@gamer.sogverse.internal`, so GoTrue''s uniqueness constraint on that address is what makes the username unique, and the child signs in with an ordinary email and password. `email` means the address on the account is the child''s REAL mailbox: they verify it and set a password through the same reset flow an adult uses. The value is a PRIVILEGE marker as much as a preference — it decides whether a child can sign in without their parent at all, and whether the address stored for them is something we may mail or a handle nobody reads.';
+COMMENT ON COLUMN public.gamer_profiles.sign_in IS 'How this child reaches their own account, chosen by their PARENT and written only by the API routes on the service-role client — never by the account holder, and not by the parent''s own session either: `authenticated` holds column-scoped UPDATE on this table (birth_year, birth_month, gender) and this column is deliberately not among them. Three modes. `parent` is the default and the behaviour every gamer had before the modes existed: the auth email is a random synthetic `<token>@gamer.sogverse.internal` handle, there is no password, and the only way in is an account switch from the parent. `username` means the parent picked a lowercase [a-z0-9]{3,20} handle and a password; the auth email becomes `<username>@gamer.sogverse.internal`, so GoTrue''s uniqueness constraint on that address is what makes the username unique, and the child signs in with an ordinary email and password. `email` means the address on the account is the child''s REAL mailbox: they verify it and set a password through the same reset flow an adult uses. The value is a PRIVILEGE marker as much as a preference — it decides whether a child can sign in without their parent at all, and whether the address stored for them is something we may mail or a handle nobody reads.';
+
+
+--
+-- Name: COLUMN gamer_profiles.birth_year; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_profiles.birth_year IS 'The year the child was born. With birth_month it is the whole of what is held about their birth: families are told we hold the month and never the day, and the table has nowhere to put one. Not in the future together with birth_month (gamer_profiles_birth_not_future_check). Written at creation by create_gamer and afterwards by an admin only.';
+
+
+--
+-- Name: COLUMN gamer_profiles.birth_month; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.gamer_profiles.birth_month IS 'The month the child was born, 1-12. See birth_year: the pair is the whole of what is held, and an age read from it counts the child a year older from the 1st of this month.';
 
 
 --
@@ -55,13 +72,6 @@ CREATE POLICY gamers_read_own_gamer_profile ON public.gamer_profiles FOR SELECT 
 
 
 --
--- Name: gamer_profiles gamers_update_own_gamer_profile; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY gamers_update_own_gamer_profile ON public.gamer_profiles FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
-
---
 -- Name: gamer_profiles parents_read_linked_gamer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -78,16 +88,23 @@ GRANT SELECT ON TABLE public.gamer_profiles TO authenticated;
 
 
 --
--- Name: COLUMN gamer_profiles.date_of_birth; Type: ACL; Schema: public; Owner: -
---
-
-GRANT UPDATE(date_of_birth) ON TABLE public.gamer_profiles TO authenticated;
-
-
---
 -- Name: COLUMN gamer_profiles.gender; Type: ACL; Schema: public; Owner: -
 --
 
 GRANT UPDATE(gender) ON TABLE public.gamer_profiles TO authenticated;
+
+
+--
+-- Name: COLUMN gamer_profiles.birth_year; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(birth_year) ON TABLE public.gamer_profiles TO authenticated;
+
+
+--
+-- Name: COLUMN gamer_profiles.birth_month; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(birth_month) ON TABLE public.gamer_profiles TO authenticated;
 
 

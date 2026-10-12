@@ -22,5 +22,7 @@ export function ConsentBanner() {
 
   if (consent !== null && !isOpen) return null;
 
-  return <ConsentBannerView onChoose={choose} placement="fixed" />;
+  return (
+    <ConsentBannerView onChoose={choose} current={consent} placement="fixed" />
+  );
 }

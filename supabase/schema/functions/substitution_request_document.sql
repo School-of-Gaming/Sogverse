@@ -47,16 +47,18 @@ CREATE FUNCTION public.substitution_request_document(p_request public.session_su
     -- Whether the VIEWER is the absent gedu. The card shows a status line and a
     -- Withdraw button off this, and nothing else needs it.
     'is_requester', COALESCE(p_request.requested_by = p_viewer_id, false),
-    -- How many offers are waiting — for the REQUESTER (their own status line)
-    -- and for an admin (the queue). A colleague sees null: how many people
-    -- volunteered for somebody else's absence is not their business, and
-    -- offerers never learn who else offered.
+    -- How many OFFERS are waiting — declines are not counted — for the
+    -- REQUESTER (their own status line) and for an admin (the queue). A
+    -- colleague sees null: how many people volunteered for somebody else's
+    -- absence is not their business, and answerers never learn who else
+    -- answered.
     'offer_count',
       CASE WHEN p_include_reason OR p_request.requested_by = p_viewer_id
            THEN (
              SELECT count(*)::integer
                FROM public.session_substitution_offers o
               WHERE o.request_id = p_request.id
+                AND o.response = 'offer'::public.substitution_offer_response
            )
       END,
     -- Admin-only, and emitted as JSON null rather than omitted so the document
@@ -72,7 +74,7 @@ $$;
 -- Name: FUNCTION substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean) IS 'Internal: the ONE wire shape of a substitution request. Every substitution write returns it and both staff feeds'' `substitutions` arrays are built from it, so no surface can drift about what a request is. Takes the ROW rather than an id, so a feed aggregates it over a query and a writer hands over the row it just wrote. THREE fields are keyed to the reader rather than to the RPC, and all three are emitted as JSON null when the reader is not entitled to them rather than omitted, so the document keeps one shape for every reader and no client schema branches on which keys arrived. `reason`/`reason_note` travel on p_include_reason, the ADMIN flag, alone. `offer_count` travels for an admin and for the requester themselves, because how many people volunteered for a colleague''s absence is not their business. And WHO IS ABSENT — requested_by with its first name — travels for an admin, for a viewer who IS the requester, and for a caller that passed p_reveal_requester because its own reader is staff on the group; that flag DEFAULTS TO FALSE, so a caller added later that forgets it conceals, and the only caller passing it today is get_gedu_group_feed, whose reader reached the group''s workspace and whose session card''s staffing line names who is away. The two offer RPCs pass false explicitly: a volunteer decides on the session and never on the person, which is the same rule the pool list keeps by never naming them at all. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.substitution_request_document(p_request public.session_substitution_requests, p_include_reason boolean, p_viewer_id uuid, p_reveal_requester boolean) IS 'Internal: the ONE wire shape of a substitution request. Every substitution write returns it and both staff feeds'' `substitutions` arrays are built from it, so no surface can drift about what a request is. Takes the ROW rather than an id, so a feed aggregates it over a query and a writer hands over the row it just wrote. THREE fields are keyed to the reader rather than to the RPC, and all three are emitted as JSON null when the reader is not entitled to them rather than omitted, so the document keeps one shape for every reader and no client schema branches on which keys arrived. `reason`/`reason_note` travel on p_include_reason, the ADMIN flag, alone. `offer_count` — the answers that are offers, declines not counted — travels for an admin and for the requester themselves, because how many people volunteered for a colleague''s absence is not their business. And WHO IS ABSENT — requested_by with its first name — travels for an admin, for a viewer who IS the requester, and for a caller that passed p_reveal_requester because its own reader is staff on the group; that flag DEFAULTS TO FALSE, so a caller added later that forgets it conceals, and the only caller passing it today is get_gedu_group_feed, whose reader reached the group''s workspace and whose session card''s staffing line names who is away. The answer RPCs pass false explicitly: a volunteer decides on the session and never on the person, which is the same rule the pool list keeps by never naming them at all. Not granted to `authenticated`.';
 
 
 --

@@ -234,18 +234,20 @@ each script is handed the new answer as it loads.
 
 **Revoking one is not the mirror image of that, and no message can stand in for it.** A
 script that has already installed itself on the document goes on running whatever it has
-installed, and what it has already sent has already been sent — so a withdrawal deletes
-the advertising scripts' own cookies, clears what either of them keeps in web storage, and
-reloads. The new document has neither script in it, and starts from everything denied like
-any other.
+installed, and what it has already sent has already been sent — so any withdrawal reloads.
+Withdrawing marketing also deletes the advertising scripts' own cookies and clears what
+either of them keeps in web storage first; the new document has neither script in it, and
+starts from everything denied like any other. Withdrawing analytics alone reloads and
+clears nothing: Vercel's components leave their scripts installed when they unmount, so
+only a new document stops them, while the advertising scripts' state belongs to marketing,
+which is unchanged.
 
 **There is deliberately no way to tell a running script that the answer grew**, and it is
-worth knowing why rather than adding one back. Both advertising scripts load on marketing,
-which is the fullest of the three answers the strip offers — so a document with either of
-them running is a document whose visitor has already said everything there is to say. Any
-later change to that answer takes a purpose away, which is the paragraph above. An
-addition is therefore always an addition to a document that had neither script in it, and
-the answer travels with the load.
+worth knowing why rather than adding one back. Both advertising scripts load on marketing
+and read no other purpose, so a document with either of them running has nothing left to
+tell them: the one change they could need to hear is marketing taken away, which is the
+paragraph above. A purpose being added was off until then, so the scripts it covers are
+not in the document yet, and the answer travels with their load.
 
 Two things about the cookies. They are walked across every domain the page could have set
 them on, because both vendors write on the registrable domain while our pages are served

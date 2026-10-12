@@ -328,6 +328,23 @@ COMMENT ON TYPE public.spoken_language IS 'A human language a club is delivered 
 
 
 --
+-- Name: substitution_offer_response; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.substitution_offer_response AS ENUM (
+    'offer',
+    'decline'
+);
+
+
+--
+-- Name: TYPE substitution_offer_response; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.substitution_offer_response IS 'A gedu''s answer to an open substitution request: `offer` (I can stand in) or `decline` (I cannot). Stored on session_substitution_offers.response.';
+
+
+--
 -- Name: substitution_reason; Type: TYPE; Schema: public; Owner: -
 --
 

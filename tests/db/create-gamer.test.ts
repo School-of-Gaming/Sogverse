@@ -98,7 +98,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Unmade",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
     });
 
     expect(error?.code).toBe("P0025");
@@ -148,7 +149,8 @@ describe("create_gamer() atomic promotion", () => {
         p_parent_id: parent.id,
         p_first_name: "Undeclared",
         p_last_name: "Parentson",
-        p_date_of_birth: "2015-06-15",
+        p_birth_year: 2015,
+        p_birth_month: 6,
         ...(attested === undefined ? {} : { p_guardian_attested: attested }),
       });
 
@@ -188,7 +190,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Declared",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
     });
     expect(error).toBeNull();
 
@@ -227,7 +230,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Switched",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
     });
     expect(defaultError).toBeNull();
 
@@ -237,7 +241,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Mailed",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
       p_sign_in: "email",
     });
     expect(emailError).toBeNull();
@@ -272,7 +277,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Aino",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
     });
     expect(error).toBeNull();
 
@@ -294,7 +300,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Lily",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-06-15",
+      p_birth_year: 2015,
+      p_birth_month: 6,
       p_gender: "girl",
     });
     expect(error).toBeNull();
@@ -320,10 +327,14 @@ describe("create_gamer() atomic promotion", () => {
 
     const { data: gamerRow } = await admin
       .from("gamer_profiles")
-      .select("date_of_birth, gender")
+      .select("birth_year, birth_month, gender")
       .eq("user_id", gamer.id)
       .single();
-    expect(gamerRow).toMatchObject({ date_of_birth: "2015-06-15", gender: "girl" });
+    expect(gamerRow).toMatchObject({
+      birth_year: 2015,
+      birth_month: 6,
+      gender: "girl",
+    });
 
     const { data: link } = await admin
       .from("parent_gamer")
@@ -343,7 +354,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Max",
       p_last_name: "Parentson",
-      p_date_of_birth: "2014-01-20",
+      p_birth_year: 2014,
+      p_birth_month: 1,
       p_minecraft_username: "MaxCraft",
       p_minecraft_uuid: "cg-uuid-unique-1",
     });
@@ -374,7 +386,8 @@ describe("create_gamer() atomic promotion", () => {
         p_guardian_attested: true,
         p_first_name: name,
         p_last_name: "Parentson",
-        p_date_of_birth: "2014-01-20",
+        p_birth_year: 2014,
+        p_birth_month: 1,
         p_minecraft_username: shared.username,
         p_minecraft_uuid: shared.uuid,
       });
@@ -403,7 +416,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Max",
       p_last_name: "Parentson",
-      p_date_of_birth: "2014-01-20",
+      p_birth_year: 2014,
+      p_birth_month: 1,
       p_roblox_username: "MaxBlox",
       // Past 2^31, so this also pins that the column is bigint rather than
       // integer — Roblox ids are int64 and an integer column would start
@@ -434,7 +448,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Both",
       p_last_name: "Parentson",
-      p_date_of_birth: "2014-01-20",
+      p_birth_year: 2014,
+      p_birth_month: 1,
       p_minecraft_username: "BothCraft",
       p_minecraft_uuid: "cg-uuid-both",
       p_roblox_username: "BothBlox",
@@ -448,7 +463,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Neither",
       p_last_name: "Parentson",
-      p_date_of_birth: "2014-01-20",
+      p_birth_year: 2014,
+      p_birth_month: 1,
     });
     expect(neitherError).toBeNull();
 
@@ -497,7 +513,8 @@ describe("create_gamer() atomic promotion", () => {
         p_guardian_attested: true,
         p_first_name: name,
         p_last_name: "Parentson",
-        p_date_of_birth: "2014-01-20",
+        p_birth_year: 2014,
+        p_birth_month: 1,
         p_roblox_username: "SharedBlox",
         p_roblox_user_id: sharedId,
       });
@@ -534,7 +551,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Doomed",
       p_last_name: "Parentson",
-      p_date_of_birth: "2016-03-03",
+      p_birth_year: 2016,
+      p_birth_month: 3,
       p_minecraft_username: "DoomedCraft",
       p_minecraft_uuid: "cg-uuid-doomed",
       p_roblox_username: "DoomedBlox",
@@ -602,7 +620,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Once",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-09-09",
+      p_birth_year: 2015,
+      p_birth_month: 9,
     });
     expect(firstError).toBeNull();
 
@@ -615,7 +634,8 @@ describe("create_gamer() atomic promotion", () => {
       p_guardian_attested: true,
       p_first_name: "Twice",
       p_last_name: "Parentson",
-      p_date_of_birth: "2015-09-09",
+      p_birth_year: 2015,
+      p_birth_month: 9,
     });
     expect(secondError).not.toBeNull();
 

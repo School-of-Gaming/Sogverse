@@ -86,7 +86,8 @@ export const geduFeedRosterEntry = z.object({
    * `gamer_profiles` row and no linked game account on either platform. The row
    * renders that as a deliberate absence rather than as missing data.
    */
-  date_of_birth: z.string().nullable(),
+  birth_year: z.number().nullable(),
+  birth_month: z.number().nullable(),
   gender: z.enum(Constants.public.Enums.gender_type).nullable(),
   minecraft_username: z.string().nullable(),
   /** Present only once a username has been resolved against Mojang. */
@@ -386,7 +387,7 @@ export type GroupTrainee = z.infer<typeof groupTrainee>;
  * {@link geduFeedRosterEntry}, served by both trainee reads.
  *
  * What is missing is missing from the type, not nulled: no contact address of
- * any kind, an `age` in place of the date of birth, and `has_note` — whether a
+ * any kind, an `age` in place of the birth year and month, and `has_note` — whether a
  * staff note exists — in place of the note and its editor. `creations` is
  * always `[]`, because a gamer sees only their own and a trainee sees what a
  * gamer on the group sees. A consumer therefore cannot render a parent's
@@ -398,7 +399,10 @@ export const traineeRosterEntry = z.object({
   first_name: z.string(),
   signed_up_at: z.string(),
   group_joined_at: z.string().nullable(),
-  /** Whole years on the product's own calendar day, or null with no birth date on file. */
+  /**
+   * Whole years on the product's own calendar day, a year older from the 1st
+   * of the birth month; null on an adult seat, which has no birth on file.
+   */
   age: z.number().nullable(),
   gender: z.enum(Constants.public.Enums.gender_type).nullable(),
   minecraft_username: z.string().nullable(),

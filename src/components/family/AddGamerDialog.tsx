@@ -39,7 +39,6 @@ import {
   type GamerCredentialProblem,
 } from "./gamer-credential-fields";
 import {
-  assembleGamerDateOfBirth,
   gamerBirthMonthOptions,
   gamerBirthYearOptions,
 } from "@/lib/gamer-birth";
@@ -379,12 +378,10 @@ export function AddGamerFormCard({
     setError(null);
     setCommitting(true);
 
-    const dateOfBirth = assembleGamerDateOfBirth(Number(year), Number(month));
-
     try {
       const result = await onCreate({
         firstName: trimmedName,
-        dateOfBirth,
+        birth: { year: Number(year), month: Number(month) },
         gender,
         // Omitted rather than sent as null: the create contract treats an absent
         // key as "no account given", and there is nothing to unlink on a child

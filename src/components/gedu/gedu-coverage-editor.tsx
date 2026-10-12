@@ -40,7 +40,6 @@ interface GeduCoverageEditorProps {
 
 export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   const t = useTranslations("gedu.coverage");
-  const c = useTranslations("common");
   const locale = useLocale();
 
   const { data: rows, isLoading: rowsLoading } = useGeduLocations(geduId);
@@ -61,7 +60,7 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   // Before the first edit the editor renders straight off the server set, so
   // the initial paint needs no setState-in-effect hop.
   const [draft, setDraft] = useState<Map<string, CoverageTick> | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
   /**
    * Set synchronously before the save starts. `mutation.isPending` flips false
    * the moment React Query dispatches success, which is before this component
@@ -76,7 +75,7 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   function edit(
     change: (current: Map<string, CoverageTick>) => Map<string, CoverageTick>,
   ) {
-    setSaveError(null);
+    setSaveFailed(false);
     setDraft((current) => change(current ?? new Map(saved)));
   }
 
@@ -94,7 +93,7 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
 
   async function handleSave() {
     if (committing) return;
-    setSaveError(null);
+    setSaveFailed(false);
     setCommitting(true);
 
     try {
@@ -109,7 +108,10 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
       setDraft(null);
       setCommitting(false);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : c("unexpectedError"));
+      // The delete and insert go straight to Supabase, so a refusal is
+      // Postgres English: for the log, never the card.
+      console.error("[gedu-coverage-editor] coverage save failed:", err);
+      setSaveFailed(true);
       setCommitting(false);
     }
   }
@@ -138,13 +140,13 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
             className="flex min-h-[20px] flex-1 items-start gap-1.5 text-sm text-foreground"
             role="alert"
           >
-            {saveError !== null && (
+            {saveFailed && (
               <>
                 <AlertCircle
                   className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
                   aria-hidden
                 />
-                <span>{saveError}</span>
+                <span>{t("saveFailed")}</span>
               </>
             )}
           </p>

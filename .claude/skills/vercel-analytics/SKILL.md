@@ -1,6 +1,6 @@
 ---
 name: vercel-analytics
-description: Read Vercel Web Analytics and Speed Insights for the prod app — pageviews, visitors, UTM campaigns, Core Web Vitals and LCP diagnosis, prefetch share, function-invocation or edge-request spike alerts, traffic baselines. Covers vercel metrics, the Web Analytics REST endpoint, npm run perf:insights, and the flags that silently truncate results.
+description: Read Vercel Web Analytics and Speed Insights for the prod app — pageviews, visitors, UTM campaigns, Core Web Vitals and LCP diagnosis, prefetch share, cookie-acceptance and ad-click visitor counts from the edge request log, function-invocation or edge-request spike alerts, traffic baselines. Covers vercel metrics, the Web Analytics REST endpoint, npm run perf:insights, and the flags that silently truncate results.
 ---
 
 # Reading Vercel Web Analytics & Speed Insights
@@ -20,7 +20,9 @@ the `prod-incident-investigation` skill, which owns incident forensics via `verc
   `summary[0]` (the aggregate over the whole window — the figure you actually want) and
   `data[]` (per-bucket). The human table prints only per-bucket min/max and an **`avg`
   column that averages the per-bucket aggregate**, which is not the window's percentile
-  and can sit far below it when the slow buckets are the thin ones.
+  and can sit far below it when the slow buckets are the thin ones. **Under Claude Code
+  the CLI prints a `<claude-code-hint …>` line on stdout before the JSON**, so a parser
+  fed `--json` directly fails on it; pipe through `grep -v '^<claude'` first.
 - **With `--group-by`, `summary` becomes one entry per group — and `--limit` silently
   defaults to 10.** The flag means "max groups per time bucket", so grouping by `route` on
   a project with ~78 live routes returns the top ten and looks like the whole list. Pass
@@ -91,6 +93,33 @@ the `prod-incident-investigation` skill, which owns incident forensics via `verc
   referrer, so both land in one indistinguishable bucket — on our authenticated product
   pages that bucket is over 99% of hits. Attributing a mail's clicks means putting a marker
   in the link and grouping by `request_path`; no dimension recovers it after the fact.
+- **The edge request log counts every visitor; Web Analytics counts only the consenting
+  ones.** `vercel.request.count` is logged for every request whatever the cookie banner
+  said, so it is the denominator for any consent-rate or total-ad-traffic question.
+  Dimensions that matter here: `referrer_hostname`, `client_ip`, `client_user_agent`,
+  `bot_category`. Its `request_path` carries **no query string**, so UTMs are invisible on
+  this side — ad clicks are picked out by referrer (`m.facebook.com`, `facebook.com`,
+  `www.facebook.com`, `l.facebook.com`, `instagram.com`), and the analytics side is then
+  filtered by the same referrers, not by UTM, so both halves count the same thing. Recipe
+  used 2026-10-12 to estimate ad visitors' cookie acceptance (~10–15%): unique human IPs
+  arriving from those referrers on the landing path, against `unique/visitor_id` analytics
+  pageviews with the same filter, per Helsinki day. IPs are not people (mobile IPs change
+  and are shared), so the result is a rough ratio, not a measurement.
+- **`bot_category` on Meta ad traffic is half the volume and must be filtered, not
+  trusted blind** (read from the user agents 2026-10-12, not from Vercel docs).
+  `application` is the Facebook in-app browser (`FB_IAB` in the agent) — real parents;
+  most Instagram in-app traffic comes unflagged (blank). `browser_impersonation` (generic
+  desktop/Android Chrome agents) and `uncategorized_bot` (a bare `Instagram …` agent) look
+  like Meta's link checkers and ad review — exclude them with
+  `not (bot_category eq '…')`, or a rate computed over them comes out about half its size.
+- **Request-log query traps.** There is no `unique/client_ip` aggregation (`bad_request`):
+  count unique IPs by `--group-by client_ip` and counting `summary` rows. Grouping by
+  `client_ip` **together with** `bot_category` silently drops rows (71 requests came back
+  where the ungrouped total was 256), so filter on `bot_category` instead of grouping by
+  it, and check any grouped sum against the ungrouped total. A boolean filter
+  (`-f "is_prefetch_request eq false"`) is `invalid_query`; group by it instead. One `-f`
+  takes a whole expression with `and`/`or`/`not (...)` and parentheses, which is how to
+  match several referrers at once.
 - **Speed Insights is in `vercel metrics` too, and it is the sharper Core Web Vitals
   tool.** `vercel.speed_insights.{ttfb,fcp,lcp,inp}_ms` and `.cls`, each with a
   `*_count` companion giving `n`; aggregations include `p50` through `p99`. Dimensions:

@@ -152,8 +152,10 @@ export const guardianAttestedValue = z.literal(true, {
 export const createGamerBody = z
   .object({
     firstName,
-    // A bare calendar date; the route additionally refuses one in the future.
-    dateOfBirth: z.string().min(1, "Date of birth is required"),
+    // The year and month the child was born; there is no day to send. The route
+    // additionally refuses a month in the future.
+    birthYear: z.number().int().min(1900),
+    birthMonth: z.number().int().min(1).max(12),
     // The form sends "" for "prefer not to say"; that, null and an absent key all
     // mean "no value recorded".
     gender: z

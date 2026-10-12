@@ -1019,7 +1019,8 @@ describe("every roster row carries exactly one contact email", () => {
       // The absence the adult variant renders. A fixture that gave the adult an
       // age would make the badge and the age line coexist, which the row has no
       // branch for and the product cannot produce.
-      expect(adults[0].date_of_birth).toBeNull();
+      expect(adults[0].birth_year).toBeNull();
+      expect(adults[0].birth_month).toBeNull();
       expect(adults[0].gender).toBeNull();
       expect(adults[0].minecraft_username).toBeNull();
       expect(adults[0].minecraft_uuid).toBeNull();
