@@ -6,7 +6,6 @@ import {
 } from "@/lib/api/json-response";
 import { ApiError } from "@/lib/api/api-error";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   AppSupabaseClient,
@@ -182,11 +181,9 @@ export class CatalogueImagesService {
         (usage[entryId] ??= []).push({
           kind: "library-article",
           id: row.id,
-          // In the Library's own locale order, so the resolver's last
-          // fallback is the first version written, as on every Library surface.
           title:
             resolveTranslation(
-              inLocaleOrder(row.library_article_translations),
+              row.library_article_translations,
               DEFAULT_LOCALE,
             )?.title ?? "",
           is_live: entryId === liveId,
@@ -198,7 +195,7 @@ export class CatalogueImagesService {
       const liveIds = new Set(entryIdsOf(row.publication?.image_paths));
       const entryIds = new Set([...entryIdsOf(row.image_paths), ...liveIds]);
       const title =
-        resolveTranslation(inLocaleOrder(row.landing_page_translations), DEFAULT_LOCALE)
+        resolveTranslation(row.landing_page_translations, DEFAULT_LOCALE)
           ?.title ?? "";
       for (const entryId of entryIds) {
         (usage[entryId] ??= []).push({
@@ -243,10 +240,6 @@ export class CatalogueImagesService {
           { count: "exact" },
         )
         .not("image_id", "is", null)
-        // Embedded rows come back unordered, so the resolver's last fallback
-        // ("first row present") would otherwise pick an arbitrary language for
-        // a product carrying neither the default locale nor English.
-        .order("locale", { referencedTable: "product_translations" })
         .order("id")
         .range(from, to),
     );

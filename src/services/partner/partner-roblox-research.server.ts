@@ -72,6 +72,7 @@ function activityName(
   const written = new Set(locales);
   const locale =
     ["en", spokenLanguage].find((candidate) => written.has(candidate)) ?? locales[0];
+  // exact-locale: the partner API's published contract names the activity in English, else its delivery language, else the first locale by code
   return names[locale];
 }
 

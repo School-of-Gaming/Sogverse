@@ -1,10 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
   buildUpdateInput,
+  cloneFormState,
   existingFormState,
 } from "@/components/admin/products/product-build";
+import {
+  initialState,
+  sameFormState,
+  type FormState,
+} from "@/components/admin/products/product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import type { ProductAdminDetailRow } from "@/services/products";
+import { syntheticConsumerProduct } from "../../mocks/product-admin-detail-row";
 
 // Verifies the `existingFormState` reverse transform: a fetched product
 // row is mapped back into FormState such that round-tripping it through
@@ -14,90 +20,19 @@ import type { ProductAdminDetailRow } from "@/services/products";
 
 const consumerConfig = PRODUCT_TYPE_CONFIG.consumer_club;
 
-/** Synthetic admin-detail row covering every field the form touches. */
-function syntheticConsumerProduct(): ProductAdminDetailRow {
-  return {
-    id: "00000000-0000-0000-0000-0000000005a1",
-    product_type: "consumer_club",
-    billing_mode: "paid",
-    topic: "minecraft_java",
-    for_gamers: true,
-    for_parents: false,
-    min_age: 7,
-    max_age: 12,
-    tag: null,
-    region_lock_country: null,
-    requires_gamer_creations: false,
-    spoken_language_code: "en",
-    // The link is the id; `image_path` is the column the trigger derives from
-    // it, and the embed is what the form's image card paints from.
-    image_id: "3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43",
-    image_path: "abc.png",
-    catalogue_images: { label: "Creeper art", path: "abc.png" },
-    // Staff-only, so it arrives on its own embedded row rather than as a column
-    // on the product. `null` is the ordinary case: no row means no lesson link.
-    product_staff_details: null,
-    location_id: null,
-    is_remote: true,
-    start_date: "2026-09-01",
-    end_date: null,
-    timezone: "Europe/Helsinki",
-    seat_count: 10,
-    waitlist_enabled: true,
-    // Already past — reverse transform should pick `immediately`.
-    registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
-    primary_gedu_fee_cents: null,
-    assistant_gedu_fee_cents: null,
-    municipality_fee_cents: null,
-    invoice_customer_id: null,
-    is_visible: true,
-    created_by: "admin-1",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    product_translations: [
-      {
-        product_id: "00000000-0000-0000-0000-0000000005a1",
-        locale: "en",
-        name: "Build Club",
-        short_description: "Build castles together.",
-        long_description: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ],
-    product_prices: [
-      { currency: "eur", price_cents: 4500 },
-      { currency: "gbp", price_cents: 3900 },
-      { currency: "usd", price_cents: 5100 },
-    ],
-    schedule_slots: [
-      { weekday: 1, start_time: "16:00", duration_minutes: 90 },
-    ],
-    locations: null,
-    product_required_consents: [{ document_slug: "roblox-programme-terms" }],
-    // The optional ask set, stored on its own join table beside the required
-    // one. Populated here rather than left empty because the seeding of the
-    // *optional* picker is the half with a filter in it — see the tests below.
-    product_marketing_consents: [{ consent_type: "lynx_educate" }],
-    // The other optional ask set, populated for the same reason: its seeding
-    // filters the same way the marketing one's does.
-    product_gamer_photo_consents: [{ consent_type: "lynx_educate" }],
-  };
-}
-
 describe("existingFormState", () => {
   it("seeds field values from the product row", () => {
     const product = syntheticConsumerProduct();
     const state = existingFormState(product, consumerConfig, "en");
 
-    expect(state.translations).toEqual({
+    expect(state.translations.drafts).toEqual({
       en: {
         name: "Build Club",
         shortDescription: "Build castles together.",
         longDescription: "",
       },
     });
-    expect(state.activeLocale).toBe("en");
+    expect(state.translations.active).toBe("en");
     expect(state.topic).toBe("minecraft_java");
     expect(state.minAge).toBe("7");
     expect(state.maxAge).toBe("12");
@@ -212,7 +147,7 @@ describe("existingFormState", () => {
     ];
     const state = existingFormState(product, consumerConfig, "fi");
 
-    expect(state.activeLocale).toBe("en");
+    expect(state.translations.active).toBe("en");
   });
 
   it("falls back to first-available locale when neither uiLocale nor en exist", () => {
@@ -230,7 +165,7 @@ describe("existingFormState", () => {
     ];
     const state = existingFormState(product, consumerConfig, "sv");
 
-    expect(state.activeLocale).toBe("fi");
+    expect(state.translations.active).toBe("fi");
   });
 
   it("falls back to the first written in SUPPORTED_LOCALES order, not row order", () => {
@@ -246,7 +181,7 @@ describe("existingFormState", () => {
     }));
     const state = existingFormState(product, consumerConfig, "fi");
 
-    expect(state.activeLocale).toBe("sv");
+    expect(state.translations.active).toBe("sv");
   });
 });
 
@@ -299,7 +234,7 @@ describe("buildUpdateInput round-trip", () => {
   it("re-emits a gamers-only product's audience through an unrelated edit", () => {
     const product = syntheticConsumerProduct();
     const state = existingFormState(product, consumerConfig, "en");
-    state.translations = {
+    state.translations.drafts = {
       en: {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
@@ -351,7 +286,7 @@ describe("buildUpdateInput round-trip", () => {
     const product = syntheticConsumerProduct();
     product.tag = "neuroinclusive";
     const state = existingFormState(product, consumerConfig, "en");
-    state.translations = {
+    state.translations.drafts = {
       en: {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
@@ -380,7 +315,7 @@ describe("buildUpdateInput round-trip", () => {
     const state = existingFormState(product, consumerConfig, "en");
     expect(state.regionLockCountry).toBe("FI");
 
-    state.translations = {
+    state.translations.drafts = {
       en: {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
@@ -412,7 +347,7 @@ describe("buildUpdateInput round-trip", () => {
     const state = existingFormState(product, consumerConfig, "en");
     expect(state.requiresGamerCreations).toBe(true);
 
-    state.translations = {
+    state.translations.drafts = {
       en: {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
@@ -448,5 +383,122 @@ describe("buildUpdateInput round-trip", () => {
     expect(
       buildUpdateInput(state, consumerConfig).region_lock_country,
     ).toBeNull();
+  });
+});
+
+/**
+ * **Whether the product form holds anything leaving it would lose.** The whole
+ * form counts, not only the languages — a guard that ignored a changed price
+ * would be worse than none — and the languages are judged by the shared
+ * per-locale rule: trimmed, a blank tab ignored, the tab being shown left out.
+ */
+describe("sameFormState", () => {
+  const NO_BODIES = { serialised: new Map<string, string>() };
+  const same = (form: FormState, baseline: FormState) =>
+    sameFormState(form, baseline, NO_BODIES);
+  const opened = () =>
+    existingFormState(syntheticConsumerProduct(), consumerConfig, "en");
+
+  it("is the same on open, for an edit, a clone and a new product", () => {
+    const edit = opened();
+    const clone = cloneFormState(
+      syntheticConsumerProduct(),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    const fresh = initialState(consumerConfig, "en");
+    expect(same(structuredClone(edit), edit)).toBe(true);
+    expect(same(structuredClone(clone), clone)).toBe(true);
+    expect(same(structuredClone(fresh), fresh)).toBe(true);
+  });
+
+  it("differs after a field outside the languages changes, and not after it is put back", () => {
+    const baseline = opened();
+    const priced: FormState = {
+      ...baseline,
+      prices: { eur: { ...baseline.prices.eur, month: "50.00" } },
+    };
+    expect(same(priced, baseline)).toBe(false);
+    const putBack: FormState = {
+      ...priced,
+      prices: { eur: { ...baseline.prices.eur } },
+    };
+    expect(same(putBack, baseline)).toBe(true);
+  });
+
+  it("sees a change inside a set and inside a list", () => {
+    const baseline = opened();
+    expect(
+      same({ ...baseline, requiredConsentSlugs: new Set<string>() }, baseline),
+    ).toBe(false);
+    expect(
+      same(
+        {
+          ...baseline,
+          scheduleSlots: [{ ...baseline.scheduleSlots[0], start_time: "17:00" }],
+        },
+        baseline,
+      ),
+    ).toBe(false);
+  });
+
+  it("differs after a language edit, and not after it is undone", () => {
+    const baseline = opened();
+    const en = baseline.translations.drafts.en;
+    if (!en) throw new Error("no en draft");
+    const renamed: FormState = {
+      ...baseline,
+      translations: {
+        ...baseline.translations,
+        drafts: { en: { ...en, name: "Build Club Renamed" } },
+      },
+    };
+    expect(same(renamed, baseline)).toBe(false);
+    const undone: FormState = {
+      ...renamed,
+      translations: { ...renamed.translations, drafts: { en } },
+    };
+    expect(same(undone, baseline)).toBe(true);
+  });
+
+  it("ignores a blank tab, the tab being shown and padding", () => {
+    const baseline = opened();
+    const en = baseline.translations.drafts.en;
+    if (!en) throw new Error("no en draft");
+    const touched: FormState = {
+      ...baseline,
+      translations: {
+        active: "fi",
+        drafts: {
+          en: { ...en, name: `  ${en.name} ` },
+          fi: { name: "", shortDescription: " ", longDescription: "\n" },
+        },
+      },
+    };
+    expect(same(touched, baseline)).toBe(true);
+  });
+
+  it("reads a long description the editor respelled as unchanged", () => {
+    const product = syntheticConsumerProduct();
+    product.product_translations = product.product_translations.map((row) => ({
+      ...row,
+      long_description: "* one\n* two",
+    }));
+    const baseline = existingFormState(product, consumerConfig, "en");
+    const en = baseline.translations.drafts.en;
+    if (!en) throw new Error("no en draft");
+    const respelled: FormState = {
+      ...baseline,
+      translations: {
+        ...baseline.translations,
+        drafts: { en: { ...en, longDescription: "- one\n- two\n\n" } },
+      },
+    };
+    const bodies = {
+      serialised: new Map([["* one\n* two", "- one\n- two\n\n"]]),
+    };
+    expect(sameFormState(respelled, baseline, bodies)).toBe(true);
+    expect(sameFormState(respelled, baseline, NO_BODIES)).toBe(false);
   });
 });

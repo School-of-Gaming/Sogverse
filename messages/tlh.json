@@ -658,10 +658,6 @@
         "unpublishFailedWithReason": "ghItlh ngeH qIllu’be’ – {reason}",
         "versionTitleRequired": "pong poQ {language} ghItlh."
       },
-      "versionComplete": "naQ",
-      "versionIncomplete": "naQbe’ wej",
-      "addLocale": "Hol chu’",
-      "removeLocale": "{language} yIteq",
       "languagesLabel": "Holmey"
     },
     "spotlights": {
@@ -929,9 +925,7 @@
       },
       "translations": {
         "label": "Hol",
-        "hint": "Hol DIchu’. wa’ DoS DIchu’ poQ. vavmey Hol vIqIm; pagh, DIvI’ Hol; pagh, Hol DIchu’bogh.",
-        "addLocale": "+ Hol chu’",
-        "removeLocale": "{locale} pe’"
+        "hint": "Hol DIchu’. wa’ DoS DIchu’ poQ. vavmey Hol vIqIm; pagh, DIvI’ Hol; pagh, Hol DIchu’bogh."
       },
       "newPage": {
         "back": "{plural} vIcheghmoH",
@@ -3214,6 +3208,12 @@
     "linkInvalid": "Daqvam vIrarlaHbe’. qoDHa’ Daq, QIn Daq, ghap Sogverse He yIlo’.",
     "opensInNewTab": "(chu’ DaqDaq poSmoH)"
   },
+  "localeTabs": {
+    "addLanguage": "Hol chu’",
+    "removeLanguage": "{language} yIteq",
+    "complete": "naQ",
+    "notComplete": "naQbe’ wej"
+  },
   "header": {
     "nav": {
       "shop": "ngevwI’",
@@ -5077,8 +5077,7 @@
         },
         "languages": "Holmey",
         "languagesHint": "Hol mughlu’be’. Hoch Hol yIchel ’ej Hol tetlhDaq yIghItlh.",
-        "addLocale": "Hol chu’",
-        "removeLocale": "{locale} yIteq",
+        "bioTooLong": "ghaH tIq law’; pollaHbe’. {max} ngutlh yIlaghmoH.",
         "shortDescription": "wa’ tlhegh QIn",
         "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
         "longDescription": "ghaH",

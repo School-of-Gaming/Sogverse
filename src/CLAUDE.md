@@ -78,6 +78,7 @@ none of its own are stated in `packages/sog-ui/CLAUDE.md` and held by lint and b
 - Within `[locale]`, routes are grouped: `(auth)`, `(dashboard)`, `(public)`, `(voice)`, `(preview)`
 - **Name a route through the app's wrapped navigation module (`src/i18n/navigation.tsx`), not `next/link` / `next/navigation`** — hrefs are typed against the route map and emitted locale-prefixed. The exception, and the rule for it, is in `src/i18n/CLAUDE.md`: comparing a pathname → wrapped; embedding one in a URL → raw, with a comment.
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
+- **An editor that writes content per locale** is composed from the shared per-locale pieces — the rules, and what each editor decides for itself, are in `src/i18n/CLAUDE.md`.
 - Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `anon.ts` (identity-free server reads), `bearer.ts` (a caller's bearer token, for the MCP endpoint), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
@@ -291,7 +292,7 @@ This is Roblox's constraint on their own name, not a house-style ban on the word
 
 A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them.
 
-**Rule: the version a reader is shown of content written per locale (one row per thing and locale — a product's name, an article's title) is picked through `resolveTranslation()`, with the rows in a stable order (`inLocaleOrder()`), never by a hand-written lookup.** The fallback and the caller's half of the contract are in `src/i18n/CLAUDE.md`.
+**Rule: showing content written per locale — a product's name, an article, a profile — goes through `resolveTranslation()`, the one picker; never pick a version by hand.** A lookup that wants one exact locale is marked as such — `src/i18n/CLAUDE.md`, "Content written per locale".
 
 **Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there. The exception is legal pages (privacy, terms, safeguarding and their programme-specific siblings, plus the attributions page): `tlh` **omits** those keys and the request config falls back to English for that locale alone — binding copy is never in-character, and English stays its single source of truth. See `src/i18n/CLAUDE.md`.**
 

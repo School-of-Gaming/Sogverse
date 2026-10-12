@@ -4,11 +4,17 @@ import { useId, useState } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
+import {
+  AuthoredBodyEditor,
+  useAuthoredBodies,
+  type AuthoredBodiesHandle,
+} from "@/components/ui/authored-body-editor";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { LocaleTabs } from "@/components/ui/locale-tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import {
@@ -16,8 +22,6 @@ import {
   LIBRARY_CATEGORY_MESSAGE_KEY,
   isLibraryCategory,
 } from "@/components/library/categories";
-import { AuthoredBodyEditor } from "@/components/admin/authored-body-editor";
-import { LocaleVersionTabs } from "@/components/admin/locale-version-tabs";
 import { ImagePicker } from "@/components/admin/products/image-picker";
 import {
   articleAddress,
@@ -31,7 +35,15 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
+import {
+  activeLocaleDraft,
+  addLocaleTab,
+  editActiveLocaleDraft,
+  removeLocaleTab,
+  selectLocaleTab,
+  writtenLocales,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
@@ -42,8 +54,8 @@ import {
   type LibraryArticleInput,
 } from "@/services/library";
 import {
+  EMPTY_VERSION,
   emptyLibraryArticleForm,
-  formLocales,
   incompleteLocales,
   isBlankLibraryArticleForm,
   libraryArticleFormFromDraft,
@@ -52,7 +64,6 @@ import {
   libraryPublishState,
   librarySaveBlocker,
   sameAsSaved,
-  versionOf,
   type LibraryArticleForm,
   type LibraryArticleVersionDraft,
   type LibraryPublishNeed,
@@ -121,10 +132,9 @@ interface EditorCommonProps {
  * opens the saved copy on a page of its own, in the public site's chrome, and
  * waits for Save the same way, so what it shows is what Publish would publish.
  *
- * **The text is written per language, in tabs** — the shared ones: a tab
- * per language written, each marked complete or not, a remove control on each
- * while more than one remains, and an "add a language" select for the rest.
- * The category and the cover are the article's, once, beneath them.
+ * **The text is written per language, in tabs** — the shared locale tab bar,
+ * each tab marked complete or not. The category and the cover are the
+ * article's, once, beneath them.
  *
  * **Typing never adds, removes or moves a control.** Which buttons there are
  * changes only with a publish or an unpublish; what typing changes is whether
@@ -159,26 +169,12 @@ function EditorForm(props: LibraryArticleEditorProps) {
   const [publishError, setPublishError] = useState<string | null>(null);
   const [confirmingUnpublish, setConfirmingUnpublish] = useState(false);
 
-  // Each body the rich editor has been seeded with, mapped to the editor's own
-  // serialisation of it — how an untouched body comes back out of the editor.
-  const [editorBodies, setEditorBodies] = useState<ReadonlyMap<string, string>>(
-    () => new Map(),
-  );
-  const recordEditorBody = ({
-    value,
-    markdown,
-  }: {
-    value: string;
-    markdown: string;
-  }) =>
-    setEditorBodies((current) =>
-      current.get(value) === markdown
-        ? current
-        : new Map(current).set(value, markdown),
-    );
+  // How the rich editor respells each body it was seeded with, so an untouched
+  // body is never an unsaved change.
+  const bodies = useAuthoredBodies();
 
   const dirty =
-    article === null || !sameAsSaved(form, article.draft, editorBodies);
+    article === null || !sameAsSaved(form, article.draft, bodies);
   // What leaving would lose. A new article's save leaves the page on purpose,
   // so from the press on there is nothing to ask about.
   const unsaved =
@@ -269,9 +265,11 @@ function EditorForm(props: LibraryArticleEditorProps) {
         <Card>
           <CardContent className="space-y-5 p-6">
             <ArticleVersionsSection
-              form={form}
-              setForm={setForm}
-              onSeeded={recordEditorBody}
+              tabs={form.tabs}
+              setTabs={(update) =>
+                setForm((current) => ({ ...current, tabs: update(current.tabs) }))
+              }
+              bodies={bodies}
             />
 
             <Field
@@ -373,7 +371,7 @@ function EditorForm(props: LibraryArticleEditorProps) {
                 // the preview shows that version in that language's chrome.
                 <Link
                   href={ROUTES.libraryArticlePreview(props.article.draft.id)}
-                  locale={form.activeLocale}
+                  locale={form.tabs.active}
                   target="_blank"
                   rel="noopener"
                   className={buttonVariants({ variant: "outline" })}
@@ -392,10 +390,10 @@ function EditorForm(props: LibraryArticleEditorProps) {
                     : articleAddress(
                         props.published,
                         props.article.draft,
-                        form.activeLocale,
+                        form.tabs.active,
                       ),
                 )}
-                locale={form.activeLocale}
+                locale={form.tabs.active}
                 target="_blank"
                 rel="noopener"
                 className={buttonVariants({ variant: "outline" })}
@@ -618,81 +616,50 @@ function PublishReasons({
 }
 
 /**
- * **An article's text, one tab per language**, in the language tabs the
- * per-locale admin editors share. Each tab says whether its version is
- * complete — a title, a summary and a body — because only a complete one is
- * published.
+ * **An article's text, one tab per language**, under the shared locale tab
+ * bar. Each tab says whether its version is complete — a title, a summary and
+ * a body — because only a complete one is published.
  *
  * The body editor reads its content once, at mount, so the locale is its key
  * and switching tabs remounts it on that language's draft.
  */
 function ArticleVersionsSection({
-  form,
-  setForm,
-  onSeeded,
+  tabs,
+  setTabs,
+  bodies,
 }: {
-  form: LibraryArticleForm;
-  setForm: React.Dispatch<React.SetStateAction<LibraryArticleForm>>;
-  onSeeded: (seed: { value: string; markdown: string }) => void;
+  tabs: LocaleTabState<LibraryArticleVersionDraft>;
+  setTabs: (
+    update: (
+      tabs: LocaleTabState<LibraryArticleVersionDraft>,
+    ) => LocaleTabState<LibraryArticleVersionDraft>,
+  ) => void;
+  bodies: AuthoredBodiesHandle;
 }) {
   const t = useTranslations("admin.library");
   const uiLocale = resolveLocale(useLocale());
 
-  const locale = form.activeLocale;
-  const addedLocales = formLocales(form);
-  const draft = versionOf(form, locale);
-
-  function setActive(patch: Partial<LibraryArticleVersionDraft>) {
-    setForm((prev) => ({
-      ...prev,
-      versions: {
-        ...prev.versions,
-        [prev.activeLocale]: { ...versionOf(prev, prev.activeLocale), ...patch },
-      },
-    }));
-  }
-
-  function addLocale(next: SupportedLocale) {
-    setForm((prev) => ({
-      ...prev,
-      versions: { ...prev.versions, [next]: versionOf(prev, next) },
-      activeLocale: next,
-    }));
-  }
-
-  function removeLocale(gone: SupportedLocale) {
-    setForm((prev) => {
-      const next = { ...prev.versions };
-      delete next[gone];
-      return {
-        ...prev,
-        versions: next,
-        activeLocale: localeTabAfterRemoving(
-          next,
-          prev.activeLocale,
-          gone,
-          uiLocale,
-        ),
-      };
-    });
-  }
+  const locale = tabs.active;
+  const draft = activeLocaleDraft(tabs, EMPTY_VERSION);
+  const edit = (patch: Partial<LibraryArticleVersionDraft>) =>
+    setTabs((current) => editActiveLocaleDraft(current, patch, EMPTY_VERSION));
 
   return (
     <div className="space-y-5">
       <Field label={t("fields.languages")} hint={t("hints.languages")}>
-        <LocaleVersionTabs
-          open={addedLocales}
+        <LocaleTabs
+          written={writtenLocales(tabs.drafts)}
           active={locale}
-          isComplete={(l) => isCompleteVersion(versionOf(form, l))}
-          onSelect={(l) => setForm((prev) => ({ ...prev, activeLocale: l }))}
-          onAdd={addLocale}
-          onRemove={removeLocale}
-          labels={{
-            addLocale: t("addLocale"),
-            removeLocale: (language) => t("removeLocale", { language }),
-            complete: t("versionComplete"),
-            incomplete: t("versionIncomplete"),
-          }}
+          onSelect={(next) => setTabs((current) => selectLocaleTab(current, next))}
+          onAdd={(next) =>
+            setTabs((current) => addLocaleTab(current, next, EMPTY_VERSION))
+          }
+          onRemove={(gone) =>
+            setTabs((current) => removeLocaleTab(current, gone, uiLocale))
+          }
+          isComplete={(l) =>
+            isCompleteVersion(tabs.drafts[l] ?? EMPTY_VERSION)
+          }
         />
       </Field>
 
@@ -701,7 +668,7 @@ function ArticleVersionsSection({
           id="library-article-title"
           value={draft.title}
           lang={locale}
-          onChange={(event) => setActive({ title: event.target.value })}
+          onChange={(event) => edit({ title: event.target.value })}
           autoComplete="off"
         />
       </Field>
@@ -716,7 +683,7 @@ function ArticleVersionsSection({
             id="library-article-summary"
             value={draft.summary}
             lang={locale}
-            onChange={(event) => setActive({ summary: event.target.value })}
+            onChange={(event) => edit({ summary: event.target.value })}
             aria-describedby={hintId}
             rows={3}
           />
@@ -727,11 +694,11 @@ function ArticleVersionsSection({
         {({ hintId }) => (
           <div lang={locale}>
             <AuthoredBodyEditor
-              useCase="article"
               key={locale}
+              bodies={bodies}
+              useCase="article"
               value={draft.body}
-              onChange={(body) => setActive({ body })}
-              onSeeded={onSeeded}
+              onChange={(body) => edit({ body })}
               placeholder={t("bodyPlaceholder")}
               ariaLabel={t("fields.body")}
               describedBy={hintId}

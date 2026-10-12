@@ -129,13 +129,6 @@ export async function buildProductMetadata(
   const { data: product, error } = await supabase
     .from("products")
     .select("image_path, product_translations(locale, name, short_description)")
-    // Embedded resources come back unordered, so `resolveTranslation`'s last
-    // step ("first row present") would otherwise pick an arbitrary language for
-    // a product carrying neither the default locale nor English. Alphabetical
-    // locale order is arbitrary too, but it is *stable*, which is all that step
-    // needs. Ordering an embedded resource needs its table named — a bare
-    // `.order("locale")` would order `products` by a column it does not have.
-    .order("locale", { referencedTable: "product_translations" })
     .eq("id", id)
     .maybeSingle();
 
@@ -149,7 +142,7 @@ export async function buildProductMetadata(
 
   const locale = resolveLocale(await getLocale());
   const translation =
-    product && resolveTranslation(inLocaleOrder(product.product_translations), locale);
+    product && resolveTranslation(product.product_translations, locale);
   if (!product || !translation) return PRODUCT_ROBOTS_ONLY;
 
   // The product's name and nothing else. It used to be an absolute

@@ -225,6 +225,7 @@ class DmSync {
       recipient.locale !== null && isSupportedLocale(recipient.locale)
         ? recipient.locale
         : DEFAULT_LOCALE;
+    // exact-locale: a cache of the DM copy per app locale, keyed by the locale already settled above
     let copy = this.copies.get(locale);
     if (copy === undefined) {
       copy = loadDiscordSubOfferCopy(locale);
@@ -234,6 +235,7 @@ class DmSync {
   }
 
   private sessionFor(locale: SupportedLocale): SubstitutionDmSession {
+    // exact-locale: a cache of the DM session per app locale, not a pick among content versions
     let session = this.sessions.get(locale);
     if (session === undefined) {
       session = substitutionDmSession(this.snapshot, locale);

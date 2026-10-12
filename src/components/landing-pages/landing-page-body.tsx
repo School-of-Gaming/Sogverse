@@ -43,6 +43,7 @@ export function LandingPageBody({
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
   };
   return (
+    // exact-locale: marks text written in another language than the page with lang
     <div lang={textLocale === locale ? undefined : textLocale}>
       {sections.map((section) => (
         <Fragment key={section.id}>
