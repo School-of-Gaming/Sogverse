@@ -40,8 +40,11 @@ const WEEKDAY_READS: readonly RegExp[] = [
   // A date-fns format string carrying a weekday token (`E`, `e`, `c`, `i`
   // runs), as a string argument of `format` or `formatInTimeZone`. The token
   // must stand alone between non-alphanumerics, so a zone name or a
-  // `yyyy-MM-dd` pattern never matches.
-  /\bformat(?:InTimeZone)?\((?:(?:[^();]|\([^();]*\))*?,\s*)?["'`][^"'`\n]*(?<![A-Za-z0-9#])(?:E{1,5}|e{1,5}|c{1,5}|i{1,5})(?![A-Za-z0-9])[^"'`\n]*["'`]/,
+  // `yyyy-MM-dd` pattern never matches. Anything up to the statement's end
+  // may precede the string, earlier string arguments included, and that
+  // prefix is one flat repetition so the expression cannot backtrack
+  // catastrophically.
+  /\bformat(?:InTimeZone)?\([^;]*?["'`][^"'`\n]*(?<![A-Za-z0-9#])(?:E{1,5}|e{1,5}|c{1,5}|i{1,5})(?![A-Za-z0-9])[^"'`\n]*["'`]/,
   /\bweekdayOf\(/,
   /\bnextOccurrenceInstant\(/,
   /\bviewerWeekdayIndex\(/,
