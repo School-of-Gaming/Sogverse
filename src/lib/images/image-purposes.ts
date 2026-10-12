@@ -58,7 +58,9 @@ export const IMAGE_PURPOSES = {
   },
   // A wide 2:1 band at the bottom of a session report email, over twice the
   // mail's 560px content column, so it stays sharp on a high-density screen
-  // at the column's full width.
+  // at the column's full width. Deliberately not the 16:9 the Library and
+  // landing pictures share: the unusual band is what makes a spotlight stand
+  // out from the report above it (the owner's choice, 2026-10-12).
   spotlight_image: {
     bucket: "spotlight-images",
     visibility: "public",
