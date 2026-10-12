@@ -41,13 +41,7 @@ type Classification =
   /** The one path per-locale rich bodies take. */
   | { readonly kind: "authoredBodyEditor" }
   /** A rich field that is not content written per locale. */
-  | { readonly kind: "notPerLocale"; readonly reason: string }
-  /**
-   * A per-locale rich body that has not moved onto the shared editor yet.
-   * Each entry is work queued, not an exemption: it is deleted by the change
-   * that moves its editor over.
-   */
-  | { readonly kind: "notYetMigrated"; readonly reason: string };
+  | { readonly kind: "notPerLocale"; readonly reason: string };
 
 const IMPORTERS: Readonly<Record<string, Classification>> = {
   "src/components/ui/authored-body-editor.tsx": { kind: "authoredBodyEditor" },

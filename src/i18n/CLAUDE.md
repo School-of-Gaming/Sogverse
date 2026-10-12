@@ -162,6 +162,36 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 **The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split.
 
+## Editing content written per locale
+
+An editor that writes one version of an item per site locale — a product, a Library article, a Team profile, a spotlight, a holiday calendar — is composed from shared pieces, so an admin meets one behaviour in all of them. **Rule: a new per-locale editor composes these; it never grows its own tab state, blank-tab rule or draft comparison.**
+
+- **The tab set** (`src/lib/i18n/locale-tabs.ts`) — pure helpers the form applies inside its own state setter: one draft per written locale (every field a string) plus the tab shown, which tab opens, add/remove/select, the drafts a save stores, the save check, and the draft comparison.
+- **The tab bar** (`LocaleTabs`, `src/components/ui/`) — only the bar, and its own copy in the `localeTabs` namespace. The form wraps it in a `Field` whose hint states the form's content rule, and optionally hands it a completeness mark and an attention state per tab.
+- **The rich body editor and its body record** (`AuthoredBodyEditor` and `useAuthoredBodies`, `src/components/ui/authored-body-editor.tsx`) — one record per form, shared by every rich field on it, keyed per tab so a switch remounts the editor on that tab's draft.
+
+**Rule: a blank tab is not a version, in every editor.** A tab whose every field is blank once trimmed is dropped at save and ignored by the unsaved-changes check; a partly written tab is judged by the editor's content rule.
+
+**Rule: every per-locale editor tracks unsaved changes and guards leaving the page** with the shared unsaved-changes guard. The check is the locale drafts compared by the shared comparison *and* every non-locale field on the form — pictures, toggles, a price — compared alongside them.
+
+**Rule: a rich field written per locale goes through the shared body editor, and the comparison takes the form's body record.** The rich editor respells a body on load — its own markdown dialect, a trailing paragraph after a final list or heading — and reports it whether or not anything was typed, so a form wiring the editor's `onChange` straight into state reads every untouched body as an unsaved change. The editor also reads its value once, at mount, so a form that resets its values (a Discard) re-seeds through the record's reset rather than leaving the thrown-away text on screen. `tests/unit/rich-text-editor-importers.test.ts` enforces it: every file under `src/` that imports the rich editor is classified there — the shared body editor, or a field not written per locale with the reason — and a new importer fails until it is.
+
+**What each editor decides for itself, deliberately** — a new editor states each of these rather than inheriting one from a sibling:
+
+- **Its content rule**: what a savable version is, and whether the shared save check (something written, every written tab complete) is the rule at all.
+- **What "complete" means for the tab marks**, if it shows them, and any **publish or ready gate** beyond the save.
+- **Any attention state** — a fault a tab must show even when not the one open.
+- **Discard or not.** A standing page the admin keeps returning to carries one; a create/edit flow leaves by its own navigation.
+- **Its non-locale fields**, which join the unsaved-changes check.
+
+The editors today:
+
+| Editor | Saves when | Gate beyond the save | Discard |
+|---|---|---|---|
+| Library (`src/components/admin/library/`) | every written version has a title | Publish needs title, summary and body complete in a version | no |
+| Team profiles (`src/components/team/`) | anything, while not public | the public box needs photo, admin title and both descriptions in every written language; a too-long bio flags its tab | yes |
+| Products (`src/components/admin/products/`) | every written tab has a name and short description | — | no |
+
 ## Usage patterns
 
 - **Server components / `generateMetadata()`** — `await getTranslations("namespace")` from `next-intl/server`.

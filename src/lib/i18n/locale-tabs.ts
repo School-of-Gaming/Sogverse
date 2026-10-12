@@ -3,9 +3,8 @@ import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales
 import { resolveTranslation } from "./resolve-translation";
 
 /*
- * **The language tabs of an editor of content written per locale** — the
- * product, Library article, spotlight, Team profile and holiday calendar
- * editors alike, so an admin meets one behaviour in all of them. Pure, so each
+ * **The language tabs of an editor of content written per locale**, the same
+ * in every such editor, so an admin meets one behaviour in all of them. Pure, so each
  * form applies these inside its own state setter; the tab bar that drives them
  * is the shared `LocaleTabs` component.
  *
@@ -186,9 +185,9 @@ export function draftsToSave<T extends LocaleDraft<T>>(
 }
 
 /**
- * What stops a set of per-locale drafts from being saved, under the rule
- * authored content follows: **something written, and every written tab
- * complete** by the editor's own `isComplete`. Blank tabs are left out first.
+ * What stops a set of per-locale drafts from being saved, for an editor whose
+ * content rule is **something written, and every written tab complete** by its
+ * own `isComplete` — not every editor's rule. Blank tabs are left out first.
  * Any single locale is enough, because a reader is shown theirs, else English,
  * else the first written (`resolveTranslation()`); a tab partly written is
  * refused rather than saved as a gap, so what was added is either finished or
