@@ -85,7 +85,10 @@
       "teamProfile": "My profile",
       "adminTeamProfile": "Profile",
       "adminFeedback": "Feedback",
-      "team": "Team"
+      "team": "Team",
+      "adminHolidayCalendars": "Holiday Calendars",
+      "adminHolidayCalendarNew": "New Holiday Calendar",
+      "adminHolidayCalendarEdit": "Edit Holiday Calendar"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -444,6 +447,8 @@
       "billedNotRecorded": "Billed, not recorded",
       "upcoming": "Upcoming",
       "cancelled": "Cancelled",
+      "holiday": "Holiday",
+      "holidayNamed": "Holiday — {name}",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
       "clubsIn": "Clubs in {municipality}",
@@ -523,6 +528,74 @@
         "hint": "The customer this club’s sessions are invoiced to. A club without one is flagged on the invoicing page and produces no invoice file.",
         "manage": "Manage invoice customers",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "Holiday calendars",
+      "subtitle": "The school holidays and other breaks a club can follow. A club has no sessions on the days of a break.",
+      "addCalendar": "Add a calendar",
+      "columns": {
+        "name": "Name",
+        "breaks": "Breaks",
+        "nextBreak": "Next break",
+        "clubs": "Clubs"
+      },
+      "noUpcomingBreak": "None coming up",
+      "empty": "No holiday calendars yet. Add the first one.",
+      "backToList": "Back to holiday calendars",
+      "notFound": "There is no holiday calendar with this id.",
+      "newPage": {
+        "title": "New holiday calendar",
+        "submit": "Create calendar"
+      },
+      "editPage": {
+        "title": "Edit holiday calendar"
+      },
+      "sections": {
+        "calendar": "Calendar",
+        "breaks": "Breaks",
+        "breaksDescription": "Each break runs from its first day to its last day, both included. Families see its name in place of the sessions it removes.",
+        "products": "Clubs following this calendar",
+        "productsDescription": "Saving a change to the breaks changes these clubs straight away, past months included."
+      },
+      "fields": {
+        "name": "Name",
+        "languages": "Languages",
+        "firstDay": "First day",
+        "lastDay": "Last day",
+        "breakName": "Name ({language})"
+      },
+      "hints": {
+        "name": "Only admins see this name, such as Helsinki schools. Families only ever see the names of the breaks.",
+        "languages": "Every break needs a name in each language you add. Families read the name in their own language where there is one, otherwise in English or the first language written."
+      },
+      "addLocale": "Add a language",
+      "removeLocale": "Remove {language}",
+      "noBreaks": "No breaks yet.",
+      "breakNumber": "Break {number}",
+      "addBreak": "Add a break",
+      "removeBreak": "Remove break {number}",
+      "noProducts": "No club follows this calendar yet. A club picks its calendars on its own page.",
+      "errors": {
+        "nameRequired": "Give the calendar a name.",
+        "datesRequired": "Break {number} needs a first and a last day.",
+        "endBeforeStart": "Break {number} ends before it begins.",
+        "breakNameMissing": "Break {number} needs a name in {language}.",
+        "overlap": "Breaks {first} and {second} overlap. A day can only be in one break.",
+        "saveFailed": "The calendar could not be saved. Try again.",
+        "saveFailedWithReason": "The calendar could not be saved — {reason}"
+      },
+      "impact": {
+        "title": "Save these changes?",
+        "description": "{count, plural, one {This club changes} other {These # clubs change}} as soon as you save.",
+        "futureRemoved": "Families will see no session on {count, plural, one {# date} other {# dates}}: {dates}.",
+        "futureRestored": "Families will see sessions again on {count, plural, one {# date} other {# dates}}: {dates}.",
+        "pastRemoved": "{count, plural, one {A past session disappears} other {Past sessions on # dates disappear}} from families’ history: {dates}.",
+        "pastRestored": "{count, plural, one {A past session comes} other {Past sessions on # dates come}} back to families’ history: {dates}.",
+        "recordsHidden": "{count, plural, one {# written-up session is} other {# written-up sessions are}} hidden from families.",
+        "recordsShown": "{count, plural, one {# written-up session is} other {# written-up sessions are}} shown to families again.",
+        "requestsStopped": "{count, plural, one {# substitution request no longer has} other {# substitution requests no longer have}} a session to cover.",
+        "requestsReopened": "{count, plural, one {# substitution request has} other {# substitution requests have}} a session to cover again."
       }
     },
     "library": {
@@ -2962,6 +3035,8 @@
     "notRecorded": "Not recorded",
     "upcoming": "Upcoming",
     "cancelled": "Cancelled",
+    "holiday": "Holiday",
+    "holidayNamed": "Holiday — {name}",
     "absentSubstituted": "Away — {name} substituted",
     "absentNoSubstitute": "Away — no substitute",
     "substitutingFor": "substituting for {name}",
@@ -3040,6 +3115,7 @@
     "showLess": "Show less",
     "lastEditedBy": "By {name}",
     "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}",
+    "holidayLine": "No session · {breakName}, {range}",
     "photos": {
       "list": "Session photos",
       "open": "Open photo {index} of {count}",
@@ -3558,7 +3634,8 @@
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
     "substitutions": "Substitutions",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "holidayCalendars": "Holiday Calendars"
   },
   "home": {
     "hero": {

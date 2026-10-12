@@ -85,7 +85,10 @@
       "teamProfile": "Oma profiili",
       "adminTeamProfile": "Profiili",
       "adminFeedback": "Palaute",
-      "team": "Tiimi"
+      "team": "Tiimi",
+      "adminHolidayCalendars": "Lomakalenterit",
+      "adminHolidayCalendarNew": "Uusi lomakalenteri",
+      "adminHolidayCalendarEdit": "Muokkaa lomakalenteria"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -444,6 +447,8 @@
       "billedNotRecorded": "Laskutettu, ei kirjattu",
       "upcoming": "Tulossa",
       "cancelled": "Peruttu",
+      "holiday": "Loma",
+      "holidayNamed": "Loma – {name}",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
       "clubsIn": "Kerhot: {municipality}",
@@ -523,6 +528,74 @@
         "hint": "Asiakas, jolle tämän kerhon kerrat laskutetaan. Ilman asiakasta kerho merkitään laskutussivulla puutteelliseksi, eikä siitä synny laskutiedostoa.",
         "manage": "Hallinnoi laskutusasiakkaita",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "Lomakalenterit",
+      "subtitle": "Koulujen lomat ja muut tauot, joita kerho voi noudattaa. Kerholla ei ole kertoja tauon päivinä.",
+      "addCalendar": "Lisää kalenteri",
+      "columns": {
+        "name": "Nimi",
+        "breaks": "Tauot",
+        "nextBreak": "Seuraava tauko",
+        "clubs": "Kerhot"
+      },
+      "noUpcomingBreak": "Ei tulevia",
+      "empty": "Lomakalentereita ei vielä ole. Lisää ensimmäinen.",
+      "backToList": "Takaisin lomakalentereihin",
+      "notFound": "Tällä tunnisteella ei löydy lomakalenteria.",
+      "newPage": {
+        "title": "Uusi lomakalenteri",
+        "submit": "Luo kalenteri"
+      },
+      "editPage": {
+        "title": "Muokkaa lomakalenteria"
+      },
+      "sections": {
+        "calendar": "Kalenteri",
+        "breaks": "Tauot",
+        "breaksDescription": "Tauko kestää ensimmäisestä päivästään viimeiseen, molemmat mukaan lukien. Perheet näkevät tauon nimen niiden kertojen paikalla, jotka se poistaa.",
+        "products": "Kalenteria noudattavat kerhot",
+        "productsDescription": "Taukoihin tallennettu muutos muuttaa nämä kerhot heti, myös menneet kuukaudet."
+      },
+      "fields": {
+        "name": "Nimi",
+        "languages": "Kielet",
+        "firstDay": "Ensimmäinen päivä",
+        "lastDay": "Viimeinen päivä",
+        "breakName": "Nimi ({language})"
+      },
+      "hints": {
+        "name": "Vain ylläpitäjät näkevät tämän nimen, esimerkiksi Helsingin koulut. Perheet näkevät vain taukojen nimet.",
+        "languages": "Jokainen tauko tarvitsee nimen jokaisella lisäämälläsi kielellä. Perheet lukevat nimen omalla kielellään, jos se on kirjoitettu, muuten englanniksi tai ensimmäisellä kirjoitetulla kielellä."
+      },
+      "addLocale": "Lisää kieli",
+      "removeLocale": "Poista kieli: {language}",
+      "noBreaks": "Taukoja ei vielä ole.",
+      "breakNumber": "Tauko {number}",
+      "addBreak": "Lisää tauko",
+      "removeBreak": "Poista tauko {number}",
+      "noProducts": "Mikään kerho ei vielä noudata tätä kalenteria. Kerhon kalenterit valitaan kerhon omalla sivulla.",
+      "errors": {
+        "nameRequired": "Anna kalenterille nimi.",
+        "datesRequired": "Tauko {number} tarvitsee ensimmäisen ja viimeisen päivän.",
+        "endBeforeStart": "Tauko {number} päättyy ennen kuin se alkaa.",
+        "breakNameMissing": "Tauko {number} tarvitsee nimen kielellä {language}.",
+        "overlap": "Tauot {first} ja {second} menevät päällekkäin. Päivä voi kuulua vain yhteen taukoon.",
+        "saveFailed": "Kalenteria ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Kalenteria ei voitu tallentaa – {reason}"
+      },
+      "impact": {
+        "title": "Tallennetaanko muutokset?",
+        "description": "{count, plural, one {Tämä kerho muuttuu} other {Nämä # kerhoa muuttuvat}} heti, kun tallennat.",
+        "futureRemoved": "Perheet eivät näe kertaa {count, plural, one {# päivänä} other {# päivänä}}: {dates}.",
+        "futureRestored": "Perheet näkevät kerrat taas {count, plural, one {# päivänä} other {# päivänä}}: {dates}.",
+        "pastRemoved": "{count, plural, one {Mennyt kerta katoaa} other {Menneet kerrat # päivältä katoavat}} perheiden historiasta: {dates}.",
+        "pastRestored": "{count, plural, one {Mennyt kerta palaa} other {Menneet kerrat # päivältä palaavat}} perheiden historiaan: {dates}.",
+        "recordsHidden": "{count, plural, one {# kirjattu kerta piilotetaan} other {# kirjattua kertaa piilotetaan}} perheiltä.",
+        "recordsShown": "{count, plural, one {# kirjattu kerta näytetään} other {# kirjattua kertaa näytetään}} perheille taas.",
+        "requestsStopped": "{count, plural, one {# sijaispyyntö jää} other {# sijaispyyntöä jää}} ilman tuurattavaa kertaa.",
+        "requestsReopened": "{count, plural, one {# sijaispyynnöllä} other {# sijaispyynnöllä}} on taas tuurattava kerta."
       }
     },
     "library": {
@@ -2962,6 +3035,8 @@
     "notRecorded": "Ei kirjattu",
     "upcoming": "Tulossa",
     "cancelled": "Peruttu",
+    "holiday": "Loma",
+    "holidayNamed": "Loma – {name}",
     "absentSubstituted": "Poissa – tuuraajana {name}",
     "absentNoSubstitute": "Poissa – ei tuuraajaa",
     "substitutingFor": "tuuraus, poissa {name}",
@@ -3040,6 +3115,7 @@
     "showLess": "Näytä vähemmän",
     "lastEditedBy": "Muokannut {name}",
     "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}",
+    "holidayLine": "Ei kertaa · {breakName}, {range}",
     "photos": {
       "list": "Tämän kerran kuvat",
       "open": "Avaa kuva {index}/{count}",
@@ -3558,7 +3634,8 @@
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki",
     "substitutions": "Tuuraukset",
-    "feedback": "Palaute"
+    "feedback": "Palaute",
+    "holidayCalendars": "Lomakalenterit"
   },
   "home": {
     "hero": {

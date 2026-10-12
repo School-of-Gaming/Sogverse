@@ -11,6 +11,7 @@ import {
   FlaskConical,
   Building2,
   BookOpen,
+  CalendarOff,
   ChevronLeft,
   ChevronRight,
   MapPin,
@@ -36,7 +37,7 @@ type SidebarKey =
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
   | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "landingPages" | "platformVision"
   | "camps" | "events"
-  | "sites" | "substitutions" | "feedback";
+  | "sites" | "holidayCalendars" | "substitutions" | "feedback";
 
 interface NavItemDef {
   href: StaticAppHref;
@@ -78,6 +79,9 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
     { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
     { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
+    // Beside sites, the other reference data clubs are built from: a club
+    // follows calendars the way it meets at a site.
+    { href: ROUTES.admin.holidayCalendars, labelKey: "holidayCalendars", icon: <CalendarOff className="h-5 w-5" /> },
     { href: ROUTES.admin.geduInvoicing, labelKey: "geduInvoicing", icon: <ReceiptText className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
     // Directly under the ledger it serves: a customer is only ever looked up

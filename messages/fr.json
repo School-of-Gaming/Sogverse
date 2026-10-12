@@ -85,7 +85,10 @@
       "teamProfile": "Mon profil",
       "adminTeamProfile": "Profil",
       "adminFeedback": "Avis",
-      "team": "Équipe"
+      "team": "Équipe",
+      "adminHolidayCalendars": "Calendriers de vacances",
+      "adminHolidayCalendarNew": "Nouveau calendrier de vacances",
+      "adminHolidayCalendarEdit": "Modifier le calendrier de vacances"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -444,6 +447,8 @@
       "billedNotRecorded": "Facturée, non enregistrée",
       "upcoming": "À venir",
       "cancelled": "Annulée",
+      "holiday": "Vacances",
+      "holidayNamed": "Vacances – {name}",
       "unrecordedSessions": "{count, plural, one {# non enregistrée} other {# non enregistrées}}",
       "sessionsFor": "Séances de {club}",
       "clubsIn": "Clubs de {municipality}",
@@ -523,6 +528,74 @@
         "hint": "Le client à qui les séances de ce club sont facturées. Un club sans client est signalé sur la page de facturation et ne produit aucun fichier de facture.",
         "manage": "Gérer les clients de facturation",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "Calendriers de vacances",
+      "subtitle": "Les vacances scolaires et autres pauses qu’un club peut suivre. Un club n’a aucune séance pendant les jours d’une pause.",
+      "addCalendar": "Ajouter un calendrier",
+      "columns": {
+        "name": "Nom",
+        "breaks": "Pauses",
+        "nextBreak": "Prochaine pause",
+        "clubs": "Clubs"
+      },
+      "noUpcomingBreak": "Aucune à venir",
+      "empty": "Aucun calendrier de vacances pour l’instant. Ajoutez le premier.",
+      "backToList": "Retour aux calendriers de vacances",
+      "notFound": "Aucun calendrier de vacances ne correspond à cet identifiant.",
+      "newPage": {
+        "title": "Nouveau calendrier de vacances",
+        "submit": "Créer le calendrier"
+      },
+      "editPage": {
+        "title": "Modifier le calendrier de vacances"
+      },
+      "sections": {
+        "calendar": "Calendrier",
+        "breaks": "Pauses",
+        "breaksDescription": "Une pause va de son premier à son dernier jour, inclus. Les familles voient son nom à la place des séances qu’elle supprime.",
+        "products": "Clubs qui suivent ce calendrier",
+        "productsDescription": "Une modification enregistrée des pauses change ces clubs immédiatement, y compris les mois passés."
+      },
+      "fields": {
+        "name": "Nom",
+        "languages": "Langues",
+        "firstDay": "Premier jour",
+        "lastDay": "Dernier jour",
+        "breakName": "Nom ({language})"
+      },
+      "hints": {
+        "name": "Seuls les administrateurs voient ce nom, par exemple Écoles d’Helsinki. Les familles ne voient que les noms des pauses.",
+        "languages": "Chaque pause doit avoir un nom dans chaque langue ajoutée. Les familles lisent le nom dans leur langue s’il existe, sinon en anglais ou dans la première langue rédigée."
+      },
+      "addLocale": "Ajouter une langue",
+      "removeLocale": "Retirer : {language}",
+      "noBreaks": "Aucune pause pour l’instant.",
+      "breakNumber": "Pause {number}",
+      "addBreak": "Ajouter une pause",
+      "removeBreak": "Retirer la pause {number}",
+      "noProducts": "Aucun club ne suit encore ce calendrier. Un club choisit ses calendriers sur sa propre page.",
+      "errors": {
+        "nameRequired": "Donnez un nom au calendrier.",
+        "datesRequired": "La pause {number} doit avoir un premier et un dernier jour.",
+        "endBeforeStart": "La pause {number} se termine avant de commencer.",
+        "breakNameMissing": "La pause {number} doit avoir un nom en {language}.",
+        "overlap": "Les pauses {first} et {second} se chevauchent. Un jour ne peut appartenir qu’à une seule pause.",
+        "saveFailed": "Le calendrier n’a pas pu être enregistré. Réessayez.",
+        "saveFailedWithReason": "Le calendrier n’a pas pu être enregistré — {reason}"
+      },
+      "impact": {
+        "title": "Enregistrer ces modifications ?",
+        "description": "{count, plural, one {Ce club change} other {Ces # clubs changent}} dès l’enregistrement.",
+        "futureRemoved": "Les familles ne verront aucune séance {count, plural, one {pendant # jour} other {pendant # jours}} : {dates}.",
+        "futureRestored": "Les familles reverront des séances {count, plural, one {pendant # jour} other {pendant # jours}} : {dates}.",
+        "pastRemoved": "{count, plural, one {Une séance passée disparaît} other {Des séances passées sur # jours disparaissent}} de l’historique des familles : {dates}.",
+        "pastRestored": "{count, plural, one {Une séance passée réapparaît} other {Des séances passées sur # jours réapparaissent}} dans l’historique des familles : {dates}.",
+        "recordsHidden": "{count, plural, one {# séance documentée est masquée} other {# séances documentées sont masquées}} aux familles.",
+        "recordsShown": "{count, plural, one {# séance documentée est de nouveau visible} other {# séances documentées sont de nouveau visibles}} pour les familles.",
+        "requestsStopped": "{count, plural, one {# demande de remplacement n’a plus} other {# demandes de remplacement n’ont plus}} de séance à couvrir.",
+        "requestsReopened": "{count, plural, one {# demande de remplacement a} other {# demandes de remplacement ont}} de nouveau une séance à couvrir."
       }
     },
     "library": {
@@ -2962,6 +3035,8 @@
     "notRecorded": "Non enregistrée",
     "upcoming": "À venir",
     "cancelled": "Annulée",
+    "holiday": "Vacances",
+    "holidayNamed": "Vacances – {name}",
     "absentSubstituted": "Absence – remplacement par {name}",
     "absentNoSubstitute": "Absence – sans remplacement",
     "substitutingFor": "en remplacement de {name}",
@@ -3040,6 +3115,7 @@
     "showLess": "Réduire",
     "lastEditedBy": "Par {name}",
     "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}",
+    "holidayLine": "Pas de séance · {breakName}, {range}",
     "photos": {
       "list": "Photos de la séance",
       "open": "Ouvrir la photo {index} sur {count}",
@@ -3558,7 +3634,8 @@
     "expandSidebar": "Déplier la barre latérale",
     "collapseSidebar": "Replier la barre latérale",
     "substitutions": "Remplacements",
-    "feedback": "Avis"
+    "feedback": "Avis",
+    "holidayCalendars": "Calendriers de vacances"
   },
   "home": {
     "hero": {

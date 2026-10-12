@@ -115,3 +115,19 @@ export const holidayCalendarChangePreview = z
   .strict();
 
 export type HolidayCalendarChangePreview = z.output<typeof holidayCalendarChangePreview>;
+
+/**
+ * What the calendar writers take: the admin-only name, and the calendar's
+ * whole set of breaks afterwards. The name is trimmed here so what reaches the
+ * function is what it stores; every other rule — a blank or taken name, a break
+ * ending before it begins, two breaks overlapping, a blank name — is the
+ * function's, refused with a sentence written to be shown as it is.
+ */
+export const holidayCalendarInput = z
+  .object({
+    name: z.string().trim().min(1),
+    breaks: z.array(holidayBreakInput),
+  })
+  .strict();
+
+export type HolidayCalendarInput = z.input<typeof holidayCalendarInput>;

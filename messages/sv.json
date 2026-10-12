@@ -85,7 +85,10 @@
       "teamProfile": "Min profil",
       "adminTeamProfile": "Profil",
       "adminFeedback": "Feedback",
-      "team": "Team"
+      "team": "Team",
+      "adminHolidayCalendars": "Lovkalendrar",
+      "adminHolidayCalendarNew": "Ny lovkalender",
+      "adminHolidayCalendarEdit": "Redigera lovkalender"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -444,6 +447,8 @@
       "billedNotRecorded": "Fakturerat, inte registrerat",
       "upcoming": "Kommande",
       "cancelled": "Inställt",
+      "holiday": "Lov",
+      "holidayNamed": "Lov – {name}",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
       "clubsIn": "Klubbar i {municipality}",
@@ -523,6 +528,74 @@
         "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "Lovkalendrar",
+      "subtitle": "Skollov och andra uppehåll som en klubb kan följa. En klubb har inga träffar under ett uppehålls dagar.",
+      "addCalendar": "Lägg till en kalender",
+      "columns": {
+        "name": "Namn",
+        "breaks": "Uppehåll",
+        "nextBreak": "Nästa uppehåll",
+        "clubs": "Klubbar"
+      },
+      "noUpcomingBreak": "Inga kommande",
+      "empty": "Inga lovkalendrar än. Lägg till den första.",
+      "backToList": "Tillbaka till lovkalendrar",
+      "notFound": "Det finns ingen lovkalender med detta id.",
+      "newPage": {
+        "title": "Ny lovkalender",
+        "submit": "Skapa kalender"
+      },
+      "editPage": {
+        "title": "Redigera lovkalender"
+      },
+      "sections": {
+        "calendar": "Kalender",
+        "breaks": "Uppehåll",
+        "breaksDescription": "Ett uppehåll varar från sin första till sin sista dag, båda inräknade. Familjerna ser dess namn i stället för de träffar det tar bort.",
+        "products": "Klubbar som följer kalendern",
+        "productsDescription": "En sparad ändring av uppehållen ändrar dessa klubbar direkt, även tidigare månader."
+      },
+      "fields": {
+        "name": "Namn",
+        "languages": "Språk",
+        "firstDay": "Första dag",
+        "lastDay": "Sista dag",
+        "breakName": "Namn ({language})"
+      },
+      "hints": {
+        "name": "Bara administratörer ser det här namnet, till exempel Helsingfors skolor. Familjerna ser bara uppehållens namn.",
+        "languages": "Varje uppehåll behöver ett namn på varje språk du lägger till. Familjerna läser namnet på sitt eget språk om det finns, annars på engelska eller det första språket som skrivits."
+      },
+      "addLocale": "Lägg till ett språk",
+      "removeLocale": "Ta bort {language}",
+      "noBreaks": "Inga uppehåll än.",
+      "breakNumber": "Uppehåll {number}",
+      "addBreak": "Lägg till ett uppehåll",
+      "removeBreak": "Ta bort uppehåll {number}",
+      "noProducts": "Ingen klubb följer den här kalendern än. En klubb väljer sina kalendrar på sin egen sida.",
+      "errors": {
+        "nameRequired": "Ge kalendern ett namn.",
+        "datesRequired": "Uppehåll {number} behöver en första och en sista dag.",
+        "endBeforeStart": "Uppehåll {number} slutar innan det börjar.",
+        "breakNameMissing": "Uppehåll {number} behöver ett namn på {language}.",
+        "overlap": "Uppehåll {first} och {second} överlappar. En dag kan bara höra till ett uppehåll.",
+        "saveFailed": "Kalendern kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Kalendern kunde inte sparas – {reason}"
+      },
+      "impact": {
+        "title": "Spara ändringarna?",
+        "description": "{count, plural, one {Den här klubben ändras} other {De här # klubbarna ändras}} så fort du sparar.",
+        "futureRemoved": "Familjerna ser ingen träff på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+        "futureRestored": "Familjerna ser träffar igen på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+        "pastRemoved": "{count, plural, one {En tidigare träff försvinner} other {Tidigare träffar på # dagar försvinner}} ur familjernas historik: {dates}.",
+        "pastRestored": "{count, plural, one {En tidigare träff kommer} other {Tidigare träffar på # dagar kommer}} tillbaka i familjernas historik: {dates}.",
+        "recordsHidden": "{count, plural, one {# dokumenterad träff döljs} other {# dokumenterade träffar döljs}} för familjerna.",
+        "recordsShown": "{count, plural, one {# dokumenterad träff visas} other {# dokumenterade träffar visas}} för familjerna igen.",
+        "requestsStopped": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} inte längre någon träff att täcka.",
+        "requestsReopened": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} en träff att täcka igen."
       }
     },
     "library": {
@@ -2962,6 +3035,8 @@
     "notRecorded": "Inte registrerat",
     "upcoming": "Kommande",
     "cancelled": "Inställt",
+    "holiday": "Lov",
+    "holidayNamed": "Lov – {name}",
     "absentSubstituted": "Frånvarande – vikarie {name}",
     "absentNoSubstitute": "Frånvarande – ingen vikarie",
     "substitutingFor": "vikariat för {name}",
@@ -3040,6 +3115,7 @@
     "showLess": "Visa mindre",
     "lastEditedBy": "Av {name}",
     "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}",
+    "holidayLine": "Inget tillfälle · {breakName}, {range}",
     "photos": {
       "list": "Bilder från tillfället",
       "open": "Öppna bild {index} av {count}",
@@ -3558,7 +3634,8 @@
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel",
     "substitutions": "Vikariat",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "holidayCalendars": "Lovkalendrar"
   },
   "home": {
     "hero": {

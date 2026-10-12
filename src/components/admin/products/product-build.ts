@@ -26,7 +26,7 @@ import {
 import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
-import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
+import { checkLocaleDrafts, openingLocaleTab } from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
 import type {
@@ -116,28 +116,18 @@ export function validate(
   state: FormState,
   config: ProductTypeConfig,
 ): ValidationFailure | null {
-  // Translations: at least one filled locale (any locale) and no
-  // half-filled tabs. The display fallback chain (preferred → en → first
-  // available) means a single locale of any kind is enough to render.
-  // Iterate the closed locale union and skip absent tabs — `translations`
-  // is a Partial record, so this visits exactly the locales the admin added.
-  let hasFilledLocale = false;
-  for (const locale of SUPPORTED_LOCALES) {
-    const v = state.translations[locale];
-    if (v && v.name.trim() && v.shortDescription.trim()) hasFilledLocale = true;
-  }
-
-  if (!hasFilledLocale) return err("translationRequired");
-
-  for (const locale of SUPPORTED_LOCALES) {
-    const v = state.translations[locale];
-    if (!v) continue;
-    if (!v.name.trim() || !v.shortDescription.trim()) {
-      // The locale *code*, not a display name: this validator is pure and
-      // cannot call useLanguageNames — the form resolves the code to the
-      // viewer's language name at the t() call site.
-      return err("translationIncomplete", { locale });
-    }
+  // Translations: the shared per-locale rule, where a complete tab carries
+  // both a name and a short description (the long description is optional).
+  const translations = checkLocaleDrafts(
+    state.translations,
+    (draft) => draft.name.trim() !== "" && draft.shortDescription.trim() !== "",
+  );
+  if (translations?.kind === "none") return err("translationRequired");
+  if (translations?.kind === "incomplete") {
+    // The locale *code*, not a display name: this validator is pure and
+    // cannot call useLanguageNames — the form resolves the code to the
+    // viewer's language name at the t() call site.
+    return err("translationIncomplete", { locale: translations.locale });
   }
 
   if (!state.topic) return err("topicRequired");

@@ -1,21 +1,21 @@
 "use client";
 
-import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { LocaleTabs } from "@/components/ui/locale-tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
-import { cn, findOption } from "@/lib/utils";
 import {
-  LOCALE_CONFIG,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+  addLocaleTab,
+  removeLocaleTab,
+  writtenLocales,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
+import { findOption } from "@/lib/utils";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
@@ -53,14 +53,7 @@ export function IdentitySection({
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
   const topicLabel = useTopicLabel();
-  const languageName = useLanguageNames();
 
-  const addedLocales = SUPPORTED_LOCALES.filter(
-    (l) => state.translations[l] !== undefined,
-  );
-  const addableLocales = SUPPORTED_LOCALES.filter(
-    (l) => state.translations[l] === undefined,
-  );
   const emptyDraft: TranslationDraft = {
     name: "",
     shortDescription: "",
@@ -82,31 +75,15 @@ export function IdentitySection({
     }));
   }
 
-  function addLocaleTab(locale: SupportedLocale) {
-    setState((s) => ({
-      ...s,
-      translations: {
-        ...s.translations,
-        [locale]: { name: "", shortDescription: "", longDescription: "" },
-      },
-      activeLocale: locale,
-    }));
-  }
-
-  function removeLocaleTab(locale: SupportedLocale) {
+  /** The form's translations as the shared tab-set helpers take them, and back. */
+  function updateTabs(
+    change: (
+      tabs: LocaleTabState<TranslationDraft>,
+    ) => LocaleTabState<TranslationDraft>,
+  ) {
     setState((s) => {
-      const next = { ...s.translations };
-      delete next[locale];
-      return {
-        ...s,
-        translations: next,
-        activeLocale: localeTabAfterRemoving(
-          next,
-          s.activeLocale,
-          locale,
-          uiLocale,
-        ),
-      };
+      const next = change({ drafts: s.translations, active: s.activeLocale });
+      return { ...s, translations: next.drafts, activeLocale: next.active };
     });
   }
 
@@ -118,59 +95,23 @@ export function IdentitySection({
       {/* Language tabs — at least one filled locale required. The hint below
           spells the rule out. Switching tabs preserves what's typed in each. */}
       <Field label={t("translations.label")} hint={t("translations.hint")}>
-        <div className="flex flex-wrap items-center gap-1 border-b border-border">
-          {addedLocales.map((locale) => {
-            const isActive = state.activeLocale === locale;
-            const canRemove = addedLocales.length > 1;
-            return (
-              <span
-                key={locale}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "text-act"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => setState({ ...state, activeLocale: locale })}
-                >
-                  {LOCALE_CONFIG[locale].nativeLabel}
-                </button>
-                {canRemove && (
-                  <button
-                    type="button"
-                    onClick={() => removeLocaleTab(locale)}
-                    className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                    aria-label={t("translations.removeLocale", {
-                      locale: languageName(locale, LOCALE_CONFIG[locale].label),
-                    })}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
-            );
-          })}
-          {addableLocales.length > 0 && (
-            <select
-              value=""
-              onChange={(e) => {
-                const locale = findOption(addableLocales, e.target.value);
-                if (locale) addLocaleTab(locale);
-              }}
-              className="ml-1 mb-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-            >
-              <option value="">{t("translations.addLocale")}</option>
-              {addableLocales.map((l) => (
-                <option key={l} value={l}>
-                  {languageName(l, LOCALE_CONFIG[l].label)}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        <LocaleTabs
+          written={writtenLocales(state.translations)}
+          active={state.activeLocale}
+          onSelect={(locale) =>
+            setState((s) => ({ ...s, activeLocale: locale }))
+          }
+          onAdd={(locale) =>
+            updateTabs((tabs) => addLocaleTab(tabs, locale, emptyDraft))
+          }
+          onRemove={(locale) =>
+            updateTabs((tabs) => removeLocaleTab(tabs, locale, uiLocale))
+          }
+          addLabel={t("translations.addLocale")}
+          removeLabel={(language) =>
+            t("translations.removeLocale", { locale: language })
+          }
+        />
       </Field>
 
       <Field label={t("labels.name")} htmlFor={`p-name-${state.activeLocale}`}>
