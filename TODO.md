@@ -463,3 +463,24 @@ is a perfectly good outcome.
 
 - [ ] **About 1,240 of 1,590 parent accounts hold no School of Gaming marketing answer, so we can mail none of them.** Counted on prod 2026-10-08: 143 said yes and 213 said no, about 40% yes among those who answered. The rest were created before the parent-registration question went live around 1 September 2026, most of them in the bulk arrival of existing families in late August. An absent answer already means "do not mail", so nothing is wrong today, but the list we may mail is a fraction of the families we have. **The fix:** ask once in the app. On the next visit to the dashboard, a parent with no School of Gaming answer sees a single yes-or-no question. It saves through the same path as the Settings toggle, so the answer lands in the consent history the same way, and it never appears again once answered. It reaches only parents who sign in (about 220 of the unanswered signed in during the 30 days before the count), which is fine, because the rest simply stay unmailed. **Don't ask by email:** an email requesting marketing consent can itself count as marketing under GDPR. If Finland's existing-customer exception is to be relied on instead, that is a legal call, not an engineering one.
 - [ ] **New parent accounts still arrive without an answer.** Seven parent accounts created since 28 September 2026 hold none, so some way of creating a parent (an admin creating the account, the partner API, or adopting an outside Stripe subscription are the likely candidates) skips the question. Find the path and ask there, or accept that it is answered by the in-app question above.
+
+## Chargebee is still open, and still connected to our Stripe account
+
+SOGGA was shut down on 12 October 2026 and its data, Chargebee's included, is archived on the
+owner's Google Drive. Nothing in Chargebee charges anyone any more (checked 2026-10-12: the
+last three subscriptions end by 23 October, the 34 paused ones have no restart date), but the
+account still holds about 1,400 customers' personal data, and it can still charge cards
+through our Stripe account.
+
+- [ ] **Close the Chargebee account.** Only its owner can cancel, and the owner has left the
+  company, so it goes through Chargebee support from an Admin login (site `schoolofgaming`,
+  EU): ask them to cancel, or to transfer ownership so it can be cancelled from the site.
+  The data is deleted within 90 days of cancellation.
+- [ ] **Revoke Chargebee's Stripe connection.** It is a Stripe Connect app connection, app
+  `ca_0Ow2X6H1Mk28dhI5E0TnxHtNicjhgeO1` (Chargebee's payments carry it), and the dashboard
+  lists it nowhere we could find on 2026-10-12, Apps → Installed included. Ask Chargebee to
+  disconnect as part of the closure, or ask Stripe support to revoke it. Revoking leaves
+  every saved card and every migrated subscription in Stripe untouched: the cards belong to
+  our account, and the subscriptions were created by our own key. Archiving the Stripe
+  gateway inside Chargebee is not a substitute: Chargebee's docs do not say what that does
+  to the saved cards, and the same cards pay the migrated families' Stripe subscriptions.
