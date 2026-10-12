@@ -102,6 +102,7 @@ const base: ProductConfirmationEmailOptions = {
   firstChargeDate: null,
   dashboardUrl: DASHBOARD_URL,
   overview: OVERVIEW,
+  holidayBreaks: [],
   invitation: null,
 };
 
@@ -969,5 +970,46 @@ describe("the “Before the first session” guide", () => {
     );
     expect(html).not.toContain(HEADING);
     expect(html).toContain("Minecraft 101");
+  });
+});
+
+/**
+ * The club's holiday breaks: one row of the facts list, as the confirmation
+ * page draws them as the last row of its "Good to know" card — chosen and
+ * worded by the caller through the shared rule, so the template only lays the
+ * lines out.
+ */
+describe("the holiday breaks row", () => {
+  const BREAKS = [
+    { name: "Winter break", range: "22–26 Feb" },
+    { name: "Easter <3", range: "26–29 Mar" },
+  ];
+
+  it("states each break under one label, escaped", () => {
+    const html = render({ holidayBreaks: BREAKS });
+    expect(html).toContain("Holiday breaks");
+    expect(html).toContain("Winter break, 22–26 Feb");
+    // An admin-written name is a value off a row like any other.
+    expect(html).toContain("Easter &lt;3, 26–29 Mar");
+    expect(html).not.toContain("Easter <3");
+  });
+
+  it("states them in the text twin too, on one line", () => {
+    const body = productConfirmationText(
+      t,
+      resolve({ holidayBreaks: BREAKS, invitation: SCHEDULE }),
+    );
+    expect(body).toContain("Holiday breaks: Winter break, 22–26 Feb — Easter <3, 26–29 Mar");
+  });
+
+  it("states no row at all when there are none", () => {
+    expect(render({ holidayBreaks: [] })).not.toContain("Holiday breaks");
+    expect(
+      productConfirmationText(t, resolve({ holidayBreaks: [], invitation: SCHEDULE })),
+    ).not.toContain("Holiday breaks");
+  });
+
+  it("states them on the child's copy as well, since they are not a parent's fact", () => {
+    expect(render({ holidayBreaks: BREAKS, gamerCopy: true })).toContain("Winter break, 22–26 Feb");
   });
 });

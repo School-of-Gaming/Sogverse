@@ -31,6 +31,12 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { plannedSessionRows, type PlannedSession } from "@/lib/planned-sessions";
 import { formatProductLocation } from "@/lib/products/format-product-location";
+import {
+  holidayBreakLines,
+  holidayBreaksSpan,
+  productToday,
+} from "@/lib/products/holiday-breaks-shown";
+import { HolidayBreaksService } from "@/services/holiday-breaks/holiday-breaks.service";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { getOrigin } from "@/lib/url";
 import { formatCurrencyFromCents } from "@/lib/utils";
@@ -260,13 +266,37 @@ async function send({
   // the others, because the span is the product's own — its zone decides which
   // day today is, and its end date where the span stops. A waitlist join
   // carries no invitation, so it asks for no plan.
-  const plannedSessions = wantsSchedule
-    ? await readPlannedSessions(client, productId, invitationPlanWindow({
-        now,
-        timezone: product.timezone,
-        endDate: product.end_date,
-      }))
-    : [];
+  //
+  // The club's holiday breaks ride the same second round trip, beside it: their
+  // span is the product's own too — the term, or a year ahead of an open-ended
+  // club's today — and every mode states them, because the confirmation page
+  // lists them on every outcome. A failed read costs the list, not the mail:
+  // it is a row of the facts list, and the page drops it on the same failure.
+  const breaksSpan = holidayBreaksSpan(product, now);
+  const [plannedSessions, holidayBreakRows] = await Promise.all([
+    wantsSchedule
+      ? readPlannedSessions(client, productId, invitationPlanWindow({
+          now,
+          timezone: product.timezone,
+          endDate: product.end_date,
+        }))
+      : [],
+    breaksSpan === null
+      ? []
+      : new HolidayBreaksService(client)
+          .getHolidayBreaks(productId, breaksSpan.from, breaksSpan.to)
+          .catch((error: unknown) => {
+            // The message alone: this handler is what keeps the mail going, so
+            // it must not be able to throw itself, and inspecting an arbitrary
+            // error object can.
+            console.error("[product-confirmation email] holiday breaks unread", {
+              productId,
+              message: error instanceof Error ? error.message : String(error),
+            });
+            return [];
+          }),
+  ]);
+  const breaksToday = productToday(product.timezone, now);
   // The sentinel resolved before anything is built, so the mail only ever meets
   // a real mode. A seat offer is made on no-charge products alone, so the only
   // question left is who bears the cost.
@@ -425,6 +455,13 @@ async function send({
         spokenLanguageCode: product.spoken_language_code,
         now,
       },
+      // The confirmation page's list, by the same rule, in this reader's
+      // locale: the same breaks, the same names, the same compact ranges.
+      holidayBreaks: holidayBreakLines(holidayBreakRows, {
+        endDate: product.end_date,
+        today: breaksToday,
+        locale,
+      }),
       invitation: !wantsSchedule
         ? null
         : {

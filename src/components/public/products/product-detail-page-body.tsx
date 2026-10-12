@@ -17,6 +17,7 @@ import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { topicHasInfoCard } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
+import type { HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductDetailRow } from "@/services/products";
 import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
@@ -128,6 +129,12 @@ export interface ProductDetailPageBodyProps {
    *  storefront. The slug alone: the label's name is read off `product` below,
    *  so no caller has to resolve it. */
   municipalitySlug?: string;
+  /** The club's holiday breaks over the span the shared rule names, for the
+   *  facts card. Required, so a caller cannot forget them — and handed over
+   *  with the product rather than after it: the card sits above the topic card
+   *  below `2xl`, so a list arriving late would move it. Empty for anything
+   *  that is not a club. */
+  holidayBreaks: readonly HolidayBreak[];
 }
 
 /**
@@ -160,6 +167,7 @@ export function ProductDetailPageBody({
   signupPanel,
   signupActionable,
   municipalitySlug,
+  holidayBreaks,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
@@ -504,7 +512,11 @@ export function ProductDetailPageBody({
           of a 256px rail held open for one that can never arrive is dead
           space. */}
       <div className="lg:col-start-2 lg:row-start-3 lg:min-w-0 lg:self-start 2xl:col-start-2 2xl:row-start-2 2xl:row-span-2 2xl:sticky 2xl:top-[calc(var(--header-height)+1.5rem)] 2xl:max-h-[calc(100vh-var(--header-height)-3rem)] 2xl:overflow-y-auto">
-        <ProductOverviewCard product={product} railFrom2xl />
+        <ProductOverviewCard
+          product={product}
+          railFrom2xl
+          holidayBreaks={holidayBreaks}
+        />
       </div>
 
       {/* Reading block 2: what is left below the facts.

@@ -378,7 +378,9 @@
         "timesIn": "horaires en {zone}",
         "nothingOn": "Rien de prévu",
         "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "onBreak": "En pause",
+        "onBreakTitle": "En pause – {name}. Pas de session à cette date."
       },
       "cancellation": {
         "allTitle": "La séance de ce jour est annulée pour tous les groupes",
@@ -948,6 +950,16 @@
         },
         "copyLink": "Copier le lien public",
         "copied": "Copié"
+      },
+      "holidayCalendars": {
+        "label": "Calendriers de vacances",
+        "hint": "Le club n’a aucune séance pendant les jours d’une pause des calendriers qu’il suit. Les familles voient chaque pause à la place des séances concernées.",
+        "manage": "Gérer les calendriers de vacances",
+        "nextBreak": "Prochaine : {name}, {dates}",
+        "noUpcomingBreak": "Aucune pause à venir",
+        "empty": "Aucun calendrier de vacances pour l’instant.",
+        "listUnavailable": "Impossible de charger les calendriers de vacances. Les calendriers que ce club suit déjà sont conservés à l’enregistrement.",
+        "none": "Aucun"
       },
       "editPage": {
         "back": "Retour au produit",
@@ -3350,7 +3362,8 @@
       "audience": "Public",
       "language": "Langue",
       "online": "En ligne",
-      "tbd": "À confirmer"
+      "tbd": "À confirmer",
+      "holidayBreaks": "Vacances"
     },
     "signupPanel": {
       "verb": {
@@ -4438,7 +4451,9 @@
         "ages": "{min}–{max} ans",
         "audienceParents": "Pour les parents",
         "audienceFamilies": "Pour les familles",
-        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans"
+        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans",
+        "holidayBreaks": "Vacances",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {

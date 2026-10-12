@@ -276,6 +276,7 @@ describe("POST /api/admin/send-test-email", () => {
       ageRange: "8-12",
       audience: "gamers",
       spokenLanguageCode: "fi",
+      holidayBreaks: "none",
       // The calendar half of the form, which the schema requires whole. No
       // slots, so these sends carry no invitation — what is checked here is the
       // route's param handling, and a schedule would drag a calendar document

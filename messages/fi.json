@@ -378,7 +378,9 @@
         "timesIn": "ajat aikavyöhykkeellä {zone}",
         "nothingOn": "Ei mitään",
         "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
-        "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}",
+        "onBreak": "Tauolla",
+        "onBreakTitle": "Tauolla – {name}. Tänä päivänä ei ole kertaa."
       },
       "cancellation": {
         "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",
@@ -948,6 +950,16 @@
         },
         "copyLink": "Kopioi julkinen linkki",
         "copied": "Kopioitu"
+      },
+      "holidayCalendars": {
+        "label": "Lomakalenterit",
+        "hint": "Kerholla ei ole kertoja minkään sen noudattamien kalenterien tauon päivinä. Perheet näkevät tauon niiden kertojen kohdalla, jotka jäävät pitämättä.",
+        "manage": "Hallinnoi lomakalentereita",
+        "nextBreak": "Seuraava: {name}, {dates}",
+        "noUpcomingBreak": "Ei tulevia taukoja",
+        "empty": "Lomakalentereita ei vielä ole.",
+        "listUnavailable": "Lomakalentereita ei voitu ladata. Kerhon nykyiset kalenterit säilyvät, kun tallennat.",
+        "none": "Ei mitään"
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
@@ -3115,7 +3127,7 @@
     "showLess": "Näytä vähemmän",
     "lastEditedBy": "Muokannut {name}",
     "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}",
-    "holidayLine": "Ei kertaa · {breakName}, {range}",
+    "holidayLine": "Ei kerhokertaa · {breakName}, {range}",
     "photos": {
       "list": "Tämän kerran kuvat",
       "open": "Avaa kuva {index}/{count}",
@@ -3350,7 +3362,8 @@
       "audience": "Kohderyhmä",
       "language": "Kieli",
       "online": "Verkossa",
-      "tbd": "Vahvistetaan myöhemmin"
+      "tbd": "Vahvistetaan myöhemmin",
+      "holidayBreaks": "Loma-ajat"
     },
     "signupPanel": {
       "verb": {
@@ -4438,7 +4451,9 @@
         "ages": "Ikä {min}–{max}",
         "audienceParents": "Vanhemmille",
         "audienceFamilies": "Perheille",
-        "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}"
+        "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}",
+        "holidayBreaks": "Loma-ajat",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {

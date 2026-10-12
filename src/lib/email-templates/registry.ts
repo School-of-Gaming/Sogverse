@@ -26,6 +26,7 @@ import {
   noneOrDate,
   noneOrText,
   optionalDate,
+  requireDate,
   requireEmail,
   requireTime,
   requireWeekday,
@@ -95,7 +96,7 @@ import {
   PRODUCT_TOPIC_VALUES,
 } from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
-import { formatDate, formatTimeRange } from "@/lib/utils";
+import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
@@ -570,6 +571,34 @@ function formPlannedSessions({
 }
 
 /**
+ * The holiday-breaks field — `;`-separated `Name YYYY-MM-DD YYYY-MM-DD`
+ * entries, or the none token — as the formatted lines the mail states. A name
+ * may hold spaces, so the two dates are read off the end of each entry.
+ */
+function parseFormHolidayBreaks(
+  value: string,
+  locale: string,
+  today: string,
+): { name: string; range: string }[] {
+  if (isNoneToken(value)) return [];
+  return value
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "")
+    .map((entry) => {
+      const parts = entry.split(/\s+/);
+      const endDate = requireDate(parts.at(-1) ?? "", "Holiday breaks end date");
+      const startDate = requireDate(parts.at(-2) ?? "", "Holiday breaks start date");
+      const name = parts.slice(0, -2).join(" ");
+      if (name === "") fail("Holiday breaks", "a name before the two dates", entry);
+      return {
+        name,
+        range: formatCompactDateRange(startDate, endDate, locale, today),
+      };
+    });
+}
+
+/**
  * The form's strings as the options the mail is built from, resolved once.
  *
  * `now` is the resolver's own — the live sends read the clock at the moment
@@ -580,6 +609,7 @@ function formPlannedSessions({
 function resolveProductConfirmationOptions(
   params: ProductConfirmationParams,
   now: Date,
+  locale: string,
 ): ProductConfirmationEmailOptions {
   const startDate = optionalDate(params.startDate, "Start date");
   const endDate = noneOrDate(params.endDate, "End date");
@@ -651,6 +681,14 @@ function resolveProductConfirmationOptions(
       spokenLanguageCode: params.spokenLanguageCode,
       now,
     },
+    // Typed as the list the live send would already have chosen, and worded
+    // here by the same compact range the live send uses, in the render's
+    // locale — so a test send shows every locale's range shape.
+    holidayBreaks: parseFormHolidayBreaks(
+      params.holidayBreaks,
+      locale,
+      formatInTimeZone(now, params.timezone, "yyyy-MM-dd"),
+    ),
     invitation: {
       // Minted when the form names none, exactly as the explorer mints a UID:
       // the identifier is a function of the seat, and a test send has no seat.
@@ -888,6 +926,7 @@ const productConfirmationParamsSchema = z.object({
   ageRange: z.string(),
   audience: z.enum(["gamers", "parents", "families"]),
   spokenLanguageCode: z.enum(Constants.public.Enums.spoken_language),
+  holidayBreaks: z.string(),
 
   // --- What the calendar invitation is composed from. ---
   //
@@ -1632,6 +1671,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         type: "select",
         options: SPOKEN_LANGUAGE_OPTIONS,
       },
+      {
+        key: "holidayBreaks",
+        label: `Good to know – Holiday breaks, \`;\`-separated \`Name YYYY-MM-DD YYYY-MM-DD\` entries (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "Autumn break 2026-10-19 2026-10-23; Christmas break 2026-12-21 2027-01-06",
+      },
 
       {
         key: "slots",
@@ -1728,7 +1772,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         // it is a section this mail carries, not a section it is made of.
         tPrep,
         locale,
-        resolveProductConfirmationOptions(p, new Date()),
+        resolveProductConfirmationOptions(p, new Date(), locale),
       ),
     build: (content, t, locale) => buildProductConfirmationEmail(t, locale, content),
     // Shared with the live sends rather than restated here — see the function's

@@ -96,12 +96,23 @@ describe("sendProductConfirmationEmail's plan read", () => {
     vi.unstubAllEnvs();
   });
 
-  function respondTo(planBodies: unknown[]): FetchMock {
+  function respondTo(
+    planBodies: unknown[],
+    {
+      breakBodies = [],
+      breaks = [],
+      endDate = "2027-05-31",
+    }: { breakBodies?: unknown[]; breaks?: unknown[]; endDate?: string | null } = {},
+  ): FetchMock {
     return vi.fn<typeof fetch>(async (input, init) => {
       const url = requestedUrl(input);
       if (url.pathname === "/rest/v1/rpc/planned_session_dates") {
         planBodies.push(JSON.parse(String(init?.body)));
         return postgrestJson([]);
+      }
+      if (url.pathname === "/rest/v1/rpc/holiday_breaks_document") {
+        breakBodies.push(JSON.parse(String(init?.body)));
+        return postgrestJson(breaks);
       }
       if (url.pathname === "/rest/v1/profiles") {
         return postgrestJson([
@@ -122,7 +133,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
         topic: "minecraft",
         timezone: "Europe/Helsinki",
         start_date: "2027-01-04",
-        end_date: "2027-05-31",
+        end_date: endDate,
         is_remote: true,
         min_age: 8,
         max_age: 12,
@@ -157,6 +168,83 @@ describe("sendProductConfirmationEmail's plan read", () => {
     ]);
     expect(errors).not.toHaveBeenCalled();
     expect(sendTransactionalEmail).toHaveBeenCalledTimes(1);
+    errors.mockRestore();
+  });
+
+  /** One break as `holiday_breaks_document` emits it. */
+  function breakRow(id: string, name: string, from: string, to: string, withdrew: boolean) {
+    return {
+      id,
+      start_date: from,
+      end_date: to,
+      names: [{ locale: "en", name }],
+      withdrawn_sessions: withdrew
+        ? [{ session_date: from, starts_at: `${from}T14:00:00Z`, ends_at: `${from}T15:00:00Z` }]
+        : [],
+    };
+  }
+
+  async function send(fetchMock: FetchMock) {
+    await sendProductConfirmationEmail({
+      client: createFetchStubbedClient(fetchMock),
+      request: new Request("https://sogverse.example/api/checkout"),
+      customerId: PARENT,
+      participantId: CHILD,
+      productId: PRODUCT,
+      participationId: "44444444-4444-4444-4444-444444444444",
+      mode: "free",
+    });
+  }
+
+  it("reads a dated club's holiday breaks over its term and lists those that took a session", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    const breakBodies: unknown[] = [];
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await send(
+      respondTo([], {
+        breakBodies,
+        breaks: [
+          breakRow("b1", "Winter break", "2027-02-22", "2027-02-26", true),
+          breakRow("b2", "Teacher day", "2027-03-05", "2027-03-05", false),
+          breakRow("b3", "Easter", "2027-03-26", "2027-03-29", true),
+        ],
+      }),
+    );
+
+    // The term, not product-local today: a dated club lists its whole term.
+    expect(breakBodies).toEqual([
+      { p_product_id: PRODUCT, p_from: "2027-01-04", p_to: "2027-05-31" },
+    ]);
+    const { htmlContent } = sendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).toContain("Holiday breaks");
+    // In the compact form, without the year: 2027 is the current year here.
+    expect(htmlContent).toContain("Winter break, Feb 22 – 26");
+    expect(htmlContent).toContain("Easter, Mar 26 – 29");
+    // A break that removed no session is not one this club takes.
+    expect(htmlContent).not.toContain("Teacher day");
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
+  it("reads an open-ended club's breaks from product-local today a year and a day ahead", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    const breakBodies: unknown[] = [];
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await send(respondTo([], { breakBodies, endDate: null }));
+
+    expect(breakBodies).toEqual([
+      { p_product_id: PRODUCT, p_from: "2027-01-11", p_to: "2028-01-12" },
+    ]);
+    // None came back, so the mail states no row for them.
+    const { htmlContent } = sendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).not.toContain("Holiday breaks");
+    expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
   });
 });

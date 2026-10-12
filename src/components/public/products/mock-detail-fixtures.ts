@@ -6,6 +6,7 @@ import type {
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
+import { holidayBreakRows, type HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductDetailRow } from "@/services/products";
 import type { ParticipationCounts } from "@/services/participations";
 import type { RegistrationState } from "./derive-registration-state";
@@ -1714,5 +1715,79 @@ function buildPriceRows(
     created_at: refTimestamp,
     updated_at: refTimestamp,
   }));
+}
+
+// ---------- Holiday breaks ----------
+
+/**
+ * The holiday breaks a scenario's club follows, as `holiday_breaks_document`
+ * would return them — parsed through the same schema, so the scenes hand the
+ * facts card exactly the shape the live read does. Empty for anything that is
+ * not a club, which is the live answer too.
+ *
+ * A dated club's breaks sit inside its fixed spring term: a one-week winter
+ * break and Easter, which cross no month. An open-ended club starts in the
+ * future, so its breaks are walked forward from its start — four of them, one
+ * more than the list shows, so the cap is visible, and the second crossing a
+ * month so the longer range shape is too. The ids are real UUIDs only because
+ * the schema wants a string; nothing derives a picture from them.
+ */
+export function buildHolidayBreaksFixture(
+  product: Pick<ProductDetailRow, "product_type" | "start_date" | "end_date">,
+): HolidayBreak[] {
+  if (
+    product.product_type !== "consumer_club" &&
+    product.product_type !== "municipality_club"
+  ) {
+    return [];
+  }
+  const start = product.start_date;
+  const breaks: { id: string; en: string; fi: string; from: string; to: string }[] =
+    product.end_date !== null
+      ? [
+          {
+            id: "0d5c3f0e-5d1b-4a43-9a0e-6f1d1c3b9a21",
+            en: "Winter break",
+            fi: "Talviloma",
+            from: "2026-02-23",
+            to: "2026-02-27",
+          },
+          {
+            id: "6a2e9b4c-1f7d-4c58-8e3a-2b9d0c7e5f14",
+            en: "Easter",
+            fi: "Pääsiäinen",
+            from: "2026-04-03",
+            to: "2026-04-07",
+          },
+        ]
+      : [
+          { days: 21, length: 5, en: "Autumn break", fi: "Syysloma", id: "9f4b7a12-3c6e-4d8b-a1f0-5e2c9d7b3a68" },
+          { days: 70, length: 16, en: "Christmas break", fi: "Joululoma", id: "2c8e1d5a-7b3f-4e9c-b6a2-0f4d8e1c7b39" },
+          { days: 140, length: 5, en: "Winter break", fi: "Talviloma", id: "5b1f9e3d-2a7c-4f6b-8d0e-3c9a7f2b1e54" },
+          { days: 200, length: 4, en: "Easter", fi: "Pääsiäinen", id: "7e3a5c9b-4d1f-4b2e-9c8a-6f0b2d4e8a17" },
+        ].map(({ days, length, ...rest }) => {
+          const from = addDaysToDateOnly(start, days);
+          return { ...rest, from, to: addDaysToDateOnly(from, length - 1) };
+        });
+  return holidayBreakRows.parse(
+    breaks.map(({ id, en, fi, from, to }) => ({
+      id,
+      start_date: from,
+      end_date: to,
+      names: [
+        { locale: "en", name: en },
+        { locale: "fi", name: fi },
+      ],
+      // One withdrawn session is all the list asks of a break: it is what says
+      // the club would have met during it.
+      withdrawn_sessions: [
+        {
+          session_date: from,
+          starts_at: `${from}T13:30:00Z`,
+          ends_at: `${from}T15:00:00Z`,
+        },
+      ],
+    })),
+  );
 }
 

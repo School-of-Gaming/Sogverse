@@ -112,7 +112,13 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: mockAdminFrom,
     rpc: (name: string, args: unknown) =>
-      name === "planned_session_dates" ? mockPlannedSessions(args) : mockAdminRpc(name, args),
+      name === "planned_session_dates"
+        ? mockPlannedSessions(args)
+        : // The mail's holiday-breaks read, kept out of the counts the same way:
+          // a club that follows no calendar.
+          name === "holiday_breaks_document"
+          ? Promise.resolve({ data: [], error: null })
+          : mockAdminRpc(name, args),
   })),
 }));
 

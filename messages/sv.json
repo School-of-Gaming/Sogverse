@@ -378,7 +378,9 @@
         "timesIn": "tider i {zone}",
         "nothingOn": "Inget inplanerat",
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "onBreak": "Uppehåll",
+        "onBreakTitle": "Uppehåll – {name}. Inget tillfälle detta datum."
       },
       "cancellation": {
         "allTitle": "Tillfället är inställt för alla grupper den här dagen",
@@ -948,6 +950,16 @@
         },
         "copyLink": "Kopiera den publika länken",
         "copied": "Kopierad"
+      },
+      "holidayCalendars": {
+        "label": "Lovkalendrar",
+        "hint": "Klubben har inga träffar under något uppehåll i de kalendrar den följer. Familjerna ser uppehållet där träffarna annars skulle ha legat.",
+        "manage": "Hantera lovkalendrar",
+        "nextBreak": "Nästa: {name}, {dates}",
+        "noUpcomingBreak": "Inga kommande uppehåll",
+        "empty": "Det finns inga lovkalendrar än.",
+        "listUnavailable": "Lovkalendrarna kunde inte läsas in. De kalendrar klubben redan följer behålls när du sparar.",
+        "none": "Inga"
       },
       "editPage": {
         "back": "Tillbaka till produkten",
@@ -3350,7 +3362,8 @@
       "audience": "Målgrupp",
       "language": "Språk",
       "online": "Online",
-      "tbd": "Bekräftas senare"
+      "tbd": "Bekräftas senare",
+      "holidayBreaks": "Lov"
     },
     "signupPanel": {
       "verb": {
@@ -4438,7 +4451,9 @@
         "ages": "Ålder {min}–{max}",
         "audienceParents": "För föräldrar",
         "audienceFamilies": "För familjer",
-        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
+        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}",
+        "holidayBreaks": "Lov",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {

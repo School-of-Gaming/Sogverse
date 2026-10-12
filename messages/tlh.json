@@ -422,7 +422,9 @@
         "timesIn": "poHmey: {zone}",
         "nothingOn": "pagh",
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "onBreak": "leSpoH",
+        "onBreakTitle": "leSpoH — {name}. jajvam may’ tu’lu’be’."
       },
       "cancellation": {
         "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
@@ -992,6 +994,16 @@
         },
         "copyLink": "Hoch He yIghItlhqa'",
         "copied": "ghItlhqa'lu'ta'"
+      },
+      "holidayCalendars": {
+        "label": "DuQ jaj Hovtay'",
+        "hint": "The club lays down its bat'leths on every rest day of the calendars it swears by. Families see the rest where battle would have been.",
+        "manage": "Hovtay' yIloH",
+        "nextBreak": "veb: {name}, {dates}",
+        "noUpcomingBreak": "DuQ pagh. Battle continues!",
+        "empty": "Hovtay' pagh. Not yet forged.",
+        "listUnavailable": "Hovtay' laDlaHbe'! The calendars this club already honours survive the save.",
+        "none": "pagh"
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
@@ -3390,7 +3402,8 @@
       "audience": "ghotpu’",
       "language": "Hol",
       "online": "QumDaq",
-      "tbd": "Sov pagh"
+      "tbd": "Sov pagh",
+      "holidayBreaks": "SuvwI’pu’ leSbogh poHmey"
     },
     "signupPanel": {
       "verb": {
@@ -4478,7 +4491,9 @@
         "ages": "qan {min}–{max}",
         "audienceParents": "vavpu’vaD",
         "audienceFamilies": "qorDu’pu’vaD",
-        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
+        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}",
+        "holidayBreaks": "SuvwI’pu’ leSbogh poHmey",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {
