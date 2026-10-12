@@ -4,6 +4,7 @@ import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { sessionPhotoBox } from "@/lib/email-templates/session-photos";
 import { MARKDOWN_USE_CASES, OUTLINE_TAGS } from "@/lib/authored-markdown";
 import {
   getEmailTranslator,
@@ -756,8 +757,12 @@ describe("templateRegistry sessionReport", () => {
     }
   });
 
-  /** The pictures take the photos' origin rule, and a spotlight never goes without its picture. */
-  it("sends no spotlights from a dev machine, and keeps them in its preview", () => {
+  /**
+   * The pictures take the photos' origin rule, but the spotlights keep their
+   * words: a send from a dev machine carries each title and body over its
+   * painted, empty box, and the preview keeps the pictures.
+   */
+  it("sends the spotlights' words over empty boxes from a dev machine, and keeps the pictures in its preview", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
     try {
       const sent = templateRegistry.sessionReport.render(
@@ -766,8 +771,17 @@ describe("templateRegistry sessionReport", () => {
         "en",
         { to: "send" },
       );
-      expect(sent.html).not.toContain("Autumn camps are open");
+      expect(sent.html).toContain("Autumn camps are open");
+      expect(sent.html).toContain("A new Roblox club this term");
+      expect(sent.html).toContain("Places are limited");
+      expect(sent.html).toContain("A Gedu in every session");
       expect(sent.html).not.toContain("/preview-art/");
+      expect(sent.html).not.toContain("<img");
+      // Two painted wells, one per spotlight, at the box a 1200×600 picture fills.
+      const box = sessionPhotoBox(1200, 600);
+      expect(
+        sent.html.split(`height="${box.wellHeight}" align="center" valign="middle"`).length - 1,
+      ).toBe(2);
 
       const previewed = templateRegistry.sessionReport.render(
         { ...params, spotlights: "two" },

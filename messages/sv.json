@@ -622,7 +622,7 @@
     },
     "spotlights": {
       "title": "Spotlights",
-      "subtitle": "Familjer ser varje påslagen spotlight längst ner i varje sessionsrapports e-post, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
+      "subtitle": "Föräldrar ser varje påslagen spotlight längst ner i varje sessionsrapports e-post de får, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
       "newSpotlight": "Ny spotlight",
       "empty": "Inga spotlights än. Skriv den första.",
       "backToList": "Tillbaka till spotlights",

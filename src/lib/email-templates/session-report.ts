@@ -69,11 +69,15 @@ import type { EmailTranslator } from "./translator";
  * child's copy greets them and says "your session". The report, the facts, the
  * photos and the closing are the same bytes, and the button goes to the
  * child's own page in My SOG — the caller passes that URL, because a `/parent`
- * link bounces a signed-in child off it.
+ * link bounces a signed-in child off it. **The child's copy carries no
+ * spotlights**, whatever the caller passes: they are what we put in front of
+ * the parent, and the child's copy carries the report only. That is the
+ * template's decision rather than each caller's, so no surface can render a
+ * child's copy that has them.
  *
- * **The mail ends with the enabled spotlights**, newest first — admin-written
- * notes, each a picture, a title and a short markdown body, in all three
- * variants alike. They come after the closing, because the report and what it
+ * **The family mail and the staff copy end with the enabled spotlights**,
+ * newest first — admin-written notes, each a picture, a title and a short
+ * markdown body. They come after the closing, because the report and what it
  * asks are the mail and the spotlights are what the platform adds beneath it.
  * **They are laid out open, not boxed**: the shell is itself a card on a wide
  * viewport and a card in a card is the one arrangement this directory forbids,
@@ -102,6 +106,22 @@ export interface SessionReportSpotlight {
     width: number;
     height: number;
   };
+}
+
+/**
+ * A spotlight whose picture has nowhere reachable to load from: the title and
+ * body as usual, and the picture's slot drawn as its painted, empty box.
+ *
+ * **Only the testing tool's demo spotlights are ever this**, on a send composed
+ * on a dev machine — their art lives on an origin no inbox can reach. The title,
+ * body and links are what a reviewer needs to check in a real inbox, and the
+ * empty box is the honest blocked render, the one a real spotlight arrives as
+ * wherever images are off. A real spotlight always has its public URL, which
+ * is why the route's own type, `SessionReportSpotlight`, cannot express this.
+ */
+export interface SessionReportSpotlightWithoutPicture
+  extends Omit<SessionReportSpotlight, "image"> {
+  image: { url: null; width: number; height: number };
 }
 
 export interface SessionReportEmailOptions {
@@ -147,9 +167,10 @@ export interface SessionReportEmailOptions {
   gamerCopy?: boolean;
   /**
    * Every enabled spotlight, newest first, each in this reader's version.
-   * Absent or empty is the mail with nothing beneath the closing.
+   * Absent or empty is the mail with nothing beneath the closing. The child's
+   * copy draws none whatever is passed — see the module comment.
    */
-  spotlights?: readonly SessionReportSpotlight[];
+  spotlights?: readonly (SessionReportSpotlight | SessionReportSpotlightWithoutPicture)[];
 }
 
 export function sessionReportSubject(
@@ -203,7 +224,7 @@ export function buildSessionReportEmail(
     ${rule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
-    ${spotlights.map(spotlightSection).join("")}
+    ${gamerCopy ? "" : spotlights.map(spotlightSection).join("")}
   `;
   return wrapInLayout({ title: t("sessionReport.title"), content, locale, t });
 }
@@ -266,7 +287,11 @@ function photosSection(
  * of the mail under its title; the body carries no headings of its own to
  * compete with it.
  */
-function spotlightSection({ title, body, image }: SessionReportSpotlight): string {
+function spotlightSection({
+  title,
+  body,
+  image,
+}: SessionReportSpotlight | SessionReportSpotlightWithoutPicture): string {
   return `${rule()}
     ${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
     ${heading(escapeHtml(title))}

@@ -3,6 +3,7 @@ import {
   buildSessionReportEmail,
   sessionReportSubject,
   type SessionReportSpotlight,
+  type SessionReportSpotlightWithoutPicture,
 } from "@/lib/email-templates/session-report";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import {
@@ -622,11 +623,44 @@ describe("the spotlights at the foot of the mail", () => {
     );
   });
 
-  it("carries the same spotlights into the staff copy and the child's copy", () => {
+  it("carries the same spotlights into the staff copy", () => {
     const from = (html: string) => html.slice(html.indexOf("Autumn camps"));
     const family = from(withSpotlights(SPOTLIGHTS));
     expect(from(withSpotlights(SPOTLIGHTS, { staffCopy: true }))).toBe(family);
-    expect(from(withSpotlights(SPOTLIGHTS, { gamerCopy: true }))).toBe(family);
+  });
+
+  it("draws no spotlight section in the child's copy, even when given some", () => {
+    const html = withSpotlights(SPOTLIGHTS, { gamerCopy: true });
+    expect(html).toBe(buildSessionReportEmail(t, "en", { ...base, gamerCopy: true }));
+    expect(html).not.toContain("Autumn camps");
+    expect(html).not.toContain(BUCKET);
+  });
+
+  it("draws a spotlight without a picture as its words over the painted, empty box", () => {
+    const boxOnly: SessionReportSpotlightWithoutPicture = {
+      title: "Autumn camps",
+      body: "Book a place [in the shop](https://sogverse.sog.gg/shop).",
+      image: { url: null, width: 1200, height: 600 },
+    };
+    const html = buildSessionReportEmail(t, "en", { ...base, spotlights: [boxOnly] });
+    const pictured = withSpotlights(SPOTLIGHTS.slice(0, 1));
+    const box = sessionPhotoBox(1200, 600);
+    const well = `height="${box.wellHeight}" align="center" valign="middle"`;
+
+    expect(html).toContain("Autumn camps");
+    expect(html).toMatch(/<a href="https:\/\/sogverse\.sog\.gg\/shop"[^>]*>in the shop<\/a>/);
+    expect(html).toContain(well);
+    expect(html).toContain(`max-width:${box.maxWidth}px;`);
+    expect(html.slice(html.indexOf(t("sessionReport.closing", { productName: "" }).slice(0, 12))))
+      .not.toContain("<img");
+    // The same rectangle the picture would fill: the well's table and cell,
+    // up to the cell's content, are identical in both renders.
+    const wellOf = (h: string) => {
+      const at = h.indexOf(well);
+      return h.slice(h.lastIndexOf("<table", at), h.indexOf(">", at) + 1);
+    };
+    expect(wellOf(html)).toContain("<td");
+    expect(wellOf(html)).toBe(wellOf(pictured));
   });
 });
 

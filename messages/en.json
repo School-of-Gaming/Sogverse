@@ -622,7 +622,7 @@
     },
     "spotlights": {
       "title": "Spotlights",
-      "subtitle": "Families see every spotlight that is switched on at the bottom of every session report email, newest first. Each reader gets it in their own language, or in English when theirs is not written, or else in a language that is.",
+      "subtitle": "Parents see every spotlight that is switched on at the bottom of every session report email they are sent, newest first. Each reader gets it in their own language, or in English when theirs is not written, or else in a language that is.",
       "newSpotlight": "New spotlight",
       "empty": "No spotlights yet. Write the first one.",
       "backToList": "Back to spotlights",

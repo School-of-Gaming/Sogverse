@@ -1,5 +1,8 @@
 import { sendableImageOrigin, type EmailRenderContext } from "../render-context";
-import type { SessionReportSpotlight } from "../session-report";
+import type {
+  SessionReportSpotlight,
+  SessionReportSpotlightWithoutPicture,
+} from "../session-report";
 
 /**
  * Demo spotlights for the session-report mail in the admin testing tool.
@@ -10,10 +13,14 @@ import type { SessionReportSpotlight } from "../session-report";
  * art cut to exactly the 1200×600 every spotlight picture is stored at, so the
  * box a reviewer sees is the box a real one gets.
  *
- * **The pictures take the photo fixtures' origin rule exactly** — the
- * render's own reachable origin, and none at all on a send composed on a dev
- * machine. A spotlight is never mailed without its picture, so with no origin
- * there are no spotlights either, rather than a title and body under nothing.
+ * **The pictures take the photo fixtures' origin rule** — the render's own
+ * reachable origin, and none at all on a send composed on a dev machine — **but
+ * the spotlights do not vanish with them.** With no origin each keeps its title
+ * and body, and its picture's slot is the painted reserved box with no `<img>`
+ * in it: the title, body and links are what a reviewer needs to check in a real
+ * inbox, and the empty box is the honest blocked render, the one a real
+ * spotlight arrives as wherever images are off. A `localhost` src is never
+ * emitted, since no inbox can reach it.
  *
  * Fixture data, not copy: never shown outside `/admin/testing`, never
  * translated.
@@ -49,21 +56,22 @@ export const SESSION_REPORT_SPOTLIGHT_LABELS: Record<
 export function sessionReportSpotlightFixtures(
   choice: (typeof SESSION_REPORT_SPOTLIGHT_CHOICES)[number],
   context: EmailRenderContext,
-): SessionReportSpotlight[] {
+): (SessionReportSpotlight | SessionReportSpotlightWithoutPicture)[] {
   if (choice === "none") return [];
   const origin = context.to === "preview" ? context.origin : sendableImageOrigin();
-  if (!origin) return [];
-  return SPOTLIGHT_FIXTURES.flatMap(({ title, body, art }) => {
-    try {
-      return [
-        {
-          title,
-          body,
-          image: { url: new URL(art.path, origin).toString(), width: art.width, height: art.height },
-        },
-      ];
-    } catch {
-      return [];
-    }
+  return SPOTLIGHT_FIXTURES.map(({ title, body, art }) => {
+    const url = origin ? artUrl(art.path, origin) : null;
+    return url === null
+      ? { title, body, image: { url: null, width: art.width, height: art.height } }
+      : { title, body, image: { url, width: art.width, height: art.height } };
   });
+}
+
+/** The art's absolute URL, or none when the origin cannot make one. */
+function artUrl(path: string, origin: string): string | null {
+  try {
+    return new URL(path, origin).toString();
+  } catch {
+    return null;
+  }
 }

@@ -622,7 +622,7 @@
     },
     "spotlights": {
       "title": "Mises en avant",
-      "subtitle": "Les familles voient chaque mise en avant activée en bas de chaque e-mail de compte rendu de session, de la plus récente à la plus ancienne. Chaque lecteur la reçoit dans sa langue, ou en anglais si la sienne n’est pas rédigée, ou sinon dans une langue qui l’est.",
+      "subtitle": "Les parents voient chaque mise en avant activée en bas de chaque e-mail de compte rendu de session qu’ils reçoivent, de la plus récente à la plus ancienne. Chaque lecteur la reçoit dans sa langue, ou en anglais si la sienne n’est pas rédigée, ou sinon dans une langue qui l’est.",
       "newSpotlight": "Nouvelle mise en avant",
       "empty": "Aucune mise en avant pour l’instant. Rédigez la première.",
       "backToList": "Retour aux mises en avant",

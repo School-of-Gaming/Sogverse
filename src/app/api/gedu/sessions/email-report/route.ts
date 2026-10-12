@@ -686,10 +686,11 @@ function spotlightsFor(
  * every text node and drops links. The one thing embedded raw is the URL, which
  * this function builds.
  *
- * The recipient's `kind` decides two things and nothing else: which My SOG
- * root the button points at, and whether the builder renders the framing
- * sentence to the parent about the child or to the child themselves. The
- * report, the facts and the photos are the same in both.
+ * The recipient's `kind` decides three things and nothing else: which My SOG
+ * root the button points at, whether the builder renders the framing sentence
+ * to the parent about the child or to the child themselves, and whether the
+ * spotlights come along — the parent's copy only. The report, the facts and
+ * the photos are the same in both.
  */
 async function sendFamilyMail(
   { participationId, gamerName, recipient }: SeatMail,
@@ -717,7 +718,10 @@ async function sendFamilyMail(
     ),
     reportMarkdown: facts.reportMarkdown,
     photos: facts.photos,
-    spotlights: spotlightsFor(facts.spotlights, recipient.locale),
+    // Parents only: the child's copy carries the report alone, and the builder
+    // draws no spotlights on it either way — none are resolved for it, so
+    // nothing here implies they would show.
+    spotlights: gamerCopy ? [] : spotlightsFor(facts.spotlights, recipient.locale),
     // Keyed by participation, not by product: two siblings in one club have two
     // pages, and this mail is about one of them. The root follows the reader —
     // `/parent` for the parent or an adult on their own seat, `/gamer` for the

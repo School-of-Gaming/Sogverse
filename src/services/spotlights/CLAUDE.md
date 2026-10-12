@@ -1,7 +1,9 @@
 # Spotlights
 
 Admin-written notes, each with a picture, appended to the bottom of every session report
-email — the parents', the gamers' and the staff copy alike.
+email a parent receives, and to the staff copy that records what the parents were sent.
+A child's own copy of the report never carries them, which the template decides rather
+than any caller (`src/lib/email-templates/CLAUDE.md`, "Family mail").
 
 **A spotlight is a single copy, and `enabled` is what makes it live.** There is no working
 and published split, no publish step, no start or end date and no position. Every enabled

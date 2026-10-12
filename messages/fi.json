@@ -622,7 +622,7 @@
     },
     "spotlights": {
       "title": "Nostot",
-      "subtitle": "Perheet näkevät jokaisen päällä olevan noston jokaisen sessioraportin sähköpostin lopussa, uusin ensin. Kukin lukija saa sen omalla kielellään, tai englanniksi, jos hänen kieltään ei ole kirjoitettu, tai muuten jollakin kirjoitetulla kielellä.",
+      "subtitle": "Vanhemmat näkevät jokaisen päällä olevan noston jokaisen heille lähetetyn sessioraportin sähköpostin lopussa, uusin ensin. Kukin lukija saa sen omalla kielellään, tai englanniksi, jos hänen kieltään ei ole kirjoitettu, tai muuten jollakin kirjoitetulla kielellä.",
       "newSpotlight": "Uusi nosto",
       "empty": "Ei vielä nostoja. Kirjoita ensimmäinen.",
       "backToList": "Takaisin nostoihin",

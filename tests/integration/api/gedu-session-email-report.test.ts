@@ -938,7 +938,27 @@ describe("POST /api/gedu/sessions/email-report", () => {
     expect(spotlightClients[0]).toHaveProperty("from", mockFrom);
   });
 
-  it("carries every spotlight into every mail, each in its reader's version", async () => {
+  it("leaves the spotlights out of a child's own copy, and keeps them in the parent's and the staff copy", async () => {
+    mockListEnabledSpotlights.mockResolvedValue(SPOTLIGHTS);
+    setupAdminClient({
+      participations: [EMAIL_CHILD, PARTICIPATIONS[1], PARTICIPATIONS[2]],
+    });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    const child = mailTo("aino@example.test").htmlContent;
+    expect(child).toContain("report from your ");
+    expect(child).not.toContain("/spotlight-images/");
+    expect(child).not.toContain("Autumn camps");
+    expect(child).not.toContain("A Roblox club");
+    expect(mailTo("aino-parent@test.local").htmlContent).toContain(
+      `<img src="${SPOTLIGHT_BUCKET}/a.jpg"`,
+    );
+    expect(staffCopies()[0].htmlContent).toContain(`<img src="${SPOTLIGHT_BUCKET}/a.jpg"`);
+  });
+
+  it("carries every spotlight into every parent's mail, each in its reader's version", async () => {
     mockListEnabledSpotlights.mockResolvedValue(SPOTLIGHTS);
 
     const response = await POST(createRequest());
