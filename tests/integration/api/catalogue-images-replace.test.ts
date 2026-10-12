@@ -22,9 +22,10 @@ import { plainJpeg } from "../../mocks/exif-jpeg";
  * bytes get their own entry (inheriting the replaced entry's name) and every
  * product that used the old one is moved across in a single statement, and
  * every Library cover — draft and live — in `repoint_library_covers`, and
- * every landing page picture in `repoint_landing_images`. The cases below are
- * the forms that takes — nothing to move, products to move, covers to move,
- * landing pictures to move, and the entry having vanished under the admin.
+ * every landing page picture in `repoint_landing_images`, and every
+ * spotlight in `repoint_spotlight_images`. The cases below are the forms that
+ * takes — nothing to move, products to move, covers to move, landing pictures
+ * to move, spotlights to move, and the entry having vanished under the admin.
  */
 
 // --- Mocks ---
@@ -169,8 +170,9 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([]),
       postgrestJson(NEW_ENTRY),
       postgrestJson([{ id: "p1" }, { id: "p2" }, { id: "p3" }]),
-      // A product picture is no Library cover or landing picture, so no
-      // article or page moves.
+      // A product picture is no Library cover, landing picture or spotlight
+      // picture, so no article, page or spotlight moves.
+      postgrestJson(0),
       postgrestJson(0),
       postgrestJson(0),
     );
@@ -206,9 +208,10 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([{ ...OLD_ENTRY, purpose: "library_cover" }]),
       postgrestJson([]),
       postgrestJson(wideEntry),
-      // No product links a cover, and no landing page shows one.
+      // No product links a cover, and no landing page or spotlight shows one.
       postgrestJson([]),
       postgrestJson(2),
+      postgrestJson(0),
       postgrestJson(0),
     );
 
@@ -266,10 +269,11 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([{ ...OLD_ENTRY, purpose: "landing_image" }]),
       postgrestJson([]),
       postgrestJson(wideEntry),
-      // No product or article links a landing picture.
+      // No product, article or spotlight links a landing picture.
       postgrestJson([]),
       postgrestJson(0),
       postgrestJson(3),
+      postgrestJson(0),
     );
 
     const response = await POST(
@@ -307,6 +311,63 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
     expect(response.status).toBe(500);
   });
 
+  it("moves every spotlight using the entry and counts them", async () => {
+    mockAdmin();
+    const wideBytes = new Uint8Array(await plainJpeg(1200, 600));
+    const wideSha = createHash("sha256").update(wideBytes).digest("hex");
+    const wideEntry = {
+      ...NEW_ENTRY,
+      sha256: wideSha,
+      path: `${wideSha}.jpg`,
+      purpose: "spotlight_image",
+    };
+    respondWith(
+      postgrestJson([{ ...OLD_ENTRY, purpose: "spotlight_image" }]),
+      postgrestJson([]),
+      postgrestJson(wideEntry),
+      // No product, article or landing page links a spotlight picture.
+      postgrestJson([]),
+      postgrestJson(0),
+      postgrestJson(0),
+      postgrestJson(2),
+    );
+
+    const response = await POST(
+      ...createRequest(OLD_ID, new File([wideBytes], "spotlight-v2.jpg")),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ image: wideEntry, relinked: 2 });
+
+    const spotlights = fetchMock.mock.calls[6];
+    expect(requestedUrl(spotlights[0]).pathname).toBe(
+      "/rest/v1/rpc/repoint_spotlight_images",
+    );
+    expect(requestBody(6)).toEqual({ p_from: OLD_ID, p_to: NEW_ID });
+    expect(requestBody(2)).toMatchObject({ purpose: "spotlight_image" });
+    expect(mockStorageFrom).toHaveBeenCalledWith("spotlight-images");
+  });
+
+  it("fails loudly when the spotlights cannot follow, rather than reporting a partial move", async () => {
+    mockAdmin();
+    respondWith(
+      postgrestJson([OLD_ENTRY]),
+      postgrestJson([]),
+      postgrestJson(NEW_ENTRY),
+      postgrestJson([{ id: "p1" }]),
+      postgrestJson(0),
+      postgrestJson(0),
+      postgrestJson(
+        { message: "connection lost", code: "08006", details: null, hint: null },
+        500,
+      ),
+    );
+
+    const response = await POST(...createRequest(OLD_ID));
+
+    expect(response.status).toBe(500);
+  });
+
   it("gives a newly created entry the replaced entry's name", async () => {
     mockAdmin();
     respondWith(
@@ -314,6 +375,7 @@ describe("POST /api/admin/catalogue-images/[id]/replace", () => {
       postgrestJson([]),
       postgrestJson(NEW_ENTRY),
       postgrestJson([]),
+      postgrestJson(0),
       postgrestJson(0),
       postgrestJson(0),
     );

@@ -1180,6 +1180,13 @@
             "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et l’utiliser sur cette page d’atterrissage.",
             "outcomeAdded": "Ajoutée au catalogue et choisie pour cette page d’atterrissage.",
             "outcomeExisting": "Déjà dans le catalogue — choisie pour cette page d’atterrissage."
+          },
+          "spotlightImage": {
+            "change": "Changer l’image",
+            "remove": "Retirer l’image",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 2:1, l’ajouter et l’utiliser sur cette mise en avant.",
+            "outcomeAdded": "Ajoutée au catalogue et choisie pour cette mise en avant.",
+            "outcomeExisting": "Déjà dans le catalogue — choisie pour cette mise en avant."
           }
         }
       },
@@ -1250,6 +1257,19 @@
             "removeConsequence": "{count, plural, one {La page ci-dessous perdra cette image, même en ligne. Une section d’images laissée sans image est supprimée.} other {Les # pages ci-dessous perdront cette image, y compris celles en ligne. Une section d’images laissée sans image est supprimée.}}",
             "removeUnused": "Aucune page d’atterrissage n’utilise cette image. Elle sera définitivement retirée du catalogue.",
             "removeConfirm": "Retirer de {count, plural, one {# page} other {# pages}}"
+          },
+          "spotlightImage": {
+            "title": "Images des mises en avant",
+            "description": "Une même image peut servir à plusieurs mises en avant. Votre choix ne concerne que celle-ci, mais remplacer ou retirer une image touche toutes les mises en avant qui l’utilisent, y compris celles des e-mails de compte rendu de session.",
+            "usedBadge": "{count, plural, one {# mise en avant} other {# mises en avant}}",
+            "usedBy": "Mises en avant utilisant cette image",
+            "usedByNone": "Aucune mise en avant n’utilise cette image.",
+            "replaceConsequence": "{count, plural, one {La mise en avant ci-dessous affichera la nouvelle image, dès le prochain e-mail si elle est activée.} other {Les # mises en avant ci-dessous afficheront toutes la nouvelle image, dès le prochain e-mail pour celles qui sont activées.}}",
+            "replaceUnused": "Aucune mise en avant n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+            "replaceConfirm": "Remplacer sur {count, plural, one {# mise en avant} other {# mises en avant}}",
+            "removeConsequence": "{count, plural, one {La mise en avant ci-dessous perdra cette image et sera désactivée : elle quitte les e-mails de compte rendu de session jusqu’à ce que vous choisissiez une autre image et la réactiviez.} other {Les # mises en avant ci-dessous perdront cette image et seront désactivées : elles quittent les e-mails de compte rendu de session jusqu’à ce que vous choisissiez une autre image et réactiviez chacune.}}",
+            "removeUnused": "Aucune mise en avant n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+            "removeConfirm": "Retirer de {count, plural, one {# mise en avant} other {# mises en avant}}"
           }
         }
       },

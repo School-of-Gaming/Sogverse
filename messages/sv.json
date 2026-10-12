@@ -1180,6 +1180,13 @@
             "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
             "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
             "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
+          },
+          "spotlightImage": {
+            "change": "Byt bild",
+            "remove": "Ta bort bild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 2:1-ramen och den läggs till och används på den här spotlighten.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här spotlighten.",
+            "outcomeExisting": "Finns redan i biblioteket — vald för den här spotlighten."
           }
         }
       },
@@ -1250,6 +1257,19 @@
             "removeConsequence": "{count, plural, one {Landningssidan nedan förlorar bilden, även om den är publicerad. En bildsektion som blir utan bilder tas bort.} other {Alla # landningssidor nedan förlorar bilden, även de publicerade. En bildsektion som blir utan bilder tas bort.}}",
             "removeUnused": "Ingen landningssida använder den här bilden. Den tas bort ur biblioteket för gott.",
             "removeConfirm": "Ta bort från {count, plural, one {# sida} other {# sidor}}"
+          },
+          "spotlightImage": {
+            "title": "Bilder för spotlights",
+            "description": "En bild kan användas av flera spotlights. Ditt val gäller bara den här spotlighten, men att ersätta eller ta bort en bild påverkar alla spotlights som använder den, även de som visas i sessionsrapporternas e-post.",
+            "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+            "usedBy": "Spotlights som använder bilden",
+            "usedByNone": "Ingen spotlight använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Spotlighten nedan kommer att visa den nya bilden, i nästa e-post om den är påslagen.} other {Alla # spotlights nedan kommer att visa den nya bilden, de påslagna i nästa e-post.}}",
+            "replaceUnused": "Ingen spotlight använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# spotlight} other {# spotlights}}",
+            "removeConsequence": "{count, plural, one {Spotlighten nedan förlorar bilden och stängs av, så den försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på den igen.} other {Alla # spotlights nedan förlorar bilden och stängs av, så de försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på var och en igen.}}",
+            "removeUnused": "Ingen spotlight använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# spotlight} other {# spotlights}}"
           }
         }
       },

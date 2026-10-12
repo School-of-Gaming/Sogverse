@@ -1,0 +1,39 @@
+# Spotlights
+
+Admin-written notes, each with a picture, appended to the bottom of every session report
+email — the parents', the gamers' and the staff copy alike.
+
+**A spotlight is a single copy, and `enabled` is what makes it live.** There is no working
+and published split, no publish step, no start or end date and no position. Every enabled
+spotlight goes into every report, **newest first by `created_at`, `id` breaking a tie** —
+there is no ordering column to sort by or to add.
+
+**It may be saved without a picture, but never enabled without one.** A CHECK on the table
+holds it, and the writers refuse with a sentence first (`check_violation`): switching on a
+spotlight with no picture, and a save that clears the picture of an enabled one. The admin
+UI holds the switch back, so the refusal fires only on a state the UI cannot produce. A new
+spotlight starts switched off; the whole save never touches the switch.
+
+**A version per site locale, both fields required.** One row per (spotlight, locale) in
+`spotlight_translations`: a title and a markdown body (links allowed, no headings — the
+renderer's use case decides that, not the column). The editor's save writes the whole
+version set, so a language left out is removed, and a save with no version is refused —
+which is what lets every reader pick theirs with `resolveTranslation()`. The service hands
+versions back in `SUPPORTED_LOCALES` order for its last step.
+
+**The picture is a `spotlight_image` entry of the shared image catalogue**
+(`src/services/catalogue-images/`), in the `spotlight-images` bucket, stored at exactly
+the size its purpose declares in `src/lib/images/`; a mail sizes the picture from that,
+never from a measurement. **A catalogue replace repoints every spotlight on the entry and
+leaves each enabled; a catalogue removal takes the picture off and switches the spotlight
+off in one statement**, since an enabled spotlight cannot be without one. A removed picture
+therefore drops its spotlights out of the mails until an admin picks another picture and
+switches each back on.
+
+**The session report email reads with the service role.** Both tables are admin-only to
+the Data API, and the route sending a report is a gedu's, so it calls the service's
+enabled-spotlights read on the service-role client it already holds. The service module
+is safe on the server; the package index re-exports the client hooks beside it, so a
+route imports the service file itself.
+
+**Delete is allowed and outright**, versions with it; the picture stays in the catalogue.

@@ -56,6 +56,14 @@ export const IMAGE_PURPOSES = {
     visibility: "public",
     catalogue: { width: 1600, height: 900 },
   },
+  // A wide 2:1 band at the bottom of a session report email, over twice the
+  // mail's 560px content column, so it stays sharp on a high-density screen
+  // at the column's full width.
+  spotlight_image: {
+    bucket: "spotlight-images",
+    visibility: "public",
+    catalogue: { width: 1200, height: 600 },
+  },
   team_photo: { bucket: "team-photos", visibility: "private" },
   session_photo: { bucket: "session-images", visibility: "public" },
   chat_image: { bucket: "chat-images", visibility: "private" },

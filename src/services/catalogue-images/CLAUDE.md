@@ -44,6 +44,9 @@ error.
 A landing page's pictures are named inside its section structure, where no foreign key
 reaches, so their half of a replace is `repoint_landing_images(old, new)`, the same shape
 over both of a page's copies (`src/services/landing-pages/CLAUDE.md`).
+A spotlight's half is `repoint_spotlight_images(old, new)`; its half of a removal is a
+trigger on the row's delete that takes the picture off **and switches the spotlight off**,
+since an enabled spotlight cannot be without one (`src/services/spotlights/CLAUDE.md`).
 
 Removal is the mirror: the row goes, the foreign keys null every link pointing at it —
 live covers included — the triggers null each path, and the object is deleted. A landing
@@ -149,6 +152,7 @@ changed:
 | `product` | `product-images` | exactly 1200 × 800 |
 | `library_cover` | `library-covers` | exactly 1600 × 900 |
 | `landing_image` | `landing-images` | exactly 1600 × 900 |
+| `spotlight_image` | `spotlight-images` | exactly 1200 × 600 |
 
 The purpose is a column; the bucket and the size live once, in the purpose map in
 `src/lib/images/` — the catalogue's slice of the image purpose registry there — which

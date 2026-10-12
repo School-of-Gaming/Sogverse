@@ -1180,6 +1180,13 @@
             "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it on this landing page.",
             "outcomeAdded": "Added to the catalogue and chosen for this landing page.",
             "outcomeExisting": "Already in the catalogue — chosen for this landing page."
+          },
+          "spotlightImage": {
+            "change": "Change picture",
+            "remove": "Remove picture",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 2:1 frame, add it and use it on this spotlight.",
+            "outcomeAdded": "Added to the catalogue and chosen for this spotlight.",
+            "outcomeExisting": "Already in the catalogue — chosen for this spotlight."
           }
         }
       },
@@ -1250,6 +1257,19 @@
             "removeConsequence": "{count, plural, one {The landing page below will lose this picture, even while it is live. A pictures section left with none is removed.} other {All # landing pages below will lose this picture, the live ones included. A pictures section left with none is removed.}}",
             "removeUnused": "No landing page uses this picture. It will be removed from the catalogue for good.",
             "removeConfirm": "Remove from {count, plural, one {# page} other {# pages}}"
+          },
+          "spotlightImage": {
+            "title": "Spotlight pictures",
+            "description": "One picture can be used by several spotlights. Choosing one changes only this spotlight; replacing or removing one changes every spotlight using it, the ones in session report emails included.",
+            "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+            "usedBy": "Spotlights using this picture",
+            "usedByNone": "No spotlight uses this picture.",
+            "replaceConsequence": "{count, plural, one {The spotlight below will show the new picture, in the next email if it is switched on.} other {All # spotlights below will show the new picture, in the next email where they are switched on.}}",
+            "replaceUnused": "No spotlight uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# spotlight} other {# spotlights}}",
+            "removeConsequence": "{count, plural, one {The spotlight below will lose this picture and be switched off, so it leaves session report emails until you choose another picture and switch it back on.} other {All # spotlights below will lose this picture and be switched off, so they leave session report emails until you choose another picture and switch each back on.}}",
+            "removeUnused": "No spotlight uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# spotlight} other {# spotlights}}"
           }
         }
       },

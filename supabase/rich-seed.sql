@@ -2998,6 +2998,67 @@ SELECT public.consume_discord_link_token('rich-seed-mikko-link-token');
 COMMIT;
 
 -- =============================================================================
+-- 14b. Spotlights
+-- =============================================================================
+-- Two spotlights, each in English and Finnish, the newer one with a link in its
+-- body — what every session report email appends. Written through the admin
+-- RPC, which creates a spotlight switched off and with no picture: the
+-- pictures are not here, for the reason the products' are not.
+-- `rich-images.sh` uploads supabase/seed-images/spotlight-<n>.jpg, links the
+-- nth to the nth spotlight oldest first, and switches each on.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+SELECT public.create_spotlight(jsonb_build_array(
+  jsonb_build_object(
+    'locale', 'en',
+    'title',  'Building together, one block at a time',
+    'body',   'Every session ends with something the group made together. Ask your child to show you what they built this week.'),
+  jsonb_build_object(
+    'locale', 'fi',
+    'title',  'Yhdessä rakentaen, palikka kerrallaan',
+    'body',   'Jokainen sessio päättyy johonkin, minkä ryhmä teki yhdessä. Pyydä lastasi näyttämään, mitä hän rakensi tällä viikolla.')
+));
+
+SELECT public.create_spotlight(jsonb_build_array(
+  jsonb_build_object(
+    'locale', 'en',
+    'title',  'Clubs for schools',
+    'body',   'We run clubs in schools across Finland, in the school day or straight after it. [See the clubs on offer](/shop) and tell your school about them.'),
+  jsonb_build_object(
+    'locale', 'fi',
+    'title',  'Kerhot kouluille',
+    'body',   'Pidämme kerhoja kouluissa ympäri Suomen, koulupäivän aikana tai heti sen jälkeen. [Katso tarjolla olevat kerhot](/shop) ja kerro niistä koulullesi.')
+));
+
+COMMIT;
+
+-- The RPC stamps both with this moment, so they are set a week apart: the
+-- second is the newer and comes first in every mail.
+UPDATE public.spotlights s
+   SET created_at = d.created_at
+  FROM public.spotlight_translations t
+  JOIN (VALUES
+    ('Building together, one block at a time', timestamptz '2026-09-21 10:00+03'),
+    ('Clubs for schools',                      timestamptz '2026-09-28 10:00+03')
+  ) AS d(title, created_at) ON d.title = t.title
+ WHERE t.spotlight_id = s.id AND t.locale = 'en';
+
+DO $$
+BEGIN
+  IF (SELECT count(*) FROM public.spotlights
+       WHERE created_at > now() - interval '1 hour') > 0 THEN
+    RAISE EXCEPTION 'A spotlight kept its seeding date: its English title no longer matches the backdating above.';
+  END IF;
+END;
+$$;
+
+-- =============================================================================
 -- 15. What landed
 -- =============================================================================
 
