@@ -1,9 +1,9 @@
 import { wrapInLayout } from "./layout";
 import { escapeHtml, paragraph, styledName, styledProductName } from "./utils";
-import { calloutPanel, ctaButton, factList, sectionLabel } from "./blocks";
+import { calloutPanel, ctaButton, factList, hairlineRule, sectionLabel } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
 import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
-import { DARK_THEME } from "@/lib/constants/colors";
+import { MAIL_SPACE } from "./type-scale";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -158,11 +158,11 @@ export function buildSessionReportEmail(
       [t("sessionReport.dateLabel"), escapeHtml(sessionDate)],
       [t("sessionReport.timeLabel"), escapeHtml(sessionTime)],
     ])}
-    <div style="margin:0 0 24px;">
+    <div style="margin:0 0 ${MAIL_SPACE.block}px;">
       ${renderMarkdownForEmail(reportMarkdown, "feed")}
     </div>
     ${photosSection(t, photos)}
-    ${rule()}
+    ${hairlineRule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
   `;
@@ -185,11 +185,15 @@ export function buildSessionReportEmail(
  * which three strings go in it. It was a brand-orange rule down one edge for a
  * while, which is a treatment the app has nowhere and which read as a warning —
  * this is a copy of a report, not an alarm.
+ *
+ * It opens the mail, so it sits flush at the top of the content rather than
+ * taking the furniture step above itself.
  */
 function staffCopyBanner(t: EmailTranslator): string {
   return calloutPanel({
     label: t("sessionReport.staffCopyLabel"),
     paragraphs: [t("sessionReport.staffCopyBody"), t("sessionReport.staffCopyPrivacy")],
+    opening: true,
   });
 }
 
@@ -206,22 +210,18 @@ function staffCopyBanner(t: EmailTranslator): string {
  * The lead-in is `sectionLabel` rather than a heading: the report above it
  * carries the gedu's own headings, and a second-level heading here would
  * compete with them for the same rank.
+ *
+ * The lead-in and the grid are one piece of furniture, so the pair states the
+ * furniture step above and below itself; the lead-in sits the tight step above
+ * the first photo, as a lead-in does above anything it introduces.
  */
 function photosSection(
   t: EmailTranslator,
   photos: readonly SessionReportPhoto[],
 ): string {
   if (photos.length === 0) return "";
-  return `${sectionLabel(t("sessionReport.photosHeading"))}
-    ${sessionPhotoGrid(photos)}`;
-}
-
-/** A hairline between the report and what the mail asks afterwards. */
-function rule(): string {
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-      <tr>
-        <td style="border-top:1px solid ${DARK_THEME.border};font-size:0;line-height:0;">&nbsp;</td>
-      </tr>
-    </table>`;
+  return `<div style="margin:${MAIL_SPACE.furniture}px 0;">
+      ${sectionLabel(t("sessionReport.photosHeading"))}
+      ${sessionPhotoGrid(photos)}
+    </div>`;
 }

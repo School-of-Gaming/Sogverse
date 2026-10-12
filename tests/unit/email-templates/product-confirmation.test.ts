@@ -16,6 +16,7 @@ import {
   type TopicPrepTranslator,
 } from "@/lib/email-templates/translator";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { styledName } from "@/lib/email-templates/utils";
 
 let t: EmailTranslator;
 /** The guide's own translator — the second namespace this mail reads. */
@@ -413,7 +414,7 @@ describe("buildProductConfirmationEmail", () => {
     it("keeps a waitlisted place in the words the type calls for", () => {
       const club = render({ mode: "waitlist", priceAmount: null });
       // The name arrives styled, so the assertion is on the sentence around it.
-      expect(club).toContain("Aino</span> keeps their place in line for the whole term.");
+      expect(club).toContain(`${styledName("Aino")} keeps their place in line for the whole term.`);
       expect(
         render({ mode: "waitlist", priceAmount: null, productType: "camp" }),
       ).toContain("keeps their place in line for the camp.");

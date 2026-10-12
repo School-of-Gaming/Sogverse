@@ -137,6 +137,10 @@ A hard moment is a mail about money gone wrong, a mistake of ours, or anything e
 
 A block carries the space below it, and furniture and the rule state the space above them too, which a browser-based client collapses with the block above rather than adding to it. Compose blocks adjacently and add nothing between them.
 
+**A lead-in over furniture is placed inside the furniture's own spacing, never stacked above it.** A label's 8 meeting the furniture's 24 collapses to 24 in a browser and adds up to 32 in Outlook, and neither is the 8 the rule asks for. So the pair is one piece of furniture: a wrapper states the 24 on both sides, the lead-in sits inside it with its 8, and the block under it carries no margin of its own — `factList`'s `leadIn` option is that shape, and the session report's photos section builds it by hand.
+
+**The block that opens a mail sits flush.** Furniture states 24 above itself, and as a mail's first block that space is not collapsed into anything, since a table cell's first child keeps its top margin. So it only pushes the mail down from its header. A callout that opens a mail is set with `opening`, which drops its top margin.
+
 **A mail section opens with `hairlineRule()` followed by `heading()`, and the rule's 24 stands in for markdown's 32.** Markdown puts 32 above a top heading because it has no rule to mark the break; a mail section heading has one, and the rule's own space on both sides already sets the heading further from what is above it than a report's top heading ever sits. Adding the 32 under the rule would float the heading away from the rule that belongs to it, so no mail emits it.
 
 A list indents with a `margin-left` and zero padding, as the markdown definition's mail half does, because Outlook's Word engine ignores `padding-left` on a list.

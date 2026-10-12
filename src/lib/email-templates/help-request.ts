@@ -4,7 +4,8 @@ import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
 import { factList } from "./blocks";
-import { defuseAutolinks, escapeHtml, groundFill, heading, paragraph } from "./utils";
+import { MAIL_SPACE, mailText } from "./type-scale";
+import { BODY_TEXT_STYLE, defuseAutolinks, escapeHtml, groundFill, heading, paragraph } from "./utils";
 
 /**
  * The quoted message's box: a tone off whatever the shell has put it on.
@@ -98,7 +99,7 @@ export function buildHelpRequestEmail(t: EmailTranslator, locale: string, opts: 
   // reply address, the note is the account it came from.
   const gamerNote = opts.isGamer
     ? `<tr>
-        <td style="padding:12px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
+        <td style="padding:${MAIL_SPACE.block}px 0 0;${mailText("small", DARK_THEME.mutedFg)}">
           ${
             opts.gamerOwnMailbox
               ? t("helpRequest.gamerNoteOwnMailbox", {
@@ -140,12 +141,12 @@ export function buildHelpRequestEmail(t: EmailTranslator, locale: string, opts: 
         <td>${facts}</td>
       </tr>
       <tr>
-        <td style="font-size:14px;font-weight:bold;color:${DARK_THEME.foreground};padding-bottom:8px;">
+        <td style="padding-bottom:${MAIL_SPACE.tight}px;${mailText("leadIn", DARK_THEME.foreground)}">
           ${t("helpRequest.message")}
         </td>
       </tr>
       <tr>
-        <td class="${QUOTE_GROUND.className}" style="padding:16px;${QUOTE_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
+        <td class="${QUOTE_GROUND.className}" style="padding:${MAIL_SPACE.block}px;${QUOTE_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};${BODY_TEXT_STYLE}">
           ${escapedMessage}
         </td>
       </tr>

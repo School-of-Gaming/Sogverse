@@ -582,8 +582,7 @@ export function buildProductConfirmationEmail(
     ${heading(title)}
     ${greeting}
     ${paragraph(subheading)}
-    ${sectionLabel(summaryTitle(t, content.options))}
-    ${factList(factRows)}
+    ${factList(factRows, { leadIn: summaryTitle(t, content.options) })}
     ${sectionLabel(t("productConfirmation.nextTitle"))}
     ${bulletList(
       nextItems(t, content.options, {

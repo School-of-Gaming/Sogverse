@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   bulletList,
+  calloutPanel,
   factList,
   hairlineRule,
   inlineBold,
@@ -78,6 +79,41 @@ describe("factList", () => {
     expect(html).toContain(mailText("small", DARK_THEME.mutedFg));
     expect(html).not.toContain("text-transform");
     expect(html).not.toContain("letter-spacing");
+  });
+
+  it("states the furniture step on both sides of itself", () => {
+    expect(factList([["Group", "Kettukallio"]])).toContain(
+      `style="margin:${MAIL_SPACE.furniture}px 0;border-top:`,
+    );
+  });
+
+  /**
+   * A lead-in is part of the furniture it introduces: the step goes above the
+   * pair, and the lead-in sits the tight step above the first rule rather than
+   * being pushed the whole furniture step off it by the list's own margin.
+   */
+  it("takes a lead-in inside the furniture step, the tight step above the rows", () => {
+    const html = factList([["Group", "Kettukallio"]], { leadIn: "Your booking" });
+    expect(html.trimStart().startsWith(`<div style="margin:${MAIL_SPACE.furniture}px 0;">`)).toBe(
+      true,
+    );
+    expect(html).toContain(`margin:0 0 ${MAIL_SPACE.tight}px;`);
+    expect(html).toContain('style="margin:0;border-top:');
+    expect(html.indexOf("Your booking")).toBeLessThan(html.indexOf("Kettukallio"));
+  });
+});
+
+describe("calloutPanel", () => {
+  const options = { label: "Note", paragraphs: ["One sentence."] };
+
+  it("states the furniture step on both sides of itself", () => {
+    expect(calloutPanel(options)).toContain(`style="margin:${MAIL_SPACE.furniture}px 0;"`);
+  });
+
+  it("sits flush when it opens the mail", () => {
+    expect(calloutPanel({ ...options, opening: true })).toContain(
+      `style="margin:0 0 ${MAIL_SPACE.furniture}px;"`,
+    );
   });
 });
 

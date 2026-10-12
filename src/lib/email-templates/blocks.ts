@@ -375,7 +375,12 @@ export const PLAIN_MARKUP_TAGS = {
  * than a top edge, so a label sits on the same line as the value beside it.
  *
  * **It is structural furniture**, so it states the furniture step above and
- * below itself rather than leaning on whatever the block above left.
+ * below itself rather than leaning on whatever the block above left. A list
+ * introduced by a lead-in takes it as `leadIn`, and the pair is then the one
+ * piece of furniture: the step goes above the lead-in, which sits the tight
+ * step above the first rule. A `sectionLabel` set before the list instead
+ * would be pushed the whole furniture step off what it introduces, since the
+ * list's own margin outweighs the label's.
  *
  * **The last row keeps its rule.** With no box edge to close the list, the
  * final hairline is what closes it — and where the mail goes on to a report or
@@ -391,6 +396,7 @@ export const PLAIN_MARKUP_TAGS = {
  */
 export function factList(
   rows: ReadonlyArray<readonly [label: string, value: string]>,
+  { leadIn }: { leadIn?: string } = {},
 ): string {
   const rendered = rows
     .map(
@@ -401,10 +407,15 @@ export function factList(
         </tr>`,
     )
     .join("");
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${MAIL_SPACE.furniture}px 0;border-top:1px solid ${DARK_THEME.border};">
+  const table = (margin: string) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${margin};border-top:1px solid ${DARK_THEME.border};">
       ${rendered}
     </table>`;
+  if (leadIn === undefined) return table(`${MAIL_SPACE.furniture}px 0`);
+  return `
+    <div style="margin:${MAIL_SPACE.furniture}px 0;">
+      ${sectionLabel(leadIn)}${table("0")}
+    </div>`;
 }
 
 /**
@@ -445,6 +456,13 @@ interface CalloutPanelOptions {
   label: string;
   /** Already-translated (and already-escaped) paragraphs, in reading order. */
   paragraphs: string[];
+  /**
+   * The panel opens the mail: it sits flush with the top of the content and
+   * states the furniture step below itself only. The first block of a mail has
+   * nothing above it to be set apart from, and a gap there is the shell's
+   * padding doubled.
+   */
+  opening?: boolean;
 }
 
 /**
@@ -493,7 +511,7 @@ interface CalloutPanelOptions {
  * callout the later sentence is usually the one that answers the actual worry,
  * and greying it would quiet exactly the line the panel exists to say.
  */
-export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string {
+export function calloutPanel({ label, paragraphs, opening = false }: CalloutPanelOptions): string {
   const last = paragraphs.length - 1;
   const body = paragraphs
     .map(
@@ -502,7 +520,7 @@ export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string
     )
     .join("");
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${MAIL_SPACE.furniture}px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${opening ? `0 0 ${MAIL_SPACE.furniture}px` : `${MAIL_SPACE.furniture}px 0`};">
       <tr>
         <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:${MAIL_SPACE.block}px;">
           <p style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("small", STATUS.info, MAIL_WEIGHT.bold)}letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
