@@ -856,7 +856,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   can_edit_team_profile: {
     scopeTest: "tests/db/team-profiles.test.ts",
-    why: "the edit predicate the team-photos storage policies are evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
+    why: "the edit predicate the team photo upload route asks on the caller's own client before it stores, and the team-photos delete policy is evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
   },
   // The public team page's three reads. Self-scoping by the widest reading the
   // category admits, the one can_read_product sits on: none names a user,

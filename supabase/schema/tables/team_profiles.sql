@@ -55,7 +55,7 @@ COMMENT ON COLUMN public.team_profiles.pick IS 'The accent colour the person pic
 -- Name: COLUMN team_profiles.photo_path; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name in the team-photos bucket, always inside the person''s own folder: <user_id>/<name>. The client crops every upload to an 800 × 1000 portrait before it is stored. NULL for none, which keeps the profile incomplete.';
+COMMENT ON COLUMN public.team_profiles.photo_path IS 'The photo''s object name in the team-photos bucket, always inside the person''s own folder: <user_id>/<name>. The team photo upload route stores every object there, a JPEG at exactly the team photo''s stored size with its metadata stripped. NULL for none, which keeps the profile incomplete.';
 
 
 --

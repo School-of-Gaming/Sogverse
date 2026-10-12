@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
@@ -19,8 +19,8 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
  * Team profiles: the two writers (`save_team_profile`, and
- * `set_team_profile_approval` — an admin's make public and hide), the edit predicate the storage policies and
- * the save share (`can_edit_team_profile` — this file is its scope test), the
+ * `set_team_profile_approval` — an admin's make public and hide), the edit predicate the photo upload route,
+ * the bucket's delete policy and the save share (`can_edit_team_profile` — this file is its scope test), the
  * read policies, and the `team-photos` bucket's policies.
  *
  * The seeded admin and Gedu own the profiles under test. Two more accounts are
@@ -151,8 +151,39 @@ describe("team profiles", () => {
     return (data ?? []).map((object) => `${userId}/${object.name}`);
   }
 
+  /**
+   * The team photo upload route, stood in for. The service posts a new crop
+   * to it and a DB test has no server to answer, so this stores as the route
+   * does — on the service role, in the named person's folder, under a fresh
+   * name — and answers the path. The route's own checks (who may edit, the
+   * bytes) are its integration test's to hold; a case that needs the route to
+   * refuse sets `photoRouteRefuses`. Every other request goes out as usual.
+   */
+  let photoRouteRefuses = false;
+  const realFetch = globalThis.fetch;
+  async function photoRouteStandIn(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> {
+    const url = input instanceof Request ? input.url : String(input);
+    const route = /^\/api\/team\/profiles\/([^/]+)\/photo$/.exec(url);
+    if (route === null) return realFetch(input, init);
+    if (photoRouteRefuses) {
+      return Response.json({ error: "Unsupported Media Type" }, { status: 415 });
+    }
+    const file = init?.body instanceof FormData ? init.body.get("file") : null;
+    if (!(file instanceof Blob)) throw new Error("the stand-in got no file");
+    const path = `${decodeURIComponent(route[1])}/${crypto.randomUUID()}.jpg`;
+    const { error } = await admin.storage
+      .from(IMAGE_PURPOSES.team_photo.bucket)
+      .upload(path, file, { contentType: "image/jpeg", upsert: false });
+    if (error) return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ path });
+  }
+
   beforeAll(async () => {
     admin = createAdminTestClient();
+    vi.stubGlobal("fetch", photoRouteStandIn);
     const otherGeduEmail = await mint("gedu", "gedu");
     const otherAdminEmail = await mint("admin", "admin");
     [otherGeduId, otherAdminId] = await Promise.all([
@@ -203,6 +234,7 @@ describe("team profiles", () => {
     await reset(otherAdminId);
     await admin.auth.admin.deleteUser(otherGeduId);
     await admin.auth.admin.deleteUser(otherAdminId);
+    vi.unstubAllGlobals();
   });
 
   // -------------------------------------------------------------------------
@@ -349,15 +381,19 @@ describe("team profiles", () => {
       expect(data ?? []).toEqual([]);
     });
 
-    it("refuses a save whose crop cannot be stored, and writes nothing", async () => {
-      const notAPhoto = new Blob(["hello"], { type: "text/plain" });
-      await expect(
-        new TeamProfilesService(geduAuth).saveTeamProfile(
-          TEST_IDS.GEDU,
-          content({ photo: { crop: notAPhoto } }),
-          false,
-        ),
-      ).rejects.toBeInstanceOf(TeamPhotoUploadError);
+    it("refuses a save whose crop the upload route refuses, and writes nothing", async () => {
+      photoRouteRefuses = true;
+      try {
+        await expect(
+          new TeamProfilesService(geduAuth).saveTeamProfile(
+            TEST_IDS.GEDU,
+            content({ photo: { crop: photoBlob() } }),
+            false,
+          ),
+        ).rejects.toBeInstanceOf(TeamPhotoUploadError);
+      } finally {
+        photoRouteRefuses = false;
+      }
       const { count } = await admin
         .from("team_profiles")
         .select("user_id", { count: "exact", head: true })
@@ -708,13 +744,18 @@ describe("team profiles", () => {
       expect(error).toBeNull();
     });
 
-    it("cannot upload into another person's folder, or read another's photo", async () => {
-      const intoOther = await geduAuth.storage
-        .from(IMAGE_PURPOSES.team_photo.bucket)
-        .upload(`${otherGeduId}/${crypto.randomUUID()}.jpg`, photoBlob(), {
-          contentType: "image/jpeg",
-        });
-      expect(intoOther.error).not.toBeNull();
+    it("cannot upload into any folder, their own included, or read another's photo", async () => {
+      // The upload route is the bucket's only writer: not even the folder a
+      // Gedu may edit takes a direct upload.
+      for (const folderId of [otherGeduId, TEST_IDS.GEDU]) {
+        const upload = await geduAuth.storage
+          .from(IMAGE_PURPOSES.team_photo.bucket)
+          .upload(`${folderId}/${crypto.randomUUID()}.jpg`, photoBlob(), {
+            contentType: "image/jpeg",
+          });
+        expect(upload.error, folderId).not.toBeNull();
+      }
+      expect(await folder(TEST_IDS.GEDU)).toEqual([]);
 
       const theirs = await seedPhoto(otherGeduId);
       const read = await geduAuth.storage
@@ -722,13 +763,12 @@ describe("team profiles", () => {
         .createSignedUrl(theirs, 60);
       expect(read.error).not.toBeNull();
 
-      // …while their own folder takes an upload.
-      const own = await geduAuth.storage
+      // …while their own photo, stored by the route, reads back.
+      const own = await seedPhoto(TEST_IDS.GEDU);
+      const ownRead = await geduAuth.storage
         .from(IMAGE_PURPOSES.team_photo.bucket)
-        .upload(`${TEST_IDS.GEDU}/${crypto.randomUUID()}.jpg`, photoBlob(), {
-          contentType: "image/jpeg",
-        });
-      expect(own.error).toBeNull();
+        .createSignedUrl(own, 60);
+      expect(ownRead.error).toBeNull();
     });
 
     it("cannot read another person's profile rows", async () => {
@@ -858,12 +898,16 @@ describe("team profiles", () => {
         p_opted_in: false,
       });
       expect(error?.code).toBe(FORBIDDEN);
-      const upload = await adminAuth.storage
-        .from(IMAGE_PURPOSES.team_photo.bucket)
-        .upload(`${TEST_IDS.CUSTOMER}/${crypto.randomUUID()}.jpg`, photoBlob(), {
-          contentType: "image/jpeg",
-        });
-      expect(upload.error).not.toBeNull();
+      // No folder takes a direct upload from an admin either, not even one
+      // whose profile they may edit: the upload route is the only writer.
+      for (const folderId of [TEST_IDS.CUSTOMER, otherAdminId]) {
+        const upload = await adminAuth.storage
+          .from(IMAGE_PURPOSES.team_photo.bucket)
+          .upload(`${folderId}/${crypto.randomUUID()}.jpg`, photoBlob(), {
+            contentType: "image/jpeg",
+          });
+        expect(upload.error, folderId).not.toBeNull();
+      }
     });
 
     it("reads any admin's or Gedu's profile and photo", async () => {
