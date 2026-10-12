@@ -4652,6 +4652,10 @@ export type Database = {
         Args: { p_from: string; p_product_id: string; p_to: string }
         Returns: Json
       }
+      holiday_change_impact: {
+        Args: { p_after: unknown[]; p_before: unknown[]; p_product_id: string }
+        Returns: Json
+      }
       immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_chat_channel_member: {
@@ -4747,6 +4751,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      load_holiday_calendar_breaks: {
+        Args: { p_breaks: Json; p_calendar_id: string }
+        Returns: undefined
+      }
       location_search_blob: {
         Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
         Returns: string
@@ -4798,6 +4806,10 @@ export type Database = {
       }
       planned_sessions_document: {
         Args: { p_product_id: string; p_to: string }
+        Returns: Json
+      }
+      preview_holiday_calendar_change: {
+        Args: { p_breaks: Json; p_calendar_id: string }
         Returns: Json
       }
       product_holiday_breaks: {

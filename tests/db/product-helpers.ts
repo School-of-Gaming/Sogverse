@@ -363,6 +363,13 @@ import { TEST_IDS } from "./constants";
  *                  group 8a3, for the admin dashboard's window around today.
  *                  Its calendar is minted by the RPC and found by a name
  *                  prefix only that file uses)
+ *   8b0-8b2        holiday-impact.test.ts (the dated Monday club 8b0, its term
+ *                  spanning 2021 to 2034 so a break can be past or future,
+ *                  with its group 8b1 holding the stored records and requests;
+ *                  8b2 is the short club following the same calendar that an
+ *                  edit away from its term leaves out of the preview. Its
+ *                  calendars are minted by the RPC and found by a name prefix
+ *                  only that file uses)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

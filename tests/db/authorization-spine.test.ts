@@ -145,6 +145,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   create_holiday_calendar: { permittedRoles: ["admin"] },
   update_holiday_calendar: { permittedRoles: ["admin"] },
   set_product_holiday_calendars: { permittedRoles: ["admin"] },
+  // What saving a calendar would change for every club following it. Writes
+  // nothing, but reads stored session records and substitution requests, which
+  // carry no `authenticated` grant. Past the guard, all-NULL arguments are
+  // refused by the calendar lookup with `no_data_found` — not the forbidden
+  // error.
+  preview_holiday_calendar_change: { permittedRoles: ["admin"] },
   // The four writers of the Library — the working copy's create and save, and
   // publish and unpublish, which copy it over or remove its public published
   // copy. Neither table carries a write grant for `authenticated`, so these are
