@@ -105,6 +105,7 @@ const ENGLISH_UNDER_KLINGON = [
 ];
 
 const isEnglishUnderKlingon = (locale, key) =>
+  // exact-locale: Klingon's legal keys fall back to English by design
   locale === "tlh" &&
   ENGLISH_UNDER_KLINGON.some((root) => key === root || key.startsWith(`${root}.`));
 

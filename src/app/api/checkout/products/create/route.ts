@@ -32,7 +32,6 @@ import {
   metaProductDetails,
 } from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { getOrigin } from "@/lib/url";
 
 /**
@@ -99,13 +98,6 @@ export const POST = defineRoute({
         "id, product_type, billing_mode, topic, seat_count, timezone, spoken_language_code, start_date, end_date, product_translations(locale, name), product_prices(currency, price_cents)",
       )
       .eq("id", productId)
-      // Embedded resources come back unordered, so a product without an English
-      // translation resolved its name from an arbitrary row. Alphabetical
-      // locale order is arbitrary too, but it is *stable*, which is all the
-      // fallback chain's last step needs. Ordering an embedded resource needs
-      // its table named — a bare `.order("locale")` would order `products` by a
-      // column it does not have.
-      .order("locale", { referencedTable: "product_translations" })
       .single();
     if (productErr) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -133,16 +125,16 @@ export const POST = defineRoute({
     // items now name the shared Stripe Product, whose name is resolved at the
     // default locale and shared across every locale.
     const parentLocaleProductName =
-      resolveTranslation(inLocaleOrder(product.product_translations), locale)?.name ??
+      resolveTranslation(product.product_translations, locale)?.name ??
       fallbackProductName;
     // The default-locale name, for the session metadata a Stripe Workflow turns
     // into an internal Slack notification. Its audience is staff in one channel,
     // where one stable name per product is the whole point — resolving it in the
     // buyer's locale would file the same club under a different heading
-    // depending on who happened to buy it. Same convention as the shared Stripe
-    // Product's name above.
+    // depending on who happened to buy it. It is the same pick the shared Stripe
+    // Product is named with, so the two never disagree.
     const defaultLocaleProductName =
-      resolveTranslation(inLocaleOrder(product.product_translations), DEFAULT_LOCALE)?.name ??
+      resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
       fallbackProductName;
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid

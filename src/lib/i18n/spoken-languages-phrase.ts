@@ -28,6 +28,7 @@ import {
  * fall back to English for that locale.
  */
 export function spokenLanguagesPhrase(locale: SupportedLocale): string {
+  // exact-locale: Klingon has no Intl list format; no written version is picked
   const joinLocale = locale === "tlh" ? DEFAULT_LOCALE : locale;
   const join = new Intl.ListFormat(
     [`${joinLocale}-${LOCALE_CONFIG[joinLocale].country}`],

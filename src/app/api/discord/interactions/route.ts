@@ -481,6 +481,7 @@ async function sendSubStep(
       return;
     }
     const locale = gedu.locale ?? discordLanguage;
+    // exact-locale: picks which message catalogue to load, not a written version
     const copy = locale === discordLanguage ? fallback : await loadDiscordSubCopy(locale);
     fallback = copy;
     const now = new Date();

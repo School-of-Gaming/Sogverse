@@ -144,6 +144,7 @@ function ProfilePreview({ profile }: { profile: TeamProfile }) {
   const tabsLabelId = useId();
   const uiLocale = resolveLocale(useLocale());
   const written = SUPPORTED_LOCALES.filter((l) =>
+    // exact-locale: lists the tabs that are written
     profile.translations.some((row) => row.locale === l),
   );
   const [chosen, setChosen] = useState<SupportedLocale | null>(null);

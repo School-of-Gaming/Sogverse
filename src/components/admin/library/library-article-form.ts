@@ -54,6 +54,7 @@ export function versionOf(
   form: Pick<LibraryArticleForm, "versions">,
   locale: SupportedLocale,
 ): LibraryArticleVersionDraft {
+  // exact-locale: the editor reads the tab's own version
   return form.versions[locale] ?? EMPTY_VERSION;
 }
 
@@ -61,6 +62,7 @@ export function versionOf(
 export function formLocales(
   form: Pick<LibraryArticleForm, "versions">,
 ): SupportedLocale[] {
+  // exact-locale: lists the tabs that are written
   return SUPPORTED_LOCALES.filter((locale) => form.versions[locale] !== undefined);
 }
 
@@ -103,8 +105,10 @@ export function libraryArticleFormFromDraft(
 ): LibraryArticleForm {
   const versions: LibraryArticleForm["versions"] = {};
   for (const { locale, title, summary, body } of draft.versions) {
+    // exact-locale: fills each tab with its own saved version
     versions[locale] = { title, summary, body };
   }
+  // exact-locale: a new article opens on the UI locale's tab
   if (draft.versions.length === 0) versions[uiLocale] = EMPTY_VERSION;
   return {
     versions,
@@ -208,6 +212,7 @@ export function sameAsSaved(
   const sameVersions = versions.every((version, index) => {
     const saved = draft.versions[index];
     return (
+      // exact-locale: diffs each version against its own saved copy
       version.locale === saved.locale &&
       version.title === saved.title.trim() &&
       version.summary === saved.summary.trim() &&

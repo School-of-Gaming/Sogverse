@@ -145,5 +145,6 @@ export function findGeduContractAcceptance<
 export function geduContractLanguageForLocale(
   locale: string,
 ): GeduContractLanguage {
+  // exact-locale: the contract text exists in Finnish and English only
   return locale === "fi" ? "fi" : "en";
 }

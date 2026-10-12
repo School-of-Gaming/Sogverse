@@ -266,11 +266,6 @@ async function readContext(
         "product_type, timezone, product_translations(locale, name), schedule_slots(weekday, start_time)",
       )
       .eq("id", productId)
-      // Embedded resources come back unordered, so a product with no
-      // translation in the reader's locale or in English would otherwise
-      // resolve its name from an arbitrary row. Alphabetical locale order is
-      // arbitrary too, but it is stable, which is all the fallback needs.
-      .order("locale", { referencedTable: "product_translations" })
       .single(),
     client
       .from("profiles")

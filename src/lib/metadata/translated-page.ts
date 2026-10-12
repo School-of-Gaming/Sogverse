@@ -8,10 +8,10 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  *
  * The URL's locale is the site's, and the page at any locale shows the text
  * `resolveTranslation()` picks there: the reader's locale, then English, then
- * the first written. A locale the author did not write therefore shows
- * another locale's words, and canonicalises to the page of the locale whose
- * words it shows. So only the locales written are language versions, and
- * each of those is its own canonical.
+ * the earliest written in the site's locale order. A locale the author did not
+ * write therefore shows another locale's words, and canonicalises to the page
+ * of the locale whose words it shows. So only the locales written are language
+ * versions, and each of those is its own canonical.
  *
  * **Text in a locale that is not indexed is never canonicalised to.** That
  * locale's page is noindex (`INDEXED_LOCALES`: Klingon, a real locale but an
@@ -78,6 +78,7 @@ export function translatedPageLocales(
   rows: readonly WrittenRow[],
 ): SupportedLocale[] {
   return INDEXED_LOCALES.filter((locale) =>
+    // exact-locale: hreflang lists every written locale
     rows.some((row) => row.locale === locale),
   );
 }

@@ -106,8 +106,6 @@ const mockAdminRpc = vi.fn();
  * the same reason the schedule read below has no slots.
  */
 const mockPlannedSessions = vi.fn<(args: unknown) => Promise<{ data: unknown[]; error: null }>>();
-/** Records the arguments the products select's `.order()` was called with. */
-const mockProductsOrder = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: mockAdminFrom,
@@ -267,29 +265,12 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "products") {
       return {
-        select: () => ({
+        select: (columns: string) => ({
           eq: () => ({
-            // `.order("locale", { referencedTable: "product_translations" })`
-            // sits between the filter and `.single()`: embedded translations
-            // come back unordered otherwise, and the name a product without an
-            // English translation resolves to would be arbitrary.
-            order: (...args: unknown[]) => {
-              mockProductsOrder(...args);
-              return {
-                single: () =>
-                  Promise.resolve(
-                    opts.product
-                      ? { data: opts.product, error: null }
-                      : {
-                          data: null,
-                          error: opts.productErr ?? { message: "not found" },
-                        },
-                  ),
-              };
-            },
-            // The confirmation mail's second read: the schedule and the site
-            // its calendar invitation would be composed from. No `.order`,
-            // because nothing embedded there is locale-keyed.
+            // Two reads share this shape: the product the route is built
+            // from (it embeds the translations), and the confirmation mail's
+            // second read — the schedule and the site its calendar invitation
+            // would be composed from.
             //
             // **No slots, deliberately.** What this file covers about that mail
             // is who receives it and in what voice; the calendar it composes for
@@ -297,10 +278,19 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
             // and a fixture schedule here would put a document nobody asserts on
             // into every one of these renders.
             single: () =>
-              Promise.resolve({
-                data: { schedule_slots: scheduleSlots, locations: null },
-                error: null,
-              }),
+              Promise.resolve(
+                !columns.includes("product_translations")
+                  ? {
+                      data: { schedule_slots: scheduleSlots, locations: null },
+                      error: null,
+                    }
+                  : opts.product
+                    ? { data: opts.product, error: null }
+                    : {
+                        data: null,
+                        error: opts.productErr ?? { message: "not found" },
+                      },
+              ),
           }),
         }),
       };
@@ -1944,24 +1934,6 @@ describe("POST /api/checkout/products/create", () => {
   });
 
   // ── The product read both branches are built from ─────────────────
-
-  it("orders the embedded translations so the resolved name is deterministic", async () => {
-    // Embedded resources come back unordered, so a product with no English
-    // translation resolved its name from an arbitrary row. Harmless while the
-    // name was only a display string; load-bearing now — a flapping name makes
-    // the Stripe Product reconcile on every purchase, and makes two concurrent
-    // creates differ under one idempotency key. Ordering an *embedded* resource
-    // needs its table named: a bare `.order("locale")` would try to order
-    // `products` by a column it does not have, and fail loudly.
-    mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
-
-    await POST(createRequest({ ...VALID_BODY, purchaseShape: "free" }));
-
-    expect(mockProductsOrder).toHaveBeenCalledWith("locale", {
-      referencedTable: "product_translations",
-    });
-  });
 
   it("hands the subscription price helper the row it already read", async () => {
     // One read is the single source for everything Stripe is told: the Stripe

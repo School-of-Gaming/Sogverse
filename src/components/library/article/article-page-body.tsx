@@ -108,6 +108,7 @@ export function ArticlePageBody({
   const timeZone = useTimezone();
   // The article's words carry its language where it is not the page's; the
   // chrome around them — the eyebrow, the date, sharing — is the page's own.
+  // exact-locale: marks text written in another language than the page with lang
   const lang = article.locale === locale ? undefined : article.locale;
 
   return (

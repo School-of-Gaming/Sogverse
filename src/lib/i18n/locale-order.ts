@@ -5,13 +5,25 @@ import {
 } from "@/lib/constants/locales";
 
 /**
+ * Compares two locale codes in the app's one fixed language order:
+ * `SUPPORTED_LOCALES` order first, then any code the app does not ship (the
+ * database accepts any locale-shaped code), those by code. The order is total,
+ * so sorting by it, or taking the earliest by it, never depends on the order
+ * the rows arrived in.
+ */
+export function compareLocales(a: string, b: string): number {
+  const rank = (code: string) =>
+    isSupportedLocale(code)
+      ? SUPPORTED_LOCALES.indexOf(code)
+      : SUPPORTED_LOCALES.length;
+  return rank(a) - rank(b) || (a < b ? -1 : a > b ? 1 : 0);
+}
+
+/**
  * The rows of content written per locale that the app can show, in
- * `SUPPORTED_LOCALES` order — the one fixed language order every surface of
- * Library articles, Team profiles and products reads "the first written" in.
- * The database accepts any locale-shaped code, so one the app no longer ships
- * is dropped here rather than typed as one it does. Embedded rows arrive
- * unordered; the order is what makes `resolveTranslation()`'s last step, and
- * so a page's canonical, the same for every read.
+ * `SUPPORTED_LOCALES` order — the order a list of a thing's written versions
+ * (editor tabs, version lists, hreflang alternates) is shown in. A locale the
+ * app no longer ships is dropped here rather than typed as one it does.
  */
 export function inLocaleOrder<T extends { locale: string }>(
   rows: readonly T[],
@@ -19,8 +31,5 @@ export function inLocaleOrder<T extends { locale: string }>(
   const supported = rows.filter(
     (row): row is T & { locale: SupportedLocale } => isSupportedLocale(row.locale),
   );
-  return supported.sort(
-    (a, b) =>
-      SUPPORTED_LOCALES.indexOf(a.locale) - SUPPORTED_LOCALES.indexOf(b.locale),
-  );
+  return supported.sort((a, b) => compareLocales(a.locale, b.locale));
 }

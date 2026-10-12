@@ -117,12 +117,13 @@ export function validate(
   config: ProductTypeConfig,
 ): ValidationFailure | null {
   // Translations: at least one filled locale (any locale) and no
-  // half-filled tabs. The display fallback chain (preferred → en → first
-  // available) means a single locale of any kind is enough to render.
+  // half-filled tabs. The display fallback chain (preferred → en → earliest
+  // written) means a single locale of any kind is enough to render.
   // Iterate the closed locale union and skip absent tabs — `translations`
   // is a Partial record, so this visits exactly the locales the admin added.
   let hasFilledLocale = false;
   for (const locale of SUPPORTED_LOCALES) {
+    // exact-locale: validates each tab's own version
     const v = state.translations[locale];
     if (v && v.name.trim() && v.shortDescription.trim()) hasFilledLocale = true;
   }
@@ -130,6 +131,7 @@ export function validate(
   if (!hasFilledLocale) return err("translationRequired");
 
   for (const locale of SUPPORTED_LOCALES) {
+    // exact-locale: validates each tab's own version
     const v = state.translations[locale];
     if (!v) continue;
     if (!v.name.trim() || !v.shortDescription.trim()) {
@@ -455,6 +457,7 @@ function buildSharedFields(
 
   const translations: UpdateProductInput["translations"] = [];
   for (const locale of SUPPORTED_LOCALES) {
+    // exact-locale: writes each tab's own version
     const v = state.translations[locale];
     if (!v) continue;
     // A cleared editor does not serialise to "" — an empty ProseMirror document
@@ -716,7 +719,7 @@ function municipalityFeeDraft(
  *     derivation for why the row does not get a vote there.
  *   - `groups` is empty; the section is UI-only on both create and edit.
  *   - `activeLocale` follows the same fallback chain `resolveTranslation`
- *     uses for display: the admin's UI locale → en → first available. With
+ *     uses for display: the admin's UI locale → en → earliest written. With
  *     ≥1 translation guaranteed by the RPC and trigger, the chain always
  *     resolves to a present row.
  */
@@ -726,10 +729,11 @@ export function existingFormState(
   uiLocale: SupportedLocale,
 ): FormState {
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
-  // In the one fixed language order, so the tab an admin opens on is the
-  // version a reader of their UI locale is shown on the public page.
+  // In the one fixed language order, the order the tabs are listed in; the
+  // tab an admin opens on is the version a reader of their UI locale is shown.
   const translationLocales: SupportedLocale[] = [];
   for (const t of inLocaleOrder(product.product_translations)) {
+    // exact-locale: fills each tab with its own saved version
     translations[t.locale] = {
       name: t.name,
       shortDescription: t.short_description,
@@ -939,8 +943,10 @@ export function cloneFormState(
   const base = existingFormState(product, config, uiLocale);
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
   for (const locale of SUPPORTED_LOCALES) {
+    // exact-locale: copies each version as itself
     const draft = base.translations[locale];
     if (!draft) continue;
+    // exact-locale: copies each version as itself
     translations[locale] = { ...draft, name: `${draft.name}${copySuffix}` };
   }
   return { ...base, translations };
