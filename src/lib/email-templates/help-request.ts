@@ -132,13 +132,7 @@ export function buildHelpRequestEmail(t: EmailTranslator, locale: string, opts: 
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td>${heading(t("helpRequest.heading"))}</td>
-      </tr>
-      <tr>
-        <td>${paragraph(t("helpRequest.intro"))}</td>
-      </tr>
-      <tr>
-        <td>${facts}</td>
+        <td>${heading(t("helpRequest.heading"))}${paragraph(t("helpRequest.intro"))}${facts}</td>
       </tr>
       <tr>
         <td style="padding-bottom:${MAIL_SPACE.tight}px;${mailText("leadIn", DARK_THEME.foreground)}">

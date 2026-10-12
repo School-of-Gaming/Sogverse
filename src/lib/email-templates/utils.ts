@@ -35,16 +35,6 @@ export function heading(text: string): string {
 }
 
 /**
- * A person's name inside a sentence: bold, in the body's own ink — the same
- * emphasis `styledProductName` gives a product, for the same reason. Brand
- * colour belongs to the header and the button fills, never to a word inside a
- * paragraph.
- */
-export function styledName(name: string): string {
-  return `<strong style="color:${DARK_THEME.foreground};">${escapeHtml(name)}</strong>`;
-}
-
-/**
  * Bold, in the body's own text color — deliberately *not* a brand colour.
  * Gmail's dark-theme color rewriting left the world purple unreadable against
  * the card, and the background-clip workaround that saves act is a Gmail-only
@@ -55,6 +45,15 @@ export function styledName(name: string): string {
  */
 export function styledProductName(name: string): string {
   return `<strong style="color:${DARK_THEME.foreground};">${escapeHtml(name)}</strong>`;
+}
+
+/**
+ * A person's name inside a sentence, set exactly as a product's: bold, in the
+ * body's own ink. Brand colour stays on the header and the button fills, never
+ * on a word inside a paragraph.
+ */
+export function styledName(name: string): string {
+  return styledProductName(name);
 }
 
 /**

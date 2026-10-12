@@ -8,7 +8,6 @@ import {
   numberedList,
   MARKUP_TAGS,
 } from "@/lib/email-templates/blocks";
-import { styledName, styledProductName } from "@/lib/email-templates/utils";
 import { MAIL_SPACE, mailText } from "@/lib/email-templates/type-scale";
 import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
 import { DARK_THEME } from "@/lib/constants/colors";
@@ -63,7 +62,7 @@ describe("bulletList", () => {
     const gaps = [...bulletList(["One.", "Two.", "Three."]).matchAll(/<li style="margin:0 0 (\d+)px;">/g)].map(
       (m) => Number(m[1]),
     );
-    expect(gaps).toEqual([MARKDOWN_LOOK.ul.itemGap, MARKDOWN_LOOK.ul.itemGap, 0]);
+    expect(gaps).toEqual([MAIL_SPACE.item, MAIL_SPACE.item, 0]);
   });
 });
 
@@ -85,6 +84,13 @@ describe("factList", () => {
     expect(factList([["Group", "Kettukallio"]])).toContain(
       `style="margin:${MAIL_SPACE.furniture}px 0;border-top:`,
     );
+  });
+
+  it("sets both cells of a row on the baseline, as an attribute and as CSS", () => {
+    // Outlook's Word engine may ignore the CSS, and a cell with no `valign`
+    // defaults to middle there.
+    const html = factList([["Group", "Kettukallio"]]);
+    expect(html.match(/<td valign="baseline" style="[^"]*vertical-align:baseline;"/g)).toHaveLength(2);
   });
 
   /**
@@ -114,12 +120,6 @@ describe("calloutPanel", () => {
     expect(calloutPanel({ ...options, opening: true })).toContain(
       `style="margin:0 0 ${MAIL_SPACE.furniture}px;"`,
     );
-  });
-});
-
-describe("styledName", () => {
-  it("is bold in the body's ink, exactly like a product name", () => {
-    expect(styledName("Aino")).toBe(styledProductName("Aino"));
   });
 });
 

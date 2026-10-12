@@ -285,7 +285,7 @@ function list(tag: "ul" | "ol", items: string[]): string {
   const look = MARKDOWN_LOOK[tag];
   const last = items.length - 1;
   const rendered = items
-    .map((item, i) => `<li style="margin:0 0 ${i === last ? 0 : look.itemGap}px;">${item}</li>`)
+    .map((item, i) => `<li style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.item}px;">${item}</li>`)
     .join("");
   return `<${tag} style="margin:0 0 ${MAIL_SPACE.block}px ${look.indent}px;padding:0;${BODY_TEXT_STYLE}">${rendered}</${tag}>`;
 }
@@ -402,8 +402,8 @@ export function factList(
     .map(
       ([label, value]) => `
         <tr>
-          <td style="padding:${MAIL_SPACE.tight}px ${MAIL_SPACE.block}px ${MAIL_SPACE.tight}px 0;border-bottom:1px solid ${DARK_THEME.border};${mailText("small", DARK_THEME.mutedFg)}white-space:nowrap;width:1%;vertical-align:baseline;">${label}</td>
-          <td style="padding:${MAIL_SPACE.tight}px 0;border-bottom:1px solid ${DARK_THEME.border};${BODY_TEXT_STYLE}vertical-align:baseline;">${value}</td>
+          <td valign="baseline" style="padding:${MAIL_SPACE.tight}px ${MAIL_SPACE.block}px ${MAIL_SPACE.tight}px 0;border-bottom:1px solid ${DARK_THEME.border};${mailText("small", DARK_THEME.mutedFg)}white-space:nowrap;width:1%;vertical-align:baseline;">${label}</td>
+          <td valign="baseline" style="padding:${MAIL_SPACE.tight}px 0;border-bottom:1px solid ${DARK_THEME.border};${BODY_TEXT_STYLE}vertical-align:baseline;">${value}</td>
         </tr>`,
     )
     .join("");

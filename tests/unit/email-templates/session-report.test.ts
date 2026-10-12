@@ -307,11 +307,6 @@ describe("the photos under the report", () => {
   });
 
   /**
-   * The mail this template sent before photos existed is still the mail most
-   * reports are. No heading, no empty grid, no space held open for something
-   * that is not coming — and an absent array and an empty one mean the same.
-   */
-  /**
    * The lead-in and the grid are one piece of furniture: the furniture step
    * above and below the pair, and the lead-in the tight step above the first
    * photo.
@@ -328,6 +323,11 @@ describe("the photos under the report", () => {
     );
   });
 
+  /**
+   * The mail this template sent before photos existed is still the mail most
+   * reports are. No heading, no empty grid, no space held open for something
+   * that is not coming — and an absent array and an empty one mean the same.
+   */
   it("leaves a photo-less report exactly as it was", () => {
     const none = buildSessionReportEmail(t, "en", base);
 
