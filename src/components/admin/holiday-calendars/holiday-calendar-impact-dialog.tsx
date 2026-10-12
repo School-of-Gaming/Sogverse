@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { formatDateOnly } from "@/lib/utils";
+import { formatCompactDateRange } from "@/lib/utils";
 import type { HolidayImpactSummary } from "./holiday-calendar-impact";
 
 /**
@@ -35,10 +35,11 @@ export function HolidayCalendarImpactDialog({
   const c = useTranslations("common");
   const locale = useLocale();
 
-  const dates = (list: readonly string[]) =>
-    list
-      .map((date) => formatDateOnly(date, locale, { day: "numeric", month: "short" }))
-      .join(", ");
+  // Each date carries its year when that is not the club's current year: an
+  // edit can reach a past term or one years ahead, and "3 Mar" alone does not
+  // say which.
+  const dates = (list: readonly string[], today: string) =>
+    list.map((date) => formatCompactDateRange(date, date, locale, today)).join(", ");
 
   return (
     <ConfirmDialog
@@ -61,7 +62,7 @@ export function HolidayCalendarImpactDialog({
                 <li>
                   {t("futureRemoved", {
                     count: impact.futureRemoved.length,
-                    dates: dates(impact.futureRemoved),
+                    dates: dates(impact.futureRemoved, impact.today),
                   })}
                 </li>
               )}
@@ -69,7 +70,7 @@ export function HolidayCalendarImpactDialog({
                 <li>
                   {t("futureRestored", {
                     count: impact.futureRestored.length,
-                    dates: dates(impact.futureRestored),
+                    dates: dates(impact.futureRestored, impact.today),
                   })}
                 </li>
               )}
@@ -77,7 +78,7 @@ export function HolidayCalendarImpactDialog({
                 <li>
                   {t("pastRemoved", {
                     count: impact.pastRemoved.length,
-                    dates: dates(impact.pastRemoved),
+                    dates: dates(impact.pastRemoved, impact.today),
                   })}
                 </li>
               )}
@@ -85,7 +86,7 @@ export function HolidayCalendarImpactDialog({
                 <li>
                   {t("pastRestored", {
                     count: impact.pastRestored.length,
-                    dates: dates(impact.pastRestored),
+                    dates: dates(impact.pastRestored, impact.today),
                   })}
                 </li>
               )}

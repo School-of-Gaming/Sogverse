@@ -47,6 +47,7 @@ export {
 export {
   FEED_INITIAL_PAST_ENTRIES,
   FEED_PAST_CHUNK_SIZE,
+  laterSessionCount,
   newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,

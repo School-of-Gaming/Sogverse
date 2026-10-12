@@ -131,6 +131,20 @@ export function partitionFeedEntries<T extends FeedShapedEntry>(
 }
 
 /**
+ * How many sessions the later block hides — the number on the now-divider.
+ *
+ * A holiday break collapses with the later block like any dated entry, but it
+ * is a line explaining a gap rather than a session, so counting it would make
+ * "N more upcoming sessions" promise one more session than the reveal holds. A
+ * cancelled date still counts: it is a session, one that is off.
+ */
+export function laterSessionCount<T extends FeedShapedEntry>(
+  laterFuture: readonly T[],
+): number {
+  return laterFuture.filter((entry) => entry.kind !== "holiday").length;
+}
+
+/**
  * The newest session that actually ran, out of a feed's past run — the one
  * entry whose report the feed renders in full instead of clamping it.
  *

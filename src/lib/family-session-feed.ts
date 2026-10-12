@@ -227,12 +227,6 @@ export function buildFamilySessionFeed(
     );
   }
 
-  // Descending by start, which the feed shell reads as one leading run of
-  // future entries followed by the past. That the run stays contiguous while
-  // the *kinds* are decided by `endsAt` is not luck: entries are keyed by
-  // product-local date, so there is at most one per day and no two can overlap
-  // in time. Ordering by start and ordering by end are therefore the same
-  // ordering, and a future entry can never sort below a past one.
   // A holiday break is one line, placed by the sessions it withdrew, and only
   // where at least one of them is inside what the feed shows: before the
   // open-ended cut, and inside the paid window. A break whose every withdrawn
@@ -260,6 +254,14 @@ export function buildFamilySessionFeed(
     });
   }
 
+  // Descending by start, which the feed shell reads as one leading run of
+  // future entries followed by the past. That the run stays contiguous while
+  // the *kinds* are decided by `endsAt` is not luck: entries are keyed by
+  // product-local date, so there is at most one per day and no two can overlap
+  // in time — a break's line spans days, but every one of its dates was
+  // withdrawn from the plan, so no session falls inside it. Ordering by start
+  // and ordering by end are therefore the same ordering, and a future entry can
+  // never sort below a past one.
   entries.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());
   return entries;
 }

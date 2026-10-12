@@ -93,6 +93,7 @@ describe("summarising a calendar change", () => {
       productId: "p-a",
       productType: "consumer_club",
       name: "Alfa klubb",
+      today: "2030-10-15",
       futureRemoved: [],
       futureRestored: ["2030-11-05"],
       pastRemoved: [],

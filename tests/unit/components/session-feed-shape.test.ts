@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   FEED_INITIAL_PAST_ENTRIES,
   FEED_PAST_CHUNK_SIZE,
+  laterSessionCount,
   newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
@@ -25,7 +26,9 @@ type ShapeEntry =
   /** A kind that recorded nothing — the gedu feed's pre-epoch gap. */
   | { kind: "no_record"; id: string }
   /** A cancelled session, on either side of the present. */
-  | { kind: "cancelled"; id: string; upcoming: boolean };
+  | { kind: "cancelled"; id: string; upcoming: boolean }
+  /** A holiday break's line, on either side of the present. */
+  | { kind: "holiday"; id: string; upcoming: boolean };
 
 const future = (id: string): ShapeEntry => ({ kind: "future", id });
 const past = (id: string): ShapeEntry => ({ kind: "past", id });
@@ -35,6 +38,7 @@ const cancelled = (id: string, upcoming: boolean): ShapeEntry => ({
   id,
   upcoming,
 });
+const holiday = (id: string): ShapeEntry => ({ kind: "holiday", id, upcoming: true });
 
 describe("partitionFeedEntries", () => {
   it("reads the next session off position — the last of the leading future run", () => {
@@ -129,6 +133,22 @@ describe("partitionFeedEntries", () => {
     expect(partition.nextSession?.id).toBe("f1");
     expect(partition.soonerNotRunning).toEqual([]);
     expect(partition.past.map((e) => e.id)).toEqual(["c1", "p1"]);
+  });
+});
+
+describe("laterSessionCount", () => {
+  it("counts the sessions the later block hides, cancelled ones included, and no break", () => {
+    const { laterFuture } = partitionFeedEntries([
+      future("f4"),
+      holiday("h2"),
+      cancelled("c1", true),
+      holiday("h1"),
+      future("f2"),
+      future("f1"),
+      past("p1"),
+    ]);
+    expect(laterFuture).toHaveLength(5);
+    expect(laterSessionCount(laterFuture)).toBe(3);
   });
 });
 

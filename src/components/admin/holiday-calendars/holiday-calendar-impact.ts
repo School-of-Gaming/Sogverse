@@ -16,6 +16,8 @@ export interface HolidayImpactSummary {
   productType: ProductType;
   /** The club's name in the reader's locale, by the usual fallback. */
   name: string;
+  /** The club's own today, `YYYY-MM-DD`, which decides where a date shows its year. */
+  today: string;
   futureRemoved: string[];
   futureRestored: string[];
   pastRemoved: string[];
@@ -45,6 +47,7 @@ export function summariseHolidayImpact(
         productType: product.productType,
         name:
           resolveTranslation(inLocaleOrder(product.translations), uiLocale)?.name ?? "",
+        today: product.today,
         futureRemoved: distinctDates(product.removed.filter(upcoming)),
         futureRestored: distinctDates(product.restored.filter(upcoming)),
         pastRemoved: distinctDates(product.removed.filter(past)),

@@ -36,7 +36,8 @@ const IMPACT: HolidayImpactSummary = {
   productId: "p1",
   productType: "municipality_club",
   name: "Minecraft club, Kallio",
-  futureRemoved: ["2030-10-15"],
+  today: "2030-10-01",
+  futureRemoved: ["2030-10-15", "2031-01-06"],
   futureRestored: [],
   pastRemoved: [],
   pastRestored: [],
@@ -94,7 +95,11 @@ describe("the holiday calendar form", () => {
 
     expect(await screen.findByText("title")).toBeTruthy();
     expect(screen.getByText("Minecraft club, Kallio")).toBeTruthy();
-    expect(screen.getByText(/^futureRemoved count=1/)).toBeTruthy();
+    // A date in the club's current year goes without its year; one in another
+    // year says which.
+    expect(
+      screen.getByText("futureRemoved count=2 dates=Oct 15, Jan 6, 2031"),
+    ).toBeTruthy();
     expect(screen.getByText("requestsStopped count=2")).toBeTruthy();
     // Nothing that did not change is said.
     expect(screen.queryByText(/^recordsHidden/)).toBeNull();

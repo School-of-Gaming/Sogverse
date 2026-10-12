@@ -301,13 +301,21 @@ CREATE FUNCTION public.holiday_change_impact(
   ),
   -- Every stored record and every live substitution request on a date some
   -- changed range touches, whether or not the plan still projects it: a
-  -- holiday is judged by the date alone.
+  -- holiday is judged by the date alone. A (group, date) a cancellation sits on
+  -- is left out of both: the holiday coming or going does not change that it
+  -- is not running, since the cancellation stays in force wherever the plan
+  -- projects the date or a record is stored on it.
   stored AS (
     SELECT gs.group_id, g.name AS group_name, gs.session_date
       FROM public.product_groups g
       JOIN public.group_sessions gs ON gs.group_id = g.id
      WHERE g.product_id = p_product_id
        AND EXISTS (SELECT 1 FROM changed c WHERE c.r @> gs.session_date)
+       AND NOT EXISTS (
+             SELECT 1 FROM public.session_cancellations sc
+              WHERE sc.group_id = gs.group_id
+                AND sc.session_date = gs.session_date
+           )
   ),
   requested AS (
     SELECT r.id AS request_id, r.group_id, g.name AS group_name,
@@ -317,6 +325,11 @@ CREATE FUNCTION public.holiday_change_impact(
      WHERE g.product_id = p_product_id
        AND r.status <> 'withdrawn'
        AND EXISTS (SELECT 1 FROM changed c WHERE c.r @> r.session_date)
+       AND NOT EXISTS (
+             SELECT 1 FROM public.session_cancellations sc
+              WHERE sc.group_id = r.group_id
+                AND sc.session_date = r.session_date
+           )
   ),
   -- Each date's standing before and after, read against the two whole sets.
   dates AS (
@@ -433,7 +446,9 @@ COMMENT ON FUNCTION public.holiday_change_impact(uuid, daterange[], daterange[])
   'holidays included, so the term and the schedule clip them, past and future '
   'alike; records are the stored group_sessions rows on them and requests the '
   'session_substitution_requests that are not withdrawn, whether or not the plan '
-  'still projects the date, since a holiday is judged by the date alone. Each '
+  'still projects the date, since a holiday is judged by the date alone — '
+  'except where a session_cancellations row sits on that group and date, which '
+  'is not running either way and so changes nothing. Each '
   'list soonest first. Reads every row as its caller; granted to service_role '
   'only, and called by the admin-gated preview.';
 

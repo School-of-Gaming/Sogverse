@@ -368,6 +368,34 @@ describe("preview_holiday_calendar_change", () => {
     ]);
   });
 
+  it("omits a cancelled date's record and request, which are not running either way", async () => {
+    const cancelled = await admin.from("session_cancellations").insert(
+      [FUTURE_BREAK, ORDINARY].map((date) => ({
+        group_id: CLUB_GROUP,
+        session_date: date,
+        cancelled_by: TEST_IDS.ADMIN,
+      })),
+    );
+    expect(cancelled.error).toBeNull();
+    try {
+      // The plan lists are about the plan alone, so the sessions still move.
+      const added = await clubImpact([
+        ...currentBreaks(),
+        { id: null, start_date: ORDINARY, end_date: ORDINARY, names: names("June") },
+      ]);
+      expect(added.removed).toEqual([session(ORDINARY)]);
+      expect(added.records).toEqual([]);
+      expect(added.requests).toEqual([]);
+
+      const removed = await clubImpact([currentBreaks()[0]]);
+      expect(removed.restored).toEqual([session(FUTURE_BREAK)]);
+      expect(removed.records).toEqual([]);
+      expect(removed.requests).toEqual([]);
+    } finally {
+      await admin.from("session_cancellations").delete().eq("group_id", CLUB_GROUP);
+    }
+  });
+
   it("lists every following club an edit touches, and writes nothing", async () => {
     const result = await preview(edited, [
       ...currentBreaks(),
