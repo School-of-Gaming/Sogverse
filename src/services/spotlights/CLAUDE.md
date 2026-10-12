@@ -11,10 +11,13 @@ spotlight goes into every report, **newest first by `created_at`, `id` breaking 
 there is no ordering column to sort by or to add.
 
 **It may be saved without a picture, but never enabled without one.** A CHECK on the table
-holds it, and the writers refuse with a sentence first (`check_violation`): switching on a
-spotlight with no picture, and a save that clears the picture of an enabled one. The admin
-UI holds the switch back, so the refusal fires only on a state the UI cannot produce. A new
-spotlight starts switched off; the whole save never touches the switch.
+holds it. **Whether it is enabled is part of the one whole save** — the create and the save
+each write the switch, the picture and the version set together, so the rule is judged on
+the state the save asks for and no ordering of two writes can trip it: switching off and
+taking the picture away is one save, as is adding a picture and switching on. The writers
+refuse an enabled spotlight with no picture with a sentence first (`check_violation`). The
+editor disables the switch without a picture and unticks it when the picture is taken off,
+so the refusal fires only on a state the UI cannot produce. The list only reads the switch.
 
 **A version per site locale, both fields required.** One row per (spotlight, locale) in
 `spotlight_translations`: a title and a markdown body (links allowed, no headings — the
@@ -30,7 +33,7 @@ never from a measurement. **A catalogue replace repoints every spotlight on the 
 leaves each enabled; a catalogue removal takes the picture off and switches the spotlight
 off in one statement**, since an enabled spotlight cannot be without one. A removed picture
 therefore drops its spotlights out of the mails until an admin picks another picture and
-switches each back on.
+switches each back on in its editor.
 
 **The session report email reads with the service role.** Both tables are admin-only to
 the Data API, and the route sending a report is a gedu's, so it calls the service's

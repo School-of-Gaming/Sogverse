@@ -10,9 +10,9 @@ import { SpotlightEditor } from "./spotlight-editor";
 /**
  * `/admin/spotlights/new` — the data shell around a new spotlight's editor.
  *
- * Saving creates the spotlight, switched off, and returns to the list, which
- * is where it is switched on. `replace` rather than `push`, so Back from there
- * does not return to a blank form for a spotlight that now exists.
+ * Saving creates the spotlight, in session report emails or not as the form
+ * says, and returns to the list. `replace` rather than `push`, so Back from
+ * there does not return to a blank form for a spotlight that now exists.
  */
 export function NewSpotlightPage() {
   const t = useTranslations("admin.spotlights");

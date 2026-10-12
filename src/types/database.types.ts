@@ -4168,7 +4168,7 @@ export type Database = {
         Returns: string
       }
       create_spotlight: {
-        Args: { p_image_id?: string; p_versions: Json }
+        Args: { p_enabled: boolean; p_image_id?: string; p_versions: Json }
         Returns: string
       }
       decline_session_substitution: {
@@ -4857,7 +4857,12 @@ export type Database = {
         Returns: string
       }
       save_spotlight: {
-        Args: { p_id: string; p_image_id?: string; p_versions: Json }
+        Args: {
+          p_enabled: boolean
+          p_id: string
+          p_image_id?: string
+          p_versions: Json
+        }
         Returns: string
       }
       save_team_profile: {
@@ -5036,10 +5041,6 @@ export type Database = {
           p_public_note: string
         }
         Returns: Json
-      }
-      set_spotlight_enabled: {
-        Args: { p_enabled: boolean; p_id: string }
-        Returns: string
       }
       set_team_profile_approval: {
         Args: { p_approved: boolean; p_user_id: string }

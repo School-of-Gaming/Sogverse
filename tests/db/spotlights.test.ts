@@ -86,8 +86,9 @@ describe("spotlights", () => {
   async function mint(
     imageId: string | null,
     versions: SpotlightVersionInput[] = [EN],
+    enabled = false,
   ): Promise<string> {
-    const id = await service.createSpotlight({ versions, imageId });
+    const id = await service.createSpotlight({ versions, imageId, enabled });
     minted.push(id);
     return id;
   }
@@ -127,7 +128,7 @@ describe("spotlights", () => {
   });
 
   describe("create and save", () => {
-    it("creates a spotlight switched off, with its versions trimmed and its picture's path derived", async () => {
+    it("creates a spotlight as asked — here switched off — with its versions trimmed and its picture's path derived", async () => {
       const id = await mint(PIC_A, [
         { locale: "fi", title: "  Fixture: talvileiri  ", body: " Tule mukaan. " },
         EN,
@@ -146,18 +147,23 @@ describe("spotlights", () => {
     });
 
     it("refuses a spotlight with no version, and a version missing its title or its body, creating nothing", async () => {
-      const none = await adminAuth.rpc("create_spotlight", { p_versions: [] });
+      const none = await adminAuth.rpc("create_spotlight", {
+        p_versions: [],
+        p_enabled: false,
+      });
       expect(none.error?.code).toBe("23514");
       expect(none.error?.message).toMatch(/at least one language version/);
 
       const untitled = await adminAuth.rpc("create_spotlight", {
         p_versions: [{ locale: "fi", title: "  ", body: "Fixture: never created" }],
+        p_enabled: false,
       });
       expect(untitled.error?.code).toBe("23514");
       expect(untitled.error?.message).toMatch(/fi version needs a title/);
 
       const bodiless = await adminAuth.rpc("create_spotlight", {
         p_versions: [{ locale: "en", title: "Fixture: never created", body: "" }],
+        p_enabled: false,
       });
       expect(bodiless.error?.code).toBe("23514");
       expect(bodiless.error?.message).toMatch(/en version needs a body/);
@@ -175,6 +181,7 @@ describe("spotlights", () => {
       const { error } = await adminAuth.rpc("save_spotlight", {
         p_id: id,
         p_versions: [],
+        p_enabled: false,
       });
       expect(error?.code).toBe("23514");
 
@@ -184,7 +191,11 @@ describe("spotlights", () => {
     it("replaces the version set whole: a language left out is removed", async () => {
       const id = await mint(PIC_A, [EN, FI]);
 
-      await service.saveSpotlight(id, { versions: [FI], imageId: PIC_B });
+      await service.saveSpotlight(id, {
+        versions: [FI],
+        imageId: PIC_B,
+        enabled: false,
+      });
 
       expect(await service.getAdminSpotlight(id)).toMatchObject({
         versions: [FI],
@@ -196,6 +207,7 @@ describe("spotlights", () => {
     it("refuses a picture of another purpose, and an id no spotlight has", async () => {
       const cover = await adminAuth.rpc("create_spotlight", {
         p_versions: [EN],
+        p_enabled: false,
         p_image_id: COVER,
       });
       expect(cover.error?.code).toBe("23514");
@@ -204,22 +216,47 @@ describe("spotlights", () => {
       const missing = await adminAuth.rpc("save_spotlight", {
         p_id: SPOTLIGHT_MISSING,
         p_versions: [EN],
+        p_enabled: false,
       });
       expect(missing.error?.code).toBe("P0002");
     });
   });
 
   describe("enabled needs a picture", () => {
-    it("refuses switching on a spotlight with no picture", async () => {
-      const id = await mint(null);
-
-      const { error } = await adminAuth.rpc("set_spotlight_enabled", {
-        p_id: id,
+    it("refuses creating a spotlight switched on with no picture, creating nothing", async () => {
+      const { error } = await adminAuth.rpc("create_spotlight", {
+        p_versions: [{ ...EN, title: "Fixture: never created" }],
         p_enabled: true,
       });
       expect(error?.code).toBe("23514");
       expect(error?.message).toMatch(/needs a picture/);
-      expect((await service.getAdminSpotlight(id))?.enabled).toBe(false);
+
+      const { count } = await admin
+        .from("spotlight_translations")
+        .select("spotlight_id", { count: "exact", head: true })
+        .eq("title", "Fixture: never created");
+      expect(count).toBe(0);
+    });
+
+    it("creates a spotlight switched on when it has a picture", async () => {
+      const id = await mint(PIC_A, [EN], true);
+      expect((await service.getAdminSpotlight(id))?.enabled).toBe(true);
+    });
+
+    it("refuses a save switching on a spotlight with no picture, keeping it as it was", async () => {
+      const id = await mint(null);
+
+      const { error } = await adminAuth.rpc("save_spotlight", {
+        p_id: id,
+        p_versions: [FI],
+        p_enabled: true,
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/needs a picture/);
+      expect(await service.getAdminSpotlight(id)).toMatchObject({
+        enabled: false,
+        versions: [EN],
+      });
     });
 
     it("holds the rule in the schema, whoever writes", async () => {
@@ -234,35 +271,55 @@ describe("spotlights", () => {
       expect(error?.message).toMatch(/chk_spotlights_enabled_has_image/);
     });
 
-    it("refuses clearing the picture of an enabled spotlight, and allows it once switched off", async () => {
-      const id = await mint(PIC_A);
-      await service.setSpotlightEnabled(id, true);
+    it("refuses clearing the picture of a spotlight the save keeps on", async () => {
+      const id = await mint(PIC_A, [EN], true);
 
       const { error } = await adminAuth.rpc("save_spotlight", {
         p_id: id,
         p_versions: [EN],
+        p_enabled: true,
       });
       expect(error?.code).toBe("23514");
-      expect(error?.message).toMatch(/switch it off/);
+      expect(error?.message).toMatch(/needs a picture/);
+      expect(await service.getAdminSpotlight(id)).toMatchObject({
+        enabled: true,
+        imageId: PIC_A,
+      });
+    });
 
-      await service.setSpotlightEnabled(id, false);
-      await service.saveSpotlight(id, { versions: [EN], imageId: null });
+    it("judges one save on its final state: switching off and clearing the picture together, or adding one and switching on", async () => {
+      const id = await mint(PIC_A, [EN], true);
+
+      await service.saveSpotlight(id, {
+        versions: [EN],
+        imageId: null,
+        enabled: false,
+      });
       expect(await service.getAdminSpotlight(id)).toMatchObject({
         enabled: false,
         imageId: null,
         imagePath: null,
         imageLabel: null,
       });
+
+      await service.saveSpotlight(id, {
+        versions: [EN],
+        imageId: PIC_B,
+        enabled: true,
+      });
+      expect(await service.getAdminSpotlight(id)).toMatchObject({
+        enabled: true,
+        imageId: PIC_B,
+        imagePath: pathOf(PIC_B),
+      });
     });
   });
 
   describe("the image catalogue", () => {
     it("a removal takes the picture off every spotlight showing it and switches each off", async () => {
-      const on = await mint(PIC_DOOMED);
+      const on = await mint(PIC_DOOMED, [EN], true);
       const off = await mint(PIC_DOOMED);
-      const elsewhere = await mint(PIC_A);
-      await service.setSpotlightEnabled(on, true);
-      await service.setSpotlightEnabled(elsewhere, true);
+      const elsewhere = await mint(PIC_A, [EN], true);
 
       // The admin's own session removes catalogue rows, as the route does.
       const { error } = await adminAuth
@@ -285,9 +342,8 @@ describe("spotlights", () => {
     });
 
     it("a replace moves every spotlight on the entry, enabled ones staying on", async () => {
-      const on = await mint(PIC_A);
+      const on = await mint(PIC_A, [EN], true);
       const off = await mint(PIC_A);
-      await service.setSpotlightEnabled(on, true);
 
       const { data: moved, error } = await adminAuth.rpc(
         "repoint_spotlight_images",
@@ -319,14 +375,11 @@ describe("spotlights", () => {
 
   describe("the session report email's read", () => {
     it("returns only the enabled spotlights, newest first, with every version and the picture's URL and stored size", async () => {
-      const oldest = await mint(PIC_A, [EN, FI]);
+      const oldest = await mint(PIC_A, [EN, FI], true);
       const disabled = await mint(PIC_B);
-      const newest = await mint(PIC_C);
-      const tieA = await mint(PIC_A);
-      const tieB = await mint(PIC_B);
-      for (const id of [oldest, newest, tieA, tieB]) {
-        await service.setSpotlightEnabled(id, true);
-      }
+      const newest = await mint(PIC_C, [EN], true);
+      const tieA = await mint(PIC_A, [EN], true);
+      const tieB = await mint(PIC_B, [EN], true);
 
       // Creation times set apart by hand, two of them equal so the id decides.
       const stamps: [string, string][] = [
@@ -398,9 +451,17 @@ describe("spotlights", () => {
         const client = role === "customer" ? customer : role === "gedu" ? gedu : gamer;
 
         const calls = [
-          client.rpc("create_spotlight", { p_versions: [EN], p_image_id: PIC_A }),
-          client.rpc("save_spotlight", { p_id: id, p_versions: [FI], p_image_id: PIC_A }),
-          client.rpc("set_spotlight_enabled", { p_id: id, p_enabled: true }),
+          client.rpc("create_spotlight", {
+            p_versions: [EN],
+            p_enabled: true,
+            p_image_id: PIC_A,
+          }),
+          client.rpc("save_spotlight", {
+            p_id: id,
+            p_versions: [FI],
+            p_enabled: true,
+            p_image_id: PIC_A,
+          }),
           client.rpc("repoint_spotlight_images", { p_from: PIC_A, p_to: PIC_B }),
           client.rpc("delete_spotlight", { p_id: id }),
         ];
@@ -417,8 +478,7 @@ describe("spotlights", () => {
     );
 
     it("lets no non-admin read either table, and no Data API role write one", async () => {
-      const id = await mint(PIC_A);
-      await service.setSpotlightEnabled(id, true);
+      const id = await mint(PIC_A, [EN], true);
 
       for (const client of [customer, gedu, gamer, anon]) {
         const spotlights = await client.from("spotlights").select("id").eq("id", id);

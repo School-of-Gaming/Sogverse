@@ -139,12 +139,16 @@ export class SpotlightsService {
   // Admin writes
   // -------------------------------------------------------------------------
 
-  /** Create a spotlight, switched off. Returns its id. */
+  /**
+   * Create a spotlight, switched on or off as the input says. Returns its id.
+   * The database refuses switching on one with no picture.
+   */
   async createSpotlight(input: SpotlightInput): Promise<string> {
     const parsed = spotlightInput.parse(input);
 
     const { data, error } = await this.supabase.rpc("create_spotlight", {
       p_versions: parsed.versions,
+      p_enabled: parsed.enabled,
       // Null maps to an omission, so the RPC's DEFAULT NULL writes the null.
       p_image_id: parsed.imageId ?? undefined,
     });
@@ -155,9 +159,9 @@ export class SpotlightsService {
   }
 
   /**
-   * Save a spotlight whole: its picture and its whole version set, replacing
-   * what is stored. Whether it is enabled is untouched. The database refuses
-   * clearing the picture of an enabled spotlight.
+   * Save a spotlight whole: whether it is enabled, its picture and its whole
+   * version set, replacing what is stored, in one write. The database refuses
+   * leaving it enabled with no picture.
    */
   async saveSpotlight(id: string, input: SpotlightInput): Promise<string> {
     const parsed = spotlightInput.parse(input);
@@ -165,26 +169,12 @@ export class SpotlightsService {
     const { data, error } = await this.supabase.rpc("save_spotlight", {
       p_id: id,
       p_versions: parsed.versions,
+      p_enabled: parsed.enabled,
       p_image_id: parsed.imageId ?? undefined,
     });
 
     if (error) throw error;
     if (!data) throw new Error("save_spotlight returned no id");
-    return data;
-  }
-
-  /**
-   * Switch a spotlight on or off. The database refuses switching on one with
-   * no picture.
-   */
-  async setSpotlightEnabled(id: string, enabled: boolean): Promise<string> {
-    const { data, error } = await this.supabase.rpc("set_spotlight_enabled", {
-      p_id: id,
-      p_enabled: enabled,
-    });
-
-    if (error) throw error;
-    if (!data) throw new Error("set_spotlight_enabled returned no id");
     return data;
   }
 

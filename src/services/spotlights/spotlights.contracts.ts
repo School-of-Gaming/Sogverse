@@ -37,14 +37,15 @@ export type SpotlightVersionInput = z.input<typeof spotlightVersionInput>;
 
 /**
  * A spotlight as an admin saves it — the same fields on a create and on every
- * save. Whether it is enabled is not among them: that is its own write.
+ * save, written together in one statement, so whether it is enabled is judged
+ * against the picture the same save leaves it with.
  *
  * `versions` is the whole set, replacing what is stored: a language left out
  * is removed. At least one, each with a title and a body. `imageId` is
  * required-**nullable** rather than optional, because the save assigns it on
  * every call and an omitted picture is how one is cleared — demanding the
- * field keeps a clearing deliberate. The database refuses clearing the picture
- * of an enabled spotlight.
+ * field keeps a clearing deliberate. `enabled` is whether it is appended to
+ * session report emails; the database refuses it with no picture.
  */
 export const spotlightInput = z.object({
   versions: z
@@ -57,6 +58,7 @@ export const spotlightInput = z.object({
       "Each language may have one version",
     ),
   imageId: z.string().uuid("Not a catalogue picture").nullable(),
+  enabled: z.boolean(),
 });
 
 export type SpotlightInput = z.input<typeof spotlightInput>;

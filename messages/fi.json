@@ -636,10 +636,6 @@
       "editPage": {
         "title": "Muokkaa nostoa"
       },
-      "editor": {
-        "onLine": "Päällä: perheet näkevät sen jokaisen sessioraportin sähköpostin lopussa.",
-        "offLine": "Pois päältä: se ei ole missään sähköpostissa. Kytke se päälle nostojen listalta."
-      },
       "fields": {
         "languages": "Kielet",
         "title": "Otsikko",
@@ -660,11 +656,8 @@
       "errors": {
         "noVersion": "Nosto tarvitsee otsikon ja tekstin vähintään yhdellä kielellä.",
         "versionIncomplete": "Kielelle {language} tarvitaan sekä otsikko että teksti.",
-        "pictureWhileOn": "Tämä nosto on päällä, joten se tarvitsee kuvan. Valitse kuva tai kytke nosto ensin pois päältä listalta.",
         "saveFailed": "Nostoa ei voitu tallentaa. Yritä uudelleen.",
         "saveFailedWithReason": "Nostoa ei voitu tallentaa — {reason}",
-        "switchFailed": "Noston tilaa ei voitu muuttaa. Yritä uudelleen.",
-        "switchFailedWithReason": "Noston tilaa ei voitu muuttaa — {reason}",
         "deleteFailed": "Nostoa ei voitu poistaa. Yritä uudelleen.",
         "deleteFailedWithReason": "Nostoa ei voitu poistaa — {reason}"
       },
@@ -674,6 +667,10 @@
       "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet",
       "created": "Luotu {date}",
+      "status": {
+        "on": "Sähköposteissa",
+        "off": "Ei sähköposteissa"
+      },
       "switchLabel": "Sessioraporttien sähköposteissa",
       "needsPicture": "Lisää kuva, niin voit kytkeä sen päälle.",
       "deleteConfirm": {

@@ -174,16 +174,15 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   publish_landing_page: { permittedRoles: ["admin"] },
   unpublish_landing_page: { permittedRoles: ["admin"] },
   repoint_landing_images: { permittedRoles: ["admin"] },
-  // The writers of spotlights — create, the whole save, the enabled switch and
-  // delete — and the image catalogue's replace for their pictures. Neither
-  // spotlight table carries a write grant for `authenticated`, so these are
-  // the only path in. Past the admin guard, all-NULL arguments are refused
-  // with 22023 (create: not a JSON array), `no_data_found` (save, delete: no
-  // such spotlight) or `null_value_not_allowed` (the switch, repoint) — errors,
-  // but not the forbidden one.
+  // The writers of spotlights — create, the whole save and delete — and the
+  // image catalogue's replace for their pictures. Neither spotlight table
+  // carries a write grant for `authenticated`, so these are the only path in.
+  // Past the admin guard, all-NULL arguments are refused with
+  // `null_value_not_allowed` (create and save: no switch; repoint) or
+  // `no_data_found` (delete: no such spotlight) — errors, but not the
+  // forbidden one.
   create_spotlight: { permittedRoles: ["admin"] },
   save_spotlight: { permittedRoles: ["admin"] },
-  set_spotlight_enabled: { permittedRoles: ["admin"] },
   delete_spotlight: { permittedRoles: ["admin"] },
   repoint_spotlight_images: { permittedRoles: ["admin"] },
   // One OAuth client's public description out of Supabase Auth, which no Data

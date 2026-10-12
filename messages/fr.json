@@ -636,10 +636,6 @@
       "editPage": {
         "title": "Modifier la mise en avant"
       },
-      "editor": {
-        "onLine": "Activée : les familles la voient en bas de chaque e-mail de compte rendu de session.",
-        "offLine": "Désactivée : elle ne figure dans aucun e-mail. Activez-la depuis la liste des mises en avant."
-      },
       "fields": {
         "languages": "Langues",
         "title": "Titre",
@@ -660,11 +656,8 @@
       "errors": {
         "noVersion": "Une mise en avant a besoin d’un titre et d’un texte dans au moins une langue.",
         "versionIncomplete": "La version {language} a besoin d’un titre et du texte.",
-        "pictureWhileOn": "Cette mise en avant est activée, elle a donc besoin d’une image. Choisissez-en une, ou désactivez d’abord la mise en avant depuis la liste.",
         "saveFailed": "La mise en avant n’a pas pu être enregistrée. Réessayez.",
         "saveFailedWithReason": "La mise en avant n’a pas pu être enregistrée — {reason}",
-        "switchFailed": "Impossible d’activer ou de désactiver la mise en avant. Réessayez.",
-        "switchFailedWithReason": "Impossible d’activer ou de désactiver la mise en avant — {reason}",
         "deleteFailed": "La mise en avant n’a pas pu être supprimée. Réessayez.",
         "deleteFailedWithReason": "La mise en avant n’a pas pu être supprimée — {reason}"
       },
@@ -674,6 +667,10 @@
       "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues",
       "created": "Créée le {date}",
+      "status": {
+        "on": "Dans les e-mails",
+        "off": "Hors des e-mails"
+      },
       "switchLabel": "Dans les e-mails de compte rendu de session",
       "needsPicture": "Ajoutez une image pour pouvoir l’activer.",
       "deleteConfirm": {

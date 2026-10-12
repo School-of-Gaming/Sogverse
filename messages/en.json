@@ -636,10 +636,6 @@
       "editPage": {
         "title": "Edit spotlight"
       },
-      "editor": {
-        "onLine": "Switched on: families see it at the bottom of every session report email.",
-        "offLine": "Switched off: it is in no email. Switch it on from the list of spotlights."
-      },
       "fields": {
         "languages": "Languages",
         "title": "Title",
@@ -660,11 +656,8 @@
       "errors": {
         "noVersion": "A spotlight needs a title and text in at least one language.",
         "versionIncomplete": "The {language} version needs both a title and the text.",
-        "pictureWhileOn": "This spotlight is switched on, so it needs a picture. Choose one, or switch the spotlight off from the list first.",
         "saveFailed": "The spotlight could not be saved. Try again.",
         "saveFailedWithReason": "The spotlight could not be saved — {reason}",
-        "switchFailed": "Could not change whether the spotlight is switched on. Try again.",
-        "switchFailedWithReason": "Could not change whether the spotlight is switched on — {reason}",
         "deleteFailed": "The spotlight could not be deleted. Try again.",
         "deleteFailedWithReason": "The spotlight could not be deleted — {reason}"
       },
@@ -674,6 +667,10 @@
       "removeLocale": "Remove {language}",
       "languagesLabel": "Languages",
       "created": "Created {date}",
+      "status": {
+        "on": "In emails",
+        "off": "Not in emails"
+      },
       "switchLabel": "In session report emails",
       "needsPicture": "Add a picture to switch it on.",
       "deleteConfirm": {

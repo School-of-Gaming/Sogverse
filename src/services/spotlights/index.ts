@@ -6,7 +6,6 @@ export {
   useCreateSpotlight,
   useDeleteSpotlight,
   useSaveSpotlight,
-  useSetSpotlightEnabled,
 } from "./spotlights.queries";
 export {
   spotlightInput,

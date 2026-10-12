@@ -3002,8 +3002,8 @@ COMMIT;
 -- =============================================================================
 -- Two spotlights, each in English and Finnish, the newer one with a link in its
 -- body — what every session report email appends. Written through the admin
--- RPC, which creates a spotlight switched off and with no picture: the
--- pictures are not here, for the reason the products' are not.
+-- RPC, each created switched off and with no picture: the pictures are not
+-- here, for the reason the products' are not.
 -- `rich-images.sh` uploads supabase/seed-images/spotlight-<n>.jpg, links the
 -- nth to the nth spotlight oldest first, and switches each on.
 
@@ -3023,7 +3023,7 @@ SELECT public.create_spotlight(jsonb_build_array(
     'locale', 'fi',
     'title',  'Yhdessä rakentaen, palikka kerrallaan',
     'body',   'Jokainen sessio päättyy johonkin, minkä ryhmä teki yhdessä. Pyydä lastasi näyttämään, mitä hän rakensi tällä viikolla.')
-));
+), false);
 
 SELECT public.create_spotlight(jsonb_build_array(
   jsonb_build_object(
@@ -3034,7 +3034,7 @@ SELECT public.create_spotlight(jsonb_build_array(
     'locale', 'fi',
     'title',  'Kerhot kouluille',
     'body',   'Pidämme kerhoja kouluissa ympäri Suomen, koulupäivän aikana tai heti sen jälkeen. [Katso tarjolla olevat kerhot](/shop) ja kerro niistä koulullesi.')
-));
+), false);
 
 COMMIT;
 

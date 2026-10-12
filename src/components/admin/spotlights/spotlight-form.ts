@@ -30,13 +30,19 @@ export interface SpotlightVersionDraft {
 const EMPTY_VERSION: SpotlightVersionDraft = { title: "", body: "" };
 
 /**
- * The editor's own state: a version per language tab, the open tab, and the
- * spotlight's picture. Switching tabs keeps what was typed in each.
+ * The editor's own state: a version per language tab, the open tab, the
+ * spotlight's picture and whether it is in session report emails. Switching
+ * tabs keeps what was typed in each.
+ *
+ * `enabled` is never true while `picture` is null: the control is disabled
+ * without a picture, and taking the picture off switches it off
+ * (`withPicture`), which is the database's CHECK held on the form.
  */
 export interface SpotlightForm {
   versions: Partial<Record<SupportedLocale, SpotlightVersionDraft>>;
   activeLocale: SupportedLocale;
   picture: SpotlightPicture | null;
+  enabled: boolean;
 }
 
 /** The version a tab holds, or an empty one for a tab not yet typed in. */
@@ -60,6 +66,19 @@ export function emptySpotlightForm(uiLocale: SupportedLocale): SpotlightForm {
     versions: { [uiLocale]: EMPTY_VERSION },
     activeLocale: uiLocale,
     picture: null,
+    enabled: false,
+  };
+}
+
+/** The form with its picture set or taken off; taking it off switches the spotlight off. */
+export function withPicture(
+  form: SpotlightForm,
+  picture: SpotlightPicture | null,
+): SpotlightForm {
+  return {
+    ...form,
+    picture,
+    enabled: picture === null ? false : form.enabled,
   };
 }
 
@@ -76,7 +95,8 @@ export function isCompleteSpotlightVersion(version: SpotlightVersionDraft): bool
 export function isBlankSpotlightForm(form: SpotlightForm): boolean {
   return (
     formLocales(form).every((locale) => isBlankVersion(versionOf(form, locale))) &&
-    form.picture === null
+    form.picture === null &&
+    !form.enabled
   );
 }
 
@@ -111,6 +131,7 @@ export function spotlightFormFromSaved(
             label: spotlight.imageLabel,
             path: spotlight.imagePath,
           },
+    enabled: spotlight.enabled,
   };
 }
 
@@ -135,17 +156,13 @@ function versionsToSave(
  *
  * - `noVersion` — no language written at all.
  * - `incomplete` — a language written without its title or its body.
- * - `pictureWhileOn` — the picture taken off a spotlight that is switched on,
- *   which cannot be without one.
  */
 export type SpotlightSaveBlocker =
   | { kind: "noVersion" }
-  | { kind: "incomplete"; locale: SupportedLocale }
-  | { kind: "pictureWhileOn" };
+  | { kind: "incomplete"; locale: SupportedLocale };
 
 export function spotlightSaveBlocker(
   form: SpotlightForm,
-  enabled: boolean,
 ): SpotlightSaveBlocker | null {
   const versions = versionsToSave(form);
   if (versions.length === 0) return { kind: "noVersion" };
@@ -155,19 +172,19 @@ export function spotlightSaveBlocker(
   if (incomplete !== undefined) {
     return { kind: "incomplete", locale: incomplete.locale };
   }
-  if (enabled && form.picture === null) return { kind: "pictureWhileOn" };
   return null;
 }
 
 /**
  * What a save sends. The service's contract validates it; the whole input
- * travels on every save, because the save assigns the picture and replaces
- * the whole version set.
+ * travels on every save, because the save assigns the picture and the switch
+ * and replaces the whole version set, in one write.
  */
 export function spotlightInputFromForm(form: SpotlightForm): SpotlightInput {
   return {
     versions: versionsToSave(form),
     imageId: form.picture?.id ?? null,
+    enabled: form.enabled,
   };
 }
 
@@ -197,5 +214,9 @@ export function sameAsSaved(
         version.body === editorBodies.get(saved.body)?.trim())
     );
   });
-  return sameVersions && (form.picture?.id ?? null) === spotlight.imageId;
+  return (
+    sameVersions &&
+    (form.picture?.id ?? null) === spotlight.imageId &&
+    form.enabled === spotlight.enabled
+  );
 }

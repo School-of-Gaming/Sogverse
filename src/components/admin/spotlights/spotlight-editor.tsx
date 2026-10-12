@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
@@ -34,6 +35,7 @@ import {
   spotlightInputFromForm,
   spotlightSaveBlocker,
   versionOf,
+  withPicture,
   type SpotlightForm,
   type SpotlightVersionDraft,
 } from "./spotlight-form";
@@ -53,8 +55,8 @@ export interface SpotlightEditorProps {
 
 /**
  * **The page a spotlight is written on**, a new one and a saved one alike:
- * whether it is switched on, its text per language in tabs, its picture, and
- * Save.
+ * its text per language in tabs, its picture, whether it is in session report
+ * emails, and Save.
  *
  * **The form is seeded once per spotlight, never per read.** Every spotlight
  * write and every catalogue replace or removal refetches the spotlight; the
@@ -62,11 +64,11 @@ export interface SpotlightEditorProps {
  * whether the form differs from the saved copy and never what the admin is
  * typing.
  *
- * **Switching on is the list's, not this page's.** The whole save never
- * touches the switch, so the switch lives where every spotlight's state is
- * seen at once; this page says which way it is set. A save that would take
- * the picture off a spotlight that is switched on is held back with the
- * reason, since one that is on cannot be without a picture.
+ * **Whether it is in the emails is part of the form**, saved by the same Save
+ * in one write with the picture and the text, so the database judges the
+ * state the admin asked for and never a half-saved one. A spotlight cannot be
+ * on without a picture, so the box is disabled with the reason while there is
+ * none, and taking the picture off unticks it.
  *
  * **Leaving with unsaved changes asks first**, until a save lands.
  */
@@ -86,6 +88,7 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
   );
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const enabledReasonId = useId();
 
   // Each body the rich editor has been seeded with, mapped to the editor's own
   // serialisation of it — how an untouched body comes back out of the editor.
@@ -115,19 +118,17 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
-    const blocker = spotlightSaveBlocker(form, spotlight?.enabled ?? false);
+    const blocker = spotlightSaveBlocker(form);
     if (blocker !== null) {
       setSaveError(
         blocker.kind === "noVersion"
           ? t("errors.noVersion")
-          : blocker.kind === "incomplete"
-            ? t("errors.versionIncomplete", {
-                language: languageName(
-                  blocker.locale,
-                  LOCALE_CONFIG[blocker.locale].label,
-                ),
-              })
-            : t("errors.pictureWhileOn"),
+          : t("errors.versionIncomplete", {
+              language: languageName(
+                blocker.locale,
+                LOCALE_CONFIG[blocker.locale].label,
+              ),
+            }),
       );
       return;
     }
@@ -154,12 +155,6 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
     <div className="space-y-6">
       <UnsavedChangesGuard when={unsaved} />
 
-      {spotlight !== null && (
-        <p className="text-sm text-muted-foreground">
-          {spotlight.enabled ? t("editor.onLine") : t("editor.offLine")}
-        </p>
-      )}
-
       <form onSubmit={handleSave} className="space-y-6">
         <Card>
           <CardContent className="space-y-5 p-6">
@@ -177,13 +172,43 @@ function EditorForm({ spotlight, save, onCancel }: SpotlightEditorProps) {
               imageId={form.picture?.id ?? null}
               current={form.picture}
               onChange={(id, image) =>
-                setForm((current) => ({
-                  ...current,
-                  picture:
+                setForm((current) =>
+                  withPicture(
+                    current,
                     id === null || image === null ? null : { id, ...image },
-                }))
+                  ),
+                )
               }
             />
+
+            <div className="space-y-1">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={form.enabled}
+                  disabled={form.picture === null}
+                  aria-describedby={
+                    form.picture === null ? enabledReasonId : undefined
+                  }
+                  onChange={(event) => {
+                    const enabled = event.target.checked;
+                    setForm((current) => ({ ...current, enabled }));
+                  }}
+                />
+                {t("switchLabel")}
+              </label>
+              {/* The reason the box cannot be ticked, beside it, rather than a
+                  refusal after Save. */}
+              {form.picture === null && (
+                <StatusLine
+                  id={enabledReasonId}
+                  status="info"
+                  size="xs"
+                  muted
+                >
+                  {t("needsPicture")}
+                </StatusLine>
+              )}
+            </div>
           </CardContent>
         </Card>
 

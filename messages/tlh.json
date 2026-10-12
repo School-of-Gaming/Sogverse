@@ -680,10 +680,6 @@
       "editPage": {
         "title": "Hov yIchoH"
       },
-      "editor": {
-        "onLine": "chenmoHlu’: Hoch QIn ghItlh bIngDaq ’oH lutu’ qorDu’.",
-        "offLine": "Qaw’lu’: ghItlhDaq tu’lu’be’. Hovmey tetlhvo’ yIchenmoH."
-      },
       "fields": {
         "languages": "Holmey",
         "title": "pong",
@@ -704,11 +700,8 @@
       "errors": {
         "noVersion": "wa’ Hol puS pong ghItlh je poQ Hov.",
         "versionIncomplete": "{language} Hol: pong ghItlh je poQ.",
-        "pictureWhileOn": "Hovvam chenmoHlu’, vaj nagh beQ poQ. wa’ yIwIv, pagh tetlhvo’ Hov yIQaw’ wa’DIch.",
         "saveFailed": "Hov pollaHbe’. yInIDqa’.",
         "saveFailedWithReason": "Hov pollaHbe’ — {reason}",
-        "switchFailed": "Hov chenmoHlaHbe’ pagh Qaw’laHbe’. yInIDqa’.",
-        "switchFailedWithReason": "Hov chenmoHlaHbe’ pagh Qaw’laHbe’ — {reason}",
         "deleteFailed": "Hov teqlaHbe’. yInIDqa’.",
         "deleteFailedWithReason": "Hov teqlaHbe’ — {reason}"
       },
@@ -718,6 +711,10 @@
       "removeLocale": "{language} yIteq",
       "languagesLabel": "Holmey",
       "created": "chenmoHlu’: {date}",
+      "status": {
+        "on": "chenmoHlu’",
+        "off": "Qaw’lu’"
+      },
       "switchLabel": "QIn ghItlhmeyDaq",
       "needsPicture": "chenmoHmeH nagh beQ yIchel.",
       "deleteConfirm": {

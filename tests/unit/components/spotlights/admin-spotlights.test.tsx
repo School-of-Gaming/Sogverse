@@ -7,18 +7,24 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 /**
  * **The admin spotlight pages' rules.** The form's: what a save is refused
  * for before it is tried — no language, a language missing its title or its
- * text, and the picture taken off a spotlight that is switched on — and
- * whether the form holds anything unsaved. The list's: the whole card opens
- * the editor while the switch and the delete do only their own thing, a spotlight with no
- * picture cannot be switched on and says why in place, one that is on can
- * always be switched off, a refused switch is named in the row, and a failed
- * read says so rather than claiming there are no spotlights.
+ * text — whether the form holds anything unsaved, and that taking the picture
+ * off switches the spotlight off. The editor's: whether the spotlight is in
+ * the emails is a box on the form, disabled with the reason while there is no
+ * picture, counted as an unsaved change, and sent in the one save with the
+ * picture and the text. The list's: each spotlight's state is read as a
+ * status with no control to change it, the whole card opens the editor while
+ * the delete does only its own thing, and a failed read says so rather than
+ * claiming there are no spotlights.
  *
- * Translations echo their key, so nothing here depends on wording.
+ * Translations echo their key, so nothing here depends on wording. The rich
+ * editor is a textarea and the picture field two buttons, since nothing here
+ * looks inside either.
  */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
@@ -34,15 +40,66 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
+vi.mock("@/components/admin/authored-body-editor", () => ({
+  AuthoredBodyEditor: ({
+    value,
+    onChange,
+    ariaLabel,
+  }: {
+    value: string;
+    onChange: (markdown: string) => void;
+    ariaLabel: string;
+  }) => (
+    <textarea
+      aria-label={ariaLabel}
+      defaultValue={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}));
+
+const PICKED = {
+  id: "3c0d1b2e-7f53-4d3a-9b0e-5d1c2a7e4f60",
+  label: "Picked",
+  path: "picked.jpg",
+};
+
+vi.mock("@/components/admin/products/image-picker", () => ({
+  ImagePicker: ({
+    onChange,
+  }: {
+    onChange: (
+      id: string | null,
+      image: { label: string; path: string } | null,
+    ) => void;
+  }) => (
+    <div>
+      <button
+        type="button"
+        onClick={() =>
+          onChange(PICKED.id, { label: PICKED.label, path: PICKED.path })
+        }
+      >
+        pick picture
+      </button>
+      <button type="button" onClick={() => onChange(null, null)}>
+        remove picture
+      </button>
+    </div>
+  ),
+}));
+
 import { AdminSpotlightsPage } from "@/components/admin/spotlights/admin-spotlights-page";
+import { SpotlightEditor } from "@/components/admin/spotlights/spotlight-editor";
 import {
   emptySpotlightForm,
   sameAsSaved,
   spotlightFormFromSaved,
   spotlightInputFromForm,
   spotlightSaveBlocker,
+  withPicture,
 } from "@/components/admin/spotlights/spotlight-form";
-import type { AdminSpotlight } from "@/services/spotlights";
+import type { AdminSpotlight, SpotlightInput } from "@/services/spotlights";
 
 const ON: AdminSpotlight = {
   id: "a5717a61-d273-4041-b9b4-1abfb039694d",
@@ -79,7 +136,7 @@ afterEach(() => {
 
 describe("the spotlight form", () => {
   it("refuses a save with no language written", () => {
-    expect(spotlightSaveBlocker(emptySpotlightForm("en"), false)).toEqual({
+    expect(spotlightSaveBlocker(emptySpotlightForm("en"))).toEqual({
       kind: "noVersion",
     });
   });
@@ -87,26 +144,33 @@ describe("the spotlight form", () => {
   it("refuses a language with a title and no text", () => {
     const form = emptySpotlightForm("en");
     form.versions.en = { title: "Hello", body: "  " };
-    expect(spotlightSaveBlocker(form, false)).toEqual({
+    expect(spotlightSaveBlocker(form)).toEqual({
       kind: "incomplete",
       locale: "en",
     });
   });
 
-  it("refuses taking the picture off a spotlight that is on, and allows it on one that is off", () => {
-    const form = { ...spotlightFormFromSaved(ON, "en"), picture: null };
-    expect(spotlightSaveBlocker(form, true)).toEqual({ kind: "pictureWhileOn" });
-    expect(spotlightSaveBlocker(form, false)).toBeNull();
+  it("switches the spotlight off when its picture is taken off, and leaves it as it was when one is set", () => {
+    const saved = spotlightFormFromSaved(ON, "en");
+    expect(withPicture(saved, null)).toMatchObject({ picture: null, enabled: false });
+    expect(withPicture(saved, PICKED)).toMatchObject({ picture: PICKED, enabled: true });
   });
 
   it("opens a saved spotlight on the admin's language and holds nothing unsaved", () => {
     const form = spotlightFormFromSaved(ON, "fi");
     expect(form.activeLocale).toBe("fi");
+    expect(form.enabled).toBe(true);
     expect(sameAsSaved(form, ON)).toBe(true);
     expect(spotlightInputFromForm(form)).toEqual({
       versions: ON.versions,
       imageId: ON.imageId,
+      enabled: true,
     });
+  });
+
+  it("counts the switch as a change", () => {
+    const form = { ...spotlightFormFromSaved(ON, "en"), enabled: false };
+    expect(sameAsSaved(form, ON)).toBe(false);
   });
 
   it("leaves an untouched empty tab out of the save", () => {
@@ -116,36 +180,127 @@ describe("the spotlight form", () => {
   });
 });
 
+describe("the spotlight editor", () => {
+  function renderEditor(
+    spotlight: AdminSpotlight | null,
+    save = vi.fn(async (input: SpotlightInput) => {
+      void input;
+    }),
+  ) {
+    const client = new QueryClient();
+    function Wrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    }
+    render(<SpotlightEditor spotlight={spotlight} save={save} />, {
+      wrapper: Wrapper,
+    });
+    return {
+      save,
+      box: () => screen.getByRole("checkbox", { name: "switchLabel" }),
+      saveButton: () => screen.getByRole("button", { name: "actions.save" }),
+    };
+  }
+
+  it("shows the saved switch, and counts toggling it as an unsaved change", () => {
+    const { box, saveButton } = renderEditor(ON);
+    expect(box()).toHaveProperty("checked", true);
+    expect(box()).toHaveProperty("disabled", false);
+    expect(saveButton()).toHaveProperty("disabled", true);
+
+    fireEvent.click(box());
+    expect(box()).toHaveProperty("checked", false);
+    expect(saveButton()).toHaveProperty("disabled", false);
+
+    fireEvent.click(box());
+    expect(saveButton()).toHaveProperty("disabled", true);
+  });
+
+  it("holds the box back with the reason while there is no picture, and unticks it when the picture is taken off", () => {
+    const { box } = renderEditor(ON);
+    expect(screen.queryByText("needsPicture")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "remove picture" }));
+    expect(box()).toHaveProperty("checked", false);
+    expect(box()).toHaveProperty("disabled", true);
+    expect(screen.getByText("needsPicture")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "pick picture" }));
+    expect(box()).toHaveProperty("disabled", false);
+    // Off until ticked again: a new picture is not a decision to go back on.
+    expect(box()).toHaveProperty("checked", false);
+    expect(screen.queryByText("needsPicture")).toBeNull();
+  });
+
+  it("saves the switch in the one call with the picture and the text", async () => {
+    const { box, save, saveButton } = renderEditor(NO_PICTURE);
+    expect(box()).toHaveProperty("disabled", true);
+
+    fireEvent.click(screen.getByRole("button", { name: "pick picture" }));
+    fireEvent.click(box());
+    await act(async () => {
+      fireEvent.click(saveButton());
+    });
+
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledWith({
+      versions: NO_PICTURE.versions,
+      imageId: PICKED.id,
+      enabled: true,
+    });
+  });
+
+  it("creates a new spotlight already switched on when it has a picture", async () => {
+    const { box, save } = renderEditor(null);
+    expect(box()).toHaveProperty("disabled", true);
+
+    fireEvent.change(screen.getByLabelText("fields.title"), {
+      target: { value: "Winter camps" },
+    });
+    fireEvent.change(screen.getByLabelText("fields.body"), {
+      target: { value: "Book now." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "pick picture" }));
+    fireEvent.click(box());
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "newPage.submit" }));
+    });
+
+    expect(save).toHaveBeenCalledWith({
+      versions: [{ locale: "en", title: "Winter camps", body: "Book now." }],
+      imageId: PICKED.id,
+      enabled: true,
+    });
+  });
+});
+
 describe("the spotlight list", () => {
-  function renderList(setEnabled = vi.fn(async () => {})) {
+  function renderList() {
     render(
       <AdminSpotlightsPage
         spotlights={[ON, NO_PICTURE]}
         status="success"
-        actions={{ setEnabled, remove: vi.fn(async () => {}) }}
+        actions={{ remove: vi.fn(async () => {}) }}
       />,
     );
     const rows = screen.getAllByRole("listitem");
-    return { setEnabled, on: rows[0], noPicture: rows[1] };
+    return { on: rows[0], off: rows[1] };
   }
 
-  it("holds back the switch of a spotlight with no picture and says why", () => {
-    const { noPicture, on } = renderList();
-    expect(within(noPicture).getByRole("checkbox")).toHaveProperty("disabled", true);
-    expect(within(noPicture).getByText("needsPicture")).toBeTruthy();
-    expect(within(on).getByRole("checkbox")).toHaveProperty("disabled", false);
-    expect(within(on).queryByText("needsPicture")).toBeNull();
+  it("reads each spotlight's state as a status, with no control to change it", () => {
+    const { on, off } = renderList();
+    expect(within(on).getByText("on")).toBeTruthy();
+    expect(within(off).getByText("off")).toBeTruthy();
+    expect(screen.queryAllByRole("checkbox")).toHaveLength(0);
   });
 
   it("names each spotlight in the admin's language, falling back as a reader would", () => {
-    const { on, noPicture } = renderList();
+    const { on, off } = renderList();
     expect(within(on).getAllByText("Autumn camps are open").length).toBeGreaterThan(0);
-    expect(within(noPicture).getAllByText("Ny klubb").length).toBeGreaterThan(0);
+    expect(within(off).getAllByText("Ny klubb").length).toBeGreaterThan(0);
   });
 
-  it("opens the editor from the whole card, and leaves the switch and the delete to themselves", async () => {
-    const setEnabled = vi.fn(async () => {});
-    const { on } = renderList(setEnabled);
+  it("opens the editor from the whole card, and leaves the delete to itself", async () => {
+    const { on } = renderList();
 
     // One link per card, named by the title, opening the editor — stretched
     // over the card by its `::after`, which the card is the containing block
@@ -158,21 +313,14 @@ describe("the spotlight list", () => {
     expect(link.className).toContain("after:inset-0");
     expect(link.parentElement?.closest(".relative")).toBe(on.firstElementChild);
 
-    // The controls sit outside the anchor (no button inside a link), each
-    // lifted above the stretched link so a press reaches it and not the card.
-    const checkbox = within(on).getByRole("checkbox");
+    // The delete sits outside the anchor (no button inside a link), lifted
+    // above the stretched link so a press reaches it and not the card.
     const remove = within(on).getByRole("button", { name: "actions.delete" });
-    for (const control of [checkbox, remove]) {
-      expect(control.closest("a")).toBeNull();
-      expect(control.closest(".z-10")).not.toBeNull();
-    }
+    expect(remove.closest("a")).toBeNull();
+    expect(remove.closest(".z-10")).not.toBeNull();
 
     const navigated = vi.fn();
     link.addEventListener("click", navigated);
-    await act(async () => {
-      fireEvent.click(checkbox);
-    });
-    expect(setEnabled).toHaveBeenCalledWith(ON.id, false);
     await act(async () => {
       fireEvent.click(remove);
     });
@@ -180,22 +328,8 @@ describe("the spotlight list", () => {
     expect(navigated).not.toHaveBeenCalled();
   });
 
-  it("switches off, and names a refusal in the row", async () => {
-    const setEnabled = vi.fn(async () => {
-      throw { code: "23514", message: "no picture" };
-    });
-    const { on } = renderList(setEnabled);
-    await act(async () => {
-      fireEvent.click(within(on).getByRole("checkbox"));
-    });
-    expect(setEnabled).toHaveBeenCalledWith(ON.id, false);
-    expect(within(on).getByRole("alert").textContent).toContain(
-      "errors.switchFailedWithReason reason=no picture",
-    );
-  });
-
   it("shows the empty state only once the read has answered", () => {
-    const actions = { setEnabled: vi.fn(), remove: vi.fn() };
+    const actions = { remove: vi.fn() };
     const { rerender } = render(
       <AdminSpotlightsPage spotlights={[]} status="pending" actions={actions} />,
     );
@@ -207,7 +341,7 @@ describe("the spotlight list", () => {
   });
 
   it("says a failed read failed, never that there are no spotlights", () => {
-    const actions = { setEnabled: vi.fn(), remove: vi.fn() };
+    const actions = { remove: vi.fn() };
     const { rerender } = render(
       <AdminSpotlightsPage spotlights={[]} status="error" actions={actions} />,
     );

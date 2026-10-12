@@ -16,7 +16,7 @@ CREATE TABLE public.spotlights (
 -- Name: TABLE spotlights; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.spotlights IS 'Admin-written notes appended to every session report email, newest first: the picture and whether the spotlight is enabled here, the title and body per language in spotlight_translations. A single copy — enabled is what makes one live, with no publishing step, no dates and no position. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_spotlight, save_spotlight, set_spotlight_enabled and delete_spotlight, and the catalogue''s repoint_spotlight_images and removal trigger. The session report email reads the enabled ones with the service role.';
+COMMENT ON TABLE public.spotlights IS 'Admin-written notes appended to every session report email, newest first: the picture and whether the spotlight is enabled here, the title and body per language in spotlight_translations. A single copy — enabled is what makes one live, with no publishing step, no dates and no position. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_spotlight, save_spotlight and delete_spotlight, and the catalogue''s repoint_spotlight_images and removal trigger. The session report email reads the enabled ones with the service role.';
 
 
 --
@@ -37,7 +37,7 @@ COMMENT ON COLUMN public.spotlights.image_path IS 'The picture''s object name in
 -- Name: COLUMN spotlights.enabled; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.spotlights.enabled IS 'Whether the spotlight is appended to session report emails. A new spotlight starts off; set_spotlight_enabled switches it. Never true without a picture (chk_spotlights_enabled_has_image).';
+COMMENT ON COLUMN public.spotlights.enabled IS 'Whether the spotlight is appended to session report emails. Set by create_spotlight and save_spotlight together with the picture. Never true without a picture (chk_spotlights_enabled_has_image).';
 
 
 --
@@ -51,7 +51,7 @@ COMMENT ON COLUMN public.spotlights.created_at IS 'When the spotlight was create
 -- Name: CONSTRAINT chk_spotlights_enabled_has_image ON spotlights; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON CONSTRAINT chk_spotlights_enabled_has_image ON public.spotlights IS 'A spotlight may be saved without a picture but never enabled without one. The admin UI holds the switch back; this refuses the state it cannot produce.';
+COMMENT ON CONSTRAINT chk_spotlights_enabled_has_image ON public.spotlights IS 'A spotlight may be saved without a picture but never enabled without one. The admin editor turns the switch off without a picture; this refuses the state it cannot produce.';
 
 
 --

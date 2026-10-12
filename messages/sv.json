@@ -636,10 +636,6 @@
       "editPage": {
         "title": "Redigera spotlight"
       },
-      "editor": {
-        "onLine": "Påslagen: familjer ser den längst ner i varje sessionsrapports e-post.",
-        "offLine": "Avstängd: den finns inte i någon e-post. Slå på den från listan med spotlights."
-      },
       "fields": {
         "languages": "Språk",
         "title": "Rubrik",
@@ -660,11 +656,8 @@
       "errors": {
         "noVersion": "En spotlight behöver en rubrik och text på minst ett språk.",
         "versionIncomplete": "Versionen på {language} behöver både en rubrik och texten.",
-        "pictureWhileOn": "Den här spotlighten är påslagen, så den behöver en bild. Välj en, eller stäng först av spotlighten från listan.",
         "saveFailed": "Spotlighten kunde inte sparas. Försök igen.",
         "saveFailedWithReason": "Spotlighten kunde inte sparas — {reason}",
-        "switchFailed": "Det gick inte att slå på eller stänga av spotlighten. Försök igen.",
-        "switchFailedWithReason": "Det gick inte att slå på eller stänga av spotlighten — {reason}",
         "deleteFailed": "Spotlighten kunde inte tas bort. Försök igen.",
         "deleteFailedWithReason": "Spotlighten kunde inte tas bort — {reason}"
       },
@@ -674,6 +667,10 @@
       "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk",
       "created": "Skapad {date}",
+      "status": {
+        "on": "I e-posten",
+        "off": "Inte i e-posten"
+      },
       "switchLabel": "I sessionsrapporternas e-post",
       "needsPicture": "Lägg till en bild för att kunna slå på den.",
       "deleteConfirm": {

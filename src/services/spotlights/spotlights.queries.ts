@@ -38,8 +38,8 @@ export function useAdminSpotlight(id: string | null | undefined) {
 }
 
 /**
- * Every spotlight write invalidates the whole `spotlights` tree: a save, a
- * switch or a removal changes the list and the detail alike. The catalogue's
+ * Every spotlight write invalidates the whole `spotlights` tree: a save or a
+ * removal changes the list and the detail alike. The catalogue's
  * usage map too, which lists the spotlights using each picture and whether
  * each is switched on. Returned rather than fired and forgotten, so a caller
  * awaiting `mutateAsync` never acts on a stale list.
@@ -71,17 +71,6 @@ export function useSaveSpotlight() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: SpotlightInput }) =>
       service.saveSpotlight(id, input),
-    onSuccess: () => invalidate(),
-  });
-}
-
-export function useSetSpotlightEnabled() {
-  const service = new SpotlightsService(getClient());
-  const invalidate = useSpotlightInvalidation();
-
-  return useMutation({
-    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
-      service.setSpotlightEnabled(id, enabled),
     onSuccess: () => invalidate(),
   });
 }
