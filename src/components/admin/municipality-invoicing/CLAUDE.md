@@ -76,6 +76,16 @@ dates: the recorded ones no cancellation covers, plus the unrecorded ones. A rec
 and an unrecorded one are never the same date, so the two add. A customer whose clubs'
 due dates were all cancelled has nothing to invoice and is refused on that ground.
 
+**A holiday is never billed, and it is not unrecorded.** A holiday break on a calendar the
+club follows withdraws the dates it covers from the plan, so they are never planned dates;
+the document carries the month's breaks beside the plan, each with the dates it withdrew.
+Each withdrawn date is a **holiday** line on the page, printed at zero in a muted tone and
+named with the break — it is settled either side of today, like a cancellation, because
+nothing was due. It is outside the billed count and every total, so it is in no Finvoice
+file: the file's rows are the billed counts. A stored row or a cancellation on a holiday
+date counts for nothing — the document leaves both out — so a holiday line is the only
+thing a holiday date can be.
+
 "Today" is **the club's own local today**, resolved in the club's timezone, because every
 date on either side of that comparison is one of the club's own local dates. A UTC "today"
 is off by one for several hours of every day, and the error always lands on the newest
@@ -363,7 +373,7 @@ one club otherwise read the same. The free text names the whole period (`1–3/2
 invoice is dated the first day after the period, and the filename and number take the
 period's last month. **A monthly file states none of the period elements** and is the
 shape the imports were verified against; the elements a period file adds are the part of
-it that is checked against Fennoa on its first import. Cancelled sessions stay out of every
+it that is checked against Fennoa on its first import. Cancelled sessions and holidays stay out of every
 file.
 
 ## How the month is read
@@ -461,7 +471,7 @@ the billed count, and beside it, in quiet secondary type, how many of those bill
 are not recorded — so a missing write-up can be chased with every club still closed. It is
 deliberately not a warning: those sessions are in the count and the total, the invoice is
 right, and a warning tone there would read as a figure to doubt. Dates still ahead of the
-club and cancelled dates are never mentioned there.
+club, cancelled dates and holidays are never mentioned there.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
 table of the club's month, two columns wide: the day, its ISO week and what became of it as

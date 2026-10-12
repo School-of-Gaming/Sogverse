@@ -1874,7 +1874,7 @@ describe("the topic prep scene", () => {
  * the two viewers between them must — which is the whole reason there are two.
  */
 describe("the gedu invoicing scenes cover every line kind", () => {
-  const KINDS = ["paid", "unrecorded", "upcoming", "cancelled", "absent"];
+  const KINDS = ["paid", "unrecorded", "upcoming", "cancelled", "absent", "holiday"];
 
   function build(geduId?: string): GeduInvoicingView {
     return buildGeduInvoicing({

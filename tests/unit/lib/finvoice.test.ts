@@ -294,6 +294,84 @@ describe("the money rule", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Holidays
+// ---------------------------------------------------------------------------
+
+describe("a holiday", () => {
+  /** A break withdrawing the given Mondays of May from the plan. */
+  function onBreak(
+    spec: ClubSpec,
+    breakStart: string,
+    breakEnd: string,
+    withdrawn: readonly string[],
+  ): MunicipalityInvoicingClub {
+    const base = club(spec);
+    return {
+      ...base,
+      planned_dates: base.planned_dates.filter((date) => !withdrawn.includes(date)),
+      holiday_breaks: [
+        {
+          id: `${spec.id}-break`,
+          startDate: breakStart,
+          endDate: breakEnd,
+          names: [{ locale: "fi", name: "Kevätloma" }],
+          withdrawnSessions: withdrawn.map((date) => ({
+            date,
+            startsAt: new Date(`${date}T14:15:00+03:00`),
+            endsAt: new Date(`${date}T15:30:00+03:00`),
+            cancelled: false,
+          })),
+        },
+      ],
+    };
+  }
+
+  it("bills a holiday nothing, and the file carries the ledger's billed count", () => {
+    // The 11th is a holiday: the ledger shows it at €0, and the row bills the
+    // 4th (recorded) and the 18th (due, unrecorded) — the same two the ledger
+    // bills.
+    const clubs = [
+      onBreak({ id: "a", name: "Klubi A", dates: ["2026-05-04"] }, "2026-05-11", "2026-05-15", ["2026-05-11"]),
+    ];
+    const ledger = buildMunicipalityInvoicing({
+      snapshot: snapshotOf(clubs),
+      locale: "fi",
+      now: NOW,
+    }).municipalities[0].clubs[0];
+    expect(ledger.sessions.find((s) => s.date === "2026-05-11")?.kind).toBe("holiday");
+    expect(ledger.billedCount).toBe(2);
+
+    const invoice = invoiceFor(clubs);
+    expect(invoice.rows).toHaveLength(1);
+    expect(invoice.rows[0].sessions).toBe(2);
+    expect(invoice.rows[0].netCents).toBe(13_000);
+    expect(invoice.netCents).toBe(13_000);
+
+    // One row in the document, for two sessions — no line for the holiday.
+    const xml = serializeFinvoice(invoice, GENERATED_AT);
+    expect(xml.match(/<InvoiceRow>/g)).toHaveLength(1);
+    expect(xml).toContain('<DeliveredQuantity QuantityUnitCode="krt">2.00</DeliveredQuantity>');
+  });
+
+  it("leaves a club whose every due date was a holiday off the file", () => {
+    const invoice = invoiceFor([
+      club({ id: "a", name: "Klubi A" }),
+      onBreak({ id: "b", name: "Klubi B", dates: [] }, "2026-05-01", "2026-05-31", MAY_MONDAYS),
+    ]);
+
+    expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
+  });
+
+  it("refuses a customer whose clubs' month was all holiday", () => {
+    const result = buildFor([
+      onBreak({ id: "a", name: "Klubi A", dates: [] }, "2026-05-01", "2026-05-31", MAY_MONDAYS),
+    ]);
+
+    expect(result).toMatchObject({ ok: false });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // What a row says
 // ---------------------------------------------------------------------------
 

@@ -192,11 +192,11 @@ describe("buildMunicipalityInvoicing", () => {
       // the 2nd and the 9th were due and bill though nobody recorded them, and
       // the 16th onwards has not been reached and bills nothing.
       expect(built.sessions).toEqual([
-        { date: "2026-09-02", isoWeek: 36, kind: "unrecorded" },
-        { date: "2026-09-09", isoWeek: 37, kind: "unrecorded" },
-        { date: "2026-09-16", isoWeek: 38, kind: "upcoming" },
-        { date: "2026-09-23", isoWeek: 39, kind: "upcoming" },
-        { date: "2026-09-30", isoWeek: 40, kind: "upcoming" },
+        { date: "2026-09-02", isoWeek: 36, kind: "unrecorded", holidayName: null },
+        { date: "2026-09-09", isoWeek: 37, kind: "unrecorded", holidayName: null },
+        { date: "2026-09-16", isoWeek: 38, kind: "upcoming", holidayName: null },
+        { date: "2026-09-23", isoWeek: 39, kind: "upcoming", holidayName: null },
+        { date: "2026-09-30", isoWeek: 40, kind: "upcoming", holidayName: null },
       ]);
       expect(built.billedCount).toBe(2);
       expect(built.totalCents).toBe(2 * 8_750);
@@ -607,6 +607,104 @@ describe("buildMunicipalityInvoicing", () => {
       expect(built.sessions.map((s) => s.kind)).toEqual(["cancelled"]);
       expect(built.billedCount).toBe(0);
       expect(built.totalCents).toBe(0);
+    });
+  });
+
+  describe("a holiday", () => {
+    /** A break withdrawing the given Wednesdays, named in two locales. */
+    function holidayBreak(id: string, start: string, end: string, withdrawn: string[]) {
+      return {
+        id,
+        startDate: start,
+        endDate: end,
+        names: [
+          { locale: "en", name: `Break ${id}` },
+          { locale: "sv", name: `Lov ${id}` },
+        ],
+        withdrawnSessions: withdrawn.map((date) => ({
+          date,
+          startsAt: new Date(`${date}T16:00:00+03:00`),
+          endsAt: new Date(`${date}T17:30:00+03:00`),
+          cancelled: false,
+        })),
+      };
+    }
+
+    // The 9th is behind the pinned clock and the 30th ahead of it: a holiday
+    // reads the same either side of today. The plan no longer holds either.
+    const onBreaks = club({
+      id: "a",
+      planned_dates: ["2026-09-02", "2026-09-16", "2026-09-23"],
+      holiday_breaks: [
+        holidayBreak("autumn", "2026-09-07", "2026-09-11", ["2026-09-09"]),
+        holidayBreak("late", "2026-09-28", "2026-10-02", ["2026-09-30"]),
+      ],
+      sessions: [{ group_id: "g1", session_date: "2026-09-16" }],
+    });
+
+    it("shows each withdrawn date as a named holiday line, never billed or unrecorded", () => {
+      const built = onlyClub([onBreaks]);
+
+      expect(built.sessions.map((s) => [s.date, s.kind, s.holidayName])).toEqual([
+        ["2026-09-02", "unrecorded", null],
+        ["2026-09-09", "holiday", "Break autumn"],
+        ["2026-09-16", "recorded", null],
+        ["2026-09-23", "upcoming", null],
+        ["2026-09-30", "holiday", "Break late"],
+      ]);
+      // The 2nd unrecorded and the 16th recorded; neither holiday counts.
+      expect(built.billedCount).toBe(2);
+      expect(built.unrecordedCount).toBe(1);
+      expect(built.totalCents).toBe(2 * 8_750);
+    });
+
+    it("names the break in the reader's locale", () => {
+      const view = build([onBreaks], NOW, "sv");
+      const names = view.municipalities[0].clubs[0].sessions
+        .filter((s) => s.kind === "holiday")
+        .map((s) => s.holidayName);
+      expect(names).toEqual(["Lov autumn", "Lov late"]);
+    });
+
+    it("keeps a club whose month was all holiday on the page, billing nothing", () => {
+      const built = onlyClub([
+        club({
+          id: "a",
+          planned_dates: [],
+          holiday_breaks: [
+            holidayBreak("long", "2026-09-01", "2026-09-30", [
+              "2026-09-02",
+              "2026-09-09",
+              "2026-09-16",
+              "2026-09-23",
+              "2026-09-30",
+            ]),
+          ],
+        }),
+      ]);
+      expect(built.sessions.every((s) => s.kind === "holiday")).toBe(true);
+      expect(built.billedCount).toBe(0);
+      expect(built.totalCents).toBe(0);
+    });
+
+    it("bills nothing for a row stored on a holiday date", () => {
+      // The document leaves such a row out; a reader handed one anyway still
+      // treats the day as the holiday it was.
+      const built = onlyClub([
+        club({
+          id: "a",
+          planned_dates: ["2026-09-02"],
+          holiday_breaks: [
+            holidayBreak("autumn", "2026-09-07", "2026-09-11", ["2026-09-09"]),
+          ],
+          sessions: [{ group_id: "g1", session_date: "2026-09-09" }],
+        }),
+      ]);
+      expect(built.sessions.map((s) => [s.date, s.kind])).toEqual([
+        ["2026-09-02", "unrecorded"],
+        ["2026-09-09", "holiday"],
+      ]);
+      expect(built.billedCount).toBe(1);
     });
   });
 

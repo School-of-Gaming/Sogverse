@@ -1,4 +1,5 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { breakName } from "@/lib/holiday-breaks";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
@@ -76,6 +77,14 @@ import type {
  * cancelled it: a sibling group that was due and did not cancel still owes the
  * session, so the date bills.
  *
+ * **A holiday is never billed.** A holiday break withdraws the planned dates
+ * it covers, so they are not in the plan; the document names them beside it,
+ * and each becomes a `holiday` line worth nothing, labelled with the break's
+ * name. It is not unrecorded — nothing was due — and it is outside every count
+ * and total, so it never reaches a Finvoice file. A stored row on a holiday
+ * date is not evidence of a session: the document leaves it out, and the build
+ * holds the same rule for any reader handed one anyway.
+ *
  * **Money is integer cents from end to end.** The billed count is multiplied
  * by the fee in cents, the cents are summed, and the division into euros
  * happens once, at render. A null fee is never worth zero: the club's total is
@@ -116,7 +125,12 @@ export type InvoiceSessionKind =
    * ran it. Never billed — past or future, it is a known fact about the day
    * rather than something to bill or wait for.
    */
-  | "cancelled";
+  | "cancelled"
+  /**
+   * A holiday break withdrew it from the plan. Never billed and never
+   * unrecorded, past or future: nothing was due that day.
+   */
+  | "holiday";
 
 export interface InvoiceSession {
   /** The club-local calendar date, `YYYY-MM-DD`. */
@@ -124,6 +138,11 @@ export interface InvoiceSession {
   /** The ISO week number the date falls in — how Finnish admins say *when*. */
   isoWeek: number;
   kind: InvoiceSessionKind;
+  /**
+   * On a `holiday` line, the break's name in the build's locale — empty only
+   * for a break with no name at all. Null on every other kind.
+   */
+  holidayName: string | null;
 }
 
 export interface InvoiceClub {
@@ -553,8 +572,24 @@ function buildClub(
     (session) => !cancelledPairs.has(pairKey(session.group_id, session.session_date)),
   );
 
-  // One session per club per date, whatever number of groups met on it.
-  const recordedDates = new Set(ran.map((session) => session.session_date));
+  // The dates a holiday break withdrew from the plan, each with its break's
+  // name. A date is withdrawn by one break alone, so the first name holds.
+  const holidays = new Map<string, string>();
+  for (const row of club.holiday_breaks) {
+    for (const withdrawn of row.withdrawnSessions) {
+      if (!holidays.has(withdrawn.date)) {
+        holidays.set(withdrawn.date, breakName(row, locale));
+      }
+    }
+  }
+
+  // One session per club per date, whatever number of groups met on it. A
+  // holiday date is not one, whatever is stored on it.
+  const recordedDates = new Set(
+    ran
+      .map((session) => session.session_date)
+      .filter((date) => !holidays.has(date)),
+  );
 
   const cancelledDates = cancelledClubDates(club, planned);
 
@@ -578,10 +613,11 @@ function buildClub(
       date,
       isoWeek: isoWeekOf(date).week,
       kind: billableDates.has(date) ? "recorded" : "upcoming",
+      holidayName: null,
     });
   }
   for (const date of club.planned_dates) {
-    if (recordedDates.has(date)) continue;
+    if (recordedDates.has(date) || holidays.has(date)) continue;
     lines.push({
       date,
       isoWeek: isoWeekOf(date).week,
@@ -590,6 +626,16 @@ function buildClub(
       kind: cancelledDates.has(date)
         ? "cancelled"
         : unrecordedOrUpcoming(date, today),
+      holidayName: null,
+    });
+  }
+  // Worth nothing either side of today, and outside every count below.
+  for (const [date, name] of holidays) {
+    lines.push({
+      date,
+      isoWeek: isoWeekOf(date).week,
+      kind: "holiday",
+      holidayName: name,
     });
   }
   lines.sort((a, b) => compareCalendarDates(a.date, b.date));

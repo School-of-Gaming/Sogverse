@@ -16,8 +16,8 @@ import type {
  *
  * Every state the builder distinguishes is in the one month: paid seats in
  * both roles, a sub paid in the role they covered, a covered absence and an
- * uncovered one, a missed session, a cancellation, a row written ahead of its
- * date, a club whose fee nobody set, and both subtotals.
+ * uncovered one, a missed session, a cancellation, a holiday, a row written
+ * ahead of its date, a club whose fee nobody set, and both subtotals.
  */
 
 /** Thursday 21 May 2026, mid-morning in Helsinki. */
@@ -46,7 +46,8 @@ const PEOPLE = {
 
 const PRODUCTS: GeduInvoicingProduct[] = [
   {
-    // Mondays: 4, 11, 18, 25 May.
+    // Mondays: 4, 11, 18 May — the 25th falls in the term's last-week break,
+    // so both its gedus see a holiday line there.
     id: "preview-kivikko",
     product_type: "municipality_club",
     timezone: HELSINKI,
@@ -55,8 +56,27 @@ const PRODUCTS: GeduInvoicingProduct[] = [
     primary_gedu_fee_cents: 6_500,
     assistant_gedu_fee_cents: 4_500,
     product_translations: [{ locale: "fi", name: "Pelikerho Kivikko" }],
-    planned_dates: ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25"],
-    holiday_breaks: [],
+    planned_dates: ["2026-05-04", "2026-05-11", "2026-05-18"],
+    holiday_breaks: [
+      {
+        id: "preview-break-kevatloma",
+        startDate: "2026-05-25",
+        endDate: "2026-05-29",
+        names: [
+          { locale: "en", name: "Spring break" },
+          { locale: "fi", name: "Kevätloma" },
+          { locale: "sv", name: "Vårlov" },
+        ],
+        withdrawnSessions: [
+          {
+            date: "2026-05-25",
+            startsAt: new Date("2026-05-25T14:15:00+03:00"),
+            endsAt: new Date("2026-05-25T15:30:00+03:00"),
+            cancelled: false,
+          },
+        ],
+      },
+    ],
     location: {
       id: "preview-loc-kivikko",
       name: "Kivikonrinteen koulu",
@@ -246,7 +266,7 @@ export function isAdminGeduInvoicingScenario(
 /**
  * The gedu scene's scenarios are its viewers, because the gedu's own read
  * answers for one gedu and no single one of them holds every line kind: the
- * absent gedu carries a covered absence and a missed session, and the one who
+ * absent gedu carries a covered absence, a missed session and a holiday, and the one who
  * covered carries the substitution, a cancellation and a club whose fee nobody
  * set. A different viewer is a state the page cannot show beside another.
  */

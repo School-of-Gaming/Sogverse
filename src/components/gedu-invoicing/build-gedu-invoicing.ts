@@ -1,4 +1,5 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { breakContaining, breakName } from "@/lib/holiday-breaks";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
@@ -56,6 +57,12 @@ import type {
  * gets a cancelled line — a cancellation the gedu has no claim on renders
  * nothing, as in the municipality invoice.
  *
+ * **A holiday is never paid and never missed.** The dates a holiday break
+ * withdrew from the plan are claims too, so a standing seat sees them; a
+ * claimed date inside any of the product's breaks — a withdrawn date, or a
+ * substitution or absence filed for a day the break covers — is a `holiday`
+ * line naming the break, and nothing else, whatever else is on the date.
+ *
  * **An absence renders as a quiet line**, so a gedu can see why an assigned
  * date does not pay, and it names the sub who covered it where one did. A sub's
  * lines name the gedu they covered for. Both are names out of the document,
@@ -86,7 +93,9 @@ export type GeduInvoiceLineKind =
   /** A claimed date an admin cancelled. Never paid, never missed. */
   | "cancelled"
   /** The gedu filed an absence for it. Never paid, never missed. */
-  | "absent";
+  | "absent"
+  /** A claimed date inside a holiday break. Never paid, never missed. */
+  | "holiday";
 
 /** A gedu named on another gedu's line — who covered, or who was covered. */
 export interface GeduInvoicePerson {
@@ -113,6 +122,11 @@ export interface GeduInvoiceLine {
    * became of the date. Null on a seat of their own.
    */
   coveringFor: GeduInvoicePerson | null;
+  /**
+   * On a `holiday` line, the break's name in the build's locale — empty only
+   * for a break with no name at all. Null on every other kind.
+   */
+  holidayName: string | null;
 }
 
 /** One club, in one role, for one gedu: what one role's seats in it came to. */
@@ -392,7 +406,14 @@ function groupLines(
   // still renders as an absent line, or a cancelled one where the date
   // was cancelled, exactly as the sub sees it. An absence can only ever produce
   // one of those two kinds — a live request takes its filer out of the seat.
-  const claims = new Set(product.planned_dates);
+  // The dates a holiday break withdrew from the plan were due but for the
+  // break, so they claim too, and a standing seat shows them as holidays.
+  const claims = new Set([
+    ...product.planned_dates,
+    ...product.holiday_breaks.flatMap((row) =>
+      row.withdrawnSessions.map((withdrawn) => withdrawn.date),
+    ),
+  ]);
   for (const seat of [...gedu.substitutions, ...gedu.absences]) {
     if (seat.group_id === group.id) claims.add(seat.session_date);
   }
@@ -430,6 +451,7 @@ function groupLines(
     const line = (
       kind: GeduInvoiceLineKind,
       substitute: GeduInvoicePerson | null = null,
+      holidayName: string | null = null,
     ): RoledLine => ({
       role,
       line: {
@@ -440,8 +462,20 @@ function groupLines(
         groupName: group.name,
         substitute,
         coveringFor,
+        holidayName,
       },
     });
+
+    // A holiday outranks everything else on the date: the session was never
+    // due, so neither a record, a cancellation nor an absence says anything
+    // about it. Bare dates compare as strings.
+    const holiday = breakContaining(product.holiday_breaks, date);
+    if (holiday !== null) {
+      if (claims.has(date)) {
+        lines.push(line("holiday", null, breakName(holiday, context.locale)));
+      }
+      continue;
+    }
 
     if (cancelled.has(date)) {
       // Only a claimed date carries a cancelled line; a cancellation over a
