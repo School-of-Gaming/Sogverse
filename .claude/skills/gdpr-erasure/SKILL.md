@@ -142,8 +142,10 @@ which here means success.
   retention question.
 - **Brevo.** Transactional only; the app never adds anyone to a contact list. Send logs
   expire on Brevo's side.
-- **The old platform (SOGGA / Chargebee).** A family that predates Sogverse may still be
-  held there. Not covered by this procedure; say so when reporting the erasure done.
+- **The old platform's copies (the SOGGA archive / Chargebee).** A family that predates
+  Sogverse may still be held in the SOGGA archive on the owner's Google Drive (the old
+  platform's whole database, kept after its shutdown) and in Chargebee until that account
+  is closed. Not covered by this procedure; say so when reporting the erasure done.
 
 The same procedure removes an account made by mistake (a would-be gedu who signed up as a
 parent), which frees the address to sign up again. That is housekeeping, not an erasure
