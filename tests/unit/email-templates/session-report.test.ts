@@ -582,6 +582,30 @@ describe("the spotlights at the foot of the mail", () => {
     expect(second).toBeGreaterThan(first);
   });
 
+  it("opens the section with one lead-in, under one hairline and over the first picture", () => {
+    const html = withSpotlights(SPOTLIGHTS);
+    const label = t("sessionReport.spotlightsHeading");
+    const rule = `border-top:1px solid ${DARK_THEME.border};`;
+    const closing = html.indexOf(t("sessionReport.closing", { productName: "" }).slice(0, 12));
+    const at = html.indexOf(label);
+    expect(html.split(label)).toHaveLength(2);
+    expect(at).toBeGreaterThan(closing);
+    expect(at).toBeLessThan(html.indexOf(`<img src="${BUCKET}/a.jpg"`));
+    // Exactly one rule between the closing and the lead-in, none between it and the picture.
+    expect(html.slice(closing, at).split(rule)).toHaveLength(2);
+    expect(html.slice(at, html.indexOf(`<img src="${BUCKET}/a.jpg"`))).not.toContain(rule);
+  });
+
+  it("draws no lead-in when there are no spotlights", () => {
+    expect(withSpotlights([])).not.toContain(t("sessionReport.spotlightsHeading"));
+  });
+
+  it("draws no lead-in in the child's copy", () => {
+    expect(withSpotlights(SPOTLIGHTS, { gamerCopy: true })).not.toContain(
+      t("sessionReport.spotlightsHeading"),
+    );
+  });
+
   it("draws the picture, then the title, then the body", () => {
     const html = withSpotlights(SPOTLIGHTS.slice(0, 1));
     const image = html.indexOf(`<img src="${BUCKET}/a.jpg"`);

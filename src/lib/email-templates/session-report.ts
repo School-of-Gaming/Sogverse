@@ -78,8 +78,9 @@ import type { EmailTranslator } from "./translator";
  * **The family mail and the staff copy end with the enabled spotlights**,
  * newest first — admin-written notes, each a picture, a title and a short
  * markdown body. They come after the closing, because the report and what it
- * asks are the mail and the spotlights are what the platform adds beneath it.
- * **They are laid out open, not boxed**: the shell is itself a card on a wide
+ * asks are the mail and the spotlights are what the platform adds beneath it,
+ * and one lead-in over the first says so — without it they read as more of
+ * the report. **They are laid out open, not boxed**: the shell is itself a card on a wide
  * viewport and a card in a card is the one arrangement this directory forbids,
  * so each is ruled off by the same hairline that separates the report from its
  * button. The picture is the photo column's (`session-photos.ts`), boxed from
@@ -208,7 +209,7 @@ export function buildSessionReportEmail(
     ${rule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
-    ${gamerCopy ? "" : spotlights.map(spotlightSection).join("")}
+    ${gamerCopy ? "" : spotlightsSection(t, spotlights)}
   `;
   return wrapInLayout({ title: t("sessionReport.title"), content, locale, t });
 }
@@ -261,7 +262,31 @@ function photosSection(
 }
 
 /**
- * One spotlight: the hairline, the picture, the title, the body.
+ * The spotlights, under a line saying what they are.
+ *
+ * **One hairline, then the lead-in, then the first spotlight**: the rule is
+ * what separates them from the closing above, and the lead-in sits on the
+ * spotlights' side of it, so the section opens with exactly one rule rather
+ * than a rule over the lead-in and another under it. Every later spotlight is
+ * ruled off from the one before. None at all draws nothing — no lead-in over
+ * an empty section.
+ *
+ * The lead-in is `sectionLabel`, like the photos' line, rather than a
+ * heading: each spotlight's title is the mail's section heading, and a heading
+ * of the same rank above them would compete with them.
+ */
+function spotlightsSection(
+  t: EmailTranslator,
+  spotlights: readonly SessionReportSpotlight[],
+): string {
+  if (spotlights.length === 0) return "";
+  return `${rule()}
+    ${sectionLabel(t("sessionReport.spotlightsHeading"))}
+    ${spotlights.map(spotlightSection).join(rule())}`;
+}
+
+/**
+ * One spotlight: the picture, the title, the body.
  *
  * Open rather than boxed, because the shell is already the card — see the
  * module comment. The picture is a photo column of one, so it gets the same
@@ -276,8 +301,7 @@ function spotlightSection({
   body,
   image,
 }: SessionReportSpotlight): string {
-  return `${rule()}
-    ${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
+  return `${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
     ${heading(escapeHtml(title))}
     <div style="margin:0 0 24px;">
       ${renderMarkdownForEmail(body, "spotlight")}
