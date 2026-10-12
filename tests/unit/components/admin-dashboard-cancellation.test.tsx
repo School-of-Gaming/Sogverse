@@ -23,6 +23,7 @@ function chip(
   id: string,
   weekday: number,
   cancellation: DateCancellation,
+  holidayBreak: string | null = null,
 ): ScheduleChip {
   return {
     id,
@@ -36,6 +37,7 @@ function chip(
     seatCount: 12,
     needsAttention: false,
     cancellation,
+    holidayBreak,
     href: { pathname: "/admin/consumer-clubs/[id]", params: { id } },
   };
 }
@@ -103,6 +105,30 @@ describe("a cancelled date on the week rows", () => {
 
     expect(container.textContent).toContain("2 sessions");
     expect(container.textContent).not.toContain("3 sessions");
+  });
+});
+
+describe("a session a holiday break withdrew, on the week rows", () => {
+  it("keeps it on its row, muted and marked, with the break's name in the tooltip", () => {
+    const { container } = renderPanel([
+      chip("break", 2, { kind: "none" }, "Syysloma"),
+    ]);
+
+    const link = chipLink(container, "Club break");
+    const note = within(link).getByText("On break");
+    expect(note.getAttribute("title")).toContain("Syysloma");
+    expect(link.className).toContain("text-muted-foreground");
+    expect(link.textContent).not.toMatch(/cancelled/i);
+  });
+
+  it("leaves it out of the week's session count", () => {
+    const { container } = renderPanel([
+      chip("on", 0, { kind: "none" }),
+      chip("break", 2, { kind: "none" }, "Syysloma"),
+    ]);
+
+    expect(container.textContent).toContain("1 session");
+    expect(container.textContent).not.toContain("2 sessions");
   });
 });
 

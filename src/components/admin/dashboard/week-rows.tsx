@@ -2,7 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AlertTriangle, CalendarX } from "lucide-react";
+import { AlertTriangle, CalendarOff, CalendarX } from "lucide-react";
 import { cn, formatDateOnly } from "@/lib/utils";
 import type {
   DateCancellation,
@@ -152,7 +152,11 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
         : `${chip.activeCount}/${chip.seatCount}`,
   });
 
-  const cancelled = chip.cancellation.kind === "all";
+  // A session a holiday break withdrew reads as a cancelled one does — muted,
+  // its time struck — because for the week's purposes it is the same fact: on
+  // the row, and not happening.
+  const cancelled =
+    chip.cancellation.kind === "all" || chip.holidayBreak !== null;
 
   return (
     <Link
@@ -177,6 +181,7 @@ function SessionChip({ chip }: { chip: ScheduleChip }) {
       </span>
       <span className="whitespace-nowrap">{chip.productName}</span>
       <DateCancellationNote cancellation={chip.cancellation} />
+      {chip.holidayBreak !== null && <BreakNote name={chip.holidayBreak} />}
       {chip.needsAttention && <AttentionMark />}
     </Link>
   );
@@ -225,6 +230,30 @@ export function DateCancellationNote({
         cancelled: cancellation.cancelled,
         groups: cancellation.groups,
       })}
+    </span>
+  );
+}
+
+/**
+ * "This session is not happening because the club is on a holiday break."
+ *
+ * The same quiet grammar as the all-cancelled note beside it — a neutral glyph
+ * and a short word in muted ink — because a break is news, not a fault. The
+ * row carries the generic word and the break's own name rides in the `title`:
+ * a week of chips each spelling out "Syysloma" would make the row's least
+ * actionable fact its loudest text. The glyph is the one the session feeds
+ * draw a break with.
+ */
+function BreakNote({ name }: { name: string }) {
+  const t = useTranslations("admin.dashboard.schedule");
+
+  return (
+    <span
+      title={t("onBreakTitle", { name })}
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-muted-foreground"
+    >
+      <CalendarOff className="h-3 w-3 shrink-0" aria-hidden />
+      {t("onBreak")}
     </span>
   );
 }

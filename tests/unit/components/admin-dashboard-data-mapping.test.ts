@@ -515,6 +515,204 @@ describe("cancelled sessions", () => {
   });
 });
 
+describe("holiday breaks", () => {
+  interface BreakSpec {
+    id: string;
+    startDate: string;
+    endDate: string;
+    names?: { locale: string; name: string }[];
+  }
+
+  /**
+   * A product whose `breaks` withdraw their dates from its plan, the way the
+   * RPC answers: a withdrawn date is gone from `planned_sessions` and listed
+   * instead on the break that took it, earliest break first.
+   */
+  function withBreaks(
+    product: AdminDashboardScheduleProduct,
+    breaks: readonly BreakSpec[],
+  ): AdminDashboardScheduleProduct {
+    const taken = new Set<string>();
+    const holidayBreaks = breaks.map((spec) => {
+      const withdrawn = product.planned_sessions.filter(
+        (session) =>
+          !taken.has(session.session_date) &&
+          spec.startDate <= session.session_date &&
+          session.session_date <= spec.endDate,
+      );
+      for (const session of withdrawn) taken.add(session.session_date);
+      return {
+        id: spec.id,
+        startDate: spec.startDate,
+        endDate: spec.endDate,
+        names: spec.names ?? [{ locale: "en", name: `Break ${spec.id}` }],
+        withdrawnSessions: withdrawn.map((session) => ({
+          date: session.session_date,
+          startsAt: new Date(session.starts_at),
+          endsAt: new Date(session.ends_at),
+          cancelled: false,
+        })),
+      };
+    });
+    return {
+      ...product,
+      planned_sessions: product.planned_sessions.filter(
+        (session) => !taken.has(session.session_date),
+      ),
+      holiday_breaks: holidayBreaks,
+    };
+  }
+
+  /** A Monday-and-Wednesday club. */
+  function club(id = "club") {
+    return scheduleProduct({
+      id,
+      schedule_slots: [
+        { weekday: 0, start_time: "17:00", duration_minutes: 90 },
+        { weekday: 2, start_time: "17:00", duration_minutes: 90 },
+      ],
+    });
+  }
+
+  it("keeps a withdrawn session on its row, marked with the break's name in the reader's locale", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(club(), [
+            {
+              id: "day-off",
+              startDate: "2026-08-19",
+              endDate: "2026-08-19",
+              names: [
+                { locale: "en", name: "Staff day" },
+                { locale: "fi", name: "Koulutuspäivä" },
+              ],
+            },
+          ]),
+        ],
+      }),
+    );
+
+    const chips = week(data, "2026-08-17").chips;
+    expect(
+      chips.map((chip) => [chip.weekday, chip.startTime, chip.holidayBreak]),
+    ).toEqual([
+      [0, "17:00", null],
+      [2, "17:00", "Staff day"],
+    ]);
+    expect(chips[1].cancellation).toEqual({ kind: "none" });
+  });
+
+  it("leaves the week's session count what the plan says it is", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(club(), [
+            { id: "day-off", startDate: "2026-08-19", endDate: "2026-08-19" },
+          ]),
+        ],
+      }),
+    );
+
+    // Two chips on the row, one session: the break's date was never planned.
+    const chips = week(data, "2026-08-17").chips;
+    expect(chips).toHaveLength(2);
+    expect(runningSessionCount(chips)).toBe(1);
+    // And the weeks it does not touch are as they were.
+    expect(runningSessionCount(week(data, "2026-08-24").chips)).toBe(2);
+  });
+
+  it("still shows a product whose whole week is a break, with nothing running", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(club(), [
+            {
+              id: "autumn",
+              startDate: "2026-10-12",
+              endDate: "2026-10-18",
+              names: [{ locale: "en", name: "Autumn break" }],
+            },
+          ]),
+        ],
+      }),
+    );
+
+    const chips = week(data, "2026-10-12").chips;
+    expect(chips.map((chip) => [chip.productId, chip.holidayBreak])).toEqual([
+      ["club", "Autumn break"],
+      ["club", "Autumn break"],
+    ]);
+    expect(runningSessionCount(chips)).toBe(0);
+  });
+
+  it("places a withdrawn session on the viewer's weekday, as a planned one is", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(
+            scheduleProduct({
+              id: "club",
+              schedule_slots: [
+                { weekday: 0, start_time: "09:00", duration_minutes: 60 },
+              ],
+            }),
+            [{ id: "day-off", startDate: "2026-08-24", endDate: "2026-08-24" }],
+          ),
+        ],
+      }),
+      LOS_ANGELES,
+    );
+
+    // Monday 09:00 in Helsinki is Sunday 23:00 in Los Angeles, the week before.
+    expect(week(data, "2026-08-17").chips).toMatchObject([
+      { weekday: 6, startTime: "23:00", holidayBreak: "Break day-off" },
+    ]);
+  });
+
+  it("shows nothing for a break whose sessions fall outside the offered weeks", () => {
+    const product = club();
+    const data = build(
+      snapshot({
+        schedule_products: [
+          {
+            ...product,
+            holiday_breaks: [
+              {
+                id: "far",
+                startDate: "2027-02-15",
+                endDate: "2027-02-21",
+                names: [{ locale: "en", name: "Ski break" }],
+                withdrawnSessions: [
+                  {
+                    date: "2027-02-15",
+                    startsAt: new Date("2027-02-15T17:00:00+02:00"),
+                    endsAt: new Date("2027-02-15T18:30:00+02:00"),
+                    cancelled: false,
+                  },
+                ],
+              },
+              {
+                id: "untouched",
+                startDate: "2026-09-01",
+                endDate: "2026-09-01",
+                names: [{ locale: "en", name: "No session that day" }],
+                withdrawnSessions: [],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(
+      data.weeks.flatMap((entry) => entry.chips).filter(
+        (chip) => chip.holidayBreak !== null,
+      ),
+    ).toEqual([]);
+  });
+});
+
 describe("re-grouping into the viewer's week", () => {
   it("moves a Helsinki Monday morning onto the viewer's Sunday evening", () => {
     const data = build(

@@ -2,6 +2,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { breakName } from "@/lib/holiday-breaks";
 import { formatDate } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
@@ -399,7 +400,8 @@ interface ResolveWeeksArgs {
 }
 
 /**
- * Every planned session in the window, placed in the viewer's week.
+ * Every planned session in the window, and every session a holiday break
+ * withdrew from it, placed in the viewer's week.
  *
  * The whole range is resolved up front rather than a week at a time, because
  * stepping weeks is local state over data the page already holds — a step that
@@ -422,13 +424,22 @@ function resolveWeeks({
     const href = ROUTES.admin.product(product.product_type, product.id);
     const cancellationOn = productCancellations(product);
 
-    for (const session of product.planned_sessions) {
-      const startsAt = new Date(session.starts_at);
+    /**
+     * File one session under the viewer's week it lands in. A planned session
+     * and one a holiday break withdrew are placed by the same rule — the
+     * viewer's calendar date of the start instant — so a withdrawn session sits
+     * exactly where it would have run.
+     */
+    const place = (
+      startsAt: Date,
+      endsAt: Date,
+      facts: Pick<ScheduleChip, "cancellation" | "holidayBreak">,
+    ) => {
       const { date, time } = viewerPlacement(startsAt, viewerTimeZone);
       const weekStart = mondayOf(date);
       // The viewer's week can reach a day either side of the source window; a
       // week the data does not wholly cover is not offered at all.
-      if (!inWindow.has(weekStart)) continue;
+      if (!inWindow.has(weekStart)) return;
 
       const chips = chipsByWeek.get(weekStart) ?? [];
       chips.push({
@@ -439,17 +450,39 @@ function resolveWeeks({
         weekday: weekdayOf(date),
         startTime: time,
         durationMinutes: Math.round(
-          (new Date(session.ends_at).getTime() - startsAt.getTime()) / 60_000,
+          (endsAt.getTime() - startsAt.getTime()) / 60_000,
         ),
         activeCount: product.active_count,
         seatCount: product.seat_count,
         needsAttention: flagged.has(product.id),
+        href,
+        ...facts,
+      });
+      chipsByWeek.set(weekStart, chips);
+    };
+
+    for (const session of product.planned_sessions) {
+      place(new Date(session.starts_at), new Date(session.ends_at), {
         // Keyed on the product-zone date: that is the date a cancellation
         // names, whichever viewer weekday the chip lands on.
         cancellation: cancellationOn(session.session_date),
-        href,
+        holidayBreak: null,
       });
-      chipsByWeek.set(weekStart, chips);
+    }
+
+    // A break's dates are never in the plan, so a week it touches would read as
+    // short — or, for a whole-week break, as a product that is simply absent.
+    // Each session it withdrew is filed beside the planned ones instead, marked
+    // with the break's name, so the row says why. Two overlapping breaks never
+    // both list a date: the earlier break alone withdraws it.
+    for (const row of product.holiday_breaks) {
+      const holidayBreak = breakName(row, locale);
+      for (const session of row.withdrawnSessions) {
+        place(session.startsAt, session.endsAt, {
+          cancellation: NOT_CANCELLED,
+          holidayBreak,
+        });
+      }
     }
   }
 

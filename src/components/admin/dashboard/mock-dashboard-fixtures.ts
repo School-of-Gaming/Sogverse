@@ -149,6 +149,15 @@ interface ProductSpec {
   }[];
   /** Cancelled dates by product-local date; absent is none. */
   cancellations?: Readonly<Record<string, DateCancellation>>;
+  /** The holiday breaks the product follows; absent is none. */
+  holidayBreaks?: readonly FixtureBreak[];
+}
+
+/** One holiday break: its name and its first and last day, both inclusive. */
+interface FixtureBreak {
+  name: string;
+  startDate: string;
+  endDate: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -925,6 +934,7 @@ function resolveWeeks(
           seatCount: spec.seatCount,
           needsAttention: flagged.has(spec.id),
           cancellation: fixtureCancellation(spec, date),
+          holidayBreak: fixtureBreakOn(spec, date),
           href: ROUTES.admin.product(spec.productType, spec.id),
         });
       }
@@ -964,6 +974,37 @@ function withCancellations(specs: readonly ProductSpec[]): ProductSpec[] {
 
 function fixtureCancellation(spec: ProductSpec, date: string): DateCancellation {
   return spec.cancellations?.[date] ?? { kind: "none" };
+}
+
+/**
+ * The autumn break the busy term's municipality clubs follow — the school
+ * calendar's syysloma, a whole week, which is the shape a municipality club
+ * meets in practice: every one of its sessions that week stays on the row,
+ * muted and marked "On break", and the week's count drops by the lot. Placed
+ * in October rather than this week because that is where the break is; a
+ * reviewer steps to week 42 to see it. The quiet scenario follows none.
+ */
+const AUTUMN_BREAK: FixtureBreak = {
+  name: "Syysloma",
+  startDate: "2026-10-12",
+  endDate: "2026-10-18",
+};
+
+function withHolidayBreaks(specs: readonly ProductSpec[]): ProductSpec[] {
+  return specs.map((spec) =>
+    spec.productType === "municipality_club"
+      ? { ...spec, holidayBreaks: [AUTUMN_BREAK] }
+      : spec,
+  );
+}
+
+/** The break's name on a product-local date it withdraws, or `null`. */
+function fixtureBreakOn(spec: ProductSpec, date: string): string | null {
+  return (
+    spec.holidayBreaks?.find(
+      (entry) => entry.startDate <= date && date <= entry.endDate,
+    )?.name ?? null
+  );
 }
 
 function withinRun(spec: ProductSpec, date: string): boolean {
@@ -1070,12 +1111,14 @@ export function buildAdminDashboardFixture(
 
   const specs = quiet
     ? quietCatalogue()
-    : withCancellations([
-        ...consumerClubs(),
-        ...municipalityClubs(),
-        ...camps(),
-        ...events(),
-      ]);
+    : withHolidayBreaks(
+        withCancellations([
+          ...consumerClubs(),
+          ...municipalityClubs(),
+          ...camps(),
+          ...events(),
+        ]),
+      );
 
   const byId = new Map(specs.map((spec) => [spec.id, spec]));
   const products = quiet ? [] : buildProductAttention(byId);
