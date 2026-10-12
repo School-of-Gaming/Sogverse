@@ -11,6 +11,7 @@ import {
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { ogCardResponse } from "@/lib/og/card-response.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
 import {
@@ -24,10 +25,6 @@ import {
 // browser-only React Query hooks.
 import { readPublicTeamPhoto } from "@/services/team-profiles/public-team-photo";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
-import {
-  TEAM_PHOTO_HEIGHT,
-  TEAM_PHOTO_WIDTH,
-} from "@/services/team-profiles/team-profiles.types";
 
 /**
  * A team member's share card: their portrait, framed as their profile page
@@ -72,12 +69,13 @@ import {
  * drawing, by `ogCardResponse`.
  */
 async function portraitJpeg(stored: Blob): Promise<Buffer | null> {
+  const { width, height } = IMAGE_PURPOSES.team_photo.storedSize;
   try {
     return await sharp(Buffer.from(await stored.arrayBuffer()), {
       limitInputPixels: MAX_INPUT_PIXELS,
     })
       .rotate()
-      .resize(TEAM_PHOTO_WIDTH, TEAM_PHOTO_HEIGHT, { fit: "cover" })
+      .resize(width, height, { fit: "cover" })
       .jpeg({ quality: 85 })
       .toBuffer();
   } catch {

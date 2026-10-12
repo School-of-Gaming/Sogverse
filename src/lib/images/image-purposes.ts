@@ -1,7 +1,7 @@
 /**
  * What one image purpose is: the bucket its objects live in, who may read them,
- * and — for a purpose kept in the admin image catalogue — the one size they are
- * stored at.
+ * the size they are stored at, and whether they are entries of the admin image
+ * catalogue.
  */
 export interface ImagePurposeSpec {
   /** The storage bucket every image of this purpose has its object in. */
@@ -14,18 +14,26 @@ export interface ImagePurposeSpec {
    */
   readonly visibility: "public" | "private";
   /**
-   * Present only for a purpose whose entries live in the admin image catalogue
-   * (the `catalogue_images` table): the exact pixel size every entry is stored
-   * at. The crop draws to it and the upload routes refuse anything else.
+   * The exact pixel size every image of this purpose is stored at: whatever
+   * crops a picture to it, and whatever checks a stored picture against it,
+   * reads it here. `"as-uploaded"` is a purpose that keeps the shape its
+   * picture was uploaded in — it may be scaled down, but it is never cropped.
    */
-  readonly catalogue?: { readonly width: number; readonly height: number };
+  readonly storedSize: { readonly width: number; readonly height: number } | "as-uploaded";
+  /**
+   * Whether this purpose's pictures are entries of the admin image catalogue
+   * (the `catalogue_images` table), chosen and reused across the site. A
+   * picture can be stored at a fixed size without being one: a team photo is
+   * cropped to its frame but belongs to one person and is never reused.
+   */
+  readonly catalogue: boolean;
 }
 
 /**
  * **Every storage bucket, named once, as the purpose it serves.**
  *
  * How a picture may be handled — whether it can be served to a link preview,
- * how large it is stored, which bucket a URL is built against — follows from
+ * the size it is stored at, which bucket a URL is built against — follows from
  * what the picture is *for*, so the purpose is the key everything else reads.
  * Every bucket is declared here, not only the ones some feature currently asks
  * about, because that is what lets a unit test hold this map against the
@@ -34,31 +42,48 @@ export interface ImagePurposeSpec {
  * `public` flag fails CI instead of surfacing as a broken preview or a private
  * photo served to anyone with the link.
  *
- * The purposes without a `catalogue` block are declared for that coverage
- * alone; their upload routes keep their own handling and read nothing from here.
+ * The catalogue's own purpose map is the slice of this one whose `catalogue`
+ * is `true`, and every purpose in it has a fixed stored size.
  *
- * Kept free of runtime imports so `next.config.ts` can read it, through the
- * catalogue map derived from it.
+ * Kept free of runtime imports so `next.config.ts` can read it.
  */
 export const IMAGE_PURPOSES = {
   product: {
     bucket: "product-images",
     visibility: "public",
-    catalogue: { width: 1200, height: 800 },
+    storedSize: { width: 1200, height: 800 },
+    catalogue: true,
   },
   library_cover: {
     bucket: "library-covers",
     visibility: "public",
-    catalogue: { width: 1600, height: 900 },
+    storedSize: { width: 1600, height: 900 },
+    catalogue: true,
   },
   landing_image: {
     bucket: "landing-images",
     visibility: "public",
-    catalogue: { width: 1600, height: 900 },
+    storedSize: { width: 1600, height: 900 },
+    catalogue: true,
   },
-  team_photo: { bucket: "team-photos", visibility: "private" },
-  session_photo: { bucket: "session-images", visibility: "public" },
-  chat_image: { bucket: "chat-images", visibility: "private" },
+  team_photo: {
+    bucket: "team-photos",
+    visibility: "private",
+    storedSize: { width: 800, height: 1000 },
+    catalogue: false,
+  },
+  session_photo: {
+    bucket: "session-images",
+    visibility: "public",
+    storedSize: "as-uploaded",
+    catalogue: false,
+  },
+  chat_image: {
+    bucket: "chat-images",
+    visibility: "private",
+    storedSize: "as-uploaded",
+    catalogue: false,
+  },
 } as const satisfies Record<string, ImagePurposeSpec>;
 
 /** One of the purposes declared in `IMAGE_PURPOSES`. */

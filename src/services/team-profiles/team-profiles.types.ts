@@ -13,13 +13,6 @@ import type { SpokenLanguageCode } from "@/types";
 // The photo
 // ---------------------------------------------------------------------------
 
-/** The private bucket team photos live in, at `<person's id>/<name>`. */
-export const TEAM_PHOTOS_BUCKET = "team-photos";
-
-/** The size every uploaded photo is cropped to: 4:5, portrait. */
-export const TEAM_PHOTO_WIDTH = 800;
-export const TEAM_PHOTO_HEIGHT = 1000;
-
 /**
  * How long a signed photo URL lives. Long enough to outlast an editing
  * session, and short because the URL is a bearer token for a private object.
@@ -51,9 +44,9 @@ export function isPublicTeamPhotoUrl(src: string): boolean {
 }
 
 /**
- * The person's photo. Uploads are cropped to a 4:5 portrait of
- * `TEAM_PHOTO_WIDTH` × `TEAM_PHOTO_HEIGHT` before they are stored, and the
- * frame covers whatever it is handed, so a photo of another shape (the preview
+ * The person's photo. Uploads are cropped to the team photo purpose's stored
+ * size in the image purpose registry (`src/lib/images/`), a 4:5 portrait,
+ * before they are stored, and the frame covers whatever it is handed, so a photo of another shape (the preview
  * art the fixtures borrow) is cropped to the middle rather than distorted.
  */
 export interface TeamProfilePhoto {

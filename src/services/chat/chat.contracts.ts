@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { CHAT_REACTION_CODES } from "@/lib/constants/chat";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 
 /**
  * Wire contracts for the chat RPCs.
@@ -174,7 +175,7 @@ export const chatChannelRoster = z.array(chatRosterEntry);
  * of devtools and share for its whole lifetime, and on a surface children use
  * that was a standing edge worth removing rather than accepting.
  */
-export const CHAT_IMAGES_BUCKET = "chat-images";
+export const CHAT_IMAGES_BUCKET = IMAGE_PURPOSES.chat_image.bucket;
 
 /**
  * The app path a stored chat image is fetched from — the one spelling of the

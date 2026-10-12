@@ -4,14 +4,20 @@
 
 **Every storage bucket is one image purpose**, declared once in the registry here with its
 bucket and its visibility (public, or private and reached only through a signed URL or a
-checking route). A purpose kept in the admin image catalogue also declares the exact size
-its entries are stored at; the catalogue's own purpose map is that slice of the registry,
-not a second list. A unit test parses the storage bucket schema and fails on a bucket with
+checking route). A unit test parses the storage bucket schema and fails on a bucket with
 no purpose, a purpose naming no bucket, or a visibility that disagrees with the bucket's
 `public` flag — so a new bucket gets its purpose in the same change.
 
-The team photo, session photo and chat image purposes are declared for that coverage only.
-Their upload routes keep their own handling and read nothing from the registry.
+**Every purpose declares the size its pictures are stored at**, or that they keep the shape
+they were uploaded in (scaled down at most, never cropped). Whatever crops a picture to its
+size, and whatever checks a stored picture against it, reads the size from the registry —
+no feature declares a purpose's size of its own.
+
+**Whether a purpose belongs to the admin image catalogue is a separate declaration**, not
+implied by a fixed size: a team photo is cropped to its frame but is one person's own
+picture and never a catalogue entry. The catalogue's purpose map is the slice of the
+registry marked catalogue, not a second list, and the compiler refuses a catalogue purpose
+without a fixed size, since the catalogue's crop and upload routes demand an exact one.
 
 ## The preview budget
 

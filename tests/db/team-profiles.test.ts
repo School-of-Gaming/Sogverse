@@ -2,8 +2,8 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import {
-  TEAM_PHOTOS_BUCKET,
   TEAM_PROFILE_INCOMPLETE_SQLSTATE,
   TEAM_PROFILE_NOT_READY_SQLSTATE,
   TEAM_PROFILE_PHOTO_GONE_SQLSTATE,
@@ -116,7 +116,7 @@ describe("team profiles", () => {
   /** Remove a person's profile and every photo in their folder. */
   async function reset(userId: string): Promise<void> {
     await admin.from("team_profiles").delete().eq("user_id", userId);
-    const bucket = admin.storage.from(TEAM_PHOTOS_BUCKET);
+    const bucket = admin.storage.from(IMAGE_PURPOSES.team_photo.bucket);
     const { data } = await bucket.list(userId);
     const names = (data ?? []).map((object) => `${userId}/${object.name}`);
     if (names.length > 0) await bucket.remove(names);
@@ -126,7 +126,7 @@ describe("team profiles", () => {
   async function seedPhoto(userId: string): Promise<string> {
     const path = `${userId}/${crypto.randomUUID()}.jpg`;
     const { error } = await admin.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .upload(path, photoBlob(), { contentType: "image/jpeg" });
     expect(error).toBeNull();
     return path;
@@ -136,7 +136,7 @@ describe("team profiles", () => {
   async function stored(path: string): Promise<boolean> {
     const [folder, name] = path.split("/");
     const { data, error } = await admin.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .list(folder);
     expect(error).toBeNull();
     return (data ?? []).some((object) => object.name === name);
@@ -145,7 +145,7 @@ describe("team profiles", () => {
   /** Every object path in a person's folder, asked as the service role. */
   async function folder(userId: string): Promise<string[]> {
     const { data, error } = await admin.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .list(userId);
     expect(error).toBeNull();
     return (data ?? []).map((object) => `${userId}/${object.name}`);
@@ -344,7 +344,7 @@ describe("team profiles", () => {
       ).rejects.toMatchObject({ code: TEAM_PROFILE_INCOMPLETE_SQLSTATE });
 
       const { data } = await admin.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .list(TEST_IDS.GEDU);
       expect(data ?? []).toEqual([]);
     });
@@ -460,7 +460,7 @@ describe("team profiles", () => {
         false,
       );
       // The object goes behind the row's back.
-      await admin.storage.from(TEAM_PHOTOS_BUCKET).remove([photo]);
+      await admin.storage.from(IMAGE_PURPOSES.team_photo.bucket).remove([photo]);
 
       const record = await service.getTeamProfile(TEST_IDS.GEDU);
       expect(record).toMatchObject({
@@ -710,7 +710,7 @@ describe("team profiles", () => {
 
     it("cannot upload into another person's folder, or read another's photo", async () => {
       const intoOther = await geduAuth.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .upload(`${otherGeduId}/${crypto.randomUUID()}.jpg`, photoBlob(), {
           contentType: "image/jpeg",
         });
@@ -718,13 +718,13 @@ describe("team profiles", () => {
 
       const theirs = await seedPhoto(otherGeduId);
       const read = await geduAuth.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .createSignedUrl(theirs, 60);
       expect(read.error).not.toBeNull();
 
       // …while their own folder takes an upload.
       const own = await geduAuth.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .upload(`${TEST_IDS.GEDU}/${crypto.randomUUID()}.jpg`, photoBlob(), {
           contentType: "image/jpeg",
         });
@@ -859,7 +859,7 @@ describe("team profiles", () => {
       });
       expect(error?.code).toBe(FORBIDDEN);
       const upload = await adminAuth.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .upload(`${TEST_IDS.CUSTOMER}/${crypto.randomUUID()}.jpg`, photoBlob(), {
           contentType: "image/jpeg",
         });
@@ -926,12 +926,12 @@ describe("team profiles", () => {
         expect(translations.data).toEqual([]);
 
         const read = await client.storage
-          .from(TEAM_PHOTOS_BUCKET)
+          .from(IMAGE_PURPOSES.team_photo.bucket)
           .createSignedUrl(photo, 60);
         expect(read.error).not.toBeNull();
 
         const upload = await client.storage
-          .from(TEAM_PHOTOS_BUCKET)
+          .from(IMAGE_PURPOSES.team_photo.bucket)
           .upload(`${self}/${crypto.randomUUID()}.jpg`, photoBlob(), {
             contentType: "image/jpeg",
           });
@@ -954,7 +954,7 @@ describe("team profiles", () => {
       client: SupabaseClient<Database>,
       path: string,
     ): Promise<void> {
-      await client.storage.from(TEAM_PHOTOS_BUCKET).remove([path]);
+      await client.storage.from(IMAGE_PURPOSES.team_photo.bucket).remove([path]);
     }
 
     it("leaves another Gedu's photo and an admin's to a Gedu", async () => {
@@ -984,7 +984,7 @@ describe("team profiles", () => {
       const customers = await seedPhoto(TEST_IDS.CUSTOMER);
       await removeAs(adminAuth, customers);
       expect(await stored(customers)).toBe(true);
-      await admin.storage.from(TEAM_PHOTOS_BUCKET).remove([customers]);
+      await admin.storage.from(IMAGE_PURPOSES.team_photo.bucket).remove([customers]);
     });
 
     it("leaves everyone's photo to a parent and a gamer", async () => {

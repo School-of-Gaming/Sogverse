@@ -1,6 +1,7 @@
 import { StorageApiError, type QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
 import {
@@ -8,10 +9,7 @@ import {
   type PublicTeamProfileRow,
 } from "./team-profiles.contracts";
 import {
-  TEAM_PHOTOS_BUCKET,
-  TEAM_PHOTO_HEIGHT,
   TEAM_PHOTO_URL_TTL_SECONDS,
-  TEAM_PHOTO_WIDTH,
   pickFromId,
   publicTeamPhotoUrl,
   type PublicTeamProfile,
@@ -123,7 +121,8 @@ function isDatabaseRefusal(error: unknown): boolean {
 }
 
 function photoOf(src: string): TeamProfilePhoto {
-  return { src, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT };
+  const { width, height } = IMAGE_PURPOSES.team_photo.storedSize;
+  return { src, width, height };
 }
 
 /**
@@ -317,7 +316,7 @@ export class TeamProfilesService {
     }
     const path = `${ownerId}/${crypto.randomUUID()}.${extension}`;
     const upload = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .upload(path, photo, {
         contentType: photo.type,
         // A browser may keep the bytes as long as the signed URL that fetched
@@ -378,7 +377,7 @@ export class TeamProfilesService {
     const names: string[] = [];
     for (let offset = 0; ; offset += pageSize) {
       const { data, error } = await this.supabase.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .list(userId, {
           limit: pageSize,
           offset,
@@ -396,7 +395,7 @@ export class TeamProfilesService {
   private async removePhotos(paths: string[]): Promise<void> {
     if (paths.length === 0) return;
     const { error } = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .remove(paths);
     if (error) console.error("[team-profile] photos not removed:", error);
   }
@@ -430,7 +429,7 @@ export class TeamProfilesService {
 
   private async signedUrl(path: string): Promise<string> {
     const { data, error } = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .createSignedUrl(path, TEAM_PHOTO_URL_TTL_SECONDS);
     if (error) throw error;
     return data.signedUrl;
