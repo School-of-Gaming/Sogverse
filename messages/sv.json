@@ -655,7 +655,6 @@
       "actions": {
         "save": "Spara",
         "cancel": "Avbryt",
-        "edit": "Redigera",
         "delete": "Ta bort"
       },
       "errors": {

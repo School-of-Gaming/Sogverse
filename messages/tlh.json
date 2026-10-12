@@ -699,7 +699,6 @@
       "actions": {
         "save": "yIpol",
         "cancel": "yImev",
-        "edit": "yIchoH",
         "delete": "yIteq"
       },
       "errors": {

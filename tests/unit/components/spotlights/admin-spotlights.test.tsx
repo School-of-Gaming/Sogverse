@@ -12,7 +12,8 @@ import {
  * **The admin spotlight pages' rules.** The form's: what a save is refused
  * for before it is tried — no language, a language missing its title or its
  * text, and the picture taken off a spotlight that is switched on — and
- * whether the form holds anything unsaved. The list's: a spotlight with no
+ * whether the form holds anything unsaved. The list's: the whole card opens
+ * the editor while the switch and the delete do only their own thing, a spotlight with no
  * picture cannot be switched on and says why in place, one that is on can
  * always be switched off, a refused switch is named in the row, and a failed
  * read says so rather than claiming there are no spotlights.
@@ -140,6 +141,43 @@ describe("the spotlight list", () => {
     const { on, noPicture } = renderList();
     expect(within(on).getAllByText("Autumn camps are open").length).toBeGreaterThan(0);
     expect(within(noPicture).getAllByText("Ny klubb").length).toBeGreaterThan(0);
+  });
+
+  it("opens the editor from the whole card, and leaves the switch and the delete to themselves", async () => {
+    const setEnabled = vi.fn(async () => {});
+    const { on } = renderList(setEnabled);
+
+    // One link per card, named by the title, opening the editor — stretched
+    // over the card by its `::after`, which the card is the containing block
+    // for. jsdom paints no pseudo-elements, so the shape is what is asserted.
+    const [link] = within(on).getAllByRole("link");
+    expect(within(on).getAllByRole("link")).toHaveLength(1);
+    expect(link.textContent).toBe("Autumn camps are open");
+    expect(link.getAttribute("href")).toContain(ON.id);
+    expect(link.className).toContain("after:absolute");
+    expect(link.className).toContain("after:inset-0");
+    expect(link.parentElement?.closest(".relative")).toBe(on.firstElementChild);
+
+    // The controls sit outside the anchor (no button inside a link), each
+    // lifted above the stretched link so a press reaches it and not the card.
+    const checkbox = within(on).getByRole("checkbox");
+    const remove = within(on).getByRole("button", { name: "actions.delete" });
+    for (const control of [checkbox, remove]) {
+      expect(control.closest("a")).toBeNull();
+      expect(control.closest(".z-10")).not.toBeNull();
+    }
+
+    const navigated = vi.fn();
+    link.addEventListener("click", navigated);
+    await act(async () => {
+      fireEvent.click(checkbox);
+    });
+    expect(setEnabled).toHaveBeenCalledWith(ON.id, false);
+    await act(async () => {
+      fireEvent.click(remove);
+    });
+    expect(screen.getByText("deleteConfirm.title")).toBeTruthy();
+    expect(navigated).not.toHaveBeenCalled();
   });
 
   it("switches off, and names a refusal in the row", async () => {

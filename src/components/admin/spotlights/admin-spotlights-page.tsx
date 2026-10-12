@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Languages, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Clock, Languages, Loader2, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription, StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FramedImage } from "@/components/ui/framed-image";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -137,7 +138,18 @@ export function AdminSpotlightsPage({
 /**
  * One spotlight: its picture at the frame the email sets it in, its title,
  * the languages it is written in and when it was made, the switch, and the
- * way to edit or delete it.
+ * way to delete it.
+ *
+ * **The whole card opens the spotlight's editor**, through the stretched-link
+ * shape the admin sites and invoice-customer rows use: the title is the anchor
+ * and its `::after` covers the card, so the link's accessible name is the
+ * title, with no second link duplicating it. The focus ring is drawn on that
+ * `::after`, around the whole card, as the Library's article card draws it.
+ * The switch and the delete each own their clicks, so each is lifted above
+ * the stretched link with `relative z-10` — the shape the gedu assignment and
+ * family enrolment cards use for their controls — and nothing else is: text
+ * takes no lift, so the rest of the card stays a way into the editor. No
+ * control sits inside the anchor.
  *
  * The switch reads the saved state and stays disabled, with a spinner at the
  * end of its label, from the press until the list has been read again — so
@@ -186,7 +198,9 @@ function SpotlightRow({
   }
 
   return (
-    <div className="flex items-start gap-4 rounded-lg border border-border p-4">
+    // `relative` is what the title link's `::after` is positioned against;
+    // `group` is what the chevron's nudge reads, on hover and on focus alike.
+    <div className="group relative flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-hover">
       {/* The picture at its purpose's 2:1, the frame the email sets it in. No
           picture paints NO IMAGE in the same frame, so rows line up. */}
       <FramedImage
@@ -200,7 +214,7 @@ function SpotlightRow({
         <div>
           <Link
             href={ROUTES.admin.spotlight(spotlight.id)}
-            className="block truncate font-medium hover:underline"
+            className="block truncate font-medium after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
           >
             {title}
           </Link>
@@ -228,7 +242,9 @@ function SpotlightRow({
           </div>
         </div>
 
-        <label className="inline-flex items-center gap-2 text-sm">
+        {/* A control, so lifted above the stretched link — the whole label,
+            since a press on its words toggles the box too. */}
+        <label className="relative z-10 inline-flex items-center gap-2 text-sm">
           <Checkbox
             checked={spotlight.enabled}
             disabled={switching || !switchable}
@@ -252,19 +268,17 @@ function SpotlightRow({
         )}
       </div>
 
-      <div className="flex shrink-0 gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onDelete}>
-          <Trash2 aria-hidden />
-          {t("actions.delete")}
-        </Button>
-        <Link
-          href={ROUTES.admin.spotlight(spotlight.id)}
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          <Pencil aria-hidden />
-          {t("actions.edit")}
-        </Link>
-      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="relative z-10 shrink-0"
+        onClick={onDelete}
+      >
+        <Trash2 aria-hidden />
+        {t("actions.delete")}
+      </Button>
+      <NavChevron />
     </div>
   );
 }
