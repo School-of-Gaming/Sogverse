@@ -80,16 +80,6 @@ CASE
     ELSE NULL::uuid
 END)));
 
-CREATE POLICY team_photos_editor_insert ON storage.objects
-  AS PERMISSIVE
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (((bucket_id = 'team-photos'::text) AND (array_length(storage.foldername(name), 1) = 1) AND public.can_edit_team_profile(
-CASE
-    WHEN ((storage.foldername(name))[1] ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text) THEN ((storage.foldername(name))[1])::uuid
-    ELSE NULL::uuid
-END)));
-
 CREATE POLICY team_photos_owner_or_admin_read ON storage.objects
   AS PERMISSIVE
   FOR SELECT

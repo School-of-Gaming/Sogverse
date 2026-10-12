@@ -1,17 +1,17 @@
 import { StorageApiError, type QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
+import { parseJsonResponse, readApiError } from "@/lib/api/json-response";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
 import {
   publicTeamProfileRows,
+  storeTeamPhotoResponse,
   type PublicTeamProfileRow,
 } from "./team-profiles.contracts";
 import {
-  TEAM_PHOTOS_BUCKET,
-  TEAM_PHOTO_HEIGHT,
   TEAM_PHOTO_URL_TTL_SECONDS,
-  TEAM_PHOTO_WIDTH,
   pickFromId,
   publicTeamPhotoUrl,
   type PublicTeamProfile,
@@ -27,8 +27,10 @@ import {
  * Team profiles: read, save, and the photos behind them.
  *
  * **A photo reaches storage only inside a save.** A crop stays in the browser
- * until the person saves; the save stores it, names it, and removes it again
- * if the database refuses the save. Every landed save then empties the
+ * until the person saves; the save stores it through the team photo upload
+ * route, the bucket's only writer, which strips its metadata and holds it to
+ * the stored size; then it names it, and removes it again if the database
+ * refuses the save. Every landed save then empties the
  * person's folder of all but the photo their profile names, so whatever an
  * interrupted or failed cleanup left behind lasts only until their next save.
  *
@@ -82,18 +84,6 @@ function teamProfileQuery(supabase: AppSupabaseClient) {
 
 type TeamProfileQueryRow = QueryData<ReturnType<typeof teamProfileQuery>>[number];
 
-/** The file extension for a type the bucket admits, or `null` for any other. */
-function photoExtension(type: string): string | null {
-  switch (type) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/webp":
-      return "webp";
-    default:
-      return null;
-  }
-}
-
 /**
  * Whether storage answered that the object does not exist. It says so as a
  * 404, carried either as the response status or, from a server that answers
@@ -123,7 +113,8 @@ function isDatabaseRefusal(error: unknown): boolean {
 }
 
 function photoOf(src: string): TeamProfilePhoto {
-  return { src, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT };
+  const { width, height } = IMAGE_PURPOSES.team_photo.storedSize;
+  return { src, width, height };
 }
 
 /**
@@ -306,30 +297,26 @@ export class TeamProfilesService {
   }
 
   /**
-   * Store a cropped photo in the person's folder under a new name, and hand
-   * back its path. Overwriting the saved photo in place would change what the
-   * profile shows before the save that names the new one has landed.
+   * Store a cropped photo in the person's folder under a new name, through the
+   * team photo upload route, and hand back its path. The route is the bucket's
+   * only writer: it checks the caller may edit this profile, refuses anything
+   * but a JPEG at the stored size, and stores the bytes re-encoded with their
+   * metadata stripped.
    */
   private async storePhoto(ownerId: string, photo: Blob): Promise<string> {
-    const extension = photoExtension(photo.type);
-    if (extension === null) {
-      throw new Error(`A team photo is a JPEG or a WebP, not ${photo.type}`);
+    const form = new FormData();
+    // A filename is required for the part to arrive as a `File` rather than a
+    // string field. It is never stored: the route names the object.
+    form.append("file", photo, "team-photo.jpg");
+    const response = await fetch(
+      `/api/team/profiles/${encodeURIComponent(ownerId)}/photo`,
+      // No Content-Type header: the browser has to set the multipart boundary.
+      { method: "POST", body: form },
+    );
+    if (!response.ok) {
+      throw await readApiError(response, "The photo did not upload");
     }
-    const path = `${ownerId}/${crypto.randomUUID()}.${extension}`;
-    const upload = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
-      .upload(path, photo, {
-        contentType: photo.type,
-        // A browser may keep the bytes as long as the signed URL that fetched
-        // them lives, and no longer. The bytes behind a name never change, but
-        // the photo is private: a copy cached past its URL's expiry would stay
-        // viewable on that browser after the photo was replaced, removed or
-        // taken down.
-        cacheControl: String(TEAM_PHOTO_URL_TTL_SECONDS),
-        upsert: false,
-      });
-    if (upload.error) throw upload.error;
-    return path;
+    return (await parseJsonResponse(response, storeTeamPhotoResponse)).path;
   }
 
   /**
@@ -378,14 +365,14 @@ export class TeamProfilesService {
     const names: string[] = [];
     for (let offset = 0; ; offset += pageSize) {
       const { data, error } = await this.supabase.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .list(userId, {
           limit: pageSize,
           offset,
           sortBy: { column: "name", order: "asc" },
         });
       if (error) throw error;
-      // A folder entry has no id. The write policy admits no subfolder, so
+      // A folder entry has no id. The upload route writes no subfolder, so
       // there is nothing under one to collect.
       for (const object of data) if (object.id !== null) names.push(object.name);
       if (data.length < pageSize) return names;
@@ -396,7 +383,7 @@ export class TeamProfilesService {
   private async removePhotos(paths: string[]): Promise<void> {
     if (paths.length === 0) return;
     const { error } = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .remove(paths);
     if (error) console.error("[team-profile] photos not removed:", error);
   }
@@ -430,7 +417,7 @@ export class TeamProfilesService {
 
   private async signedUrl(path: string): Promise<string> {
     const { data, error } = await this.supabase.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .createSignedUrl(path, TEAM_PHOTO_URL_TTL_SECONDS);
     if (error) throw error;
     return data.signedUrl;

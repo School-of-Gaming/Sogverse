@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { TEAM_PHOTOS_BUCKET } from "./team-profiles.types";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 
 /**
  * Reading a public team profile's photo, for the photo route and the share
@@ -68,7 +68,7 @@ export async function readPublicTeamPhoto(
   userId: string,
   version: string | null,
 ): Promise<PublicTeamPhoto> {
-  const bucket = anon.storage.from(TEAM_PHOTOS_BUCKET);
+  const bucket = anon.storage.from(IMAGE_PURPOSES.team_photo.bucket);
 
   // The storage policy shows anon at most one object in the folder: the
   // current photo of a public profile.

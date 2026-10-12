@@ -22,7 +22,7 @@ $$;
 -- Name: FUNCTION can_edit_team_profile(p_user_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.can_edit_team_profile(p_user_id uuid) IS 'Whether the caller may write this person''s team profile, checkbox and photo: their own as an admin or a Gedu, or any admin''s or Gedu''s as an admin. A total boolean (false for NULL). SECURITY INVOKER: it reads only the caller''s own role and a profiles row the caller''s RLS already shows them (an admin reads every profile), so it cannot answer about anything the caller could not see. The team-photos storage policies and save_team_profile both ask it.';
+COMMENT ON FUNCTION public.can_edit_team_profile(p_user_id uuid) IS 'Whether the caller may write this person''s team profile, checkbox and photo: their own as an admin or a Gedu, or any admin''s or Gedu''s as an admin. A total boolean (false for NULL). SECURITY INVOKER: it reads only the caller''s own role and a profiles row the caller''s RLS already shows them (an admin reads every profile), so it cannot answer about anything the caller could not see. The team photo upload route asks it before storing, and the team-photos delete policy and save_team_profile ask it too.';
 
 
 --

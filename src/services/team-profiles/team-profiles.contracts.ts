@@ -10,6 +10,12 @@ import { Constants } from "@/types";
 export const saveTeamProfileResult = z.string().nullable();
 
 /**
+ * What the team photo upload route answers: the stored object's path in the
+ * person's folder, `<user_id>/<name>`, for the save to name.
+ */
+export const storeTeamPhotoResponse = z.object({ path: z.string().min(1) });
+
+/**
  * One row of `list_public_team_profiles` / `get_public_team_profile`: an
  * approved profile, narrowed to what the public team page shows. Written from
  * the function body, because a function's generated return type carries no

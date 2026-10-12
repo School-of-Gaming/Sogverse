@@ -252,6 +252,7 @@ const TESTS = {
   seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
   seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
   teamPhotos: "tests/integration/api/team-photos.test.ts",
+  teamPhotoUpload: "tests/integration/api/team-photo-upload.test.ts",
   sendTestDiscordMessage: "tests/integration/api/send-test-discord-message.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   sendTestSlackMessage: "tests/integration/api/send-test-slack-message.test.ts",
@@ -1439,6 +1440,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.teamPhotos,
+      },
+    },
+  },
+
+  "src/app/api/team/profiles/[userId]/photo/route.ts": {
+    adminClient:
+      "the storage upload alone — the team-photos bucket admits no insert from a signed-in client, so this route is its only writer and every object in it has been through the re-encode and the size check. Who may store is decided before it on the caller's own client, by can_edit_team_profile, the same predicate the save and the bucket's delete policy ask; the admin client only performs the write that check has already allowed, into the folder of the person it was asked about",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["admin", "gedu"] },
+        body: {
+          kind: "multipart",
+          schema:
+            "one `file` and no other field: the route verifies it by byte cap and magic bytes and re-encodes it to the team photo's exact stored size — the target person is the path's uuid param, and no schema can describe the bytes",
+        },
+        test: TESTS.teamPhotoUpload,
       },
     },
   },
