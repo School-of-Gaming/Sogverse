@@ -391,9 +391,9 @@ export function WhenSection({
         />
       </Field>
 
-      {/* Last in the section, under the weekly pattern it takes dates out of —
-          and last because its rows arrive with the calendar list, so nothing
-          else in the section sits below them to be moved. Clubs only. */}
+      {/* Last in the section, under the weekly pattern it takes dates out of.
+          The page holds the form back until the calendar list has answered,
+          so its rows paint with everything else. Clubs only. */}
       {config.followsHolidayCalendars && (
         <HolidayCalendarPicker
           value={state.holidayCalendarIds}

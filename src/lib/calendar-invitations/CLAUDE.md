@@ -105,11 +105,11 @@ date, and everything about which days happen from `planned_session_dates`, read 
 product-local today to the end date: `DTSTART` is the first planned session not yet
 begun, an override is a planned session at another clock face or length than the
 master's, and an `EXDATE` is a day the rule states inside that span and the plan does
-not hold — at `DTSTART`'s own clock face, in its own value form. Today the plan is the
-term crossed with the slots, which is exactly what the rule states, so the list is
-empty; a day the plan loses later leaves the family's calendar through it without the
-composer changing. Cancellations are not excluded: they are a group's, and the plan is
-read without them.
+not hold — at `DTSTART`'s own clock face, in its own value form. The days the plan
+loses are a club's holiday breaks, so the list is exactly the slot days the breaks cover,
+and a club following no calendar states none; the composer knows nothing of breaks, only
+of days the plan does not hold. Cancellations are not excluded: they are a group's, and
+the plan is read without them.
 
 **An open-ended club's span stops a year and a day on**, so its `EXDATE` list covers
 only that window, and past it the rule stands alone.

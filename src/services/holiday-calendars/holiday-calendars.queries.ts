@@ -50,13 +50,17 @@ function invalidateCalendarReaders(queryClient: QueryClient) {
   );
 }
 
-/** Every calendar, ordered by name. Admin-only by RLS. */
-export function useHolidayCalendars() {
+/**
+ * Every calendar, ordered by name. Admin-only by RLS. `enabled: false` keeps
+ * the read off a page that only sometimes needs it.
+ */
+export function useHolidayCalendars({ enabled = true }: { enabled?: boolean } = {}) {
   const service = new HolidayCalendarsService(getClient());
 
   return useQuery({
     queryKey: holidayCalendarKeys.list(),
     queryFn: () => service.listHolidayCalendars(),
+    enabled,
   });
 }
 

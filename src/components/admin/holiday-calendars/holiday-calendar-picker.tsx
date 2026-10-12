@@ -30,14 +30,15 @@ import { nextBreak } from "./admin-holiday-calendars-page";
  * empty selection is a club with no breaks, which is what every club was
  * before calendars existed.
  *
- * **The rows arrive with the list**, a handful of calendars read by one small
- * walk that lands in a frame or two, so nothing is drawn in their place. The
- * sections below the schedule move down by the rows' height when they land;
- * that is accepted rather than reserved for, because the count is unknown until
- * the read answers and a guessed reservation would leave a hole or still shift.
- * A first read that failed says so in place of the rows, and leaves the
- * selection in form state untouched, so a save made anyway keeps the calendars
- * the club already follows.
+ * **The form waits for the list, so the picker paints once, in its final
+ * form.** The row count is unknown until the read answers, so rows landing
+ * after the form had painted would push every section below them down, and a
+ * guessed reservation would leave a hole or still shift. The product pages
+ * therefore hold their loading state until {@link useHolidayCalendarListWait}
+ * says the list is in; the empty-list branch below is a real answer, never a
+ * loading state. A first read that failed ends the wait like a landed one and
+ * says so in place of the rows, leaving the selection in form state untouched,
+ * so a save made anyway keeps the calendars the club already follows.
  */
 export function HolidayCalendarPicker({
   value,
@@ -110,4 +111,15 @@ export function HolidayCalendarPicker({
       )}
     </Field>
   );
+}
+
+/**
+ * Whether a product form must keep waiting for the calendar list before it
+ * paints: true while a club's list read is still in flight. It reads the same
+ * cache entry the picker does, so the picker mounts on an answered list. Camps
+ * and events never read the list, so they never wait.
+ */
+export function useHolidayCalendarListWait(followsHolidayCalendars: boolean) {
+  const { isPending } = useHolidayCalendars({ enabled: followsHolidayCalendars });
+  return followsHolidayCalendars && isPending;
 }
