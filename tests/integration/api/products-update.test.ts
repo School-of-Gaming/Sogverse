@@ -102,6 +102,7 @@ const validBody = {
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
   invoice_customer_id: null,
+  holiday_calendar_ids: [],
 };
 
 function updateRequest(
@@ -288,6 +289,36 @@ describe("POST /api/admin/products/[id]/update", () => {
     // parameter defaults to NULL, so the omission is what writes it.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_invoice_customer_id).toBeUndefined();
+  });
+
+  it("passes the holiday calendars through, and detaches them with an empty set", async () => {
+    const CALENDAR_ID = "9a3e5f1c-2d4b-4c6a-8e7f-0b1c2d3e4f5a";
+    mockAuthenticatedAdmin();
+    await POST(
+      updateRequest({
+        data: { ...validBody, holiday_calendar_ids: [CALENDAR_ID] },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_holiday_calendar_ids: [CALENDAR_ID] }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_holiday_calendar_ids).toEqual([]);
+  });
+
+  it("returns 400 when the holiday calendars field is missing", async () => {
+    // An omitted field would reach an RPC that detaches every calendar, during
+    // an edit made for some other reason.
+    mockAuthenticatedAdmin();
+    const { holiday_calendar_ids: _ids, ...noCalendars } = validBody;
+    const response = await POST(updateRequest({ data: noCalendars }), { params });
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the invoice customer field is missing", async () => {

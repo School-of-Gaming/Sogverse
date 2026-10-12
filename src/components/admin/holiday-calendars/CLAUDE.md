@@ -2,7 +2,8 @@
 
 The admin pages behind the holiday calendars clubs follow: the list, the page for one
 calendar (the clubs following it, then its edit form), and the create form. Attaching a
-calendar to a club happens on the club's own form, not here.
+calendar to a club happens on the club's own form, through the picker that lives here;
+that save is an ordinary product edit and is not previewed.
 
 ## What a calendar is
 

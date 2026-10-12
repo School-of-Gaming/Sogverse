@@ -1085,6 +1085,52 @@ describe("the invoice customer on the wire", () => {
   });
 });
 
+// The holiday calendars a club follows: a whole-set answer like the consent
+// slugs, always present on the wire, and clubs-only like the invoice customer.
+describe("the holiday calendars on the wire", () => {
+  const CAL_A = "9a3e5f1c-2d4b-4c6a-8e7f-0b1c2d3e4f5a";
+  const CAL_B = "4f2a8c6e-1b3d-4e5f-a7c9-d0e1f2a3b4c5";
+
+  it("creates a club following no calendars by default", () => {
+    expect(initialState(consumerConfig, "en").holidayCalendarIds).toEqual([]);
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    // Present and empty, never absent: the RPC replaces the whole set and
+    // reads a missing argument as "follows none".
+    expect(out.holiday_calendar_ids).toEqual([]);
+  });
+
+  it("carries the picked calendars through to both payloads, for both club types", () => {
+    const s = validConsumerState();
+    s.holidayCalendarIds = [CAL_A, CAL_B];
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig).holiday_calendar_ids,
+    ).toEqual([CAL_A, CAL_B]);
+    expect(buildUpdateInput(s, consumerConfig).holiday_calendar_ids).toEqual([
+      CAL_A,
+      CAL_B,
+    ]);
+    expect(buildUpdateInput(s, muniConfig).holiday_calendar_ids).toEqual([
+      CAL_A,
+      CAL_B,
+    ]);
+  });
+
+  it("sends an empty array for camps and events, whatever the draft holds", () => {
+    // A stale draft must not reach the RPC, which refuses a calendar on any
+    // product that is not a club.
+    const s = validConsumerState();
+    s.holidayCalendarIds = [CAL_A];
+    expect(
+      buildCreateInput(s, "camp", campConfig).holiday_calendar_ids,
+    ).toEqual([]);
+    expect(buildUpdateInput(s, eventConfig).holiday_calendar_ids).toEqual([]);
+  });
+});
+
 // The design tag rides on the same payload as the audience above but answers a
 // different question — who the sessions were built for, not who may hold a seat
 // — so it gets its own block rather than being folded into the audience cases.
@@ -1601,6 +1647,7 @@ function mockDetailRow(
     product_required_consents: [],
     product_marketing_consents: [],
     product_gamer_photo_consents: [],
+    product_holiday_calendars: [],
     ...overrides,
   };
 }

@@ -615,6 +615,13 @@ function buildSharedFields(
       config.productType === "municipality_club"
         ? state.invoiceCustomerId
         : null,
+    // The club's holiday calendars, on every save including the empty array —
+    // the RPC replaces the whole set on each call, so an omission would detach
+    // them. Forced empty for a type that cannot follow one, so a stale draft
+    // never reaches the RPC's refusal.
+    holiday_calendar_ids: config.followsHolidayCalendars
+      ? state.holidayCalendarIds
+      : [],
   };
 }
 
@@ -893,6 +900,12 @@ export function existingFormState(
     // the customer list — a link is a foreign key with ON DELETE RESTRICT
     // behind it, so a stored id always names a row that exists.
     invoiceCustomerId: product.invoice_customer_id,
+    // Straight through from the join table. Unfiltered for the invoice
+    // customer's reason: each link is a foreign key, so a stored id always
+    // names a calendar that exists.
+    holidayCalendarIds: product.product_holiday_calendars.map(
+      (link) => link.holiday_calendars.id,
+    ),
     registrationOpensMode: mode,
     registrationOpensDate: opensDate,
     registrationOpensHour: opensHour,

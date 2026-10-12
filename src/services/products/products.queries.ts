@@ -9,6 +9,7 @@ import {
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
+import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
 import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
 import type { ProductType, ProductBrowseRow } from "@/types";
 import {
@@ -152,6 +153,9 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
       // The image catalogue's usage map is read from the products' pictures.
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey });
+      // A calendar's list row counts the clubs following it, and its page
+      // lists them.
+      queryClient.invalidateQueries({ queryKey: holidayCalendarKeys.all });
     },
   });
 }
@@ -174,6 +178,7 @@ export function useUpdateProduct(id: string) {
       queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
       queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey });
+      queryClient.invalidateQueries({ queryKey: holidayCalendarKeys.all });
     },
   });
 }

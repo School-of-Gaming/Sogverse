@@ -272,6 +272,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_required_consents: [],
     product_marketing_consents: [],
     product_gamer_photo_consents: [],
+    product_holiday_calendars: [],
   };
 }
 

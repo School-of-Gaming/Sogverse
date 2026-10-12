@@ -82,6 +82,14 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     // The other optional ask set, populated for the same reason: its seeding
     // filters the same way the marketing one's does.
     product_gamer_photo_consents: [{ consent_type: "lynx_educate" }],
+    product_holiday_calendars: [
+      {
+        holiday_calendars: {
+          id: "6b1d5c2e-3f4a-4b8c-9d0e-1f2a3b4c5d6e",
+          name: "Helsinki schools",
+        },
+      },
+    ],
   };
 }
 
@@ -112,6 +120,11 @@ describe("existingFormState", () => {
     // The optional ask set, off its own join table. Same round trip, opposite
     // filtering rule — see `products-build` for the type this one does drop.
     expect(state.marketingConsentTypes).toEqual(new Set(["lynx_educate"]));
+    // The followed calendars, as ids off their join rows: the name rides on
+    // the row for the details page and never reaches editable state.
+    expect(state.holidayCalendarIds).toEqual([
+      "6b1d5c2e-3f4a-4b8c-9d0e-1f2a3b4c5d6e",
+    ]);
     // The id alone reaches form state; the label and the path stay derived.
     expect(state.imageId).toBe("3d9e4a2f-9c1b-4f6e-8a70-5b2c1d0e7f43");
     expect(state.forGamers).toBe(true);

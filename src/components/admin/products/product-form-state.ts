@@ -218,6 +218,12 @@ export interface FormState {
   // club.
   invoiceCustomerId: string | null;
 
+  // The holiday calendars a club follows, as calendar row ids, in the order
+  // they were picked. Surfaced only where the type config's
+  // `followsHolidayCalendars` says so; for every other type it stays empty and
+  // is sent empty, because the database refuses a calendar on a camp or event.
+  holidayCalendarIds: string[];
+
   // Registration timing — `immediately` accepts signups as soon as the
   // product is published; `scheduled` opens at the picked date+time, read as a
   // wall clock in the product's own `timezone` above. The date/hour/minute
@@ -365,6 +371,9 @@ export function initialState(
     // agreement behind it is signed, so the resting state is unlinked — and the
     // invoicing page is what flags it, at the point a file would be produced.
     invoiceCustomerId: null,
+    // No breaks until somebody picks a calendar. A default calendar would pause
+    // a club on dates nobody chose for it.
+    holidayCalendarIds: [],
     // Capacity defaults — see `capacityDefaultsToCapped` for who caps and why.
     uncapped: !startsCapped,
     // The waitlist only exists behind a cap, so it follows the same answer.

@@ -15,18 +15,14 @@ import { municipalityInvoicingKeys } from "@/services/municipality-invoicing/mun
 import { participationKeys } from "@/services/participations/participations.keys";
 import { productKeys } from "@/services/products/products.queries";
 import { sessionSubstitutionKeys } from "@/services/session-substitution/session-substitution.keys";
+import { holidayCalendarKeys } from "./holiday-calendars.keys";
 import { HolidayCalendarsService } from "./holiday-calendars.service";
 import type {
   HolidayBreakInput,
   HolidayCalendarInput,
 } from "./holiday-calendars.contracts";
 
-export const holidayCalendarKeys = {
-  all: ["holiday-calendars"] as const,
-  list: () => [...holidayCalendarKeys.all, "list"] as const,
-  details: () => [...holidayCalendarKeys.all, "detail"] as const,
-  detail: (id: string) => [...holidayCalendarKeys.details(), id] as const,
-};
+export { holidayCalendarKeys };
 
 /**
  * Everything a saved calendar can change, refreshed together.

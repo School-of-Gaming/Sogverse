@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar,
   CalendarCheck,
+  CalendarOff,
   Camera,
   Check,
   Clock,
@@ -400,7 +401,8 @@ function OperationalFacts({
   // Same flag the form reads, so a type with no region-lock control has no
   // region-lock row here either — an empty "Not region locked" line on a
   // municipality club would advertise a setting that does not exist for it.
-  const { regionLockable } = PRODUCT_TYPE_CONFIG[product.product_type];
+  const { regionLockable, followsHolidayCalendars } =
+    PRODUCT_TYPE_CONFIG[product.product_type];
   // Country names in the admin's own language, the config's English `name` as
   // the fallback, and the raw stored code as the last resort — the last one
   // covers a code no longer in the config at all, which must still be visible
@@ -571,6 +573,42 @@ function OperationalFacts({
             label={t("detailsPage.fields.lastSession")}
           >
             {lastSession}
+          </Fact>
+        )}
+
+        {/* After the session dates, because a break is dates missing from
+            that same span. Clubs only, on the flag the form reads: no other
+            type may follow a calendar, so an empty row on a camp would
+            advertise a setting that does not exist for it. The names ride on
+            the product read itself, so nothing here arrives late. */}
+        {followsHolidayCalendars && (
+          <Fact
+            icon={CalendarOff}
+            label={t("holidayCalendars.label")}
+          >
+            {product.product_holiday_calendars.length === 0 ? (
+              <span className="text-muted-foreground">
+                {t("holidayCalendars.none")}
+              </span>
+            ) : (
+              <ul className="space-y-0.5">
+                {/* By name, as the calendar list orders them: the embed
+                    arrives in no order of its own. */}
+                {product.product_holiday_calendars
+                  .map((link) => link.holiday_calendars)
+                  .sort((a, b) => a.name.localeCompare(b.name, uiLocale))
+                  .map((calendar) => (
+                    <li key={calendar.id}>
+                      <Link
+                        href={ROUTES.admin.holidayCalendar(calendar.id)}
+                        className="underline-offset-2 hover:underline"
+                      >
+                        {calendar.name}
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </Fact>
         )}
 
