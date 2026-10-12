@@ -240,13 +240,22 @@ export function sameLocaleDrafts<T extends LocaleDraft<T>>(
     const draft = versionIn(drafts, locale);
     const stored = versionIn(saved, locale);
     if (draft === undefined || stored === undefined) return draft === stored;
-    for (const field in draft) {
-      const same =
-        rich !== null && rich.fields.includes(field)
-          ? sameAuthoredBody(draft[field], stored[field], rich.bodies)
-          : draft[field].trim() === stored[field].trim();
-      if (!same) return false;
-    }
-    return true;
+    // Both sides' fields: a draft keyed by something the writer adds to (a
+    // holiday calendar's breaks) can hold a field the saved copy lacks, or the
+    // reverse, and a missing field reads as blank.
+    const fields = new Set([...Object.keys(draft), ...Object.keys(stored)]);
+    return [...fields].every((field) => {
+      const current = fieldText(draft, field);
+      const before = fieldText(stored, field);
+      return rich !== null && rich.fields.some((name) => name === field)
+        ? sameAuthoredBody(current, before, rich.bodies)
+        : current.trim() === before.trim();
+    });
   });
+}
+
+/** A draft's field, or blank where the draft has no such field. */
+function fieldText(draft: object, field: string): string {
+  const text: unknown = Reflect.get(draft, field);
+  return typeof text === "string" ? text : "";
 }

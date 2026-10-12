@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AuthoredBodies } from "@/lib/authored-bodies";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   NO_RICH_BODIES,
   activeLocaleDraft,
@@ -227,5 +228,15 @@ describe("the drafts against the saved copy", () => {
     expect(sameLocaleDrafts({ fi: { a: "Joulu " } }, { fi: { a: "Joulu" } }, NO_RICH_BODIES)).toBe(
       true,
     );
+  });
+
+  it("compares drafts whose fields differ from side to side, a missing one as blank", () => {
+    const written: Partial<Record<SupportedLocale, Record<string, string>>> = {
+      fi: { a: "Joulu" },
+    };
+    const named = { fi: { a: "Joulu", b: "Pääsiäinen" } };
+    expect(sameLocaleDrafts(named, written, NO_RICH_BODIES)).toBe(false);
+    expect(sameLocaleDrafts(written, named, NO_RICH_BODIES)).toBe(false);
+    expect(sameLocaleDrafts({ fi: { a: "Joulu", b: " " } }, written, NO_RICH_BODIES)).toBe(true);
   });
 });

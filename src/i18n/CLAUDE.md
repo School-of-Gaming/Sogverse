@@ -164,7 +164,7 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 ## Editing content written per locale
 
-An editor that writes one version of an item per site locale — a product, a Library article, a Team profile, a spotlight, a holiday calendar — is composed from shared pieces, so an admin meets one behaviour in all of them. **Rule: a new per-locale editor composes these; it never grows its own tab state, blank-tab rule or draft comparison.**
+An editor that writes one version of an item per site locale — a product, a Library article, a Team profile — is composed from shared pieces, so an admin meets one behaviour in all of them. **Rule: a new per-locale editor composes these; it never grows its own tab state, blank-tab rule or draft comparison.**
 
 - **The tab set** (`src/lib/i18n/locale-tabs.ts`) — pure helpers the form applies inside its own state setter: one draft per written locale (every field a string) plus the tab shown, which tab opens, add/remove/select, the drafts a save stores, the save check, and the draft comparison.
 - **The tab bar** (`LocaleTabs`, `src/components/ui/`) — only the bar, and its own copy in the `localeTabs` namespace. The form wraps it in a `Field` whose hint states the form's content rule, and optionally hands it a completeness mark and an attention state per tab.
