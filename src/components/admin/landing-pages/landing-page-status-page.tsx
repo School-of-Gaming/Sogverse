@@ -104,6 +104,7 @@ export function LandingPageStatusPage({
             sections={page.draft.sections}
             publication={liveLocales.has(v.locale) ? page.publication : null}
             movingFrom={
+              // exact-locale: pairs each version with its own slug change
               slugsChanging.find((change) => change.locale === v.locale)?.from ?? null
             }
           />

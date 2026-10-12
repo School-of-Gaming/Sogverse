@@ -47,9 +47,7 @@ vi.mock("@/services/products", () => ({
 vi.mock("@/components/admin/products/location-picker", () => ({
   LocationPicker: () => <div data-testid="location-picker" />,
 }));
-vi.mock("@/components/admin/products/long-description-editor", () => ({
-  LongDescriptionEditor: () => <div data-testid="long-description" />,
-}));
+vi.mock("@/components/ui/rich-text-editor", () => import("../../mocks/rich-text-editor"));
 
 import { NowProvider } from "@/providers";
 import { ProductFormShell } from "@/components/admin/products/product-form";
@@ -66,14 +64,13 @@ const CONFIG = PRODUCT_TYPE_CONFIG.consumer_club;
 /** A paid consumer club that clears every rule ahead of the price. */
 function paidClubState(month: string): FormState {
   const s = initialState(CONFIG, "en");
-  s.translations = {
+  s.translations.drafts = {
     en: {
       name: "Test Club",
       shortDescription: "A great club",
       longDescription: "",
     },
   };
-  s.activeLocale = "en";
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;

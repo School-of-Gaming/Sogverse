@@ -27,6 +27,7 @@ export function articleSlug(
   article: Pick<AddressableArticle, "versions">,
   locale: SupportedLocale,
 ): string | null {
+  // exact-locale: a slug resolves only in its own locale
   const version = article.versions.find((row) => row.locale === locale);
   return version === undefined ? null : slugify(version.title);
 }

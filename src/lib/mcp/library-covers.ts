@@ -1,5 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
+import { DEFAULT_LOCALE } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   COVER_THUMBNAIL,
   MAX_IMAGES_PER_RESULT,
@@ -143,7 +145,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
         const article = await service.getAdminArticle(id);
         if (article === null) return refusal(NOT_FOUND);
         const { draft } = article;
-        const title = draft.versions[0]?.title ?? "";
+        const title = resolveTranslation(draft.versions, DEFAULT_LOCALE)?.title ?? "";
         const value = {
           articleId: id,
           title,

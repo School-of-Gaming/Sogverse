@@ -186,10 +186,6 @@ export async function checkSwitchClub({
   const { data: target, error: targetError } = await supabase
     .from("products")
     .select(TARGET_PRODUCT_COLUMNS)
-    // Embedded translations come back unordered, so the fallback chain's last
-    // step ("first row present") would otherwise pick an arbitrary name — the
-    // same ordering the checkout route states, for the same reason.
-    .order("locale", { referencedTable: "product_translations" })
     .eq("id", targetProductId)
     .maybeSingle();
   if (targetError) throw targetError;

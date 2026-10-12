@@ -246,6 +246,7 @@ export function canonicalPathForForeignSlug(pathname: string): string | null {
 
   for (const internal of INTERNAL_TEMPLATES) {
     for (const candidate of SUPPORTED_LOCALES) {
+      // exact-locale: matches a URL's slug against the other UI locales' slugs
       if (candidate === own.locale) continue;
       const params = matchTemplate(
         rest,

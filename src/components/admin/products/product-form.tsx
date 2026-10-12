@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuthoredBodies } from "@/components/ui/authored-body-editor";
 import { Button } from "@/components/ui/button";
+import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { isSupportedCurrency } from "@/lib/constants";
 import {
   isSupportedLocale,
@@ -25,7 +27,7 @@ import { WhenSection } from "./sections/when-section";
 import { WhereSection } from "./sections/where-section";
 import { validate, type ValidationFailure } from "./product-build";
 import { type ProductImageSelection } from "./product-image-selection";
-import { type FormState } from "./product-form-state";
+import { sameFormState, type FormState } from "./product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
 
@@ -105,10 +107,22 @@ export function ProductFormShell({
   const uiLocale = resolveLocale(rawLocale);
 
   const [state, setState] = useState<FormState>(initialFormState);
+  // What the form opened with — the saved product, the clone's source or the
+  // empty new form — held as it was at mount, like the state seeded from it.
+  const [baseline] = useState<FormState>(initialFormState);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<ProductSaveWarning | null>(null);
   const [committing, setCommitting] = useState(false);
   const languageName = useLanguageNames();
+
+  // How the rich editor respells each long description it was seeded with, so
+  // an untouched one is never an unsaved change.
+  const bodies = useAuthoredBodies();
+  // What leaving would lose: anything anywhere on the form that differs from
+  // what it opened with. From the save's press on there is nothing to ask
+  // about — a save that lands leaves the page, one with a soft warning has
+  // stored the form, and a failed one clears `committing` and asks again.
+  const unsaved = !committing && !sameFormState(state, baseline, bodies);
 
   /**
    * The picture beside `state.imageId`. Derived data, so it lives outside form
@@ -193,11 +207,13 @@ export function ProductFormShell({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <UnsavedChangesGuard when={unsaved} />
       <IdentitySection
         state={state}
         setState={setState}
         config={config}
         uiLocale={uiLocale}
+        bodies={bodies}
         currentImage={currentImage}
         onImageChange={(imageId, image) => {
           setState((s) => ({ ...s, imageId }));

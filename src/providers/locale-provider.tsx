@@ -86,6 +86,7 @@ export function LocaleProvider({
       // that is already active, and a from === to row would be a no-op
       // cluttering the matrix. Everything below still runs in that case: this
       // change adds an event, it does not change what the picker does.
+      // exact-locale: a UI locale switch, not a written version
       if (newLocale !== locale) {
         trackLocaleChange({
           detected: detectedLocale,

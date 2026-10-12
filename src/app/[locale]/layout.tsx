@@ -123,6 +123,7 @@ export async function generateMetadata({
     // says so itself. Disallow would be the wrong tool for the reason the
     // Roblox pages already document: a disallowed URL is never fetched, so the
     // tag is never read, and the URL can still be indexed bare.
+    // exact-locale: Klingon UI pages are noindex; no written version is picked
     ...(locale === "tlh" && { robots: { index: false } }),
     openGraph: {
       type: "website",
