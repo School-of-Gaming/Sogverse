@@ -63,6 +63,7 @@ export function LocaleTabs({
   return (
     <div className="flex flex-wrap items-center gap-1 border-b border-border">
       {written.map((locale) => {
+        // exact-locale: a tab is keyed by the locale it writes
         const isActive = active === locale;
         const complete = isComplete?.(locale);
         const Mark = complete ? CircleCheck : CircleDashed;

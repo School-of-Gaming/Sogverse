@@ -201,12 +201,6 @@ async function send({
         "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
-      // Embedded resources come back unordered, so a product without a
-      // translation in the reader's locale or in English would otherwise resolve
-      // its name from an arbitrary row. Alphabetical locale order is arbitrary
-      // too, but it is *stable*, which is all the fallback chain's last step
-      // needs.
-      .order("locale", { referencedTable: "product_translations" })
       .single(),
     client
       .from("profiles")

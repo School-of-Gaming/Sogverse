@@ -19,6 +19,7 @@ import { ogCardImage } from "@/lib/og/card-metadata";
  * fetched and so the tag would never be read.
  */
 export const INDEXED_LOCALES: readonly SupportedLocale[] =
+  // exact-locale: Klingon pages are not indexed; no written version is picked
   SUPPORTED_LOCALES.filter((locale) => locale !== "tlh");
 
 /**

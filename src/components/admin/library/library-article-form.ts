@@ -79,6 +79,7 @@ function savedVersions(
 ): LocaleTabState<LibraryArticleVersionDraft>["drafts"] {
   const versions: LocaleTabState<LibraryArticleVersionDraft>["drafts"] = {};
   for (const { locale, title, summary, body } of draft.versions) {
+    // exact-locale: each saved version fills the tab of its own locale
     versions[locale] = { title, summary, body };
   }
   return versions;

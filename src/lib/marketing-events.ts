@@ -41,7 +41,6 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
@@ -129,7 +128,7 @@ export function metaProductDetails(
   currency: SupportedCurrency = DEFAULT_CURRENCY,
 ): MetaProductDetails {
   const name = resolveTranslation(
-    inLocaleOrder(product.product_translations),
+    product.product_translations,
     DEFAULT_LOCALE,
   )?.name;
   const priceCents =

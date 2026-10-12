@@ -495,6 +495,7 @@ export class LandingPageService {
     const { data, error } = await this.supabase
       .from("landing_page_publication_translations")
       .select("page_id")
+      // exact-locale: a slug resolves only in its own locale
       .eq("locale", locale)
       .eq("slug", slug)
       .maybeSingle();

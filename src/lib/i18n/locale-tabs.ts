@@ -22,7 +22,7 @@ import { resolveTranslation } from "./resolve-translation";
  *   complete one.
  */
 
-/** The tab an existing item opens on, given its written locales in `SUPPORTED_LOCALES` order (`writtenLocales`). */
+/** The tab an existing item opens on, given its written locales in any order. */
 export function openingLocaleTab(
   written: readonly SupportedLocale[],
   uiLocale: SupportedLocale,

@@ -15,6 +15,7 @@ import {
 } from "@/lib/authored-markdown-subset";
 import { ROUTES } from "@/lib/constants";
 import {
+  DEFAULT_LOCALE,
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
   type SupportedLocale,
@@ -238,7 +239,7 @@ function coversOnce(articles: readonly AdminLibraryArticleListItem[]): CoverToSh
   }
   return [...usedBy].map(([path, users]) => {
     const named = users
-      .map((article) => `article ${article.id} ("${article.versions[0]?.title ?? ""}")`)
+      .map((article) => `article ${article.id} ("${resolveTranslation(article.versions, DEFAULT_LOCALE)?.title ?? ""}")`)
       .join(", ");
     return {
       path,
@@ -439,6 +440,7 @@ export function registerLibraryTools(server: McpServer): void {
         });
         const article = await service.getAdminArticle(input.articleId);
         if (article === null) return refusal(NOT_FOUND);
+        // exact-locale: the tool writes the version it was asked for
         const saved = article.draft.versions.find((v) => v.locale === input.locale);
         const liveSlug =
           article.publication === null

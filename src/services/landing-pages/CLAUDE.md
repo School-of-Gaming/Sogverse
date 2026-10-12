@@ -72,9 +72,9 @@ live address a publish would change, the status page warns on the language and i
 publish confirmation, and the MCP tools tell the AI app to confirm the change with the
 admin before publishing.
 
-**Readers fall back from their locale to English to the first version written**, and the
-service hands back every live version in `SUPPORTED_LOCALES` order so "first" is stable —
-exactly the Library's rule. An id address resolves in every locale; a slug address only
+**Readers fall back from their locale to English to the earliest version written** in
+`SUPPORTED_LOCALES` order — exactly the Library's rule (`src/i18n/CLAUDE.md`, "Content
+written per locale"). An id address resolves in every locale; a slug address only
 in its own.
 
 **Pictures are `landing_image` entries of the shared image catalogue, referenced by id from

@@ -517,6 +517,12 @@ page's JSON turns each new UI field into a migration, and replacing a function b
 one schema change two branches cannot merge: the last writer silently wins. This applies
 when a function is next touched. It is not a sweep.
 
+**Rule: a function reading content written per locale returns every version, and never
+picks the reader's.** The pick happens in the app through `resolveTranslation()`, so
+there is one answer everywhere (`src/i18n/CLAUDE.md`, "Content written per locale"); a
+pick in SQL would be a second picker that drifts. The order of the versions it returns
+does not matter.
+
 **Moving this logic into TypeScript over a direct Postgres connection does not fit, and
 the measurements are in `docs/records/logic-in-database-evaluation-2026-09.md`.** A
 connection running as the signed-in user can take over only the reads RLS already admits,
