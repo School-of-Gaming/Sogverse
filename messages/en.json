@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "The article could not be unpublished — {reason}",
         "versionTitleRequired": "The {language} version needs a title."
       },
-      "versionComplete": "complete",
-      "versionIncomplete": "not complete yet",
-      "addLocale": "Add a language",
-      "removeLocale": "Remove {language}",
       "languagesLabel": "Languages"
     },
     "landingPages": {
@@ -3089,6 +3085,12 @@
     "linkCancel": "Cancel",
     "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site.",
     "opensInNewTab": "(opens in a new tab)"
+  },
+  "localeTabs": {
+    "addLanguage": "Add a language",
+    "removeLanguage": "Remove {language}",
+    "complete": "complete",
+    "notComplete": "not complete yet"
   },
   "header": {
     "nav": {

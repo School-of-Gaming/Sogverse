@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
         "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
       },
-      "versionComplete": "färdig",
-      "versionIncomplete": "inte färdig än",
-      "addLocale": "Lägg till språk",
-      "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk"
     },
     "landingPages": {
@@ -3089,6 +3085,12 @@
     "linkCancel": "Avbryt",
     "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen.",
     "opensInNewTab": "(öppnas i en ny flik)"
+  },
+  "localeTabs": {
+    "addLanguage": "Lägg till språk",
+    "removeLanguage": "Ta bort {language}",
+    "complete": "färdig",
+    "notComplete": "inte färdig än"
   },
   "header": {
     "nav": {

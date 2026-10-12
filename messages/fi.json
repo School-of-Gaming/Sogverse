@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}",
         "versionTitleRequired": "{language}: kieliversiolta puuttuu otsikko."
       },
-      "versionComplete": "valmis",
-      "versionIncomplete": "kesken",
-      "addLocale": "Lisää kieli",
-      "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet"
     },
     "landingPages": {
@@ -3089,6 +3085,12 @@
     "linkCancel": "Peruuta",
     "linkInvalid": "Tätä osoitetta ei voi linkittää. Käytä verkko-osoitetta, sähköpostiosoitetta tai tämän sivuston sisäistä polkua.",
     "opensInNewTab": "(avautuu uuteen välilehteen)"
+  },
+  "localeTabs": {
+    "addLanguage": "Lisää kieli",
+    "removeLanguage": "Poista {language}",
+    "complete": "valmis",
+    "notComplete": "kesken"
   },
   "header": {
     "nav": {

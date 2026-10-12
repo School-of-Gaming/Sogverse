@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { AuthoredBodies } from "@/lib/authored-bodies";
 import {
   emptyLibraryArticleForm,
   incompleteLocales,
@@ -52,8 +53,20 @@ function complete(): LibraryArticleForm {
 /** The form with the English version changed. */
 function withEnglish(patch: Partial<LibraryArticleVersionDraft>): LibraryArticleForm {
   const form = complete();
-  return { ...form, versions: { ...form.versions, en: { ...EN, ...patch } } };
+  const text = { title: EN.title, summary: EN.summary, body: EN.body };
+  return withDrafts(form, { ...form.tabs.drafts, en: { ...text, ...patch } });
 }
+
+/** The form with its tabs holding `drafts`, the same tab shown. */
+function withDrafts(
+  form: LibraryArticleForm,
+  drafts: LibraryArticleForm["tabs"]["drafts"],
+): LibraryArticleForm {
+  return { ...form, tabs: { ...form.tabs, drafts } };
+}
+
+/** No body has been through the rich editor: nothing is respelled. */
+const UNTOUCHED: AuthoredBodies = { serialised: new Map() };
 
 describe("an article's status", () => {
   it("is a draft until it is published, whatever the change flag says", () => {
@@ -91,10 +104,10 @@ describe("what publishing still needs", () => {
 
   it("needs one complete language, not every language", () => {
     const form = complete();
-    const halfFinnish: LibraryArticleForm = {
-      ...form,
-      versions: { ...form.versions, fi: { title: "Otsikko", summary: "", body: "" } },
-    };
+    const halfFinnish = withDrafts(form, {
+      ...form.tabs.drafts,
+      fi: { title: "Otsikko", summary: "", body: "" },
+    });
     expect(missingForPublish(halfFinnish)).toEqual([]);
     expect(incompleteLocales(halfFinnish)).toEqual(["fi"]);
   });
@@ -102,10 +115,12 @@ describe("what publishing still needs", () => {
   it("does not count an untouched tab as a language left out", () => {
     const form = complete();
     expect(
-      incompleteLocales({
-        ...form,
-        versions: { ...form.versions, sv: { title: "", summary: "", body: "" } },
-      }),
+      incompleteLocales(
+        withDrafts(form, {
+          ...form.tabs.drafts,
+          sv: { title: "", summary: "", body: "" },
+        }),
+      ),
     ).toEqual([]);
   });
 
@@ -125,10 +140,12 @@ describe("what a save needs", () => {
   it("names a language written without its title", () => {
     const form = complete();
     expect(
-      librarySaveBlocker({
-        ...form,
-        versions: { ...form.versions, fi: { title: " ", summary: "Tiivistelmä", body: "" } },
-      }),
+      librarySaveBlocker(
+        withDrafts(form, {
+          ...form.tabs.drafts,
+          fi: { title: " ", summary: "Tiivistelmä", body: "" },
+        }),
+      ),
     ).toEqual({ kind: "untitled", locale: "fi" });
   });
 
@@ -194,8 +211,8 @@ describe("the Publish control", () => {
 describe("the form against the saved copy", () => {
   it("opens on the language a reader of the admin's own would be shown, with nothing unsaved", () => {
     // An English-only copy, opened by a Finnish admin, falls back to English.
-    expect(complete().activeLocale).toBe("en");
-    expect(sameAsSaved(complete(), DRAFT)).toBe(true);
+    expect(complete().tabs.active).toBe("en");
+    expect(sameAsSaved(complete(), DRAFT, UNTOUCHED)).toBe(true);
   });
 
   it("opens on the admin's own language when the copy has it, else English, else the first written", () => {
@@ -209,32 +226,36 @@ describe("the form against the saved copy", () => {
       libraryArticleFormFromDraft(
         written({ ...sv, locale: "sv" }, EN, { ...fi, locale: "fi" }),
         "fi",
-      ).activeLocale,
+      ).tabs.active,
     ).toBe("fi");
     expect(
       libraryArticleFormFromDraft(written({ ...sv, locale: "sv" }, EN), "fi")
-        .activeLocale,
+        .tabs.active,
     ).toBe("en");
     expect(
       libraryArticleFormFromDraft(written({ ...sv, locale: "sv" }), "fi")
-        .activeLocale,
+        .tabs.active,
     ).toBe("sv");
   });
 
   it("opens a new article on the admin's own language", () => {
-    expect(emptyLibraryArticleForm("fi").activeLocale).toBe("fi");
+    expect(emptyLibraryArticleForm("fi").tabs.active).toBe("fi");
   });
 
   it("compares as the save stores, trimmed", () => {
-    expect(sameAsSaved(withEnglish({ title: `  ${EN.title} ` }), DRAFT)).toBe(true);
+    expect(sameAsSaved(withEnglish({ title: `  ${EN.title} ` }), DRAFT, UNTOUCHED)).toBe(true);
   });
 
   it("does not count an opened, untouched tab as a change", () => {
     const form = complete();
     expect(
       sameAsSaved(
-        { ...form, versions: { ...form.versions, sv: { title: "", summary: "", body: "" } } },
+        withDrafts(form, {
+          ...form.tabs.drafts,
+          sv: { title: "", summary: "", body: "" },
+        }),
         DRAFT,
+        UNTOUCHED,
       ),
     ).toBe(true);
   });
@@ -243,19 +264,23 @@ describe("the form against the saved copy", () => {
     const form = complete();
     expect(
       sameAsSaved(
-        { ...form, versions: { ...form.versions, fi: { title: "Otsikko", summary: "", body: "" } } },
+        withDrafts(form, {
+          ...form.tabs.drafts,
+          fi: { title: "Otsikko", summary: "", body: "" },
+        }),
         DRAFT,
+        UNTOUCHED,
       ),
     ).toBe(false);
-    expect(sameAsSaved({ ...form, versions: {} }, DRAFT)).toBe(false);
+    expect(sameAsSaved(withDrafts(form, {}), DRAFT, UNTOUCHED)).toBe(false);
   });
 
   it("sees a changed field, category or cover", () => {
-    expect(sameAsSaved(withEnglish({ summary: "Other" }), DRAFT)).toBe(false);
-    expect(sameAsSaved({ ...complete(), category: "learning" }, DRAFT)).toBe(
+    expect(sameAsSaved(withEnglish({ summary: "Other" }), DRAFT, UNTOUCHED)).toBe(false);
+    expect(sameAsSaved({ ...complete(), category: "learning" }, DRAFT, UNTOUCHED)).toBe(
       false,
     );
-    expect(sameAsSaved({ ...complete(), cover: null }, DRAFT)).toBe(false);
+    expect(sameAsSaved({ ...complete(), cover: null }, DRAFT, UNTOUCHED)).toBe(false);
   });
 
   it("pairs a cover's id with its label and path, and has none of them for none", () => {
@@ -276,7 +301,7 @@ describe("the form against the saved copy", () => {
     const form = complete();
     if (form.cover === null) throw new Error("expected a cover");
     expect(
-      sameAsSaved({ ...form, cover: { ...form.cover, label: "Renamed" } }, DRAFT),
+      sameAsSaved({ ...form, cover: { ...form.cover, label: "Renamed" } }, DRAFT, UNTOUCHED),
     ).toBe(true);
   });
 

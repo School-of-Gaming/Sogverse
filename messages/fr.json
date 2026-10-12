@@ -611,10 +611,6 @@
         "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}",
         "versionTitleRequired": "La version en {language} doit avoir un titre."
       },
-      "versionComplete": "complète",
-      "versionIncomplete": "pas encore complète",
-      "addLocale": "Ajouter une langue",
-      "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues"
     },
     "landingPages": {
@@ -3089,6 +3085,12 @@
     "linkCancel": "Annuler",
     "linkInvalid": "Cette adresse ne peut pas servir de lien. Utilisez une adresse web, une adresse e-mail ou un chemin interne à ce site.",
     "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
+  },
+  "localeTabs": {
+    "addLanguage": "Ajouter une langue",
+    "removeLanguage": "Supprimer {language}",
+    "complete": "complète",
+    "notComplete": "pas encore complète"
   },
   "header": {
     "nav": {
