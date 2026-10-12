@@ -24,6 +24,15 @@ export function heading(text: string): string {
   return `<h2 style="margin:0 0 16px;font-size:18px;font-weight:bold;color:${DARK_THEME.foreground};">${text}</h2>`;
 }
 
+/**
+ * A heading one rank under `heading()`: an item inside a section that
+ * `heading()` names. Set at authored markdown's 16px body size, told from it
+ * by weight, so it stays under the section heading and over the item's body.
+ */
+export function subheading(text: string): string {
+  return `<h3 style="margin:0 0 8px;font-size:16px;font-weight:bold;line-height:1.4;color:${DARK_THEME.foreground};">${text}</h3>`;
+}
+
 export function styledName(name: string): string {
   // Class targets the Gmail-specific background-clip:text rule in layout.ts <style> block.
   // Inline style is the default for all other email clients.

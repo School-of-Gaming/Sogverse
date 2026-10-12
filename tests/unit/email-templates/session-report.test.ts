@@ -625,10 +625,19 @@ describe("the spotlights at the foot of the mail", () => {
     expect(html).toContain(`width:100%;height:auto;max-width:${box.maxWidth}px`);
   });
 
-  it("escapes the title and sets it as the mail's section heading", () => {
+  it("escapes the title and sets it one rank under the section's heading", () => {
     const html = withSpotlights(SPOTLIGHTS.slice(0, 1));
-    expect(html).toContain("Autumn camps &lt;open&gt;</h2>");
+    expect(html).toContain("Autumn camps &lt;open&gt;</h3>");
     expect(html).not.toContain("<open>");
+  });
+
+  it("sets the section's heading larger than every spotlight title", () => {
+    const html = withSpotlights(SPOTLIGHTS);
+    const section = Number(
+      /<h2 style="[^"]*font-size:(\d+)px[^"]*">School of Gaming news/.exec(html)?.[1],
+    );
+    const title = Number(/<h3 style="[^"]*font-size:(\d+)px[^"]*">Autumn camps/.exec(html)?.[1]);
+    expect(section).toBeGreaterThan(title);
   });
 
   it("keeps a link in the body, and no heading", () => {

@@ -1,5 +1,12 @@
 import { wrapInLayout } from "./layout";
-import { escapeHtml, heading, paragraph, styledName, styledProductName } from "./utils";
+import {
+  escapeHtml,
+  heading,
+  paragraph,
+  styledName,
+  styledProductName,
+  subheading,
+} from "./utils";
 import { calloutPanel, ctaButton, factList, sectionLabel } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
 import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
@@ -271,9 +278,9 @@ function photosSection(
  * ruled off from the one before. None at all draws nothing — no lead-in over
  * an empty section.
  *
- * The lead-in is `sectionLabel`, like the photos' line, rather than a
- * heading: each spotlight's title is the mail's section heading, and a heading
- * of the same rank above them would compete with them.
+ * The lead-in is the section's `heading()`, and each spotlight's title is a
+ * `subheading()` under it: the heading names the whole section, so it outranks
+ * every title and every body beneath it.
  */
 function spotlightsSection(
   t: EmailTranslator,
@@ -281,7 +288,7 @@ function spotlightsSection(
 ): string {
   if (spotlights.length === 0) return "";
   return `${rule()}
-    ${sectionLabel(t("sessionReport.spotlightsHeading"))}
+    ${heading(t("sessionReport.spotlightsHeading"))}
     ${spotlights.map(spotlightSection).join(rule())}`;
 }
 
@@ -292,9 +299,8 @@ function spotlightsSection(
  * module comment. The picture is a photo column of one, so it gets the same
  * box arithmetic, painted well, Outlook pixel pair and empty `alt` as a session
  * photo rather than a second image block that could drift from it. The title
- * is `heading()`, the shell's section heading, since a spotlight is a section
- * of the mail under its title; the body carries no headings of its own to
- * compete with it.
+ * is a `subheading()`, one rank under the section's heading; the body carries
+ * no headings of its own to compete with it.
  */
 function spotlightSection({
   title,
@@ -302,7 +308,7 @@ function spotlightSection({
   image,
 }: SessionReportSpotlight): string {
   return `${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
-    ${heading(escapeHtml(title))}
+    ${subheading(escapeHtml(title))}
     <div style="margin:0 0 24px;">
       ${renderMarkdownForEmail(body, "spotlight")}
     </div>`;
