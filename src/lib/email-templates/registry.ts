@@ -180,8 +180,9 @@ export interface TemplateDefinition {
    * Validate raw params against `schema`, then build the subject line, HTML
    * email content and Reply-To. Throws a ZodError when params are malformed.
    *
-   * `context` says where the render is going, and defaults to the send — the
-   * destination that has to be safe when a caller has not thought about it.
+   * `context` is the render's own origin, which the testing tool's demo art
+   * resolves against. A render that asks for no demo art may leave it out; one
+   * that asks for some without it throws.
    *
    * `tPrep` is the **second** translator, scoped to the top-level `topicPrep`
    * namespace, for the one template whose mail carries a document the app's own
@@ -215,12 +216,17 @@ function defineTemplate<P extends TemplateParams>(entry: {
   schema: z.ZodType<P>;
   /**
    * Build the HTML email content from validated params. The context is there
-   * for a template whose markup depends on where the render is going — one
-   * does, and it is the fixture photographs, whose URLs are only fetchable
-   * from a dev machine by the browser previewing them. A builder that does not
-   * care simply declares three parameters and takes the fourth for free.
+   * for a template whose markup carries demo art — one does, the session
+   * report, whose fixture pictures resolve against the render's origin. A
+   * builder that does not care simply declares three parameters and takes the
+   * fourth for free.
    */
-  build: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  build: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
   /**
    * Generate the email subject line from validated params and translator. The
    * locale is there for a subject that prints a formatted value of its own —
@@ -228,7 +234,12 @@ function defineTemplate<P extends TemplateParams>(entry: {
    * the same reason `build` takes it: a subject derived from the same resolved
    * options has to resolve them the same way.
    */
-  subject: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  subject: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
   /**
    * Reply-To for this template, defaulting to the support inbox — which is the
    * answer for every mail we send *to* a family. Only a template whose real
@@ -248,7 +259,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
     params: P,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => RenderedAttachment[];
   /**
    * The plain-text body, for a template that states one. See
@@ -258,7 +269,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
     params: P,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => string | undefined;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
@@ -297,11 +308,21 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
     params: P,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
     tPrep: TopicPrepTranslator | null,
   ) => R;
-  build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
-  subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  build: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
+  subject: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
   /**
    * `undefined` is a real answer, not an omission: a template can owe a text
    * body only on the renders that carry a calendar part, and the signup
@@ -312,13 +333,13 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
     resolved: R,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => string | undefined;
   attachments?: (
     resolved: R,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => RenderedAttachment[];
   replyTo?: (params: P) => string;
   resolveParams?: TemplateDefinition["resolveParams"];
@@ -327,7 +348,7 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
   return {
     ...rest,
     schema,
-    render: (rawParams, t, locale, context = { to: "send" }, tPrep) => {
+    render: (rawParams, t, locale, context, tPrep) => {
       const params = schema.parse(rawParams);
       const resolved = resolve(params, t, locale, context, tPrep ?? null);
       const files = attachments?.(resolved, t, locale, context);
@@ -742,7 +763,7 @@ function resolveSessionReport(
     ...rest
   }: SessionReportParams,
   locale: string,
-  context: EmailRenderContext,
+  context: EmailRenderContext | undefined,
 ): SessionReportEmailOptions {
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??

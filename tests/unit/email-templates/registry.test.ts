@@ -4,7 +4,6 @@ import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
-import { sessionPhotoBox } from "@/lib/email-templates/session-photos";
 import { MARKDOWN_USE_CASES, OUTLINE_TAGS } from "@/lib/authored-markdown";
 import {
   getEmailTranslator,
@@ -326,7 +325,7 @@ describe("templateRegistry render()", () => {
           { ...signup, isSelfSeat: false, topic: "roblox_studio", isRemote: "yes" },
           t,
           "en",
-          { to: "send" },
+          undefined,
           tPrep,
         );
 
@@ -345,7 +344,7 @@ describe("templateRegistry render()", () => {
           { ...signup, isSelfSeat: false, topic: "programming" },
           t,
           "en",
-          { to: "send" },
+          undefined,
           tPrep,
         );
 
@@ -361,7 +360,7 @@ describe("templateRegistry render()", () => {
           { ...signup, isSelfSeat: false, topic: "programming", isRemote: "yes" },
           t,
           "en",
-          { to: "send" },
+          undefined,
           tPrep,
         );
 
@@ -733,7 +732,7 @@ describe("templateRegistry sessionReport", () => {
   /**
    * The spotlights select hangs the two demo spotlights under the mail — the
    * pictures on committed art at the stored 1200×600, absolute on the render's
-   * reachable origin, and the first body's link kept and made absolute.
+   * render's origin, and the first body's link kept and made absolute.
    */
   it("hangs the demo spotlights under the mail when asked", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
@@ -745,6 +744,7 @@ describe("templateRegistry sessionReport", () => {
         { ...params, spotlights: "two" },
         t,
         "en",
+        { origin: "https://sogverse.sog.gg" },
       );
       expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\/spotlight-[a-z]+\.jpg"/g))
         .toHaveLength(2);
@@ -758,44 +758,19 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
-   * The pictures take the photos' origin rule, but the spotlights keep their
-   * words: a send from a dev machine carries each title and body over its
-   * painted, empty box, and the preview keeps the pictures.
+   * A localhost origin is an origin like any other: a test send from a dev
+   * machine carries the localhost URLs, and each spotlight still draws its
+   * picture's `<img>` — which an inbox cannot fetch, so it fails to load there.
    */
-  it("sends the spotlights' words over empty boxes from a dev machine, and keeps the pictures in its preview", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
-    try {
-      const sent = templateRegistry.sessionReport.render(
-        { ...params, spotlights: "two" },
-        t,
-        "en",
-        { to: "send" },
-      );
-      expect(sent.html).toContain("Autumn camps are open");
-      expect(sent.html).toContain("A new Roblox club this term");
-      expect(sent.html).toContain("Places are limited");
-      expect(sent.html).toContain("A Gedu in every session");
-      expect(sent.html).not.toContain("/preview-art/");
-      expect(sent.html).not.toContain("<img");
-      // Two painted wells, one per spotlight, at the box a 1200×600 picture fills.
-      const box = sessionPhotoBox(1200, 600);
-      expect(
-        sent.html.split(`height="${box.wellHeight}" align="center" valign="middle"`).length - 1,
-      ).toBe(2);
-
-      const previewed = templateRegistry.sessionReport.render(
-        { ...params, spotlights: "two" },
-        t,
-        "en",
-        { to: "preview", origin: "http://localhost:3010" },
-      );
-      expect(previewed.html).toContain("Autumn camps are open");
-      expect(previewed.html).toContain(
-        '<img src="http://localhost:3010/preview-art/spotlight-arena.jpg"',
-      );
-    } finally {
-      vi.unstubAllEnvs();
-    }
+  it("resolves the spotlights' pictures against a localhost origin", () => {
+    const { html } = templateRegistry.sessionReport.render(
+      { ...params, spotlights: "two" },
+      t,
+      "en",
+      { origin: "http://localhost:3005" },
+    );
+    expect(html).toContain('<img src="http://localhost:3005/preview-art/spotlight-arena.jpg"');
+    expect(html).toContain('<img src="http://localhost:3005/preview-art/spotlight-parkour.jpg"');
   });
 
   it("formats the sample's date and time in the parent's zone for the locale", async () => {
@@ -902,106 +877,48 @@ describe("templateRegistry sessionReport", () => {
    * path is unfetchable from wherever the test send lands.
    */
   it("hangs the chosen number of demo photos on the fixture session", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
-    try {
-      const none = templateRegistry.sessionReport.render(params, t, "en");
-      expect(none.html).not.toContain("Photos from this session");
+    const origin = { origin: "https://sogverse.sog.gg" };
+    const none = templateRegistry.sessionReport.render(params, t, "en", origin);
+    expect(none.html).not.toContain("Photos from this session");
 
-      const three = templateRegistry.sessionReport.render(
-        { ...params, photoCount: "3" },
-        t,
-        "en",
-      );
-      expect(three.html).toContain("Photos from this session");
-      expect(three.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
-        .toHaveLength(3);
-      // The staff copy is the same mail behind a banner, pictures included.
-      const staff = templateRegistry.sessionReport.render(
-        { ...params, photoCount: "3", copy: "staff" },
-        t,
-        "en",
-      );
-      expect(staff.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
-        .toHaveLength(3);
-    } finally {
-      vi.unstubAllEnvs();
-    }
+    const three = templateRegistry.sessionReport.render(
+      { ...params, photoCount: "3" },
+      t,
+      "en",
+      origin,
+    );
+    expect(three.html).toContain("Photos from this session");
+    expect(three.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+      .toHaveLength(3);
+    // The staff copy is the same mail behind a banner, pictures included.
+    const staff = templateRegistry.sessionReport.render(
+      { ...params, photoCount: "3", copy: "staff" },
+      t,
+      "en",
+      origin,
+    );
+    expect(staff.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+      .toHaveLength(3);
   });
 
   /**
-   * A send from a dev machine carries no photos, on exactly the terms the
-   * shell's brand mark takes: a `localhost` src is unreachable by construction
-   * for the inbox the mail is about to land in, and a *failed* fetch is worse
-   * than an absent one — Gmail's proxy paints its broken-image glyph in every
-   * well the design reserved. The rule is that an `<img>` which will
-   * predictably fail is never emitted, and a fixture is not exempt from it.
+   * A localhost origin is an origin like any other — and it is the render's
+   * own, not the env's, whatever port it is on. A test send from a dev machine
+   * therefore carries localhost URLs, whose pictures fail to load in an inbox.
    */
-  it("sends no photos when the origin is one only a dev machine can reach", () => {
-    for (const origin of ["http://localhost:3000", "http://127.0.0.1:3000"]) {
-      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
-      try {
-        const { html } = templateRegistry.sessionReport.render(
-          { ...params, photoCount: "5" },
-          t,
-          "en",
-          { to: "send" },
-        );
-        expect(html, `origin ${origin} produced photos`)
-          .not.toContain("Photos from this session");
-        expect(html).not.toContain("/preview-art/");
-      } finally {
-        vi.unstubAllEnvs();
-      }
-    }
-  });
-
-  /**
-   * And the default is the send — pinned where it can actually be told apart.
-   *
-   * The two cases above and below both pass a context or have no origin to build
-   * from, so neither would notice the default drifting to `preview`. A reachable-
-   * looking loopback origin with **no context argument at all** is the one shape
-   * that separates them: as a send it drops the photos, as a preview it would
-   * keep them. A caller who has not thought about where the mail is going is
-   * sending it, which is the conservative half of the pair.
-   */
-  it("defaults to the send, so an unstated context drops a loopback origin's photos", () => {
+  it("resolves the photos against a localhost origin, not the env", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
     try {
       const { html } = templateRegistry.sessionReport.render(
         { ...params, photoCount: "5" },
         t,
         "en",
-      );
-      expect(html).not.toContain("Photos from this session");
-      expect(html).not.toContain("/preview-art/");
-    } finally {
-      vi.unstubAllEnvs();
-    }
-  });
-
-  /**
-   * The preview is the other destination, and the reason the context exists:
-   * the mail drawn in `/admin/testing` is fetched by the browser looking at
-   * it, so the loopback origin that is useless in an inbox is the right one
-   * here. Suppressing the grid there would leave the one surface built to show
-   * it with nothing to show — no pairs, no spanning odd one, no wells.
-   */
-  it("keeps the photos in a preview, resolved against the previewing browser", () => {
-    // Not the env: a preview names the origin its own browser will fetch from,
-    // which is the dev server actually serving the art whatever port it is on.
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000");
-    try {
-      const { html } = templateRegistry.sessionReport.render(
-        { ...params, photoCount: "5" },
-        t,
-        "en",
-        { to: "preview", origin: "http://localhost:3010" },
+        { origin: "http://localhost:3005" },
       );
       expect(html).toContain("Photos from this session");
       const sources = html.match(/<img src="[^"]+"/g) ?? [];
       expect(
-        sources.filter((tag) => tag.startsWith('<img src="http://localhost:3010/preview-art/')),
+        sources.filter((tag) => tag.startsWith('<img src="http://localhost:3005/preview-art/')),
       ).toHaveLength(5);
     } finally {
       vi.unstubAllEnvs();
@@ -1009,55 +926,17 @@ describe("templateRegistry sessionReport", () => {
   });
 
   /**
-   * A real origin is a real origin in both destinations — the distinction is
-   * about reachability, not about the tool, so a staging or production send is
-   * unchanged by any of it.
+   * Demo art with no origin has no absolute URL to be, so a render that asks
+   * for it without a context fails loudly; one that asks for none needs none.
    */
-  it("carries the photos from a public origin whichever way it is rendered", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
-    try {
-      const contexts = [
-        { to: "send" },
-        { to: "preview", origin: "https://sogverse.sog.gg" },
-      ] as const;
-      for (const context of contexts) {
-        const { html } = templateRegistry.sessionReport.render(
-          { ...params, photoCount: "3" },
-          t,
-          "en",
-          context,
-        );
-        expect(html, `context ${context.to} dropped the photos`)
-          .toContain("Photos from this session");
-        expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
-          .toHaveLength(3);
-      }
-    } finally {
-      vi.unstubAllEnvs();
-    }
-  });
-
-  /**
-   * No origin is the third case, and it is an impossibility rather than a
-   * judgment: there is no absolute URL to put in a `src`, and a half-built one
-   * is what this directory never emits. The default context is the send, which
-   * is what a caller who has not thought about it should get.
-   */
-  it("renders no photos at all when no site origin can be built", () => {
-    for (const origin of ["", "not-a-url"]) {
-      vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
-      try {
-        const { html } = templateRegistry.sessionReport.render(
-          { ...params, photoCount: "5" },
-          t,
-          "en",
-        );
-        expect(html, `origin ${JSON.stringify(origin)} produced photos`)
-          .not.toContain("Photos from this session");
-      } finally {
-        vi.unstubAllEnvs();
-      }
-    }
+  it("throws when demo art is asked for without the render's origin", () => {
+    expect(() =>
+      templateRegistry.sessionReport.render({ ...params, photoCount: "1" }, t, "en"),
+    ).toThrow("needs the render's origin");
+    expect(() =>
+      templateRegistry.sessionReport.render({ ...params, spotlights: "two" }, t, "en"),
+    ).toThrow("needs the render's origin");
+    expect(() => templateRegistry.sessionReport.render(params, t, "en")).not.toThrow();
   });
 
   it("rejects a sample id it does not know", () => {
@@ -1498,7 +1377,7 @@ describe("every template renders in every locale", () => {
       for (const params of variantsOf(key)) {
         const { subject, html, text, replyTo, attachments } = templateRegistry[
           key
-        ].render(params, translator, locale);
+        ].render(params, translator, locale, { origin: "https://sogverse.sog.gg" });
 
         expect(subject.trim()).not.toBe("");
         expect(subject).not.toContain(`email.${key}`);

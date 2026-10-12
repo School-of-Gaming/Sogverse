@@ -108,22 +108,6 @@ export interface SessionReportSpotlight {
   };
 }
 
-/**
- * A spotlight whose picture has nowhere reachable to load from: the title and
- * body as usual, and the picture's slot drawn as its painted, empty box.
- *
- * **Only the testing tool's demo spotlights are ever this**, on a send composed
- * on a dev machine — their art lives on an origin no inbox can reach. The title,
- * body and links are what a reviewer needs to check in a real inbox, and the
- * empty box is the honest blocked render, the one a real spotlight arrives as
- * wherever images are off. A real spotlight always has its public URL, which
- * is why the route's own type, `SessionReportSpotlight`, cannot express this.
- */
-export interface SessionReportSpotlightWithoutPicture
-  extends Omit<SessionReportSpotlight, "image"> {
-  image: { url: null; width: number; height: number };
-}
-
 export interface SessionReportEmailOptions {
   /** The child the report concerns, as the family knows them. */
   gamerName: string;
@@ -170,7 +154,7 @@ export interface SessionReportEmailOptions {
    * Absent or empty is the mail with nothing beneath the closing. The child's
    * copy draws none whatever is passed — see the module comment.
    */
-  spotlights?: readonly (SessionReportSpotlight | SessionReportSpotlightWithoutPicture)[];
+  spotlights?: readonly SessionReportSpotlight[];
 }
 
 export function sessionReportSubject(
@@ -291,7 +275,7 @@ function spotlightSection({
   title,
   body,
   image,
-}: SessionReportSpotlight | SessionReportSpotlightWithoutPicture): string {
+}: SessionReportSpotlight): string {
   return `${rule()}
     ${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
     ${heading(escapeHtml(title))}

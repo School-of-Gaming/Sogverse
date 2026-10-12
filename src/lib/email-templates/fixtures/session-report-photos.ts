@@ -1,4 +1,4 @@
-import { sendableImageOrigin, type EmailRenderContext } from "../render-context";
+import { demoArtUrl, type EmailRenderContext } from "../render-context";
 import type { SessionReportPhoto } from "../session-photos";
 
 /**
@@ -34,45 +34,19 @@ const PHOTO_ART: readonly { path: string; width: number; height: number }[] = [
 ];
 
 /**
- * The first `count` demo photos, resolved against whichever origin the render's
- * own destination can actually reach.
- *
- * **A send takes the mark's rule exactly**, and there is no fixture exemption
- * from it: a test mail composed on a dev machine carries no photos section at
- * all, because a `localhost` src is unreachable by construction for the inbox it
- * is about to land in, and Gmail's proxy paints a broken-image glyph in every
- * well rather than leaving the wells the design turns on. An `<img>` that will
- * predictably fail is not emitted, whoever the recipient is. Deployed, where the
- * origin is real, a test send carries the pictures like any other.
- *
- * **A preview is the other half, and it is why the distinction exists at all.**
- * The mail drawn in `/admin/testing` is fetched by the browser looking at it, on
- * the machine serving the art, so the loopback origin that is useless in an
- * inbox is the correct one here — and the photos are the thing that page exists
- * to show. Suppressing them there would leave nothing to look at: no shapes, no
- * caps, none of the reserved wells, and no way to compare the loaded render
- * against the blocked one the whole design is about. So the two destinations
- * differ in exactly one way, and it is the way they genuinely differ.
- *
- * **No origin at all is still no photos**, in either destination, and that is an
- * impossibility rather than a judgment: there is no absolute URL to put in a
- * `src`, and a half-built one is the thing this directory never emits.
+ * The first `count` demo photos, absolute on the render's own origin — a preview
+ * and a send alike, so a test send from a dev machine carries `localhost` URLs
+ * that load nowhere but that machine.
  */
 export function sessionReportPhotoFixtures(
   count: number,
-  context: EmailRenderContext,
+  context: EmailRenderContext | undefined,
 ): SessionReportPhoto[] {
-  const origin = context.to === "preview" ? context.origin : sendableImageOrigin();
-  if (!origin) return [];
-  return PHOTO_ART.slice(0, count).flatMap((art) => {
-    try {
-      return [
-        { src: new URL(art.path, origin).toString(), width: art.width, height: art.height },
-      ];
-    } catch {
-      return [];
-    }
-  });
+  return PHOTO_ART.slice(0, count).map((art) => ({
+    src: demoArtUrl(art.path, context),
+    width: art.width,
+    height: art.height,
+  }));
 }
 
 /** How many demo photos the testing form offers, and what each one shows. */

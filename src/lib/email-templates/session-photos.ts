@@ -127,25 +127,6 @@ export interface SessionReportPhoto {
 }
 
 /**
- * A picture's reserved box with no picture in it: the painted well alone, at
- * exactly the rectangle the picture would have filled.
- *
- * **Only the testing tool produces one**, for a demo spotlight on a send
- * composed where the art has no reachable origin. A `localhost` src would load
- * in no inbox, and Gmail's proxy would paint its broken-image glyph inside the
- * box; leaving the `<img>` out instead gives the blocked render this module
- * already guarantees for real mail. No route has a reason to emit one: a real
- * photo or spotlight always has a public URL, and their types say so.
- */
-export interface ReservedPhotoBox {
-  src: null;
-  /** The stored pixel width the box is built from. */
-  width: number;
-  /** The stored pixel height the box is built from. */
-  height: number;
-}
-
-/**
  * The three numbers a photo's markup is built from, from its stored dimensions.
  *
  * `maxWidth` is how wide the picture may ever be drawn — the height budget
@@ -237,21 +218,16 @@ export function sessionPhotoBox(
  * under it, and the zeroed font metrics on the cell keep the well from being
  * taller than the picture it holds.
  */
-function photoWell(photo: SessionReportPhoto | ReservedPhotoBox): string {
+function photoWell(photo: SessionReportPhoto): string {
   const box = sessionPhotoBox(photo.width, photo.height);
   // Escaped, unlike the app-generated hrefs this directory embeds raw: this is
   // the one URL here built around a value off a row, and escaping a
-  // well-formed one changes nothing. A reserved box holds a non-breaking space
-  // instead, so no client collapses the empty cell; the zeroed font metrics
-  // keep it from adding height.
-  const inner =
-    photo.src === null
-      ? "&nbsp;"
-      : `<img src="${escapeHtml(photo.src)}" width="${box.phoneWidth}" height="${box.wellHeight}" alt="" style="display:block;width:100%;height:auto;max-width:${box.maxWidth}px;border:0;outline:none;text-decoration:none;border-radius:${RADIUS.md};" />`;
+  // well-formed one changes nothing.
+  const src = escapeHtml(photo.src);
   return `<table role="presentation" width="${box.phoneWidth}" cellpadding="0" cellspacing="0" style="margin:0 auto;width:100%;max-width:${box.maxWidth}px;">
             <tr>
               <td class="${WELL_GROUND.className}" height="${box.wellHeight}" align="center" valign="middle" style="${WELL_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.md};height:${box.wellHeight}px;font-size:0;line-height:0;">
-                ${inner}
+                <img src="${src}" width="${box.phoneWidth}" height="${box.wellHeight}" alt="" style="display:block;width:100%;height:auto;max-width:${box.maxWidth}px;border:0;outline:none;text-decoration:none;border-radius:${RADIUS.md};" />
               </td>
             </tr>
           </table>`;
@@ -275,9 +251,7 @@ function photoWell(photo: SessionReportPhoto | ReservedPhotoBox): string {
  * between its rows, and the space under the last photo belongs to the section
  * rather than to the grid.
  */
-export function sessionPhotoGrid(
-  photos: readonly (SessionReportPhoto | ReservedPhotoBox)[],
-): string {
+export function sessionPhotoGrid(photos: readonly SessionReportPhoto[]): string {
   if (photos.length === 0) return "";
   const rows = photos.map((photo, index) => {
     const gap = index === photos.length - 1 ? "" : `padding-bottom:${PHOTO_ROW_GAP}px;`;

@@ -188,13 +188,11 @@ export const BRAND_MARK = {
  * unreachable-by-construction src is morally a malformed one, so it takes the
  * same branch.
  *
- * Both halves of that are `sendableImageOrigin()`, shared with the testing
- * tool's demo photographs — the only other images this directory emits, and the
- * only other place the same question is asked. The shell never renders in the
- * preview context, so the mark keeps one shape here: a mail previewed from a dev
- * machine shows the header the same send would arrive with, which is the honest
- * render and costs nothing, because the lockup underneath already says
- * everything the badge said.
+ * Both halves of that are `sendableImageOrigin()`, shared with the Discord
+ * messages' header logo. The mark keeps one shape in a preview too: a mail
+ * previewed from a dev machine shows the header the same send would arrive
+ * with, which is the honest render and costs nothing, because the lockup
+ * underneath already says everything the badge said.
  */
 function brandMarkSrc(): string | null {
   const origin = sendableImageOrigin();

@@ -220,8 +220,8 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     copy: "family",
     // Three, so the sweep sees the photo grid at all: a pair of cells, an odd
     // one spanning the row, and three toned wells whose fills and corners have
-    // to answer to the same rules as everything else in a mail. The stub above
-    // is what makes the fixture URLs resolvable, exactly as it does the mark's.
+    // to answer to the same rules as everything else in a mail. The origin
+    // `fromRegistry` renders with is what the fixture URLs resolve against.
     photoCount: "3",
     // Both demo spotlights, so the sweep sees a markdown link reach a mail —
     // the one anchor no button or inline-link helper builds.
@@ -284,7 +284,7 @@ function fromRegistry(
         { ...PARAMS[key], ...overrides },
         t,
         "en",
-        { to: "send" },
+        { origin: "https://sogverse.sog.gg" },
         tPrep,
       ).html,
     ],
