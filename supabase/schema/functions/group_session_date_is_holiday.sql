@@ -21,7 +21,7 @@ $$;
 -- Name: FUNCTION group_session_date_is_holiday(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.group_session_date_is_holiday(p_group_id uuid, p_session_date date) IS 'Whether the date falls in a break of a holiday calendar the group''s product follows. The holiday arm of group_session_is_cancelled, and the partner API''s way to name a stored session on a holiday. Service-role only.';
+COMMENT ON FUNCTION public.group_session_date_is_holiday(p_group_id uuid, p_session_date date) IS 'Whether the date falls in a break of a holiday calendar the group''s product follows. The holiday arm of group_session_is_cancelled; what the session documents ask to leave a holiday''s stored row and cancellation off the wire, the date carrying its break alone; and the partner API''s way to name a stored session on a holiday. Service-role only.';
 
 
 --

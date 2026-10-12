@@ -154,6 +154,7 @@ export function buildTraineeWorkspaceFixture(now: Date): {
     // The workspace fixture's plan, which is its feed's own sessions — so
     // the trainee's feed lays its rows over the same dates the gedu's does.
     planned_sessions: data.planned_sessions,
+    holiday_breaks: [],
     final_session_date: data.final_session_date,
   };
 

@@ -51,6 +51,7 @@ function club(
     schedule_slots: [{ weekday: 2, start_time: "16:00", duration_minutes: 90 }],
     // Its Wednesdays, which September 2026 has five of: 2, 9, 16, 23, 30.
     planned_dates: ["2026-09-02", "2026-09-09", "2026-09-16", "2026-09-23", "2026-09-30"],
+    holiday_breaks: [],
     location: {
       id: "aaaaaaaa-0000-0000-0000-000000000001",
       name: "Test School",

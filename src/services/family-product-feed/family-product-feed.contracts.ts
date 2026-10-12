@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { plannedSessionRows } from "@/lib/planned-sessions";
 import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
@@ -334,6 +335,12 @@ export const familyProductFeed = z
      * and the cancellations above are laid over them by date.
      */
     planned_sessions: plannedSessionRows,
+    /**
+     * The holiday breaks over the plan's span, each with the sessions it
+     * withdrew from the plan above. A holiday date carries its break and
+     * nothing else: no stored session and no cancellation lands on one.
+     */
+    holiday_breaks: holidayBreakRows,
   })
   .strict();
 

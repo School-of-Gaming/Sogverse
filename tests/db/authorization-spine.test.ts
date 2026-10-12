@@ -847,6 +847,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/holiday-calendars.test.ts",
     why: "public catalogue facts, identical for every caller: the breaks of the holiday calendars a product follows, which planned_session_dates subtracts from the plan. SECURITY INVOKER over `product_holiday_calendars` and `holiday_breaks`, whose read policies admit every followed calendar's breaks to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — and it never reads a calendar's admin-only name or an unattached calendar's breaks, since it reaches breaks only through a product's link. It names no user and reads no uid; its arguments only pick a product and narrow a date span. The scope test proves an anonymous caller and an admin get identical rows",
   },
+  holiday_breaks_document: {
+    scopeTest: "tests/db/holiday-documents.test.ts",
+    why: "public catalogue facts, identical for every caller: the `holiday_breaks` member the session documents carry, built from product_holiday_breaks, holiday_break_translations and planned_session_dates. SECURITY INVOKER, and every table behind it admits a followed calendar's breaks and their names to anon and authenticated alike, so it can answer with nothing a plain read of them would not already return — it reaches breaks only through a product's link, so never an unattached calendar's, and never reads a calendar's admin-only name. It names no user and reads no uid; its arguments only pick a product and narrow a date span. The scope test proves an anonymous caller and an admin get identical documents",
+  },
   // The three fold primitives below are a third shape the category has to
   // admit, and the widest reading of it: they read *no table at all*. Each is a
   // pure function of its arguments — strip diacritics, return a constant
@@ -948,12 +952,16 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * It subtracts the product's holiday breaks, read through
  * `product_holiday_breaks` as its caller — so anon needs that one too, and it
  * returns only breaks anon may already select from the breaks table.
+ * `holiday_breaks_document` is those breaks with their names and the plan rows
+ * each withdrew, the shape every session document carries beside its plan,
+ * built as its caller from the same anon-readable rows.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
   "planned_session_dates",
   "product_holiday_breaks",
+  "holiday_breaks_document",
   "immutable_unaccent",
   "location_search_separator",
   "list_public_team_profiles",

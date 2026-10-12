@@ -4648,6 +4648,10 @@ export type Database = {
         Returns: boolean
       }
       hide_chat_message: { Args: { p_id: string }; Returns: string }
+      holiday_breaks_document: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: Json
+      }
       immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_chat_channel_member: {

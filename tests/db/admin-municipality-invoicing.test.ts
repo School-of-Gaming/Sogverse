@@ -37,6 +37,8 @@ import {
  *   - a schedule slot's `start_time` arrives as a bare `HH:MM` wall clock, which
  *     is what the client contract parses and what the projection reads
  *   - a club whose sessions and term both fall outside the month is absent
+ *   - a club carries the holiday breaks touching the month, each with the
+ *     planned dates it withdrew, and lists no cancellation on a holiday
  *   - a club whose location chain reaches NO municipality takes the whole read
  *     down, naming the product: an invoice is per municipality, so such a club
  *     cannot be billed to anybody and is a data error to repair rather than a
@@ -459,6 +461,83 @@ describe("get_admin_municipality_invoicing", () => {
       // month does not inherit a database the RPC refuses to answer for.
       await deleteTestProducts(admin, [P_NO_MUNICIPALITY]);
       await admin.from("locations").delete().eq("id", L_REGION_SITE);
+    }
+  });
+
+  it("carries the month's holiday breaks, and lists no cancellation on a holiday", async () => {
+    // April, read on its own and put back afterwards, so nothing else here
+    // sees the calendar. The break takes Wednesday the 15th out of the plan;
+    // the cancellation written on it beforehand is kept but not listed, while
+    // the one on the ordinary 22nd is.
+    const name = "Municipality-invoicing test calendar";
+    await admin.from("holiday_calendars").delete().eq("name", name);
+    const cancelled = await admin.from("session_cancellations").insert(
+      ["2026-04-15", "2026-04-22"].map((date) => ({
+        group_id: GROUP_IN_MONTH,
+        session_date: date,
+        cancelled_by: TEST_IDS.ADMIN,
+      })),
+    );
+    expect(cancelled.error).toBeNull();
+    const created = await adminUser.rpc("create_holiday_calendar", {
+      p_name: name,
+      p_breaks: [
+        {
+          start_date: "2026-04-13",
+          end_date: "2026-04-17",
+          names: [
+            { locale: "en", name: "Easter break" },
+            { locale: "fi", name: "Pääsiäisloma" },
+          ],
+        },
+      ],
+    });
+    expect(created.error).toBeNull();
+
+    try {
+      const followed = await adminUser.rpc("set_product_holiday_calendars", {
+        p_product_id: P_IN_MONTH,
+        p_calendar_ids: [created.data ?? ""],
+      });
+      expect(followed.error).toBeNull();
+
+      const { data, error } = await adminUser.rpc(
+        "get_admin_municipality_invoicing",
+        { p_month_start: "2026-04-01" },
+      );
+      expect(error).toBeNull();
+      const club = municipalityInvoicingSnapshot
+        .parse(data)
+        .clubs.find((one) => one.id === P_IN_MONTH);
+      expect(club?.planned_dates).toEqual(["2026-04-01", "2026-04-08", "2026-04-22", "2026-04-29"]);
+      expect(
+        club?.holiday_breaks.map((row) => ({
+          startDate: row.startDate,
+          endDate: row.endDate,
+          names: row.names,
+          withdrawn: row.withdrawnSessions.map((session) => session.date),
+        })),
+      ).toEqual([
+        {
+          startDate: "2026-04-13",
+          endDate: "2026-04-17",
+          names: [
+            { locale: "en", name: "Easter break" },
+            { locale: "fi", name: "Pääsiäisloma" },
+          ],
+          withdrawn: ["2026-04-15"],
+        },
+      ]);
+      expect(club?.cancelled_sessions).toEqual([
+        { group_id: GROUP_IN_MONTH, session_date: "2026-04-22" },
+      ]);
+    } finally {
+      await adminUser.rpc("set_product_holiday_calendars", {
+        p_product_id: P_IN_MONTH,
+        p_calendar_ids: [],
+      });
+      await admin.from("holiday_calendars").delete().eq("name", name);
+      await admin.from("session_cancellations").delete().eq("group_id", GROUP_IN_MONTH);
     }
   });
 

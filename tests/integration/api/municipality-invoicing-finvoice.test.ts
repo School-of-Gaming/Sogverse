@@ -70,6 +70,7 @@ function club(overrides: Record<string, unknown> = {}) {
     ],
     // Its Mondays in May 2020.
     planned_dates: ["2020-05-04", "2020-05-11", "2020-05-18", "2020-05-25"],
+    holiday_breaks: [],
     location: {
       id: "loc-purola",
       name: "Purolan koulu",

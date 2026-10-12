@@ -115,6 +115,7 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
       { weekday: 0, start_time: "14:15", duration_minutes: 75 },
     ],
     planned_dates: spec.slots?.length === 0 ? [] : MAY_MONDAYS,
+    holiday_breaks: [],
     location:
       spec.location === undefined
         ? {

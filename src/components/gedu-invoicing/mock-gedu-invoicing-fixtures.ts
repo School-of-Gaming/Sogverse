@@ -56,6 +56,7 @@ const PRODUCTS: GeduInvoicingProduct[] = [
     assistant_gedu_fee_cents: 4_500,
     product_translations: [{ locale: "fi", name: "Pelikerho Kivikko" }],
     planned_dates: ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25"],
+    holiday_breaks: [],
     location: {
       id: "preview-loc-kivikko",
       name: "Kivikonrinteen koulu",
@@ -75,6 +76,7 @@ const PRODUCTS: GeduInvoicingProduct[] = [
     assistant_gedu_fee_cents: 4_500,
     product_translations: [{ locale: "fi", name: "Rakentajakerho Mäntyranta" }],
     planned_dates: ["2026-05-06", "2026-05-13", "2026-05-20", "2026-05-27"],
+    holiday_breaks: [],
     location: {
       id: "preview-loc-mantyranta",
       name: "Mäntyrannan koulu",
@@ -97,6 +99,7 @@ const PRODUCTS: GeduInvoicingProduct[] = [
       { locale: "en", name: "Minecraft adventurers" },
     ],
     planned_dates: ["2026-05-05", "2026-05-12", "2026-05-19", "2026-05-26"],
+    holiday_breaks: [],
     location: null,
     municipality: null,
   },

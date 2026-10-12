@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { Constants } from "@/types";
 
 /**
@@ -226,6 +227,12 @@ export const adminDashboardScheduleProduct = z.object({
    * together: every group cancelled, some of them, or none.
    */
   planned_sessions: z.array(adminDashboardPlannedSession),
+  /**
+   * The holiday breaks inside the schedule window, each with the sessions it
+   * withdrew. A planned date is never a holiday, so no cancellation above is
+   * on one.
+   */
+  holiday_breaks: holidayBreakRows,
 });
 
 /** The whole document `get_admin_dashboard` returns. */

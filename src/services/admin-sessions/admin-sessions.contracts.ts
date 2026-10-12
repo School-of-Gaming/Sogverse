@@ -111,6 +111,8 @@ export const adminProductSessions = z.object({
    * than on every group.
    */
   planned_sessions: geduGroupFeed.shape.planned_sessions,
+  /** The holiday breaks over the plan's span, in the gedu feed's shape. */
+  holiday_breaks: geduGroupFeed.shape.holiday_breaks,
 });
 
 /**

@@ -325,6 +325,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     cancellations: [],
     trainees: [],
     planned_sessions: [],
+    holiday_breaks: [],
     final_session_date: null,
   };
 }

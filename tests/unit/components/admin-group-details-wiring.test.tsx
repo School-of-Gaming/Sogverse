@@ -371,6 +371,7 @@ function adminSessions(): AdminProductSessions {
       },
     ],
     planned_sessions: [],
+    holiday_breaks: [],
   };
 }
 
@@ -413,6 +414,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     // trainees to the body rather than leave them behind.
     trainees: [{ id: IDS.trainee, first_name: "Oliver" }],
     planned_sessions: [],
+    holiday_breaks: [],
     final_session_date: null,
   };
 }

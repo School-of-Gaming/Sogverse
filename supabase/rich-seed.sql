@@ -100,6 +100,13 @@
 -- Substitutions page has an offer to approve, and gedu@example.com, who has
 -- not answered, finds it in their pool with Offer and Decline (section 11).
 --
+-- TWO CLUBS FOLLOW A HOLIDAY CALENDAR. "Helsinki schools" breaks for a holiday
+-- week that ended a week before the build and for Christmas ahead, and the
+-- Creator Studio Club (gedu@example.com's, with parent@example.com's Otso and
+-- Nea) and the Youth Centre Game Club (a municipality club) follow it, so the
+-- family feed, the gedu's workspace and both Invoicing pages show the breaks
+-- (section 15).
+--
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
 -- a hand-written id — all ones, all twos — draws a degenerate face that is not
@@ -2998,7 +3005,81 @@ SELECT public.consume_discord_link_token('rich-seed-mikko-link-token');
 COMMIT;
 
 -- =============================================================================
--- 15. What landed
+-- 15. Holiday calendars
+-- =============================================================================
+-- One calendar, "Helsinki schools", with two breaks named in every locale: a
+-- holiday week that ended a week before the build, and the Christmas break
+-- ahead. Two clubs follow it: the Creator Studio Club, which gedu@example.com
+-- teaches and parent@example.com's Otso and Nea attend, so the family's feed,
+-- the gedu's workspace and the gedu's Invoicing page each show both breaks;
+-- and the Youth Centre Game Club, a municipality club, for the municipality
+-- invoicing page's holiday lines.
+--
+-- It runs after everything else on purpose, as an admin attaching a calendar
+-- to a running club would: whatever sections 9 to 12 stored on the holiday
+-- week now counts as not running, and is shown as its break rather than as a
+-- session. The holiday week is seven days, so it takes exactly one session
+-- from each weekly club. The Christmas break is this year's, or next year's
+-- when this year's would touch the holiday week — the breaks of one calendar
+-- may not overlap. A stack built in the second half of December may find
+-- the Creator Studio Club's cancelled next session (section 12) on a Christmas
+-- date, where it shows as the break rather than as cancelled.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_week_start date := current_date - 13;
+  v_week_end   date := current_date - 7;
+  v_christmas  date := make_date(EXTRACT(YEAR FROM current_date)::integer, 12, 22);
+  v_calendar   uuid;
+  v_product    uuid;
+BEGIN
+  IF v_christmas <= v_week_end THEN
+    v_christmas := (v_christmas + interval '1 year')::date;
+  END IF;
+
+  v_calendar := public.create_holiday_calendar(
+    'Helsinki schools',
+    jsonb_build_array(
+      jsonb_build_object(
+        'start_date', v_week_start,
+        'end_date',   v_week_end,
+        'names', jsonb_build_array(
+          jsonb_build_object('locale', 'en', 'name', 'Holiday week'),
+          jsonb_build_object('locale', 'fi', 'name', 'Lomaviikko'),
+          jsonb_build_object('locale', 'sv', 'name', 'Lovvecka'),
+          jsonb_build_object('locale', 'fr', 'name', 'Semaine de vacances'))),
+      jsonb_build_object(
+        'start_date', v_christmas,
+        'end_date',   make_date(EXTRACT(YEAR FROM v_christmas)::integer + 1, 1, 6),
+        'names', jsonb_build_array(
+          jsonb_build_object('locale', 'en', 'name', 'Christmas break'),
+          jsonb_build_object('locale', 'fi', 'name', 'Joululoma'),
+          jsonb_build_object('locale', 'sv', 'name', 'Jullov'),
+          jsonb_build_object('locale', 'fr', 'name', 'Vacances de Noël')))
+    ));
+
+  FOR v_product IN
+    SELECT t.product_id
+      FROM public.product_translations t
+     WHERE t.locale = 'en'
+       AND t.name IN ('Creator Studio Club', 'Youth Centre Game Club')
+  LOOP
+    PERFORM public.set_product_holiday_calendars(v_product, ARRAY[v_calendar]);
+  END LOOP;
+END;
+$$;
+
+COMMIT;
+
+-- =============================================================================
+-- 16. What landed
 -- =============================================================================
 
 DO $$
@@ -3090,6 +3171,18 @@ BEGIN
     (SELECT string_agg(locale || ' ' || n, ', ' ORDER BY locale)
        FROM (SELECT locale, count(*) AS n FROM public.library_article_publication_translations
               GROUP BY locale) v);
+
+  RAISE NOTICE 'rich-seed: holiday breaks, and the clubs that follow them';
+  FOR r IN SELECT c.name || ': ' || string_agg(DISTINCT t.name, ', ') AS k,
+                  string_agg(DISTINCT to_char(b.start_date, 'DD Mon YYYY') || ' – '
+                             || to_char(b.end_date, 'DD Mon YYYY'), ', ') AS n
+             FROM public.holiday_calendars c
+             JOIN public.holiday_breaks b ON b.calendar_id = c.id
+             JOIN public.product_holiday_calendars phc ON phc.calendar_id = c.id
+             JOIN public.product_translations t
+               ON t.product_id = phc.product_id AND t.locale = 'en'
+            GROUP BY c.name
+  LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 
   RAISE NOTICE 'rich-seed: team profiles';
   FOR r IN SELECT p.email || ' (' || p.role::text || ')' AS k,

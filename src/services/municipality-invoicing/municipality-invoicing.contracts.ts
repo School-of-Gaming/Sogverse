@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { Constants } from "@/types";
 // The one definition of a Fennoa customer, imported rather than restated: the
 // RPC emits the stored row, so a second spelling of those nine fields here
@@ -120,6 +121,12 @@ export const municipalityInvoicingClub = z.object({
    * database's plan, which the builder reads rather than walking the slots.
    */
   planned_dates: z.array(z.string()),
+  /**
+   * The holiday breaks touching the month, each with the planned dates it
+   * withdrew inside it — shown on the page as holiday lines at no charge, and
+   * left out of the Finvoice file.
+   */
+  holiday_breaks: holidayBreakRows,
   location: municipalityInvoicingLocation.nullable(),
   municipality: municipalityInvoicingMunicipality,
   invoice_customer: invoiceCustomerRow.nullable(),

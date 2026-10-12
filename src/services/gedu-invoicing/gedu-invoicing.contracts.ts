@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { Constants } from "@/types";
 // The same location rows the municipality invoicing read emits, from the same
 // SQL, so they are imported rather than spelled a second time.
@@ -137,6 +138,11 @@ export const geduInvoicingProduct = z.object({
    * the month, already clipped to its term, one per date, ascending.
    */
   planned_dates: z.array(z.string()),
+  /**
+   * The holiday breaks touching the month, each with the planned dates it
+   * withdrew inside it — the invoice's holiday lines, at no charge.
+   */
+  holiday_breaks: holidayBreakRows,
   location: municipalityInvoicingLocation.nullable(),
   municipality: municipalityInvoicingMunicipality.nullable(),
 });

@@ -18,6 +18,8 @@ DECLARE
   v_gedus         jsonb;
   v_cancellations jsonb;
   v_trainees      jsonb;
+  v_start_date    date;
+  v_horizon       date;
 BEGIN
   -- Guard-first, in the shape get_gedu_group_feed uses: an admin or a gedu
   -- past the first statement, everyone else refused on it.
@@ -33,11 +35,14 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  SELECT g.product_id, p.timezone
-    INTO v_product_id, v_timezone
+  SELECT g.product_id, p.timezone, p.start_date
+    INTO v_product_id, v_timezone, v_start_date
     FROM public.product_groups g
     JOIN public.products p ON p.id = g.product_id
    WHERE g.id = p_group_id;
+
+  -- The plan's span, which the holiday breaks share.
+  v_horizon := public.session_plan_horizon(v_product_id, p_group_id);
 
   -- Ages are counted on the product's own calendar day.
   v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
@@ -187,7 +192,8 @@ BEGIN
     ) AS gedu_rows;
 
   -- The cancelled sessions in effect, in the staff documents' shape with the
-  -- detail left null: that a session is off, never why.
+  -- detail left null: that a session is off, never why. One on a holiday is
+  -- not listed — that date carries its break alone.
   SELECT COALESCE(
            jsonb_agg(
              public.session_cancellation_document(sc, false)
@@ -198,7 +204,8 @@ BEGIN
     INTO v_cancellations
     FROM public.session_cancellations sc
    WHERE sc.group_id = p_group_id
-     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
+     AND NOT public.group_session_date_is_holiday(sc.group_id, sc.session_date);
 
   SELECT COALESCE(
            jsonb_agg(
@@ -224,10 +231,10 @@ BEGIN
     'cancellations', v_cancellations,
     'trainees',      v_trainees,
     -- The plan and the final session, as the gedu document carries them: the
-    -- schedule is no secret from anyone on the group.
-    'planned_sessions', public.planned_sessions_document(
-                          v_product_id, public.session_plan_horizon(v_product_id, p_group_id)
-                        ),
+    -- schedule is no secret from anyone on the group, and nor are the holiday
+    -- breaks over the same span.
+    'planned_sessions', public.planned_sessions_document(v_product_id, v_horizon),
+    'holiday_breaks',   public.holiday_breaks_document(v_product_id, v_start_date, v_horizon),
     'final_session_date', public.group_final_session_date(p_group_id)
   );
 END;
@@ -238,7 +245,7 @@ $$;
 -- Name: FUNCTION get_trainee_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_trainee_group_feed(p_group_id uuid) IS 'The trainee''s group workspace: the same document get_gedu_group_feed serves, with everything a trainee may not see ABSENT from the wire rather than blanked, so the same page body renders it. A trainee sees what a gamer on the group sees, plus the material link and the roster. Guard-first on assert_role (an admin or a gedu), then gedu_trains_group as a second 42501; an admin passes outright, to preview the trainee''s view. Carries: the product shell with material_url; the group''s public note (never gedu_note); the site''s name, address and public note (never gedu_note); a roster row per active seat with participant_id, first_name, signed_up_at, group_joined_at, an integer `age` (never the birth year or month), gender, both game identities, `has_note` (whether a staff note exists, never its text or editor) and `creations` always []; no parent_email or participant_email. Every stored session a family is shown — a record kept under a cancellation does not travel — with report, report_emailed_at, updated_by and updated_by_first_name, images, and `attendance` always {}; never gedu_note, created_at, created_by or updated_at. `gedus` as {id, first_name, role}; `substitutions` always []; `cancellations` in session_cancellation_document''s shape with the admin-only detail null; `trainees` as {id, first_name}; `planned_sessions` and `final_session_date` as get_gedu_group_feed carries them. Photo-consent answers are not on it and the trainee cannot read them elsewhere: their read policy asks gedu_teaches_gamer, which has no trainee arm.';
+COMMENT ON FUNCTION public.get_trainee_group_feed(p_group_id uuid) IS 'The trainee''s group workspace: the same document get_gedu_group_feed serves, with everything a trainee may not see ABSENT from the wire rather than blanked, so the same page body renders it. A trainee sees what a gamer on the group sees, plus the material link and the roster. Guard-first on assert_role (an admin or a gedu), then gedu_trains_group as a second 42501; an admin passes outright, to preview the trainee''s view. Carries: the product shell with material_url; the group''s public note (never gedu_note); the site''s name, address and public note (never gedu_note); a roster row per active seat with participant_id, first_name, signed_up_at, group_joined_at, an integer `age` (never the birth year or month), gender, both game identities, `has_note` (whether a staff note exists, never its text or editor) and `creations` always []; no parent_email or participant_email. Every stored session a family is shown — a record kept under a cancellation does not travel — with report, report_emailed_at, updated_by and updated_by_first_name, images, and `attendance` always {}; never gedu_note, created_at, created_by or updated_at. `gedus` as {id, first_name, role}; `substitutions` always []; `cancellations` in session_cancellation_document''s shape with the admin-only detail null, none on a holiday date; `trainees` as {id, first_name}; `planned_sessions`, `holiday_breaks` and `final_session_date` as get_gedu_group_feed carries them. Photo-consent answers are not on it and the trainee cannot read them elsewhere: their read policy asks gedu_teaches_gamer, which has no trainee arm.';
 
 
 --

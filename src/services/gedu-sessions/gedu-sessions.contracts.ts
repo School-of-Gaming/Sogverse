@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { plannedSessionRows } from "@/lib/planned-sessions";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
@@ -382,6 +383,12 @@ export const geduGroupFeed = z.object({
    */
   planned_sessions: plannedSessionRows,
   /**
+   * The holiday breaks over the plan's span, each with the sessions it
+   * withdrew from the plan above. A holiday date carries its break and
+   * nothing else: no stored session and no cancellation lands on one.
+   */
+  holiday_breaks: holidayBreakRows,
+  /**
    * The run's last session this group has not cancelled, product-local
    * `YYYY-MM-DD`; null on an open-ended product, which has none.
    */
@@ -479,6 +486,7 @@ export const traineeGroupFeed = z.object({
   cancellations: z.array(sessionCancellation),
   trainees: z.array(groupTrainee),
   planned_sessions: geduGroupFeed.shape.planned_sessions,
+  holiday_breaks: geduGroupFeed.shape.holiday_breaks,
   final_session_date: geduGroupFeed.shape.final_session_date,
 });
 

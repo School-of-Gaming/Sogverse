@@ -357,6 +357,12 @@ import { TEST_IDS } from "./constants";
  *                  cases — declared here for the same reason 6ee and 6ff are.
  *                  The calendars themselves are minted by the RPC under test
  *                  and found by a name prefix only that file uses)
+ *   8a0-8a3        holiday-documents.test.ts (the dated Monday club 8a0 with
+ *                  its group 8a1, taught by the seeded gedu and holding the
+ *                  seeded gamer's seat; the open-ended daily club 8a2 with its
+ *                  group 8a3, for the admin dashboard's window around today.
+ *                  Its calendar is minted by the RPC and found by a name
+ *                  prefix only that file uses)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls
