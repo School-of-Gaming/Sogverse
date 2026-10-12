@@ -688,6 +688,7 @@ function ArticleVersionsSection({
       <Field label={t("fields.languages")} hint={t("hints.languages")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-border">
           {addedLocales.map((l) => {
+            // exact-locale: highlights the tab being edited
             const isActive = locale === l;
             const canRemove = addedLocales.length > 1;
             const name = languageName(l, LOCALE_CONFIG[l].label);

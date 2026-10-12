@@ -162,6 +162,24 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 **The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split.
 
+## Content written per locale
+
+Authored content — products, Library articles, landing pages, Team profiles — is stored
+one row per (thing, locale), and not every thing has every locale.
+
+**Rule: showing such content to a reader always goes through `resolveTranslation()`.** It
+picks the reader's locale, else English, else the earliest written locale in
+`SUPPORTED_LOCALES` order (a code the app does not ship ranks after those). The pick
+depends only on which locales are written, never on the order of the rows, so neither app
+code nor a database function orders rows for it. A database function returns every
+version and never picks one itself.
+
+**Every other lookup of one locale's row is exact on purpose and says why** — a slug
+address, an editor's tab, a writer saving a named version, an `hreflang` list — with a
+comment `exact-locale: <reason>` on its line or the line above. A unit test sweeps `src/`
+and `scripts/` for hand-written per-locale lookups and fails on an unmarked one; a lookup
+that is really a display pick is converted, not marked.
+
 ## Usage patterns
 
 - **Server components / `generateMetadata()`** — `await getTranslations("namespace")` from `next-intl/server`.

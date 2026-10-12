@@ -58,19 +58,16 @@ const ACTIVITIES = {
     product_type: "camp",
     is_remote: false,
     start_date: "2026-10-19",
-    spoken_language_code: "fr",
   },
   [P_CLUB]: {
     product_type: "consumer_club",
     is_remote: true,
     start_date: "2026-09-14",
-    spoken_language_code: "fi",
   },
   [P_EVENT]: {
     product_type: "event",
     is_remote: true,
     start_date: "2026-11-02",
-    spoken_language_code: "fi",
   },
 };
 
@@ -179,7 +176,7 @@ const TABLES = {
     { product_id: P_CAMP, locale: "fr", name: "Camp Créateur Roblox — Lyon" },
     { product_id: P_CLUB, locale: "fi", name: "Roblox-kerho" },
     { product_id: P_CLUB, locale: "sv", name: "Roblox-klubb" },
-    // Neither English nor the spoken Finnish: the first locale by code.
+    // No English: the earliest written in the app's locale order (sv before fr).
     { product_id: P_EVENT, locale: "fr", name: "Journée Roblox" },
     { product_id: P_EVENT, locale: "sv", name: "Roblox-dag" },
   ]),
@@ -277,7 +274,7 @@ describe("GET /api/partner/v1/roblox-research", () => {
         age: { min: 14, max: 14 },
         activity: {
           product_id: P_EVENT,
-          name: "Journée Roblox",
+          name: "Roblox-dag",
           type: "event",
           delivery: "online",
           start_date: "2026-11-02",

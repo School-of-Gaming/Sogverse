@@ -175,8 +175,8 @@ interface DesiredStripeProduct {
 function desiredStripeProduct(product: ProductRow): DesiredStripeProduct {
   // One Stripe Product per Sogverse product, shared across every locale, so
   // there is no viewer locale to prefer: resolve at the default locale and walk
-  // the shared fallback chain (en → first). The select below orders the embedded
-  // translations by locale, which is what makes that last step deterministic.
+  // the shared fallback chain, whose pick depends only on which locales are
+  // written — the same name the app gives the product.
   const name = resolveTranslation(
     product.product_translations,
     DEFAULT_LOCALE,
@@ -299,13 +299,7 @@ async function loadProductRows(
       .select(
         "id, product_type, spoken_language_code, start_date, end_date, product_translations(locale, name)",
       )
-      .in("id", chunk)
-      // Embedded resources come back unordered, so a product without an English
-      // translation would resolve its name from an arbitrary row and the name
-      // would flap between runs. Ordering an embedded resource needs its table
-      // named — a bare `.order("locale")` orders `products` by a column it does
-      // not have.
-      .order("locale", { referencedTable: "product_translations" });
+      .in("id", chunk);
     if (error) throw error;
     for (const row of data) rows.set(row.id, row);
   }

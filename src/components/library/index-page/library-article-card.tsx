@@ -73,6 +73,7 @@ export function LibraryArticleCard({
   const timeZone = useTimezone();
   // Only the article's words carry its language; the category and the date
   // are the page's own.
+  // exact-locale: marks text written in another language than the page with lang
   const lang = textLocale === locale ? undefined : textLocale;
 
   return (

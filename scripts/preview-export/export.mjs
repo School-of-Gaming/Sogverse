@@ -860,6 +860,7 @@ function planComposite(shots, title) {
 
     for (const viewport of rowOrder()) {
       const row = LOCALES.flatMap((locale) =>
+        // exact-locale: screenshots are filed per UI locale
         entry.filter((s) => s.locale === locale && s.viewport === viewport),
       ).filter((s) => s.state === "ok");
       if (row.length === 0) continue;

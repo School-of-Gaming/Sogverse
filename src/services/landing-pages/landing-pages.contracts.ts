@@ -27,8 +27,7 @@ import { slugify } from "@/lib/slug";
  * their order, pictures, buttons, icons and items — are the page's, once.
  * Each language version holds a title, a summary, a slug and the text of every
  * section, keyed by section id. Versions are listed in `SUPPORTED_LOCALES`
- * order everywhere, so "the first written" — the reader fallback's last step —
- * is the same answer on every surface.
+ * order everywhere.
  */
 
 // ---------------------------------------------------------------------------

@@ -133,6 +133,7 @@ async function loadCohort() {
   const ids = products.map((p) => p.id);
   const names = {};
   const translations = await rest(
+    // exact-locale: an English-only ops console, reading the English name
     `product_translations?select=product_id,name&locale=eq.en&product_id=in.(${ids.join(",")})`,
   );
   translations.forEach((t) => (names[t.product_id] = t.name));
