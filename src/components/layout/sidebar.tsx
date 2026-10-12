@@ -19,6 +19,7 @@ import {
   Receipt,
   ReceiptText,
   Sparkles,
+  Spotlight,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -34,7 +35,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "testing"
   | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "landingPages" | "platformVision"
+  | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "spotlights" | "landingPages" | "platformVision"
   | "camps" | "events"
   | "sites" | "substitutions" | "feedback";
 
@@ -85,6 +86,7 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // no customer is reported.
     { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
     { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
+    { href: ROUTES.admin.spotlights, labelKey: "spotlights", icon: <Spotlight className="h-5 w-5" /> },
     { href: ROUTES.admin.landingPages, labelKey: "landingPages", icon: <Megaphone className="h-5 w-5" /> },
     // Last of the content entries and above the tooling: it is read, not
     // worked in, and an admin reaches it from a link far more than by habit.

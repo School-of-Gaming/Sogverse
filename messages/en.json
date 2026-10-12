@@ -49,6 +49,9 @@
       "adminLibrary": "Library Content",
       "adminLibraryArticleNew": "New Article",
       "adminLibraryArticleEdit": "Edit Article",
+      "adminSpotlights": "Spotlights",
+      "adminSpotlightNew": "New Spotlight",
+      "adminSpotlightEdit": "Edit Spotlight",
       "adminLandingPages": "Landing Pages",
       "adminLandingPage": "Landing Page",
       "adminPlatformVision": "Platform Vision",
@@ -616,6 +619,69 @@
       "addLocale": "Add a language",
       "removeLocale": "Remove {language}",
       "languagesLabel": "Languages"
+    },
+    "spotlights": {
+      "title": "Spotlights",
+      "subtitle": "Families see every spotlight that is switched on at the bottom of every session report email, newest first. Each reader gets it in their own language, or in English when theirs is not written, or else in a language that is.",
+      "newSpotlight": "New spotlight",
+      "empty": "No spotlights yet. Write the first one.",
+      "backToList": "Back to spotlights",
+      "notFound": "There is no spotlight with this id.",
+      "loadError": "Could not load this spotlight. Refresh to try again.",
+      "newPage": {
+        "title": "New spotlight",
+        "submit": "Save"
+      },
+      "editPage": {
+        "title": "Edit spotlight"
+      },
+      "editor": {
+        "onLine": "Switched on: families see it at the bottom of every session report email.",
+        "offLine": "Switched off: it is in no email. Switch it on from the list of spotlights."
+      },
+      "fields": {
+        "languages": "Languages",
+        "title": "Title",
+        "body": "Text",
+        "picture": "Picture"
+      },
+      "hints": {
+        "languages": "Write each language by hand. Every language needs a title and the text.",
+        "body": "Set under the title in the email, formatted as it looks here. Links are allowed.",
+        "picture": "Shown above the title in the email, cropped to 2:1. A spotlight can be saved without one, but needs one to be switched on."
+      },
+      "bodyPlaceholder": "Write the spotlight…",
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "errors": {
+        "noVersion": "A spotlight needs a title and text in at least one language.",
+        "versionIncomplete": "The {language} version needs both a title and the text.",
+        "pictureWhileOn": "This spotlight is switched on, so it needs a picture. Choose one, or switch the spotlight off from the list first.",
+        "saveFailed": "The spotlight could not be saved. Try again.",
+        "saveFailedWithReason": "The spotlight could not be saved — {reason}",
+        "switchFailed": "Could not change whether the spotlight is switched on. Try again.",
+        "switchFailedWithReason": "Could not change whether the spotlight is switched on — {reason}",
+        "deleteFailed": "The spotlight could not be deleted. Try again.",
+        "deleteFailedWithReason": "The spotlight could not be deleted — {reason}"
+      },
+      "versionComplete": "complete",
+      "versionIncomplete": "not complete yet",
+      "addLocale": "Add a language",
+      "removeLocale": "Remove {language}",
+      "languagesLabel": "Languages",
+      "created": "Created {date}",
+      "switchLabel": "In session report emails",
+      "needsPicture": "Add a picture to switch it on.",
+      "deleteConfirm": {
+        "title": "Delete this spotlight?",
+        "descriptionOn": "It leaves session report emails straight away, and it cannot be brought back. Its picture stays in the catalogue.",
+        "descriptionOff": "It cannot be brought back. Its picture stays in the catalogue.",
+        "confirm": "Delete"
+      }
     },
     "landingPages": {
       "title": "Landing pages",
@@ -1201,6 +1267,7 @@
         "live": "Live",
         "hidden": "Hidden",
         "draft": "Draft",
+        "switchedOff": "Off",
         "replace": "Replace picture",
         "remove": "Remove from catalogue",
         "replaceConfirm": {
@@ -3565,6 +3632,7 @@
     "municipalityInvoicing": "Municipality Invoicing",
     "invoiceCustomers": "Invoice Customers",
     "libraryContent": "Library Content",
+    "spotlights": "Spotlights",
     "landingPages": "Landing Pages",
     "platformVision": "Platform Vision",
     "geduInvoicing": "Gedu Invoicing",

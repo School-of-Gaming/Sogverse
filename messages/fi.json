@@ -49,6 +49,9 @@
       "adminLibrary": "Kirjaston sisältö",
       "adminLibraryArticleNew": "Uusi artikkeli",
       "adminLibraryArticleEdit": "Muokkaa artikkelia",
+      "adminSpotlights": "Nostot",
+      "adminSpotlightNew": "Uusi nosto",
+      "adminSpotlightEdit": "Muokkaa nostoa",
       "adminLandingPages": "Laskeutumissivut",
       "adminLandingPage": "Laskeutumissivu",
       "adminPlatformVision": "Alustan visio",
@@ -616,6 +619,69 @@
       "addLocale": "Lisää kieli",
       "removeLocale": "Poista {language}",
       "languagesLabel": "Kielet"
+    },
+    "spotlights": {
+      "title": "Nostot",
+      "subtitle": "Perheet näkevät jokaisen päällä olevan noston jokaisen sessioraportin sähköpostin lopussa, uusin ensin. Kukin lukija saa sen omalla kielellään, tai englanniksi, jos hänen kieltään ei ole kirjoitettu, tai muuten jollakin kirjoitetulla kielellä.",
+      "newSpotlight": "Uusi nosto",
+      "empty": "Ei vielä nostoja. Kirjoita ensimmäinen.",
+      "backToList": "Takaisin nostoihin",
+      "notFound": "Tällä tunnisteella ei ole nostoa.",
+      "loadError": "Nostoa ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+      "newPage": {
+        "title": "Uusi nosto",
+        "submit": "Tallenna"
+      },
+      "editPage": {
+        "title": "Muokkaa nostoa"
+      },
+      "editor": {
+        "onLine": "Päällä: perheet näkevät sen jokaisen sessioraportin sähköpostin lopussa.",
+        "offLine": "Pois päältä: se ei ole missään sähköpostissa. Kytke se päälle nostojen listalta."
+      },
+      "fields": {
+        "languages": "Kielet",
+        "title": "Otsikko",
+        "body": "Teksti",
+        "picture": "Kuva"
+      },
+      "hints": {
+        "languages": "Kirjoita jokainen kieli itse. Jokainen kieli tarvitsee otsikon ja tekstin.",
+        "body": "Näkyy sähköpostissa otsikon alla, muotoiltuna kuten tässä. Linkit ovat sallittuja.",
+        "picture": "Näkyy sähköpostissa otsikon yläpuolella, rajattuna suhteeseen 2:1. Noston voi tallentaa ilman kuvaa, mutta päälle kytkeminen vaatii kuvan."
+      },
+      "bodyPlaceholder": "Kirjoita nosto…",
+      "actions": {
+        "save": "Tallenna",
+        "cancel": "Peruuta",
+        "edit": "Muokkaa",
+        "delete": "Poista"
+      },
+      "errors": {
+        "noVersion": "Nosto tarvitsee otsikon ja tekstin vähintään yhdellä kielellä.",
+        "versionIncomplete": "Kielelle {language} tarvitaan sekä otsikko että teksti.",
+        "pictureWhileOn": "Tämä nosto on päällä, joten se tarvitsee kuvan. Valitse kuva tai kytke nosto ensin pois päältä listalta.",
+        "saveFailed": "Nostoa ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Nostoa ei voitu tallentaa — {reason}",
+        "switchFailed": "Noston tilaa ei voitu muuttaa. Yritä uudelleen.",
+        "switchFailedWithReason": "Noston tilaa ei voitu muuttaa — {reason}",
+        "deleteFailed": "Nostoa ei voitu poistaa. Yritä uudelleen.",
+        "deleteFailedWithReason": "Nostoa ei voitu poistaa — {reason}"
+      },
+      "versionComplete": "valmis",
+      "versionIncomplete": "kesken",
+      "addLocale": "Lisää kieli",
+      "removeLocale": "Poista {language}",
+      "languagesLabel": "Kielet",
+      "created": "Luotu {date}",
+      "switchLabel": "Sessioraporttien sähköposteissa",
+      "needsPicture": "Lisää kuva, niin voit kytkeä sen päälle.",
+      "deleteConfirm": {
+        "title": "Poistetaanko tämä nosto?",
+        "descriptionOn": "Se poistuu sessioraporttien sähköposteista heti, eikä sitä voi palauttaa. Sen kuva jää kuvakirjastoon.",
+        "descriptionOff": "Sitä ei voi palauttaa. Sen kuva jää kuvakirjastoon.",
+        "confirm": "Poista"
+      }
     },
     "landingPages": {
       "title": "Laskeutumissivut",
@@ -1201,6 +1267,7 @@
         "live": "Julkaistu",
         "hidden": "Piilotettu",
         "draft": "Luonnos",
+        "switchedOff": "Pois päältä",
         "replace": "Korvaa kuva",
         "remove": "Poista kirjastosta",
         "replaceConfirm": {
@@ -3565,6 +3632,7 @@
     "municipalityInvoicing": "Kuntalaskutus",
     "invoiceCustomers": "Laskutusasiakkaat",
     "libraryContent": "Kirjaston sisältö",
+    "spotlights": "Nostot",
     "landingPages": "Laskeutumissivut",
     "platformVision": "Alustan visio",
     "geduInvoicing": "Gedujen laskutus",

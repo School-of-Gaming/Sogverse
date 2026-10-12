@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { CircleCheck, CircleDashed, ExternalLink, Loader2, X } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import {
   LIBRARY_CATEGORY_MESSAGE_KEY,
   isLibraryCategory,
 } from "@/components/library/categories";
+import { AuthoredBodyEditor } from "@/components/admin/authored-body-editor";
+import { LocaleVersionTabs } from "@/components/admin/locale-version-tabs";
 import { ImagePicker } from "@/components/admin/products/image-picker";
 import {
   articleAddress,
@@ -26,12 +28,11 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import {
   LOCALE_CONFIG,
-  SUPPORTED_LOCALES,
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { localeTabAfterRemoving } from "@/lib/i18n/locale-tabs";
-import { cn, findOption, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
   isCompleteVersion,
@@ -40,7 +41,6 @@ import {
   type LibraryArticleDraft,
   type LibraryArticleInput,
 } from "@/services/library";
-import { ArticleBodyEditor } from "./article-body-editor";
 import {
   emptyLibraryArticleForm,
   formLocales,
@@ -121,7 +121,7 @@ interface EditorCommonProps {
  * opens the saved copy on a page of its own, in the public site's chrome, and
  * waits for Save the same way, so what it shows is what Publish would publish.
  *
- * **The text is written per language, in tabs** — the team profile's: a tab
+ * **The text is written per language, in tabs** — the shared ones: a tab
  * per language written, each marked complete or not, a remove control on each
  * while more than one remains, and an "add a language" select for the rest.
  * The category and the cover are the article's, once, beneath them.
@@ -618,12 +618,10 @@ function PublishReasons({
 }
 
 /**
- * **An article's text, one tab per language.** The team profile's tabs,
- * mirrored rather than shared, as that form mirrors the product form's: a tab
- * per language written, a remove control on each while more than one remains,
- * and an "add a language" select for the rest. Each tab says whether its
- * version is complete — a title, a summary and a body — because only a
- * complete one is published.
+ * **An article's text, one tab per language**, in the language tabs the
+ * per-locale admin editors share. Each tab says whether its version is
+ * complete — a title, a summary and a body — because only a complete one is
+ * published.
  *
  * The body editor reads its content once, at mount, so the locale is its key
  * and switching tabs remounts it on that language's draft.
@@ -638,14 +636,10 @@ function ArticleVersionsSection({
   onSeeded: (seed: { value: string; markdown: string }) => void;
 }) {
   const t = useTranslations("admin.library");
-  const languageName = useLanguageNames();
   const uiLocale = resolveLocale(useLocale());
 
   const locale = form.activeLocale;
   const addedLocales = formLocales(form);
-  const addableLocales = SUPPORTED_LOCALES.filter(
-    (l) => form.versions[l] === undefined,
-  );
   const draft = versionOf(form, locale);
 
   function setActive(patch: Partial<LibraryArticleVersionDraft>) {
@@ -686,69 +680,20 @@ function ArticleVersionsSection({
   return (
     <div className="space-y-5">
       <Field label={t("fields.languages")} hint={t("hints.languages")}>
-        <div className="flex flex-wrap items-center gap-1 border-b border-border">
-          {addedLocales.map((l) => {
-            const isActive = locale === l;
-            const canRemove = addedLocales.length > 1;
-            const name = languageName(l, LOCALE_CONFIG[l].label);
-            const complete = isCompleteVersion(versionOf(form, l));
-            const Mark = complete ? CircleCheck : CircleDashed;
-            return (
-              <span
-                key={l}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-t-md border-b-2 border-border px-3 py-1.5 text-sm transition-colors",
-                  isActive
-                    ? "text-act"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <button
-                  type="button"
-                  aria-pressed={isActive}
-                  className="inline-flex items-center gap-1.5"
-                  onClick={() =>
-                    setForm((prev) => ({ ...prev, activeLocale: l }))
-                  }
-                >
-                  {LOCALE_CONFIG[l].nativeLabel}
-                  <Mark className="h-3.5 w-3.5" aria-hidden />
-                  <span className="sr-only">
-                    {complete ? t("versionComplete") : t("versionIncomplete")}
-                  </span>
-                </button>
-                {canRemove && (
-                  <button
-                    type="button"
-                    onClick={() => removeLocale(l)}
-                    className="rounded p-0.5 text-muted-foreground hover:text-destructive"
-                    aria-label={t("removeLocale", { language: name })}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </span>
-            );
-          })}
-          {addableLocales.length > 0 && (
-            <select
-              value=""
-              aria-label={t("addLocale")}
-              onChange={(e) => {
-                const next = findOption(addableLocales, e.target.value);
-                if (next) addLocale(next);
-              }}
-              className="mb-1 ml-1 h-8 rounded-md border border-border bg-background px-2 text-xs text-foreground"
-            >
-              <option value="">{t("addLocale")}</option>
-              {addableLocales.map((l) => (
-                <option key={l} value={l}>
-                  {languageName(l, LOCALE_CONFIG[l].label)}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        <LocaleVersionTabs
+          open={addedLocales}
+          active={locale}
+          isComplete={(l) => isCompleteVersion(versionOf(form, l))}
+          onSelect={(l) => setForm((prev) => ({ ...prev, activeLocale: l }))}
+          onAdd={addLocale}
+          onRemove={removeLocale}
+          labels={{
+            addLocale: t("addLocale"),
+            removeLocale: (language) => t("removeLocale", { language }),
+            complete: t("versionComplete"),
+            incomplete: t("versionIncomplete"),
+          }}
+        />
       </Field>
 
       <Field label={t("fields.title")} htmlFor="library-article-title">
@@ -781,7 +726,8 @@ function ArticleVersionsSection({
       <Field label={t("fields.body")} hint={t("hints.body")}>
         {({ hintId }) => (
           <div lang={locale}>
-            <ArticleBodyEditor
+            <AuthoredBodyEditor
+              useCase="article"
               key={locale}
               value={draft.body}
               onChange={(body) => setActive({ body })}

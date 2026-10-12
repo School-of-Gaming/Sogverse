@@ -49,6 +49,9 @@
       "adminLibrary": "Contenu de la Bibliothèque",
       "adminLibraryArticleNew": "Nouvel article",
       "adminLibraryArticleEdit": "Modifier l’article",
+      "adminSpotlights": "Mises en avant",
+      "adminSpotlightNew": "Nouvelle mise en avant",
+      "adminSpotlightEdit": "Modifier la mise en avant",
       "adminLandingPages": "Pages d’atterrissage",
       "adminLandingPage": "Page d’atterrissage",
       "adminPlatformVision": "Vision de la plateforme",
@@ -616,6 +619,69 @@
       "addLocale": "Ajouter une langue",
       "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues"
+    },
+    "spotlights": {
+      "title": "Mises en avant",
+      "subtitle": "Les familles voient chaque mise en avant activée en bas de chaque e-mail de compte rendu de session, de la plus récente à la plus ancienne. Chaque lecteur la reçoit dans sa langue, ou en anglais si la sienne n’est pas rédigée, ou sinon dans une langue qui l’est.",
+      "newSpotlight": "Nouvelle mise en avant",
+      "empty": "Aucune mise en avant pour l’instant. Rédigez la première.",
+      "backToList": "Retour aux mises en avant",
+      "notFound": "Aucune mise en avant ne correspond à cet identifiant.",
+      "loadError": "Impossible de charger cette mise en avant. Actualisez la page pour réessayer.",
+      "newPage": {
+        "title": "Nouvelle mise en avant",
+        "submit": "Enregistrer"
+      },
+      "editPage": {
+        "title": "Modifier la mise en avant"
+      },
+      "editor": {
+        "onLine": "Activée : les familles la voient en bas de chaque e-mail de compte rendu de session.",
+        "offLine": "Désactivée : elle ne figure dans aucun e-mail. Activez-la depuis la liste des mises en avant."
+      },
+      "fields": {
+        "languages": "Langues",
+        "title": "Titre",
+        "body": "Texte",
+        "picture": "Image"
+      },
+      "hints": {
+        "languages": "Rédigez chaque langue à la main. Chaque langue a besoin d’un titre et du texte.",
+        "body": "Affiché sous le titre dans l’e-mail, mis en forme comme ici. Les liens sont autorisés.",
+        "picture": "Affichée au-dessus du titre dans l’e-mail, recadrée en 2:1. Une mise en avant peut être enregistrée sans image, mais il en faut une pour l’activer."
+      },
+      "bodyPlaceholder": "Rédigez la mise en avant…",
+      "actions": {
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+      },
+      "errors": {
+        "noVersion": "Une mise en avant a besoin d’un titre et d’un texte dans au moins une langue.",
+        "versionIncomplete": "La version {language} a besoin d’un titre et du texte.",
+        "pictureWhileOn": "Cette mise en avant est activée, elle a donc besoin d’une image. Choisissez-en une, ou désactivez d’abord la mise en avant depuis la liste.",
+        "saveFailed": "La mise en avant n’a pas pu être enregistrée. Réessayez.",
+        "saveFailedWithReason": "La mise en avant n’a pas pu être enregistrée — {reason}",
+        "switchFailed": "Impossible d’activer ou de désactiver la mise en avant. Réessayez.",
+        "switchFailedWithReason": "Impossible d’activer ou de désactiver la mise en avant — {reason}",
+        "deleteFailed": "La mise en avant n’a pas pu être supprimée. Réessayez.",
+        "deleteFailedWithReason": "La mise en avant n’a pas pu être supprimée — {reason}"
+      },
+      "versionComplete": "complète",
+      "versionIncomplete": "pas encore complète",
+      "addLocale": "Ajouter une langue",
+      "removeLocale": "Supprimer {language}",
+      "languagesLabel": "Langues",
+      "created": "Créée le {date}",
+      "switchLabel": "Dans les e-mails de compte rendu de session",
+      "needsPicture": "Ajoutez une image pour pouvoir l’activer.",
+      "deleteConfirm": {
+        "title": "Supprimer cette mise en avant ?",
+        "descriptionOn": "Elle quitte immédiatement les e-mails de compte rendu de session et ne pourra pas être récupérée. Son image reste dans le catalogue.",
+        "descriptionOff": "Elle ne pourra pas être récupérée. Son image reste dans le catalogue.",
+        "confirm": "Supprimer"
+      }
     },
     "landingPages": {
       "title": "Pages d’atterrissage",
@@ -1201,6 +1267,7 @@
         "live": "En ligne",
         "hidden": "Masqué",
         "draft": "Brouillon",
+        "switchedOff": "Désactivée",
         "replace": "Remplacer l’image",
         "remove": "Retirer du catalogue",
         "replaceConfirm": {
@@ -3565,6 +3632,7 @@
     "municipalityInvoicing": "Facturation municipale",
     "invoiceCustomers": "Clients de facturation",
     "libraryContent": "Contenu de la Bibliothèque",
+    "spotlights": "Mises en avant",
     "landingPages": "Pages d’atterrissage",
     "platformVision": "Vision de la plateforme",
     "geduInvoicing": "Facturation des Gedus",

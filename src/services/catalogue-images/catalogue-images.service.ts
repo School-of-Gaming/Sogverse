@@ -60,15 +60,29 @@ export interface LandingPageImageUser {
 }
 
 /**
+ * One spotlight whose picture is a catalogue entry, named by its title in the
+ * default locale. `is_live` is whether it is switched on — in the session
+ * report emails right now.
+ */
+export interface SpotlightImageUser {
+  kind: "spotlight";
+  id: string;
+  title: string;
+  is_live: boolean;
+}
+
+/**
  * Anything a catalogue entry reaches. A product links only a product entry, an
- * article only a Library cover and a landing page only a landing picture, so
+ * article only a Library cover, a landing page only a landing picture and a
+ * spotlight only a spotlight picture, so
  * one entry's list is in practice all of one kind; the type does not rely on
  * that.
  */
 export type CatalogueImageUser =
   | ProductPictureUser
   | LibraryArticleImageUser
-  | LandingPageImageUser;
+  | LandingPageImageUser
+  | SpotlightImageUser;
 
 /**
  * Which products and articles use which entry, keyed by entry id. The count a
@@ -118,9 +132,8 @@ export class CatalogueImagesService {
   }
 
   /**
-   * Which products, Library articles and landing pages each entry reaches,
-   * derived from a products read, an articles read and a landing pages read
-   * rather than stored anywhere.
+   * Which products, Library articles, landing pages and spotlights each entry
+   * reaches, derived from a read of each rather than stored anywhere.
    *
    * Only imaged products are fetched: a product with no entry contributes to
    * no entry's list, so reading it would be payload for nothing. The name is
@@ -133,14 +146,17 @@ export class CatalogueImagesService {
    * resolved the same way. It reaches the entry its working copy links and
    * the one its published copy links, which differ while a cover change is unpublished —
    * and a replace or a remove reaches both. A landing page is named and
-   * listed the same way, under every entry either of its copies shows.
+   * listed the same way, under every entry either of its copies shows. A
+   * spotlight is a single copy, named by its title in the default locale.
    */
   async getUsage(): Promise<CatalogueImageUsage> {
-    const [productRows, articleRows, landingRows] = await Promise.all([
-      this.readProductUsage(),
-      this.readArticleUsage(),
-      this.readLandingPageUsage(),
-    ]);
+    const [productRows, articleRows, landingRows, spotlightRows] =
+      await Promise.all([
+        this.readProductUsage(),
+        this.readArticleUsage(),
+        this.readLandingPageUsage(),
+        this.readSpotlightUsage(),
+      ]);
 
     const usage: CatalogueImageUsage = {};
     for (const row of productRows) {
@@ -192,6 +208,18 @@ export class CatalogueImagesService {
           is_live: liveIds.has(entryId),
         });
       }
+    }
+
+    for (const row of spotlightRows) {
+      if (!row.image_id) continue;
+      (usage[row.image_id] ??= []).push({
+        kind: "spotlight",
+        id: row.id,
+        title:
+          resolveTranslation(inLocaleOrder(row.spotlight_translations), DEFAULT_LOCALE)
+            ?.title ?? "",
+        is_live: row.enabled,
+      });
     }
 
     // A stable order inside each list, so re-reading usage after a rename or a
@@ -255,6 +283,20 @@ export class CatalogueImagesService {
           "id, image_paths, landing_page_translations(locale, title), publication:landing_page_publications(image_paths)",
           { count: "exact" },
         )
+        .order("id")
+        .range(from, to),
+    );
+  }
+
+  /** Every spotlight with a picture. */
+  private readSpotlightUsage() {
+    return walkPages("spotlightImageUsage", (from, to) =>
+      this.supabase
+        .from("spotlights")
+        .select("id, image_id, enabled, spotlight_translations(locale, title)", {
+          count: "exact",
+        })
+        .not("image_id", "is", null)
         .order("id")
         .range(from, to),
     );

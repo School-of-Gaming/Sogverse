@@ -101,12 +101,12 @@ admin's own session is all the authority a read needs and a route would add noth
 reads are walked with the shared paging primitive: the catalogue only grows, and an image
 an admin cannot see is precisely what this feature exists to prevent.
 
-Usage — which products, Library articles and landing pages a given entry reaches — is
-**derived** from a products read, an articles read and a landing pages read and computed
-in JavaScript. An article is listed by its working title, under the entry its working copy
+Usage — which products, Library articles, landing pages and spotlights a given entry
+reaches — is **derived** from a read of each and computed in JavaScript. An article is listed by its working title, under the entry its working copy
 links and under the one its live copy links, which differ while a cover change is
 unpublished; a replace or a remove reaches both. A landing page is listed the same way,
-under every entry either copy's derived picture map names. It is not stored, and there is no counts map beside the lists: a
+under every entry either copy's derived picture map names. A spotlight is one copy, listed
+under its picture and marked live while it is switched on. It is not stored, and there is no counts map beside the lists: a
 badge's number is its list's length, because two derivations of one number is how they
 come to disagree.
 
@@ -125,8 +125,9 @@ Every catalogue mutation invalidates the catalogue list, the usage map, the prod
 **list** keys and the Library's and the landing pages' whole admin trees (those surfaces paint a derived path,
 and a repoint changes it under them).
 
-The usage map is read from products, Library articles and landing pages together, so a
-product's create and update and every Library and landing page write invalidate it too:
+The usage map is read from products, Library articles, landing pages and spotlights
+together, so a product's create and update and every Library, landing page and spotlight
+write invalidate it too:
 a stale map shows a live cover as unused, and removable without warning. Its key sits in
 `catalogue-images.keys.ts`, which imports no other feature's module, so the product and Library hooks can
 name it without an import cycle.

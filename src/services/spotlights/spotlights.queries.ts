@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { SpotlightsService } from "./spotlights.service";
 import type { SpotlightInput } from "./spotlights.contracts";
 
@@ -38,14 +39,18 @@ export function useAdminSpotlight(id: string | null | undefined) {
 
 /**
  * Every spotlight write invalidates the whole `spotlights` tree: a save, a
- * switch or a removal changes the list and the detail alike. Returned rather
- * than fired and forgotten, so a caller awaiting `mutateAsync` never acts on a
- * stale list.
+ * switch or a removal changes the list and the detail alike. The catalogue's
+ * usage map too, which lists the spotlights using each picture and whether
+ * each is switched on. Returned rather than fired and forgotten, so a caller
+ * awaiting `mutateAsync` never acts on a stale list.
  */
 function useSpotlightInvalidation(): () => Promise<void> {
   const queryClient = useQueryClient();
   return async () => {
-    await queryClient.invalidateQueries({ queryKey: spotlightKeys.all });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: spotlightKeys.all }),
+      queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey }),
+    ]);
   };
 }
 

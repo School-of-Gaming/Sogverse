@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import type { MarkdownUseCase } from "@/lib/authored-markdown";
 
 /**
  * The rich editor, loaded on demand and never rendered on the server; the
@@ -22,11 +23,13 @@ const RichTextEditor = dynamic(
 );
 
 /**
- * **A Library article's body, edited as rich text** in the `article` variant —
- * the toolbar offers exactly what the article page's renderer keeps, links
- * included. The editor reads `value` once, at mount.
+ * **An admin-authored markdown body, edited as rich text** — a Library
+ * article's or a spotlight's. The toolbar offers exactly what the field's
+ * renderer keeps, decided by `useCase`, which every surface showing the field
+ * passes alike. The editor reads `value` once, at mount.
  */
-export function ArticleBodyEditor({
+export function AuthoredBodyEditor({
+  useCase,
   value,
   placeholder,
   ariaLabel,
@@ -35,6 +38,8 @@ export function ArticleBodyEditor({
   onSeeded,
   disabled,
 }: {
+  /** The field's use case, the same one its renderer is given. */
+  useCase: MarkdownUseCase;
   /** The stored markdown. Read once, at mount. */
   value: string;
   placeholder: string;
@@ -54,7 +59,7 @@ export function ArticleBodyEditor({
 
   return (
     <RichTextEditor
-      variant="article"
+      variant={useCase}
       initialValue={value}
       onChange={onChange}
       onSeeded={(markdown) => onSeeded?.({ value: seed, markdown })}

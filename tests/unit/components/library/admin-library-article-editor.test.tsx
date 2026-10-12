@@ -43,8 +43,8 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
-vi.mock("@/components/admin/library/article-body-editor", () => ({
-  ArticleBodyEditor: ({
+vi.mock("@/components/admin/authored-body-editor", () => ({
+  AuthoredBodyEditor: ({
     value,
     onChange,
     ariaLabel,

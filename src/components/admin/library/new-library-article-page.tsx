@@ -5,7 +5,7 @@ import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { useCreateLibraryArticle } from "@/services/library";
 import { LibraryArticleEditor } from "./library-article-editor";
-import { LibraryArticlePageShell } from "./library-article-page-shell";
+import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 
 /**
  * `/admin/library/new` — the data shell around a new article's editor.
@@ -21,7 +21,11 @@ export function NewLibraryArticlePage() {
   const createArticle = useCreateLibraryArticle();
 
   return (
-    <LibraryArticlePageShell title={t("newPage.title")}>
+    <AdminEditorPageShell
+      backHref={ROUTES.admin.library}
+      backLabel={t("backToList")}
+      title={t("newPage.title")}
+    >
       <LibraryArticleEditor
         article={null}
         onCancel={() => router.push(ROUTES.admin.library)}
@@ -32,6 +36,6 @@ export function NewLibraryArticlePage() {
           },
         }}
       />
-    </LibraryArticlePageShell>
+    </AdminEditorPageShell>
   );
 }

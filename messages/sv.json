@@ -49,6 +49,9 @@
       "adminLibrary": "Bibliotekets innehåll",
       "adminLibraryArticleNew": "Ny artikel",
       "adminLibraryArticleEdit": "Redigera artikel",
+      "adminSpotlights": "Spotlights",
+      "adminSpotlightNew": "Ny spotlight",
+      "adminSpotlightEdit": "Redigera spotlight",
       "adminLandingPages": "Landningssidor",
       "adminLandingPage": "Landningssida",
       "adminPlatformVision": "Plattformens vision",
@@ -616,6 +619,69 @@
       "addLocale": "Lägg till språk",
       "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk"
+    },
+    "spotlights": {
+      "title": "Spotlights",
+      "subtitle": "Familjer ser varje påslagen spotlight längst ner i varje sessionsrapports e-post, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
+      "newSpotlight": "Ny spotlight",
+      "empty": "Inga spotlights än. Skriv den första.",
+      "backToList": "Tillbaka till spotlights",
+      "notFound": "Det finns ingen spotlight med det här id:t.",
+      "loadError": "Spotlighten kunde inte laddas. Uppdatera sidan för att försöka igen.",
+      "newPage": {
+        "title": "Ny spotlight",
+        "submit": "Spara"
+      },
+      "editPage": {
+        "title": "Redigera spotlight"
+      },
+      "editor": {
+        "onLine": "Påslagen: familjer ser den längst ner i varje sessionsrapports e-post.",
+        "offLine": "Avstängd: den finns inte i någon e-post. Slå på den från listan med spotlights."
+      },
+      "fields": {
+        "languages": "Språk",
+        "title": "Rubrik",
+        "body": "Text",
+        "picture": "Bild"
+      },
+      "hints": {
+        "languages": "Skriv varje språk för hand. Varje språk behöver en rubrik och texten.",
+        "body": "Visas under rubriken i e-posten, formaterad som här. Länkar är tillåtna.",
+        "picture": "Visas ovanför rubriken i e-posten, beskuren till 2:1. En spotlight kan sparas utan bild, men behöver en för att kunna slås på."
+      },
+      "bodyPlaceholder": "Skriv spotlighten…",
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt",
+        "edit": "Redigera",
+        "delete": "Ta bort"
+      },
+      "errors": {
+        "noVersion": "En spotlight behöver en rubrik och text på minst ett språk.",
+        "versionIncomplete": "Versionen på {language} behöver både en rubrik och texten.",
+        "pictureWhileOn": "Den här spotlighten är påslagen, så den behöver en bild. Välj en, eller stäng först av spotlighten från listan.",
+        "saveFailed": "Spotlighten kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Spotlighten kunde inte sparas — {reason}",
+        "switchFailed": "Det gick inte att slå på eller stänga av spotlighten. Försök igen.",
+        "switchFailedWithReason": "Det gick inte att slå på eller stänga av spotlighten — {reason}",
+        "deleteFailed": "Spotlighten kunde inte tas bort. Försök igen.",
+        "deleteFailedWithReason": "Spotlighten kunde inte tas bort — {reason}"
+      },
+      "versionComplete": "färdig",
+      "versionIncomplete": "inte färdig än",
+      "addLocale": "Lägg till språk",
+      "removeLocale": "Ta bort {language}",
+      "languagesLabel": "Språk",
+      "created": "Skapad {date}",
+      "switchLabel": "I sessionsrapporternas e-post",
+      "needsPicture": "Lägg till en bild för att kunna slå på den.",
+      "deleteConfirm": {
+        "title": "Ta bort den här spotlighten?",
+        "descriptionOn": "Den försvinner genast ur sessionsrapporternas e-post och kan inte återställas. Bilden blir kvar i biblioteket.",
+        "descriptionOff": "Den kan inte återställas. Bilden blir kvar i biblioteket.",
+        "confirm": "Ta bort"
+      }
     },
     "landingPages": {
       "title": "Landningssidor",
@@ -1201,6 +1267,7 @@
         "live": "Publicerad",
         "hidden": "Dold",
         "draft": "Utkast",
+        "switchedOff": "Avstängd",
         "replace": "Ersätt bild",
         "remove": "Ta bort ur biblioteket",
         "replaceConfirm": {
@@ -3565,6 +3632,7 @@
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
+    "spotlights": "Spotlights",
     "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
     "geduInvoicing": "Gedufakturering",

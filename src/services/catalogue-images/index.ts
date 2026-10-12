@@ -4,6 +4,7 @@ export type {
   CatalogueImageUsage,
   CatalogueImageUser,
   LandingPageImageUser,
+  SpotlightImageUser,
   ProductPictureUser,
 } from "./catalogue-images.service";
 export { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
