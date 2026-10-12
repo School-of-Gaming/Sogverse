@@ -208,10 +208,9 @@ function desiredStripeProduct(
 ): DesiredStripeProduct {
   // One Stripe Product per Sogverse product, shared across every locale, so
   // there is no viewer locale to prefer — resolve at the default locale and
-  // walk the shared fallback chain (en → first). The embedded translations are
-  // ordered by locale at the query, which is what makes that last step
-  // deterministic; an arbitrary one would make the name flap, and a flapping
-  // name reconciles on every purchase and breaks the idempotency key below.
+  // walk the shared fallback chain. The pick depends only on which locales are
+  // written, never on the rows' order, so the name does not flap — a flapping
+  // name would reconcile on every purchase and break the idempotency key below.
   const name = resolveTranslation(
     product.product_translations,
     DEFAULT_LOCALE,

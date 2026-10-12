@@ -49,6 +49,7 @@ export function landingPublishForecast(
     wouldLeaveOut: draft.versions.filter((v) => v.missing.length > 0).map((v) => v.locale),
     wouldTakeDown: live.filter((locale) => !completeLocales.includes(locale)),
     slugsChanging: complete.flatMap((v) => {
+      // exact-locale: pairs each version with its own live slug
       const from = publication?.versions.find((l) => l.locale === v.locale)?.slug;
       return from !== undefined && from !== v.slug
         ? [{ locale: v.locale, from, to: v.slug }]

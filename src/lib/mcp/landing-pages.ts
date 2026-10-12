@@ -494,6 +494,7 @@ export function registerLandingPageTools(server: McpServer): void {
         });
         const page = await service.getAdminPage(id);
         if (page === null) return refusal(NOT_FOUND);
+        // exact-locale: the tool reads the version it was asked for
         const version = page.draft.versions.find((v) => v.locale === input.locale);
         return answer({
           pageId: id,
@@ -583,6 +584,7 @@ export function registerLandingPageTools(server: McpServer): void {
         });
         const page = await service.getAdminPage(input.pageId);
         if (page === null) return refusal(NOT_FOUND);
+        // exact-locale: the tool writes the version it was asked for
         const saved = page.draft.versions.find((v) => v.locale === input.locale);
         return answer({
           pageId: input.pageId,
@@ -592,6 +594,7 @@ export function registerLandingPageTools(server: McpServer): void {
           complete: saved !== undefined && saved.missing.length === 0,
           missing: saved === undefined ? [] : missingWords(page, saved),
           languageIsLive:
+            // exact-locale: whether the named version is live
             page.publication?.versions.some((v) => v.locale === input.locale) ?? false,
           hasUnpublishedChanges: page.hasUnpublishedChanges,
           publish: publishForecast(page, origin),
@@ -622,6 +625,7 @@ export function registerLandingPageTools(server: McpServer): void {
         return answer({
           pageId: id,
           removed,
+          // exact-locale: whether the removed version is live
           languageIsLive: page.publication?.versions.some((v) => v.locale === removed) ?? false,
           languages: languages(page),
           hasUnpublishedChanges: page.hasUnpublishedChanges,
@@ -658,6 +662,7 @@ export function registerLandingPageTools(server: McpServer): void {
             .map((v) => ({ locale: v.locale, missing: missingWords(after, v) })),
           takenDown: wasLive.filter((l) => !liveLocales.includes(l)),
           slugsChanged: (publication?.versions ?? []).flatMap((v) => {
+            // exact-locale: pairs each version with its own live slug
             const from = before.publication?.versions.find((b) => b.locale === v.locale)?.slug;
             return from !== undefined && from !== v.slug
               ? [{ locale: v.locale, from, to: v.slug }]

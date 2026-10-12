@@ -19,9 +19,7 @@ import { Constants, type LibraryCategory } from "@/types";
  *
  * **An article's text is per language.** Each version is a title, a summary
  * and a body in one site locale; the category and the cover are the article's,
- * once. Versions are listed in `SUPPORTED_LOCALES` order everywhere, so "the
- * first written" — the reader fallback's last step — is the same answer on
- * every surface.
+ * once. Versions are listed in `SUPPORTED_LOCALES` order everywhere.
  */
 
 // ---------------------------------------------------------------------------
@@ -374,6 +372,7 @@ export function hasUnpublishedChanges(
   }
   const live = new Map(publication.versions.map((v) => [v.locale, v]));
   return draft.versions.some((version) => {
+    // exact-locale: each working version is compared with the published version of the same language
     const published = live.get(version.locale);
     return (
       published === undefined ||

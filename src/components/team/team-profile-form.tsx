@@ -118,6 +118,7 @@ export function formFromProfile(
 ): TeamProfileForm {
   const translations: TeamProfileForm["translations"] = {};
   for (const row of profile.translations) {
+    // exact-locale: fills each tab with its own saved version
     translations[row.locale] = {
       shortDescription: row.shortDescription,
       longDescription: row.longDescription,
@@ -128,6 +129,7 @@ export function formFromProfile(
   // shown, and one with nothing written on one tab in that locale, exactly as
   // a product does (`openingLocaleTab`).
   if (profile.translations.length === 0) {
+    // exact-locale: a profile with nothing written opens on the UI locale's tab
     translations[uiLocale] = EMPTY_TRANSLATION;
   }
   return {
@@ -149,6 +151,7 @@ export function contentFromForm(
 ): TeamProfileContent {
   const translations: TeamProfileTranslation[] = [];
   for (const locale of SUPPORTED_LOCALES) {
+    // exact-locale: writes each tab's own version
     const draft = form.translations[locale];
     if (draft === undefined) continue;
     const shortDescription = draft.shortDescription.trim();
@@ -613,6 +616,7 @@ export function TeamProfileWritingSection({
   const addableLocales = SUPPORTED_LOCALES.filter(
     (l) => form.translations[l] === undefined,
   );
+  // exact-locale: the editor shows the active tab's own version
   const draft = form.translations[locale] ?? EMPTY_TRANSLATION;
 
   function setActive(patch: Partial<TeamProfileTranslationDraft>) {
@@ -621,6 +625,7 @@ export function TeamProfileWritingSection({
       translations: {
         ...prev.translations,
         [prev.activeLocale]: {
+          // exact-locale: the editor edits the active tab's own version
           ...(prev.translations[prev.activeLocale] ?? EMPTY_TRANSLATION),
           ...patch,
         },
@@ -660,6 +665,7 @@ export function TeamProfileWritingSection({
       <Field label={t("languages")} hint={t("languagesHint")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-border">
           {addedLocales.map((l) => {
+            // exact-locale: highlights the tab being edited
             const isActive = locale === l;
             const canRemove = addedLocales.length > 1;
             // A language whose bio is too long to save is marked on

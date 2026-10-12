@@ -163,7 +163,7 @@ export function AboutSection({ id }: AboutSectionProps) {
           The prose around them is not artwork: it is ordinary secondary text
           and takes the app's two inks (the English column is what a reader
           scans and takes `foreground`; the rest is quiet ink). */}
-      {/* eslint-disable i18next/no-literal-string -- Klingon easter egg: the "English"/"tlhIngan Hol"/"Literal meaning" reference headers are intentionally untranslated since this block only renders when locale === "tlh" */}
+      {/* eslint-disable i18next/no-literal-string -- Klingon easter egg: the "English"/"tlhIngan Hol"/"Literal meaning" reference headers are intentionally untranslated since this block only renders when locale === "tlh"; exact-locale: the easter egg belongs to the Klingon UI locale, not a written version */}
       {locale === "tlh" && (
         <div className="mx-auto mt-16 max-w-3xl">
           <Card
