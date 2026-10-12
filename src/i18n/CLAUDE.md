@@ -170,6 +170,15 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 Locale always comes from `useLocale()` (client) or `getLocale()` (server) — never hardcode it.
 
+## Content written per locale
+
+**Rule: the version a reader is shown of authored content stored as one row per (thing, locale) — a product's name, an article's title, a profile's bio — is picked through `resolveTranslation()` (`src/lib/i18n/`), never by a hand-written lookup.** Its order is the reader's locale, then English, then the first row present. A lookup that stops at the reader's locale renders nothing for a thing nobody wrote in their language, and a second ladder drifts from the first until two surfaces show one reader different versions of the same thing.
+
+Two halves of its contract sit with the caller:
+
+- **The rows must arrive in a stable order**, or the last step answers differently from one read to the next — and a page's canonical with it. Rows embedded in a select come back unordered; put them through `inLocaleOrder()` before resolving.
+- **Every write keeps at least one row** — a save with no version is refused, and so is removing the last — so the last step always resolves for real data and a `null` result is purely defensive.
+
 ## Timezone for formatters
 
 `DEFAULT_TIMEZONE` (`Europe/Helsinki`) in `src/lib/constants/locales.ts` is the server-side default for next-intl's date/time formatters (`useFormatter`). HTTP headers carry no timezone, so it can't be auto-detected. This affects only next-intl formatters — `date-fns-tz` handles its own timezone logic. Used in both the server request config and the client provider.

@@ -291,6 +291,8 @@ This is Roblox's constraint on their own name, not a house-style ban on the word
 
 A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them.
 
+**Rule: the version a reader is shown of content written per locale (one row per thing and locale — a product's name, an article's title) is picked through `resolveTranslation()`, with the rows in a stable order (`inLocaleOrder()`), never by a hand-written lookup.** The fallback and the caller's half of the contract are in `src/i18n/CLAUDE.md`.
+
 **Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there. The exception is legal pages (privacy, terms, safeguarding and their programme-specific siblings, plus the attributions page): `tlh` **omits** those keys and the request config falls back to English for that locale alone — binding copy is never in-character, and English stays its single source of truth. See `src/i18n/CLAUDE.md`.**
 
 **Rule: No emoji in `messages/` files** — they're untranslatable copy that can't be themed or recolored. When a string needs a glyph (warning triangle, checkmark, arrow), render a `lucide-react` icon next to the translated text in the component instead.
