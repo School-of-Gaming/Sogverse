@@ -11,7 +11,6 @@ import { ROUTES } from "@/lib/constants";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
@@ -186,10 +185,8 @@ export function ProductDetailPageBody({
   const tVerb = useTranslations("productDetail.signupPanel.verb");
   const getTopicLabel = useTopicLabel();
 
-  // Resolved over the one fixed language order, so a reader of a language the
-  // product was not written in meets the same "first written" as its canonical.
   const tr = resolveTranslation(
-    inLocaleOrder(product.product_translations),
+    product.product_translations,
     uiLocale,
   );
   const topicLabel = getTopicLabel(product.topic);

@@ -9,7 +9,6 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { formatDateRange } from "@/lib/utils";
 import type {
   HolidayCalendarBreak,
@@ -120,7 +119,7 @@ export function AdminHolidayCalendarsPage({
                         ) : (
                           <>
                             <span className="text-foreground">
-                              {breakName({ names: inLocaleOrder(next.names) }, locale)}
+                              {breakName(next, locale)}
                             </span>{" "}
                             {formatDateRange(next.startDate, next.endDate, locale)}
                           </>

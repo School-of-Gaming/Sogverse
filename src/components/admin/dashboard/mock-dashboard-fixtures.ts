@@ -980,7 +980,7 @@ function fixtureCancellation(spec: ProductSpec, date: string): DateCancellation 
  * The autumn break the busy term's municipality clubs follow — the school
  * calendar's syysloma, a whole week, which is the shape a municipality club
  * meets in practice: every one of its sessions that week stays on the row,
- * muted and marked "On break", and the week's count drops by the lot. Placed
+ * muted and marked "Holiday", and the week's count drops by the lot. Placed
  * in October rather than this week because that is where the break is; a
  * reviewer steps to week 42 to see it. The quiet scenario follows none.
  */

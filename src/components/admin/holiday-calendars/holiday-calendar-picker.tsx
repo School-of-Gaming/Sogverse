@@ -7,7 +7,6 @@ import { Field } from "@/components/ui/field";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { formatDateRange } from "@/lib/utils";
 import { useHolidayCalendars } from "@/services/holiday-calendars";
 import { nextBreak } from "./admin-holiday-calendars-page";
@@ -92,7 +91,7 @@ export function HolidayCalendarPicker({
                   next === null
                     ? t("noUpcomingBreak")
                     : t("nextBreak", {
-                        name: breakName({ names: inLocaleOrder(next.names) }, locale),
+                        name: breakName(next, locale),
                         dates: formatDateRange(next.startDate, next.endDate, locale),
                       })
                 }

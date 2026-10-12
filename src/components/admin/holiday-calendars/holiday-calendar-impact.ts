@@ -1,5 +1,4 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { HolidayCalendarChangePreview } from "@/services/holiday-calendars";
 import type { ProductType } from "@/types";
@@ -46,7 +45,7 @@ export function summariseHolidayImpact(
         productId: product.productId,
         productType: product.productType,
         name:
-          resolveTranslation(inLocaleOrder(product.translations), uiLocale)?.name ?? "",
+          resolveTranslation(product.translations, uiLocale)?.name ?? "",
         today: product.today,
         futureRemoved: distinctDates(product.removed.filter(upcoming)),
         futureRestored: distinctDates(product.restored.filter(upcoming)),

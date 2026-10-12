@@ -249,11 +249,11 @@ function BreakNote({ name }: { name: string }) {
 
   return (
     <span
-      title={t("onBreakTitle", { name })}
+      title={t("holidayTitle", { name })}
       className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-muted-foreground"
     >
       <CalendarOff className="h-3 w-3 shrink-0" aria-hidden />
-      {t("onBreak")}
+      {t("holiday")}
     </span>
   );
 }

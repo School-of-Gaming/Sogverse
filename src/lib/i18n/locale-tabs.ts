@@ -15,7 +15,7 @@ import { resolveTranslation } from "./resolve-translation";
  *   `SUPPORTED_LOCALES` order, or to the UI locale when none remains.
  */
 
-/** The tab an existing item opens on, given its written locales in `SUPPORTED_LOCALES` order (`inLocaleOrder`). */
+/** The tab an existing item opens on, given its written locales in any order. */
 export function openingLocaleTab(
   written: readonly SupportedLocale[],
   uiLocale: SupportedLocale,

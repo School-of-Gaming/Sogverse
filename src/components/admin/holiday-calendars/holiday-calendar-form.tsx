@@ -125,6 +125,7 @@ export function HolidayCalendarForm({
       names: {
         ...current.names,
         [current.activeLocale]: {
+          // exact-locale: the editor edits the active tab's own names
           ...current.names[current.activeLocale],
           [key]: name,
         },
@@ -303,6 +304,7 @@ export function HolidayCalendarForm({
                     <Input
                       id={nameId}
                       lang={draft.activeLocale}
+                      // exact-locale: the editor shows the active tab's own name
                       value={draft.names[draft.activeLocale]?.[entry.key] ?? ""}
                       onChange={(event) => setBreakName(entry.key, event.target.value)}
                       autoComplete="off"

@@ -60,6 +60,7 @@ export function IdentitySection({
     longDescription: "",
   };
   const activeDraft: TranslationDraft =
+    // exact-locale: the editor shows the active tab's own version
     state.translations[state.activeLocale] ?? emptyDraft;
 
   function setActiveTranslation(patch: Partial<TranslationDraft>) {
@@ -68,6 +69,7 @@ export function IdentitySection({
       translations: {
         ...s.translations,
         [s.activeLocale]: {
+          // exact-locale: the editor edits the active tab's own version
           ...(s.translations[s.activeLocale] ?? emptyDraft),
           ...patch,
         },

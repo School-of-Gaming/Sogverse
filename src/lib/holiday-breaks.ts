@@ -23,7 +23,7 @@ export const holidayBreakRow = z
     /** Bare calendar dates, both inclusive — UTC-pinned, never re-anchored. */
     start_date: isoDate,
     end_date: isoDate,
-    /** Every locale written, ordered by locale; never empty for real data. */
+    /** Every locale written, in no particular order; never empty for real data. */
     names: z.array(z.object({ locale: z.string(), name: z.string() }).strict()),
     /**
      * The plan rows inside the document's span that this break removed,

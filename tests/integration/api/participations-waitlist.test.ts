@@ -190,32 +190,31 @@ function mockReadsForConfirmationEmail(
   mockFrom.mockImplementation((table: string) => {
     if (table === "products") {
       return {
-        select: () => ({
+        select: (columns: string) => ({
           eq: () => ({
-            order: () => ({
-              single: () =>
-                Promise.resolve({
-                  data: {
-                    product_type: "consumer_club",
-                    timezone: "Europe/Helsinki",
-                    start_date: null,
-                    end_date: null,
-                    is_remote: true,
-                    min_age: 8,
-                    max_age: 12,
-                    for_gamers: true,
-                    for_parents: false,
-                    spoken_language_code: "en",
-                    product_translations: [{ locale: "en", name: "Test Club" }],
-                  },
-                  error: null,
-                }),
-            }),
+            // The mail's two reads: the product with its translations, and
+            // the schedule and site its calendar invitation is composed from.
             single: () =>
-              Promise.resolve({
-                data: { schedule_slots: [], locations: null },
-                error: null,
-              }),
+              Promise.resolve(
+                !columns.includes("product_translations")
+                  ? { data: { schedule_slots: [], locations: null }, error: null }
+                  : {
+                      data: {
+                        product_type: "consumer_club",
+                        timezone: "Europe/Helsinki",
+                        start_date: null,
+                        end_date: null,
+                        is_remote: true,
+                        min_age: 8,
+                        max_age: 12,
+                        for_gamers: true,
+                        for_parents: false,
+                        spoken_language_code: "en",
+                        product_translations: [{ locale: "en", name: "Test Club" }],
+                      },
+                      error: null,
+                    },
+              ),
             // The conversion's own read, after the response: the two columns
             // that decide whether this is a product we advertise at all. A
             // separate terminator from the two above, so a route reading the

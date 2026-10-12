@@ -423,8 +423,8 @@
         "nothingOn": "pagh",
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
-        "onBreak": "leSpoH",
-        "onBreakTitle": "leSpoH — {name}. jajvam may’ tu’lu’be’."
+        "holiday": "leSpoH",
+        "holidayTitle": "leSpoH — {name}. jajvam may’ tu’lu’be’."
       },
       "cancellation": {
         "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",

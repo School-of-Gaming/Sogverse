@@ -63,10 +63,12 @@ export function holidayCalendarDraft(
   const names: HolidayCalendarDraft["names"] = {};
   for (const entry of calendar.breaks) {
     for (const { locale, name } of inLocaleOrder(entry.names)) {
+      // exact-locale: fills each tab with its own saved names
       names[locale] = { ...names[locale], [entry.id]: name };
     }
   }
   const written = writtenLocales(names);
+  // exact-locale: opens the UI locale's tab when nothing is written
   if (written.length === 0) names[uiLocale] = {};
 
   return {
@@ -134,6 +136,7 @@ export function validateHolidayCalendarDraft(
       return fail({ kind: "endBeforeStart", index });
     }
     const missing = locales.find(
+      // exact-locale: checks each tab's own name for the break
       (locale) => (draft.names[locale]?.[entry.key] ?? "").trim() === "",
     );
     if (missing) return fail({ kind: "breakNameMissing", index, locale: missing });
@@ -148,6 +151,7 @@ export function validateHolidayCalendarDraft(
     end_date: entry.endDate,
     names: locales.map((locale) => ({
       locale,
+      // exact-locale: writes each tab's own name
       name: (draft.names[locale]?.[entry.key] ?? "").trim(),
     })),
   }));

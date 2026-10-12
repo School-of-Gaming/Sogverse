@@ -115,7 +115,7 @@ describe("a session a holiday break withdrew, on the week rows", () => {
     ]);
 
     const link = chipLink(container, "Club break");
-    const note = within(link).getByText("On break");
+    const note = within(link).getByText("Holiday");
     expect(note.getAttribute("title")).toContain("Syysloma");
     expect(link.className).toContain("text-muted-foreground");
     expect(link.textContent).not.toMatch(/cancelled/i);

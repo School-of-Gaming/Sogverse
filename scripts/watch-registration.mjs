@@ -1,9 +1,12 @@
 /**
  * Live view of a registration opening, for watching one happen.
  *
- *   node scripts/watch-registration.mjs --opens-at 2026-08-24T09:00:00Z
- *   node scripts/watch-registration.mjs --opens-at ... --staging
- *   node scripts/watch-registration.mjs --opens-at ... --interval 5
+ *   npx tsx scripts/watch-registration.mjs --opens-at 2026-08-24T09:00:00Z
+ *   npx tsx scripts/watch-registration.mjs --opens-at ... --staging
+ *   npx tsx scripts/watch-registration.mjs --opens-at ... --interval 5
+ *
+ * Through tsx, not plain node, because it names products with the app's own
+ * picker from `src/`.
  *
  * **Read-only.** It issues counting reads against PostgREST and reads two
  * Supabase analytics endpoints. It writes nothing except its own log file.
@@ -59,7 +62,12 @@
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+// A default import: tsx loads the app's TypeScript as CommonJS, so its named
+// exports arrive on the module object rather than as ES bindings.
+import translation from "@/lib/i18n/resolve-translation";
 import { outputDir } from "./lib/output.mjs";
+
+const { resolveTranslation } = translation;
 
 /** Load .env.local without clobbering the shell — the shell always wins. */
 function loadEnvLocal() {
@@ -131,11 +139,18 @@ async function loadCohort() {
     process.exit(1);
   }
   const ids = products.map((p) => p.id);
-  const names = {};
   const translations = await rest(
-    `product_translations?select=product_id,name&locale=eq.en&product_id=in.(${ids.join(",")})`,
+    `product_translations?select=product_id,locale,name&product_id=in.(${ids.join(",")})`,
   );
-  translations.forEach((t) => (names[t.product_id] = t.name));
+  // The console is English, so each product shows as an English reader sees it.
+  const names = {};
+  for (const id of ids) {
+    const shown = resolveTranslation(
+      translations.filter((t) => t.product_id === id),
+      "en",
+    );
+    if (shown) names[id] = shown.name;
+  }
   return { products, ids, names, seats: products.reduce((n, p) => n + (p.seat_count ?? 0), 0) };
 }
 

@@ -379,8 +379,8 @@
         "nothingOn": "Nothing on",
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
         "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
-        "onBreak": "On break",
-        "onBreakTitle": "On break — {name}. No session on this date."
+        "holiday": "Holiday",
+        "holidayTitle": "Holiday — {name}. No session on this date."
       },
       "cancellation": {
         "allTitle": "Every group’s session on this date is cancelled",

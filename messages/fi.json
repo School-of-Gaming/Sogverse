@@ -379,8 +379,8 @@
         "nothingOn": "Ei mitään",
         "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
         "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}",
-        "onBreak": "Tauolla",
-        "onBreakTitle": "Tauolla – {name}. Tänä päivänä ei ole kertaa."
+        "holiday": "Loma",
+        "holidayTitle": "Loma – {name}. Tänä päivänä ei ole kertaa."
       },
       "cancellation": {
         "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",

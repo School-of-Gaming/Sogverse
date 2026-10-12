@@ -91,16 +91,14 @@ function adminTableStub(table: string) {
     return {
       select: () => ({
         eq: () => ({
-          order: () => ({
-            single: async () => ({
-              data: {
-                product_type: "municipality_club",
-                timezone: "Europe/Helsinki",
-                product_translations: [{ locale: "en", name: "Minecraft 101" }],
-                schedule_slots: [{ weekday: 1, start_time: "16:00:00" }],
-              },
-              error: null,
-            }),
+          single: async () => ({
+            data: {
+              product_type: "municipality_club",
+              timezone: "Europe/Helsinki",
+              product_translations: [{ locale: "en", name: "Minecraft 101" }],
+              schedule_slots: [{ weekday: 1, start_time: "16:00:00" }],
+            },
+            error: null,
           }),
         }),
       }),
