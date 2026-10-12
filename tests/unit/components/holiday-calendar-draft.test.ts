@@ -3,7 +3,9 @@ import {
   emptyHolidayCalendarDraft,
   holidayCalendarDraft,
   holidayCalendarFailureReason,
+  sameHolidayCalendarDraft,
   validateHolidayCalendarDraft,
+  withoutBreakName,
   type HolidayCalendarDraft,
 } from "@/components/admin/holiday-calendars/holiday-calendar-draft";
 import { holidayCalendarInput } from "@/services/holiday-calendars";
@@ -22,11 +24,21 @@ function validDraft(): HolidayCalendarDraft {
       { key: "new-1", id: null, startDate: "2030-12-21", endDate: "2031-01-06" },
     ],
     names: {
-      fi: { b1: "Syysloma", "new-1": " Joululoma " },
-      en: { b1: "Autumn break", "new-1": "Christmas break" },
+      drafts: {
+        fi: { b1: "Syysloma", "new-1": " Joululoma " },
+        en: { b1: "Autumn break", "new-1": "Christmas break" },
+      },
+      active: "fi",
     },
-    activeLocale: "fi",
   };
+}
+
+/** The draft with `patch` merged into its tabs. */
+function withNames(
+  draft: HolidayCalendarDraft,
+  patch: HolidayCalendarDraft["names"]["drafts"],
+): HolidayCalendarDraft {
+  return { ...draft, names: { ...draft.names, drafts: { ...draft.names.drafts, ...patch } } };
 }
 
 describe("validating a holiday calendar draft", () => {
@@ -100,20 +112,38 @@ describe("validating a holiday calendar draft", () => {
   });
 
   it("names the first break missing a name, and the language it is missing in", () => {
-    const draft = validDraft();
-    draft.names = { ...draft.names, fi: { b1: "Syysloma", "new-1": "  " } };
+    const draft = withNames(validDraft(), { fi: { b1: "Syysloma", "new-1": "  " } });
     expect(validateHolidayCalendarDraft(draft)).toEqual({
       ok: false,
       problem: { kind: "breakNameMissing", index: 1, locale: "fi" },
     });
   });
 
-  it("asks for every break's name in a newly added language", () => {
-    const draft = validDraft();
-    draft.names = { ...draft.names, sv: {} };
+  it("asks for every break's name in a language partly named", () => {
+    const draft = withNames(validDraft(), { sv: { "new-1": "Jullov" } });
     expect(validateHolidayCalendarDraft(draft)).toEqual({
       ok: false,
       problem: { kind: "breakNameMissing", index: 0, locale: "sv" },
+    });
+  });
+
+  it("drops a language with no break named in it, rather than refusing it", () => {
+    const blank = withNames(validDraft(), { sv: {} });
+    const spaces = withNames(validDraft(), { sv: { b1: "  ", "new-1": "" } });
+    const expected = validateHolidayCalendarDraft(validDraft());
+    expect(expected.ok).toBe(true);
+    expect(validateHolidayCalendarDraft(blank)).toEqual(expected);
+    expect(validateHolidayCalendarDraft(spaces)).toEqual(expected);
+  });
+
+  it("refuses breaks named in no language at all, against the tab being shown", () => {
+    const draft: HolidayCalendarDraft = {
+      ...validDraft(),
+      names: { drafts: { fi: {}, en: { b1: " " } }, active: "en" },
+    };
+    expect(validateHolidayCalendarDraft(draft)).toEqual({
+      ok: false,
+      problem: { kind: "breakNameMissing", index: 0, locale: "en" },
     });
   });
 
@@ -168,7 +198,7 @@ describe("opening a stored calendar", () => {
       },
       "fi",
     );
-    expect(draft.names).toEqual({
+    expect(draft.names.drafts).toEqual({
       en: { b1: "Autumn break" },
       fi: { b1: "Syysloma" },
       sv: { b2: "Sportlov" },
@@ -177,13 +207,61 @@ describe("opening a stored calendar", () => {
       ["b1", "b1"],
       ["b2", "b2"],
     ]);
-    expect(draft.activeLocale).toBe("fi");
+    expect(draft.names.active).toBe("fi");
   });
 
   it("opens a calendar with no breaks on one tab in the admin's locale", () => {
     const draft = holidayCalendarDraft({ name: "Empty", breaks: [] }, "sv");
-    expect(draft.names).toEqual({ sv: {} });
-    expect(draft.activeLocale).toBe("sv");
+    expect(draft.names).toEqual({ drafts: { sv: {} }, active: "sv" });
+  });
+});
+
+describe("comparing a draft with what the form opened with", () => {
+  it("is the same untouched, and on another tab", () => {
+    const opened = validDraft();
+    expect(sameHolidayCalendarDraft(validDraft(), opened)).toBe(true);
+    const otherTab = { ...validDraft(), names: { ...validDraft().names, active: "en" as const } };
+    expect(sameHolidayCalendarDraft(otherTab, opened)).toBe(true);
+  });
+
+  it("differs for the name, a date, a break added or removed, or a break's name", () => {
+    const opened = validDraft();
+    expect(sameHolidayCalendarDraft({ ...validDraft(), name: "Espoo schools" }, opened)).toBe(false);
+
+    const moved = validDraft();
+    moved.breaks[0] = { ...moved.breaks[0], endDate: "2030-10-21" };
+    expect(sameHolidayCalendarDraft(moved, opened)).toBe(false);
+
+    const removed = validDraft();
+    removed.breaks = removed.breaks.slice(0, 1);
+    expect(sameHolidayCalendarDraft(removed, opened)).toBe(false);
+
+    const added = validDraft();
+    added.breaks = [...added.breaks, { key: "new-2", id: null, startDate: "", endDate: "" }];
+    expect(sameHolidayCalendarDraft(added, opened)).toBe(false);
+
+    const renamed = withNames(validDraft(), { en: { b1: "Fall break", "new-1": "Christmas break" } });
+    expect(sameHolidayCalendarDraft(renamed, opened)).toBe(false);
+
+    const translated = withNames(validDraft(), { sv: { b1: "Höstlov" } });
+    expect(sameHolidayCalendarDraft(translated, opened)).toBe(false);
+  });
+
+  it("ignores a blank tab, and spaces around a name", () => {
+    const opened = validDraft();
+    expect(sameHolidayCalendarDraft(withNames(validDraft(), { sv: {} }), opened)).toBe(true);
+    const padded = withNames(validDraft(), { en: { b1: " Autumn break ", "new-1": "Christmas break" } });
+    expect(sameHolidayCalendarDraft(padded, opened)).toBe(true);
+  });
+});
+
+describe("removing a break", () => {
+  it("takes its name out of every tab, so a tab naming only it reads as blank", () => {
+    const tabs = withoutBreakName(
+      { drafts: { fi: { b1: "Syysloma", b2: "Hiihtoloma" }, sv: { b2: "Sportlov" } }, active: "sv" },
+      "b2",
+    );
+    expect(tabs).toEqual({ drafts: { fi: { b1: "Syysloma" }, sv: {} }, active: "sv" });
   });
 });
 

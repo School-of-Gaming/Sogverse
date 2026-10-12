@@ -28,8 +28,7 @@ import type { HolidayImpactSummary } from "@/components/admin/holiday-calendars/
 const DRAFT: HolidayCalendarDraft = {
   name: "Helsinki schools",
   breaks: [{ key: "b1", id: "b1", startDate: "2030-10-14", endDate: "2030-10-20" }],
-  names: { en: { b1: "Autumn break" } },
-  activeLocale: "en",
+  names: { drafts: { en: { b1: "Autumn break" } }, active: "en" },
 };
 
 const IMPACT: HolidayImpactSummary = {
@@ -132,7 +131,7 @@ describe("the holiday calendar form", () => {
     const { submit } = renderForm({
       onSubmit,
       preview,
-      draft: { ...DRAFT, names: { en: { b1: "" } } },
+      draft: { ...DRAFT, names: { drafts: { en: { b1: "" } }, active: "en" } },
     });
     submit();
 
@@ -141,5 +140,135 @@ describe("the holiday calendar form", () => {
     ).toBeTruthy();
     expect(preview).not.toHaveBeenCalled();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
+describe("the holiday calendar form's language tabs", () => {
+  it("marks only a fully named tab complete, and flags no fault on a partly named one", () => {
+    renderForm({
+      onSubmit: vi.fn(),
+      draft: {
+        ...DRAFT,
+        breaks: [
+          ...DRAFT.breaks,
+          { key: "b2", id: "b2", startDate: "2031-02-17", endDate: "2031-02-23" },
+        ],
+        names: {
+          drafts: {
+            en: { b1: "Autumn break", b2: "Winter break" },
+            fi: { b1: "Syysloma" },
+            sv: {},
+          },
+          active: "en",
+        },
+      },
+    });
+    // Work in progress shows the not-complete mark only; the attention mark is
+    // kept for a fault, as on the other per-locale editors.
+    const finnish = screen.getByRole("button", { name: /^Suomi/ }).textContent;
+    expect(finnish).toContain("notComplete");
+    expect(finnish).not.toContain("errors.");
+    expect(screen.getByRole("button", { name: /^Svenska/ }).textContent).not.toContain(
+      "errors.",
+    );
+    expect(screen.getByRole("button", { name: /^English/ }).textContent).toContain(
+      "complete",
+    );
+  });
+
+  it("saves without a tab left blank", async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const { submit } = renderForm({
+      onSubmit,
+      draft: {
+        ...DRAFT,
+        names: { drafts: { en: { b1: "Autumn break" }, sv: {} }, active: "sv" },
+      },
+    });
+    submit();
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      breaks: [{ names: [{ locale: "en", name: "Autumn break" }] }],
+    });
+  });
+});
+
+/** Whether leaving now would be asked about: the page's `beforeunload` answer. */
+function guarded(): boolean {
+  const event = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
+}
+
+describe("the holiday calendar form's unsaved-changes guard", () => {
+  const nameBox = () => screen.getByLabelText<HTMLInputElement>("fields.name");
+
+  it("stays down untouched, goes up for the name, and down when it is put back", () => {
+    renderForm({ onSubmit: vi.fn() });
+    expect(guarded()).toBe(false);
+    fireEvent.change(nameBox(), { target: { value: "Espoo schools" } });
+    expect(guarded()).toBe(true);
+    fireEvent.change(nameBox(), { target: { value: "Helsinki schools" } });
+    expect(guarded()).toBe(false);
+  });
+
+  it("goes up for a date", () => {
+    const { container } = renderForm({ onSubmit: vi.fn() });
+    const start = container.querySelector<HTMLInputElement>("#holiday-break-b1-start");
+    if (!start) throw new Error("no start date");
+    fireEvent.change(start, { target: { value: "2030-10-13" } });
+    expect(guarded()).toBe(true);
+  });
+
+  it("goes up for a break added, and for a break removed", () => {
+    const first = renderForm({ onSubmit: vi.fn() });
+    fireEvent.click(screen.getByRole("button", { name: "addBreak" }));
+    expect(guarded()).toBe(true);
+    first.unmount();
+
+    renderForm({ onSubmit: vi.fn() });
+    fireEvent.click(screen.getByRole("button", { name: "removeBreak number=1" }));
+    expect(guarded()).toBe(true);
+  });
+
+  it("stays down for a language added and left blank, and goes up once a break is named in it", () => {
+    renderForm({ onSubmit: vi.fn() });
+    fireEvent.change(screen.getByLabelText("addLanguage"), { target: { value: "fi" } });
+    expect(guarded()).toBe(false);
+    fireEvent.change(screen.getByLabelText("fields.breakName language=Finnish"), {
+      target: { value: "Syysloma" },
+    });
+    expect(guarded()).toBe(true);
+  });
+
+  it("goes up for a break's name changed in a tab", () => {
+    renderForm({ onSubmit: vi.fn() });
+    fireEvent.change(screen.getByLabelText("fields.breakName language=English"), {
+      target: { value: "Fall break" },
+    });
+    expect(guarded()).toBe(true);
+  });
+
+  it("stands down once a save is pressed", async () => {
+    // A save that never settles: the page is on its way out.
+    const { submit } = renderForm({ onSubmit: () => new Promise(() => {}) });
+    fireEvent.change(nameBox(), { target: { value: "Espoo schools" } });
+    expect(guarded()).toBe(true);
+    submit();
+    await waitFor(() => expect(guarded()).toBe(false));
+  });
+
+  it("stays up while the confirm dialog waits, and stands down once it is confirmed", async () => {
+    const onSubmit = vi.fn(() => new Promise<void>(() => {}));
+    const preview = vi.fn().mockResolvedValue([IMPACT]);
+    const { submit } = renderForm({ onSubmit, preview });
+    fireEvent.change(nameBox(), { target: { value: "Espoo schools" } });
+    submit();
+    expect(await screen.findByText("title")).toBeTruthy();
+    expect(guarded()).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "saveChanges" }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(guarded()).toBe(false);
   });
 });

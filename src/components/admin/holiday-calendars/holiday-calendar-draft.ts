@@ -1,6 +1,14 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
-import { openingLocaleTab, writtenLocales } from "@/lib/i18n/locale-tabs";
+import {
+  NO_RICH_BODIES,
+  draftsToSave,
+  newLocaleTabs,
+  openLocaleTabs,
+  sameLocaleDrafts,
+  writtenLocales,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
 import type {
   HolidayBreakInput,
   HolidayCalendarDetail,
@@ -28,15 +36,21 @@ export interface HolidayBreakDraft {
  * break's name in that language. So a language is added to or removed from the
  * whole calendar at once — the tabs are the calendar's, not each break's — and
  * removing one discards every break's name in it. A break's name in a language
- * is missing when its entry is absent or blank.
+ * is missing when its entry is absent or blank, and a tab where every break's
+ * name is missing is a blank tab, which the save leaves out.
  */
 export interface HolidayCalendarDraft {
   /** Admin-only. */
   name: string;
   breaks: HolidayBreakDraft[];
-  names: Partial<Record<SupportedLocale, Record<string, string>>>;
-  activeLocale: SupportedLocale;
+  names: LocaleTabState<HolidayBreakNames>;
 }
+
+/** One language's tab: every break's name in it, by break key. */
+export type HolidayBreakNames = Record<string, string>;
+
+/** A tab with no break named in it. */
+export const NO_BREAK_NAMES: HolidayBreakNames = {};
 
 /** A new row's form key. Only unique within one form; never stored. */
 export function newBreakKey(): string {
@@ -47,7 +61,7 @@ export function newBreakKey(): string {
 export function emptyHolidayCalendarDraft(
   uiLocale: SupportedLocale,
 ): HolidayCalendarDraft {
-  return { name: "", breaks: [], names: { [uiLocale]: {} }, activeLocale: uiLocale };
+  return { name: "", breaks: [], names: newLocaleTabs(uiLocale, NO_BREAK_NAMES) };
 }
 
 /**
@@ -60,16 +74,13 @@ export function holidayCalendarDraft(
   calendar: Pick<HolidayCalendarDetail, "name" | "breaks">,
   uiLocale: SupportedLocale,
 ): HolidayCalendarDraft {
-  const names: HolidayCalendarDraft["names"] = {};
+  const names: Partial<Record<SupportedLocale, HolidayBreakNames>> = {};
   for (const entry of calendar.breaks) {
     for (const { locale, name } of inLocaleOrder(entry.names)) {
       // exact-locale: fills each tab with its own saved names
       names[locale] = { ...names[locale], [entry.id]: name };
     }
   }
-  const written = writtenLocales(names);
-  // exact-locale: opens the UI locale's tab when nothing is written
-  if (written.length === 0) names[uiLocale] = {};
 
   return {
     name: calendar.name,
@@ -79,10 +90,64 @@ export function holidayCalendarDraft(
       startDate: entry.startDate,
       endDate: entry.endDate,
     })),
-    names,
-    activeLocale:
-      written.length === 0 ? uiLocale : openingLocaleTab(written, uiLocale),
+    names: openLocaleTabs(names, uiLocale, NO_BREAK_NAMES),
   };
+}
+
+/**
+ * The first break, by position, with no name in `names` — or `null` when every
+ * break is named in that tab.
+ */
+export function firstUnnamedBreak(
+  breaks: readonly HolidayBreakDraft[],
+  names: HolidayBreakNames,
+): number | null {
+  const index = breaks.findIndex(
+    (entry) => (names[entry.key] ?? "").trim() === "",
+  );
+  return index === -1 ? null : index;
+}
+
+/**
+ * The tabs once a break is removed: its name gone from every one of them, so a
+ * tab that named only that break reads as blank again, and the comparison with
+ * the saved copy does not count a name nobody can see any more.
+ */
+export function withoutBreakName(
+  tabs: LocaleTabState<HolidayBreakNames>,
+  key: string,
+): LocaleTabState<HolidayBreakNames> {
+  const drafts: LocaleTabState<HolidayBreakNames>["drafts"] = {};
+  for (const locale of writtenLocales(tabs.drafts)) {
+    const names = { ...tabs.drafts[locale] };
+    delete names[key];
+    drafts[locale] = names;
+  }
+  return { ...tabs, drafts };
+}
+
+/**
+ * Whether the form still holds what it opened with: the calendar's name, its
+ * breaks and their dates, and every tab's names. Which tab is shown is no
+ * change, and a blank tab is no version on either side.
+ */
+export function sameHolidayCalendarDraft(
+  draft: HolidayCalendarDraft,
+  opened: HolidayCalendarDraft,
+): boolean {
+  return (
+    draft.name === opened.name &&
+    draft.breaks.length === opened.breaks.length &&
+    draft.breaks.every((entry, index) => {
+      const before = opened.breaks[index];
+      return (
+        entry.key === before.key &&
+        entry.startDate === before.startDate &&
+        entry.endDate === before.endDate
+      );
+    }) &&
+    sameLocaleDrafts(draft.names.drafts, opened.names.drafts, NO_RICH_BODIES)
+  );
 }
 
 /**
@@ -114,7 +179,9 @@ export type HolidayCalendarDraftResult =
  * name would show an English reader a Finnish word for one break and English
  * for the rest. That is the product form's rule — no tab half-written — with a
  * tab complete only when every break is named in it, checked per break so the
- * refusal can point at the row.
+ * refusal can point at the row. A tab with no break named in it is a blank
+ * tab, and the save leaves it out; breaks named in no language at all are
+ * refused against the tab being shown.
  */
 export function validateHolidayCalendarDraft(
   draft: HolidayCalendarDraft,
@@ -126,7 +193,7 @@ export function validateHolidayCalendarDraft(
   const name = draft.name.trim();
   if (name === "") return fail({ kind: "nameRequired" });
 
-  const locales = writtenLocales(draft.names);
+  const written = draftsToSave(draft.names.drafts);
 
   for (const [index, entry] of draft.breaks.entries()) {
     if (entry.startDate === "" || entry.endDate === "") {
@@ -135,11 +202,15 @@ export function validateHolidayCalendarDraft(
     if (entry.endDate < entry.startDate) {
       return fail({ kind: "endBeforeStart", index });
     }
-    const missing = locales.find(
-      // exact-locale: checks each tab's own name for the break
-      (locale) => (draft.names[locale]?.[entry.key] ?? "").trim() === "",
+    if (written.length === 0) {
+      return fail({ kind: "breakNameMissing", index, locale: draft.names.active });
+    }
+    const missing = written.find(
+      (tab) => (tab.draft[entry.key] ?? "").trim() === "",
     );
-    if (missing) return fail({ kind: "breakNameMissing", index, locale: missing });
+    if (missing) {
+      return fail({ kind: "breakNameMissing", index, locale: missing.locale });
+    }
   }
 
   const overlap = firstOverlap(draft.breaks);
@@ -149,10 +220,9 @@ export function validateHolidayCalendarDraft(
     id: entry.id,
     start_date: entry.startDate,
     end_date: entry.endDate,
-    names: locales.map((locale) => ({
-      locale,
-      // exact-locale: writes each tab's own name
-      name: (draft.names[locale]?.[entry.key] ?? "").trim(),
+    names: written.map((tab) => ({
+      locale: tab.locale,
+      name: (tab.draft[entry.key] ?? "").trim(),
     })),
   }));
 

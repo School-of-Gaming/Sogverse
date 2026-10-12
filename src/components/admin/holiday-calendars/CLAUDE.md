@@ -20,10 +20,12 @@ snap a week pick to Monday and Sunday, because breaks are planned in whole weeks
 **The calendar's languages are the calendar's, not each break's.** The form's locale tabs
 sit over the whole break list, and every break needs a name in every language the
 calendar uses: a calendar written in Finnish and English whose autumn break had only a
-Finnish name would show an English reader one Finnish word among English ones. The tab
-bar and the tab-set helpers are the shared ones the product form uses
-(`src/components/ui/locale-tabs.tsx`, `src/lib/i18n/locale-tabs.ts`); the draft files
-names by locale, then by break, which is the shape those helpers take.
+Finnish name would show an English reader one Finnish word among English ones. A tab with
+no break named in it is blank and is dropped at save; a tab naming some breaks and not
+others is refused at save, and until then shows only the bar's not-complete mark — the
+attention mark is kept for a fault, as on the other editors, not for work in progress. The
+form is one of the shared per-locale editors (`src/i18n/CLAUDE.md`); the draft files
+names by locale, then by break, which is the shape the shared tab set takes.
 
 **There is no deletion and no break-length guard** (owner's ruling). A calendar a club
 follows cannot be deleted at the database either; a club detaches it instead.

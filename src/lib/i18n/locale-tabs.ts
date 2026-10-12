@@ -1,18 +1,25 @@
+import { sameAuthoredBody, type AuthoredBodies } from "@/lib/authored-bodies";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "./resolve-translation";
 
 /*
- * **Which language tab an editor of content written per locale shows** — the
- * product, Library article, Team profile and holiday calendar editors alike, so
- * an admin meets one behaviour in all of them.
+ * **The language tabs of an editor of content written per locale**, the same
+ * in every such editor, so an admin meets one behaviour in all of them. Pure, so each
+ * form applies these inside its own state setter; the tab bar that drives them
+ * is the shared `LocaleTabs` component.
  *
  * - An existing item opens on the tab a reader of the admin's UI locale would
  *   be shown (`resolveTranslation()`: the UI locale, then English, then the
  *   first written in `SUPPORTED_LOCALES` order); an item with nothing written
- *   at all opens on the UI locale.
- * - A new item opens on one tab, in the UI locale.
+ *   at all opens on one empty tab in the UI locale.
+ * - A new item opens on one empty tab, in the UI locale.
  * - Removing the tab being shown moves to the first remaining tab in
  *   `SUPPORTED_LOCALES` order, or to the UI locale when none remains.
+ * - **A blank tab is not a version.** A tab where every field is blank, once
+ *   trimmed, is a tab opened and not used: a save leaves it out, the check of
+ *   what may be saved ignores it, and so does the comparison with the saved
+ *   copy. A tab partly written is judged by the editor's own rule for a
+ *   complete one.
  */
 
 /** The tab an existing item opens on, given its written locales in any order. */
@@ -47,12 +54,15 @@ export function localeTabAfterRemoving(
 }
 
 /*
- * **The tab set itself**, as the product form and the holiday calendar form
- * both hold it: one draft per written locale, keyed by locale, plus the tab
- * being shown. The draft is whatever that form writes per locale — a product's
- * name and descriptions, a calendar's break names — so these helpers never look
- * inside one. Pure, so each form applies them inside its own state setter.
+ * **The tab set itself**: one draft per written locale, keyed by locale, plus
+ * the tab being shown. The draft is whatever that form writes per locale — an
+ * article's title, summary and body, a calendar's break names — and every one
+ * of its fields is text, which is what lets blankness be one rule for all of
+ * them.
  */
+
+/** A draft whose every field is text, as typed — untrimmed. */
+export type LocaleDraft<T> = Record<keyof T, string>;
 
 /** One draft per written locale, and the tab being shown. */
 export interface LocaleTabState<T> {
@@ -65,6 +75,36 @@ export function writtenLocales(
   drafts: Partial<Record<SupportedLocale, unknown>>,
 ): SupportedLocale[] {
   return SUPPORTED_LOCALES.filter((locale) => drafts[locale] !== undefined);
+}
+
+/** A new item's tabs: one, in the UI locale, holding `empty`. */
+export function newLocaleTabs<T>(
+  uiLocale: SupportedLocale,
+  empty: T,
+): LocaleTabState<T> {
+  return { drafts: { [uiLocale]: empty }, active: uiLocale };
+}
+
+/**
+ * A saved item's tabs: one per saved draft, open on the tab `openingLocaleTab`
+ * picks. An item with nothing saved opens as a new one does.
+ */
+export function openLocaleTabs<T>(
+  drafts: Partial<Record<SupportedLocale, T>>,
+  uiLocale: SupportedLocale,
+  empty: T,
+): LocaleTabState<T> {
+  const written = writtenLocales(drafts);
+  if (written.length === 0) return newLocaleTabs(uiLocale, empty);
+  return { drafts, active: openingLocaleTab(written, uiLocale) };
+}
+
+/** Show `locale`'s tab. */
+export function selectLocaleTab<T>(
+  state: LocaleTabState<T>,
+  locale: SupportedLocale,
+): LocaleTabState<T> {
+  return { ...state, active: locale };
 }
 
 /** Open a tab for `locale`, seeded with `draft`, and show it. */
@@ -94,31 +134,128 @@ export function removeLocaleTab<T>(
   };
 }
 
+/** The draft in the tab being shown, or `empty` for a tab with none. */
+export function activeLocaleDraft<T>(state: LocaleTabState<T>, empty: T): T {
+  return state.drafts[state.active] ?? empty;
+}
+
+/** Change fields of the draft in the tab being shown. */
+export function editActiveLocaleDraft<T>(
+  state: LocaleTabState<T>,
+  patch: Partial<T>,
+  empty: T,
+): LocaleTabState<T> {
+  return {
+    ...state,
+    drafts: {
+      ...state.drafts,
+      [state.active]: { ...activeLocaleDraft(state, empty), ...patch },
+    },
+  };
+}
+
+/** Every field blank once trimmed: a tab opened and not used. */
+export function isBlankLocaleDraft<T extends LocaleDraft<T>>(draft: T): boolean {
+  for (const field in draft) {
+    if (draft[field].trim() !== "") return false;
+  }
+  return true;
+}
+
+/** A draft that is there and not blank — a version — or `undefined`. */
+function versionIn<T extends LocaleDraft<T>>(
+  drafts: Partial<Record<SupportedLocale, T>>,
+  locale: SupportedLocale,
+): T | undefined {
+  const draft = drafts[locale];
+  return draft === undefined || isBlankLocaleDraft(draft) ? undefined : draft;
+}
+
 /**
- * What is wrong with a set of per-locale drafts under the rule authored content
- * follows: **at least one locale complete, and no tab left half-written.** Any
- * single locale is enough, because a reader is shown theirs, else English, else
- * the first written (`resolveTranslation()`); a tab that is open but not
- * complete is refused rather than saved as a gap, so what was added is either
- * finished or removed.
+ * The drafts a save stores, in `SUPPORTED_LOCALES` order: every tab but the
+ * blank ones. As typed — the editor trims each field as it builds its input.
+ */
+export function draftsToSave<T extends LocaleDraft<T>>(
+  drafts: Partial<Record<SupportedLocale, T>>,
+): { locale: SupportedLocale; draft: T }[] {
+  return SUPPORTED_LOCALES.flatMap((locale) => {
+    const draft = versionIn(drafts, locale);
+    return draft === undefined ? [] : [{ locale, draft }];
+  });
+}
+
+/**
+ * What stops a set of per-locale drafts from being saved, for an editor whose
+ * content rule is **something written, and every written tab complete** by its
+ * own `isComplete` — not every editor's rule. Blank tabs are left out first.
+ * Any single locale is enough, because a reader is shown theirs, else English,
+ * else the first written (`resolveTranslation()`); a tab partly written is
+ * refused rather than saved as a gap, so what was added is either finished or
+ * emptied.
  *
- * `none` when no tab is complete; `incomplete` names the first open tab, in
- * `SUPPORTED_LOCALES` order, that is not. The locale is a code — the caller
- * turns it into the reader's language name.
+ * `none` when nothing is written; `incomplete` names the first written tab, in
+ * `SUPPORTED_LOCALES` order, that is not complete. The locale is a code — the
+ * caller turns it into the reader's language name.
  */
 export type LocaleDraftsProblem =
   | { kind: "none" }
   | { kind: "incomplete"; locale: SupportedLocale };
 
-export function checkLocaleDrafts<T>(
+export function checkLocaleDrafts<T extends LocaleDraft<T>>(
   drafts: Partial<Record<SupportedLocale, T>>,
   isComplete: (draft: T) => boolean,
 ): LocaleDraftsProblem | null {
-  const written = SUPPORTED_LOCALES.flatMap((locale) => {
-    const draft = drafts[locale];
-    return draft === undefined ? [] : [{ locale, complete: isComplete(draft) }];
-  });
-  if (!written.some((entry) => entry.complete)) return { kind: "none" };
-  const half = written.find((entry) => !entry.complete);
+  const written = draftsToSave(drafts);
+  if (written.length === 0) return { kind: "none" };
+  const half = written.find((entry) => !isComplete(entry.draft));
   return half ? { kind: "incomplete", locale: half.locale } : null;
+}
+
+/**
+ * The fields of a draft written in the rich editor, and the record of how that
+ * editor respells an untouched body (`AuthoredBodies`). Required wherever
+ * drafts are compared, so an editor holding a rich body cannot compare
+ * without it; an editor with plain text only states `NO_RICH_BODIES`.
+ */
+export interface RichBodyFields<T> {
+  fields: readonly (keyof T)[];
+  bodies: AuthoredBodies;
+}
+
+/** What an editor whose drafts are all plain text passes for its rich bodies. */
+export const NO_RICH_BODIES = null;
+
+/**
+ * Whether `drafts` hold exactly what `saved` holds, locale by locale: the same
+ * locales written, blank tabs on either side ignored, and every field equal
+ * once trimmed — a rich body also when it is the editor's own serialisation of
+ * the saved one.
+ */
+export function sameLocaleDrafts<T extends LocaleDraft<T>>(
+  drafts: Partial<Record<SupportedLocale, T>>,
+  saved: Partial<Record<SupportedLocale, T>>,
+  rich: RichBodyFields<T> | typeof NO_RICH_BODIES,
+): boolean {
+  return SUPPORTED_LOCALES.every((locale) => {
+    const draft = versionIn(drafts, locale);
+    const stored = versionIn(saved, locale);
+    if (draft === undefined || stored === undefined) return draft === stored;
+    // Both sides' fields: a draft keyed by something the writer adds to (a
+    // holiday calendar's breaks) can hold a field the saved copy lacks, or the
+    // reverse, and a missing field reads as blank.
+    const fields = new Set([...Object.keys(draft), ...Object.keys(stored)]);
+    return [...fields].every((field) => {
+      const current = fieldText(draft, field);
+      const before = fieldText(stored, field);
+      return rich !== null && rich.fields.some((name) => name === field)
+        ? sameAuthoredBody(current, before, rich.bodies)
+        : current.trim() === before.trim();
+    });
+  });
+}
+
+/** A draft's field, or blank where the draft has no such field. */
+function fieldText(draft: object, field: string): string {
+  const text: unknown = Reflect.get(draft, field);
+  return typeof text === "string" ? text : "";
 }

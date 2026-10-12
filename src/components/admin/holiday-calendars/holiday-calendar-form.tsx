@@ -10,20 +10,33 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { LocaleTabs } from "@/components/ui/locale-tabs";
+import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import {
+  LOCALE_CONFIG,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import {
+  activeLocaleDraft,
   addLocaleTab,
+  editActiveLocaleDraft,
   removeLocaleTab,
+  selectLocaleTab,
   writtenLocales,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
 import type { HolidayCalendarInput } from "@/services/holiday-calendars";
 import {
+  NO_BREAK_NAMES,
+  firstUnnamedBreak,
   holidayCalendarFailureReason,
   newBreakKey,
+  sameHolidayCalendarDraft,
   validateHolidayCalendarDraft,
+  withoutBreakName,
   type HolidayBreakDraft,
+  type HolidayBreakNames,
   type HolidayCalendarDraft,
   type HolidayCalendarDraftProblem,
 } from "./holiday-calendar-draft";
@@ -82,6 +95,9 @@ export function HolidayCalendarForm({
   const languageName = useLanguageNames();
 
   const [draft, setDraft] = useState<HolidayCalendarDraft>(initialDraft);
+  // What the form opened with — the stored calendar or the blank new one —
+  // held as it was at mount, like the draft seeded from it.
+  const [opened] = useState<HolidayCalendarDraft>(initialDraft);
   const [error, setError] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
   // The save waiting on the confirm dialog. Kept after the dialog closes, so
@@ -92,22 +108,23 @@ export function HolidayCalendarForm({
   } | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  const locales = writtenLocales(draft.names);
-  const activeLanguage = languageName(
-    draft.activeLocale,
-    LOCALE_CONFIG[draft.activeLocale].label,
-  );
+  // What leaving would lose: the name, a date, a break added or removed, or a
+  // break's name in any tab. From the save's press on there is nothing to ask
+  // about — a save that lands leaves the page, and a refused one clears
+  // `committing` and asks again; so does the confirm dialog opening, since
+  // nothing is saved until it is answered.
+  const unsaved = !committing && !sameHolidayCalendarDraft(draft, opened);
 
-  /** The draft's names as the shared tab-set helpers take them, and back. */
+  const activeLocale = draft.names.active;
+  const activeNames = activeLocaleDraft(draft.names, NO_BREAK_NAMES);
+  const activeLanguage = language(activeLocale);
+
   function updateTabs(
     change: (
-      tabs: LocaleTabState<Record<string, string>>,
-    ) => LocaleTabState<Record<string, string>>,
+      tabs: LocaleTabState<HolidayBreakNames>,
+    ) => LocaleTabState<HolidayBreakNames>,
   ) {
-    setDraft((current) => {
-      const next = change({ drafts: current.names, active: current.activeLocale });
-      return { ...current, names: next.drafts, activeLocale: next.active };
-    });
+    setDraft((current) => ({ ...current, names: change(current.names) }));
   }
 
   function updateBreak(key: string, patch: Partial<HolidayBreakDraft>) {
@@ -120,17 +137,9 @@ export function HolidayCalendarForm({
   }
 
   function setBreakName(key: string, name: string) {
-    setDraft((current) => ({
-      ...current,
-      names: {
-        ...current.names,
-        [current.activeLocale]: {
-          // exact-locale: the editor edits the active tab's own names
-          ...current.names[current.activeLocale],
-          [key]: name,
-        },
-      },
-    }));
+    updateTabs((tabs) =>
+      editActiveLocaleDraft(tabs, { [key]: name }, NO_BREAK_NAMES),
+    );
   }
 
   function addBreak() {
@@ -147,10 +156,11 @@ export function HolidayCalendarForm({
     setDraft((current) => ({
       ...current,
       breaks: current.breaks.filter((entry) => entry.key !== key),
+      names: withoutBreakName(current.names, key),
     }));
   }
 
-  function language(locale: keyof typeof LOCALE_CONFIG) {
+  function language(locale: SupportedLocale) {
     return languageName(locale, LOCALE_CONFIG[locale].label);
   }
 
@@ -217,6 +227,7 @@ export function HolidayCalendarForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <UnsavedChangesGuard when={unsaved} />
       <FormSection title={t("sections.calendar")}>
         <Field
           label={t("fields.name")}
@@ -243,18 +254,21 @@ export function HolidayCalendarForm({
       >
         <Field label={t("fields.languages")} hint={t("hints.languages")}>
           <LocaleTabs
-            written={locales}
-            active={draft.activeLocale}
-            onSelect={(locale) =>
-              setDraft((current) => ({ ...current, activeLocale: locale }))
+            written={writtenLocales(draft.names.drafts)}
+            active={activeLocale}
+            onSelect={(locale) => updateTabs((tabs) => selectLocaleTab(tabs, locale))}
+            onAdd={(locale) =>
+              updateTabs((tabs) => addLocaleTab(tabs, locale, NO_BREAK_NAMES))
             }
-            onAdd={(locale) => updateTabs((tabs) => addLocaleTab(tabs, locale, {}))}
             onRemove={(locale) =>
               updateTabs((tabs) => removeLocaleTab(tabs, locale, uiLocale))
             }
-            addLabel={t("addLocale")}
-            removeLabel={(name) => t("removeLocale", { language: name })}
-          />
+            isComplete={(locale) =>
+              firstUnnamedBreak(
+                draft.breaks,
+                draft.names.drafts[locale] ?? NO_BREAK_NAMES,
+              ) === null
+            }          />
         </Field>
 
         {draft.breaks.length === 0 ? (
@@ -265,7 +279,7 @@ export function HolidayCalendarForm({
               const number = index + 1;
               const startId = `holiday-break-${entry.key}-start`;
               const endId = `holiday-break-${entry.key}-end`;
-              const nameId = `holiday-break-${entry.key}-name-${draft.activeLocale}`;
+              const nameId = `holiday-break-${entry.key}-name-${activeLocale}`;
               return (
                 <li
                   key={entry.key}
@@ -303,9 +317,8 @@ export function HolidayCalendarForm({
                   >
                     <Input
                       id={nameId}
-                      lang={draft.activeLocale}
-                      // exact-locale: the editor shows the active tab's own name
-                      value={draft.names[draft.activeLocale]?.[entry.key] ?? ""}
+                      lang={activeLocale}
+                      value={activeNames[entry.key] ?? ""}
                       onChange={(event) => setBreakName(entry.key, event.target.value)}
                       autoComplete="off"
                     />
