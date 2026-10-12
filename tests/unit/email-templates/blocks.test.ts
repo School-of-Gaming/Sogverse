@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   bulletList,
+  factList,
+  hairlineRule,
   inlineBold,
   numberedList,
   MARKUP_TAGS,
 } from "@/lib/email-templates/blocks";
+import { styledName, styledProductName } from "@/lib/email-templates/utils";
+import { MAIL_SPACE, mailText } from "@/lib/email-templates/type-scale";
+import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
 import { DARK_THEME } from "@/lib/constants/colors";
 
 // The house-style sweep asserts on *mails*, so a block nothing sends yet has
@@ -38,6 +43,47 @@ describe("numberedList", () => {
     expect(numberedList([inlineBold("Do this")])).toContain(
       inlineBold("Do this"),
     );
+  });
+});
+
+describe("bulletList", () => {
+  it("indents with a margin, which Outlook's Word engine honours on a list", () => {
+    const html = bulletList(["One.", "Two."]);
+    const listStyle = /<ul style="([^"]*)"/.exec(html)?.[1] ?? "";
+
+    expect(listStyle).toContain(
+      `margin:0 0 ${MAIL_SPACE.block}px ${MARKDOWN_LOOK.ul.indent}px;`,
+    );
+    expect(listStyle).toContain("padding:0;");
+    expect(listStyle).not.toContain("padding-left");
+  });
+
+  it("spaces items by markdown's item gap, and leaves nothing under the last", () => {
+    const gaps = [...bulletList(["One.", "Two.", "Three."]).matchAll(/<li style="margin:0 0 (\d+)px;">/g)].map(
+      (m) => Number(m[1]),
+    );
+    expect(gaps).toEqual([MARKDOWN_LOOK.ul.itemGap, MARKDOWN_LOOK.ul.itemGap, 0]);
+  });
+});
+
+describe("hairlineRule", () => {
+  it("states the furniture step on both sides of itself", () => {
+    expect(hairlineRule()).toContain(`style="margin:${MAIL_SPACE.furniture}px 0;"`);
+  });
+});
+
+describe("factList", () => {
+  it("sets its labels small and muted, in sentence case", () => {
+    const html = factList([["Group", "Kettukallio"]]);
+    expect(html).toContain(mailText("small", DARK_THEME.mutedFg));
+    expect(html).not.toContain("text-transform");
+    expect(html).not.toContain("letter-spacing");
+  });
+});
+
+describe("styledName", () => {
+  it("is bold in the body's ink, exactly like a product name", () => {
+    expect(styledName("Aino")).toBe(styledProductName("Aino"));
   });
 });
 

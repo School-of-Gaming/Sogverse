@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { mailWeight, renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { mailWeight } from "@/lib/email-templates/type-scale";
 import {
   MARKDOWN_CONTAINER,
   MARKDOWN_LOOK,

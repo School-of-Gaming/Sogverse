@@ -6,6 +6,7 @@ import {
   ctaButton,
   ctaButtonRow,
   factList,
+  hairlineRule,
   inlineLink,
   bulletList,
   numberedList,
@@ -13,6 +14,7 @@ import {
   sectionLabel,
 } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
+import { MAIL_SPACE, MAIL_WEIGHT, mailText } from "./type-scale";
 import { heading, paragraph, pinnedFill, styledName, styledProductName } from "./utils";
 
 /**
@@ -64,9 +66,9 @@ import { heading, paragraph, pinnedFill, styledName, styledProductName } from ".
  */
 function entry(name: string, specimen: string): string {
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.furniture}px;">
       <tr>
-        <td style="padding:0 0 8px;color:${DARK_THEME.mutedFg};font-size:12px;font-weight:bold;letter-spacing:0.5px;">
+        <td style="padding:0 0 ${MAIL_SPACE.tight}px;${mailText("small", DARK_THEME.mutedFg, MAIL_WEIGHT.bold)}">
           ${name}
         </td>
       </tr>
@@ -74,16 +76,13 @@ function entry(name: string, specimen: string): string {
     </table>`;
 }
 
-/** A section rule and its title. */
+/**
+ * A section of the reference, opened the way a mail section is: the hairline
+ * rule, then the mail's title level. So every section break on this page is
+ * itself a specimen of the construct.
+ */
 function section(title: string): string {
-  return `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:8px 0 20px;">
-      <tr>
-        <td style="border-top:1px solid ${DARK_THEME.border};padding-top:16px;color:${BRAND.act};font-size:15px;font-weight:bold;">
-          ${title}
-        </td>
-      </tr>
-    </table>`;
+  return `${hairlineRule()}${heading(title)}`;
 }
 
 /**
@@ -107,12 +106,12 @@ function section(title: string): string {
  */
 function swatch(token: string, hex: string, on: string): string {
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 8px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.tight}px;">
       <tr>
-        <td width="150" style="${pinnedFill(hex)}border-radius:${RADIUS.sm};padding:14px 10px;color:${on};font-size:12px;font-weight:bold;text-align:center;">
+        <td width="150" style="${pinnedFill(hex)}border-radius:${RADIUS.sm};padding:14px 10px;${mailText("small", on, MAIL_WEIGHT.bold)}text-align:center;">
           ${hex}
         </td>
-        <td style="padding-left:12px;color:${DARK_THEME.foreground};font-size:12px;">
+        <td style="padding-left:12px;${mailText("small", DARK_THEME.foreground)}">
           ${token}
         </td>
       </tr>
@@ -253,14 +252,27 @@ export function buildComponentsReferenceEmail(locale: string): string {
   /*
    * TEXT
    *
-   * Every block below carries its own bottom margin — 16px, except
-   * `sectionLabel`'s 8px, which sits tight to whatever it labels. Compose them
-   * adjacently and add nothing: a spacer between two blocks double-spaces them,
-   * and inventing a third gap is how a mail ends up with a rhythm of its own.
+   * The scale, from the top: `heading` is the title level, the size of a
+   * report's own top heading; `paragraph` and both lists are the body, the
+   * report's body size; `sectionLabel` is the body in bold; a button label is
+   * the action level. The small level is furniture and appears where furniture
+   * does — the fact labels, the callout's label, the footer, and the specimen
+   * names on this page.
    *
-   * `styledName` and `styledProductName` escape what they are given. Never
-   * interpolate a person's or a product's name into markup by hand — those are
-   * the two values in a mail that come from the database.
+   * Every block carries its own spacing, on markdown's steps — 16px under a
+   * block, 8px under a lead-in, 4px between list items, 24px around the fact
+   * list, the callout and a hairline rule. Compose them adjacently and add
+   * nothing: a spacer between two blocks double-spaces them, and inventing a
+   * further gap is how a mail ends up with a rhythm of its own.
+   *
+   * A mail section opens with `hairlineRule` and then `heading`, which is how
+   * every section on this page opens too. The rule is what tells a mail's own
+   * section heading from a report's top heading of the same size.
+   *
+   * `styledName` and `styledProductName` escape what they are given, and set it
+   * bold in the body's ink. Never interpolate a person's or a product's name
+   * into markup by hand — those are the two values in a mail that come from
+   * the database.
    *
    * `inlineLink` is for a destination worth naming but not worth a button, and
    * it rides inside a sentence already being read. Which word carries it is the
@@ -280,6 +292,10 @@ export function buildComponentsReferenceEmail(locale: string): string {
     ${section("Text")}
     ${entry("heading + paragraph", `${heading("A heading")}${paragraph("Body copy, which is what most of a mail is.")}`)}
     ${entry("sectionLabel", `${sectionLabel("A section label")}${paragraph("The block it labels.")}`)}
+    ${entry(
+      "hairlineRule + heading",
+      `${paragraph("The end of one part of the mail.")}${hairlineRule()}${heading("A mail section")}${paragraph("The start of the next.")}`,
+    )}
     ${entry(
       "styledName + styledProductName",
       paragraph(
@@ -320,9 +336,10 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * to whatever the locale calls a thing.
    *
    * Its own section rather than a line under Text, because it is not a text
-   * style: it is a ruled table, it carries a 24px bottom margin where the text
-   * blocks carry 16px, and a reader skimming for "how do I state a date and a
-   * price" should find it by name rather than between the lists.
+   * style: it is a ruled table, it is furniture with 24px either side where the
+   * text blocks carry 16px under them, and a reader skimming for "how do I
+   * state a date and a price" should find it by name rather than between the
+   * lists. Its labels are the small level in the muted ink, in sentence case.
    *
    * Labels and values go in as composed HTML and neither is escaped by the
    * block, so a value off a row is escaped by the caller — and an address is
