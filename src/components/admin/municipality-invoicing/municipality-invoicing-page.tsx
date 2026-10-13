@@ -804,8 +804,8 @@ function ClubTable({
  * secondary type beside the billed count, so a missing write-up can be chased
  * without opening anything — which matters because every club here is closed
  * by default. It is not a warning: those sessions are in the count and the
- * total, and nothing about the invoice is wrong. Dates still ahead of the club
- * and cancelled dates get no mention there.
+ * total, and nothing about the invoice is wrong. Dates still ahead of the club,
+ * cancelled dates and holidays get no mention there.
  *
  * **The whole row toggles the dates, and the club's name is the one thing on it
  * that does not.** A row this dense is read by pointing at it, and a reader
@@ -981,7 +981,8 @@ function ClubSessionDetail({
  * carries no amount at all: it has not happened, and printing €0 against a date
  * in the future would invite somebody to go looking for a session nobody has
  * missed. A cancelled one is muted and worth €0, past or future: it is settled,
- * and the word beside the zero is what tells it apart from a billed one.
+ * and the word beside the zero is what tells it apart from a billed one. A
+ * holiday reads the same way, naming its break: nothing was due that day.
  */
 function SessionRow({
   session,
@@ -1000,7 +1001,11 @@ function SessionRow({
       isoWeek={session.isoWeek}
       locale={locale}
       tone={session.kind === "recorded" ? "plain" : "muted"}
-      outcome={t(SESSION_OUTCOME_KEY[session.kind])}
+      outcome={
+        session.kind === "holiday" && session.holidayName
+          ? t("holidayNamed", { name: session.holidayName })
+          : t(SESSION_OUTCOME_KEY[session.kind])
+      }
       amount={
         session.kind === "recorded" || session.kind === "unrecorded" ? (
           feeCents === null ? (
@@ -1021,4 +1026,5 @@ const SESSION_OUTCOME_KEY = {
   unrecorded: "billedNotRecorded",
   upcoming: "upcoming",
   cancelled: "cancelled",
+  holiday: "holiday",
 } as const satisfies Record<InvoiceSession["kind"], string>;

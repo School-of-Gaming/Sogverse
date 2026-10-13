@@ -1395,6 +1395,94 @@ export type Database = {
           },
         ]
       }
+      holiday_break_translations: {
+        Row: {
+          break_id: string
+          created_at: string
+          locale: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          break_id: string
+          created_at?: string
+          locale: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          break_id?: string
+          created_at?: string
+          locale?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holiday_break_translations_break_id_fkey"
+            columns: ["break_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_breaks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holiday_breaks: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          end_date: string
+          id: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          end_date: string
+          id?: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "holiday_breaks_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      holiday_calendars: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_customers: {
         Row: {
           billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -2299,6 +2387,36 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_groups_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_holiday_calendars: {
+        Row: {
+          calendar_id: string
+          product_id: string
+        }
+        Insert: {
+          calendar_id: string
+          product_id: string
+        }
+        Update: {
+          calendar_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_holiday_calendars_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_holiday_calendars_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -4108,6 +4226,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_holiday_calendar: {
+        Args: { p_breaks: Json; p_name: string }
+        Returns: string
+      }
       create_invoice_customer: {
         Args: {
           p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -4152,6 +4274,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_holiday_calendar_ids?: string[]
           p_invoice_customer_id?: string
           p_is_remote: boolean
           p_is_visible?: boolean
@@ -4263,7 +4386,6 @@ export type Database = {
       gedu_assigned_products: {
         Args: { p_gedu_id: string }
         Returns: {
-          cancelled_dates: string[]
           group_count: number
           group_id: string
           kind: string
@@ -4271,6 +4393,9 @@ export type Database = {
           product: Json
           substitution_cancelled: boolean
           substitution_date: string
+          substitution_ends_at: string
+          substitution_starts_at: string
+          upcoming_sessions: Json
         }[]
       }
       gedu_assignment_summaries: {
@@ -4351,7 +4476,6 @@ export type Database = {
       get_assigned_products_for_discord_user: {
         Args: { p_discord_user_id: string }
         Returns: {
-          cancelled_dates: string[]
           group_count: number
           group_id: string
           kind: string
@@ -4359,6 +4483,9 @@ export type Database = {
           product: Json
           substitution_cancelled: boolean
           substitution_date: string
+          substitution_ends_at: string
+          substitution_starts_at: string
+          upcoming_sessions: Json
         }[]
       }
       get_chat_channel_roster: {
@@ -4395,7 +4522,6 @@ export type Database = {
       get_my_assigned_products: {
         Args: never
         Returns: {
-          cancelled_dates: string[]
           group_count: number
           group_id: string
           kind: string
@@ -4403,6 +4529,9 @@ export type Database = {
           product: Json
           substitution_cancelled: boolean
           substitution_date: string
+          substitution_ends_at: string
+          substitution_starts_at: string
+          upcoming_sessions: Json
         }[]
       }
       get_my_family_product_feed: {
@@ -4483,11 +4612,14 @@ export type Database = {
           status: string
         }[]
       }
-      get_my_session_cancellations: {
+      get_my_planned_sessions: {
         Args: never
         Returns: {
+          cancelled: boolean
+          ends_at: string
           participation_id: string
           session_date: string
+          starts_at: string
         }[]
       }
       get_my_waitlist_positions: {
@@ -4554,6 +4686,25 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_final_session_date: {
+        Args: { p_group_id: string }
+        Returns: string
+      }
+      group_open_session_windows: {
+        Args: { p_at?: string; p_group_id: string }
+        Returns: {
+          cancelled: boolean
+          closes_at: string
+          ends_at: string
+          opens_at: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
+      group_session_date_is_holiday: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       group_session_date_is_scheduled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -4566,9 +4717,9 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
-      group_upcoming_cancelled_dates: {
+      group_upcoming_planned_sessions: {
         Args: { p_group_id: string }
-        Returns: string[]
+        Returns: Json
       }
       has_active_participation_in_group: {
         Args: { p_group_id: string }
@@ -4579,6 +4730,14 @@ export type Database = {
         Returns: boolean
       }
       hide_chat_message: { Args: { p_id: string }; Returns: string }
+      holiday_breaks_document: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: Json
+      }
+      holiday_change_impact: {
+        Args: { p_after: unknown[]; p_before: unknown[]; p_product_id: string }
+        Returns: Json
+      }
       immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_chat_channel_member: {
@@ -4674,6 +4833,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      load_holiday_calendar_breaks: {
+        Args: { p_breaks: Json; p_calendar_id: string }
+        Returns: undefined
+      }
       location_search_blob: {
         Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
         Returns: string
@@ -4700,6 +4863,46 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
+      planned_group_sessions: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: {
+          cancelled_group_ids: string[]
+          ends_at: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
+      planned_session_dates: {
+        Args: {
+          p_from: string
+          p_include_holidays?: boolean
+          p_product_id: string
+          p_to: string
+        }
+        Returns: {
+          ends_at: string
+          holiday_break_id: string
+          session_date: string
+          starts_at: string
+        }[]
+      }
+      planned_sessions_document: {
+        Args: { p_product_id: string; p_to: string }
+        Returns: Json
+      }
+      preview_holiday_calendar_change: {
+        Args: { p_breaks: Json; p_calendar_id: string }
+        Returns: Json
+      }
+      product_holiday_breaks: {
+        Args: { p_from: string; p_product_id: string; p_to: string }
+        Returns: {
+          break_id: string
+          calendar_id: string
+          end_date: string
+          start_date: string
+        }[]
+      }
       product_required_qualifications: {
         Args: {
           p_product_type: Database["public"]["Enums"]["product_type"]
@@ -4833,6 +5036,10 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      save_holiday_calendar: {
+        Args: { p_breaks: Json; p_id: string; p_name: string }
+        Returns: string
+      }
       save_landing_page: {
         Args: { p_id: string; p_sections: Json; p_versions: Json }
         Returns: string
@@ -4928,6 +5135,10 @@ export type Database = {
           p_include_detail: boolean
         }
         Returns: Json
+      }
+      session_plan_horizon: {
+        Args: { p_at_least?: string; p_group_id?: string; p_product_id: string }
+        Returns: string
       }
       session_product_document: {
         Args: { p_product: Database["public"]["Tables"]["products"]["Row"] }
@@ -5035,6 +5246,10 @@ export type Database = {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
       }
+      set_product_holiday_calendars: {
+        Args: { p_calendar_ids: string[]; p_product_id: string }
+        Returns: undefined
+      }
       set_product_required_consents: {
         Args: { p_product_id: string; p_slugs: string[] }
         Returns: undefined
@@ -5082,6 +5297,10 @@ export type Database = {
       }
       unpublish_landing_page: { Args: { p_id: string }; Returns: string }
       unpublish_library_article: { Args: { p_id: string }; Returns: string }
+      update_holiday_calendar: {
+        Args: { p_breaks: Json; p_id: string; p_name: string }
+        Returns: undefined
+      }
       update_invoice_customer: {
         Args: {
           p_billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -5104,6 +5323,7 @@ export type Database = {
           p_end_date?: string
           p_for_gamers: boolean
           p_for_parents: boolean
+          p_holiday_calendar_ids?: string[]
           p_id: string
           p_invoice_customer_id?: string
           p_is_remote: boolean

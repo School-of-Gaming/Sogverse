@@ -1,5 +1,10 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
-import { calendarDate, futureSlot } from "@/components/preview/fixture-clock";
+import {
+  calendarDate,
+  fixturePlan,
+  fixtureWireWindowOf,
+  futureSlot,
+} from "@/components/preview/fixture-clock";
 import { SESSION_FEED_TIMEZONE } from "@/components/gedu/session-feed/mock-fixtures";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type {
@@ -78,9 +83,9 @@ export interface GeduSubstitutionsFixture {
    * The viewer's **own** upcoming sessions — what the "Can't make a session?"
    * picker is a list of.
    *
-   * Expanded from the seats below by the live helper, so the scene shows the
-   * real schedule walk — a term of five weekly clubs, one of them stopping at
-   * its end date — rather than a hand-written list that could not be wrong.
+   * Read off the seats' plans below by the live helper, so the scene shows the
+   * real list — a term of five weekly clubs, one of them stopping at its end
+   * date — rather than a hand-written list that could not be wrong.
    */
   upcomingSessions: GeduUpcomingSession[];
   /**
@@ -165,15 +170,18 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
     isRemote: boolean;
     siteName?: string | null;
     productType?: GeduAssignmentRow["product"]["productType"];
-  }): GeduAssignmentRow => ({
+  }): GeduAssignmentRow => {
+    const startDate = calendarDate(now, -40, SESSION_FEED_TIMEZONE);
+    const endDate =
+      opts.endsInDays === null
+        ? null
+        : calendarDate(now, opts.endsInDays, SESSION_FEED_TIMEZONE);
+    return {
     product: {
       id: opts.id,
       timezone: SESSION_FEED_TIMEZONE,
-      startDate: calendarDate(now, -40, SESSION_FEED_TIMEZONE),
-      endDate:
-        opts.endsInDays === null
-          ? null
-          : calendarDate(now, opts.endsInDays, SESSION_FEED_TIMEZONE),
+      startDate,
+      endDate,
       isRemote: opts.isRemote,
       siteName: opts.isRemote ? null : (opts.siteName ?? null),
       topic: "minecraft_java",
@@ -184,14 +192,23 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
     groupId: `${opts.id}-group`,
     kind: "assignment",
     substitutionDate: null,
-    cancelledDates: [],
+    upcomingSessions: fixturePlan({
+      slots: opts.slots,
+      timeZone: SESSION_FEED_TIMEZONE,
+      startDate,
+      endDate,
+      now,
+    }),
     substitutionCancelled: false,
+    substitutionStartsAt: null,
+    substitutionEndsAt: null,
     groupCount: 2,
     participantCount: 9,
     groupName: opts.group,
     groupParticipantCount: 9,
     slots: opts.slots,
-  });
+    };
+  };
 
   return [
     seat({
@@ -299,6 +316,8 @@ function ownLiveRequests(
       group_id: session.groupId,
       group_name: seat.groupName ?? "",
       session_date: session.sessionDate,
+      starts_at: session.startsAt.toISOString(),
+      ends_at: session.endsAt.toISOString(),
       role: "primary",
       created_at: "2026-10-01T09:00:00+00:00",
       requested_by: OWN_REQUESTER_ID,
@@ -365,6 +384,16 @@ const OWN_REQUESTER_ID = "fec1339c-c33a-4660-ac39-4cafd24c89b5";
  * state.
  */
 function openRequests(now: Date): OpenSubstitutionRequest[] {
+  return openRequestsWithoutInstants(now).map((request) => ({
+    ...request,
+    ...fixtureWireWindowOf(request.product, request.session_date),
+  }));
+}
+
+/** The queue's rows before the read's session instants are laid on them. */
+function openRequestsWithoutInstants(
+  now: Date,
+): Omit<OpenSubstitutionRequest, "starts_at" | "ends_at">[] {
   const weekly = (daysAhead: number, startTime: string, minutes: number) => {
     const built = futureSlot(
       now,

@@ -9,6 +9,7 @@ import type {
   GeduAssignedProductRosterEntry,
   GeduAssignedProductShell,
 } from "@/types";
+import type { PlannedSession } from "@/lib/planned-sessions";
 
 /**
  * Convenience alias for the roster row shape consumed by
@@ -97,6 +98,13 @@ export interface WorkspaceProduct {
   product: GeduAssignedProductShell;
   my_group_id: string;
   groups: readonly WorkspaceGroupRow[];
+  /** The product's planned sessions, soonest first, cancellations unmarked. */
+  planned_sessions: readonly PlannedSession[];
+  /**
+   * The run's last session the reader's group has not cancelled,
+   * product-local `YYYY-MM-DD`; null on an open-ended product.
+   */
+  final_session_date: string | null;
 }
 
 /**

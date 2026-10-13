@@ -3,6 +3,8 @@ import type Stripe from "stripe";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { ParticipationsService } from "@/services/participations";
 import { ProductsService } from "@/services/products";
+import { HolidayBreaksService } from "@/services/holiday-breaks";
+import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
 import {
   PurchaseConfirmationView,
   PurchaseConfirmationFallback,
@@ -225,6 +227,19 @@ async function renderConfirmation(
 
   if (!product) return <PurchaseConfirmationFallback />;
 
+  // The club's holiday breaks, for the "Good to know" card — read here, with
+  // the rest of the page's data, so the list is on the first paint rather than
+  // arriving above the cards under it. After the product read rather than
+  // beside it, because the span follows the club's own term and zone. Every other product
+  // type reads nothing; a failed read costs the list, never the summary.
+  const breaksSpan = holidayBreaksSpan(product, new Date());
+  const holidayBreaks =
+    breaksSpan === null
+      ? []
+      : await new HolidayBreaksService(supabase)
+          .getHolidayBreaks(product.id, breaksSpan.from, breaksSpan.to)
+          .catch(() => []);
+
   return (
     <PurchaseConfirmationView
       product={product}
@@ -236,6 +251,7 @@ async function renderConfirmation(
       outcome={outcome}
       waitlistPosition={waitlistPosition}
       firstChargeAt={firstChargeAt}
+      holidayBreaks={holidayBreaks}
     />
   );
 }

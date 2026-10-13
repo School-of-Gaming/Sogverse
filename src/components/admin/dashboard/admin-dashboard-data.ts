@@ -277,16 +277,32 @@ export interface ScheduleChip {
    * the chip is filed under.
    */
   cancellation: DateCancellation;
+  /**
+   * The name of the holiday break that withdrew this session, in the reader's
+   * locale — or `null` for a session the plan holds.
+   *
+   * A break's dates are never planned, so without this the week would simply
+   * be short a session, or empty for a club whose whole week is a break, and
+   * nothing on the row would say why. A withdrawn session therefore keeps its
+   * place on the row, muted and marked, exactly as a date every group
+   * cancelled does, and like that date it counts as no session. Its
+   * `cancellation` is always `none`: a holiday is not a planned date, so no
+   * group can have cancelled it.
+   */
+  holidayBreak: string | null;
   href: AppHref;
 }
 
 /**
  * How many sessions a run of chips holds: a date every group cancelled is not a
  * session, so it is on the row and out of the count, while a partly cancelled
- * date still runs and still counts.
+ * date still runs and still counts. A session a holiday break withdrew is on
+ * the row and out of the count for the same reason.
  */
 export function runningSessionCount(chips: readonly ScheduleChip[]): number {
-  return chips.filter((chip) => chip.cancellation.kind !== "all").length;
+  return chips.filter(
+    (chip) => chip.cancellation.kind !== "all" && chip.holidayBreak === null,
+  ).length;
 }
 
 /**

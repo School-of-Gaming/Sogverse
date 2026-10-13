@@ -35,6 +35,7 @@ const PRODUCT_CONFIRMATION_SCHEDULE = {
   ageRange: "8-12",
   audience: "gamers",
   spokenLanguageCode: "fi",
+  holidayBreaks: "Autumn break 2026-10-19 2026-10-23; Christmas break 2026-12-21 2027-01-06",
   participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   attendeeName: "Marja Virtanen",
   attendeeEmail: "marja@example.com",

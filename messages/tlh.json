@@ -81,7 +81,10 @@
       "teamProfile": "Del’a’wIj",
       "adminTeamProfile": "Del’a’",
       "adminFeedback": "ja'chuq",
-      "team": "ghom"
+      "team": "ghom",
+      "adminHolidayCalendars": "DuQ jaj Hovtay'",
+      "adminHolidayCalendarNew": "DuQ jaj Hovtay' chu'",
+      "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -422,7 +425,9 @@
         "timesIn": "poHmey: {zone}",
         "nothingOn": "pagh",
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "holiday": "leSpoH",
+        "holidayTitle": "leSpoH — {name}. jajvam may’ tu’lu’be’."
       },
       "cancellation": {
         "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
@@ -491,6 +496,8 @@
       "billedNotRecorded": "DIl ’ach qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
       "cancelled": "qIllu’",
+      "holiday": "leSpoH",
+      "holidayNamed": "leSpoH — {name}",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
       "sessionsFor": "{club} qaSpu'",
       "clubsIn": "{municipality} ghomHommey",
@@ -570,6 +577,84 @@
         "hint": "ghomHomvam qaSpu’ DIlbogh ghot. DIlwI’ ghajbe’bogh ghomHom — DIl ghItlh chenbe’, ’ej DIl HaqwI’Daq ngoQlu’.",
         "manage": "DIlwI’pu’ yIQorgh",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "DuQ jaj Hovtay'",
+      "subtitle": "Warriors rest too. On these days the club does not meet — even Kahless took a break.",
+      "addCalendar": "Hovtay' chel",
+      "columns": {
+        "name": "pong",
+        "breaks": "DuQ",
+        "nextBreak": "DuQ veb",
+        "clubs": "ghommey"
+      },
+      "noUpcomingBreak": "DuQ pagh. Battle continues!",
+      "empty": "Hovtay' pagh. wa'DIch yIchel!",
+      "backToList": "Hovtay' tetlhDaq yIchegh",
+      "notFound": "Hovtay' Datu'be'. Perhaps it fled in dishonour.",
+      "newPage": {
+        "title": "Hovtay' chu'",
+        "submit": "Hovtay' yIchenmoH"
+      },
+      "editPage": {
+        "title": "Hovtay' yIchoH"
+      },
+      "sections": {
+        "calendar": "Hovtay'",
+        "breaks": "DuQ",
+        "breaksDescription": "A rest runs from its first day to its last, both included, and bears a name in every tongue of the calendar. Families see the name where the sessions it removes would have been.",
+        "products": "Hovtay' tlha'bogh ghommey",
+        "productsDescription": "Saving changes these clubs at once — past moons included. Choose wisely, warrior."
+      },
+      "fields": {
+        "name": "pong",
+        "languages": "Hol",
+        "firstDay": "jaj wa'DIch",
+        "lastDay": "jaj Qav",
+        "breakName": "pong ({language})"
+      },
+      "hints": {
+        "name": "Only the High Council of admins sees this name. Families see only the names of the rests.",
+        "languages": "The tongues belong to the whole calendar: add or remove one here and every rest obeys. Every rest needs a name in each. Families read their own tongue, else English, else the first one written."
+      },
+      "noBreaks": "DuQ pagh.",
+      "checkLine": "{range} · {days, plural, one {# jaj} other {# jaj}} · Hogh {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# jaj} other {# jaj}} · Hogh {first}–{last}",
+      "addBreak": "DuQ chel",
+      "removeBreak": "{name} yIteq",
+      "noProducts": "No club follows this calendar yet. A club chooses its calendars on its own page.",
+      "errors": {
+        "nameRequired": "Hovtay' pong yInob!",
+        "datesRequired": "{name} needs a first and a last day.",
+        "endBeforeStart": "{name} ends before it begins. Not even time travel allows this.",
+        "breakNameMissing": "{name} needs a name in {language}.",
+        "overlap": "{first} and {second} clash. One day, one rest.",
+        "saveFailed": "Hovtay' pollaHbe'. yInIDqa'!",
+        "saveFailedWithReason": "Hovtay' pollaHbe' — {reason}"
+      },
+      "impact": {
+        "title": "choHmeyvam DapolneS'a'?",
+        "description": "{count, plural, one {This club changes} other {These # clubs change}} the moment you save.",
+        "futureRemoved": "Families see no session on {count, plural, one {# day} other {# days}}: {dates}.",
+        "futureRestored": "Families see sessions again on {count, plural, one {# day} other {# days}}: {dates}.",
+        "pastRemoved": "{count, plural, one {A past session vanishes} other {Past sessions on # days vanish}} from families’ history: {dates}.",
+        "pastRestored": "{count, plural, one {A past session returns} other {Past sessions on # days return}} to families’ history: {dates}.",
+        "recordsHidden": "{count, plural, one {# written-up session is} other {# written-up sessions are}} hidden from families.",
+        "recordsShown": "{count, plural, one {# written-up session is} other {# written-up sessions are}} shown to families again.",
+        "requestsStopped": "{count, plural, one {# substitution request has} other {# substitution requests have}} no session left to cover.",
+        "requestsReopened": "{count, plural, one {# substitution request has} other {# substitution requests have}} a session to cover again."
+      },
+      "editBreak": "{name} yIchoH",
+      "unnamedBreak": "DuQ pong Hutlh",
+      "dialog": {
+        "editTitle": "DuQ yIchoH",
+        "saveAndAddAnother": "yIpol ’ej latlh yIchel"
+      },
+      "breakErrors": {
+        "datesRequired": "jaj wa’DIch jaj Qav je yIwIv!",
+        "endBeforeStart": "The last day comes before the first. Not even time travel allows this.",
+        "nameMissing": "DuQ pong yInob ({language})!"
       }
     },
     "library": {
@@ -972,6 +1057,16 @@
         },
         "copyLink": "Hoch He yIghItlhqa'",
         "copied": "ghItlhqa'lu'ta'"
+      },
+      "holidayCalendars": {
+        "label": "DuQ jaj Hovtay'",
+        "hint": "The club lays down its bat'leths on every rest day of the calendars it swears by. Families see the rest where battle would have been.",
+        "manage": "Hovtay' yIloH",
+        "nextBreak": "veb: {name}, {dates}",
+        "noUpcomingBreak": "DuQ pagh. Battle continues!",
+        "empty": "Hovtay' pagh. Not yet forged.",
+        "listUnavailable": "Hovtay' laDlaHbe'! The calendars this club already honours survive the save.",
+        "none": "pagh"
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
@@ -3073,6 +3168,8 @@
     "notRecorded": "ghItlhbe’lu’",
     "upcoming": "ghoSqu’",
     "cancelled": "qIllu’",
+    "holiday": "leSpoH",
+    "holidayNamed": "leSpoH — {name}",
     "absentSubstituted": "Dachbe’ — lIw {name}",
     "absentNoSubstitute": "Dachbe’ — lIwwI’ tu’lu’be’",
     "substitutingFor": "{name} lIw",
@@ -3140,7 +3237,8 @@
     "live": "qaStaH",
     "nextSession": "may’ veb",
     "upcoming": "may’ pIq",
-    "cancelled": "qIllu’"
+    "cancelled": "qIllu’",
+    "noSession": "may’ tu’lu’be’"
   },
   "sessionFacts": {
     "remote": "HeHDaq",
@@ -3391,7 +3489,8 @@
       "audience": "ghotpu’",
       "language": "Hol",
       "online": "QumDaq",
-      "tbd": "Sov pagh"
+      "tbd": "Sov pagh",
+      "holidayBreaks": "SuvwI’pu’ leSbogh poHmey"
     },
     "signupPanel": {
       "verb": {
@@ -3676,7 +3775,8 @@
     "expandSidebar": "HeDmey ’an",
     "collapseSidebar": "HeDmey SoQmoH",
     "substitutions": "lIwmey",
-    "feedback": "ja'chuq"
+    "feedback": "ja'chuq",
+    "holidayCalendars": "DuQ jaj Hovtay'"
   },
   "home": {
     "hero": {
@@ -4479,7 +4579,9 @@
         "ages": "qan {min}–{max}",
         "audienceParents": "vavpu’vaD",
         "audienceFamilies": "qorDu’pu’vaD",
-        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
+        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}",
+        "holidayBreaks": "SuvwI’pu’ leSbogh poHmey",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {

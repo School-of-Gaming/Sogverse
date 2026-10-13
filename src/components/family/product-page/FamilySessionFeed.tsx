@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   SessionCancelledLine,
   SessionFeedShell,
+  SessionHolidayLine,
   formatSessionLabels,
   hasReport,
   type SessionFeedRowContext,
@@ -117,6 +118,17 @@ export function FamilySessionFeed({
       className={className}
       markerClass={markerClass}
       renderItem={(entry, { prominent }) => {
+        // A break where nothing was planned: one calm line, its name and
+        // dates, and no session labels because it is not a session.
+        if (entry.kind === "holiday") {
+          return (
+            <SessionHolidayLine
+              names={entry.names}
+              startDate={entry.startDate}
+              endDate={entry.endDate}
+            />
+          );
+        }
         const labels = formatSessionLabels(entry, {
           locale,
           timeZone,
@@ -162,8 +174,9 @@ export function FamilySessionFeed({
  */
 function isQuiet(entry: FamilySessionEntry, showAttendance: boolean): boolean {
   // A cancelled session is a line when past and a panel when ahead; both open
-  // on one short row, so its dot sits at a line's height either way.
-  if (entry.kind === "cancelled") return true;
+  // on one short row, so its dot sits at a line's height either way. A
+  // holiday break is always a line.
+  if (entry.kind === "cancelled" || entry.kind === "holiday") return true;
   return (
     entry.kind === "past" &&
     !hasReport(entry.report) &&

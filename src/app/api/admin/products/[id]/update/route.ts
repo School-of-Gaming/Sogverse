@@ -137,6 +137,10 @@ export const POST = defineRoute({
       // and its parameter defaults to NULL. Safe only because the contract
       // demands the field: a caller that forgot it never reaches this line.
       p_invoice_customer_id: body.invoice_customer_id ?? undefined,
+      // Wipe-and-replace, like the consent slugs: the RPC replaces the club's
+      // calendar set on every call and a NULL or omitted argument detaches them
+      // all, so the array always travels — the contract demands the field.
+      p_holiday_calendar_ids: body.holiday_calendar_ids,
     };
 
     const { data: productId, error: rpcError } = await supabase.rpc(

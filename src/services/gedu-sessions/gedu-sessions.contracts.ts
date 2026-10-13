@@ -2,6 +2,8 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { MAX_IMAGE_EDGE } from "@/lib/images/image-purposes";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
+import { plannedSessionRows } from "@/lib/planned-sessions";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   substitutionRequestDocument,
@@ -301,10 +303,9 @@ export const groupTrainee = z.object({
 /**
  * Everything the group workspace renders for one group.
  *
- * There is no derived occurrence list in here on purpose: the RPC returns data
- * and TypeScript does the calendar math, so the merge of stored rows over
- * projected occurrences happens in one place on the client rather than twice in
- * two languages.
+ * The planned sessions arrive already expanded, from the database's one
+ * expansion of the plan; the merge of stored rows and cancellations over them
+ * happens on the client.
  */
 export const geduGroupFeed = z.object({
   product: z.object({
@@ -375,6 +376,24 @@ export const geduGroupFeed = z.object({
    * silently missing.
    */
   trainees: z.array(groupTrainee),
+  /**
+   * The product's planned sessions from its start date to its horizon — the
+   * end date of a dated product; on an open-ended one, the eighth session that
+   * has not ended and that the group has not cancelled — soonest first. Plain plan rows: `cancelled` is always `false` here,
+   * and the cancellations above are laid over them by date.
+   */
+  planned_sessions: plannedSessionRows,
+  /**
+   * The holiday breaks over the plan's span, each with the sessions it
+   * withdrew from the plan above. A holiday date carries its break and
+   * nothing else: no stored session and no cancellation lands on one.
+   */
+  holiday_breaks: holidayBreakRows,
+  /**
+   * The run's last session this group has not cancelled, product-local
+   * `YYYY-MM-DD`; null on an open-ended product, which has none.
+   */
+  final_session_date: z.string().nullable(),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
@@ -467,6 +486,9 @@ export const traineeGroupFeed = z.object({
   gedus: z.array(sessionStaffGedu),
   cancellations: z.array(sessionCancellation),
   trainees: z.array(groupTrainee),
+  planned_sessions: geduGroupFeed.shape.planned_sessions,
+  holiday_breaks: geduGroupFeed.shape.holiday_breaks,
+  final_session_date: geduGroupFeed.shape.final_session_date,
 });
 
 export type TraineeGroupFeed = z.infer<typeof traineeGroupFeed>;

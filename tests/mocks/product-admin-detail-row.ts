@@ -68,5 +68,13 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
     // The other optional ask set, populated for the same reason: its seeding
     // filters the same way the marketing one's does.
     product_gamer_photo_consents: [{ consent_type: "lynx_educate" }],
+    product_holiday_calendars: [
+      {
+        holiday_calendars: {
+          id: "6b1d5c2e-3f4a-4b8c-9d0e-1f2a3b4c5d6e",
+          name: "Helsinki schools",
+        },
+      },
+    ],
   };
 }

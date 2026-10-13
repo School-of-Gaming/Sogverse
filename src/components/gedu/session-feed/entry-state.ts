@@ -601,7 +601,11 @@ export function editorStateFromEntry(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): SessionEditorState {
-  if (entry.kind === "no_record" || entry.kind === "cancelled") {
+  if (
+    entry.kind === "no_record" ||
+    entry.kind === "cancelled" ||
+    entry.kind === "holiday"
+  ) {
     return { attendance: {}, report: "", staffNote: "" };
   }
   return {
@@ -670,8 +674,9 @@ export function applyDraftToEntry(
   entry: SessionFeedEntry,
   draft: SessionRecordDraft,
 ): SessionFeedEntry {
-  // A cancelled session takes no record, so there is nothing to fold in.
-  if (entry.kind === "cancelled") return entry;
+  // A cancelled session or a holiday break takes no record, so there is
+  // nothing to fold in.
+  if (entry.kind === "cancelled" || entry.kind === "holiday") return entry;
   // The staffing rides through untouched, like the identity and the schedule
   // beside it: who is expected at a session is not something writing up that
   // session changes.

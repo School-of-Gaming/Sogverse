@@ -2,6 +2,7 @@ import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
   SESSION_FEED_ADULT_ID,
+  SESSION_FEED_AUTUMN_BREAK,
   SESSION_FEED_EDITORS,
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_PHOTO_ART,
@@ -15,7 +16,7 @@ import {
 } from "@/components/gedu/session-feed/mock-fixtures";
 import type { SessionFeedEntry, SessionFeedGamer } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
-import { sessionEntryId } from "@/lib/session-occurrence";
+import { holidayEntryId, sessionEntryId } from "@/lib/session-occurrence";
 import {
   deriveSessionStaffing,
   type SubstitutionRequestInput,
@@ -274,8 +275,8 @@ interface ScenarioConfig {
    * feed's own dates agree only by accident: the feed pins its sessions to the
    * schedule's weekday and `now` is whatever day it is, so counting back whole
    * weeks lands up to a cadence step *after* the oldest session the feed
-   * carries. Nothing breaks — the final-session derivation only needs the start
-   * date at or below the last session — but a run whose start date sits after
+   * carries. Nothing breaks — the final session is read off the end date, never
+   * the start date — but a run whose start date sits after
    * its own first card is a fixture contradicting itself on screen. Read off
    * the feed, it cannot.
    */
@@ -870,13 +871,16 @@ function yearlongSpecs(): readonly EntrySpec[] {
     ...CLUB_FUTURE_SPECS.map((spec, index): EntrySpec =>
       index === 1 ? { kind: "future", cancelled: true } : spec,
     ),
-    ...past.map((spec, index) => {
+    ...past.flatMap((spec, index): EntrySpec[] => {
       // And one behind: a cancelled week owes nothing and takes no editor.
       if (index === 5) {
-        return { kind: "past", cancelled: true } satisfies EntrySpec;
+        return [{ kind: "past", cancelled: true }];
       }
       const photos = PHOTOS_AT.get(index);
-      return photos ? { ...spec, photos } : spec;
+      const week = photos ? { ...spec, photos } : spec;
+      // A holiday week a little further back: never planned, so one calm line
+      // between two sessions rather than a session of its own.
+      return index === 8 ? [SESSION_FEED_AUTUMN_BREAK, week] : [week];
     }),
     // Before the epoch and written up anyway — a gedu going back over an old
     // term. It renders as an ordinary past entry with a half-finished register
@@ -1627,10 +1631,13 @@ export function buildGroupWorkspaceFixture(
    */
   const dateOf = (startsAt: Date) =>
     formatInTimeZone(startsAt, feed.timeZone, "yyyy-MM-dd");
-  const rekeyed = feed.entries.map((entry) => ({
-    ...entry,
-    id: sessionEntryId(groupId, dateOf(entry.startsAt)),
-  }));
+  // A holiday line is keyed by its break rather than by a date, as the
+  // builder keys it.
+  const rekeyed = feed.entries.map((entry) =>
+    entry.kind === "holiday"
+      ? { ...entry, id: holidayEntryId(`mock-break-${dateOf(entry.startsAt)}`) }
+      : { ...entry, id: sessionEntryId(groupId, dateOf(entry.startsAt)) },
+  );
 
   /**
    * The group's substitution requests, and the per-date staffing derived from them.
@@ -1642,15 +1649,22 @@ export function buildGroupWorkspaceFixture(
    * it instead of exercising it. What the fixture supplies is the rows.
    */
   const substitutions = substitutionRequestsFor(scenario, rekeyed, dateOf);
-  const entries = rekeyed.map((entry) => ({
-    ...entry,
-    staffing: deriveSessionStaffing({
-      gedus: ASSIGNED_GROUP_GEDUS,
-      requests: substitutions,
-      sessionDate: dateOf(entry.startsAt),
-      viewerId: VIEWER_GEDU_ID,
-    }),
-  }));
+  const entries: SessionFeedEntry[] = rekeyed.map((entry) =>
+    // A holiday break has nobody to run it, so it carries no staffing.
+    entry.kind === "holiday"
+      ? entry
+      : {
+          ...entry,
+          staffing: deriveSessionStaffing({
+            gedus: ASSIGNED_GROUP_GEDUS,
+            requests: substitutions,
+            sessionDate: dateOf(entry.startsAt),
+            viewerId: VIEWER_GEDU_ID,
+          }),
+        },
+  );
+  // Every entry but a holiday line is a session the plan holds.
+  const sessionEntries = entries.filter((entry) => entry.kind !== "holiday");
   const sendOutcomes = new Map(
     feed.entries.flatMap((entry, index) => {
       const outcome = feed.sendOutcomes.get(entry.id);
@@ -1754,6 +1768,32 @@ export function buildGroupWorkspaceFixture(
       },
       my_group_id: assignedGroup.id,
       groups: [assignedGroup, ...peerGroups],
+      // The feed's own sessions are the plan the page was given, soonest
+      // first, so the room's next session is always one the feed shows.
+      // A holiday week is not in the plan, exactly as the database leaves it out.
+      planned_sessions: [...sessionEntries].reverse().map((entry) => ({
+        date: dateOf(entry.startsAt),
+        startsAt: entry.startsAt,
+        endsAt: entry.endsAt,
+        cancelled: false,
+      })),
+      // What the database answers for this run: the last date on or before the
+      // end date that the group has not cancelled, read off the same feed — so
+      // the final-session derivation finds the entry it names.
+      final_session_date:
+        endDate === null
+          ? null
+          : (sessionEntries
+              .map((entry) => ({
+                date: dateOf(entry.startsAt),
+                cancelled: entry.kind === "cancelled",
+              }))
+              .find(
+                (entry) =>
+                  !entry.cancelled &&
+                  entry.date <= endDate &&
+                  entry.date >= startDate,
+              )?.date ?? null),
     },
     entries,
     feedRoster: feed.roster,

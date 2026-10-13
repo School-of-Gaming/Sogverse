@@ -4,6 +4,7 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
 import {
   adminDashboardSnapshot,
   type AdminDashboardSnapshot,
@@ -35,6 +36,8 @@ import {
  *     halves from collapsing into one
  *   - a live product with nothing wrong is absent from the queue entirely
  *   - a run that ended months ago is in neither product section
+ *   - each schedule product's planned sessions, clipped to the window and to
+ *     the term, each date naming the groups that cancelled it
  *
  * **Every assertion is scoped to this file's own fixtures.** CI carries the
  * migrations' data *and* `seed.sql` *and* whatever other test files have seeded
@@ -42,8 +45,9 @@ import {
  * platform and would be false for reasons that are not bugs. The document is
  * read once, after seeding, and each test looks up its own row in it.
  *
- * Product UUIDs 620-629, plus 80d-80f for the invoice-customer fixtures (see the
- * allocation registry in product-helpers.ts).
+ * Product UUIDs 620-629, plus 80d-80f for the invoice-customer fixtures and
+ * 880-883 for the plan fixtures (see the allocation registry in
+ * product-helpers.ts).
  */
 
 const P_UNASSIGNED = "00000000-0000-0000-0000-000000000620";
@@ -89,6 +93,17 @@ const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080f";
 const INVOICE_CUSTOMER_NUMBER = "F980F";
 
 /**
+ * The plan fixtures: a daily club whose term starts before the window and ends
+ * inside it, with two groups so a date can be cancelled by one of them or by
+ * both; and an open-ended daily club starting inside the window, which runs to
+ * the window's far edge.
+ */
+const P_PLANNED = "00000000-0000-0000-0000-000000000880";
+const GROUP_PLANNED_A = "00000000-0000-0000-0000-000000000881";
+const GROUP_PLANNED_B = "00000000-0000-0000-0000-000000000882";
+const P_PLANNED_OPEN = "00000000-0000-0000-0000-000000000883";
+
+/**
  * A contract version this file adds so it can seed an acceptance of something
  * that is NOT current. Its `created_at` is the epoch, which is what keeps it
  * from becoming the current version for every other test running against the
@@ -118,6 +133,8 @@ const ALL_PRODUCTS = [
   P_ENDED,
   P_MUNI_NO_CUSTOMER,
   P_MUNI_INVOICEABLE,
+  P_PLANNED,
+  P_PLANNED_OPEN,
 ];
 
 /**
@@ -273,6 +290,21 @@ describe("get_admin_dashboard", () => {
         waitlistEnabled: false,
       });
     }
+    // The plan pair: a term clipped by the window at its start and by its own
+    // end inside it, and an open-ended one the window's far edge clips.
+    await createTestProduct(admin, {
+      id: P_PLANNED,
+      seatCount: null,
+      waitlistEnabled: false,
+      startDate: utcDay(-40),
+      endDate: utcDay(20),
+    });
+    await createTestProduct(admin, {
+      id: P_PLANNED_OPEN,
+      seatCount: null,
+      waitlistEnabled: false,
+      startDate: utcDay(5),
+    });
 
     // The buyer. Deleted by id AND by number first, because the number is
     // UNIQUE and a run that died before its teardown would otherwise leave a
@@ -402,6 +434,34 @@ describe("get_admin_dashboard", () => {
       duration_minutes: 90,
     });
     expect(slot.error).toBeNull();
+
+    // --- the plan -----------------------------------------------------------
+    const daily = await admin.from("schedule_slots").insert(
+      [P_PLANNED, P_PLANNED_OPEN].flatMap((productId) =>
+        [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+          product_id: productId,
+          weekday,
+          start_time: "10:00",
+          duration_minutes: 60,
+        })),
+      ),
+    );
+    expect(daily.error).toBeNull();
+    const plannedGroups = await admin.from("product_groups").insert([
+      { id: GROUP_PLANNED_A, product_id: P_PLANNED, name: "Plan group A" },
+      { id: GROUP_PLANNED_B, product_id: P_PLANNED, name: "Plan group B" },
+    ]);
+    expect(plannedGroups.error).toBeNull();
+    const plannedCancellations = await admin
+      .from("session_cancellations")
+      .insert([
+        // One of the two groups.
+        { group_id: GROUP_PLANNED_B, session_date: utcDay(3), cancelled_by: TEST_IDS.ADMIN },
+        // Both of them.
+        { group_id: GROUP_PLANNED_A, session_date: utcDay(4), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_B, session_date: utcDay(4), cancelled_by: TEST_IDS.ADMIN },
+      ]);
+    expect(plannedCancellations.error).toBeNull();
 
     // --- gedus --------------------------------------------------------------
     queuedGeduId = await createGedu("queued", true);
@@ -797,6 +857,50 @@ describe("get_admin_dashboard", () => {
 
     it("omits a run that ended months ago", () => {
       expect(scheduled(P_ENDED)).toBeUndefined();
+    });
+
+    it("plans a term from the window's near edge to the term's last day", () => {
+      // Started forty days ago, so the window's thirty days back clips it;
+      // ends in twenty, inside the window, so its own end clips it there.
+      const dates =
+        scheduled(P_PLANNED)?.planned_sessions.map((s) => s.session_date) ?? [];
+      const expected = Array.from({ length: 51 }, (_, i) => utcDay(i - 30));
+      expect(dates).toEqual(expected);
+    });
+
+    it("plans an open-ended term from its first day to the window's far edge", () => {
+      // The window ends, exclusive, four months after today in the product's
+      // zone; the plan's last date is the day before.
+      const dates =
+        scheduled(P_PLANNED_OPEN)?.planned_sessions.map((s) => s.session_date) ??
+        [];
+      expect(dates[0]).toBe(utcDay(5));
+      expect(dates.at(-1)).toBe(
+        addCalendarDays(addCalendarMonths(utcDay(0), 4), -1),
+      );
+    });
+
+    it("carries each session's instants in the product's zone", () => {
+      const session = scheduled(P_PLANNED)?.planned_sessions.find(
+        (s) => s.session_date === utcDay(0),
+      );
+      expect(new Date(session!.starts_at).toISOString()).toBe(
+        `${utcDay(0)}T10:00:00.000Z`,
+      );
+      expect(new Date(session!.ends_at).toISOString()).toBe(
+        `${utcDay(0)}T11:00:00.000Z`,
+      );
+    });
+
+    it("names the groups that cancelled each date, one of two or both", () => {
+      const product = scheduled(P_PLANNED);
+      expect(product?.group_ids).toEqual([GROUP_PLANNED_A, GROUP_PLANNED_B]);
+      const cancelledOn = (date: string) =>
+        product?.planned_sessions.find((s) => s.session_date === date)
+          ?.cancelled_group_ids;
+      expect(cancelledOn(utcDay(2))).toEqual([]);
+      expect(cancelledOn(utcDay(3))).toEqual([GROUP_PLANNED_B]);
+      expect(cancelledOn(utcDay(4))).toEqual([GROUP_PLANNED_A, GROUP_PLANNED_B]);
     });
   });
 });

@@ -49,17 +49,16 @@
 -- every product on its placeholder, and every Library article without its
 -- cover.
 --
--- SIGNING IN. Three accounts are the ones to look at the app through, and they
--- share the password `password`:
+-- SIGNING IN. Every account this file creates has the password `password`.
+-- Three are the ones to look at the app through:
 --
 --     admin@example.com    Admin Example    the admin who owns the catalogue
 --     parent@example.com   Parent Example   three children, PIN 1111
 --     gedu@example.com     Gedu Example     certified, the busiest teaching load
 --
--- Every other account this file creates exists to fill lists, and they all
--- share the password `testpassword123`. These are the only accounts a stack
--- carrying this file has. Among them is a second admin, admin2@example.com
--- (Anni Salonen), so the admin UI has one admin viewing and editing another's
+-- Every other account this file creates exists to fill lists. These are the
+-- only accounts a stack carrying this file has. Among them is a second admin,
+-- admin2@example.com (Anni Salonen), so the admin UI has one admin viewing and editing another's
 -- profile, and three more admins who make up the public team page's
 -- leadership with the owner's: juha.makela@, helena.strand@ and
 -- daniel.okafor@example.com. Another is the trainee, oliver.grant@example.com
@@ -99,6 +98,13 @@
 -- offered to cover it and aino.virtanen@ has declined, so the admin's
 -- Substitutions page has an offer to approve, and gedu@example.com, who has
 -- not answered, finds it in their pool with Offer and Decline (section 11).
+--
+-- TWO CLUBS FOLLOW A HOLIDAY CALENDAR. "Helsinki schools" breaks for a holiday
+-- week that ended a week before the build and for Christmas ahead, and the
+-- Creator Studio Club (gedu@example.com's, with parent@example.com's Otso and
+-- Nea) and the Youth Centre Game Club (a municipality club) follow it, so the
+-- family feed, the gedu's workspace and both Invoicing pages show the breaks
+-- (section 15).
 --
 -- IDS ARE GENERATED, NEVER WRITTEN OUT. Every account gets `gen_random_uuid()`,
 -- because the avatar identicon derives its pattern from the id's hex bytes and
@@ -154,8 +160,7 @@ $$;
 -- it does for a real registration.
 
 CREATE FUNCTION pg_temp.account(
-  p_email text, p_first text, p_last text, p_password text DEFAULT 'testpassword123',
-  p_meta jsonb DEFAULT '{}'
+  p_email text, p_first text, p_last text, p_meta jsonb DEFAULT '{}'
 ) RETURNS uuid LANGUAGE plpgsql AS $$
 DECLARE
   v_id uuid := gen_random_uuid();
@@ -170,7 +175,7 @@ BEGIN
     v_id,
     '00000000-0000-0000-0000-000000000000',
     'authenticated', 'authenticated', p_email,
-    extensions.crypt(p_password, extensions.gen_salt('bf')),
+    extensions.crypt('password', extensions.gen_salt('bf')),
     now(), now(),
     '{"provider":"email","providers":["email"]}',
     jsonb_build_object('first_name', p_first, 'last_name', p_last) || p_meta,
@@ -198,7 +203,7 @@ BEGIN;
 -- admin-gated below runs as it, so the catalogue, the venues, the groups and
 -- the comped seats all read as one person's work.
 DO $$
-DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example', 'password');
+DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example');
 BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin;
@@ -209,7 +214,7 @@ $$;
 -- A second admin, so the admin UI has one admin's profile for another admin
 -- to view and edit.
 DO $$
-DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen', 'testpassword123');
+DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen');
 BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin2;
@@ -249,24 +254,24 @@ DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('gedu@example.com',           'Gedu',   'Example',   'password'),
-    ('aino.virtanen@example.com',  'Aino',   'Virtanen',  'testpassword123'),
-    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen',  'testpassword123'),
-    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen',  'testpassword123'),
-    ('lucas.moreau@example.com',   'Lucas',  'Moreau',    'testpassword123'),
-    ('emma.koskinen@example.com',  'Emma',   'Koskinen',  'testpassword123'),
-    ('oliver.grant@example.com',   'Oliver', 'Grant',     'testpassword123'),
-    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen',  'testpassword123'),
-    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen', 'testpassword123'),
-    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio',    'testpassword123'),
-    ('priya.nair@example.com',      'Priya',  'Nair',      'testpassword123'),
-    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg',  'testpassword123'),
-    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen',  'testpassword123'),
-    ('ben.carter@example.com',      'Ben',    'Carter',    'testpassword123'),
-    ('ronja.kallio@example.com',    'Ronja',  'Kallio',    'testpassword123')
-  ) AS t(email, first_name, last_name, password)
+    ('gedu@example.com',           'Gedu',   'Example'),
+    ('aino.virtanen@example.com',  'Aino',   'Virtanen'),
+    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen'),
+    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen'),
+    ('lucas.moreau@example.com',   'Lucas',  'Moreau'),
+    ('emma.koskinen@example.com',  'Emma',   'Koskinen'),
+    ('oliver.grant@example.com',   'Oliver', 'Grant'),
+    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen'),
+    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen'),
+    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio'),
+    ('priya.nair@example.com',      'Priya',  'Nair'),
+    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg'),
+    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen'),
+    ('ben.carter@example.com',      'Ben',    'Carter'),
+    ('ronja.kallio@example.com',    'Ronja',  'Kallio')
+  ) AS t(email, first_name, last_name)
   LOOP
-    PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.password);
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name);
   END LOOP;
 END;
 $$;
@@ -286,18 +291,18 @@ DECLARE
   v_utm  jsonb;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('parent@example.com',          'Parent',  'Example',   'password',        'en', ARRAY['en','fi']::public.spoken_language[], '358401000000'),
-    ('laura.korhonen@example.com',  'Laura',   'Korhonen',  'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000001'),
-    ('petri.makinen@example.com',   'Petri',   'Mäkinen',   'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000002'),
-    ('hanna.salminen@example.com',  'Hanna',   'Salminen',  'testpassword123', 'fi', ARRAY['fi','sv']::public.spoken_language[], '358401000003'),
-    ('jussi.heikkinen@example.com', 'Jussi',   'Heikkinen', 'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000004'),
-    ('marika.laine@example.com',    'Marika',  'Laine',     'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000005'),
-    ('anna.jarvinen@example.com',   'Anna',    'Järvinen',  'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000006'),
-    ('camille.dubois@example.com',  'Camille', 'Dubois',    'testpassword123', 'fr', ARRAY['fr','en']::public.spoken_language[], '358401000007'),
-    ('james.whitfield@example.com', 'James',   'Whitfield', 'testpassword123', 'en', ARRAY['en']::public.spoken_language[],      '358401000008'),
-    ('satu.rantanen@example.com',   'Satu',    'Rantanen',  'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000009'),
-    ('tomi.hakala@example.com',     'Tomi',    'Hakala',    'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
-  ) AS t(email, first_name, last_name, password, locale, languages, phone)
+    ('parent@example.com',          'Parent',  'Example',   'en', ARRAY['en','fi']::public.spoken_language[], '358401000000'),
+    ('laura.korhonen@example.com',  'Laura',   'Korhonen',  'fi', ARRAY['fi','en']::public.spoken_language[], '358401000001'),
+    ('petri.makinen@example.com',   'Petri',   'Mäkinen',   'fi', ARRAY['fi']::public.spoken_language[],      '358401000002'),
+    ('hanna.salminen@example.com',  'Hanna',   'Salminen',  'fi', ARRAY['fi','sv']::public.spoken_language[], '358401000003'),
+    ('jussi.heikkinen@example.com', 'Jussi',   'Heikkinen', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000004'),
+    ('marika.laine@example.com',    'Marika',  'Laine',     'fi', ARRAY['fi','en']::public.spoken_language[], '358401000005'),
+    ('anna.jarvinen@example.com',   'Anna',    'Järvinen',  'fi', ARRAY['fi']::public.spoken_language[],      '358401000006'),
+    ('camille.dubois@example.com',  'Camille', 'Dubois',    'fr', ARRAY['fr','en']::public.spoken_language[], '358401000007'),
+    ('james.whitfield@example.com', 'James',   'Whitfield', 'en', ARRAY['en']::public.spoken_language[],      '358401000008'),
+    ('satu.rantanen@example.com',   'Satu',    'Rantanen',  'fi', ARRAY['fi','en']::public.spoken_language[], '358401000009'),
+    ('tomi.hakala@example.com',     'Tomi',    'Hakala',    'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
+  ) AS t(email, first_name, last_name, locale, languages, phone)
   LOOP
     v_utm := COALESCE((SELECT u.meta FROM (VALUES
       ('anna.jarvinen@example.com',   '{"utm_source":"google","utm_medium":"cpc","utm_campaign":"lynx-autumn-a","utm_content":"roblox-hero-video","utm_term":"roblox kerho lapsille"}'::jsonb),
@@ -306,7 +311,7 @@ BEGIN
       ('satu.rantanen@example.com',   '{"utm_source":"school-flyer"}'::jsonb)
     ) AS u(email, meta) WHERE u.email = r.email), '{}');
 
-    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.password, v_utm);
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name, v_utm);
 
     -- The fields the registration form collects and no RPC owns. Done here
     -- rather than later because create_gamer copies the parent's locale onto
@@ -3077,7 +3082,81 @@ END;
 $$;
 
 -- =============================================================================
--- 15. What landed
+-- 15. Holiday calendars
+-- =============================================================================
+-- One calendar, "Helsinki schools", with two breaks named in every locale: a
+-- holiday week that ended a week before the build, and the Christmas break
+-- ahead. Two clubs follow it: the Creator Studio Club, which gedu@example.com
+-- teaches and parent@example.com's Otso and Nea attend, so the family's feed,
+-- the gedu's workspace and the gedu's Invoicing page each show both breaks;
+-- and the Youth Centre Game Club, a municipality club, for the municipality
+-- invoicing page's holiday lines.
+--
+-- It runs after everything else on purpose, as an admin attaching a calendar
+-- to a running club would: whatever sections 9 to 12 stored on the holiday
+-- week now counts as not running, and is shown as its break rather than as a
+-- session. The holiday week is seven days, so it takes exactly one session
+-- from each weekly club. The Christmas break is this year's, or next year's
+-- when this year's would touch the holiday week — the breaks of one calendar
+-- may not overlap. A stack built in the second half of December may find
+-- the Creator Studio Club's cancelled next session (section 12) on a Christmas
+-- date, where it shows as the break rather than as cancelled.
+
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_week_start date := current_date - 13;
+  v_week_end   date := current_date - 7;
+  v_christmas  date := make_date(EXTRACT(YEAR FROM current_date)::integer, 12, 22);
+  v_calendar   uuid;
+  v_product    uuid;
+BEGIN
+  IF v_christmas <= v_week_end THEN
+    v_christmas := (v_christmas + interval '1 year')::date;
+  END IF;
+
+  v_calendar := public.create_holiday_calendar(
+    'Helsinki schools',
+    jsonb_build_array(
+      jsonb_build_object(
+        'start_date', v_week_start,
+        'end_date',   v_week_end,
+        'names', jsonb_build_array(
+          jsonb_build_object('locale', 'en', 'name', 'Holiday week'),
+          jsonb_build_object('locale', 'fi', 'name', 'Lomaviikko'),
+          jsonb_build_object('locale', 'sv', 'name', 'Lovvecka'),
+          jsonb_build_object('locale', 'fr', 'name', 'Semaine de vacances'))),
+      jsonb_build_object(
+        'start_date', v_christmas,
+        'end_date',   make_date(EXTRACT(YEAR FROM v_christmas)::integer + 1, 1, 6),
+        'names', jsonb_build_array(
+          jsonb_build_object('locale', 'en', 'name', 'Christmas break'),
+          jsonb_build_object('locale', 'fi', 'name', 'Joululoma'),
+          jsonb_build_object('locale', 'sv', 'name', 'Jullov'),
+          jsonb_build_object('locale', 'fr', 'name', 'Vacances de Noël')))
+    ));
+
+  FOR v_product IN
+    SELECT t.product_id
+      FROM public.product_translations t
+     WHERE t.locale = 'en'
+       AND t.name IN ('Creator Studio Club', 'Youth Centre Game Club')
+  LOOP
+    PERFORM public.set_product_holiday_calendars(v_product, ARRAY[v_calendar]);
+  END LOOP;
+END;
+$$;
+
+COMMIT;
+
+-- =============================================================================
+-- 16. What landed
 -- =============================================================================
 
 DO $$
@@ -3169,6 +3248,18 @@ BEGIN
     (SELECT string_agg(locale || ' ' || n, ', ' ORDER BY locale)
        FROM (SELECT locale, count(*) AS n FROM public.library_article_publication_translations
               GROUP BY locale) v);
+
+  RAISE NOTICE 'rich-seed: holiday breaks, and the clubs that follow them';
+  FOR r IN SELECT c.name || ': ' || string_agg(DISTINCT t.name, ', ') AS k,
+                  string_agg(DISTINCT to_char(b.start_date, 'DD Mon YYYY') || ' – '
+                             || to_char(b.end_date, 'DD Mon YYYY'), ', ') AS n
+             FROM public.holiday_calendars c
+             JOIN public.holiday_breaks b ON b.calendar_id = c.id
+             JOIN public.product_holiday_calendars phc ON phc.calendar_id = c.id
+             JOIN public.product_translations t
+               ON t.product_id = phc.product_id AND t.locale = 'en'
+            GROUP BY c.name
+  LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 
   RAISE NOTICE 'rich-seed: team profiles';
   FOR r IN SELECT p.email || ' (' || p.role::text || ')' AS k,

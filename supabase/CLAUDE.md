@@ -316,8 +316,8 @@ every command does — the things its usage text does not say:
   human to look at, so a stack is created with the CLI's seed switched off. Its accounts
   are the rich seed's alone: families and educators
   around three meant to be signed in as — `admin@example.com`, `parent@example.com`
-  (parent PIN 1111) and `gedu@example.com`, all on the password `password`, with every
-  other account it creates on `testpassword123`. Each id is generated rather than written
+  (parent PIN 1111) and `gedu@example.com` — and every account it creates is on the
+  password `password`. Each id is generated rather than written
   out, because the avatar identicon derives its pattern from the id's bytes and a
   hand-written one draws a face nobody will ever see in production. The trimmed service
   set has no mail catcher, so nothing emailed can be read on a stack; the seeded accounts

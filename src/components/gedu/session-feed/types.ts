@@ -344,20 +344,58 @@ export interface CancelledSessionFeedEntry extends SessionFeedEntryBase {
   cancelledBy: SessionEditor | null;
 }
 
+/**
+ * A holiday break that took sessions out of the plan — one line per break, in
+ * date order by the sessions it withdrew.
+ *
+ * **Never planned, not cancelled**, and so not a session at all: it does not
+ * extend the session base. A holiday date has no staffing, no register, no
+ * write-up and no substitution to ask for, and it is never the next session;
+ * a kind with none of those fields is what keeps every control off its line.
+ */
+export interface HolidaySessionFeedEntry {
+  kind: "holiday";
+  /** Keyed by the break, so two lines can never share one. */
+  id: string;
+  /** The start of the first session the break withdrew inside the feed. */
+  startsAt: Date;
+  /** The end of the last session the break withdrew inside the feed. */
+  endsAt: Date;
+  /** The break's own bare dates, both inclusive — what the line names. */
+  startDate: string;
+  endDate: string;
+  /** Every locale the name is written in; the line picks the reader's. */
+  names: readonly { locale: string; name: string }[];
+  /** Whether the last withdrawn session had not yet ended at the feed's `now`. */
+  upcoming: boolean;
+}
+
 export type SessionFeedEntry =
   | FutureSessionFeedEntry
   | PastSessionFeedEntry
   | NoRecordSessionFeedEntry
-  | CancelledSessionFeedEntry;
+  | CancelledSessionFeedEntry
+  | HolidaySessionFeedEntry;
+
+/**
+ * Every entry that is a session, cancelled or not: everything but a holiday
+ * line. What is keyed by a session date — staffing, cancellation, the menu —
+ * is written against this.
+ */
+export type DatedSessionFeedEntry = Exclude<
+  SessionFeedEntry,
+  HolidaySessionFeedEntry
+>;
 
 /**
  * Every kind a session **card** draws: a session that runs, or ran. A cancelled
- * one never reaches a card — the feed draws it as a line — so the card and its
- * editors are written against this and cannot read a field it has not got.
+ * one never reaches a card — the feed draws it as a line, as it does a holiday
+ * break — so the card and its editors are written against this and cannot read
+ * a field it has not got.
  */
 export type ScheduledSessionFeedEntry = Exclude<
   SessionFeedEntry,
-  CancelledSessionFeedEntry
+  CancelledSessionFeedEntry | HolidaySessionFeedEntry
 >;
 
 /*

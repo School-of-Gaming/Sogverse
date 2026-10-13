@@ -7,7 +7,8 @@ import {
   styledName,
   styledProductName,
 } from "./utils";
-import { bulletList, ctaButton, factList, sectionLabel } from "./blocks";
+import { bulletList, ctaButton, factList, inlineBold, sectionLabel } from "./blocks";
+import { MAIL_SPACE } from "./type-scale";
 import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import { textAttachment, type RenderedAttachment } from "./attachments";
@@ -224,6 +225,14 @@ export interface ProductConfirmationEmailOptions {
   dashboardUrl: string;
   /** The "Good to know" facts, or `null` where the send could not read them. */
   overview: ProductConfirmationOverviewInput | null;
+  /**
+   * The club's holiday breaks, chosen and worded by the shared rule the
+   * confirmation page lists them with — each break's name in the reader's
+   * locale and its compact date range, already formatted. Empty for anything
+   * that is not a club and for a club no break touches, and the row is then
+   * simply absent.
+   */
+  holidayBreaks: readonly { name: string; range: string }[];
   /**
    * Everything the calendar invitation is composed from, or `null` where the
    * mail is not to carry one at all.
@@ -567,6 +576,7 @@ export function buildProductConfirmationEmail(
       escapeHtml(participantName),
     ],
     ...overviewRows(overview),
+    ...holidayBreakRows(t, content.options.holidayBreaks),
   ];
   // The child's copy states no price whatever it was handed: what a seat cost
   // is between us and whoever paid for it.
@@ -671,6 +681,47 @@ function overviewRows(
     // well as escaped.
     lines.map((line) => defuseAutolinks(escapeHtml(line))).join("<br />"),
   ]);
+}
+
+/**
+ * The holiday breaks as one row of the list, under the facts they belong with —
+ * the page draws them as the last row of its "Good to know" card — or no row at
+ * all when there are none. Each break is its name in bold with its dates on the
+ * line under it, as the page draws them.
+ */
+function holidayBreakRows(
+  t: EmailTranslator,
+  breaks: readonly { name: string; range: string }[],
+): [string, string][] {
+  if (breaks.length === 0) return [];
+  return [
+    [
+      t("productConfirmation.overview.holidayBreaks"),
+      breaks
+        .map(
+          ({ name, range }, index) =>
+            // A break's name is admin-written and could be address-shaped, so
+            // it is defused as well as escaped, like every value off a row.
+            `<div style="margin:${index === 0 ? 0 : MAIL_SPACE.tight}px 0 0;">${inlineBold(
+              defuseAutolinks(escapeHtml(name)),
+            )}<br />${escapeHtml(range)}</div>`,
+        )
+        .join(""),
+    ],
+  ];
+}
+
+/** The same breaks as the text twin's one line, with the twin's separator. */
+function holidayBreaksText(
+  t: EmailTranslator,
+  breaks: readonly { name: string; range: string }[],
+): string[] {
+  if (breaks.length === 0) return [];
+  return [
+    `${t("productConfirmation.overview.holidayBreaks")}: ${breaks
+      .map(({ name, range }) => t("productConfirmation.overview.holidayBreak", { name, range }))
+      .join(" — ")}`,
+  ];
 }
 
 /**
@@ -790,6 +841,7 @@ export function productConfirmationText(
       lines.push(`${label}: ${values.join(" — ")}`);
     }
   }
+  lines.push(...holidayBreaksText(t, content.options.holidayBreaks));
 
   const price = gamerCopy ? null : plainPriceLine(t, mode, priceAmount);
   if (price !== null) {

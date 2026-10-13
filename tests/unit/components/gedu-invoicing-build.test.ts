@@ -50,8 +50,9 @@ function product(
     primary_gedu_fee_cents: 6_000,
     assistant_gedu_fee_cents: 4_000,
     product_translations: [{ locale: "en", name: `Club ${overrides.id}` }],
-    // Wednesdays (weekday 2): 2, 9, 16, 23, 30 September.
-    schedule_slots: [{ weekday: 2, start_time: "16:00", duration_minutes: 90 }],
+    // Its Wednesdays: 2, 9, 16, 23, 30 September.
+    planned_dates: ["2026-09-02", "2026-09-09", "2026-09-16", "2026-09-23", "2026-09-30"],
+    holiday_breaks: [],
     location: {
       id: "loc-school",
       name: "Test School",
@@ -156,7 +157,7 @@ describe("buildGeduInvoicing", () => {
           group({ id: "g1", product_id: "p1", sessions: ["2026-09-02", "2026-09-09"] }),
           group({ id: "g2", product_id: "p2" }),
         ],
-        products: [product({ id: "p1" }), product({ id: "p2", schedule_slots: [] })],
+        products: [product({ id: "p1" }), product({ id: "p2", planned_dates: [] })],
       });
 
       const ben = geduOf(view, BENJAMIN);
@@ -346,15 +347,15 @@ describe("buildGeduInvoicing", () => {
       expect(club.lines.find((line) => line.date === "2026-09-16")?.kind).toBe("paid");
     });
 
-    it("renders stored rows alone for a product with no slots", () => {
+    it("renders stored rows alone for a product with nothing planned", () => {
       const club = geduOf(
-        build(assigned(["2026-09-04"], { schedule_slots: [] })),
+        build(assigned(["2026-09-04"], { planned_dates: [] })),
         AINO,
       ).clubs[0];
       expect(kinds(club)).toEqual([["2026-09-04", "paid"]]);
     });
 
-    it("pays a stored row the schedule never projected", () => {
+    it("pays a stored row the plan never held", () => {
       const club = geduOf(build(assigned(["2026-09-04"])), AINO).clubs[0];
       expect(club.lines.find((line) => line.date === "2026-09-04")?.kind).toBe("paid");
     });
@@ -401,8 +402,8 @@ describe("buildGeduInvoicing", () => {
     });
   });
 
-  describe("an absence the schedule does not project", () => {
-    // Friday the 4th: the weekly Wednesday slot never lands on it, and no row
+  describe("an absence the plan does not hold", () => {
+    // Friday the 4th: the plan never holds it, and no row
     // was stored — Celia's page shows it, so Aino's must too.
     function absentOnThe4th(cancelled: string[]) {
       return build({
@@ -460,6 +461,150 @@ describe("buildGeduInvoicing", () => {
       const view = absentOnThe4th(["2026-09-04"]);
       expect(lineOn4th(view, AINO)?.kind).toBe("cancelled");
       expect(lineOn4th(view, CELIA)?.kind).toBe("cancelled");
+    });
+  });
+
+  describe("holidays", () => {
+    // An autumn break over 9–13 September withdrew the 9th from the plan, so
+    // the plan holds 2, 16, 23 and 30 and the break names the 9th beside it.
+    // The 11th is a Friday inside the break that the plan never held.
+    const AUTUMN_BREAK = {
+      id: "break-autumn",
+      startDate: "2026-09-09",
+      endDate: "2026-09-13",
+      names: [
+        { locale: "en", name: "Autumn break" },
+        { locale: "fi", name: "Syysloma" },
+      ],
+      withdrawnSessions: [
+        {
+          date: "2026-09-09",
+          startsAt: new Date("2026-09-09T16:00:00+03:00"),
+          endsAt: new Date("2026-09-09T17:30:00+03:00"),
+          cancelled: false,
+        },
+      ],
+    };
+    const ON_BREAK = product({
+      id: "p1",
+      planned_dates: ["2026-09-02", "2026-09-16", "2026-09-23", "2026-09-30"],
+      holiday_breaks: [AUTUMN_BREAK],
+    });
+
+    function lineOn(view: ReturnType<typeof build>, id: string, date: string) {
+      return geduOf(view, id)
+        .clubs.flatMap((club) => club.lines)
+        .find((line) => line.date === date);
+    }
+
+    it("shows a standing seat's withdrawn date as a named holiday, never paid or missed", () => {
+      const view = build({
+        gedus: [gedu({ id: AINO, assignments: [{ group_id: "g1", role: "primary" }] })],
+        groups: [group({ id: "g1", product_id: "p1", sessions: ["2026-09-02"] })],
+        products: [ON_BREAK],
+      });
+
+      const aino = geduOf(view, AINO);
+      expect(kinds(aino.clubs[0])).toEqual([
+        ["2026-09-02", "paid"],
+        ["2026-09-09", "holiday"],
+        ["2026-09-16", "upcoming"],
+        ["2026-09-23", "upcoming"],
+        ["2026-09-30", "upcoming"],
+      ]);
+      expect(lineOn(view, AINO, "2026-09-09")).toMatchObject({
+        kind: "holiday",
+        holidayName: "Autumn break",
+        substitute: null,
+      });
+      // The past holiday is not a missed session, and pays nothing.
+      expect(aino.unrecordedCount).toBe(0);
+      expect(aino.paidCount).toBe(1);
+      expect(aino.totalCents).toBe(6_000);
+    });
+
+    it("names the break in the build's locale", () => {
+      const view = buildGeduInvoicing({
+        snapshot: {
+          month_start: MONTH,
+          gedus: [gedu({ id: AINO, assignments: [{ group_id: "g1", role: "primary" }] })],
+          groups: [group({ id: "g1", product_id: "p1" })],
+          products: [ON_BREAK],
+        },
+        locale: "fi",
+        now: NOW,
+      });
+      expect(lineOn(view, AINO, "2026-09-09")?.holidayName).toBe("Syysloma");
+    });
+
+    it("turns a sub's booking and the absence behind it inside a break into holidays", () => {
+      // A request filed for Friday the 11th, inside the break, on a group the
+      // sub is booked to: the request claims the date, the break wins it.
+      const view = build({
+        gedus: [
+          gedu({
+            id: AINO,
+            assignments: [{ group_id: "g1", role: "primary" }],
+            absences: [
+              {
+                request_id: "r1",
+                group_id: "g1",
+                session_date: "2026-09-11",
+                role: "primary",
+                status: "substituted",
+                substitute: CELIA_ROW,
+              },
+            ],
+          }),
+          gedu({
+            id: CELIA,
+            substitutions: [
+              {
+                request_id: "r1",
+                group_id: "g1",
+                session_date: "2026-09-11",
+                role: "primary",
+                absent_gedu: { id: AINO, first_name: "Aino", last_name: "Tester" },
+              },
+            ],
+          }),
+        ],
+        groups: [group({ id: "g1", product_id: "p1" })],
+        products: [ON_BREAK],
+      });
+
+      expect(lineOn(view, AINO, "2026-09-11")).toMatchObject({
+        kind: "holiday",
+        holidayName: "Autumn break",
+      });
+      const celia = geduOf(view, CELIA);
+      // The sub sees the booked date and nothing else of a group not theirs.
+      expect(kinds(celia.clubs[0])).toEqual([["2026-09-11", "holiday"]]);
+      expect(celia.clubs[0].lines[0].coveringFor).toEqual(
+        expect.objectContaining({ id: AINO }),
+      );
+      expect(celia.paidCount).toBe(0);
+      expect(celia.unrecordedCount).toBe(0);
+      expect(celia.totalCents).toBe(0);
+    });
+
+    it("keeps a holiday a holiday whatever is stored or cancelled on it", () => {
+      // The document leaves both out; a reader handed them anyway still
+      // neither pays nor cancels a day that was never due.
+      const view = build({
+        gedus: [gedu({ id: AINO, assignments: [{ group_id: "g1", role: "primary" }] })],
+        groups: [
+          group({
+            id: "g1",
+            product_id: "p1",
+            sessions: ["2026-09-09"],
+            cancelled_sessions: ["2026-09-09"],
+          }),
+        ],
+        products: [ON_BREAK],
+      });
+      expect(lineOn(view, AINO, "2026-09-09")?.kind).toBe("holiday");
+      expect(geduOf(view, AINO).paidCount).toBe(0);
     });
   });
 
@@ -617,7 +762,7 @@ describe("buildGeduInvoicing", () => {
       const view = build({
         gedus: [gedu({ id: AINO, assignments: [{ group_id: "g1", role: "primary" }] })],
         groups: [group({ id: "g1", product_id: "p1" })],
-        products: [product({ id: "p1", start_date: "2026-10-05" })],
+        products: [product({ id: "p1", planned_dates: [] })],
       });
       expect(view.gedus).toEqual([]);
       expect(view.totalCents).toBe(0);
@@ -637,7 +782,7 @@ describe("buildGeduInvoicing", () => {
         ),
       );
       expect([...seen].sort()).toEqual(
-        ["absent", "cancelled", "paid", "unrecorded", "upcoming"],
+        ["absent", "cancelled", "holiday", "paid", "unrecorded", "upcoming"],
       );
       expect(view.clubsWithoutFee).toBeGreaterThan(0);
       expect(view.municipalityTotalCents).toBeGreaterThan(0);

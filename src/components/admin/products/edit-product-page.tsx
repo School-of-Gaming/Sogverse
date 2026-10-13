@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
+import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -26,7 +27,14 @@ export function EditProductPage({
   const uiLocale = resolveLocale(useLocale());
   const label = t(`types.${config.i18nKey}.label`);
 
-  const { data: product, isLoading } = useProductAdmin(productId);
+  const { data: product, isLoading: productLoading } =
+    useProductAdmin(productId);
+  // A club's form also waits for the holiday calendar list, so the picker
+  // paints with the rest of the form instead of pushing it down on arrival.
+  const calendarsPending = useHolidayCalendarListWait(
+    config.followsHolidayCalendars,
+  );
+  const isLoading = productLoading || calendarsPending;
 
   const detailsHref = ROUTES.admin.product(productType, productId);
 

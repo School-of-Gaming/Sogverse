@@ -1,3 +1,4 @@
+import { fixtureWireWindowOf } from "@/components/preview/fixture-clock";
 import type {
   AdminSubstitutionRequest,
   OpenAdminSubstitutionRequest,
@@ -247,6 +248,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     requested_by_first_name: "Milo",
     requested_by_last_name: "Korhonen",
     product: ESPOO_CLUB,
+    ...fixtureWireWindowOf(ESPOO_CLUB, "2026-08-17"),
     offers: [
       offer({
         id: "substitution-offer-1",
@@ -279,6 +281,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     requested_by_first_name: "Siiri",
     requested_by_last_name: "Laine",
     product: STOCKHOLM_CLUB,
+    ...fixtureWireWindowOf(STOCKHOLM_CLUB, "2026-08-17"),
     offers: [
       offer({
         id: "substitution-offer-3",
@@ -310,6 +313,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     approved_by_first_name: APPROVER.firstName,
     approved_by_last_name: APPROVER.lastName,
     product: VANTAA_CLUB,
+    ...fixtureWireWindowOf(VANTAA_CLUB, "2026-08-18"),
     offers: [],
     declines: [],
   },
@@ -327,6 +331,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     requested_by_first_name: "Veeti",
     requested_by_last_name: "Aaltonen",
     product: VANTAA_CLUB,
+    ...fixtureWireWindowOf(VANTAA_CLUB, "2026-08-21"),
     offers: [
       offer({
         id: "substitution-offer-4",
@@ -358,6 +363,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     approved_by_first_name: APPROVER.firstName,
     approved_by_last_name: APPROVER.lastName,
     product: ESPOO_CLUB,
+    ...fixtureWireWindowOf(ESPOO_CLUB, "2026-08-24"),
     offers: [],
     declines: [],
   },
@@ -376,6 +382,7 @@ const REQUESTS: readonly AdminSubstitutionRequest[] = [
     requested_by_first_name: "Milo",
     requested_by_last_name: "Korhonen",
     product: ROBLOX_CAMP,
+    ...fixtureWireWindowOf(ROBLOX_CAMP, "2026-08-25"),
     offers: [],
     declines: [
       decline({ geduId: PERSON_IDS.eeliVirtanen, first: "Eeli", last: "Virtanen" }),

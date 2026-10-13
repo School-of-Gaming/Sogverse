@@ -119,6 +119,7 @@ const validBody = {
   assistant_gedu_fee_cents: null,
   municipality_fee_cents: null,
   invoice_customer_id: null,
+  holiday_calendar_ids: [],
 };
 
 function createRequest(
@@ -328,6 +329,33 @@ describe("POST /api/admin/products/create", () => {
     // pays yet" — which is what a club looks like the day it is created.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_invoice_customer_id).toBeUndefined();
+  });
+
+  it("passes the holiday calendars through, an empty set included", async () => {
+    const CALENDAR_ID = "9a3e5f1c-2d4b-4c6a-8e7f-0b1c2d3e4f5a";
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: { ...validBody, holiday_calendar_ids: [CALENDAR_ID] },
+      }),
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "create_product",
+      expect.objectContaining({ p_holiday_calendar_ids: [CALENDAR_ID] }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(createRequest({ data: validBody }));
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_holiday_calendar_ids).toEqual([]);
+  });
+
+  it("returns 400 when the holiday calendars field is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { holiday_calendar_ids: _ids, ...noCalendars } = validBody;
+    const response = await POST(createRequest({ data: noCalendars }));
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the invoice customer field is missing", async () => {
