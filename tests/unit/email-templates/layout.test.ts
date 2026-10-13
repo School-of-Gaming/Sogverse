@@ -196,6 +196,28 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
   });
 
   /**
+   * On a phone nothing but space separates the last block from the footer, so
+   * the footer read as that block's own small print. A hairline ends the mail
+   * there; the query hides it, because the card's edge does that job above the
+   * breakpoint.
+   */
+  it("rules off the footer on a phone and hides the rule where the card ends the mail", () => {
+    const html = render();
+    const rowClass = /<tr class="([\w-]+)">\s*<td style="[^"]*border-bottom:1px solid ([^;"]+);/.exec(html);
+    expect(rowClass, "no hairline row above the footer").not.toBeNull();
+    expect(rowClass![2]).toBe(DARK_THEME.border);
+    // Between the content and the footer: after the body, before the small type.
+    const at = html.indexOf(rowClass![0]);
+    expect(at).toBeGreaterThan(html.indexOf("<p>Body</p>"));
+    expect(at).toBeLessThan(html.indexOf(mailText("small", DARK_THEME.mutedFg)));
+    const query = wideQuery(html);
+    const rule = query.slice(query.indexOf(`.${rowClass![1]} {`));
+    expect(rule, "the query does not hide the footer's hairline").toMatch(
+      /^\.[\w-]+ \{\s*display: none !important;\s*\}/,
+    );
+  });
+
+  /**
    * The other thing the ground changing has to move: every fill chosen *in
    * relation to* what is behind it. There are two intents — a tone off the
    * ground (a photo's well, the quoted box in the staff help-request mail) and a
@@ -251,7 +273,8 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
     // The phone's gutter and the column it holds.
     expect(stripped).toContain('style="padding:24px 16px;"');
     expect(stripped).toContain('style="max-width:560px;width:100%;"');
-    // The content, in the body ink, and the footer under it.
+    // The content, in the body ink, the footer's hairline, and the footer.
+    expect(stripped).toContain(`border-bottom:1px solid ${DARK_THEME.border};`);
     expect(stripped).toContain("<p>Body</p>");
     expect(stripped).toContain(mailText("body", DARK_THEME.foreground));
     expect(stripped).toContain(mailText("small", DARK_THEME.mutedFg));

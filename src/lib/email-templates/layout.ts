@@ -5,7 +5,7 @@ import {
   MAIL_FONT_STACK,
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
-import { MAIL_TYPE, mailText } from "./type-scale";
+import { MAIL_SPACE, MAIL_TYPE, mailText } from "./type-scale";
 import { BODY_TEXT_STYLE, GROUND_TONES, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
@@ -98,6 +98,12 @@ const SHELL_CLASS = {
   panel: "shell-panel",
   /** The breathing room between the header rule and the content. */
   rhythm: "shell-rhythm",
+  /**
+   * The hairline above the footer. A phone has no card, so without it the
+   * footer reads as the last block's own small print; a wide viewport hides
+   * it, because the card's edge already ends the mail.
+   */
+  footerRule: "shell-footer-rule",
 } as const;
 
 /**
@@ -339,6 +345,9 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
         border-radius: ${RADIUS.lg} !important;
         padding: 32px !important;
       }
+      .${SHELL_CLASS.footerRule} {
+        display: none !important;
+      }
       /* The fills that are chosen in relation to what sits behind them, and
          this block is where what sits behind them changes: a photo's reserved
          well and a quoted box are a tone *off* the ground, the outlined button
@@ -429,6 +438,12 @@ ${groundToneRules}
                 ${content}
               </div>
             </td>
+          </tr>
+          <!-- The footer's hairline, for the phone layout only: with no card,
+               it is what ends the mail above the footer. The query hides it
+               where the card's edge does that job. -->
+          <tr class="${SHELL_CLASS.footerRule}">
+            <td style="height:${MAIL_SPACE.furniture}px;line-height:${MAIL_SPACE.furniture}px;font-size:0;border-bottom:1px solid ${DARK_THEME.border};">&nbsp;</td>
           </tr>
           <!-- Footer -->
           <tr>
