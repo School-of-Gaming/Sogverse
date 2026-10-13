@@ -5,7 +5,8 @@ import type { UtmAttribution } from "@/lib/utm";
 
 /**
  * Holds the UTM attribution the visitor arrived with (`utm_source`,
- * `utm_medium`, `utm_campaign` on the landing URL) for the duration of the
+ * `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` on the landing URL)
+ * for the duration of the
  * visit, so browsing shop → about → home → register as client-side navigation
  * still yields it at account creation.
  *
@@ -40,7 +41,7 @@ const UtmContext = createContext<UtmAttribution | undefined>(undefined);
 
 interface UtmProviderProps {
   /**
-   * The sanitised attribution from this request's `x-utm` header — three
+   * The sanitised attribution from this request's `x-utm` header — five
    * fields, each a value or null. Read once, at mount — see the note above.
    */
   initialUtm: UtmAttribution;
@@ -54,7 +55,7 @@ export function UtmProvider({ initialUtm, children }: UtmProviderProps) {
 }
 
 /**
- * The attribution this visit arrived with. All three fields null is the common
+ * The attribution this visit arrived with. All five fields null is the common
  * case, and `hasUtmAttribution` is the way to ask whether anything survived.
  */
 export function useUtm(): UtmAttribution {

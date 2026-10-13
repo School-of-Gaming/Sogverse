@@ -1,14 +1,16 @@
 /**
  * UTM attribution — where a family came from when they created an account.
  *
- * A marketing link carries the three standard UTM parameters
- * (`/roblox?utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a`). The
+ * A marketing link carries up to five standard UTM parameters
+ * (`/roblox?utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a`, plus
+ * `utm_content` and `utm_term` where the link's maker set them). The
  * proxy reads and sanitises them, hands them to the root layout on the `x-utm`
  * request header, and a client context provider holds them for the rest of the
  * visit so they survive browsing the whole site as client-side navigation. At
  * registration they travel in the new user's auth metadata and the
  * profile-creation trigger writes them to `profiles.utm_source`,
- * `profiles.utm_medium` and `profiles.utm_campaign`.
+ * `profiles.utm_medium`, `profiles.utm_campaign`, `profiles.utm_content` and
+ * `profiles.utm_term`.
  *
  * Values are invented ad hoc by whoever makes the link; there is no registry of
  * valid ones, and validating against one was considered and turned down.
@@ -62,7 +64,7 @@
  *     parameters on a landing link as tracking that needs consent, and Lynx's
  *     places it under **marketing** consent rather than analytics. So a parent
  *     who rejected the banner, or chose analytics only, or never answered it,
- *     creates an account with all three columns NULL — a partner's numbers
+ *     creates an account with all five columns NULL — a partner's numbers
  *     cover the families who agreed to be counted, not every family, and that
  *     is the accepted cost.
  *
@@ -82,11 +84,11 @@
  *  3. **Gamer accounts never carry a value.** Reporting treats a gamer and
  *     their parent as one family unit, so a join through the existing parent
  *     relationship answers "which campaign brought this family" without copying
- *     a marketing attribute onto a child's record. Gamer rows keep all three
+ *     a marketing attribute onto a child's record. Gamer rows keep all five
  *     columns NULL by construction: the gamer-creation route passes only name
  *     fields in metadata.
  *  4. **The values are write-once.** There is deliberately no UPDATE grant on
- *     any of the three columns, so nobody but `service_role` can alter or clear
+ *     any of the five columns, so nobody but `service_role` can alter or clear
  *     them after account creation — an admin included, since an admin is also
  *     the `authenticated` DB role. That is what lets us refuse a client-side
  *     write path.
@@ -103,12 +105,26 @@
 // the proxy, which is not a Node runtime.
 import type { ConsentState } from "./consent";
 
-/** The three query params a marketing link carries, keyed by the field they fill. */
+/**
+ * The five attribution fields in the order a campaign link spells them, for
+ * every place that walks them, so no loop can quietly skip one.
+ */
+export const UTM_FIELDS = ["source", "medium", "campaign", "content", "term"] as const;
+
+/** One attribution field, named as it is everywhere but the query string. */
+export type UtmField = (typeof UTM_FIELDS)[number];
+
+/** The five query params a marketing link carries, keyed by the field they fill. */
 export const UTM_QUERY_PARAMS = {
   source: "utm_source",
   medium: "utm_medium",
   campaign: "utm_campaign",
-} as const;
+  content: "utm_content",
+  term: "utm_term",
+} as const satisfies Record<UtmField, string>;
+
+/** The raw, unsanitised fields a registration body may carry. */
+export type UtmInput = Partial<Record<UtmField, string>>;
 
 /**
  * The request header the proxy sets for the root layout to read. A root layout
@@ -117,13 +133,13 @@ export const UTM_QUERY_PARAMS = {
  * boundary whose *fallback* is what gets prerendered — so the header is the
  * mechanism.
  *
- * **One header carrying a `URLSearchParams` string**, not three headers holding
+ * **One header carrying a `URLSearchParams` string**, not five headers holding
  * raw values. A sanitised value may legitimately contain anything but a control
  * character — a Meta macro expands to an ad name with spaces and accents in it
  * — and a raw non-ASCII header value is not something every hop between the
  * proxy and the layout is obliged to carry intact. Percent-encoding through
  * `URLSearchParams` makes the transport ASCII by construction, and one header
- * keeps the three fields arriving or not arriving together.
+ * keeps the five fields arriving or not arriving together.
  */
 export const UTM_HEADER = "x-utm";
 
@@ -131,10 +147,10 @@ export const UTM_HEADER = "x-utm";
  * The most bytes the serialised header value may run to before the proxy
  * declines to set it at all.
  *
- * Three sanitised fields cap at 200 code points each, but percent-encoding is
+ * Five sanitised fields cap at 200 code points each, but percent-encoding is
  * what actually decides the length: a campaign of 200 astral-plane characters
- * expands to roughly 2,400 bytes on its own, and three of those would push one
- * header past the ~4 KB per-header ceiling every proxy and serverless runtime
+ * expands to roughly 2,400 bytes on its own, and two of those would already push
+ * one header past the ~4 KB per-header ceiling every proxy and serverless runtime
  * in the path enforces in its own way — some by rejecting the request, some by
  * truncating the value, some by dropping the header. A request that 502s
  * because of a query string a stranger controls is a denial-of-service with no
@@ -145,17 +161,32 @@ export const UTM_HEADER = "x-utm";
  * attribute a family to an outreach that did not bring them, which is the same
  * reasoning that makes `sanitiseUtmValue` refuse rather than shorten.
  *
- * 2048 is comfortably above anything a real link produces (a long Meta ad name
- * expands to a few hundred bytes) and comfortably below every ceiling in the
- * path.
+ * 2048 is comfortably above anything a real link produces and comfortably below
+ * every ceiling in the path. A long Meta ad name expands to a few hundred bytes,
+ * and even all five fields at their full 200 plain-ASCII characters serialise to
+ * about 1,050 — the budget only bites on values dense with heavily encoded
+ * characters, which no real link carries.
  */
 export const UTM_HEADER_MAX_LENGTH = 2048;
 
-/** The three fields, each present or explicitly absent. */
+/** The five fields, each present or explicitly absent. */
 export interface UtmAttribution {
   source: string | null;
   medium: string | null;
   campaign: string | null;
+  content: string | null;
+  term: string | null;
+}
+
+/** Build an attribution by resolving each field in turn. */
+function mapUtmFields(resolve: (field: UtmField) => string | null): UtmAttribution {
+  return {
+    source: resolve("source"),
+    medium: resolve("medium"),
+    campaign: resolve("campaign"),
+    content: resolve("content"),
+    term: resolve("term"),
+  };
 }
 
 /** Nothing at all — the common case, and the shape every absent path returns. */
@@ -163,11 +194,13 @@ export const NO_UTM_ATTRIBUTION: UtmAttribution = {
   source: null,
   medium: null,
   campaign: null,
+  content: null,
+  term: null,
 };
 
-/** Attribution is present when at least one of the three fields survived. */
+/** Attribution is present when at least one of the five fields survived. */
 export function hasUtmAttribution(utm: UtmAttribution): boolean {
-  return utm.source !== null || utm.medium !== null || utm.campaign !== null;
+  return UTM_FIELDS.some((field) => utm[field] !== null);
 }
 
 /**
@@ -189,7 +222,7 @@ const UTM_CONTROL_CHARACTER = /\p{Cc}/u;
  * Tab and carriage return are on the list as belt and braces, not because
  * anything needs them: both are control characters, so the rule above already
  * refuses a value containing one anywhere, on both sides — `[[:cntrl:]]` in the
- * trigger and the three column CHECKs, `\p{Cc}` here. The SQL copy names them in
+ * trigger and the five column CHECKs, `\p{Cc}` here. The SQL copy names them in
  * its own lead-character list for the same redundant-by-design reason. Neither
  * entry is reachable, and both are kept because a lead-character rule that
  * silently depends on a *different* rule catching two of its members is one
@@ -227,7 +260,7 @@ const UTM_MAX_LENGTH = 200;
  * that did not bring them.
  *
  * The same four rules are mirrored in the profile-creation trigger and, as a
- * backstop, in the three column CHECKs. Three deliberate divergences, every one
+ * backstop, in the five column CHECKs. Three deliberate divergences, every one
  * of them fail-closed on the database side:
  *
  *  1. The trigger's `btrim` strips spaces only, where `String.trim()` strips the
@@ -259,7 +292,7 @@ export function sanitiseUtmValue(raw: string | null | undefined): string | null 
 }
 
 /**
- * Read the three params off a landing URL's query string.
+ * Read the five params off a landing URL's query string.
  *
  * `.getAll()` rather than `.get()`: a repeated `?utm_campaign=a&utm_campaign=b`
  * is not a campaign and must resolve to absent for that field, and `.get()`
@@ -274,11 +307,7 @@ export function readUtmFromSearchParams(params: URLSearchParams): UtmAttribution
     return values.length === 1 ? sanitiseUtmValue(values[0]) : null;
   };
 
-  return {
-    source: readOne(UTM_QUERY_PARAMS.source),
-    medium: readOne(UTM_QUERY_PARAMS.medium),
-    campaign: readOne(UTM_QUERY_PARAMS.campaign),
-  };
+  return mapUtmFields((field) => readOne(UTM_QUERY_PARAMS[field]));
 }
 
 /**
@@ -298,9 +327,10 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
   if (!hasUtmAttribution(utm)) return null;
 
   const params = new URLSearchParams();
-  if (utm.source !== null) params.set("source", utm.source);
-  if (utm.medium !== null) params.set("medium", utm.medium);
-  if (utm.campaign !== null) params.set("campaign", utm.campaign);
+  for (const field of UTM_FIELDS) {
+    const value = utm[field];
+    if (value !== null) params.set(field, value);
+  }
   const encoded = params.toString();
   return encoded.length > UTM_HEADER_MAX_LENGTH ? null : encoded;
 }
@@ -325,20 +355,14 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
  * feed the same trigger; a second copy is how the two would come to disagree
  * about a key name, which fails silently with the column always NULL.
  */
-function buildUtmMetadata(utm: {
-  source?: string;
-  medium?: string;
-  campaign?: string;
-} | undefined): Record<string, string> {
+function buildUtmMetadata(utm: UtmInput | undefined): Record<string, string> {
   const metadata: Record<string, string> = {};
   if (utm === undefined) return metadata;
 
-  const source = sanitiseUtmValue(utm.source);
-  if (source !== null) metadata[UTM_QUERY_PARAMS.source] = source;
-  const medium = sanitiseUtmValue(utm.medium);
-  if (medium !== null) metadata[UTM_QUERY_PARAMS.medium] = medium;
-  const campaign = sanitiseUtmValue(utm.campaign);
-  if (campaign !== null) metadata[UTM_QUERY_PARAMS.campaign] = campaign;
+  for (const field of UTM_FIELDS) {
+    const value = sanitiseUtmValue(utm[field]);
+    if (value !== null) metadata[UTM_QUERY_PARAMS[field]] = value;
+  }
 
   return metadata;
 }
@@ -348,7 +372,7 @@ function buildUtmMetadata(utm: {
  * did not consent to marketing**.
  *
  * The one exported way to build the payload, and the single greppable home of
- * the rule in point 2 of this module's header: the three `profiles.utm_*`
+ * the rule in point 2 of this module's header: the five `profiles.utm_*`
  * columns are written at account creation only for a visitor whose stored
  * consent answer grants the marketing purpose. Anything else — no cookie at
  * all, a cookie from a superseded version of the question, a refusal, or
@@ -366,10 +390,24 @@ function buildUtmMetadata(utm: {
  */
 export function utmMetadataForConsent(
   consent: ConsentState | null,
-  utm: { source?: string; medium?: string; campaign?: string } | undefined,
+  utm: UtmInput | undefined,
 ): Record<string, string> {
   if (consent?.marketing !== true) return {};
   return buildUtmMetadata(utm);
+}
+
+/**
+ * An attribution as a registration body's `utm` field: every field that is
+ * present, every absent one omitted. The register forms and the finish page all
+ * send this, so the body shape cannot differ between them.
+ */
+export function utmRegistrationBody(utm: UtmAttribution): UtmInput {
+  const body: UtmInput = {};
+  for (const field of UTM_FIELDS) {
+    const value = utm[field];
+    if (value !== null) body[field] = value;
+  }
+  return body;
 }
 
 /**
@@ -396,11 +434,7 @@ export function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
     return values.length === 1 ? sanitiseUtmValue(values[0]) : null;
   };
 
-  return {
-    source: readOne("source"),
-    medium: readOne("medium"),
-    campaign: readOne("campaign"),
-  };
+  return mapUtmFields(readOne);
 }
 
 /**
@@ -417,8 +451,9 @@ export function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
  */
 export function utmQueryParams(utm: UtmAttribution): Record<string, string> {
   const query: Record<string, string> = {};
-  if (utm.source !== null) query[UTM_QUERY_PARAMS.source] = utm.source;
-  if (utm.medium !== null) query[UTM_QUERY_PARAMS.medium] = utm.medium;
-  if (utm.campaign !== null) query[UTM_QUERY_PARAMS.campaign] = utm.campaign;
+  for (const field of UTM_FIELDS) {
+    const value = utm[field];
+    if (value !== null) query[UTM_QUERY_PARAMS[field]] = value;
+  }
   return query;
 }

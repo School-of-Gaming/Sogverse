@@ -843,11 +843,11 @@ describe("proxy", () => {
     it("emits the sanitised fields for utm params on the request", async () => {
       mockNoUser();
       const request = createNextRequest(
-        "/shop?utm_source=Lynx&utm_medium=email&utm_campaign=lynx-summer-a",
+        "/shop?utm_source=Lynx&utm_medium=email&utm_campaign=lynx-summer-a&utm_content=hero&utm_term=roblox+club",
       );
       await proxy(request);
       expect(utmHeaderAfter(request)).toBe(
-        "source=Lynx&medium=email&campaign=lynx-summer-a",
+        "source=Lynx&medium=email&campaign=lynx-summer-a&content=hero&term=roblox+club",
       );
     });
 
@@ -856,6 +856,10 @@ describe("proxy", () => {
       const request = createNextRequest("/shop?utm_campaign=lynx-summer-a");
       await proxy(request);
       expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+
+      const termOnly = createNextRequest("/shop?utm_term=minecraft");
+      await proxy(termOnly);
+      expect(utmHeaderAfter(termOnly)).toBe("term=minecraft");
     });
 
     it("emits nothing when there are no utm params at all", async () => {

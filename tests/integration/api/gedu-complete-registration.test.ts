@@ -96,7 +96,7 @@ const validBody = {
   locationIds: [LOCATION_ID],
   minecraftUsername: "AinoBuilds",
   robloxUsername: "builderman",
-  utm: { source: "recruit", campaign: "gedu-autumn" },
+  utm: { source: "recruit", campaign: "gedu-autumn", term: "game educator" },
 };
 
 function request(
@@ -272,8 +272,10 @@ describe("POST /api/gedu/complete-registration", () => {
     expect(row).toMatchObject({
       utm_source: "recruit",
       utm_campaign: "gedu-autumn",
+      utm_term: "game educator",
     });
     expect(row).not.toHaveProperty("utm_medium");
+    expect(row).not.toHaveProperty("utm_content");
     expect(typeof row.email_verified_at).toBe("string");
     // register_gedu stamps it inside the promotion's transaction.
     expect(row).not.toHaveProperty("registration_completed_at");
@@ -286,6 +288,7 @@ describe("POST /api/gedu/complete-registration", () => {
     const row = profileRow();
     expect(row).not.toHaveProperty("utm_source");
     expect(row).not.toHaveProperty("utm_campaign");
+    expect(row).not.toHaveProperty("utm_term");
   });
 
   it("writes nothing after the promotion when there is nothing to add", async () => {

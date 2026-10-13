@@ -223,6 +223,8 @@ export default async function AdminUserDetailPage({
     source: profile.utm_source,
     medium: profile.utm_medium,
     campaign: profile.utm_campaign,
+    content: profile.utm_content,
+    term: profile.utm_term,
   };
 
   const [
@@ -647,7 +649,7 @@ export default async function AdminUserDetailPage({
           shift silently.
 
           Parents and educators, because those are the two roles that can carry
-          an attribution — a gamer's three columns are NULL by construction.
+          an attribution — a gamer's five columns are NULL by construction.
           Only a customer can hold a marketing consent, so `customerId` is null
           for an educator and their card is the attribution block alone. */}
       {(isCustomer || isGedu) && (

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { mockSupabaseClient } from "../../setup";
+import { NO_UTM_ATTRIBUTION, type UtmAttribution } from "@/lib/utm";
 
 /**
  * **The Gedu register page's Google button asks for the Gedu finish page.** A
@@ -24,11 +25,7 @@ vi.mock("next-intl", () => ({
   useLocale: () => "fi",
 }));
 
-let mockUtm: { source: string | null; medium: string | null; campaign: string | null } = {
-  source: null,
-  medium: null,
-  campaign: null,
-};
+let mockUtm: UtmAttribution = NO_UTM_ATTRIBUTION;
 
 vi.mock("@/providers", () => ({
   useAuth: () => ({
@@ -83,7 +80,7 @@ function precedes(a: Element, b: Element): boolean {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockUtm = { source: null, medium: null, campaign: null };
+  mockUtm = NO_UTM_ATTRIBUTION;
   signInWithOAuth.mockResolvedValue({
     data: { provider: "google", url: "https://accounts.google.test" },
     error: null,
@@ -134,7 +131,12 @@ describe("the Gedu register page's Google button", () => {
   // The round trip through Google unloads the tab holding the visit's
   // attribution in memory, so it travels on the finish page's address.
   it("carries the visit's attribution on next", async () => {
-    mockUtm = { source: "recruit", medium: null, campaign: "gedu-autumn" };
+    mockUtm = {
+      ...NO_UTM_ATTRIBUTION,
+      source: "recruit",
+      campaign: "gedu-autumn",
+      content: "jobs-board",
+    };
     render(<RegisterGeduForm redirect={null} />);
 
     await act(async () => {
@@ -148,7 +150,9 @@ describe("the Gedu register page's Google button", () => {
     expect(nextUrl.searchParams.get("as")).toBe("gedu");
     expect(nextUrl.searchParams.get("utm_source")).toBe("recruit");
     expect(nextUrl.searchParams.get("utm_campaign")).toBe("gedu-autumn");
+    expect(nextUrl.searchParams.get("utm_content")).toBe("jobs-board");
     expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
+    expect(nextUrl.searchParams.has("utm_term")).toBe(false);
   });
 });
 

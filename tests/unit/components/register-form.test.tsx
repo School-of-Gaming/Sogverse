@@ -49,7 +49,13 @@ vi.mock("@/providers", () => ({
     freezeUntilNavigation: mockFreezeUntilNavigation,
     unfreezeAuthState: mockUnfreezeAuthState,
   }),
-  useUtm: () => ({ source: "Lynx", medium: null, campaign: "lynx-summer-a" }),
+  useUtm: () => ({
+    source: "Lynx",
+    medium: null,
+    campaign: "lynx-summer-a",
+    content: null,
+    term: "minecraft",
+  }),
 }));
 
 // The navigation itself is the hook's job and jsdom cannot perform it; what
@@ -176,9 +182,8 @@ describe("RegisterForm", () => {
       // request — so the locale the form is being read in is the best answer
       // anyone has for the welcome mail.
       locale: "fi",
-      // Every field is sent, present or not: an absent one goes as `undefined`,
-      // which JSON.stringify drops, so the body carries only what survived.
-      utm: { source: "Lynx", campaign: "lynx-summer-a" },
+      // Only the fields that survived are sent; an absent one is omitted.
+      utm: { source: "Lynx", campaign: "lynx-summer-a", term: "minecraft" },
     });
   });
 
@@ -447,7 +452,9 @@ describe("the parent register page's Google button", () => {
     expect(nextUrl.searchParams.has("as")).toBe(false);
     expect(nextUrl.searchParams.get("utm_source")).toBe("Lynx");
     expect(nextUrl.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
+    expect(nextUrl.searchParams.get("utm_term")).toBe("minecraft");
     expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
+    expect(nextUrl.searchParams.has("utm_content")).toBe(false);
     expect(nextUrl.searchParams.has("redirect")).toBe(false);
   });
 

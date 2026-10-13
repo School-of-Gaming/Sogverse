@@ -12,6 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { utmRegistrationBody } from "@/lib/utm";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
@@ -99,11 +100,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           // The route cannot read `x-utm` off its own request: the proxy derives
           // that header from the query string of the request it is handling, and
           // this POST carries no UTM params. So they travel in the body.
-          utm: {
-            source: utm.source ?? undefined,
-            medium: utm.medium ?? undefined,
-            campaign: utm.campaign ?? undefined,
-          },
+          utm: utmRegistrationBody(utm),
         }),
       });
 
