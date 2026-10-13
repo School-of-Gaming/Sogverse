@@ -181,13 +181,14 @@ export function ProductDetailPage({
   // The club's holiday breaks, for the facts card
   //
   // Anyone may read them, so they are asked for every viewer — but only of a
-  // club, and only once the row has said what its term is: the span is the
-  // term, or a year ahead of today for an open-ended club. That makes this a
+  // club, and only once the row has said what its term is: the span runs from
+  // today to the end of the term, or a year ahead of today for an open-ended
+  // club, and a term already over reads nothing. That makes this a
   // second hop like the births read, and the page waits for it for the same
   // reason: the list is the facts card's last row, and below `2xl` that card
   // sits above the topic card, so a list landing after paint would push the
   // card down. The read keeps its previous answer across a re-key (a day
-  // turning over under an open tab moves an open-ended span), so the wait is a
+  // turning over under an open tab moves the span's start), so the wait is a
   // first resolution and never returns.
   //
   // **Its fail-open is latched like the two reads around it**, and for the

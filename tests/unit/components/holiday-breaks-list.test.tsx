@@ -107,13 +107,16 @@ function listItems(container: HTMLElement): (string | null)[] {
 }
 
 describe("the Holiday breaks row", () => {
-  it("lists a dated club's breaks that took a session, each with its compact range", () => {
+  it("lists a dated club's breaks still to come that take a session, each with its compact range", () => {
     const { container } = renderCard(
       breaks([
+        { id: "past", from: "2026-12-21", to: "2027-01-01", names: [{ locale: "en", name: "Christmas break" }] },
         { id: "a", from: "2027-02-22", to: "2027-02-26", names: [{ locale: "en", name: "Winter break" }] },
         { id: "b", from: "2027-03-05", to: "2027-03-05", withdrew: false, names: [{ locale: "en", name: "Teacher day" }] },
         { id: "c", from: "2027-04-01", to: "2027-04-01", names: [{ locale: "en", name: "Easter" }] },
       ]),
+      // A club that began last autumn, so its term holds a break already over.
+      { start_date: "2026-08-10" },
     );
 
     expect(container.textContent).toContain("Holiday breaks");
@@ -122,11 +125,13 @@ describe("the Holiday breaks row", () => {
       // One day names one date.
       `Easter${formatCompactDateRange("2027-04-01", "2027-04-01", "en", TODAY)}`,
     ]);
+    // A break that is over is not listed, however much of the term it took.
+    expect(container.textContent).not.toContain("Christmas break");
     // A break that removed no session is not one this club takes.
     expect(container.textContent).not.toContain("Teacher day");
   });
 
-  it("lists an open-ended club's next three breaks ending on or after today", () => {
+  it("lists every break an open-ended club has still to come, more than three included", () => {
     const { container } = renderCard(
       breaks([
         { id: "past", from: "2026-12-21", to: "2027-01-01" },
@@ -138,13 +143,12 @@ describe("the Holiday breaks row", () => {
       { end_date: null },
     );
 
-    expect(listItems(container)).toHaveLength(3);
+    expect(listItems(container)).toHaveLength(4);
     const text = container.textContent;
-    expect(text).toContain("Break one");
-    expect(text).toContain("Break two");
-    expect(text).toContain("Break three");
+    for (const id of ["one", "two", "three", "four"]) {
+      expect(text).toContain(`Break ${id}`);
+    }
     expect(text).not.toContain("Break past");
-    expect(text).not.toContain("Break four");
   });
 
   it("names a break in English where the reader's locale is not written, else the first written", () => {

@@ -230,7 +230,7 @@ async function renderConfirmation(
   // The club's holiday breaks, for the "Good to know" card — read here, with
   // the rest of the page's data, so the list is on the first paint rather than
   // arriving above the cards under it. After the product read rather than
-  // beside it, because the span is the club's own term. Every other product
+  // beside it, because the span follows the club's own term and zone. Every other product
   // type reads nothing; a failed read costs the list, never the summary.
   const breaksSpan = holidayBreaksSpan(product, new Date());
   const holidayBreaks =

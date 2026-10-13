@@ -196,7 +196,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
     });
   }
 
-  it("reads a dated club's holiday breaks over its term and lists those that took a session", async () => {
+  it("reads a dated club's holiday breaks from product-local today to its end and lists those that took a session", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
@@ -214,17 +214,35 @@ describe("sendProductConfirmationEmail's plan read", () => {
       }),
     );
 
-    // The term, not product-local today: a dated club lists its whole term.
+    // Product-local today, not the term's first day: a break that is over is
+    // never listed, so the past is not read.
     expect(breakBodies).toEqual([
-      { p_product_id: PRODUCT, p_from: "2027-01-04", p_to: "2027-05-31" },
+      { p_product_id: PRODUCT, p_from: "2027-01-11", p_to: "2027-05-31" },
     ]);
     const { htmlContent } = sendTransactionalEmail.mock.calls[0][0];
     expect(htmlContent).toContain("Holiday breaks");
     // In the compact form, without the year: 2027 is the current year here.
-    expect(htmlContent).toContain("Winter break, Feb 22 – 26");
-    expect(htmlContent).toContain("Easter, Mar 26 – 29");
+    expect(htmlContent).toMatch(/<strong[^>]*>Winter break<\/strong><br \/>Feb 22 – 26/);
+    expect(htmlContent).toMatch(/<strong[^>]*>Easter<\/strong><br \/>Mar 26 – 29/);
     // A break that removed no session is not one this club takes.
     expect(htmlContent).not.toContain("Teacher day");
+    expect(errors).not.toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
+  it("reads no breaks for a dated club whose term has ended, and states no row for them", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    const breakBodies: unknown[] = [];
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // The 10th is yesterday in Helsinki.
+    await send(respondTo([], { breakBodies, endDate: "2027-01-10" }));
+
+    expect(breakBodies).toEqual([]);
+    const { htmlContent } = sendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).not.toContain("Holiday breaks");
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
   });

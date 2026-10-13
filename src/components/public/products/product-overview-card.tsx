@@ -119,7 +119,6 @@ export function ProductOverviewCard({
     now,
   });
   const breakLines = holidayBreakLines(holidayBreaks, {
-    endDate: product.end_date,
     today: productToday(product.timezone, now),
     locale: uiLocale,
   });

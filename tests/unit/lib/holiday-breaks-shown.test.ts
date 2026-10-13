@@ -86,13 +86,32 @@ function breaks(
 describe("holidayBreaksSpan", () => {
   const NOW = new Date("2026-10-11T22:30:00Z"); // already the 12th in Helsinki
 
-  it("reads a dated club over its term", () => {
+  it("reads a dated club from product-local today to its last day once its term has begun", () => {
     expect(
       holidayBreaksSpan(
         { product_type: "consumer_club", start_date: "2026-08-10", end_date: "2026-12-18", timezone: "Europe/Helsinki" },
         NOW,
       ),
-    ).toEqual({ from: "2026-08-10", to: "2026-12-18" });
+    ).toEqual({ from: "2026-10-12", to: "2026-12-18" });
+  });
+
+  it("reads a dated club that has not begun from its first day", () => {
+    expect(
+      holidayBreaksSpan(
+        { product_type: "consumer_club", start_date: "2027-01-11", end_date: "2027-05-31", timezone: "Europe/Helsinki" },
+        NOW,
+      ),
+    ).toEqual({ from: "2027-01-11", to: "2027-05-31" });
+  });
+
+  it("reads a dated club whose term ends today, and nothing for one whose term has ended", () => {
+    const club = { product_type: "consumer_club", start_date: "2025-08-11", timezone: "Europe/Helsinki" } as const;
+    expect(holidayBreaksSpan({ ...club, end_date: "2026-10-12" }, NOW)).toEqual({
+      from: "2026-10-12",
+      to: "2026-10-12",
+    });
+    // The 11th is yesterday in Helsinki, though it is still the 11th in UTC.
+    expect(holidayBreaksSpan({ ...club, end_date: "2026-10-11" }, NOW)).toBeNull();
   });
 
   it("reads an open-ended club from product-local today a year and a day ahead", () => {
@@ -119,37 +138,37 @@ describe("holidayBreaksSpan", () => {
 describe("shownHolidayBreaks", () => {
   const TODAY = "2026-10-12";
 
-  it("shows every break of a dated club that took a session, and none that took none", () => {
+  it("shows every break still to come that took a session, a break in progress today included", () => {
     const rows = breaks([
-      { id: "a", from: "2026-08-24", to: "2026-08-28" },
-      { id: "b", from: "2026-09-04", to: "2026-09-04", withdrew: false },
-      { id: "c", from: "2026-10-19", to: "2026-10-23" },
+      { id: "past", from: "2026-08-24", to: "2026-08-28" },
+      { id: "yesterday", from: "2026-10-05", to: "2026-10-11" },
+      { id: "now", from: "2026-10-09", to: "2026-10-16" },
+      { id: "skip", from: "2026-11-02", to: "2026-11-02", withdrew: false },
+      { id: "xmas", from: "2026-12-21", to: "2027-01-06" },
     ]);
-    expect(shownHolidayBreaks(rows, "2026-12-18", TODAY).map((row) => row.id)).toEqual([
-      "a",
-      "c",
-    ]);
+    expect(shownHolidayBreaks(rows, TODAY).map((row) => row.id)).toEqual(["now", "xmas"]);
   });
 
-  it("shows an open-ended club the next three breaks ending on or after today", () => {
+  it("shows every upcoming break, however many there are", () => {
     const rows = breaks([
-      { id: "past", from: "2026-10-05", to: "2026-10-09" },
-      { id: "now", from: "2026-10-12", to: "2026-10-16" },
-      { id: "skip", from: "2026-11-02", to: "2026-11-02", withdrew: false },
+      { id: "autumn", from: "2026-10-19", to: "2026-10-23" },
       { id: "xmas", from: "2026-12-21", to: "2027-01-06" },
       { id: "winter", from: "2027-02-22", to: "2027-02-26" },
       { id: "easter", from: "2027-03-26", to: "2027-03-29" },
+      { id: "may", from: "2027-05-01", to: "2027-05-01" },
     ]);
-    expect(shownHolidayBreaks(rows, null, TODAY).map((row) => row.id)).toEqual([
-      "now",
+    expect(shownHolidayBreaks(rows, TODAY).map((row) => row.id)).toEqual([
+      "autumn",
       "xmas",
       "winter",
+      "easter",
+      "may",
     ]);
   });
 
   it("shows nothing when no break took a session", () => {
     expect(
-      shownHolidayBreaks(breaks([{ id: "a", from: "2026-10-19", to: "2026-10-23", withdrew: false }]), null, TODAY),
+      shownHolidayBreaks(breaks([{ id: "a", from: "2026-10-19", to: "2026-10-23", withdrew: false }]), TODAY),
     ).toEqual([]);
   });
 });
@@ -162,7 +181,7 @@ describe("holidayBreakLines", () => {
       { id: "c", from: "2027-02-22", to: "2027-02-26", names: [{ locale: "sv", name: "Sportlov" }] },
     ]);
     expect(
-      holidayBreakLines(rows, { endDate: null, today: "2026-10-12", locale: "fi" }),
+      holidayBreakLines(rows, { today: "2026-10-12", locale: "fi" }),
     ).toEqual([
       { id: "a", name: "Syysloma", range: "19.–23.10." },
       { id: "b", name: "Christmas break", range: formatCompactDateRange("2026-12-21", "2027-01-06", "fi", "2026-10-12") },

@@ -262,8 +262,8 @@ async function send({
   // carries no invitation, so it asks for no plan.
   //
   // The club's holiday breaks ride the same second round trip, beside it: their
-  // span is the product's own too — the term, or a year ahead of an open-ended
-  // club's today — and every mode states them, because the confirmation page
+  // span is the product's own too — from today to the end of the term, or a
+  // year ahead of an open-ended club's today — and every mode states them, because the confirmation page
   // lists them on every outcome. A failed read costs the list, not the mail:
   // it is a row of the facts list, and the page drops it on the same failure.
   const breaksSpan = holidayBreaksSpan(product, now);
@@ -452,7 +452,6 @@ async function send({
       // The confirmation page's list, by the same rule, in this reader's
       // locale: the same breaks, the same names, the same compact ranges.
       holidayBreaks: holidayBreakLines(holidayBreakRows, {
-        endDate: product.end_date,
         today: breaksToday,
         locale,
       }),
