@@ -225,8 +225,8 @@ if [ "$rich_seed_state" = "applied" ]; then
   echo "  data         supabase/rich-seed.sql alone, with product pictures and"
   echo "               Library covers in their buckets — seed.sql's fixtures are not on a rich"
   echo "               stack. Sign in as admin@example.com, parent@example.com"
-  echo "               (PIN 1111) or gedu@example.com, password \"password\"; every"
-  echo "               other seeded account is testpassword123."
+  echo "               (PIN 1111) or gedu@example.com; every seeded account's"
+  echo "               password is \"password\"."
 else
   echo "  data         seed.sql only — no rich catalogue and no product images"
   echo "               (--no-rich-seed). Sign in as seed.sql's own fixtures."

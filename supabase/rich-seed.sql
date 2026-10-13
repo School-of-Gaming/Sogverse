@@ -49,17 +49,16 @@
 -- every product on its placeholder, and every Library article without its
 -- cover.
 --
--- SIGNING IN. Three accounts are the ones to look at the app through, and they
--- share the password `password`:
+-- SIGNING IN. Every account this file creates has the password `password`.
+-- Three are the ones to look at the app through:
 --
 --     admin@example.com    Admin Example    the admin who owns the catalogue
 --     parent@example.com   Parent Example   three children, PIN 1111
 --     gedu@example.com     Gedu Example     certified, the busiest teaching load
 --
--- Every other account this file creates exists to fill lists, and they all
--- share the password `testpassword123`. These are the only accounts a stack
--- carrying this file has. Among them is a second admin, admin2@example.com
--- (Anni Salonen), so the admin UI has one admin viewing and editing another's
+-- Every other account this file creates exists to fill lists. These are the
+-- only accounts a stack carrying this file has. Among them is a second admin,
+-- admin2@example.com (Anni Salonen), so the admin UI has one admin viewing and editing another's
 -- profile, and three more admins who make up the public team page's
 -- leadership with the owner's: juha.makela@, helena.strand@ and
 -- daniel.okafor@example.com. Another is the trainee, oliver.grant@example.com
@@ -158,7 +157,7 @@ $$;
 -- The id is the helper's to choose and nobody else's. Callers pass an email.
 
 CREATE FUNCTION pg_temp.account(
-  p_email text, p_first text, p_last text, p_password text DEFAULT 'testpassword123'
+  p_email text, p_first text, p_last text
 ) RETURNS uuid LANGUAGE plpgsql AS $$
 DECLARE
   v_id uuid := gen_random_uuid();
@@ -173,7 +172,7 @@ BEGIN
     v_id,
     '00000000-0000-0000-0000-000000000000',
     'authenticated', 'authenticated', p_email,
-    extensions.crypt(p_password, extensions.gen_salt('bf')),
+    extensions.crypt('password', extensions.gen_salt('bf')),
     now(), now(),
     '{"provider":"email","providers":["email"]}',
     jsonb_build_object('first_name', p_first, 'last_name', p_last),
@@ -201,7 +200,7 @@ BEGIN;
 -- admin-gated below runs as it, so the catalogue, the venues, the groups and
 -- the comped seats all read as one person's work.
 DO $$
-DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example', 'password');
+DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example');
 BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin;
@@ -212,7 +211,7 @@ $$;
 -- A second admin, so the admin UI has one admin's profile for another admin
 -- to view and edit.
 DO $$
-DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen', 'testpassword123');
+DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen');
 BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin2;
@@ -252,24 +251,24 @@ DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('gedu@example.com',           'Gedu',   'Example',   'password'),
-    ('aino.virtanen@example.com',  'Aino',   'Virtanen',  'testpassword123'),
-    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen',  'testpassword123'),
-    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen',  'testpassword123'),
-    ('lucas.moreau@example.com',   'Lucas',  'Moreau',    'testpassword123'),
-    ('emma.koskinen@example.com',  'Emma',   'Koskinen',  'testpassword123'),
-    ('oliver.grant@example.com',   'Oliver', 'Grant',     'testpassword123'),
-    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen',  'testpassword123'),
-    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen', 'testpassword123'),
-    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio',    'testpassword123'),
-    ('priya.nair@example.com',      'Priya',  'Nair',      'testpassword123'),
-    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg',  'testpassword123'),
-    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen',  'testpassword123'),
-    ('ben.carter@example.com',      'Ben',    'Carter',    'testpassword123'),
-    ('ronja.kallio@example.com',    'Ronja',  'Kallio',    'testpassword123')
-  ) AS t(email, first_name, last_name, password)
+    ('gedu@example.com',           'Gedu',   'Example'),
+    ('aino.virtanen@example.com',  'Aino',   'Virtanen'),
+    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen'),
+    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen'),
+    ('lucas.moreau@example.com',   'Lucas',  'Moreau'),
+    ('emma.koskinen@example.com',  'Emma',   'Koskinen'),
+    ('oliver.grant@example.com',   'Oliver', 'Grant'),
+    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen'),
+    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen'),
+    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio'),
+    ('priya.nair@example.com',      'Priya',  'Nair'),
+    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg'),
+    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen'),
+    ('ben.carter@example.com',      'Ben',    'Carter'),
+    ('ronja.kallio@example.com',    'Ronja',  'Kallio')
+  ) AS t(email, first_name, last_name)
   LOOP
-    PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.password);
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name);
   END LOOP;
 END;
 $$;
@@ -282,20 +281,20 @@ DECLARE
   v_id   uuid;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('parent@example.com',          'Parent',  'Example',   'password',        'en', ARRAY['en','fi']::public.spoken_language[], '358401000000'),
-    ('laura.korhonen@example.com',  'Laura',   'Korhonen',  'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000001'),
-    ('petri.makinen@example.com',   'Petri',   'Mäkinen',   'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000002'),
-    ('hanna.salminen@example.com',  'Hanna',   'Salminen',  'testpassword123', 'fi', ARRAY['fi','sv']::public.spoken_language[], '358401000003'),
-    ('jussi.heikkinen@example.com', 'Jussi',   'Heikkinen', 'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000004'),
-    ('marika.laine@example.com',    'Marika',  'Laine',     'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000005'),
-    ('anna.jarvinen@example.com',   'Anna',    'Järvinen',  'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000006'),
-    ('camille.dubois@example.com',  'Camille', 'Dubois',    'testpassword123', 'fr', ARRAY['fr','en']::public.spoken_language[], '358401000007'),
-    ('james.whitfield@example.com', 'James',   'Whitfield', 'testpassword123', 'en', ARRAY['en']::public.spoken_language[],      '358401000008'),
-    ('satu.rantanen@example.com',   'Satu',    'Rantanen',  'testpassword123', 'fi', ARRAY['fi','en']::public.spoken_language[], '358401000009'),
-    ('tomi.hakala@example.com',     'Tomi',    'Hakala',    'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
-  ) AS t(email, first_name, last_name, password, locale, languages, phone)
+    ('parent@example.com',          'Parent',  'Example',   'en', ARRAY['en','fi']::public.spoken_language[], '358401000000'),
+    ('laura.korhonen@example.com',  'Laura',   'Korhonen',  'fi', ARRAY['fi','en']::public.spoken_language[], '358401000001'),
+    ('petri.makinen@example.com',   'Petri',   'Mäkinen',   'fi', ARRAY['fi']::public.spoken_language[],      '358401000002'),
+    ('hanna.salminen@example.com',  'Hanna',   'Salminen',  'fi', ARRAY['fi','sv']::public.spoken_language[], '358401000003'),
+    ('jussi.heikkinen@example.com', 'Jussi',   'Heikkinen', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000004'),
+    ('marika.laine@example.com',    'Marika',  'Laine',     'fi', ARRAY['fi','en']::public.spoken_language[], '358401000005'),
+    ('anna.jarvinen@example.com',   'Anna',    'Järvinen',  'fi', ARRAY['fi']::public.spoken_language[],      '358401000006'),
+    ('camille.dubois@example.com',  'Camille', 'Dubois',    'fr', ARRAY['fr','en']::public.spoken_language[], '358401000007'),
+    ('james.whitfield@example.com', 'James',   'Whitfield', 'en', ARRAY['en']::public.spoken_language[],      '358401000008'),
+    ('satu.rantanen@example.com',   'Satu',    'Rantanen',  'fi', ARRAY['fi','en']::public.spoken_language[], '358401000009'),
+    ('tomi.hakala@example.com',     'Tomi',    'Hakala',    'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
+  ) AS t(email, first_name, last_name, locale, languages, phone)
   LOOP
-    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.password);
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name);
 
     -- The fields the registration form collects and no RPC owns. Done here
     -- rather than later because create_gamer copies the parent's locale onto

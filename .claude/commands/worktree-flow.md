@@ -180,8 +180,7 @@ if they have to run again.
   `supabase/rich-seed.sql` alone — `seed.sql` is the DB tests' fixture set and never
   runs on a rich stack — and that file's header lists the educators, parents and
   children it creates. Sign in as `admin@example.com`, `parent@example.com` (PIN 1111)
-  or `gedu@example.com`, password `password`; every other seeded account is on
-  `testpassword123`. A trimmed stack runs no mail catcher, so nothing emailed — a magic
+  or `gedu@example.com`; every seeded account's password is `password`. A trimmed stack runs no mail catcher, so nothing emailed — a magic
   link, a reset — can be read on it; the seed's accounts are the only way in.
 - `npm run db -- list` shows every stack on the machine with its memory (a settled
   one holds about 660 MB). Two beside the user's own work are comfortable, three
