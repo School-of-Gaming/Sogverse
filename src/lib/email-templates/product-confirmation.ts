@@ -7,7 +7,7 @@ import {
   styledName,
   styledProductName,
 } from "./utils";
-import { bulletList, ctaButton, factList, sectionLabel } from "./blocks";
+import { bulletList, ctaButton, factList, inlineBold, sectionLabel } from "./blocks";
 import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import { textAttachment, type RenderedAttachment } from "./attachments";
@@ -686,7 +686,8 @@ function overviewRows(
 /**
  * The holiday breaks as one row of the list, under the facts they belong with —
  * the page draws them as the last row of its "Good to know" card — or no row at
- * all when there are none. One line per break, the name and then its dates.
+ * all when there are none. Each break is its name in bold with its dates on the
+ * line under it, as the page draws them.
  */
 function holidayBreakRows(
   t: EmailTranslator,
@@ -697,14 +698,15 @@ function holidayBreakRows(
     [
       t("productConfirmation.overview.holidayBreaks"),
       breaks
-        .map(({ name, range }) =>
-          // A break's name is admin-written and could be address-shaped, so it
-          // is defused as well as escaped, like every value off a row.
-          defuseAutolinks(
-            escapeHtml(t("productConfirmation.overview.holidayBreak", { name, range })),
-          ),
+        .map(
+          ({ name, range }, index) =>
+            // A break's name is admin-written and could be address-shaped, so
+            // it is defused as well as escaped, like every value off a row.
+            `<div style="margin:${index === 0 ? "0" : "8px"} 0 0;">${inlineBold(
+              defuseAutolinks(escapeHtml(name)),
+            )}<br />${escapeHtml(range)}</div>`,
         )
-        .join("<br />"),
+        .join(""),
     ],
   ];
 }

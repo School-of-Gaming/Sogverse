@@ -985,12 +985,12 @@ describe("the holiday breaks row", () => {
     { name: "Easter <3", range: "26–29 Mar" },
   ];
 
-  it("states each break under one label, escaped", () => {
+  it("states each break under one label, its name in bold and its dates on the line under it, escaped", () => {
     const html = render({ holidayBreaks: BREAKS });
     expect(html).toContain("Holiday breaks");
-    expect(html).toContain("Winter break, 22–26 Feb");
+    expect(html).toMatch(/<strong[^>]*>Winter break<\/strong><br \/>22–26 Feb/);
     // An admin-written name is a value off a row like any other.
-    expect(html).toContain("Easter &lt;3, 26–29 Mar");
+    expect(html).toMatch(/<strong[^>]*>Easter &lt;3<\/strong><br \/>26–29 Mar/);
     expect(html).not.toContain("Easter <3");
   });
 
@@ -1010,6 +1010,8 @@ describe("the holiday breaks row", () => {
   });
 
   it("states them on the child's copy as well, since they are not a parent's fact", () => {
-    expect(render({ holidayBreaks: BREAKS, gamerCopy: true })).toContain("Winter break, 22–26 Feb");
+    expect(render({ holidayBreaks: BREAKS, gamerCopy: true })).toMatch(
+      /<strong[^>]*>Winter break<\/strong><br \/>22–26 Feb/,
+    );
   });
 });
