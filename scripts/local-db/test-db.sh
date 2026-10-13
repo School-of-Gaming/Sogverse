@@ -1,113 +1,56 @@
 #!/usr/bin/env bash
 #
-# `test-db` — hand the Node side everything the DB tests need to reach a stack,
-# and refuse a stack they must not be run against.
+# `test` — a throwaway database for the DB tests, held for as long as the Node
+# side is running them, and removed afterwards.
 #
-#   test-db.sh <project-id> <cli-version>
-#
-# No checkout path: a stack already records the checkout it belongs to, and this
-# file reads it back rather than being told, so that the --stack escape hatch
-# cannot assert a stack is something it is not.
+#   test-db.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # Arguments are bare words on purpose; see lib.sh for what the boundary mangles.
+# The id is the tests' own, distinct from the checkout's stack's and from
+# `generate`'s, so the tests run beside a stack that is serving a preview.
 #
-# This file changes nothing: it reads the stack's state, asks the CLI for the
-# URL and keys, and prints them back on sentinel lines. The test run itself is
-# not here, because node_modules and the vitest binary live on the Windows side
-# — see scripts/test-db-local.mjs, which is the half that runs them.
+# The database is migrations/ plus supabase/seed.sql and nothing else — the
+# fixtures the tests' whole-table claims are written against, and what CI's DB
+# job builds — on the service set a stack runs, which has the auth, REST and
+# storage layers the tests reach.
+#
+# The tests themselves are not run here: node_modules and the vitest binary
+# live on the Windows side. So this file hands back the URL and keys on
+# sentinel lines, says `ready`, and waits on its stdin; the Node side closes
+# that when vitest is done, and the cleanup trap removes the database. A Node
+# side that dies closes it too, so the database goes either way — and a run
+# killed outright leaves a claim the next allocation reaps (lib.sh).
 set -euo pipefail
 here=$(dirname "$0")
 . "$here/lib.sh"
 
-project=$1
-cli_version=$2
+checkout=$1
+project=$2
+candidate_blocks=$3
+cli_version=$4
 
-# Held for the few seconds this file takes and released with it, so the stack
-# cannot be read half-way through an `up` or a `reset` that is rebuilding it.
-# The vitest run afterwards is outside the lock — nothing it does changes the
-# stack's identity, ports or keys.
-take_lock "$project"
+transient_db "$checkout" "$project" "$candidate_blocks" "$cli_version" true "$STACK_EXCLUDE"
 
-state=$(stack_state_dir "$project")
-work=$(shadow_workdir "$project")
-
-if [ ! -f "$state/meta" ]; then
-  echo "There is no stack called $project on this machine." >&2
-  echo "Bring this checkout's stack up with \`npm run db -- up --no-rich-seed\`, or see what is" >&2
-  echo "already here with \`npm run db -- list\`." >&2
-  exit 1
-fi
-
-if ! stack_is_running "$project"; then
-  echo "$project's stack is parked, not running. \`npm run db -- up\` brings it back in about 30s." >&2
-  exit 1
-fi
-
-# The rich seed is disqualifying, not merely untidy: the DB tests' whole-table
-# claims are written against seed.sql's minimal fixtures alone, and the rich
-# catalogue on top of them fails those sweeps for reasons that are not bugs.
-#
-# Two signals, because they fail differently. The marker is what `up` writes
-# when it creates a stack that is getting the rich seed, so it is the answer for
-# a stack this tooling built; the row is the database's own answer, and it is
-# the one that catches a rich seed applied to a stack by hand. Either is enough
-# to refuse.
-rich_seed=
-if [ -f "$state/rich-seed-applied" ]; then
-  rich_seed="the stack records that \`up\` applied it"
-else
-  # Assigned rather than piped into a test: under `pipefail` a reader that had
-  # already seen enough would leave the pipeline holding the writer's SIGPIPE
-  # status, and the answer would come back "no rich seed" because of how the
-  # question was asked.
-  rich_rows=$(docker exec "supabase_db_$project" psql -U postgres -d postgres -tAc \
-    "SELECT 1 FROM auth.users WHERE email = 'admin@example.com'" 2>/dev/null || true)
-  if [ -n "$rich_rows" ]; then
-    rich_seed="its accounts are in auth.users"
-  fi
-fi
-
-if [ -n "$rich_seed" ]; then
-  echo "$project carries supabase/rich-seed.sql ($rich_seed)." >&2
-  echo "The DB tests' whole-table claims are written against supabase/seed.sql alone, so a" >&2
-  echo "stack holding the rich catalogue fails them for reasons that are not bugs. Rebuild" >&2
-  echo "the stack without it:" >&2
-  echo "  npm run db -- down" >&2
-  echo "  npm run db -- up --no-rich-seed" >&2
-  exit 1
-fi
-
-ensure_cli "$cli_version"
-cli=$(cli_bin "$cli_version")
-
-# From the CLI rather than the well-known local defaults, for the reason `up`
-# reads them the same way: a CLI whose defaults move would otherwise have the
-# tests presenting a key the stack no longer honours.
-#
-# Its stderr is held back rather than forwarded: `status` narrates the workdir
-# it used and every service the stack was started without, none of which is
-# about this run — and a reader who asked for a test run should see test output.
-# It is printed if the command fails, which is when it says something.
-if ! "$cli" status --workdir "$work" -o env > "$work/status.env" 2> "$work/status.err"; then
-  cat "$work/status.err" >&2
-  rm -f "$work/status.env" "$work/status.err"
-  echo "supabase status failed for $project." >&2
-  exit 1
-fi
-rm -f "$work/status.err"
+# From the CLI rather than the well-known local defaults, so a CLI whose
+# defaults move cannot have the tests presenting a key the database no longer
+# honours.
+step "Reading the database's URL and keys"
+"$cli" status --workdir "$work" -o env > "$work/status.env" < /dev/null
 api_url=$(status_value "$work/status.env" API_URL)
 anon_key=$(status_value "$work/status.env" ANON_KEY)
 service_key=$(status_value "$work/status.env" SERVICE_ROLE_KEY)
 rm -f "$work/status.env"
 
 if [ -z "$api_url" ] || [ -z "$anon_key" ] || [ -z "$service_key" ]; then
-  echo "supabase status did not report a URL and both keys for $project." >&2
+  echo "supabase status did not report a URL and both keys." >&2
   exit 1
 fi
 
-stack_checkout=$(awk -F= '$1 == "checkout" { print substr($0, 10); exit }' "$state/meta")
-
-printf '::localdb checkout=%s\n' "$stack_checkout"
 printf '::localdb api_url=%s\n' "$api_url"
 printf '::localdb anon_key=%s\n' "$anon_key"
 printf '::localdb service_key=%s\n' "$service_key"
+printf '::localdb ready\n'
+
+# Until the Node side says the tests are done, by a line or by closing stdin.
+read -r _ || true
+step "Removing the throwaway database"

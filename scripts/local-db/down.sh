@@ -2,10 +2,10 @@
 #
 # `down` — remove this checkout's stack and its data, and put .env.local back.
 #
-#   down.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   down.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # This is what landing a feature, or tearing its worktree down, runs. The data
-# goes with it: a stack is built from the worktree's migrations and both seeds,
+# goes with it: a stack is built from the worktree's migrations and the rich seed,
 # so there is nothing in it that `up` cannot make again.
 set -euo pipefail
 here=$(dirname "$0")
@@ -13,7 +13,6 @@ here=$(dirname "$0")
 
 checkout=$1
 project=$2
-port_base=$3
 cli_version=$4
 
 take_lock "$project"
@@ -23,7 +22,7 @@ work=$(shadow_workdir "$project")
 env_file="$checkout/.env.local"
 
 if [ -z "$(stack_containers_all "$project")" ] && [ ! -d "$state" ] && [ ! -d "$work" ]; then
-  echo "This checkout has no stack. Nothing to remove."
+  say "This checkout has no stack. Nothing to remove."
   report_running
   exit 0
 fi
@@ -34,6 +33,7 @@ fi
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
 
+step "Removing the stack"
 stop_stack "$cli" "$work" "$project"
 # Whatever the CLI left behind of the rest of the service set. `stop_stack`
 # guarantees only the database is gone, and a container holding this stack's
@@ -67,6 +67,6 @@ if [ "$restored" -ne 0 ]; then
   exit 1
 fi
 
-echo "Stack and its data removed; .env.local points at staging again. Restart the dev server."
+say "Stack and its data removed; .env.local points at staging again. Restart the dev server."
 
 report_running

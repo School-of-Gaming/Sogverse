@@ -311,11 +311,10 @@ every command does — the things its usage text does not say:
 - **Memory:** about 660 MB settled, in a distro capped at 12 GB and shared with everything
   else running on this machine. Two stacks are comfortable, three tight; `list` shows them
   all with their memory.
-- **A stack carries one seed, never both.** They serve different readers: `seed.sql` is
-  the DB tests' fixture set and `supabase/rich-seed.sql` is a catalogue for a human to
-  look at, so a stack getting the rich seed is created with the CLI's seed switched off
-  and `seed.sql` never runs on it, while `up --no-rich-seed` leaves it on and applies
-  nothing else. A rich stack's accounts are the rich seed's alone: families and educators
+- **A stack carries `supabase/rich-seed.sql` and never `seed.sql`.** They serve different
+  readers: `seed.sql` is the DB tests' fixture set and the rich seed is a catalogue for a
+  human to look at, so a stack is created with the CLI's seed switched off. Its accounts
+  are the rich seed's alone: families and educators
   around three meant to be signed in as — `admin@example.com`, `parent@example.com`
   (parent PIN 1111) and `gedu@example.com`, all on the password `password`, with every
   other account it creates on `testpassword123`. Each id is generated rather than written
@@ -344,20 +343,21 @@ every command does — the things its usage text does not say:
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —
   a Google Cloud OAuth client of your own; its consent screen can stay in testing mode,
   with your account as a test user. `up` switches the provider on when both are there,
-  and prints the redirect URI the client needs; the port in it is per stack, so a new
-  worktree means adding its URI to the client. Without both, the provider stays off.
+  and prints the redirect URI the client needs. A stack's ports are chosen at its first
+  start — the first free block in 20000–23999 — and kept for its life, so the URI holds
+  across `park`, `up` and `reset`; a new stack, including one built again after `down`,
+  can land on other ports and then needs its URI added. Without both, the provider stays
+  off.
   `config.toml` keeps `enabled = false` on purpose: CI and `db push` read it with nothing
   set. A stack picks the setting up only when its containers are created, so `park` and
   `up` after changing the two lines. The redirect allow-list is different: it lives in
   the stack's copy of `config.toml`, taken when the stack was created, so a stack older
   than a change to that list needs `down` and `up` to see it.
-- **A stack can host the DB tests, but only one built with `up --no-rich-seed`.**
-  `npm run test:db:local` runs the `tests/db/` suite against this checkout's stack, taking
-  its URL and keys from the stack rather than from `.env.local`, and refuses a stack
-  carrying the rich seed, because the tests' whole-table claims are written against
-  `supabase/seed.sql` alone — `tests/CLAUDE.md`, "DB tests need a real Postgres". The
-  choice is recorded on the stack, so a later `up` resumes it and `reset` rebuilds it the
-  same way; `down` and `up` again is how a stack changes its mind.
+- **The DB tests never run on the stack.** `npm run test:db:local` builds a throwaway
+  database of `migrations/` and `seed.sql` beside it, runs `tests/db/` against it and
+  removes it — `tests/CLAUDE.md`, "DB tests need a real Postgres". It needs no stack, and
+  one that is up keeps serving its preview throughout; the run holds about as much of the
+  distro's memory as a stack while it lasts.
 
 ## Generated nullability can lie
 

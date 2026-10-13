@@ -2,7 +2,7 @@
 #
 # `migrate` — apply migration files the running stack has not seen yet.
 #
-#   migrate.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   migrate.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # Adding a migration to a feature that already has a stack up is the common
 # case, and it does not need the database rebuilt: the new file goes on top in
@@ -25,7 +25,6 @@ here=$(dirname "$0")
 
 checkout=$1
 project=$2
-port_base=$3
 cli_version=$4
 
 take_lock "$project"
@@ -41,9 +40,10 @@ fi
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
 
+step "Applying pending migrations"
 "$cli" migration up --workdir "$work" --local --include-all --yes
 
-echo "Pending migrations applied. The data is unchanged; run \`npm run db -- reset\` instead if a"
-echo "migration was EDITED rather than added, or if a merge from dev brought migrations with it."
+say "Pending migrations applied; the data is unchanged. \`npm run db -- reset\` instead if a"
+say "migration was EDITED rather than added, or if a merge from dev brought migrations with it."
 
 report_running

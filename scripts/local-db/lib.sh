@@ -7,6 +7,15 @@
 # into the distro mangles `~`, rooted Linux paths, inline environment
 # assignments and anything carrying `$` or nested quotes, so the boundary
 # carries only a file path and a few bare words.
+#
+# Every command script is handed the same four: the checkout, the project id,
+# the candidate port blocks and the CLI version. The blocks are `-` for every
+# command except `up`, `generate` and `test`, the three that can take one
+# (`allocate_block` and `claim_transient_block` below).
+#
+# What a command prints is for the Node side, which writes all of it to the
+# run's log and shows the reader only the lines `say` marks (below) — so a
+# script echoes freely, and says only what the reader needs.
 
 # PATH and HOME are set here rather than inherited. The distro inherits the
 # Windows PATH, so a bare `node` or `npm` inside it resolves to the Windows
@@ -41,7 +50,7 @@ ensure_cli() {
   if [ -x "$cli_dir/supabase" ]; then
     return 0
   fi
-  echo "Installing Supabase CLI v$cli_version into the distro…" >&2
+  step "Installing Supabase CLI v$cli_version into the distro"
   cli_tmp=$(mktemp -d)
   curl -fsSL -o "$cli_tmp/cli.tar.gz" \
     "https://github.com/supabase/cli/releases/download/v$cli_version/supabase_linux_amd64.tar.gz"
@@ -62,12 +71,19 @@ shadow_workdir() {
 }
 
 # Where a long-lived stack keeps what outlives its containers: which checkout
-# it belongs to, which ports it took, the .env.local values it displaced, and
-# whether the rich seed has been applied. One directory per project id, beside
+# it belongs to, the port block it was given, and the .env.local values it
+# displaced. One directory per project id, beside
 # the shadow workdirs in the distro — so `list` can describe every stack on the
 # machine without asking any checkout anything, and tearing a worktree down
 # leaves a state directory `list` can flag rather than a silent orphan.
 STACKS_DIR="$STATE_DIR/stacks"
+
+# Where a running throwaway database — `generate`'s, or the DB tests' — records
+# the port block it holds: one claim file per identity, beside the stacks rather
+# than among them, so `list` and the running count never mistake a throwaway
+# database for a stack. `claim_transient_block` says how a claim outlives
+# nothing but its run.
+TRANSIENT_DIR="$STATE_DIR/transient"
 
 # The trimmed service set, as exclusions. The app uses realtime and storage and
 # reaches all of it through the gateway, so the set that stays is the database,
@@ -98,8 +114,8 @@ stack_state_dir() {
 # the copy holds exactly one rewritten file and can be thrown away.
 #
 # The fourth argument is whether the CLI loads seed.sql when it creates the
-# database. The two seeds never share one: a `--no-rich-seed` stack's data IS
-# seed.sql and passes true, while a stack getting supabase/rich-seed.sql passes
+# database. The two seeds never share one: the DB tests' database IS seed.sql
+# and passes true, while a stack, which gets supabase/rich-seed.sql, passes
 # false so that the fixtures are never there to be mistaken for the catalogue —
 # as does `generate`, which wants a schema and would only be slowed down by
 # rows.
@@ -154,10 +170,11 @@ build_shadow() {
 }
 
 # The shadow workdir for a stack, built only if it is not already there. A
-# parked stack's containers were created against a particular rewritten
-# config.toml, and `supabase start` reuses them; rebuilding the workdir
-# underneath a parked stack would be rewriting the description of something
-# that already exists.
+# parked stack is its named volumes and nothing else — `supabase stop` removes
+# the containers — and `supabase start` creates fresh ones around those volumes
+# from this workdir's config.toml. Keeping the workdir is what brings a stack
+# back configured as it was created, whatever the checkout's config.toml says
+# now; rebuilding it would quietly change a stack that already exists.
 ensure_shadow() {
   ensure_work=$(shadow_workdir "$2")
   if [ ! -f "$ensure_work/supabase/config.toml" ]; then
@@ -166,13 +183,13 @@ ensure_shadow() {
   printf '%s' "$ensure_work"
 }
 
-# The `[db.seed]` switch inside a workdir that already exists, set from the
-# stack's recorded seed choice. `build_shadow` writes the line once, when the
-# stack is created; `reset` writes it again before the CLI rebuilds the
-# database, because the workdir outlives the run that made it and a stack whose
-# recorded choice and config.toml disagreed would come back carrying the other
-# seed's data. Rewritten in place rather than by rebuilding the workdir: the
-# containers were created against this config, so the rest of it must not move.
+# The `[db.seed]` switch inside a workdir that already exists. `build_shadow`
+# writes the line once, when the stack is created; `reset` writes it off again
+# before the CLI rebuilds the database, whatever config the workdir was created
+# with, because a rebuild that loaded seed.sql's fixtures would leave the rich
+# seed refusing a database that already holds accounts. Rewritten in place rather
+# than by rebuilding the workdir: the containers were created against this
+# config, so the rest of it must not move.
 set_shadow_seed() {
   seed_config="$1/supabase/config.toml"
   awk -v want="$2" '
@@ -205,6 +222,229 @@ shadow_db_port() {
 
 shadow_api_port() {
   shadow_port "$1" api
+}
+
+# One value out of a record — a stack's meta, or a generate claim — or nothing.
+record_value() {
+  awk -v key="$2" 'index($0, key "=") == 1 { print substr($0, length(key) + 2); exit }' "$1"
+}
+
+# The first port of the block a record holds. A record with no `port_base` line
+# names its block through its API port instead, which sits inside it.
+record_port_base() {
+  record_base=$(record_value "$1" port_base)
+  if [ -z "$record_base" ]; then
+    record_api=$(record_value "$1" api_port)
+    case "$record_api" in
+      '' | *[!0-9]*) return 0 ;;
+    esac
+    record_base=$((record_api / 100 * 100))
+  fi
+  printf '%s' "$record_base"
+}
+
+# Every block some record claims, space-separated: each stack's, parked or
+# running, and each throwaway database's. A stack whose worktree is gone still
+# claims its block, because its volumes are still there and `up` would bring it
+# back on it.
+claimed_blocks() {
+  for claim in "$STACKS_DIR"/*/meta "$TRANSIENT_DIR"/*; do
+    [ -f "$claim" ] || continue
+    printf '%s ' "$(record_port_base "$claim")"
+  done
+}
+
+# The machine-wide allocation lock, on fd 8: one lock for every checkout rather
+# than the per-checkout one, because two checkouts' first starts at the same
+# moment would otherwise both read the records, both see the same block free,
+# and both take it. It waits rather than refusing, since it is held only while
+# a block is chosen and recorded.
+hold_ports_lock() {
+  mkdir -p "$STATE_DIR"
+  exec 8>"$STATE_DIR/ports.lock"
+  if ! flock -w 60 8; then
+    echo "Timed out waiting for another local-database command to finish choosing its ports." >&2
+    return 1
+  fi
+}
+
+release_ports_lock() {
+  exec 8>&-
+}
+
+# Every container, volume and network the CLI made for one project id, and its
+# shadow workdir. The CLI names them all `supabase_<thing>_<id>`, and an id
+# holds no underscore, so `_<id>` as an exact suffix matches that id's and no
+# other's — never a substring, which would take a stack's throwaway neighbours
+# with it.
+remove_project() {
+  remove_containers=$(stack_containers_all "$1")
+  remove_volumes=$(docker volume ls -q 2>/dev/null | grep -E "_$1\$" || true)
+  remove_networks=$(docker network ls --format '{{.Name}}' 2>/dev/null | grep -E "_$1\$" || true)
+  # Word splitting is what turns each name list into arguments here.
+  # shellcheck disable=SC2086
+  {
+    [ -z "$remove_containers" ] || docker rm -f $remove_containers
+    [ -z "$remove_volumes" ] || docker volume rm -f $remove_volumes
+    [ -z "$remove_networks" ] || docker network rm $remove_networks
+  } >/dev/null 2>&1 || true
+  rm -rf "$(shadow_workdir "$1")"
+}
+
+# A throwaway database's claim whose run is gone. A run holds a lock on its own
+# claim file for as long as it lives (`claim_transient_block`), and the kernel
+# drops that lock however the run ends — SIGKILL included — so a claim whose
+# lock can be taken is one nothing holds. Its leftovers go before its claim
+# does, so the block is free of containers by the time anyone is handed it.
+#
+# Only ever called with the ports lock held. A run takes its claim's lock under
+# that same lock, so it cannot slip in between this finding a claim free and
+# removing it.
+reap_stale_claims() {
+  for reap_claim in "$TRANSIENT_DIR"/*; do
+    [ -f "$reap_claim" ] || continue
+    if flock -n "$reap_claim" true 2>/dev/null; then
+      echo "Reaping $(basename "$reap_claim")'s claim; its run is gone." >&2
+      remove_project "$(basename "$reap_claim")"
+      rm -f "$reap_claim"
+    fi
+  done
+}
+
+# The first candidate no record claims. The candidates are the blocks the Node
+# side found Windows could bind, as one comma-separated word (`-` for none).
+pick_block() {
+  pick_claimed=" $(claimed_blocks)"
+  for pick_base in $(printf '%s' "$1" | tr ',' ' '); do
+    case "$pick_base" in
+      '' | *[!0-9]*) continue ;;
+    esac
+    case "$pick_claimed" in
+      *" $pick_base "*) continue ;;
+    esac
+    printf '%s' "$pick_base"
+    return 0
+  done
+  echo "No free port block in 20000-23999: every one is claimed by a stack or cannot be bound" >&2
+  echo "on Windows right now. \`npm run db -- list\` shows the stacks; \`down\` one that is done." >&2
+  return 1
+}
+
+# A port block for a stack that has none, recorded.
+#
+#   allocate_block <record-file> <candidates> [line…]
+#
+# The block is written into <record-file> as `port_base=`, followed by any
+# further lines given, and printed. The record is written before anything
+# starts on the ports, so a second allocation can never be handed the same
+# block. Run in a command substitution, so the ports lock is released when the
+# allocation returns.
+allocate_block() {
+  alloc_record=$1
+  alloc_candidates=$2
+  shift 2
+  hold_ports_lock || return 1
+  reap_stale_claims
+  alloc_base=$(pick_block "$alloc_candidates") || return 1
+  mkdir -p "$(dirname "$alloc_record")"
+  {
+    printf 'port_base=%s\n' "$alloc_base"
+    for alloc_line in "$@"; do
+      printf '%s\n' "$alloc_line"
+    done
+  } > "$alloc_record"
+  printf '%s' "$alloc_base"
+}
+
+# A port block for a throwaway database, held for exactly as long as this run.
+#
+#   claim_transient_block <project-id> <candidates>   # sets port_base
+#
+# The claim is a file under TRANSIENT_DIR that this run keeps open, with a lock
+# on it, on fd 7 until it exits — which is what lets `reap_stale_claims` tell a
+# claim whose run was killed from a live one without anyone having to clean up
+# after a SIGKILL. The run's own cleanup removes the file; if it never got to,
+# the next allocation anywhere on the machine does, after removing what the
+# dead run left running on the block.
+#
+# The block is always picked afresh from this run's candidates, and written
+# over whatever claim this identity left behind. The file is opened and locked
+# under the ports lock, so a reaper never sees it unlocked in between.
+claim_transient_block() {
+  claim_file="$TRANSIENT_DIR/$1"
+  hold_ports_lock || return 1
+  mkdir -p "$TRANSIENT_DIR"
+  # Appending, so a claim another run holds is not emptied before the lock
+  # below finds it held.
+  exec 7>>"$claim_file"
+  if ! flock -n 7; then
+    release_ports_lock
+    echo "Another run holds $1's port claim." >&2
+    return 1
+  fi
+  # Only now is the file this run's to remove.
+  claim=$claim_file
+  reap_stale_claims
+  if ! port_base=$(pick_block "$2"); then
+    release_ports_lock
+    return 1
+  fi
+  printf 'port_base=%s\n' "$port_base" > "$claim"
+  release_ports_lock
+}
+
+# A throwaway database, built for one run and removed when it ends.
+#
+#   transient_db <checkout> <project-id> <candidates> <cli-version> <seed> <excluded-services>
+#
+# `generate` and the DB tests both run on one. It sets `cli`, `work`,
+# `port_base` and `db_port`, and installs the trap that removes the database,
+# its workdir, its claim and any path in `transient_paths` however the run ends.
+# The database goes before the claim, so a block is never free while a
+# container still holds it.
+#
+# The slate is cleared first, every run. A run killed without its trap leaves
+# this id's containers behind with their volumes, and `supabase start` reuses
+# an existing container rather than building a new one — and migrations apply
+# when a database is created, not when it is restarted, so the reused one would
+# hand back the PREVIOUS run's schema with a zero exit.
+#
+# SIGPIPE is ignored so that a reader who has gone away — the Node side killed —
+# turns the next write into a failed command, which ends the run through its
+# trap, rather than into a signal that ends it without one. Every CLI call reads
+# /dev/null: a prompt that waited on stdin would hang a run nobody is watching.
+transient_paths=""
+transient_db() {
+  transient_project=$2
+  trap '' PIPE
+  # The lock before the trap: a run refused because another holds this id must
+  # leave that run's database alone.
+  take_lock "$transient_project"
+  trap transient_cleanup EXIT INT TERM HUP
+  ensure_cli "$4"
+  cli=$(cli_bin "$4")
+
+  step "Choosing ports"
+  claim_transient_block "$transient_project" "$3"
+  echo "Ports $port_base-$((port_base + 99)), until this run ends"
+
+  remove_project "$transient_project"
+  work=$(build_shadow "$1" "$transient_project" "$port_base" "$5")
+
+  step "Starting a throwaway database"
+  "$cli" start --workdir "$work" -x "$6" < /dev/null
+  db_port=$(shadow_db_port "$work")
+}
+
+transient_cleanup() {
+  transient_status=$?
+  trap - EXIT INT TERM HUP
+  set +e
+  remove_project "$transient_project"
+  # Word splitting is what turns the path list into arguments here.
+  # shellcheck disable=SC2086
+  rm -rf $transient_paths "${claim:-}"
+  exit "$transient_status"
 }
 
 # Is this stack's database container up? Matched exactly rather than through
@@ -264,6 +504,19 @@ running_stack_count() {
 # reader. The prefix is what keeps it off the screen.
 report_running() {
   printf '::localdb running=%s\n' "$(running_stack_count)"
+}
+
+# A line for the reader. Everything else a command prints goes to the run's log
+# alone, so this is how a command says what the reader needs: on success, the
+# whole of what they see.
+say() {
+  printf '::localdb say %s\n' "$*"
+}
+
+# The step a command is on. Written into the log as a heading, and named to the
+# reader if the run fails, so a failure says where it happened.
+step() {
+  printf '::localdb step %s\n' "$*"
 }
 
 # One key's whole line in .env.local, replaced, with every other byte of the
