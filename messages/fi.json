@@ -1597,13 +1597,6 @@
       "marketing": {
         "title": "Markkinointi",
         "attribution": "Lähdetiedot",
-        "utm": {
-          "source": "Lähde",
-          "medium": "Media",
-          "campaign": "Kampanja",
-          "content": "Sisältö",
-          "term": "Hakusana"
-        },
         "preferences": "Asetukset",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",

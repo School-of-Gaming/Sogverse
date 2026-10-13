@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useMarketingConsentsForCustomer } from "@/services/marketing-consents";
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/utils";
-import { UTM_FIELDS, type UtmAttribution } from "@/lib/utm";
+import { UTM_FIELDS, UTM_QUERY_PARAMS, type UtmAttribution } from "@/lib/utm";
 import type { MarketingConsentType } from "@/types";
 
 /**
@@ -125,7 +125,14 @@ export function UserMarketingCard({
               const value = attribution[field];
               return (
                 <div key={field} className="flex items-center gap-2 text-sm">
-                  <dt className="text-muted-foreground">{t(`utm.${field}`)}</dt>
+                  {/* The tag itself, untranslated, is the label: it is the
+                      name a marketer types into a link and reads in every
+                      tool, in every language, and the name the column and the
+                      partner API carry too. A friendlier word would be ours
+                      alone, and would need translating. */}
+                  <dt className="font-mono text-muted-foreground">
+                    {UTM_QUERY_PARAMS[field]}
+                  </dt>
                   {value === null ? (
                     <dd className="text-muted-foreground">{c("notSet")}</dd>
                   ) : (

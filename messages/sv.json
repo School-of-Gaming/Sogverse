@@ -1597,13 +1597,6 @@
       "marketing": {
         "title": "Marknadsföring",
         "attribution": "Ursprung",
-        "utm": {
-          "source": "Källa",
-          "medium": "Medium",
-          "campaign": "Kampanj",
-          "content": "Innehåll",
-          "term": "Sökord"
-        },
         "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",

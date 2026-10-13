@@ -1597,13 +1597,6 @@
       "marketing": {
         "title": "Marketing",
         "attribution": "Attribution",
-        "utm": {
-          "source": "Source",
-          "medium": "Medium",
-          "campaign": "Campaign",
-          "content": "Content",
-          "term": "Term"
-        },
         "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
