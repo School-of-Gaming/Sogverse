@@ -11,7 +11,7 @@ CREATE TABLE public.team_profile_translations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT team_profile_translations_fun_fact_check CHECK (((fun_fact IS NULL) OR ((fun_fact = btrim(fun_fact)) AND ((char_length(fun_fact) >= 1) AND (char_length(fun_fact) <= 200))))),
-    CONSTRAINT team_profile_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}$'::text)),
+    CONSTRAINT team_profile_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT team_profile_translations_long_description_check CHECK (((long_description = btrim(long_description)) AND (char_length(long_description) <= 5000))),
     CONSTRAINT team_profile_translations_not_empty CHECK (((short_description <> ''::text) OR (long_description <> ''::text) OR (fun_fact IS NOT NULL))),
     CONSTRAINT team_profile_translations_short_description_check CHECK (((short_description = btrim(short_description)) AND (char_length(short_description) <= 140) AND (short_description !~ '[\r\n]'::text)))

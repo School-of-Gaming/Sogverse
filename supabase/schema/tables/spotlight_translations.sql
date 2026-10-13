@@ -8,7 +8,7 @@ CREATE TABLE public.spotlight_translations (
     title text NOT NULL,
     body text NOT NULL,
     CONSTRAINT chk_spotlight_translations_body_present CHECK ((btrim(body) <> ''::text)),
-    CONSTRAINT chk_spotlight_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}$'::text)),
+    CONSTRAINT chk_spotlight_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT chk_spotlight_translations_title_present CHECK ((btrim(title) <> ''::text))
 );
 
