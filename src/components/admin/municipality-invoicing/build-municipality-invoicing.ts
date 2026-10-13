@@ -1,4 +1,4 @@
-import type { SupportedLocale } from "@/lib/constants/locales";
+import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
@@ -387,13 +387,13 @@ export function buildMunicipalityInvoicing({
   }
 
   const ordered = [...buckets.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, locale),
+    a.name.localeCompare(b.name, formattingLocale(locale)),
   );
 
   const sections: Omit<InvoiceMunicipality, "customers">[] = ordered.map(
     (bucket) => {
       const clubs = [...bucket.clubs].sort((a, b) =>
-        a.name.localeCompare(b.name, locale),
+        a.name.localeCompare(b.name, formattingLocale(locale)),
       );
       return {
         id: bucket.id,

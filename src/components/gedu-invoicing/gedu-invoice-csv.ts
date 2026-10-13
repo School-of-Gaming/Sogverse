@@ -1,4 +1,4 @@
-import type { SupportedLocale } from "@/lib/constants/locales";
+import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import type {
   GeduInvoice,
   GeduInvoiceClub,
@@ -88,8 +88,8 @@ export function csvLines(
       (a, b) =>
         // ISO dates order as strings.
         compare(a.line.date, b.line.date) ||
-        a.club.name.localeCompare(b.club.name, locale) ||
-        a.line.groupName.localeCompare(b.line.groupName, locale) ||
+        a.club.name.localeCompare(b.club.name, formattingLocale(locale)) ||
+        a.line.groupName.localeCompare(b.line.groupName, formattingLocale(locale)) ||
         // Primary before assistant, as the page orders a club's two lines.
         ROLE_RANK[a.club.role] - ROLE_RANK[b.club.role] ||
         compare(a.club.productId, b.club.productId),

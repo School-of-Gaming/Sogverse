@@ -3,7 +3,7 @@ import {
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
 import { ROUTES } from "@/lib/constants";
-import type { SupportedLocale } from "@/lib/constants/locales";
+import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
@@ -458,7 +458,7 @@ export function sortFamilyEnrollments(
     }
     return a.enrollment.productName.localeCompare(
       b.enrollment.productName,
-      locale,
+      formattingLocale(locale),
     );
   });
 
@@ -697,7 +697,7 @@ export function rollUpFamilyEnrollments(
       .filter((member) => member.role === "gamer")
       .sort(
         (a, b) =>
-          a.first_name.localeCompare(b.first_name, args.locale) ||
+          a.first_name.localeCompare(b.first_name, formattingLocale(args.locale)) ||
           a.id.localeCompare(b.id),
       )
       .map(sectionFor),

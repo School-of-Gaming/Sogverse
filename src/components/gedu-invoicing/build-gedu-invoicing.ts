@@ -1,4 +1,4 @@
-import type { SupportedLocale } from "@/lib/constants/locales";
+import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
@@ -215,8 +215,8 @@ export function buildGeduInvoicing({
     .filter((gedu) => gedu.clubs.length > 0)
     .sort(
       (a, b) =>
-        a.firstName.localeCompare(b.firstName, locale) ||
-        a.lastName.localeCompare(b.lastName, locale) ||
+        a.firstName.localeCompare(b.firstName, formattingLocale(locale)) ||
+        a.lastName.localeCompare(b.lastName, formattingLocale(locale)) ||
         compareCodeUnits(a.id, b.id),
     );
 
@@ -298,7 +298,7 @@ function buildGedu(gedu: GeduInvoicingGedu, context: BuildContext): GeduInvoice 
     .sort(
       (a, b) =>
         (a.segment === b.segment ? 0 : a.segment === "municipality" ? -1 : 1) ||
-        a.name.localeCompare(b.name, context.locale) ||
+        a.name.localeCompare(b.name, formattingLocale(context.locale)) ||
         (a.role === b.role ? 0 : a.role === "primary" ? -1 : 1) ||
         compareCodeUnits(a.productId, b.productId),
     );
@@ -492,7 +492,7 @@ function buildClub(
   const sorted = [...lines].sort(
     (a, b) =>
       compareCalendarDates(a.date, b.date) ||
-      a.groupName.localeCompare(b.groupName, locale) ||
+      a.groupName.localeCompare(b.groupName, formattingLocale(locale)) ||
       compareCodeUnits(a.groupId, b.groupId),
   );
   const feeCents =

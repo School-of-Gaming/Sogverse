@@ -13,7 +13,7 @@ import {
 } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatWeekday } from "@/lib/products/format-product-schedule";
-import { resolveLocale } from "@/lib/constants/locales";
+import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   matchesProductSearch,
@@ -141,7 +141,7 @@ export function ProductListFilters({
     );
     return [...present]
       .map((id) => ({ value: id, label: nameById.get(id) ?? id }))
-      .sort((a, b) => a.label.localeCompare(b.label, uiLocale));
+      .sort((a, b) => a.label.localeCompare(b.label, formattingLocale(uiLocale)));
   }, [products, gedus, uiLocale]);
 
   const languageOptions = useMemo(() => {
@@ -171,7 +171,7 @@ export function ProductListFilters({
     }
     return [...byId.entries()]
       .map(([value, label]) => ({ value, label }))
-      .sort((a, b) => a.label.localeCompare(b.label, uiLocale));
+      .sort((a, b) => a.label.localeCompare(b.label, formattingLocale(uiLocale)));
   }, [muniByProduct, isMunicipality, uiLocale]);
 
   // The stored params, each narrowed to something the control can actually
