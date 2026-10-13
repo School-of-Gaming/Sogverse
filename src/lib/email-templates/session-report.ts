@@ -84,14 +84,12 @@ import type { EmailTranslator } from "./translator";
  * **The family mail and the staff copy end with the enabled spotlights**,
  * newest first — admin-written notes, each a picture, a title and a short
  * markdown body. They come after the closing, because the report and what it
- * asks are the mail and the spotlights are what the platform adds beneath it,
- * and one lead-in over the first says so — without it they read as more of
- * the report. **They are laid out open, not boxed**: the shell is itself a card on a wide
+ * asks are the mail and the spotlights are what the platform adds beneath it.
+ * **They are laid out open, not boxed**: the shell is itself a card on a wide
  * viewport and a card in a card is the one arrangement this directory forbids,
  * so each is ruled off by the same hairline that separates the report from its
  * button. The picture is the photo column's (`session-photos.ts`), boxed from
- * the stored dimensions like any photo; the title is the shell's own section
- * heading; the body renders under the `spotlight` use case, which keeps links —
+ * the stored dimensions like any photo; the title is a `subheading()`; the body renders under the `spotlight` use case, which keeps links —
  * an admin is trusted with what they publish to every family, where a gedu's
  * report keeps none. Every value arrives resolved: the version for this
  * reader's locale and the picture's public URL are the caller's to pick.

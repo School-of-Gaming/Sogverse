@@ -681,7 +681,7 @@ describe("the spotlights at the foot of the mail", () => {
     expect(html).toContain("Not a heading");
   });
 
-  it("rules each one off with the report's hairline and boxes none of them", () => {
+  it("adds exactly one hairline per spotlight to the mail, and no other", () => {
     const rule = `border-top:1px solid ${DARK_THEME.border};font-size:0;line-height:0;`;
     const count = (html: string) => html.split(rule).length - 1;
     expect(count(withSpotlights(SPOTLIGHTS))).toBe(
