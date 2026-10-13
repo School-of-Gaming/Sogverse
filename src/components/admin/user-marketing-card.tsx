@@ -45,12 +45,11 @@ const CONSENT_ORDER = [
  * which write-once is one.
  *
  * **All five rows, always, in the order a campaign link spells them, empty
- * ones included.** This is the admin
- * details-page rule doing its work: a property nobody can see is a property
- * nobody audits, and a block that hid the null fields made "this account has no
- * medium" and "this page does not show mediums" look identical. Gamer rows are
- * NULL by construction, which is why a gamer never sees this card at all rather
- * than seeing five empty rows.
+ * ones included.** This is the admin details-page rule doing its work: a
+ * property nobody can see is a property nobody audits, and a block that hid the
+ * null fields made "this account has no medium" and "this page does not show
+ * mediums" look identical. Gamer rows are NULL by construction, which is why a
+ * gamer never sees this card at all rather than seeing five empty rows.
  *
  * ---------------------------------------------------------------------------
  * PREFERENCES

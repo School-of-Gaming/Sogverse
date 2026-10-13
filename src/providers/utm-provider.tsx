@@ -6,9 +6,8 @@ import type { UtmAttribution } from "@/lib/utm";
 /**
  * Holds the UTM attribution the visitor arrived with (`utm_source`,
  * `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` on the landing URL)
- * for the duration of the
- * visit, so browsing shop → about → home → register as client-side navigation
- * still yields it at account creation.
+ * for the duration of the visit, so browsing shop → about → home → register as
+ * client-side navigation still yields it at account creation.
  *
  * Flow: the proxy reads and sanitises the params and sets `x-utm` on the
  * request; the root layout parses that header and passes the result in here as

@@ -108,10 +108,9 @@ export const POST = defineRoute({
           // The same five metadata keys the parent path uses, reaching the same
           // trigger, which writes profiles.utm_source / utm_medium /
           // utm_campaign / utm_content / utm_term and re-sanitises on the way
-          // in. Each is omitted when
-          // absent so its column simply stays null. The promotion RPC below
-          // names a targeted column list that mentions none of them, so the
-          // trigger-written values survive.
+          // in. Each is omitted when absent so its column simply stays null.
+          // The promotion RPC below names a targeted column list that
+          // mentions none of them, so the trigger-written values survive.
           ...utmMetadata,
         },
       });
