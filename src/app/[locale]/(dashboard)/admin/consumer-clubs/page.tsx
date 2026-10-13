@@ -1,5 +1,11 @@
-import { ProductListPage } from "@/components/admin/products/product-list-page";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
 
-export default function ConsumerClubsPage() {
-  return <ProductListPage productType="consumer_club" />;
+// Consumer clubs are listed with every other product type, narrowed by type.
+export default async function ConsumerClubsPage() {
+  redirect({
+    href: ROUTES.admin.productList("consumer_club"),
+    locale: await getLocale(),
+  });
 }

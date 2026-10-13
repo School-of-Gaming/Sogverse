@@ -27,6 +27,7 @@ import {
   type ProductScheduleSummary,
 } from "@/lib/products/format-product-schedule";
 import { productWhereLine } from "./product-where-line";
+import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
@@ -76,15 +77,33 @@ function scheduleRowLine(schedule: ProductScheduleSummary): string | null {
   }
 }
 
-interface ProductRowsProps {
-  products: ProductWithDetails[];
-  productType: ProductType;
+// The type's glyph, uninked as on the type chips above the list, so a mixed
+// list's rows wear the mark of the chip that would narrow to them. The glyph is
+// hidden from assistive tech and the type's name read in its place.
+function TypeGlyph({ productType }: { productType: ProductType }) {
+  const t = useTranslations("admin.products.types");
+  const presentation = PRODUCT_TYPE_PRESENTATION[productType];
+  const Icon = presentation.icon;
+  const label = t(`${presentation.i18nKey}.label`);
+  return (
+    <span className="inline-flex shrink-0" title={label}>
+      <Icon className="h-4 w-4" aria-hidden />
+      <span className="sr-only">{label}</span>
+    </span>
+  );
 }
 
-// The list body for an admin product page: one clickable row per product.
-// Shared by the plain list (camps/events) and the filtered club list, so the
-// row layout lives in one place.
-export function ProductRows({ products, productType }: ProductRowsProps) {
+interface ProductRowsProps {
+  products: ProductWithDetails[];
+  /**
+   * Whether each row leads its name with its type's glyph — wanted while the
+   * list mixes the types, and noise once a type chip has said what every row is.
+   */
+  showType: boolean;
+}
+
+// The list body of the admin product list: one clickable row per product.
+export function ProductRows({ products, showType }: ProductRowsProps) {
   const t = useTranslations("admin.products");
   const c = useTranslations("common");
   const uiLocale = resolveLocale(useLocale());
@@ -120,7 +139,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
         // never alerts (null just means "no assistant").
         const missingGeduFee = p.primary_gedu_fee_cents == null;
         const missingMunicipalityFee =
-          productType === "municipality_club" &&
+          p.product_type === "municipality_club" &&
           p.municipality_fee_cents == null;
         // A time-bearing event is a date+time instant, so its date renders in
         // the viewer's zone (may differ from the stored start_date). Every
@@ -168,6 +187,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
+                  {showType && <TypeGlyph productType={p.product_type} />}
                   <span className="truncate font-medium">
                     {tr?.name ?? t("list.untitled")}
                   </span>

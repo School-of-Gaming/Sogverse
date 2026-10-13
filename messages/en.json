@@ -945,9 +945,11 @@
         }
       },
       "list": {
-        "subtitle": "Manage {plural} that admins have created.",
+        "title": "Clubs, camps and events",
+        "subtitle": "Manage the clubs, camps and events admins have created.",
         "new": "New {label}",
         "empty": "No {plural} yet. Click New {label} to create one.",
+        "emptyAll": "No clubs, camps or events yet.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
         "online": "Online",
@@ -1432,11 +1434,14 @@
         "searchGedu": "Search Gedus…",
         "searchMunicipality": "Search municipalities…",
         "noResults": "No matches.",
+        "type": "Type",
+        "allTypes": "All",
         "search": "Search",
         "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
         "clear": "Clear",
-        "noMatches": "No {plural} match the current search and filters."
+        "noMatches": "No {plural} match the current search and filters.",
+        "noMatchesAll": "Nothing matches the current search and filters."
       },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",

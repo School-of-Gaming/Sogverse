@@ -1,5 +1,11 @@
-import { ProductListPage } from "@/components/admin/products/product-list-page";
+import { getLocale } from "next-intl/server";
+import { redirect } from "@/i18n/navigation";
+import { ROUTES } from "@/lib/constants";
 
-export default function CampsPage() {
-  return <ProductListPage productType="camp" />;
+// Camps are listed with every other product type, narrowed by type.
+export default async function CampsPage() {
+  redirect({
+    href: ROUTES.admin.productList("camp"),
+    locale: await getLocale(),
+  });
 }

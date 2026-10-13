@@ -945,9 +945,11 @@
         }
       },
       "list": {
-        "subtitle": "Gérez les {plural} créés par les administrateurs.",
+        "title": "Clubs, stages et événements",
+        "subtitle": "Gérez les clubs, stages et événements créés par les administrateurs.",
         "new": "Ajouter un {label}",
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
+        "emptyAll": "Pas encore de clubs, de stages ni d’événements.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
         "online": "En ligne",
@@ -1432,11 +1434,14 @@
         "searchGedu": "Rechercher des Gedus…",
         "searchMunicipality": "Rechercher des communes…",
         "noResults": "Aucun résultat.",
+        "type": "Type",
+        "allTypes": "Tous",
         "search": "Recherche",
         "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
         "clear": "Effacer",
-        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés."
+        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés.",
+        "noMatchesAll": "Rien ne correspond à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
         "searchPlaceholder": "Rechercher un nom ou un e-mail…",

@@ -46,6 +46,19 @@ export function useProductsByType(
   });
 }
 
+// Every product of every type in one fetch, for the admin product list, whose
+// type chips then narrow it client-side. Under `productKeys.lists()`, so every
+// writer that refreshes the per-type lists refreshes this one too.
+export function useAllProducts() {
+  const supabase = getClient();
+  const service = new ProductsService(supabase);
+
+  return useQuery({
+    queryKey: productKeys.listAll(),
+    queryFn: () => service.listAll(),
+  });
+}
+
 // Visible products across one or more types in a single fetch. The shop uses
 // this to load every browseable type (clubs + camps) at once so the in-page
 // Type filter is an instant client-side switch rather than a per-type refetch.

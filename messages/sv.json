@@ -945,9 +945,11 @@
         }
       },
       "list": {
-        "subtitle": "Hantera {plural} som administratörer har skapat.",
+        "title": "Klubbar, läger och evenemang",
+        "subtitle": "Hantera de klubbar, läger och evenemang som administratörer har skapat.",
         "new": "Nytt {label}",
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
+        "emptyAll": "Inga klubbar, läger eller evenemang än.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
         "online": "På distans",
@@ -1432,11 +1434,14 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
+        "type": "Typ",
+        "allTypes": "Alla",
         "search": "Sök",
         "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
         "clear": "Rensa",
-        "noMatches": "Inga {plural} matchar sökningen och de valda filtren."
+        "noMatches": "Inga {plural} matchar sökningen och de valda filtren.",
+        "noMatchesAll": "Inget matchar sökningen och de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",

@@ -1,6 +1,10 @@
 import type { Database } from "@/types/database.types";
 import type { getPathname } from "@/i18n/navigation";
 import type { LibraryCategory } from "@/types";
+import {
+  PRODUCT_LIST_TYPE_PARAM,
+  productListTypeParam,
+} from "@/lib/products/admin-product-list-type";
 
 type ProductType = Database["public"]["Enums"]["product_type"];
 
@@ -349,21 +353,14 @@ const ADMIN_FEEDBACK_DETAIL_PATHNAMES = {
 } as const satisfies Record<FeedbackRouteKind, string>;
 
 /**
- * A product type's admin listing and create form — the two of its surfaces that
- * take no params, so a plain pathname is the whole href.
+ * A product type's admin create form — the one of its surfaces that takes no
+ * params, so a plain pathname is the whole href.
  *
- * They used to be built at their call sites from the product-type config's
- * `routeSlug`, which produced a `/admin/${slug}/…` template string the router
- * can no longer be handed: a typed href names a declared route, and a
- * concatenated segment names none.
+ * Built here rather than at the call sites from the product-type config's
+ * `routeSlug`: a `/admin/${slug}/…` template string cannot be handed to the
+ * router, because a typed href names a declared route and a concatenated
+ * segment names none.
  */
-const ADMIN_PRODUCT_LIST_PATHNAMES = {
-  "consumer-clubs": "/admin/consumer-clubs",
-  "municipality-clubs": "/admin/municipality-clubs",
-  camps: "/admin/camps",
-  events: "/admin/events",
-} as const;
-
 const ADMIN_PRODUCT_NEW_PATHNAMES = {
   "consumer-clubs": "/admin/consumer-clubs/new",
   "municipality-clubs": "/admin/municipality-clubs/new",
@@ -688,9 +685,14 @@ export const ROUTES = {
     product: adminProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     productPath: adminProductPath,
-    /** A product type's admin listing (`/admin/camps`). */
+    /** Every club, camp and event in one list, narrowed by its `type` param. */
+    products: "/admin/products",
+    /** The product list narrowed to one type (`/admin/products?type=camps`). */
     productList: (productType: ProductType) =>
-      ADMIN_PRODUCT_LIST_PATHNAMES[adminProductSegment(productType)],
+      ({
+        pathname: "/admin/products",
+        query: { [PRODUCT_LIST_TYPE_PARAM]: productListTypeParam(productType) },
+      }) as const,
     /** The create form for a product type (`/admin/camps/new`). */
     productNew: (productType: ProductType) =>
       ADMIN_PRODUCT_NEW_PATHNAMES[adminProductSegment(productType)],

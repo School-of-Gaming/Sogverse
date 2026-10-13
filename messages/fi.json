@@ -945,9 +945,11 @@
         }
       },
       "list": {
-        "subtitle": "Hallinnoi ylläpitäjien luomia kohteita ({plural}).",
+        "title": "Kerhot, leirit ja tapahtumat",
+        "subtitle": "Hallinnoi ylläpitäjien luomia kerhoja, leirejä ja tapahtumia.",
         "new": "Uusi {label}",
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
+        "emptyAll": "Kerhoja, leirejä tai tapahtumia ei ole vielä.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
         "online": "Etänä",
@@ -1432,11 +1434,14 @@
         "searchGedu": "Hae Geduja…",
         "searchMunicipality": "Hae kuntia…",
         "noResults": "Ei osumia.",
+        "type": "Tyyppi",
+        "allTypes": "Kaikki",
         "search": "Haku",
         "searchPlaceholder": "Hae nimellä…",
         "showing": "Näytetään {count} / {total}",
         "clear": "Tyhjennä",
-        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia."
+        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia.",
+        "noMatchesAll": "Mikään ei vastaa hakua ja valittuja suodattimia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",

@@ -14,6 +14,7 @@ export type {
 export {
   productKeys,
   useProductsByType,
+  useAllProducts,
   useVisibleProductsByTypes,
   useProductDetail,
   useProductAdmin,

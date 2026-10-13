@@ -5,16 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AdminListShowingLine } from "@/components/admin/admin-list-narrowing";
 import { ProductRows } from "./product-rows";
 import type { ProductWithDetails } from "@/services/products";
-import type { ProductType } from "@/types";
 
 interface ProductListResultsProps {
   /** The rows left standing after search and filters. */
   products: ProductWithDetails[];
-  /** How many there were before any of it — the denominator of the count line. */
+  /** How many of the selected type there are before any filter — the denominator of the count line. */
   total: number;
-  productType: ProductType;
-  /** The type's plural noun, for the no-matches line. */
-  plural: string;
+  /** What the list says when no row is left: none exist yet, or none match. */
+  emptyMessage: string;
+  /** Whether each row names its type — true while the list mixes the types. */
+  showType: boolean;
   /** True while anything — the search box or a filter — is narrowing the list. */
   narrowed: boolean;
   /** Reset every narrowing control, search included. */
@@ -22,19 +22,17 @@ interface ProductListResultsProps {
 }
 
 /**
- * The tail of every admin product list: how many of how many are showing, a way
+ * The tail of the admin product list: how many of how many are showing, a way
  * back to all of them, and either the rows or the reason there are none.
  *
- * Rendered by the one filter row all four product types share, so none of them
- * can drift into counting or clearing differently. Renders a fragment rather
- * than a wrapper: the caller's `space-y` owns the spacing, and a second nesting
- * level here would double it.
+ * Renders a fragment rather than a wrapper: the caller's `space-y` owns the
+ * spacing, and a second nesting level here would double it.
  */
 export function ProductListResults({
   products,
   total,
-  productType,
-  plural,
+  emptyMessage,
+  showType,
   narrowed,
   onClear,
 }: ProductListResultsProps) {
@@ -52,11 +50,11 @@ export function ProductListResults({
       {products.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            {t("filters.noMatches", { plural })}
+            {emptyMessage}
           </CardContent>
         </Card>
       ) : (
-        <ProductRows products={products} productType={productType} />
+        <ProductRows products={products} showType={showType} />
       )}
     </>
   );

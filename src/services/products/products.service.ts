@@ -240,17 +240,22 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
 // The translations are the three columns a list row reads, never `*`: the long
 // description is most of a translation's bytes and no list renders it, so
 // selecting it made a municipality club list's payload three times its size.
+//
+// `type` narrows to one product type; `null` reads every type in one round
+// trip, which is what the admin product list loads. Newest first either way.
 function buildProductsByTypeQuery(
   supabase: AppSupabaseClient,
-  type: ProductType,
+  type: ProductType | null,
 ) {
-  return supabase
+  const query = supabase
     .from("products")
     .select(
       "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
-    )
-    .eq("product_type", type)
-    .order("created_at", { ascending: false });
+    );
+  return (type === null ? query : query.eq("product_type", type)).order(
+    "created_at",
+    { ascending: false },
+  );
 }
 
 // `topic` is a column on Product (the product_topic enum) — its label is
@@ -544,6 +549,14 @@ export class ProductsService {
 
   async listByType(type: ProductType): Promise<ProductWithDetails[]> {
     const { data, error } = await buildProductsByTypeQuery(this.supabase, type);
+
+    if (error) throw error;
+    return data;
+  }
+
+  // Every product of every type, newest first — the admin product list.
+  async listAll(): Promise<ProductWithDetails[]> {
+    const { data, error } = await buildProductsByTypeQuery(this.supabase, null);
 
     if (error) throw error;
     return data;

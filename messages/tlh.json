@@ -989,9 +989,11 @@
         }
       },
       "list": {
-        "subtitle": "{plural} yIQI’.",
+        "title": "ghomHom, pa’ Qugh, Qu’mey je",
+        "subtitle": "ghomHom, pa’ Qugh, Qu’mey je yIQI’.",
         "new": "{label} chu’",
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
+        "emptyAll": "ghomHom pagh, pa’ Qugh pagh, Qu’mey pagh.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
         "online": "HeHDaq",
@@ -1476,11 +1478,14 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
+        "type": "Segh",
+        "allTypes": "Hoch",
         "search": "nej",
         "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
         "clear": "yIteq",
-        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!"
+        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!",
+        "noMatchesAll": "pagh DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj ’ehmaH yInej…",

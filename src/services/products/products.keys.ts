@@ -10,6 +10,8 @@ export const productKeys = {
   lists: () => [...productKeys.all, "list"] as const,
   listByType: (type: ProductType) =>
     [...productKeys.lists(), { type }] as const,
+  /** Every product of every type — the admin product list. */
+  listAll: () => [...productKeys.lists(), "all"] as const,
   // Sort the types so the key is order-independent — callers passing the same
   // set in a different order hit the same cache entry (matches countsByProducts
   // in participations.queries.ts).
