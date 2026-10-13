@@ -1,7 +1,9 @@
+import type { QueryData } from "@supabase/supabase-js";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
+  GeduAssignmentRole,
   ProductTopic,
   ProductType,
   SpokenLanguageCode,
@@ -115,6 +117,56 @@ export interface MyAssignedProductSessionRow {
 }
 
 /**
+ * The columns both halves of the admin seat read take: the group by id and
+ * name, and the product by id, type and the translation names a row shows.
+ * One string, so the two halves cannot drift into different shapes.
+ */
+const ADMIN_SEAT_EMBEDS =
+  "created_at, group:product_groups!inner(id, name), product:products!inner(id, product_type, product_translations(locale, name))";
+
+function buildAdminAssignmentSeatsQuery(
+  supabase: AppSupabaseClient,
+  geduId: string,
+) {
+  return supabase
+    .from("gedu_group_assignments")
+    .select(`role, ${ADMIN_SEAT_EMBEDS}`)
+    .eq("gedu_id", geduId);
+}
+
+function buildAdminTraineeSeatsQuery(
+  supabase: AppSupabaseClient,
+  geduId: string,
+) {
+  return supabase
+    .from("gedu_group_trainees")
+    .select(ADMIN_SEAT_EMBEDS)
+    .eq("gedu_id", geduId);
+}
+
+type AdminTraineeSeatQueryRow = QueryData<
+  ReturnType<typeof buildAdminTraineeSeatsQuery>
+>[number];
+
+/**
+ * One standing seat a gedu holds, for the admin user page's "Assigned
+ * products" section: a lead assignment (`primary` / `assistant`) or a trainee
+ * seat, on one group of one product. A gedu holds at most one seat per
+ * product, of either kind, so a product never appears twice.
+ *
+ * Substitutions are not seats and are not here: a sub covering one afternoon
+ * is not one of the group's educators.
+ */
+export interface AdminGeduSeatRow {
+  /** The seat's role — an assignment's pay class, or `trainee`. */
+  role: GeduAssignmentRole | "trainee";
+  /** When the seat was given, the order the section lists them in. */
+  createdAt: string;
+  group: AdminTraineeSeatQueryRow["group"];
+  product: AdminTraineeSeatQueryRow["product"];
+}
+
+/**
  * Reads the gedu's product assignments for the dashboard. Calls the
  * `get_my_assigned_products` RPC (SECURITY DEFINER, gedu-only); the
  * function bakes its own authorization, so the user-bound client is
@@ -127,6 +179,37 @@ export class AssignmentsService {
     const { data, error } = await this.supabase.rpc("get_my_assigned_products");
     if (error) throw error;
     return parseMyAssignedProductRows(data);
+  }
+
+  /**
+   * Every standing seat the given gedu holds — lead assignments and trainee
+   * seats together, newest first — for the admin user page. Plain table reads
+   * under RLS: an admin reads every row of both tables, and nobody else
+   * reaches another gedu's rows.
+   */
+  async getSeatsForGedu(geduId: string): Promise<AdminGeduSeatRow[]> {
+    const [assignments, trainees] = await Promise.all([
+      buildAdminAssignmentSeatsQuery(this.supabase, geduId),
+      buildAdminTraineeSeatsQuery(this.supabase, geduId),
+    ]);
+    if (assignments.error) throw assignments.error;
+    if (trainees.error) throw trainees.error;
+
+    const seats: AdminGeduSeatRow[] = [
+      ...assignments.data.map((row) => ({
+        role: row.role,
+        createdAt: row.created_at,
+        group: row.group,
+        product: row.product,
+      })),
+      ...trainees.data.map((row) => ({
+        role: "trainee" as const,
+        createdAt: row.created_at,
+        group: row.group,
+        product: row.product,
+      })),
+    ];
+    return seats.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   /**

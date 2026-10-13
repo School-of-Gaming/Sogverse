@@ -35,6 +35,18 @@ interface ProductListFiltersProps {
   products: ProductWithDetails[];
 }
 
+/**
+ * Every gedu seated on the product: assigned (primary or assistant) or a
+ * trainee. The gedu filter asks who is on a product, and a trainee is on it as
+ * much as a lead is — the difference is pay and permissions, not presence.
+ */
+function seatedGeduIds(product: ProductWithDetails): string[] {
+  return [
+    ...product.gedu_group_assignments.map((a) => a.gedu_id),
+    ...product.gedu_group_trainees.map((t) => t.gedu_id),
+  ];
+}
+
 // The narrowing controls of every admin product list, and the list under them.
 // One component for all four product types rather than one per type: which
 // controls a type offers differs, but the row they sit in, the AND between
@@ -55,8 +67,8 @@ interface ProductListFiltersProps {
 // AND together — a row must satisfy every one, the search box included.
 // Filtering is client-side over the already loaded list; the
 // day/gedu/language/municipality data all ride on the list query (gedu via
-// `gedu_group_assignments`, municipality via the embedded location and its
-// parent).
+// `gedu_group_assignments` and `gedu_group_trainees`, municipality via the
+// embedded location and its parent).
 export function ProductListFilters({
   productType,
   products,
@@ -132,7 +144,7 @@ export function ProductListFilters({
   const geduOptions = useMemo(() => {
     const present = new Set<string>();
     for (const p of products)
-      for (const a of p.gedu_group_assignments) present.add(a.gedu_id);
+      for (const id of seatedGeduIds(p)) present.add(id);
     const nameById = new Map(
       (gedus ?? []).map((g) => [
         g.id,
@@ -189,11 +201,7 @@ export function ProductListFilters({
       if (!matchesProductSearch(p, needle)) return false;
       if (dayNum !== null && !p.schedule_slots.some((s) => s.weekday === dayNum))
         return false;
-      if (
-        geduId !== null &&
-        !p.gedu_group_assignments.some((a) => a.gedu_id === geduId)
-      )
-        return false;
+      if (geduId !== null && !seatedGeduIds(p).includes(geduId)) return false;
       if (isConsumer && language !== null && p.spoken_language_code !== language)
         return false;
       if (isMunicipality && municipalityId !== null) {
