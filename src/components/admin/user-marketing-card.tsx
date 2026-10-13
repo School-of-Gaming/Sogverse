@@ -111,7 +111,7 @@ export function UserMarketingCard({
           {t("title")}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="@container space-y-6">
         <section>
           {/* Furniture, not voice: a small tracked marker a reader scans as
               structure. Both sub-headings are styled identically and case
@@ -156,10 +156,13 @@ export function UserMarketingCard({
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t("preferences")}
             </h3>
-            {/* Two abreast from `sm`: an admin surface is desktop-default, and
-                two one-line rows stacked down the middle of a wide page is the
-                layout that rule exists to prevent. */}
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            {/* Two abreast once the card is wide enough: an admin surface is
+                desktop-default, and two one-line rows stacked down the middle
+                of a wide page is the layout that rule exists to prevent. Keyed
+                to the card's own width rather than the viewport's, because the
+                user page puts this card in a narrow reference column on a wide
+                screen, where two rows abreast would truncate their labels. */}
+            <div className="mt-2 grid gap-3 @lg:grid-cols-2">
               {CONSENT_ORDER.map((consentType) => {
                 const row = consents?.find(
                   (candidate) => candidate.consent_type === consentType,

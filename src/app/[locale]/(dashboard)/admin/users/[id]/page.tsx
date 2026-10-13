@@ -22,7 +22,7 @@ import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-c
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
@@ -220,7 +220,7 @@ export default async function AdminUserDetailPage({
 
   if (!profile) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <Link href={ROUTES.admin.users} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> {t('backToUsers')}
         </Link>
@@ -243,6 +243,12 @@ export default async function AdminUserDetailPage({
   // running the session. A parent's or another admin's account has none, which
   // is also what the write route refuses as a target.
   const showGameAccounts = isGamer || isGedu;
+
+  // Whether the reference column beside the main one has anything in it: game
+  // accounts, a gedu's spoken languages and coverage, the marketing card and a
+  // gamer's photo consent. An admin's page holds none of them, so it stays one
+  // column at full width rather than leaving a hole on the right.
+  const hasAside = showGameAccounts || isCustomer || isGedu;
 
   // Where this account came from, handed to the marketing card as the server
   // read it — nulls included, because that card shows all three fields whether
@@ -433,7 +439,7 @@ export default async function AdminUserDetailPage({
     });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <Link href={ROUTES.admin.users} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> {t('backToUsers')}
       </Link>
@@ -536,232 +542,260 @@ export default async function AdminUserDetailPage({
             </div>
             {/* The account's UTM attribution used to sit here, inside the
                 identity summary. It has moved into the Marketing card at the
-                foot of the page, which is now the page's one section about
+                foot of the reference column, which is now the page's one section about
                 marketing: where the account came from, and what its holder has
                 agreed to since. */}
           </div>
         </CardContent>
       </Card>
 
-      {/* Linked Accounts (customers → gamers, gamers → parents) */}
-      {(isCustomer || isGamer) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-act" />
-              {isCustomer ? t('linkedGamers') : t('linkedParents')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isCustomer && linkedGamers.length > 0 && (
-              <div className="space-y-4">
-                {linkedGamers.map((gamer) => {
-                  const rows = participationsByGamer.get(gamer.id) ?? [];
-                  return (
-                    <div key={gamer.id} className="space-y-2">
+      {/* Below the summary, which spans the page as its header, two columns
+          from `xl`: on the left, what this person is and what they are doing —
+          linked accounts, assigned products, a gedu's standing and their team
+          profile; on the right, reference and settings. Below `xl` the right
+          column follows the left in one stack.
+
+          Each column is its own run, and that is load-bearing: the cards that
+          fetch after first paint (coverage, the marketing consents, the photo
+          consents) sit in the right column, so whatever they change can only
+          push what sits below them there — never a card in the left column. */}
+      <div
+        className={cn(
+          "grid grid-cols-1 items-start gap-6",
+          hasAside && "xl:grid-cols-3",
+        )}
+      >
+        <div className="space-y-6 xl:col-span-2">
+          {/* Linked Accounts (customers → gamers, gamers → parents) */}
+          {(isCustomer || isGamer) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-act" />
+                  {isCustomer ? t('linkedGamers') : t('linkedParents')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isCustomer && linkedGamers.length > 0 && (
+                  <div className="space-y-4">
+                    {linkedGamers.map((gamer) => {
+                      const rows = participationsByGamer.get(gamer.id) ?? [];
+                      return (
+                        <div key={gamer.id} className="space-y-2">
+                          <Link
+                            href={ROUTES.admin.user(gamer.id)}
+                            className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <Identicon id={gamer.id} size={32} />
+                              </Avatar>
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {gamer.first_name || t('unnamedGamer')}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={ROLE_BADGE_STYLES.gamer}>
+                                {c("roleGamer")}
+                              </Badge>
+                              <NavChevron size="sm" />
+                            </div>
+                          </Link>
+
+                          {/* This gamer's assigned products, nested under the link */}
+                          <div className="ml-4 space-y-2 border-l border-border pl-4">
+                            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                              <Package className="h-3.5 w-3.5" />
+                              {t('assignedProducts')}
+                            </p>
+                            {rows.length > 0 ? (
+                              renderAssignedProducts(rows)
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                {t('noAssignedProducts')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {isCustomer && linkedGamers.length === 0 && (
+                  <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
+                )}
+                {isGamer && linkedParents.length > 0 && (
+                  <div className="space-y-2">
+                    {linkedParents.map((parent) => (
                       <Link
-                        href={ROUTES.admin.user(gamer.id)}
+                        key={parent.id}
+                        href={ROUTES.admin.user(parent.id)}
                         className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <Identicon id={gamer.id} size={32} />
+                            <Identicon id={parent.id} size={32} />
                           </Avatar>
                           <div>
                             <p className="text-sm font-medium">
-                              {gamer.first_name || t('unnamedGamer')}
+                              {parent.first_name || t('unnamedUser')}
+                            </p>
+                            <p className="text-xs text-muted-foreground ">
+                              {parent.email}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={ROLE_BADGE_STYLES.gamer}>
-                            {c("roleGamer")}
+                          <Badge variant="outline" className={ROLE_BADGE_STYLES.customer}>
+                            {c("roleParent")}
                           </Badge>
                           <NavChevron size="sm" />
                         </div>
                       </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-                      {/* This gamer's assigned products, nested under the link */}
-                      <div className="ml-4 space-y-2 border-l border-border pl-4">
-                        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                          <Package className="h-3.5 w-3.5" />
-                          {t('assignedProducts')}
-                        </p>
-                        {rows.length > 0 ? (
-                          renderAssignedProducts(rows)
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {t('noAssignedProducts')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* A gamer's own assigned products. (For parents, these are nested per
+              child inside the Linked Gamers card above — no separate section.) */}
+          {isGamer && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-act" />
+                  {t('assignedProducts')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {participationsByGamer.get(userId)?.length ? (
+                  <div className="space-y-2">
+                    {renderAssignedProducts(participationsByGamer.get(userId)!)}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('noAssignedProducts')}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Gedu certification (with the contract standing and the criminal record
+              check inside it) — first in the main column, ahead of the game
+              accounts deliberately. It is the highest-impact thing on an
+              educator's page: whether they may be assigned to a group at all, and
+              the two facts that decide it. A game username is a detail beside
+              that, so it sits in the reference column and does not get the
+              position an admin's eye lands on first — and in the single stack below
+              `xl` it comes after every main-column card. */}
+          {isGedu && (
+            <GeduCertificationCard
+              geduId={userId}
+              initial={geduCertification}
+              initialAcceptances={geduAcceptances}
+            />
+          )}
+
+          {/* The educator's qualifications, directly after certification: the
+              other standing an admin grants an educator, though unlike
+              certification it gates nothing. */}
+          {isGedu && (
+            <GeduQualificationsCard geduId={userId} initial={geduQualifications} />
+          )}
+
+          {/* The groups this educator is on, each with the role they hold there —
+              the gamer's Assigned Products card in the same shape, after the two
+              cards that decide whether they may be placed at all. */}
+          {isGedu && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-act" />
+                  {t('assignedProducts')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {geduSeats.length > 0 ? (
+                  <div className="space-y-2">{renderGeduSeats(geduSeats)}</div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t('noAssignedProducts')}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* The public team profile, for the two roles that have one. Seeded by
+              the read above, so it is in its final shape on first paint.
+
+              In the main column rather than the reference one, though it is a
+              setting: the card's body is the public page itself, which lays itself
+              out by its own width, so in a third of the page an admin would be
+              reading the phone layout of the page instead of the one a desktop
+              visitor meets. */}
+          {hasTeamProfile && (
+            <UserTeamProfileCard
+              userId={userId}
+              initial={teamProfile}
+              publicAddress={teamProfileAddress}
+              isViewer={viewer?.user.id === userId}
+            />
+          )}
+        </div>
+
+        {hasAside && (
+          <div className="space-y-6">
+            {/* Both game identities, editable. Admins have always had the database
+                permission to fix these (a `FOR ALL` policy over `is_admin()` on both
+                tables); this is the surface that finally uses it. */}
+            {showGameAccounts && (
+              <UserGameAccountsCard
+                userId={userId}
+                personName={profile.first_name}
+                initialMinecraft={minecraftAccount}
+                initialRoblox={robloxAccount}
+              />
             )}
-            {isCustomer && linkedGamers.length === 0 && (
-              <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
+
+            {/* Spoken languages and coverage areas, the two answers substitute
+                matching reads, side by side. The languages are seeded from the
+                profile row this page already read. */}
+            {isGedu && <GeduSpokenLanguagesCard geduId={userId} initialProfile={profile} />}
+            {isGedu && <GeduCoverageEditor geduId={userId} />}
+
+            {/* Everything about marketing, in one card: where the account came from,
+                and what its holder has agreed to since.
+
+                Last in the reference column, and the position is load-bearing: the
+                consent half is fetched client-side after first paint, so at the end
+                of the run its arrival is paid for out of the page's own slack and
+                nothing already painted moves. A later tidy-up that files it beside
+                the summary card, or above another card in this column, on aesthetic
+                grounds would reintroduce that shift silently.
+
+                Parents and educators, because those are the two roles that can carry
+                an attribution — a gamer's five columns are NULL by construction.
+                Only a customer can hold a marketing consent, so `customerId` is null
+                for an educator and their card is the attribution block alone. */}
+            {(isCustomer || isGedu) && (
+              <UserMarketingCard
+                attribution={attribution}
+                customerId={isCustomer ? userId : null}
+              />
             )}
-            {isGamer && linkedParents.length > 0 && (
-              <div className="space-y-2">
-                {linkedParents.map((parent) => (
-                  <Link
-                    key={parent.id}
-                    href={ROUTES.admin.user(parent.id)}
-                    className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <Identicon id={parent.id} size={32} />
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {parent.first_name || t('unnamedUser')}
-                        </p>
-                        <p className="text-xs text-muted-foreground ">
-                          {parent.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={ROLE_BADGE_STYLES.customer}>
-                        {c("roleParent")}
-                      </Badge>
-                      <NavChevron size="sm" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
-      {/* A gamer's own assigned products. (For parents, these are nested per
-          child inside the Linked Gamers card above — no separate section.) */}
-      {isGamer && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-act" />
-              {t('assignedProducts')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {participationsByGamer.get(userId)?.length ? (
-              <div className="space-y-2">
-                {renderAssignedProducts(participationsByGamer.get(userId)!)}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">{t('noAssignedProducts')}</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Gedu certification (with the contract standing and the criminal record
-          check inside it) — above the game accounts deliberately. It is the
-          highest-impact thing on an educator's page: whether they may be
-          assigned to a group at all, and the two facts that decide it. A game
-          username is a detail beside that, so it does not get the position an
-          admin's eye lands on first. Gamer pages are unaffected — they carry no
-          certification card, so the accounts card is still their first card
-          here. */}
-      {isGedu && (
-        <GeduCertificationCard
-          geduId={userId}
-          initial={geduCertification}
-          initialAcceptances={geduAcceptances}
-        />
-      )}
-
-      {/* The educator's qualifications, directly after certification: the
-          other standing an admin grants an educator, though unlike
-          certification it gates nothing. */}
-      {isGedu && (
-        <GeduQualificationsCard geduId={userId} initial={geduQualifications} />
-      )}
-
-      {/* The groups this educator is on, each with the role they hold there —
-          the gamer's Assigned Products card in the same shape, after the two
-          cards that decide whether they may be placed at all. */}
-      {isGedu && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-act" />
-              {t('assignedProducts')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {geduSeats.length > 0 ? (
-              <div className="space-y-2">{renderGeduSeats(geduSeats)}</div>
-            ) : (
-              <p className="text-sm text-muted-foreground">{t('noAssignedProducts')}</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Both game identities, editable. Admins have always had the database
-          permission to fix these (a `FOR ALL` policy over `is_admin()` on both
-          tables); this is the surface that finally uses it. */}
-      {showGameAccounts && (
-        <UserGameAccountsCard
-          userId={userId}
-          personName={profile.first_name}
-          initialMinecraft={minecraftAccount}
-          initialRoblox={robloxAccount}
-        />
-      )}
-
-      {/* Spoken languages and coverage areas, the two answers substitute
-          matching reads, side by side. The languages are seeded from the
-          profile row this page already read. */}
-      {isGedu && <GeduSpokenLanguagesCard geduId={userId} initialProfile={profile} />}
-      {isGedu && <GeduCoverageEditor geduId={userId} />}
-
-      {/* The public team profile, for the two roles that have one. Seeded by
-          the read above, so it is in its final shape on first paint and sits
-          ahead of the marketing card, whose place at the end is load-bearing. */}
-      {hasTeamProfile && (
-        <UserTeamProfileCard
-          userId={userId}
-          initial={teamProfile}
-          publicAddress={teamProfileAddress}
-          isViewer={viewer?.user.id === userId}
-        />
-      )}
-
-      {/* Everything about marketing, in one card: where the account came from,
-          and what its holder has agreed to since.
-
-          Last on the page, and the position is load-bearing: the consent half
-          is the only data on this page fetched client-side after first paint,
-          so at the end of the run its arrival is paid for out of the page's own
-          slack and nothing already painted moves. A later tidy-up that files it
-          beside the summary card on aesthetic grounds would reintroduce that
-          shift silently.
-
-          Parents and educators, because those are the two roles that can carry
-          an attribution — a gamer's five columns are NULL by construction.
-          Only a customer can hold a marketing consent, so `customerId` is null
-          for an educator and their card is the attribution block alone. */}
-      {(isCustomer || isGedu) && (
-        <UserMarketingCard
-          attribution={attribution}
-          customerId={isCustomer ? userId : null}
-        />
-      )}
-
-      {/* The gamer's counterpart to the card above, in the same last position
-          and for the same reason: its rows are the only data on this page
-          fetched client-side after first paint, so at the end of the run their
-          arrival is paid for out of the page's own slack. Only a gamer has a
-          photo consent — the subject is a child's image — so no other role sees
-          it, the way no gamer sees the marketing card. */}
-      {isGamer && <UserGamerPhotoConsentCard gamerId={userId} />}
+            {/* The gamer's counterpart to the card above, in the same last position
+                and for the same reason: its rows are fetched client-side after first
+                paint, so at the end of the run their arrival is paid for out of the
+                page's own slack. Only a gamer has a photo consent — the subject is a
+                child's image — so no other role sees it, the way no gamer sees the
+                marketing card. */}
+            {isGamer && <UserGamerPhotoConsentCard gamerId={userId} />}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

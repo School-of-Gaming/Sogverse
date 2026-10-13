@@ -65,16 +65,19 @@ export function UserGameAccountsCard({
         </CardTitle>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* Side by side from `sm`: this is an admin surface, and two identity
-            rows stacked down the middle of a wide page is the layout the
-            desktop-default rule exists to prevent.
+      <CardContent className="@container">
+        {/* Side by side once the card is wide enough: this is an admin surface,
+            and two identity rows stacked down the middle of a wide page is the
+            layout the desktop-default rule exists to prevent. Keyed to the
+            card's own width rather than the viewport's, because the user page
+            puts this card in a narrow reference column on a wide screen, where
+            two fields abreast would leave each editor too narrow to type in.
 
             A failure sentence belongs to its own column rather than to the card,
             which is what the shared field gives us — with two columns, one slot
             at the bottom would make an admin work out which of the two it was
             about, even though the sentence names the platform. */}
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid gap-6 @lg:grid-cols-2">
           <GameAccountField
             platform="minecraft"
             label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}

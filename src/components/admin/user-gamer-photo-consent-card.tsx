@@ -49,11 +49,13 @@ export function UserGamerPhotoConsentCard({ gamerId }: { gamerId: string }) {
           {t("title")}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        {/* Two abreast from `sm`, matching the marketing card's preferences
-            grid: an admin surface is desktop-default, and one-line rows stacked
-            down the middle of a wide page is the layout that rule prevents. */}
-        <div className="grid gap-3 sm:grid-cols-2">
+      <CardContent className="@container">
+        {/* Two abreast once the card is wide enough, matching the marketing
+            card's preferences grid: an admin surface is desktop-default, and
+            one-line rows stacked down the middle of a wide page is the layout
+            that rule prevents. Keyed to the card's width, as that grid is, for
+            the narrow reference column the user page puts it in. */}
+        <div className="grid gap-3 @lg:grid-cols-2">
           {ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES.map((consentType) => {
             const row = findGamerPhotoConsentRow(consents, consentType);
             return (
