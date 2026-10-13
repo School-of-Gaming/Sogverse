@@ -70,6 +70,8 @@ interface Views {
   campaign?: string;
   source?: string;
   medium?: string;
+  content?: string;
+  term?: string;
   environment?: string;
   views: number;
 }
@@ -80,9 +82,9 @@ const PRODUCT_ROUTE = "/shop/[id]";
 
 const VIEWS: Views[] = [
   // The landing page, in two languages, on two days.
-  { path: "/en/roblox", route: LANDING, day: "2026-09-01", campaign: "lynx-autumn-a", source: "lynx", medium: "email", views: 40 },
-  { path: "/fi/roblox", route: LANDING, day: "2026-09-02", campaign: "lynx-autumn-a", source: "lynx", medium: "email", views: 10 },
-  { path: "/en/roblox", route: LANDING, day: "2026-09-02", campaign: "Lynx-Autumn-A", source: "lynx", medium: "social", views: 5 },
+  { path: "/en/roblox", route: LANDING, day: "2026-09-01", campaign: "lynx-autumn-a", source: "lynx", medium: "email", content: "hero-banner", term: "roblox club", views: 40 },
+  { path: "/fi/roblox", route: LANDING, day: "2026-09-02", campaign: "lynx-autumn-a", source: "lynx", medium: "email", content: "hero-banner", views: 10 },
+  { path: "/en/roblox", route: LANDING, day: "2026-09-02", campaign: "Lynx-Autumn-A", source: "lynx", medium: "social", term: "roblox club", views: 5 },
   { path: "/en/roblox", route: LANDING, day: "2026-09-02", views: 30 },
   // A preview deployment's view is not traffic.
   { path: "/en/roblox", route: LANDING, day: "2026-09-02", environment: "preview", views: 999 },
@@ -167,6 +169,8 @@ function fakeVercel(views: readonly Views[], adjust?: (url: URL, rows: Record<st
         else if (dimension === "utmCampaign") values.utmCampaign = bucket.campaign ?? "";
         else if (dimension === "utmSource") values.utmSource = bucket.source ?? "";
         else if (dimension === "utmMedium") values.utmMedium = bucket.medium ?? "";
+        else if (dimension === "utmContent") values.utmContent = bucket.content ?? "";
+        else if (dimension === "utmTerm") values.utmTerm = bucket.term ?? "";
         else if (dimension === "requestPath") values.requestPath = bucket.path;
         else throw new Error(`the fake does not group by ${dimension}`);
       }
@@ -217,6 +221,8 @@ function expectSplitsSumToPageviews(body: PartnerTrafficResponse) {
   for (const page of body.pages) {
     expect(sum(page.by_campaign)).toBe(page.pageviews);
     expect(sum(page.by_source_medium)).toBe(page.pageviews);
+    expect(sum(page.by_content)).toBe(page.pageviews);
+    expect(sum(page.by_term)).toBe(page.pageviews);
     expect(sum(page.by_day)).toBe(page.pageviews);
   }
 }
@@ -304,6 +310,14 @@ describe("GET /api/partner/v1/traffic", () => {
         { utm_source: "lynx", utm_medium: "social", pageviews: 5 },
         { utm_source: null, utm_medium: null, pageviews: 30 },
       ],
+      by_content: [
+        { utm_content: "hero-banner", pageviews: 50 },
+        { utm_content: null, pageviews: 35 },
+      ],
+      by_term: [
+        { utm_term: "roblox club", pageviews: 45 },
+        { utm_term: null, pageviews: 40 },
+      ],
       by_day: [
         { date: "2026-09-01", pageviews: 40 },
         { date: "2026-09-02", pageviews: 45 },
@@ -361,6 +375,8 @@ describe("GET /api/partner/v1/traffic", () => {
         pageviews: 2,
         by_campaign: [{ utm_campaign: null, pageviews: 2 }],
         by_source_medium: [{ utm_source: null, utm_medium: null, pageviews: 2 }],
+        by_content: [{ utm_content: null, pageviews: 2 }],
+        by_term: [{ utm_term: null, pageviews: 2 }],
         by_day: [{ date: "2026-09-05", pageviews: 2 }],
       },
     ]);
@@ -378,8 +394,16 @@ describe("GET /api/partner/v1/traffic", () => {
   it("answers the landing page and the shop with zeros when nothing was viewed", async () => {
     const body = await read("?from=2026-06-01&to=2026-06-30");
     expect(body.pages).toEqual([
-      { page: "landing", product_id: null, pageviews: 0, by_campaign: [], by_source_medium: [], by_day: [] },
-      { page: "shop", product_id: null, pageviews: 0, by_campaign: [], by_source_medium: [], by_day: [] },
+      ...(["landing", "shop"] as const).map((page) => ({
+        page,
+        product_id: null,
+        pageviews: 0,
+        by_campaign: [],
+        by_source_medium: [],
+        by_content: [],
+        by_term: [],
+        by_day: [],
+      })),
     ]);
   });
 
@@ -427,8 +451,8 @@ describe("GET /api/partner/v1/traffic", () => {
     const until = Math.max(...calls.map((url) => Number(url.searchParams.get("until"))));
     expect(since).toBe(Date.parse("2026-05-31T00:00:00Z"));
     expect(until).toBe(Date.parse("2026-09-18T00:00:00Z") - 1);
-    // Three splits, the day split in two windows: not a read per hundred days since 2000.
-    expect(calls).toHaveLength(4);
+    // Five splits, the day split in two windows: not a read per hundred days since 2000.
+    expect(calls).toHaveLength(6);
   });
 
   it.each([
@@ -522,8 +546,8 @@ describe("GET /api/partner/v1/traffic", () => {
     const body = await read("?page=landing");
     expect(raced).toBe(true);
     expect(body.pages[0].pageviews).toBe(85);
-    // Each of the three splits was read twice.
-    expect(vercelCalls(racing)).toHaveLength(6);
+    // Each of the five splits was read twice.
+    expect(vercelCalls(racing)).toHaveLength(10);
   });
 
   it("answers 500 when the splits keep disagreeing", async () => {

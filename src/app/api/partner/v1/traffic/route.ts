@@ -19,8 +19,8 @@ import { readPartnerTraffic } from "@/services/partner/partner-traffic.server";
  *
  * Read from Vercel Web Analytics: the Roblox landing page, the shop, and each
  * Programme product's page that had a view, every language of a page counted
- * as one. Each page's views are split by campaign, by source and medium, and by
- * UTC day, and each split sums to the page's total. `from`/`to` are UTC days,
+ * as one. Each page's views are split by campaign, by source and medium, by
+ * content, by term, and by UTC day, and each split sums to the page's total. `from`/`to` are UTC days,
  * defaulting to the last thirty. The resolved answer is cached for the hour, so
  * counts can be up to an hour old. See `/docs/lynx-api` for the contract.
  *

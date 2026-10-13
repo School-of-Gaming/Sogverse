@@ -18,11 +18,11 @@ import type { PartnerDb } from "./partner-shared-db.server";
 
 /**
  * `/traffic` — pageviews of the pages a Lynx campaign lands on, from Vercel Web
- * Analytics, split three ways per page: by campaign, by source and medium, and
- * by UTC day.
+ * Analytics, split five ways per page: by campaign, by source and medium, by
+ * content, by term, and by UTC day.
  *
  * **Every split is of the same views and sums to the page's `pageviews`.** The
- * three are three separate reads, so the sums are checked rather than assumed:
+ * five are five separate reads, so the sums are checked rather than assumed:
  * a view arriving between the reads — the current day is live — would
  * otherwise leave one split a view ahead of the others. A page whose splits
  * disagree is read once more, and a second disagreement is thrown rather than
@@ -36,6 +36,8 @@ type TrafficPage = PartnerTrafficResponse["pages"][number];
 type TrafficPageKind = TrafficPage["page"];
 type CampaignEntry = TrafficPage["by_campaign"][number];
 type SourceMediumEntry = TrafficPage["by_source_medium"][number];
+type ContentEntry = TrafficPage["by_content"][number];
+type TermEntry = TrafficPage["by_term"][number];
 
 /** The Vercel `route` of the Roblox landing page and of the shop, every locale on one row. */
 const LANDING_ROUTE = "/roblox";
@@ -233,7 +235,7 @@ const sum = (entries: readonly { pageviews: number }[]) =>
   entries.reduce((total, entry) => total + entry.pageviews, 0);
 
 /**
- * Build one page's entry from its three reads, or `null` when the splits do not
+ * Build one page's entry from its five reads, or `null` when the splits do not
  * sum to the same number. A day outside the range with views throws: the read
  * asked for none, and dropping it would break the sum silently.
  */
@@ -244,11 +246,15 @@ export function buildTrafficPage(
   reads: {
     byCampaign: readonly PageviewsGroup[];
     bySourceMedium: readonly PageviewsGroup[];
+    byContent: readonly PageviewsGroup[];
+    byTerm: readonly PageviewsGroup[];
     byDay: readonly PageviewsGroup[];
   },
 ): TrafficPage | null {
   const campaignLabel = (entry: CampaignEntry) => [entry.utm_campaign];
   const sourceMediumLabel = (entry: SourceMediumEntry) => [entry.utm_source, entry.utm_medium];
+  const contentLabel = (entry: ContentEntry) => [entry.utm_content];
+  const termLabel = (entry: TermEntry) => [entry.utm_term];
 
   const by_campaign = sortSplit<CampaignEntry>(
     collapse<CampaignEntry>(
@@ -270,6 +276,22 @@ export function buildTrafficPage(
     ),
     sourceMediumLabel,
   );
+  const by_content = sortSplit<ContentEntry>(
+    collapse<ContentEntry>(
+      reads.byContent,
+      (group) => ({ utm_content: utmValue(group.values.utmContent), pageviews: group.pageviews }),
+      contentLabel,
+    ),
+    contentLabel,
+  );
+  const by_term = sortSplit<TermEntry>(
+    collapse<TermEntry>(
+      reads.byTerm,
+      (group) => ({ utm_term: utmValue(group.values.utmTerm), pageviews: group.pageviews }),
+      termLabel,
+    ),
+    termLabel,
+  );
 
   const by_day = reads.byDay
     .filter((group) => group.pageviews > 0)
@@ -285,9 +307,22 @@ export function buildTrafficPage(
     .sort((a, b) => compareText(a.date, b.date));
 
   const pageviews = sum(by_campaign);
-  if (sum(by_source_medium) !== pageviews || sum(by_day) !== pageviews) return null;
+  if (
+    [by_source_medium, by_content, by_term, by_day].some((split) => sum(split) !== pageviews)
+  ) {
+    return null;
+  }
 
-  return { page, product_id: productId, pageviews, by_campaign, by_source_medium, by_day };
+  return {
+    page,
+    product_id: productId,
+    pageviews,
+    by_campaign,
+    by_source_medium,
+    by_content,
+    by_term,
+    by_day,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -313,14 +348,18 @@ async function readPage(
   range: { from: string; to: string },
 ): Promise<TrafficPage> {
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const [byCampaign, bySourceMedium, byDay] = await Promise.all([
+    const [byCampaign, bySourceMedium, byContent, byTerm, byDay] = await Promise.all([
       client.aggregatePageviews({ by: ["utmCampaign"], filter, ...range }),
       client.aggregatePageviews({ by: ["utmSource", "utmMedium"], filter, ...range }),
+      client.aggregatePageviews({ by: ["utmContent"], filter, ...range }),
+      client.aggregatePageviews({ by: ["utmTerm"], filter, ...range }),
       client.aggregatePageviews({ by: ["day"], filter, ...range }),
     ]);
     const built = buildTrafficPage(page, productId, range, {
       byCampaign,
       bySourceMedium,
+      byContent,
+      byTerm,
       byDay,
     });
     if (built !== null) return built;
