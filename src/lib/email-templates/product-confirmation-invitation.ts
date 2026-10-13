@@ -1,15 +1,17 @@
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
 import {
   isUtcZone,
   ZONE_RULE_TIMEZONES,
 } from "@/lib/calendar-invitations/ics-primitives";
 import {
   buildInvitation,
+  occurrenceDatesThrough,
   type InvitationOverride,
   type InvitationRecurrence,
 } from "@/lib/calendar-invitations/invitation";
 import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import type { PlannedSession } from "@/lib/planned-sessions";
 import type { ProductType } from "@/types";
 import type { EmailTranslator } from "./translator";
 
@@ -54,6 +56,9 @@ export interface InvitationSlot {
   durationMinutes: number;
 }
 
+/** One planned session, as `planned_session_dates` states it. */
+export type InvitationPlannedSession = Pick<PlannedSession, "date" | "startsAt" | "endsAt">;
+
 export interface ProductConfirmationInvitationInput {
   /** The seat this invitation is for — one entry per participation. */
   participationId: string;
@@ -74,11 +79,16 @@ export interface ProductConfirmationInvitationInput {
   shortDescription: string | null;
   /** The IANA zone the product is authored in. */
   timezone: string;
-  /** Product-local `YYYY-MM-DD`, or `null` on a product with no declared start. */
-  startDate: string | null;
   /** Product-local `YYYY-MM-DD`, or `null` on an open-ended run. */
   endDate: string | null;
+  /** The weekly slots: the rule's shape, never its dates. */
   slots: readonly InvitationSlot[];
+  /**
+   * The product's planned sessions over `invitationPlanWindow`'s span, soonest
+   * first, exactly as the database plans them. Every date the document states
+   * comes from here.
+   */
+  plannedSessions: readonly InvitationPlannedSession[];
   isRemote: boolean;
   /** The site's display name in the reader's locale, for an in-person product. */
   siteName: string | null;
@@ -121,39 +131,45 @@ export interface ProductConfirmationInvitation {
 const DAY_MS = 86_400_000;
 
 /**
- * How far past the floor the search for a first occurrence walks.
+ * How far past today an open-ended run's plan is read: a year and a day, so a
+ * club's same weekday a year on is still inside it.
  *
- * Seven consecutive days cover every weekday, and the eighth is what makes the
- * floor day's own slot recoverable when its clock face has already gone by —
- * the same weekday comes round again exactly a week later. Anything beyond that
- * would mean the run has ended, which is a `null` rather than a longer walk.
+ * It bounds the one thing that needs a last day on a rule that has none — the
+ * `EXDATE` list, which names every day the rule states and the plan does not.
+ * Past the window the rule stands alone, so an open-ended club's invitation
+ * excludes nothing more than a year out.
  */
-const FIRST_OCCURRENCE_SEARCH_DAYS = 8;
+const OPEN_ENDED_PLAN_DAYS = 366;
 
-// --- Dates, UTC-pinned throughout ---
-
-/** A `YYYY-MM-DD` string as a UTC-pinned day. */
-function parseDay(value: string): number {
-  const [year, month, day] = value.split("-").map(Number);
-  return Date.UTC(year, month - 1, day);
+/**
+ * The span of the plan an invitation is composed from, both ends inclusive and
+ * product-local: from today in the product's own zone — a session that has
+ * already been is never put in a calendar — to the run's end date, or a year
+ * and a day on where it has none.
+ *
+ * Exported because the plan is read where the database is and composed here:
+ * the sender asks `planned_session_dates` for exactly this span and the
+ * composer walks the rule over exactly this span, so the two cannot disagree
+ * about which days an exclusion could cover.
+ */
+export function invitationPlanWindow({
+  now,
+  timezone,
+  endDate,
+}: {
+  now: Date;
+  timezone: string;
+  endDate: string | null;
+}): { from: string; to: string } {
+  const from = formatInTimeZone(now, timezone, "yyyy-MM-dd");
+  return { from, to: endDate ?? addDays(from, OPEN_ENDED_PLAN_DAYS) };
 }
 
-/** A UTC-pinned day back as `YYYY-MM-DD`. */
-function dayString(utcDay: number): string {
-  const date = new Date(utcDay);
-  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getUTCDate()}`.padStart(2, "0");
-  return `${date.getUTCFullYear()}-${month}-${day}`;
-}
-
-/** `0` = Monday … `6` = Sunday, from a UTC-pinned day. */
-function weekdayOf(utcDay: number): number {
-  return (new Date(utcDay).getUTCDay() + 6) % 7;
-}
-
-/** A product-local wall clock as the instant it names. */
-function instantOf(date: string, time: string, timezone: string): Date {
-  return fromZonedTime(`${date}T${time}:00`, timezone);
+/** A `YYYY-MM-DD` date `days` later, by UTC-pinned calendar arithmetic. */
+function addDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const later = new Date(Date.UTC(year, month - 1, day) + days * DAY_MS);
+  return formatInTimeZone(later, "UTC", "yyyy-MM-dd");
 }
 
 // --- The schedule, as the calendar has to state it ---
@@ -163,185 +179,101 @@ function shapeOf(slot: InvitationSlot): string {
   return `${slot.startTime}|${slot.durationMinutes}`;
 }
 
-interface FirstOccurrence {
-  date: string;
-  slot: InvitationSlot;
-}
-
-/**
- * The first occurrence at or after `now` that is also on or after the run's
- * start — the invitation's `DTSTART`.
- *
- * **A signup after a club has begun must not put finished sessions in a
- * calendar**, which is the whole reason this is a search rather than the start
- * date. `RRULE` counts `DTSTART` as its first instance, so moving it forward
- * moves the whole run forward with it and nothing before today is ever stated.
- *
- * The walk is UTC-pinned calendar arithmetic over bare dates, and the only
- * instant it builds is the one it compares against `now` — which is what keeps
- * a daylight-saving transition inside the run from repeating or skipping a day.
- * The product's *own* zone decides which day "today" is, because the schedule is
- * a promise about clock faces in that zone.
- *
- * `null` means the run has nothing left: an ended product, or one whose
- * remaining days all fall past its end date.
- */
-function findFirstOccurrence({
-  slots,
-  startDate,
-  endDate,
-  timezone,
-  now,
-}: {
-  slots: readonly InvitationSlot[];
-  startDate: string;
-  endDate: string | null;
-  timezone: string;
-  now: Date;
-}): FirstOccurrence | null {
-  const today = formatInTimeZone(now, timezone, "yyyy-MM-dd");
-  // Bare-date string comparison is calendar comparison: the format is
-  // fixed-width and zero-padded.
-  const floor = parseDay(today > startDate ? today : startDate);
-
-  for (let step = 0; step < FIRST_OCCURRENCE_SEARCH_DAYS; step++) {
-    const day = floor + step * DAY_MS;
-    const date = dayString(day);
-    if (endDate !== null && date > endDate) return null;
-
-    const weekday = weekdayOf(day);
-    const candidates = slots
-      .filter((slot) => slot.weekday === weekday)
-      .filter(
-        (slot) => instantOf(date, slot.startTime, timezone).getTime() >= now.getTime(),
-      )
-      // Earliest clock face first: every candidate is on the same day, so the
-      // earliest start time is the earliest instant.
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    if (candidates.length > 0) return { date, slot: candidates[0] };
-  }
-  return null;
-}
-
-/**
- * Every occurrence of a slot whose time or length disagrees with the master's,
- * as the overrides that state them.
- *
- * A mixed-time camp — several days, each with its own start and end — cannot be
- * one `RRULE`, because a rule states one clock face. RFC 5545's answer is an
- * extra component per disagreeing occurrence under the same identifier, and
- * that is what this walks out: from `DTSTART` to the run's last day inclusive,
- * one entry per day whose slot is not the master's shape.
- *
- * The walk is bounded by the end date, which is why the caller refuses a
- * mixed-time run that has none: there would be no last day to stop writing
- * overrides at.
- */
-function overridesFor({
-  slots,
-  fromDate,
-  endDate,
-  masterShape,
-}: {
-  slots: readonly InvitationSlot[];
-  fromDate: string;
-  endDate: string;
-  masterShape: string;
-}): InvitationOverride[] {
-  const byWeekday = new Map(slots.map((slot) => [slot.weekday, slot]));
-  const overrides: InvitationOverride[] = [];
-  const last = parseDay(endDate);
-
-  for (let day = parseDay(fromDate); day <= last; day += DAY_MS) {
-    const slot = byWeekday.get(weekdayOf(day));
-    if (!slot || shapeOf(slot) === masterShape) continue;
-    overrides.push({
-      date: dayString(day),
-      time: slot.startTime,
-      durationMinutes: slot.durationMinutes,
-    });
-  }
-  return overrides;
+/** A planned session's clock face in the product's zone, and its length. */
+function faceOf(
+  session: InvitationPlannedSession,
+  timezone: string,
+): { time: string; durationMinutes: number } {
+  return {
+    time: formatInTimeZone(session.startsAt, timezone, "HH:mm"),
+    durationMinutes: Math.round(
+      (session.endsAt.getTime() - session.startsAt.getTime()) / 60_000,
+    ),
+  };
 }
 
 interface ResolvedSchedule {
   start: { date: string; time: string };
   durationMinutes: number;
   recurrence: InvitationRecurrence;
+  excludedDates: string[];
   overrides: InvitationOverride[];
 }
 
 /**
- * A product's stored schedule as the one calendar object that states it, or
- * `null` where no such object exists.
+ * A product's plan as the one calendar object that states it, or `null` where
+ * no such object exists.
  *
- * Five shapes answer `null`, and each of them is a real product rather than a
- * fault: no slots at all, no start date, an event whose slots name no session
- * on its own start date, a run with no occurrence still ahead, and the one
- * shape RFC 5545 cannot express under a single identifier — a mixed-time run
- * with no last day. The caller sends the plain mail for all five.
+ * **The slots give the rule its shape and the plan gives it its dates.** The
+ * `BYDAY` is the slots' weekdays and the `UNTIL` the end date, because that is
+ * the compact notation every client draws; which days actually happen comes
+ * from the plan, which is the database's and nobody else's:
+ *
+ * - `DTSTART` is the first planned session that has not yet begun. A signup
+ *   after a club has begun must not put finished sessions in a calendar, and
+ *   `RRULE` counts `DTSTART` as its first instance, so moving it forward moves
+ *   the whole run forward with it.
+ * - An override is a planned session at another clock face or length than the
+ *   master's. A mixed-time camp is the case today: a rule states one clock
+ *   face, and RFC 5545's answer is an extra component per disagreeing
+ *   occurrence under the same identifier.
+ * - An `EXDATE` is a day the rule states inside the plan's window that the plan
+ *   does not hold. The plan is the term crossed with the slots, less the
+ *   club's holiday breaks, so the list is exactly the slot days those breaks
+ *   cover inside the plan's window, and a club following no calendar states
+ *   none. Nothing here knows of breaks, only of days the plan does not hold.
+ *
+ * A cancelled session is not excluded: a cancellation is a group's, not the
+ * plan's, and the plan is read without them.
+ *
+ * Four shapes answer `null`, and each of them is a real product rather than a
+ * fault: no slots or no planned session still ahead, an event whose one
+ * session has begun, two different sessions on one weekday, and the one shape
+ * RFC 5545 cannot express under a single identifier — a mixed-time run with no
+ * last day. The caller sends the plain mail for all of them.
  */
 function resolveSchedule({
   slots,
   productType,
-  startDate,
   endDate,
   timezone,
+  plannedSessions,
   now,
 }: {
   slots: readonly InvitationSlot[];
   productType: ProductType;
-  startDate: string | null;
   endDate: string | null;
   timezone: string;
+  plannedSessions: readonly InvitationPlannedSession[];
   now: Date;
 }): ResolvedSchedule | null {
-  if (slots.length === 0 || startDate === null) return null;
+  if (slots.length === 0) return null;
 
   // An event is one session on one day: the rule that would state it has
-  // nothing to repeat, so the occurrence is the start date at the clock face of
-  // whichever slot falls on that weekday. A schedule naming no slot there
-  // describes no session at all, which is a product with a date and nothing on
-  // it rather than a document to send.
+  // nothing to repeat, so the occurrence is its planned session — the earliest,
+  // should its day carry two. One that has already begun describes nothing a
+  // calendar should be handed.
   if (productType === "event") {
-    const weekday = weekdayOf(parseDay(startDate));
-    const onTheDay = [...slots]
-      .filter((candidate) => candidate.weekday === weekday)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
-    if (onTheDay.length === 0) return null;
-    const slot = onTheDay[0];
-    if (instantOf(startDate, slot.startTime, timezone).getTime() < now.getTime()) {
-      return null;
-    }
+    const session = plannedSessions.at(0);
+    if (session === undefined || session.startsAt.getTime() < now.getTime()) return null;
+    const face = faceOf(session, timezone);
     return {
-      start: { date: startDate, time: slot.startTime },
-      durationMinutes: slot.durationMinutes,
+      start: { date: session.date, time: face.time },
+      durationMinutes: face.durationMinutes,
       recurrence: { kind: "none" },
+      excludedDates: [],
       overrides: [],
     };
   }
 
-  const first = findFirstOccurrence({ slots, startDate, endDate, timezone, now });
-  if (first === null) return null;
+  // The plan is soonest first, so the first one not yet begun is the next.
+  const ahead = plannedSessions.filter(
+    (session) => session.startsAt.getTime() >= now.getTime(),
+  );
+  const first = ahead.at(0);
+  if (first === undefined) return null;
 
-  const recurrence: InvitationRecurrence = {
-    kind: "weekly",
-    weekdays: [...new Set(slots.map((slot) => slot.weekday))].sort((a, b) => a - b),
-    interval: 1,
-    // An open-ended consumer club states no last day, which is the honest
-    // answer: the family's seat renews until somebody cancels it.
-    until: endDate,
-    count: null,
-    // Nothing is excluded. A cancelled session is not a thing the schedule
-    // knows about, and inventing an EXDATE from anything else would state a
-    // fact the product does not hold.
-  };
-
-  const shapes = new Set(slots.map(shapeOf));
-  const masterShape = shapeOf(first.slot);
-
-  if (shapes.size > 1) {
+  if (new Set(slots.map(shapeOf)).size > 1) {
     // Two slots on one weekday at different times cannot both be stated: the
     // rule produces one occurrence per weekday, and a `RECURRENCE-ID` names an
     // occurrence rather than a session. It is not a shape the admin form can
@@ -361,14 +293,48 @@ function resolveSchedule({
     if (endDate === null) return null;
   }
 
+  const recurrence: InvitationRecurrence = {
+    kind: "weekly",
+    weekdays: [...new Set(slots.map((slot) => slot.weekday))].sort((a, b) => a - b),
+    interval: 1,
+    // An open-ended consumer club states no last day, which is the honest
+    // answer: the family's seat renews until somebody cancels it.
+    until: endDate,
+    count: null,
+  };
+
+  const master = faceOf(first, timezone);
+  const planned = new Set<string>();
+  const overrides: InvitationOverride[] = [];
+  for (const session of ahead) {
+    // One occurrence per day: a rule cannot state two, and the slots that
+    // could put two different ones on one day were refused above.
+    if (planned.has(session.date)) continue;
+    planned.add(session.date);
+    const face = faceOf(session, timezone);
+    if (face.time === master.time && face.durationMinutes === master.durationMinutes) {
+      continue;
+    }
+    overrides.push({
+      date: session.date,
+      time: face.time,
+      durationMinutes: face.durationMinutes,
+    });
+  }
+
+  // The rule walked over the same window the plan was read for, so a day can
+  // only be excluded where the plan had the chance to hold it.
+  const { to } = invitationPlanWindow({ now, timezone, endDate });
+  const excludedDates = occurrenceDatesThrough(first.date, recurrence, to).filter(
+    (date) => !planned.has(date),
+  );
+
   return {
-    start: { date: first.date, time: first.slot.startTime },
-    durationMinutes: first.slot.durationMinutes,
+    start: { date: first.date, time: master.time },
+    durationMinutes: master.durationMinutes,
     recurrence,
-    overrides:
-      shapes.size > 1 && endDate !== null
-        ? overridesFor({ slots, fromDate: first.date, endDate, masterShape })
-        : [],
+    excludedDates,
+    overrides,
   };
 }
 
@@ -582,12 +548,12 @@ export function composeProductConfirmationInvitation(
   const schedule = resolveSchedule({
     slots: input.slots,
     productType: input.productType,
-    startDate: input.startDate,
     endDate: input.endDate,
     timezone: input.timezone,
+    plannedSessions: input.plannedSessions,
     now: input.now,
   });
-  if (schedule === null || input.startDate === null) return null;
+  if (schedule === null) return null;
 
   const placeLines = placeInWords({
     t,
@@ -617,7 +583,7 @@ export function composeProductConfirmationInvitation(
     start: schedule.start,
     durationMinutes: schedule.durationMinutes,
     recurrence: schedule.recurrence,
-    excludedDates: [],
+    excludedDates: schedule.excludedDates,
     overrides: schedule.overrides,
 
     // The support inbox, not the unattended sending address: an RSVP is a

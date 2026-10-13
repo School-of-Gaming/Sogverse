@@ -216,6 +216,46 @@ export function formatDateRange(
   return formatDateOnly(startDate, locale);
 }
 
+/**
+ * A short zoneless range from two ISO dates, both inclusive — "13–17 Oct",
+ * "13 Oct – 17 Nov", "22 Dec 2026 – 6 Jan 2027" — for a run of days read
+ * beside other dates rather than as a headline: a holiday break in a list or a
+ * feed. `Intl.DateTimeFormat#formatRange` writes the compact forms itself, so
+ * each locale collapses the shared month and year its own way. One day names
+ * one date.
+ *
+ * **The year appears only where the reader needs it**: a range that crosses a
+ * year boundary always carries it (the formatter adds it unasked), and a range
+ * inside a single year carries it when that year is not the one `today` falls
+ * in. `today` is the caller's `YYYY-MM-DD`, from the same request-stable clock
+ * as the rest of the page, so the server and the first client render agree.
+ *
+ * UTC-pinned like `formatDateOnly`, and the space either side of the dash is
+ * normalised the way `formatTimeRange` normalises it, for the same hydration
+ * reason.
+ */
+export function formatCompactDateRange(
+  startDate: string,
+  endDate: string,
+  locale: string,
+  today: string,
+): string {
+  const startYear = startDate.slice(0, 4);
+  const showYear =
+    startYear !== endDate.slice(0, 4) || startYear !== today.slice(0, 4);
+  const format = new Intl.DateTimeFormat(formattingLocale(locale), {
+    day: "numeric",
+    month: "short",
+    ...(showYear ? { year: "numeric" } : {}),
+    timeZone: "UTC",
+  });
+  const start = new Date(`${startDate}T00:00:00Z`);
+  if (endDate <= startDate) return format.format(start);
+  return format
+    .formatRange(start, new Date(`${endDate}T00:00:00Z`))
+    .replace(RANGE_DASH_SPACE, " ");
+}
+
 
 // The gamer synthetic-address helpers used to live here. They are now in
 // src/lib/gamer-sign-in.ts, beside the sign-in modes that decide what an

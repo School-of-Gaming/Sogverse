@@ -88,7 +88,10 @@
       "teamProfile": "Min profil",
       "adminTeamProfile": "Profil",
       "adminFeedback": "Feedback",
-      "team": "Team"
+      "team": "Team",
+      "adminHolidayCalendars": "Lovkalendrar",
+      "adminHolidayCalendarNew": "Ny lovkalender",
+      "adminHolidayCalendarEdit": "Redigera lovkalender"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -378,7 +381,9 @@
         "timesIn": "tider i {zone}",
         "nothingOn": "Inget inplanerat",
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "holiday": "Lov",
+        "holidayTitle": "Lov – {name}. Inget tillfälle detta datum."
       },
       "cancellation": {
         "allTitle": "Tillfället är inställt för alla grupper den här dagen",
@@ -447,6 +452,8 @@
       "billedNotRecorded": "Fakturerat, inte registrerat",
       "upcoming": "Kommande",
       "cancelled": "Inställt",
+      "holiday": "Lov",
+      "holidayNamed": "Lov – {name}",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
       "clubsIn": "Klubbar i {municipality}",
@@ -526,6 +533,84 @@
         "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "Lovkalendrar",
+      "subtitle": "Skollov och andra uppehåll som en klubb kan följa. En klubb har inga träffar under ett uppehålls dagar.",
+      "addCalendar": "Lägg till en kalender",
+      "columns": {
+        "name": "Namn",
+        "breaks": "Uppehåll",
+        "nextBreak": "Nästa uppehåll",
+        "clubs": "Klubbar"
+      },
+      "noUpcomingBreak": "Inga kommande",
+      "empty": "Inga lovkalendrar än. Lägg till den första.",
+      "backToList": "Tillbaka till lovkalendrar",
+      "notFound": "Det finns ingen lovkalender med detta id.",
+      "newPage": {
+        "title": "Ny lovkalender",
+        "submit": "Skapa kalender"
+      },
+      "editPage": {
+        "title": "Redigera lovkalender"
+      },
+      "sections": {
+        "calendar": "Kalender",
+        "breaks": "Uppehåll",
+        "breaksDescription": "Ett uppehåll varar från sin första till sin sista dag, båda inräknade, och har ett namn på vart och ett av kalenderns språk. Familjerna ser namnet i stället för de träffar det tar bort.",
+        "products": "Klubbar som följer kalendern",
+        "productsDescription": "En sparad ändring av uppehållen ändrar dessa klubbar direkt, även tidigare månader."
+      },
+      "fields": {
+        "name": "Namn",
+        "languages": "Språk",
+        "firstDay": "Första dag",
+        "lastDay": "Sista dag",
+        "breakName": "Namn på {language}"
+      },
+      "hints": {
+        "name": "Bara administratörer ser det här namnet, till exempel Helsingfors skolor. Familjerna ser bara uppehållens namn.",
+        "languages": "Språken hör till hela kalendern: lägger du till eller tar bort ett här gäller det varje uppehåll. Varje uppehåll behöver ett namn på varje språk. Familjerna läser namnet på sitt eget språk om det finns, annars på engelska eller det första språket som skrivits."
+      },
+      "noBreaks": "Inga uppehåll än.",
+      "checkLine": "{range} · {days, plural, one {# dag} other {# dagar}} · vecka {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# dag} other {# dagar}} · veckor {first}–{last}",
+      "addBreak": "Lägg till ett uppehåll",
+      "removeBreak": "Ta bort {name}",
+      "noProducts": "Ingen klubb följer den här kalendern än. En klubb väljer sina kalendrar på sin egen sida.",
+      "errors": {
+        "nameRequired": "Ge kalendern ett namn.",
+        "datesRequired": "{name} behöver en första och en sista dag.",
+        "endBeforeStart": "{name} slutar innan det börjar.",
+        "breakNameMissing": "{name} behöver ett namn på {language}.",
+        "overlap": "{first} och {second} överlappar. En dag kan bara höra till ett uppehåll.",
+        "saveFailed": "Kalendern kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Kalendern kunde inte sparas – {reason}"
+      },
+      "impact": {
+        "title": "Spara ändringarna?",
+        "description": "{count, plural, one {Den här klubben ändras} other {De här # klubbarna ändras}} så fort du sparar.",
+        "futureRemoved": "Familjerna ser ingen träff på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+        "futureRestored": "Familjerna ser träffar igen på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+        "pastRemoved": "{count, plural, one {En tidigare träff försvinner} other {Tidigare träffar på # dagar försvinner}} ur familjernas historik: {dates}.",
+        "pastRestored": "{count, plural, one {En tidigare träff kommer} other {Tidigare träffar på # dagar kommer}} tillbaka i familjernas historik: {dates}.",
+        "recordsHidden": "{count, plural, one {# dokumenterad träff döljs} other {# dokumenterade träffar döljs}} för familjerna.",
+        "recordsShown": "{count, plural, one {# dokumenterad träff visas} other {# dokumenterade träffar visas}} för familjerna igen.",
+        "requestsStopped": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} inte längre någon träff att täcka.",
+        "requestsReopened": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} en träff att täcka igen."
+      },
+      "editBreak": "Redigera {name}",
+      "unnamedBreak": "Namnlöst uppehåll",
+      "dialog": {
+        "editTitle": "Redigera uppehåll",
+        "saveAndAddAnother": "Spara och lägg till ett till"
+      },
+      "breakErrors": {
+        "datesRequired": "Välj första och sista dagen.",
+        "endBeforeStart": "Sista dagen är före den första.",
+        "nameMissing": "Ge uppehållet ett namn på {language}."
       }
     },
     "library": {
@@ -928,6 +1013,16 @@
         },
         "copyLink": "Kopiera den publika länken",
         "copied": "Kopierad"
+      },
+      "holidayCalendars": {
+        "label": "Lovkalendrar",
+        "hint": "Klubben har inga träffar under något uppehåll i de kalendrar den följer. Familjerna ser uppehållet där träffarna annars skulle ha legat.",
+        "manage": "Hantera lovkalendrar",
+        "nextBreak": "Nästa: {name}, {dates}",
+        "noUpcomingBreak": "Inga kommande uppehåll",
+        "empty": "Det finns inga lovkalendrar än.",
+        "listUnavailable": "Lovkalendrarna kunde inte läsas in. De kalendrar klubben redan följer behålls när du sparar.",
+        "none": "Inga"
       },
       "editPage": {
         "back": "Tillbaka till produkten",
@@ -3033,6 +3128,8 @@
     "notRecorded": "Inte registrerat",
     "upcoming": "Kommande",
     "cancelled": "Inställt",
+    "holiday": "Lov",
+    "holidayNamed": "Lov – {name}",
     "absentSubstituted": "Frånvarande – vikarie {name}",
     "absentNoSubstitute": "Frånvarande – ingen vikarie",
     "substitutingFor": "vikariat för {name}",
@@ -3100,7 +3197,8 @@
     "live": "Pågår",
     "nextSession": "Nästa tillfälle",
     "upcoming": "Kommande tillfälle",
-    "cancelled": "Inställt"
+    "cancelled": "Inställt",
+    "noSession": "Inget tillfälle"
   },
   "sessionFacts": {
     "remote": "På distans",
@@ -3351,7 +3449,8 @@
       "audience": "Målgrupp",
       "language": "Språk",
       "online": "Online",
-      "tbd": "Bekräftas senare"
+      "tbd": "Bekräftas senare",
+      "holidayBreaks": "Lov"
     },
     "signupPanel": {
       "verb": {
@@ -3636,7 +3735,8 @@
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel",
     "substitutions": "Vikariat",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "holidayCalendars": "Lovkalendrar"
   },
   "home": {
     "hero": {
@@ -4439,7 +4539,9 @@
         "ages": "Ålder {min}–{max}",
         "audienceParents": "För föräldrar",
         "audienceFamilies": "För familjer",
-        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
+        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}",
+        "holidayBreaks": "Lov",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {

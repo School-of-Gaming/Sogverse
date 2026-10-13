@@ -3,6 +3,7 @@ import { Constants } from "@/types";
 import {
   geduAssignmentRole,
   sessionProductDocument,
+  sessionWindowFields,
   substitutionOfferResponse,
   substitutionReason,
 } from "@/services/session-substitution/session-substitution.contracts";
@@ -46,6 +47,7 @@ const snapshotRequestBase = z.object({
   group_name: z.string(),
   /** Product-local calendar date, `YYYY-MM-DD`. */
   session_date: z.string(),
+  ...sessionWindowFields,
   role: geduAssignmentRole,
   /** The fee for this role; null when the product has not set one. */
   fee_cents: z.number().nullable(),

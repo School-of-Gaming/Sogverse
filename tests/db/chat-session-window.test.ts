@@ -1,11 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import { toZonedTime } from "date-fns-tz";
 import type { Database } from "@/types/database.types";
-import { computeSessionWindow } from "@/lib/session-schedule";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { ensureChatChannelResult } from "@/services/chat/chat.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
-import { TEST_CREDENTIALS } from "./constants";
+import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
   createTestProduct,
@@ -14,45 +13,39 @@ import {
 import { getStringRecord } from "../helpers/json";
 
 /**
- * `ensure_chat_channel`'s window search, held to the TypeScript one.
+ * `group_open_session_windows` — the one definition of "the session window
+ * open now", which the voice token route and `ensure_chat_channel` both take
+ * the first row of — and `ensure_chat_channel` reading it.
  *
- * **There are two implementations of the same arithmetic and this file is what
- * stops them drifting.** The voice token route computes a session window in
- * TypeScript (`computeSessionWindow` over `getNextSessionStart`); the chat RPC
- * had to compute the same window in PL/pgSQL, because a participant-callable
- * guard cannot ask the caller which window is open — a client-supplied instant
- * would let a member mint an arbitrary read bound over the group's whole
- * history. The duplication was taken knowingly; this is the price paid for it.
- *
- * The shapes below are the ones `tests/unit/session-schedule.test.ts` uses: a
- * plain hour-long weekly slot, the same slot in a zone that observes DST, and a
- * slot that starts at 23:30 and runs past local midnight. What they cannot be
- * is the same *instants*: the RPC reads `now()` and there is no way to inject a
- * clock into PostgREST, so each case is re-anchored so that its window is open
- * at the moment the file runs, and the two implementations are then asked for
- * the same window and compared to the millisecond.
- *
- * **What that covers and what it does not.** Northern and southern zones are
- * both exercised on every run — one of Helsinki and Auckland is always in
- * summer time and the other always is not — so an offset bug cannot hide for
- * half the year, and the midnight case exercises the adjacent-day probe that
- * replaces the TypeScript search's previous-occurrence step. What is out of
- * reach is a run *at* a transition instant; the guarantee left there is that
- * both sides ask their platform's tz database for the same wall clock on the
- * same date, and a disagreement between Postgres and ICU would show up here as
- * soon as either moved.
+ * The function takes the clock as an argument, so every case below is a fixed
+ * instant: the DST transitions of a northern and a southern zone, a session
+ * running past midnight, one whose lead-in starts the day before, a date
+ * outside the product's term, a cancelled date and two overlapping windows.
+ * The fixtures sit in 2030 and the answers do not depend on when this runs.
+ * Only the last block reads the real clock, because `ensure_chat_channel` has
+ * no clock argument of its own.
  */
 
+/** UTC: the midnight, overlap, cancellation and term cases. */
 const PRODUCT_UTC = "00000000-0000-0000-0000-0000000007f1";
+/** Europe/Helsinki: the northern transitions. */
 const PRODUCT_NORTH = "00000000-0000-0000-0000-0000000007f2";
+/** Pacific/Auckland: the southern transitions. */
 const PRODUCT_SOUTH = "00000000-0000-0000-0000-0000000007f3";
-const PRODUCT_MIDNIGHT = "00000000-0000-0000-0000-0000000007f4";
+/** Europe/Helsinki with a slot at a wall clock the transitions skip and repeat. */
+const PRODUCT_GAP = "00000000-0000-0000-0000-0000000007f4";
+/** UTC, with a session in progress while the file runs. */
+const PRODUCT_LIVE = "00000000-0000-0000-0000-0000000007e4";
 const ALL_PRODUCTS = [
   PRODUCT_UTC,
   PRODUCT_NORTH,
   PRODUCT_SOUTH,
-  PRODUCT_MIDNIGHT,
+  PRODUCT_GAP,
+  PRODUCT_LIVE,
 ];
+
+const LEAD_IN_MS = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES * 60_000;
+const TAIL_MS = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
 type Result<T> = { data: T; error: null } | { data: null; error: PostgrestError };
 
@@ -67,90 +60,85 @@ function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-/**
- * The weekday and wall clock an instant lands on in a zone.
- *
- * `toZonedTime` hands back a Date whose *local* getters read the wall clock in
- * `timezone` — the same contract `src/lib/enrollment.ts` depends on, and the
- * reason `getUTC*` must not be used here: those agree only on a UTC runtime and
- * land on the wrong weekday anywhere else.
- */
-function slotFor(instant: Date, timezone: string) {
-  const zoned = toZonedTime(instant, timezone);
-  return {
-    // schedule_slots.weekday is 0 = Monday; getDay() is 0 = Sunday.
-    weekday: (zoned.getDay() + 6) % 7,
-    startTime: `${pad(zoned.getHours())}:${pad(zoned.getMinutes())}`,
-  };
+function iso(value: string): string {
+  return new Date(value).toISOString();
 }
 
-/**
- * A fixed-offset zone in which `now` reads 00:xx.
- *
- * Whole-hour `Etc/GMT` zones exist precisely so a test can pin a local time of
- * day without waiting for the clock, and they observe no DST, so nothing in the
- * midnight case is confounded by a transition. **The POSIX sign is inverted**:
- * `Etc/GMT+5` is UTC−5, not UTC+5.
- */
-function zoneWhereItIsJustAfterMidnight(now: Date): string {
-  let offset = (24 - now.getUTCHours()) % 24;
-  // Etc/GMT runs +12 … −14; keeping the offset inside ±12 keeps every hour of
-  // the day expressible.
-  if (offset > 12) offset -= 24;
-  if (offset === 0) return "UTC";
-  return offset > 0 ? `Etc/GMT-${offset}` : `Etc/GMT+${-offset}`;
+interface Window {
+  session_date: string;
+  starts_at: string;
+  opens_at: string;
+  closes_at: string;
+  cancelled: boolean;
 }
 
-interface WindowCase {
-  name: string;
-  productId: string;
-  groupId: string;
-  schedule: {
-    day_of_week: number;
-    start_time: string;
-    timezone: string;
-    duration_minutes: number;
-  };
-}
-
-describe("ensure_chat_channel's window agrees with computeSessionWindow", () => {
+describe("group_open_session_windows", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
-  /** One instant, shared by every case and by both implementations. */
-  const now = new Date();
-  const cases: WindowCase[] = [];
+  const groups: Record<string, string> = {};
 
   async function seed(
     productId: string,
-    name: string,
-    timezone: string,
-    weekday: number,
-    startTime: string,
-    durationMinutes: number,
+    options: { timezone: string; startDate: string; endDate: string | null },
+    slots: Array<{ weekday: number; startTime: string; durationMinutes: number }>,
   ): Promise<void> {
-    await createTestProduct(admin, { id: productId, seatCount: 50, timezone });
-    await createScheduleSlot(admin, productId, {
-      weekday,
-      startTime,
-      durationMinutes,
-    });
+    await createTestProduct(admin, { id: productId, seatCount: 50, ...options });
+    for (const slot of slots) {
+      await createScheduleSlot(admin, productId, slot);
+    }
     const created = ok(
       await adminAuth.rpc("apply_group_changes", {
         p_product_id: productId,
-        p_added_groups: [{ tempId: "g", name, geduIds: [] }],
+        p_added_groups: [{ tempId: "g", name: "Group", geduIds: [] }],
       }),
     );
-    cases.push({
-      name,
-      productId,
-      groupId: getStringRecord(created, "tempMap").g,
-      schedule: {
-        day_of_week: weekday,
-        start_time: startTime,
-        timezone,
-        duration_minutes: durationMinutes,
-      },
-    });
+    groups[productId] = getStringRecord(created, "tempMap").g;
+  }
+
+  async function cancel(productId: string, sessionDate: string): Promise<void> {
+    ok(
+      await admin.from("session_cancellations").insert({
+        group_id: groups[productId],
+        session_date: sessionDate,
+        cancelled_by: TEST_IDS.ADMIN,
+      }),
+    );
+  }
+
+  /** The open windows of `productId`'s group at `at`, every margin checked. */
+  async function windowsAt(productId: string, at?: string): Promise<Window[]> {
+    const rows = ok(
+      await admin.rpc("group_open_session_windows", {
+        p_group_id: groups[productId],
+        ...(at === undefined ? {} : { p_at: at }),
+      }),
+    );
+    for (const row of rows) {
+      // The margins are SQL literals and VOICE_CONFIG is what the client's
+      // countdown reads: this is what holds the two together.
+      expect(
+        new Date(row.starts_at).getTime() - new Date(row.opens_at).getTime(),
+        "the SQL lead-in is not VOICE_CONFIG's",
+      ).toBe(LEAD_IN_MS);
+      expect(
+        new Date(row.closes_at).getTime() - new Date(row.ends_at).getTime(),
+        "the SQL tail is not VOICE_CONFIG's",
+      ).toBe(TAIL_MS);
+    }
+    return rows.map((row) => ({
+      session_date: row.session_date,
+      starts_at: iso(row.starts_at),
+      opens_at: iso(row.opens_at),
+      closes_at: iso(row.closes_at),
+      cancelled: row.cancelled,
+    }));
+  }
+
+  /** The single open window at `at`, as session date and start instant. */
+  async function sessionAt(productId: string, at: string) {
+    const rows = await windowsAt(productId, at);
+    expect(rows, `expected exactly one open window at ${at}`).toHaveLength(1);
+    return { date: rows[0].session_date, startsAt: rows[0].starts_at };
   }
 
   beforeAll(async () => {
@@ -162,127 +150,272 @@ describe("ensure_chat_channel's window agrees with computeSessionWindow", () => 
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    // Three ordinary hour-long slots, each started twenty minutes ago in its
-    // own zone, so `now` sits mid-session with a comfortable margin either side
-    // — the RPC's clock runs seconds later than this one and must land in the
-    // same window.
-    const started = new Date(now.getTime() - 20 * 60_000);
-
-    const utc = slotFor(started, "UTC");
-    await seed(PRODUCT_UTC, "UTC", "UTC", utc.weekday, utc.startTime, 60);
-
-    const north = slotFor(started, "Europe/Helsinki");
+    // 2030-01-01 is a Tuesday. schedule_slots.weekday is 0 = Monday.
+    await seed(
+      PRODUCT_UTC,
+      { timezone: "UTC", startDate: "2025-01-01", endDate: "2030-06-30" },
+      [
+        { weekday: 1, startTime: "23:30", durationMinutes: 90 }, // Tue, past midnight
+        { weekday: 4, startTime: "00:02", durationMinutes: 30 }, // Fri, lead-in on Thu
+        // A product has one slot per weekday, so two windows overlap across
+        // midnight: Sunday's runs to 01:00 and Monday's opens at 00:25.
+        { weekday: 6, startTime: "23:00", durationMinutes: 120 },
+        { weekday: 0, startTime: "00:30", durationMinutes: 60 },
+      ],
+    );
     await seed(
       PRODUCT_NORTH,
-      "North",
-      "Europe/Helsinki",
-      north.weekday,
-      north.startTime,
-      60,
+      { timezone: "Europe/Helsinki", startDate: "2030-01-01", endDate: "2030-12-31" },
+      [
+        { weekday: 1, startTime: "14:00", durationMinutes: 60 },
+        // Sunday 02:00 for three hours runs across both transition instants.
+        { weekday: 6, startTime: "02:00", durationMinutes: 180 },
+      ],
     );
-
-    // The southern hemisphere twin. Whenever Helsinki is on summer time
-    // Auckland is not and the other way round, so every run exercises one zone
-    // at each side of its own DST rule rather than whichever the calendar
-    // happens to offer.
-    const south = slotFor(started, "Pacific/Auckland");
     await seed(
       PRODUCT_SOUTH,
-      "South",
-      "Pacific/Auckland",
-      south.weekday,
-      south.startTime,
-      60,
+      { timezone: "Pacific/Auckland", startDate: "2030-01-01", endDate: "2030-12-31" },
+      [
+        { weekday: 1, startTime: "14:00", durationMinutes: 60 },
+        { weekday: 6, startTime: "01:30", durationMinutes: 120 },
+      ],
+    );
+    await seed(
+      PRODUCT_GAP,
+      { timezone: "Europe/Helsinki", startDate: "2030-01-01", endDate: "2030-12-31" },
+      // 03:30 does not exist on 2030-03-31 in Helsinki and happens twice on
+      // 2030-10-27.
+      [{ weekday: 6, startTime: "03:30", durationMinutes: 60 }],
     );
 
-    // The midnight case, and the one the SQL's adjacent-day probe exists for.
-    // In this zone it is 00:xx, so a session that began at 23:30 YESTERDAY is
-    // still running — the occurrence's local date is not today's, which is
-    // exactly what a probe of today alone would miss.
-    const midnightZone = zoneWhereItIsJustAfterMidnight(now);
-    const zonedNow = toZonedTime(now, midnightZone);
-    const todayWeekday = (zonedNow.getDay() + 6) % 7;
+    // A session that started twenty minutes ago and runs an hour, so its
+    // window is open however long this file takes. The term started a week ago.
+    const started = new Date(Date.now() - 20 * 60_000);
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
     await seed(
-      PRODUCT_MIDNIGHT,
-      "Midnight",
-      midnightZone,
-      // Yesterday, in Monday-is-zero terms.
-      (todayWeekday + 6) % 7,
-      "23:30",
-      // Started 30 minutes before local midnight and running an hour past now.
-      30 + zonedNow.getMinutes() + 60,
+      PRODUCT_LIVE,
+      { timezone: "UTC", startDate: weekAgo, endDate: null },
+      [
+        {
+          // getUTCDay() is 0 = Sunday.
+          weekday: (started.getUTCDay() + 6) % 7,
+          startTime: `${pad(started.getUTCHours())}:${pad(started.getUTCMinutes())}`,
+          durationMinutes: 60,
+        },
+      ],
     );
+
+    // Monday 2030-03-04 is cancelled; Monday 2030-03-11 is not.
+    await cancel(PRODUCT_UTC, "2030-03-04");
   });
 
   afterAll(async () => {
-    for (const entry of cases) {
-      await admin.from("chat_channels").delete().eq("group_id", entry.groupId);
-    }
+    const groupIds = Object.values(groups);
+    await admin.from("chat_channels").delete().in("group_id", groupIds);
+    await admin.from("session_cancellations").delete().in("group_id", groupIds);
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
-  it("every case's window is genuinely open, so the comparisons are not vacuous", () => {
-    expect(cases).toHaveLength(4);
-    for (const entry of cases) {
-      expect(
-        computeSessionWindow(entry.schedule, now).isOpen,
-        `${entry.name}: the fixture schedule is not live, so nothing below is comparing anything`,
-      ).toBe(true);
-    }
+  describe("the window's edges", () => {
+    it("opens at the lead-in, inclusive, and closes after the tail, exclusive", async () => {
+      // Tuesday 2030-03-05 23:30–01:00 UTC: the window is 23:25 to 01:05.
+      expect(await windowsAt(PRODUCT_UTC, "2030-03-05T23:24:59.999Z")).toEqual([]);
+      expect(await windowsAt(PRODUCT_UTC, "2030-03-05T23:25:00.000Z")).toHaveLength(1);
+      expect(await windowsAt(PRODUCT_UTC, "2030-03-06T01:04:59.999Z")).toHaveLength(1);
+      expect(await windowsAt(PRODUCT_UTC, "2030-03-06T01:05:00.000Z")).toEqual([]);
+    });
   });
 
-  it("the midnight case really does sit on the previous local date", () => {
-    // The precondition the adjacent-day probe is being tested through. If the
-    // zone arithmetic above ever stopped landing on 00:xx, the case would
-    // quietly become a fourth ordinary same-day slot and prove nothing.
-    const midnight = cases.find((entry) => entry.name === "Midnight");
-    expect(midnight).toBeDefined();
-    if (!midnight) return;
+  describe("midnight", () => {
+    it("keeps a session running past midnight on the date it started", async () => {
+      expect(await windowsAt(PRODUCT_UTC, "2030-03-06T00:15:00.000Z")).toEqual([
+        {
+          session_date: "2030-03-05",
+          starts_at: "2030-03-05T23:30:00.000Z",
+          opens_at: "2030-03-05T23:25:00.000Z",
+          closes_at: "2030-03-06T01:05:00.000Z",
+          cancelled: false,
+        },
+      ]);
+    });
 
-    const zonedNow = toZonedTime(now, midnight.schedule.timezone);
-    expect(zonedNow.getHours()).toBe(0);
-
-    const occurrenceStart = computeSessionWindow(midnight.schedule, now)
-      .nextSessionStart;
-    const occurrenceDay = toZonedTime(
-      occurrenceStart,
-      midnight.schedule.timezone,
-    ).getDate();
-    expect(occurrenceDay).not.toBe(zonedNow.getDate());
+    it("opens a small-hours session's window on the day before it", async () => {
+      // Friday 2030-03-08 00:02: the lead-in starts 23:57 on Thursday.
+      expect(await sessionAt(PRODUCT_UTC, "2030-03-07T23:58:00.000Z")).toEqual({
+        date: "2030-03-08",
+        startsAt: "2030-03-08T00:02:00.000Z",
+      });
+    });
   });
 
-  it.each([
-    ["UTC"],
-    ["North"],
-    ["South"],
-    ["Midnight"],
-  ])("%s: SQL and TypeScript derive the same window instants", async (name) => {
-    const entry = cases.find((candidate) => candidate.name === name);
-    expect(entry).toBeDefined();
-    if (!entry) return;
+  describe("the term", () => {
+    it("opens no window on a slot weekday after the term ends", async () => {
+      // Tuesday 2030-06-25 is the last Tuesday of the term; 2030-07-02 is past it.
+      expect(await windowsAt(PRODUCT_UTC, "2030-06-25T23:45:00.000Z")).toHaveLength(1);
+      expect(await windowsAt(PRODUCT_UTC, "2030-07-02T23:45:00.000Z")).toEqual([]);
+    });
 
-    const expected = computeSessionWindow(entry.schedule, now);
-    const [channel] = ensureChatChannelResult.parse(
-      ok(
-        await adminAuth.rpc("ensure_chat_channel", {
-          p_group_id: entry.groupId,
-        }),
-      ),
-    );
+    it("opens no window on a slot weekday before the term starts, even one running into it", async () => {
+      // Tuesday 2024-12-31 23:30 would run into the term's first day, but the
+      // session is dated the day before it.
+      expect(await windowsAt(PRODUCT_UTC, "2025-01-01T00:15:00.000Z")).toEqual([]);
+    });
+  });
 
-    expect(
-      new Date(channel.session_opens_at).toISOString(),
-      `${name}: the SQL window opens somewhere the voice room does not`,
-    ).toBe(expected.windowOpensAt.toISOString());
-    expect(
-      new Date(channel.session_ends_at).toISOString(),
-      `${name}: the SQL window closes somewhere the voice room does not`,
-    ).toBe(expected.windowClosesAt.toISOString());
+  describe("overlap and cancellation", () => {
+    it("returns overlapping windows earliest-opening first", async () => {
+      const rows = await windowsAt(PRODUCT_UTC, "2030-03-11T00:40:00.000Z");
+      expect(rows.map((row) => [row.session_date, row.starts_at])).toEqual([
+        ["2030-03-10", "2030-03-10T23:00:00.000Z"],
+        ["2030-03-11", "2030-03-11T00:30:00.000Z"],
+      ]);
+      expect(rows.every((row) => !row.cancelled)).toBe(true);
+    });
 
-    // The unique key is (group_id, session_opens_at), so agreeing on the open
-    // instant is also what keeps a room and its chat on the same channel: a
-    // disagreement here is not a cosmetic drift, it is two channels for one
-    // session.
-    expect(channel.group_id).toBe(entry.groupId);
+    it("marks a cancelled date's window cancelled rather than dropping it", async () => {
+      // Monday 2030-03-04 is cancelled; the Sunday overlapping it is not.
+      const rows = await windowsAt(PRODUCT_UTC, "2030-03-04T00:40:00.000Z");
+      expect(rows.map((row) => [row.session_date, row.cancelled])).toEqual([
+        ["2030-03-03", false],
+        ["2030-03-04", true],
+      ]);
+    });
+  });
+
+  describe("Europe/Helsinki across its transitions", () => {
+    // A Tuesday 14:00 session, mid-session, the weeks either side of each
+    // transition: the instant moves with the offset, the wall clock does not.
+    it.each([
+      ["the week before spring-forward (EET)", "2030-03-26T12:30:00.000Z", "2030-03-26T12:00:00.000Z"],
+      ["the week after spring-forward (EEST)", "2030-04-02T11:30:00.000Z", "2030-04-02T11:00:00.000Z"],
+      ["the week before fall-back (EEST)", "2030-10-22T11:30:00.000Z", "2030-10-22T11:00:00.000Z"],
+      ["the week after fall-back (EET)", "2030-10-29T12:30:00.000Z", "2030-10-29T12:00:00.000Z"],
+    ])("%s", async (_name, at, startsAt) => {
+      expect(await sessionAt(PRODUCT_NORTH, at)).toEqual({
+        date: at.slice(0, 10),
+        startsAt,
+      });
+    });
+
+    it("keeps a session's real length across spring-forward", async () => {
+      // Sunday 2030-03-31 02:00 EET is 00:00Z; three real hours later it is
+      // 06:00 on the wall clock, not 05:00. Read at 05:30 EEST.
+      const [row] = await windowsAt(PRODUCT_NORTH, "2030-03-31T02:30:00.000Z");
+      expect(row).toMatchObject({
+        session_date: "2030-03-31",
+        starts_at: "2030-03-31T00:00:00.000Z",
+        closes_at: "2030-03-31T03:05:00.000Z",
+      });
+    });
+
+    it("dates a fall-back session by its local day, though it starts on the UTC day before", async () => {
+      // Sunday 2030-10-27 02:00 EEST is 23:00Z on the 26th; it runs until 02:00Z.
+      const [row] = await windowsAt(PRODUCT_NORTH, "2030-10-27T01:30:00.000Z");
+      expect(row).toMatchObject({
+        session_date: "2030-10-27",
+        starts_at: "2030-10-26T23:00:00.000Z",
+        closes_at: "2030-10-27T02:05:00.000Z",
+      });
+    });
+
+    it("resolves a wall clock the transitions skip or repeat as Postgres does", async () => {
+      // The ordinary Sundays either side of each transition first.
+      expect(await sessionAt(PRODUCT_GAP, "2030-03-24T01:45:00.000Z")).toEqual({
+        date: "2030-03-24",
+        startsAt: "2030-03-24T01:30:00.000Z", // 03:30 EET
+      });
+      expect(await sessionAt(PRODUCT_GAP, "2030-04-07T00:45:00.000Z")).toEqual({
+        date: "2030-04-07",
+        startsAt: "2030-04-07T00:30:00.000Z", // 03:30 EEST
+      });
+      // 03:30 on 2030-03-31 does not exist: Postgres reads it at the offset in
+      // force before the gap, EET, which is 04:30 EEST.
+      expect(await sessionAt(PRODUCT_GAP, "2030-03-31T01:45:00.000Z")).toEqual({
+        date: "2030-03-31",
+        startsAt: "2030-03-31T01:30:00.000Z",
+      });
+      // 03:30 on 2030-10-27 happens twice: Postgres takes standard time, EET,
+      // the later of the two.
+      expect(await sessionAt(PRODUCT_GAP, "2030-10-27T01:45:00.000Z")).toEqual({
+        date: "2030-10-27",
+        startsAt: "2030-10-27T01:30:00.000Z",
+      });
+    });
+  });
+
+  describe("Pacific/Auckland across its transitions", () => {
+    it.each([
+      ["the week before DST ends (NZDT)", "2030-04-02T01:30:00.000Z", "2030-04-02T01:00:00.000Z"],
+      ["the week after DST ends (NZST)", "2030-04-09T02:30:00.000Z", "2030-04-09T02:00:00.000Z"],
+      ["the week before DST starts (NZST)", "2030-09-24T02:30:00.000Z", "2030-09-24T02:00:00.000Z"],
+      ["the week after DST starts (NZDT)", "2030-10-01T01:30:00.000Z", "2030-10-01T01:00:00.000Z"],
+    ])("%s", async (_name, at, startsAt) => {
+      expect(await sessionAt(PRODUCT_SOUTH, at)).toEqual({
+        date: at.slice(0, 10),
+        startsAt,
+      });
+    });
+
+    it("keeps a session's real length as DST ends, dated by its local day", async () => {
+      // Sunday 2030-04-07 01:30 NZDT is 12:30Z on the 6th; two real hours on,
+      // the clock has gone back and reads 02:30 NZST.
+      const [row] = await windowsAt(PRODUCT_SOUTH, "2030-04-06T14:20:00.000Z");
+      expect(row).toMatchObject({
+        session_date: "2030-04-07",
+        starts_at: "2030-04-06T12:30:00.000Z",
+        closes_at: "2030-04-06T14:35:00.000Z",
+      });
+    });
+
+    it("keeps a session's real length as DST starts", async () => {
+      // Sunday 2030-09-29 01:30 NZST is 13:30Z on the 28th; it ends at 15:30Z,
+      // 04:30 NZDT on the wall clock.
+      const [row] = await windowsAt(PRODUCT_SOUTH, "2030-09-28T15:20:00.000Z");
+      expect(row).toMatchObject({
+        session_date: "2030-09-29",
+        starts_at: "2030-09-28T13:30:00.000Z",
+        closes_at: "2030-09-28T15:35:00.000Z",
+      });
+    });
+  });
+
+  describe("ensure_chat_channel reads it", () => {
+    it("defaults the clock to now", async () => {
+      expect(await windowsAt(PRODUCT_LIVE)).toHaveLength(1);
+    });
+
+    it("materializes the channel on the open window's instants", async () => {
+      const [window] = await windowsAt(PRODUCT_LIVE);
+      const [channel] = ensureChatChannelResult.parse(
+        ok(
+          await adminAuth.rpc("ensure_chat_channel", {
+            p_group_id: groups[PRODUCT_LIVE],
+          }),
+        ),
+      );
+
+      // The channel's key is (group, opening instant), so agreeing on the
+      // opening is what keeps a voice room and its chat on one channel.
+      expect(iso(channel.session_opens_at)).toBe(window.opens_at);
+      expect(iso(channel.session_ends_at)).toBe(window.closes_at);
+    });
+
+    it("opens no chat on a cancelled session", async () => {
+      const [window] = await windowsAt(PRODUCT_LIVE);
+      await cancel(PRODUCT_LIVE, window.session_date);
+      try {
+        expect((await windowsAt(PRODUCT_LIVE))[0]?.cancelled).toBe(true);
+
+        const { error } = await adminAuth.rpc("ensure_chat_channel", {
+          p_group_id: groups[PRODUCT_LIVE],
+        });
+        expect(error?.code).toBe("P0002");
+      } finally {
+        await admin
+          .from("session_cancellations")
+          .delete()
+          .eq("group_id", groups[PRODUCT_LIVE]);
+      }
+    });
   });
 });

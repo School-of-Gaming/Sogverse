@@ -101,6 +101,9 @@ export function notificationSnapshot(
     group_id: SNAPSHOT_IDS.group,
     group_name: "A",
     session_date: "2026-10-14",
+    // The Wednesday session the plan has on that date, 16:00–17:30 Helsinki.
+    starts_at: "2026-10-14T16:00:00+03:00",
+    ends_at: "2026-10-14T17:30:00+03:00",
     role: "primary",
     fee_cents: 4500,
     reason: "sick",

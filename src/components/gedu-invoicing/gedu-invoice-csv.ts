@@ -5,6 +5,7 @@ import type {
   GeduInvoiceLine,
 } from "./build-gedu-invoicing";
 import {
+  holidayLabel,
   otherGeduName,
   STATUS_LABEL_KEY,
   type GeduInvoicingTranslator,
@@ -15,7 +16,7 @@ import { ROLE_LABEL_KEY, SEGMENT_LABEL_KEY } from "./gedu-invoicing-labels";
  * One gedu's month as CSV: raw rows for the gedu's own spreadsheet.
  *
  * **One row per dated line, of every kind** — paid, not recorded, upcoming,
- * cancelled and away — sorted by date, then club, so the file is the page's
+ * cancelled, away and holiday — sorted by date, then club, so the file is the page's
  * dates laid flat. A line that does not pay carries an amount of `0,00`, so the
  * amount column sums to the invoice total; a line whose club has no fee set
  * leaves both money cells blank, because an unset fee is never zero.
@@ -61,7 +62,9 @@ export function buildGeduInvoiceCsv({
     csvText(line.groupName),
     csvText(club.locationName ?? ""),
     t(ROLE_LABEL_KEY[club.role]),
-    t(STATUS_LABEL_KEY[line.kind]),
+    line.kind === "holiday"
+      ? holidayLabel(line, t)
+      : t(STATUS_LABEL_KEY[line.kind]),
     csvText(otherGeduName(line) ?? ""),
     club.feeCents === null ? "" : csvMoney(club.feeCents),
     club.feeCents === null

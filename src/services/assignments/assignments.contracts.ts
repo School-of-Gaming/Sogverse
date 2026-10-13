@@ -1,11 +1,15 @@
 import { z } from "zod";
+import { plannedSessionRows } from "@/lib/planned-sessions";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   sessionProductDocument,
   sessionStaffGedu,
 } from "@/services/session-substitution/session-substitution.contracts";
-import { traineeRosterEntry } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import {
+  geduGroupFeed,
+  traineeRosterEntry,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * Runtime contracts for the gedu assignment RPCs. The generated types can't
@@ -50,16 +54,23 @@ const myAssignedProductRow = z.object({
   /** The substitution date on a `substitution` row; null on an `assignment` row. */
   substitution_date: z.string().nullable(),
   /**
-   * The row's group's cancelled session dates from the day before
-   * product-local today onwards, ascending — dates only, never a reason.
-   */
-  cancelled_dates: z.array(z.string()),
-  /**
    * Whether a `substitution` row's own date is cancelled, asked of that date
-   * rather than of `cancelled_dates`, whose window the card outlives; false
-   * on an `assignment` row.
+   * itself because the card stands for days after it; false on the other kinds.
    */
   substitution_cancelled: z.boolean(),
+  /**
+   * A standing seat's group's planned sessions, from the day before
+   * product-local today to the group's plan horizon, soonest first, each
+   * flagged where the group cancelled it. Empty on a `substitution` row, which
+   * is one afternoon rather than a run.
+   */
+  upcoming_sessions: plannedSessionRows,
+  /**
+   * The substituted session's instants on a `substitution` row, from the plan;
+   * null on a date the plan no longer has, and on the other kinds.
+   */
+  substitution_starts_at: z.string().nullable(),
+  substitution_ends_at: z.string().nullable(),
 });
 
 export type MyAssignedProductRow = z.infer<typeof myAssignedProductRow>;
@@ -176,6 +187,12 @@ export const geduAssignedProduct = z.object({
         .nullable(),
     })
   ),
+  /**
+   * The plan and the caller's group's final session, in the gedu group
+   * feed's shapes and in parity with it: the page composes both documents.
+   */
+  planned_sessions: geduGroupFeed.shape.planned_sessions,
+  final_session_date: geduGroupFeed.shape.final_session_date,
 });
 
 /**
@@ -212,6 +229,8 @@ export const traineeAssignedProduct = z.object({
       }),
     ]),
   ),
+  planned_sessions: geduAssignedProduct.shape.planned_sessions,
+  final_session_date: geduAssignedProduct.shape.final_session_date,
 });
 
 export type TraineeAssignedProduct = z.infer<typeof traineeAssignedProduct>;

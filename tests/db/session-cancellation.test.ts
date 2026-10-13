@@ -14,7 +14,6 @@ import { familyProductFeed } from "@/services/family-product-feed/family-product
 import { municipalityInvoicingSnapshot } from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 import { adminSubstitutionRequests } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
-import { mySessionCancellations } from "@/services/participations/participations.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
@@ -823,7 +822,7 @@ describe("session cancellation", () => {
   // the My SOG cards' reads
   // -------------------------------------------------------------------------
 
-  it("hands the gedu's seat its group's upcoming cancelled dates, from yesterday on", async () => {
+  it("flags the gedu's seat's planned sessions its group cancelled, from yesterday on", async () => {
     for (const date of [LAST_WEEK, YESTERDAY, TOMORROW, IN_THREE_DAYS]) {
       expect((await cancel(date, "Holiday")).error).toBeNull();
     }
@@ -835,7 +834,11 @@ describe("session cancellation", () => {
       .find((row) => row.group_id === GROUP && row.kind === "assignment");
     // The day before today is kept, for a session still running past local
     // midnight; anything earlier is no card's business.
-    expect(seat?.cancelled_dates).toEqual([YESTERDAY, TOMORROW, IN_THREE_DAYS]);
+    expect(
+      seat?.upcoming_sessions
+        .filter((session) => session.cancelled)
+        .map((session) => session.date),
+    ).toEqual([YESTERDAY, TOMORROW, IN_THREE_DAYS]);
   });
 
   it("drops an inert cancellation from the gedu's seat", async () => {
@@ -854,7 +857,12 @@ describe("session cancellation", () => {
       const seat = myAssignedProductRows
         .parse(data)
         .find((row) => row.group_id === GROUP && row.kind === "assignment");
-      expect(seat?.cancelled_dates).toEqual([]);
+      // The date is not in the plan at all, so nothing on it reads cancelled.
+      expect(
+        seat?.upcoming_sessions.some(
+          (session) => session.date === IN_THREE_DAYS || session.cancelled,
+        ),
+      ).toBe(false);
     } finally {
       await createScheduleSlot(admin, PRODUCT, {
         weekday,
@@ -865,7 +873,7 @@ describe("session cancellation", () => {
   });
 
   it("keeps a substitution card's date cancelled after it leaves the upcoming window", async () => {
-    // The card stands for days after its date, and `cancelled_dates` starts
+    // The card stands for days after its date, and the seat's plan starts
     // the day before today, so the substitution row asks of its own date. The
     // seeded gedu's certification belongs to another file, so the sub is a
     // certified gedu minted here.
@@ -919,8 +927,9 @@ describe("session cancellation", () => {
         [LAST_WEEK, true],
         [SIX_DAYS_AGO, false],
       ]);
-      // Out of the window the next-session reads use, and cancelled all the same.
-      expect(cards.every((row) => !row.cancelled_dates.includes(LAST_WEEK))).toBe(
+      // A substitution carries no plan to read the flag from; its own date
+      // answers, outside any window.
+      expect(cards.every((row) => row.upcoming_sessions.length === 0)).toBe(
         true,
       );
     } finally {
@@ -930,41 +939,6 @@ describe("session cancellation", () => {
         .eq("substitute_id", subId);
       await admin.auth.admin.deleteUser(subId);
     }
-  });
-
-  it("hands a family its own seats' upcoming cancelled dates and nothing more", async () => {
-    for (const date of [LAST_WEEK, TOMORROW]) {
-      expect((await cancel(date, "Holiday")).error).toBeNull();
-    }
-
-    const customerAuth = await createAuthenticatedClient(
-      TEST_CREDENTIALS.CUSTOMER.email,
-      TEST_CREDENTIALS.CUSTOMER.password,
-    );
-    const strangerAuth = await createAuthenticatedClient(
-      TEST_CREDENTIALS.CUSTOMER_2.email,
-      TEST_CREDENTIALS.CUSTOMER_2.password,
-    );
-
-    // The child in the seat and the parent who pays for it get the same
-    // answer; the strict parse fails if a reason or an author rides along.
-    for (const client of [gamerAuth, customerAuth]) {
-      const { data, error } = await client.rpc("get_my_session_cancellations");
-      expect(error).toBeNull();
-      expect(
-        mySessionCancellations
-          .parse(data)
-          .filter((row) => row.participation_id === PARTICIPATION),
-      ).toEqual([{ participation_id: PARTICIPATION, session_date: TOMORROW }]);
-    }
-
-    const stranger = await strangerAuth.rpc("get_my_session_cancellations");
-    expect(stranger.error).toBeNull();
-    expect(
-      mySessionCancellations
-        .parse(stranger.data)
-        .filter((row) => row.participation_id === PARTICIPATION),
-    ).toEqual([]);
   });
 
   // -------------------------------------------------------------------------
@@ -983,6 +957,18 @@ describe("session cancellation", () => {
     return product;
   }
 
+  /** Every (group, date) the product's planned sessions name as cancelled. */
+  function cancelledPairs(
+    product: Awaited<ReturnType<typeof dashboardScheduleProduct>>,
+  ) {
+    return product.planned_sessions.flatMap((session) =>
+      session.cancelled_group_ids.map((groupId) => ({
+        group_id: groupId,
+        session_date: session.session_date,
+      })),
+    );
+  }
+
   it("hands the admin dashboard every cancelled pair in its window, past as well as future", async () => {
     for (const date of [LAST_WEEK, TOMORROW, IN_THREE_DAYS]) {
       expect((await cancel(date)).error).toBeNull();
@@ -992,7 +978,7 @@ describe("session cancellation", () => {
     expect(product.group_ids).toEqual([GROUP]);
     // Unlike the My SOG reads, the dashboard's window reaches thirty days
     // back, so last week's cancellation is carried too.
-    expect(product.cancelled_sessions).toEqual([
+    expect(cancelledPairs(product)).toEqual([
       { group_id: GROUP, session_date: LAST_WEEK },
       { group_id: GROUP, session_date: TOMORROW },
       { group_id: GROUP, session_date: IN_THREE_DAYS },
@@ -1004,7 +990,7 @@ describe("session cancellation", () => {
     // still needs it to know a date one group cancelled is not every group's.
     const club = await dashboardScheduleProduct(CLUB);
     expect(club.group_ids).toEqual([CLUB_GROUP, CLUB_SILENT_GROUP]);
-    expect(club.cancelled_sessions).toEqual([]);
+    expect(cancelledPairs(club)).toEqual([]);
   });
 
   it("drops an inert cancellation from the admin dashboard", async () => {
@@ -1019,7 +1005,7 @@ describe("session cancellation", () => {
 
     try {
       expect(
-        (await dashboardScheduleProduct(PRODUCT)).cancelled_sessions,
+        cancelledPairs(await dashboardScheduleProduct(PRODUCT)),
       ).toEqual([]);
     } finally {
       await createScheduleSlot(admin, PRODUCT, {
@@ -1030,15 +1016,8 @@ describe("session cancellation", () => {
     }
 
     expect(
-      (await dashboardScheduleProduct(PRODUCT)).cancelled_sessions,
+      cancelledPairs(await dashboardScheduleProduct(PRODUCT)),
     ).toEqual([{ group_id: GROUP, session_date: IN_THREE_DAYS }]);
-  });
-
-  it("keeps the shared window helper private", async () => {
-    const { error } = await gamerAuth.rpc("group_upcoming_cancelled_dates", {
-      p_group_id: GROUP,
-    });
-    expect(error?.code).toBe("42501");
   });
 
   it("keeps the partner API's cancellation read to the service role", async () => {

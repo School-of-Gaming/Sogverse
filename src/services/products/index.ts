@@ -17,6 +17,7 @@ export {
   useVisibleProductsByTypes,
   useProductDetail,
   useProductAdmin,
+  usePlannedSessions,
   useCreateProduct,
   useUpdateProduct,
 } from "./products.queries";

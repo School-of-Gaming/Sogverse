@@ -127,6 +127,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Municipality invoicing — the CFO's monthly invoice page and its Finvoice export | `src/components/admin/municipality-invoicing/` |
 | Gedu invoicing — the month each gedu invoices us for, the admin's page and the gedu's own | `src/components/gedu-invoicing/` |
 | Invoice customers — the Fennoa buyers a municipality club is invoiced to | `src/components/admin/invoice-customers/` |
+| Holiday calendars — the breaks a club follows, their admin pages and the edit preview | `src/components/admin/holiday-calendars/` |
 | Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Topic prep — the "Before the first session" guide | `src/components/topic-prep/` |
 | Chat components | `src/components/chat/` |

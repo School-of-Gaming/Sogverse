@@ -751,6 +751,17 @@ export const ROUTES = {
      */
     invoiceCustomer: (id: string) =>
       ({ pathname: "/admin/invoice-customers/[id]", params: { id } }) as const,
+    /**
+     * The holiday calendars clubs follow — named lists of breaks whose dates
+     * are missing from every following club's plan. A collection of its own
+     * because one calendar (a city's school holidays) is followed by many clubs.
+     */
+    holidayCalendars: "/admin/holiday-calendars",
+    /** The create form. */
+    holidayCalendarNew: "/admin/holiday-calendars/new",
+    /** One calendar: the clubs following it, and its edit form. */
+    holidayCalendar: (id: string) =>
+      ({ pathname: "/admin/holiday-calendars/[id]", params: { id } }) as const,
     /** The Library's articles, published or not, and where they are written. */
     library: "/admin/library",
     /** The form a new article is written in. */

@@ -5,7 +5,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { dateTimeInstant } from "@/lib/schedule-occurrence";
+import { breakName } from "@/lib/holiday-breaks";
 import { formatDate } from "@/lib/utils";
 import type {
   AdminDashboardAttentionProduct,
@@ -57,9 +57,9 @@ import { PRODUCT_TYPE_ORDER } from "./product-type-presentation";
  *
  * **The schedule half converts; the coming-up half does not**, and the rule
  * behind that split is the repo's own: a value with a clock face converts, a
- * bare date does not. A session is a date *plus* a wall clock, so it is resolved
- * to an instant in the product's zone and re-read in the viewer's — re-grouped
- * onto whichever weekday it lands on there. A term's first and last day carry no
+ * bare date does not. A session arrives from the plan as an instant, so it is
+ * read in the viewer's zone — re-grouped onto whichever weekday it lands on
+ * there. A term's first and last day carry no
  * time of day at all, so they stay UTC-pinned calendar dates and are compared,
  * grouped and rendered as themselves.
  */
@@ -77,8 +77,8 @@ export interface BuildAdminDashboardDataArgs {
  * How far back and forward the snapshot's schedule set reaches
  * (`(now AT TIME ZONE p.timezone)::date - 30` to `+ 4 months` in the RPC).
  *
- * The occurrence walk below applies these in each **product's** zone, which is
- * where the RPC applies them; the offered week window applies them in the
+ * The RPC plans each product's sessions over these in the **product's** zone;
+ * the offered week window applies them in the
  * **viewer's** and then shrinks by a day at each end, because the two anchors
  * straddle a midnight for part of every day — see `windowWeekStarts`.
  *
@@ -148,7 +148,6 @@ export function buildAdminDashboardData({
     products: snapshot.schedule_products,
     locale,
     viewerTimeZone,
-    now,
     today,
     flagged,
   });
@@ -400,14 +399,14 @@ interface ResolveWeeksArgs {
   products: readonly AdminDashboardScheduleProduct[];
   locale: SupportedLocale;
   viewerTimeZone: string;
-  now: Date;
   /** Today, as the calendar date it is in the viewer's zone. */
   today: string;
   flagged: ReadonlySet<string>;
 }
 
 /**
- * Every occurrence in the window, placed in the viewer's week.
+ * Every planned session in the window, and every session a holiday break
+ * withdrew from it, placed in the viewer's week.
  *
  * The whole range is resolved up front rather than a week at a time, because
  * stepping weeks is local state over data the page already holds — a step that
@@ -417,7 +416,6 @@ function resolveWeeks({
   products,
   locale,
   viewerTimeZone,
-  now,
   today,
   flagged,
 }: ResolveWeeksArgs): { weeks: ScheduleWeek[]; currentWeekIndex: number } {
@@ -431,17 +429,22 @@ function resolveWeeks({
     const href = ROUTES.admin.product(product.product_type, product.id);
     const cancellationOn = productCancellations(product);
 
-    for (const occurrence of productOccurrences(product, now)) {
-      const { date, time } = viewerPlacement(
-        occurrence.date,
-        occurrence.slot.start_time,
-        product.timezone,
-        viewerTimeZone,
-      );
+    /**
+     * File one session under the viewer's week it lands in. A planned session
+     * and one a holiday break withdrew are placed by the same rule — the
+     * viewer's calendar date of the start instant — so a withdrawn session sits
+     * exactly where it would have run.
+     */
+    const place = (
+      startsAt: Date,
+      endsAt: Date,
+      facts: Pick<ScheduleChip, "cancellation" | "holidayBreak">,
+    ) => {
+      const { date, time } = viewerPlacement(startsAt, viewerTimeZone);
       const weekStart = mondayOf(date);
       // The viewer's week can reach a day either side of the source window; a
       // week the data does not wholly cover is not offered at all.
-      if (!inWindow.has(weekStart)) continue;
+      if (!inWindow.has(weekStart)) return;
 
       const chips = chipsByWeek.get(weekStart) ?? [];
       chips.push({
@@ -451,16 +454,40 @@ function resolveWeeks({
         productType: product.product_type,
         weekday: weekdayOf(date),
         startTime: time,
-        durationMinutes: occurrence.slot.duration_minutes,
+        durationMinutes: Math.round(
+          (endsAt.getTime() - startsAt.getTime()) / 60_000,
+        ),
         activeCount: product.active_count,
         seatCount: product.seat_count,
         needsAttention: flagged.has(product.id),
-        // Keyed on the product-zone date: that is the date a cancellation
-        // names, whichever viewer weekday the chip lands on.
-        cancellation: cancellationOn(occurrence.date),
         href,
+        ...facts,
       });
       chipsByWeek.set(weekStart, chips);
+    };
+
+    for (const session of product.planned_sessions) {
+      place(new Date(session.starts_at), new Date(session.ends_at), {
+        // Keyed on the product-zone date: that is the date a cancellation
+        // names, whichever viewer weekday the chip lands on.
+        cancellation: cancellationOn(session.session_date),
+        holidayBreak: null,
+      });
+    }
+
+    // A break's dates are never in the plan, so a week it touches would read as
+    // short — or, for a whole-week break, as a product that is simply absent.
+    // Each session it withdrew is filed beside the planned ones instead, marked
+    // with the break's name, so the row says why. Two overlapping breaks never
+    // both list a date: the earlier break alone withdraws it.
+    for (const row of product.holiday_breaks) {
+      const holidayBreak = breakName(row, locale);
+      for (const session of row.withdrawnSessions) {
+        place(session.startsAt, session.endsAt, {
+          cancellation: NOT_CANCELLED,
+          holidayBreak,
+        });
+      }
     }
   }
 
@@ -485,8 +512,8 @@ function resolveWeeks({
  * could tell the reader which they were looking at.
  *
  * **The day at each end is the price of two calendars.** This window is measured
- * from the *viewer's* today, while every product's own occurrence window is
- * measured from today in the *product's* zone, which the walk above mirrors.
+ * from the *viewer's* today, while every product's own session window is
+ * measured from today in the *product's* zone, which is where the RPC plans it.
  * The two agree for most of the day and disagree across whichever midnight
  * comes first: an LA admin reading a Helsinki club is a calendar date behind it
  * for seven hours out of every twenty-four. On those hours a boundary week can
@@ -500,7 +527,7 @@ function resolveWeeks({
  * same date. Adding four months clamps to the end of the target month, so a
  * subtraction on the far side is a subtraction from an already-clamped answer:
  * from 1 March, `+ 4 months − 1 day` is 30 June, while the product a calendar
- * date behind walked to `28 February + 4 months` = 28 June. Three days of window
+ * date behind was planned to `28 February + 4 months` = 28 June. Three days of window
  * the data does not cover, and the week of 22 June offered on the strength of
  * it. Taking the day off first asks the clamp the same question the product
  * asked it, which is the only way the two edges can agree. Day arithmetic
@@ -533,64 +560,9 @@ function windowWeekStarts(today: string): string[] {
   return starts;
 }
 
-interface Occurrence {
-  /** The calendar date in the **product's** zone. */
-  date: string;
-  slot: AdminDashboardScheduleProduct["schedule_slots"][number];
-}
-
 /**
- * Every date a product's slots fall on inside its own window.
- *
- * The walk is in the product's zone because that is the zone its term dates and
- * its slot weekdays are authored in — a term that ends on the 13th ends on the
- * 13th there, whoever is reading. Conversion happens one step later, per
- * occurrence, once there is a concrete date to hang a clock face on.
- */
-function* productOccurrences(
-  product: AdminDashboardScheduleProduct,
-  now: Date,
-): Generator<Occurrence> {
-  // A product with no first day has no occurrences to place: there is no date
-  // to start walking from, and guessing one would invent sessions.
-  if (product.start_date === null) return;
-
-  const sourceToday = formatInTimeZone(now, product.timezone, "yyyy-MM-dd");
-  const windowStart = addCalendarDays(sourceToday, -WINDOW_DAYS_BEFORE);
-  const windowEnd = addCalendarMonths(sourceToday, WINDOW_MONTHS_AFTER);
-
-  const from =
-    product.start_date > windowStart ? product.start_date : windowStart;
-  // Exclusive end: the day after the term's last, or the window's edge.
-  const termEnd =
-    product.end_date === null ? null : addCalendarDays(product.end_date, 1);
-  const until = termEnd !== null && termEnd < windowEnd ? termEnd : windowEnd;
-
-  for (const slot of product.schedule_slots) {
-    // The first occurrence of this weekday on or after `from`, then a week at a
-    // time. Stepping seven calendar days on a UTC-pinned date is exact — a
-    // weekday cannot drift, which is the whole reason these dates never leave
-    // UTC until a clock face is attached to them.
-    const offset = (slot.weekday - weekdayOf(from) + 7) % 7;
-    for (
-      let date = addCalendarDays(from, offset);
-      date < until;
-      date = addCalendarDays(date, 7)
-    ) {
-      yield { date, slot };
-    }
-  }
-}
-
-/**
- * One occurrence as the viewer meets it: their calendar date, their clock face.
- *
- * The identical-zone case short-circuits, and that is not only an optimisation:
- * when the product's zone *is* the viewer's, the stored wall clock already is
- * the viewer's wall clock, and round-tripping it through an instant could only
- * introduce error. It is also the overwhelmingly common path — Helsinki products
- * read by a Helsinki admin — so the conversion cost falls only on the reader who
- * actually needs it.
+ * One session as the viewer meets it: their calendar date, their clock face,
+ * read off the session's start instant.
  *
  * The `time` is a fixed 24-hour "HH:mm", and it is both the chip's sort key and
  * the text the chip shows. That holds while every formatting locale sets a
@@ -598,18 +570,10 @@ function* productOccurrences(
  * and the display split, and the display renders through `formattingLocale()`.
  */
 function viewerPlacement(
-  date: string,
-  startTime: string,
-  sourceTimeZone: string,
+  startsAt: Date,
   viewerTimeZone: string,
 ): { date: string; time: string } {
-  if (sourceTimeZone === viewerTimeZone) {
-    return { date, time: startTime.slice(0, 5) };
-  }
-  // A recurring wall clock cannot be converted without a concrete date — the
-  // offset is DST-dependent — which is exactly what this occurrence has.
-  const instant = dateTimeInstant(date, startTime, sourceTimeZone);
-  const stamp = formatInTimeZone(instant, viewerTimeZone, "yyyy-MM-dd HH:mm");
+  const stamp = formatInTimeZone(startsAt, viewerTimeZone, "yyyy-MM-dd HH:mm");
   return { date: stamp.slice(0, 10), time: stamp.slice(11) };
 }
 
@@ -769,27 +733,29 @@ const NOT_CANCELLED: DateCancellation = { kind: "none" };
 /**
  * A product's dates, decided against its whole group list.
  *
- * The wire carries every group the product has and every cancelled (group,
- * date) in effect, and a date is cancelled only when **every** group cancelled
- * it — a group with no cancellation on the date is simply running. A
- * cancellation naming a group outside the list cannot count towards "every",
- * so it is ignored rather than trusted; and a product with no groups has
- * nothing that could have been cancelled.
+ * The wire carries every group the product has and, on each planned session,
+ * the groups that cancelled its date, and a date is cancelled only when
+ * **every** group cancelled it — a group with no cancellation on the date is
+ * simply running. A cancellation naming a group outside the list cannot count
+ * towards "every", so it is ignored rather than trusted; a product with no
+ * groups has nothing that could have been cancelled; and a date the plan does
+ * not hold has no session to cancel.
  */
 export function productCancellations(
-  product: Pick<AdminDashboardScheduleProduct, "group_ids" | "cancelled_sessions">,
+  product: Pick<AdminDashboardScheduleProduct, "group_ids" | "planned_sessions">,
 ): (date: string) => DateCancellation {
   const groups = new Set(product.group_ids);
-  const cancelledByDate = new Map<string, Set<string>>();
-  for (const { group_id: groupId, session_date: date } of product.cancelled_sessions) {
-    if (!groups.has(groupId)) continue;
-    const cancelled = cancelledByDate.get(date) ?? new Set<string>();
-    cancelled.add(groupId);
-    cancelledByDate.set(date, cancelled);
+  const cancelledByDate = new Map<string, number>();
+  for (const session of product.planned_sessions) {
+    cancelledByDate.set(
+      session.session_date,
+      session.cancelled_group_ids.filter((groupId) => groups.has(groupId))
+        .length,
+    );
   }
 
   return (date) => {
-    const cancelled = cancelledByDate.get(date)?.size ?? 0;
+    const cancelled = cancelledByDate.get(date) ?? 0;
     if (cancelled === 0) return NOT_CANCELLED;
     if (cancelled === groups.size) return { kind: "all" };
     return { kind: "some", cancelled, groups: groups.size };

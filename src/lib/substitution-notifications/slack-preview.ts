@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { addCalendarDays } from "@/lib/calendar-date";
 import { ROUTES } from "@/lib/constants/routes";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
@@ -118,11 +118,14 @@ function sampleSnapshot(
   dms: SnapshotDm[],
   seated: { substitute: SnapshotPerson; approver: SnapshotPerson; approved_at: string } | null = null,
 ): PreviewSnapshot {
+  const startsAt = fromZonedTime(`${sessionDate}T16:00:00`, DEFAULT_TIMEZONE);
   const base: Omit<SnapshotRequest, "status" | "substitute" | "approver" | "approved_at"> = {
     id: IDS.request,
     group_id: IDS.group,
     group_name: "A",
     session_date: sessionDate,
+    starts_at: startsAt.toISOString(),
+    ends_at: new Date(startsAt.getTime() + 90 * 60_000).toISOString(),
     role: "primary",
     fee_cents: 4500,
     reason: "sick",

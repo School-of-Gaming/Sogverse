@@ -2,12 +2,26 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
-import { Clock, Globe, Languages, MapPin, UserRound, Users } from "lucide-react";
+import {
+  CalendarOff,
+  Clock,
+  Globe,
+  Languages,
+  MapPin,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
+import type { HolidayBreak } from "@/lib/holiday-breaks";
+import {
+  holidayBreakLines,
+  productToday,
+} from "@/lib/products/holiday-breaks-shown";
 import type { ProductBrowseRow } from "@/types";
+import { HolidayBreaksList } from "./holiday-breaks-list";
 import {
   formatProductLocation,
   productLocationLabelIsFormat,
@@ -62,11 +76,25 @@ interface ProductOverviewCardProps {
    * width and leave it unset.
    */
   railFrom2xl?: boolean;
+  /**
+   * The club's holiday breaks, as `holiday_breaks_document` returned them over
+   * the span `holidayBreaksSpan` names — the family-facing surfaces (the
+   * product page and the purchase confirmation) pass them; the admin product
+   * page does not. Which of them are listed is the shared rule's call, and a
+   * list that comes out empty draws nothing.
+   *
+   * **They arrive with the card, never after it.** The section is the card's
+   * last row, and below `2xl` the card sits in the reading column above the
+   * topic card — so a list landing a round trip late would push that card
+   * down. Both callers hold them in the page's initial data instead.
+   */
+  holidayBreaks?: readonly HolidayBreak[];
 }
 
 export function ProductOverviewCard({
   product,
   railFrom2xl,
+  holidayBreaks = [],
 }: ProductOverviewCardProps) {
   const t = useTranslations("productDetail");
   const tAudience = useTranslations("productAudience");
@@ -89,6 +117,10 @@ export function ProductOverviewCard({
     locale: uiLocale,
     timeZone,
     now,
+  });
+  const breakLines = holidayBreakLines(holidayBreaks, {
+    today: productToday(product.timezone, now),
+    locale: uiLocale,
   });
 
   return (
@@ -179,6 +211,18 @@ export function ProductOverviewCard({
             <LanguageFlag code={product.spoken_language_code} />
           </DetailRow>
         </div>
+        {/* Below the four-fact grid rather than in it, so the grid stays a
+            filled 2×2: a list of dates is a fact of its own length, and only
+            clubs have one. Absent entirely when nothing is listed. */}
+        {breakLines.length > 0 && (
+          <DetailRow
+            icon={CalendarOff}
+            label={t("info.holidayBreaks")}
+            railFrom2xl={railFrom2xl}
+          >
+            <HolidayBreaksList lines={breakLines} />
+          </DetailRow>
+        )}
       </CardContent>
     </Card>
   );

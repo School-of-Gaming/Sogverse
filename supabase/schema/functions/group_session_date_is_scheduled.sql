@@ -6,17 +6,7 @@ CREATE FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_sessio
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT p_group_id IS NOT NULL
-     AND p_session_date IS NOT NULL
-     AND EXISTS (
-           SELECT 1
-             FROM public.product_groups g
-             JOIN public.products p ON p.id = g.product_id
-            WHERE g.id = p_group_id
-              AND (p.start_date IS NULL OR p_session_date >= p.start_date)
-              AND (p.end_date   IS NULL OR p_session_date <= p.end_date)
-         )
-     AND public.derive_group_session_window(p_group_id, p_session_date) IS NOT NULL;
+  SELECT public.derive_group_session_window(p_group_id, p_session_date) IS NOT NULL;
 $$;
 
 
@@ -24,7 +14,7 @@ $$;
 -- Name: FUNCTION group_session_date_is_scheduled(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT schedule project a session on this date: inside the product''s start and end dates and on a weekday it has a slot for. The writable-date check minus its visible horizon — what a new cancellation is validated against, and one of the two ways a stored cancellation stays in effect (group_session_is_cancelled).';
+COMMENT ON FUNCTION public.group_session_date_is_scheduled(p_group_id uuid, p_session_date date) IS 'Does the CURRENT plan have a session on this date: inside the product''s term, on a weekday it has a slot for, and outside every break of the holiday calendars it follows (planned_session_dates, through derive_group_session_window). The writable-date check minus its visible horizon — what a new cancellation is validated against, and one of the two ways a stored cancellation stays in effect (group_session_is_cancelled).';
 
 
 --

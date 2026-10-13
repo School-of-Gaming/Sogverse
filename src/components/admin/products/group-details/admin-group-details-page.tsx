@@ -76,7 +76,7 @@ import type {
   ProductGroupsSnapshot,
   ProductType,
 } from "@/types";
-import type { SessionFeedEntry } from "@/components/gedu/session-feed";
+import type { DatedSessionFeedEntry } from "@/components/gedu/session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { sessionRequirements } from "@/lib/products/session-requirements";
 import type { AppHref } from "@/lib/constants/routes";
@@ -449,14 +449,8 @@ function Workspace({
     () =>
       buildGeduSessionFeed({
         groupId,
-        timezone: sessions.product.timezone,
-        slots: sessions.product.schedule_slots.map((slot) => ({
-          weekday: slot.weekday,
-          startTime: slot.start_time,
-          durationMinutes: slot.duration_minutes,
-        })),
-        startDate: sessions.product.start_date,
-        endDate: sessions.product.end_date,
+        plannedSessions: sessions.planned_sessions,
+        openEnded: sessions.product.end_date === null,
         sessions: group.sessions,
         // The staffing derivation's two inputs, from the admin product
         // document's own copy of them — same shapes as the gedu feed's, because
@@ -465,6 +459,8 @@ function Workspace({
         substitutions: group.substitutions,
         // With every admin field filled — this document is admin-only.
         cancellations: group.cancellations,
+        // The product's breaks, like its plan: one copy for every group.
+        holidayBreaks: sessions.holiday_breaks,
         // **No viewer.** An admin is not a member of the group's staff, so
         // there is nobody here for "am I expected" to be about: the shell
         // supplies the staffing editor in that slot instead, as it already does
@@ -474,11 +470,13 @@ function Workspace({
       }),
     [
       groupId,
-      sessions.product,
+      sessions.planned_sessions,
+      sessions.product.end_date,
       group.sessions,
       group.gedus,
       group.substitutions,
       group.cancellations,
+      sessions.holiday_breaks,
       now,
     ],
   );
@@ -590,10 +588,15 @@ function Workspace({
         })),
         roster: candidate.id === groupId ? feed.roster : null,
       })),
+      // The plan is the product's and travels once on the session record; the
+      // final session is this group's, because its cancellations can move it.
+      planned_sessions: sessions.planned_sessions,
+      final_session_date: group.final_session_date,
     }),
     [
       product,
       sessions,
+      group.final_session_date,
       feed.product.translations,
       feed.product.requires_gamer_creations,
       feed.roster,
@@ -757,7 +760,7 @@ function Workspace({
    * keyed by in Postgres, so the two agree by construction and cannot drift if a
    * snapshot's instant ever disagrees with the date it was filed under.
    */
-  const renderSessionMenu = (entry: SessionFeedEntry) => {
+  const renderSessionMenu = (entry: DatedSessionFeedEntry) => {
     const sessionDate = entry.id.slice(sessionEntryId(groupId, "").length);
     const handleCancelSession = async (reason: string) => {
       await cancelSession.mutateAsync({ sessionDate, reason });

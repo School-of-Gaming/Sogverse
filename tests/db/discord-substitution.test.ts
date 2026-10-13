@@ -262,6 +262,34 @@ describe("substitutions from Discord", () => {
       expect(summaries.map((s) => s.group_name)).toEqual(["Discord Cohort"]);
     });
 
+    it("hand the bot the seat's plan, flagged where the group cancelled", async () => {
+      await link(geduId, DISCORD_GEDU, new Date());
+      const { error: cancelError } = await admin.from("session_cancellations").insert([
+        { group_id: GROUP, session_date: utcDate(3), cancelled_by: TEST_IDS.ADMIN },
+        // The sister group's cancellation is not this seat's.
+        { group_id: OTHER_GROUP, session_date: utcDate(4), cancelled_by: TEST_IDS.ADMIN },
+      ]);
+      expect(cancelError).toBeNull();
+
+      const { data, error } = await admin.rpc("get_assigned_products_for_discord_user", {
+        p_discord_user_id: DISCORD_GEDU,
+      });
+      expect(error).toBeNull();
+      const [seat] = myAssignedProductRows.parse(data);
+      const plan = seat.upcoming_sessions;
+      // A slot every day: the day before today to the term's last day.
+      expect(plan.map((session) => session.date)).toEqual(
+        Array.from({ length: 62 }, (_, index) => utcDate(index - 1)),
+      );
+      expect(plan[1].startsAt.toISOString()).toBe(`${utcDate(0)}T10:00:00.000Z`);
+      expect(plan[1].endsAt.toISOString()).toBe(`${utcDate(0)}T11:00:00.000Z`);
+      expect(plan.filter((session) => session.cancelled).map((session) => session.date)).toEqual([
+        utcDate(3),
+      ]);
+      expect(seat.substitution_starts_at).toBeNull();
+      expect(seat.substitution_ends_at).toBeNull();
+    });
+
     it("refuse an unlinked Discord user", async () => {
       const rows = await admin.rpc("get_assigned_products_for_discord_user", {
         p_discord_user_id: DISCORD_NOBODY,
@@ -488,6 +516,44 @@ describe("substitutions from Discord", () => {
         p_reason: "sick",
       });
       expect(again.error?.code).toBe(FORBIDDEN);
+    });
+
+    it("carries each request's planned window from Discord, cancelled or not, and none past the term", async () => {
+      await link(geduId, DISCORD_GEDU, new Date());
+      await fileOnTheWeb(geduAuth, utcDate(5));
+      await fileOnTheWeb(geduAuth, utcDate(11));
+      await admin.from("session_cancellations").insert({
+        group_id: GROUP,
+        session_date: utcDate(11),
+        cancelled_by: TEST_IDS.ADMIN,
+      });
+      // Past the term's end: stored directly, since the write refuses a date
+      // the plan does not name.
+      const { error: pastTermError } = await admin.from("session_substitution_requests").insert({
+        group_id: GROUP,
+        session_date: utcDate(61),
+        requested_by: geduId,
+        role: "primary",
+        reason: "other",
+      });
+      expect(pastTermError).toBeNull();
+
+      const viaDiscord = await admin.rpc("get_live_substitution_requests_for_discord_user", {
+        p_discord_user_id: DISCORD_GEDU,
+      });
+      expect(viaDiscord.error).toBeNull();
+      const windows = liveSubstitutionRequests.parse(viaDiscord.data).map((request) => [
+        request.session_date,
+        request.starts_at === null ? null : new Date(request.starts_at).toISOString(),
+        request.ends_at === null ? null : new Date(request.ends_at).toISOString(),
+        request.session_cancelled,
+      ]);
+      expect(windows).toEqual([
+        [utcDate(5), `${utcDate(5)}T10:00:00.000Z`, `${utcDate(5)}T11:00:00.000Z`, false],
+        // A cancelled session keeps its window: the plan still has it.
+        [utcDate(11), `${utcDate(11)}T10:00:00.000Z`, `${utcDate(11)}T11:00:00.000Z`, true],
+        [utcDate(61), null, null, false],
+      ]);
     });
 
     it("leaves out a request dated before today in the product's zone", async () => {

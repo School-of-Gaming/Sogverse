@@ -16,6 +16,7 @@ import { formatCurrencyFromCents } from "@/lib/utils";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
+import type { HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import { ProductOverviewCard } from "./product-overview-card";
@@ -65,6 +66,13 @@ interface PurchaseConfirmationViewProps {
    * same way — a bare start date when unclamped, the viewer's own day when not.
    */
   firstChargeAt?: string | null;
+  /**
+   * The club's holiday breaks, read by the page over the span the shared rule
+   * names, for the "Good to know" card — where the confirmation mail states
+   * the same list. Empty for anything that is not a club, and on a read that
+   * failed: the list is optional and the summary is not.
+   */
+  holidayBreaks?: readonly HolidayBreak[];
 }
 
 export function PurchaseConfirmationView({
@@ -74,6 +82,7 @@ export function PurchaseConfirmationView({
   outcome = "enrolled",
   waitlistPosition = null,
   firstChargeAt = null,
+  holidayBreaks = [],
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
   const tSelf = useTranslations("purchaseConfirmation.self");
@@ -205,7 +214,7 @@ export function PurchaseConfirmationView({
         </Card>
 
         <div className="mt-6">
-          <ProductOverviewCard product={product} />
+          <ProductOverviewCard product={product} holidayBreaks={holidayBreaks} />
         </div>
 
         <Card className="mt-6">

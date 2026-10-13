@@ -8,16 +8,7 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
-import {
-  capPastCancellations,
-  earlierBoundary,
-  endDateToCutoff,
-  enumerateRowOccurrences,
-  productLocalDate,
-  splitAtNextRunning,
-  startDateToCutoff,
-  type SlotShape,
-} from "@/lib/session-occurrence";
+import { nextRunning } from "@/lib/planned-sessions";
 import type { FamilyMember } from "@/services/family";
 import type {
   MyUpcomingSessionRow,
@@ -265,8 +256,8 @@ export const TOPIC_PREP_WINDOW_SESSIONS = 2;
  *   precisely the reader it is written for.
  *
  * Takes the occurrences rather than fetching them, so the same rule serves the
- * live roll-up and a fixture. They are expected soonest-first, which is what
- * every walk in this codebase emits.
+ * live roll-up and a fixture. They are expected soonest-first, which is the
+ * order the plan arrives in.
  */
 export function topicPrepWindowEnd(
   occurrences: readonly { start: Date; end: Date }[],
@@ -281,52 +272,18 @@ export function topicPrepWindowEnd(
 }
 
 /**
- * The same answer, from a product's schedule rather than from a list — the form
- * both the live roll-up and the dashboard fixtures want.
- *
- * The walk is the one every other surface runs, anchored at the start moment
- * instead of at now, so the occurrences it yields are the family's first ones
- * rather than the next ones.
- *
- * **The cap is the window plus one per slot, and that bound is provable rather
- * than generous.** The walk emits, per slot, at most one occurrence that is
- * already in progress at the anchor plus future ones whose starts are all
- * strictly after it; it then merges the slots, sorts ascending and keeps the
- * first `cap`. An in-progress occurrence started *before* the moment, so it is
- * filtered out here — and since a slot can be in progress at most once at any
- * one instant, the discarded prefix of that sorted list is at most one per
- * slot. Asking for `slots.length` more than the window is therefore exactly
- * what guarantees the second qualifying occurrence survives the trim, on a
- * product with any number of slots overlapping the moment of placement.
- */
-export function topicPrepWindowEndFromSchedule(args: {
-  slots: SlotShape[];
-  timezone: string;
-  /** When the seat became this family's — see `laterStamp`. */
-  startMoment: Date;
-  startBoundary: Date | null;
-  endBoundary: Date | null;
-}): Date | null {
-  const occurrences = enumerateRowOccurrences({
-    slots: args.slots,
-    timezone: args.timezone,
-    now: args.startMoment,
-    startBoundary: args.startBoundary,
-    endBoundary: args.endBoundary,
-    cap: TOPIC_PREP_WINDOW_SESSIONS + args.slots.length,
-    windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
-  });
-  return topicPrepWindowEnd(occurrences, args.startMoment);
-}
-
-/**
  * One row's prep-window end — the whole derivation, from the row alone.
  *
  * **Nothing here reads the clock.** The answer comes from the two stamps on the
- * row, the product's schedule and its date bounds, all of which are fixed for
- * as long as the row is; that is what lets the dashboards compute it once per
- * row instead of once per row per tick, and it is the property to preserve if
- * this ever grows a branch.
+ * row and the seat's planned sessions, all of which are fixed for as long as
+ * the row is; that is what lets the dashboards compute it once per row instead
+ * of once per row per tick, and it is the property to preserve if this ever
+ * grows a branch.
+ *
+ * The plan reaches back to the day the seat became the family's, so the
+ * sessions after that moment are in it however long ago it was. A cancelled
+ * session still counts: the window measures the family's first stretch of the
+ * run, not which evenings of it went ahead.
  *
  * An unplaced seat gets no end at all: its sessions are not theirs to count
  * until somebody puts them in a group, and it is the state with the most setup
@@ -334,27 +291,23 @@ export function topicPrepWindowEndFromSchedule(args: {
  */
 export function prepWindowEndForRow(row: MyUpcomingSessionRow): Date | null {
   if (row.groupId === null) return null;
-  const { product } = row;
-  return topicPrepWindowEndFromSchedule({
-    slots: row.slots,
-    timezone: product.timezone,
-    startMoment: laterStamp(row.signedUpAt, row.groupJoinedAt),
-    startBoundary: startDateToCutoff(product.startDate, product.timezone),
-    endBoundary: endDateToCutoff(product.endDate, product.timezone),
-  });
+  return topicPrepWindowEnd(
+    row.plan.map((session) => ({ start: session.startsAt, end: session.endsAt })),
+    laterStamp(row.signedUpAt, row.groupJoinedAt),
+  );
 }
 
 /**
  * Every row's prep-window end, keyed by participation — the form the dashboards
  * hold it in.
  *
- * **This exists to keep the walk off the per-tick path.** The roll-up is
+ * **This exists to keep the derivation off the per-tick path.** The roll-up is
  * re-derived on every beat of the shared 30-second clock, because what is next
  * and which band a card sorts into both move with the clock; the prep window
- * does not move at all, and running its occurrence walk twice a minute per
- * enrollment on the two hottest pages in the app is work with no answer to
- * show for it. Computed on the rows and handed to the roll-up, it is computed
- * again only when the rows themselves change.
+ * does not move at all, and scanning each seat's plan for it twice a minute on
+ * the two hottest pages in the app is work with no answer to show for it.
+ * Computed on the rows and handed to the roll-up, it is computed again only
+ * when the rows themselves change.
  *
  * A caller that passes nothing still gets the right cards: the roll-up falls
  * back to deriving each row's window itself, which is what every fixture and
@@ -503,8 +456,8 @@ export interface FamilyRollUpArgs {
    *
    * The roll-up runs on every tick of the shared 30-second clock; this answer
    * depends only on the row, so a caller that holds the rows computes it once
-   * with `prepWindowEndsForRows` and hands it in, keeping an occurrence walk
-   * per enrollment off the dashboards' hottest path. Optional, and a row the
+   * with `prepWindowEndsForRows` and hands it in, keeping a scan of each
+   * seat's plan off the dashboards' hottest path. Optional, and a row the
    * map does not mention is derived here as before — the result is the same
    * either way, which is what makes the map an optimisation rather than a
    * second source of truth.
@@ -734,8 +687,7 @@ export function rollUpGamerEnrollments(
  * rule itself is shared with the club page and unchanged: the last session a
  * paid window covers is the furthest-out one inside it if any are still to
  * come, and otherwise the most recent one that already ran. What differs is
- * that this surface may only *say* the answer when it comes from the forward
- * walk. The club page says it in both cases, because it reads a feed merged
+ * that this surface may only *say* the answer when it is still to come. The club page says it in both cases, because it reads a feed merged
  * from the group's stored rows and so has the better answer available.
  *
  * **"Better" rather than "certain", and the distinction is worth keeping
@@ -748,10 +700,11 @@ export function rollUpGamerEnrollments(
  * date in the notice is read off the very list of sessions rendered beneath it.
  *
  * **Why the card must not answer the second case itself.** The dashboard read
- * fetches no session rows — only the product's *current* schedule — so the only
- * way to name a past session here is to project one backwards, and a projection
- * is not a record. Move a club from Mondays to Wednesdays mid-term and the
- * backward walk happily produces a Wednesday that never ran, while the club
+ * fetches no session rows — only the plan, which is the product's *current*
+ * schedule laid over its term — so a past session named here would be a
+ * projection, and a projection is not a record. Move a club from Mondays to
+ * Wednesdays mid-term and the plan behind today happily holds a Wednesday that
+ * never ran, while the club
  * page, where a row exists, names the Monday that did. That was a card and a
  * page contradicting each other about the same enrollment, in the surface a
  * parent checks *most* often, in exactly the situation they are most likely to
@@ -760,20 +713,20 @@ export function rollUpGamerEnrollments(
  *
  * So the fallback returns `lastSessionStart: null` and the card drops to copy
  * that names no session, stating instead when access ends — which the
- * subscription row tells us outright and no walk has to guess. **This is a
+ * subscription row tells us outright and nothing has to guess. **This is a
  * deliberate information downgrade, not a gap waiting to be filled**: the card
  * gives up a date it could only have invented, keeps the not-renewing marking
  * the plan requires, and points at a page with the fuller answer. Giving the
- * card a truthful date means giving it the stored history, not a better walk.
+ * card a truthful date means giving it the stored history, not a better plan.
  */
 function cancellationFor(
   /** The instant paid access ends — `null` on a healthy subscription. */
   accessUntil: Date | null,
   /**
-   * The forward walk's occurrences, already bounded by the paid window and
-   * sorted soonest-first.
+   * The planned sessions still to come that run, already bounded by the paid
+   * window and sorted soonest-first.
    */
-  remaining: readonly { start: Date }[],
+  remaining: readonly { startsAt: Date }[],
 ): SessionCancellation | null {
   if (accessUntil === null) return null;
 
@@ -785,7 +738,7 @@ function cancellationFor(
 
   return {
     accessUntil,
-    lastSessionStart: remaining[remaining.length - 1].start,
+    lastSessionStart: remaining[remaining.length - 1].startsAt,
     // "This *is* the last one" — a claim about the session the card is
     // otherwise pointing at, so it needs one still to come and it needs to be
     // the only one left.
@@ -797,8 +750,9 @@ function cancellationFor(
  * An `status='active'` row — a seat the family holds, placed or not.
  *
  * **Everything the card shows stops at the paid window.** When a parent has
- * cancelled, the occurrence walk is bounded by whichever comes first, the
- * product's own last day or the instant paid access ends, so the next session
+ * cancelled, the card reads only the planned sessions starting by the instant
+ * paid access ends (the plan already stops at the product's own last day), so
+ * the next session
  * the card names is one the family can actually attend and the sort cannot
  * float a cancelled club above a live one on the strength of a session nobody
  * is entitled to.
@@ -812,54 +766,38 @@ function sessionSummary(
   const hasVoiceRoom = product.isRemote;
   const subEnd = row.subscriptionEndsAt;
 
-  const cancelledDates = new Set(row.cancelledDates);
-  const occurrences = enumerateRowOccurrences({
-    slots: row.slots,
-    timezone: product.timezone,
-    now,
-    startBoundary: startDateToCutoff(product.startDate, product.timezone),
-    endBoundary: earlierBoundary(
-      endDateToCutoff(product.endDate, product.timezone),
-      subEnd,
-    ),
-    // One running occurrence is all a card states, so the walk goes one past
-    // whatever the cancellations could remove — except on a cancelled
-    // membership, where the *last* covered session has to be identified as the
-    // last, and that cannot be known without walking to the end of the window.
-    // The walk is finite either way: a cancelled sub always supplies a
-    // terminal instant, so the uncapped branch is bounded by the boundary above.
-    cap:
-      subEnd === null
-        ? capPastCancellations(1, cancelledDates.size, row.slots.length)
-        : Infinity,
-    windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
-  });
+  // A session stays the next one until it closes, the voice window after its
+  // end — the same margin the Join keeps the room open for.
+  const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  const covered =
+    subEnd === null
+      ? row.plan
+      : row.plan.filter(
+          (session) => session.startsAt.getTime() <= subEnd.getTime(),
+        );
   // A cancelled session is never the next one: the card names, joins and
   // lights up for the first session that runs, and names the cancelled ones
   // before it on a line of their own.
-  const { next, cancelledAhead } = splitAtNextRunning(
-    occurrences,
-    product.timezone,
-    cancelledDates,
-  );
+  const { next, cancelledAhead } = nextRunning(covered, now, closeMarginMs);
   // What the paid window still covers, for the winding-down line: the family
   // does not attend a cancelled session, so it cannot be their last one.
-  const running = occurrences.filter(
-    (occurrence) =>
-      !cancelledDates.has(productLocalDate(occurrence.start, product.timezone)),
+  const running = covered.filter(
+    (session) =>
+      !session.cancelled &&
+      session.endsAt.getTime() + closeMarginMs > now.getTime(),
   );
 
   const precomputedPrepWindowEnd = prepWindowEnds?.get(row.participationId);
 
   return {
-    // **A second walk, anchored where the family's own run begins**, rather
-    // than a slice of the one above: that one starts at `now` and answers what
-    // is next, and the prep window is a question about what came *first* for
-    // this family, which on a club running since February is months behind it.
+    // **Anchored where the family's own run begins**, rather than at `now`:
+    // the next session answers what is coming, and the prep window is a
+    // question about what came *first* for this family, which on a club
+    // running since February is months behind it.
     //
     // It is also the one field here the clock has nothing to do with, so a
     // caller re-deriving these cards on every tick supplies it precomputed and
-    // the walk does not run again. `undefined` means the caller offered no
+    // the plan is not scanned again. `undefined` means the caller offered no
     // answer for this row — `null` is an answer, and a real one.
     prepWindowEnd:
       precomputedPrepWindowEnd !== undefined
@@ -870,9 +808,9 @@ function sessionSummary(
     productType: product.type,
     topic: product.topic,
     isRemote: product.isRemote,
-    nextSessionStart: next === null ? null : next.start,
-    nextSessionEnd: next === null ? null : next.end,
-    cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),
+    nextSessionStart: next === null ? null : next.startsAt,
+    nextSessionEnd: next === null ? null : next.endsAt,
+    cancelledAhead: cancelledAhead.map((session) => session.startsAt),
     hasVoiceRoom,
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
@@ -908,8 +846,8 @@ function sessionSummary(
     paymentProblem: row.paymentProblem,
     // Emitted for the whole of a winding-down membership's life, including the
     // stretch after its last session has run — that is when a parent is most
-    // likely to be looking. What varies is whether it carries a date: only the
-    // forward walk can supply one this surface is entitled to state. See
+    // likely to be looking. What varies is whether it carries a date: only a
+    // session still to come is one this surface is entitled to state. See
     // `cancellationFor`.
     cancellation: cancellationFor(subEnd, running),
     scheduleLines: scheduleLinesFor(

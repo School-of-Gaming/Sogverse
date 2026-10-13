@@ -202,7 +202,7 @@ An editor that writes one version of an item per site locale — a product, a Li
 - **Discard or not.** A standing page the admin keeps returning to carries one; a create/edit flow leaves by its own navigation.
 - **Its non-locale fields**, which join the unsaved-changes check.
 
-The editors today, each stating its own content rule in its code: Library (`src/components/admin/library/`), with a publish gate; Team profiles (`src/components/team/`), with a public gate and a Discard; Products (`src/components/admin/products/`); Spotlights (`src/components/admin/spotlights/`), with a title and a body required in every written tab at save and no publish step.
+The editors today, each stating its own content rule in its code: Library (`src/components/admin/library/`), with a publish gate; Team profiles (`src/components/team/`), with a public gate and a Discard; Products (`src/components/admin/products/`); Spotlights (`src/components/admin/spotlights/`), with a title and a body required in every written tab at save and no publish step; Holiday calendars (`src/components/admin/holiday-calendars/`), whose tabs are the calendar's and hold every break's name.
 
 ## Usage patterns
 

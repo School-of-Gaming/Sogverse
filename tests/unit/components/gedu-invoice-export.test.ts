@@ -104,7 +104,7 @@ describe("buildGeduInvoiceCsv", () => {
       ["2026-05-12", "Minecraft adventurers", "Not recorded"],
       ["2026-05-18", "Pelikerho Kivikko", "Recorded"],
       ["2026-05-19", "Minecraft adventurers", "Recorded"],
-      ["2026-05-25", "Pelikerho Kivikko", "Upcoming"],
+      ["2026-05-25", "Pelikerho Kivikko", "Holiday — Spring break"],
       ["2026-05-26", "Minecraft adventurers", "Upcoming"],
     ]);
   });
@@ -161,6 +161,34 @@ describe("buildGeduInvoiceCsv", () => {
     expect(cover?.[8]).toBe("Aino Kallio");
     expect(cover?.[7]).toBe("Recorded");
     expect(cover?.[10]).toBe("65,00");
+  });
+
+  it("labels a holiday with its break, at 0,00, and the CSV's own words for it", () => {
+    const rows = records(
+      buildGeduInvoiceCsv({ invoice: aino, locale: "en", t: translator("en") }),
+    ).slice(1);
+    const holiday = rows.find((row) => row[0] === "2026-05-25");
+
+    expect(holiday?.[7]).toBe("Holiday — Spring break");
+    expect(holiday?.[9]).toBe("65,00");
+    expect(holiday?.[10]).toBe("0,00");
+
+    // A break with no name at all still says what the day was.
+    const unnamed: GeduInvoice = {
+      ...aino,
+      clubs: aino.clubs.map((club) => ({
+        ...club,
+        lines: club.lines.map((line) =>
+          line.kind === "holiday" ? { ...line, holidayName: "" } : line,
+        ),
+      })),
+    };
+    const bare = records(
+      buildGeduInvoiceCsv({ invoice: unnamed, locale: "fi", t: translator("fi") }),
+    )
+      .slice(1)
+      .find((row) => row[0] === "2026-05-25");
+    expect(bare?.[7]).toBe("Loma");
   });
 
   it("words headers and values in the page locale", () => {
@@ -288,8 +316,9 @@ describe("geduInvoicePdfContent", () => {
         text: "1 past session has nothing recorded, so it is not included:",
         sessions: ["Tue 12/05/2026 · Minecraft adventurers · Group 1"],
       },
+      // The holiday on the 25th is neither: it is settled, and never due.
       upcoming:
-        "2 sessions are still upcoming: the month is in progress, so these figures can change.",
+        "1 session is still upcoming: the month is in progress, so these figures can change.",
     });
   });
 
@@ -298,7 +327,7 @@ describe("geduInvoicePdfContent", () => {
 
     expect(completeness.isComplete).toBe(false);
     expect(completeness.unrecorded).toBeNull();
-    expect(completeness.upcoming).toMatch(/^2 sessions are still upcoming/);
+    expect(completeness.upcoming).toMatch(/^1 session is still upcoming/);
   });
 
   it("says the month is complete once nothing is upcoming or unrecorded", () => {
@@ -372,7 +401,7 @@ describe("geduInvoicePdfContent", () => {
           { date: "Mon 04/05/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
           { date: "Mon 11/05/2026", group: "Ryhmä A", status: "Away — Mikael Rinne substituted", details: [], amount: "€0.00", pays: false },
           { date: "Mon 18/05/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
-          { date: "Mon 25/05/2026", group: "Ryhmä A", status: "Upcoming", details: [], amount: "€0.00", pays: false },
+          { date: "Mon 25/05/2026", group: "Ryhmä A", status: "Holiday — Spring break", details: [], amount: "€0.00", pays: false },
         ],
         total: { label: "Total", sessions: "2 sessions", amount: "€130.00" },
       },

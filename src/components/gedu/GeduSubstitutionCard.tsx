@@ -102,9 +102,9 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
   /**
    * Whether the room is open, from the same shared derivation the assignment
    * card asks — against the substituted session's own instants rather than a
-   * schedule walk, because a substitution *is* one occurrence.
+   * group's plan, because a substitution *is* one session.
    *
-   * An orphaned date (one the schedule no longer projects) has no instants and
+   * An orphaned date (one the plan no longer holds) has no instants and
    * is therefore never live, which is right: there is no session to walk into.
    */
   const { voiceIsOpen } = runLiveness(

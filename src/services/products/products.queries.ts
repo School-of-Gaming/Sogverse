@@ -1,32 +1,21 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
+import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
 import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
 import type { ProductType, ProductBrowseRow } from "@/types";
+import { invalidatePlanReaders } from "./plan-readers";
+import { productKeys } from "./products.keys";
 import {
   ProductsService,
   type CreateProductInput,
   type UpdateProductInput,
 } from "./products.service";
 
-export const productKeys = {
-  all: ["products"] as const,
-  lists: () => [...productKeys.all, "list"] as const,
-  listByType: (type: ProductType) =>
-    [...productKeys.lists(), { type }] as const,
-  // Sort the types so the key is order-independent — callers passing the same
-  // set in a different order hit the same cache entry (matches countsByProducts
-  // in participations.queries.ts).
-  visibleByTypes: (types: ProductType[]) =>
-    [...productKeys.lists(), "visible", { types: [...types].sort() }] as const,
-  detail: (id: string | undefined) =>
-    [...productKeys.all, "detail", id] as const,
-  adminDetail: (id: string | undefined) =>
-    [...productKeys.all, "admin-detail", id] as const,
-};
+export { productKeys };
 
 export function useProductDetail(id: string | undefined) {
   const supabase = getClient();
@@ -90,6 +79,41 @@ export function useProductAdmin(id: string | undefined) {
   });
 }
 
+/**
+ * A product's planned sessions in `[from, to]`, or nothing while any of the
+ * three is unknown — the caller usually learns the window from the product
+ * read.
+ *
+ * A window that moves (an open-ended product's reaches a year past today, so it
+ * moves at midnight) keeps the previous window's sessions on screen while the
+ * new one is read, so the query is pending only before its first answer — the
+ * admin product page waits on exactly that, and must not fall back to its
+ * loading state at midnight. Only the same product's sessions are carried
+ * over: another product's plan is never a placeholder for this one's, or the
+ * page would paint its first and last session and its Join state from it.
+ */
+export function usePlannedSessions(
+  productId: string | undefined,
+  window: { from: string; to: string } | null,
+) {
+  const supabase = getClient();
+  const service = new ProductsService(supabase);
+
+  return useQuery({
+    queryKey: productKeys.plannedSessionsIn(
+      productId,
+      window?.from ?? "",
+      window?.to ?? "",
+    ),
+    queryFn: () =>
+      service.getPlannedSessions(productId!, window!.from, window!.to),
+    enabled: !!productId && window !== null,
+    // The key is ["products", "planned-sessions", id, window].
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[2] === productId ? previous : undefined,
+  });
+}
+
 // Both writers below also invalidate the admin dashboard, which is a separate
 // cache entry built from these very rows: whether a product is live at all, its
 // schedule and term dates, its seat cap, and whether its gedu/municipality fees
@@ -112,6 +136,9 @@ export function useCreateProduct() {
       queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
       // The image catalogue's usage map is read from the products' pictures.
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey });
+      // A calendar's list row counts the clubs following it, and its page
+      // lists them.
+      queryClient.invalidateQueries({ queryKey: holidayCalendarKeys.all });
     },
   });
 }
@@ -124,11 +151,11 @@ export function useUpdateProduct(id: string) {
   return useMutation({
     mutationFn: (input: UpdateProductInput) => service.updateProduct(id, input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: productKeys.adminDetail(id) });
-      queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all });
-      queryClient.invalidateQueries({ queryKey: municipalityInvoicingKeys.all });
+      // The term, the slots and the calendar followed are the plan, so a saved
+      // edit moves every reader of it — the product's own detail and lists
+      // among them.
+      invalidatePlanReaders(queryClient);
+      // The image catalogue's usage map is read from the products' pictures.
       queryClient.invalidateQueries({ queryKey: catalogueImageUsageKey });
     },
   });

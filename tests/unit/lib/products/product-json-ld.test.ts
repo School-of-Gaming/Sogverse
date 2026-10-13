@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import {
   productJsonLd,
-  weekdayOccurrences,
+  statesSessionCount,
   type ProductJsonLdSubject,
 } from "@/lib/products/product-json-ld";
+import { planSessions } from "../../../mocks/planned-sessions";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 afterAll(() => vi.unstubAllEnvs());
@@ -66,8 +67,35 @@ const SITE_ROW = {
   },
 };
 
-function build(subject: ProductJsonLdSubject) {
-  return productJsonLd({ siteUrl: SITE, canonicalPath: PATH, product: subject, locale: "en" });
+/**
+ * The plan's dates as the page reads them: the whole term, for a product whose
+ * block states a session count, and nothing otherwise.
+ */
+function plannedDatesOf(subject: ProductJsonLdSubject): string[] | null {
+  if (!statesSessionCount(subject)) return null;
+  return planSessions({
+    slots: subject.schedule_slots.map((slot) => ({
+      weekday: slot.weekday,
+      startTime: slot.start_time,
+      durationMinutes: slot.duration_minutes,
+    })),
+    startDate: subject.start_date,
+    endDate: subject.end_date,
+    timezone: subject.timezone,
+  }).map((session) => session.date);
+}
+
+function build(
+  subject: ProductJsonLdSubject,
+  plannedDates: readonly string[] | null = plannedDatesOf(subject),
+) {
+  return productJsonLd({
+    siteUrl: SITE,
+    canonicalPath: PATH,
+    product: subject,
+    locale: "en",
+    plannedDates,
+  });
 }
 
 describe("productJsonLd", () => {
@@ -249,20 +277,52 @@ describe("productJsonLd", () => {
   });
 });
 
-describe("weekdayOccurrences", () => {
-  it("counts a weekday across a range, both ends included", () => {
-    // Tue 1 Sep – Tue 15 Dec 2026.
-    expect(weekdayOccurrences("2026-09-01", "2026-12-15", 1)).toBe(16);
-    expect(weekdayOccurrences("2026-09-01", "2026-12-15", 2)).toBe(15);
-  });
+describe("a club's session count", () => {
+  /** What a course states when its slots repeat these many times, in slot order. */
+  function counted(...repeatCounts: number[]) {
+    return {
+      hasCourseInstance: {
+        courseSchedule: repeatCounts.map((repeatCount) => ({ repeatCount })),
+      },
+    };
+  }
 
-  it("counts a range shorter than a week", () => {
-    expect(weekdayOccurrences("2026-09-01", "2026-09-01", 1)).toBe(1);
-    expect(weekdayOccurrences("2026-09-01", "2026-09-01", 2)).toBe(0);
+  it("counts each slot's planned dates on its own weekday", () => {
+    // Tue 1 Sep – Tue 15 Dec 2026: sixteen Tuesdays, fifteen Wednesdays.
+    const course = build(
+      product({
+        schedule_slots: [
+          { weekday: 1, start_time: "17:00:00", duration_minutes: 60 },
+          { weekday: 2, start_time: "17:00:00", duration_minutes: 60 },
+        ],
+      }),
+    );
+    expect(course).toMatchObject(counted(16, 15));
   });
 
   it("counts across a daylight-saving change with no drift", () => {
     // Europe's clocks go back on Sun 25 Oct 2026; calendar dates do not care.
-    expect(weekdayOccurrences("2026-10-19", "2026-11-01", 6)).toBe(2);
+    const course = build(
+      product({
+        start_date: "2026-10-19",
+        end_date: "2026-11-01",
+        schedule_slots: [{ weekday: 6, start_time: "10:00:00", duration_minutes: 60 }],
+      }),
+    );
+    expect(course).toMatchObject(counted(2));
+  });
+
+  it("claims no session the plan does not hold", () => {
+    // A Wednesday taken out of the plan — a holiday, once the plan knows them.
+    const subject = product();
+    const plan = plannedDatesOf(subject)!.filter((date) => date !== "2026-10-21");
+    expect(build(subject, plan)).toMatchObject(counted(14));
+  });
+
+  it("asks for no plan for an open-ended club, an event or a camp", () => {
+    expect(statesSessionCount(product({ end_date: null }))).toBe(false);
+    expect(statesSessionCount(product({ product_type: "event" }))).toBe(false);
+    expect(statesSessionCount(product({ product_type: "camp" }))).toBe(false);
+    expect(statesSessionCount(product({ product_type: "municipality_club" }))).toBe(true);
   });
 });

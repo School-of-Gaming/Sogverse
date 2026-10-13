@@ -1,5 +1,8 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
-import { getNextSessionStart } from "@/lib/enrollment";
+import {
+  fixtureNextSlotStart,
+  fixtureSlotStarts,
+} from "@/components/preview/fixture-clock";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import type {
   FamilyProductCancellation,
@@ -12,6 +15,7 @@ import type {
   FamilySessionEntry,
 } from "./types";
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
+import type { PlannedSession } from "@/lib/planned-sessions";
 import { ROUTES } from "@/lib/constants";
 
 /**
@@ -99,6 +103,8 @@ export interface FamilyProductPageFixture {
   site: FamilyProductSite | null;
   voiceHref: MaybeInertHrefObject;
   entries: FamilySessionEntry[];
+  /** The plan the Join reads: the feed's own sessions, soonest first. */
+  plannedSessions: PlannedSession[];
   sourceTimeZone: string;
 }
 
@@ -309,11 +315,26 @@ type FamilyEntrySpec =
       photos?: readonly SessionPhoto[];
       attendance?: AttendanceMark;
       lastEditedBy?: FamilyProductGedu;
+    }
+  | {
+      /**
+       * A holiday break over the week this slot would have met: the calm line,
+       * in its place, and no session in the plan for that week.
+       */
+      kind: "holiday";
+      names: readonly { locale: string; name: string }[];
     };
+
+/** The break the active club's history carries, written in three locales. */
+const AUTUMN_BREAK_NAMES = [
+  { locale: "en", name: "Autumn break" },
+  { locale: "fi", name: "Syysloma" },
+  { locale: "sv", name: "Höstlov" },
+] as const;
 
 /**
  * The active club's run: seven sessions ahead (so the divider reads "6 upcoming
- * sessions" and the reveal is judged against a screenful) and seventeen behind,
+ * sessions" and the reveal is judged against a screenful) and eighteen behind,
  * which is four months and therefore three or four month dividers plus a
  * history the scroll sentinel has to feed in more than one chunk.
  *
@@ -388,6 +409,8 @@ const ACTIVE_CLUB_SPECS: readonly FamilyEntrySpec[] = [
     // card and wraps at the 360 px floor.
     photos: [PHOTO_ART.parkour, PHOTO_ART.tower],
   },
+  // A holiday week: never planned, so one calm line rather than a session.
+  { kind: "holiday", names: AUTUMN_BREAK_NAMES },
   {
     kind: "past",
     report: SHORT_REPORTS[4],
@@ -714,7 +737,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink**, and the only scenario with a live room: a remote
    * weekly club four months into its run, with a session in progress, seven
-   * more ahead of it and seventeen behind.
+   * more ahead of it and eighteen behind.
    *
    * The club is named for what it builds rather than for a weekday, and that is
    * load-bearing: the run is anchored to *today* so the room can be open while
@@ -927,6 +950,20 @@ export function buildFamilyProductPageFixture(
   const entries = config.specs.map((spec, index) => {
     const startsAt = starts[index];
     const endsAt = new Date(startsAt.getTime() + durationMs);
+    if (spec.kind === "holiday") {
+      // The break is the slot's whole week, so the line names a range; the
+      // session it withdrew is what places it.
+      return {
+        kind: "holiday" as const,
+        id: `mock-family-holiday-${index}`,
+        startsAt,
+        endsAt,
+        startDate: dateIn(startsAt),
+        endDate: dateIn(shiftZonedDays(startsAt, 4)),
+        names: spec.names,
+        upcoming: endsAt.getTime() > now.getTime(),
+      };
+    }
     // Index-keyed rather than date-keyed, so an entry keeps its identity across
     // the `useNow()` tick and React never re-creates a row mid-scroll.
     return toEntry(spec, `mock-family-session-${index}`, startsAt, endsAt);
@@ -976,6 +1013,18 @@ export function buildFamilyProductPageFixture(
     site: config.site,
     voiceHref: ROUTES.voice.groupSession(GROUP_ID),
     entries,
+    // The feed's sessions are the plan the page was given: the next session
+    // the Join names is then always one the feed beneath it shows.
+    // A holiday week is not in the plan, exactly as the database leaves it out.
+    plannedSessions: starts
+      .filter((_, index) => config.specs[index].kind !== "holiday")
+      .map((startsAt) => ({
+        date: dateIn(startsAt),
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + durationMs),
+        cancelled: false,
+      }))
+      .reverse(),
     sourceTimeZone: TIMEZONE,
   };
 }
@@ -1003,7 +1052,7 @@ function countLeadingFutureSpecs(specs: readonly FamilyEntrySpec[]): number {
 }
 
 function toEntry(
-  spec: FamilyEntrySpec,
+  spec: Exclude<FamilyEntrySpec, { kind: "holiday" }>,
   id: string,
   startsAt: Date,
   endsAt: Date,
@@ -1135,16 +1184,15 @@ function clockFace(minutes: number): string {
 }
 
 /**
- * The instant the run is pinned to — resolved from the slot through the same
- * helper the voice window resolves its occurrences with.
+ * The instant the run is pinned to — resolved from the slot by the fixture
+ * clock, which resolves each date's clock face in the product's zone the way
+ * the database's plan does.
  *
- * That sharing is the point. The masthead's Join asks "is an occurrence of this
- * slot open right now?" and the feed asks "when is the next occurrence of this
- * slot?", and a fixture that answered the second question with its own
- * arithmetic would eventually disagree with the first. It did: flooring `now` to
- * a half hour and calling that the session start put the two an hour apart on
- * the autumn night when 03:00 happens twice in Helsinki, so the page showed a
- * locked room over a session that was running.
+ * Flooring `now` to a half hour and calling that the session start once put
+ * the masthead's Join and the feed an hour apart on the autumn night when 03:00
+ * happens twice in Helsinki, so the page showed a locked room over a session
+ * that was running. Resolving the slot on its date is what keeps the two
+ * agreeing.
  */
 function resolveAnchor(
   now: Date,
@@ -1152,11 +1200,6 @@ function resolveAnchor(
   slot: SlotTime,
   durationMs: number,
 ): Date {
-  const schedule = {
-    dayOfWeek: slot.weekday,
-    startTime: slot.startTime,
-    timezone: TIMEZONE,
-  };
   switch (anchor.kind) {
     // The same answer for both, and deliberately: "the next session" means the
     // one running right now when there is one. A club meeting as somebody opens
@@ -1165,10 +1208,10 @@ function resolveAnchor(
     // or not the scenario was written to be live.
     case "live":
     case "next-occurrence":
-      return currentOrNextOccurrence(now, schedule, durationMs);
+      return currentOrNextOccurrence(now, slot, durationMs);
     case "finished":
       return shiftZonedDays(
-        getNextSessionStart(schedule, { now }),
+        fixtureNextSlotStart(now, slot, TIMEZONE),
         -7 * anchor.weeksAgo,
       );
   }
@@ -1176,35 +1219,18 @@ function resolveAnchor(
 
 /**
  * The occurrence of a slot that is under way right now, or the next one if none
- * is.
- *
- * The running one is looked for from a search point a week back, which is
- * exactly how the voice window finds an in-progress session: the schedule
- * resolver only ever returns a *future* start, so asking it from `now` would
- * skip the session currently happening.
- *
- * **The answer is checked before it is trusted.** That resolver can hand back a
- * start earlier than the point it was asked from: on the day the clocks go back
- * the local day is twenty-five hours long, so its "one day later" candidate
- * lands on the same weekday again, matches, and returns *last week's* session.
- * Taken at face value that would date the head of this feed a week in the past
- * while labelling it upcoming. Anything not genuinely running is therefore
- * discarded in favour of the next future occurrence, which costs the live
- * scenario its lit Join for that one day — honest, and the same conclusion the
- * voice window reaches on its own.
+ * is: the slot's starts over the past week, the running one taken first.
  */
 function currentOrNextOccurrence(
   now: Date,
-  schedule: { dayOfWeek: number; startTime: string; timezone: string },
+  slot: SlotTime,
   durationMs: number,
 ): Date {
-  const candidate = getNextSessionStart(schedule, {
-    now: shiftZonedDays(now, -7),
-  });
-  const start = candidate.getTime();
-  return start <= now.getTime() && now.getTime() < start + durationMs
-    ? candidate
-    : getNextSessionStart(schedule, { now });
+  const nowMs = now.getTime();
+  const running = fixtureSlotStarts(now, slot, TIMEZONE, -7, 0).find(
+    (start) => start.getTime() <= nowMs && nowMs < start.getTime() + durationMs,
+  );
+  return running ?? fixtureNextSlotStart(now, slot, TIMEZONE);
 }
 
 /**

@@ -268,7 +268,10 @@ export function GroupColumn({
             </div>
             {/* Right-side action cluster: Join (live/locked) sits left of the
                 destructive Delete. `mt-6` drops the cluster to align with the
-                group name under its label. */}
+                group name under its label. Whether Join is here is settled
+                before the card first paints — the product page waits for the
+                plan that decides it — because a button arriving later would
+                rewrap the name beside it. */}
             <div className="mt-6 flex shrink-0 items-center gap-2">
               {showVoice && (
                 <JoinVoiceButton

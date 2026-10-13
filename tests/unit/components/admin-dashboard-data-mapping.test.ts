@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { formatInTimeZone } from "date-fns-tz";
+import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
+import { planSessions } from "../../mocks/planned-sessions";
 import {
   buildAdminDashboardData,
   buildCertificationQueue,
@@ -32,24 +35,75 @@ const LOS_ANGELES = "America/Los_Angeles";
 const NOW = new Date("2026-08-17T09:20:00+03:00");
 const TODAY = "2026-08-17";
 
+interface Cancellation {
+  group_id: string;
+  session_date: string;
+}
+
+/**
+ * A schedule product as the RPC sends it, its `planned_sessions` laid out from
+ * its slots and term the way the database plans them: over the product's own
+ * window, `[product-local today − 30 days, + 4 months)` at `now`, each date
+ * carrying the groups `cancellations` names on it.
+ */
 function scheduleProduct(
-  overrides: Partial<AdminDashboardScheduleProduct> & { id: string },
+  overrides: Partial<Omit<AdminDashboardScheduleProduct, "planned_sessions">> & {
+    id: string;
+    cancellations?: readonly Cancellation[];
+  },
+  now: Date = NOW,
 ): AdminDashboardScheduleProduct {
-  return {
-    product_type: "consumer_club",
+  const { cancellations = [], ...fields } = overrides;
+  const product = {
+    product_type: "consumer_club" as const,
     translations: [{ locale: "en", name: `Product ${overrides.id}` }],
     timezone: HELSINKI,
-    start_date: "2026-08-10",
-    end_date: null,
-    seat_count: 12,
+    start_date: "2026-08-10" as string | null,
+    end_date: null as string | null,
+    seat_count: 12 as number | null,
     active_count: 9,
     waitlist_count: 0,
     schedule_slots: [
       { weekday: 0, start_time: "17:00", duration_minutes: 90 },
     ],
-    group_ids: [],
-    cancelled_sessions: [],
-    ...overrides,
+    group_ids: [] as string[],
+    holiday_breaks: [],
+    ...fields,
+  };
+
+  const productToday = formatInTimeZone(now, product.timezone, "yyyy-MM-dd");
+  const windowStart = addCalendarDays(productToday, -30);
+  const windowLast = addCalendarDays(addCalendarMonths(productToday, 4), -1);
+  const plan =
+    product.start_date === null
+      ? []
+      : planSessions({
+          timezone: product.timezone,
+          slots: product.schedule_slots.map((slot) => ({
+            weekday: slot.weekday,
+            startTime: slot.start_time,
+            durationMinutes: slot.duration_minutes,
+          })),
+          startDate:
+            product.start_date > windowStart ? product.start_date : windowStart,
+          endDate:
+            product.end_date !== null && product.end_date < windowLast
+              ? product.end_date
+              : windowLast,
+          now,
+        });
+
+  return {
+    ...product,
+    planned_sessions: plan.map((session) => ({
+      session_date: session.date,
+      starts_at: session.startsAt.toISOString(),
+      ends_at: session.endsAt.toISOString(),
+      cancelled_group_ids: cancellations
+        .filter((one) => one.session_date === session.date)
+        .map((one) => one.group_id)
+        .sort(),
+    })),
   };
 }
 
@@ -154,7 +208,7 @@ describe("the week window", () => {
     const data = build(
       snapshot({
         schedule_products: [
-          scheduleProduct({ id: "club", start_date: "2026-06-01" }),
+          scheduleProduct({ id: "club", start_date: "2026-06-01" }, now),
         ],
       }),
       LOS_ANGELES,
@@ -186,7 +240,7 @@ describe("the week window", () => {
             timezone: LOS_ANGELES,
             start_date: "2026-01-05",
             end_date: "2026-12-14",
-          }),
+          }, now),
         ],
       }),
       HELSINKI,
@@ -279,8 +333,8 @@ describe("cancelled sessions", () => {
 
   /** A Monday-and-Wednesday club with two groups. */
   function twoGroupClub(
-    cancelled: { group_id: string; session_date: string }[],
-    overrides: Partial<AdminDashboardScheduleProduct> = {},
+    cancelled: Cancellation[],
+    overrides: Partial<Parameters<typeof scheduleProduct>[0]> = {},
   ) {
     return scheduleProduct({
       id: "club",
@@ -289,7 +343,7 @@ describe("cancelled sessions", () => {
         { weekday: 2, start_time: "17:00", duration_minutes: 90 },
       ],
       group_ids: [GROUP_A, GROUP_B],
-      cancelled_sessions: cancelled,
+      cancellations: cancelled,
       ...overrides,
     });
   }
@@ -376,7 +430,7 @@ describe("cancelled sessions", () => {
               { weekday: 0, start_time: "09:00", duration_minutes: 60 },
             ],
             group_ids: [GROUP_A],
-            cancelled_sessions: [
+            cancellations: [
               { group_id: GROUP_A, session_date: "2026-08-24" },
             ],
           }),
@@ -422,7 +476,7 @@ describe("cancelled sessions", () => {
               { weekday: 2, start_time: "17:00", duration_minutes: 240 },
             ],
             group_ids: [GROUP_A],
-            cancelled_sessions: [
+            cancellations: [
               { group_id: GROUP_A, session_date: "2026-08-19" },
             ],
           }),
@@ -448,11 +502,214 @@ describe("cancelled sessions", () => {
   it("ignores a cancellation naming a group outside the product's list", () => {
     const decide = productCancellations({
       group_ids: [GROUP_A],
-      cancelled_sessions: [
-        { group_id: GROUP_B, session_date: "2026-08-19" },
+      planned_sessions: [
+        {
+          session_date: "2026-08-19",
+          starts_at: "2026-08-19T14:00:00.000Z",
+          ends_at: "2026-08-19T15:30:00.000Z",
+          cancelled_group_ids: [GROUP_B],
+        },
       ],
     });
     expect(decide("2026-08-19")).toEqual({ kind: "none" });
+  });
+});
+
+describe("holiday breaks", () => {
+  interface BreakSpec {
+    id: string;
+    startDate: string;
+    endDate: string;
+    names?: { locale: string; name: string }[];
+  }
+
+  /**
+   * A product whose `breaks` withdraw their dates from its plan, the way the
+   * RPC answers: a withdrawn date is gone from `planned_sessions` and listed
+   * instead on the break that took it, earliest break first.
+   */
+  function withBreaks(
+    product: AdminDashboardScheduleProduct,
+    breaks: readonly BreakSpec[],
+  ): AdminDashboardScheduleProduct {
+    const taken = new Set<string>();
+    const holidayBreaks = breaks.map((spec) => {
+      const withdrawn = product.planned_sessions.filter(
+        (session) =>
+          !taken.has(session.session_date) &&
+          spec.startDate <= session.session_date &&
+          session.session_date <= spec.endDate,
+      );
+      for (const session of withdrawn) taken.add(session.session_date);
+      return {
+        id: spec.id,
+        startDate: spec.startDate,
+        endDate: spec.endDate,
+        names: spec.names ?? [{ locale: "en", name: `Break ${spec.id}` }],
+        withdrawnSessions: withdrawn.map((session) => ({
+          date: session.session_date,
+          startsAt: new Date(session.starts_at),
+          endsAt: new Date(session.ends_at),
+          cancelled: false,
+        })),
+      };
+    });
+    return {
+      ...product,
+      planned_sessions: product.planned_sessions.filter(
+        (session) => !taken.has(session.session_date),
+      ),
+      holiday_breaks: holidayBreaks,
+    };
+  }
+
+  /** A Monday-and-Wednesday club. */
+  function club(id = "club") {
+    return scheduleProduct({
+      id,
+      schedule_slots: [
+        { weekday: 0, start_time: "17:00", duration_minutes: 90 },
+        { weekday: 2, start_time: "17:00", duration_minutes: 90 },
+      ],
+    });
+  }
+
+  it("keeps a withdrawn session on its row, marked with the break's name in the reader's locale", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(club(), [
+            {
+              id: "day-off",
+              startDate: "2026-08-19",
+              endDate: "2026-08-19",
+              names: [
+                { locale: "en", name: "Staff day" },
+                { locale: "fi", name: "Koulutuspäivä" },
+              ],
+            },
+          ]),
+        ],
+      }),
+    );
+
+    const chips = week(data, "2026-08-17").chips;
+    expect(
+      chips.map((chip) => [chip.weekday, chip.startTime, chip.holidayBreak]),
+    ).toEqual([
+      [0, "17:00", null],
+      [2, "17:00", "Staff day"],
+    ]);
+    expect(chips[1].cancellation).toEqual({ kind: "none" });
+  });
+
+  it("leaves the week's session count what the plan says it is", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(club(), [
+            { id: "day-off", startDate: "2026-08-19", endDate: "2026-08-19" },
+          ]),
+        ],
+      }),
+    );
+
+    // Two chips on the row, one session: the break's date was never planned.
+    const chips = week(data, "2026-08-17").chips;
+    expect(chips).toHaveLength(2);
+    expect(runningSessionCount(chips)).toBe(1);
+    // And the weeks it does not touch are as they were.
+    expect(runningSessionCount(week(data, "2026-08-24").chips)).toBe(2);
+  });
+
+  it("still shows a product whose whole week is a break, with nothing running", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(club(), [
+            {
+              id: "autumn",
+              startDate: "2026-10-12",
+              endDate: "2026-10-18",
+              names: [{ locale: "en", name: "Autumn break" }],
+            },
+          ]),
+        ],
+      }),
+    );
+
+    const chips = week(data, "2026-10-12").chips;
+    expect(chips.map((chip) => [chip.productId, chip.holidayBreak])).toEqual([
+      ["club", "Autumn break"],
+      ["club", "Autumn break"],
+    ]);
+    expect(runningSessionCount(chips)).toBe(0);
+  });
+
+  it("places a withdrawn session on the viewer's weekday, as a planned one is", () => {
+    const data = build(
+      snapshot({
+        schedule_products: [
+          withBreaks(
+            scheduleProduct({
+              id: "club",
+              schedule_slots: [
+                { weekday: 0, start_time: "09:00", duration_minutes: 60 },
+              ],
+            }),
+            [{ id: "day-off", startDate: "2026-08-24", endDate: "2026-08-24" }],
+          ),
+        ],
+      }),
+      LOS_ANGELES,
+    );
+
+    // Monday 09:00 in Helsinki is Sunday 23:00 in Los Angeles, the week before.
+    expect(week(data, "2026-08-17").chips).toMatchObject([
+      { weekday: 6, startTime: "23:00", holidayBreak: "Break day-off" },
+    ]);
+  });
+
+  it("shows nothing for a break whose sessions fall outside the offered weeks", () => {
+    const product = club();
+    const data = build(
+      snapshot({
+        schedule_products: [
+          {
+            ...product,
+            holiday_breaks: [
+              {
+                id: "far",
+                startDate: "2027-02-15",
+                endDate: "2027-02-21",
+                names: [{ locale: "en", name: "Ski break" }],
+                withdrawnSessions: [
+                  {
+                    date: "2027-02-15",
+                    startsAt: new Date("2027-02-15T17:00:00+02:00"),
+                    endsAt: new Date("2027-02-15T18:30:00+02:00"),
+                    cancelled: false,
+                  },
+                ],
+              },
+              {
+                id: "untouched",
+                startDate: "2026-09-01",
+                endDate: "2026-09-01",
+                names: [{ locale: "en", name: "No session that day" }],
+                withdrawnSessions: [],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(
+      data.weeks.flatMap((entry) => entry.chips).filter(
+        (chip) => chip.holidayBreak !== null,
+      ),
+    ).toEqual([]);
   });
 });
 

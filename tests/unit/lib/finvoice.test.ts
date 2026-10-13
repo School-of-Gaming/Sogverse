@@ -88,8 +88,8 @@ interface ClubSpec {
   feeCents?: number | null;
   invoiceCustomer?: InvoiceCustomerRow | null;
   /**
-   * Monday 14:15 for 75 minutes unless a case wants something else. An empty
-   * list projects nothing, so the club bills its stored rows and no more.
+   * Monday 14:15 for 75 minutes unless a case wants something else. A club
+   * with no slots has nothing planned, so it bills its stored rows and no more.
    */
   slots?: MunicipalityInvoicingClub["schedule_slots"];
   /** Dates with a stored row. Mondays in May 2026 are 4, 11, 18 and 25. */
@@ -99,6 +99,9 @@ interface ClubSpec {
   /** The term's last day — the end of May unless a case stops it earlier. */
   endDate?: string;
 }
+
+/** The Monday club's planned dates in May 2026. */
+const MAY_MONDAYS = ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25"];
 
 function club(spec: ClubSpec): MunicipalityInvoicingClub {
   return {
@@ -111,6 +114,8 @@ function club(spec: ClubSpec): MunicipalityInvoicingClub {
     schedule_slots: spec.slots ?? [
       { weekday: 0, start_time: "14:15", duration_minutes: 75 },
     ],
+    planned_dates: spec.slots?.length === 0 ? [] : MAY_MONDAYS,
+    holiday_breaks: [],
     location:
       spec.location === undefined
         ? {
@@ -285,6 +290,84 @@ describe("the money rule", () => {
 
     expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
     expect(invoice.rows.map((row) => row.rowNumber)).toEqual([1]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Holidays
+// ---------------------------------------------------------------------------
+
+describe("a holiday", () => {
+  /** A break withdrawing the given Mondays of May from the plan. */
+  function onBreak(
+    spec: ClubSpec,
+    breakStart: string,
+    breakEnd: string,
+    withdrawn: readonly string[],
+  ): MunicipalityInvoicingClub {
+    const base = club(spec);
+    return {
+      ...base,
+      planned_dates: base.planned_dates.filter((date) => !withdrawn.includes(date)),
+      holiday_breaks: [
+        {
+          id: `${spec.id}-break`,
+          startDate: breakStart,
+          endDate: breakEnd,
+          names: [{ locale: "fi", name: "Kevätloma" }],
+          withdrawnSessions: withdrawn.map((date) => ({
+            date,
+            startsAt: new Date(`${date}T14:15:00+03:00`),
+            endsAt: new Date(`${date}T15:30:00+03:00`),
+            cancelled: false,
+          })),
+        },
+      ],
+    };
+  }
+
+  it("bills a holiday nothing, and the file carries the ledger's billed count", () => {
+    // The 11th is a holiday: the ledger shows it at €0, and the row bills the
+    // 4th (recorded) and the 18th (due, unrecorded) — the same two the ledger
+    // bills.
+    const clubs = [
+      onBreak({ id: "a", name: "Klubi A", dates: ["2026-05-04"] }, "2026-05-11", "2026-05-15", ["2026-05-11"]),
+    ];
+    const ledger = buildMunicipalityInvoicing({
+      snapshot: snapshotOf(clubs),
+      locale: "fi",
+      now: NOW,
+    }).municipalities[0].clubs[0];
+    expect(ledger.sessions.find((s) => s.date === "2026-05-11")?.kind).toBe("holiday");
+    expect(ledger.billedCount).toBe(2);
+
+    const invoice = invoiceFor(clubs);
+    expect(invoice.rows).toHaveLength(1);
+    expect(invoice.rows[0].sessions).toBe(2);
+    expect(invoice.rows[0].netCents).toBe(13_000);
+    expect(invoice.netCents).toBe(13_000);
+
+    // One row in the document, for two sessions — no line for the holiday.
+    const xml = serializeFinvoice(invoice, GENERATED_AT);
+    expect(xml.match(/<InvoiceRow>/g)).toHaveLength(1);
+    expect(xml).toContain('<DeliveredQuantity QuantityUnitCode="krt">2.00</DeliveredQuantity>');
+  });
+
+  it("leaves a club whose every due date was a holiday off the file", () => {
+    const invoice = invoiceFor([
+      club({ id: "a", name: "Klubi A" }),
+      onBreak({ id: "b", name: "Klubi B", dates: [] }, "2026-05-01", "2026-05-31", MAY_MONDAYS),
+    ]);
+
+    expect(invoice.rows.map((row) => row.clubId)).toEqual(["a"]);
+  });
+
+  it("refuses a customer whose clubs' month was all holiday", () => {
+    const result = buildFor([
+      onBreak({ id: "a", name: "Klubi A", dates: [] }, "2026-05-01", "2026-05-31", MAY_MONDAYS),
+    ]);
+
+    expect(result).toMatchObject({ ok: false });
   });
 });
 
@@ -919,12 +1002,30 @@ describe("a period customer's file", () => {
     billing_cadence: "half_yearly",
   });
 
-  /** One month's document holding the clubs given. */
+  /** The Monday clubs' planned dates, month by month, from the 12 January start. */
+  const MONDAYS_BY_MONTH: Record<string, string[]> = {
+    "2026-01-01": ["2026-01-12", "2026-01-19", "2026-01-26"],
+    "2026-02-01": ["2026-02-02", "2026-02-09", "2026-02-16", "2026-02-23"],
+    "2026-03-01": ["2026-03-02", "2026-03-09", "2026-03-16", "2026-03-23", "2026-03-30"],
+    "2026-04-01": ["2026-04-06", "2026-04-13", "2026-04-20", "2026-04-27"],
+    "2026-05-01": MAY_MONDAYS,
+  };
+
+  /**
+   * One month's document holding the clubs given, each carrying that month's
+   * Mondays as its plan.
+   */
   function monthOf(
     month: string,
     clubs: MunicipalityInvoicingClub[],
   ): MunicipalityInvoicingSnapshot {
-    return { month_start: month, clubs };
+    return {
+      month_start: month,
+      clubs: clubs.map((one) => ({
+        ...one,
+        planned_dates: MONDAYS_BY_MONTH[month] ?? [],
+      })),
+    };
   }
 
   /** A Monday club of `buyer`'s that recorded nothing — it bills every date it was due. */

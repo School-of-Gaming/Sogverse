@@ -11,7 +11,12 @@ import {
   PRODUCT_CONFIRMATION_MODES,
   type ProductConfirmationEmailOptions,
 } from "./product-confirmation";
-import type { InvitationSlot } from "./product-confirmation-invitation";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import {
+  invitationPlanWindow,
+  type InvitationPlannedSession,
+  type InvitationSlot,
+} from "./product-confirmation-invitation";
 import { formatProductLocation } from "@/lib/products/format-product-location";
 import {
   fail,
@@ -21,6 +26,7 @@ import {
   noneOrDate,
   noneOrText,
   optionalDate,
+  requireDate,
   requireEmail,
   requireTime,
   requireWeekday,
@@ -96,7 +102,7 @@ import {
 } from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import { formattingLocale } from "@/lib/constants/locales";
-import { formatDate, formatTimeRange } from "@/lib/utils";
+import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
@@ -544,6 +550,82 @@ function parseInvitationSlots(value: string): InvitationSlot[] {
 }
 
 /**
+ * The plan a test send's invitation is composed from.
+ *
+ * **The form has no product row, so there is no database plan to read.** It
+ * stands in with what `planned_session_dates` answers for a product with these
+ * slots and dates — every date in the span the composer walks on which the typed
+ * schedule has a slot, soonest first — which is the plan of a product nothing
+ * has taken a day out of. A test send therefore never states an `EXDATE`; that
+ * shape is the live send's, and the unit tests are where it is exercised.
+ */
+function formPlannedSessions({
+  slots,
+  startDate,
+  endDate,
+  timezone,
+  now,
+}: {
+  slots: readonly InvitationSlot[];
+  startDate: string | null;
+  endDate: string | null;
+  timezone: string;
+  now: Date;
+}): InvitationPlannedSession[] {
+  if (startDate === null) return [];
+  const window = invitationPlanWindow({ now, timezone, endDate });
+  const first = Date.parse(`${startDate > window.from ? startDate : window.from}T00:00:00Z`);
+  const last = Date.parse(`${window.to}T00:00:00Z`);
+  const sessions: InvitationPlannedSession[] = [];
+  // UTC-pinned calendar days, so the walk cannot repeat or skip a date at a
+  // daylight-saving transition; only the instants are read in the zone.
+  for (let day = first; day <= last; day += 86_400_000) {
+    const date = formatInTimeZone(new Date(day), "UTC", "yyyy-MM-dd");
+    const weekday = (new Date(day).getUTCDay() + 6) % 7;
+    const onTheDay = slots
+      .filter((slot) => slot.weekday === weekday)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    for (const slot of onTheDay) {
+      const startsAt = fromZonedTime(`${date}T${slot.startTime}:00`, timezone);
+      sessions.push({
+        date,
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + slot.durationMinutes * 60_000),
+      });
+    }
+  }
+  return sessions;
+}
+
+/**
+ * The holiday-breaks field — `;`-separated `Name YYYY-MM-DD YYYY-MM-DD`
+ * entries, or the none token — as the formatted lines the mail states. A name
+ * may hold spaces, so the two dates are read off the end of each entry.
+ */
+function parseFormHolidayBreaks(
+  value: string,
+  locale: string,
+  today: string,
+): { name: string; range: string }[] {
+  if (isNoneToken(value)) return [];
+  return value
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "")
+    .map((entry) => {
+      const parts = entry.split(/\s+/);
+      const endDate = requireDate(parts.at(-1) ?? "", "Holiday breaks end date");
+      const startDate = requireDate(parts.at(-2) ?? "", "Holiday breaks start date");
+      const name = parts.slice(0, -2).join(" ");
+      if (name === "") fail("Holiday breaks", "a name before the two dates", entry);
+      return {
+        name,
+        range: formatCompactDateRange(startDate, endDate, locale, today),
+      };
+    });
+}
+
+/**
  * The form's strings as the options the mail is built from, resolved once.
  *
  * `now` is the resolver's own — the live sends read the clock at the moment
@@ -554,6 +636,7 @@ function parseInvitationSlots(value: string): InvitationSlot[] {
 function resolveProductConfirmationOptions(
   params: ProductConfirmationParams,
   now: Date,
+  locale: string,
 ): ProductConfirmationEmailOptions {
   const startDate = optionalDate(params.startDate, "Start date");
   const endDate = noneOrDate(params.endDate, "End date");
@@ -625,6 +708,14 @@ function resolveProductConfirmationOptions(
       spokenLanguageCode: params.spokenLanguageCode,
       now,
     },
+    // Typed as the list the live send would already have chosen, and worded
+    // here by the same compact range the live send uses, in the render's
+    // locale — so a test send shows every locale's range shape.
+    holidayBreaks: parseFormHolidayBreaks(
+      params.holidayBreaks,
+      locale,
+      formatInTimeZone(now, params.timezone, "yyyy-MM-dd"),
+    ),
     invitation: {
       // Minted when the form names none, exactly as the explorer mints a UID:
       // the identifier is a function of the seat, and a test send has no seat.
@@ -644,13 +735,19 @@ function resolveProductConfirmationOptions(
       // text input posts its placeholder.
       shortDescription: noneOrText(params.shortDescription),
       timezone: params.timezone,
-      startDate,
       // Three more of the token fields, alongside the description above and the
       // schedule below. Every one of them is a text input, so the absence is a
       // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
       // empty one cannot carry it.
       endDate,
       slots,
+      plannedSessions: formPlannedSessions({
+        slots,
+        startDate,
+        endDate,
+        timezone: params.timezone,
+        now,
+      }),
       isRemote,
       siteName,
       siteAddress: noneOrText(params.siteAddress),
@@ -864,6 +961,7 @@ const productConfirmationParamsSchema = z.object({
   ageRange: z.string(),
   audience: z.enum(["gamers", "parents", "families"]),
   spokenLanguageCode: z.enum(Constants.public.Enums.spoken_language),
+  holidayBreaks: z.string(),
 
   // --- What the calendar invitation is composed from. ---
   //
@@ -1610,6 +1708,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         type: "select",
         options: SPOKEN_LANGUAGE_OPTIONS,
       },
+      {
+        key: "holidayBreaks",
+        label: `Good to know – Holiday breaks, \`;\`-separated \`Name YYYY-MM-DD YYYY-MM-DD\` entries (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "Autumn break 2026-10-19 2026-10-23; Christmas break 2026-12-21 2027-01-06",
+      },
 
       {
         key: "slots",
@@ -1706,7 +1809,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         // it is a section this mail carries, not a section it is made of.
         tPrep,
         locale,
-        resolveProductConfirmationOptions(p, new Date()),
+        resolveProductConfirmationOptions(p, new Date(), locale),
       ),
     build: (content, t, locale) => buildProductConfirmationEmail(t, locale, content),
     // Shared with the live sends rather than restated here — see the function's

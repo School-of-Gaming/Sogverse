@@ -195,10 +195,9 @@ the child's enrollment date and settled the other way. Their attendance on those
 dates is simply unmarked — nobody marked a child who was not there to mark.
 
 **Rule: a cancelled enrollment renders nothing past its paid window, anywhere.** The
-instant paid access ends bounds the occurrence walk, the dashboard card's next session
-and the dashboard's sort alike — and it bounds *stored rows* as well as projections,
-which is the case the walks cannot catch, since a row exists whether or not anything
-projected it. A listed session nobody may turn up to is a promise the platform will not
+instant paid access ends bounds the feed, the dashboard card's next session and the
+dashboard's sort alike — and it bounds *stored rows* as well as planned sessions, since a
+row exists whether or not the plan holds it. A listed session nobody may turn up to is a promise the platform will not
 keep.
 
 ## One fetch, and a scroll sentinel over it
@@ -210,15 +209,15 @@ mechanism belongs to the shared feed shell — a scroll sentinel over fully-load
 button and no spinner — and the arithmetic ruling paging out is documented with it.
 
 **What is worth repeating here is that paging was rejected twice and must not be
-rebuilt**, because this is the surface that would want it. The client *projects* past
-occurrences from the schedule and merges stored rows onto them, so a partial fetch makes
+rebuilt**, because this is the surface that would want it. The client lays stored rows
+over the whole plan the document carries, so a partial fetch makes
 older sessions that have real reports render as "no write-up" — wrong, not merely short.
 If a club ever genuinely outgrows one fetch, paged loading can be added behind the same
 sentinel without the reading experience changing.
 
-**Rule: the server returns data, the client does the calendar math.** Nothing on the
-server expands a schedule. What comes back is the schedule parameters and the stored
-rows; the walk forward, the walk backward, the merge of rows over projections and the
+**Rule: the server plans the dates, the client reads them against the clock.** The
+document carries the product's planned sessions, expanded once in the database, beside
+the stored rows; the cut of an open-ended plan, the merge of rows over it and the
 derivation of each entry's kind all happen client-side in front of one shared clock, so
 entry kinds advance while the page is open and SSR agrees with the first client render.
 Joinability is derived from that same tick and the shared voice-window arithmetic — never
@@ -242,10 +241,10 @@ drawn is the shared feed's rule (`src/components/session-feed/`).
 it — and the shape it emits is where the privacy line is drawn.** A builder generic over
 both output types would have to take every field as optional and trust each caller to
 pass the right subset, which is exactly the remember-the-rule arrangement the split
-replaces. What the two share is the arithmetic, and that lives in
-`src/lib/session-occurrence.ts` where both read it: a session's identity is a (group,
-product-local date) pair — the row's unique key in Postgres — so a projection and a row
-for the same day meet on the same map key, and a stored row wins outright where both
+replaces. What the two share is the plan's shaping, and that lives in
+`src/lib/planned-sessions.ts` where both read it: a session's identity is a (group,
+product-local date) pair — the row's unique key in Postgres — so a planned session and a
+row for the same day meet on the same map key, and a stored row wins outright where both
 exist, snapshotted start and end included.
 
 **Rule: an entry's kind splits on the session's `endsAt`, not its start — and both feeds

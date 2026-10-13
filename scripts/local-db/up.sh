@@ -218,7 +218,7 @@ echo "memory: $(stack_memory_mib "$project") MiB"
 say "Stack up at $api_url"
 say "  .env.local   its three Supabase values point here now; restart the dev server."
 say "  sign in      admin@example.com, parent@example.com (PIN 1111) or gedu@example.com,"
-say "               password \"password\"; every other seeded account is testpassword123."
+say "               every seeded account's password is \"password\"."
 say "  database     postgresql://postgres:postgres@127.0.0.1:$db_port/postgres"
 printf '::localdb api_url=%s\n' "$api_url"
 

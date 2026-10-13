@@ -237,6 +237,15 @@ const productDataBase = z.object({
   // with a customer is refused by the database rather than by a rule restated
   // at the boundary.
   invoice_customer_id: z.string().uuid().nullable(),
+  // The holiday calendars a club follows, as calendar row ids. Required and a
+  // plain array, for the reason the consent slugs above are: the RPC replaces
+  // the whole set on every call and reads NULL and `[]` alike as "follows
+  // none", so an omitted field on an update would detach every calendar.
+  //
+  // Only shape is checked here. Whether an id names a calendar is the foreign
+  // key's answer, and whether this product may follow calendars at all (clubs
+  // only) is the RPC's refusal rather than a rule restated at the boundary.
+  holiday_calendar_ids: z.array(z.string().uuid()),
 });
 
 /** The JSON body of POST /api/admin/products/create. */

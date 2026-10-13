@@ -50,6 +50,7 @@ export function FamilyProductPageScene({
       }
       productName={fixture.productName}
       schedule={fixture.schedule}
+      plannedSessions={fixture.plannedSessions}
       isRemote={fixture.isRemote}
       participant={fixture.participant}
       groupName={fixture.groupName}

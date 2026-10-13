@@ -1,9 +1,8 @@
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { breakName } from "@/lib/holiday-breaks";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
-  monthEndOf,
-  projectMonthDates,
   recordHasHappened,
   unrecordedOrUpcoming,
 } from "@/lib/invoicing/month";
@@ -37,10 +36,10 @@ import type {
  * ## What the month counts
  *
  * **A municipality is billed for every session that was due and not
- * cancelled.** A session is due on a date the club's schedule projects, and on
- * a date where one of its groups holds a stored session row. Those rows are
+ * cancelled.** A session is due on a date the club's plan holds, and on a
+ * date where one of its groups holds a stored session row. Those rows are
  * written lazily — one appears when an educator records a report, a note or an
- * attendance mark — so a row is the evidence somebody was there; a projected
+ * attendance mark — so a row is the evidence somebody was there; a planned
  * date that has passed with no row is assumed to have run and bills exactly as
  * a recorded one does. It stays a line of its own, `unrecorded`, because a
  * missing write-up is still something an admin may want to chase, but it is
@@ -50,39 +49,41 @@ import type {
  * and two groups meeting on the same date are one session of that club. The
  * rows arrive raw, one per group and date, and are collapsed here.
  *
- * **The schedule is projected across the month**, clipped to the club's own
- * term. A projected date before the club's own today with no row is
- * `unrecorded` and bills; one from today on is `upcoming` and does not. "Today"
- * is the club's own local today, because the dates being compared are the
- * club's own local dates. **Records beat projections**: a stored row on a date
- * the schedule does not project still counts, which is the same rule every
- * session feed in this app follows.
+ * **The plan arrives with the document**: the club's planned dates inside the
+ * month, already clipped to its term by the database, which is the one place a
+ * weekly schedule becomes dates. A planned date before the club's own today
+ * with no row is `unrecorded` and bills; one from today on is `upcoming` and
+ * does not. "Today" is the club's own local today, because the dates being
+ * compared are the club's own local dates. **Records beat the plan**: a stored
+ * row on a date the plan does not hold still counts, which is the same rule
+ * every session feed in this app follows.
  *
  * **A date after the club's own today never bills, whatever is stored on it.**
  * Nothing stops a gedu writing a note against a session that has not happened
  * yet, and that row would otherwise invoice a municipality for a session still
- * ahead of it. Such a date is `upcoming` — the same line a projection with no row
+ * ahead of it. Such a date is `upcoming` — the same line a planned date with no row
  * gets — and it is outside the count. A row dated *today* bills: the date is the
  * club's own local day, and an educator writing a session up in the afternoon is
  * recording one that ran.
  *
  * **A cancellation is the only thing that stops a due date billing.** It turns
- * a projected date into `cancelled` and a cancelled record into nothing billed.
- * It holds on a date the schedule projects or one where its group holds a
- * stored row — a cancelled record stays cancelled through any later schedule
- * edit — and one on a date with neither is ignored. Only a projected date gets
- * a cancelled line; a cancelled record the schedule no longer projects has no
- * line at all, because the document leaves its row out. A club cancels per
+ * a planned date into `cancelled` and a cancelled record into nothing billed.
+ * It holds on a planned date or one where its group holds a stored row — a
+ * cancelled record stays cancelled through any later schedule edit — and one
+ * on a date with neither is ignored. Only a planned date gets a cancelled line;
+ * a cancelled record the plan no longer holds has no line at all, because the document leaves its row out. A club cancels per
  * group while the invoice counts per club, so the date is cancelled only where
  * no group ran it and every group the month's document names for the club
  * cancelled it: a sibling group that was due and did not cancel still owes the
  * session, so the date bills.
  *
- * **Projection is offered wherever the club has a start date to clip against.**
- * That date is the whole of the "has it begun" rule: the walk starts at the
- * later of it and the month, so a club whose term starts after this month
- * projects nothing here anyway. A club with no start date contributes its stored
- * rows alone, because there is no day to start walking from.
+ * **A holiday is never billed.** A holiday break withdraws the planned dates
+ * it covers, so they are not in the plan; the document names them beside it,
+ * and each becomes a `holiday` line worth nothing, labelled with the break's
+ * name. It is not unrecorded — nothing was due — and it is outside every count
+ * and total, so it never reaches a Finvoice file. A stored row on a holiday
+ * date is not evidence of a session: the document leaves it out, and the build
+ * holds the same rule for any reader handed one anyway.
  *
  * **Money is integer cents from end to end.** The billed count is multiplied
  * by the fee in cents, the cents are summed, and the division into euros
@@ -107,24 +108,29 @@ export type InvoiceSessionKind =
   /** A stored row exists on a date that has arrived. It bills. */
   | "recorded"
   /**
-   * The schedule projected it, no row exists, the date has passed and it was
+   * The plan holds it, no row exists, the date has passed and it was
    * not cancelled. It is assumed to have run and bills at the fee exactly as a
    * recorded one does; it is a kind of its own only so the page can show which
    * billed sessions have no write-up behind them.
    */
   | "unrecorded"
   /**
-   * The date has not arrived yet — whether the schedule merely projects it or a
+   * The date has not arrived yet — whether the plan merely holds it or a
    * stored row already sits on it. A row written ahead of its own session is
    * something the database permits and the invoice must not bill.
    */
   | "upcoming"
   /**
-   * The schedule projects it, an admin cancelled it, and no group of the club
+   * The plan holds it, an admin cancelled it, and no group of the club
    * ran it. Never billed — past or future, it is a known fact about the day
    * rather than something to bill or wait for.
    */
-  | "cancelled";
+  | "cancelled"
+  /**
+   * A holiday break withdrew it from the plan. Never billed and never
+   * unrecorded, past or future: nothing was due that day.
+   */
+  | "holiday";
 
 export interface InvoiceSession {
   /** The club-local calendar date, `YYYY-MM-DD`. */
@@ -132,6 +138,11 @@ export interface InvoiceSession {
   /** The ISO week number the date falls in — how Finnish admins say *when*. */
   isoWeek: number;
   kind: InvoiceSessionKind;
+  /**
+   * On a `holiday` line, the break's name in the build's locale — empty only
+   * for a break with no name at all. Null on every other kind.
+   */
+  holidayName: string | null;
 }
 
 export interface InvoiceClub {
@@ -356,7 +367,6 @@ export function buildMunicipalityInvoicing({
   now,
 }: BuildMunicipalityInvoicingArgs): MunicipalityInvoicingView {
   const monthStart = snapshot.month_start;
-  const monthEnd = monthEndOf(monthStart);
 
   // Keyed by municipality id. Every club has one — the database refuses to
   // answer a month in which any club's location chain reaches no municipality —
@@ -368,8 +378,8 @@ export function buildMunicipalityInvoicing({
   >();
 
   for (const club of snapshot.clubs) {
-    const built = buildClub(club, { locale, now, monthStart, monthEnd });
-    // A club with nothing in the month — no row, and no projected date once the
+    const built = buildClub(club, { locale, now });
+    // A club with nothing in the month — no row, and no planned date once the
     // term was clipped — is not on this invoice at all. Rendering it empty
     // would say the club did nothing in a month it was not running in.
     if (built.sessions.length === 0) continue;
@@ -535,20 +545,17 @@ function summarizeCustomers(
 interface ClubContext {
   locale: SupportedLocale;
   now: Date;
-  monthStart: string;
-  monthEnd: string;
 }
 
 function buildClub(
   club: MunicipalityInvoicingClub,
-  { locale, now, monthStart, monthEnd }: ClubContext,
+  { locale, now }: ClubContext,
 ): InvoiceClub {
-  const projected = projectedDates(club, monthStart, monthEnd);
-  const projectedSet = new Set(projected);
+  const planned = new Set(club.planned_dates);
 
   // A cancellation wins over a stored row for its group: an admin may cancel a
   // session that was recorded, and a cancelled session must never bill —
-  // whatever the schedule has done since, so a pair holds on a projected date
+  // whatever the schedule has done since, so a pair holds on a planned date
   // or on one where its group holds a row. The document already leaves such
   // rows out; this holds the rule for any reader handed one anyway. A pair on
   // a date with neither is inert, as it is everywhere else.
@@ -558,17 +565,33 @@ function buildClub(
   const cancelledPairs = new Set(
     club.cancelled_sessions
       .map((one) => ({ date: one.session_date, key: pairKey(one.group_id, one.session_date) }))
-      .filter(({ date, key }) => projectedSet.has(date) || storedPairs.has(key))
+      .filter(({ date, key }) => planned.has(date) || storedPairs.has(key))
       .map(({ key }) => key),
   );
   const ran = club.sessions.filter(
     (session) => !cancelledPairs.has(pairKey(session.group_id, session.session_date)),
   );
 
-  // One session per club per date, whatever number of groups met on it.
-  const recordedDates = new Set(ran.map((session) => session.session_date));
+  // The dates a holiday break withdrew from the plan, each with its break's
+  // name. A date is withdrawn by one break alone, so the first name holds.
+  const holidays = new Map<string, string>();
+  for (const row of club.holiday_breaks) {
+    for (const withdrawn of row.withdrawnSessions) {
+      if (!holidays.has(withdrawn.date)) {
+        holidays.set(withdrawn.date, breakName(row, locale));
+      }
+    }
+  }
 
-  const cancelledDates = cancelledClubDates(club, projectedSet);
+  // One session per club per date, whatever number of groups met on it. A
+  // holiday date is not one, whatever is stored on it.
+  const recordedDates = new Set(
+    ran
+      .map((session) => session.session_date)
+      .filter((date) => !holidays.has(date)),
+  );
+
+  const cancelledDates = cancelledClubDates(club, planned);
 
   // The club's own today. The dates on both sides of this comparison are
   // club-local calendar dates, so the clock has to be read in the club's zone —
@@ -590,10 +613,11 @@ function buildClub(
       date,
       isoWeek: isoWeekOf(date).week,
       kind: billableDates.has(date) ? "recorded" : "upcoming",
+      holidayName: null,
     });
   }
-  for (const date of projected) {
-    if (recordedDates.has(date)) continue;
+  for (const date of club.planned_dates) {
+    if (recordedDates.has(date) || holidays.has(date)) continue;
     lines.push({
       date,
       isoWeek: isoWeekOf(date).week,
@@ -602,6 +626,16 @@ function buildClub(
       kind: cancelledDates.has(date)
         ? "cancelled"
         : unrecordedOrUpcoming(date, today),
+      holidayName: null,
+    });
+  }
+  // Worth nothing either side of today, and outside every count below.
+  for (const [date, name] of holidays) {
+    lines.push({
+      date,
+      isoWeek: isoWeekOf(date).week,
+      kind: "holiday",
+      holidayName: name,
     });
   }
   lines.sort((a, b) => compareCalendarDates(a.date, b.date));
@@ -654,22 +688,22 @@ function pairKey(groupId: string, date: string): string {
 }
 
 /**
- * The projected dates that are cancelled for the club as a whole.
+ * The planned dates that are cancelled for the club as a whole.
  *
  * A cancellation is per group and the invoice is per club, so a date qualifies
  * only when every group the club has cancelled it — including a group the
  * month otherwise says nothing about. One group cancelling while a sibling was
  * due and did not leaves the date unrecorded, and so billed: the sibling still
- * owed the session. Only projected dates are lines to mark: a cancellation
- * off the projection either keeps a record from billing (above) or is inert.
+ * owed the session. Only planned dates are lines to mark: a cancellation
+ * off the plan either keeps a record from billing (above) or is inert.
  */
 function cancelledClubDates(
   club: MunicipalityInvoicingClub,
-  projected: ReadonlySet<string>,
+  planned: ReadonlySet<string>,
 ): Set<string> {
   const byDate = new Map<string, Set<string>>();
   for (const one of club.cancelled_sessions) {
-    if (!projected.has(one.session_date)) continue;
+    if (!planned.has(one.session_date)) continue;
     const cancelledGroups = byDate.get(one.session_date) ?? new Set<string>();
     cancelledGroups.add(one.group_id);
     byDate.set(one.session_date, cancelledGroups);
@@ -682,24 +716,6 @@ function cancelledClubDates(
       )
       .map(([date]) => date),
   );
-}
-
-/**
- * Every date the club's weekly schedule puts inside the month, clipped to its
- * own term — the shared projection (`@/lib/invoicing/month`), which the gedu
- * invoice walks the same way.
- */
-function projectedDates(
-  club: MunicipalityInvoicingClub,
-  monthStart: string,
-  monthEnd: string,
-): string[] {
-  // Type-driven, not reachable: a municipality club always carries both ends of
-  // its term and a location by CHECK constraint, so a null start exists only in
-  // the generated types. The projection answers it with nothing rather than
-  // throwing, because a page that throws is a worse answer than one that
-  // projects nothing.
-  return projectMonthDates(club, monthStart, monthEnd);
 }
 
 /** A weekly schedule the formatter recognised — the only kind a club has. */

@@ -34,17 +34,6 @@ vi.mock("@/lib/daily", async () => {
   };
 });
 
-const mockComputeSessionWindow = vi.fn();
-vi.mock("@/lib/session-schedule", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/session-schedule")>(
-    "@/lib/session-schedule",
-  );
-  return {
-    ...actual,
-    computeSessionWindow: (...args: unknown[]) => mockComputeSessionWindow(...args),
-  };
-});
-
 // --- Helpers ---
 
 const GROUP_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
@@ -73,8 +62,25 @@ const gameAccountReads: string[] = [];
 // the two happened to match".
 const substitutionDatesAsked: string[] = [];
 
-// Every session date the route asked the cancellation predicate about.
-const cancellationDatesAsked: string[] = [];
+/** One row of `group_open_session_windows`, as PostgREST hands it back. */
+interface OpenWindowRow {
+  session_date: string;
+  starts_at: string;
+  ends_at: string;
+  opens_at: string;
+  closes_at: string;
+  cancelled: boolean;
+}
+
+/**
+ * What the database answers for the group's open windows on this test. The
+ * route's arithmetic on the window lives in the database now, and its own DB
+ * test covers it; what this suite pins is what the route does with the rows.
+ */
+let openWindows: OpenWindowRow[] = [];
+
+// Every argument object the route called the window function with.
+const windowCalls: unknown[] = [];
 
 /**
  * A calendar date in the fixture product's zone.
@@ -92,20 +98,38 @@ function dateInProductZone(
 }
 
 /**
- * Make the window mock report an open session starting at `sessionStart`.
+ * A window row for an hour-long session starting at `sessionStart`, dated
+ * `sessionDate` (by default its date in the fixture product's zone).
+ */
+function windowRow(
+  sessionStart: Date,
+  { sessionDate, cancelled = false }: { sessionDate?: string; cancelled?: boolean } = {},
+): OpenWindowRow {
+  const endsAt = new Date(sessionStart.getTime() + 3600_000);
+  return {
+    session_date: sessionDate ?? dateInProductZone(sessionStart),
+    starts_at: sessionStart.toISOString(),
+    ends_at: endsAt.toISOString(),
+    opens_at: new Date(sessionStart.getTime() - 300_000).toISOString(),
+    closes_at: new Date(endsAt.getTime() + 300_000).toISOString(),
+    cancelled,
+  };
+}
+
+/**
+ * Make the database report one open window, for a session starting at
+ * `sessionStart`.
  *
  * The substitution cases derive the date they seed **from this same instant**, so
  * nothing in them is keyed to the wall clock: a run that crossed local midnight
  * between seeding a substitution and reading the route would otherwise flip, which is
  * a real non-determinism rather than a flake to re-run.
  */
-function openWindowFor(sessionStart: Date) {
-  mockComputeSessionWindow.mockReturnValue({
-    isOpen: true,
-    nextSessionStart: sessionStart,
-    windowOpensAt: new Date(sessionStart.getTime() - 300_000),
-    windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
-  });
+function openWindowFor(
+  sessionStart: Date,
+  options: { sessionDate?: string; cancelled?: boolean } = {},
+) {
+  openWindows = [windowRow(sessionStart, options)];
 }
 
 function tokenRequest(body: Record<string, unknown>): Request {
@@ -140,7 +164,6 @@ function mockTables(opts: {
     /** Drives which game identity (if any) the token carries. Defaults to the
      *  Minecraft Java topic, which is what most remote clubs are. */
     topic?: ProductTopic;
-    slots?: Array<{ weekday: number; start_time: string; duration_minutes: number }>;
   } | null;
   participation?: { id: string } | null;
   geduAssignment?: { group_id: string } | null;
@@ -160,29 +183,16 @@ function mockTables(opts: {
    * group, which is what makes "refused on a sibling group" a real assertion.
    */
   traineeSeatGroupId?: string;
-  /**
-   * Product-local dates the database answers cancelled on this group. The
-   * predicate answers true only when the route asked about one of these dates
-   * for this group, and records every date asked on `cancellationDatesAsked`.
-   */
-  cancelledDates?: string[];
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
   robloxAccount?: { roblox_username: string | null; roblox_user_id: number | null } | null;
 }) {
-  mockAdminRpc.mockImplementation(
-    (fn: string, args: { p_group_id: string; p_session_date: string }) => {
-      if (fn !== "group_session_is_cancelled") {
-        return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
-      }
-      cancellationDatesAsked.push(args.p_session_date);
-      return Promise.resolve(
-        mockSupabaseSuccess(
-          args.p_group_id === GROUP_ID &&
-            (opts.cancelledDates?.includes(args.p_session_date) ?? false),
-        ),
-      );
-    },
-  );
+  mockAdminRpc.mockImplementation((fn: string, args: unknown) => {
+    if (fn !== "group_open_session_windows") {
+      return Promise.resolve({ data: null, error: { message: `unexpected rpc ${fn}` } });
+    }
+    windowCalls.push(args);
+    return Promise.resolve(mockSupabaseSuccess(openWindows));
+  });
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "product_groups") {
       const row = opts.group
@@ -194,9 +204,6 @@ function mockTables(opts: {
               timezone: opts.group.timezone ?? "Europe/Helsinki",
               is_remote: opts.group.is_remote ?? true,
               topic: opts.group.topic ?? "minecraft_java",
-              slots: opts.group.slots ?? [
-                { weekday: 1, start_time: "14:00", duration_minutes: 60 },
-              ],
             },
           }
         : null;
@@ -342,7 +349,7 @@ describe("POST /api/voice/token", () => {
     vi.clearAllMocks();
     gameAccountReads.length = 0;
     substitutionDatesAsked.length = 0;
-    cancellationDatesAsked.length = 0;
+    windowCalls.length = 0;
     // Rebuild the prune chain each test (clearAllMocks wipes return values).
     placementLt.mockResolvedValue({ error: null });
     placementEq.mockReturnValue({ lt: placementLt });
@@ -360,14 +367,8 @@ describe("POST /api/voice/token", () => {
       privacy: "private",
       created_at: new Date().toISOString(),
     });
-    // Default window: open right now, closes in an hour.
-    const nextStart = new Date(Date.now() - 60_000);
-    mockComputeSessionWindow.mockReturnValue({
-      isOpen: true,
-      nextSessionStart: nextStart,
-      windowOpensAt: new Date(nextStart.getTime() - 300_000),
-      windowClosesAt: new Date(nextStart.getTime() + 3600_000),
-    });
+    // Default window: a session that started a minute ago, open for an hour.
+    openWindowFor(new Date(Date.now() - 60_000));
   });
 
   afterEach(() => {
@@ -499,11 +500,11 @@ describe("POST /api/voice/token", () => {
 
     it("keeps a substitution in a session that runs past local midnight", async () => {
       // A Monday 23:30 Helsinki session, read at 00:10 on Tuesday: the room is
-      // still Monday's. Asking "does this gedu substitution TODAY", which is what this
-      // route used to ask, would look Tuesday up and eject them at midnight —
-      // so the assertion is on the DATE ASKED FOR, not only on the 200.
+      // still Monday's. Asking "does this gedu substitute TODAY" would look
+      // Tuesday up and eject them at midnight — so the assertion is on the DATE
+      // ASKED FOR, which is the open window's own session date.
       const sessionStart = new Date("2026-03-09T21:30:00.000Z"); // 23:30 Helsinki
-      openWindowFor(sessionStart);
+      openWindowFor(sessionStart, { sessionDate: "2026-03-09" });
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
         group: {},
@@ -522,7 +523,7 @@ describe("POST /api/voice/token", () => {
       // direction: a 00:10 Tuesday start opens its window at 23:55 on Monday,
       // when "today" is still Monday and the session is dated Tuesday.
       const sessionStart = new Date("2026-03-09T22:10:00.000Z"); // 00:10 Tue Helsinki
-      openWindowFor(sessionStart);
+      openWindowFor(sessionStart, { sessionDate: "2026-03-10" });
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
         group: {},
@@ -536,18 +537,13 @@ describe("POST /api/voice/token", () => {
       expect(substitutionDatesAsked).toEqual(["2026-03-10"]);
     });
 
-    it("falls back to today and yesterday when no slot is open, and still refuses on the window", async () => {
+    it("falls back to today and yesterday when no window is open, and still refuses on the window", async () => {
       // With no session in progress there is no session date to be about, so
       // the membership arm asks the SQL predicates' own pair. It admits — and
       // the window gate refuses a moment later, which is the documented order:
       // a non-member and a member both learn only "not assigned" or "not open",
       // never which groups are in session.
-      mockComputeSessionWindow.mockReturnValue({
-        isOpen: false,
-        nextSessionStart: new Date(Date.now() + 86400_000),
-        windowOpensAt: new Date(Date.now() + 86100_000),
-        windowClosesAt: new Date(Date.now() + 90000_000),
-      });
+      openWindows = [];
       const today = dateInProductZone();
       authAs("sub-id", { role: "gedu", first_name: "Joonas" });
       mockTables({
@@ -661,130 +657,116 @@ describe("POST /api/voice/token", () => {
   });
 
   describe("session window gate", () => {
-    it("rejects when no slot has an open window", async () => {
+    it("asks the database for the group's open windows, at its own clock", async () => {
+      // No `p_at`: the database's now() is the clock, so the room and its chat,
+      // which reads the same function, are asked about the same instant.
+      authAs("admin-id", { role: "admin", first_name: "Boss" });
+      mockTables({ group: {} });
+      await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(windowCalls).toEqual([{ p_group_id: GROUP_ID }]);
+    });
+
+    it("rejects when no window is open", async () => {
       authAs("gedu-id", { role: "gedu", first_name: "Edu" });
       mockTables({ group: {}, geduAssignment: { group_id: GROUP_ID } });
-      mockComputeSessionWindow.mockReturnValue({
-        isOpen: false,
-        nextSessionStart: new Date(Date.now() + 86400_000),
-        windowOpensAt: new Date(Date.now() + 86100_000),
-        windowClosesAt: new Date(Date.now() + 90000_000),
-      });
+      openWindows = [];
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       const data = await res.json();
       expect(res.status).toBe(403);
       expect(data.error).toBe("Room is not open yet");
+      expect(mockCreateMeetingToken).not.toHaveBeenCalled();
     });
 
-    it("picks the first slot whose window is open when multiple slots exist", async () => {
+    it("joins the first window when several are open", async () => {
+      // The database orders overlapping windows earliest-opening first; the
+      // route takes that order as given, so its room and token are the first
+      // row's.
       authAs("gedu-id", { role: "gedu", first_name: "Edu" });
-      mockTables({
-        group: {
-          slots: [
-            { weekday: 1, start_time: "23:00", duration_minutes: 60 }, // Mon 11pm
-            { weekday: 2, start_time: "05:00", duration_minutes: 60 }, // Tue 5am
-          ],
-        },
-        geduAssignment: { group_id: GROUP_ID },
-      });
-      const closedWindow = {
-        isOpen: false,
-        nextSessionStart: new Date(Date.now() + 86400_000),
-        windowOpensAt: new Date(Date.now() + 86100_000),
-        windowClosesAt: new Date(Date.now() + 90000_000),
-      };
-      const openWindow = {
-        isOpen: true,
-        nextSessionStart: new Date(Date.now() - 60_000),
-        windowOpensAt: new Date(Date.now() - 300_000),
-        windowClosesAt: new Date(Date.now() + 3600_000),
-      };
-      mockComputeSessionWindow
-        .mockReturnValueOnce(closedWindow)
-        .mockReturnValueOnce(openWindow);
+      mockTables({ group: {}, geduAssignment: { group_id: GROUP_ID } });
+      const first = windowRow(new Date(Date.now() - 50 * 60_000));
+      const second = windowRow(new Date(Date.now() - 60_000));
+      openWindows = [first, second];
+
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+
       expect(res.status).toBe(200);
+      expect(data.sessionOpensAt).toBe(first.opens_at);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          expUnix:
+            Math.round(new Date(first.closes_at).getTime() / 1000) +
+            VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS,
+        }),
+      );
+    });
+
+    it("fails loudly when the window read fails, rather than refusing", async () => {
+      authAs("admin-id", { role: "admin", first_name: "Boss" });
+      mockTables({ group: {} });
+      mockAdminRpc.mockResolvedValue({ data: null, error: { message: "db down" } });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(500);
+      expect(mockCreateMeetingToken).not.toHaveBeenCalled();
     });
   });
 
   describe("cancelled session", () => {
     it("refuses a member on a cancelled session, and never touches Daily", async () => {
-      const sessionStart = new Date();
-      openWindowFor(sessionStart);
-      const sessionDate = dateInProductZone(sessionStart);
+      openWindowFor(new Date(), { cancelled: true });
       authAs("gamer-id", { role: "gamer", first_name: "Kid" });
-      mockTables({
-        group: {},
-        participation: { id: "participation-1" },
-        cancelledDates: [sessionDate],
-      });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       const data = await res.json();
       expect(res.status).toBe(403);
       expect(data.error).toBe("This session is cancelled");
-      expect(cancellationDatesAsked).toEqual([sessionDate]);
       expect(mockGetOrCreateDailyRoom).not.toHaveBeenCalled();
       expect(mockCreateMeetingToken).not.toHaveBeenCalled();
     });
 
     it("refuses an admin too: a cancelled session has no room for anyone", async () => {
-      const sessionStart = new Date();
-      openWindowFor(sessionStart);
+      openWindowFor(new Date(), { cancelled: true });
       authAs("admin-id", { role: "admin", first_name: "Admin" });
-      mockTables({ group: {}, cancelledDates: [dateInProductZone(sessionStart)] });
+      mockTables({ group: {} });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(403);
       expect(mockCreateMeetingToken).not.toHaveBeenCalled();
     });
 
-    it("reads a session running past local midnight as its own start date", async () => {
-      // A Monday 23:30 Helsinki session, joined at 00:10 on Tuesday, is still
-      // Monday's session: a cancellation of Tuesday leaves it open, and the
-      // date asked about is Monday's. The window is mocked, so the wall clock
-      // at test time plays no part.
-      openWindowFor(new Date("2026-03-09T21:30:00.000Z")); // 23:30 Helsinki
+    it("refuses when the first open window is cancelled, though a later one is not", async () => {
+      // The first window is the session being joined; a cancelled one is not
+      // skipped for the next.
       authAs("gamer-id", { role: "gamer", first_name: "Kid" });
-      mockTables({
-        group: {},
-        participation: { id: "participation-1" },
-        cancelledDates: ["2026-03-10"],
-      });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
+      openWindows = [
+        windowRow(new Date(Date.now() - 50 * 60_000), { cancelled: true }),
+        windowRow(new Date(Date.now() - 60_000)),
+      ];
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
-      expect(res.status).toBe(200);
-      expect(cancellationDatesAsked).toEqual(["2026-03-09"]);
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("This session is cancelled");
     });
 
-    it("admits a member when only another date of the group is cancelled", async () => {
-      const sessionStart = new Date();
-      openWindowFor(sessionStart);
-      const [year, month, day] = dateInProductZone(sessionStart).split("-").map(Number);
-      const otherDate = new Date(Date.UTC(year, month - 1, day + 7))
-        .toISOString()
-        .slice(0, 10);
+    it("admits when only a later open window is cancelled", async () => {
       authAs("gamer-id", { role: "gamer", first_name: "Kid" });
-      mockTables({
-        group: {},
-        participation: { id: "participation-1" },
-        cancelledDates: [otherDate],
-      });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
+      openWindows = [
+        windowRow(new Date(Date.now() - 50 * 60_000)),
+        windowRow(new Date(Date.now() - 60_000), { cancelled: true }),
+      ];
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);
     });
 
     it("refuses a non-member as a non-member, without revealing the cancellation", async () => {
-      const sessionStart = new Date();
-      openWindowFor(sessionStart);
+      openWindowFor(new Date(), { cancelled: true });
       authAs("gamer-id", { role: "gamer", first_name: "Kid" });
-      mockTables({
-        group: {},
-        participation: null,
-        cancelledDates: [dateInProductZone(sessionStart)],
-      });
+      mockTables({ group: {}, participation: null });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       const data = await res.json();
       expect(res.status).toBe(403);
       expect(data.error).toBe("You are not enrolled in this group");
-      expect(cancellationDatesAsked).toEqual([]);
     });
   });
 
@@ -795,13 +777,8 @@ describe("POST /api/voice/token", () => {
         group: {},
         participation: { id: "participation-1" },
       });
-      const windowClosesAt = new Date(Date.now() + 3600_000);
-      mockComputeSessionWindow.mockReturnValue({
-        isOpen: true,
-        nextSessionStart: new Date(Date.now() - 60_000),
-        windowOpensAt: new Date(Date.now() - 300_000),
-        windowClosesAt,
-      });
+      openWindowFor(new Date(Date.now() - 60_000));
+      const windowClosesAt = new Date(openWindows[0].closes_at);
 
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       const data = await res.json();
@@ -957,13 +934,8 @@ describe("POST /api/voice/token", () => {
       // joiners (and a user who never left is reaped on the next join).
       authAs("admin-id", { role: "admin", first_name: "Boss" });
       mockTables({ group: {} });
-      const windowOpensAt = new Date(Date.now() - 300_000);
-      mockComputeSessionWindow.mockReturnValue({
-        isOpen: true,
-        nextSessionStart: new Date(Date.now() - 60_000),
-        windowOpensAt,
-        windowClosesAt: new Date(Date.now() + 3600_000),
-      });
+      openWindowFor(new Date(Date.now() - 60_000));
+      const windowOpensAt = new Date(openWindows[0].opens_at);
 
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
 

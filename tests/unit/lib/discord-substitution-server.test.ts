@@ -57,8 +57,19 @@ const ASSIGNMENT_ROW = {
   participant_count: 4,
   kind: "assignment",
   substitution_date: null,
-  cancelled_dates: ["2026-10-12"],
   substitution_cancelled: false,
+  // The plan from the day before the tests' clock to the end date: every
+  // Monday, the 12th cancelled.
+  upcoming_sessions: ["2026-10-05", "2026-10-12", "2026-10-19", "2026-10-26"].map(
+    (date) => ({
+      session_date: date,
+      starts_at: `${date}T10:00:00+00:00`,
+      ends_at: `${date}T11:00:00+00:00`,
+      cancelled: date === "2026-10-12",
+    }),
+  ),
+  substitution_starts_at: null,
+  substitution_ends_at: null,
 };
 
 const SUMMARY = {
@@ -95,6 +106,8 @@ const LIVE_REQUEST = {
   ...REQUEST_DOCUMENT,
   group_name: "Monday Cohort",
   product: ASSIGNMENT_ROW.product,
+  starts_at: "2026-10-19T10:00:00+00:00",
+  ends_at: "2026-10-19T11:00:00+00:00",
   session_cancelled: false,
 };
 

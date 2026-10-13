@@ -1,3 +1,4 @@
+import type { PlannedSession } from "@/lib/planned-sessions";
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
@@ -29,9 +30,7 @@ export interface MyAssignedProductSessionRow {
     timezone: string;
     /**
      * Inclusive start date in product-local calendar (YYYY-MM-DD), or
-     * null for ongoing clubs. Matches the participations shape so the
-     * shared occurrence enumeration can clamp pre-start phantom
-     * occurrences out of the list.
+     * null for ongoing clubs. The card's schedule line states it.
      */
     startDate: string | null;
     /** Inclusive end date (YYYY-MM-DD), null for ongoing clubs. */
@@ -86,17 +85,24 @@ export interface MyAssignedProductSessionRow {
    */
   substitutionDate: string | null;
   /**
-   * This row's group's cancelled session dates, product-local `YYYY-MM-DD`,
-   * from the day before today onwards. A card skips them when naming the next
-   * session and names the ones before it; the absence picker never offers one.
+   * A standing seat's planned sessions, from the day before today to the
+   * group's plan horizon, soonest first, each `cancelled` where the group
+   * cancelled it. A card names its next session from them and the absence
+   * picker lists them. Empty on a `substitution` row.
    */
-  cancelledDates: readonly string[];
+  upcomingSessions: PlannedSession[];
   /**
    * Whether a `substitution` row's date is cancelled — asked of the date itself,
-   * because the card stands for days after it and `cancelledDates` starts the
-   * day before today. False on an `assignment` row.
+   * because the card stands for days after it. False on the other kinds.
    */
   substitutionCancelled: boolean;
+  /**
+   * When a `substitution` row's session runs, from the plan — `null` on a date
+   * the plan no longer has (an orphan, a date outside the term, or one on a
+   * holiday break), and on the other kinds.
+   */
+  substitutionStartsAt: Date | null;
+  substitutionEndsAt: Date | null;
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
@@ -223,8 +229,16 @@ function toMyAssignedProductSessionRow(
     groupId: row.group_id,
     kind: row.kind,
     substitutionDate: row.substitution_date,
-    cancelledDates: row.cancelled_dates,
+    upcomingSessions: row.upcoming_sessions,
     substitutionCancelled: row.substitution_cancelled,
+    substitutionStartsAt:
+      row.substitution_starts_at === null
+        ? null
+        : new Date(row.substitution_starts_at),
+    substitutionEndsAt:
+      row.substitution_ends_at === null
+        ? null
+        : new Date(row.substitution_ends_at),
     groupCount: row.group_count,
     participantCount: row.participant_count,
     slots: row.product.schedule_slots.map((s) => ({

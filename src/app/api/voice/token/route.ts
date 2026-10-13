@@ -10,7 +10,6 @@ import {
   getOrCreateDailyRoom,
   groupVoiceRoomName,
 } from "@/lib/daily";
-import { computeSessionWindow } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
@@ -39,13 +38,15 @@ import {
  *      assignment arm is not: a sub joins the room on the session they are
  *      substituting and on none of the group's other sessions. The trainee arm is
  *      group-scoped, and it is the one gedu arm that does not moderate.
- *   2. Session window — at least one slot's window must be open right now, and
- *      the session it belongs to must not have been cancelled by an admin.
+ *   2. Session window — a planned session's window must be open right now (the
+ *      database's `group_open_session_windows`, the same window the group's
+ *      chat opens on), and that session must not have been cancelled by an
+ *      admin.
  *
  * The two gates answer in that order and the order is the contract — a
  * non-member is refused whether or not a session is running, so this route
- * cannot be used to probe which groups are in session. The open slot is
- * *computed* before gate 1 all the same, because gate 1 needs the date of the
+ * cannot be used to probe which groups are in session. The open window is
+ * *read* before gate 1 all the same, because gate 1 needs the date of the
  * session being joined to look a substitution up under; nothing is decided by it until
  * gate 2.
  *
@@ -74,22 +75,12 @@ export const POST = defineRoute({
     const { groupId } = body;
     const admin = createAdminClient();
 
-    // Group → product → slots → timezone in one round trip. `!inner` makes
-    // PostgREST fail the parent select on a missing product (shouldn't happen
-    // given the FK, but defends against partially deleted rows).
-    // schedule_slots is keyed off `product_id`, so it nests inside the products
-    // join — product_groups ↔ schedule_slots is not a direct FK pair.
+    // Group → product in one round trip. `!inner` makes PostgREST fail the
+    // parent select on a missing product (shouldn't happen given the FK, but
+    // defends against partially deleted rows).
     const { data: group, error: groupErr } = await admin
       .from("product_groups")
-      .select(
-        `
-          id, product_id,
-          product:products!inner(
-            id, timezone, is_remote, topic,
-            slots:schedule_slots(weekday, start_time, duration_minutes)
-          )
-        `,
-      )
+      .select("id, product_id, product:products!inner(id, timezone, is_remote, topic)")
       .eq("id", groupId)
       .maybeSingle();
 
@@ -103,43 +94,26 @@ export const POST = defineRoute({
     }
 
     const productTimezone = group.product.timezone;
-    const slots = group.product.slots;
 
     // ---- Which session is being joined ----
-    // Iterate every slot; the first whose window is currently open wins.
-    // Mon-11pm + Tue-5am sessions for the same group sit on different slots
-    // (and end up with distinct Daily room names below), so checking each slot
-    // independently is correct.
+    // The database's answer, from the product's plan: the sessions whose join
+    // window is open now, earliest-opening first, each marked cancelled or
+    // not. The first is the session being joined, and a session dated outside
+    // the product's term has no window at all. Two sessions of one group have
+    // distinct windows and so distinct Daily room names below. A failed read
+    // throws rather than answering "no window", so an outage is a 500, never a
+    // refusal the database would not have given.
     //
-    // Computed here rather than after the membership gate because the substitution arm
-    // of that gate needs the SESSION DATE, and the open slot is what knows it.
-    // Nothing is refused on it yet — the gates still answer in their documented
-    // order below.
-    const now = new Date();
-    let openSlot: {
-      windowOpensAt: Date;
-      windowClosesAt: Date;
-      sessionStartsAt: Date;
-    } | null = null;
-    for (const slot of slots) {
-      const window = computeSessionWindow(
-        {
-          day_of_week: slot.weekday,
-          start_time: slot.start_time,
-          timezone: productTimezone,
-          duration_minutes: slot.duration_minutes,
-        },
-        now,
-      );
-      if (window.isOpen) {
-        openSlot = {
-          windowOpensAt: window.windowOpensAt,
-          windowClosesAt: window.windowClosesAt,
-          sessionStartsAt: window.nextSessionStart,
-        };
-        break;
-      }
-    }
+    // Read here rather than after the membership gate because the substitution
+    // arm of that gate needs the SESSION DATE, and the open window is what
+    // knows it. Nothing is refused on it yet — the gates still answer in their
+    // documented order below.
+    const { data: openWindows, error: windowErr } = await admin.rpc(
+      "group_open_session_windows",
+      { p_group_id: groupId },
+    );
+    if (windowErr) throw windowErr;
+    const openWindow = openWindows.at(0) ?? null;
 
     // ---- Membership gate ----
     // Which arm admitted the joiner is kept, not just whether one did: the
@@ -173,7 +147,7 @@ export const POST = defineRoute({
         groupId,
         productId: group.product_id,
         userId: user.id,
-        substitutionDates: sessionDatesToAdmit(openSlot, productTimezone),
+        substitutionDates: sessionDatesToAdmit(openWindow, productTimezone),
       });
       if (geduAdmission === null) {
         return NextResponse.json(
@@ -188,9 +162,9 @@ export const POST = defineRoute({
     }
 
     // ---- Session window gate ----
-    // The slot was resolved above, before the membership gate that needed its
+    // The window was read above, before the membership gate that needed its
     // date. This is where it decides anything.
-    if (!openSlot) {
+    if (!openWindow) {
       return NextResponse.json(
         { error: "Room is not open yet" },
         { status: 403 },
@@ -199,21 +173,16 @@ export const POST = defineRoute({
 
     // A cancelled session opens no room, exactly as `ensure_chat_channel` opens
     // it no chat. Asked after the membership gate, so only a member learns the
-    // session was cancelled. The date is the product-local date of the open
-    // slot's own start — the session's date however its window straddles
-    // midnight, as the substitution arm reads it.
-    if (
-      await sessionIsCancelled(
-        admin,
-        groupId,
-        formatInTimeZone(openSlot.sessionStartsAt, productTimezone, "yyyy-MM-dd"),
-      )
-    ) {
+    // session was cancelled.
+    if (openWindow.cancelled) {
       return NextResponse.json(
         { error: "This session is cancelled" },
         { status: 403 },
       );
     }
+
+    const windowOpensAt = new Date(openWindow.opens_at);
+    const windowClosesAt = new Date(openWindow.closes_at);
 
     // Self-healing cleanup of private-zone occupancy: every join reaps this
     // group's occupancy rows from *prior* session windows. A row is only valid
@@ -228,7 +197,7 @@ export const POST = defineRoute({
       .from("voice_private_zone_occupants")
       .delete()
       .eq("group_id", groupId)
-      .lt("session_opens_at", openSlot.windowOpensAt.toISOString());
+      .lt("session_opens_at", windowOpensAt.toISOString());
 
     // Bake the private-zone privacy boundary into this joiner's token: read the
     // current window's occupancy and compute the `canReceive` block set, so the
@@ -239,7 +208,7 @@ export const POST = defineRoute({
       .from("voice_private_zone_occupants")
       .select("user_id, zone_id")
       .eq("group_id", groupId)
-      .eq("session_opens_at", openSlot.windowOpensAt.toISOString());
+      .eq("session_opens_at", windowOpensAt.toISOString());
     const canReceive = tokenCanReceiveFor(
       user.id,
       (occupantRows ?? []).map((r) => ({ userId: r.user_id, zoneId: r.zone_id })),
@@ -253,12 +222,12 @@ export const POST = defineRoute({
     // inside the helper.
     const dailyRoomName = groupVoiceRoomName({
       groupId,
-      windowOpensAt: openSlot.windowOpensAt,
+      windowOpensAt,
       timezone: productTimezone,
     });
 
     const expUnix =
-      Math.round(openSlot.windowClosesAt.getTime() / 1000) +
+      Math.round(windowClosesAt.getTime() / 1000) +
       VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS;
 
     await getOrCreateDailyRoom({ name: dailyRoomName, expUnix });
@@ -325,7 +294,7 @@ export const POST = defineRoute({
       token,
       roomUrl: `https://${domain}.daily.co/${dailyRoomName}`,
       role,
-      sessionOpensAt: openSlot.windowOpensAt.toISOString(),
+      sessionOpensAt: windowOpensAt.toISOString(),
       standing,
     };
   },
@@ -402,16 +371,15 @@ async function admitGedu(
 /**
  * Which session date(s) a substitution may be admitted for on this join.
  *
- * **The open slot knows the answer, so it is asked first.** A session dated
+ * **The open window knows the answer, so it is asked first.** A session dated
  * Monday that runs to 00:30 is still Monday's session at 00:10 on Tuesday, and
  * a session starting at 00:10 has its whole pre-window on the day before — so
- * "today in the product's timezone", which is what this route used to ask, drops
- * a substitute out of the room at local midnight and refuses them before a
- * small-hours start. The open slot carries the session's own start instant, and
- * the product-local date of *that* is the session's date however the window
- * straddles midnight.
+ * "today in the product's timezone" would drop a substitute out of the room at
+ * local midnight and refuse them before a small-hours start. The open window
+ * carries the session's own date, the product-local date it starts on, however
+ * the window straddles midnight.
  *
- * With no slot open there is no session to be about, and the answer is the
+ * With no window open there is no session to be about, and the answer is the
  * SQL predicates' own: today or yesterday in the product's timezone. Nothing is
  * admitted on it — gate 2 refuses the join a moment later — but the two arms of
  * the gate are then answering about the same thing, which is what keeps a
@@ -421,14 +389,10 @@ async function admitGedu(
  * 24 hours: the day a clock goes back, a flat 24-hour step lands back on today.
  */
 function sessionDatesToAdmit(
-  openSlot: { sessionStartsAt: Date } | null,
+  openWindow: { session_date: string } | null,
   productTimezone: string,
 ): string[] {
-  if (openSlot) {
-    return [
-      formatInTimeZone(openSlot.sessionStartsAt, productTimezone, "yyyy-MM-dd"),
-    ];
-  }
+  if (openWindow) return [openWindow.session_date];
 
   const today = formatInTimeZone(new Date(), productTimezone, "yyyy-MM-dd");
   const [year, month, day] = today.split("-").map(Number);
@@ -499,29 +463,6 @@ async function holdsSubstitutionOn(
     .maybeSingle();
 
   return gedu?.certified === true;
-}
-
-/**
- * Has an admin cancelled this group's session on this product-local date?
- *
- * The database's one answer, asked rather than re-derived: this route runs on
- * the service-role client, the only role the predicate is granted to, and the
- * chat room's own gate asks the same function. A failed read throws rather than
- * answering "not cancelled", so an outage refuses the join instead of opening a
- * room the database would have kept shut.
- */
-async function sessionIsCancelled(
-  admin: ReturnType<typeof createAdminClient>,
-  groupId: string,
-  sessionDate: string,
-): Promise<boolean> {
-  const { data, error } = await admin.rpc("group_session_is_cancelled", {
-    p_group_id: groupId,
-    p_session_date: sessionDate,
-  });
-
-  if (error) throw error;
-  return data;
 }
 
 /**
