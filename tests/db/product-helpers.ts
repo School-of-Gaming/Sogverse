@@ -334,9 +334,9 @@ import { TEST_IDS } from "./constants";
  *                  NEVER exist, and 851-855 catalogue entries — four spotlight
  *                  pictures (one removed during the run) and one Library cover
  *                  a spotlight may not show
- *   860-864        session-documents-plan.test.ts (the dated club 860 with its
- *                  groups 861/862, the open-ended daily club 863 with its group
- *                  864)
+ *   860-865        session-documents-plan.test.ts (the dated club 860 with its
+ *                  groups 861/862, the open-ended daily club 863 with its
+ *                  groups 864/865)
  *   870-876        my-planned-sessions.test.ts (the open-ended daily club 870
  *                  with group 871 and the seeded family's seat 872; the
  *                  open-ended weekly club 873 with group 874, the seeded

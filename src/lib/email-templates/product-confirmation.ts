@@ -8,6 +8,7 @@ import {
   styledProductName,
 } from "./utils";
 import { bulletList, ctaButton, factList, inlineBold, sectionLabel } from "./blocks";
+import { MAIL_SPACE } from "./type-scale";
 import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import { textAttachment, type RenderedAttachment } from "./attachments";
@@ -701,7 +702,7 @@ function holidayBreakRows(
           ({ name, range }, index) =>
             // A break's name is admin-written and could be address-shaped, so
             // it is defused as well as escaped, like every value off a row.
-            `<div style="margin:${index === 0 ? "0" : "8px"} 0 0;">${inlineBold(
+            `<div style="margin:${index === 0 ? 0 : MAIL_SPACE.tight}px 0 0;">${inlineBold(
               defuseAutolinks(escapeHtml(name)),
             )}<br />${escapeHtml(range)}</div>`,
         )
