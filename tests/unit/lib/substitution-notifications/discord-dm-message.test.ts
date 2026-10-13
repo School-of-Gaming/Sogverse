@@ -149,7 +149,7 @@ describe("buildSubstitutionOfferDm", () => {
 
   it("states the pool's facts: when in the product zone, what, where, topic, language, role and fee", () => {
     const body = texts(offerDm(null, "open"));
-    expect(body).toContain("Wed, Oct 14");
+    expect(body).toContain("Wed 14 Oct");
     // The product's own clock and zone name — the reader's zone never reaches the bot.
     expect(body).toMatch(/16:00.*17:30.*(EEST|GMT\+3)/);
     expect(body).toContain("Minecraft Club — A");
@@ -207,7 +207,7 @@ describe("buildSubstitutionAcceptedDm", () => {
       mySogUrl: "https://sogverse.sog.gg/gedu",
     });
     expect(texts(message)).toContain("You’ve been accepted");
-    expect(texts(message)).toContain("Minecraft Club – A on Wed, Oct 14");
+    expect(texts(message)).toContain("Minecraft Club – A on Wed 14 Oct");
     expect(buttons(message)).toEqual([
       expect.objectContaining({ style: 5, url: "https://sogverse.sog.gg/gedu", label: "Open My SOG" }),
     ]);
@@ -234,7 +234,7 @@ describe("buildSubstitutionRequesterFilledDm", () => {
     expect(message.flags).toBe(DISCORD_FLAG_IS_COMPONENTS_V2);
     expect(texts(message)).toContain("Your substitution request has been filled");
     expect(texts(message)).toContain("Aino Korhonen will substitute for you");
-    expect(texts(message)).toContain("Wed, Oct 14");
+    expect(texts(message)).toContain("Wed 14 Oct");
     expect(texts(message)).toContain("Minecraft Club — A");
     expect(texts(message)).not.toContain("€");
     expect(buttons(message)).toEqual([
@@ -279,7 +279,7 @@ describe("buildSubstitutionPreviewFlow", () => {
       mySogUrl: null,
       refusalLine: "x",
     });
-    expect(texts(first)).toContain("Thu, Oct 15");
+    expect(texts(first)).toContain("Thu 15 Oct");
     expect(texts(first)).toContain("16:00");
   });
 });

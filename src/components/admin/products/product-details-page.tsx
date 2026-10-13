@@ -32,7 +32,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { ROUTES, SUPPORTED_CURRENCIES } from "@/lib/constants";
-import { resolveLocale } from "@/lib/constants/locales";
+import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
@@ -596,7 +596,7 @@ function OperationalFacts({
                     arrives in no order of its own. */}
                 {product.product_holiday_calendars
                   .map((link) => link.holiday_calendars)
-                  .sort((a, b) => a.name.localeCompare(b.name, uiLocale))
+                  .sort((a, b) => a.name.localeCompare(b.name, formattingLocale(uiLocale)))
                   .map((calendar) => (
                     <li key={calendar.id}>
                       <Link

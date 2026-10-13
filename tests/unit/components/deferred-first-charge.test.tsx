@@ -67,7 +67,7 @@ describe("the signup panel's first-charge date", () => {
     // product's zone: a date-only render is immune to that, and a viewer-zone
     // projection of Helsinki midnight would slip to the 23rd.
     viewerZone.value = "America/New_York";
-    expect(firstChargeDateFor(clubStarting("2027-02-24"))).toBe("Feb 24, 2027");
+    expect(firstChargeDateFor(clubStarting("2027-02-24"))).toBe("24 Feb 2027");
   });
 
   it("projects a clamped anchor into the viewer's own zone", () => {
@@ -76,7 +76,7 @@ describe("the signup panel's first-charge date", () => {
     // and already 4 March in Helsinki — which is the day the money leaves the
     // viewer's account, and therefore the day to print.
     viewerZone.value = "Europe/Helsinki";
-    expect(firstChargeDateFor(clubStarting("2027-06-01"))).toBe("Mar 4, 2027");
+    expect(firstChargeDateFor(clubStarting("2027-06-01"))).toBe("4 Mar 2027");
   });
 
   it("says nothing for a club that has already started", () => {
@@ -124,7 +124,7 @@ describe("the confirmation's first-charge line", () => {
       "2027-02-24",
     );
     expect(container.textContent).toContain(
-      'next.firstCharge|{"date":"Feb 24, 2027"}',
+      'next.firstCharge|{"date":"24 Feb 2027"}',
     );
   });
 
@@ -136,7 +136,7 @@ describe("the confirmation's first-charge line", () => {
     viewerZone.value = "Europe/Helsinki";
     const { container } = renderConfirmation("2027-03-03T22:30:00.000Z");
     expect(container.textContent).toContain(
-      'next.firstCharge|{"date":"Mar 4, 2027"}',
+      'next.firstCharge|{"date":"4 Mar 2027"}',
     );
   });
 

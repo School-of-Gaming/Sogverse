@@ -598,12 +598,12 @@ describe("POST /api/discord/interactions — /sub", () => {
   /** The session select's options on the pressed message, as the list drew them. */
   const PRESSED_OPTIONS = [
     {
-      label: "Tue, Oct 6, 16:00 – 17:30 GMT+3",
+      label: "Tue 6 Oct, 16:00–17:30 EEST",
       description: "Minecraft Club — A · Kallio School",
       value: `${GROUP_A}:2026-10-06`,
     },
     {
-      label: "Thu, Oct 8, 16:00 – 17:30 GMT+3",
+      label: "Thu 8 Oct, 16:00–17:30 EEST",
       description: "Minecraft Club — A · Kallio School",
       value: `${GROUP_B}:2026-10-08`,
     },
@@ -864,7 +864,7 @@ describe("POST /api/discord/interactions — /sub", () => {
       data: {
         custom_id: `sub:n:${GROUP_A}:${sessionDate}`,
         components: [
-          { type: 10, id: 1, content: "**Tue, Oct 6, 16:00 – 17:30 GMT+3**" },
+          { type: 10, id: 1, content: "**Tue 6 Oct, 16:00–17:30 EEST**" },
           { type: 10, id: 2, content: "Only admins see the reason." },
           { type: 18, id: 3, component: { type: 3, id: 4, custom_id: "reason", values: reason } },
           { type: 18, id: 5, component: { type: 4, id: 6, custom_id: "note", value: note } },
@@ -884,7 +884,7 @@ describe("POST /api/discord/interactions — /sub", () => {
     // The session line is the option picked on the pressed message.
     expect(response.data.components[0]).toEqual({
       type: 10,
-      content: "**Thu, Oct 8, 16:00 – 17:30 GMT+3**\nMinecraft Club — A · Kallio School",
+      content: "**Thu 8 Oct, 16:00–17:30 EEST**\nMinecraft Club — A · Kallio School",
     });
     const reason = response.data.components.find(
       (component: { type: number; component?: { custom_id?: string } }) =>
@@ -904,7 +904,7 @@ describe("POST /api/discord/interactions — /sub", () => {
     const { response } = await press("sub:s:en", [`${GROUP_A}:2026-10-13`]);
 
     expect(response.type).toBe(9);
-    expect(response.data.components[0]).toEqual({ type: 10, content: "**Tue, Oct 13**" });
+    expect(response.data.components[0]).toEqual({ type: 10, content: "**Tue 13 Oct**" });
   });
 
   it("acknowledges a pick that is not a session, and opens nothing", async () => {
@@ -932,7 +932,7 @@ describe("POST /api/discord/interactions — /sub", () => {
       reason: "other",
       reasonNote: "Dentist",
     });
-    expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue, Oct 6,");
+    expect(texts(patched)).toContain("Substitute requested for Minecraft Club — A on Tue 6 Oct,");
   });
 
   it("files with no note when the note is left blank", async () => {
@@ -1009,7 +1009,7 @@ describe("POST /api/discord/interactions — /sub", () => {
   it("names a filed session the list does not carry by its date alone", async () => {
     const { patched } = await submit("2026-12-01");
 
-    expect(texts(patched)).toContain("**Tue, Dec 1**");
+    expect(texts(patched)).toContain("**Tue 1 Dec**");
     expect(texts(patched)).toContain("You’ve asked for a substitute for this session. Waiting for one.");
   });
 

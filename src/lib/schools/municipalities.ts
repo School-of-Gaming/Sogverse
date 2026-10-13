@@ -1,3 +1,4 @@
+import { formattingLocale } from "@/lib/constants/locales";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   municipalityOf,
@@ -139,7 +140,7 @@ export function buildMunicipalityEntries(
 ): MunicipalityEntry[] {
   return municipalities
     .map((m) => buildMunicipalityEntry(m, locale))
-    .sort((a, b) => a.name.localeCompare(b.name, locale));
+    .sort((a, b) => a.name.localeCompare(b.name, formattingLocale(locale)));
 }
 
 /**

@@ -45,7 +45,7 @@ describe("SessionHolidayLine", () => {
       startDate: "2026-10-13",
       endDate: "2026-10-17",
     });
-    expect(screen.getByText("Oct 13 – 17")).toBeTruthy();
+    expect(screen.getByText("13–17 Oct")).toBeTruthy();
     expect(screen.getByText("Autumn break")).toBeTruthy();
     expect(screen.getByText("No session")).toBeTruthy();
     // The past cancellation's quiet shape, never a warning panel.
@@ -55,12 +55,12 @@ describe("SessionHolidayLine", () => {
 
   it("names one date for a one-day break", () => {
     renderLine("en", { names: NAMES, startDate: "2026-12-24", endDate: "2026-12-24" });
-    expect(screen.getByText("Dec 24")).toBeTruthy();
+    expect(screen.getByText("24 Dec")).toBeTruthy();
   });
 
   it("carries the year on a break outside the current one", () => {
     renderLine("en", { names: NAMES, startDate: "2027-02-22", endDate: "2027-02-26" });
-    expect(screen.getByText("Feb 22 – 26, 2027")).toBeTruthy();
+    expect(screen.getByText("22–26 Feb 2027")).toBeTruthy();
   });
 
   it("picks the reader's own locale where it is written, in that locale's range form", () => {

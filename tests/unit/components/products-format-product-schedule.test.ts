@@ -246,7 +246,9 @@ describe("formatProductSchedule — viewer-tz conversion", () => {
     expect(s.groups[0].startTime).toBe("23:00");
   });
 
-  it("tz abbrev reflects the SESSION's DST, not 'now' (EST in winter, EDT in summer)", () => {
+  // English formats as en-GB, which names a US zone by its offset (GMT-5 /
+  // GMT-4) rather than the American abbreviation (EST / EDT).
+  it("tz abbrev reflects the SESSION's DST, not 'now' (GMT-5 in winter, GMT-4 in summer)", () => {
     const slots = [{ weekday: 0, start_time: "16:00:00", duration_minutes: 90 }];
     const winter = summary(
       { product_type: "consumer_club", schedule_slots: slots },
@@ -257,8 +259,8 @@ describe("formatProductSchedule — viewer-tz conversion", () => {
       { timeZone: "America/New_York", now: SUMMER_MON },
     );
     if (winter.kind !== "recurring" || summer.kind !== "recurring") throw new Error("expected recurring");
-    expect(winter.tzAbbrev).toBe("EST");
-    expect(summer.tzAbbrev).toBe("EDT");
+    expect(winter.tzAbbrev).toBe("GMT-5");
+    expect(summer.tzAbbrev).toBe("GMT-4");
     // Both render 09:00 local (Helsinki and NY shift together across DST).
     expect(winter.groups[0].startTime).toBe("09:00");
     expect(summer.groups[0].startTime).toBe("09:00");
@@ -279,7 +281,7 @@ describe("formatProductSchedule — viewer-tz conversion", () => {
     expect(s.startDate).toMatch(/15/);
     expect(s.endDate).toMatch(/19/);
     expect(s.tzAdjusted).toBe(true);
-    expect(s.tzAbbrev).toBe("HST");
+    expect(s.tzAbbrev).toBe("GMT-10");
     // 09:00 Helsinki → 20:00 the previous day in Honolulu (Sunday).
     expect(s.groups[0].weekdaysLabel).toBe("Sunday");
     expect(s.groups[0].startTime).toBe("20:00");

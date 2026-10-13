@@ -1,4 +1,4 @@
-import type { SupportedLocale } from "@/lib/constants/locales";
+import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { HolidayCalendarChangePreview } from "@/services/holiday-calendars";
 import type { ProductType } from "@/types";
@@ -59,5 +59,5 @@ export function summariseHolidayImpact(
           .length,
       };
     })
-    .sort((a, b) => a.name.localeCompare(b.name, uiLocale));
+    .sort((a, b) => a.name.localeCompare(b.name, formattingLocale(uiLocale)));
 }

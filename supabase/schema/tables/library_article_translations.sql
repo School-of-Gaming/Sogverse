@@ -10,7 +10,7 @@ CREATE TABLE public.library_article_translations (
     body text DEFAULT ''::text NOT NULL,
     body_md5 text GENERATED ALWAYS AS (md5(body)) STORED,
     is_complete boolean GENERATED ALWAYS AS (((btrim(title) <> ''::text) AND (btrim(summary) <> ''::text) AND (btrim(body) <> ''::text))) STORED,
-    CONSTRAINT chk_library_article_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}$'::text)),
+    CONSTRAINT chk_library_article_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT chk_library_article_translations_title_present CHECK ((btrim(title) <> ''::text))
 );
 

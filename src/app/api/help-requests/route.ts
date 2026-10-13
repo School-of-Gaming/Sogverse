@@ -11,6 +11,7 @@ import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import {
   detectLocaleFromHeader,
+  formattingLocale,
   isSupportedLocale,
 } from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
@@ -130,7 +131,7 @@ export const POST = defineRoute({
       userRole: role,
       userEmail,
       message: body.message,
-      sentAt: new Date().toLocaleString(locale, {
+      sentAt: new Date().toLocaleString(formattingLocale(locale), {
         dateStyle: "medium",
         timeStyle: "short",
       }),

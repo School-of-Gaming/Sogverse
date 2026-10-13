@@ -194,7 +194,6 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                     time: formatDate(accessOpensAt, locale, {
                       hour: "2-digit",
                       minute: "2-digit",
-                      hour12: false,
                       timeZone,
                     }),
                   })}
@@ -215,7 +214,6 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                   opensTime={formatDate(startsAt, locale, {
                     hour: "2-digit",
                     minute: "2-digit",
-                    hour12: false,
                     timeZone,
                   })}
                   // Leaving the room lands on the substituted group's workspace,

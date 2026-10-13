@@ -75,7 +75,6 @@ export function SeatOfferScene({ scenario }: { scenario: SeatOfferScenario }) {
                   month: "long",
                   hour: "2-digit",
                   minute: "2-digit",
-                  hour12: false,
                   timeZoneName: "short",
                   timeZone: SEAT_OFFER_FIXTURE.timeZone,
                 }),

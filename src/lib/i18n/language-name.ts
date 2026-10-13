@@ -1,3 +1,5 @@
+import { formattingLocale } from "@/lib/constants/locales";
+
 /**
  * A language code's name in a reader's locale — "fi" → Finnish / suomi /
  * finska / finnois, depending on who is reading.
@@ -23,7 +25,7 @@ export function languageDisplayNames(
   locale: string,
 ): Intl.DisplayNames | null {
   try {
-    return new Intl.DisplayNames([locale, "en"], {
+    return new Intl.DisplayNames([formattingLocale(locale), "en"], {
       type: "language",
       fallback: "none",
     });

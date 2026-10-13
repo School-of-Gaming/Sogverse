@@ -222,8 +222,8 @@ describe("sendProductConfirmationEmail's plan read", () => {
     const { htmlContent } = sendTransactionalEmail.mock.calls[0][0];
     expect(htmlContent).toContain("Holiday breaks");
     // In the compact form, without the year: 2027 is the current year here.
-    expect(htmlContent).toMatch(/<strong[^>]*>Winter break<\/strong><br \/>Feb 22 – 26/);
-    expect(htmlContent).toMatch(/<strong[^>]*>Easter<\/strong><br \/>Mar 26 – 29/);
+    expect(htmlContent).toMatch(/<strong[^>]*>Winter break<\/strong><br \/>22–26 Feb/);
+    expect(htmlContent).toMatch(/<strong[^>]*>Easter<\/strong><br \/>26–29 Mar/);
     // A break that removed no session is not one this club takes.
     expect(htmlContent).not.toContain("Teacher day");
     expect(errors).not.toHaveBeenCalled();

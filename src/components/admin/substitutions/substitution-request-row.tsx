@@ -1,10 +1,11 @@
 "use client";
 
 import { useId } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonChip } from "@/components/ui/person-chip";
+import { formattingLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 import type {
   SubstitutionOffer,
@@ -153,17 +154,16 @@ function DeclinesLine({
   declines: SubstitutionRequest["declines"];
 }) {
   const t = useTranslations("admin.substitutions");
-  const format = useFormatter();
+  const locale = useLocale();
 
   if (declines.length === 0) return null;
 
   return (
     <p className="pt-1 text-xs text-muted-foreground">
       {t("declinedBy", {
-        names: format.list(
-          declines.map((decline) => decline.name ?? t("unnamed")),
-          { type: "conjunction" },
-        ),
+        names: new Intl.ListFormat(formattingLocale(locale), {
+          type: "conjunction",
+        }).format(declines.map((decline) => decline.name ?? t("unnamed"))),
       })}
     </p>
   );

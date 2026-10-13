@@ -11,7 +11,7 @@ import { useNow, useTimezone } from "@/providers";
 
 /**
  * A holiday break, as both feeds draw it: one entry in its dated place, the
- * break's dates and name with a neutral "No session" tag — "Oct 13 – 17 ·
+ * break's dates and name with a neutral "No session" tag — "13–17 Oct ·
  * Autumn break".
  *
  * **The shape of a past cancellation, on either side of the present.** A

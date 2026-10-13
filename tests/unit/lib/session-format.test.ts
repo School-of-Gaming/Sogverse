@@ -11,8 +11,8 @@ describe("formatSessionDateTimeRange", () => {
     const start = new Date("2026-02-02T14:00:00Z"); // Mon 16:00 Helsinki
     const end = new Date("2026-02-02T16:00:00Z"); // Mon 18:00 Helsinki
 
-    const en = formatSessionDateTimeRange(start, end, "en-US", "Europe/Helsinki");
-    expect(en).toMatch(/Mon, February 2 · 16:00 – 18:00/);
+    const en = formatSessionDateTimeRange(start, end, "en", "Europe/Helsinki");
+    expect(en).toBe("Mon 2 February · 16:00 – 18:00");
   });
 
   it("uses 24-hour time in en", () => {
@@ -21,7 +21,7 @@ describe("formatSessionDateTimeRange", () => {
     const out = formatSessionDateTimeRange(
       start,
       end,
-      "en-US",
+      "en",
       "Europe/Helsinki",
     );
     expect(out).toContain("20:30");
@@ -36,7 +36,7 @@ describe("formatSessionDateTimeRange", () => {
     const out = formatSessionDateTimeRange(
       start,
       end,
-      "en-US",
+      "en",
       "Europe/Helsinki",
     );
     expect(out).toContain("23:00");
@@ -45,7 +45,7 @@ describe("formatSessionDateTimeRange", () => {
 });
 
 describe("formatCountdownCompound", () => {
-  const en = "en-US";
+  const en = "en";
 
   it("returns minutes-only under one hour", () => {
     expect(formatCountdownCompound(37 * 60_000, en)).toMatch(/^37 minutes?$/);
@@ -81,7 +81,7 @@ describe("formatCountdownCompound", () => {
 
   it("is locale-aware (Finnish unit words)", () => {
     const ms = 45 * 60_000;
-    const fi = formatCountdownCompound(ms, "fi-FI");
+    const fi = formatCountdownCompound(ms, "fi");
     expect(fi.toLowerCase()).toMatch(/minuut/);
   });
 });

@@ -130,7 +130,7 @@ describe("the holiday calendar form", () => {
     // A date in the club's current year goes without its year; one in another
     // year says which.
     expect(
-      screen.getByText("futureRemoved count=2 dates=Oct 15, Jan 6, 2031"),
+      screen.getByText("futureRemoved count=2 dates=15 Oct, 6 Jan 2031"),
     ).toBeTruthy();
     expect(screen.getByText("requestsStopped count=2")).toBeTruthy();
     // Nothing that did not change is said.

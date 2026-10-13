@@ -12,6 +12,7 @@ import { FACES } from "@sog/ui";
 import { BRAND, PRINT_INK, PRINT_STATUS_EDGE } from "@/lib/constants/colors";
 import {
   DEFAULT_TIMEZONE,
+  formattingLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import {
@@ -251,8 +252,8 @@ export function geduInvoicePdfContent({
     .sort(
       (a, b) =>
         a.line.date.localeCompare(b.line.date) ||
-        a.club.name.localeCompare(b.club.name, locale) ||
-        a.line.groupName.localeCompare(b.line.groupName, locale),
+        a.club.name.localeCompare(b.club.name, formattingLocale(locale)) ||
+        a.line.groupName.localeCompare(b.line.groupName, formattingLocale(locale)),
     );
   const upcomingCount = invoice.clubs.reduce(
     (count, club) =>

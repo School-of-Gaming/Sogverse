@@ -10,7 +10,7 @@ CREATE TABLE public.landing_page_publication_translations (
     slug text NOT NULL,
     section_texts jsonb NOT NULL,
     texts_md5 text GENERATED ALWAYS AS (md5((section_texts)::text)) STORED,
-    CONSTRAINT chk_landing_page_publication_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}$'::text)),
+    CONSTRAINT chk_landing_page_publication_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT chk_landing_page_publication_translations_slug_format CHECK (((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text) AND (char_length(slug) <= 80) AND (slug !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text))),
     CONSTRAINT chk_landing_page_publication_translations_summary_present CHECK ((btrim(summary) <> ''::text)),
     CONSTRAINT chk_landing_page_publication_translations_texts_object CHECK ((jsonb_typeof(section_texts) = 'object'::text)),

@@ -52,9 +52,9 @@ describe("formatCompactDateRange", () => {
     expect(formatCompactDateRange("2026-10-19", "2026-10-23", "sv", TODAY)).toBe(
       "19–23 okt.",
     );
-    // Bare `en` is US English in `Intl`, like every other date the app renders.
+    // English formats as en-GB, like every other date the app renders.
     expect(formatCompactDateRange("2026-10-19", "2026-10-23", "en", TODAY)).toBe(
-      "Oct 19 – 23",
+      "19–23 Oct",
     );
   });
 

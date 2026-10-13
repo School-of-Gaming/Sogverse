@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { ExternalLink, Loader2 } from "lucide-react";
-import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import {
   AuthoredBodyEditor,
@@ -31,6 +31,7 @@ import { useLanguageNames } from "@/hooks/use-language-names";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import {
+  formattingLocale,
   LOCALE_CONFIG,
   resolveLocale,
   type SupportedLocale,
@@ -572,16 +573,17 @@ function PublishReasons({
   leftOut: readonly SupportedLocale[];
 }) {
   const t = useTranslations("admin.library");
-  const format = useFormatter();
+  const conjunction = new Intl.ListFormat(formattingLocale(useLocale()), {
+    type: "conjunction",
+  });
   const languageName = useLanguageNames();
 
   const needName: Record<LibraryPublishNeed, string> = {
     category: t("missing.category"),
     completeVersion: t("missing.completeVersion"),
   };
-  const languages = format.list(
+  const languages = conjunction.format(
     leftOut.map((locale) => languageName(locale, LOCALE_CONFIG[locale].label)),
-    { type: "conjunction" },
   );
 
   return (
@@ -592,9 +594,8 @@ function PublishReasons({
       {publishState.kind === "incomplete" && (
         <StatusLine status="info">
           {t("readiness.missing", {
-            fields: format.list(
+            fields: conjunction.format(
               publishState.missing.map((need) => needName[need]),
-              { type: "conjunction" },
             ),
           })}
         </StatusLine>

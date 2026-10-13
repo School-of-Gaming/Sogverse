@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { ExternalLink } from "lucide-react";
-import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +11,12 @@ import { landingPageHref } from "@/components/landing-pages/landing-page-address
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { LOCALE_CONFIG, resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import {
+  formattingLocale,
+  LOCALE_CONFIG,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
@@ -265,11 +270,13 @@ function affirmative(enabled: boolean) {
  */
 function PublishForecast({ forecast }: { forecast: LandingPublishForecast }) {
   const t = useTranslations("admin.landingPages.publishConfirm");
-  const format = useFormatter();
+  const conjunction = new Intl.ListFormat(formattingLocale(useLocale()), {
+    type: "conjunction",
+  });
   const languageName = useLanguageNames();
   const language = (locale: SupportedLocale) => languageName(locale, LOCALE_CONFIG[locale].label);
   const list = (locales: readonly SupportedLocale[]) =>
-    format.list(locales.map(language), { type: "conjunction" });
+    conjunction.format(locales.map(language));
 
   const leftOut = forecast.wouldLeaveOut.filter(
     (locale) => !forecast.wouldTakeDown.includes(locale),

@@ -86,7 +86,7 @@ export function mondayOf(iso: string): string {
 }
 
 /**
- * `17.8.` in Finnish, `8/17` in en-US — day and month as bare numerals, short
+ * `17.8.` in Finnish, `17/08` in English — day and month as bare numerals, short
  * enough for a row heading.
  *
  * It carries no *words*, which is not the same as carrying no locale: the order

@@ -836,18 +836,13 @@ export function SessionFeed({
               entry.kind === "past" && entry.reportEmailedAt !== null
                 ? // The viewer's zone and locale, like every other clock face
                   // on this feed: the send happened at an instant, and the gedu
-                  // reading it may be nowhere near the club's own zone. The
-                  // fields are spelled out rather than taken from a date/time
-                  // style because a style would give an English reader a
-                  // 12-hour clock beside the 24-hour session times two lines
-                  // above it.
+                  // reading it may be nowhere near the club's own zone.
                   formatDate(entry.reportEmailedAt, locale, {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
-                    hour12: false,
                     timeZone,
                   })
                 : null

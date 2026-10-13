@@ -6,7 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { FormSection } from "@/components/admin/products/form-primitives";
 import { ROUTES } from "@/lib/constants";
-import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import {
+  formattingLocale,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   useHolidayCalendar,
@@ -32,7 +36,7 @@ function namedProducts(
         resolveTranslation(product.translations, uiLocale)?.name ??
         "",
     }))
-    .sort((a, b) => a.name.localeCompare(b.name, uiLocale));
+    .sort((a, b) => a.name.localeCompare(b.name, formattingLocale(uiLocale)));
 }
 
 /**

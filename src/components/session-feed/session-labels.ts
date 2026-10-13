@@ -10,6 +10,7 @@
  */
 
 import { formatDate, formatTime } from "@/lib/utils";
+import { formattingLocale } from "@/lib/constants/locales";
 
 export interface SessionLabels {
   /** e.g. "Mon 12 Jan" — or "Mon 12 Jan 2025" once the year stops being obvious. */
@@ -88,7 +89,7 @@ function shortTimeZoneName(
   locale: string,
   timeZone: string,
 ): string | null {
-  const part = new Intl.DateTimeFormat(locale, {
+  const part = new Intl.DateTimeFormat(formattingLocale(locale), {
     timeZone,
     timeZoneName: "short",
   })
