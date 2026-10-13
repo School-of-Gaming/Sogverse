@@ -2,7 +2,7 @@
 #
 # `park` — stop this checkout's stack, keeping its data.
 #
-#   park.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   park.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # `supabase stop` without `--no-backup` leaves the data volumes in place, which
 # is the whole difference between this and `down`: parking frees the memory
@@ -19,7 +19,6 @@ here=$(dirname "$0")
 
 checkout=$1
 project=$2
-port_base=$3
 cli_version=$4
 
 take_lock "$project"

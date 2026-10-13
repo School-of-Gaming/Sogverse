@@ -344,8 +344,11 @@ every command does — the things its usage text does not say:
   `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`** —
   a Google Cloud OAuth client of your own; its consent screen can stay in testing mode,
   with your account as a test user. `up` switches the provider on when both are there,
-  and prints the redirect URI the client needs; the port in it is per stack, so a new
-  worktree means adding its URI to the client. Without both, the provider stays off.
+  and prints the redirect URI the client needs. A stack's ports are chosen at its first
+  start — the first free block in 20000–23999 — and kept for its life, so the URI holds
+  across `park`, `up` and `reset`; a new stack, including one built again after `down`,
+  can land on other ports and then needs its URI added. Without both, the provider stays
+  off.
   `config.toml` keeps `enabled = false` on purpose: CI and `db push` read it with nothing
   set. A stack picks the setting up only when its containers are created, so `park` and
   `up` after changing the two lines. The redirect allow-list is different: it lives in

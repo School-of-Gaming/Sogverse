@@ -7,6 +7,11 @@
 # into the distro mangles `~`, rooted Linux paths, inline environment
 # assignments and anything carrying `$` or nested quotes, so the boundary
 # carries only a file path and a few bare words.
+#
+# Every command script but test-db.sh is handed the same four: the checkout,
+# the project id, the candidate port blocks and the CLI version. The blocks are
+# `-` for every command except `up` and `generate`, the two that can take one
+# (`allocate_block` below).
 
 # PATH and HOME are set here rather than inherited. The distro inherits the
 # Windows PATH, so a bare `node` or `npm` inside it resolves to the Windows
@@ -62,12 +67,17 @@ shadow_workdir() {
 }
 
 # Where a long-lived stack keeps what outlives its containers: which checkout
-# it belongs to, which ports it took, the .env.local values it displaced, and
-# whether the rich seed has been applied. One directory per project id, beside
+# it belongs to, the port block it was given, the .env.local values it
+# displaced, and whether the rich seed has been applied. One directory per project id, beside
 # the shadow workdirs in the distro — so `list` can describe every stack on the
 # machine without asking any checkout anything, and tearing a worktree down
 # leaves a state directory `list` can flag rather than a silent orphan.
 STACKS_DIR="$STATE_DIR/stacks"
+
+# Where a running `generate` records the port block it holds — one file per
+# generate identity, beside the stacks rather than among them, so `list` and the
+# running count never mistake a throwaway database for a stack.
+GENERATE_DIR="$STATE_DIR/generate"
 
 # The trimmed service set, as exclusions. The app uses realtime and storage and
 # reaches all of it through the gateway, so the set that stays is the database,
@@ -154,10 +164,11 @@ build_shadow() {
 }
 
 # The shadow workdir for a stack, built only if it is not already there. A
-# parked stack's containers were created against a particular rewritten
-# config.toml, and `supabase start` reuses them; rebuilding the workdir
-# underneath a parked stack would be rewriting the description of something
-# that already exists.
+# parked stack is its named volumes and nothing else — `supabase stop` removes
+# the containers — and `supabase start` creates fresh ones around those volumes
+# from this workdir's config.toml. Keeping the workdir is what brings a stack
+# back configured as it was created, whatever the checkout's config.toml says
+# now; rebuilding it would quietly change a stack that already exists.
 ensure_shadow() {
   ensure_work=$(shadow_workdir "$2")
   if [ ! -f "$ensure_work/supabase/config.toml" ]; then
@@ -205,6 +216,84 @@ shadow_db_port() {
 
 shadow_api_port() {
   shadow_port "$1" api
+}
+
+# One value out of a record — a stack's meta, or a generate claim — or nothing.
+record_value() {
+  awk -v key="$2" 'index($0, key "=") == 1 { print substr($0, length(key) + 2); exit }' "$1"
+}
+
+# The first port of the block a record holds. A record with no `port_base` line
+# names its block through its API port instead, which sits inside it.
+record_port_base() {
+  record_base=$(record_value "$1" port_base)
+  if [ -z "$record_base" ]; then
+    record_api=$(record_value "$1" api_port)
+    case "$record_api" in
+      '' | *[!0-9]*) return 0 ;;
+    esac
+    record_base=$((record_api / 100 * 100))
+  fi
+  printf '%s' "$record_base"
+}
+
+# Every block some record claims, space-separated: each stack's, parked or
+# running, and each running `generate`'s. A stack whose worktree is gone still
+# claims its block, because its volumes are still there and `up` would bring it
+# back on it.
+claimed_blocks() {
+  for claim in "$STACKS_DIR"/*/meta "$GENERATE_DIR"/*; do
+    [ -f "$claim" ] || continue
+    printf '%s ' "$(record_port_base "$claim")"
+  done
+}
+
+# A port block, taken for a stack or a `generate` that has none, and recorded.
+#
+#   allocate_block <record-file> <candidates> [line…]
+#
+# The candidates are the blocks the Node side found Windows could bind, as one
+# comma-separated word (`-` for none); the first that no record claims is
+# written into <record-file> as `port_base=`, followed by any further lines
+# given, and printed. The record is written before anything starts on the
+# ports, so a second allocation can never be handed the same block.
+#
+# Under one lock for the whole machine rather than the per-checkout one: two
+# checkouts' first starts at the same moment would otherwise both read the
+# records, both see the same block free, and both take it. It waits rather
+# than refusing, since an allocation holds the lock for milliseconds. Run in a
+# command substitution, so the lock is released when the allocation returns.
+allocate_block() {
+  alloc_record=$1
+  alloc_candidates=$2
+  shift 2
+  mkdir -p "$STATE_DIR"
+  exec 8>"$STATE_DIR/ports.lock"
+  if ! flock -w 60 8; then
+    echo "Timed out waiting for another local-database command to finish choosing its ports." >&2
+    return 1
+  fi
+  alloc_claimed=" $(claimed_blocks)"
+  for alloc_base in $(printf '%s' "$alloc_candidates" | tr ',' ' '); do
+    case "$alloc_base" in
+      '' | *[!0-9]*) continue ;;
+    esac
+    case "$alloc_claimed" in
+      *" $alloc_base "*) continue ;;
+    esac
+    mkdir -p "$(dirname "$alloc_record")"
+    {
+      printf 'port_base=%s\n' "$alloc_base"
+      for alloc_line in "$@"; do
+        printf '%s\n' "$alloc_line"
+      done
+    } > "$alloc_record"
+    printf '%s' "$alloc_base"
+    return 0
+  done
+  echo "No free port block in 20000-23999: every one is claimed by a stack or cannot be bound" >&2
+  echo "on Windows right now. \`npm run db -- list\` shows the stacks; \`down\` one that is done." >&2
+  return 1
 }
 
 # Is this stack's database container up? Matched exactly rather than through

@@ -2,7 +2,7 @@
 #
 # `down` — remove this checkout's stack and its data, and put .env.local back.
 #
-#   down.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   down.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # This is what landing a feature, or tearing its worktree down, runs. The data
 # goes with it: a stack is built from the worktree's migrations and both seeds,
@@ -13,7 +13,6 @@ here=$(dirname "$0")
 
 checkout=$1
 project=$2
-port_base=$3
 cli_version=$4
 
 take_lock "$project"

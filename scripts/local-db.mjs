@@ -24,11 +24,12 @@
  *
  * What lives here is the boundary and nothing else: locating the checkout,
  * reading the CLI pin, translating a Windows path, deriving the stack's
- * identity, holding the distro keep-alive, and keeping the noise WSL writes to
- * stderr out of the output. The real work is the shell files in
- * scripts/local-db/, run as files inside the distro — crossing the boundary
- * mangles `~`, rooted Linux paths, inline environment assignments and anything
- * with `$` or nested quotes, so only bare words are passed across.
+ * identity, probing which port blocks Windows can bind, holding the distro
+ * keep-alive, and keeping the noise WSL writes to stderr out of the output. The
+ * real work is the shell files in scripts/local-db/, run as files inside the
+ * distro — crossing the boundary mangles `~`, rooted Linux paths, inline
+ * environment assignments and anything with `$` or nested quotes, so only bare
+ * words are passed across.
  *
  * Nothing it builds touches the repo: the CLI, the shadow workdirs, the stacks'
  * state and the generation output all live in the distro's own filesystem. The
@@ -50,6 +51,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { stackIdentity } from './lib/local-db-identity.mjs';
+import { bindableBlocks } from './lib/local-db-ports.mjs';
 
 const DISTRO = 'Ubuntu-24.04';
 
@@ -64,9 +66,11 @@ const NOISE = [/screen size is bogus/i, /A new version of Supabase CLI is availa
 
 /**
  * The prefix a shell file uses for a line meant for this script rather than for
- * the reader. There are two such lines: `started`, written when lib.sh is
+ * the reader. There are three such lines: `started`, written when lib.sh is
  * sourced, which is the only proof that bash inside the distro ever ran our
- * file; and `running=<n>`, which the keep-alive below is decided on.
+ * file; `running=<n>`, which the keep-alive below is decided on; and
+ * `api_url=<url>`, the URL `up` left the stack at, which the Google report
+ * asks.
  */
 const SENTINEL = '::localdb ';
 
@@ -92,14 +96,17 @@ const COULD_NOT_RUN = 2;
  * The command surface. `summary` is the usage text; `flags` is the whole set of
  * words a command accepts after its name, and anything else is refused here
  * rather than passed into the distro to be ignored; a command with
- * `ownsGenerateId` runs against the second identity described under `portBase`
- * rather than the stack's; a command with `createsServices` may have the CLI
- * create the stack's containers, which is when the Google provider's settings
- * (below) are read, so it is the one handed them.
+ * `ownsGenerateId` runs against the second identity described under
+ * `projectId` rather than the stack's; a command with `allocatesPorts` may have
+ * to take a port block, so it is handed the blocks Windows can bind; a command
+ * with `createsServices` may have the CLI create the stack's containers, which
+ * is when the Google provider's settings (below) are read, so it is the one
+ * handed them.
  */
 const COMMANDS = {
   up: {
     flags: ['--no-rich-seed'],
+    allocatesPorts: true,
     createsServices: true,
     summary: [
       'Build this checkout\'s local Supabase stack from supabase/migrations/,',
@@ -148,6 +155,7 @@ const COMMANDS = {
   },
   generate: {
     ownsGenerateId: true,
+    allocatesPorts: true,
     summary: [
       'Start a throwaway database from supabase/migrations/, write',
       'src/types/database.types.ts and supabase/schema/ from it, remove the',
@@ -189,14 +197,27 @@ if (!cliVersion || !/^\d+\.\d+\.\d+$/.test(cliVersion)) {
 
 /**
  * The stack's identity, derived from the checkout path so that it is the same
- * on every run of the same checkout and different for every other one — which
- * is all it takes for two checkouts to hold databases at once. Deriving beats
- * allocating free ports: a run that dies without cleaning up leaves a
- * container the next run of *this* checkout finds and removes, where a random
- * block would leave an orphan nobody goes looking for.
+ * on every run of the same checkout and different for every other one. The
+ * containers and volumes are named by it, which is what makes a crashed run's
+ * leftovers findable: the next run of *this* checkout looks under its own id and
+ * removes them, where a name nobody can work out again would leave an orphan.
  *
- * The block sits above the default Linux ephemeral port range (32768-60999),
- * so an outbound connection cannot already be holding one of these.
+ * The ports are NOT derived. A stack takes a block of 100 when it is first
+ * started — the first block in 20000-23999 that no other stack's record claims
+ * and that Windows can bind right now — and records it; every later command
+ * reads the block back from that record and never works it out again, so a
+ * stack keeps its URL, and the Google OAuth redirect URI built on it, until it
+ * goes `down` and the record goes with it. Ports derived like the id would fail
+ * twice over: forty hash-chosen blocks put two of a handful of checkouts on the
+ * same one more often than not, and nothing derived can dodge a reservation —
+ * inside Windows' dynamic ports (49152-65535) Hyper-V reserves blocks of its
+ * own choosing at every boot. A reserved port cannot be bound, so WSL's
+ * localhost forwarder cannot publish it and the stack is unreachable from
+ * Windows while healthy inside the distro. 20000-23999 is below that range and below Linux's ephemeral one
+ * (32768-60999), and the bind probe at allocation catches whatever else holds a
+ * port there. The probe has to run here, on Windows; the choice is made inside
+ * the distro, under a lock every checkout shares, because that is where the
+ * records are — lib.sh, `allocate_block`.
  *
  * A checkout has TWO identities, because `generate` and a long-lived stack have
  * to coexist: generating types is what you do just after adding a migration,
@@ -204,13 +225,10 @@ if (!cliVersion || !/^\d+\.\d+\.\d+$/.test(cliVersion)) {
  * removing whatever holds its project id before it starts — so sharing an id
  * would silently destroy the stack and its data. The alternative, refusing to
  * generate while a stack runs, is safe but hostile at the one moment it fires.
- * The second identity costs no extra room: config.toml's ports all sit in the
- * first thirty of the hundred this checkout owns, so shifting `generate` half a
- * block up keeps both inside it and clear of every other checkout's.
+ * `generate` takes a block of its own through the same allocator, held only
+ * while it runs — generate.sh says why.
  */
-const { projectId, digest } = stackIdentity(checkout, checkoutWsl);
-const portBase = 61000 + (digest.readUInt16BE(0) % 40) * 100;
-const GENERATE_PORT_OFFSET = 50;
+const { projectId } = stackIdentity(checkout, checkoutWsl);
 
 const command = process.argv[2];
 if (!command || !Object.hasOwn(COMMANDS, command)) {
@@ -230,7 +248,6 @@ if (!command || !Object.hasOwn(COMMANDS, command)) {
 
 const spec = COMMANDS[command];
 const runProjectId = spec.ownsGenerateId ? `${projectId}-gen` : projectId;
-const runPortBase = spec.ownsGenerateId ? portBase + GENERATE_PORT_OFFSET : portBase;
 
 /**
  * The flags this command was given, checked here so a typo is a refusal rather
@@ -421,6 +438,7 @@ const runInDistro = (shellFile, args) =>
   new Promise((resolve) => {
     let running = null;
     let started = false;
+    let apiUrl = null;
 
     const child = spawn(
       'wsl.exe',
@@ -435,6 +453,8 @@ const runInDistro = (shellFile, args) =>
       }
       const match = /^running=(\d+)$/.exec(line);
       if (match) running = Number(match[1]);
+      const url = /^api_url=(\S+)$/.exec(line);
+      if (url) apiUrl = url[1];
     };
 
     const streams = [
@@ -455,21 +475,27 @@ const runInDistro = (shellFile, args) =>
     );
     child.on('close', (code) => {
       for (const [, filter] of streams) filter.flush();
-      resolve({ code: code ?? 1, running, started });
+      resolve({ code: code ?? 1, running, started, apiUrl });
     });
   });
 
 const startedAt = Date.now();
 if (command !== 'list') {
-  console.log(
-    `${command}: ${runProjectId} on ports ${runPortBase}-${runPortBase + 49} (Supabase CLI ${cliVersion})`,
-  );
+  console.log(`${command}: ${runProjectId} (Supabase CLI ${cliVersion})`);
 }
 
-const { code, message, running, started } = await runInDistro(`${command}.sh`, [
+/**
+ * The blocks Windows can bind, as one bare word — `-` when there are none, or
+ * when the command never allocates. Probed on every run of a command that may
+ * allocate, because only the distro knows whether this one will: a stack that
+ * already has a record ignores the list.
+ */
+const candidateBlocks = spec.allocatesPorts ? (await bindableBlocks()).join(',') || '-' : '-';
+
+const { code, message, running, started, apiUrl } = await runInDistro(`${command}.sh`, [
   checkoutWsl,
   runProjectId,
-  String(runPortBase),
+  candidateBlocks,
   cliVersion,
   ...flags,
 ]);
@@ -499,14 +525,10 @@ if (code !== 0) {
 /**
  * Whether Google is on, asked of the running stack rather than inferred from
  * .env.local: a stack that was already up kept the settings it started with.
- * The API port is config.toml's, shifted into this checkout's block the way
- * lib.sh shifts it when it rewrites the file.
+ * The URL is the one `up` reported from the stack's record.
  */
 const reportGoogle = async () => {
-  const config = readFileSync(path.join(checkout, 'supabase', 'config.toml'), 'utf8');
-  const apiSection = /^\[api\]\s*$([\s\S]*?)(?=^\[)/m.exec(config)?.[1] ?? '';
-  const configPort = Number(/^\s*port\s*=\s*(\d+)/m.exec(apiSection)?.[1]);
-  const apiUrl = `http://127.0.0.1:${runPortBase + (configPort % 100)}`;
+  if (apiUrl === null) return;
   let enabled;
   try {
     const response = await fetch(`${apiUrl}/auth/v1/settings`, { signal: AbortSignal.timeout(5000) });

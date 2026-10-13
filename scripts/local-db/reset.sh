@@ -3,7 +3,7 @@
 # `reset` — rebuild the running stack's database in place from the checkout's
 # migrations and this stack's seed.
 #
-#   reset.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   reset.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # This is the answer to an EDITED migration, which cannot be applied on top of
 # itself: the database is dropped and replayed, which takes about a minute. A
@@ -23,7 +23,6 @@ here=$(dirname "$0")
 
 checkout=$1
 project=$2
-port_base=$3
 cli_version=$4
 
 take_lock "$project"

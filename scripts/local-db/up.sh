@@ -3,9 +3,11 @@
 # `up` — bring this checkout's local Supabase stack up and point the checkout's
 # dev server at it.
 #
-#   up.sh <checkout-path> <project-id> <port-base> <cli-version> [--no-rich-seed]
+#   up.sh <checkout-path> <project-id> <candidate-blocks> <cli-version> [--no-rich-seed]
 #
 # Arguments are bare words on purpose; see lib.sh for what the boundary mangles.
+# The candidate blocks are the port blocks Windows can bind (lib.sh,
+# `allocate_block`); only a stack's first start reads them.
 #
 # The first `up` creates the database, which is when the migrations are applied
 # and when this stack's seed goes on — supabase/rich-seed.sql and its product
@@ -27,7 +29,7 @@ here=$(dirname "$0")
 
 checkout=$1
 project=$2
-port_base=$3
+candidate_blocks=$3
 cli_version=$4
 rich_seed_flag=${5:-}
 
@@ -42,8 +44,9 @@ fi
 state=$(stack_state_dir "$project")
 
 if stack_is_running "$project"; then
-  work=$(shadow_workdir "$project")
-  echo "Already up: http://127.0.0.1:$(shadow_api_port "$work")"
+  api_url="http://127.0.0.1:$(record_value "$state/meta" api_port)"
+  echo "Already up: $api_url"
+  printf '::localdb api_url=%s\n' "$api_url"
   report_running
   exit 0
 fi
@@ -55,62 +58,20 @@ cli=$(cli_bin "$cli_version")
 # fail differently: a first start that dies leaves half a stack nobody asked
 # for and is cleaned away, where a resume that dies leaves a parked stack with
 # real data in it, which is not ours to throw out.
+#
+# The record exists from the moment the stack's port block is taken, before
+# anything starts, so it is the `cli=` line — written once the stack is fully
+# built — that says the build finished. A record without it is a first start
+# that was killed before it could clean up after itself, and is one again.
 first_start=0
-if [ ! -f "$state/meta" ]; then
+if [ ! -f "$state/meta" ] || [ -z "$(record_value "$state/meta" cli)" ]; then
   first_start=1
 fi
 
-# Another checkout's stack sitting in this one's port block. A stack's identity
-# is derived from its checkout path, so two checkouts can land on the same
-# hundred — uncommon, but when it happens `supabase start` fails on a bound port
-# and says nothing about whose port it is, and the first start would then be
-# cleaned away as if the checkout were at fault. Only a first start asks: a
-# resume is reclaiming ports it already holds.
-if [ "$first_start" -eq 1 ]; then
-  for other_meta in "$STACKS_DIR"/*/meta; do
-    [ -f "$other_meta" ] || continue
-    other_project=$(basename "$(dirname "$other_meta")")
-    [ "$other_project" != "$project" ] || continue
-    other_port=$(awk -F= '$1 == "api_port" { print $2; exit }' "$other_meta")
-    case "$other_port" in
-      '' | *[!0-9]*) continue ;;
-    esac
-    if [ "$other_port" -ge "$port_base" ] && [ "$other_port" -lt "$((port_base + 100))" ]; then
-      other_checkout=$(awk -F= '$1 == "checkout" { print substr($0, 10); exit }' "$other_meta")
-      echo "$other_project's stack holds this checkout's port block ($port_base-$((port_base + 99)))." >&2
-      echo "Its worktree is $other_checkout; \`npm run db -- down\` it from there first." >&2
-      exit 1
-    fi
-  done
-fi
-
-mkdir -p "$state"
-
-# Which seed this stack gets, settled BEFORE the workdir is built, because the
-# choice shapes the config the CLI creates the database from: a rich stack has
-# `[db.seed]` off so seed.sql never runs on it, and a --no-rich-seed stack has
-# it on and that is the whole of its data. A first start takes the flag and
-# records it; every later run reads the record back, and a flag that disagrees
-# with it is answered further down. The flag cannot take the rich seed back off
-# a stack that already has it, which is what the second condition says.
-#
-# The choice is written down as exactly ONE of the two markers, here, before
-# the database exists — never both and never neither, because `reset` and every
-# later `up` read a stack's seed off them and have nothing else to read it off.
-# `rich-seed-applied` therefore records the CHOICE rather than a completed seed
-# step; whether the seeding still has to run is `first_start` below.
-if [ "$rich_seed_flag" = "--no-rich-seed" ] && [ ! -f "$state/rich-seed-applied" ]; then
-  : > "$state/rich-seed-skipped"
-fi
-
-if [ -f "$state/rich-seed-skipped" ]; then
-  cli_seed=true
-else
-  : > "$state/rich-seed-applied"
-  cli_seed=false
-fi
-
-work=$(ensure_shadow "$checkout" "$project" "$port_base" "$cli_seed")
+# Set before anything is written, so a first start that fails at any step —
+# taking its port block included — leaves nothing behind. The workdir's path is
+# fixed by the project id whether or not it has been built yet.
+work=$(shadow_workdir "$project")
 
 cleanup() {
   status=$?
@@ -155,10 +116,66 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-"$cli" start --workdir "$work" -x "$STACK_EXCLUDE"
+mkdir -p "$state"
+
+# Which seed this stack gets, settled BEFORE the workdir is built, because the
+# choice shapes the config the CLI creates the database from: a rich stack has
+# `[db.seed]` off so seed.sql never runs on it, and a --no-rich-seed stack has
+# it on and that is the whole of its data. A first start takes the flag and
+# records it; every later run reads the record back, and a flag that disagrees
+# with it is answered further down. The flag cannot take the rich seed back off
+# a stack that already has it, which is what the second condition says.
+#
+# The choice is written down as exactly ONE of the two markers, here, before
+# the database exists — never both and never neither, because `reset` and every
+# later `up` read a stack's seed off them and have nothing else to read it off.
+# `rich-seed-applied` therefore records the CHOICE rather than a completed seed
+# step; whether the seeding still has to run is `first_start` below.
+if [ "$rich_seed_flag" = "--no-rich-seed" ] && [ ! -f "$state/rich-seed-applied" ]; then
+  : > "$state/rich-seed-skipped"
+fi
+
+if [ -f "$state/rich-seed-skipped" ]; then
+  cli_seed=true
+else
+  : > "$state/rich-seed-applied"
+  cli_seed=false
+fi
+
+# The stack's port block: taken now if it has none, and otherwise read back
+# from its record and never worked out again, so a stack keeps its ports — and
+# the URLs built on them — for its whole life.
+if [ -f "$state/meta" ]; then
+  port_base=$(record_port_base "$state/meta")
+else
+  port_base=$(allocate_block "$state/meta" "$candidate_blocks" "checkout=$checkout")
+fi
+echo "Ports $port_base-$((port_base + 99))"
+
+work=$(ensure_shadow "$checkout" "$project" "$port_base" "$cli_seed")
 
 api_port=$(shadow_api_port "$work")
 db_port=$(shadow_db_port "$work")
+
+# The record, complete but for the `cli=` line that marks a finished build, so
+# `list` can name a stack's checkout and port while its first start is running.
+write_meta() {
+  {
+    printf 'checkout=%s\n' "$checkout"
+    printf 'port_base=%s\n' "$port_base"
+    printf 'api_port=%s\n' "$api_port"
+    printf 'db_port=%s\n' "$db_port"
+    if [ -n "${1:-}" ]; then
+      printf 'cli=%s\n' "$1"
+    fi
+  } > "$state/meta.new"
+  mv "$state/meta.new" "$state/meta"
+}
+if [ "$first_start" -eq 1 ]; then
+  write_meta
+fi
+
+"$cli" start --workdir "$work" -x "$STACK_EXCLUDE"
 
 # The URL and keys come from the CLI rather than from the well-known local
 # defaults, so that a CLI whose defaults move cannot leave .env.local holding a
@@ -208,12 +225,7 @@ set_env_line "$env_file" NEXT_PUBLIC_SUPABASE_URL "NEXT_PUBLIC_SUPABASE_URL=$api
 set_env_line "$env_file" NEXT_PUBLIC_SUPABASE_ANON_KEY "NEXT_PUBLIC_SUPABASE_ANON_KEY=$anon_key"
 set_env_line "$env_file" SUPABASE_SERVICE_ROLE_KEY "SUPABASE_SERVICE_ROLE_KEY=$service_key"
 
-{
-  printf 'checkout=%s\n' "$checkout"
-  printf 'api_port=%s\n' "$api_port"
-  printf 'db_port=%s\n' "$db_port"
-  printf 'cli=%s\n' "$cli_version"
-} > "$state/meta"
+write_meta "$cli_version"
 
 echo
 echo "Stack up at $api_url"
@@ -232,5 +244,6 @@ else
   echo "               (--no-rich-seed). Sign in as seed.sql's own fixtures."
 fi
 echo "  memory       $(stack_memory_mib "$project") MiB"
+printf '::localdb api_url=%s\n' "$api_url"
 
 report_running

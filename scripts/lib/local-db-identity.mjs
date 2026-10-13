@@ -23,13 +23,12 @@ const LABEL_MAX_LENGTH = PROJECT_ID_MAX_LENGTH - '-'.length - HASH_LENGTH - '-ge
 /**
  * @param {string} checkout the checkout's Windows path
  * @param {string} checkoutWsl the same path as WSL sees it — what the hash is over
- * @returns {{ projectId: string, digest: Buffer }} the digest also seeds the
- *   checkout's port block
+ * @returns {{ projectId: string }}
  */
 export function stackIdentity(checkout, checkoutWsl) {
   const digest = createHash('sha256').update(checkoutWsl).digest();
   const slug = path.basename(checkout).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   const fullLabel = slug.startsWith('sogverse') ? slug : `sogverse-${slug || 'checkout'}`;
   const label = fullLabel.slice(0, LABEL_MAX_LENGTH).replace(/-+$/g, '');
-  return { projectId: `${label}-${digest.toString('hex').slice(0, HASH_LENGTH)}`, digest };
+  return { projectId: `${label}-${digest.toString('hex').slice(0, HASH_LENGTH)}` };
 }
