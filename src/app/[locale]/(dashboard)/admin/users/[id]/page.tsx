@@ -1,3 +1,4 @@
+import type { ComponentProps, ReactNode } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
@@ -30,6 +31,11 @@ import { MinecraftService } from "@/services/minecraft";
 import { RobloxService } from "@/services/roblox";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
+// From the service module, for the reason given for the contract service below.
+import {
+  AssignmentsService,
+  type AdminGeduSeatRow,
+} from "@/services/assignments/assignments.service";
 import {
   GeduProfilesService,
   type GeduCertificationDetail,
@@ -56,7 +62,7 @@ import {
 } from "@/services/slack-link/slack-link.service";
 import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import slackMark from "@/assets/partners/slack-mark-color.svg";
-import type { GeduContractAcceptance, ParticipationStatus, ProductType } from "@/types";
+import type { GeduContractAcceptance, ParticipationStatus } from "@/types";
 
 /**
  * A participation's state, on the lifecycle chip's one shape: a neutral edge,
@@ -109,59 +115,83 @@ async function readTeamProfile(
 }
 
 /**
- * One assigned-product row: product name + assigned group, with a status
- * badge, linking to that product's type-specific admin detail page.
+ * The chip a gedu's seat wears. A role is not a state, so every role takes the
+ * same quiet chip — the lifecycle chip's neutral edge with no colour — and the
+ * word alone says which it is.
+ */
+const SEAT_BADGE_STYLE = "border border-border bg-transparent text-muted-foreground";
+
+/**
+ * One assigned-product row: the product's name over one line about the group,
+ * with a chip at the end, linking into the admin product pages. Shared by the
+ * two roles that have such rows — a gamer's participations and a gedu's seats
+ * — so the two sections read as one design; each decides its own line, chip
+ * and destination.
+ */
+function AssignedProductRow({
+  href,
+  name,
+  detail,
+  badgeLabel,
+  badgeClassName,
+}: {
+  href: ComponentProps<typeof Link>["href"];
+  name: string;
+  detail: ReactNode;
+  badgeLabel: string;
+  badgeClassName: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">{name}</p>
+        {detail}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Badge variant="outline" className={badgeClassName}>
+          {badgeLabel}
+        </Badge>
+        <NavChevron size="sm" />
+      </div>
+    </Link>
+  );
+}
+
+/**
+ * A participation row's line under the product name: its group, or why it has
+ * none.
  *
  * An *active* participation with no group is unplaced — the gamer has paid in
  * but isn't in a cohort yet, so the admin needs to assign one. That row gets a
  * warning treatment to flag the action. Waitlisted/awaiting-payment/completed
  * rows have no group by design, so those stay neutral.
  */
-function AssignedProductRow({
-  productType,
-  productId,
-  name,
+function ParticipationGroupLine({
   groupName,
+  status,
   unassignedLabel,
   needsGroupLabel,
-  status,
-  statusLabel,
 }: {
-  productType: ProductType;
-  productId: string;
-  name: string;
   groupName: string | null;
+  status: ParticipationStatus;
   unassignedLabel: string;
   needsGroupLabel: string;
-  status: ParticipationStatus;
-  statusLabel: string;
 }) {
-  const needsGroup = status === "active" && groupName === null;
+  if (status === "active" && groupName === null) {
+    return (
+      <p className="flex items-center gap-1 truncate text-xs font-medium text-warning">
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+        {needsGroupLabel}
+      </p>
+    );
+  }
   return (
-    <Link
-      href={ROUTES.admin.product(productType, productId)}
-      className="group flex items-center justify-between rounded-lg border border-border p-3 transition-colors hover:bg-hover hover:text-foreground"
-    >
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{name}</p>
-        {needsGroup ? (
-          <p className="flex items-center gap-1 truncate text-xs font-medium text-warning">
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            {needsGroupLabel}
-          </p>
-        ) : (
-          <p className="truncate text-xs text-muted-foreground">
-            {groupName ?? unassignedLabel}
-          </p>
-        )}
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <Badge variant="outline" className={STATUS_BADGE_STYLES[status]}>
-          {statusLabel}
-        </Badge>
-        <NavChevron size="sm" />
-      </div>
-    </Link>
+    <p className="truncate text-xs text-muted-foreground">
+      {groupName ?? unassignedLabel}
+    </p>
   );
 }
 
@@ -171,9 +201,11 @@ export default async function AdminUserDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: userId } = await params;
-  const [t, c, locale, timeZone] = await Promise.all([
+  const [t, c, tRole, tGroups, locale, timeZone] = await Promise.all([
     getTranslations("admin.users"),
     getTranslations("common"),
+    getTranslations("admin.geduRole"),
+    getTranslations("admin.products.groupsPanel"),
     getLocale(),
     getServerTimezone(),
   ]);
@@ -240,6 +272,7 @@ export default async function AdminUserDetailPage({
     viewer,
     discordLink,
     slackLink,
+    geduSeats,
   ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
@@ -294,6 +327,14 @@ export default async function AdminUserDetailPage({
     canLinkSlack
       ? new SlackLinkService(supabase).getLink(userId)
       : Promise.resolve<SlackLinkSummary | null>(null),
+    // The products a gedu is on — lead assignments and trainee seats, read
+    // by the gedu's id. Admin RLS permits the cross-user read on both tables.
+    // A failure reads as no seats, the way a gamer's participations do below.
+    isGedu
+      ? new AssignmentsService(supabase)
+          .getSeatsForGedu(userId)
+          .catch(() => [] as AdminGeduSeatRow[])
+      : Promise.resolve<AdminGeduSeatRow[]>([]),
   ]);
 
   // Products this user is assigned to. For a gamer, their own participations;
@@ -345,14 +386,48 @@ export default async function AdminUserDetailPage({
       return (
         <AssignedProductRow
           key={row.id}
-          productType={product.product_type}
-          productId={product.id}
+          href={ROUTES.admin.product(product.product_type, product.id)}
           name={name}
-          groupName={row.group?.name ?? null}
-          unassignedLabel={t("unassignedGroup")}
-          needsGroupLabel={t("needsGroup")}
-          status={row.status}
-          statusLabel={statusLabels[row.status]}
+          detail={
+            <ParticipationGroupLine
+              groupName={row.group?.name ?? null}
+              status={row.status}
+              unassignedLabel={t("unassignedGroup")}
+              needsGroupLabel={t("needsGroup")}
+            />
+          }
+          badgeLabel={statusLabels[row.status]}
+          badgeClassName={STATUS_BADGE_STYLES[row.status]}
+        />
+      );
+    });
+
+  // A gedu's seat row links to the group itself rather than to the product:
+  // a seat is on one group, and that group's page is where it is changed.
+  const renderGeduSeats = (rows: AdminGeduSeatRow[]) =>
+    rows.map((row) => {
+      const product = row.product;
+      const name =
+        resolveTranslation(product.product_translations, uiLocale)?.name.trim() ||
+        t("untitledProduct");
+      return (
+        <AssignedProductRow
+          key={row.group.id}
+          href={ROUTES.admin.productGroup(
+            product.product_type,
+            product.id,
+            row.group.id,
+          )}
+          name={name}
+          detail={
+            <p className="truncate text-xs text-muted-foreground">
+              {row.group.name}
+            </p>
+          }
+          badgeLabel={
+            row.role === "trainee" ? tGroups("trainee.role") : tRole(row.role)
+          }
+          badgeClassName={SEAT_BADGE_STYLE}
         />
       );
     });
@@ -606,6 +681,27 @@ export default async function AdminUserDetailPage({
           certification it gates nothing. */}
       {isGedu && (
         <GeduQualificationsCard geduId={userId} initial={geduQualifications} />
+      )}
+
+      {/* The groups this educator is on, each with the role they hold there —
+          the gamer's Assigned Products card in the same shape, after the two
+          cards that decide whether they may be placed at all. */}
+      {isGedu && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-act" />
+              {t('assignedProducts')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {geduSeats.length > 0 ? (
+              <div className="space-y-2">{renderGeduSeats(geduSeats)}</div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('noAssignedProducts')}</p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Both game identities, editable. Admins have always had the database

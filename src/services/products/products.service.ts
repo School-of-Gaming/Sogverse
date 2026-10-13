@@ -225,11 +225,11 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
 // `formatProductSchedule` consumes, so the list reuses the same schedule
 // formatter as the browse card. `product_type`, `start_date`, `end_date`,
 // `timezone`, `location_id` and `spoken_language_code` come from `*` (columns
-// on Product). `gedu_group_assignments(gedu_id)` is embedded for the admin
-// club-list filter on assigned educator; the rows the list renders ignore it,
-// so it's inert for camps/events. The embed is keyed off the assignment's own
-// `product_id` FK, so it spans every group on the product — an empty array
-// means no educator is assigned anywhere.
+// on Product). `gedu_group_assignments(gedu_id)` and `gedu_group_trainees(gedu_id)`
+// are embedded for the admin list's filter on educator, which matches a gedu
+// holding either kind of seat; the rows the list renders ignore them. Each
+// embed is keyed off the seat's own `product_id` FK, so it spans every group
+// on the product — two empty arrays mean no educator is seated anywhere.
 //
 // The location embed carries one level of parent, which is exactly what the
 // admin club list's municipality filter needs: an online municipality club
@@ -247,7 +247,7 @@ function buildProductsByTypeQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), gedu_group_trainees(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
     )
     .eq("product_type", type)
     .order("created_at", { ascending: false });
