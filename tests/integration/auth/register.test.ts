@@ -413,7 +413,7 @@ describe("POST /api/auth/register", () => {
     expect(deferred).toHaveLength(0);
   });
 
-  // The trigger reads first_name/last_name (and the three utm_* keys) straight
+  // The trigger reads first_name/last_name (and the five utm_* keys) straight
   // out of this bag, so the shape is a contract with the database, not a
   // detail. The two inert keys are kept because the Supabase Auth dashboard
   // shows display_name and because a reader of the metadata should see what
@@ -488,7 +488,7 @@ describe("POST /api/auth/register", () => {
   //
   // Counsel — SOG's and Lynx's both — reads the UTM parameters on a landing
   // link as tracking, and Lynx's places it under the MARKETING purpose rather
-  // than analytics. So the three `profiles.utm_*` columns are filled only for a
+  // than analytics. So the five `profiles.utm_*` columns are filled only for a
   // visitor whose own consent cookie granted marketing, and the decision is
   // made HERE, on the server, from the `Cookie` header this request carried —
   // never from anything the body claims. What follows are the four answers a
@@ -497,7 +497,13 @@ describe("POST /api/auth/register", () => {
   const GRANTED = { analytics: true, marketing: true };
   const UTM_BODY = {
     ...validBody,
-    utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+    utm: {
+      source: "Lynx",
+      medium: "email",
+      campaign: "lynx-summer-a",
+      content: "hero",
+      term: "roblox club",
+    },
   };
 
   it("passes valid utm values through to the signup metadata when marketing consent was granted", async () => {
@@ -507,11 +513,13 @@ describe("POST /api/auth/register", () => {
     expect(metadata.utm_source).toBe("Lynx");
     expect(metadata.utm_medium).toBe("email");
     expect(metadata.utm_campaign).toBe("lynx-summer-a");
+    expect(metadata.utm_content).toBe("hero");
+    expect(metadata.utm_term).toBe("roblox club");
   });
 
   it("drops every utm key when the request carries no consent cookie", async () => {
     // No cookie is not an answer, and an unanswered banner is not consent — so
-    // the account is created and all three columns stay NULL.
+    // the account is created and all five columns stay NULL.
     const response = await POST(registerRequest(UTM_BODY));
 
     expect(response.status).toBe(200);
@@ -519,6 +527,8 @@ describe("POST /api/auth/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("drops every utm key on analytics-only, which is the case the ruling turns on", async () => {
@@ -537,6 +547,8 @@ describe("POST /api/auth/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("drops every utm key when the parent rejected the banner outright", async () => {
@@ -551,6 +563,8 @@ describe("POST /api/auth/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("drops every utm key when the stored answer is from a superseded version of the question", async () => {
@@ -569,6 +583,8 @@ describe("POST /api/auth/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("ignores the body's own marketing checkbox, which answers a different question", async () => {
@@ -605,6 +621,8 @@ describe("POST /api/auth/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   // -- Marketing consent --

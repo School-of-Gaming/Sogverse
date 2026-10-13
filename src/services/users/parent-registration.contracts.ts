@@ -4,7 +4,7 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 
 /**
- * Marketing provenance as it travels in a registration body: the three UTM
+ * Marketing provenance as it travels in a registration body: the five UTM
  * fields this visit arrived with, each present or absent.
  *
  * **Plain optional strings on purpose — no format rule here.** This is a
@@ -18,13 +18,15 @@ import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
  *
  * **Defined once and imported by the educator schema too**, rather than written
  * out in both places. Both registration routes hand these to the same signup
- * trigger under the same three metadata keys, so a second copy is a shape that
+ * trigger under the same five metadata keys, so a second copy is a shape that
  * can drift while both ends still type-check.
  */
 export const registrationUtmBody = z.object({
   source: z.string().optional(),
   medium: z.string().optional(),
   campaign: z.string().optional(),
+  content: z.string().optional(),
+  term: z.string().optional(),
 });
 
 export type RegistrationUtmBody = z.infer<typeof registrationUtmBody>;

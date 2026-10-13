@@ -79,14 +79,14 @@ export const POST = defineRoute({
 
     // The schema takes these as plain strings and leaves the format rule here,
     // deliberately — see the contract. A malformed value degrades to null and
-    // the account is created without that field; the three are independent, so
+    // the account is created without that field; the five are independent, so
     // a junk `utm_source` does not cost a well-formed `utm_campaign`.
     //
     // GATED ON MARKETING CONSENT, DECIDED HERE. Counsel reads the UTM
     // parameters on a landing link as tracking, under the marketing purpose, so
-    // the three `profiles.utm_*` columns are written only for a visitor whose
+    // the five `profiles.utm_*` columns are written only for a visitor whose
     // stored answer granted it — anything else (no cookie, a refusal,
-    // analytics-only) drops all three keys and the columns stay NULL. The
+    // analytics-only) drops all five keys and the columns stay NULL. The
     // answer is read off THIS request's own `Cookie` header, the same way the
     // Conversions API reporter below decides whether to send: a
     // `marketingConsent` field in the body is the checkbox for our mailing
@@ -101,7 +101,7 @@ export const POST = defineRoute({
 
     // The metadata shape is exactly what the browser `signUp()` sent before, and
     // it has to stay that way: `handle_new_user` reads `first_name`,
-    // `last_name` and the three `utm_*` keys out of it to build the profile row.
+    // `last_name` and the five `utm_*` keys out of it to build the profile row.
     // `display_name` is not read by the trigger — it is the label the Supabase
     // Auth dashboard shows for the user — and `role` is not read either, since
     // the trigger hardcodes `customer`. Both are kept because the dashboard and

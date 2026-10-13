@@ -415,14 +415,14 @@ describe("POST /api/gedu/register", () => {
   //
   // The values travel in the body (the form POSTs here with no utm params on
   // the URL, so the proxy's header is simply absent on this request) and reach
-  // the profile-creation trigger through the same three user-metadata keys the
+  // the profile-creation trigger through the same five user-metadata keys the
   // parent path uses. The body schema takes them as plain strings on purpose:
   // the educator never typed them and cannot see them, so a malformed one must
   // not 400 them.
   //
   // And they are persisted only when the request's own consent cookie grants
   // MARKETING — the same ruling and the same server-side gate as the parent
-  // route, because it is the same three columns on the same table.
+  // route, because it is the same five columns on the same table.
 
   const GRANTED = { analytics: true, marketing: true };
 
@@ -434,7 +434,13 @@ describe("POST /api/gedu/register", () => {
     const response = await POST(
       registerRequestWithConsent(GRANTED, {
         ...validBody,
-        utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+        utm: {
+          source: "Lynx",
+          medium: "email",
+          campaign: "lynx-summer-a",
+          content: "jobs-board",
+          term: "game educator",
+        },
       }),
     );
 
@@ -443,13 +449,21 @@ describe("POST /api/gedu/register", () => {
     expect(metadata.utm_source).toBe("Lynx");
     expect(metadata.utm_medium).toBe("email");
     expect(metadata.utm_campaign).toBe("lynx-summer-a");
+    expect(metadata.utm_content).toBe("jobs-board");
+    expect(metadata.utm_term).toBe("game educator");
   });
 
   it("drops every utm key when the request carries no consent cookie", async () => {
     const response = await POST(
       registerRequest({
         ...validBody,
-        utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+        utm: {
+          source: "Lynx",
+          medium: "email",
+          campaign: "lynx-summer-a",
+          content: "jobs-board",
+          term: "game educator",
+        },
       }),
     );
 
@@ -458,6 +472,8 @@ describe("POST /api/gedu/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("drops every utm key on analytics-only", async () => {
@@ -466,7 +482,13 @@ describe("POST /api/gedu/register", () => {
         { analytics: true, marketing: false },
         {
           ...validBody,
-          utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+          utm: {
+            source: "Lynx",
+            medium: "email",
+            campaign: "lynx-summer-a",
+            content: "jobs-board",
+            term: "game educator",
+          },
         },
       ),
     );
@@ -476,18 +498,26 @@ describe("POST /api/gedu/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("drops every utm key when the educator rejected the banner outright", async () => {
     // A refusal is an answer, and the answer is no. It has to reach the same
-    // place an unanswered banner does — the educator registers, the three
+    // place an unanswered banner does — the educator registers, the five
     // columns stay NULL.
     const response = await POST(
       registerRequestWithConsent(
         { analytics: false, marketing: false },
         {
           ...validBody,
-          utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+          utm: {
+            source: "Lynx",
+            medium: "email",
+            campaign: "lynx-summer-a",
+            content: "jobs-board",
+            term: "game educator",
+          },
         },
       ),
     );
@@ -497,6 +527,8 @@ describe("POST /api/gedu/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("registers successfully with NULL when a utm value is malformed", async () => {
@@ -524,11 +556,13 @@ describe("POST /api/gedu/register", () => {
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata).not.toHaveProperty("utm_medium");
     expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
   });
 
   it("never passes the utm values to the promotion RPC", async () => {
     // register_gedu names a targeted column list and mentions none of the
-    // three, so the trigger-written values survive promotion untouched.
+    // five, so the trigger-written values survive promotion untouched.
     await POST(
       registerRequestWithConsent(GRANTED, {
         ...validBody,
@@ -540,6 +574,8 @@ describe("POST /api/gedu/register", () => {
     expect(Object.keys(args)).not.toContain("p_utm_source");
     expect(Object.keys(args)).not.toContain("p_utm_medium");
     expect(Object.keys(args)).not.toContain("p_utm_campaign");
+    expect(Object.keys(args)).not.toContain("p_utm_content");
+    expect(Object.keys(args)).not.toContain("p_utm_term");
   });
 
   // -- The welcome mail --

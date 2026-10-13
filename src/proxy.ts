@@ -302,11 +302,12 @@ export async function proxy(request: NextRequest) {
   request.headers.set("x-nonce", nonce);
   request.headers.set("Content-Security-Policy", cspHeader);
 
-  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` on the landing
-  // URL, sanitised here and handed to the root layout, which seeds them into a
-  // client context provider so they survive the whole visit as client-side
-  // navigation. See src/lib/utm.ts for the constraints this feature is built to
-  // — including why reading the query string here is itself the moment ePrivacy
+  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` /
+  // `utm_content` / `utm_term` on the landing URL, sanitised here and handed
+  // to the root layout, which seeds them into a client context provider so
+  // they survive the whole visit as client-side navigation. See
+  // src/lib/utm.ts for the constraints this feature is built to — including
+  // why reading the query string here is itself the moment ePrivacy
   // engages, whatever we do with the value afterwards.
   //
   // **Delete unconditionally, then set conditionally.** A browser can send its

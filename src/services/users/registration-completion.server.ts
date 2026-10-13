@@ -2,7 +2,12 @@ import "server-only";
 
 import type { SupabaseClient, UserIdentity } from "@supabase/supabase-js";
 import { parseConsentCookieHeader } from "@/lib/consent";
-import { UTM_QUERY_PARAMS, utmMetadataForConsent } from "@/lib/utm";
+import {
+  UTM_FIELDS,
+  UTM_QUERY_PARAMS,
+  utmMetadataForConsent,
+  type UtmField,
+} from "@/lib/utm";
 import type { Database } from "@/types/database.types";
 import type { RegistrationUtmBody } from "./parent-registration.contracts";
 
@@ -55,12 +60,14 @@ export function hasGoogleVerifiedAddress(
   );
 }
 
-/** The three `profiles.utm_*` columns a completion may write, each only if present. */
-export interface UtmProfileColumns {
-  utm_source?: string;
-  utm_medium?: string;
-  utm_campaign?: string;
-}
+/**
+ * The five `profiles.utm_*` columns a completion may write, each only if present.
+ * Named by the query params because the columns are: one vocabulary from the
+ * link to the row.
+ */
+export type UtmProfileColumns = Partial<
+  Record<(typeof UTM_QUERY_PARAMS)[UtmField], string>
+>;
 
 /**
  * The attribution columns for the account's one and only UTM write.
@@ -82,14 +89,9 @@ export function utmProfileColumns(
   );
   // The gate omits a key that did not survive, so presence is the test.
   const columns: UtmProfileColumns = {};
-  if (Object.hasOwn(metadata, UTM_QUERY_PARAMS.source)) {
-    columns.utm_source = metadata[UTM_QUERY_PARAMS.source];
-  }
-  if (Object.hasOwn(metadata, UTM_QUERY_PARAMS.medium)) {
-    columns.utm_medium = metadata[UTM_QUERY_PARAMS.medium];
-  }
-  if (Object.hasOwn(metadata, UTM_QUERY_PARAMS.campaign)) {
-    columns.utm_campaign = metadata[UTM_QUERY_PARAMS.campaign];
+  for (const field of UTM_FIELDS) {
+    const column = UTM_QUERY_PARAMS[field];
+    if (Object.hasOwn(metadata, column)) columns[column] = metadata[column];
   }
   return columns;
 }

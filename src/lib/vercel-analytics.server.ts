@@ -114,7 +114,9 @@ export type VisitsDimension =
   | "requestPath"
   | "utmCampaign"
   | "utmSource"
-  | "utmMedium";
+  | "utmMedium"
+  | "utmContent"
+  | "utmTerm";
 
 /**
  * The longest `filter` the endpoint accepts, in characters: it answers 400

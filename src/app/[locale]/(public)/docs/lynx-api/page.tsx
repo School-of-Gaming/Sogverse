@@ -598,6 +598,16 @@ const TRAFFIC_FIELDS = [
     key: "resources.traffic.fields.pagesBySourceMedium",
   },
   {
+    name: "pages[].by_content",
+    type: "array",
+    key: "resources.traffic.fields.pagesByContent",
+  },
+  {
+    name: "pages[].by_term",
+    type: "array",
+    key: "resources.traffic.fields.pagesByTerm",
+  },
+  {
     name: "pages[].by_day",
     type: "array",
     key: "resources.traffic.fields.pagesByDay",
@@ -707,7 +717,13 @@ const FAMILIES_EXAMPLE = `{
       "email": "parent@example.com",
       "created_at": "2026-09-02T18:41:07Z",
       "location": { "city": "Lyon", "country_code": "FR" },
-      "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
+      "utm": {
+        "source": "lynx",
+        "medium": "email",
+        "campaign": "lynx-autumn-a",
+        "content": "newsletter-banner",
+        "term": null
+      },
       "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" }
     }
   ],
@@ -810,6 +826,15 @@ const TRAFFIC_EXAMPLE = `{
         { "utm_source": "lynx", "utm_medium": "social", "pageviews": 655 },
         { "utm_source": null, "utm_medium": null, "pageviews": 1117 }
       ],
+      "by_content": [
+        { "utm_content": "newsletter-banner", "pageviews": 1412 },
+        { "utm_content": "story-carousel", "pageviews": 655 },
+        { "utm_content": null, "pageviews": 1117 }
+      ],
+      "by_term": [
+        { "utm_term": "roblox club", "pageviews": 410 },
+        { "utm_term": null, "pageviews": 2774 }
+      ],
       "by_day": [
         { "date": "2026-09-01", "pageviews": 212 },
         { "date": "2026-09-02", "pageviews": 240 }
@@ -827,6 +852,11 @@ const TRAFFIC_EXAMPLE = `{
         { "utm_source": "lynx", "utm_medium": "email", "pageviews": 611 },
         { "utm_source": null, "utm_medium": null, "pageviews": 316 }
       ],
+      "by_content": [
+        { "utm_content": "newsletter-banner", "pageviews": 611 },
+        { "utm_content": null, "pageviews": 316 }
+      ],
+      "by_term": [{ "utm_term": null, "pageviews": 927 }],
       "by_day": [
         { "date": "2026-09-01", "pageviews": 54 },
         { "date": "2026-09-02", "pageviews": 71 }

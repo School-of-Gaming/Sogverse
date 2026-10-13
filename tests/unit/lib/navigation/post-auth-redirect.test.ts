@@ -5,6 +5,7 @@ import {
   resolveCompleteRegistrationIntent,
   resolveSafeRedirect,
 } from "@/lib/navigation/post-auth-redirect";
+import { NO_UTM_ATTRIBUTION } from "@/lib/utm";
 
 describe("resolveSafeRedirect", () => {
   it("returns null when no redirect is provided", () => {
@@ -148,7 +149,7 @@ describe("resolveSafeRedirect with the finish page allowed", () => {
 });
 
 describe("readCompleteRegistrationTarget", () => {
-  const NO_UTM = { source: null, medium: null, campaign: null };
+  const NO_UTM = NO_UTM_ATTRIBUTION;
 
   it("splits the raw pathname from the variant it asked for", () => {
     expect(readCompleteRegistrationTarget("/fr/complete-registration")).toEqual(
@@ -178,12 +179,12 @@ describe("readCompleteRegistrationTarget", () => {
   it("reads the attribution through the sanitiser", () => {
     expect(
       readCompleteRegistrationTarget(
-        "/complete-registration?utm_source=Lynx&utm_medium=%3Dx&utm_campaign=a&utm_campaign=b",
+        "/complete-registration?utm_source=Lynx&utm_medium=%3Dx&utm_campaign=a&utm_campaign=b&utm_content=hero&utm_term=%2Bx",
       ),
     ).toEqual({
       pathname: "/complete-registration",
       asGedu: null,
-      utm: { source: "Lynx", medium: null, campaign: null },
+      utm: { ...NO_UTM_ATTRIBUTION, source: "Lynx", content: "hero" },
       redirect: null,
     });
   });
@@ -214,7 +215,13 @@ describe("readCompleteRegistrationTarget", () => {
 });
 
 describe("completeRegistrationQuery", () => {
-  const UTM = { source: "Lynx", medium: null, campaign: "summer" };
+  const UTM = {
+    source: "Lynx",
+    medium: null,
+    campaign: "summer",
+    content: "hero",
+    term: "minecraft",
+  };
 
   it("puts the variant first, then the attribution, then the product page", () => {
     expect(
@@ -229,6 +236,8 @@ describe("completeRegistrationQuery", () => {
       ["as", "gedu"],
       ["utm_source", "Lynx"],
       ["utm_campaign", "summer"],
+      ["utm_content", "hero"],
+      ["utm_term", "minecraft"],
       ["redirect", "/fi/kauppa/abc-123"],
     ]);
   });
@@ -245,7 +254,7 @@ describe("completeRegistrationQuery", () => {
     expect(
       completeRegistrationQuery({
         asGedu: false,
-        utm: { source: null, medium: null, campaign: null },
+        utm: NO_UTM_ATTRIBUTION,
       }),
     ).toEqual({});
   });
@@ -258,14 +267,20 @@ describe("completeRegistrationQuery", () => {
  */
 describe("resolveCompleteRegistrationIntent", () => {
   const COOKIE =
-    "as=gedu&utm_source=Lynx&utm_campaign=summer&redirect=%2Ffi%2Fkauppa%2Fabc-123";
+    "as=gedu&utm_source=Lynx&utm_campaign=summer&utm_content=hero&utm_term=minecraft&redirect=%2Ffi%2Fkauppa%2Fabc-123";
 
   it("falls back to the cookie for everything a bare address lacks", () => {
     expect(
       resolveCompleteRegistrationIntent(new URLSearchParams(), COOKIE),
     ).toEqual({
       asGedu: true,
-      utm: { source: "Lynx", medium: null, campaign: "summer" },
+      utm: {
+        source: "Lynx",
+        medium: null,
+        campaign: "summer",
+        content: "hero",
+        term: "minecraft",
+      },
       redirect: "/fi/kauppa/abc-123",
     });
   });
@@ -281,7 +296,7 @@ describe("resolveCompleteRegistrationIntent", () => {
     ).toEqual({
       asGedu: false,
       // Whole, never merged field by field with the cookie's.
-      utm: { source: null, medium: "email", campaign: null },
+      utm: { ...NO_UTM_ATTRIBUTION, medium: "email" },
       redirect: "/shop/xyz",
     });
   });
@@ -291,7 +306,7 @@ describe("resolveCompleteRegistrationIntent", () => {
       resolveCompleteRegistrationIntent(new URLSearchParams(), undefined),
     ).toEqual({
       asGedu: false,
-      utm: { source: null, medium: null, campaign: null },
+      utm: NO_UTM_ATTRIBUTION,
       redirect: null,
     });
   });
@@ -304,7 +319,7 @@ describe("resolveCompleteRegistrationIntent", () => {
       ),
     ).toEqual({
       asGedu: false,
-      utm: { source: null, medium: null, campaign: null },
+      utm: NO_UTM_ATTRIBUTION,
       redirect: null,
     });
   });
