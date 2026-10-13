@@ -70,6 +70,25 @@ CREATE POLICY product_images_admin_update ON storage.objects
   USING (((bucket_id = 'product-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
   WITH CHECK (((bucket_id = 'product-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
 
+CREATE POLICY spotlight_images_admin_delete ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  TO authenticated
+  USING (((bucket_id = 'spotlight-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY spotlight_images_admin_insert ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (((bucket_id = 'spotlight-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY spotlight_images_admin_update ON storage.objects
+  AS PERMISSIVE
+  FOR UPDATE
+  TO authenticated
+  USING (((bucket_id = 'spotlight-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
+  WITH CHECK (((bucket_id = 'spotlight-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
 CREATE POLICY team_photos_editor_delete ON storage.objects
   AS PERMISSIVE
   FOR DELETE

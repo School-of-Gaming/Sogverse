@@ -169,11 +169,9 @@ export default function TestingPage() {
    * long as the dialog is up, and gets the form's current state by reopening
    * it.
    *
-   * The render is the same registry call the send route makes — but in the
-   * preview context, so a fixture whose art lives on this dev server is
-   * resolved against *this browser's* origin instead of being dropped as
-   * unreachable. The mail a recipient would get is the send's job; the mail as
-   * it was designed is this one's.
+   * The render is the same registry call the send route makes, with this
+   * browser's origin for the demo art to resolve against — the server actually
+   * serving it, whatever port that is on.
    *
    * The translator is an awaited dynamic import of one locale's messages, so
    * this is a chunk fetch rather than a round trip: nothing is drawn while it
@@ -205,7 +203,7 @@ export default function TestingPage() {
           templateApiParams(definition, params),
           translate,
           locale,
-          { to: "preview", origin: window.location.origin },
+          { origin: window.location.origin },
           translatePrep,
         );
         setPreview({

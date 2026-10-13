@@ -72,11 +72,31 @@ export interface DiscordComponentsMessage {
 }
 
 /**
+ * This environment's site origin when Discord can reach it, or `null` when it
+ * cannot: an unset or malformed `NEXT_PUBLIC_SITE_URL`, or a **loopback** one,
+ * which is well-formed and unreachable from Discord's servers. A Discord-only
+ * check: Discord fetches the header logo and opens the My SOG link itself, so
+ * this one answer gates both, and each is left out rather than sent pointing at
+ * nothing.
+ */
+export function discordReachableOrigin(): string | null {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) return null;
+  try {
+    const { hostname } = new URL(siteUrl);
+    // The two names a dev machine serves itself under.
+    if (hostname === "localhost" || hostname === "127.0.0.1") return null;
+  } catch {
+    return null;
+  }
+  return siteUrl;
+}
+
+/**
  * The logo every step shows beside its header: the favicon, as the site
  * serves it. `null` when there is no origin Discord can fetch it from — the
- * caller passes `sendableImageOrigin()`, which says so for an unset, malformed
- * or loopback site URL — and the header then goes without it, never with a
- * broken image.
+ * caller passes `discordReachableOrigin()` — and the header then goes without it,
+ * never with a broken image.
  */
 export function discordSubLogoUrl(origin: string | null): string | null {
   return origin === null ? null : new URL("/apple-icon.png", origin).toString();

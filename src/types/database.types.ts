@@ -3234,6 +3234,67 @@ export type Database = {
           },
         ]
       }
+      spotlight_translations: {
+        Row: {
+          body: string
+          locale: string
+          spotlight_id: string
+          title: string
+        }
+        Insert: {
+          body: string
+          locale: string
+          spotlight_id: string
+          title: string
+        }
+        Update: {
+          body?: string
+          locale?: string
+          spotlight_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_translations_spotlight_id_fkey"
+            columns: ["spotlight_id"]
+            isOneToOne: false
+            referencedRelation: "spotlights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spotlights: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          image_id: string | null
+          image_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          image_id?: string | null
+          image_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          image_id?: string | null
+          image_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlights_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       substitution_notification_dms: {
         Row: {
           accepted_dm_claimed_at: string | null
@@ -4118,6 +4179,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_spotlight: {
+        Args: { p_enabled: boolean; p_image_id?: string; p_versions: Json }
+        Returns: string
+      }
       decline_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -4130,6 +4195,7 @@ export type Database = {
         Args: { p_image_id: string }
         Returns: undefined
       }
+      delete_spotlight: { Args: { p_id: string }; Returns: undefined }
       demote_to_waitlist: {
         Args: { p_participation_id: string }
         Returns: Json
@@ -4698,11 +4764,19 @@ export type Database = {
         Args: { p_id: string; p_locale: string }
         Returns: string
       }
+      replace_spotlight_versions: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: undefined
+      }
       repoint_landing_images: {
         Args: { p_from: string; p_to: string }
         Returns: number
       }
       repoint_library_covers: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
+      repoint_spotlight_images: {
         Args: { p_from: string; p_to: string }
         Returns: number
       }
@@ -4795,6 +4869,15 @@ export type Database = {
           p_locale: string
           p_summary: string
           p_title: string
+        }
+        Returns: string
+      }
+      save_spotlight: {
+        Args: {
+          p_enabled: boolean
+          p_id: string
+          p_image_id?: string
+          p_versions: Json
         }
         Returns: string
       }
@@ -5076,7 +5159,11 @@ export type Database = {
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
-      catalogue_image_purpose: "product" | "library_cover" | "landing_image"
+      catalogue_image_purpose:
+        | "product"
+        | "library_cover"
+        | "landing_image"
+        | "spotlight_image"
       chat_channel_type: "group_session"
       effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
@@ -5250,7 +5337,12 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
-      catalogue_image_purpose: ["product", "library_cover", "landing_image"],
+      catalogue_image_purpose: [
+        "product",
+        "library_cover",
+        "landing_image",
+        "spotlight_image",
+      ],
       chat_channel_type: ["group_session"],
       effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],

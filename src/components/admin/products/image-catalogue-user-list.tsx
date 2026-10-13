@@ -8,6 +8,7 @@ import type {
   LibraryArticleImageUser,
   CatalogueImageUser,
   LandingPageImageUser,
+  SpotlightImageUser,
   ProductPictureUser,
 } from "@/services/catalogue-images";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -32,6 +33,9 @@ import { ROUTES } from "@/lib/constants";
  *
  * A landing page row says the same about the page, by its working title, and
  * is a link to the page's admin editor.
+ *
+ * A spotlight row is a link to the spotlight's admin editor, names it by its
+ * title, and says whether it is switched on — in the emails right now.
  *
  * The list is **bounded and scrolls**, in both hosts. An entry can reach 22
  * products, and a list that simply grows pushes whatever is under it — the
@@ -70,6 +74,8 @@ function UserRow({ user }: { user: CatalogueImageUser }) {
       return <ArticleRow article={user} />;
     case "landing-page":
       return <LandingPageRow page={user} />;
+    case "spotlight":
+      return <SpotlightRow spotlight={user} />;
   }
 }
 
@@ -128,6 +134,22 @@ function LandingPageRow({ page }: { page: LandingPageImageUser }) {
       <LiveMark
         live={page.is_live}
         label={page.is_live ? t("live") : t("draft")}
+      />
+    </Link>
+  );
+}
+
+function SpotlightRow({ spotlight }: { spotlight: SpotlightImageUser }) {
+  const t = useTranslations("admin.products.imageCatalogue");
+  return (
+    <Link
+      href={ROUTES.admin.spotlight(spotlight.id)}
+      className={cn(ROW, "hover:bg-hover")}
+    >
+      <span className="block min-w-0 truncate font-medium">{spotlight.title}</span>
+      <LiveMark
+        live={spotlight.is_live}
+        label={spotlight.is_live ? t("live") : t("switchedOff")}
       />
     </Link>
   );

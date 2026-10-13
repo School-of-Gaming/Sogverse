@@ -49,6 +49,9 @@
       "adminLibrary": "Library Content",
       "adminLibraryArticleNew": "New Article",
       "adminLibraryArticleEdit": "Edit Article",
+      "adminSpotlights": "Spotlights",
+      "adminSpotlightNew": "New Spotlight",
+      "adminSpotlightEdit": "Edit Spotlight",
       "adminLandingPages": "Landing Pages",
       "adminLandingPage": "Landing Page",
       "adminPlatformVision": "Platform Vision",
@@ -613,6 +616,62 @@
       },
       "languagesLabel": "Languages"
     },
+    "spotlights": {
+      "title": "Spotlights",
+      "subtitle": "Parents see every spotlight that is switched on at the bottom of every session report email they are sent, newest first. Each reader gets it in their own language, or in English when theirs is not written, or else in a language that is.",
+      "newSpotlight": "New spotlight",
+      "empty": "No spotlights yet. Write the first one.",
+      "backToList": "Back to spotlights",
+      "notFound": "There is no spotlight with this id.",
+      "loadError": "Could not load this spotlight. Refresh to try again.",
+      "listLoadError": "Could not load the spotlights. Refresh to try again.",
+      "newPage": {
+        "title": "New spotlight",
+        "submit": "Save"
+      },
+      "editPage": {
+        "title": "Edit spotlight"
+      },
+      "fields": {
+        "languages": "Languages",
+        "title": "Title",
+        "body": "Text",
+        "picture": "Picture"
+      },
+      "hints": {
+        "languages": "Write each language by hand. Every language needs a title and the text.",
+        "body": "Set under the title in the email, formatted as it looks here. Links are allowed.",
+        "picture": "Shown above the title in the email, cropped to 2:1. A spotlight can be saved without one, but needs one to be switched on."
+      },
+      "bodyPlaceholder": "Write the spotlight…",
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete"
+      },
+      "errors": {
+        "noVersion": "A spotlight needs a title and text in at least one language.",
+        "versionIncomplete": "The {language} version needs both a title and the text.",
+        "saveFailed": "The spotlight could not be saved. Try again.",
+        "saveFailedWithReason": "The spotlight could not be saved — {reason}",
+        "deleteFailed": "The spotlight could not be deleted. Try again.",
+        "deleteFailedWithReason": "The spotlight could not be deleted — {reason}"
+      },
+      "languagesLabel": "Languages",
+      "created": "Created {date}",
+      "status": {
+        "on": "In emails",
+        "off": "Not in emails"
+      },
+      "switchLabel": "In session report emails",
+      "needsPicture": "Add a picture to switch it on.",
+      "deleteConfirm": {
+        "title": "Delete this spotlight?",
+        "descriptionOn": "It leaves session report emails straight away, and it cannot be brought back. Its picture stays in the catalogue.",
+        "descriptionOff": "It cannot be brought back. Its picture stays in the catalogue.",
+        "confirm": "Delete"
+      }
+    },
     "landingPages": {
       "title": "Landing pages",
       "subtitle": "Pages for a school, a city, a business or an event, written for search engines and AI apps to find.",
@@ -1174,6 +1233,13 @@
             "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it on this landing page.",
             "outcomeAdded": "Added to the catalogue and chosen for this landing page.",
             "outcomeExisting": "Already in the catalogue — chosen for this landing page."
+          },
+          "spotlightImage": {
+            "change": "Change picture",
+            "remove": "Remove picture",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 2:1 frame, add it and use it on this spotlight.",
+            "outcomeAdded": "Added to the catalogue and chosen for this spotlight.",
+            "outcomeExisting": "Already in the catalogue — chosen for this spotlight."
           }
         }
       },
@@ -1188,6 +1254,7 @@
         "live": "Live",
         "hidden": "Hidden",
         "draft": "Draft",
+        "switchedOff": "Off",
         "replace": "Replace picture",
         "remove": "Remove from catalogue",
         "replaceConfirm": {
@@ -1244,6 +1311,19 @@
             "removeConsequence": "{count, plural, one {The landing page below will lose this picture, even while it is live. A pictures section left with none is removed.} other {All # landing pages below will lose this picture, the live ones included. A pictures section left with none is removed.}}",
             "removeUnused": "No landing page uses this picture. It will be removed from the catalogue for good.",
             "removeConfirm": "Remove from {count, plural, one {# page} other {# pages}}"
+          },
+          "spotlightImage": {
+            "title": "Spotlight pictures",
+            "description": "One picture can be used by several spotlights. Choosing one changes only this spotlight; replacing or removing one changes every spotlight using it, the ones in session report emails included.",
+            "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+            "usedBy": "Spotlights using this picture",
+            "usedByNone": "No spotlight uses this picture.",
+            "replaceConsequence": "{count, plural, one {The spotlight below will show the new picture, in the next email if it is switched on.} other {All # spotlights below will show the new picture, in the next email where they are switched on.}}",
+            "replaceUnused": "No spotlight uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# spotlight} other {# spotlights}}",
+            "removeConsequence": "{count, plural, one {The spotlight below will lose this picture and be switched off, so it leaves session report emails until you choose another picture and switch it back on.} other {All # spotlights below will lose this picture and be switched off, so they leave session report emails until you choose another picture and switch each back on.}}",
+            "removeUnused": "No spotlight uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# spotlight} other {# spotlights}}"
           }
         }
       },
@@ -3542,6 +3622,7 @@
     "municipalityInvoicing": "Municipality Invoicing",
     "invoiceCustomers": "Invoice Customers",
     "libraryContent": "Library Content",
+    "spotlights": "Spotlights",
     "landingPages": "Landing Pages",
     "platformVision": "Platform Vision",
     "geduInvoicing": "Gedu Invoicing",

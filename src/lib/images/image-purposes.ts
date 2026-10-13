@@ -99,6 +99,18 @@ export const IMAGE_PURPOSES = {
     maxBytes: 3 * 1024 * 1024,
     catalogue: false,
   },
+  // A wide 2:1 band at the bottom of a session report email, over twice the
+  // mail's 560px content column, so it stays sharp on a high-density screen
+  // at the column's full width. Deliberately not the 16:9 the Library and
+  // landing pictures share: the unusual band is what makes a spotlight stand
+  // out from the report above it (the owner's choice, 2026-10-12).
+  spotlight_image: {
+    bucket: "spotlight-images",
+    visibility: "public",
+    storedSize: { width: 1200, height: 600 },
+    maxBytes: 4 * 1024 * 1024,
+    catalogue: true,
+  },
 } as const satisfies Record<string, ImagePurposeSpec>;
 
 /**

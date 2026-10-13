@@ -758,6 +758,16 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /**
+     * Every spotlight, switched on or not — the notes with a picture appended
+     * to every parent's session report email — and where each is switched on and off.
+     */
+    spotlights: "/admin/spotlights",
+    /** The form a new spotlight is written in. */
+    spotlightNew: "/admin/spotlights/new",
+    /** One spotlight's editor. */
+    spotlight: (id: string) =>
+      ({ pathname: "/admin/spotlights/[id]", params: { id } }) as const,
     /** Every landing page, live or not. They are written through the MCP server alone. */
     landingPages: "/admin/landing-pages",
     /**

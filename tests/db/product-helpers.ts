@@ -326,6 +326,11 @@ import { TEST_IDS } from "./constants";
  *                  841, whose minted gedu files every request the file
  *                  enqueues; 842 is a substitution request id that must NEVER
  *                  exist, backing the "unknown request" snapshot case)
+ *   850-855        spotlights.test.ts — `spotlights` and `catalogue_images`
+ *                  rows rather than products: 850 a spotlight id that must
+ *                  NEVER exist, and 851-855 catalogue entries — four spotlight
+ *                  pictures (one removed during the run) and one Library cover
+ *                  a spotlight may not show
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

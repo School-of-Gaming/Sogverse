@@ -48,7 +48,9 @@ function mockAuthenticatedWithRole(role: string) {
 function createRequest(body: Record<string, unknown>): Request {
   return new Request("http://localhost:3000/api/admin/send-test-email", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // The Host a real request carries, which the route resolves the demo art's
+    // origin from.
+    headers: { "Content-Type": "application/json", host: "localhost:3000" },
     body: JSON.stringify(body),
   });
 }
@@ -360,6 +362,7 @@ describe("POST /api/admin/send-test-email", () => {
         groupName: "Usvalaakso: Kettukallio",
         copy: "family",
         photoCount: "0",
+        spotlights: "none",
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "",
@@ -379,6 +382,42 @@ describe("POST /api/admin/send-test-email", () => {
     );
   });
 
+  /**
+   * The demo art resolves against the request's own origin, localhost
+   * included: a send from a dev machine carries localhost URLs, whose pictures
+   * fail to load in the inbox, and every spotlight still draws its `<img>`.
+   */
+  it("resolves the demo art against the request's origin, even localhost", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    await POST(createRequest({
+      toEmail: "test@example.com",
+      template: "sessionReport",
+      params: {
+        gamerName: "Aino",
+        geduName: "Marianne",
+        productName: "Minecraft: Cozy Adventures",
+        groupName: "Usvalaakso: Kettukallio",
+        copy: "family",
+        photoCount: "1",
+        spotlights: "two",
+        sample: "en",
+        viewerTimezone: "Europe/Helsinki",
+        reportMarkdown: "",
+        productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      },
+    }));
+
+    const [{ htmlContent }] = mockSendTransactionalEmail.mock.calls[0];
+    expect(htmlContent).toContain('<img src="http://localhost:3000/preview-art/session-build.jpg"');
+    expect(htmlContent).toContain(
+      '<img src="http://localhost:3000/preview-art/spotlight-arena.jpg"',
+    );
+    expect(htmlContent).toContain(
+      '<img src="http://localhost:3000/preview-art/spotlight-parkour.jpg"',
+    );
+  });
+
   it("should render typed markdown over the sample in the session-report template", async () => {
     mockAuthenticatedWithRole("admin");
 
@@ -392,6 +431,7 @@ describe("POST /api/admin/send-test-email", () => {
         groupName: "Usvalaakso: Kettukallio",
         copy: "family",
         photoCount: "0",
+        spotlights: "none",
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "# Typed title\n\nWith a [link](https://evil.example).",

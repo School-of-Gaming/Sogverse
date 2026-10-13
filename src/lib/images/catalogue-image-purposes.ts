@@ -69,4 +69,5 @@ export const CATALOGUE_IMAGE_PURPOSES = {
   product: cataloguePurposeSpec("product"),
   library_cover: cataloguePurposeSpec("library_cover"),
   landing_image: cataloguePurposeSpec("landing_image"),
+  spotlight_image: cataloguePurposeSpec("spotlight_image"),
 } as const satisfies Record<CatalogueImagePurpose, CatalogueImagePurposeSpec>;

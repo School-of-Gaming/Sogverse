@@ -35,6 +35,15 @@ export function heading(text: string): string {
 }
 
 /**
+ * A heading one rank under `heading()`: the title of one item in a run of
+ * them, such as a spotlight at the foot of the session report. It is the
+ * subtitle level, so it stays under a mail's title and over the item's body.
+ */
+export function subheading(text: string): string {
+  return `<h3 style="margin:0 0 ${MAIL_SPACE.block}px;${mailText("subtitle", DARK_THEME.foreground)}">${text}</h3>`;
+}
+
+/**
  * Bold, in the body's own text color — deliberately *not* a brand colour.
  * Gmail's dark-theme color rewriting left the world purple unreadable against
  * the card, and the background-clip workaround that saves act is a Gmail-only

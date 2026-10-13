@@ -1,5 +1,11 @@
 import { wrapInLayout } from "./layout";
-import { escapeHtml, paragraph, styledName, styledProductName } from "./utils";
+import {
+  escapeHtml,
+  paragraph,
+  styledName,
+  styledProductName,
+  subheading,
+} from "./utils";
 import { calloutPanel, ctaButton, factList, hairlineRule, sectionLabel } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
 import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
@@ -69,8 +75,43 @@ import type { EmailTranslator } from "./translator";
  * child's copy greets them and says "your session". The report, the facts, the
  * photos and the closing are the same bytes, and the button goes to the
  * child's own page in My SOG — the caller passes that URL, because a `/parent`
- * link bounces a signed-in child off it.
+ * link bounces a signed-in child off it. **The child's copy carries no
+ * spotlights**, whatever the caller passes: they are what we put in front of
+ * the parent, and the child's copy carries the report only. That is the
+ * template's decision rather than each caller's, so no surface can render a
+ * child's copy that has them.
+ *
+ * **The family mail and the staff copy end with the enabled spotlights**,
+ * newest first — admin-written notes, each a picture, a title and a short
+ * markdown body. They come after the closing, because the report and what it
+ * asks are the mail and the spotlights are what the platform adds beneath it.
+ * **They are laid out open, not boxed**: the shell is itself a card on a wide
+ * viewport and a card in a card is the one arrangement this directory forbids,
+ * so each is ruled off by the same hairline that separates the report from its
+ * button. The picture is the photo column's (`session-photos.ts`), boxed from
+ * the stored dimensions like any photo; the title is a `subheading()`; the body renders under the `spotlight` use case, which keeps links —
+ * an admin is trusted with what they publish to every family, where a gedu's
+ * report keeps none. Every value arrives resolved: the version for this
+ * reader's locale and the picture's public URL are the caller's to pick.
  */
+
+/**
+ * One spotlight, as the mail draws it: the reader's version, already picked,
+ * and a picture whose URL the caller composed.
+ */
+export interface SessionReportSpotlight {
+  /** Plain text; escaped here. */
+  title: string;
+  /** Authored markdown, rendered under the `spotlight` use case. */
+  body: string;
+  image: {
+    /** Absolute, unauthenticated URL — composed by the caller. */
+    url: string;
+    /** The stored pixel size, which the reserved box is built from. */
+    width: number;
+    height: number;
+  };
+}
 
 export interface SessionReportEmailOptions {
   /** The child the report concerns, as the family knows them. */
@@ -113,6 +154,12 @@ export interface SessionReportEmailOptions {
    * family mail and a staff copy leave it unset.
    */
   gamerCopy?: boolean;
+  /**
+   * Every enabled spotlight, newest first, each in this reader's version.
+   * Absent or empty is the mail with nothing beneath the closing. The child's
+   * copy draws none whatever is passed — see the module comment.
+   */
+  spotlights?: readonly SessionReportSpotlight[];
 }
 
 export function sessionReportSubject(
@@ -137,6 +184,7 @@ export function buildSessionReportEmail(
     photos = [],
     staffCopy = false,
     gamerCopy = false,
+    spotlights = [],
   }: SessionReportEmailOptions,
 ): string {
   // The banner carries its own leading break, so the family mail's content is
@@ -165,6 +213,7 @@ export function buildSessionReportEmail(
     ${hairlineRule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
+    ${gamerCopy ? "" : spotlightsSection(spotlights)}
   `;
   return wrapInLayout({ title: t("sessionReport.title"), content, locale, t });
 }
@@ -223,5 +272,44 @@ function photosSection(
   return `<div style="margin:${MAIL_SPACE.furniture}px 0;">
       ${sectionLabel(t("sessionReport.photosHeading"))}
       ${sessionPhotoGrid(photos)}
+    </div>`;
+}
+
+/**
+ * The spotlights, each under a hairline of its own: the first one's rule
+ * separates them from the closing above, and every later one's from the
+ * spotlight before. No heading names them as a group, because a picture and
+ * its title already say what each one is (owner's ruling, 2026-10-13), and a
+ * group heading read as the first spotlight's alone. None at all draws
+ * nothing.
+ */
+function spotlightsSection(spotlights: readonly SessionReportSpotlight[]): string {
+  return spotlights
+    .map((spotlight) => `${hairlineRule()}${spotlightSection(spotlight)}`)
+    .join("");
+}
+
+/**
+ * One spotlight: the picture, the title, the body.
+ *
+ * Open rather than boxed, because the shell is already the card — see the
+ * module comment. The picture is a photo column of one, so it gets the same
+ * box arithmetic, painted well, Outlook pixel pair and empty `alt` as a session
+ * photo rather than a second image block that could drift from it. The grid
+ * states no margin of its own, so the block step under the picture is stated
+ * here. The title is a `subheading()`; the body carries no headings of its
+ * own to compete with it.
+ */
+function spotlightSection({
+  title,
+  body,
+  image,
+}: SessionReportSpotlight): string {
+  return `<div style="margin:0 0 ${MAIL_SPACE.block}px;">
+      ${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
+    </div>
+    ${subheading(escapeHtml(title))}
+    <div>
+      ${renderMarkdownForEmail(body, "spotlight")}
     </div>`;
 }

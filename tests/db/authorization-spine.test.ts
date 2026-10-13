@@ -174,6 +174,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   publish_landing_page: { permittedRoles: ["admin"] },
   unpublish_landing_page: { permittedRoles: ["admin"] },
   repoint_landing_images: { permittedRoles: ["admin"] },
+  // The writers of spotlights — create, the whole save and delete — and the
+  // image catalogue's replace for their pictures. Neither spotlight table
+  // carries a write grant for `authenticated`, so these are the only path in.
+  // Past the admin guard, all-NULL arguments are refused with
+  // `null_value_not_allowed` (create and save: no switch; repoint) or
+  // `no_data_found` (delete: no such spotlight) — errors, but not the
+  // forbidden one.
+  create_spotlight: { permittedRoles: ["admin"] },
+  save_spotlight: { permittedRoles: ["admin"] },
+  delete_spotlight: { permittedRoles: ["admin"] },
+  repoint_spotlight_images: { permittedRoles: ["admin"] },
   // One OAuth client's public description out of Supabase Auth, which no Data
   // API role can read — how the Library editor names the AI app a save came
   // through. Past the admin guard, a NULL id finds no client: an empty answer.

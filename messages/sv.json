@@ -49,6 +49,9 @@
       "adminLibrary": "Bibliotekets innehåll",
       "adminLibraryArticleNew": "Ny artikel",
       "adminLibraryArticleEdit": "Redigera artikel",
+      "adminSpotlights": "Spotlights",
+      "adminSpotlightNew": "Ny spotlight",
+      "adminSpotlightEdit": "Redigera spotlight",
       "adminLandingPages": "Landningssidor",
       "adminLandingPage": "Landningssida",
       "adminPlatformVision": "Plattformens vision",
@@ -613,6 +616,62 @@
       },
       "languagesLabel": "Språk"
     },
+    "spotlights": {
+      "title": "Spotlights",
+      "subtitle": "Föräldrar ser varje påslagen spotlight längst ner i varje sessionsrapports e-post de får, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
+      "newSpotlight": "Ny spotlight",
+      "empty": "Inga spotlights än. Skriv den första.",
+      "backToList": "Tillbaka till spotlights",
+      "notFound": "Det finns ingen spotlight med det här id:t.",
+      "loadError": "Spotlighten kunde inte laddas. Uppdatera sidan för att försöka igen.",
+      "listLoadError": "Spotlightsen kunde inte laddas. Uppdatera sidan för att försöka igen.",
+      "newPage": {
+        "title": "Ny spotlight",
+        "submit": "Spara"
+      },
+      "editPage": {
+        "title": "Redigera spotlight"
+      },
+      "fields": {
+        "languages": "Språk",
+        "title": "Rubrik",
+        "body": "Text",
+        "picture": "Bild"
+      },
+      "hints": {
+        "languages": "Skriv varje språk för hand. Varje språk behöver en rubrik och texten.",
+        "body": "Visas under rubriken i e-posten, formaterad som här. Länkar är tillåtna.",
+        "picture": "Visas ovanför rubriken i e-posten, beskuren till 2:1. En spotlight kan sparas utan bild, men behöver en för att kunna slås på."
+      },
+      "bodyPlaceholder": "Skriv spotlighten…",
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt",
+        "delete": "Ta bort"
+      },
+      "errors": {
+        "noVersion": "En spotlight behöver en rubrik och text på minst ett språk.",
+        "versionIncomplete": "Versionen på {language} behöver både en rubrik och texten.",
+        "saveFailed": "Spotlighten kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Spotlighten kunde inte sparas — {reason}",
+        "deleteFailed": "Spotlighten kunde inte tas bort. Försök igen.",
+        "deleteFailedWithReason": "Spotlighten kunde inte tas bort — {reason}"
+      },
+      "languagesLabel": "Språk",
+      "created": "Skapad {date}",
+      "status": {
+        "on": "I e-posten",
+        "off": "Inte i e-posten"
+      },
+      "switchLabel": "I sessionsrapporternas e-post",
+      "needsPicture": "Lägg till en bild för att kunna slå på den.",
+      "deleteConfirm": {
+        "title": "Ta bort den här spotlighten?",
+        "descriptionOn": "Den försvinner genast ur sessionsrapporternas e-post och kan inte återställas. Bilden blir kvar i biblioteket.",
+        "descriptionOff": "Den kan inte återställas. Bilden blir kvar i biblioteket.",
+        "confirm": "Ta bort"
+      }
+    },
     "landingPages": {
       "title": "Landningssidor",
       "subtitle": "Sidor för en skola, en stad, ett företag eller ett evenemang, skrivna för att sökmotorer och AI-appar ska hitta dem.",
@@ -1174,6 +1233,13 @@
             "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
             "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
             "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
+          },
+          "spotlightImage": {
+            "change": "Byt bild",
+            "remove": "Ta bort bild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 2:1-ramen och den läggs till och används på den här spotlighten.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här spotlighten.",
+            "outcomeExisting": "Finns redan i biblioteket — vald för den här spotlighten."
           }
         }
       },
@@ -1188,6 +1254,7 @@
         "live": "Publicerad",
         "hidden": "Dold",
         "draft": "Utkast",
+        "switchedOff": "Avstängd",
         "replace": "Ersätt bild",
         "remove": "Ta bort ur biblioteket",
         "replaceConfirm": {
@@ -1244,6 +1311,19 @@
             "removeConsequence": "{count, plural, one {Landningssidan nedan förlorar bilden, även om den är publicerad. En bildsektion som blir utan bilder tas bort.} other {Alla # landningssidor nedan förlorar bilden, även de publicerade. En bildsektion som blir utan bilder tas bort.}}",
             "removeUnused": "Ingen landningssida använder den här bilden. Den tas bort ur biblioteket för gott.",
             "removeConfirm": "Ta bort från {count, plural, one {# sida} other {# sidor}}"
+          },
+          "spotlightImage": {
+            "title": "Bilder för spotlights",
+            "description": "En bild kan användas av flera spotlights. Ditt val gäller bara den här spotlighten, men att ersätta eller ta bort en bild påverkar alla spotlights som använder den, även de som visas i sessionsrapporternas e-post.",
+            "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+            "usedBy": "Spotlights som använder bilden",
+            "usedByNone": "Ingen spotlight använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Spotlighten nedan kommer att visa den nya bilden, i nästa e-post om den är påslagen.} other {Alla # spotlights nedan kommer att visa den nya bilden, de påslagna i nästa e-post.}}",
+            "replaceUnused": "Ingen spotlight använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# spotlight} other {# spotlights}}",
+            "removeConsequence": "{count, plural, one {Spotlighten nedan förlorar bilden och stängs av, så den försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på den igen.} other {Alla # spotlights nedan förlorar bilden och stängs av, så de försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på var och en igen.}}",
+            "removeUnused": "Ingen spotlight använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# spotlight} other {# spotlights}}"
           }
         }
       },
@@ -3542,6 +3622,7 @@
     "municipalityInvoicing": "Kommunfakturering",
     "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
+    "spotlights": "Spotlights",
     "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
     "geduInvoicing": "Gedufakturering",

@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 import {
   useAdminLibraryArticle,
   usePublishLibraryArticle,
@@ -11,7 +12,7 @@ import {
   useUnpublishLibraryArticle,
 } from "@/services/library";
 import { LibraryArticleEditor } from "./library-article-editor";
-import { LibraryArticlePageShell } from "./library-article-page-shell";
+import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 
 /**
  * `/admin/library/[id]` — one article's editor, where it is also published,
@@ -43,7 +44,11 @@ export function EditLibraryArticlePage({ articleId }: { articleId: string }) {
   );
 
   return (
-    <LibraryArticlePageShell title={t("editPage.title")}>
+    <AdminEditorPageShell
+      backHref={ROUTES.admin.library}
+      backLabel={t("backToList")}
+      title={t("editPage.title")}
+    >
       {article && (
         <LibraryArticleEditor
           article={article}
@@ -75,6 +80,6 @@ export function EditLibraryArticlePage({ articleId }: { articleId: string }) {
           </CardContent>
         </Card>
       )}
-    </LibraryArticlePageShell>
+    </AdminEditorPageShell>
   );
 }

@@ -318,6 +318,7 @@ const PURPOSE_NAME: Record<CatalogueImagePurpose, string> = {
   product: "product picture",
   library_cover: "Library cover",
   landing_image: "landing page picture",
+  spotlight_image: "spotlight picture",
 };
 
 /**

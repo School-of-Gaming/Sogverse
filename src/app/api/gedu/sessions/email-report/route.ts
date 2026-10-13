@@ -5,6 +5,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import {
   buildSessionReportEmail,
   sessionReportSubject,
+  type SessionReportSpotlight,
 } from "@/lib/email-templates/session-report";
 import type { SessionReportPhoto } from "@/lib/email-templates/session-photos";
 import { sessionImageUrl } from "@/lib/images/session-image-url";
@@ -32,6 +33,8 @@ import {
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { SpotlightsService } from "@/services/spotlights/spotlights.service";
+import type { EnabledSpotlight } from "@/services/spotlights/spotlights.contracts";
 import type { ProductType } from "@/types";
 
 const ROUTE_LABEL = "/api/gedu/sessions/email-report";
@@ -87,6 +90,12 @@ interface SessionFacts {
    * template reserved from the stored dimensions rather than from the picture.
    */
   photos: SessionReportPhoto[];
+  /**
+   * Every enabled spotlight, newest first, with all its versions — read once
+   * for the whole send, and resolved to each reader's version per mail. Empty
+   * when the read failed: see `readEnabledSpotlights`.
+   */
+  spotlights: EnabledSpotlight[];
   origin: string;
 }
 
@@ -379,6 +388,10 @@ export const POST = defineRoute({
 
       if (imagesError) throw imagesError;
 
+      // The admin's spotlights, once for the send rather than once per mail.
+      // Unlike the photos, a failed read sends the report without them.
+      const spotlights = await readEnabledSpotlights(adminClient, claim.id);
+
       // A seat whose holder is not their own paying customer belongs to
       // somebody's child, and the contact is the parent linked earliest. Read
       // for every seat in one trip rather than per seat — a group is a handful
@@ -494,6 +507,7 @@ export const POST = defineRoute({
           width: image.width,
           height: image.height,
         })),
+        spotlights,
         // The TRUSTED origin, never the raw Host header: these links go to
         // families who have every reason to trust them.
         origin: getOrigin(request),
@@ -619,6 +633,48 @@ async function readParentLinks(adminClient: AdminClient, gamerIds: string[]) {
 }
 
 /**
+ * The enabled spotlights, or none when they cannot be read.
+ *
+ * **A failed read must not fail the report.** The spotlights are the
+ * platform's notes under a gedu's report, not part of it: losing them from one
+ * send costs a family an announcement, while failing the send would cost them
+ * the report and hand the gedu an error over something they never wrote. So
+ * the failure is logged and the report goes out without them — the opposite of
+ * the photos, which are the report's own content and take the send with them.
+ */
+async function readEnabledSpotlights(
+  adminClient: AdminClient,
+  sessionId: string,
+): Promise<EnabledSpotlight[]> {
+  try {
+    return await new SpotlightsService(adminClient).listEnabledSpotlights();
+  } catch (error) {
+    console.error(
+      `[${ROUTE_LABEL}] spotlights could not be read for session ${sessionId}; sending the report without them:`,
+      error,
+    );
+    return [];
+  }
+}
+
+/**
+ * Each spotlight in one reader's version, picked by the shared fallback — the
+ * reader's locale, then English, then the first written. A spotlight always
+ * has a version, so none is dropped for real data.
+ */
+function spotlightsFor(
+  spotlights: readonly EnabledSpotlight[],
+  locale: SupportedLocale,
+): SessionReportSpotlight[] {
+  return spotlights.flatMap((spotlight) => {
+    const version = resolveTranslation(spotlight.versions, locale);
+    return version
+      ? [{ title: version.title, body: version.body, image: spotlight.image }]
+      : [];
+  });
+}
+
+/**
  * One family mail. Everything locale-shaped is resolved here, per recipient:
  * the translator, the product's name in their locale, and the date and time
  * range — in the PRODUCT's zone, with the zone named, because a mail is rendered
@@ -630,10 +686,11 @@ async function readParentLinks(adminClient: AdminClient, gamerIds: string[]) {
  * every text node and drops links. The one thing embedded raw is the URL, which
  * this function builds.
  *
- * The recipient's `kind` decides two things and nothing else: which My SOG
- * root the button points at, and whether the builder renders the framing
- * sentence to the parent about the child or to the child themselves. The
- * report, the facts and the photos are the same in both.
+ * The recipient's `kind` decides three things and nothing else: which My SOG
+ * root the button points at, whether the builder renders the framing sentence
+ * to the parent about the child or to the child themselves, and whether the
+ * spotlights come along — the parent's copy only. The report, the facts and
+ * the photos are the same in both.
  */
 async function sendFamilyMail(
   { participationId, gamerName, recipient }: SeatMail,
@@ -661,6 +718,10 @@ async function sendFamilyMail(
     ),
     reportMarkdown: facts.reportMarkdown,
     photos: facts.photos,
+    // Parents only: the child's copy carries the report alone, and the builder
+    // draws no spotlights on it either way — none are resolved for it, so
+    // nothing here implies they would show.
+    spotlights: gamerCopy ? [] : spotlightsFor(facts.spotlights, recipient.locale),
     // Keyed by participation, not by product: two siblings in one club have two
     // pages, and this mail is about one of them. The root follows the reader —
     // `/parent` for the parent or an adult on their own seat, `/gamer` for the
@@ -742,6 +803,8 @@ async function sendStaffCopy({
     // The same photos the families were sent: the copy is a record of what went
     // out, and a record with the pictures missing is a different mail.
     photos: facts.photos,
+    // The sender's version of the same spotlights the families were sent.
+    spotlights: spotlightsFor(facts.spotlights, senderLocale),
     productUrl: `${facts.origin}${workspacePath}`,
     staffCopy: true,
   };

@@ -49,6 +49,9 @@
       "adminLibrary": "paq qach ghItlhmey",
       "adminLibraryArticleNew": "ghItlh chu’",
       "adminLibraryArticleEdit": "ghItlh yIchoH",
+      "adminSpotlights": "Hovmey",
+      "adminSpotlightNew": "Hov chu’",
+      "adminSpotlightEdit": "Hov yIchoH",
       "adminLandingPages": "Sap ghItlhmey",
       "adminLandingPage": "Sap ghItlh",
       "adminPlatformVision": "Sogverse naj",
@@ -657,6 +660,62 @@
       },
       "languagesLabel": "Holmey"
     },
+    "spotlights": {
+      "title": "Hovmey",
+      "subtitle": "Hoch QIn ghItlh bIngDaq Hoch Hov chenmoHlu’bogh lutu’ vavDu’ SoSDu’ je. chu’qu’ wa’DIch. Hoch laDwI’ Hol Dalo’ — Hol ghItlhlu’be’chugh, DIvI’ Hol; ghIq latlh Hol ghItlhlu’bogh.",
+      "newSpotlight": "Hov chu’",
+      "empty": "Hov tu’lu’be’ wej. wa’DIch yIghItlh.",
+      "backToList": "Hovmey yIchegh",
+      "notFound": "ID’vam ghajbogh Hov tu’lu’be’.",
+      "loadError": "Hov’e’ laHlaHbe’. nIDqa’meH yIchu’qa’.",
+      "listLoadError": "Hovmey laHlaHbe’. nIDqa’meH yIchu’qa’. batlh yIvang.",
+      "newPage": {
+        "title": "Hov chu’",
+        "submit": "yIpol"
+      },
+      "editPage": {
+        "title": "Hov yIchoH"
+      },
+      "fields": {
+        "languages": "Holmey",
+        "title": "pong",
+        "body": "ghItlh",
+        "picture": "nagh beQ"
+      },
+      "hints": {
+        "languages": "Hoch Hol ghopDaj yIghItlh. pong ghItlh je poQ Hoch Hol.",
+        "body": "ghItlhDaq pong bIng ’oH, naDev rur. rarwI’mey chaw’lu’.",
+        "picture": "ghItlhDaq pong Dung ’oH, 2:1 pe’lu’. nagh beQ Hutlhbogh Hov pollaH, ’ach chenmoHmeH nagh beQ poQ."
+      },
+      "bodyPlaceholder": "Hov yIghItlh…",
+      "actions": {
+        "save": "yIpol",
+        "cancel": "yImev",
+        "delete": "yIteq"
+      },
+      "errors": {
+        "noVersion": "wa’ Hol puS pong ghItlh je poQ Hov.",
+        "versionIncomplete": "{language} Hol: pong ghItlh je poQ.",
+        "saveFailed": "Hov pollaHbe’. yInIDqa’.",
+        "saveFailedWithReason": "Hov pollaHbe’ — {reason}",
+        "deleteFailed": "Hov teqlaHbe’. yInIDqa’.",
+        "deleteFailedWithReason": "Hov teqlaHbe’ — {reason}"
+      },
+      "languagesLabel": "Holmey",
+      "created": "chenmoHlu’: {date}",
+      "status": {
+        "on": "chenmoHlu’",
+        "off": "Qaw’lu’"
+      },
+      "switchLabel": "QIn ghItlhmeyDaq",
+      "needsPicture": "chenmoHmeH nagh beQ yIchel.",
+      "deleteConfirm": {
+        "title": "Hovvam DateqneS’a’?",
+        "descriptionOn": "QIn ghItlhmeyvo’ DaH mej, ’ej chegh not. qachDaq ratlh nagh beQDaj.",
+        "descriptionOff": "chegh not. qachDaq ratlh nagh beQDaj.",
+        "confirm": "yIteq"
+      }
+    },
     "landingPages": {
       "title": "Sap ghItlhmey",
       "subtitle": "DuSaQ, veng, malja’ qoj wanI’ ghItlhmey. nejwI’ jabbI’IDmey ’ej De’wI’ qoq Dochmey luSamnIS.",
@@ -1218,6 +1277,13 @@
             "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej navvamDaq lo’lu’.",
             "outcomeAdded": "qachDaq chellu’, ’ej navvamvaD wIvlu’.",
             "outcomeExisting": "qachDaq tu’lu’ — navvamvaD wIvlu’."
+          },
+          "spotlightImage": {
+            "change": "nagh beQ yIchoH",
+            "remove": "nagh beQ yIteq",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 2:1 ’echletvaD Dape’, qachDaq chellu’, ’ej HovvamDaq lo’lu’.",
+            "outcomeAdded": "qachDaq chellu’, ’ej HovvamvaD wIvlu’.",
+            "outcomeExisting": "qachDaq tu’lu’ — HovvamvaD wIvlu’."
           }
         }
       },
@@ -1232,6 +1298,7 @@
         "live": "cha’lu’",
         "hidden": "So’lu’",
         "draft": "nab",
+        "switchedOff": "Qaw’lu’",
         "replace": "nagh beQ yIchoH",
         "remove": "qachvo’ yIteq",
         "replaceConfirm": {
@@ -1288,6 +1355,19 @@
             "removeConsequence": "{count, plural, one {bIngDaq nav nagh beQvam Hutlh.} other {bIngDaq Hoch # navmey nagh beQvam luHutlh.}}",
             "removeUnused": "nagh beQvam lo’ pagh nav. qachvo’ reH teqlu’.",
             "removeConfirm": "{count, plural, one {# navvo’} other {# navmeyvo’}} yIteq"
+          },
+          "spotlightImage": {
+            "title": "Hov nagh beQmey",
+            "description": "wa’ nagh beQ lo’laH law’ Hovmey. naDev wIvlIj Hovvam neH choH; ’ach nagh beQ DachoHchugh qoj DateqchughvaD, Hoch lo’bogh Hovmey luchoH — QIn ghItlhmeyDaq ’oHbogh je.",
+            "usedBadge": "{count, plural, one {# Hov} other {# Hovmey}}",
+            "usedBy": "nagh beQvam lo’bogh Hovmey",
+            "usedByNone": "nagh beQvam lo’ pagh Hov.",
+            "replaceConsequence": "{count, plural, one {bIngDaq Hov nagh beQ chu’ cha’ — QIn veb ghItlhDaq.} other {bIngDaq Hoch # Hovmey nagh beQ chu’ lucha’ — QIn veb ghItlhDaq.}}",
+            "replaceUnused": "nagh beQvam lo’ pagh Hov. qachDaq DaqDaj tlhap chu’bogh.",
+            "replaceConfirm": "{count, plural, one {# HovDaq} other {# HovmeyDaq}} yIchoH",
+            "removeConsequence": "{count, plural, one {bIngDaq Hov nagh beQvam Hutlh, ’ej Qaw’lu’. QIn ghItlhmeyvo’ mej.} other {bIngDaq Hoch # Hovmey nagh beQvam luHutlh, ’ej Qaw’lu’. QIn ghItlhmeyvo’ mej.}}",
+            "removeUnused": "nagh beQvam lo’ pagh Hov. qachvo’ reH teqlu’.",
+            "removeConfirm": "{count, plural, one {# Hovvo’} other {# Hovmeyvo’}} yIteq"
           }
         }
       },
@@ -3582,6 +3662,7 @@
     "municipalityInvoicing": "veng DIlmeH ghItlh",
     "invoiceCustomers": "DIlwI’pu’",
     "libraryContent": "paq qach ghItlhmey",
+    "spotlights": "Hovmey",
     "landingPages": "Sap ghItlhmey",
     "platformVision": "Sogverse naj",
     "geduInvoicing": "Gedu DIlmeH ghItlh",

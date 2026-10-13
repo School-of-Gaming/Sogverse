@@ -5,6 +5,7 @@ import { getClient } from "@/lib/supabase/client";
 import { landingPageKeys } from "@/services/landing-pages/landing-pages.queries";
 import { libraryKeys } from "@/services/library/library.queries";
 import { productKeys } from "@/services/products/products.queries";
+import { spotlightKeys } from "@/services/spotlights/spotlights.queries";
 import type { CatalogueImagePurpose } from "@/types";
 import {
   catalogueImageKeys,
@@ -54,7 +55,9 @@ export function useCatalogueImageUsage() {
  * because the Library editor seeds its form once per article id, never from a
  * refetch. Landing pages' admin tree too: a replace or a remove moves the
  * pictures in a page's working structure and its last-saved time and saver,
- * which its status page shows, and nothing there is a form.
+ * which its status page shows, and nothing there is a form. Spotlights' admin
+ * tree likewise: a replace moves a spotlight's picture, and a removal takes it
+ * off and switches the spotlight off.
  *
  * Never `productKeys.all` and never the product's admin **detail** key: the
  * product form seeds its state from that query, so refetching it mid-edit
@@ -72,6 +75,7 @@ function useCatalogueInvalidation(): () => Promise<void> {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() }),
       queryClient.invalidateQueries({ queryKey: libraryKeys.admin() }),
       queryClient.invalidateQueries({ queryKey: landingPageKeys.admin() }),
+      queryClient.invalidateQueries({ queryKey: spotlightKeys.admin() }),
     ]);
   };
 }

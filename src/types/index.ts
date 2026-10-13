@@ -353,6 +353,16 @@ export type LibraryArticleTranslationRow =
 export type LibraryArticlePublicationTranslationRow =
   Database["public"]["Tables"]["library_article_publication_translations"]["Row"];
 
+// Spotlights — admin-written notes appended to every parent's session report email:
+// the picture and the enabled switch in `spotlights`, the title and body per
+// site locale in `spotlight_translations`. Row aliases only: neither table
+// carries a write grant for any Data API role, and the spotlight RPCs — with
+// the image catalogue's `repoint_spotlight_images` and removal trigger — are
+// the only writers. `image_path` is derived from `image_id` by a trigger.
+export type SpotlightRow = Database["public"]["Tables"]["spotlights"]["Row"];
+export type SpotlightTranslationRow =
+  Database["public"]["Tables"]["spotlight_translations"]["Row"];
+
 // Landing pages — `landing_pages` is a page's admin-only working copy and
 // `landing_page_publications` its public published copy, whose row existing is
 // the page being live; the section structure is the copy's, and each copy's
