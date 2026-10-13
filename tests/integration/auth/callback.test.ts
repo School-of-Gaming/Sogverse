@@ -277,12 +277,12 @@ describe("GET /api/auth/callback", () => {
       const response = await GET(
         createCallbackRequest({
           code: "valid-code",
-          next: "/fi/complete-registration?utm_source=Lynx&utm_medium=%3Dformula&utm_campaign=lynx-summer-a&extra=1",
+          next: "/fi/complete-registration?utm_source=Lynx&utm_medium=%3Dformula&utm_campaign=lynx-summer-a&utm_content=hero&utm_term=roblox&extra=1",
         }),
       );
 
       expect(destination(response)).toBe(
-        "/fi/complete-registration?utm_source=Lynx&utm_campaign=lynx-summer-a",
+        "/fi/complete-registration?utm_source=Lynx&utm_campaign=lynx-summer-a&utm_content=hero&utm_term=roblox",
       );
     });
 

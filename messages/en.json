@@ -1677,11 +1677,6 @@
       "marketing": {
         "title": "Marketing",
         "attribution": "Attribution",
-        "utm": {
-          "source": "Source",
-          "medium": "Medium",
-          "campaign": "Campaign"
-        },
         "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -2351,7 +2346,7 @@
             "parentsEmail": "The parent’s email address, present only while their <code>marketing_consent.granted</code> is <code>true</code>. It is <code>null</code> otherwise, and it becomes <code>null</code> again when consent is withdrawn.",
             "parentsCreatedAt": "When the parent account was created: the first step of the funnel, a family created.",
             "parentsLocation": "The municipality the parent’s self-reported home location is or lies within, with its two-letter country code; <code>city</code> is the municipality’s name. <code>null</code> when the parent has not set a home location, or it lies within no municipality.",
-            "parentsUtm": "The <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry three nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
+            "parentsUtm": "The <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> and <code>utm_term</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry five nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
             "parentsMarketingConsent": "This parent’s current answer to Lynx’s marketing consent: <code>granted</code> and when it was last changed. <code>null</code> means the parent has never been asked, which for sending purposes is the same as <code>false</code>.",
             "gamers": "The family’s children who hold a seat on a Programme product, have completed one, or are waiting for one, one entry each. Empty when the family is in scope only through a seat a parent holds themselves. A child carries a first name and no other contact detail; identity is the identifier and the Roblox account.",
             "gamersId": "The child’s identifier, the one enrolments carry as <code>participant_id</code>.",
@@ -2450,7 +2445,9 @@
             "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
             "pagesPageviews": "Views of the page in the range, whatever brought them.",
             "pagesByCampaign": "The views split by the <code>utm_campaign</code> on the link. The <code>null</code> row is every view that carried none, including a visitor who typed the address or followed an untagged link.",
-            "pagesBySourceMedium": "The same views split by <code>utm_source</code> and <code>utm_medium</code> together, for reading paid, social and email traffic apart. The two splits are of the same views and each sums to <code>pageviews</code>; they are not a cross-tab of one another.",
+            "pagesBySourceMedium": "The same views split by <code>utm_source</code> and <code>utm_medium</code> together, for reading paid, social and email traffic apart. Every split of a page is of the same views and each sums to <code>pageviews</code>; none is a cross-tab of another.",
+            "pagesByContent": "The same views split by the <code>utm_content</code> on the link, for telling apart the ads or links within one campaign. The <code>null</code> row is every view that carried none.",
+            "pagesByTerm": "The same views split by the <code>utm_term</code> on the link, which a paid search ad usually sets to its keyword. The <code>null</code> row is every view that carried none.",
             "pagesByDay": "The views per calendar day, in UTC, for a time series."
           },
           "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so a view counted here and a family in <code>/families</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."

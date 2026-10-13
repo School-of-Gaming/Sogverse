@@ -41,6 +41,8 @@ function profileRows(count: number, offset = 0): Profile[] {
     utm_source: null,
     utm_medium: null,
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     locale: "en",
     spoken_languages: [],
     registration_completed_at: "2026-01-01T00:00:00.000Z",

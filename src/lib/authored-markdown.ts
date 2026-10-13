@@ -82,9 +82,9 @@ export interface MarkdownLook {
 /**
  * Body size, leading and ink for everything inside, and the first block flush.
  *
- * Body is 16px in a mail too, above the 14px of the mail's own paragraphs
- * around a report: the report is somebody's writing and reads as it does on
- * the page (owner's ruling — one style, mail included).
+ * Body is 16px in a mail too: the report is somebody's writing and reads as it
+ * does on the page (owner's ruling — one style, mail included). The mail's own
+ * type is fitted around this scale, never the other way round.
  */
 export const MARKDOWN_CONTAINER = {
   classes: "text-base leading-relaxed text-foreground",

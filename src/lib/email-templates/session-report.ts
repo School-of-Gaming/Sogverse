@@ -7,10 +7,10 @@ import {
   styledProductName,
   subheading,
 } from "./utils";
-import { calloutPanel, ctaButton, factList, sectionLabel } from "./blocks";
+import { calloutPanel, ctaButton, factList, hairlineRule, sectionLabel } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
 import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
-import { DARK_THEME } from "@/lib/constants/colors";
+import { MAIL_SPACE } from "./type-scale";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -209,11 +209,11 @@ export function buildSessionReportEmail(
       [t("sessionReport.dateLabel"), escapeHtml(sessionDate)],
       [t("sessionReport.timeLabel"), escapeHtml(sessionTime)],
     ])}
-    <div style="margin:0 0 24px;">
+    <div style="margin:0 0 ${MAIL_SPACE.block}px;">
       ${renderMarkdownForEmail(reportMarkdown, "feed")}
     </div>
     ${photosSection(t, photos)}
-    ${rule()}
+    ${hairlineRule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
     ${gamerCopy ? "" : spotlightsSection(t, spotlights)}
@@ -237,11 +237,15 @@ export function buildSessionReportEmail(
  * which three strings go in it. It was a brand-orange rule down one edge for a
  * while, which is a treatment the app has nowhere and which read as a warning —
  * this is a copy of a report, not an alarm.
+ *
+ * It opens the mail, so it sits flush at the top of the content rather than
+ * taking the furniture step above itself.
  */
 function staffCopyBanner(t: EmailTranslator): string {
   return calloutPanel({
     label: t("sessionReport.staffCopyLabel"),
     paragraphs: [t("sessionReport.staffCopyBody"), t("sessionReport.staffCopyPrivacy")],
+    opening: true,
   });
 }
 
@@ -258,27 +262,34 @@ function staffCopyBanner(t: EmailTranslator): string {
  * The lead-in is `sectionLabel` rather than a heading: the report above it
  * carries the gedu's own headings, and a second-level heading here would
  * compete with them for the same rank.
+ *
+ * The lead-in and the grid are one piece of furniture, so the pair states the
+ * furniture step above and below itself; the lead-in sits the tight step above
+ * the first photo, as a lead-in does above anything it introduces.
  */
 function photosSection(
   t: EmailTranslator,
   photos: readonly SessionReportPhoto[],
 ): string {
   if (photos.length === 0) return "";
-  return `${sectionLabel(t("sessionReport.photosHeading"))}
-    ${sessionPhotoGrid(photos)}`;
+  return `<div style="margin:${MAIL_SPACE.furniture}px 0;">
+      ${sectionLabel(t("sessionReport.photosHeading"))}
+      ${sessionPhotoGrid(photos)}
+    </div>`;
 }
 
 /**
- * The spotlights, under a line saying what they are.
+ * The spotlights, under a heading saying what they are.
  *
- * **One hairline, then the lead-in, then the first spotlight**: the rule is
- * what separates them from the closing above, and the lead-in sits on the
+ * **One hairline, then the heading, then the first spotlight**: the rule is
+ * what separates them from the closing above, and the heading sits on the
  * spotlights' side of it, so the section opens with exactly one rule rather
- * than a rule over the lead-in and another under it. Every later spotlight is
- * ruled off from the one before. None at all draws nothing — no lead-in over
+ * than a rule over the heading and another under it. The rule's own space
+ * stands above the heading; nothing is added to it. Every later spotlight is
+ * ruled off from the one before. None at all draws nothing — no heading over
  * an empty section.
  *
- * The lead-in is the section's `heading()`, and each spotlight's title is a
+ * The heading is the section's `heading()`, and each spotlight's title is a
  * `subheading()` under it: the heading names the whole section, so it outranks
  * every title and every body beneath it.
  */
@@ -287,9 +298,9 @@ function spotlightsSection(
   spotlights: readonly SessionReportSpotlight[],
 ): string {
   if (spotlights.length === 0) return "";
-  return `${rule()}
+  return `${hairlineRule()}
     ${heading(t("sessionReport.spotlightsHeading"))}
-    ${spotlights.map(spotlightSection).join(rule())}`;
+    ${spotlights.map(spotlightSection).join(hairlineRule())}`;
 }
 
 /**
@@ -298,28 +309,21 @@ function spotlightsSection(
  * Open rather than boxed, because the shell is already the card — see the
  * module comment. The picture is a photo column of one, so it gets the same
  * box arithmetic, painted well, Outlook pixel pair and empty `alt` as a session
- * photo rather than a second image block that could drift from it. The title
- * is a `subheading()`, one rank under the section's heading; the body carries
- * no headings of its own to compete with it.
+ * photo rather than a second image block that could drift from it. The grid
+ * states no margin of its own, so the block step under the picture is stated
+ * here. The title is a `subheading()`, one rank under the section's heading;
+ * the body carries no headings of its own to compete with it.
  */
 function spotlightSection({
   title,
   body,
   image,
 }: SessionReportSpotlight): string {
-  return `${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
+  return `<div style="margin:0 0 ${MAIL_SPACE.block}px;">
+      ${sessionPhotoGrid([{ src: image.url, width: image.width, height: image.height }])}
+    </div>
     ${subheading(escapeHtml(title))}
-    <div style="margin:0 0 24px;">
+    <div>
       ${renderMarkdownForEmail(body, "spotlight")}
     </div>`;
-}
-
-/** A hairline between the report and what the mail asks afterwards. */
-function rule(): string {
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-      <tr>
-        <td style="border-top:1px solid ${DARK_THEME.border};font-size:0;line-height:0;">&nbsp;</td>
-      </tr>
-    </table>`;
 }

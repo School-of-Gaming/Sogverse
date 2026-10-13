@@ -83,7 +83,13 @@ import { ROUTES } from "@/lib/constants";
 
 const mockFetch = vi.fn();
 
-const UTM = { source: "Lynx", medium: null, campaign: "lynx-summer-a" };
+const UTM = {
+  source: "Lynx",
+  medium: null,
+  campaign: "lynx-summer-a",
+  content: "hero",
+  term: null,
+};
 
 function renderForm(
   variant: "parent" | "gedu",
@@ -189,7 +195,7 @@ describe("CompleteRegistrationForm", () => {
       firstName: "Marja",
       lastName: "Virtanen",
       locale: "fi",
-      utm: { source: "Lynx", campaign: "lynx-summer-a" },
+      utm: { source: "Lynx", campaign: "lynx-summer-a", content: "hero" },
       marketingConsent: false,
       acceptedTerms: true,
     });
@@ -234,7 +240,7 @@ describe("CompleteRegistrationForm", () => {
       locale: "fi",
       spokenLanguages: ["fi"],
       locationIds: [],
-      utm: { source: "Lynx", campaign: "lynx-summer-a" },
+      utm: { source: "Lynx", campaign: "lynx-summer-a", content: "hero" },
     });
     expect(mockPushGtmEvent).not.toHaveBeenCalled();
     expect(mockNavigateAfterAuth).toHaveBeenCalledWith(ROUTES.gedu.dashboard);
@@ -300,6 +306,7 @@ describe("CompleteRegistrationForm", () => {
     expect(url.pathname).toBe(ROUTES.completeRegistration);
     expect(url.searchParams.get("as")).toBe("parent");
     expect(url.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
+    expect(url.searchParams.get("utm_content")).toBe("hero");
     expect(url.searchParams.get("redirect")).toBe("/shop/abc-123");
   });
 });

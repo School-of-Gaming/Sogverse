@@ -1677,11 +1677,6 @@
       "marketing": {
         "title": "Marknadsföring",
         "attribution": "Ursprung",
-        "utm": {
-          "source": "Källa",
-          "medium": "Medium",
-          "campaign": "Kampanj"
-        },
         "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -2351,7 +2346,7 @@
             "parentsEmail": "Förälderns e-postadress, som finns med bara så länge förälderns <code>marketing_consent.granted</code> är <code>true</code>. Den är <code>null</code> annars, och den blir <code>null</code> igen när samtycket återkallas.",
             "parentsCreatedAt": "När föräldrakontot skapades: trattens första steg, en familj skapad.",
             "parentsLocation": "Kommunen som förälderns egenrapporterade hemort är eller ligger inom, och dess tvåbokstaviga landskod; <code>city</code> är kommunens namn. <code>null</code> när föräldern inte har angett någon hemort, eller när den inte ligger inom någon kommun.",
-            "parentsUtm": "<code>utm_source</code>, <code>utm_medium</code> och <code>utm_campaign</code> för den länk kontot skapades via, var och en <code>null</code> när den saknas. De skrivs en gång vid registreringen och bara där besökaren accepterade marknadsföringscookies, så de flesta poster bär tre null. Kampanjer som tagits fram för Lynx har enligt konvention prefixet <code>lynx-</code>.",
+            "parentsUtm": "<code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> och <code>utm_term</code> för den länk kontot skapades via, var och en <code>null</code> när den saknas. De skrivs en gång vid registreringen och bara där besökaren accepterade marknadsföringscookies, så de flesta poster bär fem null. Kampanjer som tagits fram för Lynx har enligt konvention prefixet <code>lynx-</code>.",
             "parentsMarketingConsent": "Den här förälderns nuvarande svar på Lynx marknadsföringssamtycke: <code>granted</code> och när det senast ändrades. <code>null</code> betyder att föräldern aldrig har blivit tillfrågad, vilket för utskick är samma sak som <code>false</code>.",
             "gamers": "Familjens barn som har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en, en post var. Tom när familjen omfattas bara genom en plats som en förälder själv har. Ett barn bär ett förnamn och inga andra kontaktuppgifter; identiteten är identifieraren och Roblox-kontot.",
             "gamersId": "Barnets identifierare, den som anmälningar bär som <code>participant_id</code>.",
@@ -2450,7 +2445,9 @@
             "pagesProductId": "Produkten vars sida det är; <code>null</code> för landningssidan och butiken.",
             "pagesPageviews": "Visningar av sidan i intervallet, oavsett vad som förde dem dit.",
             "pagesByCampaign": "Visningarna uppdelade efter <code>utm_campaign</code> på länken. Raden <code>null</code> är varje visning som inte bar någon, inklusive en besökare som skrev in adressen eller följde en omärkt länk.",
-            "pagesBySourceMedium": "Samma visningar uppdelade efter <code>utm_source</code> och <code>utm_medium</code> tillsammans, för att kunna läsa betald trafik, social trafik och e-posttrafik var för sig. De två uppdelningarna gäller samma visningar och var och en summerar till <code>pageviews</code>; de är inte en korstabell av varandra.",
+            "pagesBySourceMedium": "Samma visningar uppdelade efter <code>utm_source</code> och <code>utm_medium</code> tillsammans, för att kunna läsa betald trafik, social trafik och e-posttrafik var för sig. Alla uppdelningar av en sida gäller samma visningar och var och en summerar till <code>pageviews</code>; ingen är en korstabell av en annan.",
+            "pagesByContent": "Samma visningar uppdelade efter <code>utm_content</code> på länken, för att skilja annonserna eller länkarna inom en kampanj åt. Raden <code>null</code> är varje visning som inte bar någon.",
+            "pagesByTerm": "Samma visningar uppdelade efter <code>utm_term</code> på länken, som en betald sökannons oftast sätter till sitt sökord. Raden <code>null</code> är varje visning som inte bar någon.",
             "pagesByDay": "Visningarna per kalenderdag, i UTC, för en tidsserie."
           },
           "note": "Vercels skript körs bara för en besökare som accepterat analys i cookiebannern, och UTM-värdena på en familjepost skrivs bara för en besökare som accepterat marknadsföring. De två villkoren skiljer sig åt, och analysvillkoret är det bredare, så en visning som räknas här och en familj i <code>/families</code> är inte samma population: en besökare som accepterat allt finns i båda, en som bara accepterat analys finns bara här, och en som avvisat bannern finns i ingendera."

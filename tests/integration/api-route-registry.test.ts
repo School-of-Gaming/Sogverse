@@ -578,7 +578,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/complete-registration/route.ts": {
     adminClient:
-      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
+      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
     handlers: {
       POST: {
         posture: {
@@ -974,7 +974,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gedu/complete-registration/route.ts": {
     adminClient:
-      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does and stamps registration_completed_at in the same transaction, then the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write) and email_verified_at (when Google verified the same address) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
+      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does and stamps registration_completed_at in the same transaction, then the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write) and email_verified_at (when Google verified the same address) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
     handlers: {
       POST: {
         posture: {

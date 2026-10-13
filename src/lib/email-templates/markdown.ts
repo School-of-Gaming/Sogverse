@@ -18,6 +18,7 @@ import {
   type MarkdownUseCase,
 } from "@/lib/authored-markdown";
 import { mailOwnSiteHref } from "@/lib/links/own-site";
+import { mailWeight } from "./type-scale";
 import { defuseAutolinks, escapeHtml } from "./utils";
 
 /**
@@ -98,15 +99,6 @@ type Declarations = [property: string, value: string][];
 
 function css(declarations: Declarations): string {
   return declarations.map(([property, value]) => `${property}:${value};`).join("");
-}
-
-/**
- * The weight a mail asks for. The mail face draws 400 and 700 only, so a
- * weight between them lands where a browser's own font matching would put it:
- * above 500 on the heavier face, 500 and below on the lighter.
- */
-export function mailWeight(weight: number): 400 | 700 {
-  return weight > 500 ? 700 : 400;
 }
 
 /** The text half of a look: size, leading, weight, ink, decoration. */

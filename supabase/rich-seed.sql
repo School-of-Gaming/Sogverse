@@ -149,9 +149,13 @@ $$;
 -- the profile promoted over psql.
 --
 -- The id is the helper's to choose and nobody else's. Callers pass an email.
+-- `p_meta` is merged into the signup metadata, which is how a parent's UTM
+-- attribution reaches the profile: the trigger reads it from there, exactly as
+-- it does for a real registration.
 
 CREATE FUNCTION pg_temp.account(
-  p_email text, p_first text, p_last text, p_password text DEFAULT 'testpassword123'
+  p_email text, p_first text, p_last text, p_password text DEFAULT 'testpassword123',
+  p_meta jsonb DEFAULT '{}'
 ) RETURNS uuid LANGUAGE plpgsql AS $$
 DECLARE
   v_id uuid := gen_random_uuid();
@@ -169,7 +173,7 @@ BEGIN
     extensions.crypt(p_password, extensions.gen_salt('bf')),
     now(), now(),
     '{"provider":"email","providers":["email"]}',
-    jsonb_build_object('first_name', p_first, 'last_name', p_last),
+    jsonb_build_object('first_name', p_first, 'last_name', p_last) || p_meta,
     '', '', '', '',
     now(), now()
   );
@@ -269,10 +273,17 @@ $$;
 
 -- Parents. The owner's is first, and is the one with children on the most
 -- products.
+--
+-- Four arrived through a tagged link, each the shape a different channel
+-- leaves: a Google search ad (all five fields), a Lynx newsletter (no term), a
+-- Meta ad (no term), and a bare `?utm_source=` (one field). The two `lynx-`
+-- campaigns are what the partner API's `/campaigns` counts. Everyone else
+-- carries none, which is the common case.
 DO $$
 DECLARE
   r      record;
   v_id   uuid;
+  v_utm  jsonb;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
     ('parent@example.com',          'Parent',  'Example',   'password',        'en', ARRAY['en','fi']::public.spoken_language[], '358401000000'),
@@ -288,7 +299,14 @@ BEGIN
     ('tomi.hakala@example.com',     'Tomi',    'Hakala',    'testpassword123', 'fi', ARRAY['fi']::public.spoken_language[],      '358401000010')
   ) AS t(email, first_name, last_name, password, locale, languages, phone)
   LOOP
-    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.password);
+    v_utm := COALESCE((SELECT u.meta FROM (VALUES
+      ('anna.jarvinen@example.com',   '{"utm_source":"google","utm_medium":"cpc","utm_campaign":"lynx-autumn-a","utm_content":"roblox-hero-video","utm_term":"roblox kerho lapsille"}'::jsonb),
+      ('camille.dubois@example.com',  '{"utm_source":"lynx","utm_medium":"email","utm_campaign":"lynx-autumn-a","utm_content":"newsletter-button"}'::jsonb),
+      ('james.whitfield@example.com', '{"utm_source":"facebook","utm_medium":"paid_social","utm_campaign":"autumn-clubs","utm_content":"carousel-minecraft"}'::jsonb),
+      ('satu.rantanen@example.com',   '{"utm_source":"school-flyer"}'::jsonb)
+    ) AS u(email, meta) WHERE u.email = r.email), '{}');
+
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.password, v_utm);
 
     -- The fields the registration form collects and no RPC owns. Done here
     -- rather than later because create_gamer copies the parent's locale onto

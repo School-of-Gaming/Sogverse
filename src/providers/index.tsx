@@ -36,7 +36,7 @@ interface ProvidersProps {
    */
   initialNow: Date;
   /**
-   * The sanitised UTM attribution from this request's `x-utm` header — three
+   * The sanitised UTM attribution from this request's `x-utm` header — five
    * fields, each a value or null. Seeds `UtmProvider` once and is never
    * re-synced — a language switch re-runs the document layout against a URL
    * that no longer carries the params. See `src/providers/utm-provider.tsx`.

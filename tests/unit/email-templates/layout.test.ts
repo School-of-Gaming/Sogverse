@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { wrapInLayout, BRAND_MARK } from "@/lib/email-templates/layout";
 import { GROUND_TONES, pinnedFill } from "@/lib/email-templates/utils";
+import { mailText } from "@/lib/email-templates/type-scale";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
@@ -252,8 +253,8 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
     expect(stripped).toContain('style="max-width:560px;width:100%;"');
     // The content, in the body ink, and the footer under it.
     expect(stripped).toContain("<p>Body</p>");
-    expect(stripped).toContain(`color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;`);
-    expect(stripped).toContain(`color:${DARK_THEME.mutedFg}`);
+    expect(stripped).toContain(mailText("body", DARK_THEME.foreground));
+    expect(stripped).toContain(mailText("small", DARK_THEME.mutedFg));
   });
 });
 

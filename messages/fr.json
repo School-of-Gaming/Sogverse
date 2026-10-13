@@ -1677,11 +1677,6 @@
       "marketing": {
         "title": "Marketing",
         "attribution": "Attribution",
-        "utm": {
-          "source": "Source",
-          "medium": "Support",
-          "campaign": "Campagne"
-        },
         "preferences": "Préférences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -2351,7 +2346,7 @@
             "parentsEmail": "L’adresse e-mail du parent, présente uniquement tant que son <code>marketing_consent.granted</code> vaut <code>true</code>. Elle vaut <code>null</code> sinon, et elle redevient <code>null</code> lorsque le consentement est retiré.",
             "parentsCreatedAt": "La date de création du compte parent : la première étape de l’entonnoir, une famille créée.",
             "parentsLocation": "La commune dans laquelle se trouve le lieu de résidence déclaré par le parent, et son code pays à deux lettres ; <code>city</code> est le nom de la commune. <code>null</code> lorsque le parent n’a pas renseigné de lieu de résidence, ou que celui-ci ne se trouve dans aucune commune.",
-            "parentsUtm": "Les <code>utm_source</code>, <code>utm_medium</code> et <code>utm_campaign</code> du lien par lequel le compte a été créé, chacun à <code>null</code> en leur absence. Ils sont écrits une seule fois à l’inscription et uniquement lorsque le visiteur a accepté les cookies marketing : la plupart des enregistrements portent donc trois valeurs nulles. Par convention, les campagnes créées pour Lynx sont préfixées <code>lynx-</code>.",
+            "parentsUtm": "Les <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> et <code>utm_term</code> du lien par lequel le compte a été créé, chacun à <code>null</code> en leur absence. Ils sont écrits une seule fois à l’inscription et uniquement lorsque le visiteur a accepté les cookies marketing : la plupart des enregistrements portent donc cinq valeurs nulles. Par convention, les campagnes créées pour Lynx sont préfixées <code>lynx-</code>.",
             "parentsMarketingConsent": "La réponse actuelle de ce parent au consentement marketing de Lynx : <code>granted</code> et la date du dernier changement. <code>null</code> signifie que la question ne lui a jamais été posée, ce qui, pour l’envoi, équivaut à <code>false</code>.",
             "gamers": "Les enfants de la famille qui occupent une place sur un produit du Programme, en ont terminé un, ou attendent une place, une entrée chacun. Vide lorsque la famille n’est dans le périmètre que par une place qu’un parent occupe lui-même. Un enfant porte un prénom et aucune autre coordonnée : son identité, ce sont l’identifiant et le compte Roblox.",
             "gamersId": "L’identifiant de l’enfant, celui que les inscriptions portent sous le nom <code>participant_id</code>.",
@@ -2450,7 +2445,9 @@
             "pagesProductId": "Le produit dont c’est la page ; <code>null</code> pour la page d’atterrissage et pour la boutique.",
             "pagesPageviews": "Les vues de la page sur la plage, quelle qu’en soit la provenance.",
             "pagesByCampaign": "Les vues ventilées selon l’<code>utm_campaign</code> du lien. La ligne <code>null</code> regroupe toutes les vues qui n’en portaient aucune, y compris celles d’un visiteur qui a saisi l’adresse ou suivi un lien non balisé.",
-            "pagesBySourceMedium": "Les mêmes vues ventilées selon <code>utm_source</code> et <code>utm_medium</code> pris ensemble, pour lire séparément le trafic payant, social et e-mail. Les deux ventilations portent sur les mêmes vues et chacune totalise <code>pageviews</code> ; elles ne sont pas un tableau croisé l’une de l’autre.",
+            "pagesBySourceMedium": "Les mêmes vues ventilées selon <code>utm_source</code> et <code>utm_medium</code> pris ensemble, pour lire séparément le trafic payant, social et e-mail. Toutes les ventilations d’une page portent sur les mêmes vues et chacune totalise <code>pageviews</code> ; aucune n’est un tableau croisé d’une autre.",
+            "pagesByContent": "Les mêmes vues ventilées selon l’<code>utm_content</code> du lien, pour distinguer les annonces ou les liens d’une même campagne. La ligne <code>null</code> regroupe toutes les vues qui n’en portaient aucun.",
+            "pagesByTerm": "Les mêmes vues ventilées selon l’<code>utm_term</code> du lien, qu’une annonce payante sur un moteur de recherche renseigne généralement avec son mot-clé. La ligne <code>null</code> regroupe toutes les vues qui n’en portaient aucun.",
             "pagesByDay": "Les vues par jour calendaire, en UTC, pour une série temporelle."
           },
           "note": "Le script de Vercel ne s’exécute que pour un visiteur ayant accepté les statistiques dans le bandeau de cookies, et les valeurs UTM d’un enregistrement de famille ne sont écrites que pour un visiteur ayant accepté le marketing. Les deux conditions diffèrent, et celle des statistiques est la plus large : une vue comptée ici et une famille dans <code>/families</code> ne portent donc pas sur la même population. Un visiteur qui a tout accepté figure dans les deux, un visiteur qui n’a accepté que les statistiques ne figure qu’ici, et un visiteur qui a refusé le bandeau ne figure dans aucun des deux."

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES } from "@/lib/constants";
-import type { UtmAttribution } from "@/lib/utm";
+import { utmRegistrationBody, type UtmAttribution } from "@/lib/utm";
 import {
   COMPLETE_REGISTRATION_PARENT_QUERY,
   completeRegistrationQuery,
@@ -61,15 +61,6 @@ export function CompleteRegistrationForm(props: CompleteRegistrationFormProps) {
   ) : (
     <ParentCompletion {...props} />
   );
-}
-
-/** The request body's `utm`, exactly as the register forms send it. */
-function utmBody(utm: UtmAttribution) {
-  return {
-    source: utm.source ?? undefined,
-    medium: utm.medium ?? undefined,
-    campaign: utm.campaign ?? undefined,
-  };
 }
 
 /**
@@ -268,7 +259,7 @@ function ParentCompletion({
           lastName: names.data.lastName,
           ...account.requestBody,
           locale,
-          utm: utmBody(utm),
+          utm: utmRegistrationBody(utm),
           // The product page the sign-up started from, so the account-creation
           // report can name it. The route re-checks it.
           redirect: redirect ?? undefined,
@@ -382,7 +373,7 @@ function GeduCompletion({
           lastName: names.data.lastName,
           ...profile.requestBody,
           locale,
-          utm: utmBody(utm),
+          utm: utmRegistrationBody(utm),
         }),
       });
 

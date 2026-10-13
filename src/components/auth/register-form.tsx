@@ -18,6 +18,7 @@ import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.con
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
+import { utmRegistrationBody } from "@/lib/utm";
 import { ContinueWithGoogle } from "./continue-with-google";
 import { NameFields, useNameSchemaFields } from "./name-fields";
 import { ParentAccountFields, useParentAccountFields } from "./parent-account-fields";
@@ -141,17 +142,13 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // locale the form is being read in is the best answer anyone has.
           locale,
           // Marketing provenance, written by the handle_new_user trigger to the
-          // three profiles.utm_* columns and never updatable afterwards. It
+          // five profiles.utm_* columns and never updatable afterwards. It
           // travels in the body (and from there into signup metadata) rather
           // than as a later profile write, because a client write would need
           // GRANT UPDATE on those columns TO authenticated, handing every user
           // the permanent ability to rewrite their own attribution; the grant is
           // the thing we are refusing, and the trigger is what lets us.
-          utm: {
-            source: utm.source ?? undefined,
-            medium: utm.medium ?? undefined,
-            campaign: utm.campaign ?? undefined,
-          },
+          utm: utmRegistrationBody(utm),
           // The product page this visit came from, so the account-creation
           // report can name it. The route re-checks it; nothing navigates on it.
           redirect: safeRedirect ?? undefined,

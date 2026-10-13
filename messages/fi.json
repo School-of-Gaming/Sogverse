@@ -1677,11 +1677,6 @@
       "marketing": {
         "title": "Markkinointi",
         "attribution": "Lähdetiedot",
-        "utm": {
-          "source": "Lähde",
-          "medium": "Media",
-          "campaign": "Kampanja"
-        },
         "preferences": "Asetukset",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -2351,7 +2346,7 @@
             "parentsEmail": "Vanhemman sähköpostiosoite, mukana vain niin kauan kuin hänen <code>marketing_consent.granted</code>-arvonsa on <code>true</code>. Muutoin se on <code>null</code>, ja se palaa <code>null</code>-arvoon, kun suostumus perutaan.",
             "parentsCreatedAt": "Milloin vanhemman tili luotiin: suppilon ensimmäinen vaihe, perhe luotu.",
             "parentsLocation": "Kunta, jonka alueella vanhemman itse ilmoittama kotisijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. <code>null</code>, jos vanhempi ei ole ilmoittanut kotisijaintia tai se ei ole minkään kunnan alueella.",
-            "parentsUtm": "Sen linkin <code>utm_source</code>, <code>utm_medium</code> ja <code>utm_campaign</code>, jonka kautta tili luotiin, kukin <code>null</code>, jos arvoa ei ole. Ne kirjoitetaan kerran rekisteröitymisen yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten useimmissa tietueissa on kolme null-arvoa. Lynxille luoduissa kampanjoissa on sovittu etuliite <code>lynx-</code>.",
+            "parentsUtm": "Sen linkin <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> ja <code>utm_term</code>, jonka kautta tili luotiin, kukin <code>null</code>, jos arvoa ei ole. Ne kirjoitetaan kerran rekisteröitymisen yhteydessä ja vain, jos kävijä hyväksyi markkinointievästeet, joten useimmissa tietueissa on viisi null-arvoa. Lynxille luoduissa kampanjoissa on sovittu etuliite <code>lynx-</code>.",
             "parentsMarketingConsent": "Tämän vanhemman nykyinen vastaus Lynxin markkinointisuostumukseen: <code>granted</code> ja milloin sitä viimeksi muutettiin. <code>null</code> tarkoittaa, ettei vanhemmalta ole koskaan kysytty, mikä lähettämisen kannalta vastaa arvoa <code>false</code>.",
             "gamers": "Perheen lapset, joilla on paikka Ohjelman tuotteessa, jotka ovat suorittaneet sellaisen tai jotka jonottavat paikkaa, kukin omana merkintänään. Lista on tyhjä, kun perhe kuuluu rajaukseen vain vanhemman oman paikan kautta. Lapsesta välitetään etunimi eikä mitään muita yhteystietoja; tunnistetiedot ovat tunniste ja Roblox-tili.",
             "gamersId": "Lapsen tunniste, sama, jota ilmoittautumiset kantavat nimellä <code>participant_id</code>.",
@@ -2450,7 +2445,9 @@
             "pagesProductId": "Tuote, jonka sivusta on kyse; <code>null</code> laskeutumissivulle ja kaupalle.",
             "pagesPageviews": "Sivun sivunäytöt tällä välillä, tulivatpa ne mistä tahansa.",
             "pagesByCampaign": "Sivunäytöt jaoteltuina linkin kentän <code>utm_campaign</code> mukaan. <code>null</code>-rivi kattaa kaikki sivunäytöt, joissa sitä ei ollut, mukaan lukien kävijä, joka kirjoitti osoitteen itse tai seurasi merkitsemätöntä linkkiä.",
-            "pagesBySourceMedium": "Samat sivunäytöt jaoteltuina kenttien <code>utm_source</code> ja <code>utm_medium</code> yhdistelmän mukaan, jotta maksettu, sosiaalinen ja sähköpostiliikenne erottuvat toisistaan. Molemmat jaottelut koskevat samoja sivunäyttöjä, ja kumpikin summautuu arvoon <code>pageviews</code>; ne eivät ole toistensa ristiintaulukointi.",
+            "pagesBySourceMedium": "Samat sivunäytöt jaoteltuina kenttien <code>utm_source</code> ja <code>utm_medium</code> yhdistelmän mukaan, jotta maksettu, sosiaalinen ja sähköpostiliikenne erottuvat toisistaan. Kaikki sivun jaottelut koskevat samoja sivunäyttöjä, ja jokainen summautuu arvoon <code>pageviews</code>; mikään niistä ei ole toisen ristiintaulukointi.",
+            "pagesByContent": "Samat sivunäytöt jaoteltuina linkin kentän <code>utm_content</code> mukaan, jotta saman kampanjan mainokset tai linkit erottuvat toisistaan. <code>null</code>-rivi kattaa kaikki sivunäytöt, joissa sitä ei ollut.",
+            "pagesByTerm": "Samat sivunäytöt jaoteltuina linkin kentän <code>utm_term</code> mukaan. Maksettu hakumainos asettaa siihen yleensä hakusanansa. <code>null</code>-rivi kattaa kaikki sivunäytöt, joissa sitä ei ollut.",
             "pagesByDay": "Sivunäytöt kalenteripäivittäin UTC-ajassa aikasarjaa varten."
           },
           "note": "Vercelin skripti käynnistyy vain kävijälle, joka on hyväksynyt analytiikan evästebannerissa, ja perhetietueen UTM-arvot kirjoitetaan vain kävijälle, joka on hyväksynyt markkinoinnin. Ehdot ovat eri, ja analytiikan ehto on laajempi, joten tässä laskettu sivunäyttö ja <code>/families</code>-resurssin perhe eivät kuvaa samaa joukkoa: kaiken hyväksynyt kävijä on molemmissa, pelkän analytiikan hyväksynyt vain tässä, ja bannerin hylännyt ei kummassakaan."

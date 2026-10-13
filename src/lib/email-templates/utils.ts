@@ -1,4 +1,5 @@
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { DARK_THEME } from "@/lib/constants/colors";
+import { MAIL_SPACE, mailText } from "./type-scale";
 
 /** Escape HTML special characters to prevent XSS in email content. */
 export function escapeHtml(str: string): string {
@@ -12,44 +13,57 @@ export function escapeHtml(str: string): string {
 
 /**
  * The body's text style, for any block that carries body copy — a paragraph,
- * a list. One string, so the two agree.
+ * a list, a fact's value, a callout's sentences. One string, so they agree; and
+ * it is the authored-markdown body, so the mail's own copy and a report inside
+ * it are set alike.
  */
-export const BODY_TEXT_STYLE = `color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;`;
+export const BODY_TEXT_STYLE = mailText("body", DARK_THEME.foreground);
 
 export function paragraph(text: string): string {
-  return `<p style="margin:0 0 16px;${BODY_TEXT_STYLE}">${text}</p>`;
+  return `<p style="margin:0 0 ${MAIL_SPACE.block}px;${BODY_TEXT_STYLE}">${text}</p>`;
 }
 
+/**
+ * The mail's title: its opening heading, and — after a `hairlineRule()` — a
+ * mail section heading. It is the authored-markdown top heading's size, so a
+ * report's own top heading matches it; the `<h2>` outranks the report's `<h3>`
+ * in the outline, and the rule above a section heading is what tells the two
+ * apart on the page.
+ */
 export function heading(text: string): string {
-  return `<h2 style="margin:0 0 16px;font-size:18px;font-weight:bold;color:${DARK_THEME.foreground};">${text}</h2>`;
+  return `<h2 style="margin:0 0 ${MAIL_SPACE.block}px;${mailText("title", DARK_THEME.foreground)}">${text}</h2>`;
 }
 
 /**
  * A heading one rank under `heading()`: an item inside a section that
- * `heading()` names. Set at authored markdown's 16px body size, told from it
- * by weight, so it stays under the section heading and over the item's body.
+ * `heading()` names, such as one spotlight under the session report's news
+ * heading. It is the subtitle level, so it stays under the section heading
+ * and over the item's body.
  */
 export function subheading(text: string): string {
-  return `<h3 style="margin:0 0 8px;font-size:16px;font-weight:bold;line-height:1.4;color:${DARK_THEME.foreground};">${text}</h3>`;
-}
-
-export function styledName(name: string): string {
-  // Class targets the Gmail-specific background-clip:text rule in layout.ts <style> block.
-  // Inline style is the default for all other email clients.
-  return `<span class="brand-act" style="color:${BRAND.act};">${escapeHtml(name)}</span>`;
+  return `<h3 style="margin:0 0 ${MAIL_SPACE.block}px;${mailText("subtitle", DARK_THEME.foreground)}">${text}</h3>`;
 }
 
 /**
- * Bold, in the body's own text color — deliberately *not* the brand's world
- * colour it used to carry. Gmail's dark-theme color rewriting left that purple
- * unreadable against the card, and the background-clip workaround that saves act
- * is a Gmail-only patch on a problem world hits in more clients than one.
- * Weight is the emphasis every client renders the same way, so the product name
- * still stands out of the sentence without depending on a color surviving.
- * Brand color now lives only where it does survive: the header and button fills.
+ * Bold, in the body's own text color — deliberately *not* a brand colour.
+ * Gmail's dark-theme color rewriting left the world purple unreadable against
+ * the card, and the background-clip workaround that saves act is a Gmail-only
+ * patch. Weight is the emphasis every client renders the same way, so the
+ * product name still stands out of the sentence without depending on a color
+ * surviving. Brand color lives only where it does survive: the header and
+ * button fills.
  */
 export function styledProductName(name: string): string {
   return `<strong style="color:${DARK_THEME.foreground};">${escapeHtml(name)}</strong>`;
+}
+
+/**
+ * A person's name inside a sentence, set exactly as a product's: bold, in the
+ * body's own ink. Brand colour stays on the header and the button fills, never
+ * on a word inside a paragraph.
+ */
+export function styledName(name: string): string {
+  return styledProductName(name);
 }
 
 /**

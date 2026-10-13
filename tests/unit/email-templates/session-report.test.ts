@@ -12,6 +12,7 @@ import {
   type SessionReportPhoto,
 } from "@/lib/email-templates/session-photos";
 import { GROUND_TONES } from "@/lib/email-templates/utils";
+import { MAIL_SPACE } from "@/lib/email-templates/type-scale";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
 let t: EmailTranslator;
@@ -101,6 +102,27 @@ describe("buildSessionReportEmail", () => {
     expect(html).toContain("u + .body .cta-on-brand");
   });
 
+  /**
+   * One hairline, between the report and what the mail asks next, and it
+   * states the furniture step on both sides of itself rather than leaning on
+   * whatever the block above it left. The report's own wrapper carries the
+   * block step under it, as any block does.
+   */
+  it("rules the report off once, with the furniture step on both sides", () => {
+    const html = buildSessionReportEmail(t, "en", base);
+    const rules = html.match(/<td style="border-top:1px solid [^"]*font-size:0;line-height:0;">/g);
+    expect(rules).toHaveLength(1);
+    expect(html).toContain(
+      `cellspacing="0" style="margin:${MAIL_SPACE.furniture}px 0;">
+      <tr>
+        <td style="border-top:1px solid ${DARK_THEME.border};`,
+    );
+    // The report's wrapper is the block that holds its first heading.
+    const wrapper = html.indexOf(`<div style="margin:0 0 ${MAIL_SPACE.block}px;">`);
+    expect(wrapper).toBeGreaterThan(0);
+    expect(html.indexOf("<h3 ")).toBeGreaterThan(wrapper);
+  });
+
   it("keeps brand color out of the report body", () => {
     const html = buildSessionReportEmail(t, "en", base);
     // From the report's title to its last paragraph — the button below it is
@@ -144,6 +166,19 @@ describe("the staff copy's banner", () => {
     expect(intro).toBeGreaterThan(0);
     expect(html.indexOf(LABEL)).toBeLessThan(intro);
     expect(html.indexOf(PRIVACY)).toBeLessThan(intro);
+  });
+
+  /**
+   * The first block of a mail sits flush: the banner states the furniture step
+   * under itself and nothing above, so the staff copy does not open on a gap
+   * the family mail does not have.
+   */
+  it("sits flush at the top of the mail", () => {
+    const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
+    const start = html.lastIndexOf("<table ", html.indexOf(LABEL));
+    expect(html.slice(start, html.indexOf(">", start))).toContain(
+      `style="margin:0 0 ${MAIL_SPACE.furniture}px;"`,
+    );
   });
 
   it("is absent from the mail a family receives", () => {
@@ -270,6 +305,23 @@ describe("the photos under the report", () => {
       PHOTOS.portrait.src,
       PHOTOS.square.src,
     ]);
+  });
+
+  /**
+   * The lead-in and the grid are one piece of furniture: the furniture step
+   * above and below the pair, and the lead-in the tight step above the first
+   * photo.
+   */
+  it("sets the photos apart as furniture, under a lead-in", () => {
+    const html = withPhotos([PHOTOS.landscape]);
+    const label = html.lastIndexOf("<p ", html.indexOf(HEADING));
+    const section = html.lastIndexOf("<div ", label);
+    expect(html.slice(section, label).trim()).toBe(
+      `<div style="margin:${MAIL_SPACE.furniture}px 0;">`,
+    );
+    expect(html.slice(label, html.indexOf(">", label))).toContain(
+      `margin:0 0 ${MAIL_SPACE.tight}px;`,
+    );
   });
 
   /**
@@ -437,9 +489,11 @@ describe("the photos under the report", () => {
     expect(photoImages(stripped)).toEqual(photoImages(html));
 
     // Rows are separated by padding on the cell rather than by a gutter around
-    // the whole table, so every photo but the last carries one gap.
-    expect(html).toContain('cellspacing="0" style="margin:0 0 24px;"');
-    expect(html.match(/<td align="center" valign="top" style="padding-bottom:8px;">/g)).toHaveLength(2);
+    // the whole table, so every photo but the last carries one gap — the tight
+    // step. The grid states no margin of its own: the section placing it does.
+    expect(html).toContain('cellspacing="0" style="margin:0;"');
+    const gapped = `<td align="center" valign="top" style="padding-bottom:${MAIL_SPACE.tight}px;">`;
+    expect(html.split(gapped)).toHaveLength(3);
     expect(html.match(/<td align="center" valign="top" style="">/g)).toHaveLength(1);
   });
 

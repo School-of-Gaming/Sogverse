@@ -12,9 +12,13 @@ DECLARE
   utm_source_raw       TEXT;
   utm_medium_raw       TEXT;
   utm_campaign_raw     TEXT;
+  utm_content_raw      TEXT;
+  utm_term_raw         TEXT;
   utm_source_value     TEXT;
   utm_medium_value     TEXT;
   utm_campaign_value   TEXT;
+  utm_content_value    TEXT;
+  utm_term_value       TEXT;
   registration_value   TIMESTAMPTZ;
 BEGIN
   profile_first_name := COALESCE(
@@ -37,6 +41,8 @@ BEGIN
   utm_source_raw   := NEW.raw_user_meta_data->>'utm_source';
   utm_medium_raw   := NEW.raw_user_meta_data->>'utm_medium';
   utm_campaign_raw := NEW.raw_user_meta_data->>'utm_campaign';
+  utm_content_raw  := NEW.raw_user_meta_data->>'utm_content';
+  utm_term_raw     := NEW.raw_user_meta_data->>'utm_term';
 
   utm_source_value := CASE
     WHEN btrim(utm_source_raw) <> ''
@@ -65,6 +71,24 @@ BEGIN
     ELSE NULL
   END;
 
+  utm_content_value := CASE
+    WHEN btrim(utm_content_raw) <> ''
+     AND char_length(btrim(utm_content_raw)) <= 200
+     AND utm_content_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_content_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_content_raw)
+    ELSE NULL
+  END;
+
+  utm_term_value := CASE
+    WHEN btrim(utm_term_raw) <> ''
+     AND char_length(btrim(utm_term_raw)) <= 200
+     AND utm_term_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_term_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_term_raw)
+    ELSE NULL
+  END;
+
   -- A password account arrives whole: every route that creates one supplies
   -- the name, the terms acceptance and the consents in the same request, so it
   -- is registered the moment it exists. Any other provider (Google) arrives
@@ -78,12 +102,13 @@ BEGIN
 
   INSERT INTO public.profiles (
     id, email, role, first_name, last_name,
-    utm_source, utm_medium, utm_campaign,
+    utm_source, utm_medium, utm_campaign, utm_content, utm_term,
     registration_completed_at
   )
   VALUES (
     NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name,
     utm_source_value, utm_medium_value, utm_campaign_value,
+    utm_content_value, utm_term_value,
     registration_value
   );
 

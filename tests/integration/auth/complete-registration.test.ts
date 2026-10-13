@@ -134,7 +134,13 @@ const validBody = {
   firstName: "Marja",
   lastName: "Virtanen",
   locale: "fi",
-  utm: { source: "Lynx", medium: "email", campaign: "lynx-summer-a" },
+  utm: {
+    source: "Lynx",
+    medium: "email",
+    campaign: "lynx-summer-a",
+    content: "hero",
+    term: "roblox club",
+  },
   marketingConsent: true,
   acceptedTerms: true,
 };
@@ -317,6 +323,8 @@ describe("POST /api/auth/complete-registration", () => {
       utm_source: "Lynx",
       utm_medium: "email",
       utm_campaign: "lynx-summer-a",
+      utm_content: "hero",
+      utm_term: "roblox club",
     });
     expect(row).not.toHaveProperty("registration_completed_at");
 
@@ -363,6 +371,8 @@ describe("POST /api/auth/complete-registration", () => {
     expect(row).not.toHaveProperty("utm_source");
     expect(row).not.toHaveProperty("utm_medium");
     expect(row).not.toHaveProperty("utm_campaign");
+    expect(row).not.toHaveProperty("utm_content");
+    expect(row).not.toHaveProperty("utm_term");
   });
 
   it("omits the attribution when there is no consent cookie at all", async () => {

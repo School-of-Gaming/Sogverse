@@ -93,6 +93,8 @@ function parentProfile(id: string, overrides: Record<string, unknown> = {}) {
     utm_source: null,
     utm_medium: null,
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     ...overrides,
   };
 }
@@ -139,6 +141,8 @@ function world(): World {
         utm_source: "lynx",
         utm_medium: "email",
         utm_campaign: "lynx-autumn-a",
+        utm_content: "newsletter-banner",
+        utm_term: "roblox club",
       }),
       parentProfile(P2),
       parentProfile(P3, { utm_campaign: "Lynx-Autumn-A" }),
@@ -299,7 +303,13 @@ describe("GET /api/partner/v1/families", () => {
         email: "parent1@example.com",
         created_at: "2026-09-02T18:41:07.250Z",
         location: { city: "Lyon", country_code: "FR" },
-        utm: { source: "lynx", medium: "email", campaign: "lynx-autumn-a" },
+        utm: {
+          source: "lynx",
+          medium: "email",
+          campaign: "lynx-autumn-a",
+          content: "newsletter-banner",
+          term: "roblox club",
+        },
         marketing_consent: { granted: true, updated_at: "2026-09-02T18:43:12.000Z" },
       },
     ]);
@@ -309,7 +319,7 @@ describe("GET /api/partner/v1/families", () => {
       id: P2,
       email: null,
       location: null,
-      utm: { source: null, medium: null, campaign: null },
+      utm: { source: null, medium: null, campaign: null, content: null, term: null },
       marketing_consent: { granted: false, updated_at: "2026-09-03T08:00:00.000Z" },
     });
     expect(twoGamers.gamers).toEqual([

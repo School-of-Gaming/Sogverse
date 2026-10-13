@@ -1721,11 +1721,6 @@
       "marketing": {
         "title": "ghum",
         "attribution": "He",
-        "utm": {
-          "source": "mung",
-          "medium": "Duj",
-          "campaign": "veS"
-        },
         "preferences": "chaw’mey",
         "schoolOfGaming": "noH Quj yejHaD",
         "lynxEducate": "Lynx Educate",
@@ -2395,7 +2390,7 @@
             "parentsEmail": "vav QIn Daq — tu'lu' neH <code>marketing_consent.granted</code>Daj <code>true</code> 'oHtaHvIS. latlhDaq <code>null</code>, 'ej chaw' lujDI' <code>null</code> mojqa'.",
             "parentsCreatedAt": "ghorgh chenmoHlu' vav account: He'So' wa'DIch nuq — qorDu' chenmoHlu'.",
             "parentsLocation": "vav jatlhpu'bogh juH Daq ngaSbogh veng je cha' ghItlh Sep ngoq; <code>city</code> 'oH veng pong'e'. <code>null</code> vav 'angbe'DI' qoj vengDaq ngaSbe'DI'.",
-            "parentsUtm": "tlhegh <code>utm_source</code>, <code>utm_medium</code> je <code>utm_campaign</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' wej null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
+            "parentsUtm": "tlhegh <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> je <code>utm_term</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' vagh null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
             "parentsMarketingConsent": "DaH Lynx ngeH chaw'vaD vavvam jang: <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — ngeHmeH <code>false</code> rur.",
             "gamers": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' puqpu', Hoch wa' ghItlh. vav Daq nIteb neH qorDu' veH 'elmoHDI' chIm. puq qeng wa'DIch pong neH — latlh jatlhmeH Daq Hutlh; pong mI' je Roblox account neH.",
             "gamersId": "puq pong mI' — muvmoHghachmey <code>participant_id</code> qengbogh.",
@@ -2494,7 +2489,9 @@
             "pagesProductId": "De'wI' — nav ghajbogh; <code>null</code> mut navvaD malja' navvaD je.",
             "pagesPageviews": "veHDaq nav leghghachmey — nuq qem 'e' qelbe'lu'.",
             "pagesByCampaign": "tlhegh <code>utm_campaign</code> tlha' leghghachmey Sep. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach — Daq ghItlhbogh leghwI', qoj per Hutlhbogh tlhegh tlha'bogh je.",
-            "pagesBySourceMedium": "leghghachmey rap, 'ach <code>utm_source</code> je <code>utm_medium</code> boqDaj tlha' Sep — Huch leng, ghom leng, je QIn leng pIm leghmeH. cha' Sepmey leghghachmey rap qel, 'ej Hoch <code>pageviews</code> chav; latlh SepvaD chIm tetlh chenmoHbe'.",
+            "pagesBySourceMedium": "leghghachmey rap, 'ach <code>utm_source</code> je <code>utm_medium</code> boqDaj tlha' Sep — Huch leng, ghom leng, je QIn leng pIm leghmeH. Hoch Sepmey leghghachmey rap qel, 'ej Hoch <code>pageviews</code> chav; latlh SepvaD chIm tetlh chenmoHbe'.",
+            "pagesByContent": "leghghachmey rap, 'ach tlhegh <code>utm_content</code> tlha' Sep — wa' veS 'olvetlhmey tlheghmey je pIm leghmeH. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach.",
+            "pagesByTerm": "leghghachmey rap, 'ach tlhegh <code>utm_term</code> tlha' Sep — Huch nejwI' mu' lan pagh. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach.",
             "pagesByDay": "Hoch jaj leghghachmey, UTC-Daq, poH tlhegh chenmoHmeH."
           },
           "note": "Vercel ghItlh vangtaH neH leghwI' chab beQDaq De' ghom laj, 'ej qorDu' De'wI'Daq UTM mI'mey ghItlhlu' neH leghwI' ngeH lajDI'. cha' veHmey pIm, 'ej De' ghom veH tIn law'; vaj naDev toghlu'bogh leghghach je <code>/families</code>-Daq qorDu' rapbe': Hoch lajbogh leghwI' cha'Daq tu'lu'; De' ghom neH lajbogh naDev neH; chab beQ lajbe'bogh pagh Daq."

@@ -1,5 +1,7 @@
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
+import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
+import { MAIL_SPACE, MAIL_WEIGHT, mailText } from "./type-scale";
 import { BODY_TEXT_STYLE, groundFill, pinnedFill } from "./utils";
 
 /**
@@ -160,7 +162,7 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
     ].join(""),
     surfaceClass,
     labelClass,
-    label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};font-size:14px;font-weight:bold;color:${label};text-decoration:none;`,
+    label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};${mailText("action", label)}text-decoration:none;`,
   };
 }
 
@@ -174,7 +176,7 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
     "auto",
   );
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.block}px;">
       <tr>
         <td align="center">
           <table role="presentation" cellpadding="0" cellspacing="0">
@@ -222,7 +224,7 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
  */
 export function ctaButtonRow(left: RowButtonOptions, right: RowButtonOptions): string {
   return `
-    <table role="presentation" cellpadding="0" cellspacing="8" width="100%" style="margin:0 0 16px;">
+    <table role="presentation" cellpadding="0" cellspacing="8" width="100%" style="margin:0 0 ${MAIL_SPACE.block}px;">
       <tr>
         ${halfButtonCell(left)}
         ${halfButtonCell(right)}
@@ -260,23 +262,37 @@ function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
  * case ending on the word ("asetuksissa") keeps it inside the link text.
  */
 export function inlineLink(href: string, label: string): string {
-  // Deliberately unpinned, unlike styledName, which paints the same colour.
-  // The pin works by setting `color: transparent` and painting the glyphs out of a
-  // background — and `text-decoration-color` defaults to `currentColor`, so a
-  // pinned anchor keeps its colour and loses its underline. A span has no
-  // decoration to lose, which is why the same class is right on a name and
-  // wrong here. The underline is the affordance that says "link", so it
-  // outranks matching the name's orange exactly; that mismatch is real, and it
-  // is the cheaper of the two faults until a screenshot settles a fix for it.
+  // Deliberately unpinned, unlike the header lockup, which paints the same
+  // colour. The pin works by setting `color: transparent` and painting the
+  // glyphs out of a background — and `text-decoration-color` defaults to
+  // `currentColor`, so a pinned anchor keeps its colour and loses its
+  // underline. The underline is the affordance that says "link", so it
+  // outranks the colour arriving exactly in Gmail's dark theme.
   return `<a href="${href}" target="_blank" style="color:${BRAND.act};text-decoration:underline;">${label}</a>`;
+}
+
+/**
+ * A list's markup, shared by both markers so they cannot space differently.
+ *
+ * Authored markdown's list, at the mail's own block margin: the item gap under
+ * every item but the last, so the list's bottom margin is the only space under
+ * it, and the indent written as a `margin-left` with the padding zeroed —
+ * Outlook's Word engine ignores `padding-left` on a list and draws the markers
+ * flush against the column's edge, which is why the markdown definition's mail
+ * half writes it as a margin too.
+ */
+function list(tag: "ul" | "ol", items: string[]): string {
+  const look = MARKDOWN_LOOK[tag];
+  const last = items.length - 1;
+  const rendered = items
+    .map((item, i) => `<li style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.item}px;">${item}</li>`)
+    .join("");
+  return `<${tag} style="margin:0 0 ${MAIL_SPACE.block}px ${look.indent}px;padding:0;${BODY_TEXT_STYLE}">${rendered}</${tag}>`;
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */
 export function bulletList(items: string[]): string {
-  const rendered = items
-    .map((item) => `<li style="margin:0 0 8px;">${item}</li>`)
-    .join("");
-  return `<ul style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ul>`;
+  return list("ul", items);
 }
 
 /**
@@ -291,10 +307,7 @@ export function bulletList(items: string[]): string {
  * with the items after an edit.
  */
 export function numberedList(items: string[]): string {
-  const rendered = items
-    .map((item) => `<li style="margin:0 0 8px;">${item}</li>`)
-    .join("");
-  return `<ol style="margin:0 0 16px;padding-left:20px;${BODY_TEXT_STYLE}">${rendered}</ol>`;
+  return list("ol", items);
 }
 
 /**
@@ -356,8 +369,18 @@ export const PLAIN_MARKUP_TAGS = {
  * The label column sizes itself: `width:1%` and no wrapping, so it is as narrow
  * as its own longest label and the values line up whatever the locale calls a
  * thing. That is also why there is no width option to pass — a caller choosing
- * one was choosing it for the English labels. Labels are small, muted and
- * tracked, which is furniture rather than voice; the value carries the line.
+ * one was choosing it for the English labels. Labels are small and muted, in
+ * sentence case — a label is read as a word, not scanned as a marker — and the
+ * value carries the line in the body. The two sizes share a baseline rather
+ * than a top edge, so a label sits on the same line as the value beside it.
+ *
+ * **It is structural furniture**, so it states the furniture step above and
+ * below itself rather than leaning on whatever the block above left. A list
+ * introduced by a lead-in takes it as `leadIn`, and the pair is then the one
+ * piece of furniture: the step goes above the lead-in, which sits the tight
+ * step above the first rule. A `sectionLabel` set before the list instead
+ * would be pushed the whole furniture step off what it introduces, since the
+ * list's own margin outweighs the label's.
  *
  * **The last row keeps its rule.** With no box edge to close the list, the
  * final hairline is what closes it — and where the mail goes on to a report or
@@ -373,25 +396,59 @@ export const PLAIN_MARKUP_TAGS = {
  */
 export function factList(
   rows: ReadonlyArray<readonly [label: string, value: string]>,
+  { leadIn }: { leadIn?: string } = {},
 ): string {
   const rendered = rows
     .map(
       ([label, value]) => `
         <tr>
-          <td style="padding:8px 16px 8px 0;border-bottom:1px solid ${DARK_THEME.border};color:${DARK_THEME.mutedFg};font-size:12px;letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap;width:1%;vertical-align:top;">${label}</td>
-          <td style="padding:8px 0;border-bottom:1px solid ${DARK_THEME.border};color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${value}</td>
+          <td valign="baseline" style="padding:${MAIL_SPACE.tight}px ${MAIL_SPACE.block}px ${MAIL_SPACE.tight}px 0;border-bottom:1px solid ${DARK_THEME.border};${mailText("small", DARK_THEME.mutedFg)}white-space:nowrap;width:1%;vertical-align:baseline;">${label}</td>
+          <td valign="baseline" style="padding:${MAIL_SPACE.tight}px 0;border-bottom:1px solid ${DARK_THEME.border};${BODY_TEXT_STYLE}vertical-align:baseline;">${value}</td>
         </tr>`,
     )
     .join("");
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-top:1px solid ${DARK_THEME.border};">
+  const table = (margin: string) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${margin};border-top:1px solid ${DARK_THEME.border};">
       ${rendered}
     </table>`;
+  if (leadIn === undefined) return table(`${MAIL_SPACE.furniture}px 0`);
+  return `
+    <div style="margin:${MAIL_SPACE.furniture}px 0;">
+      ${sectionLabel(leadIn)}${table("0")}
+    </div>`;
 }
 
-/** A bold lead-in above a list — a section label, not a second heading. */
+/**
+ * A bold lead-in above a list or a block — a section label, not a second
+ * heading. Body size at the bold weight, sitting the tight step above what it
+ * introduces, so it reads as the first line of that block.
+ */
 export function sectionLabel(text: string): string {
-  return `<p style="margin:0 0 8px;color:${DARK_THEME.foreground};font-size:14px;font-weight:bold;line-height:1.6;">${text}</p>`;
+  return `<p style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("leadIn", DARK_THEME.foreground)}">${text}</p>`;
+}
+
+/**
+ * A hairline across the column, between two parts of a mail — and, followed by
+ * `heading()`, the opening of a mail section.
+ *
+ * **It states its own space on both sides**, the furniture step, rather than
+ * inheriting whatever the block above it left: a rule's job is to divide, and
+ * a division that sits closer to one side than the other reads as belonging to
+ * it. Where a section heading follows, the step under the rule is the space
+ * above the heading; nothing stacks on top of it.
+ *
+ * A 1px top border on an empty cell, the line Outlook's Word engine and
+ * Gmail's Android renderer both draw without argument. The cell holds a
+ * non-breaking space so Outlook does not collapse it, set at no size so the
+ * space takes no room.
+ */
+export function hairlineRule(): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${MAIL_SPACE.furniture}px 0;">
+      <tr>
+        <td style="border-top:1px solid ${DARK_THEME.border};font-size:0;line-height:0;">&nbsp;</td>
+      </tr>
+    </table>`;
 }
 
 interface CalloutPanelOptions {
@@ -399,6 +456,13 @@ interface CalloutPanelOptions {
   label: string;
   /** Already-translated (and already-escaped) paragraphs, in reading order. */
   paragraphs: string[];
+  /**
+   * The panel opens the mail: it sits flush with the top of the content and
+   * states the furniture step below itself only. The first block of a mail has
+   * nothing above it to be set apart from, and a gap there is the shell's
+   * padding doubled.
+   */
+  opening?: boolean;
 }
 
 /**
@@ -447,19 +511,19 @@ interface CalloutPanelOptions {
  * callout the later sentence is usually the one that answers the actual worry,
  * and greying it would quiet exactly the line the panel exists to say.
  */
-export function calloutPanel({ label, paragraphs }: CalloutPanelOptions): string {
+export function calloutPanel({ label, paragraphs, opening = false }: CalloutPanelOptions): string {
   const last = paragraphs.length - 1;
   const body = paragraphs
     .map(
       (text, i) =>
-        `<p style="margin:${i === last ? "0" : "0 0 8px"};${BODY_TEXT_STYLE}">${text}</p>`,
+        `<p style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.block}px;${BODY_TEXT_STYLE}">${text}</p>`,
     )
     .join("");
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${opening ? `0 0 ${MAIL_SPACE.furniture}px` : `${MAIL_SPACE.furniture}px 0`};">
       <tr>
-        <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:16px;">
-          <p style="margin:0 0 8px;color:${STATUS.info};font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
+        <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:${MAIL_SPACE.block}px;">
+          <p style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("small", STATUS.info, MAIL_WEIGHT.bold)}letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
           ${body}
         </td>
       </tr>

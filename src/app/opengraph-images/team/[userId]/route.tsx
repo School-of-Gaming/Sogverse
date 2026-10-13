@@ -55,8 +55,7 @@ import { TeamProfilesService } from "@/services/team-profiles/team-profiles.serv
  * frame from the middle as the profile page's frame does. Uploads are already
  * cropped to that, but a photo of another shape (the fixtures borrow square
  * art) is cropped rather than squashed — the renderer cannot crop a background
- * itself. And one JPEG in, whatever was stored: the bucket admits WebP, which
- * the card's rasteriser cannot decode.
+ * itself.
  *
  * The decode is bounded as the upload routes bound theirs (`MAX_INPUT_PIXELS`):
  * the stored bytes are capped, their decoded size is not, and a Gedu writes
