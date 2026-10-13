@@ -12,6 +12,7 @@
  */
 
 export * from "./tokens/brand";
+export * from "./tokens/class-merge";
 export * from "./tokens/contrast";
 export * from "./tokens/grammar";
 export * from "./tokens/identicon";

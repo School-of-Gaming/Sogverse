@@ -395,6 +395,36 @@ export const TYPE_SCALE = [
 
 export type TypeStepId = (typeof TYPE_SCALE)[number]["id"];
 
+/** One size the theme declares from the scale, under the CSS token that names it. */
+export type TypeSize = {
+  /** The CSS token, and the `text-*` utility Tailwind generates from it. */
+  readonly cssName: `--text-${string}`;
+  /** The size in CSS pixels. */
+  readonly px: number;
+  /** The step the size belongs to, which carries its weight and line height. */
+  readonly step: TypeStep;
+};
+
+/**
+ * Every size the theme declares from the scale, in scale order: each step's own
+ * size, followed — where the step resteps — by its narrow-viewport size, named
+ * by the step's token with `-mobile` appended.
+ *
+ * The naming is decided once, here, because two things have to agree on it: the
+ * generator, which declares the tokens, and the class merger, which has to
+ * recognise every `text-*` utility those tokens produce as a size.
+ */
+export function typeSizes(): readonly TypeSize[] {
+  return TYPE_SCALE.flatMap((step): TypeSize[] =>
+    step.mobilePx === null
+      ? [{ cssName: step.cssName, px: step.px, step }]
+      : [
+          { cssName: step.cssName, px: step.px, step },
+          { cssName: `${step.cssName}-mobile`, px: step.mobilePx, step },
+        ],
+  );
+}
+
 // -------------------------------------------------------------- type rules
 
 /**
