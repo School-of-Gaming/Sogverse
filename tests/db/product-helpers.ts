@@ -374,6 +374,11 @@ import { TEST_IDS } from "./constants";
  *                  8c2, the two DST zones 8c3/8c4, the cancelling product 8c5
  *                  with its groups 8c6/8c7, the horizon club 8c8 with its group
  *                  8c9, the late-starting club 8cd and the live-list club 8ce)
+ *   8d1-8d9, 8e0-8fa
+ *                  admin-product-list.test.ts (five products 8d1-8d5, one per
+ *                  shape the list's filters tell apart, with groups 8d8/8d9;
+ *                  8e0-8fa are the 27 products — one page and two more — the
+ *                  keyset cursor is walked across)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

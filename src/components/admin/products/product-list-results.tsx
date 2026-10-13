@@ -71,9 +71,9 @@ export function ProductListResults({
     rootMargin: SENTINEL_ROOT_MARGIN,
   });
 
-  // The first page is a keyset page of 25 off an indexed read — a small,
-  // bounded read that lands in a frame or two — so nothing is painted in its
-  // place. What must not appear in the meantime is the count line or the empty
+  // The first page lands in a frame or two — the catalogue is small, so
+  // ordering and filtering all of it is near-instant even without an index —
+  // and so nothing is painted in its place. What must not appear in the meantime is the count line or the empty
   // line, which would claim an answer before anyone has been asked; both
   // arrive with the rows, below everything already on screen.
   const showing = list.data?.pages[0]?.total;
