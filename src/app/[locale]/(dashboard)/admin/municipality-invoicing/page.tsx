@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { getTranslations } from "next-intl/server";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import {
-  MunicipalityInvoicingHeading,
+  MunicipalityInvoicingDescription,
   MunicipalityInvoicingPage,
 } from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
 import { wireErrorMessage } from "@/lib/api/wire-error-message";
@@ -112,7 +113,11 @@ export default async function MunicipalityInvoicingRoute({
   const result = await loadMonth(monthStart);
 
   if (!result.ok) {
-    return <MunicipalityInvoicingLoadFailure reason={result.reason} />;
+    return (
+      <AdminHub hub="invoicing">
+        <MunicipalityInvoicingLoadFailure reason={result.reason} />
+      </AdminHub>
+    );
   }
 
   // Named through the hook's own key factory rather than a literal: a key one
@@ -126,27 +131,26 @@ export default async function MunicipalityInvoicingRoute({
   }
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <MunicipalityInvoicingPage
-        monthStart={monthStart}
-        initialSnapshot={result.snapshot}
-        initialPeriodSnapshots={result.periodSnapshots}
-      />
-    </HydrationBoundary>
+    <AdminHub hub="invoicing">
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <MunicipalityInvoicingPage
+          monthStart={monthStart}
+          initialSnapshot={result.snapshot}
+          initialPeriodSnapshots={result.periodSnapshots}
+        />
+      </HydrationBoundary>
+    </AdminHub>
   );
 }
 
 /**
- * The page's chrome over a band saying why there is nothing under it.
+ * The page's description over a band saying why there is nothing under it.
  *
- * The heading waits on nothing, so it is **the same component** the loaded page
- * renders rather than the same two lines written again. Written again, it drifted:
- * a display heading over the failure and a working-surface heading over the
- * ledger, so the page appeared to change size according to whether the read
- * succeeded — in precisely the state where the reader is already being told that
- * something went wrong. Below it is the failure and nothing else: an empty month
- * would say no municipality is owed anything, which is the one wrong answer this
- * page must never give.
+ * The description waits on nothing, so it is **the same component** the loaded
+ * page renders rather than the same line written again, and the hub's title and
+ * tabs above it are the route's on either path. Below it is the failure and
+ * nothing else: an empty month would say no municipality is owed anything,
+ * which is the one wrong answer this page must never give.
  */
 async function MunicipalityInvoicingLoadFailure({
   reason,
@@ -157,7 +161,7 @@ async function MunicipalityInvoicingLoadFailure({
 
   return (
     <div className="space-y-3 pb-12">
-      <MunicipalityInvoicingHeading />
+      <MunicipalityInvoicingDescription />
       {/* The reason is a message off the wire, never translated copy — it is
           spliced into a sentence that is, which is why there are two keys rather
           than one with an optionally-empty argument. */}

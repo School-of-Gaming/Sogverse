@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Municipality invoicing",
       "description": "One month of municipality clubs: what each one ran, and what the municipality owes for it.",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
     },
     "invoiceCustomers": {
-      "title": "Invoice customers",
       "subtitle": "The Fennoa customers a municipality club’s sessions are invoiced to.",
       "addCustomer": "Add a customer",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Holiday calendars",
       "subtitle": "The school holidays and other breaks a club can follow. A club has no sessions on the days of a break.",
       "addCalendar": "Add a calendar",
       "columns": {
@@ -945,7 +942,6 @@
         }
       },
       "list": {
-        "title": "Clubs, camps and events",
         "subtitle": "Manage the clubs, camps and events admins have created.",
         "new": "New {label}",
         "empty": "No {plural} yet. Click New {label} to create one.",
@@ -960,7 +956,9 @@
         "pendingHint": {
           "registrationOpens": "Registration opens {date}",
           "startDate": "Starts {date}"
-        }
+        },
+        "newAny": "New",
+        "newDialogTitle": "Create a club, camp or event"
       },
       "translations": {
         "label": "Languages",
@@ -1829,7 +1827,6 @@
       "addType": "Add {type}"
     },
     "sites": {
-      "title": "Sites",
       "subtitle": "Every site on the platform, and the products running at each one.",
       "addSite": "Add a site",
       "searchPlaceholder": "Search sites by name…",
@@ -3103,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedu invoicing",
     "adminDescription": "One month: the sessions each Gedu recorded, and what they invoice School of Gaming for them.",
     "myTitle": "Invoicing",
     "myDescription": "What you invoice School of Gaming for, one month at a time. A session counts once something is recorded for it — attendance, a report or a note.",
@@ -3721,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",
-    "consumerClubs": "Consumer Clubs",
-    "municipalityClubs": "Municipality Clubs",
-    "municipalityInvoicing": "Municipality Invoicing",
-    "invoiceCustomers": "Invoice Customers",
     "libraryContent": "Library Content",
     "spotlights": "Spotlights",
     "landingPages": "Landing Pages",
     "platformVision": "Platform Vision",
-    "geduInvoicing": "Gedu Invoicing",
-    "camps": "Camps",
-    "events": "Events",
-    "sites": "Sites",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
     "testing": "Testing",
@@ -3741,7 +3729,22 @@
     "collapseSidebar": "Collapse sidebar",
     "substitutions": "Substitutions",
     "feedback": "Feedback",
-    "holidayCalendars": "Holiday Calendars"
+    "products": "Clubs, camps and events",
+    "invoicing": "Invoicing"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Clubs, camps and events",
+      "invoicing": "Invoicing"
+    },
+    "tabs": {
+      "products": "Products",
+      "sites": "Sites",
+      "holidayCalendars": "Holiday calendars",
+      "municipalities": "Municipalities",
+      "invoiceCustomers": "Invoice customers",
+      "gedus": "Gedus"
+    }
   },
   "home": {
     "hero": {

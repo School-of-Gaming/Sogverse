@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { getTranslations } from "next-intl/server";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import {
-  AdminGeduInvoicingHeading,
+  AdminGeduInvoicingDescription,
   AdminGeduInvoicingPage,
 } from "@/components/gedu-invoicing/admin-gedu-invoicing-page";
 import { wireErrorMessage } from "@/lib/api/wire-error-message";
@@ -65,7 +66,11 @@ export default async function AdminGeduInvoicingRoute({
   const result = await loadMonth(monthStart);
 
   if (!result.ok) {
-    return <AdminGeduInvoicingLoadFailure reason={result.reason} />;
+    return (
+      <AdminHub hub="invoicing">
+        <AdminGeduInvoicingLoadFailure reason={result.reason} />
+      </AdminHub>
+    );
   }
 
   const queryClient = new QueryClient();
@@ -75,16 +80,18 @@ export default async function AdminGeduInvoicingRoute({
   );
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <AdminGeduInvoicingPage
-        monthStart={monthStart}
-        initialSnapshot={result.snapshot}
-      />
-    </HydrationBoundary>
+    <AdminHub hub="invoicing">
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <AdminGeduInvoicingPage
+          monthStart={monthStart}
+          initialSnapshot={result.snapshot}
+        />
+      </HydrationBoundary>
+    </AdminHub>
   );
 }
 
-/** The page's heading over a band saying why there is nothing under it. */
+/** The page's description over a band saying why there is nothing under it. */
 async function AdminGeduInvoicingLoadFailure({
   reason,
 }: {
@@ -94,7 +101,7 @@ async function AdminGeduInvoicingLoadFailure({
 
   return (
     <div className="space-y-3 pb-12">
-      <AdminGeduInvoicingHeading />
+      <AdminGeduInvoicingDescription />
       <Alert variant="destructive">
         <AlertDescription>
           {reason === null

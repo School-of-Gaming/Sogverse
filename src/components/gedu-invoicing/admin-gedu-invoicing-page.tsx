@@ -109,11 +109,10 @@ export function AdminGeduInvoicingPage({
     shownGedus.length > 0 && shownGedus.every((gedu) => openIds.has(gedu.id));
 
   return (
-    // The gutter is reserved because opening a gedu is itself what makes the
-    // document scrollbar appear, and the reader's own click would otherwise
-    // narrow the page under the figures they were reading.
-    <div className="space-y-3 pb-12" data-reserve-scroll-gutter>
-      <AdminGeduInvoicingHeading />
+    // The scroll gutter this page needs — opening a gedu is itself what makes
+    // the document scrollbar appear — is reserved by the hub it renders in.
+    <div className="space-y-3 pb-12">
+      <AdminGeduInvoicingDescription />
 
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
         <MonthStepper
@@ -203,17 +202,14 @@ function adminMonthHref(month: string): MonthHref {
 }
 
 /**
- * The page's title and description — a component because the route renders
- * them above a failed read too, and two copies of a heading drift.
+ * The page's description, under the hub's tabs — a component because the
+ * route renders it above a failed read too, and two copies of one line drift.
  */
-export function AdminGeduInvoicingHeading() {
+export function AdminGeduInvoicingDescription() {
   const t = useTranslations("geduInvoicing");
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold">{t("adminTitle")}</h1>
-      <p className="text-sm text-muted-foreground">{t("adminDescription")}</p>
-    </div>
+    <p className="text-sm text-muted-foreground">{t("adminDescription")}</p>
   );
 }
 

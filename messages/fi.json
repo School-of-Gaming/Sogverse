@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Kuntalaskutus",
       "description": "Kuukauden kuntakerhot: montako kertaa kukin kokoontui ja mitä kunta maksaa niistä.",
       "previousMonth": "Edellinen kuukausi",
       "nextMonth": "Seuraava kuukausi",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
     },
     "invoiceCustomers": {
-      "title": "Laskutusasiakkaat",
       "subtitle": "Fennoa-asiakkaat, joille kuntakerhojen kerrat laskutetaan.",
       "addCustomer": "Lisää asiakas",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Lomakalenterit",
       "subtitle": "Koulujen lomat ja muut tauot, joita kerho voi noudattaa. Kerholla ei ole kertoja tauon päivinä.",
       "addCalendar": "Lisää kalenteri",
       "columns": {
@@ -945,7 +942,6 @@
         }
       },
       "list": {
-        "title": "Kerhot, leirit ja tapahtumat",
         "subtitle": "Hallinnoi ylläpitäjien luomia kerhoja, leirejä ja tapahtumia.",
         "new": "Uusi {label}",
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
@@ -960,7 +956,9 @@
         "pendingHint": {
           "registrationOpens": "Ilmoittautuminen aukeaa {date}",
           "startDate": "Alkaa {date}"
-        }
+        },
+        "newAny": "Uusi",
+        "newDialogTitle": "Luo kerho, leiri tai tapahtuma"
       },
       "translations": {
         "label": "Kielet",
@@ -1829,7 +1827,6 @@
       "addType": "Lisää {type}"
     },
     "sites": {
-      "title": "Toimipisteet",
       "subtitle": "Kaikki alustan toimipisteet ja kussakin pyörivät tuotteet.",
       "addSite": "Lisää toimipiste",
       "searchPlaceholder": "Hae toimipistettä nimellä…",
@@ -3103,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedujen laskutus",
     "adminDescription": "Kuukausi: kunkin Gedun kirjaamat kerrat ja mitä hän laskuttaa niistä School of Gamingilta.",
     "myTitle": "Laskutus",
     "myDescription": "Mitä laskutat School of Gamingilta, kuukausi kerrallaan. Kerta lasketaan mukaan, kun siitä on kirjattu jotain – läsnäolot, raportti tai muistiinpano.",
@@ -3721,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",
-    "consumerClubs": "Kuluttajakerhot",
-    "municipalityClubs": "Kuntakerhot",
-    "municipalityInvoicing": "Kuntalaskutus",
-    "invoiceCustomers": "Laskutusasiakkaat",
     "libraryContent": "Kirjaston sisältö",
     "spotlights": "Nostot",
     "landingPages": "Laskeutumissivut",
     "platformVision": "Alustan visio",
-    "geduInvoicing": "Gedujen laskutus",
-    "camps": "Leirit",
-    "events": "Tapahtumat",
-    "sites": "Toimipisteet",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
     "testing": "Testaus",
@@ -3741,7 +3729,22 @@
     "collapseSidebar": "Pienennä sivupalkki",
     "substitutions": "Tuuraukset",
     "feedback": "Palaute",
-    "holidayCalendars": "Lomakalenterit"
+    "products": "Kerhot, leirit ja tapahtumat",
+    "invoicing": "Laskutus"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Kerhot, leirit ja tapahtumat",
+      "invoicing": "Laskutus"
+    },
+    "tabs": {
+      "products": "Tuotteet",
+      "sites": "Toimipisteet",
+      "holidayCalendars": "Lomakalenterit",
+      "municipalities": "Kunnat",
+      "invoiceCustomers": "Laskutusasiakkaat",
+      "gedus": "Gedut"
+    }
   },
   "home": {
     "hero": {

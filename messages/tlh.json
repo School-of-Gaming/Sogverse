@@ -474,7 +474,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "veng DIlmeH ghItlh",
       "description": "wa’ jar ghomHom veng: nuq qaSpu’, ’ej nuq DIlnIS veng.",
       "previousMonth": "jar wa’Dich",
       "nextMonth": "jar veb",
@@ -519,7 +518,6 @@
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
     },
     "invoiceCustomers": {
-      "title": "DIlwI’pu’",
       "subtitle": "Fennoa DIlwI’pu’: veng ghomHom qaSpu’ DIlbogh ghotpu’.",
       "addCustomer": "DIlwI’ yIchel",
       "columns": {
@@ -580,7 +578,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "DuQ jaj Hovtay'",
       "subtitle": "Warriors rest too. On these days the club does not meet — even Kahless took a break.",
       "addCalendar": "Hovtay' chel",
       "columns": {
@@ -989,7 +986,6 @@
         }
       },
       "list": {
-        "title": "ghomHom, pa’ Qugh, Qu’mey je",
         "subtitle": "ghomHom, pa’ Qugh, Qu’mey je yIQI’.",
         "new": "{label} chu’",
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
@@ -1004,7 +1000,9 @@
         "pendingHint": {
           "registrationOpens": "{date}: ghIt poSchoH",
           "startDate": "{date}: tagh"
-        }
+        },
+        "newAny": "chu’",
+        "newDialogTitle": "ghomHom, pa’ Qugh, Qu’ ghap yIchenmoH"
       },
       "translations": {
         "label": "Hol",
@@ -1873,7 +1871,6 @@
       "addType": "{type} yIchel"
     },
     "sites": {
-      "title": "Daqmey",
       "subtitle": "Hoch Daqmey, ’ej Daq HochvaD qaStaHbogh wanI’mey.",
       "addSite": "Daq yIchel",
       "searchPlaceholder": "Daq pong yIghItlh…",
@@ -3143,7 +3140,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedu DIlmeH ghItlh",
     "adminDescription": "wa’ jar: SeSSIy’mey ghItlhlu’pu’bogh Gedu Hoch, ’ej School of Gaming DIlmeH nuq poQ.",
     "myTitle": "DIlmeH ghItlh",
     "myDescription": "School of Gaming DIlmeH nuq DapoQ, wa’ jar neH. SeSSIy’ ghItlhlu’DI’ vaj togh — ghoS, ja’ pagh qonta’.",
@@ -3761,18 +3757,10 @@
   "sidebar": {
     "dashboard": "QaD",
     "users": "lo’wI’pu’",
-    "consumerClubs": "ghomHom tlhIngan",
-    "municipalityClubs": "ghomHom veng",
-    "municipalityInvoicing": "veng DIlmeH ghItlh",
-    "invoiceCustomers": "DIlwI’pu’",
     "libraryContent": "paq qach ghItlhmey",
     "spotlights": "Hovmey",
     "landingPages": "Sap ghItlhmey",
     "platformVision": "Sogverse naj",
-    "geduInvoicing": "Gedu DIlmeH ghItlh",
-    "camps": "pa’ Qugh",
-    "events": "Qu’mey",
-    "sites": "Daqmey",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
     "testing": "Qu’ nI’moH",
@@ -3781,7 +3769,22 @@
     "collapseSidebar": "HeDmey SoQmoH",
     "substitutions": "lIwmey",
     "feedback": "ja'chuq",
-    "holidayCalendars": "DuQ jaj Hovtay'"
+    "products": "ghomHom, pa’ Qugh, Qu’mey je",
+    "invoicing": "DIlmeH ghItlh"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "ghomHom, pa’ Qugh, Qu’mey je",
+      "invoicing": "DIlmeH ghItlh"
+    },
+    "tabs": {
+      "products": "Doch",
+      "sites": "Daqmey",
+      "holidayCalendars": "DuQ jaj Hovtay'",
+      "municipalities": "vengmey",
+      "invoiceCustomers": "DIlwI’pu’",
+      "gedus": "Gedupu’"
+    }
   },
   "home": {
     "hero": {

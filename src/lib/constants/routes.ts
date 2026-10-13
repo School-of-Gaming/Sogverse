@@ -702,15 +702,13 @@ export const ROUTES = {
     productClone: adminProductCloneHref,
     /** One group's detail page under its product. */
     productGroup: adminProductGroupHref,
-    consumerClubs: "/admin/consumer-clubs",
-    municipalityClubs: "/admin/municipality-clubs",
     /**
      * The month a municipality is invoiced for: every club it runs, how many
      * sessions each ran, and what that comes to. A read-only report over the
      * municipality clubs, which is why it is a page of its own rather than
-     * something under one club — it is about a month, not about one club. In the
-     * sidebar the owner placed it below Sites, at the end of the operational
-     * entries and above the tooling.
+     * something under one club — it is about a month, not about one club. It
+     * is the first tab of the invoicing hub, where the rail's Invoicing entry
+     * opens.
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
     /**
@@ -794,8 +792,6 @@ export const ROUTES = {
      * they ask what the dream is. Static prose and artwork, English only.
      */
     platformVision: "/admin/platform-vision",
-    camps: "/admin/camps",
-    events: "/admin/events",
     /**
      * Every site on the platform — the `site` rows of the location tree, listed
      * and edited as things in their own right rather than as a field on

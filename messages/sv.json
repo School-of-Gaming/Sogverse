@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Kommunfakturering",
       "description": "En månad kommunklubbar: vad varje klubb genomförde och vad kommunen ska betala för det.",
       "previousMonth": "Föregående månad",
       "nextMonth": "Nästa månad",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },
     "invoiceCustomers": {
-      "title": "Faktureringskunder",
       "subtitle": "Fennoa-kunderna som en kommunklubbs tillfällen faktureras till.",
       "addCustomer": "Lägg till en kund",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Lovkalendrar",
       "subtitle": "Skollov och andra uppehåll som en klubb kan följa. En klubb har inga träffar under ett uppehålls dagar.",
       "addCalendar": "Lägg till en kalender",
       "columns": {
@@ -945,7 +942,6 @@
         }
       },
       "list": {
-        "title": "Klubbar, läger och evenemang",
         "subtitle": "Hantera de klubbar, läger och evenemang som administratörer har skapat.",
         "new": "Nytt {label}",
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
@@ -960,7 +956,9 @@
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
           "startDate": "Startar {date}"
-        }
+        },
+        "newAny": "Ny",
+        "newDialogTitle": "Skapa en klubb, ett läger eller ett evenemang"
       },
       "translations": {
         "label": "Språk",
@@ -1829,7 +1827,6 @@
       "addType": "Lägg till {type}"
     },
     "sites": {
-      "title": "Lokaler",
       "subtitle": "Alla lokaler på plattformen och produkterna som körs i var och en.",
       "addSite": "Lägg till en lokal",
       "searchPlaceholder": "Sök lokal på namn…",
@@ -3103,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedufakturering",
     "adminDescription": "En månad: de tillfällen varje Gedu har registrerat och vad hen fakturerar School of Gaming för dem.",
     "myTitle": "Fakturering",
     "myDescription": "Vad du fakturerar School of Gaming för, en månad i taget. Ett tillfälle räknas med när något har registrerats för det – närvaro, en rapport eller en anteckning.",
@@ -3721,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Instrumentpanel",
     "users": "Användare",
-    "consumerClubs": "Konsumentklubbar",
-    "municipalityClubs": "Kommunklubbar",
-    "municipalityInvoicing": "Kommunfakturering",
-    "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
     "spotlights": "Spotlights",
     "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
-    "geduInvoicing": "Gedufakturering",
-    "camps": "Läger",
-    "events": "Evenemang",
-    "sites": "Lokaler",
     "uiComponents": "UI-komponenter",
     "uiPreviews": "UI-förhandsvisningar",
     "testing": "Testning",
@@ -3741,7 +3729,22 @@
     "collapseSidebar": "Minimera sidopanel",
     "substitutions": "Vikariat",
     "feedback": "Feedback",
-    "holidayCalendars": "Lovkalendrar"
+    "products": "Klubbar, läger och evenemang",
+    "invoicing": "Fakturering"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Klubbar, läger och evenemang",
+      "invoicing": "Fakturering"
+    },
+    "tabs": {
+      "products": "Produkter",
+      "sites": "Lokaler",
+      "holidayCalendars": "Lovkalendrar",
+      "municipalities": "Kommuner",
+      "invoiceCustomers": "Faktureringskunder",
+      "gedus": "Geduer"
+    }
   },
   "home": {
     "hero": {

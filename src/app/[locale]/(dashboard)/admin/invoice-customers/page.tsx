@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import { AdminInvoiceCustomersView } from "@/components/admin/invoice-customers/admin-invoice-customers-view";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -8,5 +9,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function InvoiceCustomersPage() {
-  return <AdminInvoiceCustomersView />;
+  return (
+    <AdminHub hub="invoicing">
+      <AdminInvoiceCustomersView />
+    </AdminHub>
+  );
 }

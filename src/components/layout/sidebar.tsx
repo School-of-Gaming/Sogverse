@@ -9,16 +9,13 @@ import {
   Palette,
   MonitorPlay,
   FlaskConical,
-  Building2,
   BookOpen,
-  CalendarOff,
   ChevronLeft,
   ChevronRight,
-  MapPin,
+  LayoutGrid,
   Megaphone,
   MessageSquareHeart,
   Receipt,
-  ReceiptText,
   Sparkles,
   Spotlight,
   Wrench,
@@ -28,37 +25,27 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
-import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
-import type { ProductType, UserRole } from "@/types";
+import { adminHubPrefixes, isAtOrBeneath } from "@/components/admin/hubs/admin-hubs";
+import type { UserRole } from "@/types";
 import type { StaticAppHref } from "@/lib/constants/routes";
 
 type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "testing"
-  | "tools" | "consumerClubs" | "municipalityClubs" | "municipalityInvoicing"
-  | "invoiceCustomers" | "geduInvoicing" | "libraryContent" | "spotlights" | "landingPages" | "platformVision"
-  | "camps" | "events"
-  | "sites" | "holidayCalendars" | "substitutions" | "feedback";
+  | "tools" | "products" | "invoicing"
+  | "libraryContent" | "spotlights" | "landingPages" | "platformVision"
+  | "substitutions" | "feedback";
 
 interface NavItemDef {
   href: StaticAppHref;
   labelKey: SidebarKey;
   icon: React.ReactNode;
-}
-
-/**
- * The rail's glyph for a product kind, read from the one table that owns it.
- *
- * A kind's glyph is a fact the library's tone grammar decides, not a choice
- * this file makes: the four entries below used to spell their own lucide
- * icons, which agreed with the grammar only by coincidence and drifted the
- * moment the grammar picked a different mark. The rail takes the glyph
- * uninked — the sidebar is chrome and composes from the neutrals, so the
- * family's colour stays with the surfaces that key on it.
- */
-function kindIcon(kind: ProductType) {
-  const Icon = PRODUCT_TYPE_PRESENTATION[kind].icon;
-  return <Icon className="h-5 w-5" />;
+  /**
+   * The paths this entry is lit on, each with every page beneath it. Given, it
+   * replaces matching on the entry's own href; a hub entry takes its list from
+   * the hub definition, which is what keeps it lit on every tab of the hub.
+   */
+  matches?: readonly string[];
 }
 
 // Only admin renders the sidebar (see DashboardRootLayout). Parents, gamers,
@@ -68,27 +55,32 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <House className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
-    // Above the product entries because it is the one page here that is a queue
-    // of work rather than a catalogue: a session with nobody teaching it is
-    // answered today, and the clubs are answered whenever.
+    // Above the catalogue because it is the one page here that is a queue of
+    // work: a session with nobody teaching it is answered today, and the clubs
+    // are answered whenever.
     { href: ROUTES.admin.substitutions, labelKey: "substitutions", icon: <ArrowLeftRight className="h-5 w-5" /> },
     // Beside the queue rather than among the reports: it is the read of how
     // sessions are landing, and a note that needs acting on is today's work too.
     { href: ROUTES.admin.feedback, labelKey: "feedback", icon: <MessageSquareHeart className="h-5 w-5" /> },
-    { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: kindIcon("consumer_club") },
-    { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: kindIcon("municipality_club") },
-    { href: ROUTES.admin.camps, labelKey: "camps", icon: kindIcon("camp") },
-    { href: ROUTES.admin.events, labelKey: "events", icon: kindIcon("event") },
-    { href: ROUTES.admin.sites, labelKey: "sites", icon: <MapPin className="h-5 w-5" /> },
-    // Beside sites, the other reference data clubs are built from: a club
-    // follows calendars the way it meets at a site.
-    { href: ROUTES.admin.holidayCalendars, labelKey: "holidayCalendars", icon: <CalendarOff className="h-5 w-5" /> },
-    { href: ROUTES.admin.geduInvoicing, labelKey: "geduInvoicing", icon: <ReceiptText className="h-5 w-5" /> },
-    { href: ROUTES.admin.municipalityInvoicing, labelKey: "municipalityInvoicing", icon: <Receipt className="h-5 w-5" /> },
-    // Directly under the ledger it serves: a customer is only ever looked up
-    // because an invoice is being raised, and the ledger is where a club with
-    // no customer is reported.
-    { href: ROUTES.admin.invoiceCustomers, labelKey: "invoiceCustomers", icon: <Building2 className="h-5 w-5" /> },
+    // One entry for the whole catalogue: the product list, and the sites and
+    // holiday calendars clubs are built from, as tabs of one hub. It stays lit
+    // on every page beneath a product, so a reader deep in one club still sees
+    // where they are.
+    {
+      href: ROUTES.admin.products,
+      labelKey: "products",
+      icon: <LayoutGrid className="h-5 w-5" />,
+      matches: adminHubPrefixes("products"),
+    },
+    // The month's money in one hub, under the catalogue it bills for: what each
+    // municipality owes, the customers its invoices are addressed to, and what
+    // each gedu invoices us for.
+    {
+      href: ROUTES.admin.municipalityInvoicing,
+      labelKey: "invoicing",
+      icon: <Receipt className="h-5 w-5" />,
+      matches: adminHubPrefixes("invoicing"),
+    },
     { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
     { href: ROUTES.admin.spotlights, labelKey: "spotlights", icon: <Spotlight className="h-5 w-5" /> },
     { href: ROUTES.admin.landingPages, labelKey: "landingPages", icon: <Megaphone className="h-5 w-5" /> },
@@ -151,8 +143,9 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 overflow-hidden p-4">
         {navItems.map((item) => {
           const label = t(item.labelKey);
-          const isActive =
-            pathname === item.href ||
+          const isActive = item.matches
+            ? item.matches.some((prefix) => isAtOrBeneath(pathname, prefix))
+            : pathname === item.href ||
             (item.href !== ROUTES.admin.dashboard &&
               item.href !== ROUTES.customer.dashboard &&
               item.href !== ROUTES.gamer.dashboard &&

@@ -122,15 +122,11 @@ export function AdminSitesPage() {
   const settled = searching ? !search.isPending : !listing.isPending;
 
   return (
-    // The listing can shrink back above the fold as a search narrows it, so the
-    // document scrollbar's gutter is reserved rather than left to appear and
-    // shift the page sideways.
-    <div className="mx-auto max-w-6xl space-y-6" data-reserve-scroll-gutter>
+    // The listing can shrink back above the fold as a search narrows it; the
+    // hub this page renders in reserves the document scrollbar's gutter.
+    <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
         <Button
           type="button"
           className="gap-1.5"

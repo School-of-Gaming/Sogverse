@@ -56,12 +56,9 @@ export function AdminHolidayCalendarsPage({
   const locale = resolveLocale(useLocale());
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
-        </div>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
         <Link
           href={ROUTES.admin.holidayCalendarNew}
           className={buttonVariants({ className: "gap-1.5" })}

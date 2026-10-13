@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Facturation municipale",
       "description": "Un mois de clubs municipaux : ce que chacun a assuré, et ce que la commune doit pour cela.",
       "previousMonth": "Mois précédent",
       "nextMonth": "Mois suivant",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
     },
     "invoiceCustomers": {
-      "title": "Clients de facturation",
       "subtitle": "Les clients Fennoa à qui les séances d’un club municipal sont facturées.",
       "addCustomer": "Ajouter un client",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Calendriers de vacances",
       "subtitle": "Les vacances scolaires et autres pauses qu’un club peut suivre. Un club n’a aucune séance pendant les jours d’une pause.",
       "addCalendar": "Ajouter un calendrier",
       "columns": {
@@ -945,7 +942,6 @@
         }
       },
       "list": {
-        "title": "Clubs, stages et événements",
         "subtitle": "Gérez les clubs, stages et événements créés par les administrateurs.",
         "new": "Ajouter un {label}",
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
@@ -960,7 +956,9 @@
         "pendingHint": {
           "registrationOpens": "Ouverture des inscriptions le {date}",
           "startDate": "Début le {date}"
-        }
+        },
+        "newAny": "Ajouter",
+        "newDialogTitle": "Créer un club, un stage ou un événement"
       },
       "translations": {
         "label": "Langues",
@@ -1829,7 +1827,6 @@
       "addType": "Ajouter {type}"
     },
     "sites": {
-      "title": "Sites",
       "subtitle": "Tous les sites de la plateforme et les produits qui s’y déroulent.",
       "addSite": "Ajouter un site",
       "searchPlaceholder": "Rechercher un site par son nom…",
@@ -3103,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Facturation des Gedus",
     "adminDescription": "Un mois : les séances enregistrées par chaque Gedu, et le montant facturé à School of Gaming pour celles-ci.",
     "myTitle": "Facturation",
     "myDescription": "Ce que vous facturez à School of Gaming, mois par mois. Une séance est comptée dès que quelque chose est enregistré pour elle : présences, compte rendu ou note.",
@@ -3721,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Tableau de bord",
     "users": "Utilisateurs",
-    "consumerClubs": "Clubs grand public",
-    "municipalityClubs": "Clubs municipaux",
-    "municipalityInvoicing": "Facturation municipale",
-    "invoiceCustomers": "Clients de facturation",
     "libraryContent": "Contenu de la Bibliothèque",
     "spotlights": "Mises en avant",
     "landingPages": "Pages d’atterrissage",
     "platformVision": "Vision de la plateforme",
-    "geduInvoicing": "Facturation des Gedus",
-    "camps": "Stages",
-    "events": "Événements",
-    "sites": "Sites",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "testing": "Tests",
@@ -3741,7 +3729,22 @@
     "collapseSidebar": "Replier la barre latérale",
     "substitutions": "Remplacements",
     "feedback": "Avis",
-    "holidayCalendars": "Calendriers de vacances"
+    "products": "Clubs, stages et événements",
+    "invoicing": "Facturation"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Clubs, stages et événements",
+      "invoicing": "Facturation"
+    },
+    "tabs": {
+      "products": "Produits",
+      "sites": "Sites",
+      "holidayCalendars": "Calendriers de vacances",
+      "municipalities": "Municipalités",
+      "invoiceCustomers": "Clients de facturation",
+      "gedus": "Gedus"
+    }
   },
   "home": {
     "hero": {
