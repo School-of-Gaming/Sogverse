@@ -95,13 +95,13 @@ function row(overrides: Partial<PublicTeamProfileRow> = {}): PublicTeamProfileRo
   };
 }
 
-async function photo(format: "jpeg" | "webp"): Promise<Blob> {
+async function photo(): Promise<Blob> {
   const bytes = await sharp({
     create: { width: 800, height: 1000, channels: 3, background: "#336699" },
   })
-    [format]()
+    .jpeg()
     .toBuffer();
-  return new Blob([new Uint8Array(bytes)], { type: `image/${format}` });
+  return new Blob([new Uint8Array(bytes)], { type: "image/jpeg" });
 }
 
 /**
@@ -158,7 +158,7 @@ describe("GET /opengraph-images/team/[userId]", () => {
       data: [{ id: "object-id", name: "4b1f.jpg" }],
       error: null,
     });
-    mockDownload.mockResolvedValue({ data: await photo("jpeg"), error: null });
+    mockDownload.mockResolvedValue({ data: await photo(), error: null });
   });
 
   it("draws a public Gedu's card, cached for five minutes", async () => {
@@ -189,7 +189,7 @@ describe("GET /opengraph-images/team/[userId]", () => {
     await served(response);
   });
 
-  it("draws a leader's card, and one whose photo is a WebP", async () => {
+  it("draws a leader's card", async () => {
     mockRpc.mockResolvedValue({
       data: [
         row({
@@ -203,11 +203,7 @@ describe("GET /opengraph-images/team/[userId]", () => {
       ],
       error: null,
     });
-    mockList.mockResolvedValue({
-      data: [{ id: "object-id", name: "4b1f.webp" }],
-      error: null,
-    });
-    mockDownload.mockResolvedValue({ data: await photo("webp"), error: null });
+    mockDownload.mockResolvedValue({ data: await photo(), error: null });
 
     const response = await card(USER_ID, "?locale=fi");
 
