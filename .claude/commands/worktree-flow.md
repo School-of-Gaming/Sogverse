@@ -134,11 +134,9 @@ Before reporting any piece of work complete:
   the script also checks the workspace packages, which a bare `tsc` silently
   skips.
 - Unit tests with `npx vitest run <file>`. Never `npm run test -- --run`.
-- DB tests, when the change touches the database, with `npm run test:db:local`
-  against this worktree's own stack built by `npm run db -- up --no-rich-seed`
-  (`tests/CLAUDE.md`). It refuses a rich stack, so a stack Phase 3 brought up
-  for previewing cannot serve it. CI runs the suite on every push and remains
-  the authority.
+- DB tests, when the change touches the database, with `npm run test:db:local`,
+  which builds and removes a database of its own (`tests/CLAUDE.md`). CI runs the
+  suite on every push and remains the authority.
 
 Commit as the work reaches coherent points rather than in one lump at the end.
 Multiline commit messages go through the Bash tool with a heredoc and
@@ -168,17 +166,9 @@ app reads, nothing else — so the server has to start after it, and a server al
 running has to be restarted to see it. A schema change with nothing to look at gets
 no stack: `npm run db -- generate` is all that kind of branch needs.
 
-**A preview always runs on a rich stack, never on the DB tests' `--no-rich-seed` one.**
-Phase 2's DB tests usually leave exactly that stack running, and `up` on a running
-stack changes nothing and keeps its remembered seed — so it reports success and the
-user then cannot sign in with any account below. When `npm run db -- list` shows this
-checkout's stack built `--no-rich-seed`, run `npm run db -- down` and then
-`npm run db -- up` before starting the server. The DB tests rebuild their own stack
-if they have to run again.
-
 - **Sign in as the rich seed's accounts.** `up` builds the stack on
   `supabase/rich-seed.sql` alone — `seed.sql` is the DB tests' fixture set and never
-  runs on a rich stack — and that file's header lists the educators, parents and
+  runs on a stack — and that file's header lists the educators, parents and
   children it creates. Sign in as `admin@example.com`, `parent@example.com` (PIN 1111)
   or `gedu@example.com`, password `password`; every other seeded account is on
   `testpassword123`. A trimmed stack runs no mail catcher, so nothing emailed — a magic

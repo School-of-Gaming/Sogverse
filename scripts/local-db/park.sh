@@ -27,13 +27,13 @@ state=$(stack_state_dir "$project")
 work=$(shadow_workdir "$project")
 
 if [ ! -f "$state/meta" ]; then
-  echo "This checkout has no stack. Nothing to park."
+  say "This checkout has no stack. Nothing to park."
   report_running
   exit 0
 fi
 
 if ! stack_is_running "$project"; then
-  echo "Already parked."
+  say "Already parked."
   report_running
   exit 0
 fi
@@ -41,9 +41,10 @@ fi
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
 
+step "Stopping the stack"
 "$cli" stop --workdir "$work" --yes
 
-echo "Parked. The data is kept; \`npm run db -- up\` brings it back in about half a minute."
-echo ".env.local still points at this stack."
+say "Parked, data kept; \`npm run db -- up\` brings it back in about half a minute."
+say ".env.local still points at this stack."
 
 report_running

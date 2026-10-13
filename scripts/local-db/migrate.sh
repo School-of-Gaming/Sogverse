@@ -40,9 +40,10 @@ fi
 ensure_cli "$cli_version"
 cli=$(cli_bin "$cli_version")
 
+step "Applying pending migrations"
 "$cli" migration up --workdir "$work" --local --include-all --yes
 
-echo "Pending migrations applied. The data is unchanged; run \`npm run db -- reset\` instead if a"
-echo "migration was EDITED rather than added, or if a merge from dev brought migrations with it."
+say "Pending migrations applied; the data is unchanged. \`npm run db -- reset\` instead if a"
+say "migration was EDITED rather than added, or if a merge from dev brought migrations with it."
 
 report_running

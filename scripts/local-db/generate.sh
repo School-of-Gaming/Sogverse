@@ -7,6 +7,9 @@
 #   generate.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # Arguments are bare words on purpose; see lib.sh for what the boundary mangles.
+# The id is `generate`'s own, distinct from the checkout's stack's, and the
+# database is a throwaway one on a port block claimed only while this runs —
+# lib.sh, `transient_db`.
 #
 # Both outputs are produced into the shadow workdir first and copied into the
 # checkout only once both have succeeded, so a run that fails part-way never
@@ -20,72 +23,19 @@ project=$2
 candidate_blocks=$3
 cli_version=$4
 
-# The id arriving here is `generate`'s own, distinct from the one this
-# checkout's long-lived stack uses — the Node side derives both. It has to be
-# that way: this script clears the slate by removing the database under its
-# project id before it starts, so sharing an id with a running stack would
-# quietly destroy it and its data. Refusing to run while a stack is up would
-# also have been safe, but generating types is exactly what you do just after
-# adding a migration, which is exactly when a stack is up.
-#
-# Its ports are a block of its own, taken through the same allocator as a
-# stack's and under the same lock, and claimed only while this script runs: a
-# block lent out of the checkout's stack would leave a `generate` with no stack
-# to borrow from needing the allocator anyway, so there is one scheme, not two.
-# The claim is a file under GENERATE_DIR rather than a stack record, so `list`
-# never shows it. The cleanup below removes it however the run ends short of
-# SIGKILL; a claim a killed run left behind belongs to this identity, so the
-# next run takes it over as it is rather than taking a second block.
-take_lock "$project"
-
-claim="$GENERATE_DIR/$project"
-
 # Where the new schema directory waits to be swapped in. It sits beside its
 # target rather than in the distro so the swap is a rename on one filesystem,
-# and the cleanup trap below removes it however the run ends, so a failure
-# leaves nothing untracked in the checkout.
+# and the cleanup removes it however the run ends, so a failure leaves nothing
+# untracked in the checkout.
 staged="$checkout/supabase/.schema.new"
-
-ensure_cli "$cli_version"
-cli=$(cli_bin "$cli_version")
-work=$(shadow_workdir "$project")
-
-# The database is removed whatever happens, including a failure part-way
-# through the start, so a crashed run never leaves a container behind holding
-# its ports — and the port claim goes only after the container that used it.
-cleanup() {
-  status=$?
-  stop_stack "$cli" "$work" "$project"
-  rm -rf "$work" "$staged" "$claim"
-  exit "$status"
-}
-trap cleanup EXIT INT TERM
-
-if [ -f "$claim" ]; then
-  port_base=$(record_port_base "$claim")
-else
-  port_base=$(allocate_block "$claim" "$candidate_blocks")
-fi
-echo "Ports $port_base-$((port_base + 99)), until this run ends"
-work=$(build_shadow "$checkout" "$project" "$port_base" false)
-
-# The slate is cleared first, every run, whether or not anything is there. A run
-# killed without its trap — SIGKILL, a reboot, Docker restarting under it —
-# leaves this checkout's container behind with its volume, and `supabase start`
-# reuses an existing container rather than building a new one. Migrations apply
-# when the database is created, not when it is restarted, so the reused
-# container would hand back the PREVIOUS run's schema: generated files
-# describing migrations that are no longer the ones on disk, with a zero exit.
-stop_stack "$cli" "$work" "$project"
+transient_paths=$staged
 
 # Database container only. The names below are the ones the CLI's own warning
 # prints — its help text lists a different set, and an invalid name is ignored
 # with a warning rather than an error, so the service would quietly start
 # anyway. This is every valid name except `db`.
-"$cli" start --workdir "$work" -x \
+transient_db "$checkout" "$project" "$candidate_blocks" "$cli_version" false \
   edge-runtime,gotrue,imgproxy,kong,logflare,mailpit,postgres-meta,postgrest,realtime,storage-api,studio,supavisor,vector
-
-db_port=$(shadow_db_port "$work")
 
 # Pointed at the database URL, not `--local`: the `--local` form fails with a
 # password authentication error against a database that accepts the same
@@ -99,9 +49,10 @@ db_port=$(shadow_db_port "$work")
 # so no Windows shell text handling ever touches it. The same holds for the
 # schema directory below: both generated artifacts are written by Linux tools
 # and only ever copied, never piped through a Windows shell.
+step "Generating database.types.ts"
 "$cli" gen types typescript \
   --db-url "postgresql://postgres:postgres@127.0.0.1:$db_port/postgres" \
-  --schema public > "$work/database.types.ts"
+  --schema public > "$work/database.types.ts" < /dev/null
 
 if [ ! -s "$work/database.types.ts" ]; then
   echo "Type generation produced an empty file; leaving the committed one alone." >&2
@@ -117,6 +68,7 @@ fi
 # `set -o pipefail` is on from the top of this file, which this pipeline needs:
 # without it the status would be grep's, and a pg_dump that died mid-stream
 # would still "succeed" so long as one line reached the filter.
+step "Dumping the schema into supabase/schema/"
 docker exec "supabase_db_$project" pg_dump -U postgres -d postgres \
   --schema=public --schema-only --no-owner \
   | grep -vE '^[\](un)?restrict ' > "$work/schema.sql"
@@ -146,6 +98,6 @@ cp -r "$work/schema" "$staged"
 rm -rf "$checkout/supabase/schema"
 mv "$staged" "$checkout/supabase/schema"
 
-echo "Wrote src/types/database.types.ts and supabase/schema/ from a database built off $(ls "$checkout/supabase/migrations" | wc -l) migrations."
+say "Wrote src/types/database.types.ts and supabase/schema/ from $(ls "$checkout/supabase/migrations" | wc -l) migrations."
 
 report_running

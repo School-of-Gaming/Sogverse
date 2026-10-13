@@ -197,8 +197,8 @@ work under `tests/`). Two things worth knowing from anywhere:
 
 - **`npm run test` runs `unit/` + `integration/`** (node by default, jsdom for `.tsx`
   component tests — see `tests/CLAUDE.md`). DB tests need a real Postgres: CI is the
-  authority on every push, and `npm run test:db:local` runs them against this
-  checkout's `--no-rich-seed` stack (`tests/CLAUDE.md` has the details).
+  authority on every push, and `npm run test:db:local` runs them against a throwaway
+  database it builds and removes itself (`tests/CLAUDE.md` has the details).
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
 - **`smoke/` is the only CI job that builds the app**, and it asserts security headers

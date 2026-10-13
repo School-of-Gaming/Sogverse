@@ -4,9 +4,6 @@
  *
  *   npm run db -- up          # build/resume this checkout's Supabase stack and
  *                             # point its dev server at it
- *   npm run db -- up --no-rich-seed
- *                             # ...on seed.sql alone, with no rich catalogue
- *                             # and no product images
  *   npm run db -- migrate     # apply new migration files to the running stack
  *   npm run db -- reset       # rebuild the running stack's database in place
  *   npm run db -- park        # stop the stack, keeping its data
@@ -15,6 +12,9 @@
  *   npm run db -- generate    # build a throwaway DB from migrations/, regenerate
  *                             # src/types/database.types.ts and
  *                             # supabase/schema/, remove the DB
+ *   npm run test:db:local [-- <vitest args>]
+ *                             # (`npm run db -- test`) run tests/db/ against a
+ *                             # throwaway DB of migrations/ + seed.sql, remove it
  *
  * The database runs in the WSL distro, because that is where Docker lives on
  * this machine. **This script is the only thing that knows that.** Every
@@ -23,20 +23,26 @@
  * only this file changes.
  *
  * What lives here is the boundary and nothing else: locating the checkout,
- * reading the CLI pin, translating a Windows path, deriving the stack's
- * identity, probing which port blocks Windows can bind, holding the distro
- * keep-alive, and keeping the noise WSL writes to stderr out of the output. The
+ * reading the CLI pin, translating a Windows path, deriving the identities,
+ * probing which port blocks Windows can bind, holding the distro keep-alive,
+ * running vitest for `test`, and deciding what of a run the reader sees. The
  * real work is the shell files in scripts/local-db/, run as files inside the
  * distro — crossing the boundary mangles `~`, rooted Linux paths, inline
  * environment assignments and anything with `$` or nested quotes, so only bare
  * words are passed across.
  *
+ * A run is quiet. Everything the distro side prints goes to a log under
+ * scripts/output/local-db/, and the reader sees only the lines it marks for
+ * them — on success, a few lines; on failure, the step it failed at, the end of
+ * the log, and the log's path. Every reader of this output is paying for it,
+ * Claude sessions included, so a line belongs on screen only if they act on it.
+ *
  * Nothing it builds touches the repo: the CLI, the shadow workdirs, the stacks'
  * state and the generation output all live in the distro's own filesystem. The
  * only things written on the Windows side are the generated files themselves —
  * database.types.ts and supabase/schema/ — written from inside the distro so no
- * Windows shell text handling ever sees them, and this checkout's own
- * .env.local, which `up` repoints and `down` puts back.
+ * Windows shell text handling ever sees them, this checkout's own .env.local,
+ * which `up` repoints and `down` puts back, and the logs.
  *
  * **Never restart WSL to fix a failure here.** The distro is shared with other
  * long-running work that a shutdown destroys. Restart the Docker service or
@@ -45,32 +51,35 @@
  */
 
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, writeFileSync, writeSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { stackIdentity } from './lib/local-db-identity.mjs';
 import { bindableBlocks } from './lib/local-db-ports.mjs';
+import { outputDir } from './lib/output.mjs';
 
 const DISTRO = 'Ubuntu-24.04';
 
 /**
  * Lines WSL and the CLI write to stderr on every run and that say nothing
- * about this run. The screen-size warning is emitted by the distro's init for
- * any invocation from a Windows shell; the CLI's upgrade notice is advice we
- * deliberately do not take, since the version is pinned in package.json and CI
- * pins the same one.
+ * about this run, kept even out of the log. The screen-size warning is emitted
+ * by the distro's init for any invocation from a Windows shell; the CLI's
+ * upgrade notice is advice we deliberately do not take, since the version is
+ * pinned in package.json and CI pins the same one.
  */
 const NOISE = [/screen size is bogus/i, /A new version of Supabase CLI is available/i];
 
 /**
- * The prefix a shell file uses for a line meant for this script rather than for
- * the reader. There are three such lines: `started`, written when lib.sh is
- * sourced, which is the only proof that bash inside the distro ever ran our
- * file; `running=<n>`, which the keep-alive below is decided on; and
- * `api_url=<url>`, the URL `up` left the stack at, which the Google report
- * asks.
+ * The prefix a shell file uses for a line meant for this script rather than
+ * printed as it is. `started` is written when lib.sh is sourced, which is the
+ * only proof that bash inside the distro ever ran our file; `say <text>` is a
+ * line for the reader and `step <text>` the step a command is on (lib.sh);
+ * `ready` is the `test` database saying the tests may start; and `<key>=<value>`
+ * hands back a value: `running` (the keep-alive is decided on it), `api_url`,
+ * and the `test` database's keys.
  */
 const SENTINEL = '::localdb ';
 
@@ -92,20 +101,24 @@ const SENTINEL = '::localdb ';
  */
 const COULD_NOT_RUN = 2;
 
+/** How much of the log a failure shows, and how many logs of one command are kept. */
+const FAILURE_TAIL_LINES = 20;
+const LOGS_KEPT_PER_COMMAND = 5;
+
 /**
- * The command surface. `summary` is the usage text; `flags` is the whole set of
- * words a command accepts after its name, and anything else is refused here
- * rather than passed into the distro to be ignored; a command with
- * `ownsGenerateId` runs against the second identity described under
- * `projectId` rather than the stack's; a command with `allocatesPorts` may have
- * to take a port block, so it is handed the blocks Windows can bind; a command
- * with `createsServices` may have the CLI create the stack's containers, which
- * is when the Google provider's settings (below) are read, so it is the one
- * handed them.
+ * The command surface. `summary` is the usage text. A command with `identity`
+ * runs against one of the checkout's throwaway identities rather than its
+ * stack's (lib/local-db-identity.mjs); with `allocatesPorts` it may have to take
+ * a port block, so it is handed the blocks Windows can bind; with
+ * `createsServices` the CLI may create the stack's containers, which is when the
+ * Google provider's settings (below) are read, so it is the one handed them;
+ * with `passThrough` every word after its name is vitest's, and every other
+ * command refuses any word after its name rather than passing it into the
+ * distro to be ignored. `list` alone prints what its shell file prints, since a
+ * listing is all it is for.
  */
 const COMMANDS = {
   up: {
-    flags: ['--no-rich-seed'],
     allocatesPorts: true,
     createsServices: true,
     summary: [
@@ -113,9 +126,6 @@ const COMMANDS = {
       'supabase/rich-seed.sql and its product images, and point this',
       'checkout\'s .env.local at it. Resumes a parked stack without replaying',
       'anything. Already running: prints the URL and changes nothing.',
-      '--no-rich-seed builds it from seed.sql alone, with no rich catalogue',
-      'and no images — what the DB tests are written against. The choice is',
-      'remembered, so a later `up` or `reset` of that stack keeps it.',
     ],
   },
   migrate: {
@@ -130,8 +140,8 @@ const COMMANDS = {
     createsServices: true,
     summary: [
       'Rebuild the running stack\'s database in place from migrations/ and',
-      'whichever seeds it was built with (about a minute). This is what an',
-      'EDITED migration needs. Other stacks are untouched.',
+      'the rich seed (about a minute). This is what an EDITED migration',
+      'needs. Other stacks are untouched.',
     ],
   },
   park: {
@@ -148,18 +158,29 @@ const COMMANDS = {
     ],
   },
   list: {
+    verbatim: true,
     summary: [
       'Every stack on this machine, running or parked, with its worktree,',
       'memory and API port — and a flag on any whose worktree is gone.',
     ],
   },
   generate: {
-    ownsGenerateId: true,
+    identity: 'generateId',
     allocatesPorts: true,
     summary: [
       'Start a throwaway database from supabase/migrations/, write',
       'src/types/database.types.ts and supabase/schema/ from it, remove the',
       'database. Runs beside this checkout\'s stack, not instead of it.',
+    ],
+  },
+  test: {
+    identity: 'testId',
+    allocatesPorts: true,
+    passThrough: true,
+    summary: [
+      '`npm run test:db:local`. Start a throwaway database from migrations/',
+      'and supabase/seed.sql, run tests/db/ against it (any further words go',
+      'to vitest), remove the database. Runs beside this checkout\'s stack.',
     ],
   },
 };
@@ -170,7 +191,7 @@ const scriptsDir = path.dirname(fileURLToPath(import.meta.url));
 const checkout = path.dirname(scriptsDir);
 
 const fail = (message, code = 1) => {
-  console.error(message);
+  if (message !== '') console.error(message);
   process.exit(code);
 };
 
@@ -196,9 +217,9 @@ if (!cliVersion || !/^\d+\.\d+\.\d+$/.test(cliVersion)) {
 }
 
 /**
- * The stack's identity, derived from the checkout path so that it is the same
- * on every run of the same checkout and different for every other one. The
- * containers and volumes are named by it, which is what makes a crashed run's
+ * The identities, derived from the checkout path so that each is the same on
+ * every run of the same checkout and different for every other one. The
+ * containers and volumes are named by them, which is what makes a crashed run's
  * leftovers findable: the next run of *this* checkout looks under its own id and
  * removes them, where a name nobody can work out again would leave an orphan.
  *
@@ -213,29 +234,23 @@ if (!cliVersion || !/^\d+\.\d+\.\d+$/.test(cliVersion)) {
  * inside Windows' dynamic ports (49152-65535) Hyper-V reserves blocks of its
  * own choosing at every boot. A reserved port cannot be bound, so WSL's
  * localhost forwarder cannot publish it and the stack is unreachable from
- * Windows while healthy inside the distro. 20000-23999 is below that range and below Linux's ephemeral one
- * (32768-60999), and the bind probe at allocation catches whatever else holds a
- * port there. The probe has to run here, on Windows; the choice is made inside
- * the distro, under a lock every checkout shares, because that is where the
- * records are — lib.sh, `allocate_block`.
+ * Windows while healthy inside the distro. 20000-23999 is below that range and
+ * below Linux's ephemeral one (32768-60999), and the bind probe at allocation
+ * catches whatever else holds a port there. The probe has to run here, on
+ * Windows; the choice is made inside the distro, under a lock every checkout
+ * shares, because that is where the records are — lib.sh, `allocate_block`.
  *
- * A checkout has TWO identities, because `generate` and a long-lived stack have
- * to coexist: generating types is what you do just after adding a migration,
- * which is exactly when the stack is up, and `generate` clears the slate by
- * removing whatever holds its project id before it starts — so sharing an id
- * would silently destroy the stack and its data. The alternative, refusing to
- * generate while a stack runs, is safe but hostile at the one moment it fires.
- * `generate` takes a block of its own through the same allocator, held only
- * while it runs — generate.sh says why.
+ * `generate` and `test` each build a throwaway database under an identity of
+ * their own, on a block claimed only while they run — lib.sh, `transient_db`.
  */
-const { projectId } = stackIdentity(checkout, checkoutWsl);
+const identities = stackIdentity(checkout, checkoutWsl);
 
 const command = process.argv[2];
 if (!command || !Object.hasOwn(COMMANDS, command)) {
   const names = Object.keys(COMMANDS);
   const width = Math.max(...names.map((name) => name.length));
   fail(
-    `Usage: npm run db -- <${names.join('|')}> [flags]\n\n` +
+    `Usage: npm run db -- <${names.join('|')}>\n\n` +
       names
         .map((name) =>
           COMMANDS[name].summary
@@ -247,51 +262,39 @@ if (!command || !Object.hasOwn(COMMANDS, command)) {
 }
 
 const spec = COMMANDS[command];
-const runProjectId = spec.ownsGenerateId ? `${projectId}-gen` : projectId;
+const runProjectId = identities[spec.identity ?? 'projectId'];
 
-/**
- * The flags this command was given, checked here so a typo is a refusal rather
- * than a word the shell file silently ignores — a mistyped `--no-rich-seed` is
- * a stack built with data the caller did not want. Deduplicated, so the shell
- * file reads one optional argument and never has to count.
- */
-const flags = [...new Set(process.argv.slice(3))];
-const allowedFlags = spec.flags ?? [];
-const unknownFlags = flags.filter((flag) => !allowedFlags.includes(flag));
-if (unknownFlags.length > 0) {
-  fail(
-    allowedFlags.length > 0
-      ? `${command} takes ${allowedFlags.join(', ')}; it was given ${unknownFlags.join(' ')}.`
-      : `${command} takes no flags; it was given ${unknownFlags.join(' ')}.`,
-  );
+const extraArgs = process.argv.slice(3);
+if (!spec.passThrough && extraArgs.length > 0) {
+  fail(`${command} takes no flags; it was given ${extraArgs.join(' ')}.`);
 }
 
 /**
- * A stream of a child's output, forwarded line by line with the noise dropped
- * and the sentinel lines pulled out.
- *
- * Both streams are piped rather than inherited, because filtering is the whole
- * point — and the CLI rewrites its progress in place with carriage returns, so
- * a plain `\n` split leaves half-overwritten lines in a captured log. Splitting
- * on either makes each update its own line.
+ * The run's log: scripts/output/local-db/<command>-<time>.log, written as the
+ * run goes so that a run killed part-way still leaves what it had done. Only
+ * the newest few of each command are kept — a log is read the moment its run
+ * fails or not at all.
  */
-const lineFilter = (sink, onSentinel) => {
-  let pending = '';
-  const emit = (line) => {
-    if (line.startsWith(SENTINEL)) {
-      onSentinel(line.slice(SENTINEL.length).trim());
-      return;
-    }
-    if (line.trim() !== '' && !NOISE.some((pattern) => pattern.test(line))) sink.write(`${line}\n`);
+const openLog = () => {
+  if (spec.verbatim) return null;
+  const dir = outputDir(import.meta.url);
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const file = path.join(dir, `${command}-${stamp}.log`);
+  const fd = openSync(file, 'w');
+  const lines = [];
+  const write = (line) => {
+    lines.push(line);
+    writeSync(fd, `${line}\n`);
   };
-  return {
-    push: (chunk) => {
-      const lines = (pending + chunk).split(/\r\n|\r|\n/);
-      pending = lines.pop() ?? '';
-      lines.forEach(emit);
-    },
-    flush: () => emit(pending),
-  };
+  write(`${command}: ${runProjectId} (Supabase CLI ${cliVersion}), ${new Date().toISOString()}`);
+
+  const older = readdirSync(dir)
+    .filter((name) => name.startsWith(`${command}-`) && name.endsWith('.log'))
+    .sort()
+    .slice(0, -LOGS_KEPT_PER_COMMAND);
+  for (const name of older) rmSync(path.join(dir, name), { force: true });
+
+  return { file, lines, write, close: () => closeSync(fd) };
 };
 
 /**
@@ -433,102 +436,120 @@ const distroEnv = () => {
   };
 };
 
-/** Run one of the shell files inside the distro. */
-const runInDistro = (shellFile, args) =>
+/**
+ * Run one of the shell files inside the distro.
+ *
+ * Both streams are piped rather than inherited, because sorting the lines is
+ * the whole point — and the CLI rewrites its progress in place with carriage
+ * returns, so a plain `\n` split leaves half-overwritten lines in a captured
+ * log. Splitting on either makes each update its own line.
+ *
+ * `onReady` is called, with the child, when the shell file says `ready`; only
+ * `test`'s does, and it is the one run whose stdin is a pipe, which is how it
+ * is told the tests are done.
+ */
+const runInDistro = ({ shellFile, args, log, onReady }) =>
   new Promise((resolve) => {
-    let running = null;
     let started = false;
-    let apiUrl = null;
+    let step = null;
+    const said = [];
+    const values = {};
 
     const child = spawn(
       'wsl.exe',
       ['-d', DISTRO, '--', 'bash', `${checkoutWsl}/scripts/local-db/${shellFile}`, ...args],
-      { stdio: ['ignore', 'pipe', 'pipe'], env: distroEnv() },
+      { stdio: [onReady ? 'pipe' : 'ignore', 'pipe', 'pipe'], env: distroEnv() },
     );
 
-    const onSentinel = (line) => {
-      if (line === 'started') {
+    const onSentinel = (rest) => {
+      if (rest === 'started') {
         started = true;
-        return;
+      } else if (rest === 'ready') {
+        onReady?.(child, values);
+      } else if (rest.startsWith('say ')) {
+        said.push(rest.slice('say '.length));
+        log?.write(rest.slice('say '.length));
+      } else if (rest.startsWith('step ')) {
+        step = rest.slice('step '.length);
+        log?.write(`== ${step}`);
+      } else {
+        const match = /^([a-z_]+)=(.*)$/.exec(rest);
+        if (match) values[match[1]] = match[2];
       }
-      const match = /^running=(\d+)$/.exec(line);
-      if (match) running = Number(match[1]);
-      const url = /^api_url=(\S+)$/.exec(line);
-      if (url) apiUrl = url[1];
+    };
+
+    const lineSorter = (sink) => {
+      let pending = '';
+      const emit = (line) => {
+        if (line.startsWith(SENTINEL)) {
+          onSentinel(line.slice(SENTINEL.length).trimEnd());
+          return;
+        }
+        if (line.trim() === '' || NOISE.some((pattern) => pattern.test(line))) return;
+        if (log) log.write(line);
+        else sink.write(`${line}\n`);
+      };
+      return {
+        push: (chunk) => {
+          const lines = (pending + chunk).split(/\r\n|\r|\n/);
+          pending = lines.pop() ?? '';
+          lines.forEach(emit);
+        },
+        flush: () => emit(pending),
+      };
     };
 
     const streams = [
-      [child.stdout, lineFilter(process.stdout, onSentinel)],
-      [child.stderr, lineFilter(process.stderr, onSentinel)],
+      [child.stdout, lineSorter(process.stdout)],
+      [child.stderr, lineSorter(process.stderr)],
     ];
-    for (const [source, filter] of streams) {
+    for (const [source, sorter] of streams) {
       source.setEncoding('utf8');
-      source.on('data', (chunk) => filter.push(chunk));
+      source.on('data', (chunk) => sorter.push(chunk));
     }
+    // A shell file that has already gone makes a late write to its stdin fail;
+    // that is the shell file's exit, which `close` below reports.
+    child.stdin?.on('error', () => {});
 
     child.on('error', () =>
       resolve({
         code: COULD_NOT_RUN,
         message: `Could not run wsl.exe. Is the ${DISTRO} distro installed?`,
         started: false,
+        step,
+        said,
+        values,
       }),
     );
     child.on('close', (code) => {
-      for (const [, filter] of streams) filter.flush();
-      resolve({ code: code ?? 1, running, started, apiUrl });
+      for (const [, sorter] of streams) sorter.flush();
+      resolve({ code: code ?? 1, started, step, said, values });
     });
   });
 
-const startedAt = Date.now();
-if (command !== 'list') {
-  console.log(`${command}: ${runProjectId} (Supabase CLI ${cliVersion})`);
-}
-
-/**
- * The blocks Windows can bind, as one bare word — `-` when there are none, or
- * when the command never allocates. Probed on every run of a command that may
- * allocate, because only the distro knows whether this one will: a stack that
- * already has a record ignores the list.
- */
-const candidateBlocks = spec.allocatesPorts ? (await bindableBlocks()).join(',') || '-' : '-';
-
-const { code, message, running, started, apiUrl } = await runInDistro(`${command}.sh`, [
-  checkoutWsl,
-  runProjectId,
-  candidateBlocks,
-  cliVersion,
-  ...flags,
-]);
-const seconds = ((Date.now() - startedAt) / 1000).toFixed(0);
-
-// Whatever the command did, the answer to "is anything of ours running" decides
-// whether the distro is held open. A run that failed before it could say leaves
-// the keep-alive as it found it.
-if (running !== null && running !== undefined) {
-  if (running > 0) holdKeepAlive();
-  else releaseKeepAlive();
-}
-
-if (code !== 0) {
-  // Either the shell file never started, or it started and exited with the
-  // status reserved for "could not run". Anything else is an outcome.
-  const exitCode = !started || code === COULD_NOT_RUN ? COULD_NOT_RUN : 1;
-  fail(
-    message ??
-      `${command} failed after ${seconds}s.\n\n` +
-        `If Docker itself is wedged, restart the Docker service inside the distro —\n` +
-        `never restart WSL, which would kill whatever else is running in there:\n` +
+/** A failed run, told the reader: where it stopped, the end of its log, and where the log is. */
+const reportFailure = (log, result, seconds, what = `${command} failed`) => {
+  console.error(`${what}${result.step ? ` at: ${result.step}` : ''} (after ${seconds}s).`);
+  if (log !== null) {
+    const tail = log.lines.slice(1).slice(-FAILURE_TAIL_LINES);
+    if (tail.length > 0) console.error(`\n${tail.map((line) => `  ${line}`).join('\n')}\n`);
+    console.error(`Full log: ${log.file}`);
+  }
+  if (result.step) {
+    console.error(
+      `If Docker itself is wedged, restart it — never WSL, which kills whatever else runs there:\n` +
         `  wsl -d ${DISTRO} -u root -- systemctl restart docker`,
-    exitCode,
-  );
-}
+    );
+  }
+};
+
 /**
  * Whether Google is on, asked of the running stack rather than inferred from
  * .env.local: a stack that was already up kept the settings it started with.
  * The URL is the one `up` reported from the stack's record.
  */
-const reportGoogle = async () => {
-  if (apiUrl === null) return;
+const reportGoogle = async (apiUrl) => {
+  if (apiUrl === undefined) return;
   let enabled;
   try {
     const response = await fetch(`${apiUrl}/auth/v1/settings`, { signal: AbortSignal.timeout(5000) });
@@ -538,10 +559,8 @@ const reportGoogle = async () => {
     return;
   }
   if (enabled) {
-    console.log(`  Google       on. The Google OAuth client's authorized redirect URI: ${apiUrl}/auth/v1/callback`);
-  } else if (googleCredentials === null) {
-    console.log(`  Google       off — .env.local does not carry both ${GOOGLE_CREDENTIALS.join(' and ')}.`);
-  } else {
+    console.log(`  Google       on; the OAuth client's redirect URI is ${apiUrl}/auth/v1/callback`);
+  } else if (googleCredentials !== null) {
     console.log('  Google       off, although .env.local carries its credentials.');
   }
   if (enabled !== (googleCredentials !== null)) {
@@ -550,5 +569,128 @@ const reportGoogle = async () => {
   }
 };
 
-if (command === 'up') await reportGoogle();
-console.log(`${command}: done in ${seconds}s`);
+/**
+ * vitest against the `test` database: the same invocation `test:db` runs, plus
+ * whatever was passed through, and the three variables CI's own step sets —
+ * nothing else, so a green run here and a green run there mean the same thing.
+ * The URL and keys come out of the database itself, never out of .env.local,
+ * which `up` rewrites and a dev server is reading.
+ *
+ * vitest is spawned as its own JS entry rather than through npm: an npm child
+ * on Windows means a shell, and a test path with a space in it would come apart
+ * in the quoting. Its entry is resolved the way node resolves any import rather
+ * than joined onto the checkout: a worktree has no node_modules of its own and
+ * finds the parent checkout's by walking upward.
+ */
+const runVitest = (values) =>
+  new Promise((resolve) => {
+    const vitest = spawn(
+      process.execPath,
+      [
+        createRequire(path.join(checkout, 'package.json')).resolve('vitest/vitest.mjs'),
+        '--run',
+        '--config',
+        'vitest.config.db.mts',
+        ...extraArgs,
+      ],
+      {
+        cwd: checkout,
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          NEXT_PUBLIC_SUPABASE_URL: values.api_url,
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: values.anon_key,
+          SUPABASE_SERVICE_ROLE_KEY: values.service_key,
+        },
+      },
+    );
+    vitest.on('error', (error) => {
+      console.error(`Could not run vitest: ${error.message}`);
+      resolve(1);
+    });
+    vitest.on('close', (code) => resolve(code ?? 1));
+  });
+
+const startedAt = Date.now();
+const elapsed = () => ((Date.now() - startedAt) / 1000).toFixed(0);
+const log = openLog();
+
+/**
+ * The blocks Windows can bind, as one bare word — `-` when there are none, or
+ * when the command never allocates. Probed on every run of a command that may
+ * allocate, because only the distro knows whether this one will: a stack that
+ * already has a record ignores the list.
+ */
+const candidateBlocks = spec.allocatesPorts ? (await bindableBlocks()).join(',') || '-' : '-';
+
+/**
+ * `test` hands the database to vitest once it is `ready`, and closes the shell
+ * file's stdin when vitest is done, which is what removes the database. Ctrl-C
+ * reaches vitest and wsl.exe on its own; this script stays to see the database
+ * removed, and closes that stdin itself in case the database was still being
+ * built when it came.
+ */
+let vitestRun = null;
+let interrupted = false;
+let distroChild = null;
+const release = () => distroChild?.stdin?.end('done\n');
+if (command === 'test') {
+  process.on('SIGINT', () => {
+    interrupted = true;
+    release();
+  });
+}
+
+const result = await runInDistro({
+  shellFile: command === 'test' ? 'test-db.sh' : `${command}.sh`,
+  args: [checkoutWsl, runProjectId, candidateBlocks, cliVersion],
+  log,
+  onReady:
+    command === 'test'
+      ? (child, values) => {
+          distroChild = child;
+          if (interrupted) {
+            release();
+            return;
+          }
+          console.log(`test:db:local: a throwaway database at ${values.api_url}, built in ${elapsed()}s`);
+          vitestRun = runVitest(values).then((code) => {
+            release();
+            return code;
+          });
+        }
+      : undefined,
+});
+const vitestCode = vitestRun === null ? null : await vitestRun;
+log?.close();
+
+// Whatever the command did, the answer to "is anything of ours running" decides
+// whether the distro is held open. A run that failed before it could say leaves
+// the keep-alive as it found it.
+if (result.values.running !== undefined) {
+  if (Number(result.values.running) > 0) holdKeepAlive();
+  else releaseKeepAlive();
+}
+
+if (command === 'test' && vitestCode !== null) {
+  // vitest has spoken for itself; what is left to say is only a database that
+  // was not removed.
+  if (result.code !== 0) reportFailure(log, result, elapsed(), 'Removing the throwaway database failed');
+  process.exit(vitestCode !== 0 ? vitestCode : result.code === 0 ? 0 : 1);
+}
+
+if (interrupted) fail(`${command} interrupted before the tests ran; the throwaway database goes with its run.`, 130);
+
+if (result.code !== 0 || command === 'test') {
+  // Either the shell file never started, or it started and exited with the
+  // status reserved for "could not run". Anything else is an outcome. A `test`
+  // run that got here never reached its tests, whatever the shell file's code.
+  const exitCode = !result.started || result.code === COULD_NOT_RUN ? COULD_NOT_RUN : 1;
+  if (result.message) fail(result.message, exitCode);
+  reportFailure(log, result, elapsed());
+  fail('', exitCode);
+}
+
+for (const line of result.said) console.log(line);
+if (command === 'up') await reportGoogle(result.values.api_url);
+if (!spec.verbatim) console.log(`${command}: done in ${elapsed()}s`);

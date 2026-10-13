@@ -24,7 +24,7 @@ Before touching anything it describes:
 2. **Follow the migration workflow in `supabase/CLAUDE.md`.** The regenerated types and
    schema files are committed with the migration.
 3. **DB tests run in CI** against a database built from `migrations/`, and locally
-   against a worktree's own rich-seed-free stack with `npm run test:db:local`. Never
+   against a throwaway database with `npm run test:db:local`. Never
    against the remote DB.
 4. **A migration reaches staging the moment it lands on `dev`, about a minute before the
    code it landed with deploys there; it reaches prod through the release pipeline, which

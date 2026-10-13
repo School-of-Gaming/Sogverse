@@ -14,11 +14,11 @@
 --
 -- THE TWO SEEDS NEVER SHARE A DATABASE. What makes a good fixture for a DB test
 -- — a handful of accounts at fixed ids, with whole-table claims written around
--- them — is not what makes a good example for a human to look at, so a stack
--- gets one seed or the other. The local stack script turns the CLI's `[db.seed]`
--- off on a stack that is getting this file, so `seed.sql` never runs there;
--- `up --no-rich-seed` leaves it on and applies nothing else. Everything below
--- therefore stands on its own: nothing here reads a row `seed.sql` wrote.
+-- them — is not what makes a good example for a human to look at. The local
+-- stack script turns the CLI's `[db.seed]` off on a stack, so `seed.sql` never
+-- runs there, and the DB tests get a database of their own that carries
+-- `seed.sql` alone. Everything below therefore stands on its own: nothing here
+-- reads a row `seed.sql` wrote.
 --
 -- CI NEVER LOADS IT. It is not named in `config.toml` — `seed.sql` is the only
 -- seed the CLI itself ever loads — and no CI job applies it. The local stack
@@ -134,7 +134,7 @@ BEGIN
   SELECT count(*) INTO users FROM auth.users;
   IF users > 0 THEN
     RAISE EXCEPTION
-      'rich-seed.sql wants a database built from migrations/ and seeded by nothing else, and this one already holds % account(s). A stack carrying this seed, a stack built with --no-rich-seed, and any real environment are all of them not that. Reset the database and apply it again.', users;
+      'rich-seed.sql wants a database built from migrations/ and seeded by nothing else, and this one already holds % account(s). A stack already carrying this seed, a database carrying seed.sql, and any real environment are all of them not that. Reset the database and apply it again.', users;
   END IF;
 END
 $$;
