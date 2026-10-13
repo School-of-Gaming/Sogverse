@@ -44,7 +44,9 @@ CREATE VIEW public.user_list_entries WITH (security_invoker='true') AS
     ARRAY( SELECT gq.qualification
            FROM public.gedu_qualifications gq
           WHERE (gq.gedu_id = p.id)
-          ORDER BY gq.qualification) AS qualifications
+          ORDER BY gq.qualification) AS qualifications,
+    utm_content,
+    utm_term
    FROM public.profiles p
   WHERE ((role <> 'gamer'::public.user_role) OR (NOT (EXISTS ( SELECT 1
            FROM public.parent_gamer pg
