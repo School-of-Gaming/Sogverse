@@ -270,3 +270,36 @@ export const productIdResponse = z.object({
   product_id: z.string(),
   warning: z.string().optional(),
 });
+
+/**
+ * One municipality a product type's products sit in, as the facets view builds
+ * it: the columns a localized name needs, which is what the municipality
+ * filter's options are labelled from.
+ */
+const productListFacetMunicipality = z.object({
+  id: z.string(),
+  name: z.string(),
+  name_i18n: z.record(z.string(), z.string()).nullable(),
+  type: z.enum(Constants.public.Enums.location_type),
+});
+
+/**
+ * One row of `product_list_facets`: a product type, how many products of it
+ * exist, and the values each of the admin product list's filters can offer
+ * under it.
+ *
+ * The view cannot promise NOT NULL through the catalog and the municipalities
+ * are `jsonb`, so the generated row is nullable everywhere and says nothing
+ * about the JSON; this parse is what puts both guarantees back, loudly if the
+ * view's shape ever stops matching.
+ */
+export const productListFacetsRow = z.object({
+  product_type: z.enum(Constants.public.Enums.product_type),
+  product_count: z.number().int(),
+  gedu_ids: z.array(z.string()),
+  weekdays: z.array(z.number().int()),
+  spoken_language_codes: z.array(z.enum(Constants.public.Enums.spoken_language)),
+  municipalities: z.array(productListFacetMunicipality),
+});
+
+export type ProductListFacetsRow = z.infer<typeof productListFacetsRow>;

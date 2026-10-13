@@ -1,7 +1,14 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
@@ -10,7 +17,9 @@ import type { ProductType, ProductBrowseRow } from "@/types";
 import { invalidatePlanReaders } from "./plan-readers";
 import { productKeys } from "./products.keys";
 import {
+  ADMIN_PRODUCT_LIST_PAGE_SIZE,
   ProductsService,
+  type AdminProductListFilters,
   type CreateProductInput,
   type UpdateProductInput,
 } from "./products.service";
@@ -46,16 +55,60 @@ export function useProductsByType(
   });
 }
 
-// Every product of every type in one fetch, for the admin product list, whose
-// type chips then narrow it client-side. Under `productKeys.lists()`, so every
-// writer that refreshes the per-type lists refreshes this one too.
-export function useAllProducts() {
+/**
+ * The admin product list, one keyset page at a time, filtered server-side.
+ *
+ * Pages accumulate rather than replace, so a revealed page appends below the
+ * rows already painted and nothing on screen moves. `keepPreviousData` keeps
+ * the previous filters' rows in place while a new question is read, so a
+ * keystroke or a chip does not empty the list and refill it; `isPlaceholderData`
+ * says when what is on screen belongs to the previous question, and the
+ * surface must not ask for the next page then, because that page's cursor
+ * would resume the new query from the old one's boundary.
+ *
+ * Under `productKeys.lists()`, so every writer that refreshes the product
+ * lists refreshes this one too.
+ */
+export function useAdminProductList(filters: AdminProductListFilters) {
+  const supabase = getClient();
+  const service = new ProductsService(supabase);
+
+  // Normalised once and used for the key and the read, so "Club" and "club "
+  // cannot become two cache entries answering the same question — the match is
+  // case-insensitive either way.
+  const normalized: AdminProductListFilters = {
+    ...filters,
+    search: filters.search.trim().toLowerCase(),
+  };
+
+  // Annotated, because an `undefined` literal alone would narrow the page
+  // param's type to `undefined` and reject the cursor `getNextPageParam` hands
+  // back.
+  const firstPage: KeysetCursor | undefined = undefined;
+
+  return useInfiniteQuery({
+    queryKey: productKeys.adminList(normalized),
+    queryFn: ({ pageParam }: { pageParam: KeysetCursor | undefined }) =>
+      service.getAdminListPage(normalized, { cursor: pageParam }),
+    initialPageParam: firstPage,
+    getNextPageParam: (lastPage) =>
+      nextKeysetCursor(lastPage.rows, ADMIN_PRODUCT_LIST_PAGE_SIZE),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * The admin product list's facets — per type, how many products exist and
+ * what each filter can offer. Under `productKeys.lists()` for the same reason
+ * as the list: a saved product moves both.
+ */
+export function useProductListFacets() {
   const supabase = getClient();
   const service = new ProductsService(supabase);
 
   return useQuery({
-    queryKey: productKeys.listAll(),
-    queryFn: () => service.listAll(),
+    queryKey: productKeys.adminListFacets(),
+    queryFn: () => service.getListFacets(),
   });
 }
 

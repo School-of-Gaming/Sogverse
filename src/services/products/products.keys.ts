@@ -1,4 +1,5 @@
 import type { ProductType } from "@/types";
+import type { AdminProductListFilters } from "./products.service";
 
 /**
  * The product cache keys. In a file of their own so the shared plan-reader
@@ -10,8 +11,11 @@ export const productKeys = {
   lists: () => [...productKeys.all, "list"] as const,
   listByType: (type: ProductType) =>
     [...productKeys.lists(), { type }] as const,
-  /** Every product of every type — the admin product list. */
-  listAll: () => [...productKeys.lists(), "all"] as const,
+  /** The admin product list's pages under one set of filters. */
+  adminList: (filters: AdminProductListFilters) =>
+    [...productKeys.lists(), "admin", filters] as const,
+  /** The admin product list's per-type counts and filter options. */
+  adminListFacets: () => [...productKeys.lists(), "admin-facets"] as const,
   // Sort the types so the key is order-independent — callers passing the same
   // set in a different order hit the same cache entry (matches countsByProducts
   // in participations.queries.ts).

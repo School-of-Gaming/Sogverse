@@ -1,7 +1,7 @@
 import { ADMIN_LIST_SEARCH_PARAM } from "@/components/admin/admin-list-url-state";
 import { PRODUCT_LIST_TYPE_PARAM } from "@/lib/products/admin-product-list-type";
-import { municipalityOf } from "@/lib/locations/embedded-chain";
-import type { ProductWithDetails } from "@/services/products";
+import type { EmbeddedLocationNode } from "@/lib/locations/embedded-chain";
+import type { ProductListFacetsRow } from "@/services/products";
 import type { ProductType } from "@/types";
 
 /**
@@ -75,24 +75,35 @@ export type ProductListFilterParams = Record<
   string | null
 >;
 
-/** The columns of a product row the filters read. */
-export type ProductListFilterRow = Pick<
-  ProductWithDetails,
-  | "product_type"
-  | "schedule_slots"
-  | "gedu_group_assignments"
-  | "spoken_language_code"
-  | "locations"
->;
+/** The facet rows a type chip covers: its own, or every type's for `null`. */
+function facetsUnder(
+  facets: readonly ProductListFacetsRow[],
+  type: ProductType | null,
+): readonly ProductListFacetsRow[] {
+  return type === null
+    ? facets
+    : facets.filter((row) => row.product_type === type);
+}
+
+/** How many products each type chip stands for, whatever the filters say. */
+export function productListCount(
+  facets: readonly ProductListFacetsRow[],
+  type: ProductType | null,
+): number {
+  return facetsUnder(facets, type).reduce(
+    (sum, row) => sum + row.product_count,
+    0,
+  );
+}
 
 /**
  * The values each filter can offer under a type (`null` for every type): the
- * ones present on that type's products, and none at all for a filter the type
- * does not offer. Each control's options are built from these, so a selection
- * always matches at least one row.
+ * ones present on that type's products, as the server's facets report them,
+ * and none at all for a filter the type does not offer. Each control's options
+ * are built from these, so a selection always matches at least one row.
  */
 export function productListOptionValues(
-  products: readonly ProductListFilterRow[],
+  facets: readonly ProductListFacetsRow[],
   type: ProductType | null,
 ): Record<keyof ProductListFilterParams, Set<string>> {
   const offer = productListFilterOffer(type);
@@ -102,18 +113,30 @@ export function productListOptionValues(
     language: new Set<string>(),
     municipality: new Set<string>(),
   };
-  for (const p of products) {
-    if (type !== null && p.product_type !== type) continue;
-    for (const a of p.gedu_group_assignments) values.gedu.add(a.gedu_id);
-    if (offer.day)
-      for (const s of p.schedule_slots) values.day.add(String(s.weekday));
-    if (offer.language) values.language.add(p.spoken_language_code);
-    if (offer.municipality) {
-      const muni = municipalityOf(p.locations);
-      if (muni) values.municipality.add(muni.id);
-    }
+  for (const row of facetsUnder(facets, type)) {
+    for (const id of row.gedu_ids) values.gedu.add(id);
+    if (offer.day) for (const w of row.weekdays) values.day.add(String(w));
+    if (offer.language)
+      for (const code of row.spoken_language_codes) values.language.add(code);
+    if (offer.municipality)
+      for (const muni of row.municipalities) values.municipality.add(muni.id);
   }
   return values;
+}
+
+/**
+ * The municipalities a type's products sit in, once each — what the
+ * municipality filter's options are labelled from.
+ */
+export function productListMunicipalities(
+  facets: readonly ProductListFacetsRow[],
+  type: ProductType | null,
+): EmbeddedLocationNode[] {
+  const byId = new Map<string, EmbeddedLocationNode>();
+  for (const row of facetsUnder(facets, type)) {
+    for (const muni of row.municipalities) byId.set(muni.id, muni);
+  }
+  return [...byId.values()];
 }
 
 /**
@@ -128,11 +151,11 @@ export function productListOptionValues(
  * a gedu who teaches both types stays selected.
  */
 export function productListParamsAfterTypeSwitch(
-  products: readonly ProductListFilterRow[],
+  facets: readonly ProductListFacetsRow[],
   nextType: ProductType | null,
   current: ProductListFilterParams,
 ): ProductListFilterParams {
-  const values = productListOptionValues(products, nextType);
+  const values = productListOptionValues(facets, nextType);
   const keep = (key: keyof ProductListFilterParams) => {
     const value = current[key];
     return value !== null && values[key].has(value) ? value : null;

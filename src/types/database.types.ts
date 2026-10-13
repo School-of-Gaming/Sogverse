@@ -3899,6 +3899,19 @@ export type Database = {
       }
     }
     Views: {
+      product_list_facets: {
+        Row: {
+          gedu_ids: string[] | null
+          municipalities: Json | null
+          product_count: number | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
+          spoken_language_codes:
+            | Database["public"]["Enums"]["spoken_language"][]
+            | null
+          weekdays: number[] | null
+        }
+        Relationships: []
+      }
       user_list_entries: {
         Row: {
           certified: boolean | null

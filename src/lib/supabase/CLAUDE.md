@@ -123,3 +123,10 @@ this shape carries.** Every other filter is its own parameter and PostgREST ANDs
 search, a role filter and a set of ids compose freely; a second top-level `or` is a second
 thing to get wrong, so a search that genuinely wants several columns ORed together belongs
 in a searchable column on the view, where it is one filter again.
+
+**A filter over a row's children — any of its names, any of its weekdays — goes on an
+aliased empty embed, never on the embed the row renders.** `alias:child_table()` plus
+`alias=not.is.null` keeps the rows with a matching child and puts nothing in the response;
+filtering the rendered embed instead would also narrow the children painted on the row. An
+`or` among a child's own columns is scoped to that embed, so it does not compete with the
+cursor's.

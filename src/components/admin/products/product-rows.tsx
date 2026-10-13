@@ -28,7 +28,7 @@ import {
 } from "@/lib/products/format-product-schedule";
 import { productWhereLine } from "./product-where-line";
 import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
-import type { ProductWithDetails } from "@/services/products";
+import type { AdminProductListRow } from "@/services/products";
 import type { ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
 
@@ -94,7 +94,7 @@ function TypeGlyph({ productType }: { productType: ProductType }) {
 }
 
 interface ProductRowsProps {
-  products: ProductWithDetails[];
+  products: AdminProductListRow[];
   /**
    * Whether each row leads its name with its type's glyph — wanted while the
    * list mixes the types, and noise once a type chip has said what every row is.

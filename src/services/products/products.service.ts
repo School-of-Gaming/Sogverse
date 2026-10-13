@@ -9,6 +9,13 @@ import type {
   GamerPhotoConsentType,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
+import { z } from "zod";
+import { escapeLikePattern } from "@/lib/utils";
+import {
+  keysetPage,
+  quoteFilterValue,
+  type KeysetCursor,
+} from "@/lib/supabase/keyset";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
@@ -23,7 +30,11 @@ import {
   plannedSessionRows,
   type PlannedSession,
 } from "@/lib/planned-sessions";
-import { productIdResponse } from "./products.contracts";
+import {
+  productIdResponse,
+  productListFacetsRow,
+  type ProductListFacetsRow,
+} from "./products.contracts";
 
 // ---------------------------------------------------------------------------
 // Query builders + inferred row types. Each select lives in a standalone
@@ -218,44 +229,59 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
     .maybeSingle();
 }
 
-// Admin per-type list. Carries the translations the row renders plus the
-// weekly schedule slots — clubs that differ only by weekday are otherwise
-// indistinguishable in the list without opening each one. The slot shape
-// (`weekday, start_time, duration_minutes`) matches what
-// `formatProductSchedule` consumes, so the list reuses the same schedule
-// formatter as the browse card. `product_type`, `start_date`, `end_date`,
-// `timezone`, `location_id` and `spoken_language_code` come from `*` (columns
-// on Product). `gedu_group_assignments(gedu_id)` is embedded for the admin
-// club-list filter on assigned educator; the rows the list renders ignore it,
-// so it's inert for camps/events. The embed is keyed off the assignment's own
-// `product_id` FK, so it spans every group on the product — an empty array
-// means no educator is assigned anywhere.
-//
-// The location embed carries one level of parent, which is exactly what the
-// admin club list's municipality filter needs: an online municipality club
-// points at the municipality itself, an in-person one at a site whose parent
-// is that municipality. Riding on this query is what lets that filter answer
-// the question without reading the locations table.
-//
-// The translations are the three columns a list row reads, never `*`: the long
-// description is most of a translation's bytes and no list renders it, so
-// selecting it made a municipality club list's payload three times its size.
-//
-// `type` narrows to one product type; `null` reads every type in one round
-// trip, which is what the admin product list loads. Newest first either way.
+// The two admin product list reads below share one row: the translations a
+// row renders (the three columns it reads, never `*` — the long description is
+// most of a translation's bytes and no list renders it), the weekly schedule
+// slots in the shape `formatProductSchedule` consumes (clubs that differ only
+// by weekday are otherwise indistinguishable without opening each one), and
+// the location with one level of parent, which is enough to name a product's
+// municipality: an online municipality club points at the municipality itself,
+// an in-person one at a site whose parent is that municipality. Each builder
+// spells its select out as a literal, because the row type is inferred from it.
+
+// Every product of one type, newest first — the admin's club-switch picker.
 function buildProductsByTypeQuery(
   supabase: AppSupabaseClient,
-  type: ProductType | null,
+  type: ProductType,
 ) {
-  const query = supabase
+  return supabase
     .from("products")
     .select(
-      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
+    )
+    .eq("product_type", type)
+    .order("created_at", { ascending: false });
+}
+
+/**
+ * The admin product list's read: the same row, plus four empty embeds that
+ * exist only to be filtered on.
+ *
+ * An empty embed (`alias:table()`) puts nothing in the response; paired with a
+ * `not.is.null` filter on its alias it keeps only the products that have a
+ * matching child row. That is how a filter over a product's *children* — any of
+ * its names, any of its weekdays, any of its educators — stays one ordinary
+ * PostgREST parameter on the products read, ANDed with the rest, rather than a
+ * second query. Each is aliased apart from the embed the row renders, because
+ * a filter on that one would narrow the rendered children too: a club on
+ * Monday and Wednesday filtered to Monday must still show both days.
+ *
+ * It reads `products` itself rather than a view so the row type stays the
+ * table's own: a view's columns all come back nullable, and the row renders
+ * most of them.
+ *
+ * The order, the resume filter and the limit are `keysetPage`'s.
+ */
+function buildAdminProductListQuery(
+  supabase: AppSupabaseClient,
+  withCount: boolean,
+) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), name_match:product_translations(), day_match:schedule_slots(), gedu_match:gedu_group_assignments(), municipality_match:locations()",
+      withCount ? { count: "exact" } : undefined,
     );
-  return (type === null ? query : query.eq("product_type", type)).order(
-    "created_at",
-    { ascending: false },
-  );
 }
 
 // `topic` is a column on Product (the product_topic enum) — its label is
@@ -263,6 +289,56 @@ function buildProductsByTypeQuery(
 export type ProductWithDetails = QueryData<
   ReturnType<typeof buildProductsByTypeQuery>
 >[number];
+
+/** One row of the admin product list. */
+export type AdminProductListRow = QueryData<
+  ReturnType<typeof buildAdminProductListQuery>
+>[number];
+
+/**
+ * How many products one page of the admin product list carries: a screenful
+ * and a little, so the first page fills the viewport and there is something to
+ * scroll through. The hook decides "there is more" from a page coming back
+ * shorter than this, so the read and the hook share this one constant.
+ */
+export const ADMIN_PRODUCT_LIST_PAGE_SIZE = 25;
+
+/**
+ * Which products one page of the admin product list is about. Every field
+ * narrows the same read, as its own PostgREST parameter the database ANDs.
+ */
+export interface AdminProductListFilters {
+  /** One product type, or null for every type. */
+  type: ProductType | null;
+  /**
+   * What the admin typed, trimmed; empty is "no search". Matched as a
+   * case-insensitive substring of any one of the product's names, in every
+   * locale — an admin may have typed the English name while reading the list
+   * in Finnish.
+   */
+  search: string;
+  /** A weekday the product must be scheduled on (0 = Monday), or null. */
+  weekday: number | null;
+  /** A gedu assigned to any group of the product, or null. */
+  geduId: string | null;
+  /** The language the product is delivered in, or null. */
+  spokenLanguage: SpokenLanguageCode | null;
+  /** The municipality the product sits in, or null. */
+  municipalityId: string | null;
+}
+
+/** One keyset page of the admin product list. */
+export interface AdminProductListPage {
+  /** The page's rows, newest first. */
+  rows: AdminProductListRow[];
+  /**
+   * How many products match the filters — on the first page only, `null`
+   * after it. The count cannot change as the reader scrolls, so it is asked
+   * once rather than paid for per page; `null` means "not asked", never
+   * "none".
+   */
+  total: number | null;
+}
 
 // Parent-facing single-product detail, inferred from its own query rather than
 // from the browse row: one page reading one product can afford the whole row,
@@ -554,12 +630,83 @@ export class ProductsService {
     return data;
   }
 
-  // Every product of every type, newest first — the admin product list.
-  async listAll(): Promise<ProductWithDetails[]> {
-    const { data, error } = await buildProductsByTypeQuery(this.supabase, null);
+  /**
+   * One keyset page of the admin product list, filtered as the admin asked.
+   *
+   * Listing and filtering are one read: the type, the language and the
+   * filters over a product's children are each an ordinary PostgREST
+   * parameter the database ANDs, and `keysetPage` owns the order, the resume
+   * filter and the limit — and with them the query's only top-level `or`,
+   * which is why the municipality filter's `or` is scoped to its embed.
+   */
+  async getAdminListPage(
+    filters: AdminProductListFilters,
+    { cursor }: { cursor?: KeysetCursor } = {},
+  ): Promise<AdminProductListPage> {
+    // Asked on the first page only: an aggregate over the whole match set
+    // cannot change as the reader scrolls.
+    const withCount = cursor === undefined;
+    let query = buildAdminProductListQuery(this.supabase, withCount);
+
+    if (filters.type !== null) query = query.eq("product_type", filters.type);
+    if (filters.spokenLanguage !== null) {
+      query = query.eq("spoken_language_code", filters.spokenLanguage);
+    }
+
+    // PostgREST reads `*` in an ilike pattern as a wildcard before SQL sees it,
+    // and there is no escaping it — so it is dropped rather than left to match
+    // every name. No product is named with one.
+    const needle = filters.search.replaceAll("*", "").trim();
+    if (needle !== "") {
+      query = query
+        .ilike("name_match.name", `%${escapeLikePattern(needle)}%`)
+        .not("name_match", "is", null);
+    }
+    if (filters.weekday !== null) {
+      query = query
+        .eq("day_match.weekday", filters.weekday)
+        .not("day_match", "is", null);
+    }
+    if (filters.geduId !== null) {
+      query = query
+        .eq("gedu_match.gedu_id", filters.geduId)
+        .not("gedu_match", "is", null);
+    }
+    if (filters.municipalityId !== null) {
+      // The location itself when it is the municipality, or the site under it.
+      // Quoted, because the id comes off the URL and the `or` grammar reserves
+      // characters a hand-edited one could carry.
+      const id = quoteFilterValue(filters.municipalityId);
+      query = query
+        .or(`id.eq.${id},parent_id.eq.${id}`, {
+          referencedTable: "municipality_match",
+        })
+        .not("municipality_match", "is", null);
+    }
+
+    const { data, error, count } = await keysetPage(query, {
+      cursor,
+      pageSize: ADMIN_PRODUCT_LIST_PAGE_SIZE,
+    });
 
     if (error) throw error;
-    return data;
+    return { rows: data, total: withCount ? count : null };
+  }
+
+  /**
+   * The admin product list's facets: per product type, how many products
+   * exist and the values each filter can offer. One row per type — bounded by
+   * the enum, so a plain read.
+   */
+  async getListFacets(): Promise<ProductListFacetsRow[]> {
+    const { data, error } = await this.supabase
+      .from("product_list_facets")
+      .select(
+        "product_type, product_count, gedu_ids, weekdays, spoken_language_codes, municipalities",
+      );
+
+    if (error) throw error;
+    return z.array(productListFacetsRow).parse(data);
   }
 
   // Parent-facing list: the visible products a parent should be offered. The

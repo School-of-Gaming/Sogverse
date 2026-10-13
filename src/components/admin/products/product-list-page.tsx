@@ -18,7 +18,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { useAllProducts } from "@/services/products";
+import { useProductListFacets } from "@/services/products";
 import {
   parseAdminProductSlug,
   adminProductSlug,
@@ -45,31 +45,21 @@ function useProductListType() {
 // products tab of its hub, which owns the title and the description above it.
 export function ProductListPage() {
   const [type, setTypeParam] = useProductListType();
-  const { data: products, isLoading } = useAllProducts();
+  // Four rows, one per type — a small bounded read that lands in a frame or
+  // two, so nothing is painted in its place.
+  const { data: facets } = useProductListFacets();
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="h-20 animate-pulse rounded-lg border border-border bg-lifted"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (!products) return null;
+  if (!facets) return null;
 
   return (
     // One `space-y-4` for the type chips, the filter row, the count line and
     // the rows: they are all direct children here (the component below renders
     // a fragment), so they share one rhythm. The chips render only once the
-    // products have, so their counts never arrive into them.
+    // facets have, so their counts never arrive into them — and the controls
+    // only once there are options to clamp the URL's values against.
     <div className="space-y-4">
       <ProductListFilters
-        products={products}
+        facets={facets}
         type={type}
         onTypeChange={(next) =>
           setTypeParam(next === null ? null : adminProductSlug(next))

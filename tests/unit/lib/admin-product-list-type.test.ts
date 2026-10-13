@@ -5,11 +5,13 @@ import {
   adminProductSlug,
 } from "@/lib/products/admin-product-list-type";
 import {
+  productListCount,
   productListFilterOffer,
+  productListMunicipalities,
   productListParamsAfterTypeSwitch,
   type ProductListFilterParams,
-  type ProductListFilterRow,
 } from "@/components/admin/products/product-list-url-state";
+import type { ProductListFacetsRow } from "@/services/products";
 import { ROUTES } from "@/lib/constants/routes";
 import type { ProductType } from "@/types";
 
@@ -92,39 +94,71 @@ describe("productListFilterOffer", () => {
   });
 });
 
-describe("productListParamsAfterTypeSwitch", () => {
-  /** A product row carrying only what the filters read. */
-  function row(fields: {
-    type: ProductType;
-    weekdays?: number[];
-    gedus?: string[];
-    language?: ProductListFilterRow["spoken_language_code"];
-    municipality?: string;
-  }): ProductListFilterRow {
-    return {
-      product_type: fields.type,
-      schedule_slots: (fields.weekdays ?? []).map((weekday) => ({
-        weekday,
-        start_time: "16:00:00",
-        duration_minutes: 60,
-      })),
-      gedu_group_assignments: (fields.gedus ?? []).map((gedu_id) => ({
-        gedu_id,
-      })),
-      spoken_language_code: fields.language ?? "fi",
-      locations:
-        fields.municipality === undefined
-          ? null
-          : {
+/** One type's facets, as the view reports them, from what its products carry. */
+function row(fields: {
+  type: ProductType;
+  count?: number;
+  weekdays?: number[];
+  gedus?: string[];
+  language?: ProductListFacetsRow["spoken_language_codes"][number];
+  municipality?: string;
+}): ProductListFacetsRow {
+  return {
+    product_type: fields.type,
+    product_count: fields.count ?? 1,
+    weekdays: fields.weekdays ?? [],
+    gedu_ids: fields.gedus ?? [],
+    spoken_language_codes: [fields.language ?? "fi"],
+    municipalities:
+      fields.municipality === undefined
+        ? []
+        : [
+            {
               id: fields.municipality,
               name: fields.municipality,
               name_i18n: null,
               type: "municipality",
-              parent: null,
             },
-    };
-  }
+          ],
+  };
+}
 
+describe("productListCount", () => {
+  const FACETS = [
+    row({ type: "consumer_club", count: 3 }),
+    row({ type: "camp", count: 2 }),
+  ];
+
+  it("counts one type's products", () => {
+    expect(productListCount(FACETS, "camp")).toBe(2);
+  });
+
+  it("sums every type's under every type", () => {
+    expect(productListCount(FACETS, null)).toBe(5);
+  });
+
+  it("reads a type with no facets row as none", () => {
+    expect(productListCount(FACETS, "event")).toBe(0);
+  });
+});
+
+describe("productListMunicipalities", () => {
+  it("names each municipality once across the types", () => {
+    const facets = [
+      row({ type: "municipality_club", municipality: "espoo" }),
+      row({ type: "consumer_club", municipality: "espoo" }),
+      row({ type: "camp", municipality: "vantaa" }),
+    ];
+    expect(
+      productListMunicipalities(facets, null).map((muni) => muni.id),
+    ).toEqual(["espoo", "vantaa"]);
+    expect(
+      productListMunicipalities(facets, "municipality_club").map((m) => m.id),
+    ).toEqual(["espoo"]);
+  });
+});
+
+describe("productListParamsAfterTypeSwitch", () => {
   const PRODUCTS = [
     row({
       type: "consumer_club",

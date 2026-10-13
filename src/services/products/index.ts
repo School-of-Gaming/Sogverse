@@ -1,6 +1,9 @@
 export { ProductsService } from "./products.service";
 export type {
   ProductWithDetails,
+  AdminProductListRow,
+  AdminProductListFilters,
+  AdminProductListPage,
   ProductLocationRow,
   ProductDetailRow,
   ProductAdminDetailRow,
@@ -14,7 +17,8 @@ export type {
 export {
   productKeys,
   useProductsByType,
-  useAllProducts,
+  useAdminProductList,
+  useProductListFacets,
   useVisibleProductsByTypes,
   useProductDetail,
   useProductAdmin,
@@ -22,6 +26,7 @@ export {
   useCreateProduct,
   useUpdateProduct,
 } from "./products.queries";
+export type { ProductListFacetsRow } from "./products.contracts";
 export {
   referenceKeys,
   useConsentDocuments,
