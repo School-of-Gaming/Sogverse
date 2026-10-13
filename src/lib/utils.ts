@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type SupportedCurrency } from "@/lib/constants/currency";
+import { formattingLocale } from "@/lib/constants/locales";
 import { ageOnDate } from "@/lib/gamer-age-eligibility";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
@@ -40,7 +41,7 @@ export function formatCurrency(
   currency: SupportedCurrency,
   locale: string,
 ): string {
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(formattingLocale(locale), {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amount);
@@ -102,15 +103,17 @@ export function sumCents(values: Iterable<number>): number {
 // an explicit viewer zone, never the runtime default (CLAUDE.md viewer-zone
 // rule). The required `timeZone` is the type-level enforcement of that rule —
 // the compiler rejects a call that omits it, no lint heuristic needed.
+//
+// The `locale` taken by every helper below is the app locale; each resolves it
+// through `formattingLocale()` itself, so callers never pass an `Intl` tag.
 const TIME_OF_DAY: Intl.DateTimeFormatOptions = {
   hour: "2-digit",
   minute: "2-digit",
-  hour12: false,
 };
 
 export function formatTime(date: Date | string, locale: string, timeZone: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale, { ...TIME_OF_DAY, timeZone }).format(d);
+  return new Intl.DateTimeFormat(formattingLocale(locale), { ...TIME_OF_DAY, timeZone }).format(d);
 }
 
 /** A thin or narrow no-break space directly before or after a range's en dash. */
@@ -118,7 +121,7 @@ const RANGE_DASH_SPACE = /[\u2009\u202f](?=\u2013)|(?<=\u2013)[\u2009\u202f]/g;
 
 /**
  * A start–end range — one session's clock face — in the given zone, with the
- * zone's short name appended ("16:30 – 18:00 GMT+3"). Both ends are formatted
+ * zone's short name appended ("16:30–18:00 EEST"). Both ends are formatted
  * from their own instants: the end is never a duration string-added to the
  * local start, which a DST transition inside the session would corrupt
  * (CLAUDE.md viewer-zone rule).
@@ -144,7 +147,7 @@ export function formatTimeRange(
 ): string {
   const s = typeof start === "string" ? new Date(start) : start;
   const e = typeof end === "string" ? new Date(end) : end;
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(formattingLocale(locale), {
     ...TIME_OF_DAY,
     timeZone,
     timeZoneName: "short",
@@ -163,7 +166,7 @@ export function formatDate(
   options: Intl.DateTimeFormatOptions & { timeZone: string },
 ): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale, options).format(d);
+  return new Intl.DateTimeFormat(formattingLocale(locale), options).format(d);
 }
 
 /**
@@ -187,7 +190,7 @@ export function formatDate(
  * render (e.g. `{ weekday: "long" }` for the weekday name).
  */
 export function formatDateOnly(date: string, locale: string, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(formattingLocale(locale), {
     ...(options ?? { dateStyle: "medium" }),
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));

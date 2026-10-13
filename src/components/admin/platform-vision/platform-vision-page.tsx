@@ -174,7 +174,7 @@ function IdeaCard({
 // ------------------------------------------------------------ sections
 
 /** A bare calendar date, so UTC-pinned at both ends and never in the viewer's zone. */
-const LAST_UPDATED_TEXT = formatDateOnly(VISION_LAST_UPDATED, "en-GB", {
+const LAST_UPDATED_TEXT = formatDateOnly(VISION_LAST_UPDATED, "en", {
   day: "numeric",
   month: "long",
   year: "numeric",

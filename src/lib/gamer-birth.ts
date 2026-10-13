@@ -2,6 +2,7 @@ import {
   MIN_ENROLLMENT_AGE,
   MAX_ENROLLMENT_AGE,
 } from "@/lib/constants/gamer-age";
+import { formattingLocale } from "@/lib/constants/locales";
 
 /**
  * A gamer's birth, as the year and month `gamer_profiles` stores.
@@ -143,7 +144,7 @@ export function gamerBirthMonthOptions(
   locale: string,
   clamp?: GamerBirthMonthClamp,
 ): GamerBirthMonthOption[] {
-  const fmt = new Intl.DateTimeFormat(locale, { month: "long" });
+  const fmt = new Intl.DateTimeFormat(formattingLocale(locale), { month: "long" });
   return selectableBirthMonths(clamp).map((month) => ({
     value: month,
     // The year and day are arbitrary — only the month name is read out.

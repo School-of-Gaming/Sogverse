@@ -80,7 +80,7 @@ describe("gamerBirthMonthOptions", () => {
     gamerBirthMonthOptions(locale, clamp).map((m) => m.value);
 
   it("offers all twelve months, labelled in the locale, when unclamped", () => {
-    const months = gamerBirthMonthOptions("en-US");
+    const months = gamerBirthMonthOptions("en");
     expect(months).toHaveLength(12);
     expect(months[0]).toEqual({ value: 1, label: "January" });
     expect(months[11]).toEqual({ value: 12, label: "December" });
@@ -92,25 +92,25 @@ describe("gamerBirthMonthOptions", () => {
 
   it("offers all twelve when the selected year is in the past", () => {
     expect(
-      values("en-US", { selectedYear: 2017, currentYear: 2026, currentMonth: 8 }),
+      values("en", { selectedYear: 2017, currentYear: 2026, currentMonth: 8 }),
     ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   });
 
   it("stops at the current month when the selected year is the current year", () => {
     expect(
-      values("en-US", { selectedYear: 2026, currentYear: 2026, currentMonth: 8 }),
+      values("en", { selectedYear: 2026, currentYear: 2026, currentMonth: 8 }),
     ).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it("offers only January in the current year's first month", () => {
     expect(
-      values("en-US", { selectedYear: 2026, currentYear: 2026, currentMonth: 1 }),
+      values("en", { selectedYear: 2026, currentYear: 2026, currentMonth: 1 }),
     ).toEqual([1]);
   });
 
   it("carries a stored month the clamp would otherwise remove", () => {
     expect(
-      values("en-US", {
+      values("en", {
         selectedYear: 2026,
         currentYear: 2026,
         currentMonth: 8,
@@ -121,7 +121,7 @@ describe("gamerBirthMonthOptions", () => {
 
   it("does not duplicate a stored month the clamp already keeps", () => {
     expect(
-      values("en-US", {
+      values("en", {
         selectedYear: 2026,
         currentYear: 2026,
         currentMonth: 8,
@@ -134,7 +134,7 @@ describe("gamerBirthMonthOptions", () => {
     // The row holds November 2025; with 2026 selected, November is a future
     // month of a year the row says nothing about.
     expect(
-      values("en-US", {
+      values("en", {
         selectedYear: 2026,
         currentYear: 2026,
         currentMonth: 8,

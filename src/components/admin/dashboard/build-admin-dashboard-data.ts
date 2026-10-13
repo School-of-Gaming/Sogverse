@@ -1,6 +1,9 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { ROUTES } from "@/lib/constants";
-import type { SupportedLocale } from "@/lib/constants/locales";
+import {
+  formattingLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import { formatDate } from "@/lib/utils";
@@ -370,7 +373,9 @@ export function relativeWait(
   locale: string,
 ): string {
   const elapsedMs = now.getTime() - new Date(createdAt).getTime();
-  const format = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const format = new Intl.RelativeTimeFormat(formattingLocale(locale), {
+    numeric: "auto",
+  });
 
   const minutes = Math.round(elapsedMs / 60_000);
   if (Math.abs(minutes) < 60) return format.format(-minutes, "minute");
@@ -586,6 +591,11 @@ function* productOccurrences(
  * introduce error. It is also the overwhelmingly common path — Helsinki products
  * read by a Helsinki admin — so the conversion cost falls only on the reader who
  * actually needs it.
+ *
+ * The `time` is a fixed 24-hour "HH:mm", and it is both the chip's sort key and
+ * the text the chip shows. That holds while every formatting locale sets a
+ * 24-hour clock; the day a 12-hour locale (such as `en-us`) is added, the key
+ * and the display split, and the display renders through `formattingLocale()`.
  */
 function viewerPlacement(
   date: string,
@@ -630,7 +640,7 @@ export function viewerZoneAbbrev(
   );
   if (!converts) return null;
 
-  const part = new Intl.DateTimeFormat(locale, {
+  const part = new Intl.DateTimeFormat(formattingLocale(locale), {
     timeZone: viewerTimeZone,
     timeZoneName: "short",
   })

@@ -278,7 +278,7 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("16:00–17:00");
       // A club's term range is folded in as an extra schedule line, exactly as
       // the page folds it — the weekly line never says when the term runs.
-      expect(html).toContain("May 31, 2027");
+      expect(html).toContain("31 May 2027");
       expect(html).toContain("Format");
       expect(html).toContain("Online");
       expect(html).toContain("Age range");
@@ -295,7 +295,7 @@ describe("buildProductConfirmationEmail", () => {
      * the viewer's zone differs from the product's; one option, one line.
      */
     it("appends the product zone's abbrev to the time-bearing line", () => {
-      expect(render(base)).toContain("16:00–17:00 (GMT+2)");
+      expect(render(base)).toContain("16:00–17:00 (EET)");
     });
 
     it("appends no abbrev where the schedule states no time", () => {
@@ -764,7 +764,7 @@ describe("the plain-text twin", () => {
 describe("the zone the times are given in", () => {
   /** Europe/Helsinki in January (EET, UTC+2), as each locale's `Intl` sets it. */
   const ABBREV = [
-    ["en", "GMT+2"],
+    ["en", "EET"],
     ["fi", "UTC+2"],
     ["sv", "EET"],
     ["fr", "UTC+2"],
@@ -804,8 +804,8 @@ describe("the zone the times are given in", () => {
       },
     });
 
-    expect(winter).toContain("(GMT+2)");
-    expect(summer).toContain("(GMT+3)");
+    expect(winter).toContain("(EET)");
+    expect(summer).toContain("(EEST)");
   });
 });
 

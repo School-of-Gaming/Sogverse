@@ -775,8 +775,8 @@ describe("templateRegistry sessionReport", () => {
 
   it("formats the sample's date and time in the parent's zone for the locale", async () => {
     const { subject, html } = templateRegistry.sessionReport.render(params, t, "en");
-    expect(subject).toBe("Session report – Minecraft: Cozy Adventures, Thursday, August 20, 2026");
-    expect(html).toContain("Thursday, August 20, 2026");
+    expect(subject).toBe("Session report – Minecraft: Cozy Adventures, Thursday, 20 August 2026");
+    expect(html).toContain("Thursday, 20 August 2026");
     // 13:30Z is 16:30 in Helsinki summer time.
     expect(html).toMatch(/16:30\s*–\s*18:00/);
 
@@ -791,15 +791,15 @@ describe("templateRegistry sessionReport", () => {
    */
   it("always names the zone the times are formatted in", () => {
     const home = templateRegistry.sessionReport.render(params, t, "en");
-    expect(home.html).toMatch(/16:30\s*–\s*18:00 GMT\+3/);
+    expect(home.html).toMatch(/16:30\s*–\s*18:00 EEST/);
 
     const away = templateRegistry.sessionReport.render(
       { ...params, viewerTimezone: "Europe/London" },
       t,
       "en",
     );
-    expect(away.html).toMatch(/14:30\s*–\s*16:00 GMT\+1/);
-    expect(away.subject).toContain("Thursday, August 20, 2026");
+    expect(away.html).toMatch(/14:30\s*–\s*16:00 BST/);
+    expect(away.subject).toContain("Thursday, 20 August 2026");
   });
 
   it("sends the sample's own markdown when the override is empty", () => {
@@ -820,7 +820,7 @@ describe("templateRegistry sessionReport", () => {
     );
     expect(html).toContain("Lyhtyjä sataman ylle");
     expect(html).toContain("View in My SOG");
-    expect(subject).toContain("Thursday, August 27, 2026");
+    expect(subject).toContain("Thursday, 27 August 2026");
   });
 
   it("lets a typed report replace the sample's markdown but keep its date", () => {
@@ -832,7 +832,7 @@ describe("templateRegistry sessionReport", () => {
     expect(html).toContain("Custom report");
     expect(html).toContain("Typed in the tool.");
     expect(html).not.toContain("Lanterns over the Harbour");
-    expect(subject).toContain("Thursday, August 20, 2026");
+    expect(subject).toContain("Thursday, 20 August 2026");
   });
 
   /**

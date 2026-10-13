@@ -92,16 +92,13 @@ export default async function SeatOfferPage({
         // different clock faces for one deadline is worse than one that is
         // explicit about which zone it is in. Explicit components rather than
         // dateStyle, because `Intl` refuses to combine that with
-        // `timeZoneName`. `hour12: false` for the same "one deadline, one clock
-        // face" reason: `en` alone would set this as "02:20 PM" while the mail
-        // and the in-app cards say "14:20".
+        // `timeZoneName`.
         deadline: formatDate(state.deadline, locale, {
           weekday: "long",
           day: "numeric",
           month: "long",
           hour: "2-digit",
           minute: "2-digit",
-          hour12: false,
           timeZoneName: "short",
           timeZone: state.timeZone,
         }),

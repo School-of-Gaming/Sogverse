@@ -100,11 +100,11 @@ describe("admin feedback pages", () => {
   it("draws the whole history over a labelled scale, its readings also given as text", () => {
     wrap(<FeedbackOverviewPage read={read(dataset)} />);
     const chart = screen.getByRole("group", { name: "Positive answers by week" });
-    for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sep"]) {
+    for (const label of ["0%", "25%", "50%", "75%", "100%", "Jul 2026", "Aug", "Sept"]) {
       expect(within(chart).getByText(label)).toBeTruthy();
     }
-    expect(within(chart).getByText("Sep 28, 2026 – Sep 30, 2026 · No answers")).toBeTruthy();
-    expect(within(chart).getByText("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers")).toBeTruthy();
+    expect(within(chart).getByText("28 Sept 2026 – 30 Sept 2026 · No answers")).toBeTruthy();
+    expect(within(chart).getByText("7 Sept 2026 – 13 Sept 2026 · 89% positive · 9 answers")).toBeTruthy();
   });
 
   it("names the chart's focusable surface and describes it with the readings", () => {
@@ -113,7 +113,7 @@ describe("admin feedback pages", () => {
     expect(surface.getAttribute("tabindex")).toBe("0");
     const readings = document.getElementById(surface.getAttribute("aria-describedby") ?? "");
     expect(readings?.tagName).toBe("UL");
-    expect(readings?.textContent).toContain("Sep 7, 2026 – Sep 13, 2026 · 89% positive · 9 answers");
+    expect(readings?.textContent).toContain("7 Sept 2026 – 13 Sept 2026 · 89% positive · 9 answers");
   });
 
   it("names the month the history starts in, though it starts mid-month", () => {

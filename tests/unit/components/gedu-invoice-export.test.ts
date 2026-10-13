@@ -262,7 +262,7 @@ describe("geduInvoicePdfContent", () => {
     expect(content.to).toBe("To: School of Gaming Galactic Oy");
     // 10:40 in Helsinki, whatever zone the test runs in.
     expect(content.figuresAsOf).toMatch(
-      /^Figures as of May 21, 2026.*10:40.*GMT\+3$/,
+      /^Figures as of 21 May 2026.*10:40.*EEST$/,
     );
   });
 
@@ -286,7 +286,7 @@ describe("geduInvoicePdfContent", () => {
       body: null,
       unrecorded: {
         text: "1 past session has nothing recorded, so it is not included:",
-        sessions: ["Tue 5/12/2026 · Minecraft adventurers · Group 1"],
+        sessions: ["Tue 12/05/2026 · Minecraft adventurers · Group 1"],
       },
       upcoming:
         "2 sessions are still upcoming: the month is in progress, so these figures can change.",
@@ -369,10 +369,10 @@ describe("geduInvoicePdfContent", () => {
         heading: "Pelikerho Kivikko · Primary",
         fee: "Fee / session €65.00",
         sessions: [
-          { date: "Mon 5/4/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
-          { date: "Mon 5/11/2026", group: "Ryhmä A", status: "Away — Mikael Rinne substituted", details: [], amount: "€0.00", pays: false },
-          { date: "Mon 5/18/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
-          { date: "Mon 5/25/2026", group: "Ryhmä A", status: "Upcoming", details: [], amount: "€0.00", pays: false },
+          { date: "Mon 04/05/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
+          { date: "Mon 11/05/2026", group: "Ryhmä A", status: "Away — Mikael Rinne substituted", details: [], amount: "€0.00", pays: false },
+          { date: "Mon 18/05/2026", group: "Ryhmä A", status: "Recorded", details: [], amount: "€65.00", pays: true },
+          { date: "Mon 25/05/2026", group: "Ryhmä A", status: "Upcoming", details: [], amount: "€0.00", pays: false },
         ],
         total: { label: "Total", sessions: "2 sessions", amount: "€130.00" },
       },
@@ -382,17 +382,17 @@ describe("geduInvoicePdfContent", () => {
         heading: "Minecraft adventurers · Primary",
         fee: "Fee / session €50.00",
         sessions: [
-          { date: "Tue 5/5/2026", group: "Group 1", status: "Recorded", details: [], amount: "€50.00", pays: true },
+          { date: "Tue 05/05/2026", group: "Group 1", status: "Recorded", details: [], amount: "€50.00", pays: true },
           {
-            date: "Tue 5/12/2026",
+            date: "Tue 12/05/2026",
             group: "Group 1",
             status: "Not recorded",
             details: ["No report, note or attendance yet"],
             amount: "€0.00",
             pays: false,
           },
-          { date: "Tue 5/19/2026", group: "Group 1", status: "Recorded", details: [], amount: "€50.00", pays: true },
-          { date: "Tue 5/26/2026", group: "Group 1", status: "Upcoming", details: [], amount: "€0.00", pays: false },
+          { date: "Tue 19/05/2026", group: "Group 1", status: "Recorded", details: [], amount: "€50.00", pays: true },
+          { date: "Tue 26/05/2026", group: "Group 1", status: "Upcoming", details: [], amount: "€0.00", pays: false },
         ],
         total: { label: "Total", sessions: "2 sessions", amount: "€100.00" },
       },
@@ -412,7 +412,7 @@ describe("geduInvoicePdfContent", () => {
     const clubs = contentOf(mikael).sessionsByClub;
     const cover = clubs
       .flatMap((club) => club.sessions)
-      .find((session) => session.date === "Mon 5/11/2026");
+      .find((session) => session.date === "Mon 11/05/2026");
     expect(cover?.status).toBe("Recorded");
     expect(cover?.details).toEqual(["Substituting for Aino Kallio"]);
 
@@ -439,7 +439,7 @@ describe("geduInvoicePdfContent", () => {
     };
     const away = contentOf(noSub)
       .sessionsByClub.flatMap((club) => club.sessions)
-      .find((session) => session.date === "Mon 5/11/2026");
+      .find((session) => session.date === "Mon 11/05/2026");
 
     expect(away?.status).toBe("Away — no substitute");
   });

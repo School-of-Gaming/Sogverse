@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectLocaleFromHeader,
+  formattingLocale,
   matchLocaleFromHeader,
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
@@ -140,5 +141,22 @@ describe("matchLocaleFromHeader", () => {
     ]) {
       expect(matchLocaleFromHeader(header)).toBe(detectLocaleFromHeader(header));
     }
+  });
+});
+
+describe("formattingLocale", () => {
+  it("formats each locale with its own Intl tag", () => {
+    expect(formattingLocale("en")).toBe("en-GB");
+    expect(formattingLocale("fi")).toBe("fi");
+    expect(formattingLocale("sv")).toBe("sv");
+    expect(formattingLocale("fr")).toBe("fr");
+    // Klingon has no Intl data of its own; it formats as English.
+    expect(formattingLocale("tlh")).toBe("en-GB");
+  });
+
+  it("formats anything unsupported as the default locale", () => {
+    expect(formattingLocale("de")).toBe("en-GB");
+    expect(formattingLocale("en-US")).toBe("en-GB");
+    expect(formattingLocale("")).toBe("en-GB");
   });
 });

@@ -95,6 +95,7 @@ import {
   PRODUCT_TOPIC_VALUES,
 } from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
+import { formattingLocale } from "@/lib/constants/locales";
 import { formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
@@ -1501,7 +1502,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       userRole: p.userRole,
       userEmail: p.userEmail,
       message: p.message,
-      sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+      sentAt: new Date().toLocaleString(formattingLocale(locale), { dateStyle: "medium", timeStyle: "short" }),
       isGamer: p.userRole === "gamer",
       parentEmail: p.parentEmail ?? undefined,
       gamerOwnMailbox: p.gamerOwnMailbox,
@@ -1736,10 +1737,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "deadline",
         label: "Deadline (formatted)",
-        // Exactly what the live send produces for `en` — a 24-hour clock, and
-        // month before day. A placeholder that sets the value differently to
-        // the code teaches whoever is testing the mail the wrong shape.
-        placeholder: "Monday, August 31 at 14:20 GMT+3",
+        // Exactly what the live send produces for `en` — day before month, a
+        // 24-hour clock and the zone's short name. A placeholder that sets the
+        // value differently to the code teaches whoever is testing the mail the
+        // wrong shape.
+        placeholder: "Monday 31 August at 14:20 EEST",
       },
       {
         key: "acceptUrl",
@@ -1779,10 +1781,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "offeredAt",
         label: "Offered at (formatted)",
-        // What the live staff send produces — pinned to the 24-hour clock like
+        // What the live staff send produces for `en` — a 24-hour clock like
         // every other seat-offer surface, so the stamp staff read matches the
         // one on the admin card.
-        placeholder: "Wed, Aug 26, 14:20 GMT+3",
+        placeholder: "Wed 26 Aug, 14:20 EEST",
       },
       {
         key: "adminProductUrl",

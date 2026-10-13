@@ -35,7 +35,6 @@ vi.mock("next-intl", () => ({
           .map(([name, value]) => `${name}=${String(value)}`)
           .join(" ")}`
       : key,
-  useFormatter: () => ({ list: (items: string[]) => items.join(" + ") }),
   useLocale: () => "en",
 }));
 
@@ -463,7 +462,7 @@ describe("the Library article editor", () => {
 
       expect(within(panel()).getByText("published")).toBeTruthy();
       expect(panel().textContent).toContain(
-        "statusPanel.publishedLine date=September 16, 2026",
+        "statusPanel.publishedLine date=16 September 2026",
       );
       expect(panel().textContent).not.toContain("statusPanel.changedLine");
     });
@@ -473,14 +472,14 @@ describe("the Library article editor", () => {
 
       expect(within(panel()).getByText("changed")).toBeTruthy();
       expect(panel().textContent).toContain(
-        "statusPanel.changedLine date=September 16, 2026",
+        "statusPanel.changedLine date=16 September 2026",
       );
       expect(panel().textContent).not.toContain("statusPanel.publishedLine");
     });
   });
 
   describe("the last save", () => {
-    const savedAt = "statusPanel.savedLine date=Sep 15, 2026, 11:05 AM";
+    const savedAt = "statusPanel.savedLine date=15 Sept 2026, 11:05";
 
     function draftSavedBy(
       lastSavedBy: string | null,
@@ -500,7 +499,7 @@ describe("the Library article editor", () => {
 
       expect(
         screen.getByText(
-          "statusPanel.savedByLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson",
+          "statusPanel.savedByLine date=15 Sept 2026, 11:05 name=Kyle Hutchinson",
         ),
       ).toBeTruthy();
     });
@@ -512,7 +511,7 @@ describe("the Library article editor", () => {
 
       expect(
         screen.getByText(
-          "statusPanel.savedByViaLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson app=Claude Code",
+          "statusPanel.savedByViaLine date=15 Sept 2026, 11:05 name=Kyle Hutchinson app=Claude Code",
         ),
       ).toBeTruthy();
     });
@@ -522,7 +521,7 @@ describe("the Library article editor", () => {
 
       expect(
         screen.getByText(
-          "statusPanel.savedByViaUnnamedLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson",
+          "statusPanel.savedByViaUnnamedLine date=15 Sept 2026, 11:05 name=Kyle Hutchinson",
         ),
       ).toBeTruthy();
     });

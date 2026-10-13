@@ -48,8 +48,8 @@ describe("CancelledAheadNotice", () => {
     const { container, getByRole } = renderNotice([
       new Date("2026-09-28T22:30:00Z"),
     ]);
-    expect(getByRole("status").textContent).toBe("Tue, Sep 29 is cancelled.");
-    expect(boldRuns(container)).toEqual(["Tue, Sep 29"]);
+    expect(getByRole("status").textContent).toBe("Tue 29 Sept is cancelled.");
+    expect(boldRuns(container)).toEqual(["Tue 29 Sept"]);
   });
 
   it("wears the cancellation's calendar-cross in the warning hue, not the triangle", () => {
@@ -69,9 +69,9 @@ describe("CancelledAheadNotice", () => {
       new Date("2026-10-06T14:00:00Z"),
     ]);
     expect(getByRole("status").textContent).toBe(
-      "Tue, Sep 29 and Tue, Oct 6 are cancelled.",
+      "Tue 29 Sept and Tue 6 Oct are cancelled.",
     );
-    expect(boldRuns(container)).toEqual(["Tue, Sep 29 and Tue, Oct 6"]);
+    expect(boldRuns(container)).toEqual(["Tue 29 Sept and Tue 6 Oct"]);
   });
 
   it("names the first and counts the rest when many are cancelled", () => {
@@ -80,9 +80,9 @@ describe("CancelledAheadNotice", () => {
     );
     const { container, getByRole } = renderNotice(starts);
     expect(getByRole("status").textContent).toBe(
-      "Mon, Oct 5 and 4 more sessions are cancelled.",
+      "Mon 5 Oct and 4 more sessions are cancelled.",
     );
-    expect(boldRuns(container)).toEqual(["Mon, Oct 5"]);
+    expect(boldRuns(container)).toEqual(["Mon 5 Oct"]);
   });
 
   it("carries the bold tag through a translated plural branch", () => {

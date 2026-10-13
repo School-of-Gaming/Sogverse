@@ -22,7 +22,6 @@ vi.mock("next-intl", () => ({
           .map(([name, value]) => `${name}=${String(value)}`)
           .join(" ")}`
       : key,
-  useFormatter: () => ({ list: (items: string[]) => items.join(" + ") }),
   useLocale: () => "en",
 }));
 
@@ -243,7 +242,7 @@ describe("the landing page status page", () => {
     fireEvent.click(publishButton());
     const dialog = await dialogTitled("publishConfirm.changesTitle");
 
-    expect(within(dialog).getByText("goesLive languages=English + Finnish")).toBeTruthy();
+    expect(within(dialog).getByText("goesLive languages=English and Finnish")).toBeTruthy();
     expect(within(dialog).getByText("takenDown languages=Swedish count=1")).toBeTruthy();
     // Swedish is named once, as taken down, not again as left out.
     expect(within(dialog).queryByText(/^leftOut/)).toBeNull();

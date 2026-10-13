@@ -5,6 +5,7 @@ import { CalendarX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { useTimezone } from "@/providers";
+import { formattingLocale } from "@/lib/constants/locales";
 import { formatDate } from "@/lib/utils";
 
 /**
@@ -61,7 +62,9 @@ export function CancelledAheadNotice({ starts }: { starts: readonly Date[] }) {
     dates.length <= LISTED_DATES
       ? c.rich("cancelledAhead", {
           count: dates.length,
-          dates: new Intl.ListFormat(locale, { type: "conjunction" }).format(
+          dates: new Intl.ListFormat(formattingLocale(locale), {
+            type: "conjunction",
+          }).format(
             dates,
           ),
           b,

@@ -124,8 +124,8 @@ describe("buildSubstitutionSlackMessage", () => {
     // Every fact on the table's one page.
     expect(blocks[3].page_size).toBe(facts.length);
     expect(body).toContain("Family matter");
-    expect(body).toMatch(/Wed, Oct 14, 16:00.*17:30/);
-    expect(text).toMatch(/^Substitute needed: Minecraft Club – A, Wed, Oct 14/);
+    expect(body).toMatch(/Wed 14 Oct, 16:00.*17:30/);
+    expect(text).toMatch(/^Substitute needed: Minecraft Club – A, Wed 14 Oct/);
   });
 
   it("never sends an alert block, which Slack refuses in a message", () => {
@@ -142,7 +142,7 @@ describe("buildSubstitutionSlackMessage", () => {
       expect(accept).toMatchObject({ type: "button", action_id: SLACK_ACCEPT_ACTION_ID, style: "primary" });
       expect(accept.confirm).toBeDefined();
     }
-    expect(allText(cards(blocks))).toContain("Offered Oct 8, 12:00");
+    expect(allText(cards(blocks))).toContain("Offered 8 Oct, 12:00");
   });
 
   it("says so where nobody has offered yet", () => {
@@ -187,8 +187,8 @@ describe("buildSubstitutionSlackMessage", () => {
       }),
     );
     expect(cards(blocks).map(cardTitle)).toEqual([":white_check_mark: Aino Korhonen", "Eero Mäki"]);
-    expect(allText([cards(blocks)[0]])).toContain("Accepted by Admin Person, Oct 9, 12:00");
-    expect(allText([cards(blocks)[1]])).toContain("Offered Oct 8, 11:00");
+    expect(allText([cards(blocks)[0]])).toContain("Accepted by Admin Person, 9 Oct, 12:00");
+    expect(allText([cards(blocks)[1]])).toContain("Offered 8 Oct, 11:00");
     expect(buttons(blocks)).toEqual([]);
     expect(tableRows(blocks).slice(1).map((row) => [row[0], row[3]])).toEqual([
       ["Aino Korhonen", "Accepted"],

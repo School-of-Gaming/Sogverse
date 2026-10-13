@@ -380,7 +380,6 @@ function acceptedLine(approver: SnapshotPerson, approvedAt: string, timezone: st
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23",
     timeZone: timezone,
   })}`;
 }
@@ -393,7 +392,6 @@ function offeredLine(candidate: SnapshotCandidate, timezone: string): string {
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23",
     timeZone: timezone,
   })}`;
 }

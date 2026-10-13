@@ -4,6 +4,7 @@ import {
   viewerWeekdayIndex,
 } from "@/lib/schedule-occurrence";
 import { formatDate, formatDateOnly } from "@/lib/utils";
+import { formattingLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 
 // Schedule formatting for the browse + purchased cards and the detail page's
@@ -103,12 +104,20 @@ export function formatWeekday(
 ): string {
   const d = new Date(WEEKDAY_SEED);
   d.setUTCDate(WEEKDAY_SEED.getUTCDate() + weekday);
-  return new Intl.DateTimeFormat(locale, { weekday: form }).format(d);
+  return new Intl.DateTimeFormat(formattingLocale(locale), { weekday: form }).format(
+    d,
+  );
 }
 
 // A 24h "HH:MM" clock face for an instant as it falls in `timeZone`. en-GB +
 // hourCycle h23 gives a stable 00–23 "HH:MM" regardless of the UI locale,
 // matching the schedule's existing 24h look.
+//
+// That string is both the key slots are grouped and sorted by and the text the
+// schedule shows. It is fixed rather than the reader's because every formatting
+// locale sets a 24-hour clock today; the day a 12-hour locale (such as `en-us`)
+// is added, the key and the display split, and the display renders through
+// `formattingLocale()`.
 function viewerClock(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
@@ -123,7 +132,7 @@ function viewerClock(instant: Date, timeZone: string): string {
 
 function viewerTzAbbrev(instant: Date, locale: string, timeZone: string): string {
   try {
-    const parts = new Intl.DateTimeFormat(locale, {
+    const parts = new Intl.DateTimeFormat(formattingLocale(locale), {
       timeZone,
       timeZoneName: "short",
     }).formatToParts(instant);

@@ -547,7 +547,7 @@ describe("re-grouping into the viewer's week", () => {
         "en",
         new Date("2026-03-29T00:30:00+02:00"),
       ),
-    ).toBe("GMT+2");
+    ).toBe("EET");
     expect(
       viewerZoneAbbrev(
         products,
@@ -555,7 +555,7 @@ describe("re-grouping into the viewer's week", () => {
         "en",
         new Date("2026-03-29T12:00:00+03:00"),
       ),
-    ).toBe("GMT+3");
+    ).toBe("EEST");
   });
 });
 
@@ -954,7 +954,7 @@ describe("the certification queue", () => {
     ];
 
     const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
-    expect(helsinki[0].contractAcceptedOn).toBe("Aug 16, 2026");
+    expect(helsinki[0].contractAcceptedOn).toBe("16 Aug 2026");
     // Never signed, and "signed a version that has since been superseded", are
     // the same null on the wire and the same silence here: the question is
     // standing under the terms in force today.
@@ -966,7 +966,7 @@ describe("the certification queue", () => {
       NOW,
       LOS_ANGELES,
     );
-    expect(losAngeles[0].contractAcceptedOn).toBe("Aug 15, 2026");
+    expect(losAngeles[0].contractAcceptedOn).toBe("15 Aug 2026");
   });
 
   it("dates a criminal record check in the viewer's zone, independently of the contract", () => {
@@ -993,7 +993,7 @@ describe("the certification queue", () => {
     ];
 
     const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
-    expect(helsinki[0].criminalRecordCheckOn).toBe("Aug 16, 2026");
+    expect(helsinki[0].criminalRecordCheckOn).toBe("16 Aug 2026");
     expect(helsinki[0].contractAcceptedOn).toBeNull();
     // No check recorded, and one recorded as unacceptable, are the same false
     // in the column and so the same null on the wire: both mean the check has
@@ -1006,7 +1006,7 @@ describe("the certification queue", () => {
       NOW,
       LOS_ANGELES,
     );
-    expect(losAngeles[0].criminalRecordCheckOn).toBe("Aug 15, 2026");
+    expect(losAngeles[0].criminalRecordCheckOn).toBe("15 Aug 2026");
   });
 });
 

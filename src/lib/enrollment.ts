@@ -1,4 +1,5 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { formattingLocale } from "@/lib/constants/locales";
 import { parseTime } from "@/lib/utils";
 
 interface Schedule {
@@ -123,14 +124,14 @@ export function formatCountdown(ms: number, locale: string): string {
   const mins = totalMinutes % 60;
 
   const fmtUnit = (value: number, unit: "day" | "hour" | "minute") =>
-    new Intl.NumberFormat(locale, { style: "unit", unit, unitDisplay: "long" }).format(value);
+    new Intl.NumberFormat(formattingLocale(locale), { style: "unit", unit, unitDisplay: "long" }).format(value);
 
   if (days > 0) return fmtUnit(days, "day");
   if (totalMinutes < 60) return fmtUnit(totalMinutes, "minute");
   if (totalMinutes < 120) {
     const hourStr = fmtUnit(hours, "hour");
     return mins > 0
-      ? new Intl.ListFormat(locale, { type: "unit", style: "long" }).format([hourStr, fmtUnit(mins, "minute")])
+      ? new Intl.ListFormat(formattingLocale(locale), { type: "unit", style: "long" }).format([hourStr, fmtUnit(mins, "minute")])
       : hourStr;
   }
   return fmtUnit(hours, "hour");

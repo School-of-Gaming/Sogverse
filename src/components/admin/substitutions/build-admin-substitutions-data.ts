@@ -1,5 +1,8 @@
 import { ROUTES } from "@/lib/constants";
-import type { SupportedLocale } from "@/lib/constants/locales";
+import {
+  formattingLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import {
   buildSessionFacts,
   sessionClockFace,
@@ -238,7 +241,7 @@ function viewerZoneAbbrev(
   );
   if (!converts) return null;
 
-  const part = new Intl.DateTimeFormat(locale, {
+  const part = new Intl.DateTimeFormat(formattingLocale(locale), {
     timeZone: viewerTimeZone,
     timeZoneName: "short",
   })

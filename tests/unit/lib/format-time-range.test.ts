@@ -21,7 +21,7 @@ describe("formatTimeRange", () => {
 
   it("formats both ends from their own instants and names the zone", () => {
     expect(formatTimeRange(START, END, "en", "Europe/Helsinki")).toBe(
-      "18:00 \u2013 19:30 GMT+3",
+      "18:00\u201319:30 EEST",
     );
   });
 });
