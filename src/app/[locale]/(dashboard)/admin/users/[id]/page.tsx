@@ -247,7 +247,9 @@ export default async function AdminUserDetailPage({
   // Whether the reference column beside the main one has anything in it: game
   // accounts, a gedu's spoken languages and coverage, the marketing card and a
   // gamer's photo consent. An admin's page holds none of them, so it stays one
-  // column at full width rather than leaving a hole on the right.
+  // column at full width rather than leaving a hole on the right. The whole
+  // column renders behind this flag, so it has to cover every card's own
+  // condition there: a card whose condition widens past it vanishes silently.
   const hasAside = showGameAccounts || isCustomer || isGedu;
 
   // Where this account came from, handed to the marketing card as the server
@@ -733,8 +735,10 @@ export default async function AdminUserDetailPage({
               In the main column rather than the reference one, though it is a
               setting: the card's body is the public page itself, which lays itself
               out by its own width, so in a third of the page an admin would be
-              reading the phone layout of the page instead of the one a desktop
-              visitor meets. */}
+              reading its phone layout. Two thirds gets the portrait beside the
+              text at the usual desktop widths, though not the page's widest
+              headline step, which the column never reaches under the page's
+              width cap; the owner judged that close enough to review by. */}
           {hasTeamProfile && (
             <UserTeamProfileCard
               userId={userId}
