@@ -58,6 +58,17 @@ describe("formatCompactDateRange", () => {
     );
   });
 
+  it("spaces the dash exactly when an end holds a space, whatever the runtime's CLDR", () => {
+    // CLDR 48 unspaced Swedish's cross-month range and spaced English's
+    // same-month one; both come out the same on every runtime.
+    expect(formatCompactDateRange("2026-10-13", "2026-11-17", "sv", TODAY)).toBe(
+      "13 okt. – 17 nov.",
+    );
+    expect(formatCompactDateRange("2026-10-13", "2026-11-17", "en", TODAY)).toBe(
+      "13 Oct – 17 Nov",
+    );
+  });
+
   it("is pinned to UTC, whatever the runtime's zone", () => {
     // A zone east of UTC would tip a midnight-parsed date the other way.
     expect(formatCompactDateRange("2026-01-01", "2026-01-01", "fr", TODAY)).toBe(
