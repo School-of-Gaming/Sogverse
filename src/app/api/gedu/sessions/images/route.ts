@@ -1,6 +1,12 @@
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-import { reencodeJpeg } from "@/lib/images/reencode-jpeg.server";
+import {
+  IMMUTABLE_CACHE_CONTROL,
+  readImageFile,
+  reencodeForPurpose,
+  type ImageIngestRefusal,
+  type ImageIngestRefusalReason,
+} from "@/lib/images/ingest-image.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   SESSION_IMAGES_BUCKET,
@@ -11,22 +17,29 @@ import {
   addSessionImageResponse,
   SESSION_PHOTO_CAP,
   SESSION_PHOTO_CAP_REACHED_SQLSTATE,
-  SESSION_PHOTO_MAX_BYTES,
-  SESSION_PHOTO_MAX_DIMENSION,
   type AddSessionImageFields,
+  type SessionPhotoErrorCode,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 const ROUTE_LABEL = "/api/gedu/sessions/images";
 
 /**
- * A year, and safe by construction: the object is named by a `gen_random_uuid()`
- * primary key and uploaded with `upsert: false`, so the bytes at a given URL can
- * never change. The same figure the product catalogue uses, for the same reason.
+ * The code the gedu is shown for each ingest refusal. A decode failure past the
+ * JPEG marker takes `notJpeg`, the same answer as bytes that are not a JPEG at
+ * all: either way the gedu's move is to convert the picture and try again.
  */
-const IMMUTABLE_CACHE_CONTROL = "31536000";
+const INGEST_REFUSAL_CODE: Record<ImageIngestRefusalReason, SessionPhotoErrorCode> = {
+  noFile: "uploadFailed",
+  tooLarge: "tooLarge",
+  notJpeg: "notJpeg",
+  undecodable: "notJpeg",
+  wrongSize: "badDimensions",
+  tooBig: "badDimensions",
+};
 
-/** JPEG's start-of-image marker, followed by the first segment's own marker. */
-const JPEG_SOI = [0xff, 0xd8, 0xff];
+function ingestRefusal({ detail, status, reason }: ImageIngestRefusal): ApiError {
+  return new ApiError(detail, status, INGEST_REFUSAL_CODE[reason]);
+}
 
 /**
  * POST /api/gedu/sessions/images — attach one photo to a session's report.
@@ -97,36 +110,14 @@ export const POST = defineRoute({
     //
     // Before the row, because the row stores what this measures. The strip is
     // the point (see the docblock); the measurement is what it buys along the
-    // way, and it is why the claimed numbers below are never passed on.
-    let stored;
-    try {
-      stored = await reencodeJpeg(upload.bytes);
-    } catch (cause) {
-      // The magic bytes said JPEG, so a decode failure means the file is
-      // truncated or corrupt past its first three bytes. Same answer as a
-      // non-JPEG: the gedu's move is to convert it and try again.
-      throw new ApiError(
-        `the upload would not decode past its JPEG marker: ${String(cause)}`,
-        415,
-        "notJpeg",
-      );
-    }
-
-    if (
-      stored.width > SESSION_PHOTO_MAX_DIMENSION ||
-      stored.height > SESSION_PHOTO_MAX_DIMENSION
-    ) {
-      // Unreachable from the honest client, which downscales to ~2048 px before
-      // uploading, and reachable only by one that skipped that pass and claimed
-      // plausible numbers for an implausible picture. The RPC's own bound stands
-      // behind this; refusing here is what gives the gedu the dimension copy
-      // rather than the generic one.
-      throw new ApiError(
-        `the image decodes to ${stored.width} x ${stored.height}, past the ${SESSION_PHOTO_MAX_DIMENSION} bound`,
-        400,
-        "badDimensions",
-      );
-    }
+    // way, and it is why the claimed numbers below are never passed on. A
+    // picture past the maximum edge is unreachable from the honest client,
+    // which downscales to ~2048 px before uploading; the RPC's own bound stands
+    // behind the refusal, and refusing here is what gives the gedu the
+    // dimension copy rather than the generic one.
+    const reencoded = await reencodeForPurpose(upload.bytes, "session_photo");
+    if (!reencoded.ok) throw ingestRefusal(reencoded);
+    const stored = reencoded.value;
 
     // --- 2. The row, on the caller's own client ----------------------------
     //
@@ -251,40 +242,12 @@ async function readSessionImageUpload(
     );
   }
 
-  const file = formData.get("file");
-  if (!(file instanceof File)) {
-    throw new ApiError("no 'file' field in the form", 400, "uploadFailed");
-  }
-
-  // Size before bytes, and not to save memory: `formData()` above has already
-  // buffered the whole body, and what bounds that is the platform's ~4.5 MB
-  // request limit, which refuses anything far larger before this route runs at
-  // all. The order is about the answer — an over-cap file gets the same refusal
-  // whatever its first three bytes say, so sniffing them first would only be
-  // able to replace a true answer with a less useful one.
-  if (file.size > SESSION_PHOTO_MAX_BYTES) {
-    throw new ApiError(
-      `the upload is ${file.size} bytes, over the ${SESSION_PHOTO_MAX_BYTES} cap`,
-      413,
-      "tooLarge",
-    );
-  }
-
-  const bytes = Buffer.from(await file.arrayBuffer());
-
-  // The magic-byte sniff, and the whole of what "this is a JPEG" means here.
-  // The declared content type is the client's claim about its own file and is
-  // not consulted; the raw-HEIC side doors (a Files-app pick, a macOS
-  // drag-drop) land exactly here. It runs before the re-encode rather than
-  // being left to it: sharp would happily decode a PNG or a WebP, and one
-  // format in the bucket is what lets the report email render everywhere.
-  if (!JPEG_SOI.every((byte, index) => bytes[index] === byte)) {
-    throw new ApiError(
-      "the upload does not begin with a JPEG start-of-image marker",
-      415,
-      "notJpeg",
-    );
-  }
+  // The raw-HEIC side doors (a Files-app pick, a macOS drag-drop) land on the
+  // JPEG sniff in here, and one format in the bucket is what lets the report
+  // email render everywhere.
+  const file = await readImageFile(formData, "session_photo");
+  if (!file.ok) throw ingestRefusal(file);
+  const bytes = file.value;
 
   // Parsed with `safeParse` rather than the shared body helper because that
   // helper answers a ready 400 whose message is its whole content, and this

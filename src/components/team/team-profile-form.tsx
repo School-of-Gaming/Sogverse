@@ -31,9 +31,8 @@ import {
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
 import { cn } from "@/lib/utils";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import {
-  TEAM_PHOTO_HEIGHT,
-  TEAM_PHOTO_WIDTH,
   type TeamProfile,
   type TeamProfilePhoto,
   type TeamProfileTranslation,
@@ -333,13 +332,13 @@ export function TeamProfilePhotoSection({
 }) {
   const t = useTranslations("team.edit.photo");
   const crop = useImageCrop(
-    { width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT },
+    IMAGE_PURPOSES.team_photo.storedSize,
     (blob) => {
       const url = URL.createObjectURL(blob);
       onCropped(blob, url);
       update((form) => ({
         ...form,
-        photo: { src: url, width: TEAM_PHOTO_WIDTH, height: TEAM_PHOTO_HEIGHT },
+        photo: { src: url, ...IMAGE_PURPOSES.team_photo.storedSize },
       }));
     },
     { title: t("crop.title"), confirmLabel: t("crop.confirm") },

@@ -12,8 +12,8 @@ import {
   isSessionPhotoErrorCode,
   SESSION_PHOTO_CAP,
   SESSION_PHOTO_CAP_REACHED_SQLSTATE,
-  SESSION_PHOTO_MAX_BYTES,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import {
   carriesExif,
   containsText,
@@ -240,7 +240,7 @@ describe("POST /api/gedu/sessions/images", () => {
   it("refuses an upload over the byte cap, before reading its bytes", async () => {
     mockGedu();
     const tooBig = new File(
-      [new Uint8Array(SESSION_PHOTO_MAX_BYTES + 1)],
+      [new Uint8Array(IMAGE_PURPOSES.session_photo.maxBytes + 1)],
       "huge.jpg",
       { type: "image/jpeg" },
     );

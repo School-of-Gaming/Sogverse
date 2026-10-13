@@ -1,5 +1,6 @@
 import "server-only";
 import sharp from "sharp";
+import { MAX_IMAGE_EDGE } from "./image-purposes";
 
 /**
  * The server-side half of image normalization: one re-encode that makes the
@@ -29,8 +30,9 @@ import sharp from "sharp";
  *
  * **It re-encodes; it does not rescue.** There is no downscale here, on
  * purpose: the honest path arrives already inside the edge cap, and an image
- * whose true dimensions are implausible is *refused* by the send RPC's bound
- * rather than quietly resized into one. That is the same posture the routes
+ * whose true dimensions are implausible is *refused* — by the shared ingest
+ * step's size check, and behind it the database's own bound — rather than
+ * quietly resized into one. That is the same posture the routes
  * take about the bytes themselves — verify, never rescue — and it keeps this
  * helper a single fact about a single pass.
  */
@@ -57,14 +59,14 @@ const JPEG_QUALITY = 80;
  * serverless function, and on the chat route the decode happens *before* the
  * membership RPC — so an unbounded one is reachable pre-authorization.
  *
- * 4096 × 4096 is the platform's own maximum edge, the bound the image row's
+ * The square of the platform's own maximum edge, the bound the image row's
  * dimension CHECK already refuses past. Honest clients normalize to 2048 before
  * uploading, so nothing a real composer produces comes near this; a picture
  * that does is refused here rather than decoded and then refused by the RPC.
  *
  * Any other server-side decode of an image a user stored takes the same bound.
  */
-export const MAX_INPUT_PIXELS = 4096 * 4096;
+export const MAX_INPUT_PIXELS = MAX_IMAGE_EDGE * MAX_IMAGE_EDGE;
 
 /** One re-encoded image: the bytes to store, and their measured size. */
 export interface ReencodedJpeg {

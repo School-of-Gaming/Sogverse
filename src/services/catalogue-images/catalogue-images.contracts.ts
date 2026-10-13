@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants, type CatalogueImagePurpose } from "@/types";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 
 /**
  * Wire contracts for the image catalogue — the four admin routes and
@@ -87,8 +88,16 @@ export function isPurposeSize(
  * as a platform error with no message worth showing. The client checks the
  * size before posting so the admin gets the real reason; the route checks it
  * again because a route never trusts its caller.
+ *
+ * Read from the image purpose registry. The routes check it before they know
+ * the upload's purpose, so the catalogue answers to one figure, the largest
+ * any catalogue purpose declares; the catalogue purposes all declare the same.
  */
-export const CATALOGUE_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
+export const CATALOGUE_IMAGE_MAX_BYTES = Math.max(
+  ...Object.values(IMAGE_PURPOSES)
+    .filter((spec) => spec.catalogue)
+    .map((spec) => spec.maxBytes),
+);
 
 /** Matches the table's `length(label) between 1 and 120` CHECK. */
 export const CATALOGUE_IMAGE_LABEL_MAX_LENGTH = 120;

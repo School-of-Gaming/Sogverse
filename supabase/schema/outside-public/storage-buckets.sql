@@ -26,5 +26,5 @@ VALUES ('spotlight-images', 'spotlight-images', true, 4194304, ARRAY['image/jpeg
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES ('team-photos', 'team-photos', false, 2097152, ARRAY['image/jpeg', 'image/webp'])
+VALUES ('team-photos', 'team-photos', false, 2097152, ARRAY['image/jpeg'])
 ON CONFLICT (id) DO NOTHING;

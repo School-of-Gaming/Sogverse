@@ -3,6 +3,7 @@ import path from "node:path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { CATALOGUE_IMAGE_PURPOSES } from "./src/lib/images/catalogue-image-purposes";
+import { IMAGE_PURPOSES } from "./src/lib/images/image-purposes";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -149,7 +150,7 @@ const nextConfig: NextConfig = {
       // reason product banners do and a stronger one: a family feed card can
       // show five of them, unpaged, and serving ~300 KB masters into 200 px
       // thumbnails is the real delivery cost of the feature.
-      bucketPattern("session-images"),
+      bucketPattern(IMAGE_PURPOSES.session_photo.bucket),
     ],
     // The local addresses the optimizer may fetch. Declaring any replaces
     // Next's default, which is the first entry: every local path, with no
