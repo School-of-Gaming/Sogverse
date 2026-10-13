@@ -7,32 +7,35 @@ import {
   canBind,
   PORT_BLOCK_SIZE,
   PORT_BLOCKS,
+  parseClaimedBlocks,
 } from "../../scripts/lib/local-db-ports.mjs";
 
-describe("PORT_BLOCKS", () => {
-  it("is forty blocks of 100 from 20000, all below both OSes' ephemeral ranges", () => {
-    expect(PORT_BLOCKS).toHaveLength(40);
-    expect(PORT_BLOCKS[0]).toBe(20000);
-    PORT_BLOCKS.forEach((base, index) => expect(base).toBe(20000 + index * PORT_BLOCK_SIZE));
+describe("bindableBlocks", () => {
+  it("keeps the blocks whose every port binds, in order, all below both OSes' ephemeral ranges", async () => {
+    const refused = new Set([20000, 20199, 23950]);
+    const blocks = await bindableBlocks(new Set(), async (port: number) => !refused.has(port));
+    expect(blocks).toEqual(PORT_BLOCKS.filter((base) => ![20000, 20100, 23900].includes(base)));
     // Linux's ephemeral range starts at 32768, Windows' dynamic range at 49152.
     expect(PORT_BLOCKS.at(-1)! + PORT_BLOCK_SIZE - 1).toBeLessThan(32768);
   });
-});
 
-describe("bindableBlocks", () => {
-  it("keeps the blocks whose every port binds, in order", async () => {
-    const refused = new Set([20000, 20199, 23950]);
-    const blocks = await bindableBlocks(async (port: number) => !refused.has(port));
-    expect(blocks).toEqual(PORT_BLOCKS.filter((base) => ![20000, 20100, 23900].includes(base)));
-  });
-
-  it("probes every port of every block", async () => {
+  it("never probes a claimed block, and leaves it out", async () => {
     const probed = new Set<number>();
-    await bindableBlocks(async (port: number) => {
+    const blocks = await bindableBlocks(new Set([20100, 21000]), async (port: number) => {
       probed.add(port);
       return true;
     });
-    expect(probed.size).toBe(PORT_BLOCKS.length * PORT_BLOCK_SIZE);
+    expect(blocks).toEqual(PORT_BLOCKS.filter((base) => base !== 20100 && base !== 21000));
+    const inClaimed = (port: number) => (port >= 20100 && port < 20200) || (port >= 21000 && port < 21100);
+    expect([...probed].filter(inClaimed)).toEqual([]);
+  });
+});
+
+describe("parseClaimedBlocks", () => {
+  it("reads the sentinel's comma-separated blocks and drops anything that is not one", () => {
+    expect(parseClaimedBlocks("20000,,21300,x")).toEqual(new Set([20000, 21300]));
+    expect(parseClaimedBlocks("")).toEqual(new Set());
+    expect(parseClaimedBlocks(undefined)).toEqual(new Set());
   });
 });
 

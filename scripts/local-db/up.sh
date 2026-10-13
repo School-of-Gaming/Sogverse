@@ -35,7 +35,11 @@ fi
 
 state=$(stack_state_dir "$project")
 
-if stack_is_running "$project"; then
+# Up only counts as up when the record's `cli=` line says the build finished. A
+# first start killed part-way leaves containers running and a record without
+# it; that stack has no seed and .env.local was never repointed, and is rebuilt
+# below rather than reported.
+if stack_is_running "$project" && [ -f "$state/meta" ] && [ -n "$(record_value "$state/meta" cli)" ]; then
   api_url="http://127.0.0.1:$(record_value "$state/meta" api_port)"
   say "Already up at $api_url"
   printf '::localdb api_url=%s\n' "$api_url"
@@ -65,8 +69,15 @@ fi
 # fixed by the project id whether or not it has been built yet.
 work=$(shadow_workdir "$project")
 
+# A signal hands cleanup its own status: the status of whatever command was
+# interrupted can be 0, which would read as success and skip the cleanup.
 cleanup() {
   status=$?
+  if [ -n "${1:-}" ]; then
+    status=$1
+  fi
+  trap - EXIT INT TERM HUP
+  set +e
   if [ "$status" -eq 0 ]; then
     exit 0
   fi
@@ -77,18 +88,12 @@ cleanup() {
     restore_env_aside "$env_file" "$state/env-aside" || true
   fi
   if [ "$first_start" -eq 1 ]; then
+    # `remove_project` takes whatever of the service set the stop left, with
+    # the volumes, the network and the workdir, so the record goes last and
+    # nothing is left holding this checkout's ports without one.
     stop_stack "$cli" "$work" "$project"
-    # Whatever the CLI left of the rest of the service set. `stop_stack`
-    # guarantees only the database is gone, and the two directories below are
-    # about to go with it — leaving nothing on disk that describes a container
-    # still holding this checkout's ports.
-    leftovers=$(stack_containers_all "$project")
-    if [ -n "$leftovers" ]; then
-      # Word splitting is what turns the name list into arguments here.
-      # shellcheck disable=SC2086
-      docker rm -f $leftovers >/dev/null 2>&1 || true
-    fi
-    rm -rf "$work" "$state"
+    remove_project "$project"
+    rm -rf "$state"
     say "The half-built stack has been removed and .env.local left as it was."
   elif stack_is_running "$project"; then
     # A resume that got the containers back and then failed. The stack is real
@@ -106,7 +111,26 @@ cleanup() {
   report_running
   exit "$status"
 }
-trap cleanup EXIT INT TERM
+# SIGPIPE is ignored and HUP trapped for the reason lib.sh's `transient_db`
+# gives: a Node side killed, or a terminal closed, must still end this run
+# through its cleanup.
+trap '' PIPE
+trap cleanup EXIT
+trap 'cleanup 130' INT
+trap 'cleanup 143' TERM
+trap 'cleanup 129' HUP
+
+# A first start that never finished — killed before its trap could run —
+# leaves containers, running or stopped, and volumes that `supabase start`
+# would reuse, handing back a database with no seed. Its slate is cleared so the
+# build starts afresh; the record and any .env.local values it set aside stay,
+# so the stack keeps its block and `down` can still restore the originals.
+if [ "$first_start" -eq 1 ]; then
+  if [ -f "$state/meta" ]; then
+    say "A first start that never finished was found; building it afresh."
+  fi
+  remove_project "$project"
+fi
 
 mkdir -p "$state"
 

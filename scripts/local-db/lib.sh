@@ -367,15 +367,15 @@ allocate_block() {
 # the next allocation anywhere on the machine does, after removing what the
 # dead run left running on the block.
 #
-# A claim this identity left behind and nobody has reaped yet is taken over as
-# it is, block and all: the run clears its own id's slate before it starts, so
-# the leftovers on that block are its own to remove. The file is opened and
-# locked under the ports lock, so a reaper never sees it unlocked in between.
+# The block is always picked afresh from this run's candidates, and written
+# over whatever claim this identity left behind. The file is opened and locked
+# under the ports lock, so a reaper never sees it unlocked in between.
 claim_transient_block() {
   claim_file="$TRANSIENT_DIR/$1"
   hold_ports_lock || return 1
   mkdir -p "$TRANSIENT_DIR"
-  # Appending, so a claim left behind is opened without being emptied.
+  # Appending, so a claim another run holds is not emptied before the lock
+  # below finds it held.
   exec 7>>"$claim_file"
   if ! flock -n 7; then
     release_ports_lock
@@ -384,15 +384,12 @@ claim_transient_block() {
   fi
   # Only now is the file this run's to remove.
   claim=$claim_file
-  port_base=$(record_port_base "$claim")
-  if [ -z "$port_base" ]; then
-    reap_stale_claims
-    if ! port_base=$(pick_block "$2"); then
-      release_ports_lock
-      return 1
-    fi
-    printf 'port_base=%s\n' "$port_base" > "$claim"
+  reap_stale_claims
+  if ! port_base=$(pick_block "$2"); then
+    release_ports_lock
+    return 1
   fi
+  printf 'port_base=%s\n' "$port_base" > "$claim"
   release_ports_lock
 }
 

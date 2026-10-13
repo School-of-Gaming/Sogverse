@@ -58,7 +58,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { stackIdentity } from './lib/local-db-identity.mjs';
-import { bindableBlocks } from './lib/local-db-ports.mjs';
+import { bindableBlocks, parseClaimedBlocks } from './lib/local-db-ports.mjs';
 import { outputDir } from './lib/output.mjs';
 
 const DISTRO = 'Ubuntu-24.04';
@@ -616,19 +616,42 @@ const elapsed = () => ((Date.now() - startedAt) / 1000).toFixed(0);
 const log = openLog();
 
 /**
- * The blocks Windows can bind, as one bare word — `-` when there are none, or
- * when the command never allocates. Probed on every run of a command that may
- * allocate, because only the distro knows whether this one will: a stack that
- * already has a record ignores the list.
+ * A distro run that did not succeed, told the reader, and this script's exit.
+ * Either the shell file never started, or it started and exited with the status
+ * reserved for "could not run" — that is COULD_NOT_RUN; anything else is an
+ * outcome.
  */
-const candidateBlocks = spec.allocatesPorts ? (await bindableBlocks()).join(',') || '-' : '-';
+const failRun = (run) => {
+  const exitCode = !run.started || run.code === COULD_NOT_RUN ? COULD_NOT_RUN : 1;
+  if (run.message) fail(run.message, exitCode);
+  reportFailure(log, run, elapsed());
+  fail('', exitCode);
+};
+
+/**
+ * The blocks Windows can bind and no record claims, as one bare word — `-`
+ * when there are none, or when the command never allocates. Probed on every run
+ * of a command that may allocate, because only the distro knows whether this
+ * one will: a stack that already has a record ignores the list. The claims are
+ * read first, in one round trip, so that a block another stack may be starting
+ * on is never probed (lib/local-db-ports.mjs says why). The distro re-checks the
+ * claims under its lock when it picks, so this read is a guard for the probe and
+ * not the authority on what is free.
+ */
+let candidateBlocks = '-';
+if (spec.allocatesPorts) {
+  const claims = await runInDistro({ shellFile: 'claimed.sh', args: [checkoutWsl, runProjectId, '-', cliVersion], log });
+  if (claims.code !== 0) failRun(claims);
+  candidateBlocks = (await bindableBlocks(parseClaimedBlocks(claims.values.claimed))).join(',') || '-';
+}
 
 /**
  * `test` hands the database to vitest once it is `ready`, and closes the shell
  * file's stdin when vitest is done, which is what removes the database. Ctrl-C
- * reaches vitest and wsl.exe on its own; this script stays to see the database
- * removed, and closes that stdin itself in case the database was still being
- * built when it came.
+ * reaches vitest and wsl.exe on its own; this script closes that stdin itself in
+ * case the database was still being built when it came. The database is
+ * removed by its run's trap or, failing that, by the next allocation's reaper,
+ * so a second Ctrl-C stops waiting for the run and leaves.
  */
 let vitestRun = null;
 let interrupted = false;
@@ -636,6 +659,13 @@ let distroChild = null;
 const release = () => distroChild?.stdin?.end('done\n');
 if (command === 'test') {
   process.on('SIGINT', () => {
+    if (interrupted) {
+      console.error(
+        'Stopped waiting. The throwaway database is removed by its run\'s cleanup or, failing that, by the next run to choose ports.',
+      );
+      if (log !== null) console.error(`Full log: ${log.file}`);
+      process.exit(130);
+    }
     interrupted = true;
     release();
   });
@@ -679,17 +709,16 @@ if (command === 'test' && vitestCode !== null) {
   process.exit(vitestCode !== 0 ? vitestCode : result.code === 0 ? 0 : 1);
 }
 
-if (interrupted) fail(`${command} interrupted before the tests ran; the throwaway database goes with its run.`, 130);
-
-if (result.code !== 0 || command === 'test') {
-  // Either the shell file never started, or it started and exited with the
-  // status reserved for "could not run". Anything else is an outcome. A `test`
-  // run that got here never reached its tests, whatever the shell file's code.
-  const exitCode = !result.started || result.code === COULD_NOT_RUN ? COULD_NOT_RUN : 1;
-  if (result.message) fail(result.message, exitCode);
-  reportFailure(log, result, elapsed());
-  fail('', exitCode);
+if (interrupted) {
+  fail(
+    `${command} interrupted before the tests ran. The throwaway database is removed by its run's cleanup or, ` +
+      'failing that, by the next run to choose ports.',
+    130,
+  );
 }
+
+// A `test` run that got here never reached its tests, whatever the shell file's code.
+if (result.code !== 0 || command === 'test') failRun(result);
 
 for (const line of result.said) console.log(line);
 if (command === 'up') await reportGoogle(result.values.api_url);

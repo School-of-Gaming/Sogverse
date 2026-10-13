@@ -42,17 +42,45 @@ export const canBind = (port) =>
   });
 
 /**
- * The blocks every one of whose ports can be bound, in order. Every port of a
- * block is probed, not only the ones config.toml shifts into it: all forty
- * blocks take about two seconds, and the shift arithmetic keeps its one home in
- * lib.sh.
+ * The blocks the distro's `claimed=` sentinel names (scripts/local-db/claimed.sh),
+ * out of its comma-separated word. Anything that is not a block is dropped: a
+ * record with no readable block names none.
  *
+ * @param {string | undefined} word
+ * @returns {Set<number>}
+ */
+export const parseClaimedBlocks = (word) =>
+  new Set(
+    (word ?? '')
+      .split(',')
+      .filter((part) => /^\d+$/.test(part))
+      .map(Number),
+  );
+
+/**
+ * The unclaimed blocks every one of whose ports can be bound, in order. Every
+ * port of a block is probed, not only the ones config.toml shifts into it: all
+ * forty blocks take about two seconds, and the shift arithmetic keeps its one
+ * home in lib.sh.
+ *
+ * A claimed block is never probed. Its stack may be starting at this moment,
+ * and a probe's bind landing on a port just as WSL's forwarder publishes it can
+ * leave that stack unreachable from Windows. The claims are read before the
+ * probe, so a block claimed after the read is still probed. That window is
+ * real, not theoretical: the probe takes two to three seconds, and a run that
+ * claims a block just after the read can have its first container published
+ * within them. What keeps it rare is that a collision also needs one of the
+ * probe's binds, each held for well under a millisecond, to land on the very
+ * port being published at the instant it is — so it narrows the hazard to a
+ * coincidence rather than closing it.
+ *
+ * @param {Set<number>} [claimed]
  * @param {(port: number) => Promise<boolean>} [probe]
  * @returns {Promise<number[]>}
  */
-export async function bindableBlocks(probe = canBind) {
+export async function bindableBlocks(claimed = new Set(), probe = canBind) {
   const results = await Promise.all(
-    PORT_BLOCKS.map(async (base) => {
+    PORT_BLOCKS.filter((base) => !claimed.has(base)).map(async (base) => {
       const ports = Array.from({ length: PORT_BLOCK_SIZE }, (_, offset) => base + offset);
       const bindable = await Promise.all(ports.map((port) => probe(port)));
       return bindable.every(Boolean) ? base : null;
