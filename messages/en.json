@@ -943,8 +943,8 @@
       },
       "list": {
         "subtitle": "Manage the clubs, camps and events admins have created.",
-        "new": "New {label}",
-        "empty": "No {plural} yet. Click New {label} to create one.",
+        "new": "New {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}",
+        "empty": "{type, select, consumerClub {No consumer clubs yet. Click New consumer club to create one.} municipalityClub {No municipality clubs yet. Click New municipality club to create one.} camp {No camps yet. Click New camp to create one.} other {No events yet. Click New event to create one.}}",
         "emptyAll": "No clubs, camps or events yet.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
@@ -965,8 +965,8 @@
         "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in."
       },
       "newPage": {
-        "back": "Back to {plural}",
-        "title": "New {label}"
+        "back": "Back to {type, select, consumerClub {consumer clubs} municipalityClub {municipality clubs} camp {camps} other {events}}",
+        "title": "New {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}"
       },
       "detailsPage": {
         "notFound": "Product not found.",
@@ -1026,12 +1026,12 @@
       },
       "editPage": {
         "back": "Back to product",
-        "kicker": "Edit {label}",
+        "kicker": "Edit {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}",
         "title": "Edit {name}"
       },
       "clonePage": {
         "back": "Back to product",
-        "kicker": "Clone {label}",
+        "kicker": "Clone {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}",
         "title": "Cloning {name}",
         "copySuffix": " (Copy)"
       },
@@ -1263,7 +1263,7 @@
       },
       "actions": {
         "cancel": "Cancel",
-        "createLabel": "Create {label}"
+        "createLabel": "Create {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}"
       },
       "status": {
         "pending": "Awaiting start",
@@ -1438,7 +1438,7 @@
         "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
         "clear": "Clear",
-        "noMatches": "No {plural} match the current search and filters.",
+        "noMatches": "No {type, select, consumerClub {consumer clubs} municipalityClub {municipality clubs} camp {camps} other {events}} match the current search and filters.",
         "noMatchesAll": "Nothing matches the current search and filters."
       },
       "geduPicker": {

@@ -94,9 +94,7 @@ export function ProductListCreateAction() {
     return (
       <Link href={ROUTES.admin.productNew(type)} className={buttonVariants()}>
         <Plus className="mr-1 h-4 w-4" />
-        {t("list.new", {
-          label: t(`types.${PRODUCT_TYPE_CONFIG[type].i18nKey}.label`),
-        })}
+        {t("list.new", { type: PRODUCT_TYPE_CONFIG[type].i18nKey })}
       </Link>
     );
   }

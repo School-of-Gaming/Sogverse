@@ -943,8 +943,8 @@
       },
       "list": {
         "subtitle": "Hallinnoi ylläpitäjien luomia kerhoja, leirejä ja tapahtumia.",
-        "new": "Uusi {label}",
-        "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
+        "new": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}",
+        "empty": "{type, select, consumerClub {Ei vielä kuluttajakerhoja. Luo uusi painamalla Uusi kuluttajakerho.} municipalityClub {Ei vielä kuntakerhoja. Luo uusi painamalla Uusi kuntakerho.} camp {Ei vielä leirejä. Luo uusi painamalla Uusi leiri.} other {Ei vielä tapahtumia. Luo uusi painamalla Uusi tapahtuma.}}",
         "emptyAll": "Kerhoja, leirejä tai tapahtumia ei ole vielä.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
@@ -965,8 +965,8 @@
         "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty."
       },
       "newPage": {
-        "back": "Takaisin: {plural}",
-        "title": "Uusi {label}"
+        "back": "Takaisin {type, select, consumerClub {kuluttajakerhoihin} municipalityClub {kuntakerhoihin} camp {leireihin} other {tapahtumiin}}",
+        "title": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
       },
       "detailsPage": {
         "notFound": "Tuotetta ei löytynyt.",
@@ -1026,12 +1026,12 @@
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
-        "kicker": "Muokkaa: {label}",
+        "kicker": "Muokkaa {type, select, consumerClub {kuluttajakerhoa} municipalityClub {kuntakerhoa} camp {leiriä} other {tapahtumaa}}",
         "title": "Muokkaa: {name}"
       },
       "clonePage": {
         "back": "Takaisin tuotteeseen",
-        "kicker": "Kloonaa: {label}",
+        "kicker": "Kloonaa {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}",
         "title": "Kloonataan: {name}",
         "copySuffix": " (kopio)"
       },
@@ -1263,7 +1263,7 @@
       },
       "actions": {
         "cancel": "Peruuta",
-        "createLabel": "Luo {label}"
+        "createLabel": "Luo {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
       },
       "status": {
         "pending": "Odottaa alkua",
@@ -1438,7 +1438,7 @@
         "searchPlaceholder": "Hae nimellä…",
         "showing": "Näytetään {count} / {total}",
         "clear": "Tyhjennä",
-        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia.",
+        "noMatches": "Yksikään {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}} ei vastaa hakua ja valittuja suodattimia.",
         "noMatchesAll": "Mikään ei vastaa hakua ja valittuja suodattimia."
       },
       "geduPicker": {

@@ -987,8 +987,8 @@
       },
       "list": {
         "subtitle": "ghomHom, pa’ Qugh, Qu’mey je yIQI’.",
-        "new": "{label} chu’",
-        "empty": "{plural} pagh. {label} chu’ yIchu’.",
+        "new": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} chu’",
+        "empty": "{type, select, consumerClub {ghomHom tlhIngan pagh. ghomHom tlhIngan chu’ yIchu’.} municipalityClub {ghomHom veng pagh. ghomHom veng chu’ yIchu’.} camp {pa’ Qugh pagh. pa’ Qugh chu’ yIchu’.} other {Qu’mey pagh. Qu’ chu’ yIchu’.}}",
         "emptyAll": "ghomHom pagh, pa’ Qugh pagh, Qu’mey pagh.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
@@ -1009,8 +1009,8 @@
         "hint": "Hol DIchu’. wa’ DoS DIchu’ poQ. vavmey Hol vIqIm; pagh, DIvI’ Hol; pagh, Hol DIchu’bogh."
       },
       "newPage": {
-        "back": "{plural} vIcheghmoH",
-        "title": "{label} chu’"
+        "back": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} vIcheghmoH",
+        "title": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} chu’"
       },
       "detailsPage": {
         "notFound": "Davchugh ghaj.",
@@ -1070,12 +1070,12 @@
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
-        "kicker": "{label} yIchoH",
+        "kicker": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIchoH",
         "title": "{name} yIchoH"
       },
       "clonePage": {
         "back": "Doch vIcheghmoH",
-        "kicker": "{label} yIvelqa’",
+        "kicker": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIvelqa’",
         "title": "{name} velqa’lu’",
         "copySuffix": " (velqa’)"
       },
@@ -1307,7 +1307,7 @@
       },
       "actions": {
         "cancel": "pegh",
-        "createLabel": "{label} yIchu’"
+        "createLabel": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIchu’"
       },
       "status": {
         "pending": "taghbe’",
@@ -1482,7 +1482,7 @@
         "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
         "clear": "yIteq",
-        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!",
+        "noMatches": "pagh {type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} DaSamlaH. yInej 'ej yIwIv latlh!",
         "noMatchesAll": "pagh DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {

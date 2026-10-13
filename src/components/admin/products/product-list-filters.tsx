@@ -281,13 +281,10 @@ export function ProductListFilters({
     ofType.length === 0
       ? typeKey === null
         ? t("list.emptyAll")
-        : t("list.empty", {
-            plural: t(`types.${typeKey}.plural`),
-            label: t(`types.${typeKey}.label`),
-          })
+        : t("list.empty", { type: typeKey })
       : typeKey === null
         ? t("filters.noMatchesAll")
-        : t("filters.noMatches", { plural: t(`types.${typeKey}.plural`) });
+        : t("filters.noMatches", { type: typeKey });
 
   return (
     // A fragment: the page's own `space-y-4` spaces the chip row, the filter

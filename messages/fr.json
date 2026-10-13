@@ -925,26 +925,26 @@
     "products": {
       "types": {
         "consumerClub": {
-          "label": "club grand public",
-          "plural": "clubs grand public"
+          "label": "Club grand public",
+          "plural": "Clubs grand public"
         },
         "municipalityClub": {
-          "label": "club municipal",
-          "plural": "clubs municipaux"
+          "label": "Club municipal",
+          "plural": "Clubs municipaux"
         },
         "camp": {
-          "label": "stage",
-          "plural": "stages"
+          "label": "Stage",
+          "plural": "Stages"
         },
         "event": {
-          "label": "événement",
-          "plural": "événements"
+          "label": "Événement",
+          "plural": "Événements"
         }
       },
       "list": {
         "subtitle": "Gérez les clubs, stages et événements créés par les administrateurs.",
-        "new": "Ajouter un {label}",
-        "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
+        "new": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}",
+        "empty": "{type, select, consumerClub {Pas encore de clubs grand public. Cliquez sur « Ajouter un club grand public » pour en créer un.} municipalityClub {Pas encore de clubs municipaux. Cliquez sur « Ajouter un club municipal » pour en créer un.} camp {Pas encore de stages. Cliquez sur « Ajouter un stage » pour en créer un.} other {Pas encore d’événements. Cliquez sur « Ajouter un événement » pour en créer un.}}",
         "emptyAll": "Pas encore de clubs, de stages ni d’événements.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
@@ -965,8 +965,8 @@
         "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée."
       },
       "newPage": {
-        "back": "Retour aux {plural}",
-        "title": "Ajouter un {label}"
+        "back": "Retour aux {type, select, consumerClub {clubs grand public} municipalityClub {clubs municipaux} camp {stages} other {événements}}",
+        "title": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
       },
       "detailsPage": {
         "notFound": "Produit introuvable.",
@@ -1026,12 +1026,12 @@
       },
       "editPage": {
         "back": "Retour au produit",
-        "kicker": "Modifier {label}",
+        "kicker": "Modifier {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
         "title": "Modifier {name}"
       },
       "clonePage": {
         "back": "Retour au produit",
-        "kicker": "Dupliquer {label}",
+        "kicker": "Dupliquer {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
         "title": "Duplication de {name}",
         "copySuffix": " (copie)"
       },
@@ -1263,7 +1263,7 @@
       },
       "actions": {
         "cancel": "Annuler",
-        "createLabel": "Créer un {label}"
+        "createLabel": "Créer un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
       },
       "status": {
         "pending": "En attente de démarrage",
@@ -1438,7 +1438,7 @@
         "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
         "clear": "Effacer",
-        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés.",
+        "noMatches": "Aucun {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}} ne correspond à la recherche et aux filtres sélectionnés.",
         "noMatchesAll": "Rien ne correspond à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
