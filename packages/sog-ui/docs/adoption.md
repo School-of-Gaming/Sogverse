@@ -262,6 +262,42 @@ import once nothing uses it.
 Done when: every clickable action in Sogverse is the library's button and its committing
 state is the library's.
 
+### 4. Body type
+
+The rest of the type scale: every size, weight, line height and letter spacing Sogverse
+still sets for itself once headings and button labels are the library's.
+
+Why fourth: Heading and Button each close one role in the scale, and this closes
+everything else, so until it lands the scale is a suggestion rather than the only sizes
+there are. It comes after them because it is the widest sweep in the list and the
+least interesting one per site; it should ride on sweep mechanics that two adoptions have
+already proven, and its rulings are easier once the heading and label steps are settled
+and only the body roles remain to decide. At the time of writing (2026-10-13), `src/`
+spends a raw Tailwind size class about 1,300 times across some 300 files, a hand-typed
+pixel size 82 times, and a weight class about 650 times, against 30 uses of the library's
+own steps.
+
+Needs in the library first: the steps the scale does not yet have. The app sets a lot of
+text at 16px and below 14px, and the scale has neither a plain body step at 16px nor
+anything smaller than `body-s`; whether those become steps, or their sites move to an
+existing one, is the owner's ruling, made from the demo with each candidate drawn in the
+places that spend it. And a text primitive, Heading's sibling: a step and the words, no
+class prop, because the seam has Sogverse write no type class at all, so a scale utility
+spent in Sogverse is a stop on the way rather than the end state.
+
+Changes in Sogverse: every raw size, weight, line-height and letter-spacing class converts
+to the text primitive at a scale step; the hand-typed pixel sizes either find a step or
+become the evidence for a new one.
+
+Lint: raw Tailwind size classes, arbitrary `text-[…]` sizes, and weight, line-height and
+letter-spacing classes are banned in Sogverse's source, with exemptions named one by one
+with reasons. Weight is the subtle one: the faces adoption allowed four weights in
+Sogverse's source, and this adoption decides whether a weight is ever a choice outside a
+step.
+
+Done when: every piece of text Sogverse sets takes its size from the library, and
+nothing in `src/` can name a size the scale does not have.
+
 ## After these
 
 The audit named the rest of the missing middle, in rough order of how many hand-rolled
