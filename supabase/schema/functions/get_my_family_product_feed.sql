@@ -19,6 +19,9 @@ DECLARE
   v_sessions       jsonb;
   v_creations      jsonb;
   v_cancellations  jsonb;
+  v_paid_through   date;
+  v_start_date     date;
+  v_horizon        date;
 BEGIN
   -- No caller, no answer. This function is scoped entirely to auth.uid(); with
   -- no uid there is nobody for it to be scoped TO, so there is no correct
@@ -235,7 +238,9 @@ BEGIN
   -- family is told the session is off, not why. One kept over a record the
   -- schedule no longer projects travels too, and the record beside it does
   -- not (above): the family has no instants to draw it at, so the date
-  -- simply stops being shown rather than showing the report.
+  -- simply stops being shown rather than showing the report. One on a holiday
+  -- is not listed: that date carries its break and nothing else, and the
+  -- cancellation is listed again if the break goes.
   SELECT COALESCE(
            jsonb_agg(
              jsonb_build_object('session_date', sc.session_date)
@@ -246,7 +251,25 @@ BEGIN
     INTO v_cancellations
     FROM public.session_cancellations sc
    WHERE sc.group_id = v_group_id
-     AND public.group_session_is_cancelled(sc.group_id, sc.session_date);
+     AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
+     AND NOT public.group_session_date_is_holiday(sc.group_id, sc.session_date);
+
+  -- The product-local date a cancelled membership is paid through: the
+  -- `canceling` subscription's current_period_end, the instant the family's
+  -- access ends, which the page also reads (as its access-until) to clamp the
+  -- list. NULL on anything else, which leaves the horizon as it is.
+  SELECT (fs.current_period_end AT TIME ZONE p.timezone)::date
+    INTO v_paid_through
+    FROM public.family_subscriptions fs
+    JOIN public.products p ON p.id = v_product_id
+   WHERE fs.participation_id = p_participation_id
+     AND fs.status = 'canceling';
+
+  -- The plan's span, which the holiday breaks share: the product's start to
+  -- its horizon for THIS group, raised to the paid-through date.
+  SELECT p.start_date INTO v_start_date
+    FROM public.products p WHERE p.id = v_product_id;
+  v_horizon := public.session_plan_horizon(v_product_id, v_group_id, v_paid_through);
 
   RETURN jsonb_build_object(
     'participant', v_participant,
@@ -256,7 +279,16 @@ BEGIN
     'gedus',       v_gedus,
     'creations',   v_creations,
     'sessions',    v_sessions,
-    'cancellations', v_cancellations
+    'cancellations', v_cancellations,
+    -- The plan from the product's start to its horizon for THIS group — the
+    -- eighth session that has not ended and that the group has not cancelled,
+    -- on an open-ended product — raised to the paid-through date, so a cancelled membership's
+    -- plan reaches the last session the family may still attend. Plain plan
+    -- rows; the cancellations above are laid over them by date.
+    'planned_sessions', public.planned_sessions_document(v_product_id, v_horizon),
+    -- The holiday breaks over the same span, each with the sessions it
+    -- withdrew from the plan above.
+    'holiday_breaks',   public.holiday_breaks_document(v_product_id, v_start_date, v_horizon)
   );
 END;
 $$;
@@ -266,7 +298,7 @@ $$;
 -- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports and PHOTOS, the named participant''s own attendance marks, and that participant''s own creations. Each session carries updated_by and the last editor''s first name — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Each session also carries `images`: {id, width, height} per photo, ordered by (created_at, id), the same shape the gedu and admin documents carry because one shared gallery renders all three, and never the uploader, which is safeguarding audit. That key rides on this strict family document under no versioned twin of its own, on the severity paragraph in docs/plans/CLAUDE.md: transient read-side breakage inside a release window is accepted. `creations` is a TOP-LEVEL array of {title, url} — this participant''s own, in this group, and structurally incapable of holding anybody else''s because it is not a map keyed by participant. It is the one staff-authored family-facing field that carries links, an owner-approved exception to the link-free rule session reports follow, and the render side parses each URL and degrades to the title as plain text when it is not http(s). Empty array when there is nothing, so the card renders on emptiness and never on null. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page and answers P0002; a row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. Carries no gedu note of any scope, no roster, no other participant''s marks or creations, no parent email, no material link, no requires_gamer_creations flag and no owed/completeness state.';
+COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports and PHOTOS, the named participant''s own attendance marks, and that participant''s own creations. Each session carries updated_by and the last editor''s first name — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Each session also carries `images`: {id, width, height} per photo, ordered by (created_at, id), the same shape the gedu and admin documents carry because one shared gallery renders all three, and never the uploader, which is safeguarding audit. That key rides on this strict family document under no versioned twin of its own, on the severity paragraph in docs/plans/CLAUDE.md: transient read-side breakage inside a release window is accepted. `creations` is a TOP-LEVEL array of {title, url} — this participant''s own, in this group, and structurally incapable of holding anybody else''s because it is not a map keyed by participant. It is the one staff-authored family-facing field that carries links, an owner-approved exception to the link-free rule session reports follow, and the render side parses each URL and degrades to the title as plain text when it is not http(s). Empty array when there is nothing, so the card renders on emptiness and never on null. `planned_sessions` is the product''s plan from start_date to session_plan_horizon for this group (planned_sessions_document), raised to the product-local date a `canceling` subscription''s current_period_end falls on — the paid-through instant the page clamps the list at — as plain {session_date, starts_at, ends_at} rows; the cancellations stay their own list, and leave out any on a holiday date. `holiday_breaks` is holiday_breaks_document over the same span: each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page and answers P0002; a row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. Carries no gedu note of any scope, no roster, no other participant''s marks or creations, no parent email, no material link, no requires_gamer_creations flag and no owed/completeness state.';
 
 
 --

@@ -1,17 +1,13 @@
 import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { breaksInFeed, type HolidayBreak } from "@/lib/holiday-breaks";
 import {
-  endDateToCutoff,
-  enumeratePastRowOccurrences,
-  enumerateRowOccurrences,
-  MAX_PAST_OCCURRENCES_PER_SLOT,
   OPEN_ENDED_OCCURRENCE_CAP,
-  productLocalDate,
-  sessionEntryId,
-  startDateToCutoff,
-  undatedPastFloor,
-  type SlotShape,
-} from "@/lib/session-occurrence";
+  cutStartsAt,
+  trimOpenEndedFuture,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
+import { holidayEntryId, sessionEntryId } from "@/lib/session-occurrence";
 import {
   deriveSessionStaffing,
   type SubstitutionRequestInput,
@@ -34,35 +30,35 @@ import type {
 } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
- * Turning one group's stored session rows and its product's weekly schedule
+ * Turning one group's stored session rows and its product's planned sessions
  * into the feed the workspace renders.
  *
- * **The RPC returns data; this module does the calendar math.** Nothing on the
- * server expands a schedule — that would be the third schedule expansion in the
- * codebase and the second language it is written in. What comes back is the
- * schedule parameters, the rows, and the roster; the walk forward, the walk
- * backward, the merge of rows over projections and the derivation of what kind
- * of entry each date is all happen here, once, in front of one clock.
+ * **The database plans the dates; this module lays the records over them.** The
+ * document arrives with the product's planned sessions already expanded, by the
+ * one expansion of the plan there is. What happens here is the cut of an
+ * open-ended plan to the horizon every list shows, the merge of rows over the
+ * planned sessions and the derivation of what kind of entry each date is —
+ * once, in front of one clock.
  *
  * Four ideas do all the work:
  *
  * - **A session is a (group, product-local date).** That is the row's unique key
- *   in Postgres and it is the entry's identity here, so a projection and a row
- *   for the same day are the same thing and meet on the same map key. The date
- *   survives the most common schedule edit there is — somebody fixing the time
- *   of day — which keying by instant or by slot start would not.
- * - **Records beat projections.** Where both exist the row wins outright,
+ *   in Postgres and it is the entry's identity here, so a planned session and a
+ *   row for the same day are the same thing and meet on the same map key. The
+ *   date survives the most common schedule edit there is — somebody fixing the
+ *   time of day — which keying by instant or by slot start would not.
+ * - **Records beat the plan.** Where both exist the row wins outright,
  *   including its snapshotted start and end: a row was written about a session
  *   that ran at a particular hour, and an admin moving the club an hour later
  *   next term must not retroactively rewrite what happened last term. A row the
- *   schedule no longer projects at all — a weekday move orphans one — still
- *   renders, for the same reason.
+ *   plan no longer holds at all — a weekday move orphans one — still renders,
+ *   for the same reason.
  * - **A cancellation replaces its date's entry — and beats a record too.** An
  *   admin's word that the session did not happen wins over anything stored
  *   for the date, which stays in the database and returns on a restore —
- *   including a record the schedule no longer projects, which the document's
+ *   including a record the plan no longer holds, which the document's
  *   cancellations still name. It applies only to a date the feed would
- *   otherwise show, so one with neither a projection nor a row stays inert,
+ *   otherwise show, so one with neither a planned session nor a row stays inert,
  *   and the cancelled entry keeps its dated place on whichever side of the
  *   present its end instant puts it.
  * - **Kind comes from dates, never from a column.** `now` against the session's
@@ -72,8 +68,12 @@ import type {
  *   with the enforcement epoch, decides whether anything is owed. Editability is
  *   the one question that turns on the *start*: the register opens when the
  *   session begins, which is why roll call works mid-session, and the feed asks
- *   it directly rather than reading it off the kind. The product's start floors
- *   how far back the walk goes at all.
+ *   it directly rather than reading it off the kind. The plan begins at the
+ *   product's start date, which is how far back the feed goes at all.
+ *
+ * A holiday break is the one entry that is not a session: the plan never held
+ * its dates, so it arrives beside the plan rather than in it, and is drawn as
+ * one line per break, in date order by the sessions it withdrew.
  *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
@@ -82,12 +82,14 @@ import type {
 export interface GeduSessionFeedArgs {
   /** Half of every entry id, and the group whose rows these are. */
   groupId: string;
-  /** The product's authoring zone — every session date is local to it. */
-  timezone: string;
-  slots: readonly SlotShape[];
-  /** Product-local `YYYY-MM-DD`, or `null` on an open-ended product. */
-  startDate: string | null;
-  endDate: string | null;
+  /**
+   * The product's planned sessions as the document carries them, soonest
+   * first: from the start date to the end date on a dated product, and past
+   * the shared horizon on an open-ended one.
+   */
+  plannedSessions: readonly PlannedSession[];
+  /** The product has no end date, so its plan is cut to the shared horizon. */
+  openEnded: boolean;
   /**
    * Every stored row for this group, in any order — the staff document's rows,
    * or the redacted rows a trainee is sent. Which of the two is decided by
@@ -103,7 +105,7 @@ export interface GeduSessionFeedArgs {
   /**
    * Every non-withdrawn substitution request on the group, any date, as either staff
    * document emits them. The whole array reaches every entry and the derivation
-   * picks out the date it was asked about, which is what lets a projected date
+   * picks out the date it was asked about, which is what lets a planned date
    * with no stored row carry its requests like any other.
    */
   substitutions: readonly SubstitutionRequestDocument[];
@@ -113,6 +115,12 @@ export interface GeduSessionFeedArgs {
    * to the entry unchanged.
    */
   cancellations: readonly SessionCancellation[];
+  /**
+   * The holiday breaks of the calendars the product follows, as every staff
+   * document carries them. Each becomes one line where it withdrew a session
+   * the feed would otherwise show, and none where it did not.
+   */
+  holidayBreaks: readonly HolidayBreak[];
   /**
    * The signed-in gedu, where the surface has one. `null` on the admin shell
    * and in the preview scenes, which is the honest answer rather than a guess:
@@ -152,14 +160,13 @@ export function buildGeduSessionFeed(
 ): SessionFeedEntry[] {
   const {
     groupId,
-    timezone,
-    slots,
-    startDate,
-    endDate,
+    plannedSessions,
+    openEnded,
     sessions,
     gedus,
     substitutions,
     cancellations,
+    holidayBreaks,
     viewerId = null,
     now,
     epoch = SESSION_RECORDING_EPOCH,
@@ -177,47 +184,30 @@ export function buildGeduSessionFeed(
   }));
   const staffingRequests: SubstitutionRequestInput[] = substitutions.map(toSubstitutionRequestInput);
 
-  const startBoundary = startDateToCutoff(startDate, timezone);
-  const endBoundary = endDateToCutoff(endDate, timezone);
-  const slotList = [...slots];
-
   /**
-   * Projected occurrences, keyed by product-local date. First writer wins,
-   * which matters exactly once: a session already in progress is emitted by
-   * both walks (the forward one surfaces it deliberately, the backward one
-   * because it has already started), and the two agree on the instant anyway.
+   * The planned sessions the feed shows, keyed by product-local date: every
+   * one on a dated product, and on an open-ended one everything that has
+   * started plus the next eight still open. A session stays open for the voice
+   * room's closing margin after it ends, so one that has just finished is not
+   * missing from the feed while its room is still up.
    */
-  const projected = new Map<string, { startsAt: Date; endsAt: Date }>();
-  const project = (occurrence: { start: Date; end: Date }) => {
-    const date = productLocalDate(occurrence.start, timezone);
-    if (projected.has(date)) return;
-    projected.set(date, { startsAt: occurrence.start, endsAt: occurrence.end });
-  };
-
-  if (slotList.length > 0) {
-    for (const occurrence of enumerateRowOccurrences({
-      slots: slotList,
-      timezone,
-      now,
-      startBoundary,
-      endBoundary,
-      cap:
-        endDate === null ? OPEN_ENDED_OCCURRENCE_CAP : Number.POSITIVE_INFINITY,
-      windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
-    })) {
-      project(occurrence);
-    }
-
-    for (const occurrence of enumeratePastRowOccurrences({
-      slots: slotList,
-      timezone,
-      now,
-      floor: startBoundary ?? undatedPastFloor(now),
-      endBoundary,
-      maxOccurrences: MAX_PAST_OCCURRENCES_PER_SLOT,
-    })) {
-      project(occurrence);
-    }
+  const shown = openEnded
+    ? trimOpenEndedFuture(
+        plannedSessions,
+        now,
+        OPEN_ENDED_OCCURRENCE_CAP,
+        VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
+      )
+    : plannedSessions;
+  // First writer wins, so two slots on one weekday are the date's earlier
+  // session: the plan is soonest first, and an entry is one per date.
+  const planned = new Map<string, { startsAt: Date; endsAt: Date }>();
+  for (const session of shown) {
+    if (planned.has(session.date)) continue;
+    planned.set(session.date, {
+      startsAt: session.startsAt,
+      endsAt: session.endsAt,
+    });
   }
 
   const rowsByDate = new Map(
@@ -231,23 +221,23 @@ export function buildGeduSessionFeed(
   );
 
   // A substitution request contributes no date of its own, deliberately. One filed
-  // against a date the schedule no longer projects and that nobody recorded
-  // against has no instants to render with — an orphaned request is history,
-  // and the admin queue is where it is cleared, because that list orders by
-  // date and never by a derived instant.
-  const dates = new Set([...projected.keys(), ...rowsByDate.keys()]);
+  // against a date the plan no longer holds and that nobody recorded against
+  // has no instants to render with — an orphaned request is history, and the
+  // admin queue is where it is cleared, because that list orders by date and
+  // never by a derived instant.
+  const dates = new Set([...planned.keys(), ...rowsByDate.keys()]);
   const entries: SessionFeedEntry[] = [];
 
   for (const date of dates) {
     const row = rowsByDate.get(date);
 
     // The row's snapshot wins outright when there is one. A date reached this
-    // loop because at least one of the two produced it, so the projection is
-    // there whenever the row is not — the guard is for the compiler, and it
+    // loop because at least one of the two produced it, so the planned session
+    // is there whenever the row is not — the guard is for the compiler, and it
     // costs nothing to let it also be true.
     const when =
       row === undefined
-        ? projected.get(date)
+        ? planned.get(date)
         : { startsAt: new Date(row.starts_at), endsAt: new Date(row.ends_at) };
     if (when === undefined) continue;
 
@@ -294,6 +284,29 @@ export function buildGeduSessionFeed(
         redacted: reach === "redacted",
       }),
     );
+  }
+
+  // A holiday break is one line, placed by the sessions it withdrew, and only
+  // where at least one of them falls before the open-ended cut — the same
+  // horizon the sessions stop at. Withdrawn sessions were never in the plan,
+  // so they took no slot from the cap, and the line carries no staffing: a
+  // date nobody planned has nobody to run it and nothing to substitute.
+  const cut = cutStartsAt(plannedSessions, shown);
+  const breaks = breaksInFeed(
+    holidayBreaks,
+    (session) => cut === null || session.startsAt.getTime() < cut.getTime(),
+  );
+  for (const { row, startsAt, endsAt } of breaks) {
+    entries.push({
+      kind: "holiday",
+      id: holidayEntryId(row.id),
+      startsAt,
+      endsAt,
+      startDate: row.startDate,
+      endDate: row.endDate,
+      names: row.names,
+      upcoming: endsAt.getTime() > now.getTime(),
+    });
   }
 
   entries.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());

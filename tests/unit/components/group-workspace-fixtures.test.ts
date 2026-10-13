@@ -8,7 +8,7 @@ import {
   buildGroupWorkspaceFixture,
   GROUP_WORKSPACE_SCENARIOS,
 } from "@/components/group-workspace/mock-workspace-fixtures";
-import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
+import { sessionEntryId } from "@/lib/session-occurrence";
 
 /**
  * ============================================================================
@@ -28,8 +28,8 @@ import { finalSessionDate, sessionEntryId } from "@/lib/session-occurrence";
  *
  * **One line is restated rather than imported, deliberately.** `obligationFor`
  * below rebuilds the obligation the workspace body derives, and every part of
- * it but one is the real thing — `finalSessionDate` and `sessionEntryId` are
- * the functions the page calls. The exception is the `withCreations` set, whose
+ * it but one is the real thing — the document's final session and
+ * `sessionEntryId` are what the page reads. The exception is the `withCreations` set, whose
  * derivation in the body is a one-line filter over a map the shell has already
  * built; extracting a shared helper for it would cost a module and an import to
  * spare a single `list.length > 0`. The drift it leaves exposed is
@@ -46,17 +46,8 @@ function obligationFor(
 ): CreationsObligation | null {
   const { product, my_group_id: groupId } = fixture.data;
   if (!product.requires_gamer_creations) return null;
-  const date = finalSessionDate({
-    slots: product.schedule_slots,
-    startDate: product.start_date,
-    endDate: product.end_date,
-    // Read off the fixture's own feed, exactly as the workspace body reads it.
-    cancelledDates: new Set(
-      fixture.entries.flatMap((entry) =>
-        entry.kind === "cancelled" ? [entry.sessionDate] : [],
-      ),
-    ),
-  });
+  // The document's final session, exactly as the workspace body reads it.
+  const date = fixture.data.final_session_date;
   return {
     finalEntryId: date === null ? null : sessionEntryId(groupId, date),
     withCreations: new Set(
@@ -82,13 +73,53 @@ describe("every workspace scenario", () => {
 
       expect(fixture.entries.length).toBeGreaterThan(0);
       for (const entry of fixture.entries) {
-        expect(entry.id.startsWith(`${groupId}:`)).toBe(true);
+        // A holiday line is keyed by its break, as the builder keys it.
+        expect(
+          entry.id.startsWith(entry.kind === "holiday" ? "holiday:" : `${groupId}:`),
+        ).toBe(true);
       }
       // Unique, or two sessions would share a card's identity — which is what
       // the (group, date) key guarantees in the database too.
       expect(new Set(fixture.entries.map((e) => e.id)).size).toBe(
         fixture.entries.length,
       );
+    });
+
+    /**
+     * The fixture states the run's final session the way the database hands
+     * it over: the last date of its plan inside the term that the feed has not
+     * cancelled, on a weekday the schedule names — or the obligation hangs off
+     * a day the scenario never meant. An open-ended run has none.
+     */
+    it(`${scenario}: names the final session its plan names`, () => {
+      const { data, entries } = buildGroupWorkspaceFixture(NOW, scenario);
+      const { start_date: startDate, end_date: endDate } = data.product;
+      if (endDate === null) {
+        expect(data.final_session_date).toBeNull();
+        return;
+      }
+      const cancelled = new Set(
+        entries.flatMap((entry) =>
+          entry.kind === "cancelled" ? [entry.sessionDate] : [],
+        ),
+      );
+      const running = data.planned_sessions
+        .map((session) => session.date)
+        .filter(
+          (date) =>
+            (startDate === null || date >= startDate) &&
+            date <= endDate &&
+            !cancelled.has(date),
+        );
+      expect(data.final_session_date).toBe(running.at(-1) ?? null);
+      if (data.final_session_date !== null) {
+        // 0 = Monday, as the slots store it; the bare date is UTC-pinned.
+        const weekday =
+          (new Date(`${data.final_session_date}T00:00:00Z`).getUTCDay() + 6) % 7;
+        expect(
+          data.product.schedule_slots.map((slot) => slot.weekday),
+        ).toContain(weekday);
+      }
     });
   }
 

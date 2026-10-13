@@ -19,7 +19,8 @@ import {
   renderScheduleLinesForDetail,
 } from "@/lib/products/format-product-schedule";
 import { cn, formatDate } from "@/lib/utils";
-import { computeVoiceState } from "@/lib/voice-window";
+import type { PlannedSession } from "@/lib/planned-sessions";
+import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { FamilyProductBackLink } from "./BackLink";
@@ -118,6 +119,11 @@ export interface FamilyProductPageBodyProps {
    * somewhere else, and none of them belongs on a page about one enrollment.
    */
   schedule: FamilyProductSchedule;
+  /**
+   * The product's planned sessions as the family document carries them,
+   * soonest first and unmarked — what the Join reads the next session from.
+   */
+  plannedSessions: readonly PlannedSession[];
   /**
    * Whether the product runs in a voice room rather than a building. The
    * question is `is_remote`, never "does it have a site": a remote
@@ -269,6 +275,7 @@ export function FamilyProductPageBody({
   audience,
   productName,
   schedule,
+  plannedSessions,
   isRemote,
   participant,
   groupName,
@@ -307,7 +314,7 @@ export function FamilyProductPageBody({
 
   // A cancelled session opens no room, so the Join names the soonest one that
   // is going to run. The feed carries every cancelled date the room could land
-  // on: it holds the same forward horizon the room's walk does.
+  // on: it holds the same cut of the plan the room looks across.
   const cancelledDates = useMemo(
     () =>
       new Set(
@@ -320,13 +327,13 @@ export function FamilyProductPageBody({
   const voiceState = useMemo(
     () =>
       computeVoiceState({
-        product: schedule,
+        plan: markCancelled(plannedSessions, cancelledDates),
+        openEnded: schedule.end_date === null,
         now,
         locale,
         timeZone,
-        cancelledDates,
       }),
-    [schedule, now, locale, timeZone, cancelledDates],
+    [plannedSessions, schedule.end_date, now, locale, timeZone, cancelledDates],
   );
 
   // A room only exists on a remote product, and only while the product still

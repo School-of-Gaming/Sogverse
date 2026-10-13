@@ -1,11 +1,11 @@
 import { z } from "zod";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { Constants } from "@/types";
-// The same slot and location rows the municipality invoicing read emits, from
-// the same SQL, so they are imported rather than spelled a second time.
+// The same location rows the municipality invoicing read emits, from the same
+// SQL, so they are imported rather than spelled a second time.
 import {
   municipalityInvoicingLocation,
   municipalityInvoicingMunicipality,
-  municipalityInvoicingScheduleSlot,
 } from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 
 /**
@@ -117,8 +117,9 @@ export const geduInvoicingGroup = z.object({
 });
 
 /**
- * A product one of those groups belongs to: what projection needs (timezone,
- * term, weekly slots), what pays (both current fees — null means not set, never
+ * A product one of those groups belongs to: when it was due (its planned
+ * dates in the month) and whose today decides what has passed (timezone),
+ * what pays (both current fees — null means not set, never
  * zero), what splits the totals (`product_type`: a municipality club against
  * everything else), and what labels it (names, location, municipality — the
  * last null where the location chain reaches none, which a consumer club may).
@@ -132,7 +133,16 @@ export const geduInvoicingProduct = z.object({
   primary_gedu_fee_cents: z.number().nullable(),
   assistant_gedu_fee_cents: z.number().nullable(),
   product_translations: z.array(productName),
-  schedule_slots: z.array(municipalityInvoicingScheduleSlot),
+  /**
+   * The dates its seats were due: the product's planned session dates inside
+   * the month, already clipped to its term, one per date, ascending.
+   */
+  planned_dates: z.array(z.string()),
+  /**
+   * The holiday breaks touching the month, each with the planned dates it
+   * withdrew inside it — the invoice's holiday lines, at no charge.
+   */
+  holiday_breaks: holidayBreakRows,
   location: municipalityInvoicingLocation.nullable(),
   municipality: municipalityInvoicingMunicipality.nullable(),
 });

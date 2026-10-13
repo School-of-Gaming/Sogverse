@@ -16,8 +16,8 @@ import {
  *
  * Why a dedicated file: Vitest spawns a fresh worker per file by default,
  * and we set `process.env.TZ` in `beforeAll` so subsequent date math in
- * this worker reads the new zone. (Sydney, matching enrollment-tz.test.ts:
- * far from UTC and from Helsinki.) The fixed implementation is
+ * this worker reads the new zone. (Sydney: far from UTC and from
+ * Helsinki.) The fixed implementation is
  * runtime-zone independent, so these assertions hold even where the TZ
  * pin is not honored.
  */

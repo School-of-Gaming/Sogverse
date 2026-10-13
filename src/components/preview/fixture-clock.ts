@@ -1,4 +1,6 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
+import { addCalendarDays } from "@/lib/calendar-date";
+import type { PlannedSession } from "@/lib/planned-sessions";
 
 /**
  * The clock a preview fixture is built against: turning "a session running right
@@ -113,4 +115,152 @@ export function calendarDate(
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
+}
+
+/**
+ * A fixture product's planned sessions, laid out the way the database's plan
+ * lays them out: every date of the term whose weekday a slot names, each slot's
+ * clock face resolved in the product's zone, soonest first, flagged where
+ * `cancelledDates` names the date.
+ *
+ * The span is the one a gedu's seat read covers: from the day before today (or
+ * the term's first day, if later) to the term's last day — or, on an
+ * open-ended product, 120 days past today, which holds any weekly schedule's
+ * next eight sessions. Fixtures only: the app reads its plan from the database.
+ */
+export function fixturePlan(args: {
+  slots: readonly FixtureSlot[];
+  timeZone: string;
+  startDate: string | null;
+  endDate: string | null;
+  now: Date;
+  cancelledDates?: readonly string[];
+}): PlannedSession[] {
+  const { slots, timeZone, startDate, endDate, now } = args;
+  if (startDate === null) return [];
+  const cancelled = new Set(args.cancelledDates ?? []);
+  const yesterday = calendarDate(now, -1, timeZone);
+  const first = startDate > yesterday ? startDate : yesterday;
+  const last = endDate ?? calendarDate(now, 120, timeZone);
+
+  const plan: PlannedSession[] = [];
+  for (let date = first; date <= last; date = addCalendarDays(date, 1)) {
+    const window = fixtureSessionWindow(date, slots, timeZone);
+    if (window === null) continue;
+    plan.push({ date, ...window, cancelled: cancelled.has(date) });
+  }
+  return plan;
+}
+
+/**
+ * When a fixture product's session on `date` runs — its earliest slot on that
+ * weekday, resolved in the product's zone — or `null` when no slot names the
+ * weekday: the orphan a moved schedule leaves.
+ */
+export function fixtureSessionWindow(
+  date: string,
+  slots: readonly FixtureSlot[],
+  timeZone: string,
+): { startsAt: Date; endsAt: Date } | null {
+  // `getUTCDay()` is 0 = Sunday on a UTC-pinned bare date; slots are 0 = Monday.
+  const weekday = (new Date(`${date}T00:00:00.000Z`).getUTCDay() + 6) % 7;
+  const onDay = slots
+    .filter((slot) => slot.weekday === weekday)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  if (onDay.length === 0) return null;
+  const slot = onDay[0];
+  const startsAt = fromZonedTime(
+    `${date}T${slot.startTime.slice(0, 5)}:00`,
+    timeZone,
+  );
+  return {
+    startsAt,
+    endsAt: new Date(startsAt.getTime() + slot.durationMinutes * 60_000),
+  };
+}
+
+/**
+ * Every start of one weekly slot on the dates `fromDay` to `toDay` days from
+ * today — today as it falls in the product's zone — soonest first, each clock
+ * face resolved in that zone on its own date, so a DST transition between two
+ * of them moves neither. Fixtures only, like the rest of this module.
+ */
+export function fixtureSlotStarts(
+  now: Date,
+  slot: { weekday: number; startTime: string },
+  timeZone: string,
+  fromDay: number,
+  toDay: number,
+): Date[] {
+  const starts: Date[] = [];
+  for (let offset = fromDay; offset <= toDay; offset++) {
+    const window = fixtureSessionWindow(
+      calendarDate(now, offset, timeZone),
+      [{ ...slot, durationMinutes: 0 }],
+      timeZone,
+    );
+    if (window !== null) starts.push(window.startsAt);
+  }
+  return starts;
+}
+
+/**
+ * The first start of a weekly slot strictly after `now`. A week and a day of
+ * dates always holds one: today's, if it has not started, or the same weekday
+ * a week on.
+ */
+export function fixtureNextSlotStart(
+  now: Date,
+  slot: { weekday: number; startTime: string },
+  timeZone: string,
+): Date {
+  const next = fixtureSlotStarts(now, slot, timeZone, 0, 7).find(
+    (start) => start.getTime() > now.getTime(),
+  );
+  if (next === undefined) {
+    throw new Error("fixtureNextSlotStart: no start in the coming week");
+  }
+  return next;
+}
+
+/**
+ * {@link fixtureSessionWindow} as a read carries it on the wire: timestamps,
+ * both `null` on a date no slot names.
+ */
+export function fixtureWireWindow(
+  date: string,
+  slots: readonly FixtureSlot[],
+  timeZone: string,
+): { starts_at: string | null; ends_at: string | null } {
+  const window = fixtureSessionWindow(date, slots, timeZone);
+  return {
+    starts_at: window?.startsAt.toISOString() ?? null,
+    ends_at: window?.endsAt.toISOString() ?? null,
+  };
+}
+
+/**
+ * The same, for a fixture product already in its wire shape — the substitution
+ * reads' product shell, whose slots and zone ride on it.
+ */
+export function fixtureWireWindowOf(
+  product: {
+    timezone: string;
+    schedule_slots: readonly {
+      weekday: number;
+      start_time: string;
+      duration_minutes: number;
+    }[];
+  },
+  date: string,
+): { starts_at: string | null; ends_at: string | null } {
+  return fixtureWireWindow(
+    date,
+    product.schedule_slots.map((slot) => ({
+      weekday: slot.weekday,
+      startTime: slot.start_time,
+      durationMinutes: slot.duration_minutes,
+    })),
+    product.timezone,
+  );
 }

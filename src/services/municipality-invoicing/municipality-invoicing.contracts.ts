@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { Constants } from "@/types";
 // The one definition of a Fennoa customer, imported rather than restated: the
 // RPC emits the stored row, so a second spelling of those nine fields here
@@ -21,10 +22,10 @@ import { invoiceCustomerRow } from "@/services/invoice-customers/invoice-custome
  * translated back to be checked against the function.
  *
  * **Everything here is a fact, not a view.** No totalling happens on the wire:
- * the month's arithmetic — which dates a club's schedule projects, which of
- * them a stored row already covers, how many sessions that is and what they
- * come to — is the invoice itself, and it belongs in one pure function the
- * tests can drive, not split across a query and a component.
+ * the month's arithmetic — which of a club's planned dates a stored row
+ * already covers, how many sessions that is and what they come to — is the
+ * invoice itself, and it belongs in one pure function the tests can drive, not
+ * split across a query and a component.
  */
 
 /** One product name, in one locale. */
@@ -114,6 +115,18 @@ export const municipalityInvoicingClub = z.object({
   municipality_fee_cents: z.number().nullable(),
   product_translations: z.array(productName),
   schedule_slots: z.array(municipalityInvoicingScheduleSlot),
+  /**
+   * The dates the club was due to meet: its planned session dates inside the
+   * month, already clipped to its term, one per date, ascending — the
+   * database's plan, which the builder reads rather than walking the slots.
+   */
+  planned_dates: z.array(z.string()),
+  /**
+   * The holiday breaks touching the month, each with the planned dates it
+   * withdrew inside it — shown on the page as holiday lines at no charge, and
+   * left out of the Finvoice file.
+   */
+  holiday_breaks: holidayBreakRows,
   location: municipalityInvoicingLocation.nullable(),
   municipality: municipalityInvoicingMunicipality,
   invoice_customer: invoiceCustomerRow.nullable(),
@@ -122,8 +135,8 @@ export const municipalityInvoicingClub = z.object({
    * The month's cancelled sessions, raw (group, date) pairs in the same shape
    * as `sessions`: a cancelled session is shown as Cancelled rather than as
    * unrecorded, and is never billed. Raw on purpose — a cancellation applies
-   * only to a date the schedule projects, so the builder applies these to the
-   * dates it projects and ignores the rest. A pair never also appears in
+   * only to a planned date, so the builder applies these to `planned_dates`
+   * and ignores the rest. A pair never also appears in
    * `sessions`; if one somehow did, the cancellation wins.
    */
   cancelled_sessions: z.array(municipalityInvoicingSession),

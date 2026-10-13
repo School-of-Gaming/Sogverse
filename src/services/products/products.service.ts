@@ -19,6 +19,10 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
+import {
+  plannedSessionRows,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
 import { productIdResponse } from "./products.contracts";
 
 // ---------------------------------------------------------------------------
@@ -199,11 +203,16 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // and PostgREST refuses the whole query with PGRST201, which the admin product
 // page shows as "product not found". That is why `image_path` carries no FK of
 // its own — see `src/services/catalogue-images/CLAUDE.md`.
+//
+// `product_holiday_calendars(holiday_calendars(id, name))` is the third: the
+// calendars a club follows, with each one's name so the details page can list
+// and link them and the form can seed its picker. Calendar names are
+// admin-readable only, which is why no family-facing query embeds it.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type)",
+      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -435,6 +444,14 @@ export type CreateProductInput = {
    */
   invoice_customer_id: string | null;
   /**
+   * The holiday calendars this club follows, as calendar row ids; empty for a
+   * club that follows none and for every other product type. A plain array
+   * that travels on every save: the RPC replaces the whole set on each call and
+   * reads NULL and `[]` alike, so an omission would detach every calendar. Only
+   * the two club types may follow one, which the RPC refuses otherwise.
+   */
+  holiday_calendar_ids: string[];
+  /**
    * The catalogue entry this product's picture comes from, or `null` for a
    * product with no picture. Required and nullable for the same reason `tag`
    * is: the route writes the column on every save, so an omitted field would
@@ -512,6 +529,10 @@ export type UpdateProductInput = {
    *  nullable on the update half too, and that is the load-bearing one: the RPC
    *  assigns every editable column, so an omitted id unlinks the club. */
   invoice_customer_id: string | null;
+  /** The club's holiday calendars — see CreateProductInput. The update half
+   *  is the load-bearing one: the RPC replaces the whole set on every call, so
+   *  an omitted answer would detach every calendar the club follows. */
+  holiday_calendar_ids: string[];
   /** Catalogue entry id, or `null` for no picture — see CreateProductInput.
    *  Required and nullable on the update half too, and that is the
    *  load-bearing one: the route writes the column on every save. */
@@ -632,6 +653,27 @@ export class ProductsService {
 
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * A product's planned sessions in `[from, to]` (product-local `YYYY-MM-DD`,
+   * both inclusive), soonest first — the database's one expansion of the plan,
+   * which answers every caller identically. The admin product page reads it
+   * because no document it holds carries the plan.
+   */
+  async getPlannedSessions(
+    productId: string,
+    from: string,
+    to: string,
+  ): Promise<PlannedSession[]> {
+    const { data, error } = await this.supabase.rpc("planned_session_dates", {
+      p_product_id: productId,
+      p_from: from,
+      p_to: to,
+    });
+
+    if (error) throw error;
+    return plannedSessionRows.parse(data);
   }
 
   async updateProduct(

@@ -51,7 +51,7 @@ export interface ProductRunSession {
  * already tested.
  *
  * **Over means two things, and it needs both.** The last day has to be behind
- * us, *and* the occurrence walk has to have nothing left — which is the
+ * us, *and* the plan has to have nothing left — which is the
  * observation the whole ended state grew out of: a product always has a session
  * scheduled unless it has finished. The second clause is redundant on every
  * ordinary run and decisive on one case, a session that starts on the final day
@@ -62,8 +62,8 @@ export interface ProductRunSession {
  * rather than reasoning about which of them wins.
  *
  * The day ends **in the product's own zone**, not the viewer's, and via the same
- * cutoff the occurrence walk bounds itself with — so "past the end date" means
- * the identical instant to both of them. An end date is a calendar date on the
+ * end-of-day cutoff the term bounds every session with — so "past the end date"
+ * means the identical instant to both of them. An end date is a calendar date on the
  * schedule it bounds: a Helsinki club is over when Helsinki's last day is over,
  * and a viewer in Tokyo does not get to retire it seven hours early.
  */

@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
+import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -36,7 +37,13 @@ export function NewProductPage({
   // under the same key, so the form renders populated on first paint — no
   // empty-then-fill flash. A cold deep-link to ?cloneFrom=… shows the skeleton
   // briefly, matching how the edit page behaves.
-  const { data: source, isLoading } = useProductAdmin(cloneFrom);
+  const { data: source, isLoading: sourceLoading } = useProductAdmin(cloneFrom);
+  // A club's form also waits for the holiday calendar list, so the picker
+  // paints with the rest of the form instead of pushing it down on arrival.
+  const calendarsPending = useHolidayCalendarListWait(
+    config.followsHolidayCalendars,
+  );
+  const isLoading = (isCloning && sourceLoading) || calendarsPending;
 
   return (
     <div className="space-y-6">
@@ -75,9 +82,11 @@ export function NewProductPage({
         </h1>
       </div>
 
-      {!isCloning && <ProductFormCreate productType={productType} />}
+      {!isCloning && !isLoading && (
+        <ProductFormCreate productType={productType} />
+      )}
 
-      {isCloning && isLoading && (
+      {isLoading && (
         <div className="space-y-4">
           {[0, 1, 2, 3].map((i) => (
             <div

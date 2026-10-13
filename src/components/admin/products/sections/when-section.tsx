@@ -16,6 +16,7 @@ import {
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { cn, formatDateOnly } from "@/lib/utils";
 import { useNow } from "@/providers";
+import { HolidayCalendarPicker } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { FormSection } from "../form-primitives";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import { END_DATE_MODE_VALUES, type FormState } from "../product-form-state";
@@ -389,6 +390,19 @@ export function WhenSection({
           }
         />
       </Field>
+
+      {/* Last in the section, under the weekly pattern it takes dates out of.
+          The page holds the form back until the calendar list has answered,
+          so its rows paint with everything else. Clubs only. */}
+      {config.followsHolidayCalendars && (
+        <HolidayCalendarPicker
+          value={state.holidayCalendarIds}
+          onChange={(holidayCalendarIds) =>
+            setState({ ...state, holidayCalendarIds })
+          }
+          today={today}
+        />
+      )}
     </FormSection>
   );
 }

@@ -67,6 +67,12 @@ export interface ProductTypeConfig {
    *     and accepted; see the `region_lock_country` column comment.
    */
   regionLockable: boolean;
+  /**
+   * Whether the form offers holiday calendars — the breaks a weekly club pauses
+   * for. Clubs only: a camp or an event is a few dated days with nothing to
+   * break, and the database refuses a calendar on any other type.
+   */
+  followsHolidayCalendars: boolean;
   defaultBillingMode: BillingMode;
 }
 
@@ -95,6 +101,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
+    followsHolidayCalendars: true,
     defaultBillingMode: "paid",
   },
   municipality_club: {
@@ -111,6 +118,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     // The one type with no region lock: its country is already settled by
     // `countryBound` above, through an entirely separate mechanism.
     regionLockable: false,
+    followsHolidayCalendars: true,
     defaultBillingMode: "external_contract",
   },
   camp: {
@@ -128,6 +136,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
+    followsHolidayCalendars: false,
     defaultBillingMode: "paid",
   },
   event: {
@@ -144,6 +153,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     countryBound: null,
     regionLockable: true,
+    followsHolidayCalendars: false,
     defaultBillingMode: "free",
   },
 };

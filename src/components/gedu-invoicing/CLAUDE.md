@@ -21,12 +21,22 @@ which collapses a club's groups on one date into one session. A gedu at two grou
 club on the same afternoon held two seats and is paid for two.
 
 "Expected" is the substitution feature's own derivation, run over the seats the document
-carries, so the two features cannot disagree about who was meant to be there. A schedule is
-a claim, not a session, exactly as in the municipality invoice: projected dates and a sub's
-booked dates with no row are **not recorded** before the product's local today (warning
-tone, zero) and **upcoming** from today on (no amount); a row dated after today is upcoming
-and never pays. A cancelled date is never paid and never missed, and only a claimed date
+carries, so the two features cannot disagree about who was meant to be there. A plan is a
+claim, not a session, exactly as in the municipality invoice: the product's planned dates in
+the month — which the document carries from the database, already clipped to its term —
+and a sub's booked dates with no row are **not recorded** before the product's local today
+(warning tone, zero) and **upcoming** from today on (no amount); a row dated after today is
+upcoming and never pays. A cancelled date is never paid and never missed, and only a claimed date
 gets a cancelled line.
+
+**A holiday is never paid and never missed.** A holiday break withdraws the dates it covers
+from the plan, and the document carries each of the product's breaks in the month with the
+dates it withdrew. Those dates are claims too, so a gedu's standing seat shows them. A claimed
+date inside any of the product's breaks — a withdrawn date, or a sub's booking or a gedu's
+own absence filed for a day a break covers — is a **holiday** line at zero, named with the
+break, on the page and in both files, and nothing else: not paid, not cancelled, not away,
+not unrecorded, whichever side of today it falls. Records and cancellations on a holiday date
+are left out of the document, so none of them can say otherwise.
 
 ## Roles and fees
 
@@ -58,7 +68,7 @@ An absent gedu's own date renders as a quiet zero line — "away, and who substi
 "away, no substitute" — so they can see why a date they hold did not pay. A sub's lines
 name the gedu they stood in for, whatever became of the date. An absence claims its date
 just as the sub's booking does, so the two gedus' pages show the same dates even where the
-schedule no longer projects one, and a cancelled one reads cancelled on both.
+plan no longer holds one, and a cancelled one reads cancelled on both.
 
 **Both names are shown on both pages, and that is consistent with the substitution
 feature's disclosure rules rather than an exception to them.** The absent gedu is disclosed
@@ -93,7 +103,8 @@ time), and under the sums it **says whether the month is complete**: either that
 is still open, or each past session with nothing recorded by date, club and group, and
 how many are still upcoming — it goes to an accounting inbox, where a partial month must
 not pass for a finished one. Each line gives the page's own outcome and why it pays
-nothing (away and who substituted, covering for whom, nothing recorded yet). The CSV is
+nothing (away and who substituted, covering for whom, nothing recorded yet, the holiday
+break it fell in). The CSV is
 written for a Finnish Excel opened by double-click (BOM, semicolons, decimal comma, CRLF)
 whatever the page's locale. An unset fee is a blank in the CSV and a dash in the PDF, on
 the fee and on every amount it would multiply into, never zero, and neither file says more

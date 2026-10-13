@@ -87,7 +87,9 @@ export type {
 export type {
   AttendanceMarks,
   CancelledSessionFeedEntry,
+  DatedSessionFeedEntry,
   FutureSessionFeedEntry,
+  HolidaySessionFeedEntry,
   NoRecordSessionFeedEntry,
   PastSessionFeedEntry,
   ScheduledSessionFeedEntry,

@@ -68,6 +68,9 @@ function club(overrides: Record<string, unknown> = {}) {
     schedule_slots: [
       { weekday: 0, start_time: "14:15", duration_minutes: 75 },
     ],
+    // Its Mondays in May 2020.
+    planned_dates: ["2020-05-04", "2020-05-11", "2020-05-18", "2020-05-25"],
+    holiday_breaks: [],
     location: {
       id: "loc-purola",
       name: "Purolan koulu",
@@ -455,6 +458,14 @@ describe("GET /api/admin/municipality-invoicing/finvoice", () => {
                     club({
                       invoice_customer: QUARTERLY_CUSTOMER,
                       sessions: [],
+                      ...(args.p_month_start === "2020-04-01" && {
+                        planned_dates: [
+                          "2020-04-06",
+                          "2020-04-13",
+                          "2020-04-20",
+                          "2020-04-27",
+                        ],
+                      }),
                     }),
                   ],
                 },

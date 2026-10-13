@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
+import { plannedSessionRows } from "@/lib/planned-sessions";
 import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
@@ -324,6 +326,21 @@ export const familyProductFeed = z
     sessions: z.array(familyFeedSession),
     /** The group's cancelled sessions, newest first. */
     cancellations: z.array(familyFeedCancellation),
+    /**
+     * The product's planned sessions from its start date to its horizon for
+     * this group — on an open-ended product the eighth session that has not
+     * ended and that the group has not cancelled — raised to the date a cancelled membership is
+     * paid through, so the plan reaches the last session the family may
+     * attend. Soonest first, plain plan rows: `cancelled` is always `false`,
+     * and the cancellations above are laid over them by date.
+     */
+    planned_sessions: plannedSessionRows,
+    /**
+     * The holiday breaks over the plan's span, each with the sessions it
+     * withdrew from the plan above. A holiday date carries its break and
+     * nothing else: no stored session and no cancellation lands on one.
+     */
+    holiday_breaks: holidayBreakRows,
   })
   .strict();
 

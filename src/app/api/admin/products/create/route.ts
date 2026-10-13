@@ -152,6 +152,11 @@ export const POST = defineRoute({
       // database refuses a customer on a product that is not a municipality
       // club, which is the one rule not restated here.
       p_invoice_customer_id: body.invoice_customer_id ?? undefined,
+      // The holiday calendars, unconditionally and as an array, for the reason
+      // the consent slugs travel that way: the RPC reads `[]` and NULL alike as
+      // "follows none", and keeping the line identical to the update route's is
+      // what keeps an omission there from detaching a club's calendars.
+      p_holiday_calendar_ids: body.holiday_calendar_ids,
     };
 
     // Call the RPC through the user's session client — SECURITY INVOKER means

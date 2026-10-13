@@ -1,5 +1,5 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
-import { getNextSessionStart } from "@/lib/enrollment";
+import { fixtureNextSlotStart } from "@/components/preview/fixture-clock";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import type { AttendanceMark, SessionPhoto } from "@/components/session-feed";
 import { isExpectedOnEntry } from "./entry-state";
@@ -399,7 +399,26 @@ export type EntrySpec =
        */
       owed?: boolean;
     }
-  | { kind: "no_record" };
+  | { kind: "no_record" }
+  | {
+      /**
+       * A holiday break over the week this slot would have met: the calm
+       * line in its place. A scene leaves the week out of the plan, as the
+       * database does.
+       */
+      kind: "holiday";
+      names: readonly { locale: string; name: string }[];
+    };
+
+/** A break written in three locales, for the runs that show one. */
+export const SESSION_FEED_AUTUMN_BREAK: Extract<EntrySpec, { kind: "holiday" }> = {
+  kind: "holiday",
+  names: [
+    { locale: "en", name: "Autumn break" },
+    { locale: "fi", name: "Syysloma" },
+    { locale: "sv", name: "Höstlov" },
+  ],
+};
 
 /* ------------------------------------------------------------------ */
 /*  Long-form reports                                                  */
@@ -704,6 +723,24 @@ export function buildSessionFeedFixture(
     const endsAt = new Date(startsAt.getTime() + durationMs);
     // Index-keyed rather than date-keyed so an entry keeps its identity across
     // the `useNow()` tick — callers hold edits in local state against these ids.
+    if (spec.kind === "holiday") {
+      // The break is the slot's whole week, so the line names a range; the
+      // session it withdrew is what places it.
+      return {
+        kind: "holiday" as const,
+        id: `mock-holiday-${sessionsBack}`,
+        startsAt,
+        endsAt,
+        startDate: formatInTimeZone(startsAt, TIMEZONE, "yyyy-MM-dd"),
+        endDate: formatInTimeZone(
+          shiftZonedDays(startsAt, 4, TIMEZONE),
+          TIMEZONE,
+          "yyyy-MM-dd",
+        ),
+        names: spec.names,
+        upcoming: endsAt.getTime() > now.getTime(),
+      };
+    }
     const id = `mock-session-${sessionsBack}`;
     if (spec.kind === "past") {
       sendOutcomes.set(id, spec.sendOutcome ?? "sent");
@@ -741,7 +778,7 @@ function rosterWithLateJoiner(
   durationMs: number,
 ): readonly SessionFeedGamer[] {
   const pastIndexes = specs.flatMap((spec, i) =>
-    spec.kind === "future" ? [] : [i],
+    spec.kind === "future" || spec.kind === "holiday" ? [] : [i],
   );
   if (pastIndexes.length === 0) return SESSION_FEED_ROSTER;
   const index =
@@ -813,10 +850,7 @@ export function sessionStartsForCadence(opts: {
 
   const next =
     cadence === "weekly"
-      ? getNextSessionStart(
-          { dayOfWeek: weekday, startTime, timezone: timeZone },
-          { now },
-        )
+      ? fixtureNextSlotStart(now, { weekday, startTime }, timeZone)
       : nextWeekdayStart(now, startTime, timeZone);
 
   const forward = (from: Date) =>
@@ -934,7 +968,7 @@ function resolveReportDate(report: string | undefined, startsAt: Date): string |
 }
 
 function toEntry(
-  spec: EntrySpec,
+  spec: Exclude<EntrySpec, { kind: "holiday" }>,
   base: { id: string; startsAt: Date; endsAt: Date },
   roster: readonly SessionFeedGamer[],
 ): SessionFeedEntry {

@@ -163,27 +163,31 @@ export function TraineeWorkspace({
     () =>
       buildGeduSessionFeed({
         groupId,
-        timezone: feed.product.timezone,
-        slots: feed.product.schedule_slots.map((slot) => ({
-          weekday: slot.weekday,
-          startTime: slot.start_time,
-          durationMinutes: slot.duration_minutes,
-        })),
-        startDate: feed.product.start_date,
-        endDate: feed.product.end_date,
+        plannedSessions: feed.planned_sessions,
+        openEnded: feed.product.end_date === null,
         sessions: feed.sessions,
         gedus: feed.gedus,
         // A trainee is nobody's substitute and nobody's absence is theirs to
         // know; the document carries none, so nothing is invented here.
         substitutions: [],
         cancellations: feed.cancellations,
+        holidayBreaks: feed.holiday_breaks,
         // Nobody: a trainee holds no staff seat, so no card may offer them an
         // absence of their own — the locked row below stands in its place.
         viewerId: null,
         now,
         reach: "redacted",
       }),
-    [groupId, feed.product, feed.sessions, feed.gedus, feed.cancellations, now],
+    [
+      groupId,
+      feed.planned_sessions,
+      feed.product.end_date,
+      feed.sessions,
+      feed.gedus,
+      feed.cancellations,
+      feed.holiday_breaks,
+      now,
+    ],
   );
 
   const handleEditEntry = (entryId: string | null) => {

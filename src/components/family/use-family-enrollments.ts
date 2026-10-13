@@ -163,7 +163,7 @@ export function useFamilyEnrollments(
  * A prep window runs from the moment the seat became the family's to the end of
  * their second session, and both ends are fixed by the row: the same rows give
  * the same answer at 14:00 and at 14:00:30. Left inside the tick-keyed memo it
- * would run a full occurrence walk per enrollment twice a minute on the two
+ * would scan every enrollment's plan twice a minute on the two
  * busiest pages in the app, for a value that cannot have changed. Keyed on the
  * rows alone, it runs when a refetch actually brings something new.
  */

@@ -3,6 +3,7 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   buildSessionFacts,
   sessionFactsProduct,
+  sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
@@ -157,6 +158,7 @@ export function buildSubstitutionPoolRows(
       session: buildSessionFacts({
         product: sessionFactsProduct(request.product),
         sessionDate: request.session_date,
+        ...sessionWindowOf(request),
         locale,
       }),
       role: request.role,

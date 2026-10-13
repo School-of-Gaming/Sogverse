@@ -1,21 +1,18 @@
-import { calendarDate, type FixtureSlot } from "@/components/preview/fixture-clock";
+import {
+  calendarDate,
+  fixturePlan,
+  type FixtureSlot,
+} from "@/components/preview/fixture-clock";
 import {
   formatProductSchedule,
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import {
-  capPastCancellations,
-  endDateToCutoff,
-  enumerateRowOccurrences,
-  productLocalDate,
-  splitAtNextRunning,
-  startDateToCutoff,
-} from "@/lib/session-occurrence";
+import { nextRunning } from "@/lib/planned-sessions";
 import type { ProductTopic, ProductType } from "@/types";
 import {
-  topicPrepWindowEndFromSchedule,
+  topicPrepWindowEnd,
   type FamilyEnrollmentSummary,
 } from "./enrollment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
@@ -25,9 +22,9 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * description of an enrollment ("a remote club, running right now, with a
  * failing card") into the summary both page bodies consume.
  *
- * **Nothing here is hand-written narrative.** The next session comes out of the
- * same occurrence walk the live dashboards use, including the case where one is
- * in progress; the schedule sentence comes out of the same product-schedule
+ * **Nothing here is hand-written narrative.** The next session is read off the
+ * fixture product's plan with the same rule the live dashboards read theirs
+ * with, including the case where one is in progress; the schedule sentence comes out of the same product-schedule
  * formatter the public browse cards use. So a preview shows the real
  * derivations — a Join that opens when the window really opens, a cadence line
  * in the viewer's own zone — rather than a plausible imitation of them.
@@ -205,14 +202,13 @@ export function buildEnrollmentFixture(
     prepWindowEnd:
       spec.awaiting === true
         ? null
-        : topicPrepWindowEndFromSchedule({
+        : prepWindowEndFromSchedule({
             slots: spec.slots,
-            timezone: FIXTURE_TIMEZONE,
             startMoment: new Date(
               now.getTime() - (spec.enrolledDaysAgo ?? 0) * 86_400_000,
             ),
-            startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
-            endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
+            startDate,
+            endDate,
           }),
     // A label-only topic by default: it brings no steps of its own, so an
     // untouched in-person fixture draws no prep affordance and a remote one
@@ -266,11 +262,11 @@ export function buildEnrollmentFixture(
 }
 
 /**
- * The soonest occurrence still worth showing that is not cancelled, and the
- * cancelled ones ahead of it — the same walk and split the roll-up behind the
- * live dashboards does, including an in-progress session, which is precisely
- * when the Join button matters. The first `cancelledUpcoming` session dates are
- * the cancelled ones.
+ * The soonest session still worth showing that is not cancelled, and the
+ * cancelled ones ahead of it — the rule the roll-up behind the live dashboards
+ * reads its plan with, including an in-progress session, which is precisely
+ * when the Join button matters. The first `cancelledUpcoming` sessions that
+ * have not closed are the cancelled ones.
  */
 function nextOccurrence({
   now,
@@ -288,24 +284,59 @@ function nextOccurrence({
   next: { start: Date; end: Date } | null;
   cancelledAhead: { start: Date; end: Date }[];
 } {
-  if (slots.length === 0) return { next: null, cancelledAhead: [] };
-  const occurrences = enumerateRowOccurrences({
-    slots,
-    timezone: FIXTURE_TIMEZONE,
+  const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  const planOf = (cancelledDates: readonly string[]) =>
+    fixturePlan({
+      slots,
+      timeZone: FIXTURE_TIMEZONE,
+      startDate,
+      endDate,
+      now,
+      cancelledDates,
+    });
+  const cancelledDates = planOf([])
+    .filter((session) => session.endsAt.getTime() + closeMarginMs > now.getTime())
+    .slice(0, cancelledUpcoming)
+    .map((session) => session.date);
+  const { next, cancelledAhead } = nextRunning(
+    planOf(cancelledDates),
     now,
-    startBoundary: startDateToCutoff(startDate, FIXTURE_TIMEZONE),
-    endBoundary: endDateToCutoff(endDate, FIXTURE_TIMEZONE),
-    cap: capPastCancellations(1, cancelledUpcoming, slots.length),
-    windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
-  });
-  const cancelledDates = new Set(
-    [
-      ...new Set(
-        occurrences.map((occurrence) =>
-          productLocalDate(occurrence.start, FIXTURE_TIMEZONE),
-        ),
-      ),
-    ].slice(0, cancelledUpcoming),
+    closeMarginMs,
   );
-  return splitAtNextRunning(occurrences, FIXTURE_TIMEZONE, cancelledDates);
+  const occurrence = (session: { startsAt: Date; endsAt: Date }) => ({
+    start: session.startsAt,
+    end: session.endsAt,
+  });
+  return {
+    next: next === null ? null : occurrence(next),
+    cancelledAhead: cancelledAhead.map(occurrence),
+  };
+}
+
+/**
+ * The prep window's end for a fixture: the shared rule over the fixture
+ * product's plan as it stood the moment the seat became theirs.
+ */
+function prepWindowEndFromSchedule({
+  slots,
+  startMoment,
+  startDate,
+  endDate,
+}: {
+  slots: FixtureSlot[];
+  startMoment: Date;
+  startDate: string;
+  endDate: string | null;
+}): Date | null {
+  const plan = fixturePlan({
+    slots,
+    timeZone: FIXTURE_TIMEZONE,
+    startDate,
+    endDate,
+    now: startMoment,
+  });
+  return topicPrepWindowEnd(
+    plan.map((session) => ({ start: session.startsAt, end: session.endsAt })),
+    startMoment,
+  );
 }

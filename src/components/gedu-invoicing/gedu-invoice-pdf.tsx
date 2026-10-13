@@ -26,7 +26,10 @@ import {
   type GeduInvoiceLine,
   type GeduInvoiceLineKind,
 } from "./build-gedu-invoicing";
-import type { GeduInvoicingTranslator } from "./gedu-invoice-export";
+import {
+  holidayLabel,
+  type GeduInvoicingTranslator,
+} from "./gedu-invoice-export";
 import { SogPdfMark } from "./gedu-invoice-pdf-mark";
 import {
   NO_FIGURE,
@@ -52,7 +55,7 @@ import {
  *
  * It leads with the two sums the Gedu handbook asks gedus to itemise, then the
  * club lines they come from, then **every dated line of the month** — paid,
- * not recorded, upcoming, cancelled and away — each with its amount, so the
+ * not recorded, upcoming, cancelled, away and holiday — each with its amount, so the
  * detail is the page's dates on paper and a line that pays nothing says why.
  * A line that does not pay is at zero; a club whose fee is unset shows a
  * neutral dash in place of every amount, as the CSV leaves its cells blank,
@@ -192,7 +195,9 @@ export function geduInvoicePdfContent({
       ? line.substitute === null
         ? t("absentNoSubstitute")
         : t("absentSubstituted", { name: fullName(line.substitute) })
-      : t(STATUS_KEY[line.kind]);
+      : line.kind === "holiday"
+        ? holidayLabel(line, t)
+        : t(STATUS_KEY[line.kind]);
 
   // The page's own wording, which runs on after the line's outcome there; here
   // it opens a line of its own, so its first letter is capitalised.
@@ -349,13 +354,19 @@ export function geduInvoicePdfContent({
   };
 }
 
-/** The page's outcome word for every kind but away, which names a person. */
+/**
+ * The page's outcome word for every kind but away, which names a person, and
+ * holiday, which names its break.
+ */
 const STATUS_KEY = {
   paid: "recorded",
   unrecorded: "notRecorded",
   upcoming: "upcoming",
   cancelled: "cancelled",
-} as const satisfies Record<Exclude<GeduInvoiceLineKind, "absent">, string>;
+} as const satisfies Record<
+  Exclude<GeduInvoiceLineKind, "absent" | "holiday">,
+  string
+>;
 
 /** The statement as PDF bytes, rendered on the server. */
 export async function renderGeduInvoicePdf(

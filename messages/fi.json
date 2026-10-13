@@ -88,7 +88,10 @@
       "teamProfile": "Oma profiili",
       "adminTeamProfile": "Profiili",
       "adminFeedback": "Palaute",
-      "team": "Tiimi"
+      "team": "Tiimi",
+      "adminHolidayCalendars": "Lomakalenterit",
+      "adminHolidayCalendarNew": "Uusi lomakalenteri",
+      "adminHolidayCalendarEdit": "Muokkaa lomakalenteria"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -378,7 +381,9 @@
         "timesIn": "ajat aikavyöhykkeellä {zone}",
         "nothingOn": "Ei mitään",
         "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
-        "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}",
+        "holiday": "Loma",
+        "holidayTitle": "Loma – {name}. Tänä päivänä ei ole kertaa."
       },
       "cancellation": {
         "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",
@@ -447,6 +452,8 @@
       "billedNotRecorded": "Laskutettu, ei kirjattu",
       "upcoming": "Tulossa",
       "cancelled": "Peruttu",
+      "holiday": "Loma",
+      "holidayNamed": "Loma – {name}",
       "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
       "sessionsFor": "Kerhon {club} kerrat",
       "clubsIn": "Kerhot: {municipality}",
@@ -526,6 +533,84 @@
         "hint": "Asiakas, jolle tämän kerhon kerrat laskutetaan. Ilman asiakasta kerho merkitään laskutussivulla puutteelliseksi, eikä siitä synny laskutiedostoa.",
         "manage": "Hallinnoi laskutusasiakkaita",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "title": "Lomakalenterit",
+      "subtitle": "Koulujen lomat ja muut tauot, joita kerho voi noudattaa. Kerholla ei ole kertoja tauon päivinä.",
+      "addCalendar": "Lisää kalenteri",
+      "columns": {
+        "name": "Nimi",
+        "breaks": "Tauot",
+        "nextBreak": "Seuraava tauko",
+        "clubs": "Kerhot"
+      },
+      "noUpcomingBreak": "Ei tulevia",
+      "empty": "Lomakalentereita ei vielä ole. Lisää ensimmäinen.",
+      "backToList": "Takaisin lomakalentereihin",
+      "notFound": "Tällä tunnisteella ei löydy lomakalenteria.",
+      "newPage": {
+        "title": "Uusi lomakalenteri",
+        "submit": "Luo kalenteri"
+      },
+      "editPage": {
+        "title": "Muokkaa lomakalenteria"
+      },
+      "sections": {
+        "calendar": "Kalenteri",
+        "breaks": "Tauot",
+        "breaksDescription": "Tauko kestää ensimmäisestä päivästään viimeiseen, molemmat mukaan lukien, ja sillä on nimi jokaisella kalenterin kielellä. Perheet näkevät nimen niiden kertojen paikalla, jotka tauko poistaa.",
+        "products": "Kalenteria noudattavat kerhot",
+        "productsDescription": "Taukoihin tallennettu muutos muuttaa nämä kerhot heti, myös menneet kuukaudet."
+      },
+      "fields": {
+        "name": "Nimi",
+        "languages": "Kielet",
+        "firstDay": "Ensimmäinen päivä",
+        "lastDay": "Viimeinen päivä",
+        "breakName": "Nimi: {language}"
+      },
+      "hints": {
+        "name": "Vain ylläpitäjät näkevät tämän nimen, esimerkiksi Helsingin koulut. Perheet näkevät vain taukojen nimet.",
+        "languages": "Kielet ovat koko kalenterin: kun lisäät tai poistat kielen tässä, se koskee jokaista taukoa. Jokainen tauko tarvitsee nimen jokaisella kielellä. Perheet lukevat nimen omalla kielellään, jos se on kirjoitettu, muuten englanniksi tai ensimmäisellä kirjoitetulla kielellä."
+      },
+      "noBreaks": "Taukoja ei vielä ole.",
+      "checkLine": "{range} · {days, plural, one {# päivä} other {# päivää}} · viikko {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# päivä} other {# päivää}} · viikot {first}–{last}",
+      "addBreak": "Lisää tauko",
+      "removeBreak": "Poista: {name}",
+      "noProducts": "Mikään kerho ei vielä noudata tätä kalenteria. Kerhon kalenterit valitaan kerhon omalla sivulla.",
+      "errors": {
+        "nameRequired": "Anna kalenterille nimi.",
+        "datesRequired": "{name} tarvitsee ensimmäisen ja viimeisen päivän.",
+        "endBeforeStart": "{name} päättyy ennen kuin se alkaa.",
+        "breakNameMissing": "{name} tarvitsee nimen kielellä {language}.",
+        "overlap": "{first} ja {second} menevät päällekkäin. Päivä voi kuulua vain yhteen taukoon.",
+        "saveFailed": "Kalenteria ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Kalenteria ei voitu tallentaa – {reason}"
+      },
+      "impact": {
+        "title": "Tallennetaanko muutokset?",
+        "description": "{count, plural, one {Tämä kerho muuttuu} other {Nämä # kerhoa muuttuvat}} heti, kun tallennat.",
+        "futureRemoved": "Perheet eivät näe kertaa {count, plural, one {# päivänä} other {# päivänä}}: {dates}.",
+        "futureRestored": "Perheet näkevät kerrat taas {count, plural, one {# päivänä} other {# päivänä}}: {dates}.",
+        "pastRemoved": "{count, plural, one {Mennyt kerta katoaa} other {Menneet kerrat # päivältä katoavat}} perheiden historiasta: {dates}.",
+        "pastRestored": "{count, plural, one {Mennyt kerta palaa} other {Menneet kerrat # päivältä palaavat}} perheiden historiaan: {dates}.",
+        "recordsHidden": "{count, plural, one {# kirjattu kerta piilotetaan} other {# kirjattua kertaa piilotetaan}} perheiltä.",
+        "recordsShown": "{count, plural, one {# kirjattu kerta näytetään} other {# kirjattua kertaa näytetään}} perheille taas.",
+        "requestsStopped": "{count, plural, one {# sijaispyyntö jää} other {# sijaispyyntöä jää}} ilman tuurattavaa kertaa.",
+        "requestsReopened": "{count, plural, one {# sijaispyynnöllä} other {# sijaispyynnöllä}} on taas tuurattava kerta."
+      },
+      "editBreak": "Muokkaa: {name}",
+      "unnamedBreak": "Nimetön tauko",
+      "dialog": {
+        "editTitle": "Muokkaa taukoa",
+        "saveAndAddAnother": "Tallenna ja lisää toinen"
+      },
+      "breakErrors": {
+        "datesRequired": "Valitse ensimmäinen ja viimeinen päivä.",
+        "endBeforeStart": "Viimeinen päivä on ennen ensimmäistä.",
+        "nameMissing": "Anna tauolle nimi kielellä {language}."
       }
     },
     "library": {
@@ -928,6 +1013,16 @@
         },
         "copyLink": "Kopioi julkinen linkki",
         "copied": "Kopioitu"
+      },
+      "holidayCalendars": {
+        "label": "Lomakalenterit",
+        "hint": "Kerholla ei ole kertoja minkään sen noudattamien kalenterien tauon päivinä. Perheet näkevät tauon niiden kertojen kohdalla, jotka jäävät pitämättä.",
+        "manage": "Hallinnoi lomakalentereita",
+        "nextBreak": "Seuraava: {name}, {dates}",
+        "noUpcomingBreak": "Ei tulevia taukoja",
+        "empty": "Lomakalentereita ei vielä ole.",
+        "listUnavailable": "Lomakalentereita ei voitu ladata. Kerhon nykyiset kalenterit säilyvät, kun tallennat.",
+        "none": "Ei mitään"
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
@@ -3033,6 +3128,8 @@
     "notRecorded": "Ei kirjattu",
     "upcoming": "Tulossa",
     "cancelled": "Peruttu",
+    "holiday": "Loma",
+    "holidayNamed": "Loma – {name}",
     "absentSubstituted": "Poissa – tuuraajana {name}",
     "absentNoSubstitute": "Poissa – ei tuuraajaa",
     "substitutingFor": "tuuraus, poissa {name}",
@@ -3100,7 +3197,8 @@
     "live": "Käynnissä",
     "nextSession": "Seuraava kerta",
     "upcoming": "Tuleva kerta",
-    "cancelled": "Peruttu"
+    "cancelled": "Peruttu",
+    "noSession": "Ei kerhokertaa"
   },
   "sessionFacts": {
     "remote": "Etänä",
@@ -3351,7 +3449,8 @@
       "audience": "Kohderyhmä",
       "language": "Kieli",
       "online": "Verkossa",
-      "tbd": "Vahvistetaan myöhemmin"
+      "tbd": "Vahvistetaan myöhemmin",
+      "holidayBreaks": "Loma-ajat"
     },
     "signupPanel": {
       "verb": {
@@ -3636,7 +3735,8 @@
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki",
     "substitutions": "Tuuraukset",
-    "feedback": "Palaute"
+    "feedback": "Palaute",
+    "holidayCalendars": "Lomakalenterit"
   },
   "home": {
     "hero": {
@@ -4439,7 +4539,9 @@
         "ages": "Ikä {min}–{max}",
         "audienceParents": "Vanhemmille",
         "audienceFamilies": "Perheille",
-        "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}"
+        "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}",
+        "holidayBreaks": "Loma-ajat",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {

@@ -12,6 +12,7 @@ import {
 import { runEndedOn, runLiveness } from "@/lib/product-run";
 import { INERT_HREF } from "@/lib/constants/routes";
 import { geduSeatHrefs } from "@/components/gedu/gedu-seat-rows";
+import { planSessions } from "../../mocks/planned-sessions";
 
 /**
  * The roll-up is what replaced the dashboard's per-occurrence enumeration, so
@@ -21,6 +22,12 @@ import { geduSeatHrefs } from "@/components/gedu/gedu-seat-rows";
  */
 
 const TZ = "Europe/Helsinki";
+
+/**
+ * How far an open-ended fixture's plan reaches: well past every clock this
+ * suite reads at, which is all the database's horizon promises.
+ */
+const PLAN_THROUGH = "2026-12-31";
 
 function row(over: {
   id: string;
@@ -36,12 +43,24 @@ function row(over: {
   slots?: GeduAssignmentRow["slots"];
   cancelledDates?: string[];
 }): GeduAssignmentRow {
+  const startDate = over.startDate ?? "2025-01-06";
+  const endDate = over.endDate ?? null;
+  const slots =
+    over.slots ??
+    [
+      {
+        weekday: over.weekday ?? 0,
+        startTime: over.startTime ?? "16:30",
+        durationMinutes: over.durationMinutes ?? 90,
+      },
+    ];
+  const cancelled = new Set(over.cancelledDates ?? []);
   return {
     product: {
       id: over.id,
       timezone: TZ,
-      startDate: over.startDate ?? "2025-01-06",
-      endDate: over.endDate ?? null,
+      startDate,
+      endDate,
       isRemote: over.isRemote ?? true,
       siteName: over.siteName ?? null,
       topic: "minecraft_java",
@@ -54,21 +73,21 @@ function row(over: {
     // card's, and a live substitution is its own small card keyed to one date.
     kind: "assignment",
     substitutionDate: null,
-    cancelledDates: over.cancelledDates ?? [],
+    upcomingSessions: planSessions({
+      timezone: TZ,
+      slots,
+      startDate,
+      endDate: endDate ?? PLAN_THROUGH,
+      now: new Date(),
+    }).map((session) => ({ ...session, cancelled: cancelled.has(session.date) })),
     substitutionCancelled: false,
+    substitutionStartsAt: null,
+    substitutionEndsAt: null,
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,
     groupParticipantCount: 7,
-    slots:
-      over.slots ??
-      [
-        {
-          weekday: over.weekday ?? 0,
-          startTime: over.startTime ?? "16:30",
-          durationMinutes: over.durationMinutes ?? 90,
-        },
-      ],
+    slots,
   };
 }
 
@@ -642,12 +661,25 @@ describe("rollUpGeduSubstitutions", () => {
       isRemote: over.isRemote ?? true,
       siteName: over.siteName ?? null,
     });
+    const timezone = over.timezone ?? base.product.timezone;
+    // The read's window for the date: the plan's session on it, or none on a
+    // date no slot names.
+    const window = planSessions({
+      timezone,
+      slots: base.slots,
+      startDate: over.substitutionDate,
+      endDate: over.substitutionDate,
+      now: new Date(),
+    }).at(0);
     return {
       ...base,
-      product: { ...base.product, timezone: over.timezone ?? base.product.timezone },
+      product: { ...base.product, timezone },
       groupId: over.groupId ?? `${over.id}-group`,
       kind: "substitution",
       substitutionDate: over.substitutionDate,
+      upcomingSessions: [],
+      substitutionStartsAt: window?.startsAt ?? null,
+      substitutionEndsAt: window?.endsAt ?? null,
     };
   }
 
@@ -687,7 +719,7 @@ describe("rollUpGeduSubstitutions", () => {
     ]);
   });
 
-  it("resolves the substituted session's instants from the date and the slots", () => {
+  it("carries the substituted session's instants from the read", () => {
     const [substitution] = rollUpSubstitutions([
       substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
     ]);
@@ -702,23 +734,19 @@ describe("rollUpGeduSubstitutions", () => {
         ...substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
         substitutionCancelled: true,
       },
-      {
-        // Another date of the group being cancelled says nothing about this one.
-        ...substitutionRow({ id: "p2", name: "Other Club", substitutionDate: "2026-02-23" }),
-        cancelledDates: ["2026-03-02"],
-      },
+      // Only the row's own flag says cancelled.
+      substitutionRow({ id: "p2", name: "Other Club", substitutionDate: "2026-02-23" }),
     ]);
     expect(cancelled.cancelled).toBe(true);
     expect(running.cancelled).toBe(false);
   });
 
   it("keeps a cancelled substitution cancelled once its date leaves the upcoming window", () => {
-    // `cancelledDates` runs from the day before today, and the card outlives
-    // that by days: the row's own flag is what the card reads.
+    // A substitution row carries no plan, and the card outlives any upcoming
+    // window by days: the row's own flag is what the card reads.
     const [substitution] = rollUpSubstitutions([
       {
         ...substitutionRow({ id: "p1", name: "Club", substitutionDate: "2026-02-16" }),
-        cancelledDates: [],
         substitutionCancelled: true,
       },
     ]);

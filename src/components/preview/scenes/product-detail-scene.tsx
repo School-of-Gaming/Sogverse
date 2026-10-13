@@ -5,6 +5,7 @@ import { ProductDetailPageBody } from "@/components/public/products/product-deta
 import { registrationCtaKind } from "@/components/public/products/derive-registration-state";
 import { PreviewSignupPanel } from "@/components/public/products/preview-signup-panel";
 import {
+  buildHolidayBreaksFixture,
   buildScenarioFixture,
   type AuthKind,
   type PreviewScenario,
@@ -126,6 +127,9 @@ export function ProductDetailScene({
   return (
     <ProductDetailPageBody
       product={product}
+      // What the live shell reads before it paints, built from the row the
+      // same way: a club's breaks inside its term, or the next few ahead.
+      holidayBreaks={buildHolidayBreaksFixture(product)}
       signupPanel={
         <PreviewSignupPanel
           product={product}
