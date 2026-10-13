@@ -379,7 +379,9 @@ describe("the holiday calendar form's unsaved-changes guard", () => {
     fireEvent.change(nameBox(), { target: { value: "Espoo schools" } });
     submit();
     expect(await screen.findByText("title")).toBeTruthy();
-    expect(guarded()).toBe(true);
+    // The guard is down while the preview runs and is armed again by an effect
+    // of the render that opens the dialog, so it lands just after the title.
+    await waitFor(() => expect(guarded()).toBe(true));
 
     fireEvent.click(screen.getByRole("button", { name: "saveChanges" }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
