@@ -80,7 +80,7 @@ describe("the hub's tab strip", () => {
   it("marks the tab whose page this is as current, and no other", () => {
     renderAt(
       "/admin/sites",
-      <AdminHub hub="products">
+      <AdminHub hub="products" description="What this tab is.">
         <p>body</p>
       </AdminHub>,
     );
@@ -102,10 +102,35 @@ describe("the hub's tab strip", () => {
     ).toBe(en.adminHubs.titles.products);
   });
 
+  it("draws the tab's description and action under the strip, before the body", () => {
+    renderAt(
+      "/admin/sites",
+      <AdminHub
+        hub="products"
+        description="What this tab is."
+        action={<button type="button">Add</button>}
+      >
+        <p>body</p>
+      </AdminHub>,
+    );
+
+    const strip = screen.getByRole("navigation", {
+      name: en.adminHubs.titles.products,
+    });
+    const description = screen.getByText("What this tab is.");
+    const action = screen.getByRole("button", { name: "Add" });
+    const body = screen.getByText("body");
+    const follows = (a: Node, b: Node) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(strip, description)).toBe(true);
+    expect(follows(description, action)).toBe(true);
+    expect(follows(action, body)).toBe(true);
+  });
+
   it("marks no tab current on a page beneath one", () => {
     renderAt(
       "/admin/invoice-customers/[id]",
-      <AdminHub hub="invoicing">
+      <AdminHub hub="invoicing" description="What this tab is.">
         <p>body</p>
       </AdminHub>,
     );

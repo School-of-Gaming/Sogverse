@@ -1,47 +1,52 @@
 import { Constants, type ProductType } from "@/types";
 
 /**
- * The query param the admin product list narrows to one product type with, and
- * the value each type is spelled as in it.
+ * How each product type is spelled in the admin's URLs, and the query param
+ * the admin product list narrows to one type with.
  *
- * One module for both directions, because two readers must agree: the route
- * builder that writes `/admin/products?type=camps` into every back link and
- * redirect, and the list page that reads it back. No param means every type.
- *
- * The values are the plural slugs each type's admin pages already live under
- * (`/admin/camps/[id]`), so the list a link lands on reads as the same place
- * its product pages hang off.
+ * **This table is the only place the spelling is kept.** It is both the path
+ * segment each type's admin pages live under (`/admin/camps/[id]`) and the
+ * value the list's `type` param takes (`/admin/products?type=camps`), so the
+ * list a back link lands on reads as the same place its product pages hang
+ * off. Every reader derives from it: the route builders that write the
+ * segments and the param, and the list page that reads the param back. No
+ * param means every type.
  */
 export const PRODUCT_LIST_TYPE_PARAM = "type";
 
-const TYPE_PARAM_VALUES = {
+const ADMIN_PRODUCT_SLUGS = {
   consumer_club: "consumer-clubs",
   municipality_club: "municipality-clubs",
   camp: "camps",
   event: "events",
 } as const satisfies Record<ProductType, string>;
 
-export type ProductListTypeParam = (typeof TYPE_PARAM_VALUES)[ProductType];
+export type AdminProductSlug = (typeof ADMIN_PRODUCT_SLUGS)[ProductType];
 
-/** How a product type is spelled in the list's `type` param. */
-export function productListTypeParam(type: ProductType): ProductListTypeParam {
-  return TYPE_PARAM_VALUES[type];
+/**
+ * How a product type is spelled in the admin's URLs: its pages' path segment,
+ * and its value in the list's `type` param.
+ */
+export function adminProductSlug<T extends ProductType>(
+  type: T,
+): (typeof ADMIN_PRODUCT_SLUGS)[T] {
+  return ADMIN_PRODUCT_SLUGS[type];
 }
 
 /**
- * The product type a `type` param names, or `null` for every type.
+ * The product type a slug names, or `null` for every type.
  *
  * A value naming no type — a hand-edited URL, a typo — reads as every type
  * rather than as a list narrowed to nothing, the same answer a missing param
  * gives.
  */
-export function parseProductListType(
+export function parseAdminProductSlug(
   value: string | null | undefined,
 ): ProductType | null {
   if (!value) return null;
   return (
     Constants.public.Enums.product_type.find(
-      (type) => TYPE_PARAM_VALUES[type] === value,
+      (type) => ADMIN_PRODUCT_SLUGS[type] === value,
     ) ?? null
   );
 }

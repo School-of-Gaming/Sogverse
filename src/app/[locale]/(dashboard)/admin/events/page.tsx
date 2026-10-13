@@ -2,10 +2,15 @@ import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 
-// Events are listed with every other product type, narrowed by type.
-export default async function EventsPage() {
+// Events are listed with every other product type, narrowed by type. The old
+// URL's own query travels with it.
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   redirect({
-    href: ROUTES.admin.productList("event"),
+    href: ROUTES.admin.productList("event", await searchParams),
     locale: await getLocale(),
   });
 }

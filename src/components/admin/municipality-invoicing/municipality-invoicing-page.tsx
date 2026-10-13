@@ -181,8 +181,6 @@ export function MunicipalityInvoicingPage({
     // what makes the document scrollbar appear — is reserved by the hub it
     // renders in.
     <div className="space-y-3 pb-12">
-      <MunicipalityInvoicingDescription />
-
       {/* At least as tall as the small button, so a month with nothing to
           expand does not lose it and pull the stepper up the page. */}
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
@@ -274,17 +272,6 @@ const NO_SNAPSHOTS: readonly MunicipalityInvoicingSnapshot[] = [];
 /** The live page's own answer: another month of this route. */
 function adminMonthHref(month: string): MonthHref {
   return { pathname: ROUTES.admin.municipalityInvoicing, query: { month } };
-}
-
-/**
- * The page's one-line description, under the hub's tabs. A component because
- * the route renders it above a failed read as well, where there is no invoice
- * to put underneath, and two copies of one line drift.
- */
-export function MunicipalityInvoicingDescription() {
-  const t = useTranslations("admin.municipalityInvoicing");
-
-  return <p className="text-sm text-muted-foreground">{t("description")}</p>;
 }
 
 /**

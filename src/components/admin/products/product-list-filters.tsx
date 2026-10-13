@@ -32,6 +32,8 @@ import {
 import {
   optionInRange,
   productListFilterOffer,
+  productListOptionValues,
+  productListParamsAfterTypeSwitch,
   PRODUCT_LIST_PARAMS,
 } from "./product-list-url-state";
 import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
@@ -59,8 +61,9 @@ interface ProductListFiltersProps {
 //
 // The two controls every type has come first and in the same order, so the
 // columns an admin reaches for without looking stay put across a type switch; a
-// type's own filters follow. Switching type clears the params of any filter the
-// new type does not offer, so the URL states exactly what is applied.
+// type's own filters follow. Switching type clears every filter param the new
+// type cannot apply — a filter it does not offer, or a value none of its
+// products carries — so after a switch the URL states exactly what is applied.
 //
 // Every control is single-select; no selection means "all", and active filters
 // AND together — a row must satisfy every one, the search box included.
@@ -144,22 +147,28 @@ export function ProductListFilters({
 
   // Each filter's options are derived from the values actually present on the
   // type's products, so a selection always yields at least one match (no dead
-  // entries). Day/gedu/municipality sort by localized label; language keeps its
-  // canonical reference order.
-  const dayOptions = useMemo(() => {
-    if (!offer.day) return [];
-    const present = new Set<number>();
-    for (const p of ofType)
-      for (const s of p.schedule_slots) present.add(s.weekday);
-    return [...present]
-      .sort((a, b) => a - b)
-      .map((w) => ({ value: String(w), label: formatWeekday(w, uiLocale, "long") }));
-  }, [ofType, offer.day, uiLocale]);
+  // entries) — the same values a type switch keeps a param by. Day/gedu/
+  // municipality sort by localized label; language keeps its canonical
+  // reference order.
+  const optionValues = useMemo(
+    () => productListOptionValues(products, type),
+    [products, type],
+  );
+
+  const dayOptions = useMemo(
+    () =>
+      [...optionValues.day]
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map((w) => ({
+          value: String(w),
+          label: formatWeekday(w, uiLocale, "long"),
+        })),
+    [optionValues.day, uiLocale],
+  );
 
   const geduOptions = useMemo(() => {
-    const present = new Set<string>();
-    for (const p of ofType)
-      for (const a of p.gedu_group_assignments) present.add(a.gedu_id);
+    const present = optionValues.gedu;
     const nameById = new Map(
       (gedus ?? []).map((g) => [
         g.id,
@@ -169,11 +178,10 @@ export function ProductListFilters({
     return [...present]
       .map((id) => ({ value: id, label: nameById.get(id) ?? id }))
       .sort((a, b) => a.label.localeCompare(b.label, formattingLocale(uiLocale)));
-  }, [ofType, gedus, uiLocale]);
+  }, [optionValues.gedu, gedus, uiLocale]);
 
   const languageOptions = useMemo(() => {
-    if (!offer.language) return [];
-    const present = new Set(ofType.map((p) => p.spoken_language_code));
+    const present = optionValues.language;
     // Ordered by the enum's own declaration order — the same sequence every
     // other language control renders — rather than alphabetically by a name
     // that changes with the viewer's locale. Only languages some club is
@@ -187,7 +195,7 @@ export function ProductListFilters({
         adornment: <LanguageFlag code={code} showCode={false} title={name} />,
       };
     });
-  }, [ofType, languageName, offer.language]);
+  }, [optionValues.language, languageName]);
 
   const municipalityOptions = useMemo(() => {
     const byId = new Map<string, string>();
@@ -242,10 +250,17 @@ export function ProductListFilters({
   function selectType(next: ProductType | null) {
     if (next === type) return;
     onTypeChange(next);
-    const nextOffer = productListFilterOffer(next);
-    if (!nextOffer.day) setDay(null);
-    if (!nextOffer.language) setLanguage(null);
-    if (!nextOffer.municipality) setMunicipalityId(null);
+    const kept = productListParamsAfterTypeSwitch(products, next, {
+      day: dayParam,
+      gedu: geduParam,
+      language: languageParam,
+      municipality: municipalityParam,
+    });
+    if (kept.day !== dayParam) setDay(kept.day);
+    if (kept.gedu !== geduParam) setGeduId(kept.gedu);
+    if (kept.language !== languageParam) setLanguage(kept.language);
+    if (kept.municipality !== municipalityParam)
+      setMunicipalityId(kept.municipality);
   }
 
   // Leaves the type chip alone: the type is which list this is, not a filter
@@ -283,23 +298,32 @@ export function ProductListFilters({
         aria-label={t("filters.type")}
         className="flex flex-wrap gap-1.5"
       >
-        <FilterChip active={type === null} onClick={() => selectType(null)}>
+        {/* Each chip is named in words with a space before its count — the
+            label and the count sit in a flex row, where no space between them
+            survives into the accessible name, which would read "Camps12". */}
+        <FilterChip
+          active={type === null}
+          onClick={() => selectType(null)}
+          ariaLabel={`${t("filters.allTypes")} ${products.length}`}
+        >
           {t("filters.allTypes")}
           <span className="tabular-nums">{products.length}</span>
         </FilterChip>
         {PRODUCT_TYPE_ORDER.map((productType) => {
           const presentation = PRODUCT_TYPE_PRESENTATION[productType];
           const Icon = presentation.icon;
+          const label = t(`types.${presentation.i18nKey}.plural`);
           return (
             <FilterChip
               key={productType}
               active={type === productType}
               onClick={() => selectType(productType)}
+              ariaLabel={`${label} ${countByType[productType]}`}
               // Uninked: the chip's own fill says whether it is on, and a
               // family colour on an act fill would be two colours arguing.
               icon={<Icon className="h-3.5 w-3.5" aria-hidden />}
             >
-              {t(`types.${presentation.i18nKey}.plural`)}
+              {label}
               <span className="tabular-nums">{countByType[productType]}</span>
             </FilterChip>
           );

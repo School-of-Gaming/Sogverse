@@ -115,7 +115,9 @@ and the rail entry stays lit on every page of the hub and beneath it.
 **Rule: a page joins a hub by joining the hub definition (`src/components/admin/hubs/`), and
 nowhere else.** That one entry gives it both its tab and the rail highlight, so a page cannot
 be a tab of a hub while leaving the hub's entry dark. **Hub tabs are links to their own URLs,
-not an ARIA tablist**: the current one carries `aria-current="page"`.
+not an ARIA tablist**: the current one carries `aria-current="page"`. The owner placed this
+UI rule here because the library has no home for it yet, and it leaves this file with the
+tabs adoption (`packages/sog-ui/docs/adoption.md`).
 
 ## `<main>` width
 

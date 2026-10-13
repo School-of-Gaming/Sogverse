@@ -3,10 +3,7 @@ import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query
 import { getTranslations } from "next-intl/server";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdminHub } from "@/components/admin/hubs/admin-hub";
-import {
-  MunicipalityInvoicingDescription,
-  MunicipalityInvoicingPage,
-} from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
+import { MunicipalityInvoicingPage } from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
 import { wireErrorMessage } from "@/lib/api/wire-error-message";
 import { earlierPeriodMonths } from "@/lib/finvoice";
 import { InvoiceCustomersService } from "@/services/invoice-customers";
@@ -111,10 +108,12 @@ export default async function MunicipalityInvoicingRoute({
   const { month } = await searchParams;
   const monthStart = resolveInvoicingMonthStart(month);
   const result = await loadMonth(monthStart);
+  const t = await getTranslations("admin.municipalityInvoicing");
+  const description = t("description");
 
   if (!result.ok) {
     return (
-      <AdminHub hub="invoicing">
+      <AdminHub hub="invoicing" description={description}>
         <MunicipalityInvoicingLoadFailure reason={result.reason} />
       </AdminHub>
     );
@@ -131,7 +130,7 @@ export default async function MunicipalityInvoicingRoute({
   }
 
   return (
-    <AdminHub hub="invoicing">
+    <AdminHub hub="invoicing" description={description}>
       <HydrationBoundary state={dehydrate(queryClient)}>
         <MunicipalityInvoicingPage
           monthStart={monthStart}
@@ -144,13 +143,12 @@ export default async function MunicipalityInvoicingRoute({
 }
 
 /**
- * The page's description over a band saying why there is nothing under it.
+ * A band saying why there is nothing under the page's description.
  *
- * The description waits on nothing, so it is **the same component** the loaded
- * page renders rather than the same line written again, and the hub's title and
- * tabs above it are the route's on either path. Below it is the failure and
- * nothing else: an empty month would say no municipality is owed anything,
- * which is the one wrong answer this page must never give.
+ * The description waits on nothing, so the hub draws it on either path, with
+ * the title and tabs above it. Below it is the failure and nothing else: an
+ * empty month would say no municipality is owed anything, which is the one
+ * wrong answer this page must never give.
  */
 async function MunicipalityInvoicingLoadFailure({
   reason,
@@ -160,8 +158,7 @@ async function MunicipalityInvoicingLoadFailure({
   const t = await getTranslations("admin.municipalityInvoicing");
 
   return (
-    <div className="space-y-3 pb-12">
-      <MunicipalityInvoicingDescription />
+    <div className="pb-12">
       {/* The reason is a message off the wire, never translated copy — it is
           spliced into a sentence that is, which is why there are two keys rather
           than one with an optionally-empty argument. */}

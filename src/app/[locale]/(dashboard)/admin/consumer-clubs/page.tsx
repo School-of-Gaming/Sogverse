@@ -3,9 +3,14 @@ import { redirect } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 
 // Consumer clubs are listed with every other product type, narrowed by type.
-export default async function ConsumerClubsPage() {
+// The old URL's own query travels with it.
+export default async function ConsumerClubsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   redirect({
-    href: ROUTES.admin.productList("consumer_club"),
+    href: ROUTES.admin.productList("consumer_club", await searchParams),
     locale: await getLocale(),
   });
 }

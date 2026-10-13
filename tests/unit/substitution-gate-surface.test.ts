@@ -67,6 +67,10 @@ const ASSIGNMENT_ONLY = new Map<string, string>([
     "A filter over the admin product list: it asks which gedus are ASSIGNED to each product so an admin can narrow the list by one of them. It gates nothing, and a substitution is not a standing property of a product — a sub who substituted one afternoon is not one of a club's educators, and listing them as one would make the filter answer a different question from the one it asks.",
   ],
   [
+    "components/admin/products/product-list-url-state.ts",
+    "Derives the gedu filter's options from the same assignment rows, so a type switch can keep or clear the gedu param by them. Same reason as the filter above: it LISTS a product's standing staff rather than gating on them.",
+  ],
+  [
     "services/products/products.service.ts",
     "Embeds `gedu_group_assignments(gedu_id)` on the admin product read, feeding the filter above. Same reason: it LISTS a product's standing staff rather than gating on them.",
   ],

@@ -24,8 +24,8 @@ quietly return.
 - **WhatsApp (worst):** one row per message per conversation and one contact row per
   distinct phone number, both admin-surface reads with no bound. An active conversation
   is the fastest-growing set in the app.
-- **Products:** the admin product list fetches every product ever created of a type
-  (ended ones included, nothing pruned). `/schools` reads every visible
+- **Products:** the admin product list fetches every product ever created, of every
+  type (ended ones included, nothing pruned). `/schools` reads every visible
   municipality club — staging 50 / prod 20 on 2026-07-30 — but its row budget is consumed
   by ended clubs that keep matching the SQL filter.
 - The failure is silent in every case: no error is thrown, surfaces render and act on
@@ -79,12 +79,17 @@ phone numbers; it degrades gracefully (oldest-idle contacts drop) but is still w
 
 ### 2. Admin product lists
 
-The by-type product list read (in `src/services/products/`) fetches every product of a
-type ever created — every status, ended ones included, with translation / schedule /
-assignment / location embeds — ordered by creation time descending, unbounded. Past the
-cap the oldest products silently vanish from the admin list.
+The admin product list reads every product ever created, of every type, in one request —
+the all-types list read (in `src/services/products/`), which is the shared list query
+builder called with no type — every status, ended ones included, with translation /
+schedule / assignment / location embeds, ordered by creation time descending, unbounded.
+Past the cap the oldest products silently vanish from the admin list, and the type chips'
+counts with them. The same builder narrowed to one type is the by-type read, which now
+survives only in the admin switch-club sheet, where the same truncation drops the oldest
+clubs from the clubs a child can be moved to.
 
-- Walk it; creation time descending plus primary-key tiebreaker.
+- Walk the builder, so both reads page; creation time descending plus primary-key
+  tiebreaker.
 - The embeds ride inside each row and are not subject to `max_rows`; page payloads are
   heavy but correct, and this surface is admin-only. No embed changes.
 

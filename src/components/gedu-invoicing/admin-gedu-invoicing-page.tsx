@@ -112,8 +112,6 @@ export function AdminGeduInvoicingPage({
     // The scroll gutter this page needs — opening a gedu is itself what makes
     // the document scrollbar appear — is reserved by the hub it renders in.
     <div className="space-y-3 pb-12">
-      <AdminGeduInvoicingDescription />
-
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
         <MonthStepper
           monthStart={invoice.monthStart}
@@ -199,18 +197,6 @@ export function AdminGeduInvoicingPage({
 /** The live page's own answer: another month of this route. */
 function adminMonthHref(month: string): MonthHref {
   return { pathname: ROUTES.admin.geduInvoicing, query: { month } };
-}
-
-/**
- * The page's description, under the hub's tabs — a component because the
- * route renders it above a failed read too, and two copies of one line drift.
- */
-export function AdminGeduInvoicingDescription() {
-  const t = useTranslations("geduInvoicing");
-
-  return (
-    <p className="text-sm text-muted-foreground">{t("adminDescription")}</p>
-  );
 }
 
 /**
