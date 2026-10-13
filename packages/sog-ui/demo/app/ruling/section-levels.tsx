@@ -9,7 +9,10 @@
  * **The two tables.**
  *
  * - `proposed` is the table as first put: h1 hero or page-title; h2 section or
- *   card-title; h3 card-title or sub-section; h4 sub-section or label.
+ *   card-title; h3 card-title or sub-section; h4 sub-section or label. Both
+ *   tables carry `app-section` at h2, the step §8 proposes for the app's own
+ *   section headings; its column goes if §8 rules one section step. The table
+ *   draws its 20px candidate.
  * - `with the survey's sites` widens it where real usage argues, and only there:
  *   - **`label` at h2 and h3.** The furniture headings head real regions — the
  *     session feed on a family product page, the other-groups rail in a group
@@ -41,12 +44,13 @@
 import { CalendarClock, ChevronRight } from "lucide-react";
 
 import { Case, CardGround, Column, Columns, Exemplar, Question } from "./parts";
-import { LABEL, PAGE_TITLE_DRAWN, STEP } from "./steps";
+import { APP_SECTION_DRAWN, LABEL, PAGE_TITLE_DRAWN, STEP } from "./steps";
 
 const STEP_COLUMNS = [
   { name: "hero", cls: STEP.hero },
   { name: "page-title", cls: PAGE_TITLE_DRAWN },
   { name: "section", cls: STEP.section },
+  { name: "app-section", cls: APP_SECTION_DRAWN },
   { name: "card-title", cls: STEP.cardTitle },
   { name: "sub-section", cls: STEP.subSection },
   { name: "label", cls: LABEL[14] },
@@ -57,14 +61,14 @@ type Level = "h1" | "h2" | "h3" | "h4";
 
 const PROPOSED: Record<Level, readonly StepName[]> = {
   h1: ["hero", "page-title"],
-  h2: ["section", "card-title"],
+  h2: ["section", "app-section", "card-title"],
   h3: ["card-title", "sub-section"],
   h4: ["sub-section", "label"],
 };
 
 const WITH_SURVEY: Record<Level, readonly StepName[]> = {
   h1: ["hero", "page-title"],
-  h2: ["section", "card-title", "label"],
+  h2: ["section", "app-section", "card-title", "label"],
   h3: ["card-title", "sub-section", "label"],
   h4: ["sub-section", "label"],
 };

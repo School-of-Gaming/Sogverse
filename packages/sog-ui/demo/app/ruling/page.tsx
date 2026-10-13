@@ -22,18 +22,21 @@
  * class; a new step is drawn in plain values in `steps.ts`. The scale changes
  * only when a ruling lands.
  *
- * **The seven sections.** §1 the role-named steps, each with today's real
+ * **The nine sections.** §1 the role-named steps, each with today's real
  * headings beside it; §2 the level → step table and two real pages' outlines
  * under it; §3 600 against 700; §4 one size at every width, with only the hero
  * restepping; §5 tight tracking and CardTitle's leading; §6 which inks a
  * heading may wear; §7 the uppercase furniture labels, and whether each is a
- * heading at all.
+ * heading at all; §8 whether the app's sections need a step of their own
+ * beside the marketing one; §9 which step a dialog or sheet title takes.
  */
 
 import type { Metadata } from "next";
 
+import { AppSectionSection } from "./section-app-section";
 import { BreakpointsSection } from "./section-breakpoints";
 import { ColourSection } from "./section-colour";
+import { DialogTitlesSection } from "./section-dialog-titles";
 import { FurnitureSection } from "./section-furniture";
 import { LevelsSection } from "./section-levels";
 import { StepsSection } from "./section-steps";
@@ -56,6 +59,8 @@ export default function RulingPage() {
       <TrackingSection />
       <ColourSection />
       <FurnitureSection />
+      <AppSectionSection />
+      <DialogTitlesSection />
     </main>
   );
 }

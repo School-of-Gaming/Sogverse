@@ -1273,8 +1273,14 @@ const eslintConfig = defineConfig([
     // comes from its own arguments or the repo, and reading and writing files
     // at computed paths is the entire job. Left on it fires fifty times here and
     // says nothing, which is worse than silence — it trains the next reader to
-    // scroll past the category. It stays on everywhere else.
-    files: ["scripts/**/*.{mjs,ts}", "packages/*/scripts/**/*.ts"],
+    // scroll past the category. A build config is the same case: it runs at
+    // build time, and the paths it probes are its own directory's ancestors.
+    // It stays on everywhere else.
+    files: [
+      "scripts/**/*.{mjs,ts}",
+      "packages/*/scripts/**/*.ts",
+      "packages/sog-ui/demo/next.config.ts",
+    ],
     rules: {
       "security/detect-non-literal-fs-filename": "off",
     },

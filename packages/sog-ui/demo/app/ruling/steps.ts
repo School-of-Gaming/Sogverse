@@ -54,3 +54,24 @@ export const LABEL = {
  * ruling, and §1 is where the size is decided.
  */
 export const PAGE_TITLE_DRAWN = PAGE_TITLE[30];
+
+/**
+ * The `app-section` candidates (§8): a section heading for the app's own
+ * pages, where no h2 reaches the 36px `section` step and today's sit at 18–20px
+ * (`text-lg font-semibold` twelve times, `text-xl font-semibold` ten).
+ *
+ * Both take the card title's 1.3 leading, so the two drawings differ by size
+ * alone. At 20px the candidate is the same recipe as the 20px `card-title`
+ * candidate — drawn under its own name all the same, because whether the two
+ * roles share one size is part of what §8 and §9 ask.
+ */
+export const APP_SECTION = {
+  20: "text-[1.25rem] leading-[1.3] font-semibold",
+  22: "text-[1.375rem] leading-[1.3] font-semibold",
+} as const;
+
+/**
+ * The app-section candidate the level table draws (§2). Twenty is where ten of
+ * today's app h2s already sit; a drawing choice, not a ruling.
+ */
+export const APP_SECTION_DRAWN = APP_SECTION[20];

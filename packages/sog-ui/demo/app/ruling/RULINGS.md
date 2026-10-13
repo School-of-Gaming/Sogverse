@@ -16,8 +16,9 @@ Status values: `open` · `ruled` · `landed`.
   They are decoupled, and constrained by a table in the library of which steps each
   level may take, enforced by types — an unlisted pair does not compile.
 - **The steps are renamed by role.** Today's ids are `h1`, `h2`, `h3`, `h4`, `body-l`,
-  `body-s` and `cta` in `src/tokens/typography.ts`. Round 1 proposes the heading names;
-  the body and CTA steps are not asked about.
+  `body-s` and `cta` in `src/tokens/typography.ts`. Round 1 proposes the heading names
+  (`hero`, `page-title`, `section`, `card-title`, `sub-section`, `label`, and in §8 a
+  seventh, `app-section`); the body and CTA steps are not asked about.
 - **Nothing on the ruling page edits a token.** Renames are drawn from today's token
   classes and new steps in plain values (`steps.ts`); the scale moves when a ruling
   lands.
@@ -125,5 +126,34 @@ also take `label` at h2/h3 back out of §2's table).
 **Shown:** §7. Three of the twelve — the family product page's "Sessions", the group
 workspace's "Other groups" rail card, the Roblox page's "Creator Academy documents" — each
 today, at `label` 14 and 12px, and as plain body-s text, ink held at quiet ink.
+
+**Status: open.**
+
+## 8. App section vs marketing section
+
+**Asked:** whether the scale carries two section steps — the marketing `section` (36px)
+and an app one, proposed as `app-section` at 20 or 22px, 600 — or one. No app h2 reaches
+36px: the app's section headings are `text-lg font-semibold` (12 sites) and
+`text-xl font-semibold` (10), and `section` at 36 outranks every `page-title` candidate.
+If one step is ruled, `app-section` leaves §2's table.
+
+**Shown:** §8. The admin substitutions page and the gedu substitutions page (a title, two
+section h2s and a session card), today and then under each `page-title` candidate (28, 30,
+32) with their sections at `section`, `app-section` 20 and `app-section` 22. The home
+features heading today, at `section`, and at `app-section` 22. §2's tables gain an
+`app-section` column, allowed at h2.
+
+**Status: open.**
+
+## 9. Dialog and sheet titles
+
+**Asked:** which step a dialog or sheet title takes. DialogTitle and SheetTitle are h2 at
+`text-lg font-semibold leading-none tracking-tight` (18px; 32 and 4 call sites), a size no
+proposed step has. The level (h2) is not in question.
+
+**Shown:** §9. Two confirm dialogs as static mock-ups at the dialog's width — the instant
+voice room's moderator leave dialog and the parent's give-up-the-place confirm on a seat
+offer — each today, at `card-title` 20, at `app-section` 22, and at `card-title` 24. The
+20px `app-section` candidate is the 20px `card-title` recipe, so it is not drawn twice.
 
 **Status: open.**

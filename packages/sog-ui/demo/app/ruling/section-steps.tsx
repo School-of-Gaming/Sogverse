@@ -29,8 +29,7 @@
  * heading — the public pages' `text-3xl sm:text-4xl`. The app's h2s are a
  * different size altogether (18–20px; no app h2 reaches 36), and one of them is
  * drawn here at the section step so the gap shows; whether the app needs a
- * second section size is a question this page does not yet ask (see the
- * ledger).
+ * second section step is §8's question.
  *
  * Every exemplar's classes are copied from the file named under it; the words
  * are the English messages, with `Aino` standing in for a child's name.
