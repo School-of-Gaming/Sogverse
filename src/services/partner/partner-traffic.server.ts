@@ -28,6 +28,16 @@ import type { PartnerDb } from "./partner-shared-db.server";
  * disagree is read once more, and a second disagreement is thrown rather than
  * answered.
  *
+ * **That throw is a known, accepted risk (owner decision, 2026-10-13).** A
+ * range including today can 500 when views land between the reads twice
+ * running, and each split added widens the gap between the first read and the
+ * last. It is rare at our traffic and Lynx can retry, so it was left as is
+ * until it happens. The fix then is to let the caller ask for one split per
+ * request (an optional `split` parameter, all five when absent, so no existing
+ * caller changes): one read grouped by day and that split — Vercel takes two
+ * groupings — puts every number in the answer on the same moment, and the
+ * mismatch can no longer occur.
+ *
  * **The whole resolved answer is cached for the hour** — see
  * `readPartnerTraffic`.
  */
