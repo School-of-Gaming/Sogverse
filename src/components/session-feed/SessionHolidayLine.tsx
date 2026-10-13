@@ -3,21 +3,24 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { CalendarOff } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { resolveLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
 import { formatCompactDateRange } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 
 /**
- * A holiday break, as both feeds draw it: one calm line in its dated place —
- * "No session · Autumn break, 13–17 Oct".
+ * A holiday break, as both feeds draw it: one entry in its dated place, the
+ * break's dates and name with a neutral "No session" tag — "Oct 13 – 17 ·
+ * Autumn break".
  *
- * **Never the cancelled look.** A cancellation is a session that was going to
- * run and will not, which somebody may need to act on; a holiday date was
- * never planned, so there is nothing to warn about. The line is the quiet ink
- * and the muted glyph, with no edge and no tag — not dashed either, because
- * the dashed line means a session ran with nothing recorded. It takes no
- * controls on any surface, an admin's included.
+ * **The shape of a past cancellation, on either side of the present.** A
+ * holiday was never going to run, so there is nothing to warn about and
+ * nothing to act on: it takes the quiet bordered entry a cancelled date
+ * already behind us takes — muted ink, an outline tag — never the warning
+ * panel an upcoming cancellation gets. It is not dashed either, because the
+ * dashed line means a session ran with nothing recorded. It takes no controls
+ * on any surface, an admin's included.
  *
  * The name is the break's own, in the reader's locale through the shared
  * per-locale fallback; the range is the break's bare dates in the compact
@@ -34,24 +37,30 @@ export function SessionHolidayLine({
   startDate: string;
   endDate: string;
 }) {
-  const t = useTranslations("sessionFeed");
+  const b = useTranslations("sessionBadge");
   const locale = resolveLocale(useLocale());
   // Only the year is read from it, off the shared server-seeded clock so the
   // server render and the first client render agree on it.
   const today = formatInTimeZone(useNow(), useTimezone(), "yyyy-MM-dd");
 
   return (
-    <p
+    <div
       data-tone="muted"
-      className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
+      className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground"
     >
-      <CalendarOff className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      <span>
-        {t("holidayLine", {
-          breakName: breakName({ names }, locale),
-          range: formatCompactDateRange(startDate, endDate, locale, today),
-        })}
+      <span className="flex flex-wrap items-center gap-x-2">
+        <span className="tabular-nums">
+          {formatCompactDateRange(startDate, endDate, locale, today)}
+        </span>
+        <span>{breakName({ names }, locale)}</span>
       </span>
-    </p>
+      <Badge
+        variant="outline"
+        className="gap-1 text-[10px] uppercase tracking-wide text-muted-foreground"
+      >
+        <CalendarOff className="h-3 w-3" aria-hidden />
+        {b("noSession")}
+      </Badge>
+    </div>
   );
 }

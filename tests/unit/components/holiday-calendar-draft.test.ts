@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  breakNameLanguages,
+  breaksInDateOrder,
+  checkHolidayBreak,
   emptyHolidayCalendarDraft,
   holidayCalendarDraft,
   holidayCalendarFailureReason,
   sameHolidayCalendarDraft,
+  shownBreakName,
   validateHolidayCalendarDraft,
+  withCommittedBreak,
   withoutBreakName,
   type HolidayCalendarDraft,
 } from "@/components/admin/holiday-calendars/holiday-calendar-draft";
@@ -279,5 +284,85 @@ describe("a refusal off the wire", () => {
     expect(holidayCalendarFailureReason(null)).toBeNull();
     expect(holidayCalendarFailureReason({ message: "" })).toBeNull();
     expect(holidayCalendarFailureReason("boom")).toBeNull();
+  });
+});
+
+describe("committing a break from the break dialog", () => {
+  it("replaces a break it already holds, and takes the dialog's languages", () => {
+    const draft = validDraft();
+    const names: HolidayCalendarDraft["names"] = {
+      drafts: { ...draft.names.drafts, sv: { b1: "Höstlov" } },
+      active: "sv",
+    };
+    const next = withCommittedBreak(
+      draft,
+      { key: "b1", id: "b1", startDate: "2030-10-13", endDate: "2030-10-20" },
+      names,
+    );
+    expect(next.breaks).toHaveLength(2);
+    expect(next.breaks[0].startDate).toBe("2030-10-13");
+    expect(next.names).toBe(names);
+  });
+
+  it("adds a break it does not hold yet, at the end", () => {
+    const draft = validDraft();
+    const entry = { key: "new-2", id: null, startDate: "2030-02-17", endDate: "2030-02-23" };
+    expect(withCommittedBreak(draft, entry, draft.names).breaks.at(-1)).toBe(entry);
+  });
+});
+
+describe("listing breaks", () => {
+  it("lists them by first day without reordering the draft", () => {
+    const { breaks } = validDraft();
+    const reversed = [breaks[1], breaks[0]];
+    expect(breaksInDateOrder(reversed).map((entry) => entry.key)).toEqual(["b1", "new-1"]);
+    expect(reversed[0].key).toBe("new-1");
+  });
+
+  it("shows a break's name in the admin's language, else English, else the first", () => {
+    const { names } = validDraft();
+    expect(shownBreakName(names, "b1", "fi")).toEqual({ locale: "fi", name: "Syysloma" });
+    expect(shownBreakName(names, "b1", "sv")).toEqual({ locale: "en", name: "Autumn break" });
+    const finnishOnly: HolidayCalendarDraft["names"] = {
+      drafts: { fi: { b1: "Syysloma" }, en: { b1: " " } },
+      active: "en",
+    };
+    expect(shownBreakName(finnishOnly, "b1", "sv")).toEqual({ locale: "fi", name: "Syysloma" });
+    expect(shownBreakName(finnishOnly, "b2", "sv")).toBeNull();
+  });
+
+  it("says which of the calendar's languages a break is named in", () => {
+    const names: HolidayCalendarDraft["names"] = {
+      drafts: { fi: { b1: "Syysloma" }, en: {}, sv: { b1: "  " } },
+      active: "fi",
+    };
+    expect(breakNameLanguages(names, "b1")).toEqual([
+      { locale: "en", named: false },
+      { locale: "fi", named: true },
+      { locale: "sv", named: false },
+    ]);
+  });
+});
+
+describe("checking one break in the break dialog", () => {
+  const names: HolidayCalendarDraft["names"] = {
+    drafts: { fi: { b1: "Syysloma" }, en: { b1: "Autumn break" } },
+    active: "fi",
+  };
+  const dated = { key: "b1", id: null, startDate: "2030-10-14", endDate: "2030-10-20" };
+
+  it("asks for both days, and refuses an end before the start", () => {
+    expect(checkHolidayBreak({ ...dated, endDate: "" }, names)).toEqual({ kind: "datesRequired" });
+    expect(checkHolidayBreak({ ...dated, endDate: "2030-10-13" }, names)).toEqual({
+      kind: "endBeforeStart",
+    });
+    expect(checkHolidayBreak({ ...dated, endDate: "2030-10-14" }, names)).toBeNull();
+  });
+
+  it("asks for a name in every open tab, an empty one included", () => {
+    expect(checkHolidayBreak(dated, names)).toBeNull();
+    expect(
+      checkHolidayBreak(dated, { ...names, drafts: { ...names.drafts, sv: {} } }),
+    ).toEqual({ kind: "nameMissing", locale: "sv" });
   });
 });

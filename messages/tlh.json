@@ -600,7 +600,7 @@
       "sections": {
         "calendar": "Hovtay'",
         "breaks": "DuQ",
-        "breaksDescription": "A rest runs from its first day to its last, both included. Families see its name where the sessions it removes would have been.",
+        "breaksDescription": "A rest runs from its first day to its last, both included, and bears a name in every tongue of the calendar. Families see the name where the sessions it removes would have been.",
         "products": "Hovtay' tlha'bogh ghommey",
         "productsDescription": "Saving changes these clubs at once — past moons included. Choose wisely, warrior."
       },
@@ -613,19 +613,20 @@
       },
       "hints": {
         "name": "Only the High Council of admins sees this name. Families see only the names of the rests.",
-        "languages": "Every rest needs a name in each tongue you add. Families read their own tongue, else English, else the first one written."
+        "languages": "The tongues belong to the whole calendar: add or remove one here and every rest obeys. Every rest needs a name in each. Families read their own tongue, else English, else the first one written."
       },
       "noBreaks": "DuQ pagh.",
-      "breakNumber": "DuQ {number}",
+      "checkLine": "{range} · {days, plural, one {# jaj} other {# jaj}} · Hogh {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# jaj} other {# jaj}} · Hogh {first}–{last}",
       "addBreak": "DuQ chel",
-      "removeBreak": "DuQ {number} yIteq",
+      "removeBreak": "{name} yIteq",
       "noProducts": "No club follows this calendar yet. A club chooses its calendars on its own page.",
       "errors": {
         "nameRequired": "Hovtay' pong yInob!",
-        "datesRequired": "DuQ {number} needs a first and a last day.",
-        "endBeforeStart": "DuQ {number} ends before it begins. Not even time travel allows this.",
-        "breakNameMissing": "DuQ {number} needs a name in {language}.",
-        "overlap": "DuQ {first} and DuQ {second} clash. One day, one rest.",
+        "datesRequired": "{name} needs a first and a last day.",
+        "endBeforeStart": "{name} ends before it begins. Not even time travel allows this.",
+        "breakNameMissing": "{name} needs a name in {language}.",
+        "overlap": "{first} and {second} clash. One day, one rest.",
         "saveFailed": "Hovtay' pollaHbe'. yInIDqa'!",
         "saveFailedWithReason": "Hovtay' pollaHbe' — {reason}"
       },
@@ -640,6 +641,17 @@
         "recordsShown": "{count, plural, one {# written-up session is} other {# written-up sessions are}} shown to families again.",
         "requestsStopped": "{count, plural, one {# substitution request has} other {# substitution requests have}} no session left to cover.",
         "requestsReopened": "{count, plural, one {# substitution request has} other {# substitution requests have}} a session to cover again."
+      },
+      "editBreak": "{name} yIchoH",
+      "unnamedBreak": "DuQ pong Hutlh",
+      "dialog": {
+        "editTitle": "DuQ yIchoH",
+        "saveAndAddAnother": "yIpol ’ej latlh yIchel"
+      },
+      "breakErrors": {
+        "datesRequired": "jaj wa’DIch jaj Qav je yIwIv!",
+        "endBeforeStart": "The last day comes before the first. Not even time travel allows this.",
+        "nameMissing": "DuQ pong yInob ({language})!"
       }
     },
     "library": {
@@ -3148,7 +3160,8 @@
     "live": "qaStaH",
     "nextSession": "may’ veb",
     "upcoming": "may’ pIq",
-    "cancelled": "qIllu’"
+    "cancelled": "qIllu’",
+    "noSession": "may’ tu’lu’be’"
   },
   "sessionFacts": {
     "remote": "HeHDaq",
@@ -3159,7 +3172,6 @@
     "showLess": "puS yIcha’",
     "lastEditedBy": "choHwI’ Qav: {name}",
     "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}",
-    "holidayLine": "may’ tu’lu’be’, SuvwI’pu’ leSbogh · {breakName}, {range}",
     "photos": {
       "list": "may’ mIlloghmey",
       "open": "mIllogh {index}/{count} yIlegh",

@@ -556,7 +556,7 @@
       "sections": {
         "calendar": "Calendrier",
         "breaks": "Pauses",
-        "breaksDescription": "Une pause va de son premier à son dernier jour, inclus. Les familles voient son nom à la place des séances qu’elle supprime.",
+        "breaksDescription": "Une pause va de son premier à son dernier jour, inclus, et porte un nom dans chacune des langues du calendrier. Les familles voient le nom à la place des séances qu’elle supprime.",
         "products": "Clubs qui suivent ce calendrier",
         "productsDescription": "Une modification enregistrée des pauses change ces clubs immédiatement, y compris les mois passés."
       },
@@ -565,23 +565,24 @@
         "languages": "Langues",
         "firstDay": "Premier jour",
         "lastDay": "Dernier jour",
-        "breakName": "Nom ({language})"
+        "breakName": "Nom en {language}"
       },
       "hints": {
         "name": "Seuls les administrateurs voient ce nom, par exemple Écoles d’Helsinki. Les familles ne voient que les noms des pauses.",
-        "languages": "Chaque pause doit avoir un nom dans chaque langue ajoutée. Les familles lisent le nom dans leur langue s’il existe, sinon en anglais ou dans la première langue rédigée."
+        "languages": "Les langues sont celles du calendrier : en ajouter ou en retirer une ici vaut pour chaque pause. Chaque pause doit avoir un nom dans chacune. Les familles lisent le nom dans leur langue s’il existe, sinon en anglais ou dans la première langue rédigée."
       },
       "noBreaks": "Aucune pause pour l’instant.",
-      "breakNumber": "Pause {number}",
+      "checkLine": "{range} · {days, plural, one {# jour} other {# jours}} · semaine {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# jour} other {# jours}} · semaines {first}–{last}",
       "addBreak": "Ajouter une pause",
-      "removeBreak": "Retirer la pause {number}",
+      "removeBreak": "Retirer {name}",
       "noProducts": "Aucun club ne suit encore ce calendrier. Un club choisit ses calendriers sur sa propre page.",
       "errors": {
         "nameRequired": "Donnez un nom au calendrier.",
-        "datesRequired": "La pause {number} doit avoir un premier et un dernier jour.",
-        "endBeforeStart": "La pause {number} se termine avant de commencer.",
-        "breakNameMissing": "La pause {number} doit avoir un nom en {language}.",
-        "overlap": "Les pauses {first} et {second} se chevauchent. Un jour ne peut appartenir qu’à une seule pause.",
+        "datesRequired": "{name} doit avoir un premier et un dernier jour.",
+        "endBeforeStart": "{name} se termine avant de commencer.",
+        "breakNameMissing": "{name} doit avoir un nom en {language}.",
+        "overlap": "{first} et {second} se chevauchent. Un jour ne peut appartenir qu’à une seule pause.",
         "saveFailed": "Le calendrier n’a pas pu être enregistré. Réessayez.",
         "saveFailedWithReason": "Le calendrier n’a pas pu être enregistré — {reason}"
       },
@@ -596,6 +597,17 @@
         "recordsShown": "{count, plural, one {# séance documentée est de nouveau visible} other {# séances documentées sont de nouveau visibles}} pour les familles.",
         "requestsStopped": "{count, plural, one {# demande de remplacement n’a plus} other {# demandes de remplacement n’ont plus}} de séance à couvrir.",
         "requestsReopened": "{count, plural, one {# demande de remplacement a} other {# demandes de remplacement ont}} de nouveau une séance à couvrir."
+      },
+      "editBreak": "Modifier {name}",
+      "unnamedBreak": "Pause sans nom",
+      "dialog": {
+        "editTitle": "Modifier la pause",
+        "saveAndAddAnother": "Enregistrer et en ajouter une autre"
+      },
+      "breakErrors": {
+        "datesRequired": "Choisissez le premier et le dernier jour.",
+        "endBeforeStart": "Le dernier jour précède le premier.",
+        "nameMissing": "Donnez un nom à la pause en {language}."
       }
     },
     "library": {
@@ -3108,7 +3120,8 @@
     "live": "En direct",
     "nextSession": "Prochaine séance",
     "upcoming": "Séance à venir",
-    "cancelled": "Annulée"
+    "cancelled": "Annulée",
+    "noSession": "Pas de séance"
   },
   "sessionFacts": {
     "remote": "En ligne",
@@ -3119,7 +3132,6 @@
     "showLess": "Réduire",
     "lastEditedBy": "Par {name}",
     "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}",
-    "holidayLine": "Pas de séance · {breakName}, {range}",
     "photos": {
       "list": "Photos de la séance",
       "open": "Ouvrir la photo {index} sur {count}",

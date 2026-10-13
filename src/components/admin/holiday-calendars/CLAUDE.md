@@ -1,8 +1,8 @@
 # Holiday calendars
 
 The admin pages behind the holiday calendars clubs follow: the list, the page for one
-calendar (the clubs following it, then its edit form), and the create form. Attaching a
-calendar to a club happens on the club's own form, through the picker that lives here;
+calendar (its name and its list of breaks, ending in the clubs following it), and the
+create form. Attaching a calendar to a club happens on the club's own form, through the picker that lives here;
 that save is an ordinary product edit and is not previewed.
 
 ## What a calendar is
@@ -17,15 +17,31 @@ name per locale.
 They are UTC-pinned dates end to end, never re-anchored to a viewer. The date pickers
 snap a week pick to Monday and Sunday, because breaks are planned in whole weeks.
 
-**The calendar's languages are the calendar's, not each break's.** The form's locale tabs
-sit over the whole break list, and every break needs a name in every language the
-calendar uses: a calendar written in Finnish and English whose autumn break had only a
-Finnish name would show an English reader one Finnish word among English ones. A tab with
-no break named in it is blank and is dropped at save; a tab naming some breaks and not
-others is refused at save, and until then shows only the bar's not-complete mark — the
-attention mark is kept for a fault, as on the other editors, not for work in progress. The
-form is one of the shared per-locale editors (`src/i18n/CLAUDE.md`); the draft files
-names by locale, then by break, which is the shape the shared tab set takes.
+**A break is added and edited in a dialog; the page only lists them.** The list is one
+line per break, in date order: its name in the admin's own locale, a complete or
+not-complete mark per calendar language (wrapping, so any number of locales fits), its
+dates with their weekdays, length and week numbers, and edit and remove. The dialog holds
+one break: its two dates at the top, shared by every language and so above the tab bar,
+then the shared locale tabs over its name field — the same grammar as every per-locale
+editor, the tabs heading only what is written per locale. It edits a copy and files it
+into the form's draft on its own Save ("Save and add another" when adding); nothing
+reaches the database until the page is saved, and Cancel drops the copy. What one break
+can get wrong — a missing date, an end before its start, a missing name — is refused in
+the dialog; what only the whole calendar can get wrong — an overlap, the calendar's
+name — is refused at the page's Save, naming the breaks by name and dates. While a date
+picker is open inside the dialog, Escape closes the picker alone, so a press meant for it
+cannot throw the break away.
+
+**The calendar's languages are the calendar's, not each break's.** The dialog's tab bar
+adds and removes a language for the whole calendar, on that dialog's Save: every break
+needs a name in every language the calendar uses, because a calendar written in Finnish
+and English whose autumn break had only a Finnish name would show an English reader one
+Finnish word among English ones. A language with no break named in it is blank and is
+dropped at the page's save; one naming some breaks and not others is refused, and until
+then the list and the tabs show only the not-complete mark — the attention mark is kept
+for a fault, as on the other editors, not for work in progress. The form is one of the
+shared per-locale editors (`src/i18n/CLAUDE.md`); the draft files names by locale, then by
+break, which is the shape the shared tab set takes.
 
 **There is no deletion and no break-length guard** (owner's ruling). A calendar a club
 follows cannot be deleted at the database either; a club detaches it instead.

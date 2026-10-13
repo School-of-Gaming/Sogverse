@@ -556,7 +556,7 @@
       "sections": {
         "calendar": "Kalenteri",
         "breaks": "Tauot",
-        "breaksDescription": "Tauko kestää ensimmäisestä päivästään viimeiseen, molemmat mukaan lukien. Perheet näkevät tauon nimen niiden kertojen paikalla, jotka se poistaa.",
+        "breaksDescription": "Tauko kestää ensimmäisestä päivästään viimeiseen, molemmat mukaan lukien, ja sillä on nimi jokaisella kalenterin kielellä. Perheet näkevät nimen niiden kertojen paikalla, jotka tauko poistaa.",
         "products": "Kalenteria noudattavat kerhot",
         "productsDescription": "Taukoihin tallennettu muutos muuttaa nämä kerhot heti, myös menneet kuukaudet."
       },
@@ -565,23 +565,24 @@
         "languages": "Kielet",
         "firstDay": "Ensimmäinen päivä",
         "lastDay": "Viimeinen päivä",
-        "breakName": "Nimi ({language})"
+        "breakName": "Nimi: {language}"
       },
       "hints": {
         "name": "Vain ylläpitäjät näkevät tämän nimen, esimerkiksi Helsingin koulut. Perheet näkevät vain taukojen nimet.",
-        "languages": "Jokainen tauko tarvitsee nimen jokaisella lisäämälläsi kielellä. Perheet lukevat nimen omalla kielellään, jos se on kirjoitettu, muuten englanniksi tai ensimmäisellä kirjoitetulla kielellä."
+        "languages": "Kielet ovat koko kalenterin: kun lisäät tai poistat kielen tässä, se koskee jokaista taukoa. Jokainen tauko tarvitsee nimen jokaisella kielellä. Perheet lukevat nimen omalla kielellään, jos se on kirjoitettu, muuten englanniksi tai ensimmäisellä kirjoitetulla kielellä."
       },
       "noBreaks": "Taukoja ei vielä ole.",
-      "breakNumber": "Tauko {number}",
+      "checkLine": "{range} · {days, plural, one {# päivä} other {# päivää}} · viikko {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# päivä} other {# päivää}} · viikot {first}–{last}",
       "addBreak": "Lisää tauko",
-      "removeBreak": "Poista tauko {number}",
+      "removeBreak": "Poista: {name}",
       "noProducts": "Mikään kerho ei vielä noudata tätä kalenteria. Kerhon kalenterit valitaan kerhon omalla sivulla.",
       "errors": {
         "nameRequired": "Anna kalenterille nimi.",
-        "datesRequired": "Tauko {number} tarvitsee ensimmäisen ja viimeisen päivän.",
-        "endBeforeStart": "Tauko {number} päättyy ennen kuin se alkaa.",
-        "breakNameMissing": "Tauko {number} tarvitsee nimen kielellä {language}.",
-        "overlap": "Tauot {first} ja {second} menevät päällekkäin. Päivä voi kuulua vain yhteen taukoon.",
+        "datesRequired": "{name} tarvitsee ensimmäisen ja viimeisen päivän.",
+        "endBeforeStart": "{name} päättyy ennen kuin se alkaa.",
+        "breakNameMissing": "{name} tarvitsee nimen kielellä {language}.",
+        "overlap": "{first} ja {second} menevät päällekkäin. Päivä voi kuulua vain yhteen taukoon.",
         "saveFailed": "Kalenteria ei voitu tallentaa. Yritä uudelleen.",
         "saveFailedWithReason": "Kalenteria ei voitu tallentaa – {reason}"
       },
@@ -596,6 +597,17 @@
         "recordsShown": "{count, plural, one {# kirjattu kerta näytetään} other {# kirjattua kertaa näytetään}} perheille taas.",
         "requestsStopped": "{count, plural, one {# sijaispyyntö jää} other {# sijaispyyntöä jää}} ilman tuurattavaa kertaa.",
         "requestsReopened": "{count, plural, one {# sijaispyynnöllä} other {# sijaispyynnöllä}} on taas tuurattava kerta."
+      },
+      "editBreak": "Muokkaa: {name}",
+      "unnamedBreak": "Nimetön tauko",
+      "dialog": {
+        "editTitle": "Muokkaa taukoa",
+        "saveAndAddAnother": "Tallenna ja lisää toinen"
+      },
+      "breakErrors": {
+        "datesRequired": "Valitse ensimmäinen ja viimeinen päivä.",
+        "endBeforeStart": "Viimeinen päivä on ennen ensimmäistä.",
+        "nameMissing": "Anna tauolle nimi kielellä {language}."
       }
     },
     "library": {
@@ -3108,7 +3120,8 @@
     "live": "Käynnissä",
     "nextSession": "Seuraava kerta",
     "upcoming": "Tuleva kerta",
-    "cancelled": "Peruttu"
+    "cancelled": "Peruttu",
+    "noSession": "Ei kerhokertaa"
   },
   "sessionFacts": {
     "remote": "Etänä",
@@ -3119,7 +3132,6 @@
     "showLess": "Näytä vähemmän",
     "lastEditedBy": "Muokannut {name}",
     "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}",
-    "holidayLine": "Ei kerhokertaa · {breakName}, {range}",
     "photos": {
       "list": "Tämän kerran kuvat",
       "open": "Avaa kuva {index}/{count}",

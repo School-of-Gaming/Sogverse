@@ -556,7 +556,7 @@
       "sections": {
         "calendar": "Calendar",
         "breaks": "Breaks",
-        "breaksDescription": "Each break runs from its first day to its last day, both included. Families see its name in place of the sessions it removes.",
+        "breaksDescription": "Each break runs from its first day to its last day, both included, and has a name in each of the calendar’s languages. Families see the name in place of the sessions it removes.",
         "products": "Clubs following this calendar",
         "productsDescription": "Saving a change to the breaks changes these clubs straight away, past months included."
       },
@@ -565,23 +565,24 @@
         "languages": "Languages",
         "firstDay": "First day",
         "lastDay": "Last day",
-        "breakName": "Name ({language})"
+        "breakName": "Name in {language}"
       },
       "hints": {
         "name": "Only admins see this name, such as Helsinki schools. Families only ever see the names of the breaks.",
-        "languages": "Every break needs a name in each language you add. Families read the name in their own language where there is one, otherwise in English or the first language written."
+        "languages": "The languages are the calendar’s: adding or removing one here does it for every break. Every break needs a name in each. Families read the name in their own language where there is one, otherwise in English or the first language written."
       },
       "noBreaks": "No breaks yet.",
-      "breakNumber": "Break {number}",
+      "checkLine": "{range} · {days, plural, one {# day} other {# days}} · week {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# day} other {# days}} · weeks {first}–{last}",
       "addBreak": "Add a break",
-      "removeBreak": "Remove break {number}",
+      "removeBreak": "Remove {name}",
       "noProducts": "No club follows this calendar yet. A club picks its calendars on its own page.",
       "errors": {
         "nameRequired": "Give the calendar a name.",
-        "datesRequired": "Break {number} needs a first and a last day.",
-        "endBeforeStart": "Break {number} ends before it begins.",
-        "breakNameMissing": "Break {number} needs a name in {language}.",
-        "overlap": "Breaks {first} and {second} overlap. A day can only be in one break.",
+        "datesRequired": "{name} needs a first and a last day.",
+        "endBeforeStart": "{name} ends before it begins.",
+        "breakNameMissing": "{name} needs a name in {language}.",
+        "overlap": "{first} and {second} overlap. A day can only be in one break.",
         "saveFailed": "The calendar could not be saved. Try again.",
         "saveFailedWithReason": "The calendar could not be saved — {reason}"
       },
@@ -596,6 +597,17 @@
         "recordsShown": "{count, plural, one {# written-up session is} other {# written-up sessions are}} shown to families again.",
         "requestsStopped": "{count, plural, one {# substitution request no longer has} other {# substitution requests no longer have}} a session to cover.",
         "requestsReopened": "{count, plural, one {# substitution request has} other {# substitution requests have}} a session to cover again."
+      },
+      "editBreak": "Edit {name}",
+      "unnamedBreak": "Unnamed break",
+      "dialog": {
+        "editTitle": "Edit break",
+        "saveAndAddAnother": "Save and add another"
+      },
+      "breakErrors": {
+        "datesRequired": "Pick the first and the last day.",
+        "endBeforeStart": "The last day is before the first day.",
+        "nameMissing": "Give the break a name in {language}."
       }
     },
     "library": {
@@ -3108,7 +3120,8 @@
     "live": "Live",
     "nextSession": "Next session",
     "upcoming": "Upcoming",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "noSession": "No session"
   },
   "sessionFacts": {
     "remote": "Remote",
@@ -3119,7 +3132,6 @@
     "showLess": "Show less",
     "lastEditedBy": "By {name}",
     "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}",
-    "holidayLine": "No session · {breakName}, {range}",
     "photos": {
       "list": "Session photos",
       "open": "Open photo {index} of {count}",

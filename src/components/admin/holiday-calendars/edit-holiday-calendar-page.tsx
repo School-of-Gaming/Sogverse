@@ -36,12 +36,11 @@ function namedProducts(
 }
 
 /**
- * `/admin/holiday-calendars/[id]` — one calendar: the clubs following it, and
- * its edit form.
- *
- * **The clubs come first**, because they are what an edit reaches: every one
- * of them gains or loses the dates the moment the form is saved. Each links to
- * its admin page, where the calendar is attached or detached.
+ * `/admin/holiday-calendars/[id]` — one calendar: its edit form, with the
+ * clubs following it as the form's last section, just above Save, since they
+ * are what an edit reaches: every one of them gains or loses the dates the
+ * moment the form is saved. Each links to its admin page, where the calendar
+ * is attached or detached.
  *
  * **A save asks first only where a club follows the calendar.** The preview is
  * handed to the form only then, so an unfollowed calendar saves straight away.
@@ -64,7 +63,29 @@ export function EditHolidayCalendarPage({ calendarId }: { calendarId: string }) 
   return (
     <HolidayCalendarPageShell title={t("editPage.title")}>
       {calendar && (
-        <>
+        <HolidayCalendarForm
+          key={calendar.id}
+          initialDraft={holidayCalendarDraft(calendar, uiLocale)}
+          submitLabel={c("saveChanges")}
+          today={today}
+          onCancel={() => router.push(ROUTES.admin.holidayCalendars)}
+          preview={
+            calendar.products.length === 0
+              ? undefined
+              : async (input) =>
+                  summariseHolidayImpact(
+                    await previewChange.mutateAsync({
+                      id: calendar.id,
+                      breaks: input.breaks,
+                    }),
+                    uiLocale,
+                  )
+          }
+          onSubmit={async (input) => {
+            await updateCalendar.mutateAsync({ id: calendar.id, input });
+            router.push(ROUTES.admin.holidayCalendars);
+          }}
+        >
           <FormSection
             title={t("sections.products")}
             description={t("sections.productsDescription")}
@@ -87,31 +108,7 @@ export function EditHolidayCalendarPage({ calendarId }: { calendarId: string }) 
               </ul>
             )}
           </FormSection>
-
-          <HolidayCalendarForm
-            key={calendar.id}
-            initialDraft={holidayCalendarDraft(calendar, uiLocale)}
-            submitLabel={c("saveChanges")}
-            today={today}
-            onCancel={() => router.push(ROUTES.admin.holidayCalendars)}
-            preview={
-              calendar.products.length === 0
-                ? undefined
-                : async (input) =>
-                    summariseHolidayImpact(
-                      await previewChange.mutateAsync({
-                        id: calendar.id,
-                        breaks: input.breaks,
-                      }),
-                      uiLocale,
-                    )
-            }
-            onSubmit={async (input) => {
-              await updateCalendar.mutateAsync({ id: calendar.id, input });
-              router.push(ROUTES.admin.holidayCalendars);
-            }}
-          />
-        </>
+        </HolidayCalendarForm>
       )}
 
       {!isPending && !calendar && (

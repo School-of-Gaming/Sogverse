@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { CircleCheck, CircleDashed, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { FormSection } from "@/components/admin/products/form-primitives";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { LocaleTabs } from "@/components/ui/locale-tabs";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
@@ -17,31 +15,26 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import {
-  activeLocaleDraft,
-  addLocaleTab,
-  editActiveLocaleDraft,
-  removeLocaleTab,
-  selectLocaleTab,
-  writtenLocales,
-  type LocaleTabState,
-} from "@/lib/i18n/locale-tabs";
+import { formatCompactDateRange } from "@/lib/utils";
 import type { HolidayCalendarInput } from "@/services/holiday-calendars";
 import {
-  NO_BREAK_NAMES,
-  firstUnnamedBreak,
+  breakNameLanguages,
+  breaksInDateOrder,
   holidayCalendarFailureReason,
   newBreakKey,
   sameHolidayCalendarDraft,
+  shownBreakName,
   validateHolidayCalendarDraft,
+  withCommittedBreak,
   withoutBreakName,
   type HolidayBreakDraft,
-  type HolidayBreakNames,
   type HolidayCalendarDraft,
   type HolidayCalendarDraftProblem,
 } from "./holiday-calendar-draft";
 import type { HolidayImpactSummary } from "./holiday-calendar-impact";
 import { HolidayCalendarImpactDialog } from "./holiday-calendar-impact-dialog";
+import { HolidayBreakDialog } from "./holiday-break-dialog";
+import { useBreakCheckLine } from "./use-break-check-line";
 
 interface HolidayCalendarFormProps {
   /** What the form opens with: a blank draft, or a stored calendar's. */
@@ -63,12 +56,33 @@ interface HolidayCalendarFormProps {
    */
   preview?: (input: HolidayCalendarInput) => Promise<HolidayImpactSummary[]>;
   onCancel: () => void;
+  /**
+   * A section shown after the breaks and before the form's actions — the edit
+   * page's list of the clubs following the calendar.
+   */
+  children?: React.ReactNode;
 }
+
+/** The break the dialog has open: one being added, or one being edited. */
+type OpenBreak = { mode: "add" | "edit"; key: string };
 
 /**
  * The create and edit form for a holiday calendar: its admin-only name, and
  * its breaks — each a first and a last day, both inclusive, and a name in
  * every language the calendar is written in.
+ *
+ * **The page lists the breaks; a dialog edits one.** Each break is one line
+ * for scanning — its name in the admin's language, its dates with their
+ * weekdays, length and weeks, and which of the calendar's languages it is named
+ * in — ordered by first day, with its edit and remove buttons. Adding or
+ * editing opens the break dialog, which carries the dates, the language tabs
+ * and the name, and files the break into the draft on its own Save; nothing is
+ * written until the page's Save.
+ *
+ * **The calendar's languages are added and removed in the dialog's tab bar**,
+ * the one per-locale grammar every editor shares, and the change applies to the
+ * whole calendar: every line on the page then shows a language a break still
+ * lacks a name in.
  *
  * **Presentational end to end**: it takes a draft, a save and an optional
  * preview, and knows nothing about React Query, so the create page and the
@@ -88,11 +102,14 @@ export function HolidayCalendarForm({
   onSubmit,
   preview,
   onCancel,
+  children,
 }: HolidayCalendarFormProps) {
   const t = useTranslations("admin.holidayCalendars");
   const c = useTranslations("common");
+  const marks = useTranslations("localeTabs");
   const uiLocale = resolveLocale(useLocale());
   const languageName = useLanguageNames();
+  const checkLine = useBreakCheckLine();
 
   const [draft, setDraft] = useState<HolidayCalendarDraft>(initialDraft);
   // What the form opened with — the stored calendar or the blank new one —
@@ -107,49 +124,29 @@ export function HolidayCalendarForm({
     impacts: HolidayImpactSummary[];
   } | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [openBreak, setOpenBreak] = useState<OpenBreak | null>(null);
 
   // What leaving would lose: the name, a date, a break added or removed, or a
-  // break's name in any tab. From the save's press on there is nothing to ask
-  // about — a save that lands leaves the page, and a refused one clears
+  // break's name in any language. From the save's press on there is nothing to
+  // ask about — a save that lands leaves the page, and a refused one clears
   // `committing` and asks again; so does the confirm dialog opening, since
-  // nothing is saved until it is answered.
+  // nothing is saved until it is answered. A break dialog's unsaved copy is
+  // not counted: it is still on screen, in front of the admin.
   const unsaved = !committing && !sameHolidayCalendarDraft(draft, opened);
 
-  const activeLocale = draft.names.active;
-  const activeNames = activeLocaleDraft(draft.names, NO_BREAK_NAMES);
-  const activeLanguage = language(activeLocale);
-
-  function updateTabs(
-    change: (
-      tabs: LocaleTabState<HolidayBreakNames>,
-    ) => LocaleTabState<HolidayBreakNames>,
-  ) {
-    setDraft((current) => ({ ...current, names: change(current.names) }));
+  function language(locale: SupportedLocale) {
+    return languageName(locale, LOCALE_CONFIG[locale].label);
   }
 
-  function updateBreak(key: string, patch: Partial<HolidayBreakDraft>) {
-    setDraft((current) => ({
-      ...current,
-      breaks: current.breaks.map((entry) =>
-        entry.key === key ? { ...entry, ...patch } : entry,
-      ),
-    }));
-  }
-
-  function setBreakName(key: string, name: string) {
-    updateTabs((tabs) =>
-      editActiveLocaleDraft(tabs, { [key]: name }, NO_BREAK_NAMES),
-    );
+  /** A break as a sentence names it: its name, and its dates once it has them. */
+  function breakLabel(entry: HolidayBreakDraft): string {
+    const name = shownBreakName(draft.names, entry.key, uiLocale)?.name ?? t("unnamedBreak");
+    if (entry.startDate === "" || entry.endDate === "") return name;
+    return `${name} (${formatCompactDateRange(entry.startDate, entry.endDate, uiLocale, today)})`;
   }
 
   function addBreak() {
-    setDraft((current) => ({
-      ...current,
-      breaks: [
-        ...current.breaks,
-        { key: newBreakKey(), id: null, startDate: "", endDate: "" },
-      ],
-    }));
+    setOpenBreak({ mode: "add", key: newBreakKey() });
   }
 
   function removeBreak(key: string) {
@@ -160,28 +157,24 @@ export function HolidayCalendarForm({
     }));
   }
 
-  function language(locale: SupportedLocale) {
-    return languageName(locale, LOCALE_CONFIG[locale].label);
-  }
-
   /** The first problem with the draft, as the admin reads it. */
   function problemSentence(problem: HolidayCalendarDraftProblem): string {
     switch (problem.kind) {
       case "nameRequired":
         return t("errors.nameRequired");
       case "datesRequired":
-        return t("errors.datesRequired", { number: problem.index + 1 });
+        return t("errors.datesRequired", { name: breakLabel(draft.breaks[problem.index]) });
       case "endBeforeStart":
-        return t("errors.endBeforeStart", { number: problem.index + 1 });
+        return t("errors.endBeforeStart", { name: breakLabel(draft.breaks[problem.index]) });
       case "breakNameMissing":
         return t("errors.breakNameMissing", {
-          number: problem.index + 1,
+          name: breakLabel(draft.breaks[problem.index]),
           language: language(problem.locale),
         });
       case "overlap":
         return t("errors.overlap", {
-          first: problem.first + 1,
-          second: problem.second + 1,
+          first: breakLabel(draft.breaks[problem.first]),
+          second: breakLabel(draft.breaks[problem.second]),
         });
     }
   }
@@ -225,6 +218,17 @@ export function HolidayCalendarForm({
     }
   }
 
+  const listed = breaksInDateOrder(draft.breaks);
+  const editing =
+    openBreak === null
+      ? null
+      : (draft.breaks.find((entry) => entry.key === openBreak.key) ?? {
+          key: openBreak.key,
+          id: null,
+          startDate: "",
+          endDate: "",
+        });
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <UnsavedChangesGuard when={unsaved} />
@@ -252,97 +256,91 @@ export function HolidayCalendarForm({
         title={t("sections.breaks")}
         description={t("sections.breaksDescription")}
       >
-        <Field label={t("fields.languages")} hint={t("hints.languages")}>
-          <LocaleTabs
-            written={writtenLocales(draft.names.drafts)}
-            active={activeLocale}
-            onSelect={(locale) => updateTabs((tabs) => selectLocaleTab(tabs, locale))}
-            onAdd={(locale) =>
-              updateTabs((tabs) => addLocaleTab(tabs, locale, NO_BREAK_NAMES))
-            }
-            onRemove={(locale) =>
-              updateTabs((tabs) => removeLocaleTab(tabs, locale, uiLocale))
-            }
-            isComplete={(locale) =>
-              firstUnnamedBreak(
-                draft.breaks,
-                draft.names.drafts[locale] ?? NO_BREAK_NAMES,
-              ) === null
-            }          />
-        </Field>
-
-        {draft.breaks.length === 0 ? (
+        {listed.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noBreaks")}</p>
         ) : (
-          <ol className="divide-y divide-border">
-            {draft.breaks.map((entry, index) => {
-              const number = index + 1;
-              const startId = `holiday-break-${entry.key}-start`;
-              const endId = `holiday-break-${entry.key}-end`;
-              const nameId = `holiday-break-${entry.key}-name-${activeLocale}`;
+          <ul className="divide-y divide-border border-y border-border">
+            {listed.map((entry) => {
+              const shown = shownBreakName(draft.names, entry.key, uiLocale);
+              const label = shown?.name ?? t("unnamedBreak");
+              const languages = breakNameLanguages(draft.names, entry.key);
               return (
-                <li
-                  key={entry.key}
-                  className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[11rem_11rem_1fr_auto] sm:items-end"
-                >
-                  {/* The number every refusal names a break by. */}
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground sm:col-span-4">
-                    {t("breakNumber", { number })}
-                  </p>
-                  <Field label={t("fields.firstDay")} htmlFor={startId}>
-                    <DatePicker
-                      id={startId}
-                      value={entry.startDate}
-                      onChange={(startDate) => updateBreak(entry.key, { startDate })}
-                      today={today}
-                      // A break is planned in whole weeks — "autumn break, week
-                      // 42" — so a week pick lands on its Monday and Sunday.
-                      weekPick={{ edge: "start", weekdays: [] }}
-                      rangeEnd={entry.endDate === "" ? null : entry.endDate}
-                    />
-                  </Field>
-                  <Field label={t("fields.lastDay")} htmlFor={endId}>
-                    <DatePicker
-                      id={endId}
-                      value={entry.endDate}
-                      onChange={(endDate) => updateBreak(entry.key, { endDate })}
-                      today={today}
-                      weekPick={{ edge: "end", weekdays: [] }}
-                      rangeStart={entry.startDate === "" ? null : entry.startDate}
-                    />
-                  </Field>
-                  <Field
-                    label={t("fields.breakName", { language: activeLanguage })}
-                    htmlFor={nameId}
-                  >
-                    <Input
-                      id={nameId}
-                      lang={activeLocale}
-                      value={activeNames[entry.key] ?? ""}
-                      onChange={(event) => setBreakName(entry.key, event.target.value)}
-                      autoComplete="off"
-                    />
-                  </Field>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeBreak(entry.key)}
-                    aria-label={t("removeBreak", { number })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <li key={entry.key} className="flex items-start gap-3 py-3">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    {/* The name, then the languages it is written in: they
+                        wrap under it rather than push past the row, however
+                        many languages the calendar takes on. */}
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span
+                        lang={shown?.locale}
+                        className={shown ? "font-medium" : "font-medium text-muted-foreground"}
+                      >
+                        {label}
+                      </span>
+                      <ul
+                        aria-label={t("fields.languages")}
+                        className="flex flex-wrap gap-x-2.5 gap-y-1"
+                      >
+                        {languages.map(({ locale, named }) => {
+                          const Mark = named ? CircleCheck : CircleDashed;
+                          return (
+                            <li
+                              key={locale}
+                              className={
+                                named
+                                  ? "inline-flex items-center gap-1 text-xs text-muted-foreground"
+                                  : "inline-flex items-center gap-1 text-xs text-foreground"
+                              }
+                            >
+                              <Mark className="h-3 w-3" aria-hidden />
+                              {LOCALE_CONFIG[locale].nativeLabel}
+                              <span className="sr-only">
+                                {named ? marks("complete") : marks("notComplete")}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                    <p className="text-xs tabular-nums text-muted-foreground">
+                      {checkLine(entry)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setOpenBreak({ mode: "edit", key: entry.key })}
+                      aria-label={t("editBreak", { name: label })}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeBreak(entry.key)}
+                      aria-label={t("removeBreak", { name: label })}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </li>
               );
             })}
-          </ol>
+          </ul>
         )}
 
-        <Button type="button" variant="outline" onClick={addBreak} className="gap-1.5">
-          <Plus className="h-4 w-4" />
-          {t("addBreak")}
-        </Button>
+        <div>
+          <Button type="button" variant="outline" onClick={addBreak} className="gap-1.5">
+            <Plus className="h-4 w-4" />
+            {t("addBreak")}
+          </Button>
+        </div>
       </FormSection>
+
+      {children}
 
       {error && (
         <Alert variant="destructive">
@@ -361,6 +359,21 @@ export function HolidayCalendarForm({
           {submitLabel}
         </Button>
       </div>
+
+      {openBreak !== null && editing !== null && (
+        <HolidayBreakDialog
+          key={openBreak.key}
+          mode={openBreak.mode}
+          initialBreak={editing}
+          initialNames={draft.names}
+          today={today}
+          onSave={(entry, names, another) => {
+            setDraft((current) => withCommittedBreak(current, entry, names));
+            setOpenBreak(another ? { mode: "add", key: newBreakKey() } : null);
+          }}
+          onClose={() => setOpenBreak(null)}
+        />
+      )}
 
       <HolidayCalendarImpactDialog
         open={confirming}

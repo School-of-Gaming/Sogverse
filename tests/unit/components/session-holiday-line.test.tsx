@@ -8,10 +8,12 @@ import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 
 /**
- * The holiday line both feeds draw: the break's name in the reader's locale
- * (theirs, else English, else the first written) and its bare dates in the
- * compact form every holiday list uses — one date for a one-day break, and the
- * year only where the break crosses one or falls outside the current year.
+ * The holiday entry both feeds draw: the break's bare dates in the compact
+ * form every holiday list uses — one date for a one-day break, and the year
+ * only where the break crosses one or falls outside the current year — its
+ * name in the reader's locale (theirs, else English, else the first written),
+ * and a neutral "No session" tag, in the muted bordered shape of a past
+ * cancellation.
  */
 const NAMES = [
   { locale: "en", name: "Autumn break" },
@@ -37,24 +39,35 @@ function renderLine(
 }
 
 describe("SessionHolidayLine", () => {
-  it("names a multi-day break and its compact range", () => {
-    renderLine("en", { names: NAMES, startDate: "2026-10-13", endDate: "2026-10-17" });
-    expect(screen.getByText("No session · Autumn break, Oct 13 – 17")).toBeTruthy();
+  it("draws the break's dates, its name and the No session tag, muted", () => {
+    const { container } = renderLine("en", {
+      names: NAMES,
+      startDate: "2026-10-13",
+      endDate: "2026-10-17",
+    });
+    expect(screen.getByText("Oct 13 – 17")).toBeTruthy();
+    expect(screen.getByText("Autumn break")).toBeTruthy();
+    expect(screen.getByText("No session")).toBeTruthy();
+    // The past cancellation's quiet shape, never a warning panel.
+    expect(container.querySelector("[data-tone='muted']")).toBeTruthy();
+    expect(container.querySelector("[data-tone='warning']")).toBeNull();
   });
 
   it("names one date for a one-day break", () => {
     renderLine("en", { names: NAMES, startDate: "2026-12-24", endDate: "2026-12-24" });
-    expect(screen.getByText("No session · Autumn break, Dec 24")).toBeTruthy();
+    expect(screen.getByText("Dec 24")).toBeTruthy();
   });
 
   it("carries the year on a break outside the current one", () => {
     renderLine("en", { names: NAMES, startDate: "2027-02-22", endDate: "2027-02-26" });
-    expect(screen.getByText("No session · Autumn break, Feb 22 – 26, 2027")).toBeTruthy();
+    expect(screen.getByText("Feb 22 – 26, 2027")).toBeTruthy();
   });
 
   it("picks the reader's own locale where it is written, in that locale's range form", () => {
     renderLine("fi", { names: NAMES, startDate: "2026-10-13", endDate: "2026-10-17" });
-    expect(screen.getByText("Ei kerhokertaa · Syysloma, 13.–17.10.")).toBeTruthy();
+    expect(screen.getByText("13.–17.10.")).toBeTruthy();
+    expect(screen.getByText("Syysloma")).toBeTruthy();
+    expect(screen.getByText("Ei kerhokertaa")).toBeTruthy();
   });
 
   it("falls back to English where the reader's locale is not written", () => {
@@ -66,7 +79,7 @@ describe("SessionHolidayLine", () => {
       startDate: "2027-02-22",
       endDate: "2027-02-26",
     });
-    expect(screen.getByText(/^Ei kerhokertaa · Winter break, /)).toBeTruthy();
+    expect(screen.getByText("Winter break")).toBeTruthy();
   });
 
   it("falls back to the first name written when neither is there", () => {
@@ -75,6 +88,6 @@ describe("SessionHolidayLine", () => {
       startDate: "2027-02-22",
       endDate: "2027-02-26",
     });
-    expect(screen.getByText(/^No session · Sportlov, /)).toBeTruthy();
+    expect(screen.getByText("Sportlov")).toBeTruthy();
   });
 });

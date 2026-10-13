@@ -1,5 +1,6 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   NO_RICH_BODIES,
   draftsToSave,
@@ -95,17 +96,94 @@ export function holidayCalendarDraft(
 }
 
 /**
- * The first break, by position, with no name in `names` — or `null` when every
- * break is named in that tab.
+ * The draft with one break committed from the break dialog: the break replaced
+ * where the draft already holds its key, else added, and the calendar's names
+ * taken from the dialog. The dialog edits a copy of the whole tab set, because
+ * a language added or removed there is added to or removed from the calendar,
+ * so its tab set becomes the calendar's once the break is saved.
  */
-export function firstUnnamedBreak(
+export function withCommittedBreak(
+  draft: HolidayCalendarDraft,
+  entry: HolidayBreakDraft,
+  names: LocaleTabState<HolidayBreakNames>,
+): HolidayCalendarDraft {
+  const known = draft.breaks.some((existing) => existing.key === entry.key);
+  return {
+    ...draft,
+    breaks: known
+      ? draft.breaks.map((existing) => (existing.key === entry.key ? entry : existing))
+      : [...draft.breaks, entry],
+    names,
+  };
+}
+
+/**
+ * The breaks in the order the page lists them: by first day, earliest first.
+ * A copy, so the draft keeps the order its breaks were entered in.
+ */
+export function breaksInDateOrder(
   breaks: readonly HolidayBreakDraft[],
-  names: HolidayBreakNames,
-): number | null {
-  const index = breaks.findIndex(
-    (entry) => (names[entry.key] ?? "").trim() === "",
-  );
-  return index === -1 ? null : index;
+): HolidayBreakDraft[] {
+  return breaks
+    .map((entry, index) => ({ entry, index }))
+    .sort(
+      (a, b) =>
+        a.entry.startDate.localeCompare(b.entry.startDate) || a.index - b.index,
+    )
+    .map(({ entry }) => entry);
+}
+
+/**
+ * The break's name to show the admin — picked from its non-blank names the way
+ * a reader of `uiLocale` is shown content written per locale — with the locale
+ * it is written in, or `null` while it has no name in any language.
+ */
+export function shownBreakName(
+  names: LocaleTabState<HolidayBreakNames>,
+  key: string,
+  uiLocale: SupportedLocale,
+): { locale: SupportedLocale; name: string } | null {
+  const rows = writtenLocales(names.drafts).flatMap((locale) => {
+    const name = (names.drafts[locale]?.[key] ?? "").trim();
+    return name === "" ? [] : [{ locale, name }];
+  });
+  return resolveTranslation(rows, uiLocale);
+}
+
+/** Each of the calendar's languages, and whether this break is named in it. */
+export function breakNameLanguages(
+  names: LocaleTabState<HolidayBreakNames>,
+  key: string,
+): { locale: SupportedLocale; named: boolean }[] {
+  return writtenLocales(names.drafts).map((locale) => ({
+    locale,
+    named: (names.drafts[locale]?.[key] ?? "").trim() !== "",
+  }));
+}
+
+/**
+ * What stops one break from being saved in the break dialog: both its days, an
+ * end not before its start, and a name in every language tab open — the
+ * calendar's languages, since the tabs are the calendar's. A tab opened and
+ * left empty is a language the admin is still adding, so the dialog asks for it
+ * rather than dropping it; the page's own save still drops a tab no break is
+ * named in. Overlaps with other breaks are the page save's to find.
+ */
+export type HolidayBreakProblem =
+  | { kind: "datesRequired" }
+  | { kind: "endBeforeStart" }
+  | { kind: "nameMissing"; locale: SupportedLocale };
+
+export function checkHolidayBreak(
+  entry: HolidayBreakDraft,
+  names: LocaleTabState<HolidayBreakNames>,
+): HolidayBreakProblem | null {
+  if (entry.startDate === "" || entry.endDate === "") {
+    return { kind: "datesRequired" };
+  }
+  if (entry.endDate < entry.startDate) return { kind: "endBeforeStart" };
+  const missing = breakNameLanguages(names, entry.key).find(({ named }) => !named);
+  return missing ? { kind: "nameMissing", locale: missing.locale } : null;
 }
 
 /**

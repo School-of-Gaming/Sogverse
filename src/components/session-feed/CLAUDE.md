@@ -60,13 +60,15 @@ per date; and it carries no badge of its own, because a pill inside the panel's 
 doubles the border and reads as noise rather than emphasis. A past cancellation is history
 with nothing left to act on. Both are the same on both feeds and in both future slots.
 
-**Rule: a holiday break is never planned, not cancelled — one calm line per break, on
-every feed.** A break's dates are absent from the plan the document carries, and the
-document names the break beside the plan with the sessions it withdrew. Each feed draws
-one line per break — "No session", the break's name in the reader's locale and its own
-dates, one date for a one-day break — in the quiet ink, with no edge, no tag and no
-control on any surface, an admin's included: a holiday was never going to run, so there
-is nothing to warn about and nothing to act on. It is its own entry kind with no session
+**Rule: a holiday break is never planned, not cancelled — one quiet entry per break, on
+every feed, in the shape of a past cancellation.** A break's dates are absent from the
+plan the document carries, and the document names the break beside the plan with the
+sessions it withdrew. Each feed draws one entry per break — its own dates, one date for a
+one-day break, its name in the reader's locale, and a neutral "No session" tag — as the
+bordered muted entry a cancelled date already behind us takes, on either side of the
+present, and with no control on any surface, an admin's included: a holiday was never
+going to run, so there is nothing to warn about and nothing to act on, and it never takes
+an upcoming cancellation's warning panel. It is its own entry kind with no session
 fields, so no card, register, substitution or menu can reach it. A break shows only where
 it withdrew a session the feed would otherwise show — before the open-ended cut, and on
 the family feed inside a cancelled membership's paid window — and it is placed by those

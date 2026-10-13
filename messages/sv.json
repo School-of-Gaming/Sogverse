@@ -556,7 +556,7 @@
       "sections": {
         "calendar": "Kalender",
         "breaks": "Uppehåll",
-        "breaksDescription": "Ett uppehåll varar från sin första till sin sista dag, båda inräknade. Familjerna ser dess namn i stället för de träffar det tar bort.",
+        "breaksDescription": "Ett uppehåll varar från sin första till sin sista dag, båda inräknade, och har ett namn på vart och ett av kalenderns språk. Familjerna ser namnet i stället för de träffar det tar bort.",
         "products": "Klubbar som följer kalendern",
         "productsDescription": "En sparad ändring av uppehållen ändrar dessa klubbar direkt, även tidigare månader."
       },
@@ -565,23 +565,24 @@
         "languages": "Språk",
         "firstDay": "Första dag",
         "lastDay": "Sista dag",
-        "breakName": "Namn ({language})"
+        "breakName": "Namn på {language}"
       },
       "hints": {
         "name": "Bara administratörer ser det här namnet, till exempel Helsingfors skolor. Familjerna ser bara uppehållens namn.",
-        "languages": "Varje uppehåll behöver ett namn på varje språk du lägger till. Familjerna läser namnet på sitt eget språk om det finns, annars på engelska eller det första språket som skrivits."
+        "languages": "Språken hör till hela kalendern: lägger du till eller tar bort ett här gäller det varje uppehåll. Varje uppehåll behöver ett namn på varje språk. Familjerna läser namnet på sitt eget språk om det finns, annars på engelska eller det första språket som skrivits."
       },
       "noBreaks": "Inga uppehåll än.",
-      "breakNumber": "Uppehåll {number}",
+      "checkLine": "{range} · {days, plural, one {# dag} other {# dagar}} · vecka {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# dag} other {# dagar}} · veckor {first}–{last}",
       "addBreak": "Lägg till ett uppehåll",
-      "removeBreak": "Ta bort uppehåll {number}",
+      "removeBreak": "Ta bort {name}",
       "noProducts": "Ingen klubb följer den här kalendern än. En klubb väljer sina kalendrar på sin egen sida.",
       "errors": {
         "nameRequired": "Ge kalendern ett namn.",
-        "datesRequired": "Uppehåll {number} behöver en första och en sista dag.",
-        "endBeforeStart": "Uppehåll {number} slutar innan det börjar.",
-        "breakNameMissing": "Uppehåll {number} behöver ett namn på {language}.",
-        "overlap": "Uppehåll {first} och {second} överlappar. En dag kan bara höra till ett uppehåll.",
+        "datesRequired": "{name} behöver en första och en sista dag.",
+        "endBeforeStart": "{name} slutar innan det börjar.",
+        "breakNameMissing": "{name} behöver ett namn på {language}.",
+        "overlap": "{first} och {second} överlappar. En dag kan bara höra till ett uppehåll.",
         "saveFailed": "Kalendern kunde inte sparas. Försök igen.",
         "saveFailedWithReason": "Kalendern kunde inte sparas – {reason}"
       },
@@ -596,6 +597,17 @@
         "recordsShown": "{count, plural, one {# dokumenterad träff visas} other {# dokumenterade träffar visas}} för familjerna igen.",
         "requestsStopped": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} inte längre någon träff att täcka.",
         "requestsReopened": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} en träff att täcka igen."
+      },
+      "editBreak": "Redigera {name}",
+      "unnamedBreak": "Namnlöst uppehåll",
+      "dialog": {
+        "editTitle": "Redigera uppehåll",
+        "saveAndAddAnother": "Spara och lägg till ett till"
+      },
+      "breakErrors": {
+        "datesRequired": "Välj första och sista dagen.",
+        "endBeforeStart": "Sista dagen är före den första.",
+        "nameMissing": "Ge uppehållet ett namn på {language}."
       }
     },
     "library": {
@@ -3108,7 +3120,8 @@
     "live": "Pågår",
     "nextSession": "Nästa tillfälle",
     "upcoming": "Kommande tillfälle",
-    "cancelled": "Inställt"
+    "cancelled": "Inställt",
+    "noSession": "Inget tillfälle"
   },
   "sessionFacts": {
     "remote": "På distans",
@@ -3119,7 +3132,6 @@
     "showLess": "Visa mindre",
     "lastEditedBy": "Av {name}",
     "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}",
-    "holidayLine": "Inget tillfälle · {breakName}, {range}",
     "photos": {
       "list": "Bilder från tillfället",
       "open": "Öppna bild {index} av {count}",
