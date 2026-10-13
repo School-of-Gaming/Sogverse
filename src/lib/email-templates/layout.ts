@@ -6,7 +6,8 @@ import {
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
 import { sendableImageOrigin } from "./render-context";
-import { GROUND_TONES, pinnedFill } from "./utils";
+import { MAIL_TYPE, mailText } from "./type-scale";
+import { BODY_TEXT_STYLE, GROUND_TONES, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -45,6 +46,13 @@ interface LayoutOptions {
  * force the cell taller.
  */
 const HEADER_RULE_HEIGHT = 6;
+
+/**
+ * The lockup's size and weight: the mail's title level, so the brand's name
+ * and the mail's own heading are one size. Its leading is left to the line
+ * box, which is all the header's one line needs.
+ */
+const LOCKUP_TYPE = `font-size:${MAIL_TYPE.title.fontSize}px;font-weight:${MAIL_TYPE.title.fontWeight};`;
 
 /**
  * The shell's two shapes, and the class names that switch between them.
@@ -396,7 +404,7 @@ ${groundToneRules}
                asserts the two spans still read as BRAND_LOCKUP exactly. -->
           <tr>
             <td align="center" style="padding-bottom:16px;">
-              <span class="brand-act" style="font-size:24px;font-weight:bold;color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
+              <span class="brand-act" style="${LOCKUP_TYPE}color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="${LOCKUP_TYPE}color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
           </tr>
           <!-- The world rule under the lockup. See HEADER_RULE_HEIGHT. -->
@@ -425,14 +433,14 @@ ${groundToneRules}
                query is allowed to take in this shell. -->
           <tr>
             <td class="${SHELL_CLASS.panel}">
-              <div style="color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
+              <div style="${BODY_TEXT_STYLE}">
                 ${content}
               </div>
             </td>
           </tr>
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding-top:24px;color:${DARK_THEME.mutedFg};font-size:12px;">
+            <td align="center" style="padding-top:24px;${mailText("small", DARK_THEME.mutedFg)}">
               ${footerText}
             </td>
           </tr>

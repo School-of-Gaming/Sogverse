@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   bulletList,
+  calloutPanel,
+  factList,
+  hairlineRule,
   inlineBold,
   numberedList,
   MARKUP_TAGS,
 } from "@/lib/email-templates/blocks";
+import { MAIL_SPACE, mailText } from "@/lib/email-templates/type-scale";
+import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
 import { DARK_THEME } from "@/lib/constants/colors";
 
 // The house-style sweep asserts on *mails*, so a block nothing sends yet has
@@ -37,6 +42,83 @@ describe("numberedList", () => {
     // escaped, so the block escapes nothing and a caller's own bold survives.
     expect(numberedList([inlineBold("Do this")])).toContain(
       inlineBold("Do this"),
+    );
+  });
+});
+
+describe("bulletList", () => {
+  it("indents with a margin, which Outlook's Word engine honours on a list", () => {
+    const html = bulletList(["One.", "Two."]);
+    const listStyle = /<ul style="([^"]*)"/.exec(html)?.[1] ?? "";
+
+    expect(listStyle).toContain(
+      `margin:0 0 ${MAIL_SPACE.block}px ${MARKDOWN_LOOK.ul.indent}px;`,
+    );
+    expect(listStyle).toContain("padding:0;");
+    expect(listStyle).not.toContain("padding-left");
+  });
+
+  it("spaces items by markdown's item gap, and leaves nothing under the last", () => {
+    const gaps = [...bulletList(["One.", "Two.", "Three."]).matchAll(/<li style="margin:0 0 (\d+)px;">/g)].map(
+      (m) => Number(m[1]),
+    );
+    expect(gaps).toEqual([MAIL_SPACE.item, MAIL_SPACE.item, 0]);
+  });
+});
+
+describe("hairlineRule", () => {
+  it("states the furniture step on both sides of itself", () => {
+    expect(hairlineRule()).toContain(`style="margin:${MAIL_SPACE.furniture}px 0;"`);
+  });
+});
+
+describe("factList", () => {
+  it("sets its labels small and muted, in sentence case", () => {
+    const html = factList([["Group", "Kettukallio"]]);
+    expect(html).toContain(mailText("small", DARK_THEME.mutedFg));
+    expect(html).not.toContain("text-transform");
+    expect(html).not.toContain("letter-spacing");
+  });
+
+  it("states the furniture step on both sides of itself", () => {
+    expect(factList([["Group", "Kettukallio"]])).toContain(
+      `style="margin:${MAIL_SPACE.furniture}px 0;border-top:`,
+    );
+  });
+
+  it("sets both cells of a row on the baseline, as an attribute and as CSS", () => {
+    // Outlook's Word engine may ignore the CSS, and a cell with no `valign`
+    // defaults to middle there.
+    const html = factList([["Group", "Kettukallio"]]);
+    expect(html.match(/<td valign="baseline" style="[^"]*vertical-align:baseline;"/g)).toHaveLength(2);
+  });
+
+  /**
+   * A lead-in is part of the furniture it introduces: the step goes above the
+   * pair, and the lead-in sits the tight step above the first rule rather than
+   * being pushed the whole furniture step off it by the list's own margin.
+   */
+  it("takes a lead-in inside the furniture step, the tight step above the rows", () => {
+    const html = factList([["Group", "Kettukallio"]], { leadIn: "Your booking" });
+    expect(html.trimStart().startsWith(`<div style="margin:${MAIL_SPACE.furniture}px 0;">`)).toBe(
+      true,
+    );
+    expect(html).toContain(`margin:0 0 ${MAIL_SPACE.tight}px;`);
+    expect(html).toContain('style="margin:0;border-top:');
+    expect(html.indexOf("Your booking")).toBeLessThan(html.indexOf("Kettukallio"));
+  });
+});
+
+describe("calloutPanel", () => {
+  const options = { label: "Note", paragraphs: ["One sentence."] };
+
+  it("states the furniture step on both sides of itself", () => {
+    expect(calloutPanel(options)).toContain(`style="margin:${MAIL_SPACE.furniture}px 0;"`);
+  });
+
+  it("sits flush when it opens the mail", () => {
+    expect(calloutPanel({ ...options, opening: true })).toContain(
+      `style="margin:0 0 ${MAIL_SPACE.furniture}px;"`,
     );
   });
 });
