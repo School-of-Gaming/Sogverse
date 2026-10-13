@@ -35,10 +35,9 @@ export function heading(text: string): string {
 }
 
 /**
- * A heading one rank under `heading()`: an item inside a section that
- * `heading()` names, such as one spotlight under the session report's news
- * heading. It is the subtitle level, so it stays under the section heading
- * and over the item's body.
+ * A heading one rank under `heading()`: the title of one item in a run of
+ * them, such as a spotlight at the foot of the session report. It is the
+ * subtitle level, so it stays under a mail's title and over the item's body.
  */
 export function subheading(text: string): string {
   return `<h3 style="margin:0 0 ${MAIL_SPACE.block}px;${mailText("subtitle", DARK_THEME.foreground)}">${text}</h3>`;

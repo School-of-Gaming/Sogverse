@@ -636,28 +636,17 @@ describe("the spotlights at the foot of the mail", () => {
     expect(second).toBeGreaterThan(first);
   });
 
-  it("opens the section with one lead-in, under one hairline and over the first picture", () => {
+  it("puts one hairline above each spotlight and no heading over them", () => {
     const html = withSpotlights(SPOTLIGHTS);
-    const label = t("sessionReport.spotlightsHeading");
     const rule = `border-top:1px solid ${DARK_THEME.border};`;
     const closing = html.indexOf(t("sessionReport.closing", { productName: "" }).slice(0, 12));
-    const at = html.indexOf(label);
-    expect(html.split(label)).toHaveLength(2);
-    expect(at).toBeGreaterThan(closing);
-    expect(at).toBeLessThan(html.indexOf(`<img src="${BUCKET}/a.jpg"`));
-    // Exactly one rule between the closing and the lead-in, none between it and the picture.
-    expect(html.slice(closing, at).split(rule)).toHaveLength(2);
-    expect(html.slice(at, html.indexOf(`<img src="${BUCKET}/a.jpg"`))).not.toContain(rule);
-  });
-
-  it("draws no lead-in when there are no spotlights", () => {
-    expect(withSpotlights([])).not.toContain(t("sessionReport.spotlightsHeading"));
-  });
-
-  it("draws no lead-in in the child's copy", () => {
-    expect(withSpotlights(SPOTLIGHTS, { gamerCopy: true })).not.toContain(
-      t("sessionReport.spotlightsHeading"),
-    );
+    const first = html.indexOf(`<img src="${BUCKET}/a.jpg"`);
+    const second = html.indexOf(`<img src="${BUCKET}/b.jpg"`);
+    // Exactly one rule between the closing and the first picture, and one
+    // between the first spotlight and the second — and nothing else there.
+    expect(html.slice(closing, first).split(rule)).toHaveLength(2);
+    expect(html.slice(first, second).split(rule)).toHaveLength(2);
+    expect(html.slice(closing, first)).not.toMatch(/<h[1-6]/);
   });
 
   it("draws the picture, then the title, then the body", () => {
@@ -679,19 +668,10 @@ describe("the spotlights at the foot of the mail", () => {
     expect(html).toContain(`width:100%;height:auto;max-width:${box.maxWidth}px`);
   });
 
-  it("escapes the title and sets it one rank under the section's heading", () => {
+  it("escapes the title and sets it as a subheading", () => {
     const html = withSpotlights(SPOTLIGHTS.slice(0, 1));
     expect(html).toContain("Autumn camps &lt;open&gt;</h3>");
     expect(html).not.toContain("<open>");
-  });
-
-  it("sets the section's heading larger than every spotlight title", () => {
-    const html = withSpotlights(SPOTLIGHTS);
-    const section = Number(
-      /<h2 style="[^"]*font-size:(\d+)px[^"]*">School of Gaming news/.exec(html)?.[1],
-    );
-    const title = Number(/<h3 style="[^"]*font-size:(\d+)px[^"]*">Autumn camps/.exec(html)?.[1]);
-    expect(section).toBeGreaterThan(title);
   });
 
   it("keeps a link in the body, and no heading", () => {

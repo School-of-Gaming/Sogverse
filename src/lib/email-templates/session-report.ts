@@ -1,7 +1,6 @@
 import { wrapInLayout } from "./layout";
 import {
   escapeHtml,
-  heading,
   paragraph,
   styledName,
   styledProductName,
@@ -216,7 +215,7 @@ export function buildSessionReportEmail(
     ${hairlineRule()}
     ${ctaButton({ href: productUrl, label: t("sessionReport.productButton") })}
     ${paragraph(t("sessionReport.closing", { productName: styledProductName(productName) }))}
-    ${gamerCopy ? "" : spotlightsSection(t, spotlights)}
+    ${gamerCopy ? "" : spotlightsSection(spotlights)}
   `;
   return wrapInLayout({ title: t("sessionReport.title"), content, locale, t });
 }
@@ -279,28 +278,17 @@ function photosSection(
 }
 
 /**
- * The spotlights, under a heading saying what they are.
- *
- * **One hairline, then the heading, then the first spotlight**: the rule is
- * what separates them from the closing above, and the heading sits on the
- * spotlights' side of it, so the section opens with exactly one rule rather
- * than a rule over the heading and another under it. The rule's own space
- * stands above the heading; nothing is added to it. Every later spotlight is
- * ruled off from the one before. None at all draws nothing — no heading over
- * an empty section.
- *
- * The heading is the section's `heading()`, and each spotlight's title is a
- * `subheading()` under it: the heading names the whole section, so it outranks
- * every title and every body beneath it.
+ * The spotlights, each under a hairline of its own: the first one's rule
+ * separates them from the closing above, and every later one's from the
+ * spotlight before. No heading names them as a group, because a picture and
+ * its title already say what each one is (owner's ruling, 2026-10-13), and a
+ * group heading read as the first spotlight's alone. None at all draws
+ * nothing.
  */
-function spotlightsSection(
-  t: EmailTranslator,
-  spotlights: readonly SessionReportSpotlight[],
-): string {
-  if (spotlights.length === 0) return "";
-  return `${hairlineRule()}
-    ${heading(t("sessionReport.spotlightsHeading"))}
-    ${spotlights.map(spotlightSection).join(hairlineRule())}`;
+function spotlightsSection(spotlights: readonly SessionReportSpotlight[]): string {
+  return spotlights
+    .map((spotlight) => `${hairlineRule()}${spotlightSection(spotlight)}`)
+    .join("");
 }
 
 /**
@@ -311,8 +299,8 @@ function spotlightsSection(
  * box arithmetic, painted well, Outlook pixel pair and empty `alt` as a session
  * photo rather than a second image block that could drift from it. The grid
  * states no margin of its own, so the block step under the picture is stated
- * here. The title is a `subheading()`, one rank under the section's heading;
- * the body carries no headings of its own to compete with it.
+ * here. The title is a `subheading()`; the body carries no headings of its
+ * own to compete with it.
  */
 function spotlightSection({
   title,
