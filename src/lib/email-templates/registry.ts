@@ -1860,7 +1860,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         key: "deadline",
         label: "Deadline (formatted)",
         // The same string the parent's mail states — one deadline, two readers.
-        placeholder: "Monday, August 31 at 14:20 GMT+3",
+        placeholder: "Monday 31 August at 14:20 EEST",
       },
       { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "https://sogverse.sog.gg/gamer" },
     ],

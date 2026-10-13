@@ -121,9 +121,9 @@ export interface SessionReportEmailOptions {
   /** The product's name in the *parent's* locale, not the product's default. */
   productName: string;
   groupName: string;
-  /** Already formatted for the parent's locale and zone, e.g. "Thursday, 20 August 2026". */
+  /** Already formatted for the parent's locale and zone, e.g. "Thursday 20 August 2026". */
   sessionDate: string;
-  /** Already formatted, zone named, e.g. "16:30 – 18:00 GMT+3" or "16.30–18.00 UTC+3". */
+  /** Already formatted, zone named, e.g. "16:30–18:00 EEST" or "16.30–18.00 UTC+3". */
   sessionTime: string;
   /** The report exactly as stored. */
   reportMarkdown: string;

@@ -145,13 +145,15 @@ describe("matchLocaleFromHeader", () => {
 });
 
 describe("formattingLocale", () => {
-  it("formats each locale with its own Intl tag", () => {
-    expect(formattingLocale("en")).toBe("en-GB");
-    expect(formattingLocale("fi")).toBe("fi");
-    expect(formattingLocale("sv")).toBe("sv");
-    expect(formattingLocale("fr")).toBe("fr");
-    // Klingon has no Intl data of its own; it formats as English.
-    expect(formattingLocale("tlh")).toBe("en-GB");
+  // A tag the runtime has no data for is not an error: Intl silently falls back
+  // to a parent or the default locale. So every tag must resolve to itself.
+  // supportedLocalesOf alone is too lenient — it accepts "en-XX" because "en"
+  // is supported, and a formatter built from it then formats as American "en".
+  it("maps every locale to a tag the runtime formats with as given", () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const tag = formattingLocale(locale);
+      expect(new Intl.DateTimeFormat(tag).resolvedOptions().locale, `${locale} → ${tag}`).toBe(tag);
+    }
   });
 
   it("formats anything unsupported as the default locale", () => {

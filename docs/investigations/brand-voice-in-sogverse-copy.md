@@ -256,13 +256,12 @@ worked examples and the decision log stay SOG-UI's.
 
 ## Constraints that any version of this has to respect
 
-- **The Guidebook's time formats contradict locale-correct rendering.** It marks
-  "14.10.2026 klo 16.30" as incorrect and demands "Oct 14, 2026, 4:30 PM" — but that Finnish
-  form is what the platform's formatters produce for a Finnish reader, and it is correct
-  Finnish. The Guidebook concedes exactly this point for currency (Finnish puts the symbol
-  after the number) and not for time. The resolution: rendered dates, times and money belong
-  to the library's formatters in the viewer's locale; the house forms bind only what a writer
-  types into a string. Nobody should "fix" a Finnish timestamp to an English shape.
+- **Dates and times are settled, and are no longer part of this question.** The owner
+  overruled the Guidebook's date and time forms on 2026-10-13 (the ruling is in the
+  Guidebook excerpt's index): a date or time is written in the reader's own conventions,
+  English as UK English. What stays open here is the money half — rendered money belongs
+  to the formatters in the viewer's locale, and the house currency forms bind only what a
+  writer types into a string.
 - **French is a transcreation, not a mirror.** Its public-page copy deliberately says
   something other than the English, including the slogan. An English rewrite that is
   re-derived into French must preserve the French positioning where it diverges on purpose.

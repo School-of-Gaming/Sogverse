@@ -22,6 +22,12 @@ import { describe, expect, it } from "vitest";
  * locale argument, with its reason. An entry that matches no call fails, so a
  * fix that removes the call removes its entry in the same change.
  *
+ * next-intl's `dateTime`, `dateTimeRange` and `list` formatters fail outright:
+ * they format with the provider's locale, which stays the bare app code
+ * because it drives routing, so they cannot be handed `formattingLocale()`.
+ * Its `number` and `relativeTime` format the same under `en` and `en-GB`, and
+ * pass.
+ *
  * The calls are found by parsing every source file under `src/`, so a call
  * split across lines is found and a mention in a comment is not.
  */
@@ -44,9 +50,16 @@ const INTL_CONSTRUCTORS = new Set([
   "DisplayNames",
   "Collator",
   "Segmenter",
+  "Locale",
 ]);
 
 const TO_LOCALE = new Set(["toLocaleString", "toLocaleDateString", "toLocaleTimeString"]);
+
+/** next-intl's formatter factories: `useFormatter()` and `getFormatter()` from next-intl/server. */
+const FORMATTER_FACTORIES = new Set(["useFormatter", "getFormatter"]);
+
+/** The next-intl formatters whose output differs between the app code and its Intl tag. */
+const BARE_LOCALE_FORMATTERS = new Set(["dateTime", "dateTimeRange", "list"]);
 
 interface FixedTag {
   readonly file: string;
@@ -103,6 +116,8 @@ interface Call {
   /** Source text of the locale argument; null when there is none. */
   readonly locale: string | null;
   readonly conforms: boolean;
+  /** A next-intl formatter, which takes no locale and always fails. */
+  readonly nextIntl: boolean;
   readonly text: string;
 }
 
@@ -181,23 +196,79 @@ function localeArgument(node: ts.Node): { arg: ts.Expression | null } | undefine
   return undefined;
 }
 
+/** `useFormatter()`, `getFormatter(…)` or `await getFormatter(…)`, through any parentheses. */
+function isFormatterFactoryCall(node: ts.Expression): boolean {
+  let at: ts.Expression = node;
+  while (ts.isParenthesizedExpression(at) || ts.isAwaitExpression(at)) at = at.expression;
+  return ts.isCallExpression(at) && ts.isIdentifier(at.expression) && FORMATTER_FACTORIES.has(at.expression.text);
+}
+
+interface FormatterBindings {
+  /** Each name bound to a whole formatter: `const format = useFormatter()`. */
+  readonly formatters: ReadonlySet<string>;
+  /** Each name bound to a bare-locale formatter destructured out of one: `const { dateTime } = useFormatter()`. */
+  readonly methods: ReadonlySet<string>;
+}
+
+/**
+ * The names a file binds from a formatter factory. Names are tracked per file,
+ * not per scope: a shadowing name is a false alarm worth renaming, never a miss.
+ */
+function formatterBindings(sourceFile: ts.SourceFile): FormatterBindings {
+  const formatters = new Set<string>();
+  const methods = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (ts.isVariableDeclaration(node) && node.initializer !== undefined && isFormatterFactoryCall(node.initializer)) {
+      if (ts.isIdentifier(node.name)) formatters.add(node.name.text);
+      if (ts.isObjectBindingPattern(node.name)) {
+        for (const element of node.name.elements) {
+          const property = element.propertyName ?? element.name;
+          if (ts.isIdentifier(property) && BARE_LOCALE_FORMATTERS.has(property.text) && ts.isIdentifier(element.name)) {
+            methods.add(element.name.text);
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return { formatters, methods };
+}
+
+/** A call to one of next-intl's bare-locale formatters. */
+function isBareLocaleFormatterCall(node: ts.Node, bindings: FormatterBindings): boolean {
+  if (!ts.isCallExpression(node)) return false;
+  const callee = node.expression;
+  if (ts.isIdentifier(callee)) return bindings.methods.has(callee.text);
+  if (!ts.isPropertyAccessExpression(callee) || !BARE_LOCALE_FORMATTERS.has(callee.name.text)) return false;
+  const receiver = callee.expression;
+  return (ts.isIdentifier(receiver) && bindings.formatters.has(receiver.text)) || isFormatterFactoryCall(receiver);
+}
+
 function callsIn(file: string, source: string): Call[] {
   const kind = file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sourceFile = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, kind);
+  const bindings = formatterBindings(sourceFile);
   const calls: Call[] = [];
+  const site = (node: ts.Node) => ({
+    file,
+    line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+    within: enclosingName(node),
+    text: node.getText().split("\n")[0].trim(),
+  });
   const visit = (node: ts.Node): void => {
     const found = localeArgument(node);
     if (found !== undefined) {
       const { arg } = found;
       const isUndefined = arg !== null && ts.isIdentifier(arg) && arg.text === "undefined";
       calls.push({
-        file,
-        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
-        within: enclosingName(node),
+        ...site(node),
         locale: arg === null || isUndefined ? null : arg.getText(),
         conforms: arg !== null && !isUndefined && conforms(arg),
-        text: node.getText().split("\n")[0].trim(),
+        nextIntl: false,
       });
+    } else if (isBareLocaleFormatterCall(node, bindings)) {
+      calls.push({ ...site(node), locale: null, conforms: false, nextIntl: true });
     }
     ts.forEachChild(node, visit);
   };
@@ -223,10 +294,13 @@ describe("reader-locale formatting goes through formattingLocale()", () => {
   it("passes formattingLocale(…) as every formatting call's locale", () => {
     const offending = calls
       .filter((call) => !call.conforms && !FIXED_TAGS.some((entry) => matches(entry, call)))
-      .map((call) => `${call.file}:${call.line} (${call.within}) locale=${call.locale ?? "none"}  ${call.text}`);
+      .map(
+        (call) =>
+          `${call.file}:${call.line} (${call.within}) ${call.nextIntl ? "next-intl formatter" : `locale=${call.locale ?? "none"}`}  ${call.text}`,
+      );
     expect(
       offending,
-      "Pass formattingLocale(locale) as the locale argument; a fixed tag that is right on purpose is listed in FIXED_TAGS with its reason (src/i18n/CLAUDE.md)",
+      "Pass formattingLocale(locale) as the locale argument, and format dates and lists through Intl rather than next-intl's formatter; a fixed tag that is right on purpose is listed in FIXED_TAGS with its reason (src/i18n/CLAUDE.md)",
     ).toEqual([]);
   });
 
@@ -260,6 +334,25 @@ describe("reader-locale formatting goes through formattingLocale()", () => {
     expect(one(`// new Intl.DateTimeFormat(locale)\nconst options: Intl.DateTimeFormatOptions = {};`)).toEqual(
       [],
     );
+    expect(verdicts(`new Intl.Locale(locale).weekInfo;`)).toEqual([false]);
+    expect(verdicts(`new Intl.Locale(formattingLocale(locale)).weekInfo;`)).toEqual([true]);
+  });
+
+  it("flags next-intl's date and list formatters, and only those", () => {
+    const flagged = (source: string) => callsIn("snippet.tsx", source).map((call) => call.nextIntl);
+
+    expect(flagged(`const format = useFormatter();\nformat.dateTime(date, { day: "numeric" });`)).toEqual([true]);
+    expect(flagged(`const format = useFormatter();\nformat.dateTimeRange(start, end);`)).toEqual([true]);
+    expect(flagged(`const format = useFormatter();\nformat.list(names);`)).toEqual([true]);
+    expect(flagged(`useFormatter().list(names);`)).toEqual([true]);
+    expect(flagged(`async function f() { const fmt = await getFormatter({ locale }); fmt.dateTime(d); }`)).toEqual([
+      true,
+    ]);
+    expect(flagged(`async function f() { (await getFormatter()).list(names); }`)).toEqual([true]);
+    expect(flagged(`const { dateTime, number } = useFormatter();\ndateTime(d);\nnumber(1);`)).toEqual([true]);
+    expect(flagged(`const { list: join } = useFormatter();\njoin(names);`)).toEqual([true]);
+    expect(flagged(`const format = useFormatter();\nformat.number(1);\nformat.relativeTime(d, now);`)).toEqual([]);
+    expect(flagged(`const format = makeFormatter();\nformat.dateTime(d);`)).toEqual([]);
   });
 
   it("names the function around a call", () => {

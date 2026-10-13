@@ -34,7 +34,7 @@ file it replaced cost. Content is verbatim — do not reword, tidy or re-sync it
 | `princi-pal.md` | When does the Princi-Pal speak instead of the brand, and how is he attributed? |
 | `hard-moments.md` | How do we write billing, safeguarding, an incident, an outage, and proactive safety copy? |
 | `channels.md` | What does the website, a parent email, a platform surface or the store demand of copy? |
-| `formatting.md` | How is a date, time, duration, price or link written? |
+| `formatting.md` | How is a duration, price or link written? |
 | `worked-examples.md` | What does a finished piece look like at a given lore level? |
 | `quality-checklist.md` | Is this draft ready to ship? |
 | `visual-identity.md` | Logo, colour palette, typography, trademark and the ® rules (Appendix A). |
@@ -68,6 +68,13 @@ Space Mono as the machine face and nothing else — a room code, a password, an 
 placeholder no customer should see — and the world voice has no placement, because the app
 face carries every word a person reads. The heading above the two paragraphs that remain
 still says "three", since what stays is never reworded; the third was this one.
+
+Overruled by the owner, 2026-10-13: **the date and time forms** (the Dates, Timestamps,
+Days, Months and Time ranges rows of the formatting table, and the two notes on time
+designators and on ranges). They prescribed US forms — month first, a 12-hour clock,
+"4PM-6PM" — and marked locale-correct ones, Finnish among them, as wrong. A date or time
+is written in the reader's own conventions: English as UK English, matching the site's
+copy, and every other language as its own. Durations, currency and links stay as written.
 
 Dropped because it is navigation or metadata for a document that no longer exists in one
 piece: the **front matter**, the **table of contents**, the **colophon**, and the reading
