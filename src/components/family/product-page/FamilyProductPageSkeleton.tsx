@@ -69,7 +69,7 @@ export function FamilyProductPageSkeleton({
         {/* The standing-notes card. */}
         <Card className="mt-5">
           <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="h-3 w-32 animate-pulse rounded bg-lifted" />
+            <div className="h-6 w-32 animate-pulse rounded bg-lifted" />
             <div className="h-4 w-full animate-pulse rounded bg-lifted" />
             <div className="h-4 w-11/12 animate-pulse rounded bg-lifted" />
             <div className="h-4 w-3/5 animate-pulse rounded bg-lifted" />
@@ -81,7 +81,7 @@ export function FamilyProductPageSkeleton({
             is drawn taller because the head of the past is where the report
             worth reading almost always is. */}
         <section className="mt-6">
-          <div className="mb-3 h-3 w-20 animate-pulse rounded bg-lifted" />
+          <div className="mb-3 h-6 w-20 animate-pulse rounded bg-lifted" />
           <div className="relative space-y-3 border-l border-border pl-6">
             {[0, 1, 2, 3].map((index) => (
               <div key={index} className="relative">

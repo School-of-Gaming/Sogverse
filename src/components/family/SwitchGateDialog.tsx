@@ -193,10 +193,10 @@ export function SwitchGateBody({
     return (
       <>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 shrink-0" aria-hidden />
-            {t("switchGate.pinNotSetTitle")}
-          </DialogTitle>
+            <DialogTitle align="start">{t("switchGate.pinNotSetTitle")}</DialogTitle>
+          </div>
           <DialogDescription>
             {t("switchGate.pinNotSetDescription")}
           </DialogDescription>
@@ -319,10 +319,10 @@ function SignOutToSwitch({
           sentences of explanation and reads as a description. The second
           sentence lives inside the header so both take the same alignment. */}
       <DialogHeader className="text-left">
-        <DialogTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <LogOut className="h-5 w-5 shrink-0" aria-hidden />
-          {t("switchGate.signOutTitle")}
-        </DialogTitle>
+          <DialogTitle align="start">{t("switchGate.signOutTitle")}</DialogTitle>
+        </div>
         {/* Both sentences are the dialog's description, so both live inside
             `DialogDescription` — the second used to be a sibling paragraph
             beside it, which put half the explanation outside the description a

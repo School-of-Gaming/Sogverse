@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { Heading } from "@sog/ui";
 
 /**
  * Terminal/info state shared across the PIN screens — the unlock gate's
@@ -21,7 +22,7 @@ export function PinNotice({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{description}</p>
       </div>
       {action}

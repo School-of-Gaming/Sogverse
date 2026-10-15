@@ -3,13 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
 
@@ -174,7 +175,7 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">{t('resetPassword.successTitle')}</CardTitle>
+          <Heading level={1} step="section" align="center">{t('resetPassword.successTitle')}</Heading>
           <CardDescription>
             {t('resetPassword.successDescription')}
           </CardDescription>
@@ -197,7 +198,7 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">{t('resetPassword.linkExpiredTitle')}</CardTitle>
+          <Heading level={1} step="section" align="center">{t('resetPassword.linkExpiredTitle')}</Heading>
           <CardDescription>
             {t('resetPassword.linkExpired')}
           </CardDescription>
@@ -224,7 +225,7 @@ export function ResetPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">{t('resetPassword.title')}</CardTitle>
+        <Heading level={1} step="section" align="center">{t('resetPassword.title')}</Heading>
         <CardDescription className="text-center">
           {t('resetPassword.description')}
         </CardDescription>

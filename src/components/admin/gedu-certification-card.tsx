@@ -40,6 +40,7 @@
  */
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import {
   FileCheck,
   FileWarning,
@@ -51,7 +52,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CertifyWithWarningsDialog } from "@/components/admin/certify-with-warnings-dialog";
 import {
@@ -230,7 +231,7 @@ export function GeduCertificationCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {/* The same mark the users list puts on a certified gedu, so one
               concept has one glyph across the admin surfaces — and pointedly not
               the green check, which now belongs to email verification. */}
@@ -239,8 +240,8 @@ export function GeduCertificationCard({
           ) : (
             <ShieldAlert className="h-5 w-5 text-warning" />
           )}
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-4">
@@ -301,9 +302,9 @@ export function GeduCertificationCard({
             appearing and disappearing moved the checkbox out from under the
             cursor that had just clicked it. */}
         <div className="space-y-2 border-t border-border pt-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Heading level={3} step="label">
             {rt("heading")}
-          </p>
+          </Heading>
           {checkPassed === undefined ? null : (
             <>
               {/* One glyph for the check on every surface, and the scales are
@@ -374,9 +375,9 @@ export function GeduCertificationCard({
             the seed in place it is never absent, and a slot held open for an
             anomaly is a hole in every ordinary visit. */}
         <div className="space-y-2 border-t border-border pt-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <Heading level={3} step="label">
             {ct("heading")}
-          </p>
+          </Heading>
           {current === undefined || previous === undefined ? null : current !== null ? (
             <>
               <p className="flex items-center gap-2 text-sm font-medium text-success">

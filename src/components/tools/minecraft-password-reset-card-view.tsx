@@ -10,13 +10,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,12 @@ export interface MinecraftPasswordResetCardViewProps {
   /** Already-translated failure message for the *request*, or `null`. */
   error: string | null;
   onSubmit: (usernames: string[]) => void;
+  /**
+   * The card title's outline level: `2` where the card sits straight under the
+   * page title (the admin tools page), `3` inside a section (the gedu
+   * dashboard's Tools). The results heading inside it takes the level below.
+   */
+  level: 2 | 3;
 }
 
 /**
@@ -65,6 +71,7 @@ export function MinecraftPasswordResetCardView({
   submitting,
   error,
   onSubmit,
+  level,
 }: MinecraftPasswordResetCardViewProps) {
   const t = useTranslations("tools.minecraftPasswordReset");
   const [raw, setRaw] = useState("");
@@ -86,10 +93,12 @@ export function MinecraftPasswordResetCardView({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <KeyRound className="h-5 w-5" aria-hidden />
-          {t("title")}
-        </CardTitle>
+          <Heading level={level} step="card-title">
+            {t("title")}
+          </Heading>
+        </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
 
@@ -178,9 +187,9 @@ export function MinecraftPasswordResetCardView({
         {results !== null && (
           <div className="space-y-3 border-t border-border pt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-muted-foreground">
+              <Heading level={level === 2 ? 3 : 4} step="label">
                 {t("resultsHeading")}
-              </h3>
+              </Heading>
               {successes.length > 0 && (
                 <CopyAllButton
                   lines={successes.map(

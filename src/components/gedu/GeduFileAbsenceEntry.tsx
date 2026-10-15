@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { MapPin, Radio } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -447,9 +448,9 @@ function SessionPicker({
       >
         {shown.map((week) => (
           <section key={week.weekStart} className="space-y-2">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <Heading level={3} step="label">
               {weekHeading(week.weekStart)}
-            </h3>
+            </Heading>
             {week.sessions.map((session) => (
               <SessionPickerRow
                 key={session.key}

@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { Heading } from "@sog/ui";
 
 /**
  * **The Team pages' closing call to action**, the same card under the index
@@ -22,7 +23,9 @@ export function TeamClosingCta({ className }: { className?: string }) {
       <Card className="relative mx-auto max-w-3xl overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-2xl font-bold sm:text-3xl">{t("heading")}</h2>
+          <Heading level={2} step="section" align="center">
+            {t("heading")}
+          </Heading>
           <Link
             href={ROUTES.shop}
             className={buttonVariants({ size: "lg", className: "mt-8 gap-2" })}

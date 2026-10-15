@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
@@ -358,9 +359,11 @@ export function FamilyProductPageBody({
           {p(schedule.product_type)}
         </span>
 
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {productName}
-        </h1>
+        <div className="mt-1">
+          <Heading level={1} step="section">
+            {productName}
+          </Heading>
+        </div>
 
         {/* The identity lines. The product name above is the page's primary
             identity on every copy; what differs is what a reader needs
@@ -551,9 +554,11 @@ export function FamilyProductPageBody({
       />
 
       <section className="mt-6">
-        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t("feedHeading")}
-        </h2>
+        <div className="mb-3">
+          <Heading level={2} step="card-title">
+            {t("feedHeading")}
+          </Heading>
+        </div>
         <FamilySessionFeed
           entries={entries}
           sourceTimeZone={sourceTimeZone}
@@ -634,7 +639,9 @@ function ProblemNotice({
 }
 
 /**
- * One standing note: a micro-heading and the paragraph under it.
+ * One standing note: a heading and the paragraph under it. An h2: the card
+ * holding the notes has no title of its own, so each note titles its own
+ * region of the page.
  *
  * Plain text, not markdown, because that is what the field is — the standing
  * notes are stored as plain text on both scopes, and rendering them through the
@@ -645,9 +652,9 @@ function ProblemNotice({
 function NoteBlock({ heading, body }: { heading: string; body: string }) {
   return (
     <div>
-      <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <Heading level={2} step="card-title">
         {heading}
-      </h3>
+      </Heading>
       <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed">
         {body}
       </p>

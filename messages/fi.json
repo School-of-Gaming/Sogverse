@@ -1908,6 +1908,9 @@
         "subPreviewSent": "Kaikki viestit lähetetty."
       }
     },
+    "tools": {
+      "title": "Työkalut"
+    },
     "whatsapp": {
       "title": "WhatsApp",
       "description": "Näytä ja vastaa WhatsApp-keskusteluihin",

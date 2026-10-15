@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   LockedButton,
@@ -792,9 +793,11 @@ export function GroupWorkspace({
             {p(data.product.product_type)}
           </span>
 
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-            {productName}
-          </h1>
+          <div className="mt-1">
+            <Heading level={1} step="section">
+              {productName}
+            </Heading>
+          </div>
 
           {assignedGroup && (
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
@@ -1033,9 +1036,9 @@ function RailCard({
     <Card>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <Heading level={2} step="card-title">
             {title}
-          </h2>
+          </Heading>
           {trailing}
         </div>
         {children}
@@ -1341,9 +1344,9 @@ function GroupRailCard({
       )}
 
       <div className="space-y-1.5">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Heading level={3} step="label">
           {g("gedus")}
-        </p>
+        </Heading>
         {/* One run: the gedus, then the trainees, each trainee's chip tagged
             with the seat — the same list the admin groups panel shows, where a
             trainee shares the gedus' pill with "Trainee" in the role's
@@ -1361,9 +1364,9 @@ function GroupRailCard({
       </div>
 
       <div className="space-y-2 border-t border-border pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Heading level={3} step="label">
           {t("participantsLabel")}
-        </p>
+        </Heading>
         {roster.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
         ) : (

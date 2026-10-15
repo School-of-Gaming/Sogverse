@@ -62,6 +62,7 @@ export function GeduDashboardScene({
           submitting={false}
           error={null}
           onSubmit={noop}
+          level={3}
         />
       }
       instantRoomCard={
@@ -72,6 +73,7 @@ export function GeduDashboardScene({
           createFailed={false}
           onCreate={noop}
           onJoin={noop}
+          level={3}
         />
       }
       // Present on every scenario including the uncertified one, which is the

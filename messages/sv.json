@@ -1908,6 +1908,9 @@
         "subPreviewSent": "Alla meddelanden skickades."
       }
     },
+    "tools": {
+      "title": "Verktyg"
+    },
     "whatsapp": {
       "title": "WhatsApp",
       "description": "Visa och svara på WhatsApp-konversationer",

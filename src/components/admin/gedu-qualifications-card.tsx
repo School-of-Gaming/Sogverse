@@ -28,10 +28,11 @@
  */
 
 import { useId, useState } from "react";
+import { Heading } from "@sog/ui";
 import { GraduationCap } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   GEDU_QUALIFICATIONS,
@@ -92,10 +93,10 @@ export function GeduQualificationsCard({ geduId, initial }: GeduQualificationsCa
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <GraduationCap className="h-5 w-5 text-act" aria-hidden />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="divide-y divide-border">
         {GEDU_QUALIFICATIONS.map((qualification) => (

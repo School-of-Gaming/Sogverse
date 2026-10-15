@@ -129,8 +129,8 @@ export function GeduDashboardPage({
       certified={certified}
       contractAccepted={contractAccepted}
       criminalRecordCheckPassed={criminalRecordCheckPassed}
-      toolsCard={<MinecraftPasswordResetCard />}
-      instantRoomCard={<CreateInstantRoomCard />}
+      toolsCard={<MinecraftPasswordResetCard level={3} />}
+      instantRoomCard={<CreateInstantRoomCard level={3} />}
       // The adult wording — a gedu is written to in the same register a parent
       // is; only a child's copy forks.
       helpForm={<HelpRequestCard audience="adult" />}

@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES } from "@/lib/constants";
@@ -150,7 +151,7 @@ function CompletionShell({
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">{title}</CardTitle>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <CardDescription className="text-center">{t("description")}</CardDescription>
       </CardHeader>
       {/* The address, and the way out, sit outside the form: the sign-out is a
