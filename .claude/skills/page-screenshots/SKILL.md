@@ -24,6 +24,11 @@ signed out; `topic-copy` is signed in. Key flags: `--base` (default `http://loca
 `en,fi,sv,fr`), `--viewports desktop|mobile`, `--only` (entry slugs), `--out`. The full
 public-pages run in four locales takes about three minutes.
 
+**Rule: an admin-only surface is shot at desktop width only — pass `--viewports desktop`.**
+The owner never wants to see an admin page at phone width, whatever a brief or a review
+step asks for; a run covering admin and non-admin pages shoots the admin ones in a separate
+desktop-only pass.
+
 ## Signed in or signed out — the preset decides
 
 - **Signed in** (the default): signs in as the staging admin with `STAGING_ADMIN_EMAIL`
