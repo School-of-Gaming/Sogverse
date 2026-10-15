@@ -1012,7 +1012,7 @@
           "marketingConsents": "Markkinointikysymykset",
           "format": "Muoto",
           "ageRange": "Ikähaarukka",
-          "shopPage": "Kauppasivu",
+          "publicLink": "Julkinen linkki",
           "createdBy": "Luonut",
           "createdOn": "Luotu"
         },

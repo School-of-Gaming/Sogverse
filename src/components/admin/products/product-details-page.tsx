@@ -927,7 +927,7 @@ function ProductDetailsCard({
                   status; the URL breaks anywhere, so a long product id wraps
                   inside the value rather than widening the column. */}
               {publicPath !== null && (
-                <DetailRow label={t("detailsPage.fields.shopPage")}>
+                <DetailRow label={t("detailsPage.fields.publicLink")}>
                   <PublicProductLink path={publicPath} />
                 </DetailRow>
               )}

@@ -133,7 +133,7 @@ describe("the admin product details card", () => {
     expect(link.getAttribute("href")).toContain(customerId);
   });
 
-  it("carries the shop page link in the record, not in the header", () => {
+  it("carries the public link in the record, not in the header", () => {
     renderPage(syntheticConsumerProduct());
 
     const details = screen.getByRole("region", { name: "Product details" });
@@ -144,7 +144,7 @@ describe("the admin product details card", () => {
     expect(
       within(record).getByRole("link", { name: /\/shop\// }),
     ).toBeTruthy();
-    expect(valueOf("Shop page").textContent).toMatch(/\/shop\//);
+    expect(valueOf("Public link").textContent).toMatch(/\/shop\//);
 
     const title = screen.getByRole("heading", { name: "Build Club", level: 1 });
     const header = title.closest("header");
