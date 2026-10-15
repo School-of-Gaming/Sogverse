@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, Loader2, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
@@ -22,7 +22,7 @@ import {
 } from "@/lib/products/product-audience";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
+import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import {
   useUserList,
   type UserListEntry,
@@ -152,25 +152,11 @@ export function ParticipantPickerSheet({
     { enabled: hasOpened },
   );
 
-  const families = useMemo(
-    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
-    [list.data],
-  );
+  const families = list.data?.rows ?? [];
 
   // The sheet body is the scroller, not the page — the document's scroll is
   // held while a sheet is open — so the sentinel is judged against that box.
-  // `isPlaceholderData` is part of the gate because the cursor those pages
-  // yield belongs to the needle they answered, not the one now in the box.
-  const sentinelRef = useScrollSentinel({
-    enabled:
-      // `isFetching`, not `isFetchingNextPage`: asking for the next page
-      // cancels a refresh in flight, so a sentinel firing while an invalidation
-      // is re-reading the loaded pages would throw that refresh away and leave
-      // the stale rows on screen marked fresh.
-      list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
-    onReach: () => {
-      void list.fetchNextPage();
-    },
+  const sentinelRef = useKeysetSentinel(list, {
     rootMargin: SENTINEL_ROOT_MARGIN,
     root: bodyRef,
   });

@@ -121,7 +121,7 @@ const CANDIDATES = [
 // through, so no sentinel is mounted.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: CANDIDATES, total: CANDIDATES.length }] },
+    data: { rows: CANDIDATES, total: CANDIDATES.length },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

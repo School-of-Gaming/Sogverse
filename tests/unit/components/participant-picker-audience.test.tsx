@@ -99,7 +99,7 @@ const LONELY_PARENT = family(IDS.lonelyParent, "Petri", []);
 // and the fixture is one page of the shared read.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: [PARENT, LONELY_PARENT], total: 2 }] },
+    data: { rows: [PARENT, LONELY_PARENT], total: 2 },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

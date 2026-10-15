@@ -107,7 +107,7 @@ describe("useUserList", () => {
     await waitFor(() => expect(counted.result.current.isSuccess).toBe(true));
 
     expect(listRequests()).toHaveLength(2);
-    expect(plain.result.current.data?.pages[0].total).toBeNull();
-    expect(counted.result.current.data?.pages[0].total).toBe(0);
+    expect(plain.result.current.data?.total).toBeNull();
+    expect(counted.result.current.data?.total).toBe(0);
   });
 });

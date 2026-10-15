@@ -1,14 +1,8 @@
 "use client";
 
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
+import { useKeysetInfiniteQuery } from "@/hooks/use-keyset-infinite-query";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
@@ -58,13 +52,8 @@ export function useProductsByType(
 /**
  * The admin product list, one keyset page at a time, filtered server-side.
  *
- * Pages accumulate rather than replace, so a revealed page appends below the
- * rows already painted and nothing on screen moves. `keepPreviousData` keeps
- * the previous filters' rows in place while a new question is read, so a
- * keystroke or a chip does not empty the list and refill it; `isPlaceholderData`
- * says when what is on screen belongs to the previous question, and the
- * surface must not ask for the next page then, because that page's cursor
- * would resume the new query from the old one's boundary.
+ * Paging, accumulation and holding the previous filters' rows on screen while
+ * a new question is read are the shared keyset list hook's.
  *
  * Under `productKeys.lists()`, so every writer that refreshes the product
  * lists refreshes this one too.
@@ -81,19 +70,10 @@ export function useAdminProductList(filters: AdminProductListFilters) {
     search: filters.search.trim().toLowerCase(),
   };
 
-  // Annotated, because an `undefined` literal alone would narrow the page
-  // param's type to `undefined` and reject the cursor `getNextPageParam` hands
-  // back.
-  const firstPage: KeysetCursor | undefined = undefined;
-
-  return useInfiniteQuery({
+  return useKeysetInfiniteQuery({
     queryKey: productKeys.adminList(normalized),
-    queryFn: ({ pageParam }: { pageParam: KeysetCursor | undefined }) =>
-      service.getAdminListPage(normalized, { cursor: pageParam }),
-    initialPageParam: firstPage,
-    getNextPageParam: (lastPage) =>
-      nextKeysetCursor(lastPage.rows, ADMIN_PRODUCT_LIST_PAGE_SIZE),
-    placeholderData: keepPreviousData,
+    fetchPage: (cursor) => service.getAdminListPage(normalized, { cursor }),
+    pageSize: ADMIN_PRODUCT_LIST_PAGE_SIZE,
   });
 }
 

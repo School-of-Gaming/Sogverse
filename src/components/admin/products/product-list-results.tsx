@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { AdminListShowingLine } from "@/components/admin/admin-list-narrowing";
-import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
+import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { ProductRows } from "./product-rows";
 import type { useAdminProductList } from "@/services/products";
 
@@ -48,26 +47,10 @@ export function ProductListResults({
 }: ProductListResultsProps) {
   const t = useTranslations("admin.products");
 
-  const rows = useMemo(
-    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
-    [list.data],
-  );
+  const rows = list.data?.rows ?? [];
 
-  /**
-   * Reveal the next page as the reader reaches the bottom of this one.
-   *
-   * While the hook is showing the *previous* filters' pages, the cursor those
-   * pages yield belongs to the previous question, so asking for more would
-   * resume the new query from the old one's boundary — hence the placeholder
-   * condition beside the ordinary two. `isFetching` rather than
-   * `isFetchingNextPage`: asking for the next page cancels a refresh in flight,
-   * so a sentinel firing during an invalidation would throw the refresh away.
-   */
-  const sentinelRef = useScrollSentinel({
-    enabled: list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
-    onReach: () => {
-      void list.fetchNextPage();
-    },
+  // Reveal the next page as the reader reaches the bottom of this one.
+  const sentinelRef = useKeysetSentinel(list, {
     rootMargin: SENTINEL_ROOT_MARGIN,
   });
 
@@ -76,7 +59,7 @@ export function ProductListResults({
   // and so nothing is painted in its place. What must not appear in the meantime is the count line or the empty
   // line, which would claim an answer before anyone has been asked; both
   // arrive with the rows, below everything already on screen.
-  const showing = list.data?.pages[0]?.total;
+  const showing = list.data?.total;
   if (showing === undefined || showing === null) return null;
 
   return (
