@@ -82,6 +82,13 @@ the `prod-incident-investigation` skill, which owns incident forensics via `verc
   posts to an undocumented `POST /v2/observability/query`, which does allow four `groupBy`
   dimensions and a `bucketTimezone` — reach for it only when two dimensions genuinely will
   not do, because nothing about it is in the REST docs and it can change without notice.
+- **The REST endpoint's `by` takes these and no others (its own 400 lists them,
+  2026-10-15):** `hour`, `day`, `week`, `month`, `year`, `country`, `deviceType`,
+  `environment`, `requestPath`, `referrerHostname`, `osName`, `browserName`, `route`, the
+  five `utm*`, and `flags` (or `flags/<name>`). There is no `hostname` and no full
+  `referrer`. `by` is required, so a whole range as one row is `by=environment` with the
+  environment filtered; each row carries `visitors` beside `pageviews`, distinct over that
+  row's whole range. The `"Others"` fold row sits among the rows by its count, not last.
 - **`route` is one row per page across every language; `request_path` keeps the split.**
   The app supplies `route` itself as the untranslated, locale-stripped route template, so
   `-f "route eq '/shop'"` covers `/fi/kauppa` and `/sv/butik` too — group by
@@ -120,6 +127,21 @@ the `prod-incident-investigation` skill, which owns incident forensics via `verc
   (`-f "is_prefetch_request eq false"`) is `invalid_query`; group by it instead. One `-f`
   takes a whole expression with `and`/`or`/`not (...)` and parentheses, which is how to
   match several referrers at once.
+- **Pages served to people, from the request log:** filter `content_type eq 'text/html;
+  charset=utf-8' and (bot_category eq '' or bot_category eq 'application')` (verified
+  2026-10-15). HTML documents are full page loads only; the in-app moves after arrival
+  travel as `text/x-component` and are not counted. Unfiltered, HTML is dominated by
+  `bot_category` `preview`, which is `facebookexternalhit` (about 24k HTML requests a week
+  against under 4k human ones). The log's `route` is Next's template with the locale
+  segment, `/[locale]/shop/[id]`, where Web Analytics says `/shop/[id]`.
+- **That content-type filter is the expensive part of a request-log read.** A bot filter
+  alone reads a week in about 8 s; with the content type, a recent day takes about 3 s, a
+  recent week about 10 s, and an older week times out at Vercel's ~30 s
+  (`query_timeout`, intermittently). Read it a day per call.
+- **The `VERCEL_ANALYTICS_TOKEN` in `.env.local` cannot read the request log** (2026-10-15):
+  `POST /v2/observability/query` and even `GET /v2/observability/schema/<metric>` answer
+  404 "Observability Data not found" to it, while the CLI's own login is answered. It reads Web Analytics and the project fine. The admin analytics page's "Pages
+  served" stays unavailable until a token that can read observability data is configured.
 - **Speed Insights is in `vercel metrics` too, and it is the sharper Core Web Vitals
   tool.** `vercel.speed_insights.{ttfb,fcp,lcp,inp}_ms` and `.cls`, each with a
   `*_count` companion giving `n`; aggregations include `p50` through `p99`. Dimensions:
