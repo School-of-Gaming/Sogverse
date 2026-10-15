@@ -22,7 +22,7 @@ import {
 } from "@/lib/landing-pages/sections";
 import { asObject } from "../helpers/json";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
-import { requiredTextCases } from "../helpers/landing-required-text-cases";
+import { everySection, requiredTextCases } from "../helpers/landing-required-text-cases";
 
 /**
  * Landing pages: `landing_pages` (a page's admin-only working copy, holding
@@ -344,6 +344,14 @@ describe("landing pages", () => {
         p_sections: [{ id: HERO, type: "hero", imageId: "not-an-id" }],
       });
       expect(badPicture.error?.code).toBe("23514");
+    });
+
+    it("knows every section type the registry does", async () => {
+      const { data, error } = await admin.rpc("landing_sections_problem", {
+        p_sections: everySection(),
+      });
+      expect(error).toBeNull();
+      expect(data).toBeNull();
     });
 
     it("refuses words for a section the page does not have", async () => {

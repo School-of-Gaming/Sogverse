@@ -844,6 +844,7 @@
         "points": "Points",
         "steps": "Steps",
         "faq": "Questions and answers",
+        "subscribe": "Email sign-up",
         "cta": "Call to action"
       },
       "items": {
@@ -6215,5 +6216,18 @@
       "heading": "Ready to get started?",
       "button": "Get started"
     }
+  },
+  "landingSubscribe": {
+    "firstName": "First name",
+    "email": "Email address",
+    "consent": "School of Gaming may send me news and offers by email. Every email has a link to unsubscribe. I have read the <privacy>Privacy Policy</privacy>.",
+    "consentRequired": "Tick the box to sign up.",
+    "error": "Something went wrong and you are not signed up yet. Please try again in a moment.",
+    "invalid": "Check your email address and try again.",
+    "rateLimited": "Too many sign-ups have come from here. Please try again in an hour.",
+    "sentTitle": "Check your inbox",
+    "sentBody": "We have emailed a link to {email}. You are signed up once you follow it.",
+    "confirmedTitle": "You are signed up",
+    "confirmedBody": "Thank you for confirming your email address."
   }
 }

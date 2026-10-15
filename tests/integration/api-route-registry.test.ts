@@ -206,6 +206,7 @@ const TESTS = {
   geduSessionImageRemove:
     "tests/integration/api/gedu-session-image-remove.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
+  landingSubscribe: "tests/integration/api/landing-pages-subscribe.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
@@ -1105,6 +1106,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // --- Locations -----------------------------------------------------------
+
+  "src/app/api/landing-pages/subscribe/route.ts": {
+    adminClient:
+      "the sign-up rate limit — take_landing_signup_allowance is granted to service_role alone, because the form's readers have no session to count against, and its table holds hashed request addresses no other role may read",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "a landing page's reader signs up for email with no account and no session. It stores nothing about them and hands the address to Brevo's double opt-in, so its one power is making Brevo mail a confirmation to the address typed: rate limited per requesting address in the database, behind a honeypot, and answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
+        },
+        body: { kind: "json", schema: "landingSubscribeBody" },
+        test: TESTS.landingSubscribe,
+      },
+    },
+  },
 
   "src/app/api/locations/search/route.ts": {
     handlers: {

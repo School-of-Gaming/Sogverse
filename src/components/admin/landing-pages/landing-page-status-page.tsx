@@ -476,6 +476,7 @@ const ITEM_KEYS: {
   points: "points",
   steps: "steps",
   faq: "faq",
+  subscribe: null,
   cta: null,
 };
 

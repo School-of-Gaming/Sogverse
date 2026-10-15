@@ -78,6 +78,11 @@
  *     carried — never from a flag a client sends, since a client can send
  *     whatever it likes.
  *
+ *     **The same gate covers every other write of them.** A landing page's
+ *     email sign-up passes them to Brevo as contact attributes, through
+ *     {@link utmMetadataForConsent} and the request's own consent cookie,
+ *     exactly as a registration stores them.
+ *
  *     **Rows written before this change are untouched.** Nothing is
  *     re-examined, cleared or backfilled; the ruling decides what is written
  *     from now on.

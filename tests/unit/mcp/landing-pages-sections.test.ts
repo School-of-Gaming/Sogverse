@@ -90,6 +90,12 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "faq", items: [] },
     { id: ID, type: "faq", items: [{ id: ID2, question: "?" }] },
   ],
+  subscribe: [
+    { id: ID, type: "subscribe" },
+    { id: ` ${ID.toUpperCase()} `, type: "subscribe" },
+    { id: ID, type: "subscribe", listId: 3 },
+    { id: ID, type: "subscribe", button: internal },
+  ],
   cta: [
     { id: ID, type: "cta", button: internal },
     { id: ID, type: "cta", button: external },
@@ -134,6 +140,13 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },
     { items: { [ID2]: { title: "Q?" } } },
     { intro: "Not an faq field" },
+  ],
+  subscribe: [
+    {},
+    { eyebrow: " News ", heading: " Stay in touch ", intro: "Once a month.", buttonLabel: "Sign up" },
+    { heading: "H", body: "Not a sign-up field" },
+    { buttonLabel: 7 },
+    { heading: "H", emailSubject: "Not a sign-up field" },
   ],
   cta: [
     { heading: "H", body: "B", buttonLabel: "Go" },
@@ -221,6 +234,7 @@ describe("the manual", () => {
     expect(describeRequiredWords("faq")).toBe(
       "heading; items.<item id>.question; items.<item id>.answer",
     );
+    expect(describeRequiredWords("subscribe")).toBe("heading; buttonLabel");
     expect(describeRequiredWords("cta")).toBe("heading; buttonLabel");
   });
 

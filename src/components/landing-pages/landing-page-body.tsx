@@ -19,6 +19,10 @@ export interface LandingPageBodyProps {
   textLocale: SupportedLocale;
   /** The page's locale — the URL's. */
   locale: SupportedLocale;
+  /** The page's id. */
+  pageId: string;
+  /** The reader has just confirmed an email sign-up made on this page. */
+  subscribed: boolean;
 }
 
 /**
@@ -37,9 +41,13 @@ export function LandingPageBody({
   sectionTexts,
   textLocale,
   locale,
+  pageId,
+  subscribed,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
+    pageId,
+    subscribed,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
   };
   return (

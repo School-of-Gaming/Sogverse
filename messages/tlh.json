@@ -888,6 +888,7 @@
         "points": "Dochmey",
         "steps": "mIwmey",
         "faq": "ghel ’ej jang",
+        "subscribe": "QIn HevmeH chaw’",
         "cta": "ra’ ghItlh"
       },
       "items": {
@@ -5300,5 +5301,18 @@
       "heading": "bIchu’meH bIQap’a’?",
       "button": "yIchu’"
     }
+  },
+  "landingSubscribe": {
+    "firstName": "wa’DIch pong",
+    "email": "QIn Daq",
+    "consent": "noH Quj yejHaD QIn HevmeH vIchaw’. Hoch QInDaq mevmeH rar tu’lu’. <privacy>pegh ngoQ</privacy> vIlaD.",
+    "consentRequired": "Hev DaneHchugh, ’aplo’ yIghItlh.",
+    "error": "Qagh. not bIHev. tugh yInIDqa’.",
+    "invalid": "QIn Daq yInuD ’ej yInIDqa’.",
+    "rateLimited": "naDev Hevlu’pu’ law’qu’. wa’ rep pIq yInIDqa’.",
+    "sentTitle": "QIn ’aplo’lIj yInuD",
+    "sentBody": "{email} Daq rar wIngeHpu’. rar Dape’DI’ bIHev.",
+    "confirmedTitle": "bIHevta’",
+    "confirmedBody": "QIn Daq DaHeghmo’ qatlho’."
   }
 }

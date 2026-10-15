@@ -80,6 +80,10 @@ BEGIN
         IF NOT public.landing_button_is_valid(v_section->'button') THEN
           RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
+      WHEN 'subscribe' THEN
+        -- No shared field: the list it signs up to and the confirmation mail
+        -- are the deployment's configuration, not the page's.
+        NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
@@ -127,7 +131,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}; subscribe {} (no shared field). Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
 
 
 --

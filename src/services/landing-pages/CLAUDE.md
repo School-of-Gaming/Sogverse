@@ -108,6 +108,23 @@ refusals. Nothing else in the save path touches a link.
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
 detail included, and the image catalogue's usage map.
 
+**The email sign-up section (`subscribe`) is one-way to Brevo, and Sogverse stores
+nothing about the person.** The form posts to `/api/landing-pages/subscribe`, which hands
+the address to Brevo's double opt-in: Brevo sends the confirmation mail, records the
+consent, adds the contact to the list and handles every unsubscribe, and nothing is ever
+read back. A sign-up is not an account and never touches an account's marketing consent;
+accounts are not synced to Brevo either. The list and the confirmation template are the
+deployment's (`BREVO_SIGNUP_*` in the environment, read by
+`src/lib/landing-pages/subscribe-config.server.ts`, which also names the Brevo contact
+attributes a sign-up writes — each has to exist in the Brevo account first), so the
+section has no shared field; its form copy, consent sentence included, is fixed copy in
+`landingSubscribe`, and the page writes only the ask. The route answers a new address,
+a known one and a filled honeypot identically, and the only thing it writes is a hashed
+request address for the hour its rate limit counts over. The confirmation link returns
+the reader to the page in its locale, at the section, with a parameter that swaps the
+form for a thanks. A later section offering something on confirmation (a download)
+would add a shared field to this type, not a second form.
+
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the
 id — never by handing a segment to the route builder, because a slug resolves in its own

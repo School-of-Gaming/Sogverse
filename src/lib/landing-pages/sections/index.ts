@@ -5,6 +5,7 @@ import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
 import { stepsSection } from "./steps";
+import { subscribeSection } from "./subscribe";
 import { textSection } from "./text";
 import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
 
@@ -32,6 +33,7 @@ export const LANDING_SECTION_TYPES = [
   "points",
   "steps",
   "faq",
+  "subscribe",
   "cta",
 ] as const;
 
@@ -44,6 +46,7 @@ export const LANDING_SECTIONS = {
   points: pointsSection,
   steps: stepsSection,
   faq: faqSection,
+  subscribe: subscribeSection,
   cta: ctaSection,
 } as const satisfies { [Type in LandingSectionType]: { type: Type } };
 
@@ -55,6 +58,7 @@ export const landingSection = z.discriminatedUnion("type", [
   pointsSection.section,
   stepsSection.section,
   faqSection.section,
+  subscribeSection.section,
   ctaSection.section,
 ]);
 
@@ -153,6 +157,8 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return stepsSection.missingText(section, text);
     case "faq":
       return faqSection.missingText(section, text);
+    case "subscribe":
+      return subscribeSection.missingText(section, text);
     case "cta":
       return ctaSection.missingText(section, text);
   }
@@ -247,6 +253,7 @@ export { heroSection } from "./hero";
 export { imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
 export { stepsSection } from "./steps";
+export { subscribeSection } from "./subscribe";
 export { LANDING_IMAGE_SIDES, textSection } from "./text";
 export {
   buttonTarget,

@@ -78,6 +78,9 @@ export const LANDING_SECTION_SEO: {
   steps: {
     structuredData: none,
   },
+  subscribe: {
+    structuredData: none,
+  },
   faq: {
     structuredData: (section, text) =>
       section.items.flatMap((item) => {

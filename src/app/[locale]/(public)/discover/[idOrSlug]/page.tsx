@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import {
+  LANDING_SUBSCRIBED_PARAM,
   landingPageCanonicalPath,
   landingPageLocalePaths,
   resolveLandingPage,
@@ -19,6 +20,7 @@ import { LandingPageService } from "@/services/landing-pages/landing-pages.servi
 
 interface PageProps {
   params: Promise<{ idOrSlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 /**
@@ -60,8 +62,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * database error is not "this page does not exist" — and surfaces to the error
  * boundary.
  */
-export default async function LandingPage({ params }: PageProps) {
+export default async function LandingPage({ params, searchParams }: PageProps) {
   const { idOrSlug } = await params;
+  // Set by an email sign-up's confirmation link, which returns here.
+  const subscribed = (await searchParams)[LANDING_SUBSCRIBED_PARAM] === "1";
   const locale = resolveLocale(await getLocale());
   const page = await loadPage(idOrSlug);
   if (page === null) notFound();
@@ -87,6 +91,8 @@ export default async function LandingPage({ params }: PageProps) {
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}
+        pageId={page.id}
+        subscribed={subscribed}
       />
     </>
   );

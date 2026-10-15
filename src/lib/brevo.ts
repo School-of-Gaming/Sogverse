@@ -8,7 +8,12 @@ function getApiKey(): string {
   return key;
 }
 
-async function brevoFetch(path: string, options?: RequestInit) {
+/**
+ * One call to Brevo's API: the response when it succeeded, a thrown error —
+ * logged with Brevo's own body — when it did not. Reading the body is the
+ * caller's: some endpoints answer a success with none at all.
+ */
+async function brevoRequest(path: string, options?: RequestInit): Promise<Response> {
   const response = await fetch(`${BREVO_API_BASE}${path}`, {
     ...options,
     headers: {
@@ -26,6 +31,11 @@ async function brevoFetch(path: string, options?: RequestInit) {
     );
   }
 
+  return response;
+}
+
+async function brevoFetch(path: string, options?: RequestInit) {
+  const response = await brevoRequest(path, options);
   return response.json();
 }
 
@@ -87,6 +97,51 @@ export async function sendTransactionalEmail(options: SendEmailOptions): Promise
           content: contentBase64,
         })),
       }),
+    }),
+  });
+}
+
+/** A contact attribute's value, as Brevo's contact endpoints take one. */
+export type BrevoAttributeValue = string | number | boolean | string[];
+
+interface DoubleOptInContactOptions {
+  email: string;
+  /**
+   * Attribute values by the attribute's name in the Brevo account. Every name
+   * has to exist there already: Brevo refuses an unknown one.
+   */
+  attributes: Record<string, BrevoAttributeValue>;
+  /** The lists the contact joins once they confirm. */
+  listIds: number[];
+  /** The double opt-in confirmation template, which carries `{{ params.DOIurl }}`. */
+  templateId: number;
+  /** Where the confirmation link sends the contact once they have confirmed. */
+  redirectionUrl: string;
+}
+
+/**
+ * Ask Brevo to confirm an address by double opt-in: Brevo mails the
+ * confirmation template to it, and only when its link is followed does the
+ * address join the lists, with the attributes given here, and the reader land
+ * on `redirectionUrl`. Brevo keeps the record of that consent and handles the
+ * unsubscribe; nothing is stored on our side.
+ *
+ * Brevo answers 201 for a new address and 204 for one it already holds, and
+ * both resolve here alike — a caller has no way to tell the two apart, which
+ * is what lets a public form give one answer for both. Any other answer
+ * throws, logged with Brevo's body.
+ */
+export async function createDoubleOptInContact(
+  options: DoubleOptInContactOptions,
+): Promise<void> {
+  await brevoRequest("/contacts/doubleOptinConfirmation", {
+    method: "POST",
+    body: JSON.stringify({
+      email: options.email,
+      attributes: options.attributes,
+      includeListIds: options.listIds,
+      templateId: options.templateId,
+      redirectionUrl: options.redirectionUrl,
     }),
   });
 }

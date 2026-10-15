@@ -844,6 +844,7 @@
         "points": "Kohdat",
         "steps": "Vaiheet",
         "faq": "Kysymykset ja vastaukset",
+        "subscribe": "Sähköpostitilaus",
         "cta": "Toimintakehote"
       },
       "items": {
@@ -6215,5 +6216,18 @@
       "heading": "Valmis aloittamaan?",
       "button": "Aloita"
     }
+  },
+  "landingSubscribe": {
+    "firstName": "Etunimi",
+    "email": "Sähköpostiosoite",
+    "consent": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse. Jokaisessa viestissä on linkki tilauksen perumiseen. Olen lukenut <privacy>tietosuojaselosteen</privacy>.",
+    "consentRequired": "Tilaa rastittamalla ruutu.",
+    "error": "Jokin meni vikaan, eikä tilaus vielä onnistunut. Yritä hetken päästä uudelleen.",
+    "invalid": "Tarkista sähköpostiosoitteesi ja yritä uudelleen.",
+    "rateLimited": "Täältä on tullut liian monta tilausta. Yritä uudelleen tunnin kuluttua.",
+    "sentTitle": "Tarkista sähköpostisi",
+    "sentBody": "Lähetimme linkin osoitteeseen {email}. Tilaus on voimassa, kun olet avannut linkin.",
+    "confirmedTitle": "Tilaus on voimassa",
+    "confirmedBody": "Kiitos, että vahvistit sähköpostiosoitteesi."
   }
 }
