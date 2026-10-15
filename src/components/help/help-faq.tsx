@@ -160,7 +160,7 @@ function HelpFaqBlock({ items }: { items: readonly FaqAccordionItem[] }) {
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold">{t("faqHeading")}</h3>
-      <FaqAccordion items={items} />
+      <FaqAccordion items={items} questionLevel={4} />
     </div>
   );
 }

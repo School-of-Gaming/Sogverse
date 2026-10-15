@@ -61,6 +61,8 @@ const SECTIONS: LandingSection[] = [
   { id: CTA, type: "cta", button: { kind: "external", url: "https://partner.example/join" } },
 ];
 
+const FAQ_ITEMS = { [ITEM(7)]: { question: "Who leads it?", answer: "A *Game Educator*." } };
+
 const TEXTS: LandingSectionTexts = {
   [HERO]: {
     eyebrow: "Espoo",
@@ -81,7 +83,7 @@ const TEXTS: LandingSectionTexts = {
   },
   [FAQ]: {
     heading: "Questions",
-    items: { [ITEM(7)]: { question: "Who leads it?", answer: "A *Game Educator*." } },
+    items: FAQ_ITEMS,
   },
   [CTA]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
 };
@@ -172,11 +174,23 @@ describe("the landing page renderers", () => {
     expect(within(steps).getAllByRole("listitem")).toHaveLength(2);
     expect(within(steps).getByText("2")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 3, name: "Safe" })).toBeTruthy();
-    expect(screen.getByText("Who leads it?")).toBeTruthy();
+    // A question is an H3 under the section's H2, inside the row's summary.
+    const question = screen.getByRole("heading", { level: 3, name: "Who leads it?" });
+    expect(question.parentElement?.tagName).toBe("SUMMARY");
     expect(screen.getByText("Game Educator").tagName).toBe("EM");
     // The second question was never written, so it has no row.
     expect(screen.getAllByText(/Who leads it\?/)).toHaveLength(1);
     expect(document.querySelectorAll("details")).toHaveLength(1);
+  });
+
+  it("makes the questions H2s when the FAQ section has no heading of its own", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[5]],
+      texts: { [FAQ]: { items: FAQ_ITEMS } },
+    });
+    const question = screen.getByRole("heading", { level: 2, name: "Who leads it?" });
+    expect(question.parentElement?.tagName).toBe("SUMMARY");
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
   });
 
   it("marks the words' language where it is not the page's", () => {

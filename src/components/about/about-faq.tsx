@@ -117,7 +117,7 @@ export function AboutFaq({ id }: AboutFaqProps) {
           {t("heading")}
         </h2>
         <div className="mt-12">
-          <FaqAccordion items={items} />
+          <FaqAccordion items={items} questionLevel={3} />
         </div>
       </div>
     </section>
