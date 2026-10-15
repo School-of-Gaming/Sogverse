@@ -84,7 +84,12 @@ export function useUpdateInvoiceCustomer() {
           queryKey: municipalityInvoicingKeys.all,
         }),
         // The admin product read embeds the customer's name and number against
-        // every club billed to it.
+        // every club billed to it. Refetching that detail key is safe here
+        // although the product form seeds from it: this mutation runs only
+        // from the invoice customer's own edit page, a separate route, so no
+        // product form is mounted when it fires. Wiring it into a surface
+        // inside the product form would refetch under a half-filled form and
+        // discard it.
         queryClient.invalidateQueries({
           queryKey: productKeys.adminDetails(),
         }),

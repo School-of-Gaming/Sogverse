@@ -590,9 +590,15 @@ export function GroupsPanelView({
                 className="max-w-sm min-w-56 flex-1"
               />
             )}
-            {/* The actions are one right-packed group (`ml-auto`), so the drop
-                zone the first one turns into mid-drag grows leftward into the
-                slack while Add group holds its place. Neither is affirmative —
+            {/* The actions are one right-packed group (`ml-auto`), so while the
+                row has slack the drop zone the first one turns into mid-drag
+                grows leftward into it and Add group holds its place. On the
+                narrowest panels — the summary near its floor, a long locale's
+                label, a paid club with nothing in that slot at rest — the
+                group may instead wrap below the summary at drag start. That
+                rare wrap is accepted rather than reserving the zone's width at
+                rest, which would leave dead space on every paid club. Neither
+                is affirmative —
                 they are two independent additions, not the two answers to one
                 question — so the Button Order rule does not reorder them. */}
             <div className="ml-auto flex shrink-0 items-center gap-2">

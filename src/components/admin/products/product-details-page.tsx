@@ -977,12 +977,9 @@ function DetailsSection({
   title: string;
   children: React.ReactNode;
 }) {
-  const headingId = useId();
   return (
-    <section aria-labelledby={headingId} className="@container min-w-0">
-      <h3
-        id={headingId}
-        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+    <section className="@container min-w-0">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
       >
         {title}
       </h3>

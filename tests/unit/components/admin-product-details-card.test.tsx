@@ -137,7 +137,10 @@ describe("the admin product details card", () => {
     renderPage(syntheticConsumerProduct());
 
     const details = screen.getByRole("region", { name: "Product details" });
-    const record = within(details).getByRole("region", { name: "Record" });
+    const record = within(details)
+      .getByRole("heading", { name: "Record" })
+      .closest("section");
+    if (!record) throw new Error("The Record heading has no section");
     expect(
       within(record).getByRole("link", { name: /\/shop\// }),
     ).toBeTruthy();
