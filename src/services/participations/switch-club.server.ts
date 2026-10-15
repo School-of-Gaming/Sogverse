@@ -570,9 +570,12 @@ export async function commitSwitchClub({
       // a NEW Stripe price and then the price-cache write failed, a retry from
       // the same dialog sends this same key with a different `items[0].price`,
       // and Stripe answers a reused key carrying a different body with an
-      // `idempotency_error` — a plain 500 here. Closing and reopening the
-      // dialog mints a fresh request id and recovers, so the cost of the rare
-      // case is one confusing failure and a reopen.
+      // `idempotency_error` — a plain 500 here. The same happens when the
+      // period turns over between two presses in one dialog (a trial ends, a
+      // renewal lands): each press re-runs the check, so the second can send
+      // the other `proration_behavior` under the same key. Closing and
+      // reopening the dialog mints a fresh request id and recovers either way,
+      // so the cost of the rare case is one confusing failure and a reopen.
       idempotencyKey: switchClubIdempotencyKey({
         participationId,
         targetProductId,

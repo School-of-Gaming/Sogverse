@@ -790,8 +790,8 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
       items: [{ id: ITEM_ID, price: TARGET_PRICE_ID }],
       proration_behavior: "none",
     });
-    // The same key shape as a prorated switch: the dialog's check decides the
-    // proration once, so one key never carries two bodies.
+    // The same key shape as a prorated switch: the settlement changes the
+    // body, never the key.
     expect(options).toEqual({
       idempotencyKey: `club-switch:${PARTICIPATION_ID}:${TARGET_PRODUCT_ID}:${REQUEST_ID}`,
     });
