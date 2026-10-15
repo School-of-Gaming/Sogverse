@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { useKeysetInfiniteQuery } from "@/hooks/use-keyset-infinite-query";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
@@ -10,7 +11,9 @@ import type { ProductType, ProductBrowseRow } from "@/types";
 import { invalidatePlanReaders } from "./plan-readers";
 import { productKeys } from "./products.keys";
 import {
+  ADMIN_PRODUCT_LIST_PAGE_SIZE,
   ProductsService,
+  type AdminProductListFilters,
   type CreateProductInput,
   type UpdateProductInput,
 } from "./products.service";
@@ -43,6 +46,49 @@ export function useProductsByType(
     queryKey: productKeys.listByType(type),
     queryFn: () => service.listByType(type),
     enabled: options?.enabled ?? true,
+  });
+}
+
+/**
+ * The admin product list, one keyset page at a time, filtered server-side.
+ *
+ * Paging, accumulation and holding the previous filters' rows on screen while
+ * a new question is read are the shared keyset list hook's.
+ *
+ * Under `productKeys.lists()`, so every writer that refreshes the product
+ * lists refreshes this one too.
+ */
+export function useAdminProductList(filters: AdminProductListFilters) {
+  const supabase = getClient();
+  const service = new ProductsService(supabase);
+
+  // Normalised once and used for the key and the read, so "Club" and "club "
+  // cannot become two cache entries answering the same question — the match is
+  // case-insensitive either way.
+  const normalized: AdminProductListFilters = {
+    ...filters,
+    search: filters.search.trim().toLowerCase(),
+  };
+
+  return useKeysetInfiniteQuery({
+    queryKey: productKeys.adminList(normalized),
+    fetchPage: (cursor) => service.getAdminListPage(normalized, { cursor }),
+    pageSize: ADMIN_PRODUCT_LIST_PAGE_SIZE,
+  });
+}
+
+/**
+ * The admin product list's facets — per type, how many products exist and
+ * what each filter can offer. Under `productKeys.lists()` for the same reason
+ * as the list: a saved product moves both.
+ */
+export function useProductListFacets() {
+  const supabase = getClient();
+  const service = new ProductsService(supabase);
+
+  return useQuery({
+    queryKey: productKeys.adminListFacets(),
+    queryFn: () => service.getListFacets(),
   });
 }
 

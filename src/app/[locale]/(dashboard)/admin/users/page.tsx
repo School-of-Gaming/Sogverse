@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import {
 } from "@/components/gedu/contract/documents";
 import { useUserList, type UserListEntry } from "@/services/users";
 import { useGeduContractAcceptanceMap } from "@/services/gedu";
-import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
+import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types";
@@ -46,30 +46,10 @@ export default function AdminUsersPage() {
   });
   const acceptances = useGeduContractAcceptanceMap();
 
-  const rows = useMemo(
-    () => list.data?.pages.flatMap((page) => page.rows) ?? [],
-    [list.data],
-  );
+  const rows = list.data?.rows ?? [];
 
-  /**
-   * Reveal the next page as the reader reaches the bottom of this one.
-   *
-   * Three conditions, and the third is the one that is easy to miss: while the
-   * hook is showing the *previous* needle's pages, the cursor those pages yield
-   * belongs to the previous question, so asking for more would resume the new
-   * query from the old query's boundary. The other two are the ordinary
-   * discipline — nothing left to fetch, or a fetch already in flight.
-   */
-  const sentinelRef = useScrollSentinel({
-    enabled:
-      // `isFetching`, not `isFetchingNextPage`: asking for the next page
-      // cancels a refresh in flight, so a sentinel firing while an invalidation
-      // is re-reading the loaded pages would throw that refresh away and leave
-      // the stale rows on screen marked fresh.
-      list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
-    onReach: () => {
-      void list.fetchNextPage();
-    },
+  // Reveal the next page as the reader reaches the bottom of this one.
+  const sentinelRef = useKeysetSentinel(list, {
     rootMargin: SENTINEL_ROOT_MARGIN,
   });
 

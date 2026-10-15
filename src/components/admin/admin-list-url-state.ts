@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 /**
  * An admin list's narrowing controls, mirrored into the query string — shared
@@ -80,6 +81,28 @@ export function useUrlParamState(
   );
 
   return [value, set];
+}
+
+/**
+ * One query-param-backed value that markup the server sends depends on.
+ *
+ * The hook above answers `null` on the server, which is safe only while nothing
+ * it drives renders there. A value that shapes the page's own chrome — the
+ * admin product list's type, which decides the create button in its header —
+ * is painted by the server too, so it is read through the router instead: the
+ * server knows the query string as well as the browser does, and the router
+ * follows a `replaceState` write, so the value is the URL itself rather than a
+ * mirror of local state. Written exactly as the hook above writes, one
+ * `replaceState` per change.
+ */
+export function useRoutedUrlParamState(
+  key: string,
+): [string | null, (next: string | null) => void] {
+  // The router's own hook, not the wrapped navigation module: this reads a
+  // query value, and names no route.
+  const raw = useSearchParams().get(key);
+  const set = useCallback((next: string | null) => writeParam(key, next), [key]);
+  return [raw === null || raw === "" ? null : raw, set];
 }
 
 /**

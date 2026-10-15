@@ -267,5 +267,5 @@ state is the library's.
 The audit named the rest of the missing middle, in rough order of how many hand-rolled
 sites each retires: the inline error and alert, the empty state, the skeleton, the chip
 and status chip, the selection edge, the search input, the person row, the page header,
-select, table. Each takes its position when the adoptions above have landed and the shape of
+select, table, tabs. Each takes its position when the adoptions above have landed and the shape of
 an adoption is settled; none is defined in the library before its turn.

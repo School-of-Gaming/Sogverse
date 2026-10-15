@@ -18,7 +18,10 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-import { AdminInvoiceCustomersPage } from "@/components/admin/invoice-customers/admin-invoice-customers-page";
+import {
+  AddInvoiceCustomerAction,
+  AdminInvoiceCustomersPage,
+} from "@/components/admin/invoice-customers/admin-invoice-customers-page";
 import { INVOICE_CUSTOMERS } from "../../mocks/invoice-customers";
 
 describe("the invoice customers list", () => {
@@ -63,7 +66,7 @@ describe("the invoice customers list", () => {
   });
 
   it("offers the create form from the list", () => {
-    render(<AdminInvoiceCustomersPage customers={[]} settled />);
+    render(<AddInvoiceCustomerAction />);
 
     expect(
       screen.getByRole("link", { name: /addCustomer/ }).getAttribute("href"),

@@ -81,6 +81,7 @@ Every supported country is seeded complete from GeoNames and admins never hand-t
 
 - [ ] **`LocationFormDialog`'s edit mode has no caller.** The admin site page renames a location now, so the hook and the `PATCH /api/admin/locations/[id]` route behind it are live — but the dialog's edit branch is not: its one call site (`src/components/admin/products/site-picker-dialog.tsx`) only ever opens it to add a site. Remove the branch, or point something at it.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.
+- [ ] **A gedu's coverage is read back unbounded, then saved by delete-and-reinsert, so a truncated read would delete ticks silently.** The coverage read (in `src/services/gedu-locations/`) selects every one of a gedu's rows with no count and no paging, and PostgREST stops at `max_rows` (1000) without an error. The editor then shows fewer ticks than are stored, and the next save — which deletes the gedu's whole set and writes back what is on screen — erases the rest, with nothing logged. Nobody ticks 1000 places, so this cannot happen today; it is here because when it does, it fails as lost data rather than as an error. The fix is minutes: walk the read through the shared paging primitive in `src/lib/supabase/`, which requests the exact count and refuses a short result.
 
 ### Family multi-select checkout — one flow for several family members
 
@@ -148,32 +149,6 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 - We do **not** record the customer's presentment currency. `payments`/`family_subscriptions` store EUR (our settlement currency) because, under single-currency settlement, Adaptive Pricing settles us the exact EUR price we set. If you later want "what the customer actually paid", it's in `session.presentment_details` (`presentment_amount` + `presentment_currency`) on the webhook event — capture it then; it needs a small schema add.
 - Stripe `Price` objects are immutable. `getOrCreateSubscriptionPrice` lazily creates one EUR Price per product and **replaces** it when the admin changes the amount, so new checkouts follow the catalogue. Existing subscribers keep the Price they bought on — nothing migrates a live subscription to the new amount, so a club can be advertised at one price while some parents keep paying an older one indefinitely.
 - Legacy `product_prices` rows in non-EUR currencies (from before the lockdown) are harmless and ignored — `existingFormState` only loads the `eur` row.
-
-### E2E Tests with Local Supabase
-
-**There is no E2E suite right now.** The old one was deleted in August 2026: it asserted on marketing copy and unauthenticated redirects, so it churned on every copy edit while catching nothing. What survived is a build + smoke job — it builds the app, serves the production build, and asserts security headers and the per-request CSP over plain HTTP with no browser involved. This section is the plan for adding a *meaningful* browser suite back, from scratch; it is not a hardening of anything that exists.
-
-The coverage worth having is the authenticated half — admin-only pages, role-based routing, CRUD flows. That needs real Supabase Auth + Postgres, and shouldn't depend on the remote instance.
-
-**Approach:** Run `supabase start` in CI to spin up a local Supabase stack (Postgres, Auth, Storage) in Docker. Existing migration files are applied automatically, giving an identical schema. Test accounts are created via `supabase/seed.sql`.
-
-Setup tasks:
-- [ ] Extend `supabase/seed.sql` with a gamer test account — it already carries admin, customer ×2 and gedu accounts (`*@test.local`, password `testpassword123`)
-- [ ] Add `.env.test.local` with local Supabase URL/keys (`supabase start` prints these)
-- [ ] Add a `tests/e2e/` directory and a Playwright project for it — the smoke config is deliberately browserless (one project, no device emulation, no retries, no browser install in CI), so browser tests need their own project rather than being folded into that one
-- [ ] Create a Playwright auth setup project that logs in via the UI and saves `storageState` per role
-- [ ] Add a CI job (separate from build + smoke, which must stay cheap): `supabase start` → build/serve with test env → run the browser projects, installing only the engines that job actually uses
-
-Test cases to add:
-- [ ] Admin can view `/admin/products` (sees "Products" heading)
-- [ ] Non-admin roles (customer, gedu, gamer) are redirected away from `/admin/*` to their own dashboard
-- [ ] Admin can create a product via the add form
-- [ ] Admin can edit an existing product
-- [ ] Real auth flows (register, login, logout)
-- [ ] Customer adding a gamer
-- [ ] Core purchase flow
-
-**Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
 ### Product image renditions — then re-enable AVIF
 

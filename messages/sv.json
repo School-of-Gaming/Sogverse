@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Kommunfakturering",
       "description": "En månad kommunklubbar: vad varje klubb genomförde och vad kommunen ska betala för det.",
       "previousMonth": "Föregående månad",
       "nextMonth": "Nästa månad",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },
     "invoiceCustomers": {
-      "title": "Faktureringskunder",
       "subtitle": "Fennoa-kunderna som en kommunklubbs tillfällen faktureras till.",
       "addCustomer": "Lägg till en kund",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Lovkalendrar",
       "subtitle": "Skollov och andra uppehåll som en klubb kan följa. En klubb har inga träffar under ett uppehålls dagar.",
       "addCalendar": "Lägg till en kalender",
       "columns": {
@@ -945,9 +942,10 @@
         }
       },
       "list": {
-        "subtitle": "Hantera {plural} som administratörer har skapat.",
-        "new": "Nytt {label}",
-        "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
+        "subtitle": "Hantera de klubbar, läger och evenemang som administratörer har skapat.",
+        "new": "{type, select, consumerClub {Ny konsumentklubb} municipalityClub {Ny kommunklubb} camp {Nytt läger} other {Nytt evenemang}}",
+        "empty": "{type, select, consumerClub {Inga konsumentklubbar än. Klicka på Ny konsumentklubb för att skapa en.} municipalityClub {Inga kommunklubbar än. Klicka på Ny kommunklubb för att skapa en.} camp {Inga läger än. Klicka på Nytt läger för att skapa ett.} other {Inga evenemang än. Klicka på Nytt evenemang för att skapa ett.}}",
+        "emptyAll": "Inga klubbar, läger eller evenemang än.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
         "online": "På distans",
@@ -958,15 +956,17 @@
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
           "startDate": "Startar {date}"
-        }
+        },
+        "newAny": "Ny",
+        "newDialogTitle": "Skapa en klubb, ett läger eller ett evenemang"
       },
       "translations": {
         "label": "Språk",
         "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt."
       },
       "newPage": {
-        "back": "Tillbaka till {plural}",
-        "title": "Nytt {label}"
+        "back": "Tillbaka till {type, select, consumerClub {konsumentklubbarna} municipalityClub {kommunklubbarna} camp {lägren} other {evenemangen}}",
+        "title": "{type, select, consumerClub {Ny konsumentklubb} municipalityClub {Ny kommunklubb} camp {Nytt läger} other {Nytt evenemang}}"
       },
       "detailsPage": {
         "notFound": "Produkten kunde inte hittas.",
@@ -1026,12 +1026,12 @@
       },
       "editPage": {
         "back": "Tillbaka till produkten",
-        "kicker": "Redigera {label}",
+        "kicker": "Redigera {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}",
         "title": "Redigera {name}"
       },
       "clonePage": {
         "back": "Tillbaka till produkten",
-        "kicker": "Klona {label}",
+        "kicker": "Klona {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}",
         "title": "Klonar {name}",
         "copySuffix": " (kopia)"
       },
@@ -1263,7 +1263,7 @@
       },
       "actions": {
         "cancel": "Avbryt",
-        "createLabel": "Skapa {label}"
+        "createLabel": "Skapa {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}"
       },
       "status": {
         "pending": "Väntar på start",
@@ -1432,11 +1432,14 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
+        "type": "Typ",
+        "allTypes": "Alla",
         "search": "Sök",
         "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
         "clear": "Rensa",
-        "noMatches": "Inga {plural} matchar sökningen och de valda filtren."
+        "noMatches": "Inga {type, select, consumerClub {konsumentklubbar} municipalityClub {kommunklubbar} camp {läger} other {evenemang}} matchar sökningen och de valda filtren.",
+        "noMatchesAll": "Inget matchar sökningen och de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",
@@ -1824,7 +1827,6 @@
       "addType": "Lägg till {type}"
     },
     "sites": {
-      "title": "Lokaler",
       "subtitle": "Alla lokaler på plattformen och produkterna som körs i var och en.",
       "addSite": "Lägg till en lokal",
       "searchPlaceholder": "Sök lokal på namn…",
@@ -3098,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedufakturering",
     "adminDescription": "En månad: de tillfällen varje Gedu har registrerat och vad hen fakturerar School of Gaming för dem.",
     "myTitle": "Fakturering",
     "myDescription": "Vad du fakturerar School of Gaming för, en månad i taget. Ett tillfälle räknas med när något har registrerats för det – närvaro, en rapport eller en anteckning.",
@@ -3716,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Instrumentpanel",
     "users": "Användare",
-    "consumerClubs": "Konsumentklubbar",
-    "municipalityClubs": "Kommunklubbar",
-    "municipalityInvoicing": "Kommunfakturering",
-    "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
     "spotlights": "Spotlights",
     "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
-    "geduInvoicing": "Gedufakturering",
-    "camps": "Läger",
-    "events": "Evenemang",
-    "sites": "Lokaler",
     "uiComponents": "UI-komponenter",
     "uiPreviews": "UI-förhandsvisningar",
     "testing": "Testning",
@@ -3736,7 +3729,22 @@
     "collapseSidebar": "Minimera sidopanel",
     "substitutions": "Vikariat",
     "feedback": "Feedback",
-    "holidayCalendars": "Lovkalendrar"
+    "products": "Produkter",
+    "invoicing": "Fakturering"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Klubbar, läger och evenemang",
+      "invoicing": "Fakturering"
+    },
+    "tabs": {
+      "products": "Produkter",
+      "sites": "Lokaler",
+      "holidayCalendars": "Lovkalendrar",
+      "municipalities": "Kommuner",
+      "invoiceCustomers": "Faktureringskunder",
+      "gedus": "Geduer"
+    }
   },
   "home": {
     "hero": {

@@ -56,95 +56,94 @@ export function AdminHolidayCalendarsPage({
   const locale = resolveLocale(useLocale());
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
+    <Card>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[42rem] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <th scope="col" className="px-3 py-2 font-medium">
+                  {t("columns.name")}
+                </th>
+                <th scope="col" className="w-24 px-3 py-2 font-medium">
+                  {t("columns.breaks")}
+                </th>
+                <th scope="col" className="px-3 py-2 font-medium">
+                  {t("columns.nextBreak")}
+                </th>
+                <th scope="col" className="w-24 px-3 py-2 font-medium">
+                  {t("columns.clubs")}
+                </th>
+                {/* The chevron's column, unlabelled: it holds a decorative
+                    mark rather than data. */}
+                <th scope="col" className="w-8 px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {calendars.map((calendar) => {
+                const next = nextBreak(calendar.breaks, today);
+                return (
+                  <tr
+                    key={calendar.id}
+                    className="group relative border-b border-border transition-colors last:border-b-0 hover:bg-hover focus-within:bg-lifted"
+                  >
+                    <td className="px-3 py-2">
+                      <Link
+                        href={ROUTES.admin.holidayCalendar(calendar.id)}
+                        className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                      >
+                        {calendar.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 tabular-nums text-muted-foreground">
+                      {calendar.breaks.length}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {next === null ? (
+                        t("noUpcomingBreak")
+                      ) : (
+                        <>
+                          <span className="text-foreground">
+                            {breakName(next, locale)}
+                          </span>{" "}
+                          {formatDateRange(next.startDate, next.endDate, locale)}
+                        </>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 tabular-nums text-muted-foreground">
+                      {calendar.productCount}
+                    </td>
+                    <td className="w-8 px-3 py-2">
+                      <NavChevron size="sm" />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-        <Link
-          href={ROUTES.admin.holidayCalendarNew}
-          className={buttonVariants({ className: "gap-1.5" })}
-        >
-          <Plus className="h-4 w-4" />
-          {t("addCalendar")}
-        </Link>
-      </div>
 
-      <Card>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[42rem] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wider text-muted-foreground">
-                  <th scope="col" className="px-3 py-2 font-medium">
-                    {t("columns.name")}
-                  </th>
-                  <th scope="col" className="w-24 px-3 py-2 font-medium">
-                    {t("columns.breaks")}
-                  </th>
-                  <th scope="col" className="px-3 py-2 font-medium">
-                    {t("columns.nextBreak")}
-                  </th>
-                  <th scope="col" className="w-24 px-3 py-2 font-medium">
-                    {t("columns.clubs")}
-                  </th>
-                  {/* The chevron's column, unlabelled: it holds a decorative
-                      mark rather than data. */}
-                  <th scope="col" className="w-8 px-3 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {calendars.map((calendar) => {
-                  const next = nextBreak(calendar.breaks, today);
-                  return (
-                    <tr
-                      key={calendar.id}
-                      className="group relative border-b border-border transition-colors last:border-b-0 hover:bg-hover focus-within:bg-lifted"
-                    >
-                      <td className="px-3 py-2">
-                        <Link
-                          href={ROUTES.admin.holidayCalendar(calendar.id)}
-                          className="rounded font-medium after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-                        >
-                          {calendar.name}
-                        </Link>
-                      </td>
-                      <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                        {calendar.breaks.length}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {next === null ? (
-                          t("noUpcomingBreak")
-                        ) : (
-                          <>
-                            <span className="text-foreground">
-                              {breakName(next, locale)}
-                            </span>{" "}
-                            {formatDateRange(next.startDate, next.endDate, locale)}
-                          </>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 tabular-nums text-muted-foreground">
-                        {calendar.productCount}
-                      </td>
-                      <td className="w-8 px-3 py-2">
-                        <NavChevron size="sm" />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {settled && calendars.length === 0 && (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            {t("empty")}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-          {settled && calendars.length === 0 && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+/** The page's create control, the hub's `action`. */
+export function AddHolidayCalendarAction() {
+  const t = useTranslations("admin.holidayCalendars");
+
+  return (
+    <Link
+      href={ROUTES.admin.holidayCalendarNew}
+      className={buttonVariants({ className: "gap-1.5" })}
+    >
+      <Plus className="h-4 w-4" />
+      {t("addCalendar")}
+    </Link>
   );
 }

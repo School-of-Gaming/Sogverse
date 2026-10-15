@@ -27,7 +27,6 @@ export interface ProductTypeConfig {
   productType: ProductType;
   /** i18n key under admin.products.types (label + plural) */
   i18nKey: "consumerClub" | "municipalityClub" | "camp" | "event";
-  routeSlug: string; // "consumer-clubs"
   scheduleShape: ScheduleShape;
   billing: BillingOption;
   pricingShape: PricingShape;
@@ -88,7 +87,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
   consumer_club: {
     productType: "consumer_club",
     i18nKey: "consumerClub",
-    routeSlug: "consumer-clubs",
     scheduleShape: "weekly_ongoing",
     // Free-or-paid, defaulting to paid. A free club enrols exactly like a free
     // event — the enrollment path branches on billing_mode, never on type — so
@@ -107,7 +105,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
   municipality_club: {
     productType: "municipality_club",
     i18nKey: "municipalityClub",
-    routeSlug: "municipality-clubs",
     scheduleShape: "weekly_bounded",
     billing: { mode: "external_contract", required: true },
     pricingShape: "external",
@@ -124,7 +121,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
   camp: {
     productType: "camp",
     i18nKey: "camp",
-    routeSlug: "camps",
     scheduleShape: "multi_day_bounded",
     // Free-or-paid, defaulting to paid — the same chooser clubs and events get.
     // A free camp signs up through the billing_mode branch every free product
@@ -142,7 +138,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
   event: {
     productType: "event",
     i18nKey: "event",
-    routeSlug: "events",
     // Events default to free; switching to paid uses upfront_total. The
     // pricing card only renders when the effective billing mode is "paid".
     pricingShape: "upfront_total",
@@ -183,11 +178,4 @@ export function effectiveBillingMode(
 ): BillingMode {
   if (config.billing.mode === "external_contract") return "external_contract";
   return paidMode === "free" ? "free" : "paid";
-}
-
-export function productTypeFromSlug(slug: string): ProductType | null {
-  const entry = Object.values(PRODUCT_TYPE_CONFIG).find(
-    (c) => c.routeSlug === slug
-  );
-  return entry?.productType ?? null;
 }

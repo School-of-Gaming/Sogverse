@@ -474,7 +474,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "veng DIlmeH ghItlh",
       "description": "wa’ jar ghomHom veng: nuq qaSpu’, ’ej nuq DIlnIS veng.",
       "previousMonth": "jar wa’Dich",
       "nextMonth": "jar veb",
@@ -519,7 +518,6 @@
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
     },
     "invoiceCustomers": {
-      "title": "DIlwI’pu’",
       "subtitle": "Fennoa DIlwI’pu’: veng ghomHom qaSpu’ DIlbogh ghotpu’.",
       "addCustomer": "DIlwI’ yIchel",
       "columns": {
@@ -580,7 +578,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "DuQ jaj Hovtay'",
       "subtitle": "Warriors rest too. On these days the club does not meet — even Kahless took a break.",
       "addCalendar": "Hovtay' chel",
       "columns": {
@@ -989,9 +986,10 @@
         }
       },
       "list": {
-        "subtitle": "{plural} yIQI’.",
-        "new": "{label} chu’",
-        "empty": "{plural} pagh. {label} chu’ yIchu’.",
+        "subtitle": "ghomHom, pa’ Qugh, Qu’mey je yIQI’.",
+        "new": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} chu’",
+        "empty": "{type, select, consumerClub {ghomHom tlhIngan pagh. ghomHom tlhIngan chu’ yIchu’.} municipalityClub {ghomHom veng pagh. ghomHom veng chu’ yIchu’.} camp {pa’ Qugh pagh. pa’ Qugh chu’ yIchu’.} other {Qu’mey pagh. Qu’ chu’ yIchu’.}}",
+        "emptyAll": "ghomHom pagh, pa’ Qugh pagh, Qu’mey pagh.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
         "online": "HeHDaq",
@@ -1002,15 +1000,17 @@
         "pendingHint": {
           "registrationOpens": "{date}: ghIt poSchoH",
           "startDate": "{date}: tagh"
-        }
+        },
+        "newAny": "chu’",
+        "newDialogTitle": "ghomHom, pa’ Qugh, Qu’ ghap yIchenmoH"
       },
       "translations": {
         "label": "Hol",
         "hint": "Hol DIchu’. wa’ DoS DIchu’ poQ. vavmey Hol vIqIm; pagh, DIvI’ Hol; pagh, Hol DIchu’bogh."
       },
       "newPage": {
-        "back": "{plural} vIcheghmoH",
-        "title": "{label} chu’"
+        "back": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} vIcheghmoH",
+        "title": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} chu’"
       },
       "detailsPage": {
         "notFound": "Davchugh ghaj.",
@@ -1070,12 +1070,12 @@
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
-        "kicker": "{label} yIchoH",
+        "kicker": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIchoH",
         "title": "{name} yIchoH"
       },
       "clonePage": {
         "back": "Doch vIcheghmoH",
-        "kicker": "{label} yIvelqa’",
+        "kicker": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIvelqa’",
         "title": "{name} velqa’lu’",
         "copySuffix": " (velqa’)"
       },
@@ -1307,7 +1307,7 @@
       },
       "actions": {
         "cancel": "pegh",
-        "createLabel": "{label} yIchu’"
+        "createLabel": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIchu’"
       },
       "status": {
         "pending": "taghbe’",
@@ -1476,11 +1476,14 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
+        "type": "Segh",
+        "allTypes": "Hoch",
         "search": "nej",
         "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
         "clear": "yIteq",
-        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!"
+        "noMatches": "pagh {type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} DaSamlaH. yInej 'ej yIwIv latlh!",
+        "noMatchesAll": "pagh DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj ’ehmaH yInej…",
@@ -1868,7 +1871,6 @@
       "addType": "{type} yIchel"
     },
     "sites": {
-      "title": "Daqmey",
       "subtitle": "Hoch Daqmey, ’ej Daq HochvaD qaStaHbogh wanI’mey.",
       "addSite": "Daq yIchel",
       "searchPlaceholder": "Daq pong yIghItlh…",
@@ -3138,7 +3140,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedu DIlmeH ghItlh",
     "adminDescription": "wa’ jar: SeSSIy’mey ghItlhlu’pu’bogh Gedu Hoch, ’ej School of Gaming DIlmeH nuq poQ.",
     "myTitle": "DIlmeH ghItlh",
     "myDescription": "School of Gaming DIlmeH nuq DapoQ, wa’ jar neH. SeSSIy’ ghItlhlu’DI’ vaj togh — ghoS, ja’ pagh qonta’.",
@@ -3756,18 +3757,10 @@
   "sidebar": {
     "dashboard": "QaD",
     "users": "lo’wI’pu’",
-    "consumerClubs": "ghomHom tlhIngan",
-    "municipalityClubs": "ghomHom veng",
-    "municipalityInvoicing": "veng DIlmeH ghItlh",
-    "invoiceCustomers": "DIlwI’pu’",
     "libraryContent": "paq qach ghItlhmey",
     "spotlights": "Hovmey",
     "landingPages": "Sap ghItlhmey",
     "platformVision": "Sogverse naj",
-    "geduInvoicing": "Gedu DIlmeH ghItlh",
-    "camps": "pa’ Qugh",
-    "events": "Qu’mey",
-    "sites": "Daqmey",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
     "testing": "Qu’ nI’moH",
@@ -3776,7 +3769,22 @@
     "collapseSidebar": "HeDmey SoQmoH",
     "substitutions": "lIwmey",
     "feedback": "ja'chuq",
-    "holidayCalendars": "DuQ jaj Hovtay'"
+    "products": "Doch",
+    "invoicing": "DIlmeH ghItlh"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "ghomHom, pa’ Qugh, Qu’mey je",
+      "invoicing": "DIlmeH ghItlh"
+    },
+    "tabs": {
+      "products": "Doch",
+      "sites": "Daqmey",
+      "holidayCalendars": "DuQ jaj Hovtay'",
+      "municipalities": "vengmey",
+      "invoiceCustomers": "DIlwI’pu’",
+      "gedus": "Gedupu’"
+    }
   },
   "home": {
     "hero": {

@@ -27,8 +27,7 @@ export function NewProductPage({
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
-  const label = t(`types.${config.i18nKey}.label`);
-  const plural = t(`types.${config.i18nKey}.plural`);
+  const type = config.i18nKey;
 
   const isCloning = !!cloneFrom;
 
@@ -52,7 +51,7 @@ export function NewProductPage({
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        {t("newPage.back", { plural })}
+        {t("newPage.back", { type })}
       </Link>
 
       <div>
@@ -62,14 +61,14 @@ export function NewProductPage({
             here would just repeat it. */}
         {isCloning && (
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {t("clonePage.kicker", { label: label.toLowerCase() })}
+            {t("clonePage.kicker", { type })}
           </p>
         )}
         <h1
           className={`${isCloning ? "mt-1 " : ""}text-2xl font-bold tracking-tight sm:text-3xl`}
         >
           {!isCloning
-            ? t("newPage.title", { label })
+            ? t("newPage.title", { type })
             : source
               ? t("clonePage.title", {
                   name:

@@ -2,7 +2,9 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import { AdminGeduInvoicingPage } from "@/components/gedu-invoicing/admin-gedu-invoicing-page";
 import { MyGeduInvoicingPage } from "@/components/gedu-invoicing/my-gedu-invoicing-page";
 import {
@@ -35,6 +37,7 @@ export function AdminGeduInvoicingScene({
 }: {
   scenario: AdminGeduInvoicingPreviewScenario;
 }) {
+  const t = useTranslations("geduInvoicing");
   const monthStart = usePreviewMonth();
   const snapshot = useMemo(
     () => geduInvoicingMonthFixture(monthStart),
@@ -43,12 +46,17 @@ export function AdminGeduInvoicingScene({
 
   return (
     <FixtureQueryClient>
-      <AdminGeduInvoicingPage
-        monthStart={monthStart}
-        initialSnapshot={snapshot}
-        now={GEDU_INVOICING_NOW}
-        monthHref={(month) => adminPreviewMonthHref(scenario, month)}
-      />
+      {/* The hub the live route renders it in, with the route's description.
+          No tab reads as current here, since the scene's path is none of the
+          hub's. */}
+      <AdminHub hub="invoicing" description={t("adminDescription")}>
+        <AdminGeduInvoicingPage
+          monthStart={monthStart}
+          initialSnapshot={snapshot}
+          now={GEDU_INVOICING_NOW}
+          monthHref={(month) => adminPreviewMonthHref(scenario, month)}
+        />
+      </AdminHub>
     </FixtureQueryClient>
   );
 }

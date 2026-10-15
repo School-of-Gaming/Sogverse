@@ -177,13 +177,10 @@ export function MunicipalityInvoicingPage({
     invoice.municipalities.every((one) => openKeys.has(one.id));
 
   return (
-    // The scroll gutter is reserved because expanding a municipality is itself
-    // what makes the document scrollbar appear: without it, the reader's own
-    // click narrows the page under the figures they were reading and moves every
-    // one of them sideways.
-    <div className="space-y-3 pb-12" data-reserve-scroll-gutter>
-      <MunicipalityInvoicingHeading />
-
+    // The scroll gutter this page needs — expanding a municipality is itself
+    // what makes the document scrollbar appear — is reserved by the hub it
+    // renders in.
+    <div className="space-y-3 pb-12">
       {/* At least as tall as the small button, so a month with nothing to
           expand does not lose it and pull the stepper up the page. */}
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
@@ -275,33 +272,6 @@ const NO_SNAPSHOTS: readonly MunicipalityInvoicingSnapshot[] = [];
 /** The live page's own answer: another month of this route. */
 function adminMonthHref(month: string): MonthHref {
   return { pathname: ROUTES.admin.municipalityInvoicing, query: { month } };
-}
-
-/**
- * The page's title and its one-line description — the two things on it that wait
- * on nothing.
- *
- * It is a component rather than two lines written out twice, because the route
- * renders them above a failed read as well, where there is no invoice to put
- * underneath. The two copies had already drifted apart — a display heading over
- * the failure, a working-surface heading over the ledger — and a page whose title
- * changes size depending on whether the month loaded looks broken in exactly the
- * state where the reader is already being told that something went wrong.
- *
- * The size is the smallest that still reads as the page's own title: this is a
- * working surface rather than a page somebody arrives at, and a display heading
- * over a dense ledger spends a tenth of the first screen naming what the sidebar
- * named already.
- */
-export function MunicipalityInvoicingHeading() {
-  const t = useTranslations("admin.municipalityInvoicing");
-
-  return (
-    <div>
-      <h1 className="text-xl font-semibold">{t("title")}</h1>
-      <p className="text-sm text-muted-foreground">{t("description")}</p>
-    </div>
-  );
 }
 
 /**

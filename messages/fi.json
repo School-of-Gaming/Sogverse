@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Kuntalaskutus",
       "description": "Kuukauden kuntakerhot: montako kertaa kukin kokoontui ja mitä kunta maksaa niistä.",
       "previousMonth": "Edellinen kuukausi",
       "nextMonth": "Seuraava kuukausi",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
     },
     "invoiceCustomers": {
-      "title": "Laskutusasiakkaat",
       "subtitle": "Fennoa-asiakkaat, joille kuntakerhojen kerrat laskutetaan.",
       "addCustomer": "Lisää asiakas",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Lomakalenterit",
       "subtitle": "Koulujen lomat ja muut tauot, joita kerho voi noudattaa. Kerholla ei ole kertoja tauon päivinä.",
       "addCalendar": "Lisää kalenteri",
       "columns": {
@@ -945,9 +942,10 @@
         }
       },
       "list": {
-        "subtitle": "Hallinnoi ylläpitäjien luomia kohteita ({plural}).",
-        "new": "Uusi {label}",
-        "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
+        "subtitle": "Hallinnoi ylläpitäjien luomia kerhoja, leirejä ja tapahtumia.",
+        "new": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}",
+        "empty": "{type, select, consumerClub {Ei vielä kuluttajakerhoja. Luo uusi painamalla Uusi kuluttajakerho.} municipalityClub {Ei vielä kuntakerhoja. Luo uusi painamalla Uusi kuntakerho.} camp {Ei vielä leirejä. Luo uusi painamalla Uusi leiri.} other {Ei vielä tapahtumia. Luo uusi painamalla Uusi tapahtuma.}}",
+        "emptyAll": "Kerhoja, leirejä tai tapahtumia ei ole vielä.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
         "online": "Etänä",
@@ -958,15 +956,17 @@
         "pendingHint": {
           "registrationOpens": "Ilmoittautuminen aukeaa {date}",
           "startDate": "Alkaa {date}"
-        }
+        },
+        "newAny": "Uusi",
+        "newDialogTitle": "Luo kerho, leiri tai tapahtuma"
       },
       "translations": {
         "label": "Kielet",
         "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty."
       },
       "newPage": {
-        "back": "Takaisin: {plural}",
-        "title": "Uusi {label}"
+        "back": "Takaisin {type, select, consumerClub {kuluttajakerhoihin} municipalityClub {kuntakerhoihin} camp {leireihin} other {tapahtumiin}}",
+        "title": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
       },
       "detailsPage": {
         "notFound": "Tuotetta ei löytynyt.",
@@ -1026,12 +1026,12 @@
       },
       "editPage": {
         "back": "Takaisin tuotteeseen",
-        "kicker": "Muokkaa: {label}",
+        "kicker": "Muokkaa {type, select, consumerClub {kuluttajakerhoa} municipalityClub {kuntakerhoa} camp {leiriä} other {tapahtumaa}}",
         "title": "Muokkaa: {name}"
       },
       "clonePage": {
         "back": "Takaisin tuotteeseen",
-        "kicker": "Kloonaa: {label}",
+        "kicker": "Kloonaa {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}",
         "title": "Kloonataan: {name}",
         "copySuffix": " (kopio)"
       },
@@ -1263,7 +1263,7 @@
       },
       "actions": {
         "cancel": "Peruuta",
-        "createLabel": "Luo {label}"
+        "createLabel": "Luo {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
       },
       "status": {
         "pending": "Odottaa alkua",
@@ -1432,11 +1432,14 @@
         "searchGedu": "Hae Geduja…",
         "searchMunicipality": "Hae kuntia…",
         "noResults": "Ei osumia.",
+        "type": "Tyyppi",
+        "allTypes": "Kaikki",
         "search": "Haku",
         "searchPlaceholder": "Hae nimellä…",
         "showing": "Näytetään {count} / {total}",
         "clear": "Tyhjennä",
-        "noMatches": "{plural} eivät vastaa hakua ja valittuja suodattimia."
+        "noMatches": "Yksikään {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}} ei vastaa hakua ja valittuja suodattimia.",
+        "noMatchesAll": "Mikään ei vastaa hakua ja valittuja suodattimia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
@@ -1824,7 +1827,6 @@
       "addType": "Lisää {type}"
     },
     "sites": {
-      "title": "Toimipisteet",
       "subtitle": "Kaikki alustan toimipisteet ja kussakin pyörivät tuotteet.",
       "addSite": "Lisää toimipiste",
       "searchPlaceholder": "Hae toimipistettä nimellä…",
@@ -3098,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedujen laskutus",
     "adminDescription": "Kuukausi: kunkin Gedun kirjaamat kerrat ja mitä hän laskuttaa niistä School of Gamingilta.",
     "myTitle": "Laskutus",
     "myDescription": "Mitä laskutat School of Gamingilta, kuukausi kerrallaan. Kerta lasketaan mukaan, kun siitä on kirjattu jotain – läsnäolot, raportti tai muistiinpano.",
@@ -3716,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",
-    "consumerClubs": "Kuluttajakerhot",
-    "municipalityClubs": "Kuntakerhot",
-    "municipalityInvoicing": "Kuntalaskutus",
-    "invoiceCustomers": "Laskutusasiakkaat",
     "libraryContent": "Kirjaston sisältö",
     "spotlights": "Nostot",
     "landingPages": "Laskeutumissivut",
     "platformVision": "Alustan visio",
-    "geduInvoicing": "Gedujen laskutus",
-    "camps": "Leirit",
-    "events": "Tapahtumat",
-    "sites": "Toimipisteet",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
     "testing": "Testaus",
@@ -3736,7 +3729,22 @@
     "collapseSidebar": "Pienennä sivupalkki",
     "substitutions": "Tuuraukset",
     "feedback": "Palaute",
-    "holidayCalendars": "Lomakalenterit"
+    "products": "Tuotteet",
+    "invoicing": "Laskutus"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Kerhot, leirit ja tapahtumat",
+      "invoicing": "Laskutus"
+    },
+    "tabs": {
+      "products": "Tuotteet",
+      "sites": "Toimipisteet",
+      "holidayCalendars": "Lomakalenterit",
+      "municipalities": "Kunnat",
+      "invoiceCustomers": "Laskutusasiakkaat",
+      "gedus": "Gedut"
+    }
   },
   "home": {
     "hero": {

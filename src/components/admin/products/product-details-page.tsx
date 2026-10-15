@@ -119,7 +119,6 @@ export function ProductDetailsPage({
   const now = useNow();
   const topicLabel = useTopicLabel();
   const label = t(`types.${config.i18nKey}.label`);
-  const plural = t(`types.${config.i18nKey}.plural`);
 
   const { data: product, isLoading: productLoading } =
     useProductAdmin(productId);
@@ -149,7 +148,7 @@ export function ProductDetailsPage({
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t("newPage.back", { plural })}
+          {t("newPage.back", { type: config.i18nKey })}
         </Link>
         <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
         <div className="h-24 animate-pulse rounded-lg border border-border bg-lifted" />
@@ -165,7 +164,7 @@ export function ProductDetailsPage({
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t("newPage.back", { plural })}
+          {t("newPage.back", { type: config.i18nKey })}
         </Link>
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
@@ -203,7 +202,7 @@ export function ProductDetailsPage({
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        {t("newPage.back", { plural })}
+        {t("newPage.back", { type: config.i18nKey })}
       </Link>
 
       <HeaderCard

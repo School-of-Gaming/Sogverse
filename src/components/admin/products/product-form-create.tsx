@@ -37,7 +37,6 @@ export function ProductFormCreate({
   const router = useRouter();
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
-  const label = t(`types.${config.i18nKey}.label`);
   const createProduct = useCreateProduct();
 
   return (
@@ -46,7 +45,7 @@ export function ProductFormCreate({
       initialFormState={initialFormState ?? initialState(config, uiLocale)}
       initialImage={initialImage}
       isEdit={false}
-      submitLabel={t("actions.createLabel", { label: label.toLowerCase() })}
+      submitLabel={t("actions.createLabel", { type: config.i18nKey })}
       onCancel={() => router.push(ROUTES.admin.productList(productType))}
       onSubmit={async (state) => {
         const input = buildCreateInput(state, productType, config);

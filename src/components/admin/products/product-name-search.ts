@@ -1,6 +1,7 @@
 /**
- * The admin product list's free-text search: a case-insensitive substring match
- * over a product's name.
+ * The admin club-switch picker's free-text search: a case-insensitive substring
+ * match over a product's name. (The admin product list asks the same question
+ * of the server, as an `ilike` over every one of a product's names.)
  *
  * **Every locale's name is matched, not just the viewer's.** A product is
  * authored once and named in each locale it sells in, and the admin who created
@@ -18,7 +19,7 @@
  * wanted.
  */
 
-/** The columns the matcher reads; the admin list row satisfies it unchanged. */
+/** The columns the matcher reads; an admin product row satisfies it unchanged. */
 export interface ProductNameSearchSource {
   product_translations: { name: string }[];
 }

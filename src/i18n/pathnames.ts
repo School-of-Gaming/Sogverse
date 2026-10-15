@@ -224,6 +224,7 @@ export const PATHNAMES = {
   "/admin/municipality-clubs/[id]/groups/[groupId]":
     "/admin/municipality-clubs/[id]/groups/[groupId]",
   "/admin/municipality-invoicing": "/admin/municipality-invoicing",
+  "/admin/products": "/admin/products",
   "/admin/platform-vision": "/admin/platform-vision",
   "/admin/feedback": "/admin/feedback",
   "/admin/feedback/products": "/admin/feedback/products",

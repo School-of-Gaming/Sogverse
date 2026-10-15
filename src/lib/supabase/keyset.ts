@@ -77,8 +77,11 @@ const ID = "id";
  * different filter. The same rule is stated once more server-side for the
  * partner API's cursors (`src/lib/api/`), which cannot be imported here: that
  * module is server-only and this one runs in the browser. Fix one, fix both.
+ *
+ * Exported for any other logic tree a browser read builds from a value it does
+ * not control — an `or` scoped to an embed takes the same grammar.
  */
-function quoteFilterValue(value: string): string {
+export function quoteFilterValue(value: string): string {
   return `"${value.replace(/[\\"]/g, (char) => `\\${char}`)}"`;
 }
 

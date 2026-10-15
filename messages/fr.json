@@ -430,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Facturation municipale",
       "description": "Un mois de clubs municipaux : ce que chacun a assuré, et ce que la commune doit pour cela.",
       "previousMonth": "Mois précédent",
       "nextMonth": "Mois suivant",
@@ -475,7 +474,6 @@
       "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
     },
     "invoiceCustomers": {
-      "title": "Clients de facturation",
       "subtitle": "Les clients Fennoa à qui les séances d’un club municipal sont facturées.",
       "addCustomer": "Ajouter un client",
       "columns": {
@@ -536,7 +534,6 @@
       }
     },
     "holidayCalendars": {
-      "title": "Calendriers de vacances",
       "subtitle": "Les vacances scolaires et autres pauses qu’un club peut suivre. Un club n’a aucune séance pendant les jours d’une pause.",
       "addCalendar": "Ajouter un calendrier",
       "columns": {
@@ -928,26 +925,27 @@
     "products": {
       "types": {
         "consumerClub": {
-          "label": "club grand public",
-          "plural": "clubs grand public"
+          "label": "Club grand public",
+          "plural": "Clubs grand public"
         },
         "municipalityClub": {
-          "label": "club municipal",
-          "plural": "clubs municipaux"
+          "label": "Club municipal",
+          "plural": "Clubs municipaux"
         },
         "camp": {
-          "label": "stage",
-          "plural": "stages"
+          "label": "Stage",
+          "plural": "Stages"
         },
         "event": {
-          "label": "événement",
-          "plural": "événements"
+          "label": "Événement",
+          "plural": "Événements"
         }
       },
       "list": {
-        "subtitle": "Gérez les {plural} créés par les administrateurs.",
-        "new": "Ajouter un {label}",
-        "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
+        "subtitle": "Gérez les clubs, stages et événements créés par les administrateurs.",
+        "new": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}",
+        "empty": "{type, select, consumerClub {Pas encore de clubs grand public. Cliquez sur « Ajouter un club grand public » pour en créer un.} municipalityClub {Pas encore de clubs municipaux. Cliquez sur « Ajouter un club municipal » pour en créer un.} camp {Pas encore de stages. Cliquez sur « Ajouter un stage » pour en créer un.} other {Pas encore d’événements. Cliquez sur « Ajouter un événement » pour en créer un.}}",
+        "emptyAll": "Pas encore de clubs, de stages ni d’événements.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
         "online": "En ligne",
@@ -958,15 +956,17 @@
         "pendingHint": {
           "registrationOpens": "Ouverture des inscriptions le {date}",
           "startDate": "Début le {date}"
-        }
+        },
+        "newAny": "Ajouter",
+        "newDialogTitle": "Créer un club, un stage ou un événement"
       },
       "translations": {
         "label": "Langues",
         "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée."
       },
       "newPage": {
-        "back": "Retour aux {plural}",
-        "title": "Ajouter un {label}"
+        "back": "Retour aux {type, select, consumerClub {clubs grand public} municipalityClub {clubs municipaux} camp {stages} other {événements}}",
+        "title": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
       },
       "detailsPage": {
         "notFound": "Produit introuvable.",
@@ -1026,12 +1026,12 @@
       },
       "editPage": {
         "back": "Retour au produit",
-        "kicker": "Modifier {label}",
+        "kicker": "Modifier {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
         "title": "Modifier {name}"
       },
       "clonePage": {
         "back": "Retour au produit",
-        "kicker": "Dupliquer {label}",
+        "kicker": "Dupliquer {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
         "title": "Duplication de {name}",
         "copySuffix": " (copie)"
       },
@@ -1263,7 +1263,7 @@
       },
       "actions": {
         "cancel": "Annuler",
-        "createLabel": "Créer un {label}"
+        "createLabel": "Créer un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
       },
       "status": {
         "pending": "En attente de démarrage",
@@ -1432,11 +1432,14 @@
         "searchGedu": "Rechercher des Gedus…",
         "searchMunicipality": "Rechercher des communes…",
         "noResults": "Aucun résultat.",
+        "type": "Type",
+        "allTypes": "Tous",
         "search": "Recherche",
         "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
         "clear": "Effacer",
-        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés."
+        "noMatches": "Aucun {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}} ne correspond à la recherche et aux filtres sélectionnés.",
+        "noMatchesAll": "Rien ne correspond à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
         "searchPlaceholder": "Rechercher un nom ou un e-mail…",
@@ -1824,7 +1827,6 @@
       "addType": "Ajouter {type}"
     },
     "sites": {
-      "title": "Sites",
       "subtitle": "Tous les sites de la plateforme et les produits qui s’y déroulent.",
       "addSite": "Ajouter un site",
       "searchPlaceholder": "Rechercher un site par son nom…",
@@ -3098,7 +3100,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Facturation des Gedus",
     "adminDescription": "Un mois : les séances enregistrées par chaque Gedu, et le montant facturé à School of Gaming pour celles-ci.",
     "myTitle": "Facturation",
     "myDescription": "Ce que vous facturez à School of Gaming, mois par mois. Une séance est comptée dès que quelque chose est enregistré pour elle : présences, compte rendu ou note.",
@@ -3716,18 +3717,10 @@
   "sidebar": {
     "dashboard": "Tableau de bord",
     "users": "Utilisateurs",
-    "consumerClubs": "Clubs grand public",
-    "municipalityClubs": "Clubs municipaux",
-    "municipalityInvoicing": "Facturation municipale",
-    "invoiceCustomers": "Clients de facturation",
     "libraryContent": "Contenu de la Bibliothèque",
     "spotlights": "Mises en avant",
     "landingPages": "Pages d’atterrissage",
     "platformVision": "Vision de la plateforme",
-    "geduInvoicing": "Facturation des Gedus",
-    "camps": "Stages",
-    "events": "Événements",
-    "sites": "Sites",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "testing": "Tests",
@@ -3736,7 +3729,22 @@
     "collapseSidebar": "Replier la barre latérale",
     "substitutions": "Remplacements",
     "feedback": "Avis",
-    "holidayCalendars": "Calendriers de vacances"
+    "products": "Produits",
+    "invoicing": "Facturation"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Clubs, stages et événements",
+      "invoicing": "Facturation"
+    },
+    "tabs": {
+      "products": "Produits",
+      "sites": "Sites",
+      "holidayCalendars": "Calendriers de vacances",
+      "municipalities": "Municipalités",
+      "invoiceCustomers": "Clients de facturation",
+      "gedus": "Gedus"
+    }
   },
   "home": {
     "hero": {

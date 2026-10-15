@@ -1,76 +1,159 @@
 "use client";
 
+import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useProductsByType } from "@/services/products";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { NavChevron } from "@/components/ui/nav-chevron";
+import { useRoutedUrlParamState } from "@/components/admin/admin-list-url-state";
+import {
+  PRODUCT_TYPE_ORDER,
+  PRODUCT_TYPE_PRESENTATION,
+} from "@/components/admin/dashboard/product-type-presentation";
+import { useProductListFacets } from "@/services/products";
+import {
+  parseAdminProductSlug,
+  adminProductSlug,
+} from "@/lib/products/admin-product-list-type";
 import { ProductListFilters } from "./product-list-filters";
+import { PRODUCT_LIST_PARAMS } from "./product-list-url-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
-import type { ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
-interface ProductListPageProps {
-  productType: ProductType;
+/**
+ * The list's `type` param, read through the router rather than seeded from
+ * `window`: the create button the hub draws beside the description is painted
+ * by the server and names the type.
+ */
+function useProductListType() {
+  const [typeParam, setTypeParam] = useRoutedUrlParamState(
+    PRODUCT_LIST_PARAMS.type,
+  );
+  return [parseAdminProductSlug(typeParam), setTypeParam] as const;
 }
 
-export function ProductListPage({ productType }: ProductListPageProps) {
-  const config = PRODUCT_TYPE_CONFIG[productType];
-  const t = useTranslations("admin.products");
-  const label = t(`types.${config.i18nKey}.label`);
-  const plural = t(`types.${config.i18nKey}.plural`);
-  const { data: products, isLoading } = useProductsByType(productType);
+// Every club, camp and event in one list, narrowed by a row of type chips. The
+// products tab of its hub, which owns the title and the description above it.
+export function ProductListPage() {
+  const [type, setTypeParam] = useProductListType();
+  // Four rows, one per type — a small bounded read that lands in a frame or
+  // two, so nothing is painted in its place.
+  const { data: facets } = useProductListFacets();
+
+  if (!facets) return null;
 
   return (
-    // Reserve the document scrollbar gutter: the list (and the filter row) can
-    // flip the page between fits-the-viewport and needs-a-scrollbar as data
-    // loads or filters narrow it — see html:has() rule in globals.css.
-    <div className="space-y-6" data-reserve-scroll-gutter>
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{plural}</h1>
-          <p className="text-muted-foreground">
-            {t("list.subtitle", { plural })}
-          </p>
-        </div>
-        <Link
-          href={ROUTES.admin.productNew(productType)}
-          className={buttonVariants()}
-        >
-          <Plus className="mr-1 h-4 w-4" />
-          {t("list.new", { label })}
-        </Link>
-      </div>
-
-      {isLoading && (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-20 animate-pulse rounded-lg border border-border bg-lifted"
-            />
-          ))}
-        </div>
-      )}
-
-      {!isLoading && products && products.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            {t("list.empty", { plural, label })}
-          </CardContent>
-        </Card>
-      )}
-
-      {!isLoading && products && products.length > 0 && (
-        // One `space-y-4` for the narrowing controls and everything under them,
-        // whichever type this is: the filter row, the count line and the rows
-        // are all direct children here (the component below renders a
-        // fragment), so the rhythm is identical across the four pages.
-        <div className="space-y-4">
-          <ProductListFilters productType={productType} products={products} />
-        </div>
-      )}
+    // One `space-y-4` for the type chips, the filter row, the count line and
+    // the rows: they are all direct children here (the component below renders
+    // a fragment), so they share one rhythm. The chips render only once the
+    // facets have, so their counts never arrive into them — and the controls
+    // only once there are options to clamp the URL's values against.
+    <div className="space-y-4">
+      <ProductListFilters
+        facets={facets}
+        type={type}
+        onTypeChange={(next) =>
+          setTypeParam(next === null ? null : adminProductSlug(next))
+        }
+      />
     </div>
+  );
+}
+
+/**
+ * The list's create control, the hub's `action`: the selected type's create
+ * form, or — under every type — a dialog asking which kind to create. Either
+ * way it is the description line's last child, so it ends on the same right
+ * edge whichever type is selected.
+ */
+export function ProductListCreateAction() {
+  const t = useTranslations("admin.products");
+  const [type] = useProductListType();
+  const [choosingType, setChoosingType] = useState(false);
+
+  if (type !== null) {
+    return (
+      <Link href={ROUTES.admin.productNew(type)} className={buttonVariants()}>
+        <Plus className="mr-1 h-4 w-4" />
+        {t("list.new", { type: PRODUCT_TYPE_CONFIG[type].i18nKey })}
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <Button type="button" onClick={() => setChoosingType(true)}>
+        <Plus className="mr-1 h-4 w-4" />
+        {t("list.newAny")}
+      </Button>
+      <NewProductTypeDialog open={choosingType} onOpenChange={setChoosingType} />
+    </>
+  );
+}
+
+/**
+ * What "New" asks with no type selected: which kind of product to create. Each
+ * choice is a link to that type's create form, so picking one is the whole
+ * answer and the dialog needs no confirm button of its own.
+ */
+function NewProductTypeDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useTranslations("admin.products");
+  const c = useTranslations("common");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("list.newDialogTitle")}</DialogTitle>
+        </DialogHeader>
+        <ul className="mt-4 space-y-2">
+          {PRODUCT_TYPE_ORDER.map((productType) => {
+            const presentation = PRODUCT_TYPE_PRESENTATION[productType];
+            const Icon = presentation.icon;
+            return (
+              <li key={productType}>
+                <Link
+                  href={ROUTES.admin.productNew(productType)}
+                  className="group flex items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm font-medium transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                >
+                  <Icon
+                    className={cn("h-5 w-5 shrink-0", presentation.text)}
+                    aria-hidden
+                  />
+                  <span className="flex-1">
+                    {t(`types.${presentation.i18nKey}.label`)}
+                  </span>
+                  <NavChevron size="sm" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            {c("cancel")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

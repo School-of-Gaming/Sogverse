@@ -88,7 +88,7 @@ const CANDIDATES = [candidate(SANNA), candidate(PETRA), candidate(JOONAS)];
 // `IntersectionObserver`.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: CANDIDATES, total: CANDIDATES.length }] },
+    data: { rows: CANDIDATES, total: CANDIDATES.length },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

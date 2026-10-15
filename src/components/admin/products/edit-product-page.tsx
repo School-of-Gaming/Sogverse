@@ -25,7 +25,6 @@ export function EditProductPage({
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
-  const label = t(`types.${config.i18nKey}.label`);
 
   const { data: product, isLoading: productLoading } =
     useProductAdmin(productId);
@@ -55,7 +54,7 @@ export function EditProductPage({
 
       <div>
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t("editPage.kicker", { label: label.toLowerCase() })}
+          {t("editPage.kicker", { type: config.i18nKey })}
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
           {product

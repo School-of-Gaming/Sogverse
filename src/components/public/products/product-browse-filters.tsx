@@ -4,6 +4,7 @@ import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Sliders, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { useBrowseFilterRows, type BrowseFilterChip } from "./browse-filter-rows";
 import type { BrowseSurface } from "./browse-surface";
 import { useOfferedBrowseFilters } from "./use-browse-filters";
@@ -151,24 +152,17 @@ function FilterRow({
 
 function Chip({ chip }: { chip: BrowseFilterChip }) {
   return (
-    <button
-      type="button"
+    <FilterChip
+      active={chip.active}
       onClick={chip.toggle}
-      aria-pressed={chip.active}
+      icon={chip.icon}
       // A chip drawn from a richer label is named by its plain text, which is
       // written to contain whatever the label shows; one drawn from the text
       // is already named by it.
-      aria-label={chip.label === undefined ? undefined : chip.text}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all",
-        chip.active
-          ? "bg-act text-act-foreground shadow-sm"
-          : "bg-background text-foreground hover:bg-hover",
-        chip.className,
-      )}
+      ariaLabel={chip.label === undefined ? undefined : chip.text}
+      className={chip.className}
     >
-      {chip.icon}
       {chip.label ?? chip.text}
-    </button>
+    </FilterChip>
   );
 }

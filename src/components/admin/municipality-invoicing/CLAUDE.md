@@ -497,8 +497,8 @@ name and four figures.
 **The document's scroll gutter is reserved.** Expanding a municipality is itself what puts
 the page over the fold, so without the reservation the reader's own click summons a
 scrollbar, narrows the viewport and moves every figure they were reading sideways — a shift
-caused by the very action that was supposed to show them more. The opt-in attribute on the
-page's root is the repo's own mechanism for this; the rule lives in
+caused by the very action that was supposed to show them more. The invoicing hub the page
+renders in carries the repo's opt-in attribute for every one of its tabs; the rule lives in
 `src/components/layout/CLAUDE.md`.
 
 **Below the width the columns need, the table scrolls sideways rather than stacking.** This is

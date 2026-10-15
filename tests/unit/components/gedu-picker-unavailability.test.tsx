@@ -102,7 +102,7 @@ const GEDUS = [
 // `IntersectionObserver` out of these cases — paging has its own suite.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: GEDUS, total: GEDUS.length }] },
+    data: { rows: GEDUS, total: GEDUS.length },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

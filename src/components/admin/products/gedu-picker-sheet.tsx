@@ -16,7 +16,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
+import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { useUserList, type UserListEntry } from "@/services/users";
 import { useGedusCoveringProduct } from "@/services/gedu-locations";
 import { useLanguageNames } from "@/hooks/use-language-names";
@@ -235,24 +235,14 @@ export function GeduPickerSheet({
   const gedus = useMemo(
     () =>
       coverageSettled
-        ? (list.data?.pages.flatMap((page) => page.rows) ?? [])
+        ? (list.data?.rows ?? [])
         : [],
     [list.data, coverageSettled],
   );
 
   // The sheet body is the scroller while a sheet is open, so that box is what
-  // the sentinel is judged against. `isPlaceholderData` is in the gate because
-  // the cursor the pages on screen yield belongs to the query they answered.
-  const sentinelRef = useScrollSentinel({
-    enabled:
-      // `isFetching`, not `isFetchingNextPage`: asking for the next page
-      // cancels a refresh in flight, so a sentinel firing while an invalidation
-      // is re-reading the loaded pages would throw that refresh away and leave
-      // the stale rows on screen marked fresh.
-      list.hasNextPage && !list.isFetching && !list.isPlaceholderData,
-    onReach: () => {
-      void list.fetchNextPage();
-    },
+  // the sentinel is judged against.
+  const sentinelRef = useKeysetSentinel(list, {
     rootMargin: SENTINEL_ROOT_MARGIN,
     root: bodyRef,
   });
@@ -268,8 +258,8 @@ export function GeduPickerSheet({
    * educators, which is the one thing nobody has asked yet.
    */
   const counts = useMemo(() => {
-    const filtered = list.data?.pages[0]?.total;
-    const total = everyGedu.data?.pages[0]?.total;
+    const filtered = list.data?.total;
+    const total = everyGedu.data?.total;
     if (filtered === undefined || filtered === null) return null;
     if (total === undefined || total === null) return null;
     return { filtered, total };
