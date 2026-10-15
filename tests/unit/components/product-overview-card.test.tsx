@@ -7,9 +7,9 @@ import { loadMessages } from "@/i18n/messages";
 /**
  * **The "Good to know" card, as a family reads it.**
  *
- * Three surfaces render this one card — the shop detail page, the purchase
- * confirmation, the admin product page — and a fourth *mirrors* it in an email
- * through the same shared rules. That is what makes it worth a test of its own:
+ * Two surfaces render this one card — the shop detail page and the purchase
+ * confirmation — and a third *mirrors* it in an email through the same shared
+ * rules. That is what makes it worth a test of its own:
  * the card is where those rules are turned into the four cells a reader sees,
  * and every one of the four is a composition rather than a lookup. A club's
  * term range is folded into the schedule by one rule; the "Where" line picks a

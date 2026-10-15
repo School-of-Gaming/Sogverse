@@ -1647,6 +1647,7 @@ function mockDetailRow(
     id: "prod-1",
     created_at: "2026-01-01T00:00:00Z",
     created_by: "admin-1",
+    creator: { id: "admin-1", first_name: "Aino", last_name: "Admin" },
     updated_at: "2026-01-01T00:00:00Z",
     product_type: "consumer_club",
     billing_mode: "paid",
@@ -1678,6 +1679,7 @@ function mockDetailRow(
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
     invoice_customer_id: null,
+    invoice_customer: null,
     registration_opens_at: "2020-01-01T00:00:00Z",
     timezone: "Europe/Helsinki",
     product_translations: [

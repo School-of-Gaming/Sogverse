@@ -1,35 +1,13 @@
 "use client";
 
+import { useId } from "react";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  Calendar,
-  CalendarCheck,
-  CalendarOff,
-  Camera,
-  Check,
-  Clock,
-  Coins,
-  Copy,
-  FileCheck,
-  Globe2,
-  Landmark,
-  Link2,
-  Mail,
-  MapPin,
-  Pencil,
-  Shapes,
-  Sparkles,
-  Tag,
-  Wallet,
-  ExternalLink,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Copy, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { ROUTES, SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
@@ -44,11 +22,21 @@ import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { productAudience } from "@/lib/products/product-audience";
-import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
   formatAdminTermWeeks,
   formatClubTermDates,
 } from "@/lib/products/format-product-term-dates";
+import {
+  formatProductLocation,
+  productLocationLabelIsFormat,
+  renderProductLocationLine,
+} from "@/lib/products/format-product-location";
+import {
+  formatProductSchedule,
+  renderScheduleLinesForDetail,
+} from "@/lib/products/format-product-schedule";
+import { productWhoItsFor } from "@/lib/products/product-overview-facts";
+import { ScheduleLine } from "@/components/public/products/schedule-line";
 import { productTagLabelKey } from "@/components/public/products/product-tag";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import {
@@ -57,7 +45,6 @@ import {
 } from "@/lib/constants/consent-documents";
 import { describeMarketingConsents } from "@/lib/constants/marketing-consents";
 import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents";
-import { useInvoiceCustomer } from "@/services/invoice-customers";
 import {
   usePlannedSessions,
   useProductAdmin,
@@ -70,6 +57,7 @@ import {
 } from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
+import { personName } from "@/components/admin/person-name";
 import { GroupsPanel } from "./groups/groups-panel";
 import { ProductStatusChip } from "./product-status-chip";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -106,6 +94,20 @@ function plannedSessionsWindow(
   };
 }
 
+/**
+ * The page's frame: the back link and the header span the full width, and
+ * under them two columns from `xl` — groups in the main two thirds, the product
+ * details in the third beside them. Below `xl` the two stack, groups first,
+ * because managing groups is what an admin comes to this page for and the
+ * details must never push it down. The loading state lays out the same frame,
+ * so nothing it paints early lands anywhere else once the data is in. No width
+ * cap of its own: the dashboard container already bounds it, and every pixel
+ * that cap would hold back on a wide monitor belongs to the groups column.
+ */
+const PAGE_FRAME = "space-y-6";
+const PAGE_COLUMNS = "grid grid-cols-1 items-start gap-6 xl:grid-cols-3";
+const MAIN_COLUMN = "min-w-0 xl:col-span-2";
+
 export function ProductDetailsPage({
   productType,
   productId,
@@ -139,33 +141,38 @@ export function ProductDetailsPage({
   const listHref = ROUTES.admin.productList(productType);
   const editHref = ROUTES.admin.productEdit(productType, productId);
   const cloneHref = ROUTES.admin.productClone(productType, productId);
+  const backLink = (
+    <Link
+      href={listHref}
+      className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      {t("newPage.back", { type: config.i18nKey })}
+    </Link>
+  );
 
   if (isLoading) {
     return (
-      <div className="space-y-6" data-reserve-scroll-gutter>
-        <Link
-          href={listHref}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t("newPage.back", { type: config.i18nKey })}
-        </Link>
+      <div className={PAGE_FRAME} data-reserve-scroll-gutter>
+        {backLink}
         <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
-        <div className="h-24 animate-pulse rounded-lg border border-border bg-lifted" />
+        <div className={PAGE_COLUMNS}>
+          <div
+            className={cn(
+              MAIN_COLUMN,
+              "h-48 animate-pulse rounded-lg border border-border bg-lifted",
+            )}
+          />
+          <div className="h-96 animate-pulse rounded-lg border border-border bg-lifted" />
+        </div>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="space-y-6" data-reserve-scroll-gutter>
-        <Link
-          href={listHref}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t("newPage.back", { type: config.i18nKey })}
-        </Link>
+      <div className={PAGE_FRAME} data-reserve-scroll-gutter>
+        {backLink}
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             {t("detailsPage.notFound")}
@@ -196,14 +203,8 @@ export function ProductDetailsPage({
   const topicName = topicLabel(product.topic);
 
   return (
-    <div className="space-y-6" data-reserve-scroll-gutter>
-      <Link
-        href={listHref}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t("newPage.back", { type: config.i18nKey })}
-      </Link>
+    <div className={PAGE_FRAME} data-reserve-scroll-gutter>
+      {backLink}
 
       <HeaderCard
         imagePath={product.image_path}
@@ -220,48 +221,49 @@ export function ProductDetailsPage({
         cloneLabel={c("clone")}
       />
 
-      {/* Schedule / location / age / language are the parent-facing subset —
-          render the same "When & where" card the shop uses so the two never
-          drift. The admin-only operational fields live in the card below. */}
-      <ProductOverviewCard product={product} />
+      {/* Each column is its own run: the groups panel grows and shrinks as an
+          admin works in it, and nothing it does can move the details card
+          beside it, nor the other way round. */}
+      <div className={PAGE_COLUMNS}>
+        <div className={MAIN_COLUMN}>
+          <GroupsPanel
+            productId={productId}
+            productType={productType}
+            requirements={sessionRequirements(product, product.locations?.name ?? null)}
+            billingMode={product.billing_mode}
+            topic={product.topic}
+            audience={productAudience(product)}
+            seatCount={product.seat_count}
+            waitlistEnabled={product.waitlist_enabled}
+            voiceAvailable={voiceAvailable}
+            voiceIsOpen={voice.voiceIsOpen}
+            opensDate={voice.opensDate}
+            opensTime={voice.opensTime}
+          />
+        </div>
 
-      <OperationalFacts
-        product={product}
-        plannedSessions={plannedSessions}
-        topicName={topicName}
-        uiLocale={uiLocale}
-        timeZone={timeZone}
-        t={t}
-        c={c}
-      />
-
-      <GroupsPanel
-        productId={productId}
-        productType={productType}
-        requirements={sessionRequirements(product, product.locations?.name ?? null)}
-        billingMode={product.billing_mode}
-        topic={product.topic}
-        audience={productAudience(product)}
-        seatCount={product.seat_count}
-        waitlistEnabled={product.waitlist_enabled}
-        voiceAvailable={voiceAvailable}
-        voiceIsOpen={voice.voiceIsOpen}
-        opensDate={voice.opensDate}
-        opensTime={voice.opensTime}
-      />
+        <ProductDetailsCard
+          product={product}
+          plannedSessions={plannedSessions}
+          topicName={topicName}
+          uiLocale={uiLocale}
+          timeZone={timeZone}
+          t={t}
+          c={c}
+        />
+      </div>
 
       {/* What happened *inside* a group — its standing notes, its site's, its
-          roster and its whole session record — is no longer re-composed at the
-          foot of this page. Each group's header above links to its own page,
-          which renders the gedu's workspace for that group unchanged. */}
+          roster and its whole session record — is not composed on this page.
+          Each group's header above links to its own page, which renders the
+          gedu's workspace for that group unchanged. */}
     </div>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────
 // Header — image, type kicker, name, description, status + visibility
-// pills, Edit button. The one element on the page that lets the admin
-// take action right now; everything below is read-only or placeholder.
+// pills, and the Clone and Edit buttons.
 // ──────────────────────────────────────────────────────────────────────
 function HeaderCard({
   imagePath,
@@ -291,60 +293,61 @@ function HeaderCard({
   cloneLabel: string;
 }) {
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
-        {/* The project ratio here too (owner rule — one aspect ratio wherever
-            a product image shows), shaped the way the shop card shapes it —
-            rounded, borderless: this header is where an admin looks at a
-            product they manage, and it must show the same crop the family
-            surfaces paint. w-40 lands near the old square's 112px height. */}
-        <ProductBanner
-          src={catalogueImageSrc("product", imagePath)}
-          className="w-40 shrink-0 rounded-md"
-          // `w-40` in both arrangements — the card stacks below `sm` but the
-          // width is fixed, not fluid, so one length covers every breakpoint.
-          sizes="160px"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {kicker}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">{title}</h1>
-          {description && (
-            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-              {description}
+    <header>
+      <Card>
+        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
+          {/* The project ratio here too (owner rule — one aspect ratio wherever
+              a product image shows), shaped the way the shop card shapes it —
+              rounded, borderless: this header is where an admin looks at a
+              product they manage, and it must show the same crop the family
+              surfaces paint. w-40 lands near the old square's 112px height. */}
+          <ProductBanner
+            src={catalogueImageSrc("product", imagePath)}
+            className="w-40 shrink-0 rounded-md"
+            // `w-40` in both arrangements — the card stacks below `sm` but the
+            // width is fixed, not fluid, so one length covers every breakpoint.
+            sizes="160px"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {kicker}
             </p>
-          )}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <ProductStatusChip status={statusKey} />
-            <Badge variant="outline">
-              {isVisible ? listedLabel : unlistedLabel}
-            </Badge>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">{title}</h1>
+            {description && (
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                {description}
+              </p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <ProductStatusChip status={statusKey} />
+              <Badge variant="outline">
+                {isVisible ? listedLabel : unlistedLabel}
+              </Badge>
+            </div>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href={cloneHref}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <Copy className="mr-1 h-4 w-4" />
-            {cloneLabel}
-          </Link>
-          <Link href={editHref} className={buttonVariants()}>
-            <Pencil className="mr-1 h-4 w-4" />
-            {editLabel}
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={cloneHref}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <Copy className="mr-1 h-4 w-4" />
+              {cloneLabel}
+            </Link>
+            <Link href={editHref} className={buttonVariants()}>
+              <Pencil className="mr-1 h-4 w-4" />
+              {editLabel}
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </header>
   );
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Operational facts grid — the admin-only fields the parent-facing "When &
-// where" card (rendered above this on the page) doesn't carry: club term
-// dates, capacity/waitlist, registration window, billing + prices and topic.
-// One scan answers "is this product set up the way I expect?".
+// Product details — every stored property of the product, as label/value
+// rows in short named sections. One scan answers "is this product set up
+// the way I expect?", and the edit form is never the read path.
 // ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -361,7 +364,7 @@ const SESSION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   year: "numeric",
 };
 
-function OperationalFacts({
+function ProductDetailsCard({
   product,
   plannedSessions,
   topicName,
@@ -384,19 +387,6 @@ function OperationalFacts({
   // the label over the picker that sets it are one string rather than two that
   // can drift apart.
   const tInvoiceCustomers = useTranslations("admin.invoiceCustomers");
-  /**
-   * The Fennoa buyer this club's sessions are invoiced to.
-   *
-   * The product read carries the link as an id and nothing else — the admin
-   * product row is not the invoicing document, and widening it to embed a whole
-   * billing address would put contract data on every read of every product. So
-   * the name is resolved here, by one lookup by primary key that the hook skips
-   * entirely for a product with no customer, which is every product but a
-   * municipality club.
-   */
-  const { data: invoiceCustomer } = useInvoiceCustomer(
-    product.invoice_customer_id,
-  );
   // Same flag the form reads, so a type with no region-lock control has no
   // region-lock row here either — an empty "Not region locked" line on a
   // municipality club would advertise a setting that does not exist for it.
@@ -428,6 +418,12 @@ function OperationalFacts({
   // rows carry, so the details page and the edit form call one thing one thing.
   const tAsks = useTranslations("admin.products.consents");
   const tConsentBundle = useTranslations("consentDocuments.bundles");
+  // The words a family reads in the shop's "Good to know" card, for the values
+  // of the four facts that card states — "Online", "Ages 8–12", "For
+  // families" — so an admin checking what a family is told reads it verbatim.
+  // The labels beside them are the admin panel's own.
+  const tFamily = useTranslations("productDetail.info");
+  const tAudience = useTranslations("productAudience");
   // The clock the zone label's offset is read at — request-stable, so the
   // server and the first client render agree across a DST transition.
   const now = useNow();
@@ -461,9 +457,23 @@ function OperationalFacts({
     return formatCurrencyFromCents(cents, "eur", uiLocale);
   };
 
-  // A club's term range (shared with the parent overview card via
-  // `formatClubTermDates`). Camps/events fold their dates into the schedule
-  // card instead, so the helper returns null for them.
+  /**
+   * The weekly schedule, through the same formatter and line renderer the
+   * shop's "Good to know" card uses, so the days and times read here exactly as
+   * a family reads them: clock faces in the viewer's zone, named when that is
+   * not the product's own.
+   *
+   * Without the club term range the shop folds in under the schedule: the term
+   * dates row right below states it, with the admin-only week readout beside
+   * it, and folding it in as well would state the range twice.
+   */
+  const scheduleLines = renderScheduleLinesForDetail(
+    formatProductSchedule({ product, locale: uiLocale, timeZone, now }),
+  );
+
+  // A club's term range (shared with the family surfaces via
+  // `formatClubTermDates`). Camps and events carry their dates inside the
+  // schedule row instead, so the helper returns null for them.
   const termDates = formatClubTermDates(product, uiLocale);
 
   // `wk 34–50 · 17 weeks`, appended to the term range above — see
@@ -483,7 +493,7 @@ function OperationalFacts({
    *
    * Both are read off the product's plan, the same dates every other surface
    * lists. Events are excluded because their single date *is* the session —
-   * it would restate the term dates fact one row down.
+   * it would restate the date the schedule row already gives.
    *
    * Whether each row exists is decided from the product row alone, so a plan
    * read that failed leaves the rows in place with no date in them.
@@ -499,10 +509,14 @@ function OperationalFacts({
   const firstSession = formatSessionDate(plannedSessions?.[0]);
   const lastSession = formatSessionDate(plannedSessions?.at(-1));
 
-  // Where a family meets this product. `null` only for a municipality club with
-  // no location at all — there is no school page to point at, and a `/shop`
-  // link would name a listing that deliberately excludes the type.
-  const publicPath = publicProductPath(product);
+  // Where the product happens, and who it is for — the shop card's own rules
+  // (`formatProductLocation`, `productWhoItsFor`), so the label each row wears
+  // follows the same shape: "Format" for a genuinely remote product and "Where"
+  // for one with a place behind it; "Age range" where the answer is a range and
+  // "Audience" where it leads with the audience word.
+  const location = formatProductLocation(product, uiLocale);
+  const labelIsFormat = productLocationLabelIsFormat(product.is_remote, location);
+  const whoItsFor = productWhoItsFor(product);
 
   const seatsLine =
     product.seat_count !== null
@@ -528,349 +542,473 @@ function OperationalFacts({
     return [`${cur.toUpperCase()} ${(row.price_cents / 100).toFixed(2)}`];
   });
 
+  // `null` when the embed came back empty — the creator's profile is gone or
+  // not readable — and an admin who has left is, by the owner's ruling, an
+  // unknown creator rather than a gap in the record.
+  const creator = product.creator;
+  const creatorName = personName(creator);
+  const publicPath = publicProductPath(product);
+  const headingId = useId();
+
   return (
-    <Card>
-      <CardContent className="grid gap-x-6 gap-y-5 p-6 sm:grid-cols-2">
-        {/* First, and across the width: it is the one fact on this card an
-            admin comes here to take away rather than to check, and a product id
-            in a URL needs the room. */}
-        {publicPath && (
-          <Fact
-            icon={Link2}
-            label={t("detailsPage.fields.publicUrl")}
-            className="sm:col-span-2"
-          >
-            <PublicProductLink path={publicPath} />
-          </Fact>
-        )}
+    // Laid out by its own width rather than the screen's: from `xl` it is the
+    // reference column, one section under another; below that it spans the
+    // page, and there its sections pair up two by two rather than run as one
+    // long thin list.
+    <section aria-labelledby={headingId} className="min-w-0">
+      <Card className="@container">
+        <CardContent className="p-4 sm:p-5">
+          <h2 id={headingId} className="text-base font-semibold">
+            {t("detailsPage.title")}
+          </h2>
+          <div className="mt-3 grid grid-cols-1 items-start gap-x-8 gap-y-5 @3xl:grid-cols-2">
+            <DetailsSection title={t("detailsPage.sections.schedule")}>
+              <DetailRow label={t("labels.schedule")}>
+                {scheduleLines.length === 1 ? (
+                  <ScheduleLine line={scheduleLines[0]} />
+                ) : (
+                  <ul className="space-y-0.5">
+                    {scheduleLines.map((line, idx) => (
+                      <li key={idx}>
+                        <ScheduleLine line={line} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </DetailRow>
 
-        {termDates && (
-          <Fact icon={Calendar} label={t("detailsPage.fields.termDates")}>
-            {termDates}
-            {termWeeks && (
-              <span className="tabular-nums text-muted-foreground">
-                {` · ${termWeeks}`}
-              </span>
-            )}
-          </Fact>
-        )}
+              {termDates && (
+                <DetailRow label={t("detailsPage.fields.termDates")}>
+                  {termDates}
+                  {termWeeks && (
+                    <span className="tabular-nums text-muted-foreground">
+                      {` · ${termWeeks}`}
+                    </span>
+                  )}
+                </DetailRow>
+              )}
 
-        {/* Directly after the term range: the same span, read as the days a
-            family is actually expected. */}
-        {showFirstSession && (
-          <Fact
-            icon={CalendarCheck}
-            label={t("detailsPage.fields.firstSession")}
-          >
-            {firstSession}
-          </Fact>
-        )}
+              {/* Directly after the term range: the same span, read as the days
+                  a family is actually expected. */}
+              {showFirstSession && (
+                <DetailRow label={t("detailsPage.fields.firstSession")}>
+                  {firstSession}
+                </DetailRow>
+              )}
 
-        {showLastSession && (
-          <Fact
-            icon={CalendarCheck}
-            label={t("detailsPage.fields.lastSession")}
-          >
-            {lastSession}
-          </Fact>
-        )}
+              {showLastSession && (
+                <DetailRow label={t("detailsPage.fields.lastSession")}>
+                  {lastSession}
+                </DetailRow>
+              )}
 
-        {/* After the session dates, because a break is dates missing from
-            that same span. Clubs only, on the flag the form reads: no other
-            type may follow a calendar, so an empty row on a camp would
-            advertise a setting that does not exist for it. The names ride on
-            the product read itself, so nothing here arrives late. */}
-        {followsHolidayCalendars && (
-          <Fact
-            icon={CalendarOff}
-            label={t("holidayCalendars.label")}
-          >
-            {product.product_holiday_calendars.length === 0 ? (
-              <span className="text-muted-foreground">
-                {t("holidayCalendars.none")}
-              </span>
-            ) : (
-              <ul className="space-y-0.5">
-                {/* By name, as the calendar list orders them: the embed
-                    arrives in no order of its own. */}
-                {product.product_holiday_calendars
-                  .map((link) => link.holiday_calendars)
-                  .sort((a, b) => a.name.localeCompare(b.name, formattingLocale(uiLocale)))
-                  .map((calendar) => (
-                    <li key={calendar.id}>
-                      <Link
-                        href={ROUTES.admin.holidayCalendar(calendar.id)}
-                        className="underline-offset-2 hover:underline"
-                      >
-                        {calendar.name}
-                      </Link>
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </Fact>
-        )}
+              {/* After the session dates, because a break is dates missing from
+                  that same span. Clubs only, on the flag the form reads: no other
+                  type may follow a calendar, so an empty row on a camp would
+                  advertise a setting that does not exist for it. The names ride
+                  on the product read itself, so nothing here arrives late. */}
+              {followsHolidayCalendars && (
+                <DetailRow label={t("holidayCalendars.label")}>
+                  {product.product_holiday_calendars.length === 0 ? (
+                    <span className="text-muted-foreground">
+                      {t("holidayCalendars.none")}
+                    </span>
+                  ) : (
+                    <ul className="space-y-0.5">
+                      {/* By name, as the calendar list orders them: the embed
+                          arrives in no order of its own. */}
+                      {product.product_holiday_calendars
+                        .map((link) => link.holiday_calendars)
+                        .sort((a, b) =>
+                          a.name.localeCompare(b.name, formattingLocale(uiLocale)),
+                        )
+                        .map((calendar) => (
+                          <li key={calendar.id}>
+                            <Link
+                              href={ROUTES.admin.holidayCalendar(calendar.id)}
+                              className="underline-offset-2 hover:underline"
+                            >
+                              {calendar.name}
+                            </Link>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </DetailRow>
+              )}
 
-        <Fact icon={Clock} label={t("detailsPage.fields.seats")}>
-          {seatsLine}
-          {waitlistSuffix}
-        </Fact>
+              {/* The zone the schedule is authored in — the stored property, as
+                  distinct from the viewer-converted times the schedule row above
+                  shows. Same label the edit form's dropdown uses, so the two
+                  cannot disagree about what a zone is called. */}
+              <DetailRow label={t("detailsPage.fields.timezone")}>
+                {formatTimezoneOptionLabel(product.timezone, now)}
+              </DetailRow>
+            </DetailsSection>
 
-        {/* The zone the schedule is authored in — the stored property, as
-            distinct from the viewer-converted times the overview card shows.
-            Same label the edit form's dropdown uses, so the two cannot
-            disagree about what a zone is called. */}
-        <Fact icon={Globe2} label={t("detailsPage.fields.timezone")}>
-          {formatTimezoneOptionLabel(product.timezone, now)}
-        </Fact>
-
-        <Fact icon={Globe2} label={t("detailsPage.fields.registrationOpensAt")}>
-          {formatDate(product.registration_opens_at, uiLocale, {
-            dateStyle: "medium",
-            timeStyle: "short",
-            timeZone,
-          })}
-        </Fact>
-
-        <Fact icon={Wallet} label={t("detailsPage.fields.billingMode")}>
-          <span>{t(`detailsPage.billingMode.${product.billing_mode}`)}</span>
-          {priceLines.length > 0 && (
-            <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-              {priceLines.map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
-          )}
-        </Fact>
-
-        <Fact icon={Coins} label={t("detailsPage.fields.primaryGeduFee")}>
-          {renderFee(product.primary_gedu_fee_cents, "unknown")}
-        </Fact>
-
-        <Fact icon={Coins} label={t("detailsPage.fields.assistantGeduFee")}>
-          {renderFee(product.assistant_gedu_fee_cents, "none")}
-        </Fact>
-
-        {isMuni && (
-          <Fact icon={Landmark} label={t("detailsPage.fields.municipalityFee")}>
-            {renderFee(product.municipality_fee_cents, "unknown")}
-          </Fact>
-        )}
-
-        {/* Beside the fee, because the two are one arrangement: what a session
-            is worth, and who is billed for it. The label is the picker's own, so
-            the form and this page call one thing one thing.
-
-            Nothing is rendered in place of the name while the lookup is in
-            flight: it is one row by primary key and it lands in a frame or two,
-            and this fact is last in its own cell, so the name arrives into space
-            the grid already holds. */}
-        {isMuni && (
-          <Fact
-            icon={Building2}
-            label={tInvoiceCustomers("picker.label")}
-          >
-            {product.invoice_customer_id === null ? (
-              <span className="text-muted-foreground">{c("notSet")}</span>
-            ) : (
-              invoiceCustomer && (
-                <Link
-                  href={ROUTES.admin.invoiceCustomer(invoiceCustomer.id)}
-                  className="underline-offset-2 hover:underline"
-                >
-                  {tInvoiceCustomers("picker.option", {
-                    name: invoiceCustomer.invoice_name,
-                    number: invoiceCustomer.fennoa_customer_no,
-                  })}
-                </Link>
-              )
-            )}
-          </Fact>
-        )}
-
-        <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
-          {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}
-        </Fact>
-
-        {/* Untagged is the ordinary state rather than a gap in the setup, so it
-            says so in muted text — the same word the form's picker offers —
-            instead of the "not set" the topic above uses for a missing answer. */}
-        <Fact icon={Tag} label={t("detailsPage.fields.tag")}>
-          {product.tag === null ? (
-            <span className="text-muted-foreground">{t("tagOptions.none")}</span>
-          ) : (
-            tTag(productTagLabelKey(product.tag))
-          )}
-        </Fact>
-
-        {/* Not region locked is the ordinary state rather than a gap, so it says
-            so in muted text — the same words the form's picker offers — the way
-            the untagged row above does. The hint about UI-only enforcement is
-            not repeated here: it belongs where the setting is made.
-
-            The row also appears on a type that cannot be locked, if one somehow
-            carries a lock: the shop enforces the column regardless of the
-            product's type, so a stored value has to be visible to the admins
-            answering for it rather than hidden by the setting's own
-            availability. Nothing today can produce that pairing — it is one
-            cheap condition against a state that would otherwise be silent. */}
-        {(regionLockable || product.region_lock_country !== null) && (
-          <Fact icon={MapPin} label={t("detailsPage.fields.regionLock")}>
-            {regionLockName === null ? (
-              <span className="text-muted-foreground">
-                {t("regionLock.none")}
-              </span>
-            ) : (
-              regionLockName
-            )}
-          </Fact>
-        )}
-
-        {/* The enrolment conditions. Always rendered, on every type, because
-            the setting exists on every type — "None" is the ordinary answer and
-            an absent row would leave an admin unable to tell "requires nothing"
-            apart from "this page does not say".
-
-            A slug this deploy cannot name renders as the raw slug, which is the
-            same loud-not-broken answer the form's checkbox gives: registry rows
-            arrive by migration and the name map ships with them, so an unnamed
-            slug is a defect worth seeing rather than a state worth hiding.
-
-            Bundled documents are reported as the bundle, because that is the
-            unit the form offered — an admin who ticked one box should not read
-            two lines back and wonder what they picked. Anything outside a
-            bundle is still listed on its own. */}
-        <Fact icon={FileCheck} label={t("detailsPage.fields.requiredConsents")}>
-          {product.product_required_consents.length === 0 ? (
-            <span className="text-muted-foreground">{t("consents.none")}</span>
-          ) : (
-            <ul>
-              {describeRequiredConsents(
-                product.product_required_consents.map((c) => c.document_slug),
-              ).map((row) => {
-                if (row.kind === "bundle") {
-                  return (
-                    <li key={row.key}>{tConsentBundle(row.bundle.labelKey)}</li>
-                  );
+            <DetailsSection title={t("detailsPage.sections.placeAndAudience")}>
+              <DetailRow
+                label={
+                  labelIsFormat
+                    ? t("detailsPage.fields.format")
+                    : t("sections.where")
                 }
-                const meta = consentDocumentMeta(row.slug);
-                return (
-                  <li key={row.key}>
-                    {meta === null ? row.slug : tConsent(meta.nameKey)}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Fact>
+              >
+                {renderProductLocationLine({
+                  location,
+                  isRemote: product.is_remote,
+                  online: tFamily("online"),
+                  tbd: tFamily("tbd"),
+                })}
+              </DetailRow>
 
-        {/* The two optional asks, in the order the signup panel asks them and
-            directly under the conditions they sit beside on that panel.
+              {/* Null only for a row carrying neither an audience label nor an
+                  age range, which the schema's CHECKs make unreachable — the row
+                  is left out rather than rendered empty. */}
+              {whoItsFor !== null && (
+                <DetailRow
+                  label={
+                    whoItsFor.label === "ageRange"
+                      ? t("detailsPage.fields.ageRange")
+                      : t("sections.audience")
+                  }
+                >
+                  {whoItsFor.value.kind === "ages"
+                    ? tFamily("ages", whoItsFor.value)
+                    : whoItsFor.value.kind === "parents"
+                      ? tAudience("parents")
+                      : whoItsFor.value.kind === "families"
+                        ? tAudience("families")
+                        : tAudience("familiesWithAges", whoItsFor.value)}
+                </DetailRow>
+              )}
 
-            **Always rendered, both of them, and that is the rule rather than a
-            preference**: an admin must be able to read every stored property of
-            a product off this page, because the edit form is a write surface
-            and opening it to answer "is this asked?" costs a form that can be
-            accidentally submitted. "None" is the ordinary answer on nearly every
-            product, and it is a different answer from a row that is not here.
+              <DetailRow label={t("labels.spokenLanguage")}>
+                <LanguageFlag code={product.spoken_language_code} />
+              </DetailRow>
 
-            A stored type this deploy cannot name is dropped rather than shown
-            raw — the opposite of what the required run above does with an
-            unknown slug, and the same asymmetry the family-facing describe
-            helpers make. A required document that vanished from the app is a
-            legal condition nobody can see; an ask that vanished simply goes
-            unasked, and a bare enum value would say less than the count does. */}
-        <Fact icon={Camera} label={t("detailsPage.fields.gamerPhotoConsents")}>
-          {product.product_gamer_photo_consents.length === 0 ? (
-            <span className="text-muted-foreground">{t("consents.none")}</span>
-          ) : (
-            <ul>
-              {describeGamerPhotoConsents(
-                product.product_gamer_photo_consents.map((c) => c.consent_type),
-              ).map((row) => (
-                <li key={row.type}>
-                  {tAsks(`gamerPhoto.${row.ask.sentenceKey}.label`)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Fact>
+              <DetailRow label={t("detailsPage.fields.topic")}>
+                {topicName ?? (
+                  <span className="text-muted-foreground">{c("notSet")}</span>
+                )}
+              </DetailRow>
 
-        <Fact icon={Mail} label={t("detailsPage.fields.marketingConsents")}>
-          {product.product_marketing_consents.length === 0 ? (
-            <span className="text-muted-foreground">{t("consents.none")}</span>
-          ) : (
-            <ul>
-              {describeMarketingConsents(
-                product.product_marketing_consents.map((c) => c.consent_type),
-              ).map((row) => (
-                <li key={row.type}>
-                  {tAsks(`marketing.${row.ask.sentenceKey}.label`)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Fact>
+              {/* Untagged is the ordinary state rather than a gap in the setup, so
+                  it says so in muted text — the same word the form's picker
+                  offers — instead of the "not set" the topic above uses for a
+                  missing answer. */}
+              <DetailRow label={t("detailsPage.fields.tag")}>
+                {product.tag === null ? (
+                  <span className="text-muted-foreground">{t("tagOptions.none")}</span>
+                ) : (
+                  tTag(productTagLabelKey(product.tag))
+                )}
+              </DetailRow>
 
-        {/* Staff-only, and it lives on its own embedded row for exactly that
-            reason — `products` is anon-readable by column selection, so the
-            lesson link cannot be a column on it. */}
-        {product.product_staff_details?.material_url && (
-          <Fact icon={ExternalLink} label={t("detailsPage.fields.materialUrl")}>
-            <a
-              href={product.product_staff_details.material_url}
-              target="_blank"
-              rel="noreferrer"
-              className="break-all text-act underline-offset-2 hover:underline"
-            >
-              {product.product_staff_details.material_url}
-            </a>
-          </Fact>
-        )}
+              {/* Not region locked is the ordinary state rather than a gap, so it
+                  says so in muted text — the same words the form's picker offers —
+                  the way the untagged row above does. The hint about UI-only
+                  enforcement is not repeated here: it belongs where the setting
+                  is made.
 
-        {/* The form's other staff-only field, beside the lesson link above it.
-            Always rendered, for the same reason required consents is above:
-            "not required" is the ordinary answer, and a row that only appears
-            when the flag is on would leave an admin unable to tell "off" from
-            "this page does not say". */}
-        <Fact
-          icon={Sparkles}
-          label={t("detailsPage.fields.requiresGamerCreations")}
-        >
-          {product.requires_gamer_creations ? (
-            t("detailsPage.requiresGamerCreations.required")
-          ) : (
-            <span className="text-muted-foreground">
-              {t("detailsPage.requiresGamerCreations.notRequired")}
-            </span>
-          )}
-        </Fact>
-      </CardContent>
-    </Card>
+                  The row also appears on a type that cannot be locked, if one
+                  somehow carries a lock: the shop enforces the column regardless
+                  of the product's type, so a stored value has to be visible to the
+                  admins answering for it rather than hidden by the setting's own
+                  availability. Nothing today can produce that pairing — it is one
+                  cheap condition against a state that would otherwise be
+                  silent. */}
+              {(regionLockable || product.region_lock_country !== null) && (
+                <DetailRow label={t("detailsPage.fields.regionLock")}>
+                  {regionLockName === null ? (
+                    <span className="text-muted-foreground">
+                      {t("regionLock.none")}
+                    </span>
+                  ) : (
+                    regionLockName
+                  )}
+                </DetailRow>
+              )}
+            </DetailsSection>
+
+            <DetailsSection title={t("detailsPage.sections.seatsAndRegistration")}>
+              <DetailRow label={t("detailsPage.fields.seats")}>
+                {seatsLine}
+                {waitlistSuffix}
+              </DetailRow>
+
+              <DetailRow label={t("detailsPage.fields.registrationOpensAt")}>
+                {formatDate(product.registration_opens_at, uiLocale, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                  timeZone,
+                })}
+              </DetailRow>
+            </DetailsSection>
+
+            <DetailsSection title={t("detailsPage.sections.pricing")}>
+              <DetailRow label={t("detailsPage.fields.billingMode")}>
+                <span>{t(`detailsPage.billingMode.${product.billing_mode}`)}</span>
+                {priceLines.length > 0 && (
+                  <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                    {priceLines.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                )}
+              </DetailRow>
+
+              <DetailRow label={t("detailsPage.fields.primaryGeduFee")}>
+                {renderFee(product.primary_gedu_fee_cents, "unknown")}
+              </DetailRow>
+
+              <DetailRow label={t("detailsPage.fields.assistantGeduFee")}>
+                {renderFee(product.assistant_gedu_fee_cents, "none")}
+              </DetailRow>
+
+              {isMuni && (
+                <DetailRow label={t("detailsPage.fields.municipalityFee")}>
+                  {renderFee(product.municipality_fee_cents, "unknown")}
+                </DetailRow>
+              )}
+
+              {/* Under the fee, because the two are one arrangement: what a
+                  session is worth, and who is billed for it. The label is the
+                  picker's own, so the form and this page call one thing one thing.
+
+                  The customer's name and number arrive embedded in the product
+                  read, so the row paints whole with everything around it. */}
+              {isMuni && (
+                <DetailRow label={tInvoiceCustomers("picker.label")}>
+                  {product.invoice_customer === null ? (
+                    <span className="text-muted-foreground">{c("notSet")}</span>
+                  ) : (
+                    <Link
+                      href={ROUTES.admin.invoiceCustomer(product.invoice_customer.id)}
+                      className="underline-offset-2 hover:underline"
+                    >
+                      {tInvoiceCustomers("picker.option", {
+                        name: product.invoice_customer.invoice_name,
+                        number: product.invoice_customer.fennoa_customer_no,
+                      })}
+                    </Link>
+                  )}
+                </DetailRow>
+              )}
+            </DetailsSection>
+
+            <DetailsSection title={t("detailsPage.sections.requirements")}>
+              {/* The enrolment conditions. Always rendered, on every type,
+                  because the setting exists on every type — "None" is the
+                  ordinary answer and an absent row would leave an admin unable to
+                  tell "requires nothing" apart from "this page does not say".
+
+                  A slug this deploy cannot name renders as the raw slug, which is
+                  the same loud-not-broken answer the form's checkbox gives:
+                  registry rows arrive by migration and the name map ships with
+                  them, so an unnamed slug is a defect worth seeing rather than a
+                  state worth hiding.
+
+                  Bundled documents are reported as the bundle, because that is
+                  the unit the form offered — an admin who ticked one box should
+                  not read two lines back and wonder what they picked. Anything
+                  outside a bundle is still listed on its own. */}
+              <DetailRow label={t("detailsPage.fields.requiredConsents")}>
+                {product.product_required_consents.length === 0 ? (
+                  <span className="text-muted-foreground">{t("consents.none")}</span>
+                ) : (
+                  <ul>
+                    {describeRequiredConsents(
+                      product.product_required_consents.map((c) => c.document_slug),
+                    ).map((row) => {
+                      if (row.kind === "bundle") {
+                        return (
+                          <li key={row.key}>{tConsentBundle(row.bundle.labelKey)}</li>
+                        );
+                      }
+                      const meta = consentDocumentMeta(row.slug);
+                      return (
+                        <li key={row.key}>
+                          {meta === null ? row.slug : tConsent(meta.nameKey)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </DetailRow>
+
+              {/* The two optional asks, in the order the signup panel asks them
+                  and directly under the conditions they sit beside on that panel.
+
+                  **Always rendered, both of them, and that is the rule rather than
+                  a preference**: an admin must be able to read every stored
+                  property of a product off this page, because the edit form is a
+                  write surface and opening it to answer "is this asked?" costs a
+                  form that can be accidentally submitted. "None" is the ordinary
+                  answer on nearly every product, and it is a different answer
+                  from a row that is not here.
+
+                  A stored type this deploy cannot name is dropped rather than
+                  shown raw — the opposite of what the required row above does with
+                  an unknown slug, and the same asymmetry the family-facing
+                  describe helpers make. A required document that vanished from
+                  the app is a legal condition nobody can see; an ask that vanished
+                  simply goes unasked, and a bare enum value would say less than
+                  the count does. */}
+              <DetailRow label={t("detailsPage.fields.gamerPhotoConsents")}>
+                {product.product_gamer_photo_consents.length === 0 ? (
+                  <span className="text-muted-foreground">{t("consents.none")}</span>
+                ) : (
+                  <ul>
+                    {describeGamerPhotoConsents(
+                      product.product_gamer_photo_consents.map((c) => c.consent_type),
+                    ).map((row) => (
+                      <li key={row.type}>
+                        {tAsks(`gamerPhoto.${row.ask.sentenceKey}.label`)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </DetailRow>
+
+              <DetailRow label={t("detailsPage.fields.marketingConsents")}>
+                {product.product_marketing_consents.length === 0 ? (
+                  <span className="text-muted-foreground">{t("consents.none")}</span>
+                ) : (
+                  <ul>
+                    {describeMarketingConsents(
+                      product.product_marketing_consents.map((c) => c.consent_type),
+                    ).map((row) => (
+                      <li key={row.type}>
+                        {tAsks(`marketing.${row.ask.sentenceKey}.label`)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </DetailRow>
+
+              {/* Staff-only, and it lives on its own embedded row for exactly
+                  that reason — `products` is anon-readable by column selection,
+                  so the lesson link cannot be a column on it. */}
+              {product.product_staff_details?.material_url && (
+                <DetailRow label={t("detailsPage.fields.materialUrl")}>
+                  <a
+                    href={product.product_staff_details.material_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all text-act underline-offset-2 hover:underline"
+                  >
+                    {product.product_staff_details.material_url}
+                  </a>
+                </DetailRow>
+              )}
+
+              {/* The form's other staff-only field, beside the lesson link above
+                  it. Always rendered, for the same reason required consents is
+                  above: "not required" is the ordinary answer, and a row that only
+                  appears when the flag is on would leave an admin unable to tell
+                  "off" from "this page does not say". */}
+              <DetailRow label={t("detailsPage.fields.requiresGamerCreations")}>
+                {product.requires_gamer_creations ? (
+                  t("detailsPage.requiresGamerCreations.required")
+                ) : (
+                  <span className="text-muted-foreground">
+                    {t("detailsPage.requiresGamerCreations.notRequired")}
+                  </span>
+                )}
+              </DetailRow>
+            </DetailsSection>
+
+            <DetailsSection title={t("detailsPage.sections.record")}>
+              {/* First in the record: where a family meets this product, the
+                  one fact here an admin copies away rather than checks. It is
+                  a row like the rest so the header stays the product's name and
+                  status; the URL breaks anywhere, so a long product id wraps
+                  inside the value rather than widening the column. */}
+              {publicPath !== null && (
+                <DetailRow label={t("detailsPage.fields.publicLink")}>
+                  <PublicProductLink path={publicPath} />
+                </DetailRow>
+              )}
+
+              <DetailRow label={t("detailsPage.fields.createdBy")}>
+                {creator !== null && creatorName !== null ? (
+                  <Link
+                    href={ROUTES.admin.user(creator.id)}
+                    className="underline-offset-2 hover:underline"
+                  >
+                    {creatorName}
+                  </Link>
+                ) : (
+                  <span className="text-muted-foreground">
+                    {t("detailsPage.unknownCreator")}
+                  </span>
+                )}
+              </DetailRow>
+
+              {/* An instant, so the date is the one it was in the viewer's zone. */}
+              <DetailRow label={t("detailsPage.fields.createdOn")}>
+                {formatDate(product.created_at, uiLocale, {
+                  dateStyle: "medium",
+                  timeZone,
+                })}
+              </DetailRow>
+            </DetailsSection>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 
-function Fact({
-  icon: Icon,
-  label,
-  className,
+/**
+ * One named run of facts. The heading is furniture — small, muted, caps and
+ * tracked — and every section's heading wears the same treatment.
+ *
+ * Each section is its own size container, so its rows are laid out by the
+ * width of the column they are in: when the card pairs its sections up, a row
+ * answers to its half, not to the whole card.
+ */
+function DetailsSection({
+  title,
   children,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  /** Grid placement for a fact that wants more than its one cell. */
-  className?: string;
+  title: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex gap-3", className)}>
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-        <div className="mt-0.5 text-sm">{children}</div>
-      </div>
+    <section className="@container min-w-0">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
+        {title}
+      </h3>
+      <dl className="mt-1 divide-y divide-border">{children}</dl>
+    </section>
+  );
+}
+
+/**
+ * One fact, laid out by its section's width.
+ *
+ * In a narrow section — the rail beside the groups, or one half of a narrow
+ * two-up card — the label sits above the value as a small muted line and the
+ * value takes the full width, because a fixed label column there would leave
+ * the value a sliver to wrap in. From `@md` (28rem) the label moves into a
+ * fixed 8rem column beside the value, which still leaves the value at least
+ * ~300px; there the two share a type size, so their first lines sit on one
+ * baseline whichever of them wraps.
+ */
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-0.5 py-1.5 @md:grid-cols-[8rem_minmax(0,1fr)] @md:items-baseline @md:gap-x-3 @md:gap-y-0">
+      <dt className="text-xs text-muted-foreground @md:text-sm">{label}</dt>
+      <dd className="min-w-0 text-sm">{children}</dd>
     </div>
   );
 }
@@ -915,7 +1053,7 @@ function publicProductPath(product: ProductAdminDetailRow): string | null {
  *
  * The origin comes from `window.location`: the admin is reading the page on the
  * very deployment the link belongs to, so what they copy is what they can open
- * in the next tab. Reading it during render needs no mount effect — this card
+ * in the next tab. Reading it during render needs no mount effect — the details card
  * paints only after the admin product query resolves, which cannot happen
  * server-side because nothing prefetches it — and no mount effect means no
  * post-paint swap from a bare path to an absolute URL under the reader's eyes.

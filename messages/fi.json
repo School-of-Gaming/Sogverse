@@ -969,6 +969,7 @@
         "title": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
       },
       "detailsPage": {
+        "title": "Tuotteen tiedot",
         "notFound": "Tuotetta ei löytynyt.",
         "uncapped": "Ei paikkarajaa",
         "listed": "Listattu julkisesti",
@@ -986,7 +987,6 @@
           "notRequired": "Ei vaadita"
         },
         "fields": {
-          "publicUrl": "Julkinen linkki",
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
           "startDate": "Alkamispäivä",
@@ -1009,10 +1009,24 @@
           "requiresGamerCreations": "Pelaajien teokset",
           "visibility": "Näkyvyys",
           "gamerPhotoConsents": "Valokuvakysymykset",
-          "marketingConsents": "Markkinointikysymykset"
+          "marketingConsents": "Markkinointikysymykset",
+          "format": "Muoto",
+          "ageRange": "Ikähaarukka",
+          "publicLink": "Julkinen linkki",
+          "createdBy": "Luonut",
+          "createdOn": "Luotu"
         },
         "copyLink": "Kopioi julkinen linkki",
-        "copied": "Kopioitu"
+        "copied": "Kopioitu",
+        "sections": {
+          "schedule": "Aikataulu",
+          "placeAndAudience": "Paikka ja kohderyhmä",
+          "seatsAndRegistration": "Paikat ja ilmoittautuminen",
+          "pricing": "Hinnoittelu",
+          "requirements": "Vaatimukset ja suostumukset",
+          "record": "Luontitiedot"
+        },
+        "unknownCreator": "Tuntematon"
       },
       "holidayCalendars": {
         "label": "Lomakalenterit",

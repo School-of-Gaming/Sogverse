@@ -59,7 +59,8 @@ export function useCatalogueImageUsage() {
  * tree likewise: a replace moves a spotlight's picture, and a removal takes it
  * off and switches the spotlight off.
  *
- * Never `productKeys.all` and never the product's admin **detail** key: the
+ * Never `productKeys.all` and never the product's admin **detail** key from a
+ * mutation that can fire while a product form is open — as these can: the
  * product form seeds its state from that query, so refetching it mid-edit
  * would throw away a half-filled form. Invalidating a parent key would cascade
  * into it, which is why the product keys are listed individually rather than

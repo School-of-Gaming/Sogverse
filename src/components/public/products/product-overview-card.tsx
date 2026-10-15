@@ -31,20 +31,19 @@ import {
   productScheduleDisplayLines,
   productWhoItsFor,
 } from "@/lib/products/product-overview-facts";
-import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
+import { ScheduleLine } from "./schedule-line";
 
 // Shared "Good to know" overview card. Renders schedule (day/time),
 // location/format, who the product is for (its audience, its age range, or
 // both in one cell), and spoken language — the at-a-glance facts.
-// Used by the shop detail body, the purchase-confirmation view, and the
-// admin product details page, so the layout lives here as the single
-// source of truth.
+// Used by the shop detail body and the purchase-confirmation view, so the
+// layout lives here as the single source of truth.
 
 interface ProductOverviewCardProps {
   // Structural subset of the fields this card actually reads, so both the
-  // parent browse row and the admin detail row satisfy it. Neither named
-  // type is assignable to the other (admin selects a narrower
-  // product_prices), but both carry these logistics columns/joins.
+  // shop's detail row and the browse row the purchase confirmation holds
+  // satisfy it: they are two independently selected rows, and both carry these
+  // logistics columns/joins.
   product: Pick<
     ProductBrowseRow,
     | "product_type"
@@ -72,16 +71,13 @@ interface ProductOverviewCardProps {
    * viewport, and a 1920px viewport says nothing about a 256px rail. The prop
    * names the arrangement its caller put it in, which is why it stays a prop:
    * the detail page is the only caller in a rail, while the purchase
-   * confirmation view and the admin product page render this card at full
-   * width and leave it unset.
+   * confirmation view renders this card at full width and leaves it unset.
    */
   railFrom2xl?: boolean;
   /**
    * The club's holiday breaks, as `holiday_breaks_document` returned them over
-   * the span `holidayBreaksSpan` names — the family-facing surfaces (the
-   * product page and the purchase confirmation) pass them; the admin product
-   * page does not. Which of them are listed is the shared rule's call, and a
-   * list that comes out empty draws nothing.
+   * the span `holidayBreaksSpan` names. Which of them are listed is the shared
+   * rule's call, and a list that comes out empty draws nothing.
    *
    * **They arrive with the card, never after it.** The section is the card's
    * last row, and below `2xl` the card sits in the reading column above the
@@ -279,44 +275,5 @@ function DetailRow({
         <dd className="mt-0.5">{children}</dd>
       </div>
     </div>
-  );
-}
-
-/**
- * A schedule line, with its parts kept whole.
- *
- * The formatter joins a line's parts with `SCHEDULE_PART_SEPARATOR` — "Mon, Wed,
- * Fri · 10:00–14:00 (EEST)" — and at rail width that wraps wherever the browser
- * likes, which is routinely *inside* the time: a clock face broken across two
- * lines is briefly unreadable and looks like a rendering fault. So each part
- * becomes a no-wrap span and only the separator between them may break, which
- * puts the fold where a reader would put it: after the days, before the time.
- *
- * **A line with no separator is returned untouched, and that is the whole of the
- * care needed here.** Several lines carry no parts to keep together — a camp's
- * date range, a club's term range, the "—" placeholder — and wrapping one of
- * those in a no-wrap span would not be preserving a clock face, it would be
- * taking away the wrapping the line had before anybody thought about this. The
- * split runs first and the one-part case exits before any span is added.
- *
- * **It runs in both presentations on purpose.** Scoping it to the rail would
- * mean two renderings of the same string, and on a multi-part line the spans are
- * inert wherever there is width: a part is at most as wide as the line it came
- * from, and every other surface rendering these lines (the live detail page's
- * overview card at ~300px+, the confirmation page, the admin product page) gives
- * them a column several times a part's width.
- */
-function ScheduleLine({ line }: { line: string }) {
-  const parts = line.split(SCHEDULE_PART_SEPARATOR);
-  if (parts.length === 1) return line;
-  return (
-    <>
-      {parts.map((part, idx) => (
-        <span key={idx}>
-          {idx > 0 && SCHEDULE_PART_SEPARATOR}
-          <span className="whitespace-nowrap">{part}</span>
-        </span>
-      ))}
-    </>
   );
 }
