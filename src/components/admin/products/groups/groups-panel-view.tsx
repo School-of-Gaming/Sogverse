@@ -534,13 +534,19 @@ export function GroupsPanelView({
   const seatOffers = seatOfferAvailability(billingMode, groups.length);
 
   return (
-    <div className="space-y-3">
+    <div className="@container space-y-3">
       {/* The header is inside the DndContext so the "Add participant" button can
           swap to the remove/switch drop zone mid-drag
           (HeaderParticipantAction). The shell's picker sheets are deliberately
           kept OUTSIDE it — see the `overlays` slot below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex items-center justify-between gap-4">
+        {/* Laid out by the panel's own width, not the screen's: the panel shares
+            the page with a reference column on wide screens, so a wide viewport
+            can still hand it too little room for the title and every control
+            in one row. Below `@3xl` the controls take a row of their own under
+            the title; the seat bar shows from `@lg`, and on the narrowest panel
+            that shows it the buttons wrap onto a line under the bar. */}
+        <div className="flex flex-col gap-3 @3xl:flex-row @3xl:items-center @3xl:justify-between @3xl:gap-4">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="h-5 w-5 text-muted-foreground" />
@@ -548,14 +554,14 @@ export function GroupsPanelView({
             </h2>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Capacity context — the same bar the shop shows, fed from the live
                 snapshot's active count. Past the cap the bar has nothing left to
                 say ("0 remaining" is true of 20/20 and 22/20 alike), so the
                 overfill line takes the same slot — same width, same row, so
                 nothing beside it moves. */}
             {overfill ? (
-              <p className="hidden w-80 items-center gap-1.5 text-xs font-medium text-warning sm:flex">
+              <p className="hidden w-80 items-center gap-1.5 text-xs font-medium text-warning @lg:flex">
                 <Users className="h-3 w-3 shrink-0" aria-hidden />
                 <span className="truncate tabular-nums">
                   {t("seatsOverfilled", {
@@ -570,7 +576,7 @@ export function GroupsPanelView({
                 seatCount={seatCount}
                 seatsLeft={seatsLeft}
                 waitlistEnabled={waitlistEnabled}
-                className="hidden w-80 sm:block"
+                className="hidden w-80 @lg:block"
               />
             )}
             {/* Always mounted, unlike the Add button it holds at rest: the

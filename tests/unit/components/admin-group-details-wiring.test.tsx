@@ -224,6 +224,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     id: IDS.product,
     created_at: "2025-08-01T00:00:00.000Z",
     created_by: "admin-1",
+    creator: { id: "admin-1", first_name: "Aino", last_name: "Admin" },
     updated_at: "2025-08-01T00:00:00.000Z",
     product_type: productType,
     billing_mode: "paid",

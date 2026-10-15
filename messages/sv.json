@@ -969,6 +969,7 @@
         "title": "Nytt {label}"
       },
       "detailsPage": {
+        "title": "Produktuppgifter",
         "notFound": "Produkten kunde inte hittas.",
         "uncapped": "Ingen platsgräns",
         "listed": "Listad publikt",
@@ -986,7 +987,6 @@
           "notRequired": "Krävs inte"
         },
         "fields": {
-          "publicUrl": "Publik länk",
           "topic": "Ämne",
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
@@ -1009,10 +1009,23 @@
           "requiresGamerCreations": "Spelarnas skapelser",
           "visibility": "Synlighet",
           "gamerPhotoConsents": "Fotofrågor",
-          "marketingConsents": "Marknadsföringsfrågor"
+          "marketingConsents": "Marknadsföringsfrågor",
+          "format": "Format",
+          "ageRange": "Åldersintervall",
+          "createdBy": "Skapad av",
+          "createdOn": "Skapad den"
         },
         "copyLink": "Kopiera den publika länken",
-        "copied": "Kopierad"
+        "copied": "Kopierad",
+        "sections": {
+          "schedule": "Schema",
+          "placeAndAudience": "Plats och målgrupp",
+          "seatsAndRegistration": "Platser och anmälan",
+          "pricing": "Prissättning",
+          "requirements": "Krav och samtycken",
+          "record": "Historik"
+        },
+        "unknownCreator": "Okänd"
       },
       "holidayCalendars": {
         "label": "Lovkalendrar",

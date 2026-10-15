@@ -969,6 +969,7 @@
         "title": "Ajouter un {label}"
       },
       "detailsPage": {
+        "title": "Détails du produit",
         "notFound": "Produit introuvable.",
         "uncapped": "Aucune limite de places",
         "listed": "Répertorié publiquement",
@@ -986,7 +987,6 @@
           "notRequired": "Non obligatoire"
         },
         "fields": {
-          "publicUrl": "Lien public",
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
           "startDate": "Date de début",
@@ -1009,10 +1009,23 @@
           "requiresGamerCreations": "Créations des joueurs",
           "visibility": "Visibilité",
           "gamerPhotoConsents": "Questions photo",
-          "marketingConsents": "Questions marketing"
+          "marketingConsents": "Questions marketing",
+          "format": "Format",
+          "ageRange": "Tranche d’âge",
+          "createdBy": "Créé par",
+          "createdOn": "Créé le"
         },
         "copyLink": "Copier le lien public",
-        "copied": "Copié"
+        "copied": "Copié",
+        "sections": {
+          "schedule": "Planning",
+          "placeAndAudience": "Lieu et public",
+          "seatsAndRegistration": "Places et inscriptions",
+          "pricing": "Tarifs",
+          "requirements": "Conditions et consentements",
+          "record": "Historique"
+        },
+        "unknownCreator": "Inconnu"
       },
       "holidayCalendars": {
         "label": "Calendriers de vacances",

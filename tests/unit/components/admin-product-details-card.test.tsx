@@ -1,0 +1,132 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/../messages/en.json";
+import { NowProvider } from "@/providers/now-provider";
+import { TimezoneProvider } from "@/providers/timezone-provider";
+import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
+import type { ProductAdminDetailRow } from "@/services/products";
+import { syntheticConsumerProduct } from "../../mocks/product-admin-detail-row";
+
+/**
+ * ============================================================================
+ * The admin product page's details card, as an admin reads it.
+ * ============================================================================
+ *
+ * The card is where an admin reads every stored property of a product, so the
+ * edit form is never the read path. These tests hold the parts of it with a
+ * rule behind them: the facts the shop states to families appear here too, in
+ * the family's words; the public link sits in the header, not among the facts;
+ * and the creator is named and linked, or unknown when the read could not
+ * reach them.
+ *
+ * The reads are stubbed at their hooks and the groups panel at its component:
+ * what is under test is the card, never how the panel draws.
+ */
+
+const reads = vi.hoisted(() => ({
+  product: undefined as unknown,
+}));
+
+vi.mock("@/services/products", () => ({
+  useProductAdmin: () => ({ data: reads.product, isLoading: false }),
+  usePlannedSessions: () => ({ data: [], isPending: false }),
+}));
+
+vi.mock("@/services/invoice-customers", () => ({
+  useInvoiceCustomer: () => ({ data: undefined }),
+}));
+
+vi.mock("@/components/admin/products/groups/groups-panel", () => ({
+  GroupsPanel: () => <div data-testid="groups-panel" />,
+}));
+
+const NOW = new Date("2026-03-16T12:00:00.000Z");
+
+function renderPage(product: ProductAdminDetailRow) {
+  // No picture: the header would otherwise build a storage URL from an env var
+  // this suite has no reason to set.
+  reads.product = {
+    ...product,
+    image_id: null,
+    image_path: null,
+    catalogue_images: null,
+  };
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TimezoneProvider initialTimezone="Europe/Helsinki">
+        <NowProvider initialNow={NOW}>
+          <ProductDetailsPage productType="consumer_club" productId={product.id} />
+        </NowProvider>
+      </TimezoneProvider>
+    </NextIntlClientProvider>,
+  );
+}
+
+/** The `<dd>` beside the `<dt>` carrying `label`. */
+function valueOf(label: string): HTMLElement {
+  const term = screen.getByText(label, { selector: "dt" });
+  const value = term.nextElementSibling;
+  if (!(value instanceof HTMLElement)) throw new Error(`no value for ${label}`);
+  return value;
+}
+
+describe("the admin product details card", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("names the creator and links to their admin user page", () => {
+    renderPage({
+      ...syntheticConsumerProduct(),
+      created_at: "2025-12-01T08:00:00.000Z",
+    });
+
+    const link = within(valueOf("Created by")).getByRole("link", {
+      name: "Aino Admin",
+    });
+    expect(link.getAttribute("href")).toBe("/admin/users/admin-1");
+    expect(valueOf("Created on").textContent).toBe("1 Dec 2025");
+  });
+
+  it("dates the creation in the viewer's zone, not UTC", () => {
+    // 23:30 UTC on 1 December is already 2 December in Helsinki.
+    renderPage({
+      ...syntheticConsumerProduct(),
+      created_at: "2025-12-01T23:30:00.000Z",
+    });
+
+    expect(valueOf("Created on").textContent).toBe("2 Dec 2025");
+  });
+
+  it("calls the creator unknown, with no link, when the read could not reach them", () => {
+    renderPage({ ...syntheticConsumerProduct(), creator: null });
+
+    const value = valueOf("Created by");
+    expect(value.textContent).toBe("Unknown");
+    expect(within(value).queryByRole("link")).toBeNull();
+  });
+
+  it("states the shop's four facts in the family's words", () => {
+    renderPage(syntheticConsumerProduct());
+
+    // A remote product with no place behind it: "Format", and "Online".
+    expect(valueOf("Format").textContent).toBe("Online");
+    // A gamers-only product: the age range alone.
+    expect(valueOf("Age range").textContent).toBe("Ages 7–12");
+    expect(valueOf("Spoken language").textContent).toContain("EN");
+    expect(valueOf("Schedule").textContent).not.toBe("");
+  });
+
+  it("carries the public link in the header, not among the facts", () => {
+    renderPage(syntheticConsumerProduct());
+
+    const header = screen.getByRole("heading", { name: "Build Club", level: 1 });
+    const headerCard = header.closest("div.min-w-0");
+    if (!(headerCard instanceof HTMLElement)) throw new Error("no header");
+    expect(
+      within(headerCard).getByRole("link", { name: /\/shop\// }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Public link", { selector: "dt" })).toBeNull();
+  });
+});

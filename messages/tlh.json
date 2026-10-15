@@ -1013,6 +1013,7 @@
         "title": "{label} chu’"
       },
       "detailsPage": {
+        "title": "Doch De’",
         "notFound": "Davchugh ghaj.",
         "uncapped": "quS veH pagh",
         "listed": "tetlhDaq tu’lu’",
@@ -1030,7 +1031,6 @@
           "notRequired": "poQbe’lu’"
         },
         "fields": {
-          "publicUrl": "Hoch He",
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
@@ -1053,10 +1053,23 @@
           "requiresGamerCreations": "toy’wI’ chenmoHtaHbogh Doch",
           "visibility": "leghlu",
           "gamerPhotoConsents": "mIllogh tlhobmey",
-          "marketingConsents": "QIn tlhobmey"
+          "marketingConsents": "QIn tlhobmey",
+          "format": "rurmeH",
+          "ageRange": "qan SaH",
+          "createdBy": "chenmoHpu’wI’",
+          "createdOn": "chenmoHpu’bogh jaj"
         },
         "copyLink": "Hoch He yIghItlhqa'",
-        "copied": "ghItlhqa'lu'ta'"
+        "copied": "ghItlhqa'lu'ta'",
+        "sections": {
+          "schedule": "poH nab",
+          "placeAndAudience": "Daq ’ej ghom",
+          "seatsAndRegistration": "quSmey ’ej ghItlh",
+          "pricing": "Huch",
+          "requirements": "ruv ’ej Qochbe’ghach",
+          "record": "qun"
+        },
+        "unknownCreator": "Sovbe’lu’"
       },
       "holidayCalendars": {
         "label": "DuQ jaj Hovtay'",

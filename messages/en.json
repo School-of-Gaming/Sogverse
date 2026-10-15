@@ -969,6 +969,7 @@
         "title": "New {label}"
       },
       "detailsPage": {
+        "title": "Product details",
         "notFound": "Product not found.",
         "uncapped": "No seat limit",
         "listed": "Listed publicly",
@@ -986,7 +987,6 @@
           "notRequired": "Not required"
         },
         "fields": {
-          "publicUrl": "Public link",
           "topic": "Topic",
           "materialUrl": "Lesson material",
           "startDate": "Start date",
@@ -1009,10 +1009,23 @@
           "requiresGamerCreations": "Gamer creations",
           "visibility": "Visibility",
           "gamerPhotoConsents": "Photo asks",
-          "marketingConsents": "Marketing asks"
+          "marketingConsents": "Marketing asks",
+          "format": "Format",
+          "ageRange": "Age range",
+          "createdBy": "Created by",
+          "createdOn": "Created on"
         },
         "copyLink": "Copy public link",
-        "copied": "Copied"
+        "copied": "Copied",
+        "sections": {
+          "schedule": "Schedule",
+          "placeAndAudience": "Place and audience",
+          "seatsAndRegistration": "Seats and registration",
+          "pricing": "Pricing",
+          "requirements": "Requirements and consents",
+          "record": "Record"
+        },
+        "unknownCreator": "Unknown"
       },
       "holidayCalendars": {
         "label": "Holiday calendars",

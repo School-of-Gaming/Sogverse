@@ -208,11 +208,18 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // calendars a club follows, with each one's name so the details page can list
 // and link them and the form can seed its picker. Calendar names are
 // admin-readable only, which is why no family-facing query embeds it.
+//
+// `creator:profiles!products_created_by_fkey(id, first_name, last_name)` is the
+// admin who created the product, which the details page names and links. It is
+// hinted because products and profiles meet over more than one path, and it is
+// deliberately not `!inner`: a creator whose profile the reader cannot see must
+// leave the product readable with the creator unknown, never make the whole
+// product read as "not found".
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name))",
+      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name)), creator:profiles!products_created_by_fkey(id, first_name, last_name)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -274,9 +281,17 @@ export type ProductDetailRow = NonNullable<
 // this is NOT filtered on listing, so admins can fetch an unlisted product and
 // a long-finished one alike. Carries the IDs the form needs to round-trip an
 // edit plus readable strings (the location chain).
-export type ProductAdminDetailRow = NonNullable<
+//
+// `creator` is widened to admit `null`. The generator reads the NOT NULL foreign
+// key and types the embed as always present, but the embed is a left join under
+// the profiles table's own row security: a creator the reader cannot see arrives
+// as `null`, and the details page shows the creator as unknown in that case.
+type AdminProductQueryRow = NonNullable<
   QueryData<ReturnType<typeof buildAdminProductQuery>>
 >;
+export type ProductAdminDetailRow = Omit<AdminProductQueryRow, "creator"> & {
+  creator: AdminProductQueryRow["creator"] | null;
+};
 
 export type ProductTranslationInput = {
   locale: SupportedLocale;
