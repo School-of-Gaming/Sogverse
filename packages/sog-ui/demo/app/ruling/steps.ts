@@ -3,10 +3,13 @@
  * a step, so every section draws a step from the same string.
  *
  * **A rename is one recipe drawn twice.** `hero`, `section`, `card-title` and
- * `sub-section` are today's `h1`, `h2`, `h3` and `h4` under a role's name, at
- * exactly today's size, weight and leading. Their recipe *is* today's token
- * class, so the `today` drawing and the `proposed` drawing are one string and
- * the eye confirms nothing moves.
+ * `sub-section` are the round-1 `h1`, `h2`, `h3` and `h4` under a role's name, at
+ * exactly that round's size, weight and leading, so the `today` drawing and the
+ * `proposed` drawing are one string and the eye confirms nothing moves. The
+ * ruled scale has since renamed the tokens, so each recipe names the token that
+ * now carries those values — `display` for the old `h2`, `section` for the old
+ * `h3` — and the old `h4`, whose 400 weight no ruled step keeps, is the
+ * `card-title` token set back to that weight.
  *
  * **A new step is drawn in plain values.** `page-title` and `label` do not exist
  * in the tokens, and neither does the 20px `card-title` candidate, so they are
@@ -28,10 +31,10 @@
  */
 
 export const STEP = {
-  hero: "text-h1-mobile md:text-h1",
-  section: "text-h2",
-  cardTitle: "text-h3",
-  subSection: "text-h4",
+  hero: "text-hero-mobile md:text-hero",
+  section: "text-display",
+  cardTitle: "text-section",
+  subSection: "text-card-title font-normal",
 } as const;
 
 export const PAGE_TITLE = {

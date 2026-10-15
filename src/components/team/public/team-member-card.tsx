@@ -68,7 +68,7 @@ export function TeamMemberCard({
           From `md`, at 18px (about 211px), every column is at least 229px.
           A name too wide for one line puts the nickname whole on the
           second. */}
-      <h3 className="mt-3 break-words text-body-s font-semibold leading-snug md:text-h4">
+      <h3 className="mt-3 break-words text-body-s font-semibold leading-snug md:text-card-title">
         <Link
           href={href}
           className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"

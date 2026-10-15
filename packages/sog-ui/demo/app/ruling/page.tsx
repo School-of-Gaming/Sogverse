@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 export default function RulingPage() {
   return (
     <main className="mx-auto max-w-[92rem] px-6 py-16">
-      <h1 className="text-h1-mobile sm:text-h1">Heading ruling</h1>
+      <h1 className="text-hero-mobile sm:text-hero">Heading ruling</h1>
       <StepsSection />
       <LevelsSection />
       <WeightSection />

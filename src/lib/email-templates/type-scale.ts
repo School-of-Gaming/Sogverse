@@ -53,7 +53,7 @@ export interface MailTextStyle {
  * where markdown has no element for a role — the small furniture, a button's
  * label — the level is SOG-UI's own step for that role.
  *
- * - `title` — the markdown top heading (SOG-UI's `h3` step): a mail's opening
+ * - `title` — the markdown top heading (SOG-UI's `section` step): a mail's opening
  *   heading, and a mail section heading. A report's own top heading is the
  *   same size; the two are told apart by structure, never by capping the
  *   report — see the email-templates `CLAUDE.md`.

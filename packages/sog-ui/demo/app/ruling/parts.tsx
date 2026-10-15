@@ -31,7 +31,7 @@ export function Question({
   return (
     <section className="mt-24 border-t border-border pt-10">
       <p className="font-mono text-body-s text-muted-foreground">{`0${n}`}</p>
-      <h2 className="mt-1 text-h2">{title}</h2>
+      <h2 className="mt-1 text-display">{title}</h2>
       <div className="mt-10 space-y-14">{children}</div>
     </section>
   );
@@ -47,7 +47,7 @@ export function Case({
 }) {
   return (
     <div>
-      <h3 className="text-h3">{title}</h3>
+      <h3 className="text-section">{title}</h3>
       <div className="mt-5 space-y-10">{children}</div>
     </div>
   );

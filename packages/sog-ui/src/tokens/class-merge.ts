@@ -25,7 +25,7 @@ import { typeSizes } from "./typography";
  * declares rather than listed, so a step added to the scale is a size to the
  * merger the moment it is a token.
  *
- * Unregistered, `cn("text-h2", "text-foreground")` returned `text-foreground`:
+ * Unregistered, `cn("text-display", "text-foreground")` returned `text-foreground`:
  * the heading lost its size to an ink. Registered as sizes, a step survives any
  * colour beside it, and a step and a stock size (`text-2xl`) conflict, the last
  * one winning, as two sizes on one element should.

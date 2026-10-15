@@ -57,14 +57,14 @@ export function RobloxHero() {
 
   // The wider sizes are still this component's and wait for the Heading
   // adoption. The narrow one is where the two scales differ most: the library
-  // pins a narrow H1 step because a hero *slogan* cannot fit a phone at the
-  // full H1 size, and a short name can — so a headline whose lines all fit the
+  // pins a narrow hero step because a hero *slogan* cannot fit a phone at the
+  // full hero size, and a short name can — so a headline whose lines all fit the
   // big scale takes the full step on a phone too, and only the long
   // translations fall back. The same character count decides both, so there is
   // one switch and not two.
   const sloganSize = longBeats
     ? "text-4xl md:text-3xl lg:text-4xl xl:text-5xl"
-    : "text-h1 xl:text-6xl";
+    : "text-hero xl:text-6xl";
 
   return (
     // Same treatment as the home page hero, pulled up under the translucent

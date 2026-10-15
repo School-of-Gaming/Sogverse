@@ -225,7 +225,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           )}
           {/* Shrink-to-fit, so the rule runs the headline's own measure. */}
           <div className="inline-block">
-            <h1 className="text-balance text-h1-mobile font-bold tracking-tight md:text-5xl">
+            <h1 className="text-balance text-hero-mobile font-bold tracking-tight md:text-5xl">
               {text.headline}
             </h1>
             <span className="mt-5 block h-1.5 w-full rounded-full bg-world sm:mt-8" />

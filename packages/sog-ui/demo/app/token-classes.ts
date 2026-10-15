@@ -112,10 +112,12 @@ export const WEIGHT_CLASS: Record<number, string | undefined> = {
 
 /** Scale step id → the `text-*` utility carrying its size, line height and weight. */
 export const STEP_CLASS: TokenClasses = {
-  h1: "text-h1",
-  h2: "text-h2",
-  h3: "text-h3",
-  h4: "text-h4",
+  hero: "text-hero",
+  display: "text-display",
+  "page-title": "text-page-title",
+  section: "text-section",
+  "card-title": "text-card-title",
+  label: "text-label",
   "body-l": "text-body-l",
   "body-s": "text-body-s",
   cta: "text-cta",
@@ -123,5 +125,5 @@ export const STEP_CLASS: TokenClasses = {
 
 /** The narrow-viewport step, for the steps that have one. */
 export const STEP_MOBILE_CLASS: TokenClasses = {
-  h1: "text-h1-mobile",
+  hero: "text-hero-mobile",
 };

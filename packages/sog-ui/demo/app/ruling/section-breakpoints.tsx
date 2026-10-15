@@ -126,7 +126,7 @@ export function BreakpointsSection() {
           <NarrowWide
             proposedName="hero"
             today={
-              <h1 className="text-h1-mobile font-bold tracking-tight @min-[48rem]:text-6xl">
+              <h1 className="text-hero-mobile font-bold tracking-tight @min-[48rem]:text-6xl">
                 Where
                 <br />
                 Screen Time
@@ -137,7 +137,7 @@ export function BreakpointsSection() {
               </h1>
             }
             proposed={
-              <h1 className="text-h1-mobile @min-[48rem]:text-h1">
+              <h1 className="text-hero-mobile @min-[48rem]:text-hero">
                 Where
                 <br />
                 Screen Time

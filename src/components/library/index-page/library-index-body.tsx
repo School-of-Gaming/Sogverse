@@ -59,7 +59,7 @@ export function LibraryIndexBody({
         {/* The headline and its rule are centred; the wrapper shrinks to the
             headline's longest line, so the rule runs exactly its measure. */}
         <div className="mx-auto w-fit text-center">
-          <h1 className="text-h1-mobile font-bold tracking-tight md:text-5xl">
+          <h1 className="text-hero-mobile font-bold tracking-tight md:text-5xl">
             {t.rich("index.title", {
               act: (chunks) => <span className="text-act">{chunks}</span>,
             })}

@@ -139,7 +139,7 @@ function SectionHeader({
         <GlyphTile icon={icon} tone={tone} size="sm" />
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{eyebrow}</p>
       </div>
-      <h2 id={id} className="mt-5 text-h3 sm:text-h2">
+      <h2 id={id} className="mt-5 text-section sm:text-display">
         {heading}
       </h2>
       <div aria-hidden="true" className={cn("mt-5 h-1 w-16 rounded-full", VISION_TONES[tone].mark)} />
@@ -164,7 +164,7 @@ function IdeaCard({
     <Card className={cn("h-full border-t-4 p-6", VISION_TONES[tone].edgeTop)}>
       <div className="flex items-center gap-3">
         <GlyphTile icon={icon} tone={tone} />
-        <h3 className="text-h4 font-semibold">{title}</h3>
+        <h3 className="text-card-title font-semibold">{title}</h3>
       </div>
       <p className="mt-4 text-muted-foreground">{body}</p>
     </Card>
@@ -193,7 +193,7 @@ function HeroSection() {
             {VISION_HERO.eyebrow}
           </p>
         </div>
-        <h1 id="vision-hero" className="mt-5 text-h1-mobile sm:text-h1">
+        <h1 id="vision-hero" className="mt-5 text-hero-mobile sm:text-hero">
           {VISION_HERO.title}
         </h1>
         <div aria-hidden="true" className="mt-6 h-1 w-24 rounded-full bg-world" />
@@ -300,7 +300,7 @@ function LoopSection() {
             >
               <div className="flex items-baseline gap-3">
                 <span className="text-sm font-semibold tabular-nums text-muted-foreground">{i + 1}</span>
-                <h3 className="text-h4 font-semibold">{step.title}</h3>
+                <h3 className="text-card-title font-semibold">{step.title}</h3>
               </div>
               <p className="mt-2 text-muted-foreground">{step.body}</p>
             </li>
@@ -310,7 +310,7 @@ function LoopSection() {
       <div className="mt-8 flex flex-col gap-4 rounded-lg border border-act bg-card p-6 sm:flex-row sm:items-start sm:p-8">
         <GlyphTile icon={Swords} tone="act" />
         <div>
-          <h3 className="text-h4 font-semibold">{VISION_LOOP.rules.title}</h3>
+          <h3 className="text-card-title font-semibold">{VISION_LOOP.rules.title}</h3>
           <p className="mt-2 text-muted-foreground">{VISION_LOOP.rules.body}</p>
         </div>
       </div>
@@ -335,7 +335,7 @@ function YtySection() {
             <Card className={cn("h-full border-t-4 p-6", VISION_TONES[element.id].edgeTop)}>
               <div className="flex items-center gap-3">
                 <GlyphTile icon={element.icon} tone={element.id} />
-                <h3 className={cn("text-h4 font-semibold", element.color.accent)}>{element.name}</h3>
+                <h3 className={cn("text-card-title font-semibold", element.color.accent)}>{element.name}</h3>
               </div>
               <p className="mt-4 font-medium">{element.description}</p>
               <p className="mt-2 text-sm text-muted-foreground">{VISION_YTY.grows[element.id]}</p>
@@ -345,7 +345,7 @@ function YtySection() {
       </ul>
       <div className="mt-8 grid items-center gap-8 rounded-lg border border-yty-wit bg-card p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
         <div>
-          <h3 className="text-h3">{VISION_YTY.wit.title}</h3>
+          <h3 className="text-section">{VISION_YTY.wit.title}</h3>
           <p className="mt-3">{VISION_YTY.wit.body}</p>
           <p className="mt-5 font-serif text-2xl">{VISION_YTY.wit.slogan}</p>
         </div>
@@ -408,7 +408,7 @@ function GedusSection() {
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {VISION_GEDUS.stageLabel} {i + 1}
               </p>
-              <h3 className="mt-1 text-h4 font-semibold">{stage.title}</h3>
+              <h3 className="mt-1 text-card-title font-semibold">{stage.title}</h3>
               <p className="mt-2 text-muted-foreground">{stage.body}</p>
             </li>
           ))}
@@ -575,7 +575,7 @@ function WallSection() {
       <div className="mt-10 flex flex-col gap-4 rounded-lg border-2 border-world bg-card p-6 sm:flex-row sm:items-center sm:p-8">
         <GlyphTile icon={Globe} tone="world" />
         <div>
-          <h3 className="text-h3">{VISION_WALL.feature.title}</h3>
+          <h3 className="text-section">{VISION_WALL.feature.title}</h3>
           <p className="mt-2 text-body-l text-muted-foreground">{VISION_WALL.feature.body}</p>
         </div>
       </div>
@@ -611,7 +611,7 @@ function PathSection() {
                 aria-hidden="true"
                 className={cn("h-3 w-3 shrink-0 rounded-full lg:hidden", VISION_TONES[PATH_TONES[i % PATH_TONES.length]].mark)}
               />
-              <h3 className="text-h4 font-semibold">{step.title}</h3>
+              <h3 className="text-card-title font-semibold">{step.title}</h3>
             </div>
             <p className="mt-2 text-muted-foreground">{step.body}</p>
           </li>
@@ -653,7 +653,7 @@ function ClosingSection() {
       className="rounded-lg border-2 border-world bg-card px-6 py-12 text-center sm:px-12 sm:py-16"
     >
       <SparkleBurstArt className="mx-auto h-16 w-40" />
-      <h2 id="vision-closing" className="mt-6 text-h3 sm:text-h2">
+      <h2 id="vision-closing" className="mt-6 text-section sm:text-display">
         {VISION_CLOSING.heading}
       </h2>
       <p className="mx-auto mt-5 max-w-2xl text-body-l">{VISION_CLOSING.body}</p>

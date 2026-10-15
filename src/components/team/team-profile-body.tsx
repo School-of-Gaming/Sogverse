@@ -122,7 +122,7 @@ export function TeamProfileBody({
                 from 40rem, 496px from 48rem. A name too wide for one line
                 puts the nickname, an unbroken block, whole on the second. */}
             <div className="inline-block max-w-full">
-              <h1 className="break-words text-[1.625rem] font-bold leading-[1.1] tracking-tight @min-[40rem]:text-h1-mobile @min-[48rem]:text-[2.5rem]">
+              <h1 className="break-words text-[1.625rem] font-bold leading-[1.1] tracking-tight @min-[40rem]:text-hero-mobile @min-[48rem]:text-[2.5rem]">
                 {teamMemberHeadline(profile, (nickname) => (
                   <span className="inline-block max-w-full text-act">
                     {nickname}

@@ -15,7 +15,7 @@ Status values: `open` · `ruled` · `landed`.
   screen readers and tools read; its step (size, weight, leading) is what the eye reads.
   They are decoupled, and constrained by a table in the library of which steps each
   level may take, enforced by types — an unlisted pair does not compile.
-- **The steps are renamed by role.** Today's ids are `h1`, `h2`, `h3`, `h4`, `body-l`,
+- **The steps are renamed by role.** The ids round 1 started from were `h1`, `h2`, `h3`, `h4`, `body-l`,
   `body-s` and `cta` in `src/tokens/typography.ts`. Round 1 proposes the heading names
   (`hero`, `page-title`, `section`, `card-title`, `sub-section`, `label`, and in §8 a
   seventh, `app-section`); the body and CTA steps are not asked about.
@@ -55,7 +55,12 @@ default (gamer settings, "Profile") and on its `text-xl` override (admin "Schedu
 works" step titles and the parent "Gamer not found" h3. `label` at 14 and 12 against
 admin "Coming up" and the consent banner's heading.
 
-**Status: open.**
+**Ruling (round 1):** role names and six heading steps — `hero` 48 (30 on a phone),
+`display` 36, `page-title` 30, `section` 24, `card-title` 18, `label` 14, each at 600
+with its own leading; `sub-section` is dropped and the `h1`–`h4` ids are gone —
+principles 1 and 2.
+
+**Status: landed.**
 
 ## 2. Level → step table
 
@@ -69,7 +74,11 @@ real pages' outlines, today and under the table: the admin dashboard (no section
 it skips h1 → h3 because CardTitle is always an h3) and the parent dashboard (sections per
 child; today a club card's name is not a heading).
 
-**Status: open.**
+**Ruling (round 1):** h1 hero, page-title · h2 display, section, card-title · h3
+section, card-title, label · h4 card-title, label — a level takes only steps at its own
+rank or below, enforced by `Heading`'s types.
+
+**Status: landed.**
 
 ## 3. Weight: 600 vs 700
 
@@ -79,7 +88,9 @@ Guidebook say, or 700, as about 110 of the app's headings are today.
 **Shown:** §3. Each of the three at 600 and 700, side by side, with the home hero, the
 admin and parent page titles, and the home and Roblox section headings.
 
-**Status: open.**
+**Ruling (round 1):** 600 everywhere — principle 3.
+
+**Status: landed.**
 
 ## 4. Breakpoints
 
@@ -91,7 +102,9 @@ admin and parent page titles, and the home and Roblox section headings.
 heading, the not-found title, the family product page's masthead with a one-word Finnish
 club name, and the home hero.
 
-**Status: open.**
+**Ruling (round 1):** one size at every width; only `hero` resteps — principle 4.
+
+**Status: landed.**
 
 ## 5. Tracking and leading
 
@@ -104,7 +117,10 @@ are live today.
 at 280px with its real two-line title, four ways: as it renders today, at `leading-none`,
 and at the card-title step's 1.3 at 24 and 20px.
 
-**Status: open.**
+**Ruling (round 1):** normal letter spacing, never `tracking-tight`; each step carries
+its own leading and no call site overrides it — principle 3.
+
+**Status: landed.**
 
 ## 6. Heading colour
 
@@ -115,7 +131,10 @@ ink only, ink or quiet ink, and whether act is ever a heading's colour.
 greeting beside itself in ink, and an admin tool's quiet-ink results heading beside itself
 in ink.
 
-**Status: open.**
+**Ruling (round 1):** headings are ink and there is no colour prop; the public hero's
+act phrase stays the one declared departure, drawn at its call site — principle 5.
+
+**Status: landed.**
 
 ## 7. Furniture labels
 
@@ -127,7 +146,10 @@ also take `label` at h2/h3 back out of §2's table).
 workspace's "Other groups" rail card, the Roblox page's "Creator Academy documents" — each
 today, at `label` 14 and 12px, and as plain body-s text, ink held at quiet ink.
 
-**Status: open.**
+**Ruling (round 1):** sentence case always; the `label` step where the text titles a
+region, plain text where it does not — principle 6.
+
+**Status: ruled.**
 
 ## 8. App section vs marketing section
 
@@ -143,7 +165,10 @@ section h2s and a session card), today and then under each `page-title` candidat
 features heading today, at `section`, and at `app-section` 22. §2's tables gain an
 `app-section` column, allowed at h2.
 
-**Status: open.**
+**Ruling (round 1):** one `section` step at 24 under `page-title` 30; marketing
+sections take `display`. There is no `app-section` step.
+
+**Status: ruled.**
 
 ## 9. Dialog and sheet titles
 
@@ -156,4 +181,6 @@ voice room's moderator leave dialog and the parent's give-up-the-place confirm o
 offer — each today, at `card-title` 20, at `app-section` 22, and at `card-title` 24. The
 20px `app-section` candidate is the 20px `card-title` recipe, so it is not drawn twice.
 
-**Status: open.**
+**Ruling (round 1):** `card-title` (18) at h2.
+
+**Status: ruled.**

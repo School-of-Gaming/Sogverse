@@ -291,7 +291,7 @@ const noGreyAsHover = [
  * without a compiler. The generated CSS is the artifact both ends already agree
  * on — a test regenerates and diffs it — so reading it is reading the theme.
  *
- * The `--x--y` shapes (`--text-h1--font-weight`) are companions of a token, not
+ * The `--x--y` shapes (`--text-hero--font-weight`) are companions of a token, not
  * tokens, and are filtered out: a class can never name one.
  */
 const themeCss = readFileSync(
@@ -513,7 +513,7 @@ const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) =
  * Derived rather than typed out, for the reason the colour tokens above are:
  * @sog/ui adds a face and this file learns it on the next lint run; @sog/ui
  * retires one and every class still naming it starts failing the same day. The
- * pattern is anchored at the start of a declaration so `--text-h1--font-weight`
+ * pattern is anchored at the start of a declaration so `--text-hero--font-weight`
  * — a companion of a type step, which no class can ever name — is not read as a
  * face called `weight`.
  */

@@ -126,7 +126,7 @@ export function StepsSection() {
         <Exemplar file="src/app/[locale]/(public)/page.tsx" page="Home, hero">
           <Columns of={2}>
             <Column name="today">
-              <h1 className="text-h1-mobile font-bold tracking-tight md:text-6xl">
+              <h1 className="text-hero-mobile font-bold tracking-tight md:text-6xl">
                 <HomeHeroWords />
               </h1>
             </Column>
