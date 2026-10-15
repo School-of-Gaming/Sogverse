@@ -328,10 +328,14 @@ export type TypeStep = {
  * weight, same rules: the registers differ in where the scale tops out, never
  * in how a heading is drawn.
  *
- * **Only `hero` resteps for a narrow viewport.** A hero size cannot fit the
- * mobile floor, so its narrow step is pinned here rather than re-decided per
- * page; every other step ships one size at every width, because a heading that
- * changes size at a breakpoint costs more in inconsistency than it buys in fit.
+ * **Only the story steps — `hero` and `display` — restep for a narrow
+ * viewport.** They are the two sized for a wide public page, and a phone cannot
+ * carry them, so each one's narrow size is pinned here rather than re-decided
+ * per page. Both drop at `md` together, and the hero outranks a section heading
+ * at every width: 48 over 36 wide, 34 over 28 narrow. The work-register steps
+ * are already sized for a phone and ship one size at every width, because a
+ * heading that changes size at a breakpoint costs more in inconsistency than it
+ * buys in fit.
  *
  * **No heading step carries a colour.** A heading is ink; the one declared
  * departure, the public hero's act phrase, is in `brand.ts` and is drawn at its
@@ -347,8 +351,11 @@ export const TYPE_SCALE = [
    * never a section heading, however important the section — a second hero on
    * a page is two pages competing for one reader.
    *
-   * The one step that resteps: 48px cannot hold a three-or-four-word headline
-   * at the mobile floor, so it drops to 30 there. The tightest leading in the
+   * A story step, so it resteps: 48px cannot hold a three-or-four-word headline
+   * at the mobile floor, so it drops to 34 there — still above `display`'s
+   * narrow 28, so the hero outranks a section heading on a phone too. At 34
+   * every hero line the product breaks by hand still sits whole in a 375px
+   * phone's column, in every locale. The tightest leading in the
    * scale, because a display line of a few large words reads as one shape and
    * loose leading breaks it into separate lines.
    */
@@ -358,7 +365,7 @@ export const TYPE_SCALE = [
     label: "Hero",
     face: "sans",
     px: 48,
-    mobilePx: 30,
+    mobilePx: 34,
     weight: 600,
     lineHeight: 1.1,
   },
@@ -369,6 +376,11 @@ export const TYPE_SCALE = [
    * Never on an app page: no section of an app page needs 36px, and on one it
    * would outrank the page's own title. A section inside an app page is
    * `section`.
+   *
+   * A story step, so it resteps with the hero: 36px is sized for a wide public
+   * page, and on a phone a section heading at that size reads as loud as the
+   * hero above it. It drops to 28 below `md`, under the hero's 34 and still
+   * above `section`'s 24.
    */
   {
     id: "display",
@@ -376,7 +388,7 @@ export const TYPE_SCALE = [
     label: "Display",
     face: "sans",
     px: 36,
-    mobilePx: null,
+    mobilePx: 28,
     weight: 600,
     lineHeight: 1.2,
   },

@@ -74,12 +74,15 @@
   --text-hero: 3rem;
   --text-hero--line-height: 1.1;
   --text-hero--font-weight: 600;
-  --text-hero-mobile: 1.875rem;
+  --text-hero-mobile: 2.125rem;
   --text-hero-mobile--line-height: 1.1;
   --text-hero-mobile--font-weight: 600;
   --text-display: 2.25rem;
   --text-display--line-height: 1.2;
   --text-display--font-weight: 600;
+  --text-display-mobile: 1.75rem;
+  --text-display-mobile--line-height: 1.2;
+  --text-display-mobile--font-weight: 600;
   --text-page-title: 1.875rem;
   --text-page-title--line-height: 1.2;
   --text-page-title--font-weight: 600;

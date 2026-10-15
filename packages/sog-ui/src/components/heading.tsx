@@ -122,7 +122,7 @@ export type HeadingProps = HeadingPair & {
    * from `md`, for a composition that changes shape there: a hero whose words
    * stack centred over their picture on a phone and sit beside it on a wide
    * screen, or a dialog header that centres on a phone. Only `md`, the one
-   * breakpoint the scale already resteps at, so a heading never changes its
+   * breakpoint the story steps restep at, so a heading never changes its
    * alignment and its size at two different widths.
    */
   align?: "start" | "center" | "center-narrow";
@@ -143,12 +143,13 @@ export type HeadingProps = HeadingPair & {
 
 /**
  * Each step's utility, written out because Tailwind finds a class by reading
- * source text. Only `hero` names two: it is the one step that resteps, at the
- * narrow size up to `md` and its own size from there.
+ * source text. Only the story steps, `hero` and `display`, name two: they are
+ * the steps that restep, at the narrow size up to `md` and their own size from
+ * there.
  */
 const STEP_CLASS = {
   hero: "text-hero-mobile md:text-hero",
-  display: "text-display",
+  display: "text-display-mobile md:text-display",
   "page-title": "text-page-title",
   section: "text-section",
   "card-title": "text-card-title",

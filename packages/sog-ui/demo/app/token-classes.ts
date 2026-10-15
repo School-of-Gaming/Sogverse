@@ -126,4 +126,5 @@ export const STEP_CLASS: TokenClasses = {
 /** The narrow-viewport step, for the steps that have one. */
 export const STEP_MOBILE_CLASS: TokenClasses = {
   hero: "text-hero-mobile",
+  display: "text-display-mobile",
 };

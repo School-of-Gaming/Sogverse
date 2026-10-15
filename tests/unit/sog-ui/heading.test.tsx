@@ -73,11 +73,13 @@ describe("Heading", () => {
     },
   );
 
-  it("resteps the hero alone, from its narrow size to its own at md", () => {
+  it("resteps the story steps alone, from their narrow size to their own at md", () => {
     for (const pair of PAIRS) {
       const classes = [...headingOf(pair).classList];
       const responsive = classes.filter((name) => name.includes(":"));
-      expect(responsive).toEqual(pair.step === "hero" ? ["md:text-hero"] : []);
+      const story = pair.step === "hero" || pair.step === "display";
+      expect(responsive).toEqual(story ? [`md:text-${pair.step}`] : []);
+      if (story) expect(classes).toContain(`text-${pair.step}-mobile`);
     }
   });
 
