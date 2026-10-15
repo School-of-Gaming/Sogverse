@@ -254,6 +254,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
     invoice_customer_id: null,
+    invoice_customer: null,
     registration_opens_at: "2025-08-01T00:00:00.000Z",
     timezone: "Europe/Helsinki",
     product_translations: [

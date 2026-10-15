@@ -215,11 +215,19 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // deliberately not `!inner`: a creator whose profile the reader cannot see must
 // leave the product readable with the creator unknown, never make the whole
 // product read as "not found".
+//
+// `invoice_customer:invoice_customers!products_invoice_customer_id_fkey(id,
+// invoice_name, fennoa_customer_no)` is the Fennoa buyer a municipality club is
+// invoiced to — only the three fields the details page names and links, never
+// the billing address, which belongs to the invoicing page. It rides on this
+// read so the name paints with the rest of the details rather than a round trip
+// later. The foreign key is nullable, so the embed is `null` on every product
+// with no customer, which is every type but a municipality club.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name)), creator:profiles!products_created_by_fkey(id, first_name, last_name)",
+      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name)), creator:profiles!products_created_by_fkey(id, first_name, last_name), invoice_customer:invoice_customers!products_invoice_customer_id_fkey(id, invoice_name, fennoa_customer_no)",
     )
     .eq("id", id)
     .maybeSingle();

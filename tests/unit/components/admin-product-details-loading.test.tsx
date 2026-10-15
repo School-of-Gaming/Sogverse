@@ -41,10 +41,6 @@ vi.mock("@/services/products", () => ({
   usePlannedSessions: () => reads.plan,
 }));
 
-vi.mock("@/services/invoice-customers", () => ({
-  useInvoiceCustomer: () => ({ data: undefined }),
-}));
-
 vi.mock("@/components/admin/products/groups/groups-panel", () => ({
   GroupsPanel: ({ voiceAvailable }: { voiceAvailable: boolean }) => {
     voiceSeen.value.push(voiceAvailable);
@@ -83,6 +79,7 @@ function remoteClub(): ProductAdminDetailRow {
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
     invoice_customer_id: null,
+    invoice_customer: null,
     is_visible: true,
     created_by: "admin-1",
     creator: { id: "admin-1", first_name: "Aino", last_name: "Admin" },

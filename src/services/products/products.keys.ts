@@ -17,8 +17,11 @@ export const productKeys = {
     [...productKeys.lists(), "visible", { types: [...types].sort() }] as const,
   detail: (id: string | undefined) =>
     [...productKeys.all, "detail", id] as const,
+  // A grouping key with no query of its own: what a write reaching every
+  // product's admin read at once (an invoice customer's edited name) targets.
+  adminDetails: () => [...productKeys.all, "admin-detail"] as const,
   adminDetail: (id: string | undefined) =>
-    [...productKeys.all, "admin-detail", id] as const,
+    [...productKeys.adminDetails(), id] as const,
   plannedSessions: (id: string | undefined) =>
     [...productKeys.all, "planned-sessions", id] as const,
   plannedSessionsIn: (id: string | undefined, from: string, to: string) =>

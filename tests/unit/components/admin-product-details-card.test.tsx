@@ -33,10 +33,6 @@ vi.mock("@/services/products", () => ({
   usePlannedSessions: () => ({ data: [], isPending: false }),
 }));
 
-vi.mock("@/services/invoice-customers", () => ({
-  useInvoiceCustomer: () => ({ data: undefined }),
-}));
-
 vi.mock("@/components/admin/products/groups/groups-panel", () => ({
   GroupsPanel: () => <div data-testid="groups-panel" />,
 }));
@@ -118,15 +114,38 @@ describe("the admin product details card", () => {
     expect(valueOf("Schedule").textContent).not.toBe("");
   });
 
-  it("carries the public link in the header, not among the facts", () => {
+  it("names and links a municipality club's invoice customer from the product read itself", () => {
+    const customerId = "8c2f4e1a-7b3d-4a9e-b5c6-0d1e2f3a4b5c";
+    renderPage({
+      ...syntheticConsumerProduct(),
+      product_type: "municipality_club",
+      invoice_customer_id: customerId,
+      invoice_customer: {
+        id: customerId,
+        invoice_name: "Espoon kaupunki",
+        fennoa_customer_no: "F0037",
+      },
+    });
+
+    const link = within(valueOf("Invoiced to")).getByRole("link", {
+      name: "Espoon kaupunki (F0037)",
+    });
+    expect(link.getAttribute("href")).toContain(customerId);
+  });
+
+  it("carries the shop page link in the record, not in the header", () => {
     renderPage(syntheticConsumerProduct());
 
-    const header = screen.getByRole("heading", { name: "Build Club", level: 1 });
-    const headerCard = header.closest("div.min-w-0");
-    if (!(headerCard instanceof HTMLElement)) throw new Error("no header");
+    const details = screen.getByRole("region", { name: "Product details" });
+    const record = within(details).getByRole("region", { name: "Record" });
     expect(
-      within(headerCard).getByRole("link", { name: /\/shop\// }),
+      within(record).getByRole("link", { name: /\/shop\// }),
     ).toBeTruthy();
-    expect(screen.queryByText("Public link", { selector: "dt" })).toBeNull();
+    expect(valueOf("Shop page").textContent).toMatch(/\/shop\//);
+
+    const title = screen.getByRole("heading", { name: "Build Club", level: 1 });
+    const header = title.closest("header");
+    if (!(header instanceof HTMLElement)) throw new Error("no header");
+    expect(within(header).queryByRole("link", { name: /\/shop\// })).toBeNull();
   });
 });

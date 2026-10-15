@@ -1012,6 +1012,7 @@
           "marketingConsents": "Marketing asks",
           "format": "Format",
           "ageRange": "Age range",
+          "shopPage": "Shop page",
           "createdBy": "Created by",
           "createdOn": "Created on"
         },

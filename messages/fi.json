@@ -1012,6 +1012,7 @@
           "marketingConsents": "Markkinointikysymykset",
           "format": "Muoto",
           "ageRange": "Ikähaarukka",
+          "shopPage": "Kauppasivu",
           "createdBy": "Luonut",
           "createdOn": "Luotu"
         },

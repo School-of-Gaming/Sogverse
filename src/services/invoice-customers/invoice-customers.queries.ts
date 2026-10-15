@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
+import { productKeys } from "@/services/products/products.keys";
 import { InvoiceCustomersService } from "./invoice-customers.service";
 import type { InvoiceCustomerInput } from "./invoice-customers.contracts";
 
@@ -81,6 +82,11 @@ export function useUpdateInvoiceCustomer() {
         // already fetched — and a month is what a file is built from.
         queryClient.invalidateQueries({
           queryKey: municipalityInvoicingKeys.all,
+        }),
+        // The admin product read embeds the customer's name and number against
+        // every club billed to it.
+        queryClient.invalidateQueries({
+          queryKey: productKeys.adminDetails(),
         }),
       ]),
   });
