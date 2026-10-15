@@ -1268,11 +1268,12 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // The two class-level bans reach the demo, because the demo is a consumer and
-  // is held to every rule a Sogverse page is held to. A grey written as a hover
-  // and a raw palette class are both things a *consumer* writes, and the demo is
-  // the reference for how a consumer writes them — a reference showing the wrong
-  // class teaches it to every page that copies it.
+  // The two class-level bans and the raw-heading ban reach the demo, because the
+  // demo is a consumer and is held to every rule a Sogverse page is held to. A
+  // grey written as a hover, a raw palette class and a hand-written `h1` are all
+  // things a *consumer* writes, and the demo is the reference for how a consumer
+  // writes them — a reference showing the wrong one teaches it to every page
+  // that copies it.
   //
   // The hex ban still stops short of here, on its own terms: it is the library's
   // rule about where colour is authored, and a consumer spelling one is a
@@ -1280,7 +1281,11 @@ const eslintConfig = defineConfig([
   {
     files: ["packages/*/demo/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...noPaletteColourClasses, ...noGreyAsHover],
+      "no-restricted-syntax": ["error",
+        ...noPaletteColourClasses,
+        ...noGreyAsHover,
+        ...noRawHeadingElements,
+      ],
     },
   },
   {

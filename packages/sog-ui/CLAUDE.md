@@ -219,11 +219,15 @@ fifth family cannot be loaded and a face of the consumer's own cannot be declare
 **Headings.** Every heading is `Heading`, and it takes two required props because they are
 two decisions: the **level** is the outline a screen reader and a search engine walk, and
 the **step** is how much attention the page gives it. Which steps a level may take is a
-**ceiling** the types enforce — `h1` up to hero or page-title; `h2` up to display; `h3` up
-to section; `h4` up to card-title — so a level never makes a heading louder than its place
-allows, and the same card is an `h2` on one page and an `h3` on another without changing
-size. **Spotlighting is opt-in: a heading takes the quietest step that still reads as a
-title.** An app page's title is `section`, because most say only where the reader is;
+table the types enforce — `h1`: hero, page-title, section, card-title, label; `h2`:
+display, section, card-title, label; `h3`: section, card-title, label; `h4`: card-title,
+label. **Each level has a ceiling** — a heading never takes a step louder than its place in
+the outline allows — **and the steps named for what they title belong to one level**:
+`hero` and `page-title` title a page, so they are `h1`'s alone; `display` titles a story
+section, so it is `h2`'s alone. So the same card is an `h2` on one page and an `h3` on
+another without changing size. **Below that, which step a heading takes is the page's
+choice: the quietest one that still reads as a title** — spotlighting is opt-in.
+An app page's title is `section`, because most say only where the reader is;
 `page-title` is for a page whose title is its point, and `hero` and `display` are the
 public story register's, never reached for to make a section feel important. **Within a
 page a heading is always smaller than the heading it sits under**, and siblings may share

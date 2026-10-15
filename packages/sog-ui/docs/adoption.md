@@ -239,10 +239,14 @@ Done when: no raw heading element remains in Sogverse and the lint holds it ther
 **What it landed (2026-10-15).** `Heading` takes an outline level, `h1` to `h4`, and a
 step, as two required props, because on every hand-written heading they had been one
 decision and a page either skipped a level to get the size it wanted or wore the wrong size
-to keep its outline. The two are not independent: a table beside the component is the
-ceiling each level may reach — `h1` hero, page-title, section or card-title; `h2` display,
-section, card-title or label; `h3` section, card-title or label; `h4` card-title or label —
-and a pair outside it does not compile. Beside them it takes an id, a language, an alignment (start, centre, or
+to keep its outline. The two are not independent: a table beside the component lists the
+steps each level may take — `h1` hero, page-title, section, card-title or label; `h2`
+display, section, card-title or label; `h3` section, card-title or label; `h4` card-title
+or label — and a pair outside it does not compile. Each level has a ceiling, so a heading
+never takes a step louder than its place in the outline allows, and the steps named for
+what they title belong to one level: `hero` and `page-title` title a page and are `h1`'s
+alone, and `display` titles a story section and is `h2`'s alone. Below that, the step is
+the page's choice: the quietest one that still reads as a title. Beside them it takes an id, a language, an alignment (start, centre, or
 centred until `md` and start from it), a one-line truncation, a screen-reader-only form,
 and a ref with a focus-target flag for the screen that moves focus to its title on arrival.
 It takes no class and no colour. The scale's heading steps are named by role rather than by
@@ -272,8 +276,8 @@ landing-page design is settled, since no landing page is live yet.
 
 **Spotlighting is opt-in** (owner, 2026-10-15: a page's main heading need not be
 spotlighted). The table had been read as a floor, so every app page's title stood at
-`page-title`; it is a ceiling, and a heading takes the quietest step that still reads as a
-title. An app page's title is `section`, and `page-title` stays on the pages whose title is
+`page-title`; each level's top is a ceiling, and a heading takes the quietest step that
+still reads as a title. An app page's title is `section`, and `page-title` stays on the pages whose title is
 their point: the gamer's greeting, the profile picker, a Library article, a team member's
 profile, the policy pages and the gedu contract (each one document a reader came to read),
 the platform vision pitch, and the shop's screen-reader-only title. Within a page a heading
@@ -289,7 +293,7 @@ What holds it. The table is a type, so a pair outside it fails type-check at the
 site; `tests/unit/sog-ui/heading.test.tsx` renders every pair the table allows and holds
 each step to sizes the theme declares, and the restep to the story steps alone; `tests/unit/sog-ui/raw-heading-ban.test.ts` runs violating and
 conforming lines through the ban; and the ban itself, in `eslint.config.mjs`, refuses a raw
-`h1`–`h6` written as JSX anywhere in `src/` and a heading tag written as a string — held in
+`h1`–`h6` written as JSX anywhere in `src/` or the library's demo, and a heading tag written as a string — held in
 a variable, defaulted in a parameter, picked by a ternary, carried as an object's value or
 typed as a literal — which is how a tag chosen at runtime escapes the first half. Its
 exemptions are named one by one: the markdown renderer and the authored-markdown table,
@@ -305,7 +309,8 @@ which its components are rendered from, and still not its demo or its docs.
 Where each rule lives: the steps, their sizes and the departure are doc comments in
 `packages/sog-ui/src/tokens/typography.ts`; the level-to-step table and what each prop is
 for are in the component's own; the rules no value can state — level is the outline and
-step is the attention, the ceiling and the opt-in spotlight, a heading smaller than the one
+step is the attention, the ceiling, the steps that belong to one level and the opt-in
+spotlight, a heading smaller than the one
 it sits under, the label over a compact region, the two registers, one weight, headings are
 ink, a heading titles a region, and heading copy is sentence case in `messages/` too — are
 in this package's

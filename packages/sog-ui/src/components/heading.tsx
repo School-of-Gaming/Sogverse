@@ -33,24 +33,26 @@ export type HeadingLevel = 1 | 2 | 3 | 4;
 /**
  * **Which steps each outline level may take — the table the types enforce.**
  *
- * **The table is a ceiling.** It says how loud a heading at each level may be,
- * never how loud it must be: the level is the heading's place in the outline,
- * and that place never makes it louder than the place allows. The step is the
- * separate decision of how much the page wants to spotlight it, and
- * **spotlighting is opt-in** — a heading takes the quietest step that still
- * reads as a title for what it titles, and a page's `h1` is often just a label
- * for where the reader is. So an app page's title is `section` by default, and
- * `page-title` is chosen for the page whose title is its point.
+ * **Each level has a ceiling** — a heading never takes a step louder than its
+ * place in the outline allows — **and the steps named for what they title
+ * belong to one level**: `hero` and `page-title` title a page, so they are
+ * `h1`'s alone; `display` titles a story section, so it is `h2`'s alone.
+ * **Below that, which step a heading takes is the page's choice: the quietest
+ * one that still reads as a title.** Spotlighting is opt-in, and a page's `h1`
+ * is often just a label for where the reader is, so an app page's title is
+ * `section` by default and `page-title` is chosen for the page whose title is
+ * its point.
  *
- * - **`h1`** may go up to `hero` (a public page's headline) or `page-title`
- *   (the spotlit app page); its quietest is `card-title`, for a page that is
- *   one small object — a call screen, a not-found state.
- * - **`h2`** may go up to `display`, a public page's section. An app page's
- *   region is `section` under a spotlit title and `card-title` or `label`
- *   under a quiet one; a dialog or sheet, the first region of a new layer,
- *   titles at `card-title`.
- * - **`h3`** may go up to `section`, a story page's sub-section.
- * - **`h4`** may go up to `card-title`.
+ * - **`h1`**: `hero` (a public page's headline) or `page-title` (the spotlit
+ *   app page), down to `card-title` for a page that is one small object — a
+ *   call screen, a not-found state — and `label` for one that titles a
+ *   compact region.
+ * - **`h2`**: `display`, a public page's section, and below it the shared
+ *   steps. An app page's region is `section` under a spotlit title and
+ *   `card-title` or `label` under a quiet one; a dialog or sheet, the first
+ *   region of a new layer, titles at `card-title`.
+ * - **`h3`**: up to `section`, a story page's sub-section.
+ * - **`h4`**: up to `card-title`.
  *
  * Each level's top sits under the top of the level above it, so no heading
  * can outrank the outline over it. Within a page the rule is stricter than the
@@ -67,7 +69,7 @@ export type HeadingLevel = 1 | 2 | 3 | 4;
  * making an app section feel important.
  */
 export const HEADING_STEPS = {
-  1: ["hero", "page-title", "section", "card-title"],
+  1: ["hero", "page-title", "section", "card-title", "label"],
   2: ["display", "section", "card-title", "label"],
   3: ["section", "card-title", "label"],
   4: ["card-title", "label"],
