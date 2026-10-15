@@ -54,6 +54,7 @@
       "adminSpotlightEdit": "Muokkaa nostoa",
       "adminLandingPages": "Laskeutumissivut",
       "adminLandingPage": "Laskeutumissivu",
+      "adminAnalytics": "Analytiikka",
       "adminPlatformVision": "Alustan visio",
       "adminGeduInvoicing": "Gedujen laskutus",
       "adminTools": "Työkalut",
@@ -2069,6 +2070,116 @@
         "worthReading": "Lukemisen arvoiset ({count})",
         "all": "Kaikki ({count})"
       }
+    },
+    "analytics": {
+      "title": "Analytiikka",
+      "subtitle": "Kuinka moni sivustolle tulee, mitä he lukevat, mitkä kampanjat heidät tuovat ja kuinka moni perhe rekisteröityy. Jokainen tämän sivun päivä on UTC-päivä.",
+      "range": {
+        "label": "Aikaväli",
+        "preset": "Viimeiset {days} päivää",
+        "from": "Alkaen",
+        "to": "Asti",
+        "apply": "Näytä",
+        "showing": "Näytetään {from} – {to}.",
+        "dataStarts": "Vercelin luvut alkavat {date}."
+      },
+      "readAt": "Luettu Vercelistä klo {time}. Säilytetään enintään tunnin.",
+      "noLanguage": "Osoitteessa ei ole kieltä",
+      "languageCount": "{language} {count}",
+      "showAll": "Näytä kaikki {count}",
+      "showFewer": "Näytä vähemmän",
+      "errors": {
+        "unconfigured": "Vercel ei ole yhdistettynä tässä ympäristössä, joten näitä lukuja ei voi lukea.",
+        "refused": "Vercel ei antanut näitä lukuja tämän sivuston käyttöavaimelle. Avain tarvitsee niihin pääsyn, ennen kuin ne voivat näkyä tässä.",
+        "failed": "Näitä lukuja ei juuri nyt voitu lukea. Yritä uudelleen muutaman minuutin päästä."
+      },
+      "measures": {
+        "heading": "Kolme tapaa laskea",
+        "caption": "Jokainen luku laskee eri asiaa, joten ne eivät koskaan täsmää keskenään. Palvellut sivut ovat lähimpänä todellista liikennettä, sivunkatselut kertovat, mitä luettiin, ja rekisteröitymiset, mihin se johti.",
+        "served": {
+          "title": "Palvellut sivut",
+          "caption": "Jokainen kerta, kun sivu ladattiin palvelimeltamme, kenelle tahansa, riippumatta evästebannerin vastauksesta. Tunnetut botit ja linkkien esikatselut on jätetty pois, samoin sivulta toiselle siirtymiset saapumisen jälkeen. Näitä ei voi jakaa kampanjoittain: palvelimen loki ei säilytä osoitteen kampanjaa.",
+          "window": "Kattaa vain {from} – {to}: palvelimen loki säilyttää viimeiset {days} päivää.",
+          "outside": "Palvelimen loki säilyttää vain viimeiset {days} päivää, joten sillä ei ole mitään tälle aikavälille."
+        },
+        "views": {
+          "title": "Sivunkatselut",
+          "visitors": "{count, plural, one {noin # kävijä} other {noin # kävijää}}",
+          "caption": "Mukana ovat vain kävijät, jotka hyväksyivät analytiikan evästebannerissa. Se on usein pieni osa kaikista tulijoista, joten nämä luvut jäävät selvästi palveltujen sivujen alle. Kävijät lasketaan laitteittain, joten heidän määränsä on suuntaa antava."
+        },
+        "signups": {
+          "title": "Vanhempien rekisteröitymiset",
+          "caption": "Luodut vanhempien tilit omista tiedoistamme. Jokainen uusi vanhemman tili lasketaan, riippumatta evästebannerin vastauksesta."
+        }
+      },
+      "timeline": {
+        "heading": "Ajan mittaan",
+        "traffic": "Liikenne päivittäin",
+        "signups": "Vanhempien rekisteröitymiset päivittäin",
+        "utcDays": "Päivät ovat UTC-päiviä keskiyöstä keskiyöhön.",
+        "series": {
+          "served": "Palvellut sivut",
+          "pageviews": "Sivunkatselut",
+          "visitors": "Kävijät",
+          "signups": "Rekisteröitymiset"
+        },
+        "missing": {
+          "served": "Palvellut sivut puuttuvat: palvelimen lokia ei voitu lukea.",
+          "visits": "Sivunkatselut ja kävijät puuttuvat: Verceliä ei voitu lukea.",
+          "signups": "Rekisteröitymiset puuttuvat: omia tietojamme ei voitu lukea."
+        }
+      },
+      "landing": {
+        "heading": "Laskeutumissivut",
+        "caption": "Kunkin laskeutumissivun katselut, sivun kaikki kielet yhteensä. Mukana vain analytiikan hyväksyneet kävijät.",
+        "columns": {
+          "page": "Sivu",
+          "pageviews": "Katselut"
+        },
+        "unmatched": "Mikään laskeutumissivu ei enää käytä tätä osoitetta",
+        "empty": "Yhtään laskeutumissivua ei katseltu tällä aikavälillä."
+      },
+      "campaigns": {
+        "heading": "Kampanjat",
+        "caption": "Sivunkatselut linkin kampanjan mukaan sekä kunkin kampanjan tuomat vanhempien tilit. Katseluissa ovat mukana vain analytiikan hyväksyneet kävijät. Rekisteröitymiset ovat kattavat, mutta vanhemman kampanja tallennetaan vain, jos hän hyväksyi markkinointievästeet, joten kampanjajako kattaa vain nämä perheet.",
+        "columns": {
+          "campaign": "Kampanja",
+          "sources": "Lähde",
+          "mediums": "Media",
+          "pageviews": "Katselut",
+          "signups": "Rekisteröitymiset"
+        },
+        "none": "Ei kampanjaa",
+        "noneHint": "Linkissä ei ollut kampanjaa, tai sitä ei tallennettu",
+        "noValue": "ei mitään",
+        "empty": "Tällä aikavälillä ei ollut katseluita eikä rekisteröitymisiä."
+      },
+      "pages": {
+        "heading": "Suosituimmat sivut",
+        "caption": "Katselut sivuittain, sivun kaikki kielet yhdellä rivillä. Avaa rivi nähdäksesi, millä kielillä sitä luettiin. Mukana vain analytiikan hyväksyneet kävijät.",
+        "columns": {
+          "page": "Sivu",
+          "pageviews": "Katselut"
+        },
+        "noSplit": "Kielijako muuttui lukemisen aikana. Lataa sivu hetken päästä uudelleen nähdäksesi sen.",
+        "empty": "Yhtään sivua ei katseltu tällä aikavälillä."
+      },
+      "breakdowns": {
+        "heading": "Mistä kävijät tulevat",
+        "caption": "Katselut sen sivuston mukaan, jolta kävijä tuli, sekä maan ja laitteen mukaan. Mukana vain analytiikan hyväksyneet kävijät.",
+        "referrers": "Viittaajat",
+        "countries": "Maat",
+        "devices": "Laitteet",
+        "noReferrer": "Suoraan, tai tietoa ei välitetty",
+        "unknown": "Tuntematon",
+        "rest": "{count, plural, one {# muu} other {# muuta}}",
+        "empty": "Tällä aikavälillä ei ole näytettävää.",
+        "deviceTypes": {
+          "desktop": "Tietokone",
+          "mobile": "Puhelin",
+          "tablet": "Tabletti"
+        }
+      }
     }
   },
   "auth": {
@@ -3734,6 +3845,7 @@
     "libraryContent": "Kirjaston sisältö",
     "spotlights": "Nostot",
     "landingPages": "Laskeutumissivut",
+    "analytics": "Analytiikka",
     "platformVision": "Alustan visio",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",

@@ -246,6 +246,7 @@ export const PATHNAMES = {
   "/admin/library/[id]": "/admin/library/[id]",
   "/admin/landing-pages": "/admin/landing-pages",
   "/admin/landing-pages/[id]": "/admin/landing-pages/[id]",
+  "/admin/analytics": "/admin/analytics",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/spotlights": "/admin/spotlights",

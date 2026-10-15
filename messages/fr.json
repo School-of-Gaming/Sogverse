@@ -54,6 +54,7 @@
       "adminSpotlightEdit": "Modifier la mise en avant",
       "adminLandingPages": "Pages d’atterrissage",
       "adminLandingPage": "Page d’atterrissage",
+      "adminAnalytics": "Statistiques",
       "adminPlatformVision": "Vision de la plateforme",
       "adminGeduInvoicing": "Facturation des Gedus",
       "adminTools": "Outils",
@@ -2069,6 +2070,116 @@
         "worthReading": "À lire en priorité ({count})",
         "all": "Toutes ({count})"
       }
+    },
+    "analytics": {
+      "title": "Statistiques",
+      "subtitle": "Combien de personnes arrivent sur le site, ce qu'elles lisent, quelles campagnes les amènent et combien de familles s'inscrivent. Chaque jour de cette page est un jour UTC.",
+      "range": {
+        "label": "Période",
+        "preset": "{days} derniers jours",
+        "from": "Du",
+        "to": "Au",
+        "apply": "Afficher",
+        "showing": "Du {from} au {to}.",
+        "dataStarts": "Les chiffres de Vercel commencent le {date}."
+      },
+      "readAt": "Lu depuis Vercel à {time}. Conservé jusqu'à une heure.",
+      "noLanguage": "Pas de langue dans l'adresse",
+      "languageCount": "{language} {count}",
+      "showAll": "Tout afficher ({count})",
+      "showFewer": "Afficher moins",
+      "errors": {
+        "unconfigured": "Vercel n'est pas connecté sur ce déploiement, ces chiffres ne peuvent donc pas être lus.",
+        "refused": "Vercel a refusé ces chiffres au jeton d'accès de ce site. Le jeton doit y avoir accès pour qu'ils s'affichent ici.",
+        "failed": "Ces chiffres n'ont pas pu être lus pour l'instant. Réessayez dans quelques minutes."
+      },
+      "measures": {
+        "heading": "Trois façons de compter",
+        "caption": "Chaque chiffre compte une chose différente, ils ne se recoupent donc jamais. Les pages servies sont le plus proche du trafic réel, les pages vues montrent ce qui a été lu et les inscriptions ce que cela a donné.",
+        "served": {
+          "title": "Pages servies",
+          "caption": "Chaque fois qu'une page a été chargée depuis notre serveur, par n'importe qui, quelle que soit sa réponse au bandeau des cookies. Les robots connus et les aperçus de liens sont exclus, tout comme les passages d'une page à l'autre après l'arrivée. Ces chiffres ne peuvent pas être répartis par campagne : le journal du serveur ne garde pas la campagne de l'adresse.",
+          "window": "Couvre seulement du {from} au {to} : le journal du serveur garde les {days} derniers jours.",
+          "outside": "Le journal du serveur ne garde que les {days} derniers jours, il n'a donc rien pour cette période."
+        },
+        "views": {
+          "title": "Pages vues",
+          "visitors": "{count, plural, one {environ # visiteur} other {environ # visiteurs}}",
+          "caption": "Seuls les visiteurs qui ont accepté les statistiques dans le bandeau des cookies sont comptés, souvent une petite part de tous ceux qui sont venus, ces chiffres sont donc bien en dessous des pages servies. Les visiteurs sont comptés par appareil, ce nombre est donc approximatif."
+        },
+        "signups": {
+          "title": "Inscriptions de parents",
+          "caption": "Comptes parents créés, d'après nos propres données. Chaque nouveau compte parent est compté, quelle que soit sa réponse au bandeau des cookies."
+        }
+      },
+      "timeline": {
+        "heading": "Au fil du temps",
+        "traffic": "Trafic par jour",
+        "signups": "Inscriptions de parents par jour",
+        "utcDays": "Les jours sont des jours UTC, de minuit à minuit.",
+        "series": {
+          "served": "Pages servies",
+          "pageviews": "Pages vues",
+          "visitors": "Visiteurs",
+          "signups": "Inscriptions"
+        },
+        "missing": {
+          "served": "Les pages servies manquent : le journal du serveur n'a pas pu être lu.",
+          "visits": "Les pages vues et les visiteurs manquent : Vercel n'a pas pu être lu.",
+          "signups": "Les inscriptions manquent : nos propres données n'ont pas pu être lues."
+        }
+      },
+      "landing": {
+        "heading": "Pages d'atterrissage",
+        "caption": "Pages vues de chaque page d'atterrissage, toutes les langues d'une page comptées ensemble. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+        "columns": {
+          "page": "Page",
+          "pageviews": "Pages vues"
+        },
+        "unmatched": "Aucune page d'atterrissage n'utilise plus cette adresse",
+        "empty": "Aucune page d'atterrissage n'a été vue sur cette période."
+      },
+      "campaigns": {
+        "heading": "Campagnes",
+        "caption": "Pages vues selon la campagne du lien, à côté des comptes parents que chaque campagne a apportés. Les pages vues ne comptent que les visiteurs qui ont accepté les statistiques. Les inscriptions sont complètes, mais la campagne d'un parent n'est conservée que s'il a accepté les cookies marketing, la répartition par campagne ne couvre donc que ces familles.",
+        "columns": {
+          "campaign": "Campagne",
+          "sources": "Source",
+          "mediums": "Support",
+          "pageviews": "Pages vues",
+          "signups": "Inscriptions"
+        },
+        "none": "Aucune campagne",
+        "noneHint": "Pas de campagne dans le lien, ou une campagne non conservée",
+        "noValue": "aucune",
+        "empty": "Rien n'a été vu et personne ne s'est inscrit sur cette période."
+      },
+      "pages": {
+        "heading": "Pages les plus vues",
+        "caption": "Pages vues par page, toutes les langues d'une page sur une ligne. Ouvrez une ligne pour voir dans quelles langues elle a été lue. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+        "columns": {
+          "page": "Page",
+          "pageviews": "Pages vues"
+        },
+        "noSplit": "La répartition par langue a changé pendant la lecture. Rechargez dans un instant pour la voir.",
+        "empty": "Aucune page n'a été vue sur cette période."
+      },
+      "breakdowns": {
+        "heading": "D'où viennent les visiteurs",
+        "caption": "Pages vues selon le site d'où vient le visiteur, son pays et son appareil. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+        "referrers": "Sites référents",
+        "countries": "Pays",
+        "devices": "Appareils",
+        "noReferrer": "Accès direct, ou non transmis",
+        "unknown": "Inconnu",
+        "rest": "{count, plural, one {# autre} other {# autres}}",
+        "empty": "Rien à afficher pour cette période.",
+        "deviceTypes": {
+          "desktop": "Ordinateur",
+          "mobile": "Mobile",
+          "tablet": "Tablette"
+        }
+      }
     }
   },
   "auth": {
@@ -3734,6 +3845,7 @@
     "libraryContent": "Contenu de la Bibliothèque",
     "spotlights": "Mises en avant",
     "landingPages": "Pages d’atterrissage",
+    "analytics": "Statistiques",
     "platformVision": "Vision de la plateforme",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",

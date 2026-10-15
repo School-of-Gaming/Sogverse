@@ -54,6 +54,7 @@
       "adminSpotlightEdit": "Hov yIchoH",
       "adminLandingPages": "Sap ghItlhmey",
       "adminLandingPage": "Sap ghItlh",
+      "adminAnalytics": "De' poj",
       "adminPlatformVision": "Sogverse naj",
       "adminGeduInvoicing": "Gedu DIlmeH ghItlh",
       "adminTools": "janmey",
@@ -2113,6 +2114,116 @@
         "worthReading": "laDnIS ({count})",
         "all": "Hoch ({count})"
       }
+    },
+    "analytics": {
+      "title": "De' poj",
+      "subtitle": "SaH 'ar? chay' laD? 'Iv campaign qaS? 'ar qorDu' lIch? Hoch jaj UTC jaj ghaH.",
+      "range": {
+        "label": "poH",
+        "preset": "{days} jaj Qav",
+        "from": "pagh",
+        "to": "pa'",
+        "apply": "cha'",
+        "showing": "{from} – {to} 'oH.",
+        "dataStarts": "{date} Vercel mI' tagh."
+      },
+      "readAt": "{time} Vercel vIlaD. wa' rep pol.",
+      "noLanguage": "Hol tu'be'lu'",
+      "languageCount": "{language} {count}",
+      "showAll": "Hoch {count} cha'",
+      "showFewer": "puS cha'",
+      "errors": {
+        "unconfigured": "Vercel rarbe'lu', mI' laDlaHbe'.",
+        "refused": "Vercel lojmIt ngaQHa'moHwI' lajbe'. mI' cha'laHbe'.",
+        "failed": "DaH mI' laDlaHbe'. tugh yInIDqa'."
+      },
+      "measures": {
+        "heading": "wej mI' mIw",
+        "caption": "Hoch mI' latlh Doch toghlu'. ghommeH ngeHlu'be'.",
+        "served": {
+          "title": "nab ngeHlu'pu'bogh",
+          "caption": "nab ngeHlu'chugh, toghlu'. Hoch ghotvam'e', cookie DIr jangDI' vay' jangbe'chugh je. qoq toghlu'be'. campaign ghaHbe'.",
+          "window": "{from} – {to} neH: {days} jaj neH qawlu'.",
+          "outside": "{days} jaj neH qawlu'; poHvam vay' tu'lu'be'."
+        },
+        "views": {
+          "title": "nab leghlu'pu'bogh",
+          "visitors": "{count, plural, one {# SuchwI' 'ach} other {# SuchwI' 'ach}}",
+          "caption": "cookie DIr laj SuchwI' neH toghlu'. mI' mach law', Hoch mI' tIn puS. SuchwI' mI' Qagh."
+        },
+        "signups": {
+          "title": "vav SoS chu'",
+          "caption": "vav SoS mI' chu'. Hoch toghlu'."
+        }
+      },
+      "timeline": {
+        "heading": "poH chuqmo'",
+        "traffic": "Hoch jaj lup",
+        "signups": "Hoch jaj vav SoS chu'",
+        "utcDays": "UTC jaj chaH.",
+        "series": {
+          "served": "nab ngeHlu'pu'bogh",
+          "pageviews": "nab leghlu'pu'bogh",
+          "visitors": "SuchwI'",
+          "signups": "chu'"
+        },
+        "missing": {
+          "served": "nab ngeHlu'pu'bogh tu'lu'be': ta' laDlaHbe'.",
+          "visits": "nab leghlu'pu'bogh tu'lu'be': Vercel laDlaHbe'.",
+          "signups": "chu' tu'lu'be': ta' laDlaHbe'."
+        }
+      },
+      "landing": {
+        "heading": "Saq nab",
+        "caption": "Hoch Saq nab leghlu'pu'bogh. Hoch Hol rap. cookie DIr laj SuchwI' neH.",
+        "columns": {
+          "page": "nab",
+          "pageviews": "leghlu'"
+        },
+        "unmatched": "DaH Saq nab Sammo'be' Daqvam",
+        "empty": "poHvam Saq nab leghlu'be'."
+      },
+      "campaigns": {
+        "heading": "campaign",
+        "caption": "campaign leghlu'pu'bogh, vav SoS chu' je. leghlu'pu'bogh: cookie DIr laj SuchwI' neH. chu' Hoch, 'ach campaign qawlu' marketing cookie lajchugh neH.",
+        "columns": {
+          "campaign": "campaign",
+          "sources": "Hal",
+          "mediums": "jan",
+          "pageviews": "leghlu'",
+          "signups": "chu'"
+        },
+        "none": "campaign pagh",
+        "noneHint": "campaign tu'lu'be' pagh qawlu'be'",
+        "noValue": "pagh",
+        "empty": "poHvam vay' leghlu'be', vay' lIchbe'."
+      },
+      "pages": {
+        "heading": "nab Qav",
+        "caption": "Hoch nab leghlu'pu'bogh. Hoch Hol wa' tlhegh. tlhegh poSmoH, Hol yIlegh. cookie DIr laj SuchwI' neH.",
+        "columns": {
+          "page": "nab",
+          "pageviews": "leghlu'"
+        },
+        "noSplit": "laDtaHvIS Hol choHlu'. tugh yIlI'qa'.",
+        "empty": "poHvam nab leghlu'be'."
+      },
+      "breakdowns": {
+        "heading": "nuqDaq SuchwI' ghoS",
+        "caption": "nab leghlu'pu'bogh: Daq, Sep, jan je. cookie DIr laj SuchwI' neH.",
+        "referrers": "ngeHwI'",
+        "countries": "Sep",
+        "devices": "jan",
+        "noReferrer": "nIH, pagh ngeHlu'be'",
+        "unknown": "Sovbe'lu'",
+        "rest": "{count, plural, one {# latlh} other {# latlh}}",
+        "empty": "poHvam vay' tu'lu'be'.",
+        "deviceTypes": {
+          "desktop": "De'wI' tIn",
+          "mobile": "ghogh HablI'",
+          "tablet": "De'wI' mach"
+        }
+      }
     }
   },
   "auth": {
@@ -3774,6 +3885,7 @@
     "libraryContent": "paq qach ghItlhmey",
     "spotlights": "Hovmey",
     "landingPages": "Sap ghItlhmey",
+    "analytics": "De' poj",
     "platformVision": "Sogverse naj",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",

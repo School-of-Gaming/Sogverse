@@ -54,6 +54,7 @@
       "adminSpotlightEdit": "Edit Spotlight",
       "adminLandingPages": "Landing Pages",
       "adminLandingPage": "Landing Page",
+      "adminAnalytics": "Analytics",
       "adminPlatformVision": "Platform Vision",
       "adminGeduInvoicing": "Gedu Invoicing",
       "adminTools": "Tools",
@@ -2069,6 +2070,116 @@
         "worthReading": "Worth reading ({count})",
         "all": "All ({count})"
       }
+    },
+    "analytics": {
+      "title": "Analytics",
+      "subtitle": "How many people reach the site, what they read, which campaigns bring them, and how many families sign up. Every day on this page is a UTC day.",
+      "range": {
+        "label": "Date range",
+        "preset": "Last {days} days",
+        "from": "From",
+        "to": "To",
+        "apply": "Show",
+        "showing": "Showing {from} – {to}.",
+        "dataStarts": "Vercel's figures start on {date}."
+      },
+      "readAt": "Read from Vercel at {time}. Kept for up to an hour.",
+      "noLanguage": "No language in the address",
+      "languageCount": "{language} {count}",
+      "showAll": "Show all {count}",
+      "showFewer": "Show fewer",
+      "errors": {
+        "unconfigured": "Vercel isn't connected on this deployment, so these figures can't be read.",
+        "refused": "Vercel refused to give these figures to this site's access token. The token needs access to them before they can show here.",
+        "failed": "These figures couldn't be read just now. Try again in a few minutes."
+      },
+      "measures": {
+        "heading": "Three ways of counting",
+        "caption": "Each figure counts something different, so they never add up to one another. Pages served is the closest to real traffic; pageviews show what was read; signups are what it turned into.",
+        "served": {
+          "title": "Pages served",
+          "caption": "Every time a page was loaded from our server, by anyone, whatever they answered on the cookie banner. Known bots and link previews are left out, and so are moves between pages after arriving. These can't be split by campaign: the server's log doesn't keep the campaign from the address.",
+          "window": "Covers {from} – {to} only: the server's log keeps the last {days} days.",
+          "outside": "The server's log keeps only the last {days} days, so it has nothing for this range."
+        },
+        "views": {
+          "title": "Pageviews",
+          "visitors": "{count, plural, one {about # visitor} other {about # visitors}}",
+          "caption": "Only visitors who accepted analytics on the cookie banner are counted, which is often a small share of everyone who came, so these figures sit far below the pages served. Visitors are counted per device, so that number is approximate."
+        },
+        "signups": {
+          "title": "Parent signups",
+          "caption": "Parent accounts created, from our own records. Every new parent account is counted, whatever they answered on the cookie banner."
+        }
+      },
+      "timeline": {
+        "heading": "Over time",
+        "traffic": "Traffic per day",
+        "signups": "Parent signups per day",
+        "utcDays": "Days are UTC days, midnight to midnight.",
+        "series": {
+          "served": "Pages served",
+          "pageviews": "Pageviews",
+          "visitors": "Visitors",
+          "signups": "Signups"
+        },
+        "missing": {
+          "served": "Pages served are left off: the server's log couldn't be read.",
+          "visits": "Pageviews and visitors are left off: Vercel couldn't be read.",
+          "signups": "Signups are left off: our records couldn't be read."
+        }
+      },
+      "landing": {
+        "heading": "Landing pages",
+        "caption": "Pageviews of each landing page, every language of a page counted together. Only visitors who accepted analytics are counted.",
+        "columns": {
+          "page": "Page",
+          "pageviews": "Pageviews"
+        },
+        "unmatched": "No landing page uses this address now",
+        "empty": "No landing page was viewed in this range."
+      },
+      "campaigns": {
+        "heading": "Campaigns",
+        "caption": "Pageviews by the campaign in the link, beside the parent accounts each campaign brought. Pageviews count only visitors who accepted analytics. Signups are complete, but a parent's campaign is only kept when they accepted marketing cookies, so the split by campaign covers those families only.",
+        "columns": {
+          "campaign": "Campaign",
+          "sources": "Source",
+          "mediums": "Medium",
+          "pageviews": "Pageviews",
+          "signups": "Signups"
+        },
+        "none": "No campaign",
+        "noneHint": "No campaign in the link, or one that wasn't kept",
+        "noValue": "none",
+        "empty": "Nothing was viewed and nobody signed up in this range."
+      },
+      "pages": {
+        "heading": "Top pages",
+        "caption": "Pageviews per page, every language of a page on one row. Open a row to see the languages it was read in. Only visitors who accepted analytics are counted.",
+        "columns": {
+          "page": "Page",
+          "pageviews": "Pageviews"
+        },
+        "noSplit": "The language split changed while it was being read. Reload in a moment to see it.",
+        "empty": "No page was viewed in this range."
+      },
+      "breakdowns": {
+        "heading": "Where visitors come from",
+        "caption": "Pageviews by the site a visitor came from, their country and their device. Only visitors who accepted analytics are counted.",
+        "referrers": "Referrers",
+        "countries": "Countries",
+        "devices": "Devices",
+        "noReferrer": "Direct, or not passed on",
+        "unknown": "Unknown",
+        "rest": "{count, plural, one {# more} other {# more}}",
+        "empty": "Nothing to show for this range.",
+        "deviceTypes": {
+          "desktop": "Desktop",
+          "mobile": "Mobile",
+          "tablet": "Tablet"
+        }
+      }
     }
   },
   "auth": {
@@ -3734,6 +3845,7 @@
     "libraryContent": "Library Content",
     "spotlights": "Spotlights",
     "landingPages": "Landing Pages",
+    "analytics": "Analytics",
     "platformVision": "Platform Vision",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
