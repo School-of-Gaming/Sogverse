@@ -1609,7 +1609,7 @@
             "current": "Paie actuellement",
             "target": "Nouveau prix",
             "proration": "La prochaine facture ajoute ou rembourse la différence pour le reste du mois.",
-            "freePeriod": "Rien n’est facturé pour le reste de la période gratuite ; à partir du {date}, la famille paie le prix du nouveau club.",
+            "nothingPaid": "Rien de plus n’est facturé avant le {date}. Ensuite, la famille paie le prix du nouveau club, moins toute remise dont elle bénéficie déjà.",
             "unavailable": "Aucun prix à afficher",
             "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
           },

@@ -532,11 +532,11 @@ export function SwitchClubSheet({
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {check.data.settlement === "free_period" &&
-                      check.data.freePeriodEndsAt !== null
-                        ? t("prices.freePeriod", {
+                      {check.data.settlement === "nothing_paid" &&
+                      check.data.nextChargeAt !== null
+                        ? t("prices.nothingPaid", {
                             date: formatDate(
-                              check.data.freePeriodEndsAt,
+                              check.data.nextChargeAt,
                               uiLocale,
                               { dateStyle: "medium", timeZone },
                             ),

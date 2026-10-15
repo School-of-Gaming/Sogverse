@@ -385,7 +385,7 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
       subscriptionEndsAt: null,
       // A paid period, so the difference is settled on the next invoice.
       settlement: "prorate",
-      freePeriodEndsAt: null,
+      nextChargeAt: null,
     });
     // One Stripe read, with the invoice expanded — the check mints nothing.
     expect(mockSubscriptionRetrieve).toHaveBeenCalledTimes(1);
@@ -428,8 +428,8 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
 
     expect(response.status).toBe(200);
     expect(body.refusals).toEqual([]);
-    expect(body.settlement).toBe("free_period");
-    expect(body.freePeriodEndsAt).toBe(
+    expect(body.settlement).toBe("nothing_paid");
+    expect(body.nextChargeAt).toBe(
       new Date(1_800_000_000 * 1000).toISOString(),
     );
   });
@@ -449,8 +449,8 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
     const body = await response.json();
 
     expect(body.refusals).toEqual([]);
-    expect(body.settlement).toBe("free_period");
-    expect(body.freePeriodEndsAt).toBe(
+    expect(body.settlement).toBe("nothing_paid");
+    expect(body.nextChargeAt).toBe(
       new Date(1_800_000_000 * 1000).toISOString(),
     );
   });
@@ -458,7 +458,7 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
   it("refuses an active subscription whose latest invoice is a €0 mid-period one", async () => {
     mockAuthenticatedAdmin();
     // A zero plan-change invoice says nothing about whether the period itself
-    // was paid, so it is not evidence of a free period.
+    // was paid, so it is not evidence of a period paid nothing for.
     mockSubscriptionRetrieve.mockResolvedValue(
       stripeSubscription({
         amountPaid: 0,
@@ -472,7 +472,7 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
 
     expect(body.refusals).toEqual(["latest_invoice_not_paid"]);
     expect(body.settlement).toBeNull();
-    expect(body.freePeriodEndsAt).toBeNull();
+    expect(body.nextChargeAt).toBeNull();
   });
 
   it("refuses a subscription carrying more than one item", async () => {
@@ -770,7 +770,7 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     ).toBeGreaterThan(mockRpc.mock.invocationCallOrder[0]);
   });
 
-  it("commits a free period with no proration", async () => {
+  it("commits a period paid nothing for with no proration", async () => {
     mockAuthenticatedAdmin();
     mockSubscriptionRetrieve.mockResolvedValue(
       stripeSubscription({

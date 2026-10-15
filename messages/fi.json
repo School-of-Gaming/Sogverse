@@ -1609,7 +1609,7 @@
             "current": "Maksaa nyt",
             "target": "Uusi hinta",
             "proration": "Seuraava lasku lisää tai hyvittää erotuksen tämän kuukauden loppuosalta.",
-            "freePeriod": "Ilmaisen jakson loppuosasta ei veloiteta mitään; {date} alkaen perhe maksaa uuden kerhon hinnan.",
+            "nothingPaid": "Ennen {date} ei veloiteta enää mitään. Sen jälkeen perhe maksaa uuden kerhon hinnan, josta vähennetään perheen mahdollinen nykyinen alennus.",
             "unavailable": "Ei hintaa näytettäväksi",
             "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
           },

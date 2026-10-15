@@ -1653,7 +1653,7 @@
             "current": "DaH DIl",
             "target": "Huch chu’",
             "proration": "jarvam chuq pIm chel pagh nobHa’ ghItlh veb.",
-            "freePeriod": "poH Huchbe’ chuq: pagh DIl qorDu’. {date}vo’ ghom’a’ chu’ Huch DIl.",
+            "nothingPaid": "{date} pa’ latlh DIl qorDu’ ’e’ poQbe’ chuq. ghIq ghom chu’ Huch DIl, ’ach Huch tlhab’e’ ghaj qorDu’ luteq.",
             "unavailable": "Huch cha’lu’be’",
             "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
           },

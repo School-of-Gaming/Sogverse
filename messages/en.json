@@ -1609,7 +1609,7 @@
             "current": "Paying now",
             "target": "New price",
             "proration": "The next invoice adds or refunds the difference for the rest of this month.",
-            "freePeriod": "Nothing is charged for the rest of the free period; from {date} they pay the new club's price.",
+            "nothingPaid": "Nothing more is charged before {date}. After that they pay the new club's price, less any discount they already have.",
             "unavailable": "No price to show",
             "error": "The price check did not come back. Pick the club again to retry."
           },

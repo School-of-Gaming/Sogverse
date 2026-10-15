@@ -1609,7 +1609,7 @@
             "current": "Betalar nu",
             "target": "Nytt pris",
             "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
-            "freePeriod": "Inget debiteras för resten av den kostnadsfria perioden; från och med {date} betalar familjen den nya klubbens pris.",
+            "nothingPaid": "Inget mer debiteras före {date}. Därefter betalar familjen den nya klubbens pris, minus eventuell rabatt som de redan har.",
             "unavailable": "Inget pris att visa",
             "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
           },
