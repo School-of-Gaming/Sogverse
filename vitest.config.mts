@@ -11,6 +11,12 @@ const alias = {
 
 const roots = ["tests/unit", "tests/integration"];
 
+// Every run is in UTC, whatever zone the machine is in: it is what CI and the
+// production servers run, so a test that silently leans on the developer's
+// own zone fails on their machine instead of after a push. A test about a
+// viewer's zone pins one itself.
+const env = { TZ: "UTC" };
+
 export default defineConfig({
   test: {
     projects: [
@@ -24,13 +30,14 @@ export default defineConfig({
           name: "dom",
           environment: "jsdom",
           setupFiles: ["./tests/setup.ts"],
+          env,
           include: roots.map((root) => `${root}/**/*.{test,spec}.tsx`),
           globals: true,
           // Forks, and the same pool as the node project — both halves of that
           // are load-bearing. Forks because tests that pin a timezone assign
           // `process.env.TZ` at runtime, which a child process honours and a
-          // worker thread ignores (the failure only shows on a UTC runner; a
-          // developer's box in Helsinki hides it). The same pool because
+          // worker thread ignores — under threads the pin silently does
+          // nothing and the test runs in the default zone. The same pool because
           // Vitest sizes a pool per pool type and runs projects concurrently,
           // so two pool types put two full-sized pools on the machine at once
           // — on a 4-vCPU runner that doubled the summed collect and test
@@ -56,6 +63,7 @@ export default defineConfig({
           name: "node",
           environment: "node",
           setupFiles: ["./tests/setup.ts"],
+          env,
           include: roots.map((root) => `${root}/**/*.{test,spec}.ts`),
           globals: true,
           // Isolated, like the dom project: un-isolated measured no faster
