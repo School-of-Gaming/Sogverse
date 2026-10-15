@@ -34,14 +34,15 @@ export default defineConfig({
           include: roots.map((root) => `${root}/**/*.{test,spec}.tsx`),
           globals: true,
           // Forks, and the same pool as the node project — both halves of that
-          // are load-bearing. Forks because tests that pin a timezone assign
-          // `process.env.TZ` at runtime, which a child process honours and a
-          // worker thread ignores — under threads the pin silently does
-          // nothing and the test runs in the default zone. The same pool because
-          // Vitest sizes a pool per pool type and runs projects concurrently,
-          // so two pool types put two full-sized pools on the machine at once
-          // — on a 4-vCPU runner that doubled the summed collect and test
-          // time, and on a developer's box it saturates every core.
+          // are load-bearing. Forks because a test's timezone pin and the
+          // config's UTC default are both runtime assignments to `TZ`, which a
+          // child process honours and a worker thread ignores — under threads
+          // neither takes effect and tests run in the machine's zone. The same
+          // pool because Vitest sizes a pool per pool type and runs projects
+          // concurrently, so two pool types put two full-sized pools on the
+          // machine at once — on a 4-vCPU runner that doubled the summed
+          // collect and test time, and on a developer's box it saturates
+          // every core.
           pool: "forks",
           // next-intl ships ESM that imports `next/server` by its bare
           // specifier. Externalised, Node's own resolver handles that import

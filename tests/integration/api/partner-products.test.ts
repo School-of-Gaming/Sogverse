@@ -200,11 +200,8 @@ function pageReads(): URL[] {
 // --- Tests ---
 
 describe("GET /api/partner/v1/products", () => {
-  let originalTZ: string | undefined;
-
   beforeEach(() => {
-    originalTZ = process.env.TZ;
-    process.env.TZ = "Pacific/Kiritimati";
+    vi.stubEnv("TZ", "Pacific/Kiritimati");
     vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
     vi.stubEnv("LYNX_PARTNER_API_KEY", PARTNER_TEST_KEY);
     db.fetch = tables();
@@ -212,7 +209,6 @@ describe("GET /api/partner/v1/products", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllEnvs();
-    process.env.TZ = originalTZ;
     db.fetch = undefined;
   });
 
