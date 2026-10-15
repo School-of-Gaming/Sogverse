@@ -119,14 +119,14 @@ resume filter and the derivation of the next cursor belong to one place per orde
 assembled per call site.
 
 **Rule: a list a person scrolls through writes only its read, its key and its rows; the
-shared pieces do the rest.** Its service read builds the filters and hands the query to `keysetPage()`,
-returning the page's rows and, on the first page only, the count; its query hook
-normalises the filters into the key and passes that read to `useKeysetInfiniteQuery()`
-with the read's own page-size constant; the component renders the flattened rows and
-mounts the sentinel from `useKeysetSentinel()` below the last one while more follow.
-Paging, accumulation, holding the previous answer during a new question, and when asking
-for more is safe all live in those shared hooks (`src/hooks/`), so none of it is
-restated per surface.
+shared pieces do the rest.** Its service read builds the filters and hands the query to
+`keysetPage()`, returning the page's rows and, on the first page only, the count; its
+query hook normalises the filters into the key and passes that read to
+`useKeysetInfiniteQuery()` with the read's own page-size constant; the component renders
+the flattened rows and mounts the sentinel from `useKeysetSentinel()` below the last one
+while more follow. Paging, accumulation, holding the previous answer during a new
+question, and when asking for more is safe all live in those shared hooks
+(`src/hooks/`), so none of it is restated per surface.
 
 **The resume filter is the query's top-level `or`, which is the one composition constraint
 this shape carries.** Every other filter is its own parameter and PostgREST ANDs them, so a
