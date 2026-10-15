@@ -388,7 +388,7 @@ export function ProductDetailPageBody({
             />
           </div>
           <div className="mt-1 lg:mt-0 lg:min-w-0 lg:flex-1">
-            <Heading level={1} step="page-title">
+            <Heading level={1} step="section">
               {tr?.name}
             </Heading>
           </div>

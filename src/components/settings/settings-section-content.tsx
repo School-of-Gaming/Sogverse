@@ -514,7 +514,7 @@ export function SettingsSectionContent({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <Heading level={1} step="page-title">{c('settings')}</Heading>
+        <Heading level={1} step="section">{c('settings')}</Heading>
         <p className="text-muted-foreground">
           {t('subtitle')}
         </p>

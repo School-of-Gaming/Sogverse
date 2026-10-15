@@ -50,7 +50,7 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
     <div className="container mx-auto max-w-xl p-4 md:p-6">
       <Card>
         <CardContent className="space-y-4 py-12 text-center">
-          <Heading level={1} step="page-title" align="center">
+          <Heading level={1} step="section" align="center">
             {t("title")}
           </Heading>
           <p className="text-sm text-muted-foreground">{t("body")}</p>

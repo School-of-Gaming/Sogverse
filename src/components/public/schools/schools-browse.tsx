@@ -264,7 +264,7 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
             library lets carry a coloured phrase is a hero headline with its
             rule beneath (`brand.ts`, beside the label rule). This page has
             neither. */}
-        <Heading level={1} step="page-title">
+        <Heading level={1} step="section">
           {t("hero.title")}
         </Heading>
         <p className="text-lg text-muted-foreground">{t("hero.subtitle")}</p>

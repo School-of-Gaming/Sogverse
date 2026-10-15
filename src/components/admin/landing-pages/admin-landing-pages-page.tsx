@@ -51,7 +51,7 @@ export function AdminLandingPagesPage({
   return (
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
-        <Heading level={1} step="page-title">{t("title")}</Heading>
+        <Heading level={1} step="section">{t("title")}</Heading>
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 

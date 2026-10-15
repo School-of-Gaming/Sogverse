@@ -239,10 +239,10 @@ Done when: no raw heading element remains in Sogverse and the lint holds it ther
 **What it landed (2026-10-15).** `Heading` takes an outline level, `h1` to `h4`, and a
 step, as two required props, because on every hand-written heading they had been one
 decision and a page either skipped a level to get the size it wanted or wore the wrong size
-to keep its outline. The two are not independent: a table beside the component says which
-steps each level may take — `h1` hero or page-title; `h2` display, section or card-title;
-`h3` section, card-title or label; `h4` card-title or label — and a pair outside it does
-not compile. Beside them it takes an id, a language, an alignment (start, centre, or
+to keep its outline. The two are not independent: a table beside the component is the
+ceiling each level may reach — `h1` hero, page-title, section or card-title; `h2` display,
+section, card-title or label; `h3` section, card-title or label; `h4` card-title or label —
+and a pair outside it does not compile. Beside them it takes an id, a language, an alignment (start, centre, or
 centred until `md` and start from it), a one-line truncation, a screen-reader-only form,
 and a ref with a focus-target flag for the screen that moves focus to its title on arrival.
 It takes no class and no colour. The scale's heading steps are named by role rather than by
@@ -270,6 +270,21 @@ hero splits into columns at `lg` while its heading changes alignment at `md`, so
 to 1023px a start-aligned headline sits over centred words. It is left until the
 landing-page design is settled, since no landing page is live yet.
 
+**Spotlighting is opt-in** (owner, 2026-10-15: a page's main heading need not be
+spotlighted). The table had been read as a floor, so every app page's title stood at
+`page-title`; it is a ceiling, and a heading takes the quietest step that still reads as a
+title. An app page's title is `section`, and `page-title` stays on the pages whose title is
+their point: the gamer's greeting, the profile picker, a Library article, a team member's
+profile, the policy pages and the gedu contract (each one document a reader came to read),
+the platform vision pitch, and the shop's screen-reader-only title. Within a page a heading
+is always smaller than the heading it sits under, which the types cannot see and review
+holds. A title is never smaller than the text it titles, so `label` titles a compact region
+— a list, chips, controls, fields, metadata — and a heading over prose is a `card-title`.
+A page that is one small object, a call screen or a not-found state, titles at
+`card-title`. One inversion is accepted: the gedu contract's clause headings are the fourth
+level under the page title, and the scale's one step left, `label`, sits under the
+clauses' own size.
+
 What holds it. The table is a type, so a pair outside it fails type-check at the call
 site; `tests/unit/sog-ui/heading.test.tsx` renders every pair the table allows and holds
 each step to sizes the theme declares, and the restep to the story steps alone; `tests/unit/sog-ui/raw-heading-ban.test.ts` runs violating and
@@ -290,8 +305,10 @@ which its components are rendered from, and still not its demo or its docs.
 Where each rule lives: the steps, their sizes and the departure are doc comments in
 `packages/sog-ui/src/tokens/typography.ts`; the level-to-step table and what each prop is
 for are in the component's own; the rules no value can state — level is the outline and
-step is the rank, the two registers, one weight, headings are ink, a heading titles a
-region, and heading copy is sentence case in `messages/` too — are in this package's
+step is the attention, the ceiling and the opt-in spotlight, a heading smaller than the one
+it sits under, the label over a compact region, the two registers, one weight, headings are
+ink, a heading titles a region, and heading copy is sentence case in `messages/` too — are
+in this package's
 `CLAUDE.md` § Headings. `src/CLAUDE.md`'s headings rule is gone with this adoption, keeping
 only the caps rule for the markers that are not headings.
 

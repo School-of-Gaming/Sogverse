@@ -175,7 +175,7 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <Heading level={1} step="page-title" align="center">{t('resetPassword.successTitle')}</Heading>
+          <Heading level={1} step="section" align="center">{t('resetPassword.successTitle')}</Heading>
           <CardDescription>
             {t('resetPassword.successDescription')}
           </CardDescription>
@@ -198,7 +198,7 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <Heading level={1} step="page-title" align="center">{t('resetPassword.linkExpiredTitle')}</Heading>
+          <Heading level={1} step="section" align="center">{t('resetPassword.linkExpiredTitle')}</Heading>
           <CardDescription>
             {t('resetPassword.linkExpired')}
           </CardDescription>
@@ -225,7 +225,7 @@ export function ResetPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <Heading level={1} step="page-title" align="center">{t('resetPassword.title')}</Heading>
+        <Heading level={1} step="section" align="center">{t('resetPassword.title')}</Heading>
         <CardDescription className="text-center">
           {t('resetPassword.description')}
         </CardDescription>

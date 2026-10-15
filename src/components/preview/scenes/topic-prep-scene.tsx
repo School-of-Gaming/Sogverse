@@ -73,7 +73,7 @@ export function TopicPrepScene({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="space-y-1">
-          <Heading level={1} step="page-title">
+          <Heading level={1} step="section">
             Topic prep guides &mdash;{" "}
             {isRemote ? "remote products" : "in-person products"}
           </Heading>

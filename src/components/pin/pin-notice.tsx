@@ -22,7 +22,7 @@ export function PinNotice({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{title}</Heading>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{description}</p>
       </div>
       {action}

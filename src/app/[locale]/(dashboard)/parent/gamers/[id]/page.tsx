@@ -131,7 +131,7 @@ export default function GamerDetailsPage() {
         </Link>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Heading level={1} step="page-title" align="center">
+            <Heading level={1} step="card-title" align="center">
               {t('gamerDetail.notFound.title')}
             </Heading>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -160,7 +160,7 @@ export default function GamerDetailsPage() {
       </Link>
 
       <div>
-        <Heading level={1} step="page-title">{t('gamerDetail.title')}</Heading>
+        <Heading level={1} step="section">{t('gamerDetail.title')}</Heading>
         <p className="text-muted-foreground">
           {t('gamerDetail.subtitle', { name: gamer.first_name })}
         </p>

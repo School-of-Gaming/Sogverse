@@ -42,7 +42,7 @@ export function AdminHub({
   return (
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div className="space-y-4">
-        <Heading level={1} step="page-title">
+        <Heading level={1} step="section">
           {title}
         </Heading>
         <HubTabs

@@ -129,7 +129,7 @@ async function AdminSubstitutionsLoadFailure({
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       <div>
-        <Heading level={1} step="page-title">{t("title")}</Heading>
+        <Heading level={1} step="section">{t("title")}</Heading>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
       {/* The reason is a message off the wire, never translated copy — it is

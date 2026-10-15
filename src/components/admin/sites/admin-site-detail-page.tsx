@@ -125,8 +125,8 @@ export function AdminSiteDetailPage({ siteId }: { siteId: string }) {
           than a guess, and nothing below them moves when the row lands. */}
       <div className="space-y-1">
         <p className="min-h-5 truncate text-sm text-muted-foreground">{path}</p>
-        <div className="min-h-9">
-          <Heading level={1} step="page-title">{name}</Heading>
+        <div className="min-h-7.75">
+          <Heading level={1} step="section">{name}</Heading>
         </div>
       </div>
 

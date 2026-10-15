@@ -454,7 +454,7 @@ export default async function AdminUserDetailPage({
             <Identicon id={profile.id} size={64} />
           </Avatar>
           <div className="flex-1">
-            <Heading level={1} step="page-title">
+            <Heading level={1} step="section">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </Heading>
             {/* A username-mode child's username. A synthetic handle is never

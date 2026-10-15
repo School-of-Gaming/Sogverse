@@ -285,7 +285,7 @@ function GamerList({ gamers, origin }: { gamers: FeedbackGamerEntry[]; origin: F
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <Heading level={2} step="section">{title}</Heading>
+      <Heading level={2} step="card-title">{title}</Heading>
       {children}
     </section>
   );

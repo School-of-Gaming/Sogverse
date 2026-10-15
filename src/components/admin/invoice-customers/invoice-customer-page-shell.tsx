@@ -33,7 +33,7 @@ export function InvoiceCustomerPageShell({
         {t("backToList")}
       </Link>
 
-      <Heading level={1} step="page-title">{title}</Heading>
+      <Heading level={1} step="section">{title}</Heading>
 
       {children}
     </div>

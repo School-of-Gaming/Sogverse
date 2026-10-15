@@ -183,7 +183,7 @@ export function MyGeduInvoicingHeading() {
         {t("backToDashboard")}
       </Link>
       <div className="space-y-2">
-        <Heading level={1} step="page-title">
+        <Heading level={1} step="section">
           {t("myTitle")}
         </Heading>
         <p className="text-muted-foreground">{t("myDescription")}</p>

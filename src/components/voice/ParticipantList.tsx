@@ -105,7 +105,7 @@ export function ParticipantList({
     <section className="space-y-2">
       <div className="flex items-center gap-2">
         <Users className="h-4 w-4" aria-hidden />
-        <Heading level={2} step="section">
+        <Heading level={2} step="label">
           {t("participants")}
         </Heading>
       </div>

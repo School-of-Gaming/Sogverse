@@ -314,7 +314,7 @@ function HeaderCard({
               {kicker}
             </p>
             <div className="mt-1">
-              <Heading level={1} step="page-title">{title}</Heading>
+              <Heading level={1} step="section">{title}</Heading>
             </div>
             {description && (
               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">

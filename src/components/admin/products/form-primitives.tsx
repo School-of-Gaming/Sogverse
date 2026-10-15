@@ -17,7 +17,7 @@ export function FormSection({
     <Card>
       <CardContent className="p-6">
         <div className="mb-4">
-          <Heading level={2} step="card-title">{title}</Heading>
+          <Heading level={2} step="label">{title}</Heading>
           {description && (
             <p className="mt-0.5 text-sm text-muted-foreground">
               {description}

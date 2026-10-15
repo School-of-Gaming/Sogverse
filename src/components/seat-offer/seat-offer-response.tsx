@@ -188,7 +188,7 @@ export function SeatOfferResponse({
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <div className="space-y-2">
-          <Heading level={1} step="page-title" align="center">
+          <Heading level={1} step="section" align="center">
             {lapsed ? t("expired.confirmTitle") : t("offer.confirmTitle")}
           </Heading>
           <p className="text-muted-foreground">
@@ -236,7 +236,7 @@ export function SeatOfferResponse({
           aria-hidden
         />
         <div className="space-y-2">
-          <Heading level={1} step="page-title" align="center">{t("expired.title")}</Heading>
+          <Heading level={1} step="section" align="center">{t("expired.title")}</Heading>
           <p className="text-muted-foreground">
             {t("expired.body", { days: SEAT_OFFER_WINDOW_DAYS })}
           </p>
@@ -268,7 +268,7 @@ export function SeatOfferResponse({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       <CalendarClock className="h-12 w-12 text-act" aria-hidden />
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{t("offer.title")}</Heading>
+        <Heading level={1} step="section" align="center">{t("offer.title")}</Heading>
         <p className="text-muted-foreground">
           {step.isSelfSeat
             ? t("offer.self", { productName: step.productName })
@@ -412,7 +412,7 @@ function Outcome({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{title}</Heading>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{body}</p>
       </div>
       {children}

@@ -33,34 +33,42 @@ export type HeadingLevel = 1 | 2 | 3 | 4;
 /**
  * **Which steps each outline level may take — the table the types enforce.**
  *
- * The rule behind it: **a level takes only steps at its own rank or below.** A
- * step is a claim about rank, and a heading deeper in the outline claiming more
- * rank than one above it tells the eye the opposite of what the outline tells a
- * screen reader. So the steps run down the table as the levels do, and each
- * level's list starts where the one above it allows.
+ * **The table is a ceiling.** It says how loud a heading at each level may be,
+ * never how loud it must be: the level is the heading's place in the outline,
+ * and that place never makes it louder than the place allows. The step is the
+ * separate decision of how much the page wants to spotlight it, and
+ * **spotlighting is opt-in** — a heading takes the quietest step that still
+ * reads as a title for what it titles, and a page's `h1` is often just a label
+ * for where the reader is. So an app page's title is `section` by default, and
+ * `page-title` is chosen for the page whose title is its point.
  *
- * - **`h1`** is the page's own title: `hero` on a public page, `page-title` on
- *   an app page. Nothing smaller titles a whole page.
- * - **`h2`** is a top region of the page. On a public page that is a `display`
- *   section; on an app page a `section`. A **dialog or sheet** titles at `h2`
- *   with `card-title`: it is a new layer above the page, so it is the first
- *   region of that layer, at the size of the object it is. A **card** can be
- *   `h2` too, where it sits directly under the page title with no section
- *   above it.
- * - **`h3`** sits inside an `h2` region: a sub-`section` of a story section, a
- *   card inside an app section (`card-title`), or a compact region (`label`).
- *   The same card is `h2` on one page and `h3` on another, which is why level
- *   and step are two props.
- * - **`h4`** sits inside a card or a sub-section: a `card-title` inside a
- *   sub-section, or a `label` over a compact region of a card.
+ * - **`h1`** may go up to `hero` (a public page's headline) or `page-title`
+ *   (the spotlit app page); its quietest is `card-title`, for a page that is
+ *   one small object — a call screen, a not-found state.
+ * - **`h2`** may go up to `display`, a public page's section. An app page's
+ *   region is `section` under a spotlit title and `card-title` or `label`
+ *   under a quiet one; a dialog or sheet, the first region of a new layer,
+ *   titles at `card-title`.
+ * - **`h3`** may go up to `section`, a story page's sub-section.
+ * - **`h4`** may go up to `card-title`.
  *
- * `hero`, `display` and `page-title` are each one level only, because each
- * names what the level is. `label` never reaches `h2`: a region titled at the
- * top of a page in 14px is a section dressed as a footnote.
+ * Each level's top sits under the top of the level above it, so no heading
+ * can outrank the outline over it. Within a page the rule is stricter than the
+ * table: **a heading is always smaller than the heading it sits under**, and
+ * siblings may share a step. The types cannot see that, because they see one
+ * heading at a time, so it is held in review — until layout primitives that
+ * know their nesting arrive.
+ *
+ * Two rules choose between the steps a level allows. **A title is never
+ * smaller than the text it titles**, so `label` is for a heading over a compact
+ * region — a list, a row of chips, a set of controls or fields, metadata — and
+ * a heading over prose takes `card-title`. And **the two story steps stay
+ * public**: `hero` and `display` are for a page telling the story, never for
+ * making an app section feel important.
  */
 export const HEADING_STEPS = {
-  1: ["hero", "page-title"],
-  2: ["display", "section", "card-title"],
+  1: ["hero", "page-title", "section", "card-title"],
+  2: ["display", "section", "card-title", "label"],
   3: ["section", "card-title", "label"],
   4: ["card-title", "label"],
 } as const satisfies Record<HeadingLevel, readonly TypeStepId[]>;

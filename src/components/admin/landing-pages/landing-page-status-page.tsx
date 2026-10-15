@@ -83,7 +83,7 @@ export function LandingPageStatusPage({
     <div className="space-y-6">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Heading level={2} step="section">{version?.title ?? ""}</Heading>
+          <Heading level={2} step="card-title">{version?.title ?? ""}</Heading>
           <LandingPageStatusChip
             status={landingPageStatus({
               isPublished: page.publication !== null,
@@ -99,7 +99,7 @@ export function LandingPageStatusPage({
       <Publishing page={page} actions={actions} />
 
       <section aria-labelledby="landing-page-languages" className="space-y-3">
-        <Heading level={2} step="section" id="landing-page-languages">
+        <Heading level={2} step="card-title" id="landing-page-languages">
           {t("statusPage.languagesHeading")}
         </Heading>
         {page.draft.versions.map((v) => (
@@ -360,7 +360,7 @@ function LanguageCard({
       <CardContent className="space-y-3 p-6" role="region" aria-labelledby={headingId}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <Heading level={3} step="card-title" id={headingId}>
+            <Heading level={3} step="label" id={headingId}>
               {languageName(version.locale, LOCALE_CONFIG[version.locale].label)}
             </Heading>
             <p className="truncate text-sm text-muted-foreground">{version.title}</p>

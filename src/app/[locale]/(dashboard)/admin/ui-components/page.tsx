@@ -246,7 +246,7 @@ function Section({
   return (
     <SectionSlugContext.Provider value={slug}>
       <section className="space-y-4">
-        <AnchorHeading level={2} step="section" id={slug}>
+        <AnchorHeading level={2} step="card-title" id={slug}>
           {title}
         </AnchorHeading>
         <div className="rounded-lg border border-border p-6 space-y-6">{children}</div>
@@ -2428,7 +2428,7 @@ export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <Heading level={1} step="page-title">UI Components</Heading>
+        <Heading level={1} step="section">UI Components</Heading>
         <p className="text-muted-foreground">
           Living style guide &mdash; every component variant and composite
           pattern used across the app.

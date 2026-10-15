@@ -270,7 +270,7 @@ export default function TestingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Heading level={1} step="page-title">{t('title')}</Heading>
+        <Heading level={1} step="section">{t('title')}</Heading>
         <p className="text-muted-foreground">
           {t('description')}
         </p>

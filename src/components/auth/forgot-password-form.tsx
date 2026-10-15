@@ -61,7 +61,7 @@ export function ForgotPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <Heading level={1} step="page-title" align="center">{t('forgotPassword.checkEmailTitle')}</Heading>
+          <Heading level={1} step="section" align="center">{t('forgotPassword.checkEmailTitle')}</Heading>
           <CardDescription>
             {t('forgotPassword.checkEmailDescription', { email })}
           </CardDescription>
@@ -82,7 +82,7 @@ export function ForgotPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <Heading level={1} step="page-title" align="center">{t('forgotPassword.title')}</Heading>
+        <Heading level={1} step="section" align="center">{t('forgotPassword.title')}</Heading>
         <CardDescription className="text-center">
           {t('forgotPassword.description')}
         </CardDescription>

@@ -794,7 +794,7 @@ export function GroupWorkspace({
           </span>
 
           <div className="mt-1">
-            <Heading level={1} step="page-title">
+            <Heading level={1} step="section">
               {productName}
             </Heading>
           </div>

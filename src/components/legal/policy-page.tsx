@@ -184,6 +184,10 @@ export function PolicyPage({
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-3">
+        {/* The page's title is spotlit: the page is one document a reader came
+            to read, as a Library article is. That buys the outline three steps
+            under it, so a subsection title over its prose is a card title —
+            a title is never smaller than the text it titles. */}
         <Heading level={1} step="page-title">
           {title}
         </Heading>

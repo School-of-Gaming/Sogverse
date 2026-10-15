@@ -77,7 +77,7 @@ export default function AdminUIPreviewsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <Heading level={1} step="page-title">UI Previews</Heading>
+        <Heading level={1} step="section">UI Previews</Heading>
         <p className="max-w-prose text-muted-foreground">
           Full-page preview scenes: one fixture-driven page each, served at{" "}
           <code>/preview/{"{surface}"}/{"{scenario}"}</code> inside the same

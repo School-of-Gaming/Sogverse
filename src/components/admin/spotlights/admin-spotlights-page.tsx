@@ -64,7 +64,7 @@ export function AdminSpotlightsPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Heading level={1} step="page-title">{t("title")}</Heading>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <p className="max-w-3xl text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link href={ROUTES.admin.spotlightNew} className={buttonVariants()}>

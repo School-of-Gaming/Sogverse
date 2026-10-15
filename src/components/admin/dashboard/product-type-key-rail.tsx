@@ -51,7 +51,7 @@ export function ProductTypeKeyRail() {
       className="mt-6 xl:mt-0 xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:self-start xl:overflow-y-auto"
     >
       <div className="space-y-2 rounded-lg border border-border bg-card p-3">
-        <Heading level={2} step="card-title">
+        <Heading level={2} step="label">
           {t("heading")}
         </Heading>
 

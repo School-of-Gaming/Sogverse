@@ -57,7 +57,7 @@ export function AdminSubstitutionsPageBody({
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       <div>
-        <Heading level={1} step="page-title">{t("title")}</Heading>
+        <Heading level={1} step="section">{t("title")}</Heading>
         <p className="text-muted-foreground">
           {data.timeZoneAbbrev === null
             ? t("description")
@@ -94,7 +94,7 @@ function SubstitutedSessionsSection({
   return (
     <section className="space-y-3">
       <div className="flex items-baseline gap-2">
-        <Heading level={2} step="section">{t("substitutedLabel")}</Heading>
+        <Heading level={2} step="card-title">{t("substitutedLabel")}</Heading>
         {sessions.length > 0 && (
           <span className="text-sm font-normal text-muted-foreground">
             {sessions.length}

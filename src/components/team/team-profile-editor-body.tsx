@@ -164,7 +164,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           : t("back")}
       </Link>
 
-      <Heading level={1} step="page-title">
+      <Heading level={1} step="section">
         {byAdmin
           ? ta("edit.pageTitle", { name: props.profile.firstName })
           : t("pageTitle")}

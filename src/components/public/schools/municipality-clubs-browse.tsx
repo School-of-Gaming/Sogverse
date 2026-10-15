@@ -86,7 +86,7 @@ export function MunicipalityClubsBrowse({
           equalise (~1616px), and up to ~128px left of the cards' centre below
           that, the same tolerance the results grid accepts and documents. */}
       <header className="mx-auto max-w-3xl px-4 text-center">
-        <Heading level={1} step="page-title" align="center">
+        <Heading level={1} step="section" align="center">
           {t("heading", { name: municipalityName })}
         </Heading>
       </header>

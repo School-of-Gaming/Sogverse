@@ -360,7 +360,7 @@ export function FamilyProductPageBody({
         </span>
 
         <div className="mt-1">
-          <Heading level={1} step="page-title">
+          <Heading level={1} step="section">
             {productName}
           </Heading>
         </div>
@@ -555,7 +555,7 @@ export function FamilyProductPageBody({
 
       <section className="mt-6">
         <div className="mb-3">
-          <Heading level={2} step="section">
+          <Heading level={2} step="card-title">
             {t("feedHeading")}
           </Heading>
         </div>

@@ -44,7 +44,10 @@ function ContractText({ text }: { text: GeduContractText }) {
  *
  * The document's own outline sits one level under its title, which is an h2
  * on the page that shows it: the contract's sections are h3s and their
- * clauses' headings h4s.
+ * clauses' headings h4s. Under the page's spotlit title the title is a
+ * `section`, a section a `card-title`, and a clause's heading the one step
+ * left, `label` — the scale runs out there, so a clause heading is the one
+ * title on the page that is not larger than the clause beneath it.
  */
 function ContractBlock({ block }: { block: GeduContractBlock }) {
   switch (block.kind) {

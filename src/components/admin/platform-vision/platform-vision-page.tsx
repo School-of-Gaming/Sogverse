@@ -196,6 +196,11 @@ function HeroSection() {
             {VISION_HERO.eyebrow}
           </p>
         </div>
+        {/* The one admin page that keeps a story register: it is a pitch told
+            inside admin, so its title is spotlit, its sections take `section`
+            and its feature titles `card-title`, where the quiet admin defaults
+            would set a feature's title smaller than the prose under it. Still a
+            step below the public story pages' hero and display. */}
         <div className="mt-5">
           <Heading level={1} step="page-title" id="vision-hero">
             {VISION_HERO.title}

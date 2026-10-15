@@ -91,7 +91,8 @@ spend them.
 **Ruling (round 1, final):** role names and six heading steps — `hero` 48, `display` 36,
 `page-title` 30, `section` 24, `card-title` 18, `label` 14, each at 600 with its own
 leading; `sub-section` is dropped and the `h1`–`h4` ids are gone — principles 1 and 2.
-The phone sizes of `hero` and `display` are §10's.
+The phone sizes of `hero` and `display` are §10's. Which of them a heading wears was
+re-ruled in §14: `page-title` is the opt-in spotlight, not every app page's title.
 
 **Where it landed:** `TYPE_SCALE` in `packages/sog-ui/src/tokens/typography.ts` — `hero`
 48px/1.1, `display` 36px/1.2, `page-title` 30px/1.2, `section` 24px/1.3, `card-title`
@@ -111,12 +112,15 @@ with its `--line-height` and `--font-weight: 600`.
 and under the table: the admin dashboard (which skipped h1 → h3 because CardTitle was
 always an h3) and the parent dashboard.
 
-**Ruling (round 1, final):** h1 hero, page-title · h2 display, section, card-title · h3
-section, card-title, label · h4 card-title, label — a level takes only steps at its own
-rank or below, enforced by `Heading`'s types.
+**Ruling (round 1, amended by §14):** h1 hero, page-title, section, card-title · h2
+display, section, card-title, label · h3 section, card-title, label · h4 card-title,
+label — a ceiling per level, enforced by `Heading`'s types: a level never takes a step
+above its place, and which step it takes below that is the page's choice (§14). Round 1
+read it as a floor — h1 hero or page-title only, h2 never `label`.
 
 **Where it landed:** `HEADING_STEPS` in `packages/sog-ui/src/components/heading.tsx`,
-exactly that table; `HeadingPair` makes a pair outside it a compile error.
+exactly that table; `HeadingPair` makes a pair outside it a compile error, and
+`DISALLOWED_PAIRS` in the test file holds pairs above each ceiling.
 `tests/unit/sog-ui/heading.test.tsx` renders every pair the table allows. `HeadingLevel`
 is `1 | 2 | 3 | 4`.
 
@@ -205,19 +209,21 @@ sentence-case `label` step, or is not a heading at all and becomes plain text.
 workspace's "Other groups" rail card, the Roblox page's "Creator Academy documents" —
 each today, at `label` 14 and 12px, and as plain body-s text.
 
-**Ruling (round 1, final):** sentence case always; a heading where the text titles a
-region, plain text where it does not — principle 6. A region heading takes the step its
-level allows: `label` over a compact region at h3/h4, and, since `label` never reaches
-h2, `card-title` or `section` where it titles a top region.
+**Ruling (round 1, amended by §14):** sentence case always; a heading where the text
+titles a region, plain text where it does not — principle 6. A region heading takes the
+quietest step that still reads as its title (§14): `label` over a compact region — a
+list, chips, controls, fields, metadata — at any level from h2 down, and `card-title`
+over prose, because a title is never smaller than the text it titles.
 
 **Where it landed:** no heading can be uppercase or tracked — `Heading` takes no
 `className`. The three shown: the family product page's feed heading is
-`<Heading level={2} step="section">` (`src/components/family/product-page/FamilyProductPageBody.tsx`);
-the group workspace's rail cards title at `<Heading level={2} step="card-title">`
-(`RailCard` in `src/components/group-workspace/GroupWorkspace.tsx`); the Roblox legal
-documents heading is `<Heading level={2} step="card-title">`
-(`src/app/[locale]/(public)/roblox/page.tsx`). `label` sits at 22 sites, every one h3 or
-h4 (`rg -n 'step="label"' src/`). The caps rule for markers that are *not* headings stays
+`<Heading level={2} step="card-title">` (`src/components/family/product-page/FamilyProductPageBody.tsx`),
+a sibling of the page's note and creations titles; the group workspace's rail cards title
+at `<Heading level={2} step="card-title">` (`RailCard` in
+`src/components/group-workspace/GroupWorkspace.tsx`), over the roster's `label` lists; the
+Roblox legal documents heading, over a list of links, is `<Heading level={2} step="label">`
+(`src/app/[locale]/(public)/roblox/page.tsx`). `label` sits at 41 sites
+(`rg -n 'step="label"' src/`). The caps rule for markers that are *not* headings stays
 in `src/CLAUDE.md` § Styling.
 
 **Status: landed.**
@@ -230,8 +236,11 @@ an app one, proposed as `app-section` at 20 or 22px — or one.
 **Shown:** §8. The admin and gedu substitutions pages under each `page-title` candidate
 with their sections at each candidate; the home features heading three ways.
 
-**Ruling (round 1, final):** one `section` step at 24 under `page-title` 30; marketing
-sections take `display`. There is no `app-section` step.
+**Ruling (round 1, amended by §14):** one `section` step at 24; marketing sections take
+`display`. There is no `app-section` step. Round 1 set it under a `page-title` 30 on every
+app page; since §14 an app page's own title is `section`, so its regions under that quiet
+title take `card-title` or `label`, and `section` titles a region only under a spotlit
+`page-title`.
 
 **Where it landed:** `section` 24 is the only section step in `TYPE_SCALE`; `display` is
 the public pages' section step, at 19 sites, all public (`rg -l 'step="display"' src/` —
@@ -317,3 +326,49 @@ question goes to the Body type adoption, which rules on the scale's missing step
 rulings in `packages/sog-ui/docs/adoption.md` § 4.
 
 **Status: landed** (as a deferral).
+
+## 14. Spotlighting is opt-in
+
+**Asked (owner, 2026-10-15, after landing):** the table had been read as a floor, so
+every app page's title stood at `page-title` and every region under it climbed to match.
+A page's main heading need not be spotlighted; a page's `h1` is often just a label for
+where the reader is.
+
+**Ruling:** the table is a ceiling per level, not a floor. Every heading takes the
+quietest step that still reads as a title; spotlighting is opt-in. An app page's title is
+`section` (24); `page-title` (30) is kept for a page whose title is its point; public
+story pages keep `hero` and `display`. Within a page a heading is always smaller than the
+heading it sits under. Two corrections followed in the same round: a title is never
+smaller than the text it titles, so `label` is for a heading over a compact region and a
+heading over prose takes `card-title`; and a page that is one small object — the voice
+room, a not-found or not-assigned state — titles its `h1` at `card-title`. The platform
+vision page, a pitch told inside admin, keeps a story register a step below the public
+one: `page-title`, `section`, `card-title`.
+
+**Where it landed:** `HEADING_STEPS` (§2) and its doc comment in
+`packages/sog-ui/src/components/heading.tsx`; the step comments in
+`packages/sog-ui/src/tokens/typography.ts`; this package's `CLAUDE.md` § Headings;
+`packages/sog-ui/docs/adoption.md` § 2. `DISALLOWED_PAIRS` in
+`tests/unit/sog-ui/heading.test.tsx` holds pairs above each ceiling. The defaults are
+read off
+
+```
+rg -o --no-filename 'step="(hero|display|page-title|section|card-title|label)"' src/ | sort | uniq -c
+rg -n 'step="page-title"' src/
+```
+
+— `hero` 6, `display` 19, `page-title` 8, `section` 100, `card-title` 108, `label` 41.
+The eight `page-title` sites, every one an `h1`: the gamer dashboard's greeting
+(`src/components/gamer/gamer-dashboard-page-body.tsx`), the profile picker
+(`src/components/select-profile/SelectProfileView.tsx`), a Library article
+(`src/components/library/article/article-page-body.tsx`), a team member's profile
+(`src/components/team/team-profile-body.tsx`), the policy pages
+(`src/components/legal/policy-page.tsx`) and the gedu contract
+(`src/components/gedu/contract/gedu-contract-page-body.tsx`) — one document each, whose
+outline needs three steps under its title — the platform vision pitch
+(`src/components/admin/platform-vision/platform-vision-page.tsx`), and the shop's
+screen-reader-only title (`src/components/public/products/product-browse-page.tsx`).
+One inversion is accepted: the gedu contract's clause headings, the fourth level under
+its title, sit at `label` under clauses set larger.
+
+**Status: landed.**

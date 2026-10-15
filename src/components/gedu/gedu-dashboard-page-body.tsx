@@ -200,7 +200,7 @@ export function GeduDashboardPageBody({
           provider) so reading it from a client component throws at render, and
           this body is a client component. Page copy belongs in a page namespace
           regardless — `metadata` names documents, not headings. */}
-      <Heading level={1} step="page-title" srOnly>
+      <Heading level={1} step="section" srOnly>
         {t("pageTitle")}
       </Heading>
 

@@ -106,7 +106,7 @@ function RowTable({
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <Heading level={2} step="section">
+    <Heading level={2} step="card-title">
       {children}
     </Heading>
   );
@@ -175,7 +175,7 @@ function Resource({
     <Section id={id}>
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="outline" className="font-mono">GET</Badge>
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           <span className="break-all font-mono">{path}</span>
         </Heading>
       </div>
@@ -962,7 +962,7 @@ export default function LynxApiDocsPage() {
       {/* The header spans the same width as the reference below it: a narrower
           measure here read as a page that had been left-aligned by accident. */}
       <header>
-        <Heading level={1} step="page-title">
+        <Heading level={1} step="section">
           {t("title")}
         </Heading>
         <p className="mt-4 text-lg text-muted-foreground">{t("lead")}</p>
@@ -975,7 +975,7 @@ export default function LynxApiDocsPage() {
           aria-label={t("contents.heading")}
           className="lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:self-start lg:overflow-y-auto"
         >
-          <Heading level={2} step="card-title">
+          <Heading level={2} step="label">
             {t("contents.heading")}
           </Heading>
           <ul className="mt-3 space-y-1.5 text-sm leading-relaxed">

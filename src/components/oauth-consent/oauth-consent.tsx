@@ -72,7 +72,7 @@ export function OAuthConsent({
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
       <Bot className="h-12 w-12 text-act" aria-hidden />
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{t("title")}</Heading>
+        <Heading level={1} step="section" align="center">{t("title")}</Heading>
         <p className="text-muted-foreground">{t("body", { clientName })}</p>
       </div>
 
@@ -161,7 +161,7 @@ function Outcome({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{title}</Heading>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{body}</p>
       </div>
     </div>

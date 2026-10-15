@@ -188,7 +188,7 @@ export function VoiceRoom({
             {/* The room's title is the page's: the call screen has no other. */}
             <div className="flex items-center gap-2">
               <Mic className="h-4 w-4" aria-hidden />
-              <Heading level={1} step="page-title">
+              <Heading level={1} step="card-title">
                 {title ?? t('voiceRoom')}
               </Heading>
             </div>

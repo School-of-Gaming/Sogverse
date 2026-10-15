@@ -322,9 +322,11 @@ export type TypeStep = {
  *
  * **Two registers, one scale.** `hero` and `display` are the story register —
  * a public page telling the brand's story to a mixed audience, at the sizes a
- * headline needs. `page-title` is the work register's top — an app page, where
- * a person has come to get something done and a 36px heading would shout over
- * the work. `section`, `card-title` and `label` serve both. Same face, same
+ * headline needs. `page-title` is the work register's top — the opt-in
+ * spotlight on an app page, where a person has come to get something done and
+ * a 36px heading would shout over the work; an app page's title is `section`
+ * unless the page chooses the spotlight. `section`, `card-title` and `label`
+ * serve both. Same face, same
  * weight, same rules: the registers differ in where the scale tops out, never
  * in how a heading is drawn.
  *
@@ -347,9 +349,9 @@ export const TYPE_SCALE = [
    * page at most.
    *
    * For the story register only: the home page, About, a partner or landing
-   * page's opening line. Never an app page's title (that is `page-title`) and
-   * never a section heading, however important the section — a second hero on
-   * a page is two pages competing for one reader.
+   * page's opening line. Never an app page's title (that is `section`, or a
+   * spotlit `page-title`) and never a section heading, however important the
+   * section — a second hero on a page is two pages competing for one reader.
    *
    * A story step, so it resteps: 48px cannot hold a three-or-four-word headline
    * at the mobile floor, so it drops to 34 there — still above `display`'s
@@ -393,12 +395,15 @@ export const TYPE_SCALE = [
     lineHeight: 1.2,
   },
   /**
-   * An app page's title — the top of the work register, one per page.
+   * The top of the work register: the opt-in spotlight for a page whose title
+   * is its point — a greeting, a choice the whole page asks, a document the
+   * reader came to read, a person's profile. One per page at most.
    *
-   * For a dashboard page, a settings page, an admin tool, an auth page's title
-   * block. Never a public page's hero, which is a headline rather than a label
-   * for where the reader is. One size at every width: an app page title is a
-   * line of one to four words and fits the mobile floor as it is.
+   * Not an app page's title by default: that is `section`, because most app
+   * pages' titles only say where the reader is, and spotlighting is opt-in.
+   * Never a public page's hero, which is a headline rather than a title. One
+   * size at every width: a spotlit title is a line of one to four words and
+   * fits the mobile floor as it is.
    */
   {
     id: "page-title",
@@ -411,12 +416,14 @@ export const TYPE_SCALE = [
     lineHeight: 1.2,
   },
   /**
-   * A section within a page — in both registers: an app page's section under its
-   * page title, and a story sub-section under a `display` heading.
+   * An app page's title by default, and a section within a page — in both
+   * registers: an app page's section under a spotlit `page-title`, and a story
+   * sub-section under a `display` heading.
    *
-   * One step for both, because a section under a 30px title and a sub-section
-   * under a 36px one are the same rank relative to what is above them. Never a
-   * card's title — a card is an object on the page, not a region of it.
+   * The default for an app page's `h1` because spotlighting is opt-in: a title
+   * that only says where the reader is takes the quietest step that still
+   * reads as a page's title. Never a card's title — a card is an object on the
+   * page, not a region of it.
    */
   {
     id: "section",
@@ -430,7 +437,9 @@ export const TYPE_SCALE = [
   },
   /**
    * The title of a card, dialog, sheet or panel — an object's name, in both
-   * registers.
+   * registers — and of a region over prose under a quiet page title. Also the
+   * quietest a page's own title goes, for a page that is one small object: a
+   * call screen, a not-found state.
    *
    * **Declared departure: 600, where the brand sets its small heading at
    * Regular 400.** One heading weight is the rule for the whole scale, and
@@ -439,7 +448,6 @@ export const TYPE_SCALE = [
    * be told from the paragraph under it and reads as a lead sentence rather
    * than as a heading — size showing rank, failing at the small end. The
    * departure is on the weight alone.
-   * Never a page's or a section's heading, however small the section.
    */
   {
     id: "card-title",
@@ -452,8 +460,10 @@ export const TYPE_SCALE = [
     lineHeight: 1.4,
   },
   /**
-   * A small heading over a compact region — a rail card, a list's group, a
-   * block of sessions inside a product page — in both registers.
+   * A small heading over a compact region — a list, a row of chips, a set of
+   * controls or fields, a block of metadata — in both registers. A heading over
+   * prose takes `card-title` instead: a title is never smaller than the text it
+   * titles.
    *
    * Sentence case, untracked: it is a heading because it titles a region, and
    * a heading is not furniture. A small marker that does not title a region —

@@ -46,7 +46,7 @@ export function PinEntry({ title, description, onSubmit, footer }: PinEntryProps
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{title}</Heading>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       <PinPad

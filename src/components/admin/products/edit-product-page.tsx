@@ -58,7 +58,7 @@ export function EditProductPage({
           {t("editPage.kicker", { type: config.i18nKey })}
         </p>
         <div className="mt-1">
-          <Heading level={1} step="page-title">
+          <Heading level={1} step="section">
             {product
               ? t("editPage.title", {
                   name:

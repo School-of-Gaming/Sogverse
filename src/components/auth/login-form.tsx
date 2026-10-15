@@ -178,7 +178,7 @@ export function LoginForm({
   return (
     <Card className="w-full max-w-lg">
       <CardHeader className="space-y-1 text-center">
-        <Heading level={1} step="page-title" align="center">{t('login.welcomeTitle')}</Heading>
+        <Heading level={1} step="section" align="center">{t('login.welcomeTitle')}</Heading>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">

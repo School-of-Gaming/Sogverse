@@ -372,7 +372,7 @@ export function ParentDashboardPageBody({
           server-only (stripped before the client provider), and page copy
           belongs in a page namespace regardless — `metadata` names documents,
           not headings. */}
-      <Heading level={1} step="page-title" srOnly>
+      <Heading level={1} step="section" srOnly>
         {t("pageTitle")}
       </Heading>
 

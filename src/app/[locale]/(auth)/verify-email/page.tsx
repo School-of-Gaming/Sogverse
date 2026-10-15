@@ -92,7 +92,7 @@ export default async function VerifyEmailPage({
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <MailCheck className="h-12 w-12 text-success" />
         <div className="space-y-2">
-          <Heading level={1} step="page-title" align="center">
+          <Heading level={1} step="section" align="center">
             {t("gamerVerifiedTitle")}
           </Heading>
           <p className="text-muted-foreground">
@@ -126,7 +126,7 @@ export default async function VerifyEmailPage({
         <MailX className="h-12 w-12 text-destructive" />
       )}
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">
+        <Heading level={1} step="section" align="center">
           {verified ? t("successTitle") : t("invalidTitle")}
         </Heading>
         <p className="text-muted-foreground">

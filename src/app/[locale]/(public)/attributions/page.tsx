@@ -119,7 +119,7 @@ export default async function AttributionsPage() {
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-3">
-        <Heading level={1} step="page-title">
+        <Heading level={1} step="section">
           {t("title")}
         </Heading>
         <p className="text-muted-foreground">{t("intro")}</p>

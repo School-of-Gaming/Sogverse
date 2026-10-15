@@ -16,7 +16,7 @@ export function NotAssignedState() {
       <SessionDetailsBackLink />
       <Card className="mt-6">
         <CardContent className="p-8 text-center">
-          <Heading level={1} step="page-title" align="center">
+          <Heading level={1} step="card-title" align="center">
             {t("notAssignedTitle")}
           </Heading>
           <p className="mt-2 text-sm text-muted-foreground">

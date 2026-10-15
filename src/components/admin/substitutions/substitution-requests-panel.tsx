@@ -113,7 +113,7 @@ export function SubstitutionRequestsPanel({
   return (
     <section className="space-y-3">
       <div className="flex items-baseline gap-2">
-        <Heading level={2} step="section">{t("listLabel")}</Heading>
+        <Heading level={2} step="card-title">{t("listLabel")}</Heading>
         {waiting.length > 0 && (
           <span className="text-sm font-normal text-muted-foreground">
             {waiting.length}

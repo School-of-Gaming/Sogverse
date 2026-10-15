@@ -91,6 +91,9 @@ export function GeduContractPageBody({
       </Link>
 
       <header className="space-y-2">
+        {/* Spotlit, as a policy page's title is: the page is the one document
+            a gedu signs, and the contract's own outline needs three steps under
+            this title for its section titles to sit above their clauses. */}
         <Heading level={1} step="page-title">
           {t("pageTitle")}
         </Heading>
@@ -230,8 +233,9 @@ export function GeduContractPageBody({
  * exactly who is owed that sentence.
  *
  * Its title is an h2 under the page's own, a sibling of the contract
- * document's title: the box is one region of the page, and it is titled at
- * the size of the bordered object it is.
+ * document's title: the box is one region of the page, and its title sits over
+ * two sentences of prose, so it is a card title rather than a label — a title
+ * is never smaller than the text it titles.
  */
 function CriminalRecordCheckSection({
   standing,

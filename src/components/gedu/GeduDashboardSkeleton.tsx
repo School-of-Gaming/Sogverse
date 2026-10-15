@@ -48,7 +48,7 @@ export function GeduDashboardSkeleton({
 
   return (
     <>
-      <Heading level={1} step="page-title" srOnly>
+      <Heading level={1} step="section" srOnly>
         {t("pageTitle")}
       </Heading>
       <p role="status" className="sr-only">

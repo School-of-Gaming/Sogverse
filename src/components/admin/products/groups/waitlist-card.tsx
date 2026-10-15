@@ -95,7 +95,7 @@ export function WaitlistCard({
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Hourglass className="h-5 w-5 text-muted-foreground" />
-          <Heading level={3} step="card-title">{t("waitlist.title")}</Heading>
+          <Heading level={3} step="label">{t("waitlist.title")}</Heading>
           {participations.length > 0 && (
             <Badge variant="outline" className="ml-1">
               {participations.length}

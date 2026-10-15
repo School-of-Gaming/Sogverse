@@ -142,7 +142,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <Heading level={1} step="page-title" align="center">{t("registerGedu.title")}</Heading>
+        <Heading level={1} step="section" align="center">{t("registerGedu.title")}</Heading>
         {/* The brand slogan for the people this page is addressed to, placed
             once and only here — lower and smaller than the title it sits
             under, which is the sanctioned shape for a slogan on a page. */}

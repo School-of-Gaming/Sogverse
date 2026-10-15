@@ -88,7 +88,7 @@ export function SlackLinkConfirm({
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
       <SlackMark />
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{t("title")}</Heading>
+        <Heading level={1} step="section" align="center">{t("title")}</Heading>
         <p className="text-muted-foreground">
           {t.rich("body", {
             username: slackUsername,
@@ -161,7 +161,7 @@ function Outcome({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       <SlackMark />
       <div className="space-y-2">
-        <Heading level={1} step="page-title" align="center">{title}</Heading>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{body}</p>
       </div>
       {children}

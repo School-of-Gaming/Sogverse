@@ -85,7 +85,7 @@ export default function MinecraftApiDocsPage() {
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
-      <Heading level={1} step="page-title">
+      <Heading level={1} step="section">
         {t('title')}
       </Heading>
       <p className="mt-4 text-lg text-muted-foreground">
@@ -94,7 +94,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Who is let in */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('eligibility.heading')}
         </Heading>
         <p className="mt-3 text-muted-foreground">{t('eligibility.intro')}</p>
@@ -109,7 +109,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Authentication */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('authentication.heading')}
         </Heading>
         <p className="mt-3 leading-relaxed text-muted-foreground">
@@ -123,7 +123,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Endpoint */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('endpoint.heading')}
         </Heading>
         <div className="mt-4">
@@ -131,7 +131,7 @@ export default function MinecraftApiDocsPage() {
         </div>
 
         <div className="mt-6">
-          <Heading level={3} step="card-title">
+          <Heading level={3} step="label">
             {t('endpoint.queryParams')}
           </Heading>
         </div>
@@ -144,7 +144,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Responses */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('responses.heading')}
         </Heading>
         <p className="mt-3 leading-relaxed text-muted-foreground">
@@ -159,7 +159,7 @@ export default function MinecraftApiDocsPage() {
                 <span className="rounded border border-border px-2 py-0.5 text-xs font-semibold text-success">
                   200
                 </span>
-                <Heading level={3} step="card-title">
+                <Heading level={3} step="label">
                   {t('responses.playerAllowed')}
                 </Heading>
               </div>
@@ -176,7 +176,7 @@ export default function MinecraftApiDocsPage() {
                 <span className="rounded border border-border px-2 py-0.5 text-xs font-semibold text-warning">
                   200
                 </span>
-                <Heading level={3} step="card-title">
+                <Heading level={3} step="label">
                   {t('responses.playerDenied')}
                 </Heading>
               </div>
@@ -192,7 +192,7 @@ export default function MinecraftApiDocsPage() {
           {/* Error responses */}
           <Card>
             <CardHeader>
-              <Heading level={3} step="card-title">
+              <Heading level={3} step="label">
                 {t('responses.errorResponses')}
               </Heading>
             </CardHeader>
@@ -231,7 +231,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Field reference */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('fields.heading')}
         </Heading>
         <div className="mt-2">
@@ -250,7 +250,7 @@ export default function MinecraftApiDocsPage() {
         </div>
 
         <div className="mt-6">
-          <Heading level={3} step="card-title">
+          <Heading level={3} step="label">
             {t('fields.reasonsHeading')}
           </Heading>
         </div>
@@ -270,7 +270,7 @@ export default function MinecraftApiDocsPage() {
         </div>
 
         <div className="mt-6">
-          <Heading level={3} step="card-title">
+          <Heading level={3} step="label">
             {t('fields.gamerHeading')}
           </Heading>
         </div>
@@ -287,7 +287,7 @@ export default function MinecraftApiDocsPage() {
         </div>
 
         <div className="mt-6">
-          <Heading level={3} step="card-title">
+          <Heading level={3} step="label">
             {t('fields.enrollmentHeading')}
           </Heading>
         </div>
@@ -315,7 +315,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Example */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('example.heading')}
         </Heading>
         <div className="mt-4">
@@ -327,7 +327,7 @@ export default function MinecraftApiDocsPage() {
 
       {/* Integration notes */}
       <section className="mt-12">
-        <Heading level={2} step="section">
+        <Heading level={2} step="card-title">
           {t('integrationNotes.heading')}
         </Heading>
         <ul className="mt-4 list-inside list-disc space-y-3 leading-relaxed text-muted-foreground">

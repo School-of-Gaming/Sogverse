@@ -126,18 +126,22 @@ describe("Heading", () => {
  * does not compile" means. Never rendered: the type-check is the assertion.
  */
 export const DISALLOWED_PAIRS = () => [
-  // @ts-expect-error -- the hero is a page's own title, never a section's
+  // @ts-expect-error -- above h2's ceiling: the hero is a page's own title
   <Heading key="2-hero" level={2} step="hero">Words</Heading>,
-  // @ts-expect-error -- display is a story section's step, never a page title
-  <Heading key="1-display" level={1} step="display">Words</Heading>,
-  // @ts-expect-error -- an app page's title is h1 alone
+  // @ts-expect-error -- above h2's ceiling: page-title is the page's own spotlight
   <Heading key="2-page-title" level={2} step="page-title">Words</Heading>,
-  // @ts-expect-error -- a whole page is never titled in 24px
-  <Heading key="1-section" level={1} step="section">Words</Heading>,
-  // @ts-expect-error -- label never reaches the top of a page's regions
-  <Heading key="2-label" level={2} step="label">Words</Heading>,
-  // @ts-expect-error -- an h4 cannot claim a section's rank
+  // @ts-expect-error -- display is a story section's step, never a page's title
+  <Heading key="1-display" level={1} step="display">Words</Heading>,
+  // @ts-expect-error -- above h3's ceiling: an h3 sits under a section, so it cannot outrank one
+  <Heading key="3-display" level={3} step="display">Words</Heading>,
+  // @ts-expect-error -- above h3's ceiling: a page's spotlight is its h1's alone
+  <Heading key="3-page-title" level={3} step="page-title">Words</Heading>,
+  // @ts-expect-error -- above h3's ceiling: the hero is a page's own title
+  <Heading key="3-hero" level={3} step="hero">Words</Heading>,
+  // @ts-expect-error -- above h4's ceiling: an h4 sits inside a card or a sub-section
   <Heading key="4-section" level={4} step="section">Words</Heading>,
+  // @ts-expect-error -- below h1's floor: a whole page is never titled at a compact region's size
+  <Heading key="1-label" level={1} step="label">Words</Heading>,
   // @ts-expect-error -- the outline stops at h4
   <Heading key="5-label" level={5} step="label">Words</Heading>,
 ];

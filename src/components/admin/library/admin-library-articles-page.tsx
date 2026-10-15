@@ -61,7 +61,7 @@ export function AdminLibraryArticlesPage({
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Heading level={1} step="page-title">{t("title")}</Heading>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link

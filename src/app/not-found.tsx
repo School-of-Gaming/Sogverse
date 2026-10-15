@@ -21,7 +21,7 @@ export default async function RootNotFound() {
         <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
           <Compass className="h-12 w-12 text-muted-foreground" aria-hidden />
           <div className="space-y-2">
-            <Heading level={1} step="page-title" align="center">
+            <Heading level={1} step="section" align="center">
               {t("title")}
             </Heading>
             <p className="max-w-prose text-sm text-muted-foreground sm:text-base">

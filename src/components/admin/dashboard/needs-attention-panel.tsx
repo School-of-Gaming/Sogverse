@@ -106,10 +106,10 @@ function AllClearPanel() {
           wordmark and wraps within itself rather than pushing the card sideways.
           `justify-end` keeps it packed right wherever it lands. */}
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 space-y-0">
-        {/* The all-clear line is the card's heading, at the same step as every
-            other panel title on this page; the pixel cup beside it is artwork
-            and carries the reward on its own. */}
-        <Heading level={2} step="card-title">
+        {/* The all-clear line is the card's heading, at the quietest step: with
+            nothing to act on, the panel has no reason to call for attention.
+            The pixel cup beside it is artwork and carries the reward on its own. */}
+        <Heading level={2} step="label">
           {t("allClearTitle")}
         </Heading>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">

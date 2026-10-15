@@ -107,7 +107,7 @@ export function GeduSubstitutionsPageBody({
       </Link>
 
       <div className="space-y-4">
-        <Heading level={1} step="page-title">
+        <Heading level={1} step="section">
           {t("pageTitle")}
         </Heading>
         {fileAbsence}
@@ -122,7 +122,7 @@ export function GeduSubstitutionsPageBody({
         >
           <Heading
             level={2}
-            step="section"
+            step="card-title"
             id="substitution-own-requests-heading"
           >
             {t("ownRequestsHeading")}
@@ -147,7 +147,7 @@ export function GeduSubstitutionsPageBody({
               whether or not the queue has anything in it, and is what makes
               an empty queue legible to a gedu whose settings are thin. */}
           <div className="space-y-1">
-            <Heading level={2} step="section" id="substitution-pool-heading">
+            <Heading level={2} step="card-title" id="substitution-pool-heading">
               {t("poolHeading")}
             </Heading>
             <p className="text-sm text-muted-foreground">
@@ -165,7 +165,7 @@ export function GeduSubstitutionsPageBody({
       )}
 
       <section aria-labelledby="substitutions-mine-heading" className="space-y-4">
-        <Heading level={2} step="section" id="substitutions-mine-heading">
+        <Heading level={2} step="card-title" id="substitutions-mine-heading">
           {t("mineHeading")}
         </Heading>
         {/* Nothing at all while the read is out — a small indexed read of a

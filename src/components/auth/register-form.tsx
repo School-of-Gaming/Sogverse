@@ -229,7 +229,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
     // stops the narrower of the two reading as an older screen.
     <Card className="w-full max-w-2xl">
       <CardHeader className="space-y-1">
-        <Heading level={1} step="page-title" align="center">{t('register.title')}</Heading>
+        <Heading level={1} step="section" align="center">{t('register.title')}</Heading>
         <CardDescription className="text-center">
           {t('register.description')}
         </CardDescription>

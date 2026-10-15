@@ -134,7 +134,7 @@ export function PurchaseConfirmationView({
             )}
           </div>
           <div className="mt-4">
-            <Heading level={1} step="page-title" align="center">
+            <Heading level={1} step="section" align="center">
               {isWaitlist ? t("waitlist.heading") : t("heading")}
             </Heading>
           </div>
@@ -466,7 +466,7 @@ export function PurchaseConfirmationNotice({
             )}
           </div>
           <div className="mt-4">
-            <Heading level={1} step="page-title" align="center">
+            <Heading level={1} step="section" align="center">
               {copy.heading}
             </Heading>
           </div>
@@ -478,7 +478,7 @@ export function PurchaseConfirmationNotice({
             {/* Ghosts shaped like the summary card that replaces them. */}
             <Card className="mt-8">
               <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+                <div className="h-6 w-32 animate-pulse rounded bg-lifted" />
                 <div className="h-16 animate-pulse rounded-lg bg-lifted" />
                 <div className="h-4 animate-pulse rounded bg-lifted" />
                 <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />

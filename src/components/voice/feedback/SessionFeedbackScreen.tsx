@@ -341,7 +341,7 @@ export function SessionFeedbackScreen<
         {/* A focus target, so the mount effect can land focus here. */}
         <Heading
           level={1}
-          step="page-title"
+          step="section"
           align="center"
           ref={headingRef}
           focusTarget

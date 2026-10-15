@@ -242,7 +242,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, joinFailed }:
     <div className="container mx-auto max-w-3xl p-4 md:p-6">
       <Card>
         <CardHeader>
-          <Heading level={1} step="page-title">{t("title")}</Heading>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <CardDescription>{t("description")}</CardDescription>
           {/* The room link, right where someone waiting in the lobby wants it:
               the first person to arrive is usually the one inviting the rest. */}

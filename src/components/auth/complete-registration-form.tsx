@@ -151,7 +151,7 @@ function CompletionShell({
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader className="space-y-1">
-        <Heading level={1} step="page-title" align="center">{title}</Heading>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <CardDescription className="text-center">{t("description")}</CardDescription>
       </CardHeader>
       {/* The address, and the way out, sit outside the form: the sign-out is a

@@ -36,7 +36,7 @@ export function FeedbackShell({
       {back !== null && <BackLink place={back} />}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <Heading level={1} step="page-title">{title}</Heading>
+          <Heading level={1} step="section">{title}</Heading>
           <p className="text-sm text-muted-foreground">{subtitle ?? <SourcesLine />}</p>
         </div>
         {aside}

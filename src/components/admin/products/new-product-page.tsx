@@ -66,7 +66,7 @@ export function NewProductPage({
           </p>
         )}
         <div className={isCloning ? "mt-1" : undefined}>
-          <Heading level={1} step="page-title">
+          <Heading level={1} step="section">
             {!isCloning
               ? t("newPage.title", { type })
               : source

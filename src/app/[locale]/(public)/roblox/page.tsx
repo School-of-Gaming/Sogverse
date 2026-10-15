@@ -255,11 +255,11 @@ export default function RobloxPage() {
       <section className="container mx-auto px-4 pb-16">
         <div className="mx-auto max-w-3xl border-t border-border pt-8">
           {/* An h2 because it titles the documents list at the page's second
-              outline level, and `card-title` because that is the smallest step
-              an h2 may take: `label` never reaches h2. Not the page's
+              outline level, and `label` because a footer list of links needs a
+              title the eye can find, not one the page spotlights. Not the page's
               act-coloured Eyebrow — three act-coloured rows would shout from
               the bottom of the page, and an act label over them just as loudly. */}
-          <Heading level={2} step="card-title">
+          <Heading level={2} step="label">
             {t("legal.documents")}
           </Heading>
           {/* A step more present than the trademark boilerplate below — a

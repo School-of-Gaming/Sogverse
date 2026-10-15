@@ -47,7 +47,7 @@ export function UnassignedCard({
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Inbox className="h-5 w-5 text-muted-foreground" />
-          <Heading level={3} step="card-title">{t("unassigned.title")}</Heading>
+          <Heading level={3} step="label">{t("unassigned.title")}</Heading>
           {participations.length > 0 && (
             <Badge variant="outline" className="ml-1">
               {participations.length}

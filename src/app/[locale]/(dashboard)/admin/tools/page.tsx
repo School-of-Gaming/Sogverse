@@ -34,7 +34,7 @@ export default async function AdminToolsPage() {
   const t = await getTranslations("admin.tools");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <Heading level={1} step="page-title">{t("title")}</Heading>
+      <Heading level={1} step="section">{t("title")}</Heading>
       <MinecraftPasswordResetCard level={2} />
       <CreateInstantRoomCard level={2} />
     </div>

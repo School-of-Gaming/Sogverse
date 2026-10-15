@@ -814,7 +814,7 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
     <div className="rounded-md border border-border p-4">
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 shrink-0 text-info" />
-        <Heading level={2} step="card-title">
+        <Heading level={2} step="label">
           {t("regionLock.heading")}
         </Heading>
       </div>
@@ -1011,7 +1011,7 @@ function SignupForm(
             states the seat rather than asking a question with no second
             option; it stays type-neutral because the verb it would carry
             belongs to the question it is no longer asking. */}
-        <Heading level={2} step="card-title" id="gamer-picker-label">
+        <Heading level={2} step="label" id="gamer-picker-label">
           {props.forGamers
             ? t(`whoAreYouSigningUp.${props.productType}`)
             : t("seatIsFor")}
@@ -1421,7 +1421,7 @@ function RequiredConsentSection({
       : tRules.rich(productType, policyTag);
   return (
     <div className="space-y-2">
-      <Heading level={2} step="card-title">
+      <Heading level={2} step="label">
         {t("consents.heading")}
       </Heading>
       {rows.map((row) =>
