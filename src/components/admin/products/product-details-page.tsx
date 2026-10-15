@@ -100,9 +100,11 @@ function plannedSessionsWindow(
  * details in the third beside them. Below `xl` the two stack, groups first,
  * because managing groups is what an admin comes to this page for and the
  * details must never push it down. The loading state lays out the same frame,
- * so nothing it paints early lands anywhere else once the data is in.
+ * so nothing it paints early lands anywhere else once the data is in. No width
+ * cap of its own: the dashboard container already bounds it, and every pixel
+ * that cap would hold back on a wide monitor belongs to the groups column.
  */
-const PAGE_FRAME = "mx-auto max-w-7xl space-y-6";
+const PAGE_FRAME = "space-y-6";
 const PAGE_COLUMNS = "grid grid-cols-1 items-start gap-6 xl:grid-cols-3";
 const MAIN_COLUMN = "min-w-0 xl:col-span-2";
 
