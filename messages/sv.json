@@ -1590,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Byt klubb",
           "title": "Byt klubb",
-          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, nästa faktura justerar för resten av månaden, och därefter betalar familjen den nya klubbens pris.",
+          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, och därefter betalar familjen den nya klubbens pris.",
           "searchPlaceholder": "Sök klubbar på namn",
           "picker": {
             "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
@@ -1609,6 +1609,7 @@
             "current": "Betalar nu",
             "target": "Nytt pris",
             "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
+            "nothingPaid": "Inget mer debiteras före {date}. Därefter betalar familjen den nya klubbens pris, minus eventuell rabatt som de redan har.",
             "unavailable": "Inget pris att visa",
             "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
           },

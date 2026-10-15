@@ -1590,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Vaihda kerhoa",
           "title": "Vaihda kerhoa",
-          "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, seuraava lasku oikaisee tämän kuukauden loppuosan, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
+          "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
           "searchPlaceholder": "Hae kerhoja nimellä",
           "picker": {
             "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
@@ -1609,6 +1609,7 @@
             "current": "Maksaa nyt",
             "target": "Uusi hinta",
             "proration": "Seuraava lasku lisää tai hyvittää erotuksen tämän kuukauden loppuosalta.",
+            "nothingPaid": "Ennen {date} ei veloiteta enää mitään. Sen jälkeen perhe maksaa uuden kerhon hinnan, josta vähennetään perheen mahdollinen nykyinen alennus.",
             "unavailable": "Ei hintaa näytettäväksi",
             "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
           },

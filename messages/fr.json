@@ -1590,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Changer de club",
           "title": "Changer de club",
-          "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, la prochaine facture régularise le reste du mois, puis la famille paie le prix du nouveau club.",
+          "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, puis la famille paie le prix du nouveau club.",
           "searchPlaceholder": "Rechercher un club par son nom",
           "picker": {
             "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
@@ -1609,6 +1609,7 @@
             "current": "Paie actuellement",
             "target": "Nouveau prix",
             "proration": "La prochaine facture ajoute ou rembourse la différence pour le reste du mois.",
+            "nothingPaid": "Rien de plus n’est facturé avant le {date}. Ensuite, la famille paie le prix du nouveau club, moins toute remise dont elle bénéficie déjà.",
             "unavailable": "Aucun prix à afficher",
             "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
           },

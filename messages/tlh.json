@@ -1634,7 +1634,7 @@
         "switchClub": {
           "dropZone": "ghom’a’ yIchIj",
           "title": "ghom’a’ yIchIj",
-          "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; jarvam chuq chIm ghItlh veb; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
+          "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
           "searchPlaceholder": "pongDaq ghom’a’ yISam",
           "picker": {
             "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
@@ -1653,6 +1653,7 @@
             "current": "DaH DIl",
             "target": "Huch chu’",
             "proration": "jarvam chuq pIm chel pagh nobHa’ ghItlh veb.",
+            "nothingPaid": "{date} pa’ latlh DIl qorDu’ ’e’ poQbe’ chuq. ghIq ghom chu’ Huch DIl, ’ach Huch tlhab’e’ ghaj qorDu’ luteq.",
             "unavailable": "Huch cha’lu’be’",
             "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
           },
