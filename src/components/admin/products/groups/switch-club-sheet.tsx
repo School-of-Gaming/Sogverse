@@ -532,7 +532,16 @@ export function SwitchClubSheet({
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {t("prices.proration")}
+                      {check.data.settlement === "free_period" &&
+                      check.data.freePeriodEndsAt !== null
+                        ? t("prices.freePeriod", {
+                            date: formatDate(
+                              check.data.freePeriodEndsAt,
+                              uiLocale,
+                              { dateStyle: "medium", timeZone },
+                            ),
+                          })
+                        : t("prices.proration")}
                     </p>
                   </div>
                 )}

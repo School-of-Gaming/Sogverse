@@ -31,6 +31,7 @@ import { sendProductConfirmationEmail } from "@/services/participations/product-
 import type {
   SwitchClubCheckResponse,
   SwitchClubRefusal,
+  SwitchClubSettlement,
 } from "@/services/participations/switch-club.contracts";
 
 /**
@@ -105,6 +106,55 @@ export interface SwitchClubCommitFacts {
    */
   stripePriceId: string;
   targetProduct: TargetProduct;
+  /**
+   * Decided by the check from the period the family is in, and sent as is:
+   * `none` for a free period, so nothing is settled for money never taken,
+   * and `create_prorations` for a paid one.
+   */
+  prorationBehavior: Extract<
+    Stripe.SubscriptionUpdateParams.ProrationBehavior,
+    "create_prorations" | "none"
+  >;
+}
+
+/**
+ * How the rest of the current period would be settled by a price change, or
+ * null when the switch must be refused.
+ *
+ * Classic billing mode credits unused time at the CURRENT price whether or not
+ * it was ever paid, so a proration is only right for a period the family
+ * actually paid for. A period they paid nothing for is switched with no
+ * proration at all — it stays free, and the new price applies from the next
+ * billing date. Anything in between (an open, past due, void or uncollectible
+ * invoice) is refused, because no answer about the money would be true. That
+ * is why this is a hard gate rather than a picker warning.
+ *
+ * - A trial is a free period whatever its latest invoice says.
+ * - A paid invoice totalling zero is a free period only when it OPENED the
+ *   period — the first invoice, or a renewal. A zero mid-period invoice (a
+ *   plan change, a trial added by hand) says nothing about whether the period
+ *   itself was paid, so it is refused. `total` is the amount after discounts
+ *   and before any customer balance, so an invoice settled from the family's
+ *   balance is never mistaken for a free period.
+ * - A paid invoice with money taken is a paid period.
+ */
+function settlementOf(
+  subscription: Stripe.Subscription,
+): SwitchClubSettlement | null {
+  if (subscription.status === "trialing") return "free_period";
+
+  const invoice = subscription.latest_invoice;
+  if (invoice === null || typeof invoice !== "object") return null;
+  if (invoice.status !== "paid") return null;
+
+  if (
+    invoice.total === 0 &&
+    (invoice.billing_reason === "subscription_create" ||
+      invoice.billing_reason === "subscription_cycle")
+  ) {
+    return "free_period";
+  }
+  return invoice.amount_paid > 0 ? "prorate" : null;
 }
 
 export interface SwitchClubCheck extends SwitchClubCheckResponse {
@@ -272,6 +322,8 @@ export async function checkSwitchClub({
   let item: Stripe.SubscriptionItem | null = null;
   let currencyMismatch = false;
   let subscriptionEndsAt: string | null = null;
+  let settlement: SwitchClubSettlement | null = null;
+  let freePeriodEndsAt: string | null = null;
   if (subscriptionRow) {
     const subscription = await stripe.subscriptions.retrieve(
       subscriptionRow.stripe_subscription_id,
@@ -314,17 +366,30 @@ export async function checkSwitchClub({
     subscriptionEndsAt =
       endsAtUnix !== null ? new Date(endsAtUnix * 1000).toISOString() : null;
 
-    // Classic billing mode credits unused time at the CURRENT price whether or
-    // not it was ever paid, so a subscription whose latest invoice is open,
-    // past due or zero would yield a proration credit for money we never took.
-    // That is why this gate is hard rather than a picker warning.
-    const invoice = subscription.latest_invoice;
-    const invoicePaid =
-      invoice !== null &&
-      typeof invoice === "object" &&
-      invoice.status === "paid" &&
-      invoice.amount_paid > 0;
-    if (!invoicePaid) refusals.push("latest_invoice_not_paid");
+    const decided = settlementOf(subscription);
+    if (decided === null) {
+      refusals.push("latest_invoice_not_paid");
+    } else {
+      settlement = decided;
+      if (decided === "free_period") {
+        // A trial ends at `trial_end`; a period discounted to zero ends where
+        // any period does. The current period's end is the trial's end too
+        // while one runs, so the fallback only matters if Stripe ever omits it.
+        const endsAtUnix =
+          (subscription.status === "trialing" ? subscription.trial_end : null) ??
+          currentPeriodEndOf(subscription);
+        // Stripe always answers a live subscription with its period's end, so
+        // a missing one is a read we cannot trust rather than a free period of
+        // no length — and the sheet cannot tell the admin when the price starts.
+        if (endsAtUnix === null) {
+          throw new ApiError(
+            "Stripe returned no period end for this subscription",
+            502,
+          );
+        }
+        freePeriodEndsAt = new Date(endsAtUnix * 1000).toISOString();
+      }
+    }
   }
 
   // The two narrowings that are NOT refusals. `isSupportedCurrency` is the
@@ -335,8 +400,9 @@ export async function checkSwitchClub({
   // subscription our checkout creates records one, so a row without it gives
   // the RPC no expected state to be bound to, and the commit declines rather
   // than moving money against an unknown.
-  const commitFacts =
+  const commitFacts: SwitchClubCommitFacts | null =
     refusals.length === 0 &&
+    settlement !== null &&
     subscriptionRow !== null &&
     subscriptionRow.stripe_price_id !== null &&
     item !== null &&
@@ -350,6 +416,8 @@ export async function checkSwitchClub({
           subscriptionItemId: item.id,
           stripePriceId: subscriptionRow.stripe_price_id,
           targetProduct: target,
+          prorationBehavior:
+            settlement === "free_period" ? "none" : "create_prorations",
         }
       : null;
 
@@ -359,6 +427,8 @@ export async function checkSwitchClub({
     targetAmountCents: targetPrice?.price_cents ?? null,
     refusals,
     subscriptionEndsAt,
+    settlement,
+    freePeriodEndsAt,
     commitFacts,
     groupNotOnTarget,
     currencyMismatch,
@@ -479,10 +549,13 @@ export async function commitSwitchClub({
       items: [
         { id: facts.subscriptionItemId, price: priceRow.stripe_price_id },
       ],
-      // Stripe credits unused time at the old price and debits the remainder at
-      // the new one on the SAME next invoice, so a price difference is settled
-      // by the mechanism built for it and no customer balance is created.
-      proration_behavior: "create_prorations",
+      // Decided by the check. For a paid period Stripe credits unused time at
+      // the old price and debits the remainder at the new one on the SAME next
+      // invoice, so a price difference is settled by the mechanism built for it
+      // and no customer balance is created. For a free period nothing is
+      // settled: the rest of it stays free and the new price starts at the
+      // next billing date.
+      proration_behavior: facts.prorationBehavior,
       metadata: rewrittenSubscriptionMetadata(request, facts),
       description: await rewrittenSubscriptionDescription(supabase, facts),
     },

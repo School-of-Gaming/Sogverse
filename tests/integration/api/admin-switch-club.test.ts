@@ -239,8 +239,13 @@ function stripeSubscription(
       price: { id: string; unit_amount: number | null };
       quantity?: number;
     }[];
+    status?: string;
+    trialEnd?: number | null;
     invoiceStatus?: string;
     amountPaid?: number;
+    /** After discounts, before customer balance; defaults to the amount paid. */
+    invoiceTotal?: number;
+    billingReason?: string;
     currency?: string;
     cancelAt?: number | null;
     cancelAtPeriodEnd?: boolean;
@@ -249,6 +254,8 @@ function stripeSubscription(
 ) {
   return {
     id: SUB_ID,
+    status: overrides.status ?? "active",
+    trial_end: overrides.trialEnd ?? null,
     // The currency the subscription actually bills in. Stated on the fixture
     // because the check compares it with the row's: leaving it off would make
     // every test a currency mismatch.
@@ -267,6 +274,8 @@ function stripeSubscription(
       id: "in_test_1",
       status: overrides.invoiceStatus ?? "paid",
       amount_paid: overrides.amountPaid ?? 4900,
+      total: overrides.invoiceTotal ?? overrides.amountPaid ?? 4900,
+      billing_reason: overrides.billingReason ?? "subscription_cycle",
     },
   };
 }
@@ -374,6 +383,9 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
       // Nothing cancelled, so nothing to state — and `currencyMismatch` is
       // absent rather than false, which is what `toEqual` is asserting here.
       subscriptionEndsAt: null,
+      // A paid period, so the difference is settled on the next invoice.
+      settlement: "prorate",
+      freePeriodEndsAt: null,
     });
     // One Stripe read, with the invoice expanded — the check mints nothing.
     expect(mockSubscriptionRetrieve).toHaveBeenCalledTimes(1);
@@ -394,6 +406,73 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
 
     expect(response.status).toBe(200);
     expect(body.refusals).toEqual(["latest_invoice_not_paid"]);
+  });
+
+  it("lets a trialing family switch with nothing to settle until the trial ends", async () => {
+    mockAuthenticatedAdmin();
+    // The real case: a first month discounted to zero, then a trial added by
+    // hand, so the latest invoice is a €0 mid-period one. The trial alone
+    // decides it.
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        status: "trialing",
+        trialEnd: 1_800_000_000,
+        currentPeriodEnd: 1_800_000_000,
+        amountPaid: 0,
+        billingReason: "subscription_update",
+      }),
+    );
+
+    const response = await GET(checkRequest(), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.refusals).toEqual([]);
+    expect(body.settlement).toBe("free_period");
+    expect(body.freePeriodEndsAt).toBe(
+      new Date(1_800_000_000 * 1000).toISOString(),
+    );
+  });
+
+  it("lets a family on a first month discounted to zero switch with nothing to settle", async () => {
+    mockAuthenticatedAdmin();
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        amountPaid: 0,
+        invoiceTotal: 0,
+        billingReason: "subscription_create",
+        currentPeriodEnd: 1_800_000_000,
+      }),
+    );
+
+    const response = await GET(checkRequest(), { params });
+    const body = await response.json();
+
+    expect(body.refusals).toEqual([]);
+    expect(body.settlement).toBe("free_period");
+    expect(body.freePeriodEndsAt).toBe(
+      new Date(1_800_000_000 * 1000).toISOString(),
+    );
+  });
+
+  it("refuses an active subscription whose latest invoice is a €0 mid-period one", async () => {
+    mockAuthenticatedAdmin();
+    // A zero plan-change invoice says nothing about whether the period itself
+    // was paid, so it is not evidence of a free period.
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        amountPaid: 0,
+        invoiceTotal: 0,
+        billingReason: "subscription_update",
+      }),
+    );
+
+    const response = await GET(checkRequest(), { params });
+    const body = await response.json();
+
+    expect(body.refusals).toEqual(["latest_invoice_not_paid"]);
+    expect(body.settlement).toBeNull();
+    expect(body.freePeriodEndsAt).toBeNull();
   });
 
   it("refuses a subscription carrying more than one item", async () => {
@@ -689,6 +768,53 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(
       mockSendProductConfirmationEmail.mock.invocationCallOrder[0],
     ).toBeGreaterThan(mockRpc.mock.invocationCallOrder[0]);
+  });
+
+  it("commits a free period with no proration", async () => {
+    mockAuthenticatedAdmin();
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        status: "trialing",
+        trialEnd: 1_800_000_000,
+        amountPaid: 0,
+        billingReason: "subscription_update",
+      }),
+    );
+
+    const response = await POST(commitRequest(commitBody), { params });
+
+    expect(response.status).toBe(200);
+    expect(mockSubscriptionUpdate).toHaveBeenCalledTimes(1);
+    const [, updateParams, options] = mockSubscriptionUpdate.mock.calls[0];
+    expect(updateParams).toMatchObject({
+      items: [{ id: ITEM_ID, price: TARGET_PRICE_ID }],
+      proration_behavior: "none",
+    });
+    // The same key shape as a prorated switch: the dialog's check decides the
+    // proration once, so one key never carries two bodies.
+    expect(options).toEqual({
+      idempotencyKey: `club-switch:${PARTICIPATION_ID}:${TARGET_PRODUCT_ID}:${REQUEST_ID}`,
+    });
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses to commit on a €0 mid-period invoice of an active subscription", async () => {
+    mockAuthenticatedAdmin();
+    mockSubscriptionRetrieve.mockResolvedValue(
+      stripeSubscription({
+        amountPaid: 0,
+        invoiceTotal: 0,
+        billingReason: "subscription_update",
+      }),
+    );
+
+    const response = await POST(commitRequest(commitBody), { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.refusals).toEqual(["latest_invoice_not_paid"]);
+    expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("passes the admin's chosen group through to the RPC", async () => {

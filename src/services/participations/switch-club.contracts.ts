@@ -26,7 +26,11 @@ import { z } from "zod";
  * after the money has moved can fail only on a genuine outage.
  */
 export const SWITCH_CLUB_REFUSALS = [
-  /** The subscription's latest invoice is not `paid` with a positive amount. */
+  /**
+   * The family is in neither a paid period nor a free one: the latest invoice
+   * is open, past due, void or uncollectible, or it is a €0 mid-period invoice
+   * that proves nothing about whether the period itself was paid.
+   */
   "latest_invoice_not_paid",
   /** The subscription does not carry exactly one item, so there is no single price to swap. */
   "subscription_not_single_item",
@@ -49,6 +53,20 @@ export const SWITCH_CLUB_REFUSALS = [
 
 export const switchClubRefusal = z.enum(SWITCH_CLUB_REFUSALS);
 export type SwitchClubRefusal = z.infer<typeof switchClubRefusal>;
+
+/**
+ * How the rest of the current period is settled by a switch.
+ *
+ * - `prorate` — the family paid for this period, so the next invoice adds or
+ *   refunds the price difference for what is left of it.
+ * - `free_period` — the family paid nothing for this period (a trial, or a
+ *   first invoice discounted to zero), so nothing is settled: the rest of the
+ *   period stays free and the new price applies from the next billing date.
+ */
+export const SWITCH_CLUB_SETTLEMENTS = ["prorate", "free_period"] as const;
+
+export const switchClubSettlement = z.enum(SWITCH_CLUB_SETTLEMENTS);
+export type SwitchClubSettlement = z.infer<typeof switchClubSettlement>;
 
 /** Query of the check handler: `?target=<product id>`. */
 export const switchClubCheckQuery = z.object({
@@ -85,6 +103,17 @@ export const switchClubCheckResponse = z.object({
    * parent. The commit does not gate on it.
    */
   subscriptionEndsAt: z.string().datetime().nullable(),
+  /**
+   * How the rest of the current period is settled; null when the check found
+   * no subscription to read, or the latest invoice refused the switch.
+   */
+  settlement: switchClubSettlement.nullable(),
+  /**
+   * When the free period ends and the new club's price starts being charged —
+   * the trial's end, or the current period's end. Non-null exactly when
+   * `settlement` is `free_period`.
+   */
+  freePeriodEndsAt: z.string().datetime().nullable(),
   /**
    * The live Stripe subscription's currency disagrees with the
    * `family_subscriptions` row's. Present only when true, and never a refusal:

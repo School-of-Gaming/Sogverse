@@ -1590,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Switch club",
           "title": "Switch club",
-          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, the next invoice corrects for the rest of this month, and from then on they pay the new club's price.",
+          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, and from then on they pay the new club's price.",
           "searchPlaceholder": "Search clubs by name",
           "picker": {
             "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
@@ -1609,6 +1609,7 @@
             "current": "Paying now",
             "target": "New price",
             "proration": "The next invoice adds or refunds the difference for the rest of this month.",
+            "freePeriod": "Nothing is charged for the rest of the free period; from {date} they pay the new club's price.",
             "unavailable": "No price to show",
             "error": "The price check did not come back. Pick the club again to retry."
           },
