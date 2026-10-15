@@ -216,6 +216,27 @@ the name from the library rather than typing one. Lint holds the spellings, one 
 a face can be written, and the contract tests hold the list in both directions, so a
 fifth family cannot be loaded and a face of the consumer's own cannot be declared.
 
+**Headings.** Every heading is `Heading`, and it takes two required props because they are
+two decisions: the **level** is the outline a screen reader and a search engine walk, and
+the **step** is the rank the eye reads. Which steps a level may take is a table the types
+enforce — `h1` hero or page-title; `h2` display, section or card-title; `h3` section,
+card-title or label; `h4` card-title or label — so a level only ever takes a step at its
+own rank or below, and the same card is an `h2` on one page and an `h3` on another without
+changing size. **The scale has two registers and they differ only in where they top out**:
+a public page telling the story opens at `hero` and sections at `display`; an app page
+titles at `page-title` and sections at `section`, and never reaches for a story step to
+make a section feel important. Size is the only thing that shows rank: one heading weight,
+no tracking, the step's own leading, and **ink** — a heading has no colour, and the public
+hero's act phrase is the one declared departure. **A heading titles a region** — a page, a
+section, a card, a dialog, a compact group — and text that titles nothing is not a heading
+however it is meant to look: an eyebrow, a field label or a lead sentence is text.
+
+**Heading copy is sentence case, in `messages/` as much as on the element.** Never Title
+Case Every Word, never ALL CAPS; proper nouns keep their capitals and nothing else does.
+`Heading` leaves no class through which a case transform could be written, but it cannot
+stop a string that arrives already Title-Cased, so the words are held to the rule where
+they are written.
+
 **The mark.** The logo, its variants, the monogram, their clearspace, minimum size and
 placement rules, and the combined lockup `School of Gaming – Sogverse` with its spaced en
 dash, are the library's. A consumer renders the mark through the library and never carries

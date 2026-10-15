@@ -432,10 +432,14 @@ export const TYPE_SCALE = [
    * The title of a card, dialog, sheet or panel — an object's name, in both
    * registers.
    *
-   * At 600 like every heading step: a title set at body weight beside body
-   * copy of nearly the same size reads as a lead sentence rather than as a
-   * heading, which is principle one failing at the small end. Never a page's
-   * or a section's heading, however small the section.
+   * **Declared departure: 600, where the brand sets its small heading at
+   * Regular 400.** One heading weight is the rule for the whole scale, and
+   * this is the step where the brand's own value would break it: an 18px
+   * title at 400 is `body-l`'s size and weight, so beside body copy it cannot
+   * be told from the paragraph under it and reads as a lead sentence rather
+   * than as a heading — size showing rank, failing at the small end. The
+   * departure is on the weight alone.
+   * Never a page's or a section's heading, however small the section.
    */
   {
     id: "card-title",
