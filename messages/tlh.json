@@ -84,7 +84,8 @@
       "team": "ghom",
       "adminHolidayCalendars": "DuQ jaj Hovtay'",
       "adminHolidayCalendarNew": "DuQ jaj Hovtay' chu'",
-      "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH"
+      "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH",
+      "discover": "tu’"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -96,7 +97,8 @@
       "library": "School of Gaming paq qach: vavpu’ SoSpu’ je DevmeH ghItlhmey. Qan, jIHmey poH, ’ej nuq ghoj puqpu’ Quj.",
       "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
       "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’.",
-      "team": "School of Gaming ghom yIghov: DevwI’pu’ ’ej Quj ghojmoHwI’pu’."
+      "team": "School of Gaming ghom yIghov: DevwI’pu’ ’ej Quj ghojmoHwI’pu’.",
+      "discover": "School of Gaming Doch: DuSaQmey, vengmey, ghommey, wanI’mey je."
     }
   },
   "notFound": {
@@ -5302,6 +5304,15 @@
     "cta": {
       "heading": "bIchu’meH bIQap’a’?",
       "button": "yIchu’"
+    }
+  },
+  "discover": {
+    "name": "tu’",
+    "breadcrumbLabel": "He",
+    "index": {
+      "title": "School of Gaming <act>yItu’</act>",
+      "intro": "School of Gaming Doch: DuSaQmey, vengmey, ghommey, wanI’mey je. Hoch nuvpu’ ghItlhlu’pu’ Hoch QIn.",
+      "empty": "pagh naDev"
     }
   }
 }

@@ -91,7 +91,8 @@
       "team": "Team",
       "adminHolidayCalendars": "Lovkalendrar",
       "adminHolidayCalendarNew": "Ny lovkalender",
-      "adminHolidayCalendarEdit": "Redigera lovkalender"
+      "adminHolidayCalendarEdit": "Redigera lovkalender",
+      "discover": "Upptäck"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -107,7 +108,8 @@
       "terms": "Villkoren du godkänner när du använder School of Gaming: hur anmälningar, betalningar och avbokningar fungerar och vad vi och du ansvarar för.",
       "antiBullying": "Hur School of Gaming förebygger mobbning i sina klubbar, läger och evenemang, vad som händer när det inträffar och hur en spelfostrare ingriper.",
       "attributions": "Källorna och licenserna bakom de data School of Gaming använder: ortnamn, postnummer och spelarbilder, var och en krediterad som licensen kräver.",
-      "team": "Möt människorna bakom School of Gaming: teamet som driver verksamheten och spelfostrarna som leder klubbar, läger och evenemang. Var och en presenterar sig med egna ord."
+      "team": "Möt människorna bakom School of Gaming: teamet som driver verksamheten och spelfostrarna som leder klubbar, läger och evenemang. Var och en presenterar sig med egna ord.",
+      "discover": "Sidor om vad School of Gaming erbjuder enskilda skolor, orter, organisationer och evenemang – var och en skriven för dem den handlar om."
     }
   },
   "notFound": {
@@ -6217,6 +6219,15 @@
     "cta": {
       "heading": "Redo att börja?",
       "button": "Kom igång"
+    }
+  },
+  "discover": {
+    "name": "Upptäck",
+    "breadcrumbLabel": "Brödsmulor",
+    "index": {
+      "title": "<act>Upptäck</act> School of Gaming",
+      "intro": "Vad School of Gaming erbjuder enskilda skolor, orter, organisationer och evenemang – varje sida skriven för dem den handlar om.",
+      "empty": "Här finns inget ännu"
     }
   }
 }

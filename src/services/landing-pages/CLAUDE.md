@@ -108,6 +108,14 @@ refusals. Nothing else in the save path touches a link.
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
 detail included, and the image catalogue's usage map.
 
+**Every publish and unpublish goes through one helper per action in `src/lib/indexnow/`**,
+which runs the service's own publish on the caller's client and then submits every
+address the change touched to IndexNow — each live language's slug address before and
+after, so an old slug and an unpublished page are submitted too, and the `/discover`
+index. The admin's status page reaches it through its publication route, since the
+browser cannot submit; the MCP tools call it directly. A submission is made from the
+production deployment alone and never fails the publish (`docs/architecture/site-quality.md`).
+
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the
 id — never by handing a segment to the route builder, because a slug resolves in its own
@@ -115,3 +123,12 @@ locale only and a hand-picked one is a 404 in every other. The renderer and the 
 contribution (structured data) are each an exhaustive map over the section
 types. Every section sits on the plain page ground: an admin chooses the order, so a
 tinted band could land beside another and read as one section.
+
+**`/discover` lists every live page, newest first**, each card in the reader's version at
+the index's own locale, with the picture its hero leads with where it has one; there is
+no opting out, because the index is what keeps the pages from being orphans to a crawler.
+The footer links it from every page, and the header and the tab bar deliberately do not:
+people reach landing pages from advertising, not by browsing. **Each page carries a
+breadcrumb trail — Home, the index, the page — drawn on the page and stated as its
+`BreadcrumbList` from the same names**, so the structured data names nothing the reader
+cannot see.

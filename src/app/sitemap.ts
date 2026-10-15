@@ -56,6 +56,7 @@ const ROUTE_ENTRIES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitema
   { pathname: "/about", entry: { changeFrequency: "monthly", priority: 0.7 } },
   { pathname: "/team", entry: { changeFrequency: "weekly", priority: 0.6 } },
   { pathname: "/library", entry: { changeFrequency: "weekly", priority: 0.6 } },
+  { pathname: "/discover", entry: { changeFrequency: "weekly", priority: 0.6 } },
   { pathname: "/login", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/register", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/privacy", entry: { changeFrequency: "yearly", priority: 0.3 } },

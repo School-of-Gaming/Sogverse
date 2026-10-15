@@ -107,6 +107,11 @@ const LINKED_PAGES: { href: StaticAppHref; label: string; note: string }[] = [
     note: "Our articles for parents on gaming, screen time and online safety, each listed below.",
   },
   {
+    href: "/discover",
+    label: "Featured pages",
+    note: "What we offer particular places, schools, organisations and events, each page listed below.",
+  },
+  {
     href: "/register",
     label: "Create a parent account",
     note: "Where a family starts; children are added from the parent's account.",

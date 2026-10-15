@@ -91,7 +91,8 @@
       "team": "Tiimi",
       "adminHolidayCalendars": "Lomakalenterit",
       "adminHolidayCalendarNew": "Uusi lomakalenteri",
-      "adminHolidayCalendarEdit": "Muokkaa lomakalenteria"
+      "adminHolidayCalendarEdit": "Muokkaa lomakalenteria",
+      "discover": "Tutustu"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -107,7 +108,8 @@
       "terms": "School of Gamingin käyttöehdot: miten ilmoittautuminen, maksut ja peruutukset toimivat ja mistä me ja sinä olemme kumpikin vastuussa.",
       "antiBullying": "Miten School of Gaming ehkäisee kiusaamista kerhoissa, leireillä ja tapahtumissa, mitä kiusaamistilanteessa tapahtuu ja miten pelikasvattaja puuttuu siihen.",
       "attributions": "Lähteet ja lisenssit tiedoille, joita School of Gaming käyttää: paikannimet, postinumerot ja pelaajien hahmokuvat, kukin lisenssinsä edellyttämällä tavalla.",
-      "team": "Tutustu School of Gamingin ihmisiin: tiimiin, joka pyörittää toimintaa, ja pelikasvattajiin, jotka ohjaavat kerhoja, leirejä ja tapahtumia. Jokainen esittäytyy omin sanoin."
+      "team": "Tutustu School of Gamingin ihmisiin: tiimiin, joka pyörittää toimintaa, ja pelikasvattajiin, jotka ohjaavat kerhoja, leirejä ja tapahtumia. Jokainen esittäytyy omin sanoin.",
+      "discover": "Sivuja siitä, mitä School of Gaming tarjoaa yksittäisille kouluille, kunnille, organisaatioille ja tapahtumille – jokainen kirjoitettu niille, joita se koskee."
     }
   },
   "notFound": {
@@ -6217,6 +6219,15 @@
     "cta": {
       "heading": "Valmis aloittamaan?",
       "button": "Aloita"
+    }
+  },
+  "discover": {
+    "name": "Tutustu",
+    "breadcrumbLabel": "Murupolku",
+    "index": {
+      "title": "<act>Tutustu</act> School of Gamingiin",
+      "intro": "Mitä School of Gaming tarjoaa yksittäisille kouluille, kunnille, organisaatioille ja tapahtumille – jokainen sivu on kirjoitettu niille, joita se koskee.",
+      "empty": "Täällä ei ole vielä mitään"
     }
   }
 }

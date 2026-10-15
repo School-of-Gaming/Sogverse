@@ -224,7 +224,7 @@ interface SharedRouteConfig<TBody, TQuery, TParams, TResult> {
    * reason as the value. Without this the client gets a generic message for
    * the status and the real one is logged — which is the default because an
    * underlying message can name rows, columns and identifiers the caller was
-   * never shown.
+   * never shown. A disclosed database error also carries its code.
    */
   discloseErrorMessages?: string;
 }
@@ -494,10 +494,15 @@ function toErrorResponse(
     const status =
       config.errorStatus?.[code] ?? DEFAULT_ERROR_STATUS[code] ?? 500;
     console.error(`[${label}] ${code}:`, errorMessageOf(error) ?? error);
-    const message = disclose
-      ? (errorMessageOf(error) ?? genericMessageFor(status))
-      : genericMessageFor(status);
-    return NextResponse.json({ error: message }, { status });
+    // A disclosed refusal keeps its SQLSTATE, so the caller's refusal reader
+    // can tell a sentence written for a reader from a developer's, exactly as
+    // it does for the database's own errors when it calls the database itself.
+    return NextResponse.json(
+      disclose
+        ? { error: errorMessageOf(error) ?? genericMessageFor(status), code }
+        : { error: genericMessageFor(status) },
+      { status },
+    );
   }
 
   console.error(`[${label}] unhandled failure:`, error);

@@ -91,7 +91,8 @@
       "team": "Équipe",
       "adminHolidayCalendars": "Calendriers de vacances",
       "adminHolidayCalendarNew": "Nouveau calendrier de vacances",
-      "adminHolidayCalendarEdit": "Modifier le calendrier de vacances"
+      "adminHolidayCalendarEdit": "Modifier le calendrier de vacances",
+      "discover": "Découvrir"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -107,7 +108,8 @@
       "terms": "Les conditions que vous acceptez en utilisant School of Gaming : inscriptions, paiements, annulations, et ce dont nous et vous êtes responsables.",
       "antiBullying": "Comment School of Gaming prévient le harcèlement dans ses clubs, ses stages et ses événements, ce qui se passe le cas échéant et comment un animateur intervient.",
       "attributions": "Les sources et les licences des données utilisées par School of Gaming : noms de lieux, codes postaux et avatars de joueurs, crédités comme l’exige chaque licence.",
-      "team": "Découvrez les personnes derrière School of Gaming : l’équipe qui fait vivre l’aventure et les animateurs et animatrices qui encadrent ses clubs, stages et événements. Chaque membre se présente avec ses propres mots."
+      "team": "Découvrez les personnes derrière School of Gaming : l’équipe qui fait vivre l’aventure et les animateurs et animatrices qui encadrent ses clubs, stages et événements. Chaque membre se présente avec ses propres mots.",
+      "discover": "Des pages sur ce que School of Gaming propose à des écoles, des villes, des organisations et des événements en particulier, chacune écrite pour les personnes qu’elle concerne."
     }
   },
   "notFound": {
@@ -6217,6 +6219,15 @@
     "cta": {
       "heading": "Prêt à commencer ?",
       "button": "Commencer"
+    }
+  },
+  "discover": {
+    "name": "Découvrir",
+    "breadcrumbLabel": "Fil d’Ariane",
+    "index": {
+      "title": "<act>Découvrez</act> School of Gaming",
+      "intro": "Ce que School of Gaming propose à des écoles, des villes, des organisations et des événements en particulier, chacun sur une page écrite pour les personnes qu’elle concerne.",
+      "empty": "Rien pour l’instant"
     }
   }
 }

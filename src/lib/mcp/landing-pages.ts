@@ -1,3 +1,7 @@
+import {
+  publishLandingPage,
+  unpublishLandingPage,
+} from "@/lib/indexnow/landing-pages";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
 import {
@@ -76,6 +80,9 @@ const LANGUAGES = SUPPORTED_LOCALES.map(
 
 const MODEL =
   "A landing page is a marketing page on the public site — for a school, a city, a business, an event — written to be found by search engines and AI apps. Its structure (the ordered sections with their pictures, buttons, icons and items) is shared by every language; each language version holds the page's title, summary, slug and every section's words, keyed by section id.";
+
+const DISTINCT =
+  "Each page must carry genuinely distinct, substantive content for its own audience — what is true and specific about that school, place, organisation or event — and never be another page with the place or audience name swapped. Search engines treat many near-identical pages aimed at different places or audiences, all leading to the same destination, as doorway pages, which can hurt the whole site's ranking; if a new page would differ from an existing one only in its names, improve the existing page instead.";
 
 const COMPLETE =
   "A language version is complete when its title, summary and slug are written and every section has every required word in that language.";
@@ -448,7 +455,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "create_landing_page",
     {
       title: "Create a landing page",
-      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
+      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${DISTINCT} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({
           locale,
@@ -548,7 +555,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_text",
     {
       title: "Save a landing page's language version",
-      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${SLUGS} ${MARKDOWN}`,
+      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${DISTINCT} ${SLUGS} ${MARKDOWN}`,
       inputSchema: readableInput(
         z.object({
           pageId,
@@ -647,7 +654,7 @@ export function registerLandingPageTools(server: McpServer): void {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
         const wasLive = before.publication?.versions.map((v) => v.locale) ?? [];
-        await service.publishPage(id);
+        await publishLandingPage(service, id);
         // Read back from what the publish did, never forecast from the read
         // before it: a save landing in between changes what goes live.
         const after = await service.getAdminPage(id);
@@ -688,7 +695,7 @@ export function registerLandingPageTools(server: McpServer): void {
       asLandingAdmin(ctx, async ({ service }) => {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
-        await service.unpublishPage(id);
+        await unpublishLandingPage(service, id);
         return answer({ pageId: id, wasLive: before.publication !== null, live: false });
       }),
   );

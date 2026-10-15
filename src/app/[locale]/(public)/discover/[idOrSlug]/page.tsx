@@ -1,13 +1,18 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   landingPageCanonicalPath,
   landingPageLocalePaths,
   resolveLandingPage,
 } from "@/components/landing-pages/landing-page-address";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import {
+  LandingPageBreadcrumb,
+  landingBreadcrumbJsonLd,
+  type LandingBreadcrumb,
+} from "@/components/landing-pages/landing-page-breadcrumb";
 import { landingPageJsonLd } from "@/components/landing-pages/landing-page-json-ld";
 import { landingPageMetadata } from "@/components/landing-pages/landing-page-metadata";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -54,6 +59,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * `<discover>/<id>` in every locale, and `<discover>/<slug>` in a locale it is
  * live in. Both name the slug address of the version shown as canonical.
  *
+ * A quiet breadcrumb trail leads it — Home, the landing pages' index, the
+ * page — the trail its `BreadcrumbList` states, so every landing page links
+ * up to the index that lists it.
+ *
  * Rendered per request, like the Library: a page goes live, changes or leaves
  * the moment an admin publishes or unpublishes it, with no revalidation to wait
  * out. A read that fails is not swallowed into a not-found — a transient
@@ -68,18 +77,29 @@ export default async function LandingPage({ params }: PageProps) {
   const shown = localizeLandingPage(page, locale);
   if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const tNav = await getTranslations("header.nav");
+  const tDiscover = await getTranslations("discover");
+  const trail: LandingBreadcrumb = {
+    homeName: tNav("home"),
+    indexName: tDiscover("name"),
+    title: shown.title,
+  };
 
   return (
     <>
       {/* A slug resolves only in its own locale, so the picker is told this
           page's address in every locale. */}
       <LocaleSwitchPaths paths={landingPageLocalePaths(page)} />
+      <JsonLd data={landingPageJsonLd({ siteUrl, canonicalPath, page: shown })} />
       <JsonLd
-        data={landingPageJsonLd({
-          siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "",
-          canonicalPath,
-          page: shown,
-        })}
+        data={landingBreadcrumbJsonLd({ siteUrl, locale, canonicalPath, trail })}
+      />
+      <LandingPageBreadcrumb
+        trail={trail}
+        label={tDiscover("breadcrumbLabel")}
+        textLocale={shown.locale}
+        locale={locale}
       />
       <LandingPageBody
         sections={shown.sections}
