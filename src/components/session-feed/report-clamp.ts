@@ -94,14 +94,14 @@ function headingCost(sizeRem: number, leading: number, marginTopRem: number) {
 
 /**
  * Each heading level's cost, keyed by its markdown level. The sizes restate the
- * renderer's: 24px at leading 1.3, then 20px and 18px at `leading-snug`
- * (1.375); the margins are `mt-8`, `mt-6` and `mt-6`. A deeper level is outside
- * the feed's subset and unwraps to body copy.
+ * renderer's: 24px at leading 1.3, 20px at `leading-snug` (1.375), then 18px
+ * at leading 1.4; the margins are `mt-8`, `mt-6` and `mt-6`. A deeper level is
+ * outside the feed's subset and unwraps to body copy.
  */
 export const REPORT_HEADING_COSTS = {
   1: headingCost(1.5, 1.3, 2),
   2: headingCost(1.25, 1.375, 1.5),
-  3: headingCost(1.125, 1.375, 1.5),
+  3: headingCost(1.125, 1.4, 1.5),
 } as const;
 
 /**

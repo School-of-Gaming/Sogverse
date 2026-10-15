@@ -117,19 +117,19 @@ export function TeamProfileBody({
           <div className="min-w-0 flex-1">
             {/* The wrapper shrinks to the headline's longest line, so the rule
                 runs exactly the headline's measure, as on the home hero. The
-                headline is one size for every name, the largest at which a
-                twenty-character nickname fits the column on its own line at
-                each step: 328px stacked at 360, 368px beside the portrait
-                from 40rem, 496px from 48rem. A name too wide for one line
-                puts the nickname, an unbroken block, whole on the second. */}
-            <div className="inline-block max-w-full">
-              <h1 className="break-words text-[1.625rem] font-bold leading-[1.1] tracking-tight @min-[40rem]:text-hero-mobile @min-[48rem]:text-[2.5rem]">
+                headline is a page title — a person's profile is a page about
+                them, not a story's opening line — at one size at every width.
+                A name too wide for one line puts the nickname, an unbroken
+                block, whole on the second; a nickname wider than the column
+                breaks inside itself rather than running out of it. */}
+            <div className="inline-block max-w-full break-words">
+              <Heading level={1} step="page-title">
                 {teamMemberHeadline(profile, (nickname) => (
                   <span className="inline-block max-w-full text-act">
                     {nickname}
                   </span>
                 ))}
-              </h1>
+              </Heading>
               <span
                 aria-hidden
                 className="mt-4 block h-1.5 w-full rounded-full bg-world"

@@ -1908,6 +1908,9 @@
         "subPreviewSent": "Tous les messages ont été envoyés."
       }
     },
+    "tools": {
+      "title": "Outils"
+    },
     "whatsapp": {
       "title": "WhatsApp",
       "description": "Consulter les conversations WhatsApp et y répondre",

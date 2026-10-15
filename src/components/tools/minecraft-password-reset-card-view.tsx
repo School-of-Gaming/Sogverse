@@ -42,6 +42,12 @@ export interface MinecraftPasswordResetCardViewProps {
   /** Already-translated failure message for the *request*, or `null`. */
   error: string | null;
   onSubmit: (usernames: string[]) => void;
+  /**
+   * The card title's outline level: `2` where the card sits straight under the
+   * page title (the admin tools page), `3` inside a section (the gedu
+   * dashboard's Tools). The results heading inside it takes the level below.
+   */
+  level: 2 | 3;
 }
 
 /**
@@ -65,6 +71,7 @@ export function MinecraftPasswordResetCardView({
   submitting,
   error,
   onSubmit,
+  level,
 }: MinecraftPasswordResetCardViewProps) {
   const t = useTranslations("tools.minecraftPasswordReset");
   const [raw, setRaw] = useState("");
@@ -88,7 +95,7 @@ export function MinecraftPasswordResetCardView({
       <CardHeader>
         <div className="flex items-center gap-2">
           <KeyRound className="h-5 w-5" aria-hidden />
-          <Heading level={3} step="card-title">
+          <Heading level={level} step="card-title">
             {t("title")}
           </Heading>
         </div>
@@ -180,7 +187,7 @@ export function MinecraftPasswordResetCardView({
         {results !== null && (
           <div className="space-y-3 border-t border-border pt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Heading level={4} step="label">
+              <Heading level={level === 2 ? 3 : 4} step="label">
                 {t("resultsHeading")}
               </Heading>
               {successes.length > 0 && (

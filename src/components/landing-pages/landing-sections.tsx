@@ -200,8 +200,10 @@ function LandingButton({
  * The page's opening and its only H1, drawn the way the home hero is: the
  * headline in ink over one world rule that runs its measure, the line under
  * it, one act button. Centred alone; with a picture, the words and the picture
- * share the width from `lg`, the words first on a phone so the headline and the
- * button are what the first screen shows.
+ * share the width from `md`, the words first on a phone so the headline and the
+ * button are what the first screen shows. `md` rather than the `lg` the other
+ * sections split at, because `md` is where the hero heading changes alignment,
+ * and the words around it have to change with it.
  */
 function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
   const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
@@ -215,10 +217,10 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           "mx-auto",
           src === null
             ? "max-w-3xl text-center"
-            : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
+            : "grid max-w-6xl items-center gap-10 md:grid-cols-2 md:gap-16",
         )}
       >
-        <div className={cn(src !== null && "text-center lg:text-left")}>
+        <div className={cn(src !== null && "text-center md:text-left")}>
           {eyebrow !== null && (
             <div className="mb-4">
               <Eyebrow>{eyebrow}</Eyebrow>
@@ -226,9 +228,13 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           )}
           {/* Shrink-to-fit, so the rule runs the headline's own measure. */}
           <div className="inline-block">
-            <h1 className="text-balance text-hero-mobile font-bold tracking-tight md:text-5xl">
+            <Heading
+              level={1}
+              step="hero"
+              align={src === null ? "center" : "center-narrow"}
+            >
               {text.headline}
-            </h1>
+            </Heading>
             <span className="mt-5 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
           </div>
           {subline !== null && (
@@ -240,7 +246,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
             <div
               className={cn(
                 "mt-8 flex justify-center sm:mt-10",
-                src !== null && "lg:justify-start",
+                src !== null && "md:justify-start",
               )}
             >
               <LandingButton
@@ -256,7 +262,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           <LandingPicture
             src={src}
             alt={text.imageAlt}
-            sizes="(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)"
+            sizes="(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), (min-width: 768px) 336px, calc(100vw - 2rem)"
             eager
           />
         )}

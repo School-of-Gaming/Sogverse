@@ -1866,7 +1866,7 @@
       "language": "Language",
       "toEmail": "To Email",
       "toEmailPlaceholder": "recipient@example.com",
-      "templateParameters": "Template Parameters",
+      "templateParameters": "Template parameters",
       "subject": "Subject",
       "sendTestEmail": "Send Test Email",
       "emailSentSuccess": "Email sent! Message ID: {messageId}",
@@ -1907,6 +1907,9 @@
         "templateSubFlow": "Substitution messages: every state",
         "subPreviewSent": "Every message sent."
       }
+    },
+    "tools": {
+      "title": "Tools"
     },
     "whatsapp": {
       "title": "WhatsApp",

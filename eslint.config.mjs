@@ -735,6 +735,23 @@ const sogverseFaceBans = [
   ...noUnknownFaceClass,
 ];
 
+/**
+ * Every heading Sogverse draws is SOG-UI's `Heading`, and a raw `h1`–`h6` is how
+ * one stops being: a tag and a size chosen together at the call site, which is
+ * the decision the primitive splits into an outline level and a step. JSX only —
+ * the markdown renderer and the editor build their headings from a tag name,
+ * and what they paint is held by the authored-markdown look instead.
+ *
+ * Exported so a test can run a violating line and a conforming one through it.
+ */
+const noRawHeadingElements = [
+  {
+    selector: String.raw`JSXOpeningElement[name.name=/^h[1-6]$/]`,
+    message:
+      "No raw heading elements in Sogverse. Use `Heading` from @sog/ui, which takes the outline level and the step as two props.",
+  },
+];
+
 const sogverseColourBans = [
   ...noHexColourLiterals(
     "No colour literals in Sogverse. Every colour arrives from @sog/ui as a semantic token — a Tailwind class in a component, or BRAND / DARK_THEME from @/lib/constants/colors where there is no class to write (email, canvas, OG).",
@@ -1009,6 +1026,23 @@ const eslintConfig = defineConfig([
         ...sogverseColourBans,
         ...noColourFunctions,
         ...sogverseFaceBans,
+        ...noRawHeadingElements,
+      ],
+    },
+  },
+  {
+    // `AlertTitle` is still an `h5`, and stays one until the alert adoption
+    // decides what an alert's title is — a heading, or the first line of a
+    // message. It is the one raw heading left in Sogverse, so its file is
+    // exempt from that ban alone; every other ban the `src/**` block sets is
+    // restated, since this block replaces that one's options rather than
+    // merging with them.
+    files: ["src/components/ui/alert.tsx"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        ...sogverseColourBans,
+        ...noColourFunctions,
+        ...sogverseFaceBans,
       ],
     },
   },
@@ -1024,7 +1058,7 @@ const eslintConfig = defineConfig([
     // length so a later sweep does not take it on pattern.
     files: ["src/lib/voice/glow.ts"],
     rules: {
-      "no-restricted-syntax": ["error", ...sogverseColourBans, ...sogverseFaceBans],
+      "no-restricted-syntax": ["error", ...sogverseColourBans, ...sogverseFaceBans, ...noRawHeadingElements],
     },
   },
   {
@@ -1072,6 +1106,9 @@ const eslintConfig = defineConfig([
         // drawn, not typed — the words beside it are the app's, in the app's
         // face.
         ...sogverseFaceBans,
+        // And from nothing about headings: the words around a picture are
+        // titled the app's way.
+        ...noRawHeadingElements,
       ],
     },
   },
@@ -1136,6 +1173,7 @@ const eslintConfig = defineConfig([
         // required to write.
         ...noSpelledFamily,
         ...noUnknownFaceClass,
+        ...noRawHeadingElements,
       ],
     },
   },
@@ -1314,4 +1352,4 @@ export default eslintConfig;
  * the day a test goes red rather than the day a colour quietly stops being
  * enforced.
  */
-export { noAbsentBorderColour, noUnregisteredColourToken };
+export { noAbsentBorderColour, noRawHeadingElements, noUnregisteredColourToken };

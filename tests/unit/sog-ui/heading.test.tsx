@@ -1,3 +1,4 @@
+import { createRef } from "react";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
@@ -29,7 +30,12 @@ const DECLARED_SIZES = new Set(
 );
 
 /** The props a case varies beside the pair. */
-type Options = { align?: "start" | "center"; truncate?: boolean; srOnly?: boolean };
+type Options = {
+  align?: "start" | "center" | "center-narrow";
+  truncate?: boolean;
+  srOnly?: boolean;
+  focusTarget?: boolean;
+};
 
 function headingOf(pair: HeadingPair, extra: Options = {}) {
   const { container } = render(
@@ -96,6 +102,28 @@ describe("Heading", () => {
     const pair = { level: 2, step: "section" } as const;
     expect(headingOf(pair).classList).toContain("text-start");
     expect(headingOf(pair, { align: "center" }).classList).toContain("text-center");
+  });
+
+  it("centres below md and starts from md when asked to follow a stacking composition", () => {
+    const classes = [...headingOf({ level: 1, step: "hero" }, { align: "center-narrow" }).classList];
+    expect(classes).toContain("text-center");
+    expect(classes).toContain("md:text-start");
+    expect(classes).not.toContain("text-start");
+  });
+
+  it("takes focus from script without becoming a tab stop", () => {
+    const ref = createRef<HTMLHeadingElement>();
+    render(
+      <Heading level={1} step="page-title" ref={ref} focusTarget>
+        Words
+      </Heading>,
+    );
+    const element = ref.current;
+    if (element === null) throw new Error("the ref was not attached");
+    expect(element.tabIndex).toBe(-1);
+    element.focus();
+    expect(document.activeElement).toBe(element);
+    expect(headingOf({ level: 2, step: "section" }).hasAttribute("tabindex")).toBe(false);
   });
 
   it("stays in the outline when visually hidden", () => {

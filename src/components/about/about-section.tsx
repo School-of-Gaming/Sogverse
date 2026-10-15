@@ -1,7 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Heading } from "@sog/ui";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -81,8 +81,12 @@ export function AboutSection({ id }: AboutSectionProps) {
               sizes="(min-width: 640px) 176px, 160px"
               className="mx-auto w-40 sm:w-full"
             />
-            <div className="text-center sm:text-left">
-              <CardTitle className="text-2xl">{t("mission.heading")}</CardTitle>
+            {/* Centred until `md`, where the heading starts — so the words
+                beside the photo between `sm` and `md` stay centred with it. */}
+            <div className="text-center md:text-left">
+              <Heading level={3} step="section" align="center-narrow">
+                {t("mission.heading")}
+              </Heading>
               <p className="mt-4 text-lg text-muted-foreground">
                 {t("mission.text")}
               </p>

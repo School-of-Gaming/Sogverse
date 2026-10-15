@@ -24,6 +24,12 @@ export interface CreateInstantRoomCardViewProps {
   createFailed: boolean;
   onCreate: () => void;
   onJoin: () => void;
+  /**
+   * The card title's outline level: `2` where the card sits straight under the
+   * page title (the admin tools page), `3` inside a section (the gedu
+   * dashboard's Tools).
+   */
+  level: 2 | 3;
 }
 
 /**
@@ -45,6 +51,7 @@ export function CreateInstantRoomCardView({
   createFailed,
   onCreate,
   onJoin,
+  level,
 }: CreateInstantRoomCardViewProps) {
   const t = useTranslations("voice.instant.createPage");
 
@@ -53,7 +60,7 @@ export function CreateInstantRoomCardView({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Mic className="h-5 w-5" aria-hidden />
-          <Heading level={3} step="card-title">
+          <Heading level={level} step="card-title">
             {createdCode ? t("ready") : t("title")}
           </Heading>
         </div>

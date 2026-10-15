@@ -23,7 +23,7 @@
  * spacing, so `uppercase` has nowhere to be written.
  */
 
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 import type { TypeStepId } from "../tokens/typography";
 
@@ -83,21 +83,43 @@ export type HeadingPair = {
 
 export type HeadingProps = HeadingPair & {
   /**
-   * The words. A node rather than a string so the heading can carry an inline
-   * icon beside its words, or the hero's act phrase as a span — never a block
-   * element, and never a second heading.
+   * The words. A node rather than a string so the heading can carry the hero's
+   * act phrase as a span — never a block element, and never a second heading.
+   * An icon is not a child: the base styles set an `svg` to `display: block`,
+   * so one inside the heading breaks its line. An icon that belongs to a
+   * heading sits beside it, the two in a row the call site lays out.
    */
   children: ReactNode;
   /** The element's id, for an anchor link or for `aria-labelledby` on the region it titles. */
   id?: string;
   /**
+   * The rendered element, for a caller that moves focus to it — a screen whose
+   * first job on arriving is to tell a screen reader where the reader now is.
+   * A plain prop rather than `forwardRef`: React 19 hands a function component
+   * its `ref` like any other prop.
+   */
+  ref?: Ref<HTMLHeadingElement>;
+  /**
+   * A place focus is moved to by script, never one a reader tabs to. Sets
+   * `tabIndex={-1}`, which makes the heading focusable without adding a tab
+   * stop on the way down the page, and draws no focus ring: the ring is the
+   * answer to "where will my next key press land", and a heading takes no key
+   * presses. Pair it with `ref` and a mount effect that calls `focus()`.
+   */
+  focusTarget?: boolean;
+  /**
    * Where the lines sit. `start` is the default and is written out rather than
    * inherited: a heading whose alignment came from a wrapper's class would be
    * styled by that wrapper, which is the restyling seam this primitive closes.
-   * `center` is for a heading over a centred composition — a hero, an empty
-   * state, an auth page's title block.
+   * `center` is for a heading over a centred composition — an empty state, an
+   * auth page's title block. `center-narrow` is centred below `md` and starts
+   * from `md`, for a composition that changes shape there: a hero whose words
+   * stack centred over their picture on a phone and sit beside it on a wide
+   * screen, or a dialog header that centres on a phone. Only `md`, the one
+   * breakpoint the scale already resteps at, so a heading never changes its
+   * alignment and its size at two different widths.
    */
-  align?: "start" | "center";
+  align?: "start" | "center" | "center-narrow";
   /**
    * One line, cut with an ellipsis where it runs out of room. For a title in a
    * row that cannot grow — a card in a dense grid, a sheet's header — where a
@@ -130,7 +152,8 @@ const STEP_CLASS = {
 const ALIGN_CLASS = {
   start: "text-start",
   center: "text-center",
-} as const;
+  "center-narrow": "text-center md:text-start",
+} as const satisfies Record<NonNullable<HeadingProps["align"]>, string>;
 
 /**
  * A heading, at an outline level and a step the level allows.
@@ -146,6 +169,8 @@ export function Heading({
   step,
   children,
   id,
+  ref,
+  focusTarget = false,
   align = "start",
   truncate = false,
   srOnly = false,
@@ -157,11 +182,17 @@ export function Heading({
     ALIGN_CLASS[align],
     truncate ? "truncate" : "text-balance",
     srOnly ? "sr-only" : null,
+    focusTarget ? "focus:outline-none" : null,
   ]
     .filter((part) => part !== null)
     .join(" ");
   return (
-    <Element id={id} className={className}>
+    <Element
+      id={id}
+      ref={ref}
+      tabIndex={focusTarget ? -1 : undefined}
+      className={className}
+    >
       {children}
     </Element>
   );

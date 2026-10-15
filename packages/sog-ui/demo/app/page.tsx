@@ -624,6 +624,14 @@ export default function FoundationsPage() {
               </Heading>
             </div>
           </div>
+          <div className="border-b border-border pb-8">
+            <Label>center-narrow</Label>
+            <div className="mt-1">
+              <Heading level={1} step="hero" align="center-narrow">
+                {HEADING_WORDS}
+              </Heading>
+            </div>
+          </div>
           <div>
             <Label>truncate</Label>
             <div className="mt-1 w-[360px] max-w-full border border-dashed border-border p-4">
