@@ -10,13 +10,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -86,10 +86,12 @@ export function MinecraftPasswordResetCardView({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <KeyRound className="h-5 w-5" aria-hidden />
-          {t("title")}
-        </CardTitle>
+          <Heading level={3} step="card-title">
+            {t("title")}
+          </Heading>
+        </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
 
@@ -178,9 +180,9 @@ export function MinecraftPasswordResetCardView({
         {results !== null && (
           <div className="space-y-3 border-t border-border pt-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold text-muted-foreground">
+              <Heading level={4} step="label">
                 {t("resultsHeading")}
-              </h3>
+              </Heading>
               {successes.length > 0 && (
                 <CopyAllButton
                   lines={successes.map(

@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
@@ -56,15 +57,17 @@ export function EditProductPage({
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("editPage.kicker", { type: config.i18nKey })}
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {product
-            ? t("editPage.title", {
-                name:
-                  resolveTranslation(product.product_translations, uiLocale)
-                    ?.name ?? t("list.untitled"),
-              })
-            : " "}
-        </h1>
+        <div className="mt-1">
+          <Heading level={1} step="page-title">
+            {product
+              ? t("editPage.title", {
+                  name:
+                    resolveTranslation(product.product_translations, uiLocale)
+                      ?.name ?? t("list.untitled"),
+                })
+              : " "}
+          </Heading>
+        </div>
       </div>
 
       {isLoading && (

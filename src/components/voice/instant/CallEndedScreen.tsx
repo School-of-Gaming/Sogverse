@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { RoomLinkChip } from "./RoomLinkChip";
 
@@ -49,21 +50,25 @@ export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProp
     <div className="container mx-auto max-w-xl p-4 md:p-6">
       <Card>
         <CardContent className="space-y-4 py-12 text-center">
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
+          <Heading level={1} step="page-title" align="center">
+            {t("title")}
+          </Heading>
           <p className="text-sm text-muted-foreground">{t("body")}</p>
           {reason === "left" && (
             <div className="flex justify-center pt-2">
               <RoomLinkChip code={code} />
             </div>
           )}
-          <h2 className="pt-6 text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+          {/* A paragraph, not a heading: the tagline closes the screen and
+              titles nothing beneath it. */}
+          <p className="pt-6 text-2xl font-bold leading-tight tracking-tight md:text-3xl">
             {tHome.rich("title", {
               br: () => <br />,
               act: (chunks) => (
                 <span className="text-act">{chunks}</span>
               ),
             })}
-          </h2>
+          </p>
           <div className="pt-6">{copyright}</div>
         </CardContent>
       </Card>

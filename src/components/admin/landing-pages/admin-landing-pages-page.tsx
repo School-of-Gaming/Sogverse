@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Heading } from "@sog/ui";
 import { CircleCheck, CircleDashed, Clock, Languages } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -50,7 +51,7 @@ export function AdminLandingPagesPage({
   return (
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <Heading level={1} step="page-title">{t("title")}</Heading>
         <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 

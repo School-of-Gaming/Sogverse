@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Heading } from "@sog/ui";
 import { ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
@@ -82,7 +83,7 @@ export function LandingPageStatusPage({
     <div className="space-y-6">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="text-xl font-semibold">{version?.title ?? ""}</h2>
+          <Heading level={2} step="section">{version?.title ?? ""}</Heading>
           <LandingPageStatusChip
             status={landingPageStatus({
               isPublished: page.publication !== null,
@@ -98,9 +99,9 @@ export function LandingPageStatusPage({
       <Publishing page={page} actions={actions} />
 
       <section aria-labelledby="landing-page-languages" className="space-y-3">
-        <h2 id="landing-page-languages" className="text-lg font-semibold">
+        <Heading level={2} step="section" id="landing-page-languages">
           {t("statusPage.languagesHeading")}
-        </h2>
+        </Heading>
         {page.draft.versions.map((v) => (
           <LanguageCard
             key={v.locale}
@@ -359,9 +360,9 @@ function LanguageCard({
       <CardContent className="space-y-3 p-6" role="region" aria-labelledby={headingId}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 id={headingId} className="font-semibold">
+            <Heading level={3} step="card-title" id={headingId}>
               {languageName(version.locale, LOCALE_CONFIG[version.locale].label)}
-            </h3>
+            </Heading>
             <p className="truncate text-sm text-muted-foreground">{version.title}</p>
           </div>
           <div className="flex shrink-0 flex-col-reverse gap-3 sm:flex-row">

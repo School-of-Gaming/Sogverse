@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
+import { Heading } from "@sog/ui";
 import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
@@ -135,7 +136,7 @@ function StatementLines({
   return (
     <section className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-        <h2 className="text-base font-semibold">{t("heading")}</h2>
+        <Heading level={2} step="section">{t("heading")}</Heading>
         <p className="text-xs text-muted-foreground">{t("legend")}</p>
       </div>
       <Card>
@@ -172,7 +173,7 @@ function Explore({ overview }: { overview: FeedbackOverview }) {
 
   return (
     <section className="space-y-2">
-      <h2 className="text-base font-semibold">{t("heading")}</h2>
+      <Heading level={2} step="section">{t("heading")}</Heading>
       <div className="grid gap-3 sm:grid-cols-3">
         {dimensions.map((dimension) => (
           <ExploreCard

@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
 export function ForgotPasswordForm() {
@@ -60,7 +61,7 @@ export function ForgotPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">{t('forgotPassword.checkEmailTitle')}</CardTitle>
+          <Heading level={1} step="page-title" align="center">{t('forgotPassword.checkEmailTitle')}</Heading>
           <CardDescription>
             {t('forgotPassword.checkEmailDescription', { email })}
           </CardDescription>
@@ -81,7 +82,7 @@ export function ForgotPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">{t('forgotPassword.title')}</CardTitle>
+        <Heading level={1} step="page-title" align="center">{t('forgotPassword.title')}</Heading>
         <CardDescription className="text-center">
           {t('forgotPassword.description')}
         </CardDescription>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -32,7 +33,7 @@ export function InvoiceCustomerPageShell({
         {t("backToList")}
       </Link>
 
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+      <Heading level={1} step="page-title">{title}</Heading>
 
       {children}
     </div>

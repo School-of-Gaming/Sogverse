@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { Clock, Languages, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -63,7 +64,7 @@ export function AdminSpotlightsPage({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <Heading level={1} step="page-title">{t("title")}</Heading>
           <p className="max-w-3xl text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link href={ROUTES.admin.spotlightNew} className={buttonVariants()}>

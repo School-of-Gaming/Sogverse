@@ -8,7 +8,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
@@ -28,6 +27,7 @@ import {
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
+import { Heading } from "@sog/ui";
 
 /*
  * **One renderer per section type**, in an exhaustive map, so a type added to
@@ -72,9 +72,6 @@ const PICTURE = CATALOGUE_IMAGE_PURPOSES.landing_image;
 /** Vertical rhythm shared by every section after the hero. */
 const SECTION = "container mx-auto px-4 py-16 sm:py-24";
 
-/** The section heading every section but the hero takes. */
-const HEADING = "text-3xl font-bold tracking-tight sm:text-4xl";
-
 /** Small uppercase section label — furniture, so caps; act, as the Roblox page's. */
 function Eyebrow({ children }: { children: ReactNode }) {
   return (
@@ -104,7 +101,11 @@ function SectionHeader({
     <div className={cn(centred && "mx-auto max-w-2xl text-center")}>
       {label !== null && <Eyebrow>{label}</Eyebrow>}
       {title !== null && (
-        <h2 className={cn(HEADING, label !== null && "mt-4")}>{title}</h2>
+        <div className={cn(label !== null && "mt-4")}>
+          <Heading level={2} step="display" align={centred ? "center" : "start"}>
+            {title}
+          </Heading>
+        </div>
       )}
       {lead !== null && <p className="mt-4 text-muted-foreground">{lead}</p>}
     </div>
@@ -395,7 +396,7 @@ function PointsSection({ section, text }: LandingSectionProps<"points">) {
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-act bg-lifted">
                     <Icon aria-hidden="true" className="h-5 w-5 text-act" />
                   </div>
-                  <CardTitle className="text-lg leading-snug">{words?.title}</CardTitle>
+                  <Heading level={3} step="card-title">{words?.title}</Heading>
                 </div>
               </CardHeader>
               <CardContent>
@@ -447,7 +448,11 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
               >
                 {index + 1}
               </div>
-              <h3 className="mt-4 text-lg font-semibold">{words?.title}</h3>
+              <div className="mt-4">
+                <Heading level={3} step="card-title" align="center">
+                  {words?.title}
+                </Heading>
+              </div>
               <p className="mt-2 text-sm text-muted-foreground">{words?.body}</p>
             </li>
           );
@@ -511,7 +516,9 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
               <Eyebrow>{eyebrow}</Eyebrow>
             </div>
           )}
-          <h2 className="text-2xl font-bold sm:text-3xl">{text.heading}</h2>
+          <Heading level={2} step="display" align="center">
+            {text.heading}
+          </Heading>
           {body !== null && <p className="mt-4 max-w-xl text-muted-foreground">{body}</p>}
           {buttonLabel !== null && (
             <LandingButton

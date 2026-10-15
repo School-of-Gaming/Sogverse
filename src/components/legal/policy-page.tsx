@@ -6,6 +6,7 @@ import {
   type PolicyBlock,
   type PolicySegment,
 } from "./policy-content";
+import { Heading } from "@sog/ui";
 
 interface PolicySubsection {
   heading: string;
@@ -183,7 +184,9 @@ export function PolicyPage({
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+        <Heading level={1} step="page-title">
+          {title}
+        </Heading>
         {subtitle && (
           <p className="text-muted-foreground">
             <PolicyText text={subtitle} newTabLabel={newTabLabel} />
@@ -195,18 +198,24 @@ export function PolicyPage({
       {/* Plain-language summary up top — the one part we most want a hurried
           parent to actually read. */}
       <div className="mt-8 space-y-3 rounded-lg border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold">{intro.heading}</h2>
+        <Heading level={2} step="card-title">
+          {intro.heading}
+        </Heading>
         <PolicyBlocks blocks={intro.blocks} newTabLabel={newTabLabel} />
       </div>
 
       <div className="mt-10 space-y-10">
         {sections.map((section, si) => (
           <section key={si} className="space-y-3">
-            <h2 className="text-2xl font-bold">{section.heading}</h2>
+            <Heading level={2} step="section">
+              {section.heading}
+            </Heading>
             <PolicyBlocks blocks={section.blocks} newTabLabel={newTabLabel} />
             {section.subsections?.map((subsection, sub) => (
               <div key={sub} className="space-y-3 pt-3">
-                <h3 className="text-xl font-semibold">{subsection.heading}</h3>
+                <Heading level={3} step="card-title">
+                  {subsection.heading}
+                </Heading>
                 <PolicyBlocks
                   blocks={subsection.blocks}
                   newTabLabel={newTabLabel}

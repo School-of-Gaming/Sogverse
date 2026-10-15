@@ -1,5 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import Image from "next/image";
+import { Heading } from "@sog/ui";
 import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -9,7 +10,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
@@ -453,9 +454,9 @@ export default async function AdminUserDetailPage({
             <Identicon id={profile.id} size={64} />
           </Avatar>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">
+            <Heading level={1} step="page-title">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
-            </h1>
+            </Heading>
             {/* A username-mode child's username. A synthetic handle is never
                 printed as an address: it names no inbox, and for a child in
                 `parent` mode nobody ever types it. */}
@@ -572,10 +573,12 @@ export default async function AdminUserDetailPage({
           {(isCustomer || isGamer) && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-act" />
-                  {isCustomer ? t('linkedGamers') : t('linkedParents')}
-                </CardTitle>
+                  <Heading level={2} step="card-title">
+                    {isCustomer ? t('linkedGamers') : t('linkedParents')}
+                  </Heading>
+                </div>
               </CardHeader>
               <CardContent>
                 {isCustomer && linkedGamers.length > 0 && (
@@ -668,10 +671,10 @@ export default async function AdminUserDetailPage({
           {isGamer && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-act" />
-                  {t('assignedProducts')}
-                </CardTitle>
+                  <Heading level={2} step="card-title">{t('assignedProducts')}</Heading>
+                </div>
               </CardHeader>
               <CardContent>
                 {participationsByGamer.get(userId)?.length ? (
@@ -714,10 +717,10 @@ export default async function AdminUserDetailPage({
           {isGedu && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-act" />
-                  {t('assignedProducts')}
-                </CardTitle>
+                  <Heading level={2} step="card-title">{t('assignedProducts')}</Heading>
+                </div>
               </CardHeader>
               <CardContent>
                 {geduSeats.length > 0 ? (

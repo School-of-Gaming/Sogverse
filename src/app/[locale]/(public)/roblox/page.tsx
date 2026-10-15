@@ -16,7 +16,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
@@ -25,6 +24,7 @@ import { ProgrammeCta } from "@/components/roblox/programme-cta";
 import { ProgrammeFaq } from "@/components/roblox/programme-faq";
 import { UpcomingEventsSection } from "@/components/roblox/upcoming-events-section";
 import { robloxCardMetadata } from "./card-metadata";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -112,9 +112,11 @@ export default function RobloxPage() {
       <section className="container mx-auto px-4 py-16 sm:py-24">
         <div className="mx-auto max-w-3xl">
           <Eyebrow>{t("what.eyebrow")}</Eyebrow>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            {t("what.heading")}
-          </h2>
+          <div className="mt-4">
+            <Heading level={2} step="display">
+              {t("what.heading")}
+            </Heading>
+          </div>
           <div className="mt-8 space-y-6 text-lg leading-8 text-muted-foreground">
             <p>{t("what.paragraph1")}</p>
             <p>{t("what.paragraph2")}</p>
@@ -128,9 +130,11 @@ export default function RobloxPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("how.eyebrow")}</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              {t("how.heading")}
-            </h2>
+            <div className="mt-4">
+              <Heading level={2} step="display" align="center">
+                {t("how.heading")}
+              </Heading>
+            </div>
             <p className="mt-4 text-muted-foreground">{t("how.subheading")}</p>
           </div>
           <div className="mx-auto mt-14 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -139,7 +143,11 @@ export default function RobloxPage() {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-act text-xl font-bold text-act-foreground">
                   {step.number}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
+                <div className="mt-4">
+                  <Heading level={3} step="card-title" align="center">
+                    {step.title}
+                  </Heading>
+                </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {step.description}
                 </p>
@@ -157,9 +165,11 @@ export default function RobloxPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow>{t("why.eyebrow")}</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              {t("why.heading")}
-            </h2>
+            <div className="mt-4">
+              <Heading level={2} step="display" align="center">
+                {t("why.heading")}
+              </Heading>
+            </div>
           </div>
           <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
             {reasons.map((reason) => (
@@ -169,7 +179,7 @@ export default function RobloxPage() {
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-act bg-lifted">
                       <reason.icon className="h-5 w-5 text-act" />
                     </div>
-                    <CardTitle className="text-lg">{reason.title}</CardTitle>
+                    <Heading level={3} step="card-title">{reason.title}</Heading>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -191,9 +201,11 @@ export default function RobloxPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <Eyebrow>{t("parents.eyebrow")}</Eyebrow>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              {t("parents.heading")}
-            </h2>
+            <div className="mt-4">
+              <Heading level={2} step="display" align="center">
+                {t("parents.heading")}
+              </Heading>
+            </div>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
               {t("parents.body")}
             </p>
@@ -248,9 +260,9 @@ export default function RobloxPage() {
               would shout from the bottom of the page, and an act label over
               them shouts just as loudly. An h2 because it genuinely heads the
               list below it in the outline, whatever its size says. */}
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <Heading level={2} step="card-title">
             {t("legal.documents")}
-          </h2>
+          </Heading>
           {/* A step more present than the trademark boilerplate below — a
               parent looking for the terms has to be able to find them. */}
           <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">

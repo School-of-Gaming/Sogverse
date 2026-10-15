@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { GeduHelpFaq } from "@/components/help/help-faq";
 import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
@@ -199,13 +200,9 @@ export function GeduDashboardPageBody({
           provider) so reading it from a client component throws at render, and
           this body is a client component. Page copy belongs in a page namespace
           regardless — `metadata` names documents, not headings. */}
-      {/* Also the scrollbar-gutter marker: My SOG, Substitutions and Invoicing
-          all reserve it, so moving between the gedu's destinations never
-          shifts the page sideways by a scrollbar's width, whichever of them
-          happens to be taller than the window. */}
-      <h1 className="sr-only" data-reserve-scroll-gutter>
+      <Heading level={1} step="page-title" srOnly>
         {t("pageTitle")}
-      </h1>
+      </Heading>
 
       {/* Above the pill, and above everything a gedu came here to do. These are
           the errands on this page that are not optional, so whichever is
@@ -235,8 +232,13 @@ export function GeduDashboardPageBody({
           are subgroups of one thing — the activities this gedu runs — so a full
           section break between Clubs and Camps read as three unrelated pages
           stacked up and put a screen of nothing between a gedu's two cards.
-          Tools genuinely is a different section and keeps the wide gap. */}
-      <div className="space-y-24 pb-24">
+          Tools genuinely is a different section and keeps the wide gap.
+
+          Also the scrollbar-gutter marker: My SOG, Substitutions and Invoicing
+          all reserve it, so moving between the gedu's destinations never
+          shifts the page sideways by a scrollbar's width, whichever of them
+          happens to be taller than the window. */}
+      <div className="space-y-24 pb-24" data-reserve-scroll-gutter>
         <div className="space-y-10">
           {activitySections.map((group) => (
             <section
@@ -255,12 +257,13 @@ export function GeduDashboardPageBody({
                   page — two different `mx-auto` caps would read as a broken
                   grid. */}
               <div className="mx-auto max-w-5xl space-y-6">
-                <h2
+                <Heading
+                  level={2}
+                  step="section"
                   id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
-                  className="text-3xl font-bold"
                 >
                   {t(ACTIVITY_HEADING_KEY[group.type])}
-                </h2>
+                </Heading>
                 {/* Empty only on the dashboard of a gedu with nothing assigned
                     at all — a populated section always has items, because the
                     grouping drops the nouns nobody runs. The copy says a group
@@ -290,9 +293,9 @@ export function GeduDashboardPageBody({
           className="scroll-mt-32"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 id="tools-heading" className="text-3xl font-bold">
+            <Heading level={2} step="section" id="tools-heading">
               {t("tools")}
-            </h2>
+            </Heading>
             {/* One notice for the section, not one per panel. Certification is
                 a single fact about the account and the same sentence answered
                 both panels, so two of them stacked said the same thing twice
@@ -328,9 +331,9 @@ export function GeduDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <Heading level={2} step="section" id="help-heading">
               {h("heading")}
-            </h2>
+            </Heading>
             {helpForm}
             <GeduHelpFaq />
           </div>

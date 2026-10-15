@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { OutboundLink } from "@/components/ui/outbound-link";
 import { formatDateOnly } from "@/lib/utils";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
@@ -118,7 +119,9 @@ export default async function AttributionsPage() {
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <Heading level={1} step="page-title">
+          {t("title")}
+        </Heading>
         <p className="text-muted-foreground">{t("intro")}</p>
       </div>
 
@@ -128,7 +131,9 @@ export default async function AttributionsPage() {
             key={resource.key}
             className="space-y-3 rounded-lg border border-border bg-card p-6"
           >
-            <h2 className="text-xl font-semibold">{resource.name}</h2>
+            <Heading level={2} step="card-title">
+              {resource.name}
+            </Heading>
             <p className="text-muted-foreground">
               {t(`entries.${resource.key}`)}
             </p>

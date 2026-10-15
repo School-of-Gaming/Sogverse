@@ -1,5 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, Heart, Shield, Sparkles, Users } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import { Link } from "@/i18n/navigation";
@@ -45,9 +46,9 @@ export function AboutSection({ id }: AboutSectionProps) {
             The one heading the library lets carry a coloured phrase is a
             public page's hero headline (`brand.ts`, beside the label rule),
             and a section heading is not one. */}
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <Heading level={2} step="display" align="center">
           {t("hero.title")}
-        </h2>
+        </Heading>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
           {t("hero.subtitle")}
         </p>
@@ -102,7 +103,7 @@ export function AboutSection({ id }: AboutSectionProps) {
 
       {/* Values */}
       <div className="mx-auto mt-16 max-w-5xl">
-        <h3 className="text-center text-2xl font-bold">{t("values.heading")}</h3>
+        <Heading level={3} step="section" align="center">{t("values.heading")}</Heading>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {values.map((value) => (
             <Card key={value.key}>
@@ -111,7 +112,7 @@ export function AboutSection({ id }: AboutSectionProps) {
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-act bg-lifted">
                     <value.icon className="h-6 w-6 text-act" />
                   </div>
-                  <CardTitle className="text-lg">{value.title}</CardTitle>
+                  <Heading level={4} step="card-title">{value.title}</Heading>
                 </div>
               </CardHeader>
               <CardContent>
@@ -126,7 +127,7 @@ export function AboutSection({ id }: AboutSectionProps) {
 
       {/* How Clubs Work */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h3 className="text-center text-2xl font-bold">{t("howClubsWork.heading")}</h3>
+        <Heading level={3} step="section" align="center">{t("howClubsWork.heading")}</Heading>
         {/* The room an in-person club meets in, under the heading that
             explains what happens there; the caption says where it is. */}
         <MarketingPhoto
@@ -146,7 +147,7 @@ export function AboutSection({ id }: AboutSectionProps) {
 
       {/* For Parents */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h3 className="text-center text-2xl font-bold">{t("forParents.heading")}</h3>
+        <Heading level={3} step="section" align="center">{t("forParents.heading")}</Heading>
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>{t("forParents.paragraph1")}</p>
           <p>{t("forParents.paragraph2")}</p>
@@ -172,8 +173,12 @@ export function AboutSection({ id }: AboutSectionProps) {
           >
             <div style={{ height: 2, background: "linear-gradient(90deg, transparent, #d00, transparent)" }} />
             <CardHeader className="text-center">
-              {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
-              <CardTitle className="text-2xl" style={{ color: "#d00" }}>{t("easterEgg.heading")}</CardTitle>
+              <Heading level={3} step="section" align="center">
+                <span style={{ color: "#d00" }}>
+                  {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                  {t("easterEgg.heading")}
+                </span>
+              </Heading>
               <CardDescription className="text-base text-muted-foreground">
                 {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t("easterEgg.intro")}

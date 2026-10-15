@@ -41,6 +41,7 @@ import {
   type SeatAvailabilityBarProps,
 } from "./seat-availability-bar";
 import type { AppHref } from "@/lib/constants/routes";
+import { Heading } from "@sog/ui";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
@@ -811,10 +812,12 @@ function RegionLocationSection({ onSetLocation }: { onSetLocation: () => void })
   const t = useTranslations("productDetail.signupPanel");
   return (
     <div className="rounded-md border border-border p-4">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+      <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 shrink-0 text-info" />
-        {t("regionLock.heading")}
-      </h3>
+        <Heading level={2} step="card-title">
+          {t("regionLock.heading")}
+        </Heading>
+      </div>
       {/* Indented to the heading's text, not its glyph: gap-2 (0.5rem) plus a
           1rem icon is exactly pl-6, the same alignment the confirmation's
           receipt line uses. */}
@@ -1002,17 +1005,17 @@ function SignupForm(
           heading below marks the section without a container around it. See
           the border-means-interactive note above. */}
       <div>
-        <h3 id="gamer-picker-label" className="text-sm font-semibold">
-          {/* Per-type heading — matches the product's action verb
-              (enrol / register / sign up / join). A parents-only product has
-              exactly one answer and it is already selected, so the heading
-              states the seat rather than asking a question with no second
-              option; it stays type-neutral because the verb it would carry
-              belongs to the question it is no longer asking. */}
+        {/* Per-type heading — matches the product's action verb
+            (enrol / register / sign up / join). A parents-only product has
+            exactly one answer and it is already selected, so the heading
+            states the seat rather than asking a question with no second
+            option; it stays type-neutral because the verb it would carry
+            belongs to the question it is no longer asking. */}
+        <Heading level={2} step="card-title" id="gamer-picker-label">
           {props.forGamers
             ? t(`whoAreYouSigningUp.${props.productType}`)
             : t("seatIsFor")}
-        </h3>
+        </Heading>
         <div className="mt-3 space-y-2">
           <div
             role="radiogroup"
@@ -1418,7 +1421,9 @@ function RequiredConsentSection({
       : tRules.rich(productType, policyTag);
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold">{t("consents.heading")}</h3>
+      <Heading level={2} step="card-title">
+        {t("consents.heading")}
+      </Heading>
       {rows.map((row) =>
         row.kind === "bundle" ? (
           <BundleConsentRow

@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Heading, type HeadingPair } from "@sog/ui";
 import {
   Plus,
   Pencil,
@@ -24,7 +25,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -200,36 +201,37 @@ function slugify(s: string): string {
 // don't collide.
 const SectionSlugContext = createContext<string | null>(null);
 
+// The anchor target is the wrapper rather than the heading: the scroll margin
+// that clears the sticky header has to sit on the element the fragment names,
+// and the heading takes no class.
 function AnchorHeading({
-  as,
   id,
-  className,
   children,
-}: {
-  as: "h2" | "h3";
+  ...pair
+}: HeadingPair & {
   id: string;
-  className: string;
   children: React.ReactNode;
 }) {
-  const Tag = as;
   return (
-    <Tag
+    <div
       id={id}
-      className={`group scroll-mt-[calc(var(--header-height)+1rem)] ${className}`}
+      className="group scroll-mt-[calc(var(--header-height)+1rem)]"
     >
-      <a
-        href={`#${id}`}
-        className="inline-flex items-center gap-2 hover:underline"
-      >
-        {children}
-        <span
-          aria-hidden
-          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+      <Heading {...pair}>
+        <a
+          href={`#${id}`}
+          className="inline-flex items-center gap-2 hover:underline"
         >
-          #
-        </span>
-      </a>
-    </Tag>
+          {children}
+          <span
+            aria-hidden
+            className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            #
+          </span>
+        </a>
+      </Heading>
+    </div>
   );
 }
 
@@ -244,7 +246,7 @@ function Section({
   return (
     <SectionSlugContext.Provider value={slug}>
       <section className="space-y-4">
-        <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
+        <AnchorHeading level={2} step="section" id={slug}>
           {title}
         </AnchorHeading>
         <div className="rounded-lg border border-border p-6 space-y-6">{children}</div>
@@ -264,11 +266,7 @@ function SubSection({
   const slug = parentSlug ? `${parentSlug}-${slugify(title)}` : slugify(title);
   return (
     <div className="space-y-3">
-      <AnchorHeading
-        as="h3"
-        id={slug}
-        className="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
-      >
+      <AnchorHeading level={3} step="label" id={slug}>
         {title}
       </AnchorHeading>
       {children}
@@ -1365,9 +1363,9 @@ function ParticipantCardDemo() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">
+        <Heading level={4} step="label">
           Participants ({DEMO_PARTICIPANTS.length})
-        </CardTitle>
+        </Heading>
       </CardHeader>
       <CardContent className="space-y-2">
         {DEMO_PARTICIPANTS.map((p, i) => {
@@ -2430,7 +2428,7 @@ export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">UI Components</h1>
+        <Heading level={1} step="page-title">UI Components</Heading>
         <p className="text-muted-foreground">
           Living style guide &mdash; every component variant and composite
           pattern used across the app.
@@ -2484,7 +2482,7 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
 
-        <SubSection title="With Icons">
+        <SubSection title="With icons">
           <div className="flex flex-wrap items-center gap-3">
             <Button>
               <Plus className="mr-2 h-4 w-4" />

@@ -11,6 +11,7 @@ import {
   type ProductBrowseCardViewProps,
 } from "./browse-card-shell";
 import { ProductMediaChips } from "./product-chips";
+import { Heading } from "@sog/ui";
 
 // Pure presentational browse card. Takes already-resolved display props —
 // the adapter (`product-browse-card.tsx`) does the locale / currency /
@@ -122,7 +123,11 @@ export function ProductBrowseCardView({
               — a name has no upper bound — but at this width it should be rare,
               which is the point of the media-top layout and is what the
               long-name fixture on the shop scene is there to check. */}
-          <h3 className="line-clamp-2 text-base font-semibold">{name}</h3>
+          <div className="line-clamp-2">
+            <Heading level={3} step="card-title">
+              {name}
+            </Heading>
+          </div>
 
           {/* Topic left, delivery language right — the flag stays down here
               rather than joining the chips on the image: it is a standing fact

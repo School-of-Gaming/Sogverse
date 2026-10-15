@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
@@ -64,21 +65,21 @@ export function NewProductPage({
             {t("clonePage.kicker", { type })}
           </p>
         )}
-        <h1
-          className={`${isCloning ? "mt-1 " : ""}text-2xl font-bold tracking-tight sm:text-3xl`}
-        >
-          {!isCloning
-            ? t("newPage.title", { type })
-            : source
-              ? t("clonePage.title", {
-                  name:
-                    resolveTranslation(
-                      source.product_translations,
-                      uiLocale,
-                    )?.name ?? t("list.untitled"),
-                })
-              : " "}
-        </h1>
+        <div className={isCloning ? "mt-1" : undefined}>
+          <Heading level={1} step="page-title">
+            {!isCloning
+              ? t("newPage.title", { type })
+              : source
+                ? t("clonePage.title", {
+                    name:
+                      resolveTranslation(
+                        source.product_translations,
+                        uiLocale,
+                      )?.name ?? t("list.untitled"),
+                  })
+                : " "}
+          </Heading>
+        </div>
       </div>
 
       {!isCloning && !isLoading && (

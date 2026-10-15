@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { UserCog, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -371,7 +372,9 @@ export function ParentDashboardPageBody({
           server-only (stripped before the client provider), and page copy
           belongs in a page namespace regardless — `metadata` names documents,
           not headings. */}
-      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <Heading level={1} step="page-title" srOnly>
+        {t("pageTitle")}
+      </Heading>
 
       {/* The pill names the page rather than any one section: with the heading
           set varying per family, borrowing the first section's label would make
@@ -398,12 +401,13 @@ export function ParentDashboardPageBody({
             className="scroll-mt-32"
           >
             <div className="mx-auto max-w-3xl space-y-6">
-              <h2
+              <Heading
+                level={2}
+                step="section"
                 id={`${EMPTY_GAMERS_SECTION_ID}-heading`}
-                className="text-3xl font-bold"
               >
                 {t("myGamers")}
-              </h2>
+              </Heading>
               <NoGamersCard onAddGamer={onAddGamer} />
             </div>
           </section>
@@ -434,12 +438,15 @@ export function ParentDashboardPageBody({
                     <Avatar className="h-10 w-10 shrink-0">
                       <Identicon id={gamer.id} size={40} />
                     </Avatar>
-                    <h2
-                      id={`${gamerSectionId(gamer)}-heading`}
-                      className="min-w-0 break-words text-3xl font-bold"
-                    >
-                      {gamer.firstName}
-                    </h2>
+                    <div className="min-w-0 break-words">
+                      <Heading
+                        level={2}
+                        step="section"
+                        id={`${gamerSectionId(gamer)}-heading`}
+                      >
+                        {gamer.firstName}
+                      </Heading>
+                    </div>
                     {/* The identity page — name, game accounts. An outline
                         button, not a ghost one: this is a mobile-first surface
                         and ghost affordances are hover-discovered, so on touch
@@ -566,12 +573,15 @@ export function ParentDashboardPageBody({
                 <Avatar className="h-10 w-10 shrink-0">
                   <Identicon id={self.id} size={40} />
                 </Avatar>
-                <h2
-                  id={`${SELF_SECTION_ID}-heading`}
-                  className="min-w-0 break-words text-3xl font-bold"
-                >
-                  {self.firstName}
-                </h2>
+                <div className="min-w-0 break-words">
+                  <Heading
+                    level={2}
+                    step="section"
+                    id={`${SELF_SECTION_ID}-heading`}
+                  >
+                    {self.firstName}
+                  </Heading>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -611,9 +621,9 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="billing-heading" className="text-3xl font-bold">
+            <Heading level={2} step="section" id="billing-heading">
               {t("billing")}
-            </h2>
+            </Heading>
             {billingCard}
           </div>
         </section>
@@ -634,9 +644,9 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <Heading level={2} step="section" id="help-heading">
               {h("heading")}
-            </h2>
+            </Heading>
             {helpForm}
             <ParentHelpFaq />
           </div>

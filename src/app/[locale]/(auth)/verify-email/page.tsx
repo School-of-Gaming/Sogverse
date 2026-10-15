@@ -7,6 +7,7 @@ import { RequestPasswordLinkButton } from "@/components/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { redeemEmailVerificationToken } from "@/lib/email-verification.server";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -91,7 +92,9 @@ export default async function VerifyEmailPage({
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <MailCheck className="h-12 w-12 text-success" />
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{t("gamerVerifiedTitle")}</h1>
+          <Heading level={1} step="page-title" align="center">
+            {t("gamerVerifiedTitle")}
+          </Heading>
           <p className="text-muted-foreground">
             {t("gamerChoosePasswordDescription")}
           </p>
@@ -123,9 +126,9 @@ export default async function VerifyEmailPage({
         <MailX className="h-12 w-12 text-destructive" />
       )}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">
+        <Heading level={1} step="page-title" align="center">
           {verified ? t("successTitle") : t("invalidTitle")}
-        </h1>
+        </Heading>
         <p className="text-muted-foreground">
           {verified ? t("successDescription") : t("invalidDescription")}
         </p>

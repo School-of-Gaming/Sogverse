@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
@@ -97,7 +98,7 @@ export default function AdminUsersPage() {
     // globals.css.
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <Heading level={1} step="page-title">{t('title')}</Heading>
         <p className="text-muted-foreground">
           {t('manageAccounts')}
         </p>

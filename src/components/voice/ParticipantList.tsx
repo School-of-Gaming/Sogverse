@@ -3,6 +3,7 @@
 import { useMemo, useRef } from "react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { robloxAccountId } from "@/components/game-account";
 import { useLiveRobloxRenders, type RobloxRenderMap } from "@/services/roblox";
 import { useVoiceRoom } from "./VoiceRoomProvider";
@@ -102,10 +103,12 @@ export function ParticipantList({
   // section under a plain heading, matching the voice-room section in VoiceRoom.
   return (
     <section className="space-y-2">
-      <h2 className="flex items-center gap-2 text-sm font-medium">
-        <Users className="h-4 w-4" />
-        {t("participants")}
-      </h2>
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4" aria-hidden />
+        <Heading level={2} step="section">
+          {t("participants")}
+        </Heading>
+      </div>
 
       {participants.map((p) => (
         <ParticipantRowWithGlow

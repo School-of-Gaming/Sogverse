@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, ArrowLeft, Check, Copy, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -312,7 +313,9 @@ function HeaderCard({
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {kicker}
             </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight">{title}</h1>
+            <div className="mt-1">
+              <Heading level={1} step="page-title">{title}</Heading>
+            </div>
             {description && (
               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                 {description}
@@ -558,9 +561,9 @@ function ProductDetailsCard({
     <section aria-labelledby={headingId} className="min-w-0">
       <Card className="@container">
         <CardContent className="p-4 sm:p-5">
-          <h2 id={headingId} className="text-base font-semibold">
+          <Heading level={2} step="card-title" id={headingId}>
             {t("detailsPage.title")}
-          </h2>
+          </Heading>
           <div className="mt-3 grid grid-cols-1 items-start gap-x-8 gap-y-5 @3xl:grid-cols-2">
             <DetailsSection title={t("detailsPage.sections.schedule")}>
               <DetailRow label={t("labels.schedule")}>
@@ -962,8 +965,8 @@ function ProductDetailsCard({
 }
 
 /**
- * One named run of facts. The heading is furniture — small, muted, caps and
- * tracked — and every section's heading wears the same treatment.
+ * One named run of facts. The heading is a label, and every section's heading
+ * takes the same step.
  *
  * Each section is its own size container, so its rows are laid out by the
  * width of the column they are in: when the card pairs its sections up, a row
@@ -978,10 +981,9 @@ function DetailsSection({
 }) {
   return (
     <section className="@container min-w-0">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-      >
+      <Heading level={3} step="label">
         {title}
-      </h3>
+      </Heading>
       <dl className="mt-1 divide-y divide-border">{children}</dl>
     </section>
   );

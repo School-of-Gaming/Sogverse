@@ -1,4 +1,5 @@
 /* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line, the label-only card's heading, and the note that a topic renders nothing in this form. The guides themselves are the translated part, and they come from <TopicPrepContent> */
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import {
@@ -72,10 +73,10 @@ export function TopicPrepScene({
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold">
+          <Heading level={1} step="page-title">
             Topic prep guides &mdash;{" "}
             {isRemote ? "remote products" : "in-person products"}
-          </h1>
+          </Heading>
           <p className="text-sm text-muted-foreground">
             {isRemote
               ? "Every step of every guide, plus the shared voice-room step every remote product ends on."
@@ -90,9 +91,9 @@ export function TopicPrepScene({
           return (
             <Card key={topic}>
               <CardContent className="space-y-4 p-5 sm:p-6">
-                <h2 className="text-lg font-semibold">
+                <Heading level={2} step="card-title">
                   {PRODUCT_TOPICS[topic].label}
-                </h2>
+                </Heading>
                 {plan === null ? (
                   <p className="text-sm italic text-muted-foreground">
                     Nothing renders in this form &mdash; every step belongs to a
@@ -112,7 +113,9 @@ export function TopicPrepScene({
         {isRemote && labelOnlyPlan !== null && (
           <Card>
             <CardContent className="space-y-4 p-5 sm:p-6">
-              <h2 className="text-lg font-semibold">Any other topic</h2>
+              <Heading level={2} step="card-title">
+                Any other topic
+              </Heading>
               <TopicPrepContent plan={labelOnlyPlan} />
             </CardContent>
           </Card>

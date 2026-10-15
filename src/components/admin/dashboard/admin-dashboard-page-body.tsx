@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import type { AdminDashboardData } from "./admin-dashboard-data";
 import { GeduCertificationPanel } from "./gedu-certification-panel";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
@@ -77,7 +78,7 @@ export function AdminDashboardPageBody({
         {/* "Dashboard", not "My SOG": the admin surface is genuinely an admin
             panel and is called one, which is the single exception to the
             product-wide naming rule. */}
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <Heading level={1} step="page-title">{t("title")}</Heading>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
 

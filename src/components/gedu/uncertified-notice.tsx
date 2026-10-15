@@ -1,11 +1,11 @@
 import { ShieldAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 /**
@@ -32,10 +32,12 @@ export function UncertifiedNotice({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldAlert className="h-5 w-5 text-muted-foreground" />
-          {title}
-        </CardTitle>
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="h-5 w-5 text-muted-foreground" aria-hidden />
+          <Heading level={3} step="card-title">
+            {title}
+          </Heading>
+        </div>
         <CardDescription>{body}</CardDescription>
       </CardHeader>
       <CardContent />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
 import { BadgeCheck } from "lucide-react";
 import type {
@@ -111,14 +112,14 @@ export function SubstitutionRequestsPanel({
 
   return (
     <section className="space-y-3">
-      <h2 className="flex items-baseline gap-2 text-xl font-semibold">
-        {t("listLabel")}
+      <div className="flex items-baseline gap-2">
+        <Heading level={2} step="section">{t("listLabel")}</Heading>
         {waiting.length > 0 && (
           <span className="text-sm font-normal text-muted-foreground">
             {waiting.length}
           </span>
         )}
-      </h2>
+      </div>
 
       {/* The receipt for an approval, which otherwise leaves no trace: a row
           simply vanishing is indistinguishable from a row that was never

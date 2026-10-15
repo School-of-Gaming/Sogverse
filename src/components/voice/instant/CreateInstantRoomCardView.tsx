@@ -2,6 +2,7 @@
 
 import { Loader2, Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { RoomLinkChip } from "./RoomLinkChip";
 
@@ -51,10 +51,12 @@ export function CreateInstantRoomCardView({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mic className="h-5 w-5" />
-          {createdCode ? t("ready") : t("title")}
-        </CardTitle>
+        <div className="flex items-center gap-2">
+          <Mic className="h-5 w-5" aria-hidden />
+          <Heading level={3} step="card-title">
+            {createdCode ? t("ready") : t("title")}
+          </Heading>
+        </div>
         <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center gap-4 py-10">

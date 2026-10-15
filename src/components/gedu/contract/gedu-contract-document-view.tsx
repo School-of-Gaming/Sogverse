@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Heading } from "@sog/ui";
 import {
   geduContractLines,
   type GeduContractBlock,
@@ -40,18 +41,26 @@ function ContractText({ text }: { text: GeduContractText }) {
  * Spacing is per block rather than a container `space-y-*`: a heading needs
  * more air above it than one clause needs above the next, and the two ways of
  * setting margin-top would otherwise fight over the same property.
+ *
+ * The document's own outline sits one level under its title, which is an h2
+ * on the page that shows it: the contract's sections are h3s and their
+ * clauses' headings h4s.
  */
 function ContractBlock({ block }: { block: GeduContractBlock }) {
   switch (block.kind) {
     case "heading":
       return block.level === 2 ? (
-        <h2 className="mt-10 text-xl font-bold tracking-tight first:mt-0 sm:text-2xl">
-          <ContractText text={block.text} />
-        </h2>
+        <div className="mt-10 first:mt-0">
+          <Heading level={3} step="card-title">
+            <ContractText text={block.text} />
+          </Heading>
+        </div>
       ) : (
-        <h3 className="mt-6 text-lg font-semibold">
-          <ContractText text={block.text} />
-        </h3>
+        <div className="mt-6">
+          <Heading level={4} step="label">
+            <ContractText text={block.text} />
+          </Heading>
+        </div>
       );
     case "paragraph":
       return (
@@ -120,6 +129,7 @@ interface GeduContractDocumentViewProps {
  * The caller owns the page around the document — the title chrome, the accept
  * affordance, the scroll container — and any note explaining which of the
  * contract's equally binding languages this text is, and why it is that one.
+ * The page's own title is its h1, so the contract's title is an h2 beneath it.
  */
 export function GeduContractDocumentView({
   document,
@@ -134,9 +144,9 @@ export function GeduContractDocumentView({
       lang={document.language}
       className="mx-auto max-w-3xl text-sm leading-relaxed sm:text-base"
     >
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+      <Heading level={2} step="section">
         <ContractText text={document.title} />
-      </h1>
+      </Heading>
       <div className="mt-6">
         {document.blocks.map((block, index) => (
           <ContractBlock key={index} block={block} />

@@ -17,6 +17,7 @@ import {
   teamPickClasses,
 } from "@/components/team/team-portrait";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { Heading } from "@sog/ui";
 
 /**
  * The public team profile page body: one person, admin or Gedu, on one page.
@@ -169,9 +170,9 @@ export function TeamProfileBody({
         </header>
 
         <section aria-labelledby={aboutId} className="mt-12">
-          <h2 id={aboutId} className="text-xl font-semibold">
+          <Heading level={2} step="section" id={aboutId}>
             {t("whoIs", { firstName: profile.firstName })}
-          </h2>
+          </Heading>
           {longDescription === "" ? (
             <p className="mt-4 leading-relaxed text-muted-foreground">
               {t("draft.longDescription")}
@@ -193,12 +194,9 @@ export function TeamProfileBody({
               pick === null ? "border-act" : pick.edge,
             )}
           >
-            <h2
-              id={funFactId}
-              className="text-sm font-semibold text-muted-foreground"
-            >
+            <Heading level={2} step="card-title" id={funFactId}>
               {t("funFact")}
-            </h2>
+            </Heading>
             <p lang={lang} className="mt-1 text-lg leading-relaxed">
               {funFact}
             </p>
