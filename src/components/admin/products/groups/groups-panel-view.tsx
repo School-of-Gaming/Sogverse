@@ -540,13 +540,23 @@ export function GroupsPanelView({
           (HeaderParticipantAction). The shell's picker sheets are deliberately
           kept OUTSIDE it — see the `overlays` slot below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        {/* Laid out by the panel's own width, not the screen's: the panel shares
-            the page with a reference column on wide screens, so a wide viewport
-            can still hand it too little room for the title and every control
-            in one row. Below `@3xl` the controls take a row of their own under
-            the title; the seat bar shows from `@lg`, and on the narrowest panel
-            that shows it the buttons wrap onto a line under the bar. */}
-        <div className="flex flex-col gap-3 @3xl:flex-row @3xl:items-center @3xl:justify-between @3xl:gap-4">
+        {/* One arrangement at every width: the title on a row of its own, and
+            under it a row holding the seat summary on the left and the actions
+            right-packed at the end. The summary grows into the free width up to
+            a cap (a bar the length of the board says nothing more) and never
+            below a floor; when the panel cannot fit that floor and the actions
+            side by side, the actions wrap onto a line of their own beneath the
+            summary, still right-packed, rather than squeezing the bar or its
+            text. Sized by the panel's own width (`@container` above), since the
+            panel shares the page with a reference column on wide screens.
+
+            Nothing in the row arrives after first paint: the seat numbers come
+            from the product row (a prop) and the same snapshot the board is
+            drawn from, and while that snapshot loads the whole panel is the
+            skeleton card instead. An uncapped product draws no summary at all,
+            for good, so its slot is simply empty and the actions keep their
+            place at the end of the row. */}
+        <div className="space-y-3">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="h-5 w-5 text-muted-foreground" />
@@ -554,14 +564,15 @@ export function GroupsPanelView({
             </h2>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {/* Capacity context — the same bar the shop shows, fed from the live
                 snapshot's active count. Past the cap the bar has nothing left to
                 say ("0 remaining" is true of 20/20 and 22/20 alike), so the
-                overfill line takes the same slot — same width, same row, so
-                nothing beside it moves. */}
+                overfill line takes the same slot — same sizing, and held to the
+                bar's height (its text line, gap and track), so crossing the cap
+                in either direction moves nothing on the row or below it. */}
             {overfill ? (
-              <p className="hidden w-80 items-center gap-1.5 text-xs font-medium text-warning @lg:flex">
+              <p className="flex min-h-7.5 max-w-sm min-w-56 flex-1 items-center gap-1.5 text-xs font-medium text-warning">
                 <Users className="h-3 w-3 shrink-0" aria-hidden />
                 <span className="truncate tabular-nums">
                   {t("seatsOverfilled", {
@@ -576,27 +587,36 @@ export function GroupsPanelView({
                 seatCount={seatCount}
                 seatsLeft={seatsLeft}
                 waitlistEnabled={waitlistEnabled}
-                className="hidden w-80 @lg:block"
+                className="max-w-sm min-w-56 flex-1"
               />
             )}
-            {/* Always mounted, unlike the Add button it holds at rest: the
-                drop zone is the only way a chip leaves this product, and a
-                paid club — where the Add button is never offered — is exactly
-                where the subscribed seats the switch serves live. */}
-            <HeaderParticipantAction
-              canAdd={canAddGamer}
-              onAdd={actions.onRequestAddParticipant}
-              subjectFor={(participationId) => dragSubjects.get(participationId)}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAddGroup}
-              disabled={pending.creating}
-            >
-              <Plus className="mr-1 h-4 w-4" />
-              {t("addGroup")}
-            </Button>
+            {/* The actions are one right-packed group (`ml-auto`), so the drop
+                zone the first one turns into mid-drag grows leftward into the
+                slack while Add group holds its place. Neither is affirmative —
+                they are two independent additions, not the two answers to one
+                question — so the Button Order rule does not reorder them. */}
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              {/* Always mounted, unlike the Add button it holds at rest: the
+                  drop zone is the only way a chip leaves this product, and a
+                  paid club — where the Add button is never offered — is exactly
+                  where the subscribed seats the switch serves live. */}
+              <HeaderParticipantAction
+                canAdd={canAddGamer}
+                onAdd={actions.onRequestAddParticipant}
+                subjectFor={(participationId) =>
+                  dragSubjects.get(participationId)
+                }
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddGroup}
+                disabled={pending.creating}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                {t("addGroup")}
+              </Button>
+            </div>
           </div>
         </div>
 
