@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   VercelAnalyticsClient,
   VercelAnalyticsError,
+  earliestTrafficDay,
+  readServedPageLoadsUndocumented,
+  SERVED_PAGE_FILTER,
   odataString,
   splitDays,
   vercelAnalyticsConfig,
@@ -335,5 +338,134 @@ describe("VercelAnalyticsClient", () => {
     );
     expect(fetchMock).toHaveBeenCalledTimes(10);
     expect(peak).toBe(3);
+  });
+});
+
+describe("earliestTrafficDay", () => {
+  it("is the day analytics was switched on until two years of retention pass it", () => {
+    expect(earliestTrafficDay(new Date("2026-09-17T23:30:00Z"))).toBe("2026-05-31");
+    expect(earliestTrafficDay(new Date("2028-05-31T12:00:00Z"))).toBe("2026-05-31");
+    expect(earliestTrafficDay(new Date("2028-09-17T00:00:00Z"))).toBe("2026-09-17");
+  });
+});
+
+describe("aggregateVisits", () => {
+  let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns visitors beside pageviews, one window per 62 days of a day read", async () => {
+    fetchMock.mockImplementation(async (input) => {
+      const day = dayOfMs(urlOf(input).searchParams.get("since"));
+      return json({ data: [{ timestamp: `${day}T00:00:00.000Z`, pageviews: 5, visitors: 2 }] });
+    });
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    const groups = await client.aggregateVisits({
+      by: ["day"],
+      filter: "",
+      from: "2026-06-01",
+      to: "2026-08-31",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(groups.sort((a, b) => ((a.values.day ?? "") < (b.values.day ?? "") ? -1 : 1))).toEqual([
+      { values: { day: "2026-06-01" }, pageviews: 5, visitors: 2 },
+      { values: { day: "2026-08-02" }, pageviews: 5, visitors: 2 },
+    ]);
+  });
+
+  it("throws on a folded response rather than halving, since visitors do not add", async () => {
+    fetchMock.mockResolvedValue(json(foldedResponse([{ utmCampaign: "a", pageviews: 1 }], 50)));
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    await expect(
+      client.aggregateVisits({ by: ["utmCampaign"], filter: "", from: "2026-09-01", to: "2026-09-30" }),
+    ).rejects.toThrow(/visitors cannot be summed/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws on a row without visitors", async () => {
+    fetchMock.mockResolvedValue(json({ data: [{ environment: "production", pageviews: 3 }] }));
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    await expect(
+      client.aggregateVisits({ by: ["environment"], filter: "", from: "2026-09-01", to: "2026-09-30" }),
+    ).rejects.toThrow(/without its visitors/);
+  });
+});
+
+describe("readServedPageLoadsUndocumented", () => {
+  let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("posts one UTC day of the people-served filter to the observability query", async () => {
+    fetchMock.mockResolvedValue(json({ summary: [{ vercel_request_count_sum: 653 }], data: [] }));
+
+    expect(await readServedPageLoadsUndocumented(CONFIG, "2026-10-01")).toBe(653);
+
+    const [input, init] = fetchMock.mock.calls[0];
+    const url = urlOf(input);
+    expect(`${url.origin}${url.pathname}`).toBe("https://api.vercel.com/v2/observability/query");
+    expect(url.searchParams.get("teamId")).toBe("team_test");
+    expect(init?.method).toBe("POST");
+    expect(new Headers(init?.headers).get("authorization")).toBe("Bearer vercel-token");
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      scope: { type: "project", ownerId: "team_test", projectIds: ["prj_test"] },
+      metric: "vercel.request.count",
+      aggregation: "sum",
+      startTime: "2026-10-01T00:00:00.000Z",
+      endTime: "2026-10-02T00:00:00.000Z",
+      granularity: { days: 1 },
+      filter: SERVED_PAGE_FILTER,
+    });
+  });
+
+  it("reads a day with no matching request as zero", async () => {
+    fetchMock.mockResolvedValue(json({ summary: [], data: [] }));
+    expect(await readServedPageLoadsUndocumented(CONFIG, "2026-10-01")).toBe(0);
+  });
+
+  it("asks once more when Vercel's own query timed out, and no more", async () => {
+    fetchMock
+      .mockResolvedValueOnce(json({ error: { code: "query_timeout", message: "Timeout" } }, 500))
+      .mockResolvedValueOnce(json({ summary: [{ vercel_request_count_sum: 9 }] }));
+    expect(await readServedPageLoadsUndocumented(CONFIG, "2026-10-01")).toBe(9);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async () =>
+      json({ error: { code: "query_timeout", message: "Timeout" } }, 500),
+    );
+    await expect(readServedPageLoadsUndocumented(CONFIG, "2026-10-01")).rejects.toThrow(/query_timeout/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws on a refusal with Vercel's status, without asking again", async () => {
+    fetchMock.mockResolvedValue(
+      json({ error: { code: "not_found", message: "Observability Data not found." } }, 404),
+    );
+    const read = readServedPageLoadsUndocumented(CONFIG, "2026-10-01");
+    await expect(read).rejects.toBeInstanceOf(VercelAnalyticsError);
+    await expect(read).rejects.toMatchObject({ status: 404 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws on an unexpected shape", async () => {
+    fetchMock.mockResolvedValue(json({ rows: [] }));
+    await expect(readServedPageLoadsUndocumented(CONFIG, "2026-10-01")).rejects.toThrow(/unexpected shape/);
   });
 });
