@@ -459,7 +459,7 @@ export function GroupsPanelView({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />
-            <Heading level={2} step="section">{t("title")}</Heading>
+            <Heading level={2} step="card-title">{t("title")}</Heading>
           </div>
         </CardHeader>
         <CardContent>
@@ -561,7 +561,7 @@ export function GroupsPanelView({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              <Heading level={2} step="section">{t("title")}</Heading>
+              <Heading level={2} step="card-title">{t("title")}</Heading>
             </div>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>

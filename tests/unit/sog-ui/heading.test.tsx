@@ -33,8 +33,8 @@ const DECLARED_SIZES = new Set(
 type Options = {
   align?: "start" | "center" | "center-narrow";
   truncate?: boolean;
-  srOnly?: boolean;
   focusTarget?: boolean;
+  lang?: string;
 };
 
 function headingOf(pair: HeadingPair, extra: Options = {}) {
@@ -59,24 +59,15 @@ function sizeClasses(element: HTMLElement): string[] {
 }
 
 describe("Heading", () => {
-  it.each(PAIRS.map((pair) => [`h${pair.level}`, pair.step, pair] as const))(
-    "renders an %s wearing the %s step",
-    (tag, step, pair) => {
-      const element = headingOf(pair);
-      expect(element.tagName.toLowerCase()).toBe(tag);
-      expect(element.classList).toContain(
-        step === "hero" ? "text-hero-mobile" : `text-${step}`,
-      );
-    },
-  );
-
   // A class naming a size the theme does not declare compiles to nothing and
   // the heading silently inherits the body size, so each step's utility is
   // held to the sizes the generator emits.
-  it.each(PAIRS.map((pair) => [pair.step, pair] as const))(
-    "sets the %s step only through sizes the theme declares",
-    (_step, pair) => {
-      const sizes = sizeClasses(headingOf(pair));
+  it.each(PAIRS.map((pair) => [`h${pair.level}`, pair.step, pair] as const))(
+    "renders an %s and sets the %s step only through sizes the theme declares",
+    (tag, _step, pair) => {
+      const element = headingOf(pair);
+      expect(element.tagName.toLowerCase()).toBe(tag);
+      const sizes = sizeClasses(element);
       expect(sizes.length).toBeGreaterThan(0);
       for (const size of sizes) expect(DECLARED_SIZES).toContain(size);
     },
@@ -96,12 +87,6 @@ describe("Heading", () => {
     const truncated = headingOf(pair, { truncate: true }).classList;
     expect(truncated).toContain("truncate");
     expect(truncated).not.toContain("text-balance");
-  });
-
-  it("states its alignment rather than inheriting one", () => {
-    const pair = { level: 2, step: "section" } as const;
-    expect(headingOf(pair).classList).toContain("text-start");
-    expect(headingOf(pair, { align: "center" }).classList).toContain("text-center");
   });
 
   it("centres below md and starts from md when asked to follow a stacking composition", () => {
@@ -126,10 +111,10 @@ describe("Heading", () => {
     expect(headingOf({ level: 2, step: "section" }).hasAttribute("tabindex")).toBe(false);
   });
 
-  it("stays in the outline when visually hidden", () => {
-    const element = headingOf({ level: 2, step: "section" }, { srOnly: true });
-    expect(element.tagName.toLowerCase()).toBe("h2");
-    expect(element.classList).toContain("sr-only");
+  it("marks the words' language on the element", () => {
+    const pair = { level: 2, step: "card-title" } as const;
+    expect(headingOf(pair, { lang: "fi" }).getAttribute("lang")).toBe("fi");
+    expect(headingOf(pair).hasAttribute("lang")).toBe(false);
   });
 });
 

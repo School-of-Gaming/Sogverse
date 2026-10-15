@@ -738,19 +738,46 @@ const sogverseFaceBans = [
 /**
  * Every heading Sogverse draws is SOG-UI's `Heading`, and a raw `h1`–`h6` is how
  * one stops being: a tag and a size chosen together at the call site, which is
- * the decision the primitive splits into an outline level and a step. JSX only —
- * the markdown renderer and the editor build their headings from a tag name,
- * and what they paint is held by the authored-markdown look instead.
+ * the decision the primitive splits into an outline level and a step.
+ *
+ * Written as JSX, the tag is caught by its element name. Chosen at runtime —
+ * held in a variable, defaulted in a parameter, picked by a ternary, carried in
+ * an object or typed as a prop's literal union, then rendered as `<Title>` — it
+ * is caught as a string in one of those positions. A string anywhere else (a
+ * `createElement` argument, a comparison) is not reported, so the ban raises no
+ * false alarm on code that merely mentions a tag name; the files that map
+ * markdown heading levels to tag names on purpose are exempted by name below.
  *
  * Exported so a test can run a violating line and a conforming one through it.
  */
-const noRawHeadingElements = [
+const noRawHeadingJsx = [
   {
     selector: String.raw`JSXOpeningElement[name.name=/^h[1-6]$/]`,
     message:
       "No raw heading elements in Sogverse. Use `Heading` from @sog/ui, which takes the outline level and the step as two props.",
   },
 ];
+
+const HEADING_TAG = String.raw`/^h[1-6]$/`;
+const noHeadingTagStrings = [
+  "VariableDeclarator > ",
+  "AssignmentPattern > ",
+  "ConditionalExpression > ",
+  "Property > ",
+  "TSLiteralType > ",
+].flatMap((position) =>
+  [
+    `Literal[value=${HEADING_TAG}]`,
+    `TemplateLiteral[expressions.length=0][quasis.0.value.cooked=${HEADING_TAG}]`,
+  ].map((node) => ({
+    // A property's key is its name, not a tag it holds: only its value counts.
+    selector: `${position}${node}${position === "Property > " ? ".value" : ""}`,
+    message:
+      "No heading tag chosen at runtime in Sogverse. Render `Heading` from @sog/ui and pass the outline level as its `level` prop.",
+  })),
+);
+
+const noRawHeadingElements = [...noRawHeadingJsx, ...noHeadingTagStrings];
 
 const sogverseColourBans = [
   ...noHexColourLiterals(
@@ -1043,6 +1070,27 @@ const eslintConfig = defineConfig([
         ...sogverseColourBans,
         ...noColourFunctions,
         ...sogverseFaceBans,
+        ...noHeadingTagStrings,
+      ],
+    },
+  },
+  {
+    // The two files that map a markdown heading level to the tag it is painted
+    // as, which is a table of tag names by design: `lib/authored-markdown.ts`
+    // holds where each use case's headings sit in the outline, and the markdown
+    // renderer types the levels it is handed and renders the mapped tag. Neither
+    // is a heading the app titles a region with — what they paint is held by
+    // the authored-markdown look — so they are exempt from the ban on a tag
+    // chosen at runtime, and still from writing a raw heading as JSX. Every
+    // other ban the `src/**` block sets is restated, since this block replaces
+    // that one's options rather than merging with them.
+    files: ["src/components/ui/markdown.tsx", "src/lib/authored-markdown.ts"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        ...sogverseColourBans,
+        ...noColourFunctions,
+        ...sogverseFaceBans,
+        ...noRawHeadingJsx,
       ],
     },
   },

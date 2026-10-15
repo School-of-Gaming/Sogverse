@@ -93,6 +93,12 @@ export type HeadingProps = HeadingPair & {
   /** The element's id, for an anchor link or for `aria-labelledby` on the region it titles. */
   id?: string;
   /**
+   * The words' language, where it differs from the page's — a Library card can
+   * title an article written in another locale — so a screen reader pronounces
+   * them right.
+   */
+  lang?: string;
+  /**
    * The rendered element, for a caller that moves focus to it — a screen whose
    * first job on arriving is to tell a screen reader where the reader now is.
    * A plain prop rather than `forwardRef`: React 19 hands a function component
@@ -169,6 +175,7 @@ export function Heading({
   step,
   children,
   id,
+  lang,
   ref,
   focusTarget = false,
   align = "start",
@@ -189,6 +196,7 @@ export function Heading({
   return (
     <Element
       id={id}
+      lang={lang}
       ref={ref}
       tabIndex={focusTarget ? -1 : undefined}
       className={className}

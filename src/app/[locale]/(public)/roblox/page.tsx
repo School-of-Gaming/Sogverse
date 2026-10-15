@@ -254,12 +254,11 @@ export default function RobloxPage() {
           belongs at the bottom of the page, not above the thing it qualifies. */}
       <section className="container mx-auto px-4 pb-16">
         <div className="mx-auto max-w-3xl border-t border-border pt-8">
-          {/* Furniture, not voice: a small tracked marker a reader scans as
-              structure, so caps are the right treatment here. Muted rather than
-              the page's act-coloured Eyebrow — three act-coloured rows
-              would shout from the bottom of the page, and an act label over
-              them shouts just as loudly. An h2 because it genuinely heads the
-              list below it in the outline, whatever its size says. */}
+          {/* An h2 because it titles the documents list at the page's second
+              outline level, and `card-title` because that is the smallest step
+              an h2 may take: `label` never reaches h2. Not the page's
+              act-coloured Eyebrow — three act-coloured rows would shout from
+              the bottom of the page, and an act label over them just as loudly. */}
           <Heading level={2} step="card-title">
             {t("legal.documents")}
           </Heading>
