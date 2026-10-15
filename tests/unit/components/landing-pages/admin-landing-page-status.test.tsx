@@ -56,6 +56,8 @@ const EN: LandingPageDraftVersion = {
   summary: "Clubs in Minecraft, Roblox and more, after school in Espoo.",
   slug: "espoo-clubs",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageAlt: "",
   missing: [],
 };
 
@@ -66,6 +68,8 @@ const SV: LandingPageDraftVersion = {
   summary: "",
   slug: "spelklubbar-i-esbo",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageAlt: "",
   missing: [
     "summary",
     `sections.${TEXT_ID}.heading`,
@@ -80,6 +84,8 @@ const FI: LandingPageDraftVersion = {
   summary: "Kerhoja koulun jälkeen.",
   slug: "pelikerhot-espoossa",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageAlt: "",
   missing: [],
 };
 
@@ -95,6 +101,7 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
       id: PAGE_ID,
       sections: SECTIONS,
       imagePaths: {},
+      shareImageId: null,
       versions,
       createdAt: "2026-10-01T08:00:00Z",
       updatedAt: "2026-10-02T08:00:00Z",
@@ -113,6 +120,7 @@ function publication(locales: readonly string[]): PublishedLandingPage {
     publishedAt: "2026-10-03T08:00:00Z",
     sections: SECTIONS,
     imagePaths: {},
+    shareImageId: null,
     versions: [EN, SV]
       .filter((v) => locales.includes(v.locale))
       .map((v) => ({
@@ -121,6 +129,8 @@ function publication(locales: readonly string[]): PublishedLandingPage {
         summary: v.summary,
         slug: v.slug,
         sectionTexts: {},
+        shareTitle: v.shareTitle,
+        shareImageAlt: v.shareImageAlt,
       })),
   };
 }
@@ -287,5 +297,86 @@ describe("the landing page status page", () => {
   it("offers no Unpublish while the page is not live", () => {
     renderStatus(draftPage([EN]));
     expect(screen.queryByRole("button", { name: "unpublish" })).toBeNull();
+  });
+});
+
+describe("the link preview it states", () => {
+  const SHARE_PICTURE = "5c3b7a52-0d9e-4f0b-a6d2-8e1f4c7b9a30";
+  const HERO_PICTURE = "e2a4c6d8-1b3f-4a5c-8e7d-9f0a1b2c3d4e";
+
+  /** The link preview's section, named by its heading. */
+  const preview = () => screen.getByRole("region", { name: "heading" });
+  const lines = () =>
+    within(preview())
+      .getAllByRole("listitem")
+      .map((item) => item.textContent);
+
+  it("says it is derived from the page, with no warning, while nothing is overridden", () => {
+    renderStatus(draftPage([EN, FI]));
+
+    expect(within(preview()).getByText("inUse.derived")).toBeTruthy();
+    // The fixture's hero has no picture, so the site-wide card stands in.
+    expect(lines()).toEqual(["picture.site", "titlePage", "description"]);
+    expect(within(preview()).queryByText("stale")).toBeNull();
+    expect(within(card("English")).queryByText(/statusPage\.language\.shareTitle/)).toBeNull();
+  });
+
+  it("names the hero's picture when the hero has one", () => {
+    const page = draftPage([EN]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
+        imagePaths: { [HERO_PICTURE]: "hero.jpg" },
+      },
+    });
+
+    expect(lines()[0]).toBe("picture.hero");
+  });
+
+  it("says which overrides are in use, names the languages with a share title, and warns they do not follow the page", () => {
+    const page = draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }, FI]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        shareImageId: SHARE_PICTURE,
+        imagePaths: { [SHARE_PICTURE]: "share.jpg" },
+      },
+    });
+
+    expect(within(preview()).getByText("inUse.customTitleAndPicture")).toBeTruthy();
+    expect(lines()).toEqual([
+      "picture.custom",
+      "titleCustomSome languages=English",
+      "description",
+    ]);
+    expect(within(preview()).getByText("stale")).toBeTruthy();
+    expect(within(card("English")).getByText("Join a club in Espoo")).toBeTruthy();
+    expect(within(card("Finnish")).queryByText(/statusPage\.language\.shareTitle/)).toBeNull();
+  });
+
+  it("says a custom title alone, in every language", () => {
+    renderStatus(
+      draftPage([
+        { ...EN, shareTitle: "Join a club in Espoo" },
+        { ...FI, shareTitle: "Liity kerhoon Espoossa" },
+      ]),
+    );
+
+    expect(within(preview()).getByText("inUse.customTitle")).toBeTruthy();
+    expect(lines()[1]).toBe("titleCustomEvery");
+  });
+
+  it("says a custom picture alone", () => {
+    const page = draftPage([EN]);
+    renderStatus({
+      ...page,
+      draft: { ...page.draft, shareImageId: SHARE_PICTURE, imagePaths: { [SHARE_PICTURE]: "share.jpg" } },
+    });
+
+    expect(within(preview()).getByText("inUse.customPicture")).toBeTruthy();
+    expect(lines()).toEqual(["picture.custom", "titlePage", "description"]);
   });
 });

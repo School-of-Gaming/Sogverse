@@ -42,11 +42,17 @@ import {
 } from "@/lib/mcp/landing-pages-sections";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import {
+  draftShareCard,
+  landingShareCardInUse,
+  type LandingShareCardInUse,
+} from "@/components/landing-pages/landing-share-card";
+import {
   landingPublishForecast,
   landingSlug,
   type AdminLandingPage,
 } from "@/services/landing-pages";
 import {
+  LANDING_SHARE_TITLE_MAX_LENGTH,
   LANDING_SLUG_MAX_LENGTH,
   LANDING_SUMMARY_MAX_LENGTH,
   LANDING_TITLE_MAX_LENGTH,
@@ -99,6 +105,8 @@ const OFFER_PREVIEW =
 const NO_DELETE =
   "There is no delete: unpublishing takes a page down and keeps it to work on.";
 
+const SHARE_CARD = `A page's share card — the link preview shown wherever its address is shared, in a chat or a feed — is derived from the page: each language's title and summary, and the hero's picture (the site-wide card when the hero has none). Two optional overrides replace part of it: a share picture for the page (shareImageId, a catalogue id from list_landing_images, saved with the structure by save_landing_page_structure, with its alt text per language in shareImageAlt), and a share title per language (shareTitle, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters, saved with that language's words by save_landing_page_text). The summary is always the card's description. An override does not follow later edits to the page: a share title stays as written when the page title changes, and a share picture stays when the hero's picture changes. So set one only when the shared line is meant to differ from the search title, or the shared picture from the hero's, and clear it when it no longer applies. A partner's logo (Roblox's, Lynx's) in a share picture is a new placement of their mark, which needs that partner's sign-off first, as in a hero. get_landing_page says which card each language uses (shareCard).`;
+
 // ---------------------------------------------------------------------------
 // Inputs
 // ---------------------------------------------------------------------------
@@ -140,6 +148,36 @@ const slug = z
     }
   })
   .describe(`The version's address. ${SLUGS}`);
+
+const shareTitle = z
+  .string()
+  .trim()
+  .max(
+    LANDING_SHARE_TITLE_MAX_LENGTH,
+    `A share title is at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters`,
+  )
+  .describe(
+    `The share card's title in this language, in place of the page title, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters. Optional, and like the section words it is the whole of what the language holds: left out or empty, the card takes the page title. It does not follow later changes to the title.`,
+  );
+
+const shareImageAlt = z
+  .string()
+  .trim()
+  .describe(
+    "The share picture's alt text in this language. Optional: left out or empty, the card's title stands in for it. Only read while the page has a share picture.",
+  );
+
+/*
+ * Ids are stored lowercase, and compared with `===`: an id an AI app sends in
+ * capitals is lowercased first, as the registry's `landingId` does.
+ */
+const shareImageId = z
+  .guid()
+  .toLowerCase()
+  .nullable()
+  .describe(
+    "The share picture: the catalogue id of a landing page picture from list_landing_images, shown on the link preview in place of the hero's picture. Optional, and part of the structure, which is sent whole: left out or null, the page has none and the preview takes the hero's picture. It does not follow later changes to the hero's picture.",
+  );
 
 /**
  * A language's words as the call is checked: any object keyed by section id.
@@ -303,6 +341,42 @@ function publishForecast(page: AdminLandingPage, origin: string) {
   };
 }
 
+/**
+ * The share card a version uses (`landingShareCard`): which halves are the
+ * page's own overrides, the card's title, and its picture with where it comes
+ * from — so an AI app can see an override the page has since moved away from.
+ */
+const SHARE_CARD_IN_USE: Readonly<Record<LandingShareCardInUse, string>> = {
+  derived: "derived from the page",
+  customTitle: "custom title",
+  customPicture: "custom picture",
+  customTitleAndPicture: "custom title and picture",
+};
+
+function shareCardView(page: AdminLandingPage, version: DraftVersion) {
+  const card = draftShareCard(page.draft, version);
+  return {
+    inUse:
+      SHARE_CARD_IN_USE[
+        landingShareCardInUse({
+          title: card.titleSource === "custom",
+          picture: card.picture.source === "custom",
+        })
+      ],
+    title: card.title,
+    titleFrom: card.titleSource === "custom" ? "shareTitle" : "the page title",
+    picture:
+      card.picture.source === "site"
+        ? { from: "the site-wide card, because the hero has no picture" }
+        : {
+            from: card.picture.source === "custom" ? "shareImageId" : "the hero's picture",
+            publicUrl: catalogueImageUrl("landing_image", card.picture.path),
+            alt: card.picture.alt,
+          },
+    description: "the summary",
+  };
+}
+
 function lastSaved(draft: AdminLandingPage["draft"]) {
   return { at: draft.updatedAt, by: draft.lastSavedBy, via: draft.lastSavedVia };
 }
@@ -317,6 +391,7 @@ function pageView(page: AdminLandingPage, origin: string) {
       catalogueId,
       publicUrl: catalogueImageUrl("landing_image", path),
     })),
+    shareImageId: draft.shareImageId,
     createdAt: draft.createdAt,
     lastSaved: lastSaved(draft),
     versions: draft.versions.map((version) => ({
@@ -327,6 +402,9 @@ function pageView(page: AdminLandingPage, origin: string) {
       slug: version.slug,
       address: slugLink(origin, version.slug, version.locale),
       sectionTexts: version.sectionTexts,
+      shareTitle: version.shareTitle,
+      shareImageAlt: version.shareImageAlt,
+      shareCard: shareCardView(page, version),
       complete: version.missing.length === 0,
       missing: missingWords(page, version),
       live: liveLocales.has(version.locale),
@@ -400,7 +478,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING} ${SHARE_CARD}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -448,7 +526,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "create_landing_page",
     {
       title: "Create a landing page",
-      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
+      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN} ${SHARE_CARD}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({
           locale,
@@ -457,6 +535,9 @@ export function registerLandingPageTools(server: McpServer): void {
           slug: slug.optional(),
           sections: mcpLandingStructure,
           sectionTexts: mcpSectionTexts.optional(),
+          shareImageId: shareImageId.optional(),
+          shareTitle: shareTitle.optional(),
+          shareImageAlt: shareImageAlt.optional(),
         }),
         z.object({
           locale,
@@ -465,6 +546,9 @@ export function registerLandingPageTools(server: McpServer): void {
           slug: slug.optional(),
           sections: mcpLandingStructure,
           sectionTexts: wordsByHand.optional(),
+          shareImageId: shareImageId.optional(),
+          shareTitle: shareTitle.optional(),
+          shareImageAlt: shareImageAlt.optional(),
         }),
       ),
       annotations: {
@@ -482,6 +566,7 @@ export function registerLandingPageTools(server: McpServer): void {
         if ("refusal" in words) return words.refusal;
         const id = await service.createPage({
           sections: structure.sections,
+          shareImageId: input.shareImageId ?? null,
           versions: [
             {
               locale: input.locale,
@@ -489,6 +574,8 @@ export function registerLandingPageTools(server: McpServer): void {
               summary: input.summary ?? "",
               slug: input.slug,
               sectionTexts: words.texts,
+              shareTitle: input.shareTitle ?? "",
+              shareImageAlt: input.shareImageAlt ?? "",
             },
           ],
         });
@@ -504,6 +591,7 @@ export function registerLandingPageTools(server: McpServer): void {
           address: slugLink(origin, version?.slug ?? "", input.locale),
           complete: version !== undefined && version.missing.length === 0,
           missing: version === undefined ? [] : missingWords(page, version),
+          shareCard: version === undefined ? null : shareCardView(page, version),
           previewLink: previewLink(origin, id, input.locale),
           adminLink: adminLink(origin, id),
         });
@@ -514,20 +602,23 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, and each language's completeness under the new structure. Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed, the share picture (shareImageId) included, so send it back to keep it. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and the share card each language now uses. Readers see nothing until the next publish. ${PUBLISHING} ${SHARE_CARD}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
-        z.object({ pageId, sections: mcpLandingStructure }),
-        z.object({ pageId, sections: mcpLandingStructure }),
+        z.object({ pageId, sections: mcpLandingStructure, shareImageId: shareImageId.optional() }),
+        z.object({ pageId, sections: mcpLandingStructure, shareImageId: shareImageId.optional() }),
       ),
       annotations: OVERWRITES,
     },
-    ({ pageId: id, sections }, ctx) =>
+    ({ pageId: id, sections, shareImageId: sharePicture }, ctx) =>
       asLandingAdmin(ctx, async ({ service, origin }) => {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
         const structure = readStructure(sections);
         if ("refusal" in structure) return structure.refusal;
-        await service.saveStructure(id, structure.sections);
+        await service.saveStructure(id, {
+          sections: structure.sections,
+          shareImageId: sharePicture ?? null,
+        });
         const after = await service.getAdminPage(id);
         if (after === null) return refusal(NOT_FOUND);
         const kept = new Set(after.draft.sections.map((section) => section.id));
@@ -537,6 +628,7 @@ export function registerLandingPageTools(server: McpServer): void {
           removedSections: before.draft.sections
             .filter((section) => !kept.has(section.id))
             .map((section) => ({ id: section.id, type: section.type })),
+          shareImageId: after.draft.shareImageId,
           languages: languages(after),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
           publish: publishForecast(after, origin),
@@ -548,7 +640,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_text",
     {
       title: "Save a landing page's language version",
-      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${SLUGS} ${MARKDOWN}`,
+      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. The share title and share picture alt text are this language's words too: left out, each is saved empty, so send them back to keep them. ${SLUGS} ${MARKDOWN} ${SHARE_CARD}`,
       inputSchema: readableInput(
         z.object({
           pageId,
@@ -557,6 +649,8 @@ export function registerLandingPageTools(server: McpServer): void {
           summary,
           slug: slug.optional(),
           sectionTexts: mcpSectionTexts,
+          shareTitle: shareTitle.optional(),
+          shareImageAlt: shareImageAlt.optional(),
         }),
         z.object({
           pageId,
@@ -565,6 +659,8 @@ export function registerLandingPageTools(server: McpServer): void {
           summary,
           slug: slug.optional(),
           sectionTexts: wordsByHand,
+          shareTitle: shareTitle.optional(),
+          shareImageAlt: shareImageAlt.optional(),
         }),
       ),
       annotations: OVERWRITES,
@@ -581,6 +677,8 @@ export function registerLandingPageTools(server: McpServer): void {
           summary: input.summary,
           slug: input.slug,
           sectionTexts: words.texts,
+          shareTitle: input.shareTitle ?? "",
+          shareImageAlt: input.shareImageAlt ?? "",
         });
         const page = await service.getAdminPage(input.pageId);
         if (page === null) return refusal(NOT_FOUND);
@@ -593,6 +691,7 @@ export function registerLandingPageTools(server: McpServer): void {
           address: slugLink(origin, saved?.slug ?? "", input.locale),
           complete: saved !== undefined && saved.missing.length === 0,
           missing: saved === undefined ? [] : missingWords(page, saved),
+          shareCard: saved === undefined ? null : shareCardView(page, saved),
           languageIsLive:
             // exact-locale: whether the named version is live
             page.publication?.versions.some((v) => v.locale === input.locale) ?? false,

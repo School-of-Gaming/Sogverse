@@ -788,12 +788,32 @@
           "stillNeeded": "Saknas fortfarande:",
           "address": "Adress:",
           "noAddress": "ingen än",
-          "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera."
+          "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera.",
+          "shareTitle": "Delningsrubrik:"
         },
         "missing": {
           "inSection": "Avsnitt {number} ({type}): {field}",
           "inItem": "Avsnitt {number} ({type}), {item}: {field}",
           "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
+        },
+        "shareCard": {
+          "heading": "Länkförhandsvisning",
+          "inUse": {
+            "derived": "Hämtas från sidan.",
+            "customTitle": "Använder en egen rubrik.",
+            "customPicture": "Använder en egen bild.",
+            "customTitleAndPicture": "Använder en egen rubrik och en egen bild."
+          },
+          "picture": {
+            "custom": "Bild: sidans egen delningsbild.",
+            "hero": "Bild: inledningens bild.",
+            "site": "Bild: webbplatsens gemensamma kort, eftersom inledningen saknar bild."
+          },
+          "titlePage": "Rubrik: varje språkversions sidrubrik.",
+          "titleCustomEvery": "Rubrik: en egen delningsrubrik på varje språk.",
+          "titleCustomSome": "Rubrik: en egen delningsrubrik på {languages}, och sidrubriken på övriga språk.",
+          "description": "Beskrivning: varje språkversions sammanfattning.",
+          "stale": "En egen rubrik eller bild ligger kvar som den är när sidrubriken eller inledningens bild ändras. Om den inte längre passar sidan, be AI-appen att ta bort den."
         }
       },
       "status": {

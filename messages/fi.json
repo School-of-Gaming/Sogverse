@@ -788,12 +788,32 @@
           "stillNeeded": "Vielä puuttuu:",
           "address": "Osoite:",
           "noAddress": "ei vielä osoitetta",
-          "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi."
+          "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi.",
+          "shareTitle": "Jako-otsikko:"
         },
         "missing": {
           "inSection": "Osio {number} ({type}): {field}",
           "inItem": "Osio {number} ({type}), {item}: {field}",
           "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+        },
+        "shareCard": {
+          "heading": "Linkin esikatselu",
+          "inUse": {
+            "derived": "Muodostetaan sivusta.",
+            "customTitle": "Käyttää omaa otsikkoa.",
+            "customPicture": "Käyttää omaa kuvaa.",
+            "customTitleAndPicture": "Käyttää omaa otsikkoa ja omaa kuvaa."
+          },
+          "picture": {
+            "custom": "Kuva: sivun oma jakokuva.",
+            "hero": "Kuva: avausosion kuva.",
+            "site": "Kuva: koko sivuston yhteinen kortti, koska avausosiossa ei ole kuvaa."
+          },
+          "titlePage": "Otsikko: kunkin kieliversion sivun otsikko.",
+          "titleCustomEvery": "Otsikko: oma jako-otsikko jokaisella kielellä.",
+          "titleCustomSome": "Otsikko: oma jako-otsikko näillä kielillä: {languages}. Muilla kielillä sivun otsikko.",
+          "description": "Kuvaus: kunkin kieliversion tiivistelmä.",
+          "stale": "Oma otsikko tai kuva pysyy ennallaan, vaikka sivun otsikko tai avausosion kuva muuttuisi. Jos se ei enää sovi sivulle, pyydä tekoälysovellusta poistamaan se."
         }
       },
       "status": {

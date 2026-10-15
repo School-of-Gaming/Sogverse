@@ -1533,6 +1533,8 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt: string
+          share_title: string
           slug: string
           summary: string
           texts_md5: string | null
@@ -1542,6 +1544,8 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt?: string
+          share_title?: string
           slug: string
           summary: string
           texts_md5?: string | null
@@ -1551,6 +1555,8 @@ export type Database = {
           locale?: string
           page_id?: string
           section_texts?: Json
+          share_image_alt?: string
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1574,6 +1580,7 @@ export type Database = {
           published_at: string
           sections: Json
           sections_md5: string | null
+          share_image_id: string | null
         }
         Insert: {
           first_published_at: string
@@ -1582,6 +1589,7 @@ export type Database = {
           published_at: string
           sections: Json
           sections_md5?: string | null
+          share_image_id?: string | null
         }
         Update: {
           first_published_at?: string
@@ -1590,6 +1598,7 @@ export type Database = {
           published_at?: string
           sections?: Json
           sections_md5?: string | null
+          share_image_id?: string | null
         }
         Relationships: [
           {
@@ -1607,6 +1616,8 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt: string
+          share_title: string
           slug: string
           summary: string
           texts_md5: string | null
@@ -1617,6 +1628,8 @@ export type Database = {
           locale: string
           page_id: string
           section_texts?: Json
+          share_image_alt?: string
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1627,6 +1640,8 @@ export type Database = {
           locale?: string
           page_id?: string
           section_texts?: Json
+          share_image_alt?: string
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1652,6 +1667,7 @@ export type Database = {
           last_saved_via: string | null
           sections: Json
           sections_md5: string | null
+          share_image_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1663,6 +1679,7 @@ export type Database = {
           last_saved_via?: string | null
           sections: Json
           sections_md5?: string | null
+          share_image_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1674,6 +1691,7 @@ export type Database = {
           last_saved_via?: string | null
           sections?: Json
           sections_md5?: string | null
+          share_image_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4258,7 +4276,7 @@ export type Database = {
         Returns: string
       }
       create_landing_page: {
-        Args: { p_sections: Json; p_versions: Json }
+        Args: { p_sections: Json; p_share_image_id?: string; p_versions: Json }
         Returns: string
       }
       create_library_article: {
@@ -5054,11 +5072,16 @@ export type Database = {
         Returns: string
       }
       save_landing_page: {
-        Args: { p_id: string; p_sections: Json; p_versions: Json }
+        Args: {
+          p_id: string
+          p_sections: Json
+          p_share_image_id?: string
+          p_versions: Json
+        }
         Returns: string
       }
       save_landing_page_structure: {
-        Args: { p_id: string; p_sections: Json }
+        Args: { p_id: string; p_sections: Json; p_share_image_id?: string }
         Returns: string
       }
       save_landing_page_version: {
@@ -5067,6 +5090,8 @@ export type Database = {
           p_id: string
           p_locale: string
           p_section_texts?: Json
+          p_share_image_alt?: string
+          p_share_title?: string
           p_slug?: string
           p_summary?: string
           p_title: string
@@ -5383,6 +5408,8 @@ export type Database = {
           p_id: string
           p_locale: string
           p_section_texts: Json
+          p_share_image_alt: string
+          p_share_title: string
           p_slug: string
           p_summary: string
           p_title: string

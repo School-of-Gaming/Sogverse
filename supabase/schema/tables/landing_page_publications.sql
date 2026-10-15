@@ -9,6 +9,7 @@ CREATE TABLE public.landing_page_publications (
     image_paths jsonb DEFAULT '{}'::jsonb NOT NULL,
     published_at timestamp with time zone NOT NULL,
     first_published_at timestamp with time zone NOT NULL,
+    share_image_id uuid,
     CONSTRAINT chk_landing_page_publications_first_not_after_latest CHECK ((first_published_at <= published_at))
 );
 
@@ -38,7 +39,7 @@ COMMENT ON COLUMN public.landing_page_publications.sections_md5 IS 'md5 of secti
 -- Name: COLUMN landing_page_publications.image_paths; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_publications.image_paths IS 'Each catalogue entry the live sections show, as {entry id: object name in the landing-images bucket}, derived by apply_landing_image_paths — what the public pages paint, readable without reading the admin-only catalogue.';
+COMMENT ON COLUMN public.landing_page_publications.image_paths IS 'Each catalogue entry the live sections and share picture show, as {entry id: object name in the landing-images bucket}, derived by apply_landing_image_paths — what the public pages paint, readable without reading the admin-only catalogue.';
 
 
 --
@@ -53,6 +54,13 @@ COMMENT ON COLUMN public.landing_page_publications.published_at IS 'When the ver
 --
 
 COMMENT ON COLUMN public.landing_page_publications.first_published_at IS 'When the page went live, kept by every republish while it stays live. An unpublish deletes the row and takes the date with it.';
+
+
+--
+-- Name: COLUMN landing_page_publications.share_image_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_publications.share_image_id IS 'The live share picture, copied from the working copy by publishing. The catalogue''s replace and removal change it without a republish, as they do the pictures in sections.';
 
 
 --

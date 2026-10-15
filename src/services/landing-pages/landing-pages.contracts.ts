@@ -6,6 +6,7 @@ import {
 } from "@/lib/constants/locales";
 import {
   LANDING_ID_PATTERN,
+  landingId,
   landingSections,
   landingSectionTextsSchema,
   type LandingSection,
@@ -28,6 +29,12 @@ import { slugify } from "@/lib/slug";
  * Each language version holds a title, a summary, a slug and the text of every
  * section, keyed by section id. Versions are listed in `SUPPORTED_LOCALES`
  * order everywhere.
+ *
+ * **The share card may be overridden, in the same two halves.** A share
+ * picture is structure (a catalogue entry, once per page); a share title and
+ * the share picture's alt text are words (per language). All three are
+ * optional and none counts toward completeness: absent, the card is derived
+ * from the page (`landingShareCard`).
  */
 
 // ---------------------------------------------------------------------------
@@ -90,6 +97,14 @@ export const LANDING_TITLE_MAX_LENGTH = 120;
 export const LANDING_SUMMARY_MAX_LENGTH = 160;
 
 /**
+ * The longest share title the database stores. A share card's length, not a
+ * page title's: Facebook, LinkedIn and X cut a card's title at about 60–70
+ * characters, so a longer one is truncated mid-word in the feed it was
+ * written for.
+ */
+export const LANDING_SHARE_TITLE_MAX_LENGTH = 70;
+
+/**
  * One language version as an admin saves it.
  *
  * `slug` is optional: left out (or blank), the version keeps the address it
@@ -97,7 +112,10 @@ export const LANDING_SUMMARY_MAX_LENGTH = 160;
  * slug may change at any time; a live language's new address goes live with
  * the next publish. `sectionTexts` is the whole of this language's words,
  * keyed by section id, and is checked against the page's structure by the
- * writer that has it.
+ * writer that has it. `shareTitle` and `shareImageAlt` are the share card's
+ * words in this language; like the section words, a save carries the whole
+ * of them, so one left out is saved empty: the card then takes the page
+ * title, and its picture's alt text the card's title.
  */
 export const landingVersionInput = z.object({
   locale: z.enum(SUPPORTED_LOCALES),
@@ -115,6 +133,15 @@ export const landingVersionInput = z.object({
     .optional()
     .transform((slug) => (slug === "" ? undefined : slug)),
   sectionTexts: z.record(z.string(), z.unknown()),
+  shareTitle: z
+    .string()
+    .trim()
+    .max(
+      LANDING_SHARE_TITLE_MAX_LENGTH,
+      `A share title is at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters`,
+    )
+    .default(""),
+  shareImageAlt: z.string().trim().default(""),
 });
 
 export type LandingVersionInput = z.input<typeof landingVersionInput>;
@@ -149,6 +176,15 @@ const distinctLocales = (versions: readonly { locale: string }[]) =>
   new Set(versions.map((version) => version.locale)).size === versions.length;
 
 /**
+ * The share picture as a structure write carries it: a catalogue entry id, or
+ * null for none. The structure is sent whole, so leaving it out is none.
+ */
+const landingShareImageId = landingId
+  .nullable()
+  .optional()
+  .transform((id) => id ?? null);
+
+/**
  * A page's working copy whole, as a page is created: the structure and the
  * whole version set, replacing what is stored — a language left out is
  * removed. At least one version, each with a title; the rest may wait, because
@@ -157,6 +193,7 @@ const distinctLocales = (versions: readonly { locale: string }[]) =>
 export const landingPageInput = z
   .object({
     sections: landingSections,
+    shareImageId: landingShareImageId,
     versions: z
       .array(landingVersionInput)
       .min(1, "A landing page needs a title")
@@ -171,11 +208,19 @@ export const landingPageInput = z
       ]);
       if (parsed !== null) versions.push(parsed);
     });
-    return { sections: input.sections, versions };
+    return { sections: input.sections, shareImageId: input.shareImageId, versions };
   });
 
 export type LandingPageInput = z.input<typeof landingPageInput>;
 export type ParsedLandingPage = z.output<typeof landingPageInput>;
+
+/** A page's structure as a structure write sends it: the sections and the share picture. */
+export const landingStructureInput = z.object({
+  sections: landingSections,
+  shareImageId: landingShareImageId,
+});
+
+export type LandingStructureInput = z.input<typeof landingStructureInput>;
 
 // ---------------------------------------------------------------------------
 // What the reads return
@@ -190,6 +235,10 @@ export interface LandingPageDraftVersion {
   /** The empty string while unwritten. */
   slug: string;
   sectionTexts: LandingSectionTexts;
+  /** The share card's title in this language; the empty string uses the title. */
+  shareTitle: string;
+  /** The share picture's alt text in this language; the empty string while unwritten. */
+  shareImageAlt: string;
   /**
    * What the version still needs before publishing takes it, as paths
    * (`missingInLandingVersion`); empty when complete.
@@ -222,6 +271,12 @@ export interface LandingPageDraft extends LandingPageSaver {
    * `landing_image`. Derived by the database from the sections.
    */
   imagePaths: Record<string, string>;
+  /**
+   * The share picture's catalogue entry, which the link preview shows in
+   * place of the hero's picture, or null to derive it. Its path is in
+   * `imagePaths`.
+   */
+  shareImageId: string | null;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: LandingPageDraftVersion[];
   createdAt: string;
@@ -240,6 +295,9 @@ export interface PublishedLandingVersionSummary {
 /** One live language version whole. */
 export interface PublishedLandingVersion extends PublishedLandingVersionSummary {
   sectionTexts: LandingSectionTexts;
+  /** As on the working copy. */
+  shareTitle: string;
+  shareImageAlt: string;
 }
 
 /** A published page as a list reads it — the sitemap, `llms.txt`. */
@@ -258,8 +316,10 @@ export interface PublishedLandingPageSummary {
 export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
   sections: LandingSection[];
-  /** As on the working copy, for the live sections. */
+  /** As on the working copy, for the live sections and share picture. */
   imagePaths: Record<string, string>;
+  /** As on the working copy. */
+  shareImageId: string | null;
   versions: PublishedLandingVersion[];
 }
 
@@ -403,6 +463,8 @@ export interface ComparableLandingVersion {
   title: string;
   summary: string;
   slug: string;
+  share_title: string;
+  share_image_alt: string;
   /** md5 of the section texts, generated by the database on both tables. */
   texts_md5: string | null;
 }
@@ -411,6 +473,8 @@ export interface ComparableLandingVersion {
 export interface ComparableLandingCopy {
   /** md5 of the structure, generated by the database on both tables. */
   sections_md5: string | null;
+  /** The share picture: structure, kept beside the sections rather than in them. */
+  share_image_id: string | null;
   /**
    * The versions publishing would copy — for the working copy, its complete
    * ones alone; for the published copy, all of them.
@@ -423,8 +487,9 @@ export interface ComparableLandingCopy {
  * published copy, because a page that is not live has nothing for its edits
  * to be "unpublished" against.
  *
- * Compared on the structure's digest and on each version's short fields and
- * words' digest, so the admin list never reads a page's words. The working
+ * Compared on the structure's digest and share picture, and on each
+ * version's short fields (the share card's words among them) and words'
+ * digest, so the admin list never reads a page's words. The working
  * side is the versions publishing would copy, so a half-written new language
  * is not a change readers would see, and a live language whose working
  * version is no longer complete is one (publishing would take it down). A
@@ -438,6 +503,7 @@ export function hasUnpublishedChanges(
   if (
     draft.sections_md5 === null ||
     draft.sections_md5 !== publication.sections_md5 ||
+    draft.share_image_id !== publication.share_image_id ||
     draft.versions.length !== publication.versions.length
   ) {
     return true;
@@ -453,6 +519,8 @@ export function hasUnpublishedChanges(
       version.title !== published.title ||
       version.summary !== published.summary ||
       version.slug !== published.slug ||
+      version.share_title !== published.share_title ||
+      version.share_image_alt !== published.share_image_alt ||
       version.texts_md5 !== published.texts_md5
     );
   });

@@ -8,6 +8,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { landingPageHref } from "@/components/landing-pages/landing-page-address";
+import {
+  draftShareCard,
+  landingShareCardInUse,
+} from "@/components/landing-pages/landing-share-card";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -53,9 +57,10 @@ export interface LandingPageStatusActions {
  * what readers see.
  *
  * Top to bottom: where the page stands with readers and who last saved it
- * (and through which AI app); the publishing row; then one card per written
- * language — complete or what it still needs, its address (and, when that
- * differs from the live one, that the next publish moves it), its preview of
+ * (and through which AI app); the publishing row; the link preview the page
+ * is shared with; then one card per written language — complete or what it
+ * still needs, its address (and, when that differs from the live one, that
+ * the next publish moves it), its share title when it has one, its preview of
  * the saved working copy and, while it is live, its live page.
  *
  * **Publish says what it would do before it does it**: the confirm lists the
@@ -96,6 +101,8 @@ export function LandingPageStatusPage({
       </div>
 
       <Publishing page={page} actions={actions} />
+
+      <ShareCard draft={page.draft} />
 
       <section aria-labelledby="landing-page-languages" className="space-y-3">
         <h2 id="landing-page-languages" className="text-lg font-semibold">
@@ -328,6 +335,62 @@ function slugPath(slug: string, locale: SupportedLocale): string {
 }
 
 /**
+ * Which link preview the saved page is shared with: derived from the page, or
+ * a custom title and/or picture the admin's AI app set. An override does not
+ * follow later edits to the page title or the hero, so it is stated plainly
+ * here, where a stale one would be noticed. The picture is the page's, the
+ * title each language's own: the languages with a share title are named, and
+ * each card below shows it.
+ */
+function ShareCard({ draft }: { draft: LandingPageDraft }) {
+  const t = useTranslations("admin.landingPages.statusPage.shareCard");
+  const conjunction = new Intl.ListFormat(formattingLocale(useLocale()), {
+    type: "conjunction",
+  });
+  const languageName = useLanguageNames();
+
+  const cards = draft.versions.map((version) => ({
+    locale: version.locale,
+    card: draftShareCard(draft, version),
+  }));
+  const customTitles = cards
+    .filter(({ card }) => card.titleSource === "custom")
+    .map(({ locale }) => languageName(locale, LOCALE_CONFIG[locale].label));
+  // The picture is the page's, so any version's card names it.
+  const picture = cards[0]?.card.picture.source ?? "site";
+  const inUse = landingShareCardInUse({
+    title: customTitles.length > 0,
+    picture: picture === "custom",
+  });
+
+  let titleLine: string;
+  if (customTitles.length === 0) titleLine = t("titlePage");
+  else if (customTitles.length === cards.length) titleLine = t("titleCustomEvery");
+  else titleLine = t("titleCustomSome", { languages: conjunction.format(customTitles) });
+
+  return (
+    <section aria-labelledby="landing-page-share-card" className="space-y-3">
+      <h2 id="landing-page-share-card" className="text-lg font-semibold">
+        {t("heading")}
+      </h2>
+      <Card>
+        <CardContent className="space-y-3 p-6">
+          <StatusLine status="info">{t(`inUse.${inUse}`)}</StatusLine>
+          <ul className="space-y-0.5 text-sm">
+            <li>{t(`picture.${picture}`)}</li>
+            <li>{titleLine}</li>
+            <li>{t("description")}</li>
+          </ul>
+          {inUse !== "derived" && (
+            <p className="text-sm text-muted-foreground">{t("stale")}</p>
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+/**
  * One written language: complete or what it still needs, its address, its
  * preview and — while it is live — its live page. When the next publish would
  * move the language to a new address, the card warns that links to the old
@@ -428,6 +491,14 @@ function LanguageCard({
                 address: slugPath(movingFrom, version.locale),
               })}
             </StatusLine>
+          )}
+          {version.shareTitle !== "" && (
+            <p>
+              <span className="text-muted-foreground">
+                {t("statusPage.language.shareTitle")}{" "}
+              </span>
+              {version.shareTitle}
+            </p>
           )}
         </div>
       </CardContent>

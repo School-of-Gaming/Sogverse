@@ -788,12 +788,32 @@
           "stillNeeded": "Still needed:",
           "address": "Address:",
           "noAddress": "none yet",
-          "addressChanging": "Live at {address} now. The next publish moves it to this address, and links to the old one will stop working."
+          "addressChanging": "Live at {address} now. The next publish moves it to this address, and links to the old one will stop working.",
+          "shareTitle": "Share title:"
         },
         "missing": {
           "inSection": "Section {number} ({type}): {field}",
           "inItem": "Section {number} ({type}), {item}: {field}",
           "goneSection": "A section no longer on the page: {field}"
+        },
+        "shareCard": {
+          "heading": "Link preview",
+          "inUse": {
+            "derived": "Derived from the page.",
+            "customTitle": "Uses a custom title.",
+            "customPicture": "Uses a custom picture.",
+            "customTitleAndPicture": "Uses a custom title and a custom picture."
+          },
+          "picture": {
+            "custom": "Picture: the page's own share picture.",
+            "hero": "Picture: the opening section's picture.",
+            "site": "Picture: the site-wide card, because the opening section has no picture."
+          },
+          "titlePage": "Title: each language's page title.",
+          "titleCustomEvery": "Title: a custom share title in every language.",
+          "titleCustomSome": "Title: a custom share title in {languages}, and the page title in the other languages.",
+          "description": "Description: each language's summary.",
+          "stale": "A custom title or picture stays as it is when the page title or the opening section's picture changes. If it no longer fits the page, ask the AI app to clear it."
         }
       },
       "status": {

@@ -10,6 +10,8 @@ CREATE TABLE public.landing_page_publication_translations (
     slug text NOT NULL,
     section_texts jsonb NOT NULL,
     texts_md5 text GENERATED ALWAYS AS (md5((section_texts)::text)) STORED,
+    share_title text DEFAULT ''::text NOT NULL,
+    share_image_alt text DEFAULT ''::text NOT NULL,
     CONSTRAINT chk_landing_page_publication_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT chk_landing_page_publication_translations_slug_format CHECK (((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text) AND (char_length(slug) <= 80) AND (slug !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text))),
     CONSTRAINT chk_landing_page_publication_translations_summary_present CHECK ((btrim(summary) <> ''::text)),
@@ -30,6 +32,20 @@ COMMENT ON TABLE public.landing_page_publication_translations IS 'One language v
 --
 
 COMMENT ON COLUMN public.landing_page_publication_translations.texts_md5 IS 'md5 of section_texts, generated — compared with the working version''s own.';
+
+
+--
+-- Name: COLUMN landing_page_publication_translations.share_title; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_publication_translations.share_title IS 'The live link preview''s title in this language, copied by publishing; the empty string uses the title.';
+
+
+--
+-- Name: COLUMN landing_page_publication_translations.share_image_alt; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_publication_translations.share_image_alt IS 'The live share picture''s alt text in this language, copied by publishing; the empty string while unwritten.';
 
 
 --

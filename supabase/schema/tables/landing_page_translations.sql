@@ -11,7 +11,10 @@ CREATE TABLE public.landing_page_translations (
     section_texts jsonb DEFAULT '{}'::jsonb NOT NULL,
     texts_md5 text GENERATED ALWAYS AS (md5((section_texts)::text)) STORED,
     is_complete boolean DEFAULT false NOT NULL,
+    share_title text DEFAULT ''::text NOT NULL,
+    share_image_alt text DEFAULT ''::text NOT NULL,
     CONSTRAINT chk_landing_page_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
+    CONSTRAINT chk_landing_page_translations_share_title_length CHECK ((char_length(share_title) <= 70)),
     CONSTRAINT chk_landing_page_translations_slug_format CHECK (((slug = ''::text) OR ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text) AND (char_length(slug) <= 80) AND (slug !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text)))),
     CONSTRAINT chk_landing_page_translations_summary_length CHECK ((char_length(summary) <= 160)),
     CONSTRAINT chk_landing_page_translations_texts_object CHECK ((jsonb_typeof(section_texts) = 'object'::text)),
@@ -74,6 +77,20 @@ COMMENT ON COLUMN public.landing_page_translations.texts_md5 IS 'md5 of section_
 --
 
 COMMENT ON COLUMN public.landing_page_translations.is_complete IS 'Whether publishing would take this version: title, summary and slug written and every section''s required text written, by landing_version_missing against the page''s current structure. Derived by apply_landing_version_completeness on every write of the row, and recomputed for every version when the structure changes; never written by anything else.';
+
+
+--
+-- Name: COLUMN landing_page_translations.share_title; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_translations.share_title IS 'The link preview''s title in this language, in place of the page title, or the empty string to use the page title. At most 70 characters, a share card''s length. Optional: completeness never reads it.';
+
+
+--
+-- Name: COLUMN landing_page_translations.share_image_alt; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_translations.share_image_alt IS 'The share picture''s alt text in this language, or the empty string while unwritten, when the preview falls back to the card''s title. Optional: completeness never reads it.';
 
 
 --

@@ -1,8 +1,8 @@
 --
--- Name: save_landing_page(uuid, jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
+-- Name: save_landing_page(uuid, jsonb, jsonb, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) RETURNS uuid
+CREATE FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid DEFAULT NULL::uuid) RETURNS uuid
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -37,8 +37,11 @@ BEGIN
   -- Written first, so an id no page has is refused before any version is, the
   -- row's updated_at and saver move, and the row lock publish takes orders
   -- this save wholly before or after a publish. The structure trigger drops
-  -- the text of any section this structure no longer holds.
-  UPDATE public.landing_pages SET sections = p_sections
+  -- the text of any section this structure no longer holds; the image-path
+  -- trigger refuses a share picture that is gone or of another purpose.
+  UPDATE public.landing_pages
+     SET sections       = p_sections,
+         share_image_id = p_share_image_id
   WHERE id = p_id;
 
   IF NOT FOUND THEN
@@ -62,7 +65,9 @@ BEGIN
       v_version->>'summary',
       v_version->>'slug',
       v_version->>'default_slug',
-      v_version->'section_texts');
+      v_version->'section_texts',
+      v_version->>'share_title',
+      v_version->>'share_image_alt');
   END LOOP;
 
   RETURN p_id;
@@ -71,18 +76,18 @@ $$;
 
 
 --
--- Name: FUNCTION save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) IS 'Admin-gated save of a landing page''s WHOLE working copy; returns its id. Never touches the published copy. p_sections is the structure (landing_sections_problem names what is wrong with one, as check_violation). p_versions is the whole version set, a JSON array of {locale, title, summary, slug, default_slug, section_texts}, replacing what was stored: a locale it omits is removed. At least one version, each written by write_landing_page_version''s rules; a locale named twice, or p_versions not an array, raises 22023. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid) IS 'Admin-gated save of a landing page''s WHOLE working copy; returns its id. Never touches the published copy. p_sections is the structure (landing_sections_problem names what is wrong with one, as check_violation), and p_share_image_id the share picture beside it, NULL for none. p_versions is the whole version set, a JSON array of {locale, title, summary, slug, default_slug, section_texts, share_title, share_image_alt}, replacing what was stored: a locale it omits is removed. At least one version, each written by write_landing_page_version''s rules; a locale named twice, or p_versions not an array, raises 22023. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --
--- Name: FUNCTION save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) TO authenticated;
-GRANT ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb, p_share_image_id uuid) TO service_role;
 
 

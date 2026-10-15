@@ -126,11 +126,14 @@ describe("unpublished changes", () => {
     summary: "S",
     slug: "s",
     texts_md5: md5,
+    share_title: "",
+    share_image_alt: "",
   });
   const copy = (
     versions: ComparableLandingCopy["versions"],
     sections_md5: string | null = "s",
-  ): ComparableLandingCopy => ({ sections_md5, versions });
+    share_image_id: string | null = null,
+  ): ComparableLandingCopy => ({ sections_md5, share_image_id, versions });
 
   it("is false for a page that is not live", () => {
     expect(hasUnpublishedChanges(copy([v("en")]), null)).toBe(false);
@@ -147,6 +150,17 @@ describe("unpublished changes", () => {
     expect(hasUnpublishedChanges(copy([{ ...v("en"), slug: "x" }]), live)).toBe(true);
     expect(hasUnpublishedChanges(copy([v("en"), v("fi")]), live)).toBe(true);
     expect(hasUnpublishedChanges(copy([]), live)).toBe(true);
+  });
+
+  it("is true for a changed share picture, share title or share picture alt text", () => {
+    const live = copy([v("en")]);
+    expect(hasUnpublishedChanges(copy([v("en")], "s", I.hero), live)).toBe(true);
+    expect(hasUnpublishedChanges(live, copy([v("en")], "s", I.hero))).toBe(true);
+    expect(hasUnpublishedChanges(copy([{ ...v("en"), share_title: "Share" }]), live)).toBe(true);
+    expect(hasUnpublishedChanges(copy([{ ...v("en"), share_image_alt: "Alt" }]), live)).toBe(true);
+    expect(
+      hasUnpublishedChanges(copy([v("en")], "s", I.hero), copy([v("en")], "s", I.hero)),
+    ).toBe(false);
   });
 
   it("counts a digest the database failed to produce as a change", () => {

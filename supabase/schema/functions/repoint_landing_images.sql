@@ -18,15 +18,21 @@ BEGIN
       USING ERRCODE = 'null_value_not_allowed';
   END IF;
 
+  -- image_paths names the share picture as well as the sections' pictures,
+  -- so a copy whose only use of p_from is its share picture is found too;
+  -- sections is set either way, which moves the working copy's last-saved
+  -- time and saver as for any picture.
   WITH drafts AS (
     UPDATE public.landing_pages
-       SET sections = public.landing_sections_repointed(sections, p_from, p_to)
+       SET sections       = public.landing_sections_repointed(sections, p_from, p_to),
+           share_image_id = CASE WHEN share_image_id = p_from THEN p_to ELSE share_image_id END
      WHERE image_paths ? p_from::text
     RETURNING id
   ),
   live AS (
     UPDATE public.landing_page_publications
-       SET sections = public.landing_sections_repointed(sections, p_from, p_to)
+       SET sections       = public.landing_sections_repointed(sections, p_from, p_to),
+           share_image_id = CASE WHEN share_image_id = p_from THEN p_to ELSE share_image_id END
      WHERE image_paths ? p_from::text
     RETURNING page_id
   )
@@ -42,7 +48,7 @@ $$;
 -- Name: FUNCTION repoint_landing_images(p_from uuid, p_to uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The image-path trigger re-derives each copy''s paths and refuses a p_to that is gone or not a landing_image. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — in the sections or as the share picture, working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The image-path trigger re-derives each copy''s paths and refuses a p_to that is gone or not a landing_image. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --
