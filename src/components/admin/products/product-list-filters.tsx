@@ -99,7 +99,7 @@ export function ProductListFilters({
   );
 
   // Names the gedu options. Fires whatever the type, including one whose
-  // products carry no assignments — the query is cheap and cached, and gating
+  // products seat no gedu — the query is cheap and cached, and gating
   // it would mean a hook called conditionally.
   const { data: gedus } = useUsersByRole("gedu");
 

@@ -254,17 +254,19 @@ function buildProductsByTypeQuery(
 }
 
 /**
- * The admin product list's read: the same row, plus four empty embeds that
+ * The admin product list's read: the same row, plus three empty embeds that
  * exist only to be filtered on.
  *
  * An empty embed (`alias:table()`) puts nothing in the response; paired with a
  * `not.is.null` filter on its alias it keeps only the products that have a
  * matching child row. That is how a filter over a product's *children* — any of
- * its names, any of its weekdays, any of its educators — stays one ordinary
- * PostgREST parameter on the products read, ANDed with the rest, rather than a
- * second query. Each is aliased apart from the embed the row renders, because
- * a filter on that one would narrow the rendered children too: a club on
- * Monday and Wednesday filtered to Monday must still show both days.
+ * its names, any of its weekdays, its location — stays one ordinary PostgREST
+ * parameter on the products read, ANDed with the rest, rather than a second
+ * query. Each is aliased apart from the embed the row renders, because a filter
+ * on that one would narrow the rendered children too: a club on Monday and
+ * Wednesday filtered to Monday must still show both days. The gedu filter is
+ * not an embed, because a gedu's seat lives in one of two tables; the page read
+ * says how it narrows instead.
  *
  * It reads `products` itself rather than a view so the row type stays the
  * table's own: a view's columns all come back nullable, and the row renders
@@ -279,7 +281,7 @@ function buildAdminProductListQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), name_match:product_translations(), day_match:schedule_slots(), gedu_match:gedu_group_assignments(), municipality_match:locations()",
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), name_match:product_translations(), day_match:schedule_slots(), municipality_match:locations()",
       withCount ? { count: "exact" } : undefined,
     );
 }
@@ -319,7 +321,10 @@ export interface AdminProductListFilters {
   search: string;
   /** A weekday the product must be scheduled on (0 = Monday), or null. */
   weekday: number | null;
-  /** A gedu assigned to any group of the product, or null. */
+  /**
+   * A gedu holding a standing seat on any group of the product — assigned
+   * (primary or assistant) or a trainee — or null.
+   */
   geduId: string | null;
   /** The language the product is delivered in, or null. */
   spokenLanguage: SpokenLanguageCode | null;
@@ -637,7 +642,9 @@ export class ProductsService {
    * filters over a product's children are each an ordinary PostgREST
    * parameter the database ANDs, and `keysetPage` owns the order, the resume
    * filter and the limit — and with them the query's only top-level `or`,
-   * which is why the municipality filter's `or` is scoped to its embed.
+   * which is why the municipality filter's `or` is scoped to its embed. The
+   * gedu filter alone costs a small read first — the products the gedu is
+   * seated on — and then narrows the list to those ids, ANDed like the rest.
    */
   async getAdminListPage(
     filters: AdminProductListFilters,
@@ -668,9 +675,7 @@ export class ProductsService {
         .not("day_match", "is", null);
     }
     if (filters.geduId !== null) {
-      query = query
-        .eq("gedu_match.gedu_id", filters.geduId)
-        .not("gedu_match", "is", null);
+      query = query.in("id", await this.geduSeatProductIds(filters.geduId));
     }
     if (filters.municipalityId !== null) {
       // The location itself when it is the municipality, or the site under it.
@@ -691,6 +696,39 @@ export class ProductsService {
 
     if (error) throw error;
     return { rows: data, total: withCount ? count : null };
+  }
+
+  /**
+   * The products a gedu holds a standing seat on: an assignment (primary or
+   * assistant) or a trainee seat, the two tables a seat can live in. The gedu
+   * filter asks who is on a product, and a trainee is on it as much as a lead
+   * is — the difference is pay and permissions, not presence. A substitution is
+   * not a seat: a sub covering one afternoon is not one of a club's educators.
+   *
+   * Read first and handed to the list as `id=in.(…)` because matching either
+   * table is an `or` across two embeds, which would have to sit at the top
+   * level — where the keyset resume filter keeps the query's only `or`. Both
+   * reads are by an indexed `gedu_id` and bounded by one seat per product, and
+   * an empty answer becomes `in.()`, which keeps no product.
+   */
+  private async geduSeatProductIds(geduId: string): Promise<string[]> {
+    const [assignments, trainees] = await Promise.all([
+      this.supabase
+        .from("gedu_group_assignments")
+        .select("product_id")
+        .eq("gedu_id", geduId),
+      this.supabase
+        .from("gedu_group_trainees")
+        .select("product_id")
+        .eq("gedu_id", geduId),
+    ]);
+    if (assignments.error) throw assignments.error;
+    if (trainees.error) throw trainees.error;
+    return [
+      ...new Set(
+        [...assignments.data, ...trainees.data].map((seat) => seat.product_id),
+      ),
+    ];
   }
 
   /**

@@ -64,11 +64,11 @@ const SUBSTITUTION_BRANCH = [
 const ASSIGNMENT_ONLY = new Map<string, string>([
   [
     "services/products/products.service.ts",
-    "The admin product list's gedu filter: an empty `gedu_group_assignments` embed the read narrows on, so an admin can list the products a gedu is ASSIGNED to. It gates nothing, and a substitution is not a standing property of a product — a sub who substituted one afternoon is not one of a club's educators, and listing them as one would make the filter answer a different question from the one it asks.",
+    "The admin product list's gedu filter: it reads the products a gedu holds a standing seat on — from `gedu_group_assignments`, beside the trainee seats — and narrows the list to them, so an admin can list the products a gedu is on. It gates nothing, and a substitution is not a standing property of a product — a sub who substituted one afternoon is not one of a club's educators, and listing them as one would make the filter answer a different question from the one it asks.",
   ],
   [
     "services/assignments/assignments.service.ts",
-    "Names the table in prose, to say which rows the assignment arm of `get_my_assigned_products` comes from. The substitution arm of that same read is carried on the row's own `kind` discriminator, which this file maps; there is no gate here to widen.",
+    "Names the table in prose, to say which rows the assignment arm of `get_my_assigned_products` comes from — the substitution arm of that read is carried on the row's own `kind` discriminator, which this file maps — and reads it directly for the admin user page's list of a gedu's standing seats, beside the trainee seats. That read LISTS the groups a gedu is staff on and gates nothing; a sub's one afternoon is not a seat on the group. There is no gate here to widen.",
   ],
 ]);
 

@@ -139,4 +139,6 @@ aliased empty embed, never on the embed the row renders.** `alias:child_table()`
 `alias=not.is.null` keeps the rows with a matching child and puts nothing in the response;
 filtering the rendered embed instead would also narrow the children painted on the row. An
 `or` among a child's own columns is scoped to that embed, so it does not compete with the
-cursor's.
+cursor's. A match against children in *either of two tables* is an `or` across embeds,
+which only the top level can hold — so it reads the matching parent ids first and filters
+`id=in.(…)`, one more parameter the cursor composes with.

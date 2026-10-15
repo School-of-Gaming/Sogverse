@@ -22,6 +22,10 @@ import {
 // every filter arrives as its own parameter, so none of them can collide with
 // the cursor's top-level `or`.
 
+const PRODUCTS_PATH = "/rest/v1/products";
+const ASSIGNMENTS_PATH = "/rest/v1/gedu_group_assignments";
+const TRAINEES_PATH = "/rest/v1/gedu_group_trainees";
+
 const NO_FILTERS: AdminProductListFilters = {
   type: null,
   search: "",
@@ -45,6 +49,35 @@ describe("ProductsService.getAdminListPage", () => {
 
   function firstUrl(): URL {
     return requestedUrl(fetchMock.mock.calls[0][0]);
+  }
+
+  /** Every URL the read requested of one table. */
+  function urlsOf(path: string): URL[] {
+    return fetchMock.mock.calls
+      .map(([input]) => requestedUrl(input))
+      .filter((url) => url.pathname === path);
+  }
+
+  /**
+   * Answers each seat table with the product ids given for it, or an error,
+   * and the products read with one page.
+   */
+  function mockSeats(
+    assignments: readonly string[] | "error",
+    trainees: readonly string[] | "error",
+  ) {
+    fetchMock.mockImplementation((input) => {
+      const path = requestedUrl(input).pathname;
+      if (path === PRODUCTS_PATH) {
+        return Promise.resolve(postgrestPage(listRows(1), { from: 0, total: 1 }));
+      }
+      const ids = path === ASSIGNMENTS_PATH ? assignments : trainees;
+      return Promise.resolve(
+        ids === "error"
+          ? postgrestError("boom")
+          : postgrestJson(ids.map((product_id) => ({ product_id }))),
+      );
+    });
   }
 
   /** The count preference the read asked for, or "null" when it asked for none. */
@@ -180,15 +213,73 @@ describe("ProductsService.getAdminListPage", () => {
     expect(url.searchParams.has("schedule_slots.weekday")).toBe(false);
   });
 
-  it("filters the gedu on its own assignment embed", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+  // A gedu's seat is an assignment or a trainee seat — two tables, so an `or`
+  // across two embeds, which only the top level could hold. The products they
+  // are seated on are read first and the list is narrowed to those ids.
+  it("reads the gedu's seats from both seat tables, by the gedu's id", async () => {
+    mockSeats(["product-a"], ["product-b"]);
 
     await service.getAdminListPage({ ...NO_FILTERS, geduId: "gedu-1" });
 
-    const url = firstUrl();
-    expect(url.searchParams.get("gedu_match.gedu_id")).toBe("eq.gedu-1");
-    expect(url.searchParams.get("gedu_match")).toBe("not.is.null");
+    for (const path of [ASSIGNMENTS_PATH, TRAINEES_PATH]) {
+      const [url] = urlsOf(path);
+      expect(url.searchParams.get("gedu_id")).toBe("eq.gedu-1");
+      expect(url.searchParams.get("select")).toBe("product_id");
+    }
   });
+
+  it("narrows the list to the products the gedu is assigned to or a trainee on", async () => {
+    mockSeats(["product-a", "product-c"], ["product-b"]);
+
+    await service.getAdminListPage({ ...NO_FILTERS, geduId: "gedu-1" });
+
+    const [url] = urlsOf(PRODUCTS_PATH);
+    expect(url.searchParams.get("id")).toBe("in.(product-a,product-c,product-b)");
+    expect(url.searchParams.getAll("or")).toEqual([]);
+  });
+
+  it("matches a gedu who holds only trainee seats", async () => {
+    mockSeats([], ["product-b"]);
+
+    await service.getAdminListPage({ ...NO_FILTERS, geduId: "gedu-1" });
+
+    expect(urlsOf(PRODUCTS_PATH)[0].searchParams.get("id")).toBe("in.(product-b)");
+  });
+
+  // An empty list keeps no product — never "no filter".
+  it("keeps no product for a gedu with no seat anywhere", async () => {
+    mockSeats([], []);
+
+    await service.getAdminListPage({ ...NO_FILTERS, geduId: "gedu-1" });
+
+    expect(urlsOf(PRODUCTS_PATH)[0].searchParams.get("id")).toBe("in.()");
+  });
+
+  it("keeps the cursor's or the only top-level one under the gedu filter", async () => {
+    mockSeats(["product-a"], []);
+
+    await service.getAdminListPage(
+      { ...NO_FILTERS, geduId: "gedu-1" },
+      { cursor: { createdAt: "2026-01-02T00:00:00.000Z", id: "product-24" } },
+    );
+
+    expect(urlsOf(PRODUCTS_PATH)[0].searchParams.getAll("or")).toHaveLength(1);
+  });
+
+  it.each([
+    ["assignments", "error", []],
+    ["trainee seats", [], "error"],
+  ] as const)(
+    "throws when the %s read fails, rather than listing fewer products",
+    async (_table, assignments, trainees) => {
+      mockSeats(assignments, trainees);
+
+      await expect(
+        service.getAdminListPage({ ...NO_FILTERS, geduId: "gedu-1" }),
+      ).rejects.toMatchObject({ message: "boom" });
+      expect(urlsOf(PRODUCTS_PATH)).toEqual([]);
+    },
+  );
 
   // The location is the municipality itself (online) or a site under it. That
   // `or` is scoped to its embed, so the cursor keeps the only top-level one,
@@ -209,8 +300,8 @@ describe("ProductsService.getAdminListPage", () => {
     expect(url.searchParams.getAll("or")).toHaveLength(1);
   });
 
-  it("composes every filter into one request", async () => {
-    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+  it("composes every filter into one products request", async () => {
+    mockSeats(["product-a"], ["product-b"]);
 
     await service.getAdminListPage({
       type: "municipality_club",
@@ -221,12 +312,13 @@ describe("ProductsService.getAdminListPage", () => {
       municipalityId: "muni-1",
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const url = firstUrl();
+    const products = urlsOf(PRODUCTS_PATH);
+    expect(products).toHaveLength(1);
+    const [url] = products;
     expect(url.searchParams.get("product_type")).toBe("eq.municipality_club");
     expect(url.searchParams.get("name_match.name")).toBe("ilike.%kerho%");
     expect(url.searchParams.get("day_match.weekday")).toBe("eq.2");
-    expect(url.searchParams.get("gedu_match.gedu_id")).toBe("eq.gedu-1");
+    expect(url.searchParams.get("id")).toBe("in.(product-a,product-b)");
     expect(url.searchParams.get("spoken_language_code")).toBe("eq.fi");
     expect(url.searchParams.get("municipality_match.or")).toBe(
       '(id.eq."muni-1",parent_id.eq."muni-1")',

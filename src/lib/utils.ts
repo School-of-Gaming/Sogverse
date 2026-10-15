@@ -230,9 +230,13 @@ export function formatDateRange(
  * in. `today` is the caller's `YYYY-MM-DD`, from the same request-stable clock
  * as the rest of the page, so the server and the first client render agree.
  *
- * UTC-pinned like `formatDateOnly`, and the space either side of the dash is
- * normalised the way `formatTimeRange` normalises it, for the same hydration
- * reason.
+ * UTC-pinned like `formatDateOnly`. **The space either side of the dash is
+ * decided here, not taken from `Intl`**: the dash is spaced exactly when either
+ * end holds a space of its own ("13 Oct – 17 Nov", "19–23 Oct"). CLDR moves
+ * that spacing between releases — CLDR 48 spaced English's same-month range and
+ * unspaced Swedish's cross-month one — so taking it from the runtime would make
+ * the server's Node and the reader's browser disagree, and the hydration
+ * mismatch `formatTimeRange` normalises away would come back as a whole space.
  */
 export function formatCompactDateRange(
   startDate: string,
@@ -251,9 +255,16 @@ export function formatCompactDateRange(
   });
   const start = new Date(`${startDate}T00:00:00Z`);
   if (endDate <= startDate) return format.format(start);
-  return format
-    .formatRange(start, new Date(`${endDate}T00:00:00Z`))
-    .replace(RANGE_DASH_SPACE, " ");
+  const parts = format.formatRangeToParts(start, new Date(`${endDate}T00:00:00Z`));
+  const endHoldsSpace = parts.some(
+    (part) => part.source !== "shared" && part.type === "literal" && /\s/.test(part.value),
+  );
+  const dash = endHoldsSpace ? " – " : "–";
+  return parts
+    .map((part) =>
+      part.source === "shared" && part.value.includes("–") ? part.value.replace(/\s*–\s*/, dash) : part.value,
+    )
+    .join("");
 }
 
 

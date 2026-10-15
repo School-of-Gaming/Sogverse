@@ -17,11 +17,12 @@ import { deleteTestProducts } from "./product-helpers";
  *
  * The unit suite pins the URL the read builds; this pins what that URL means.
  * The filters over a product's children ride on aliased empty embeds with a
- * `not.is.null` on the alias, and the municipality filter is an `or` scoped to
- * one of them — semantics only PostgREST can confirm: that each keeps exactly
- * the products with a matching child, that it never narrows the children the
- * row renders, that they AND with each other, and that the count and the
- * keyset cursor agree with the filtered set.
+ * `not.is.null` on the alias, the municipality filter is an `or` scoped to
+ * one of them, and the gedu filter narrows to the ids of the products the gedu
+ * holds a seat on in either seat table — semantics only PostgREST can confirm:
+ * that each keeps exactly the products with a matching child, that it never
+ * narrows the children the row renders, that they AND with each other, and
+ * that the count and the keyset cursor agree with the filtered set.
  *
  * Every fixture is created far in the future, so on a newest-first list the
  * file's own products lead every page whatever other files have created in a
@@ -34,7 +35,7 @@ describe("ProductsService.getAdminListPage", () => {
 
   /** Online club, English: named in Finnish with an Ä, on Monday and Wednesday, taught by the seeded gedu. */
   const CLUB_MON_WED = "00000000-0000-0000-0000-0000000008d1";
-  /** Online club, Swedish, on Wednesday, untaught. */
+  /** Online club, Swedish, on Wednesday, with the seeded gedu as its only educator — a trainee. */
   const CLUB_WED_SV = "00000000-0000-0000-0000-0000000008d2";
   /** Camp at a site whose parent is the municipality, Finnish, Friday, taught by the seeded gedu. */
   const CAMP_AT_SITE = "00000000-0000-0000-0000-0000000008d3";
@@ -44,6 +45,8 @@ describe("ProductsService.getAdminListPage", () => {
   const MUNI_AT_REGION = "00000000-0000-0000-0000-0000000008d5";
   const GROUP_CLUB = "00000000-0000-0000-0000-0000000008d8";
   const GROUP_CAMP = "00000000-0000-0000-0000-0000000008d9";
+  const GROUP_TRAINEE = "00000000-0000-0000-0000-0000000008da";
+  const GROUPS = [GROUP_CLUB, GROUP_CAMP, GROUP_TRAINEE];
   const FILTER_FIXTURES = [
     CLUB_MON_WED,
     CLUB_WED_SV,
@@ -85,11 +88,9 @@ describe("ProductsService.getAdminListPage", () => {
   }
 
   async function cleanUp() {
-    await admin
-      .from("gedu_group_assignments")
-      .delete()
-      .in("group_id", [GROUP_CLUB, GROUP_CAMP]);
-    await admin.from("product_groups").delete().in("id", [GROUP_CLUB, GROUP_CAMP]);
+    await admin.from("gedu_group_assignments").delete().in("group_id", GROUPS);
+    await admin.from("gedu_group_trainees").delete().in("group_id", GROUPS);
+    await admin.from("product_groups").delete().in("id", GROUPS);
     await deleteTestProducts(admin, ALL_FIXTURES);
   }
 
@@ -214,6 +215,7 @@ describe("ProductsService.getAdminListPage", () => {
     const groups = await admin.from("product_groups").insert([
       { id: GROUP_CLUB, product_id: CLUB_MON_WED, name: "List crew" },
       { id: GROUP_CAMP, product_id: CAMP_AT_SITE, name: "List camp crew" },
+      { id: GROUP_TRAINEE, product_id: CLUB_WED_SV, name: "List trainee crew" },
     ]);
     if (groups.error) throw new Error(`seed groups failed: ${groups.error.message}`);
 
@@ -222,6 +224,11 @@ describe("ProductsService.getAdminListPage", () => {
       { group_id: GROUP_CAMP, product_id: CAMP_AT_SITE, gedu_id: TEST_IDS.GEDU, role: "primary" },
     ]);
     if (staff.error) throw new Error(`seed assignments failed: ${staff.error.message}`);
+
+    const trainee = await admin
+      .from("gedu_group_trainees")
+      .insert({ group_id: GROUP_TRAINEE, product_id: CLUB_WED_SV, gedu_id: TEST_IDS.GEDU });
+    if (trainee.error) throw new Error(`seed trainee failed: ${trainee.error.message}`);
   });
 
   afterAll(cleanUp);
@@ -242,11 +249,24 @@ describe("ProductsService.getAdminListPage", () => {
       expect(await fixturesMatching({ weekday: 6 })).toEqual([]);
     });
 
-    it("keeps the products the gedu is assigned to", async () => {
+    // Assigned on two products, a trainee on a third that has no other
+    // educator: a trainee seat alone is enough to match.
+    it("keeps the products the gedu is assigned to or a trainee on", async () => {
       expect(await fixturesMatching({ geduId: TEST_IDS.GEDU })).toEqual([
         CLUB_MON_WED,
+        CLUB_WED_SV,
         CAMP_AT_SITE,
       ]);
+    });
+
+    // Not a version-4 id, so no auth user — and so no seat — carries it.
+    it("keeps no product for a gedu seated nowhere", async () => {
+      const page = await service.getAdminListPage({
+        ...NO_FILTERS,
+        geduId: "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      });
+      expect(page.rows).toEqual([]);
+      expect(page.total).toBe(0);
     });
 
     it("keeps the products delivered in the spoken language", async () => {
@@ -285,6 +305,18 @@ describe("ProductsService.getAdminListPage", () => {
     expect(await fixturesMatching({ weekday: 0, geduId: TEST_IDS.GEDU })).toEqual([
       CLUB_MON_WED,
     ]);
+    // The trainee-only club ANDs like an assigned one: in on its weekday and
+    // its language, out under another type.
+    expect(await fixturesMatching({ weekday: 2, geduId: TEST_IDS.GEDU })).toEqual([
+      CLUB_MON_WED,
+      CLUB_WED_SV,
+    ]);
+    expect(
+      await fixturesMatching({ spokenLanguage: "sv", geduId: TEST_IDS.GEDU }),
+    ).toEqual([CLUB_WED_SV]);
+    expect(
+      await fixturesMatching({ search: "bravo", type: "camp", geduId: TEST_IDS.GEDU }),
+    ).toEqual([]);
     expect(
       await fixturesMatching({
         weekday: 0,

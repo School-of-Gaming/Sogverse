@@ -32,9 +32,14 @@ describe("product_list_facets", () => {
 
   /** A camp at a site under the seeded municipality, staffed by two gedus. */
   const CAMP = "00000000-0000-0000-0000-000000000fc1";
-  /** An online municipality club pointing at the municipality itself. */
+  /**
+   * An online municipality club pointing at the municipality itself, whose
+   * only educators are both gedus as trainees.
+   */
   const MUNI_CLUB = "00000000-0000-0000-0000-000000000fc2";
   const GROUP = "00000000-0000-0000-0000-000000000fc3";
+  const TRAINEE_GROUP = "00000000-0000-0000-0000-000000000fc4";
+  const GROUPS = [GROUP, TRAINEE_GROUP];
 
   /** A second gedu, so one gedu's reading can be shown to leave the other out. */
   let otherGeduId = "";
@@ -91,7 +96,8 @@ describe("product_list_facets", () => {
     await admin.from("customer_profiles").delete().eq("user_id", otherGeduId);
     await admin.from("gedu_profiles").insert({ user_id: otherGeduId, certified: true });
 
-    await admin.from("gedu_group_assignments").delete().eq("group_id", GROUP);
+    await admin.from("gedu_group_assignments").delete().in("group_id", GROUPS);
+    await admin.from("gedu_group_trainees").delete().in("group_id", GROUPS);
     await deleteTestProducts(admin, [CAMP, MUNI_CLUB]);
 
     const common = {
@@ -136,9 +142,10 @@ describe("product_list_facets", () => {
     });
     if (slot.error) throw new Error(`seed slot failed: ${slot.error.message}`);
 
-    const group = await admin
-      .from("product_groups")
-      .insert({ id: GROUP, product_id: CAMP, name: "Facet crew" });
+    const group = await admin.from("product_groups").insert([
+      { id: GROUP, product_id: CAMP, name: "Facet crew" },
+      { id: TRAINEE_GROUP, product_id: MUNI_CLUB, name: "Facet trainees" },
+    ]);
     if (group.error) throw new Error(`seed group failed: ${group.error.message}`);
 
     const staff = await admin.from("gedu_group_assignments").insert([
@@ -146,11 +153,18 @@ describe("product_list_facets", () => {
       { group_id: GROUP, product_id: CAMP, gedu_id: otherGeduId, role: "assistant" },
     ]);
     if (staff.error) throw new Error(`seed assignments failed: ${staff.error.message}`);
+
+    const trainees = await admin.from("gedu_group_trainees").insert([
+      { group_id: TRAINEE_GROUP, product_id: MUNI_CLUB, gedu_id: TEST_IDS.GEDU },
+      { group_id: TRAINEE_GROUP, product_id: MUNI_CLUB, gedu_id: otherGeduId },
+    ]);
+    if (trainees.error) throw new Error(`seed trainees failed: ${trainees.error.message}`);
   });
 
   afterAll(async () => {
-    await admin.from("gedu_group_assignments").delete().eq("group_id", GROUP);
-    await admin.from("product_groups").delete().eq("id", GROUP);
+    await admin.from("gedu_group_assignments").delete().in("group_id", GROUPS);
+    await admin.from("gedu_group_trainees").delete().in("group_id", GROUPS);
+    await admin.from("product_groups").delete().in("id", GROUPS);
     await deleteTestProducts(admin, [CAMP, MUNI_CLUB]);
     if (otherGeduId) await admin.auth.admin.deleteUser(otherGeduId);
   });
@@ -181,6 +195,18 @@ describe("product_list_facets", () => {
     );
   });
 
+  // The gedu filter matches a trainee seat as well as an assignment, so it
+  // offers a gedu seated only as a trainee — once, sorted with the rest.
+  it("offers a gedu seated only as a trainee", async () => {
+    const club = rowOf(await readAs(adminClient), "municipality_club");
+
+    expect(club.gedu_ids).toEqual(
+      expect.arrayContaining([TEST_IDS.GEDU, otherGeduId]),
+    );
+    expect(new Set(club.gedu_ids).size).toBe(club.gedu_ids.length);
+    expect(club.gedu_ids).toEqual([...club.gedu_ids].sort());
+  });
+
   // The two shapes a municipality club's location may take: a site whose
   // parent is the municipality, and the municipality itself. Both name the
   // municipality — never the site.
@@ -199,21 +225,29 @@ describe("product_list_facets", () => {
     }
   });
 
-  // The scope test. The same query, three callers: the gedu's own policy
-  // admits only their own assignment rows, so the other gedu on the same camp
-  // is absent from their array — and a parent with no participation on the
-  // camp reads no assignment at all. The counts are of products, which every
-  // caller may read, so they agree.
+  // The scope test. The same query, three callers: the gedu's own policies
+  // admit only their own assignment and trainee rows, so the other gedu on the
+  // same camp, and the other trainee on the same club, are absent from their
+  // arrays — and a parent with no participation on either reads no seat at
+  // all, a trainee seat being one no family path reaches. The counts are of
+  // products, which every caller may read, so they agree.
   it("answers each caller only from the rows its own policies admit", async () => {
-    const asAdmin = rowOf(await readAs(adminClient), "camp");
-    const asGedu = rowOf(await readAs(geduClient), "camp");
-    const asCustomer = rowOf(await readAs(customerClient), "camp");
+    const [asAdmin, asGedu, asCustomer] = await Promise.all(
+      [adminClient, geduClient, customerClient].map(readAs),
+    );
 
-    expect(asGedu.gedu_ids).toContain(TEST_IDS.GEDU);
-    expect(asGedu.gedu_ids).not.toContain(otherGeduId);
-    expect(asCustomer.gedu_ids).not.toContain(TEST_IDS.GEDU);
-    expect(asCustomer.gedu_ids).not.toContain(otherGeduId);
-    expect(asGedu.product_count).toBe(asAdmin.product_count);
+    for (const type of ["camp", "municipality_club"] as const) {
+      expect(rowOf(asAdmin, type).gedu_ids).toEqual(
+        expect.arrayContaining([TEST_IDS.GEDU, otherGeduId]),
+      );
+      expect(rowOf(asGedu, type).gedu_ids).toContain(TEST_IDS.GEDU);
+      expect(rowOf(asGedu, type).gedu_ids).not.toContain(otherGeduId);
+      expect(rowOf(asCustomer, type).gedu_ids).not.toContain(TEST_IDS.GEDU);
+      expect(rowOf(asCustomer, type).gedu_ids).not.toContain(otherGeduId);
+      expect(rowOf(asGedu, type).product_count).toBe(
+        rowOf(asAdmin, type).product_count,
+      );
+    }
   });
 
   it("is not readable without signing in", async () => {

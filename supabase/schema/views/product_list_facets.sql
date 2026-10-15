@@ -7,11 +7,17 @@ CREATE VIEW public.product_list_facets WITH (security_invoker='true') AS
     ( SELECT (count(*))::integer AS count
            FROM public.products p
           WHERE (p.product_type = t.product_type)) AS product_count,
-    ARRAY( SELECT DISTINCT a.gedu_id
-           FROM (public.gedu_group_assignments a
-             JOIN public.products p ON ((p.id = a.product_id)))
+    ARRAY( SELECT DISTINCT seat.gedu_id
+           FROM (( SELECT a.gedu_id,
+                    a.product_id
+                   FROM public.gedu_group_assignments a
+                UNION ALL
+                 SELECT tr.gedu_id,
+                    tr.product_id
+                   FROM public.gedu_group_trainees tr) seat
+             JOIN public.products p ON ((p.id = seat.product_id)))
           WHERE (p.product_type = t.product_type)
-          ORDER BY a.gedu_id) AS gedu_ids,
+          ORDER BY seat.gedu_id) AS gedu_ids,
     ARRAY( SELECT DISTINCT s.weekday
            FROM (public.schedule_slots s
              JOIN public.products p ON ((p.id = s.product_id)))
@@ -38,7 +44,7 @@ CREATE VIEW public.product_list_facets WITH (security_invoker='true') AS
 -- Name: VIEW product_list_facets; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON VIEW public.product_list_facets IS 'One row per product type for the admin product list: how many products of the type exist, and the values each of the list''s filters can offer under it (assigned gedus, schedule weekdays, spoken languages, municipalities). The list pages and filters its rows server-side, so this is where its type chips'' counts and its dropdown options come from — one request, bounded by the enum. SECURITY INVOKER, so the caller''s RLS on products, schedule_slots, gedu_group_assignments and locations decides every count and array exactly as a direct read of those tables would.';
+COMMENT ON VIEW public.product_list_facets IS 'One row per product type for the admin product list: how many products of the type exist, and the values each of the list''s filters can offer under it (seated gedus, schedule weekdays, spoken languages, municipalities). The list pages and filters its rows server-side, so this is where its type chips'' counts and its dropdown options come from — one request, bounded by the enum. SECURITY INVOKER, so the caller''s RLS on products, schedule_slots, gedu_group_assignments, gedu_group_trainees and locations decides every count and array exactly as a direct read of those tables would.';
 
 
 --
@@ -52,7 +58,7 @@ COMMENT ON COLUMN public.product_list_facets.product_count IS 'Every product of 
 -- Name: COLUMN product_list_facets.gedu_ids; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.product_list_facets.gedu_ids IS 'The distinct gedus assigned to any group of any product of this type, ascending. Empty, never NULL.';
+COMMENT ON COLUMN public.product_list_facets.gedu_ids IS 'The distinct gedus holding a standing seat — an assignment or a trainee seat — on any group of any product of this type, ascending. Empty, never NULL.';
 
 
 --
