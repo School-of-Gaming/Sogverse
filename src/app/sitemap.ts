@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { notFound } from "next/navigation";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { teamMemberAddress } from "@/components/team/team-address";
 import { teamMemberLocales } from "@/components/team/public/team-member-metadata";
@@ -17,6 +18,7 @@ import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { translatedPageLocales } from "@/lib/metadata/translated-page";
 import { productPagePath } from "@/lib/products/product-metadata";
+import { isProductionDeployment } from "@/lib/seo/deployment";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import { LibraryService } from "@/services/library/library.service";
 import { ProductsService } from "@/services/products/products.service";
@@ -261,7 +263,12 @@ async function productEntries(): Promise<MetadataRoute.Sitemap> {
  * landing page are the exceptions because publishing is what changes them,
  * and the publish time is stored.
  */
+/**
+ * Production only: a sitemap is a list whose purpose is pointing machines at
+ * pages, and no other deployment may be found (`src/lib/seo/deployment.ts`).
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (!isProductionDeployment()) notFound();
   const routes = ROUTE_ENTRIES.flatMap(({ pathname, entry }) =>
     localizedEntries(INDEXED_LOCALES, (locale) => urlFor(pathname, locale), entry),
   );
