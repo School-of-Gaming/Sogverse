@@ -202,6 +202,13 @@ export function ProductDetailsPage({
     timeZone,
   });
   const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
+  const voiceRoom = productVoiceRoom(product, product.product_translations);
+  // The same pick a family's "How to join" dialog makes, so a locale with no
+  // instructions of its own falls back exactly as theirs does.
+  const joinInstructions =
+    voiceRoom.mode === "none"
+      ? (resolveTranslation(voiceRoom.instructions, uiLocale)?.text ?? null)
+      : null;
   const topicName = topicLabel(product.topic);
 
   return (
@@ -238,7 +245,7 @@ export function ProductDetailsPage({
             seatCount={product.seat_count}
             waitlistEnabled={product.waitlist_enabled}
             voiceAvailable={voiceAvailable}
-            voiceRoom={productVoiceRoom(product, product.product_translations)}
+            voiceRoom={voiceRoom}
             voiceIsOpen={voice.voiceIsOpen}
             opensDate={voice.opensDate}
             opensTime={voice.opensTime}
@@ -249,7 +256,7 @@ export function ProductDetailsPage({
           product={product}
           plannedSessions={plannedSessions}
           topicName={topicName}
-          joinInstructions={tr?.voice_join_instructions ?? null}
+          joinInstructions={joinInstructions}
           uiLocale={uiLocale}
           timeZone={timeZone}
           t={t}
