@@ -7,6 +7,8 @@ import {
   LANDING_IMAGE_SIDES,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
+  LANDING_STICKY_SIDES,
+  LANDING_STICKY_TYPES,
   landingStructureProblem,
   missingInLandingVersion,
   type LandingSection,
@@ -364,6 +366,28 @@ export const MCP_LANDING_SECTIONS: {
 // Inputs built from the record
 // ---------------------------------------------------------------------------
 
+/** The types that may be sticky, by their names as the tools write them. */
+const STICKY_TYPES = LANDING_STICKY_TYPES.map(
+  (type) => `${type} (${LANDING_SECTIONS[type].label})`,
+).join(", ");
+
+/** How a sticky section is drawn, for the AI app. */
+export const STICKY_MANUAL = `A page may mark one section sticky, by giving it sticky: ${LANDING_STICKY_SIDES.join(" or ")}; only these types may be: ${STICKY_TYPES}. On wide screens (1280px and wider) the sticky section leaves the flow of the page and sits in a narrow column on that side, pinned under the site header as the reader scrolls, with every other section beside it. On narrower screens, phones included, it is drawn at the bottom of the page, after the last section, and the page draws a button directly under the hero that jumps down to it, in the section's own button's words. Where it sits in the list of sections makes no difference to where it is drawn; removing the section, or leaving sticky out, makes the page have none.`;
+
+/**
+ * The shared field every section takes, as the registry's `stickyField`; the
+ * structure rule then refuses it on a type that may not be sticky, with a
+ * sentence naming the types that may.
+ */
+const sticky = {
+  sticky: z
+    .enum(LANDING_STICKY_SIDES)
+    .optional()
+    .describe(
+      `Makes this the page's one sticky section, its column on this side on wide screens. Only for ${STICKY_TYPES}; leave it out on every other section.`,
+    ),
+};
+
 const { hero, ...afterHero } = MCP_LANDING_SECTIONS;
 const others = Object.values(afterHero);
 
@@ -375,8 +399,8 @@ const others = Object.values(afterHero);
 export const mcpLandingStructure = z
   .array(
     z.discriminatedUnion("type", [
-      hero.structure,
-      ...others.map((section) => section.structure),
+      hero.structure.extend(sticky),
+      ...others.map((section) => section.structure.extend(sticky)),
     ]),
   )
   .describe(
@@ -461,6 +485,13 @@ const STRUCTURE_RULES = [
     { id: "a", type: "hero" },
     { id: "b", type: "hero" },
   ]),
+  ...LANDING_STICKY_TYPES.slice(0, 1).map((type) =>
+    landingStructureProblem([
+      { id: "a", type: "hero" },
+      { id: "b", type, sticky: "left" },
+      { id: "c", type, sticky: "right" },
+    ]),
+  ),
 ]
   .filter((rule) => rule !== null)
   .join("; ");
@@ -473,4 +504,5 @@ export const SECTIONS_MANUAL = [
       `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about} Required words in every language: ${describeRequiredWords(type)}.`,
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
+  STICKY_MANUAL,
 ].join("\n");

@@ -8,6 +8,9 @@ import {
   landingSection,
   landingSections,
   landingSectionTextsSchema,
+  landingStickySection,
+  LANDING_STICKY_SIDES,
+  LANDING_STICKY_TYPES,
   missingInLandingVersion,
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
@@ -156,6 +159,46 @@ describe("the structure", () => {
     ).toBe(false);
     expect(landingSections.safeParse([hero, { ...rest[0], id: hero.id }]).success).toBe(false);
     expect(landingSections.safeParse([]).success).toBe(false);
+  });
+});
+
+describe("the sticky section", () => {
+  const sections = everySection();
+  const marked = (ids: readonly string[], side = "right") =>
+    sections.map((section) => (ids.includes(section.id) ? { ...section, sticky: side } : section));
+  const messages = (structure: unknown[]) => {
+    const parsed = landingSections.safeParse(structure);
+    return parsed.success ? [] : parsed.error.issues.map((issue) => issue.message);
+  };
+
+  it("may be a section of a type whose module allows it, on either side", () => {
+    for (const side of LANDING_STICKY_SIDES) {
+      const parsed = landingSections.parse(marked([I.subscribe], side));
+      expect(landingStickySection(parsed)).toEqual({ id: I.subscribe, type: "subscribe", sticky: side });
+    }
+    expect(landingStickySection(landingSections.parse(sections))).toBeNull();
+  });
+
+  it("is allowed on the email sign-up alone, by its module's own declaration", () => {
+    expect(LANDING_STICKY_TYPES).toEqual(["subscribe"]);
+    for (const type of LANDING_SECTION_TYPES) {
+      const section = sections.find((candidate) => candidate.type === type);
+      if (section === undefined) throw new Error(`no ${type} case`);
+      expect(messages(marked([section.id])).length === 0, type).toBe(LANDING_SECTIONS[type].sticky);
+    }
+  });
+
+  it("is refused on any other type, saying which types may be", () => {
+    expect(messages(marked([I.faq]))).toEqual([
+      `Section ${I.faq} (Questions and answers) cannot be sticky: only Email sign-up sections can`,
+    ]);
+  });
+
+  it("is one per page, and on a side the field has", () => {
+    expect(
+      messages([...marked([I.subscribe]), { id: crypto.randomUUID(), type: "subscribe", sticky: "left" }]),
+    ).toEqual(["A page has at most one sticky section"]);
+    expect(messages(marked([I.subscribe], "top"))).toHaveLength(1);
   });
 });
 

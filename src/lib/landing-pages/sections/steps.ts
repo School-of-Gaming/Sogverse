@@ -36,6 +36,7 @@ const text = z
 export const stepsSection = {
   type: "steps",
   label: "Steps",
+  sticky: false,
   section,
   text,
   missingText: (block, words) => [

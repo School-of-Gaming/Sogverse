@@ -33,6 +33,7 @@ const text = z
 export const textSection = {
   type: "text",
   label: "Text",
+  sticky: false,
   section,
   text,
   missingText: (block, words) => [

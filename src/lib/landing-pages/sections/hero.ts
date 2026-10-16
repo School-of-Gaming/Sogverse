@@ -36,6 +36,7 @@ const text = z
 export const heroSection = {
   type: "hero",
   label: "Hero",
+  sticky: false,
   section,
   text,
   missingText: (hero, words) => [

@@ -7,7 +7,13 @@ import { pointsSection } from "./points";
 import { stepsSection } from "./steps";
 import { subscribeSection } from "./subscribe";
 import { textSection } from "./text";
-import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
+import {
+  fieldOf,
+  stickyField,
+  type LandingMarkdownField,
+  type LandingStickySide,
+  type TextReading,
+} from "./shared";
 
 /**
  * The landing page section registry: every section type, its schemas, its
@@ -50,16 +56,20 @@ export const LANDING_SECTIONS = {
   cta: ctaSection,
 } as const satisfies { [Type in LandingSectionType]: { type: Type } };
 
-/** One section of a page's structure: `id`, `type` and its shared fields. */
+/**
+ * One section of a page's structure: `id`, `type`, its type's shared fields,
+ * and the `sticky` side every type takes (the structure rule says which types
+ * may carry it).
+ */
 export const landingSection = z.discriminatedUnion("type", [
-  heroSection.section,
-  textSection.section,
-  imageSection.section,
-  pointsSection.section,
-  stepsSection.section,
-  faqSection.section,
-  subscribeSection.section,
-  ctaSection.section,
+  heroSection.section.extend(stickyField),
+  textSection.section.extend(stickyField),
+  imageSection.section.extend(stickyField),
+  pointsSection.section.extend(stickyField),
+  stepsSection.section.extend(stickyField),
+  faqSection.section.extend(stickyField),
+  subscribeSection.section.extend(stickyField),
+  ctaSection.section.extend(stickyField),
 ]);
 
 export type LandingSection = z.output<typeof landingSection>;
@@ -77,13 +87,22 @@ export type LandingSectionText = {
 /** One language's words for every section, by section id. */
 export type LandingSectionTexts = Record<string, LandingSectionText>;
 
+/** The types a page's sticky section may be, in registry order. */
+export const LANDING_STICKY_TYPES: readonly LandingSectionType[] = LANDING_SECTION_TYPES.filter(
+  (type) => LANDING_SECTIONS[type].sticky,
+);
+
+/** The sticky types by their labels, as a refusal names them. */
+const STICKY_LABELS = LANDING_STICKY_TYPES.map((type) => LANDING_SECTIONS[type].label).join(", ");
+
 /**
  * What is wrong with a structure's arrangement, or null: the hero comes
- * first and there is only the one, and no two sections share an id. The SQL
- * structure check (`landing_sections_problem`) holds the same rules.
+ * first and there is only the one, no two sections share an id, and at most
+ * one section is sticky, of a type whose module allows it. The SQL structure
+ * check (`landing_sections_problem`) holds the same rules.
  */
 export function landingStructureProblem(
-  sections: readonly { id: string; type: LandingSectionType }[],
+  sections: readonly { id: string; type: LandingSectionType; sticky?: LandingStickySide }[],
 ): string | null {
   if (sections[0]?.type !== "hero") return "A page starts with its hero section";
   if (sections.filter((section) => section.type === "hero").length !== 1) {
@@ -91,6 +110,22 @@ export function landingStructureProblem(
   }
   if (new Set(sections.map((section) => section.id)).size !== sections.length) {
     return "Two sections share an id";
+  }
+  const sticky = sections.filter((section) => section.sticky !== undefined);
+  const misplaced = sticky.find((section) => !LANDING_SECTIONS[section.type].sticky);
+  if (misplaced !== undefined) {
+    return `Section ${misplaced.id} (${LANDING_SECTIONS[misplaced.type].label}) cannot be sticky: only ${STICKY_LABELS} sections can`;
+  }
+  if (sticky.length > 1) return "A page has at most one sticky section";
+  return null;
+}
+
+/** The page's sticky section, if it has one. */
+export function landingStickySection<Section extends { sticky?: LandingStickySide }>(
+  sections: readonly Section[],
+): (Section & { sticky: LandingStickySide }) | null {
+  for (const section of sections) {
+    if (section.sticky !== undefined) return { ...section, sticky: section.sticky };
   }
   return null;
 }
@@ -258,6 +293,8 @@ export { LANDING_IMAGE_SIDES, textSection } from "./text";
 export {
   buttonTarget,
   isWritten,
+  LANDING_STICKY_SIDES,
+  type LandingStickySide,
   LANDING_EMAIL_PATTERN,
   LANDING_ID_PATTERN,
   landingId,

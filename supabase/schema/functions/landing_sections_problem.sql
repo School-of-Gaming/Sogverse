@@ -14,6 +14,7 @@ DECLARE
   v_type     text;
   v_ids      text[] := ARRAY[]::text[];
   v_heroes   integer := 0;
+  v_sticky   integer := 0;
   v_key      text;
   v_min      integer;
   v_max      integer;
@@ -48,6 +49,23 @@ BEGIN
       RETURN format('Two sections share the id %s', v_id);
     END IF;
     v_ids := array_append(v_ids, v_id);
+
+    -- The page's one sticky section, of a type that may be: every type takes
+    -- the field, and the types allowed it are the section modules' that say
+    -- sticky: true. A DB test holds this list to theirs.
+    IF v_section ? 'sticky' THEN
+      IF v_type IS DISTINCT FROM 'subscribe' THEN
+        RETURN format('Section %s cannot be sticky: only an email sign-up section can', v_id);
+      END IF;
+      IF jsonb_typeof(v_section->'sticky') IS DISTINCT FROM 'string'
+         OR v_section->>'sticky' NOT IN ('left', 'right') THEN
+        RETURN format('The sticky side of section %s is left or right', v_id);
+      END IF;
+      v_sticky := v_sticky + 1;
+      IF v_sticky > 1 THEN
+        RETURN 'A page has at most one sticky section';
+      END IF;
+    END IF;
 
     -- A single picture, where a type takes one, is optional and a uuid.
     IF v_type IN ('hero', 'text') AND v_section ? 'imageId'
@@ -131,7 +149,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}; subscribe {} (no shared field). Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}; subscribe {} (no shared field). sticky, left or right, marks the page''s one sticky section and its side, and only a subscribe section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
 
 
 --

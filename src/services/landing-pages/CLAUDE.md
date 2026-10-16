@@ -125,6 +125,23 @@ the reader to the page in its locale, at the section, with a parameter that swap
 form for a thanks. A later section offering something on confirmation (a download)
 would add a shared field to this type, not a second form.
 
+**A page may have one sticky section, marked on the section itself** — a `sticky` side,
+`left` or `right`, in the structure — so it is copied, compared and cascaded with the rest
+of the structure, and removing the section is what leaves the page with none. Which types
+may carry it is declared in each type's section module (only the email sign-up today):
+allowing another is that module's one line, plus the same type in the SQL structure check,
+and a DB test running every type through both halves fails until the two agree. The
+structure rule refuses a second sticky section and a type not allowed one, naming the types
+that are. From `xl` the sticky section leaves the flow and stands in a sticky column on its
+side, pinned under the header, beside every other section; the sections keep their full
+width and clear the column with their own padding, so a section's band still spans the
+page under it, and the column is a card standing on top. Below `xl` it is drawn at the
+page's end, after the last section, and the page — not the admin — puts a jump button to
+it under the hero, in the section's own button's words, and only while the section has
+something to offer (each type's renderer says what). It is drawn once, last in the
+document, so its heading keeps its level and the outline its reading order wherever it is
+painted; the structured data does not depend on where it sits.
+
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the
 id — never by handing a segment to the route builder, because a slug resolves in its own

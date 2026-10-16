@@ -75,6 +75,22 @@
   --facts-rail-width: 16rem;
   --reading-column-width: 44rem;
 
+  /* A landing page's sticky side column, from `xl`: its width, the gap between
+     it and the sections' content, and its measured height for the same
+     two-end sticky clamp as the signup rail's (zero until measured, which pins
+     it under the header). The sections pay for the column out of their own
+     inline padding rather than out of a grid track, so a section's band still
+     spans the viewport under it; the width budget is worked through in the
+     landing page body. */
+  --landing-rail-width: 20rem;
+  --landing-rail-gap: 2rem;
+  --landing-rail-height: 0px;
+  /* How much inline padding each landing section adds on either side for the
+     column: zero, until the page body sets one side to the column's width plus
+     its gap on a page with a sticky section, from `xl`. */
+  --landing-rail-space-left: 0px;
+  --landing-rail-space-right: 0px;
+
   /* Corner radii, as one base step and the four utilities derived from it. */
   --radius: 0.5rem;
   --radius-sm: calc(var(--radius) - 4px);

@@ -68,6 +68,23 @@ export const buttonTarget = z.discriminatedUnion("kind", [
 
 export type ButtonTarget = z.infer<typeof buttonTarget>;
 
+/**
+ * The side of the page a sticky section's column takes on wide screens. The
+ * SQL half (`landing_sections_problem`) states the same two.
+ */
+export const LANDING_STICKY_SIDES = ["left", "right"] as const;
+
+export type LandingStickySide = (typeof LANDING_STICKY_SIDES)[number];
+
+/**
+ * The shared field every section takes, whatever its type: present, the
+ * section is the page's sticky section, on that side. Which types may carry it
+ * is each module's `sticky`, held by the structure rule.
+ */
+export const stickyField = {
+  sticky: z.enum(LANDING_STICKY_SIDES).optional(),
+};
+
 /** A plain-text field, unwritten while absent or blank. */
 export const plainText = z.string().trim().optional();
 
@@ -117,6 +134,16 @@ export interface LandingSectionDefinition<
   readonly type: Type;
   /** The admin-facing name of the type. */
   readonly label: string;
+  /**
+   * Whether a section of this type may be the page's sticky section: on wide
+   * screens beside the other sections in a sticky side column, below that at
+   * the bottom of the page with a jump button to it under the hero. Every
+   * section takes the `sticky` shared field; the structure rule refuses it on a
+   * type that says false here, and the SQL structure check names the same
+   * types. A type says true only once its renderer reads well in that narrow
+   * column and offers something worth the jump.
+   */
+  readonly sticky: boolean;
   /** The section in the page's structure: `id`, `type` and its shared fields. */
   readonly section: Section;
   /** The section's text fields in one language. Every field may be unwritten. */

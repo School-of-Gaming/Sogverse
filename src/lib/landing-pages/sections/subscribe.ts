@@ -42,6 +42,7 @@ const text = z
 export const subscribeSection = {
   type: "subscribe",
   label: "Email sign-up",
+  sticky: true,
   section,
   text,
   missingText: (_section, words) => [

@@ -71,6 +71,7 @@ const text = z
 export const pointsSection = {
   type: "points",
   label: "Points",
+  sticky: false,
   section,
   text,
   missingText: (block, words) => [

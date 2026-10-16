@@ -245,3 +245,40 @@ describe("the manual", () => {
     expect(SECTIONS_MANUAL).toContain(LANDING_ICONS.join(", "));
   });
 });
+
+describe("the sticky section", () => {
+  const hero = { id: ID, type: "hero" };
+  const subscribe = { id: ID2, type: "subscribe" };
+
+  it("is written on the section, and judged by the tools' schema as by the registry's", () => {
+    for (const structure of [
+      [hero, { ...subscribe, sticky: "left" }],
+      [hero, { ...subscribe, sticky: "right" }],
+      [hero, { ...subscribe, sticky: "top" }],
+      [hero, { ...subscribe, sticky: null }],
+    ]) {
+      const expected = landingSections.safeParse(structure);
+      const actual = mcpLandingStructure.safeParse(structure);
+      expect(actual.success, JSON.stringify(structure)).toBe(expected.success);
+      if (expected.success) expect(actual.data).toEqual(expected.data);
+    }
+  });
+
+  it("is refused on a type whose module does not allow it, naming the types that may be", () => {
+    const parsed = landingSections.safeParse([
+      { ...hero, sticky: "left" },
+      subscribe,
+    ]);
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
+      `Section ${ID} (Hero) cannot be sticky: only Email sign-up sections can`,
+    ]);
+  });
+
+  it("tells the AI app what it is, which types may be, and how it renders on a phone", () => {
+    expect(SECTIONS_MANUAL).toContain("A page has at most one sticky section");
+    expect(SECTIONS_MANUAL).toContain("sticky: left or right; only these types may be: subscribe (Email sign-up)");
+    expect(SECTIONS_MANUAL).toContain("at the bottom of the page");
+    expect(SECTIONS_MANUAL).toContain("directly under the hero");
+  });
+});

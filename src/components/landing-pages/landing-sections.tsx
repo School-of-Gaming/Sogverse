@@ -68,6 +68,12 @@ export interface LandingRenderContext {
    * names no path for it (the picture has left the catalogue).
    */
   imageSrc: (imageId: string) => string | null;
+  /**
+   * What the page places directly under the hero's own content: the jump
+   * button down to the page's sticky section, or null. The page decides it
+   * and its spacing; the hero only gives it its place, aligned with its words.
+   */
+  underHero: ReactNode;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -79,8 +85,17 @@ interface LandingSectionProps<Type extends LandingSectionType> {
 /** A landing picture's stored size: `next/image` reserves its box from it. */
 const PICTURE = CATALOGUE_IMAGE_PURPOSES.landing_image;
 
+/**
+ * A section's content box: the page container, with its inline padding grown
+ * on the side a sticky column takes from `xl` (the page body sets the two
+ * spaces; both are zero otherwise), so the content clears the column while
+ * the section itself still runs the container's whole width.
+ */
+const CONTENT =
+  "container mx-auto pl-[calc(1rem+var(--landing-rail-space-left))] pr-[calc(1rem+var(--landing-rail-space-right))]";
+
 /** Vertical rhythm shared by every section after the hero. */
-const SECTION = "container mx-auto px-4 py-16 sm:py-24";
+const SECTION = `${CONTENT} py-16 sm:py-24`;
 
 /** The section heading every section but the hero takes. */
 const HEADING = "text-3xl font-bold tracking-tight sm:text-4xl";
@@ -100,11 +115,14 @@ function SectionHeader({
   heading,
   intro,
   centred = true,
+  compact = false,
 }: {
   eyebrow?: string;
   heading?: string;
   intro?: string;
   centred?: boolean;
+  /** The heading a step down, as a card's: for a section drawn in a card. */
+  compact?: boolean;
 }) {
   const label = written(eyebrow);
   const title = written(heading);
@@ -114,7 +132,14 @@ function SectionHeader({
     <div className={cn(centred && "mx-auto max-w-2xl text-center")}>
       {label !== null && <Eyebrow>{label}</Eyebrow>}
       {title !== null && (
-        <h2 className={cn(HEADING, label !== null && "mt-4")}>{title}</h2>
+        <h2
+          className={cn(
+            compact ? "text-2xl font-bold tracking-tight" : HEADING,
+            label !== null && "mt-4",
+          )}
+        >
+          {title}
+        </h2>
       )}
       {lead !== null && <p className="mt-4 text-muted-foreground">{lead}</p>}
     </div>
@@ -218,7 +243,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
   const subline = written(text.subline);
   const buttonLabel = written(text.buttonLabel);
   return (
-    <section className="container mx-auto px-4 pb-16 pt-8 sm:py-24">
+    <section className={cn(CONTENT, "pb-16 pt-8 sm:py-24")}>
       <div
         className={cn(
           "mx-auto",
@@ -270,6 +295,17 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           />
         )}
       </div>
+      {context.underHero !== null && (
+        // Under the words' column where the words have one, centred otherwise.
+        <div
+          className={cn(
+            "mx-auto flex max-w-6xl justify-center",
+            src !== null && "lg:justify-start",
+          )}
+        >
+          {context.underHero}
+        </div>
+      )}
     </section>
   );
 }
@@ -542,21 +578,51 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * An email sign-up: the heading and intro the page wrote over the site's own
  * form, in the reading column. The section carries the anchor the
  * confirmation link returns to, so a reader coming back lands on the thanks.
+ *
+ * **As the page's sticky section it is a card**, the closing card's world rule
+ * along its top and the heading a step down: in the side column it is an
+ * object standing on the page beside the sections rather than one of them, so
+ * it carries its own edge, and a section's band running under the column
+ * passes behind it. The page gives it its place and its spacing — the column
+ * from `xl`, the page's end below that — and the card is the same in both.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  const form = (
+    <LandingSubscribeForm
+      pageId={context.pageId}
+      sectionId={section.id}
+      locale={context.locale}
+      buttonLabel={written(text.buttonLabel) ?? ""}
+      confirmed={context.subscribed}
+    />
+  );
+  if (section.sticky !== undefined) {
+    return (
+      <section
+        id={landingSubscribeAnchor(section.id)}
+        className="scroll-mt-[calc(var(--header-height)+1rem)]"
+      >
+        <Card className="relative mx-auto max-w-xl overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
+          <CardContent className="pt-8">
+            <SectionHeader
+              eyebrow={text.eyebrow}
+              heading={text.heading}
+              intro={text.intro}
+              centred={false}
+              compact
+            />
+            <div className="mt-6">{form}</div>
+          </CardContent>
+        </Card>
+      </section>
+    );
+  }
   return (
     <section id={landingSubscribeAnchor(section.id)} className={SECTION}>
       <div className="mx-auto max-w-xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
-        <div className="mt-10">
-          <LandingSubscribeForm
-            pageId={context.pageId}
-            sectionId={section.id}
-            locale={context.locale}
-            buttonLabel={written(text.buttonLabel) ?? ""}
-            confirmed={context.subscribed}
-          />
-        </div>
+        <div className="mt-10">{form}</div>
       </div>
     </section>
   );
@@ -593,4 +659,46 @@ export function renderLandingSection<Type extends LandingSectionType>(
   const Renderer: (props: LandingSectionProps<Type>) => ReactNode =
     LANDING_SECTION_RENDERERS[type];
   return <Renderer section={section} text={text} context={context} />;
+}
+
+// ---------------------------------------------------------------------------
+// What a sticky section offers
+// ---------------------------------------------------------------------------
+
+/**
+ * **What a sticky section of each type offers a reader**, as the words of the
+ * jump button the page draws under the hero wherever the section is not
+ * beside the sections: the section's own button's words, so the word tapped
+ * at the top is the word waiting at the bottom — or null while the section
+ * has nothing to act on, which withdraws the button rather than pointing it at
+ * a section that cannot deliver. Exhaustive, so a type allowed to be sticky
+ * already says what it offers; only the types whose module allows it are ever
+ * asked.
+ */
+export const LANDING_STICKY_OFFERS: {
+  [Type in LandingSectionType]: (
+    text: LandingTextOf<Type>,
+    context: LandingRenderContext,
+  ) => string | null;
+} = {
+  hero: () => null,
+  text: () => null,
+  image: () => null,
+  points: () => null,
+  steps: () => null,
+  faq: () => null,
+  // A reader back from confirming meets the thanks in place of the form.
+  subscribe: (text, context) => (context.subscribed ? null : written(text.buttonLabel)),
+  cta: (text) => written(text.buttonLabel),
+};
+
+/** The jump button's words for one sticky section, as `LANDING_STICKY_OFFERS` answers. */
+export function landingStickyOffer<Type extends LandingSectionType>(
+  type: Type,
+  text: LandingTextByType[Type],
+  context: LandingRenderContext,
+): string | null {
+  const offer: (text: LandingTextOf<Type>, context: LandingRenderContext) => string | null =
+    LANDING_STICKY_OFFERS[type];
+  return offer(text, context);
 }

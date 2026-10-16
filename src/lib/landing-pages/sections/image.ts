@@ -39,6 +39,7 @@ const text = z
 export const imageSection = {
   type: "image",
   label: "Pictures",
+  sticky: false,
   section,
   text,
   missingText: (block, words) =>

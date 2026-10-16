@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePublishedHeight } from "@/hooks/use-published-height";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { ROUTES } from "@/lib/constants";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
@@ -56,52 +57,6 @@ export interface MunicipalityBackLink {
  * and two string literals is how they stop agreeing.
  */
 const SIGNUP_PANEL_ANCHOR_ID = "product-signup";
-
-/**
- * Publishes an element's own height as `--signup-rail-height` on that element.
- *
- * It exists for exactly one thing: the signup rail's two-end sticky clamp is
- * `min(header offset, 100vh - panel height - gap)`, and CSS cannot measure a
- * box. So JS supplies the one number CSS cannot derive and CSS does the rest,
- * which keeps the whole mechanism a single declaration rather than a scroll
- * handler.
- *
- * **Written to the DOM rather than held in React state, deliberately.** The
- * value feeds nothing but a sticky inset, and a sticky inset changes where a
- * box *pins*, never where it is painted in flow — so there is nothing for a
- * re-render to do, and a state update here would re-render the whole page body
- * every time the panel changed height. The variable has a `0px` default in
- * `globals.css`, which is the value that makes the clamp a no-op: the
- * server-rendered frame therefore behaves exactly as it always did, and the
- * first measurement only ever *lowers* the inset, on a panel genuinely taller
- * than the window.
- *
- * A `ResizeObserver` rather than a one-off read, because the panel changes
- * height on its own schedule — a countdown finishing, a location section
- * answering itself, a consent list arriving with the product — and a stale
- * height would clamp to the wrong place. Window resizes are watched too: the
- * viewport is the other half of the comparison and it does not move the
- * element.
- */
-function usePublishedHeight(
-  ref: React.RefObject<HTMLElement | null>,
-  property: string,
-) {
-  useEffect(() => {
-    const element = ref.current;
-    if (element === null) return;
-    const measure = () =>
-      element.style.setProperty(property, `${element.offsetHeight}px`);
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    window.addEventListener("resize", measure);
-    measure();
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [ref, property]);
-}
 
 export interface ProductDetailPageBodyProps {
   /**
@@ -562,7 +517,7 @@ export function ProductDetailPageBody({
           with the page until its BOTTOM meets the viewport bottom and clamp
           there. Scrolling down reaches the CTA; scrolling back up releases it
           and the panel's top returns. The single measured input is the panel's
-          own height, published as `--signup-rail-height` by the observer below
+          own height, published as `--signup-rail-height` by `usePublishedHeight`
           — CSS does the arithmetic, and a sticky inset changes only where a box
           pins, never where it is painted in flow, so nothing shifts.
 
