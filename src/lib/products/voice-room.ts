@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  INERT_HREF,
+  type AppHrefObject,
+  type MaybeInertHrefObject,
+} from "@/lib/constants/routes";
 import { Constants, type VoiceRoomMode } from "@/types";
 
 // How a product's sessions are joined, as every Join surface receives it.
@@ -82,4 +87,23 @@ export function productVoiceRoom(
         ),
       };
   }
+}
+
+/**
+ * Where a parent's switch into their gamer lands, after a Join on that gamer's
+ * seat.
+ *
+ * Only a Sogverse room is a page of ours to land in, so a `sogverse` product
+ * lands straight in it. An external meeting opens in a new tab and the
+ * instructions in a dialog, neither of which a full-page navigation can reach,
+ * so for those — and for a room with no group to open — this answers
+ * `undefined`: the switch's own default, the gamer's My SOG, where the gamer
+ * presses the Join themselves.
+ */
+export function joinSwitchLanding(
+  voiceRoom: ProductVoiceRoom,
+  voiceHref: MaybeInertHrefObject,
+): AppHrefObject | undefined {
+  if (voiceRoom.mode !== "sogverse" || voiceHref === INERT_HREF) return undefined;
+  return voiceHref;
 }

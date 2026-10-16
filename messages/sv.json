@@ -1192,7 +1192,7 @@
         "sogverse": "Sogverse-röstrum",
         "sogverseDescription": "Ett röstrum skapas automatiskt och öppnas inför varje träff.",
         "external": "Länk till ett möte någon annanstans",
-        "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst – Zoom, Google Meet, Teams eller något annat. För publiker som är större än ett Sogverse-rum rymmer (50 personer).",
+        "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett Sogverse-röstrum rymmer (50 personer).",
         "none": "Inget röstrum",
         "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
       },

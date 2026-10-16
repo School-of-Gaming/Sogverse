@@ -7,7 +7,10 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { productVoiceRoom } from "@/lib/products/voice-room";
+import {
+  joinSwitchLanding,
+  productVoiceRoom,
+} from "@/lib/products/voice-room";
 import { useAuth, useNow } from "@/providers";
 import { useFamilyProductFeed } from "@/services/family-product-feed";
 import {
@@ -19,7 +22,7 @@ import type { SessionAudience } from "@/types";
 import { FamilyProductNotFound } from "./FamilyProductNotFound";
 import { FamilyProductPageBody } from "./FamilyProductPageBody";
 import { FamilyProductPageSkeleton } from "./FamilyProductPageSkeleton";
-import { INERT_HREF, type MaybeInertHrefObject } from "@/lib/constants/routes";
+import type { AppHrefObject } from "@/lib/constants/routes";
 import { getPathname } from "@/i18n/navigation";
 
 /**
@@ -196,6 +199,7 @@ export function FamilyProductPage({
   const productName =
     resolveTranslation(feed.product.translations, locale)?.name ?? "";
   const voiceHref = ROUTES.voice.groupSession(feed.group.id);
+  const voiceRoom = productVoiceRoom(feed.product, feed.product.translations);
 
   return (
     <>
@@ -211,7 +215,7 @@ export function FamilyProductPage({
         }}
         plannedSessions={feed.planned_sessions}
         isRemote={feed.product.is_remote}
-        voiceRoom={productVoiceRoom(feed.product, feed.product.translations)}
+        voiceRoom={voiceRoom}
         participant={participant}
         groupName={feed.group.name}
         // Handed over on both audiences: the body is what decides that a child
@@ -255,7 +259,7 @@ export function FamilyProductPage({
         <JoinSwitchDialog
           gamer={participant}
           productName={productName}
-          voiceHref={voiceHref}
+          landing={joinSwitchLanding(voiceRoom, voiceHref)}
           onClose={() => setSwitching(false)}
         />
       )}
@@ -267,7 +271,10 @@ export function FamilyProductPage({
  * The account switch standing between a parent's Join and the room.
  *
  * The parent is signed in as themselves and the room is gated by the child's
- * enrollment, so joining means becoming the child first. The dialog POSTs the
+ * enrollment, so joining means becoming the child first — in every voice room
+ * mode, so that whoever joins is the child. A Sogverse room lands the child in
+ * it; a meeting elsewhere or a product with no room lands them on their own
+ * My SOG, where they press the Join themselves. The dialog POSTs the
  * switch and then does the full-page navigation itself — the house auth rule,
  * since the cookies that route sets never reach the browser client's in-memory
  * session and a soft navigation would land the room on a stale one.
@@ -279,12 +286,13 @@ export function FamilyProductPage({
 function JoinSwitchDialog({
   gamer,
   productName,
-  voiceHref,
+  landing,
   onClose,
 }: {
   gamer: { id: string; firstName: string };
   productName: string;
-  voiceHref: MaybeInertHrefObject;
+  /** Where the switch lands; `undefined` is the gamer's own My SOG. */
+  landing: AppHrefObject | undefined;
   onClose: () => void;
 }) {
   const t = useTranslations("parent");
@@ -300,9 +308,7 @@ function JoinSwitchDialog({
       // The switch is a server round trip ending in a full-page navigation,
       // so it takes a concrete URL rather than a typed href — resolved in the
       // locale the parent is reading, so the child lands in the same language.
-      redirectUrl={
-        voiceHref === INERT_HREF ? "" : getPathname({ href: voiceHref, locale })
-      }
+      redirectUrl={landing && getPathname({ href: landing, locale })}
       title={t("switchToGamer.title", { name: gamer.firstName, productName })}
       oneWayWarning={t("switchToGamer.oneWayWarning")}
     />

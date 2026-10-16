@@ -13,8 +13,8 @@ import { INERT_HREF, ROUTES } from "@/lib/constants/routes";
  * mode shows the same locked "Opens …" button. Open, a Sogverse room links to
  * the session page, an external meeting opens its link in a new tab, and a
  * product with no room opens a dialog of the reader's-locale instructions. On a
- * parent's view of a child's seat the switch-to-gamer handler still wins for a
- * room or a meeting, and is passed over for instructions, which need no switch.
+ * parent's view of a child's seat the switch-to-gamer handler wins in every
+ * mode, so whoever joins is the child.
  */
 
 // Keys echo, so an assertion names the copy the button reached for rather than
@@ -174,14 +174,14 @@ describe("no room, open", () => {
     expect(screen.getByRole("dialog").textContent).toContain("Avaa Minecraft.");
   });
 
-  it("ignores a switch handler: reading instructions needs no switch", () => {
+  it("hands the click to a switch handler when one is passed", () => {
     const onJoinClick = vi.fn();
     renderButton(NONE, { onJoinClick });
 
     act(() => screen.getByText("voiceButton.howToJoin").click());
 
-    expect(onJoinClick).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(onJoinClick).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("closes from its Close button", () => {
@@ -245,13 +245,13 @@ describe("a parent's card for their child's seat, mid-session", () => {
     expect(screen.queryByRole("link", { name: /joinMeeting/ })).toBeNull();
   });
 
-  it("shows the instructions without switching", () => {
+  it("switches account before the instructions", () => {
     const onJoinClick = vi.fn();
     renderChildCard(NONE, onJoinClick);
 
     act(() => screen.getByText("voiceButton.howToJoin").click());
 
-    expect(onJoinClick).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog").textContent).toContain("Open Minecraft.");
+    expect(onJoinClick).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

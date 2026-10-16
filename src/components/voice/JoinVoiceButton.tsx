@@ -44,12 +44,10 @@ interface JoinVoiceButtonProps {
   opensTime: string;
   /**
    * Optional click handler. When present, the open variant renders as a
-   * `<button>` and `onJoinClick` fires instead of navigating to
-   * `voiceHref` (or the external meeting). Used by the parent dashboard,
-   * which intercepts the click to open the switch-to-gamer dialog (the
-   * parent is signed in as themselves; the voice room is gated by the
-   * gamer's enrollment). Ignored when the product has no room, where the
-   * open button only shows instructions.
+   * `<button>` and `onJoinClick` fires instead of navigating to `voiceHref`,
+   * opening the external meeting or showing the instructions — whatever the
+   * mode. Used on a parent's view of their child's seat, which intercepts the
+   * click to open the switch-to-gamer dialog: whoever joins is the child.
    */
   onJoinClick?: () => void;
   /**
@@ -76,13 +74,13 @@ interface JoinVoiceButtonProps {
  * with a lock icon + "Opens {date} at {time}", whatever the product's voice
  * room. During the window, what it does follows the product's choice:
  *
- * - **Sogverse room** — an enabled `Link` to `/voice/group/[id]` (or a
- *   `<button>` firing `onJoinClick` when one is passed).
- * - **External meeting** — a link to the meeting, opened in a new tab, for
- *   every role; `onJoinClick` still wins when passed, so a parent on their
- *   child's card switches account first exactly as for a Sogverse room.
+ * - **Sogverse room** — an enabled `Link` to `/voice/group/[id]`.
+ * - **External meeting** — a link to the meeting, opened in a new tab.
  * - **No room** — a button opening a dialog with the join instructions in the
  *   reader's locale.
+ *
+ * `onJoinClick`, when passed, wins over all three: a parent on their child's
+ * card switches account first, whatever the mode.
  *
  * That is the whole of it: a seat with no group yet renders no button at all —
  * the enrollment card says so in its footer instead — so this component never
@@ -129,19 +127,6 @@ export function JoinVoiceButton({
   const locale = useLocale();
 
   if (voiceIsOpen) {
-    if (voiceRoom.mode === "none") {
-      // `onJoinClick` is deliberately not consulted: reading instructions needs
-      // no account switch, so a parent on their child's card reads them as
-      // themselves.
-      return (
-        <JoinInstructionsButton
-          instructions={voiceRoom.instructions}
-          size={size}
-        />
-      );
-    }
-    const label =
-      voiceRoom.mode === "external" ? t("joinMeeting") : t("joinVoice");
     if (onJoinClick) {
       return (
         <button
@@ -149,9 +134,21 @@ export function JoinVoiceButton({
           onClick={onJoinClick}
           className={cn(buttonVariants({ size }), "gap-1.5")}
         >
-          <AudioLines className="h-4 w-4" />
-          {label}
+          {voiceRoom.mode === "none" ? (
+            <Info className="h-4 w-4" aria-hidden />
+          ) : (
+            <AudioLines className="h-4 w-4" />
+          )}
+          {joinLabel(voiceRoom, t)}
         </button>
+      );
+    }
+    if (voiceRoom.mode === "none") {
+      return (
+        <JoinInstructionsButton
+          instructions={voiceRoom.instructions}
+          size={size}
+        />
       );
     }
     if (voiceRoom.mode === "external") {
@@ -166,7 +163,7 @@ export function JoinVoiceButton({
           className={cn(buttonVariants({ size }), "gap-1.5")}
         >
           <AudioLines className="h-4 w-4" aria-hidden />
-          {label}
+          {t("joinMeeting")}
           <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           <span className="sr-only">{` ${t("opensInNewTab")}`}</span>
         </a>
@@ -207,6 +204,21 @@ export function JoinVoiceButton({
       {t("locked", { date: opensDate, time: opensTime })}
     </button>
   );
+}
+
+/** The open button's words, which name what the Join does in each mode. */
+function joinLabel(
+  voiceRoom: ProductVoiceRoom,
+  t: ReturnType<typeof useTranslations<"voiceButton">>,
+): string {
+  switch (voiceRoom.mode) {
+    case "sogverse":
+      return t("joinVoice");
+    case "external":
+      return t("joinMeeting");
+    case "none":
+      return t("howToJoin");
+  }
 }
 
 /**

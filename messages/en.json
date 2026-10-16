@@ -1192,7 +1192,7 @@
         "sogverse": "Sogverse voice room",
         "sogverseDescription": "A voice room is set up automatically and opens for each session.",
         "external": "Link to a meeting elsewhere",
-        "externalDescription": "Families join a meeting you host on another service — Zoom, Google Meet, Teams or anything else. For audiences larger than a Sogverse room holds (50 people).",
+        "externalDescription": "Families join a meeting you host on another service. For audiences larger than a Sogverse room holds (50 people).",
         "none": "No voice room",
         "noneDescription": "Families are shown the join instructions you write for each language instead."
       },

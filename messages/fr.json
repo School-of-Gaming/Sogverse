@@ -1192,7 +1192,7 @@
         "sogverse": "Salle vocale Sogverse",
         "sogverseDescription": "Une salle vocale est créée automatiquement et s’ouvre pour chaque séance.",
         "external": "Lien vers une réunion ailleurs",
-        "externalDescription": "Les familles rejoignent une réunion que vous organisez sur un autre service — Zoom, Google Meet, Teams ou autre. Pour les publics plus nombreux qu’une salle Sogverse ne peut accueillir (50 personnes).",
+        "externalDescription": "Les familles rejoignent une réunion que vous organisez sur un autre service. Pour les publics plus nombreux qu’une salle vocale Sogverse ne peut accueillir (50 personnes).",
         "none": "Pas de salle vocale",
         "noneDescription": "Les familles voient à la place les instructions de connexion que vous rédigez pour chaque langue."
       },
