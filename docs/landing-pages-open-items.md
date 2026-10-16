@@ -63,14 +63,6 @@ re-encodes media on the server today; admin content is written through the MCP s
 well as the admin UI; an MCP tool cannot receive a file's bytes through the model, which
 is why uploads go through a view.
 
-### Status field per page (extra 4) — dropped unless marketing insists
-
-Draft / in review / approved for marketing's Notion approval flow. Today a page knows
-whether it is live, whether it has unpublished changes, and each language's completeness.
-Skipped: it would be a second copy of an approval flow marketing already runs in Notion,
-and the two would drift; in Sogverse, publishing is the approval. The owner will ask
-marketing whether it is really wanted.
-
 ### Analytics gaps found while building the analytics tools
 
 Neither is on the list as its own item; both were part of extra 3 ("views, button clicks
