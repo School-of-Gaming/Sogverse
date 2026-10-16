@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Constants } from "@/types";
-import { FormSection, InfoCallout } from "../form-primitives";
+import { FormSection } from "../form-primitives";
 import { ChosenSitePanel, LocationPicker } from "../location-picker";
 import {
   locationPickerMode,
@@ -60,7 +60,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
       ) : null}
 
       <div className="mt-3 space-y-4">
-        {showLocationPicker ? (
+        {showLocationPicker && (
           <>
             <Field
               label={
@@ -95,8 +95,6 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
               />
             )}
           </>
-        ) : (
-          <InfoCallout text={t("hints.onlineNoLocation")} />
         )}
 
         {/* How an online product's sessions are joined, beside the choice

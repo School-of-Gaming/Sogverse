@@ -1238,7 +1238,6 @@
         "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
         "regionLockHint": "Seules les familles du pays choisi peuvent s’inscrire. Le lieu est celui que la famille a elle-même déclaré : c’est donc une indication dans la boutique plutôt qu’un blocage strict, et toute personne déjà inscrite conserve sa place même si elle déménage.",
         "spokenLanguageHint": "La langue principale parlée pendant les sessions.",
-        "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
         "externalVoiceUrlHint": "Public : n’importe qui peut lire ce lien, y compris les visiteurs non connectés.",
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
         "siteHint": "Où les sessions se déroulent physiquement.",

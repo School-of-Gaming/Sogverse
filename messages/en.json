@@ -1238,7 +1238,6 @@
         "tagHint": "Optional. Families see it as a badge on the shop card and product page. It says who the sessions were built for, not who may take a seat.",
         "regionLockHint": "Only families in the chosen country can sign up. Their location is the one they told us themselves, so this is a signpost in the shop rather than a hard block — and anyone already enrolled keeps their place if they move.",
         "spokenLanguageHint": "The main language spoken in the sessions.",
-        "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "externalVoiceUrlHint": "Public: anyone can read this link, including visitors who are not signed in.",
         "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",

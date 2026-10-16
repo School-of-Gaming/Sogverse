@@ -1238,7 +1238,6 @@
         "tagHint": "Valinnainen. Perheet näkevät sen merkintänä selauskortissa ja tuotesivulla. Se kertoo, kenelle kerrat on suunniteltu – ei sitä, kuka voi ottaa paikan.",
         "regionLockHint": "Vain valitussa maassa asuvat perheet voivat ilmoittautua. Sijainti perustuu perheen omaan ilmoitukseen, joten tämä on kaupan opaste eikä ehdoton este – jo ilmoittautuneet säilyttävät paikkansa, vaikka muuttaisivat.",
         "spokenLanguageHint": "Pääkieli, jota kerroilla puhutaan.",
-        "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",

@@ -1238,7 +1238,6 @@
         "tagHint": "Valfritt. Familjer ser den som en märkning på butikskortet och produktsidan. Den säger vem tillfällena är utformade för, inte vem som får ta en plats.",
         "regionLockHint": "Endast familjer i det valda landet kan anmäla sig. Platsen är den familjen själv har uppgett, så det här är en vägvisning i butiken snarare än ett hårt hinder – och den som redan är anmäld behåller sin plats även om hen flyttar.",
         "spokenLanguageHint": "Det huvudsakliga språk som talas under tillfällena.",
-        "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
