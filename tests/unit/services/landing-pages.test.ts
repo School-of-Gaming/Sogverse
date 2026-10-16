@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   defaultLandingSlug,
   hasUnpublishedChanges,
+  landingCopyTitle,
   landingPageInput,
   landingSlug,
   landingVersionInput,
@@ -54,6 +55,26 @@ describe("landing page slugs", () => {
     expect(long).toMatch(/^(word-)*word$/);
     expect(defaultLandingSlug("!!!")).toBe("");
     expect(defaultLandingSlug("123e4567-e89b-42d3-a456-426614174000")).toBe("");
+  });
+});
+
+describe("a clone's title", () => {
+  it("follows the source's title with the language's copy marker, and derives the clone's slug", () => {
+    expect(landingCopyTitle("Pelikerhot Espoossa", "(kopio)")).toBe("Pelikerhot Espoossa (kopio)");
+    expect(defaultLandingSlug(landingCopyTitle("Gaming clubs in Espoo", "(Copy)"))).toBe(
+      "gaming-clubs-in-espoo-copy",
+    );
+    expect(defaultLandingSlug(landingCopyTitle("Clubs de jeux à Paris", "(copie)"))).toBe(
+      "clubs-de-jeux-a-paris-copie",
+    );
+  });
+
+  it("cuts the source's title, never the marker, to stay within the length cap", () => {
+    // The cut lands on a space, which is not kept before the marker.
+    const title = landingCopyTitle(`${"a".repeat(112)} ${"b".repeat(7)}`, "(Copy)");
+    expect(title).toBe(`${"a".repeat(112)} (Copy)`);
+    expect(title.endsWith(" (Copy)")).toBe(true);
+    expect(landingCopyTitle("x".repeat(120), "(Copy)")).toHaveLength(120);
   });
 });
 

@@ -864,7 +864,8 @@
         "alt": "Texte alternatif",
         "question": "Question",
         "answer": "Réponse"
-      }
+      },
+      "copyMarker": "(copie)"
     },
     "geduRole": {
       "primary": "Gedu principal",

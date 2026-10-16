@@ -864,7 +864,8 @@
         "alt": "Alt text",
         "question": "Question",
         "answer": "Answer"
-      }
+      },
+      "copyMarker": "(Copy)"
     },
     "geduRole": {
       "primary": "Primary",

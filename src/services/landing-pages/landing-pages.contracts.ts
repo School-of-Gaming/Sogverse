@@ -90,6 +90,18 @@ export const LANDING_TITLE_MAX_LENGTH = 120;
 export const LANDING_SUMMARY_MAX_LENGTH = 160;
 
 /**
+ * A clone's title in one language: the source's, followed by that language's
+ * copy marker ("(Copy)", "(kopio)", …), so the clone is told apart and the
+ * admin is nudged to rename it. The source title is cut, never the marker,
+ * when the two together would pass the length cap.
+ */
+export function landingCopyTitle(title: string, copyMarker: string): string {
+  const marker = copyMarker.trim();
+  const room = LANDING_TITLE_MAX_LENGTH - marker.length - 1;
+  return `${title.trim().slice(0, room).trimEnd()} ${marker}`;
+}
+
+/**
  * One language version as an admin saves it.
  *
  * `slug` is optional: left out (or blank), the version keeps the address it

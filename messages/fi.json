@@ -864,7 +864,8 @@
         "alt": "Vaihtoehtoinen teksti",
         "question": "Kysymys",
         "answer": "Vastaus"
-      }
+      },
+      "copyMarker": "(kopio)"
     },
     "geduRole": {
       "primary": "Vastaava Gedu",
