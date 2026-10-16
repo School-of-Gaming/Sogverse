@@ -95,6 +95,14 @@ For work that wants its own worktree — the usual shape when several things are
 flight at once — `/worktree-flow` runs the whole lifecycle, from cutting the
 branch to tearing the worktree down after the merge.
 
+**Rule: a worktree lives under `.claude/worktrees/`, created by
+`.claude/scripts/worktree-setup.ps1` — never a sibling directory.** It resolves
+`node_modules` upward from the main checkout, so it needs no install of its own; a
+sibling directory has nothing above it to resolve to and costs a full install.
+`/worktree-flow` is one way to carry a piece of work through a worktree, used when
+the owner asks for it; the location and the setup script apply either way. A branch
+that already exists is set up with the script's `-Existing` switch.
+
 ## Documentation
 
 System architecture lives in **colocated `CLAUDE.md` files** next to the code they describe. They auto-load when you (or a future session) work in that directory — no pointer needed here — and are owned like code: update them in the same change that touches their system. Current homes:
