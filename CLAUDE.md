@@ -14,6 +14,7 @@ npm run gates            # All landing gates: lint + type-check + translations +
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run load             # CPU use and the test runs in progress, by checkout — read before blaming a timeout on the test
 npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
 npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
 ```
@@ -212,8 +213,18 @@ work under `tests/`). Two things worth knowing from anywhere:
   failed; the intermittence is a real non-determinism (an effect racing an assertion, a
   mock shared across cases, a timer leaking from a neighbour) and the fix is its root
   cause, in the test or in the component — never a retry, a longer timeout, a skip, or a
-  note that it is "unrelated to this branch". It is fixed on the branch that saw it fail,
-  before that branch lands, and proven by repeated runs under load plus the full suite.
+  note that it is "unrelated to this branch". It is found by **reasoning about the code to
+  a named cause**, and fixed on the branch that saw it fail, before that branch lands.
+  Repeated runs are a last resort for testing one specific hypothesis, never the proof: a
+  pass on repetition shows only that the race did not fire that time.
+- **A timeout is a claim about speed, so first rule out a machine without capacity.**
+  Several agents and sessions often test in parallel on one machine, and when they
+  saturate it, correct tests miss their timeouts. Before treating a timeout as a defect,
+  run `npm run load`: it reports CPU use and the test runs in progress, and where. If
+  other runs have the machine saturated, the timeout says nothing about the test yet —
+  don't re-run it in a loop, which only adds load; wait for capacity, or agree with the
+  other agents and sessions who runs what, then re-run that one file once. A timeout that
+  repeats on a machine with capacity is a real failure.
 - **A new API route has to be classified in the integration suite's route posture
   registry** — its auth posture (with a written reason for anything that is not
   role-gated), how it takes its body, and the test that exercises it. The registry's
