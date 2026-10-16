@@ -6,7 +6,12 @@ import { imageSection } from "./image";
 import { pointsSection } from "./points";
 import { stepsSection } from "./steps";
 import { textSection } from "./text";
-import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
+import {
+  fieldOf,
+  type LandingMarkdownField,
+  type LandingSectionBackground,
+  type TextReading,
+} from "./shared";
 
 /**
  * The landing page section registry: every section type, its schemas, its
@@ -64,6 +69,15 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
   LandingSection,
   { type: Type }
 >;
+
+/**
+ * The ground a section sits on. The hero has no choice and opens the page on
+ * its own ground; every other type carries the field, so a type added without
+ * it fails type-check here.
+ */
+export function landingSectionBackground(section: LandingSection): LandingSectionBackground {
+  return section.type === "hero" ? "default" : section.background;
+}
 
 /** One section's words in one language, whichever type it is. */
 export type LandingSectionText = {
@@ -253,8 +267,10 @@ export {
   isWritten,
   LANDING_EMAIL_PATTERN,
   LANDING_ID_PATTERN,
+  LANDING_SECTION_BACKGROUNDS,
   landingId,
   type ButtonTarget,
   type LandingMarkdownField,
+  type LandingSectionBackground,
   type LandingSectionDefinition,
 } from "./shared";

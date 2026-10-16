@@ -3,6 +3,7 @@ import {
   distinctIds,
   entryOf,
   isWritten,
+  landingBackgroundField,
   landingId,
   markdownText,
   plainText,
@@ -17,6 +18,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("faq"),
+    ...landingBackgroundField,
     items: z
       .array(z.object({ id: landingId }).strict())
       .min(1, "A questions section has at least one question")

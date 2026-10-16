@@ -37,10 +37,11 @@ import { Heading } from "@sog/ui";
  * home and Roblox pages already use — the act eyebrow over a section heading,
  * the centred heading over a card grid, the act-filled step numbers, the FAQ
  * rows, the closing card with the world rule along its top — so a landing page
- * reads as part of the same site whatever order an admin puts them in. Every
- * section sits on the plain page ground: an admin chooses the order, and a
- * tinted band beside another tinted band reads as one section with a stray
- * heading in it, so no band is spent at all.
+ * reads as part of the same site whatever order an admin puts them in. A
+ * renderer draws its section on whatever ground it is given and owns its own
+ * container and vertical padding; the band a `card` section sits on is laid
+ * by the page body around it, so cards and the closing card on a band are told
+ * apart from it by their own border.
  *
  * **Every word is the admin's**, so the renderers paint what is written and
  * leave out what is not: a published version has every required word, and the

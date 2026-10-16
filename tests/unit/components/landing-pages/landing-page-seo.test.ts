@@ -58,8 +58,8 @@ const PAGE: PublishedLandingPage = {
   publishedAt: "2026-10-01T08:00:00Z",
   sections: [
     { id: HERO, type: "hero", imageId: PICTURE },
-    { id: STEPS, type: "steps", items: [{ id: S1 }, { id: S2 }] },
-    { id: FAQ, type: "faq", items: [{ id: Q1 }, { id: Q2 }] },
+    { id: STEPS, type: "steps", background: "default", items: [{ id: S1 }, { id: S2 }] },
+    { id: FAQ, type: "faq", background: "default", items: [{ id: Q1 }, { id: Q2 }] },
   ],
   imagePaths: { [PICTURE]: "pictures/club.jpg" },
   versions: [

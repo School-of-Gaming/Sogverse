@@ -85,8 +85,8 @@ const FI: LandingPageDraftVersion = {
 
 const SECTIONS: AdminLandingPage["draft"]["sections"] = [
   { id: HERO_ID, type: "hero" },
-  { id: TEXT_ID, type: "text", imageSide: "end" },
-  { id: FAQ_ID, type: "faq", items: [{ id: QUESTION_ID }] },
+  { id: TEXT_ID, type: "text", background: "default", imageSide: "end" },
+  { id: FAQ_ID, type: "faq", background: "default", items: [{ id: QUESTION_ID }] },
 ];
 
 function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {

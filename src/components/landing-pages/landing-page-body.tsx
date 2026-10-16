@@ -1,9 +1,10 @@
 import { Fragment } from "react";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import type {
-  LandingSection,
-  LandingSectionTexts,
+import {
+  landingSectionBackground,
+  type LandingSection,
+  type LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
@@ -30,6 +31,13 @@ export interface LandingPageBodyProps {
  * language than the page — the reader fallback answered — the whole body
  * carries that language, for a screen reader's voice and the browser's
  * hyphenation alike.
+ *
+ * A section whose background is `card` sits on a band of the card ground that
+ * runs the viewport's full width, while its content keeps the section's own
+ * container. Each band carries no spacing of its own — the section's padding
+ * is inside it — so adjacent `card` sections join into one band, an admin's
+ * way of grouping related sections, spaced apart as any two sections are; and
+ * a band meets a plain section at its edge with each side's padding intact.
  */
 export function LandingPageBody({
   sections,
@@ -45,16 +53,23 @@ export function LandingPageBody({
   return (
     // exact-locale: marks text written in another language than the page with lang
     <div lang={textLocale === locale ? undefined : textLocale}>
-      {sections.map((section) => (
-        <Fragment key={section.id}>
-          {renderLandingSection(
-            section.type,
-            section,
-            landingSectionText(sectionTexts, section.id),
-            context,
-          )}
-        </Fragment>
-      ))}
+      {sections.map((section) => {
+        const drawn = renderLandingSection(
+          section.type,
+          section,
+          landingSectionText(sectionTexts, section.id),
+          context,
+        );
+        return (
+          <Fragment key={section.id}>
+            {landingSectionBackground(section) === "card" ? (
+              <div className="bg-card">{drawn}</div>
+            ) : (
+              drawn
+            )}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

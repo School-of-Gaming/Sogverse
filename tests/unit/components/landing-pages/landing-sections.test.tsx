@@ -39,10 +39,11 @@ const SECTIONS: LandingSection[] = [
     imageId: PIC_A,
     button: { kind: "internal", path: "/shop" },
   },
-  { id: TEXT, type: "text", imageId: PIC_B, imageSide: "start" },
+  { id: TEXT, type: "text", background: "default", imageId: PIC_B, imageSide: "start" },
   {
     id: IMAGE,
     type: "image",
+    background: "default",
     images: [
       { id: ITEM(1), imageId: PIC_A },
       { id: ITEM(2), imageId: id(99) },
@@ -51,14 +52,15 @@ const SECTIONS: LandingSection[] = [
   {
     id: POINTS,
     type: "points",
+    background: "default",
     items: [
       { id: ITEM(3), icon: "trophy" },
       { id: ITEM(4), icon: "shield-check" },
     ],
   },
-  { id: STEPS, type: "steps", items: [{ id: ITEM(5) }, { id: ITEM(6) }] },
-  { id: FAQ, type: "faq", items: [{ id: ITEM(7) }, { id: ITEM(8) }] },
-  { id: CTA, type: "cta", button: { kind: "external", url: "https://partner.example/join" } },
+  { id: STEPS, type: "steps", background: "default", items: [{ id: ITEM(5) }, { id: ITEM(6) }] },
+  { id: FAQ, type: "faq", background: "default", items: [{ id: ITEM(7) }, { id: ITEM(8) }] },
+  { id: CTA, type: "cta", background: "default", button: { kind: "external", url: "https://partner.example/join" } },
 ];
 
 const TEXTS: LandingSectionTexts = {
@@ -177,6 +179,45 @@ describe("the landing page renderers", () => {
     // The second question was never written, so it has no row.
     expect(screen.getAllByText(/Who leads it\?/)).toHaveLength(1);
     expect(document.querySelectorAll("details")).toHaveLength(1);
+  });
+
+  it("lays a card section on a full-width band, its content keeping the section's container", () => {
+    const { container } = renderBody({
+      sections: SECTIONS.map((section) =>
+        section.type === "points" || section.type === "steps" || section.type === "cta"
+          ? { ...section, background: "card" }
+          : section,
+      ),
+    });
+    const body = container.firstElementChild;
+    const sectionOf = (heading: string) =>
+      enclosing(screen.getByRole("heading", { name: heading }), "section");
+
+    // A band is the card ground and nothing more — no container, no width cap,
+    // no spacing of its own — directly in the body, so it runs edge to edge.
+    const points = sectionOf("Why families choose us");
+    const band = points.parentElement;
+    expect(band?.className).toBe("bg-card");
+    expect(band?.parentElement).toBe(body);
+    expect(points.className).toContain("container");
+
+    // Adjacent card sections share one run of the card ground: two bands
+    // touching, with each section's own padding inside them.
+    const steps = sectionOf("How to join");
+    expect(steps.parentElement?.className).toBe("bg-card");
+    expect(band?.nextElementSibling).toBe(steps.parentElement);
+
+    // A default section sits straight on the page ground between them.
+    const faq = sectionOf("Questions");
+    expect(faq.parentElement).toBe(body);
+    expect(sectionOf("Ready?").parentElement?.className).toBe("bg-card");
+    expect(enclosing(screen.getByRole("heading", { level: 1 }), "section").parentElement).toBe(body);
+  });
+
+  it("lays no band under a section on the default ground", () => {
+    const { container } = renderBody();
+    const body = container.firstElementChild;
+    expect([...(body?.children ?? [])].every((child) => child.tagName === "SECTION")).toBe(true);
   });
 
   it("marks the words' language where it is not the page's", () => {

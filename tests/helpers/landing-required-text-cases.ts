@@ -50,10 +50,11 @@ export function everySection(): LandingSection[] {
       imageId: I.picture,
       button: { kind: "internal", path: "/shop" },
     },
-    { id: I.text, type: "text", imageId: I.picture, imageSide: "end" },
+    { id: I.text, type: "text", background: "default", imageId: I.picture, imageSide: "end" },
     {
       id: I.image,
       type: "image",
+      background: "default",
       images: [
         { id: I.imageItemA, imageId: I.picture },
         { id: I.imageItemB, imageId: I.pictureTwo },
@@ -62,16 +63,23 @@ export function everySection(): LandingSection[] {
     {
       id: I.points,
       type: "points",
+      background: "card",
       items: [
         { id: I.pointA, icon: "star" },
         { id: I.pointB, icon: "heart" },
       ],
     },
-    { id: I.steps, type: "steps", items: [{ id: I.stepA }, { id: I.stepB }] },
-    { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
+    {
+      id: I.steps,
+      type: "steps",
+      background: "card",
+      items: [{ id: I.stepA }, { id: I.stepB }],
+    },
+    { id: I.faq, type: "faq", background: "default", items: [{ id: I.faqA }] },
     {
       id: I.cta,
       type: "cta",
+      background: "default",
       button: { kind: "external", url: "https://example.com" },
     },
   ];
@@ -82,7 +90,7 @@ export function plainSections(): LandingSection[] {
   return everySection().map((section) => {
     if (section.type === "hero") return { id: section.id, type: "hero" };
     if (section.type === "text") {
-      return { id: section.id, type: "text", imageSide: section.imageSide };
+      return { id: section.id, type: "text", background: section.background, imageSide: section.imageSide };
     }
     return section;
   });

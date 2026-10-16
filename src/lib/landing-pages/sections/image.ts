@@ -3,6 +3,7 @@ import {
   distinctIds,
   fieldOf,
   isWritten,
+  landingBackgroundField,
   landingId,
   plainText,
   type LandingSectionDefinition,
@@ -18,6 +19,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("image"),
+    ...landingBackgroundField,
     images: z
       .array(z.object({ id: landingId, imageId: landingId }).strict())
       .min(1, "An image section shows at least one picture")

@@ -6,12 +6,17 @@ import {
   isLandingMarkdownPath,
   landingMarkdownValues,
   landingSection,
+  landingSectionBackground,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
 import { markdownText } from "@/lib/landing-pages/sections/shared";
+import {
+  adjacentCardSections,
+  backgroundCases,
+} from "../../helpers/landing-background-cases";
 import { BUTTON_TARGET_CASES } from "../../helpers/landing-button-cases";
 import {
   CASE_IDS as I,
@@ -156,6 +161,42 @@ describe("the structure", () => {
     ).toBe(false);
     expect(landingSections.safeParse([hero, { ...rest[0], id: hero.id }]).success).toBe(false);
     expect(landingSections.safeParse([]).success).toBe(false);
+  });
+});
+
+describe("a section's background", () => {
+  it.each(backgroundCases().map((c) => [c.name, c] as const))(
+    "judges %s by the verdict SQL is held to",
+    (_, testCase) => {
+      const parsed = landingSections.safeParse(testCase.sections);
+      expect(parsed.success).toBe(testCase.valid);
+      if (parsed.success) expect(landingSectionBackground(parsed.data[1])).toBe(testCase.reads);
+    },
+  );
+
+  it("is tried on every type, each one but the hero taking card", () => {
+    const cases = backgroundCases();
+    for (const type of LANDING_SECTION_TYPES) {
+      const accepted = cases.filter((c) => c.name.startsWith(`${type} on card`) && c.valid);
+      expect(accepted.length, type).toBe(type === "hero" ? 0 : 1);
+    }
+    expect(cases.filter((c) => c.name.startsWith("the hero")).every((c) => !c.valid)).toBe(true);
+  });
+
+  it("reads a stored section without one as default, and the hero as default always", () => {
+    const stored = everySection().map((section) =>
+      Object.fromEntries(Object.entries(section).filter(([key]) => key !== "background")),
+    );
+    const [hero, ...rest] = landingSections.parse(stored);
+    expect(landingSectionBackground(hero)).toBe("default");
+    for (const section of rest) expect(landingSectionBackground(section)).toBe("default");
+  });
+
+  it("allows adjacent card sections", () => {
+    const parsed = landingSections.parse(adjacentCardSections());
+    expect(parsed.slice(1).map(landingSectionBackground)).toEqual(
+      parsed.slice(1).map(() => "card"),
+    );
   });
 });
 

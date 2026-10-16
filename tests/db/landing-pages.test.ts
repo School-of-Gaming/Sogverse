@@ -17,10 +17,13 @@ import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contr
 import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
   buttonTarget,
+  landingSectionBackground,
+  landingSections,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
 import { asObject } from "../helpers/json";
+import { backgroundCases } from "../helpers/landing-background-cases";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
 import { requiredTextCases } from "../helpers/landing-required-text-cases";
 
@@ -90,7 +93,7 @@ function structure(heroImage: string | null = PIC_A): LandingSection[] {
     heroImage === null
       ? { id: HERO, type: "hero" }
       : { id: HERO, type: "hero", imageId: heroImage },
-    { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+    { id: CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
   ];
 }
 
@@ -285,6 +288,81 @@ describe("landing pages", () => {
         expect(testCase.accepted, testCase.name).toBe(testCase.valid);
         expect(data, testCase.name).toBe(testCase.valid);
       });
+    });
+  });
+
+  describe("a section's background", () => {
+    it("is judged in SQL as the registry judges it, on what the registry would store", async () => {
+      const cases = backgroundCases().map((testCase) => {
+        const parsed = landingSections.safeParse(testCase.sections);
+        return {
+          ...testCase,
+          accepted: parsed.success,
+          stored: parsed.success ? parsed.data : testCase.sections,
+        };
+      });
+      const answers = await Promise.all(
+        cases.map((testCase) =>
+          admin.rpc("landing_sections_problem", { p_sections: testCase.stored }),
+        ),
+      );
+      cases.forEach((testCase, index) => {
+        const { data, error } = answers[index];
+        expect(error, testCase.name).toBeNull();
+        expect(testCase.accepted, testCase.name).toBe(testCase.valid);
+        expect(data === null, `${testCase.name}: ${data}`).toBe(testCase.valid);
+      });
+    });
+
+    it("is stored for adjacent card sections as sent, and kept by a picture's removal", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, [
+        ...structure(),
+        {
+          id: GALLERY,
+          type: "image",
+          background: "card",
+          images: [
+            { id: SHOT_1, imageId: PIC_DOOMED },
+            { id: SHOT_2, imageId: PIC_B },
+          ],
+        },
+        { id: FAQ, type: "faq", background: "card", items: [{ id: FAQ_1 }] },
+      ]);
+      await admin.from("catalogue_images").delete().eq("id", PIC_DOOMED);
+      const view = await service.getAdminPage(PAGE_A);
+      expect(view?.draft.sections.map(landingSectionBackground)).toEqual([
+        "default",
+        "default",
+        "card",
+        "card",
+      ]);
+    });
+
+    it("reads as default on a section stored without one, in the working and the published copy", async () => {
+      await reseed();
+      // A structure written before sections had a background: no section names one.
+      const bare = [
+        { id: HERO, type: "hero", imageId: PIC_A },
+        { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+      ];
+      const stored = await admin.from("landing_pages").update({ sections: bare }).eq("id", PAGE_A);
+      expect(stored.error).toBeNull();
+      expect((await admin.rpc("landing_sections_problem", { p_sections: bare })).data).toBeNull();
+
+      const draft = await service.getAdminPage(PAGE_A);
+      expect(draft?.draft.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
+
+      await service.publishPage(PAGE_A);
+      const { data: published } = await admin
+        .from("landing_page_publications")
+        .select("sections")
+        .eq("page_id", PAGE_A)
+        .single();
+      expect(published?.sections).toEqual(bare);
+      const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
+      expect(live?.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
+      await service.unpublishPage(PAGE_A);
     });
   });
 
@@ -886,6 +964,7 @@ describe("landing pages", () => {
       const gallery: LandingSection = {
         id: GALLERY,
         type: "image",
+        background: "default",
         images: [{ id: SHOT_1, imageId: PIC_DOOMED_TOO }],
       };
       await saveWhole(PAGE_A, {
@@ -935,6 +1014,7 @@ describe("landing pages", () => {
       expect(view?.draft.sections[2]).toEqual({
         id: GALLERY,
         type: "image",
+        background: "default",
         images: [{ id: SHOT_2, imageId: PIC_B }],
       });
       expect(view?.draft.imagePaths).toEqual({

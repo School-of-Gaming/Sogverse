@@ -10,6 +10,8 @@ import {
 /**
  * The page's opening: its one H1, an optional line under it, an optional
  * picture and an optional button. Every page has exactly one, and it is first.
+ * Alone of the types it takes no background: it opens the page on the page's
+ * own ground, and its schema refuses the field.
  */
 const section = z
   .object({

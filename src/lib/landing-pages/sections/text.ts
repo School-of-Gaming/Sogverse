@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   isWritten,
+  landingBackgroundField,
   landingId,
   markdownText,
   plainText,
@@ -15,6 +16,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("text"),
+    ...landingBackgroundField,
     imageId: landingId.optional(),
     imageSide: z.enum(LANDING_IMAGE_SIDES),
   })

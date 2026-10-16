@@ -84,6 +84,18 @@ BEGIN
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
 
+    -- The ground a section sits on: every type but the hero may name one, and
+    -- a section without one sits on the page's own ground.
+    IF v_section ? 'background' THEN
+      IF v_type = 'hero' THEN
+        RETURN 'The hero section takes no background';
+      END IF;
+      IF jsonb_typeof(v_section->'background') IS DISTINCT FROM 'string'
+         OR v_section->>'background' NOT IN ('default', 'card') THEN
+        RETURN format('The background of section %s is default or card', v_id);
+      END IF;
+    END IF;
+
     IF v_key IS NOT NULL THEN
       IF jsonb_typeof(v_section->v_key) IS DISTINCT FROM 'array'
          OR jsonb_array_length(v_section->v_key) NOT BETWEEN v_min AND v_max THEN
@@ -127,7 +139,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}. Every type but the hero also takes background?: default|card, absent read as default. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
 
 
 --
