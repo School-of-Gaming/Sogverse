@@ -1,0 +1,144 @@
+#!/usr/bin/env node
+/**
+ * Whether the machine has the capacity a test run assumes — read before
+ * treating a timeout as a defect.
+ *
+ * Several agents and sessions often test in parallel on one machine, each in
+ * its own checkout or worktree, and each run sizes its worker pool to the whole
+ * machine. When they saturate it, correct tests miss their timeouts, and the
+ * failure looks exactly like a slow or racing test. This reports the two facts
+ * that tell the cases apart: how busy the CPU is right now, and which test runs
+ * are in progress and in which checkout — so a reader knows whether to wait,
+ * and whom to agree a re-run with.
+ *
+ * It never waits, locks or throttles anything; it only reports.
+ *
+ *   npm run load
+ *
+ * Works on Windows, Linux and macOS: CPU use comes from Node's own `os`
+ * counters, sampled over a second; the process list from `ps`, or from the
+ * Windows process table where there is no `ps`.
+ */
+import { execFileSync } from "node:child_process";
+import os from "node:os";
+import path from "node:path";
+
+/** At or above this share of the CPU, a timeout says nothing about the test. */
+const SATURATED = 0.9;
+const SAMPLE_MS = 1000;
+
+/** Total and idle CPU time across every core since boot. */
+function cpuTimes() {
+  let total = 0;
+  let idle = 0;
+  for (const { times } of os.cpus()) {
+    total += times.user + times.nice + times.sys + times.irq + times.idle;
+    idle += times.idle;
+  }
+  return { total, idle };
+}
+
+/** The share of the CPU in use over one sample, 0 to 1. */
+async function cpuUse() {
+  const before = cpuTimes();
+  await new Promise((resolve) => setTimeout(resolve, SAMPLE_MS));
+  const after = cpuTimes();
+  const total = after.total - before.total;
+  return total > 0 ? 1 - (after.idle - before.idle) / total : 0;
+}
+
+/** Every process's id and command line; an empty list if they cannot be read. */
+function processes() {
+  try {
+    if (process.platform === "win32") {
+      const json = execFileSync(
+        "powershell.exe",
+        [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          "Get-CimInstance Win32_Process | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress",
+        ],
+        { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+      );
+      const rows = JSON.parse(json);
+      return (Array.isArray(rows) ? rows : [rows])
+        .filter((row) => typeof row.CommandLine === "string")
+        .map((row) => ({ pid: row.ProcessId, args: row.CommandLine }));
+    }
+    return execFileSync("ps", ["-eo", "pid=,args="], { encoding: "utf8" })
+      .split("\n")
+      .map((line) => line.trim().match(/^(\d+)\s+(.*)$/))
+      .filter((match) => match !== null)
+      .map((match) => ({ pid: Number(match[1]), args: match[2] }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * What kind of test run a process is the entry point of, or `null`. Only entry
+ * points count: a vitest run's forked workers are part of the run, not runs of
+ * their own.
+ */
+function testRunKind(args) {
+  if (/[\\/]vitest[\\/]vitest\.mjs\b/.test(args)) return "vitest";
+  if (/[\\/]@playwright[\\/]test[\\/]cli\.js\b|[\\/]playwright[\\/]cli\.js\b/.test(args)) {
+    return "playwright";
+  }
+  // npm starts it by a relative path, so its checkout is usually unknown; the
+  // vitest run it starts later is listed with its own.
+  if (/(?:^|[\s"\\/])scripts[\\/]local-db\.mjs"?\s+test\b/.test(args)) return "db tests";
+  return null;
+}
+
+/** The checkout a run belongs to: the directory above its `node_modules` or `scripts`. */
+function checkoutOf(args) {
+  const match = args.match(/([A-Za-z]:[\\/][^"]*?|\/[^"\s]*?)[\\/](?:node_modules|scripts)[\\/]/);
+  return match ? path.resolve(match[1]) : null;
+}
+
+/** Whether `dir` is `checkout` or a directory inside it. */
+function isInside(dir, checkout) {
+  const relative = path.relative(checkout, dir);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+// Sampled before the process list is read, so reading it is not in the sample.
+const use = await cpuUse();
+const all = processes();
+const here = path.resolve(process.cwd());
+const runs = all
+  .filter((p) => p.pid !== process.pid)
+  .map((p) => ({ kind: testRunKind(p.args), checkout: checkoutOf(p.args) }))
+  .filter((run) => run.kind !== null);
+
+const percent = Math.round(use * 100);
+console.log(`CPU: ${percent}% in use across ${os.cpus().length} logical cores.`);
+if (all.length === 0) {
+  console.log("Test runs: could not read the process list.");
+} else if (runs.length === 0) {
+  console.log("Test runs in progress: none.");
+} else {
+  console.log(`Test runs in progress: ${runs.length}.`);
+  for (const run of runs) {
+    const where = run.checkout === null ? "an unknown checkout" : run.checkout;
+    const mine = run.checkout !== null && isInside(here, run.checkout) ? " (this checkout)" : "";
+    console.log(`  - ${run.kind} in ${where}${mine}`);
+  }
+}
+
+const others = runs.filter((run) => run.checkout === null || !isInside(here, run.checkout));
+if (use >= SATURATED && others.length > 0) {
+  console.log(
+    `Verdict: saturated by other test runs. A timeout now is most likely contention, not a defect — wait for capacity or agree with the other agents and sessions who runs what, then re-run that one file once.`,
+  );
+} else if (use >= SATURATED) {
+  console.log(
+    "Verdict: saturated, but not by another test run. Something else is using the machine; a timeout now still says little about the test.",
+  );
+} else {
+  console.log(
+    "Verdict: the machine has capacity. A timeout now is evidence about the test — reason about the code to a named cause.",
+  );
+}
