@@ -1339,7 +1339,7 @@
           "landingImage": {
             "change": "Change picture",
             "remove": "Remove picture",
-            "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it on this landing page.",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to its frame, add it and use it on this landing page.",
             "outcomeAdded": "Added to the catalogue and chosen for this landing page.",
             "outcomeExisting": "Already in the catalogue — chosen for this landing page."
           },

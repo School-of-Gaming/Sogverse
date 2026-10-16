@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { LandingPictureShape } from "../picture-shapes";
 
 /**
  * What every landing section module builds on: the id shape, the button
@@ -134,6 +135,13 @@ export interface LandingSectionDefinition<
    * subset check both read.
    */
   readonly markdownFields: readonly LandingMarkdownField[];
+  /**
+   * The picture shapes this type's pictures may be, none for a type without
+   * pictures. A section's pictures are always all one shape, so an image
+   * section's grid lines up. The database refuses any other picture, by the
+   * same rule written once more in SQL, and a DB test holds the two equal.
+   */
+  readonly pictureShapes: readonly LandingPictureShape[];
 }
 
 /**

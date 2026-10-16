@@ -17,6 +17,8 @@ CREATE TYPE public.catalogue_image_purpose AS ENUM (
     'product',
     'library_cover',
     'landing_image',
+    'landing_square_image',
+    'landing_portrait_image',
     'spotlight_image'
 );
 
@@ -25,7 +27,7 @@ CREATE TYPE public.catalogue_image_purpose AS ENUM (
 -- Name: TYPE catalogue_image_purpose; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.catalogue_image_purpose IS 'What a catalogue picture is for: ''product'', a product''s picture; ''library_cover'', a Library article''s cover; ''landing_image'', a picture on a landing page; or ''spotlight_image'', a spotlight''s picture. Each purpose has its own storage bucket (product-images, library-covers, landing-images, spotlight-images) and its own exact stored size; both live in the application''s one purpose map, and the size is enforced by the upload routes, which measure the bytes. No aspect ratio is stored: a purpose outlives any one crop.';
+COMMENT ON TYPE public.catalogue_image_purpose IS 'What a catalogue picture is for: ''product'', a product''s picture; ''library_cover'', a Library article''s cover; ''landing_image'', ''landing_square_image'' and ''landing_portrait_image'', a picture on a landing page, wide 16:9, square 1:1 or portrait 4:5; or ''spotlight_image'', a spotlight''s picture. Each purpose has its own storage bucket (product-images, library-covers, landing-images, landing-square-images, landing-portrait-images, spotlight-images) and its own exact stored size; both live in the application''s one purpose map, and the size is enforced by the upload routes, which measure the bytes. No size or ratio is stored beside it: the purpose is the shape.';
 
 
 --

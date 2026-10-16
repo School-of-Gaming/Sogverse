@@ -71,10 +71,30 @@ export const IMAGE_PURPOSES = {
     maxBytes: 4 * 1024 * 1024,
     catalogue: true,
   },
+  // A landing page picture comes in three shapes, each its own purpose: wide
+  // 16:9 here, square 1:1 and portrait 4:5 below. A page reserves each
+  // picture's box before it loads, and the catalogue stores no size, so the
+  // shape has to follow from the purpose. The square and the portrait are
+  // 1200 px wide: neither is ever drawn wider than 600 CSS px, so that stays
+  // sharp on a high-density screen.
   landing_image: {
     bucket: "landing-images",
     visibility: "public",
     storedSize: { width: 1600, height: 900 },
+    maxBytes: 4 * 1024 * 1024,
+    catalogue: true,
+  },
+  landing_square_image: {
+    bucket: "landing-square-images",
+    visibility: "public",
+    storedSize: { width: 1200, height: 1200 },
+    maxBytes: 4 * 1024 * 1024,
+    catalogue: true,
+  },
+  landing_portrait_image: {
+    bucket: "landing-portrait-images",
+    visibility: "public",
+    storedSize: { width: 1200, height: 1500 },
     maxBytes: 4 * 1024 * 1024,
     catalogue: true,
   },

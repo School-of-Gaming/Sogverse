@@ -1339,7 +1339,7 @@
           "landingImage": {
             "change": "Changer l’image",
             "remove": "Retirer l’image",
-            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et l’utiliser sur cette page d’atterrissage.",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer à son format, l’ajouter et l’utiliser sur cette page d’atterrissage.",
             "outcomeAdded": "Ajoutée au catalogue et choisie pour cette page d’atterrissage.",
             "outcomeExisting": "Déjà dans le catalogue — choisie pour cette page d’atterrissage."
           },

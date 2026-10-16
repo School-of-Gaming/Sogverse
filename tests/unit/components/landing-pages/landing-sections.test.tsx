@@ -6,6 +6,7 @@ import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/se
 import { LANDING_SECTION_TYPES } from "@/lib/landing-pages/sections";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
 import { LANDING_SECTION_RENDERERS } from "@/components/landing-pages/landing-sections";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
@@ -30,6 +31,9 @@ const FAQ = id(6);
 const CTA = id(7);
 const PIC_A = id(10);
 const PIC_B = id(11);
+const SQUARE_A = id(12);
+const SQUARE_B = id(13);
+const PORTRAIT = id(14);
 const ITEM = (n: number) => id(100 + n);
 
 const SECTIONS: LandingSection[] = [
@@ -86,7 +90,13 @@ const TEXTS: LandingSectionTexts = {
   [CTA]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
 };
 
-const PATHS = { [PIC_A]: "a.jpg", [PIC_B]: "b.jpg" };
+const PICTURES: LandingPictures = {
+  [PIC_A]: { path: "a.jpg", purpose: "landing_image" },
+  [PIC_B]: { path: "b.jpg", purpose: "landing_image" },
+  [SQUARE_A]: { path: "sa.jpg", purpose: "landing_square_image" },
+  [SQUARE_B]: { path: "sb.jpg", purpose: "landing_square_image" },
+  [PORTRAIT]: { path: "p.jpg", purpose: "landing_portrait_image" },
+};
 
 /** The nearest `selector` around `element`, which the test requires to exist. */
 function enclosing(element: HTMLElement, selector: string): HTMLElement {
@@ -108,7 +118,7 @@ function renderBody(
     <NextIntlClientProvider locale={locale} messages={messages}>
       <LandingPageBody
         sections={overrides.sections ?? SECTIONS}
-        imagePaths={PATHS}
+        pictures={PICTURES}
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}
@@ -148,6 +158,67 @@ describe("the landing page renderers", () => {
     const figure = enclosing(screen.getByText("From last term"), "figure");
     expect(within(figure).getAllByRole("img")).toHaveLength(1);
     expect(within(figure).getByAltText("A club room")).toBeTruthy();
+  });
+
+  it("reserves a square or portrait text picture's own box, held narrower than its column", () => {
+    for (const [imageId, width, height, bucket, frame, sizes] of [
+      [SQUARE_A, "1200", "1200", "landing-square-images/sa.jpg", "max-w-md", "(min-width: 480px) 448px, calc(100vw - 2rem)"],
+      [PORTRAIT, "1200", "1500", "landing-portrait-images/p.jpg", "max-w-sm", "(min-width: 416px) 384px, calc(100vw - 2rem)"],
+    ] as const) {
+      const { unmount } = renderBody({
+        sections: [
+          { id: HERO, type: "hero" },
+          { id: TEXT, type: "text", imageId, imageSide: "end" },
+        ],
+        texts: { [TEXT]: { heading: "Beside", body: "Words.", imageAlt: "Beside the words" } },
+      });
+      const picture = screen.getByAltText("Beside the words");
+      expect(picture.getAttribute("width")).toBe(width);
+      expect(picture.getAttribute("height")).toBe(height);
+      expect(picture.getAttribute("src")).toContain(encodeURIComponent(bucket));
+      expect(picture.getAttribute("sizes")).toBe(sizes);
+      expect(picture.parentElement?.className).toContain(frame);
+      unmount();
+    }
+  });
+
+  it("lays an image section out by its pictures' shape, with honest sizes", () => {
+    const gallery = (images: string[]): LandingSection[] => [
+      { id: HERO, type: "hero" },
+      { id: IMAGE, type: "image", images: images.map((imageId, n) => ({ id: ITEM(20 + n), imageId })) },
+    ];
+    const sizesOf = () =>
+      [...document.querySelectorAll("figure img")].map((img) => img.getAttribute("sizes"));
+
+    const wide = renderBody({ sections: gallery([PIC_A, PIC_B]), texts: {} });
+    expect(sizesOf()).toEqual([
+      "(min-width: 1056px) 504px, (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
+      "(min-width: 1056px) 504px, (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
+    ]);
+    wide.unmount();
+
+    const squares = renderBody({
+      sections: gallery([SQUARE_A, SQUARE_B, SQUARE_A, SQUARE_B]),
+      texts: {},
+    });
+    expect(new Set(sizesOf())).toEqual(
+      new Set([
+        "(min-width: 1184px) 276px, (min-width: 1024px) calc(25vw - 1.25rem), (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
+      ]),
+    );
+    const grid = document.querySelector("figure > div");
+    expect(grid?.className).toContain("lg:grid-cols-4");
+    for (const img of document.querySelectorAll("figure img")) {
+      expect(img.getAttribute("width")).toBe("1200");
+      expect(img.getAttribute("height")).toBe("1200");
+      expect(img.className).toContain("aspect-square");
+    }
+    squares.unmount();
+
+    renderBody({ sections: gallery([PORTRAIT]), texts: {} });
+    expect(sizesOf()).toEqual(["(min-width: 480px) 448px, calc(100vw - 2rem)"]);
+    expect(document.querySelector("figure")?.className).toContain("max-w-md");
+    expect(document.querySelector("figure img")?.className).toContain("aspect-[4/5]");
   });
 
   it("sends an own-site button to the page's language and an outside one to a new tab", () => {

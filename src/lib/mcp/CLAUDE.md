@@ -110,16 +110,30 @@ uploaded through an **MCP Apps view** (extension `io.modelcontextprotocol/ui`): 
 tool (`open_cover_uploader`, `open_landing_image_uploader`) carries `_meta.ui.resourceUri`
 naming a `ui://` resource of type `text/html;profile=mcp-app`, which the AI app renders in a
 sandboxed frame inside the chat. **One view serves every catalogue purpose.** The opening
-tool's `uploader` field says what it is for — the purpose's exact size and the largest JPEG
-a call may carry, the app-only tool that stores the picture, and the tool and arguments
-that place it (or none, to add it to the catalogue alone) — so the view restates nothing
-the catalogue or an area defines, and a new purpose is a new opening tool, never a new
-view. The view crops the admin's picture to that frame, calls the two tools through the AI
-app's own connection, and then puts the new entry's id in the model's context. It holds no
-token and opens no connection of its own, so the gate in front of those calls is the
-endpoint's.
+tool's `uploader` field says what it is for — the frames the area's pictures come in, each
+a purpose's exact size with the app-only tool that stores it and, where this destination
+does not take that shape, the sentence saying why; what a picture of no frame's shape is
+told; the largest JPEG a call may carry; and the tool and arguments that place it (or
+none, to add it to the catalogue alone) — so the view restates nothing the catalogue or an
+area defines, and a new purpose is a new frame or a new opening tool, never a new view.
+A change to that protocol names a new view address, since hosts may cache a view by it.
 
-**An app-only tool is a tool all the same.** An upload tool (`upload_library_cover`, `upload_landing_image`) carries
+**Rule: the view never crops.** It measures the admin's picture and takes it as the frame
+it is already the shape of, within 1% of the frame's ratio, scaling it to that frame's
+exact size (the sliver under 1% is trimmed, which nobody can see); the admin never chooses
+a shape. A picture of no frame's shape, or of one the destination does not take, is
+refused: nothing uploads, the view says why on screen, and it puts the same sentence —
+the picture's measured ratio and size, and the rule — into the model's context, so the AI
+app can explain it and the admin can re-crop the picture themselves. A crop the admin
+cannot see would silently cut away what they meant to show, which is what this rule
+exists against; the in-app crop dialog, where the admin drags the frame, is the place for
+cropping. A picture smaller than its frame still uploads, with a warning that it will look
+soft, and the server's exact-size check stays the last gate. After a picture is stored the
+view calls the placing tool through the AI app's own connection, and then puts the new
+entry's id in the model's context. It holds no token and opens no connection of its own,
+so the gate in front of those calls is the endpoint's.
+
+**An app-only tool is a tool all the same.** An upload tool (one per purpose: `upload_library_cover`, `upload_landing_image` and its square and portrait siblings) carries
 `_meta.ui.visibility: ["app"]`, which tells a host to keep it out of the model's tool list
 and accept it only from this server's own views. That is the host's promise, not a gate:
 the tool is in `tools/list` and any client holding a grant can call it, so it checks its
@@ -131,8 +145,8 @@ first — it is stateless, so the initialize capabilities are gone by the next r
 
 **The picture travels as base64 inside one JSON-RPC request.** The catalogue's cap is 4 MB,
 but the SDK refuses a request body over 4 MB (Vercel's own limit, 4.5 MB, sits above it), so
-the view is told a smaller cap and re-encodes at a lower quality to fit; a 1600 × 900 JPEG is
-a few hundred kilobytes, so neither limit is near in practice.
+the view is told a smaller cap and re-encodes at a lower quality to fit; a JPEG at any
+catalogue size is a few hundred kilobytes, so neither limit is near in practice.
 
 **The view is its own workspace package, `packages/mcp-image-uploader`, built to one HTML
 file that is committed.** `@modelcontextprotocol/ext-apps` needs zod 4 as a peer, which the

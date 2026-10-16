@@ -14,7 +14,7 @@ import type { AppSupabaseClient } from "@/types";
 import {
   defaultLandingSlug,
   hasUnpublishedChanges,
-  landingImagePaths,
+  landingPictures,
   landingPageInput,
   landingVersionInput,
   oauthClientNameRows,
@@ -44,7 +44,7 @@ const DRAFT_VERSION_COLUMNS =
 const DRAFT_VERSION_LIST_COLUMNS =
   "locale, title, summary, slug, texts_md5, is_complete";
 
-const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5)`;
+const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5)`;
 
 /** The published copy's columns for a list: no structure and no words. */
 const PUBLICATION_SUMMARY_COLUMNS = `page_id, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
@@ -95,7 +95,7 @@ interface PublicationSummaryRow {
 
 interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
   sections: unknown;
-  image_paths: unknown;
+  pictures: unknown;
   versions: readonly {
     locale: string;
     title: string;
@@ -124,7 +124,7 @@ function toPublished(row: PublicationRow): PublishedLandingPage {
   return {
     ...toPublishedSummary(row),
     sections,
-    imagePaths: landingImagePaths.parse(row.image_paths),
+    pictures: landingPictures.parse(row.pictures),
     versions: inLocaleOrder(row.versions).map(
       ({ locale, title, summary, slug, section_texts }) => ({
         locale,
@@ -228,7 +228,7 @@ export class LandingPageService {
     const { data, error } = await this.supabase
       .from("landing_pages")
       .select(
-        `id, sections, sections_md5, image_paths, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
+        `id, sections, sections_md5, pictures, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -237,11 +237,11 @@ export class LandingPageService {
     if (!data) return null;
 
     const sections = readSections(data.sections);
-    const imagePaths = landingImagePaths.parse(data.image_paths);
+    const pictures = landingPictures.parse(data.pictures);
     const draft: LandingPageDraft = {
       id: data.id,
       sections,
-      imagePaths,
+      pictures,
       versions: inLocaleOrder(data.versions).map((version) => {
         const sectionTexts = readSectionTexts(sections, version.section_texts);
         return {

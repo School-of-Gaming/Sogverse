@@ -1383,7 +1383,7 @@
           "landingImage": {
             "change": "nagh beQ yIchoH",
             "remove": "nagh beQ yIteq",
-            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej navvamDaq lo’lu’.",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. ’echletvaD Dape’, qachDaq chellu’, ’ej navvamDaq lo’lu’.",
             "outcomeAdded": "qachDaq chellu’, ’ej navvamvaD wIvlu’.",
             "outcomeExisting": "qachDaq tu’lu’ — navvamvaD wIvlu’."
           },

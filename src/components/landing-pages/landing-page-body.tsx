@@ -1,18 +1,20 @@
 import { Fragment } from "react";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
+import { landingPictureShapeOf } from "@/lib/landing-pages/picture-shapes";
 import type {
   LandingSection,
   LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
+import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
 
 export interface LandingPageBodyProps {
   /** The structure, in page order: the hero first. */
   sections: readonly LandingSection[];
-  /** Each picture's path in the `landing-images` bucket, by catalogue entry id. */
-  imagePaths: Readonly<Record<string, string>>;
+  /** Each picture's path and purpose, by catalogue entry id. */
+  pictures: Readonly<LandingPictures>;
   /** The shown version's words, by section id. */
   sectionTexts: LandingSectionTexts;
   /** The language the shown version is written in. */
@@ -33,14 +35,19 @@ export interface LandingPageBodyProps {
  */
 export function LandingPageBody({
   sections,
-  imagePaths,
+  pictures,
   sectionTexts,
   textLocale,
   locale,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
-    imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
+    picture: (imageId) => {
+      if (!Object.hasOwn(pictures, imageId)) return null;
+      const { path, purpose } = pictures[imageId];
+      const src = catalogueImageSrc(purpose, path);
+      return src === null ? null : { src, shape: landingPictureShapeOf(purpose) };
+    },
   };
   return (
     // exact-locale: marks text written in another language than the page with lang

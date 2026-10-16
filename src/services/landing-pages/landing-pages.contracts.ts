@@ -11,6 +11,10 @@ import {
   type LandingSection,
   type LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
+import {
+  isLandingPicturePurpose,
+  type LandingPicturePurpose,
+} from "@/lib/landing-pages/picture-shapes";
 import { slugify } from "@/lib/slug";
 
 /**
@@ -216,12 +220,8 @@ export interface LandingPageSaver {
 export interface LandingPageDraft extends LandingPageSaver {
   id: string;
   sections: LandingSection[];
-  /**
-   * Each picture the sections show, by catalogue entry id, as its path in the
-   * `landing-images` bucket — resolve it with `catalogueImageSrc` as a
-   * `landing_image`. Derived by the database from the sections.
-   */
-  imagePaths: Record<string, string>;
+  /** Each picture the sections show, by catalogue entry id. Derived by the database from the sections. */
+  pictures: LandingPictures;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: LandingPageDraftVersion[];
   createdAt: string;
@@ -259,7 +259,7 @@ export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
   sections: LandingSection[];
   /** As on the working copy, for the live sections. */
-  imagePaths: Record<string, string>;
+  pictures: LandingPictures;
   versions: PublishedLandingVersion[];
 }
 
@@ -303,8 +303,30 @@ export interface AdminLandingPage {
   hasUnpublishedChanges: boolean;
 }
 
-/** A copy's `image_paths` column, as the database derives it. */
-export const landingImagePaths = z.record(z.string(), z.string());
+/**
+ * One picture a copy shows: its path in its purpose's bucket, and its purpose,
+ * which is its shape — resolve the path with `catalogueImageSrc` as that
+ * purpose, and reserve its box at that purpose's stored size.
+ */
+export interface LandingPicture {
+  path: string;
+  purpose: LandingPicturePurpose;
+}
+
+/** Every picture a copy shows, by catalogue entry id. */
+export type LandingPictures = Record<string, LandingPicture>;
+
+/** A copy's `pictures` column, as the database derives it. */
+export const landingPictures: z.ZodType<LandingPictures, z.ZodTypeDef, unknown> = z.record(
+  z.string(),
+  z.object({
+    path: z.string(),
+    purpose: z.custom<LandingPicturePurpose>(
+      (value) => typeof value === "string" && isLandingPicturePurpose(value),
+      "Not a landing picture purpose",
+    ),
+  }),
+);
 
 /**
  * What `get_oauth_client` answers, narrowed to what naming an AI app needs.

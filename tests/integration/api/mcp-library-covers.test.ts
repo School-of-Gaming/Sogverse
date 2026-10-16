@@ -427,14 +427,24 @@ describe("the uploader", () => {
       articleId: ID,
       title: "Screen time is not the enemy",
       currentCover: { catalogueId: COVER_ID, label: "Clock", publicUrl: `${BUCKET}/clock.jpg` },
-      // What the shared picture uploader reads: the purpose's size, and the
-      // store-then-set calls it makes.
+      // What the shared picture uploader reads: the one frame a cover may
+      // be, what a picture of another shape is told, and the store-then-set
+      // calls it makes.
       uploader: {
-        purpose: "library_cover",
         heading: "Library cover",
         subject: "For “Screen time is not the enemy”",
-        frame: { width: 1600, height: 900, maxBytes: expect.any(Number) },
-        uploadTool: "upload_library_cover",
+        frames: [
+          {
+            purpose: "library_cover",
+            name: "16:9",
+            width: 1600,
+            height: 900,
+            uploadTool: "upload_library_cover",
+            refusal: null,
+          },
+        ],
+        noFrame: "A Library cover must be 16:9.",
+        maxBytes: expect.any(Number),
         place: expect.objectContaining({
           tool: "set_library_article_cover",
           arguments: { articleId: ID },
@@ -465,7 +475,7 @@ describe("the uploader as an MCP Apps view", () => {
       })
       .parse((await rpc("tools/list")).result);
 
-    const uri = "ui://sogverse/picture-uploader.html";
+    const uri = "ui://sogverse/picture-uploader-2.html";
     expect(tools.find((t) => t.name === "open_cover_uploader")?._meta).toEqual({
       ui: { resourceUri: uri },
       "ui/resourceUri": uri,
@@ -477,7 +487,7 @@ describe("the uploader as an MCP Apps view", () => {
   });
 
   it("serves the built view as an MCP Apps resource", async () => {
-    const uri = "ui://sogverse/picture-uploader.html";
+    const uri = "ui://sogverse/picture-uploader-2.html";
 
     const listed = z
       .object({ resources: z.array(z.object({ uri: z.string(), mimeType: z.string() })) })

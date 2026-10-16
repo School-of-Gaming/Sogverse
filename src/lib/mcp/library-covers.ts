@@ -22,6 +22,10 @@ import {
   asAdmin,
   refusal,
 } from "@/lib/mcp/library-call";
+import {
+  CATALOGUE_IMAGE_PURPOSES,
+  cataloguePurposeRatio,
+} from "@/lib/images/catalogue-image-purposes";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
 
 /*
@@ -32,8 +36,10 @@ import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-im
  * the shared picture uploader (`image-uploader.ts`).
  */
 
-const COVER_RULES =
-  "A cover is a Library cover entry of Sogverse's picture catalogue, a 1600 × 900 JPEG; many articles may share one. Setting it changes the article's working copy only: readers see the new cover after the next publish.";
+const { width, height } = CATALOGUE_IMAGE_PURPOSES.library_cover;
+const COVER_RATIO = cataloguePurposeRatio("library_cover");
+
+const COVER_RULES = `A cover is a Library cover entry of Sogverse's picture catalogue, a ${width} × ${height} JPEG; many articles may share one. Setting it changes the article's working copy only: readers see the new cover after the next publish.`;
 
 export function registerLibraryCoverTools(server: McpServer): void {
   server.registerTool(
@@ -87,6 +93,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
           },
           page.map((entry) => ({
             path: entry.path,
+            purpose: "library_cover",
             caption: `Catalogue entry ${entry.id} ("${entry.label}"): ${coverUrl(entry.path)}`,
           })),
           COVER_THUMBNAIL,
@@ -134,8 +141,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
     "open_cover_uploader",
     {
       title: "Upload a Library cover",
-      description:
-        "Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. It is cropped to the middle 16:9 and saved as a 1600 × 900 JPEG in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.",
+      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. The picture must already be ${COVER_RATIO} (within 1%): it is never cropped, only scaled to a ${width} × ${height} JPEG and saved in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. A picture of another shape is refused and nothing is uploaded; you are told its size and why, so explain it to the admin, who can crop the picture to ${COVER_RATIO} themselves (or in the Sogverse editor, whose crop they can drag) and pick it again — never offer to pad or crop it for them. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.`,
       inputSchema: z.object({ articleId }),
       annotations: READ_ONLY,
       _meta: UPLOADER_VIEW_META,
@@ -157,10 +163,18 @@ export function registerLibraryCoverTools(server: McpServer): void {
                   label: draft.coverLabel,
                   publicUrl: draft.coverPath === null ? null : coverUrl(draft.coverPath),
                 },
-          uploader: uploaderOpening("library_cover", {
+          uploader: uploaderOpening({
             heading: "Library cover",
             subject: title ? `For “${title}”` : "For this article",
-            uploadTool: "upload_library_cover",
+            frames: [
+              {
+                purpose: "library_cover",
+                name: COVER_RATIO,
+                uploadTool: "upload_library_cover",
+                refusal: null,
+              },
+            ],
+            noFrame: `A Library cover must be ${COVER_RATIO}.`,
             place: {
               tool: "set_library_article_cover",
               arguments: { articleId: id },
@@ -186,8 +200,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
   registerPictureUploadTool(server, {
     name: "upload_library_cover",
     title: "Store an uploaded Library cover",
-    description:
-      "Called by the picture uploader alone. Adds a 1600 × 900 JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.",
+    description: `Called by the picture uploader alone. Adds a ${width} × ${height} JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.`,
     purpose: "library_cover",
     run: (ctx, body) => asAdmin(ctx, ({ client }) => body(client)),
   });

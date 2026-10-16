@@ -10,6 +10,8 @@ import {
 /**
  * The page's opening: its one H1, an optional line under it, an optional
  * picture and an optional button. Every page has exactly one, and it is first.
+ * Its picture is wide only: it is also the page's link preview and the picture
+ * its structured data leads with, both drawn at 16:9.
  */
 const section = z
   .object({
@@ -48,4 +50,5 @@ export const heroSection = {
       : []),
   ],
   markdownFields: [],
+  pictureShapes: ["wide"],
 } as const satisfies LandingSectionDefinition<"hero", typeof section, typeof text>;

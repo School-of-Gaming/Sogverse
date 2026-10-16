@@ -69,5 +69,22 @@ export const CATALOGUE_IMAGE_PURPOSES = {
   product: cataloguePurposeSpec("product"),
   library_cover: cataloguePurposeSpec("library_cover"),
   landing_image: cataloguePurposeSpec("landing_image"),
+  landing_square_image: cataloguePurposeSpec("landing_square_image"),
+  landing_portrait_image: cataloguePurposeSpec("landing_portrait_image"),
   spotlight_image: cataloguePurposeSpec("spotlight_image"),
 } as const satisfies Record<CatalogueImagePurpose, CatalogueImagePurposeSpec>;
+
+function greatestCommonDivisor(a: number, b: number): number {
+  return b === 0 ? a : greatestCommonDivisor(b, a % b);
+}
+
+/**
+ * A catalogue purpose's shape as a ratio in lowest terms, read off its stored
+ * size: `16:9` for a 1600 × 900 purpose. What an admin is told a picture of
+ * that purpose has to be.
+ */
+export function cataloguePurposeRatio(purpose: CatalogueImagePurpose): string {
+  const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
+  const divisor = greatestCommonDivisor(width, height);
+  return `${width / divisor}:${height / divisor}`;
+}

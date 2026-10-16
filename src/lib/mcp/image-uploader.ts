@@ -27,8 +27,12 @@ import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
  * through the model — it would have to read and repeat them, and a client
  * refuses a result that large anyway — so the model only opens the uploader,
  * and the uploader, a page the AI app renders in a sandboxed frame, reads the
- * admin's file, crops it to the purpose's exact size and hands the JPEG to an
- * app-only tool through the AI app's own connection, then places it with the
+ * admin's file, measures it, and finds the frame it already has the shape of
+ * among the frames the opening offers. It never crops: a picture of no
+ * offered shape is refused, on screen and to the model, so the admin can be
+ * told why and re-crop it themselves. A picture that matches is scaled to
+ * that frame's purpose's exact size and handed as a JPEG to the frame's
+ * app-only tool through the AI app's own connection, then placed with the
  * tool the opening named. The view never holds a token: the AI app makes the
  * calls with its grant, so the gate in front of them is the endpoint's like
  * any other call.
@@ -41,7 +45,7 @@ import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
  */
 
 /** The view's address. Hosts may cache a view by it, so a breaking change to the view's protocol names a new one. */
-export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader.html";
+export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader-2.html";
 
 /** What MCP Apps calls an HTML view. */
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
@@ -101,28 +105,48 @@ export interface UploaderPlacement {
   outcome: string;
 }
 
+/** One shape the uploader knows for an area: a catalogue purpose, and whether this opening takes it. */
+export interface UploaderFrameSpec {
+  purpose: CatalogueImagePurpose;
+  /** How the admin is told the shape: `wide 16:9`, `16:9`. */
+  name: string;
+  /** The app-only tool that stores a picture of this purpose. */
+  uploadTool: string;
+  /**
+   * Why this opening's destination does not take a picture of this shape, a
+   * sentence for the admin, or null when it does.
+   */
+  refusal: string | null;
+}
+
 /**
  * What the view is opened with, in the opening tool's result as `uploader`:
- * the catalogue purpose, its exact size and the largest JPEG a call carries,
- * the app-only tool that stores it, and where it is placed — or null, when it
- * is only added to the catalogue and the model is told its id to place.
+ * its words; every shape the area's pictures come in, each with its purpose's
+ * exact size, the tool that stores it and whether this destination takes it;
+ * what a picture of none of them is told; the largest JPEG a call carries;
+ * and where the picture is placed — or null, when it is only added to the
+ * catalogue and the model is told its id to place.
+ *
+ * The view infers a picked picture's shape from these frames alone and
+ * restates none of them.
  */
-export function uploaderOpening(
-  purpose: CatalogueImagePurpose,
-  view: {
-    heading: string;
-    subject: string;
-    uploadTool: string;
-    place: UploaderPlacement | null;
-  },
-) {
-  const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
+export function uploaderOpening(view: {
+  heading: string;
+  subject: string;
+  frames: readonly UploaderFrameSpec[];
+  /** What a picture of none of the frames' shapes is told, after its own size. */
+  noFrame: string;
+  place: UploaderPlacement | null;
+}) {
   return {
-    purpose,
     heading: view.heading,
     subject: view.subject,
-    frame: { width, height, maxBytes: MAX_UPLOAD_BYTES },
-    uploadTool: view.uploadTool,
+    frames: view.frames.map(({ purpose, name, uploadTool, refusal }) => {
+      const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
+      return { purpose, name, width, height, uploadTool, refusal };
+    }),
+    noFrame: view.noFrame,
+    maxBytes: MAX_UPLOAD_BYTES,
     place: view.place,
   };
 }

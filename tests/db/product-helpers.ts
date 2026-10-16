@@ -319,12 +319,13 @@ import { TEST_IDS } from "./constants";
  *                  taught by the file's minted gedu, and its sister group 832
  *                  that nobody teaches, so a filing there is refused for the
  *                  derivation alone)
- *   834-83b        landing-pages.test.ts — `landing_pages` and
+ *   834-83e        landing-pages.test.ts — `landing_pages` and
  *                  `catalogue_images` rows rather than products: 834 a page
  *                  seeded complete, 835 a draft, 836 an id that must NEVER
- *                  exist, and 837-83b catalogue entries — four landing
- *                  pictures (two removed during the run) and one product
- *                  picture a landing page may not show
+ *                  exist, and 837-83e catalogue entries — four wide landing
+ *                  pictures (two removed during the run), one product
+ *                  picture a landing page may not show, two square landing
+ *                  pictures (one removed during the run) and a portrait one
  *   840-842        substitution-notifications.test.ts (the club 840 with group
  *                  841, whose minted gedu files every request the file
  *                  enqueues; 842 is a substitution request id that must NEVER

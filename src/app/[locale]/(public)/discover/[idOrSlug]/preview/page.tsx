@@ -53,7 +53,7 @@ export default async function LandingPagePreviewPage({
   return (
     <LandingPageBody
       sections={draft.sections}
-      imagePaths={draft.imagePaths}
+      pictures={draft.pictures}
       sectionTexts={version.sectionTexts}
       textLocale={version.locale}
       locale={locale}

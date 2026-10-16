@@ -1339,7 +1339,7 @@
           "landingImage": {
             "change": "Vaihda kuva",
             "remove": "Poista kuva",
-            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tällä laskeutumissivulla.",
+            "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen kehykseensä, se lisätään kirjastoon ja otetaan käyttöön tällä laskeutumissivulla.",
             "outcomeAdded": "Lisätty kirjastoon ja valittu tälle laskeutumissivulle.",
             "outcomeExisting": "Kuva on jo kirjastossa — valittu tälle laskeutumissivulle."
           },

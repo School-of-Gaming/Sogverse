@@ -83,7 +83,7 @@ export default async function LandingPage({ params }: PageProps) {
       />
       <LandingPageBody
         sections={shown.sections}
-        imagePaths={shown.imagePaths}
+        pictures={shown.pictures}
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}
