@@ -40,6 +40,9 @@ session cannot create or modify another worktree, and the guard will refuse.
    change dependencies needs `npm install` inside the worktree after that change
    lands, and only then.
 
+   Picking up a branch that already exists: add `-Existing`, which checks it out
+   without a base, then go straight to step 2.
+
    **The base is the latest `dev` unless the user has said otherwise for this
    piece of work.** That is a standing repo rule (the Branching section of the
    root `CLAUDE.md`), and this is the step that enforces it, because no setting
