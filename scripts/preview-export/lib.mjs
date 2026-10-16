@@ -293,3 +293,102 @@ export const VIEWER_PROBE = {
   gamer: "/gamer",
   gedu: "/gedu",
 };
+
+/**
+ * The order the run's viewers sign in: **every gamer before any parent**, the
+ * rest as they come.
+ *
+ * **The order is load-bearing.** A gamer viewer signs in as the parent and then
+ * switches into the child, and the switch signs the parent out with Supabase's
+ * default, global scope — every session that parent account holds ends there,
+ * not only the one being switched. A parent viewer signed in earlier in the run
+ * would be holding one of them, and every one of its shots would land on the
+ * login page. Signed in after the last gamer, the parent's own session is
+ * created after the last revoke. (A gamer's session is the child's own account,
+ * which a later switch out of the parent does not touch.)
+ */
+export function signInOrder(viewers) {
+  return [
+    ...viewers.filter((v) => v.role === "gamer"),
+    ...viewers.filter((v) => v.role !== "gamer"),
+  ];
+}
+
+/**
+ * Refuses a `POST /api/auth/pin/verify` answer that did not unlock the session.
+ * A wrong PIN is not an HTTP error there — the route answers it `200
+ * { verified: false }` — so only `verified === true` counts.
+ */
+export function assertPinVerified(viewerKey, status, json, source) {
+  if (status === 200 && json?.verified === true) return;
+  throw new Error(
+    status === 200
+      ? `The PIN unlock for ${viewerKey} was refused: the server says the PIN ` +
+          `is wrong. Check ${source}.`
+      : `The PIN unlock for ${viewerKey} failed (HTTP ${status}). Check ${source}.`,
+  );
+}
+
+/**
+ * The pages the proxy bounces a viewer it will not let through to — the login
+ * form, and a PIN-locked parent's unlock gate. Neither slug is translated, so
+ * in every locale they are these paths under the request's own `/{locale}`.
+ */
+export const GATES = {
+  "/login": "the login page",
+  "/parent/unlock": "the PIN unlock gate",
+};
+
+/** Which gate a pathname is, with or without its locale prefix, or `null`. */
+export function gateOf(pathname) {
+  const path = pathname.replace(/\/$/, "");
+  return (
+    Object.keys(GATES).find(
+      (gate) => path === gate || path.replace(/^\/[a-z]{2,3}\//, "/") === gate,
+    ) ?? null
+  );
+}
+
+/**
+ * Refuses the landing of a viewer's sign-in probe unless it is the probe page
+ * itself. A parent probed at `/parent` and sent to `/parent/unlock` lands
+ * *under* the probe path, so a prefix match takes the PIN gate for success.
+ */
+export function assertProbeLanding(viewerKey, probe, landed) {
+  const gate = gateOf(landed);
+  if (gate || landed.replace(/\/$/, "") !== probe) {
+    throw new Error(
+      `Sign-in as ${viewerKey} did not hold — ${probe} sent it to ` +
+        (gate ? `${GATES[gate]} (${landed}).` : `${landed}.`),
+    );
+  }
+}
+
+/**
+ * Why a shot landed somewhere it did not ask for, or `null`. A shot bounced to
+ * a gate photographed the gate, so it fails by name; a shot whose own URL is
+ * that gate is the gate on purpose.
+ */
+export function shotLandingError(requested, landed) {
+  const gate = gateOf(landed);
+  if (!gate || gateOf(requested) === gate) return null;
+  return `landed on ${GATES[gate]} (${landed}) instead of ${requested}`;
+}
+
+/**
+ * The viewport names an entry narrows the run to, or `null` when it names none.
+ * A misspelt name matches nothing and would drop the entry from the run without
+ * a word, so an unknown one is refused.
+ */
+export function viewportsOf(entry, known) {
+  if (entry.viewports === undefined) return null;
+  const names = Array.isArray(entry.viewports) ? entry.viewports : [];
+  const unknown = names.filter((n) => !known.includes(n));
+  if (names.length === 0 || unknown.length > 0) {
+    throw new Error(
+      `Entry "${entry.slug}" names viewports ${JSON.stringify(entry.viewports)}; ` +
+        `expected a list of ${known.join(", ")}.`,
+    );
+  }
+  return names;
+}

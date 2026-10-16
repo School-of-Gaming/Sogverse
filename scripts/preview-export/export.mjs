@@ -127,13 +127,18 @@ import { chromium } from "playwright";
 import sharp from "sharp";
 import { outputDir } from "../lib/output.mjs";
 import {
+  assertPinVerified,
+  assertProbeLanding,
   credentialsFor,
   pickGamer,
   resolveBase,
   resolveStack,
+  shotLandingError,
+  signInOrder,
   stackFromSupabaseOrigin,
   supabaseOriginFromCsp,
   viewerOf,
+  viewportsOf,
   VIEWER_PROBE,
 } from "./lib.mjs";
 
@@ -315,8 +320,14 @@ function planShots(preset, signedOut) {
       const viewer = guarded(() => viewerOf(entry, preset));
       // An entry may narrow the run's widths — an admin-only page beside family
       // pages is shot at desktop alone — but never widen them.
-      const widths = entry.viewports
-        ? VIEWPORTS.filter((v) => entry.viewports.includes(v.name))
+      const narrowed = guarded(() =>
+        viewportsOf(
+          entry,
+          ALL_VIEWPORTS.map((v) => v.name),
+        ),
+      );
+      const widths = narrowed
+        ? VIEWPORTS.filter((v) => narrowed.includes(v.name))
         : VIEWPORTS;
       for (const locale of LOCALES) {
         const route =
@@ -463,8 +474,12 @@ async function signIn(context, viewer, { email, password, pin, source }) {
     await page.waitForTimeout(250);
   }
 
+  // The login page is done with. Closed rather than reused, because the
+  // sign-in's own navigation off /login may still be in flight, and anything
+  // the page did next would race it.
+  await page.close();
+
   if (!session) {
-    await page.close();
     fail(
       `Sign-in as ${viewer.key} failed — no Supabase session cookie was written.\n` +
         (message ? `  The login form said: ${message.trim()}\n` : "") +
@@ -472,34 +487,33 @@ async function signIn(context, viewer, { email, password, pin, source }) {
     );
   }
 
-  // Calls the app itself makes, issued from inside the page so they carry its
-  // cookies and the cookies they answer with land in this context.
-  const call = (url, body) =>
-    page.evaluate(
-      async ([u, b]) => {
-        const r = await fetch(u, {
-          method: b === null ? "GET" : "POST",
-          headers: b === null ? {} : { "Content-Type": "application/json" },
-          body: b === null ? undefined : JSON.stringify(b),
-        });
-        return {
-          ok: r.ok,
-          status: r.status,
-          json: await r.json().catch(() => null),
-        };
-      },
-      [url, body],
-    );
+  // Calls the app itself makes, through the context's own request client: it
+  // sends the context's cookies and stores the ones each answer sets, and needs
+  // no page. What each call was for is then checked in the jar itself.
+  const call = async (route, body) => {
+    const url = `${BASE}${route}`;
+    const response =
+      body === null
+        ? await context.request.get(url)
+        : await context.request.post(url, { data: body });
+    return {
+      status: response.status(),
+      json: await response.json().catch(() => null),
+    };
+  };
 
   // A parent is PIN-locked after every sign-in: the proxy bounces every page
   // to the unlock gate until the PIN is verified.
   if (pin) {
     const unlocked = await call("/api/auth/pin/verify", { pin });
-    if (!unlocked.ok) {
-      await page.close();
+    guarded(() =>
+      assertPinVerified(viewer.key, unlocked.status, unlocked.json, source),
+    );
+    const jar = await context.cookies(BASE);
+    if (!jar.some((c) => c.name === PIN_COOKIE)) {
       fail(
-        `The PIN unlock for ${viewer.key} failed (HTTP ${unlocked.status}). ` +
-          `Check ${source}.`,
+        `The PIN unlock for ${viewer.key} was accepted, but its ${PIN_COOKIE} ` +
+          `cookie never reached the browser.`,
       );
     }
   }
@@ -509,14 +523,21 @@ async function signIn(context, viewer, { email, password, pin, source }) {
     const gamer = guarded(() =>
       pickGamer(family.json?.family ?? [], viewer.gamer),
     );
+    const before = await sessionToken(context);
     const switched = await call("/api/auth/switch-account", {
       userId: gamer.id,
     });
-    if (!switched.ok) {
-      await page.close();
+    if (switched.status !== 200) {
       fail(
         `Switching into ${gamer.first_name}'s session failed ` +
           `(HTTP ${switched.status}).`,
+      );
+    }
+    const after = await sessionToken(context);
+    if (!after || after === before) {
+      fail(
+        `Switching into ${gamer.first_name}'s session was accepted, but the ` +
+          `browser still holds the parent's session cookie.`,
       );
     }
   }
@@ -525,16 +546,33 @@ async function signIn(context, viewer, { email, password, pin, source }) {
   // into answers. A session as the wrong role is bounced by the proxy, and so
   // is a parent still behind the PIN gate.
   const probe = `/en${VIEWER_PROBE[viewer.role]}`;
-  await page.goto(`${BASE}${probe}`, { waitUntil: "domcontentloaded" });
-  const landed = new URL(page.url()).pathname;
-  await page.close();
-  if (landed !== probe && !landed.startsWith(`${probe}/`)) {
+  const probePage = await context.newPage();
+  await probePage.goto(`${BASE}${probe}`, { waitUntil: "domcontentloaded" });
+  const landed = new URL(probePage.url()).pathname;
+  await probePage.close();
+  try {
+    assertProbeLanding(viewer.key, probe, landed);
+  } catch (error) {
     fail(
-      `Sign-in as ${viewer.key} did not hold — ${probe} sent it to ${landed}.\n` +
+      `${error.message}\n` +
         (message ? `  The login form said: ${message.trim()}\n` : "") +
         `  Check ${source}, and that the account has the ${viewer.role} role.`,
     );
   }
+}
+
+/** The app's PIN-unlock cookie, as `src/lib/pin-session.ts` names it. */
+const PIN_COOKIE = "sog_pin_verified";
+
+/**
+ * The Supabase session cookie's value in this context, its chunks joined, or
+ * `null` — compared before and after a switch to prove the session changed.
+ */
+async function sessionToken(context) {
+  const chunks = (await context.cookies(BASE))
+    .filter((c) => /^sb-.*auth-token/.test(c.name))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return chunks.length > 0 ? chunks.map((c) => c.value).join("") : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -552,6 +590,13 @@ async function shoot(page, shot) {
     .context()
     .addCookies([{ name: "locale", value: shot.locale, url: BASE }]);
   await page.goto(shot.url, { waitUntil: "domcontentloaded" });
+  // A page the viewer is not let into is bounced to a gate, and a picture of
+  // the gate labelled as the page is worse than no picture.
+  const bounced = shotLandingError(
+    new URL(shot.url).pathname,
+    new URL(page.url()).pathname,
+  );
+  if (bounced) throw new Error(`${shot.viewer?.key ?? "signed out"}: ${bounced}`);
   // Network idle plus fonts: a shot taken mid-webfont-swap measures and reads
   // differently from the page the reviewer is being asked about.
   await page.waitForLoadState("networkidle").catch(() => {});
@@ -1452,10 +1497,16 @@ async function shootSignedOut(shot) {
 // reason, and the login form is not what this tool is exercising. Every viewer
 // signs in before the first shot, so a refused one stops the run before it has
 // spent minutes on the others.
+//
+// **Gamers first, and the order is load-bearing**: a gamer's switch out of the
+// parent ends every session the parent account holds, so a parent viewer
+// signed in before it would shoot nothing but the login page. `signInOrder`
+// says why in full.
 const contexts = [];
 const pages = {};
 const pageKey = (viewerKey, viewport) => `${viewerKey}|${viewport}`;
-for (const { viewer, credentials } of VIEWERS.values()) {
+const ordered = signInOrder([...VIEWERS.values()].map((v) => v.viewer));
+for (const { viewer, credentials } of ordered.map((v) => VIEWERS.get(v.key))) {
   const first = await browser.newContext(contextOptions(VIEWPORTS[0]));
   await prepareContext(first, { storeRefusal: true });
   await signIn(first, viewer, credentials);

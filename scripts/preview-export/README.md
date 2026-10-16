@@ -126,9 +126,15 @@ is rather than by what its caller remembers.
   signs in through the real login form once, and its session is reused for every
   shot it views. A parent is then PIN-unlocked; a gamer is the parent switched
   into a child's session, as the profile switcher does it. Each viewer's sign-in
-  is proven on a page only that role is let into before the first shot. The
+  is proven on a page only that role is let into before the first shot, and a
+  shot bounced to the login page or the PIN unlock gate fails by name. The
   consent banner is answered with a stored refusal, so it never mounts.
-- **Signed out** (`signedOut: true`)- **Signed out** (`signedOut: true`) — never loads `.env.local`, never reads the
+- **A gamer viewer ends the parent account's other sessions.** The switch into
+  a child signs the parent out everywhere, not only in this browser, so the run
+  signs every gamer in before any parent. Against staging that means the
+  shared staging parent's sessions on other devices, and in other agents'
+  runs, end too.
+- **Signed out** (`signedOut: true`) — never loads `.env.local`, never reads the
   credentials, never visits the login form. Every shot is a first visit in a
   fresh browser context speaking the shot's locale, and a shot whose context
   ends up holding a Supabase session cookie fails by name. Needed because a

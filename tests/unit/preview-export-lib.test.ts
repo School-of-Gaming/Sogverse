@@ -1,13 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assertPinVerified,
+  assertProbeLanding,
   credentialsFor,
+  gateOf,
   pickGamer,
   resolveBase,
   resolveStack,
+  shotLandingError,
+  signInOrder,
   stackFromSupabaseOrigin,
   supabaseOriginFromCsp,
   viewerOf,
+  viewportsOf,
 } from "../../scripts/preview-export/lib.mjs";
 
 const csp = (supabase: string) =>
@@ -177,5 +183,90 @@ describe("pickGamer", () => {
   it("names the gamers there are when the one asked for is not", () => {
     expect(() => pickGamer(family, "Otso")).toThrow(/Milo, Nea/);
     expect(() => pickGamer([family[0]], null)).toThrow(/no gamers/);
+  });
+});
+
+describe("signInOrder", () => {
+  const v = (key: string) => ({ role: key.split(":")[0], key });
+
+  it("signs every gamer in before any parent, and keeps the rest in order", () => {
+    const order = signInOrder([v("parent"), v("admin"), v("gamer"), v("gedu"), v("gamer:Nea")]);
+    expect(order.map((x) => x.key)).toEqual(["gamer", "gamer:Nea", "parent", "admin", "gedu"]);
+  });
+
+  it("leaves a run with no gamer as it was", () => {
+    expect(signInOrder([v("admin"), v("parent")]).map((x) => x.key)).toEqual(["admin", "parent"]);
+  });
+});
+
+describe("assertPinVerified", () => {
+  it("passes only a 200 that says verified", () => {
+    expect(() => assertPinVerified("parent", 200, { verified: true }, "src")).not.toThrow();
+  });
+
+  it("refuses the wrong PIN the route answers with a 200", () => {
+    expect(() => assertPinVerified("parent", 200, { verified: false }, "src")).toThrow(/PIN is wrong/);
+    expect(() => assertPinVerified("parent", 200, null, "src")).toThrow(/PIN is wrong/);
+  });
+
+  it("refuses an HTTP failure by its status", () => {
+    expect(() => assertPinVerified("parent", 401, { verified: true }, "src")).toThrow(/HTTP 401/);
+  });
+});
+
+describe("gateOf", () => {
+  it("knows the login page and the unlock gate in any locale", () => {
+    expect(gateOf("/en/login")).toBe("/login");
+    expect(gateOf("/fi/login")).toBe("/login");
+    expect(gateOf("/tlh/parent/unlock")).toBe("/parent/unlock");
+    expect(gateOf("/login")).toBe("/login");
+  });
+
+  it("is not fooled by a page under or beside one", () => {
+    expect(gateOf("/en/parent")).toBeNull();
+    expect(gateOf("/en/parent/unlock/x")).toBeNull();
+    expect(gateOf("/en/gamer/login")).toBeNull();
+  });
+});
+
+describe("assertProbeLanding", () => {
+  it("passes the probe page itself", () => {
+    expect(() => assertProbeLanding("parent", "/en/parent", "/en/parent")).not.toThrow();
+  });
+
+  it("refuses the unlock gate, though it sits under the parent's probe", () => {
+    expect(() => assertProbeLanding("parent", "/en/parent", "/en/parent/unlock")).toThrow(/PIN unlock gate/);
+  });
+
+  it("refuses the login page and another role's dashboard", () => {
+    expect(() => assertProbeLanding("admin", "/en/gedu", "/en/login")).toThrow(/login page/);
+    expect(() => assertProbeLanding("gamer", "/en/gamer", "/en/parent")).toThrow(/sent it to \/en\/parent/);
+  });
+});
+
+describe("shotLandingError", () => {
+  it("fails a shot bounced to a gate, naming it", () => {
+    expect(shotLandingError("/en/parent/clubs/1", "/en/parent/unlock")).toMatch(/PIN unlock gate/);
+    expect(shotLandingError("/fi/gamer", "/fi/login")).toMatch(/login page/);
+  });
+
+  it("passes a shot that asked for the gate, or landed anywhere else", () => {
+    expect(shotLandingError("/en/login", "/en/login")).toBeNull();
+    expect(shotLandingError("/fi/shop", "/fi/kauppa")).toBeNull();
+  });
+});
+
+describe("viewportsOf", () => {
+  const known = ["desktop", "mobile"];
+
+  it("is null when the entry names none, and the names when they are known", () => {
+    expect(viewportsOf({ slug: "a" }, known)).toBeNull();
+    expect(viewportsOf({ slug: "a", viewports: ["desktop"] }, known)).toEqual(["desktop"]);
+  });
+
+  it("refuses a misspelt or empty list by the entry's name", () => {
+    expect(() => viewportsOf({ slug: "a", viewports: ["dekstop"] }, known)).toThrow(/Entry "a".*dekstop/);
+    expect(() => viewportsOf({ slug: "a", viewports: [] }, known)).toThrow(/Entry "a"/);
+    expect(() => viewportsOf({ slug: "a", viewports: "desktop" }, known)).toThrow(/Entry "a"/);
   });
 });
