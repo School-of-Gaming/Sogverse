@@ -271,6 +271,10 @@ export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 // the tag module under src/components/public/products/ re-exports it and owns the
 // label-key resolution.
 export type ProductTag = Database["public"]["Enums"]["product_tag"];
+// How an online product's sessions are joined: the Sogverse voice room, a link
+// to a meeting elsewhere, or no room and written instructions. An in-person
+// product is always `sogverse` (a CHECK on products).
+export type VoiceRoomMode = Database["public"]["Enums"]["voice_room_mode"];
 // A human language a club is delivered in / a person speaks — the value in
 // `products.spoken_language_code` and each entry of `profiles.spoken_languages`.
 // Deliberately NOT the UI locale, which is which translation of the app someone

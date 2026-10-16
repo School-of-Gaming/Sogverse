@@ -69,6 +69,7 @@ function paidClubState(month: string): FormState {
       name: "Test Club",
       shortDescription: "A great club",
       longDescription: "",
+      voiceJoinInstructions: "",
     },
   };
   s.topic = "minecraft_java";

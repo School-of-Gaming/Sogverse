@@ -989,6 +989,7 @@
         "fields": {
           "topic": "Topic",
           "materialUrl": "Lesson material",
+          "voiceRoom": "Joining",
           "startDate": "Start date",
           "endDate": "End date",
           "firstSession": "First session",
@@ -1086,8 +1087,10 @@
         "name": "Name",
         "shortDescription": "Short description",
         "longDescription": "Long description",
+        "voiceJoinInstructions": "Join instructions",
         "topic": "Topic",
         "materialUrl": "Lesson material URL",
+        "externalVoiceUrl": "Meeting link",
         "requiresGamerCreations": "Every gamer needs a creation link",
         "seatAudience": "Who can take a seat",
         "tag": "Designed for",
@@ -1124,6 +1127,7 @@
       "placeholders": {
         "selectTopic": "Select a topic…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone kerho",
           "municipalityClub": "e.g. Tapiola Minecraft Club · Spring 2026",
@@ -1183,6 +1187,15 @@
         "scheduled": "At a specific time",
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
+      "voiceRoomModes": {
+        "label": "How do families join?",
+        "sogverse": "Sogverse voice room",
+        "sogverseDescription": "A voice room is set up automatically and opens for each session.",
+        "external": "Link to a meeting elsewhere",
+        "externalDescription": "Families join a meeting you host on another service — Zoom, Google Meet, Teams or anything else. For audiences larger than a Sogverse room holds (50 people).",
+        "none": "No voice room",
+        "noneDescription": "Families are shown the join instructions you write for each language instead."
+      },
       "endDateModes": {
         "ongoing": "No end date",
         "ongoingDescription": "The club runs indefinitely until you decide to wind it down.",
@@ -1215,6 +1228,7 @@
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. The full pitch, shown only on the product’s detail page. Headings, lists, emphasis and links are all available.",
+        "voiceJoinInstructionsHint": "How families join the sessions, written for this language. Public: anyone can read it, including visitors who are not signed in.",
         "topicHint": "What this product is about. Families see it as the Topic filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
         "requiresGamerCreationsHint": "For products a contract requires it of. The final session keeps a needs-attention mark until every gamer in the group has a creation recorded. Families see nothing different.",
@@ -1225,7 +1239,7 @@
         "regionLockHint": "Only families in the chosen country can sign up. Their location is the one they told us themselves, so this is a signpost in the shop rather than a hard block — and anyone already enrolled keeps their place if they move.",
         "spokenLanguageHint": "The main language spoken in the sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
-        "voiceRoomAuto": "A voice room will be set up for this product automatically.",
+        "externalVoiceUrlHint": "Public: anyone can read this link, including visitors who are not signed in.",
         "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
@@ -1259,6 +1273,9 @@
         "maxAgeInvalid": "Max age must be greater than or equal to min age",
         "municipalityRequired": "Municipality is required for online municipality clubs",
         "siteRequired": "Site is required for in-person products",
+        "externalVoiceUrlRequired": "Enter the meeting link",
+        "externalVoiceUrlInvalid": "The meeting link must be a web address starting with http:// or https://",
+        "voiceJoinInstructionsRequired": "Write join instructions in at least one language",
         "scheduleRequired": "At least one schedule slot is required",
         "materialUrlInvalid": "Lesson material URL must be a valid URL",
         "startDateRequired": "Start date is required",

@@ -232,6 +232,7 @@ function translations(name: string): ProductTranslation[] {
       name,
       short_description: "",
       long_description: null,
+      voice_join_instructions: null,
       product_id: "p",
       created_at: "",
       updated_at: "",

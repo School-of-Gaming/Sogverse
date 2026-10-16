@@ -989,6 +989,7 @@
         "fields": {
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
+          "voiceRoom": "Liittyminen",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
           "firstSession": "Ensimmäinen kerta",
@@ -1086,8 +1087,10 @@
         "name": "Nimi",
         "shortDescription": "Lyhyt kuvaus",
         "longDescription": "Pitkä kuvaus",
+        "voiceJoinInstructions": "Liittymisohjeet",
         "topic": "Aihe",
         "materialUrl": "Oppimateriaalin osoite",
+        "externalVoiceUrl": "Kokouslinkki",
         "requiresGamerCreations": "Jokaiselta pelaajalta vaaditaan linkki omaan teokseensa",
         "seatAudience": "Kuka voi ottaa paikan",
         "tag": "Kenelle suunniteltu",
@@ -1124,6 +1127,7 @@
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
           "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
@@ -1183,6 +1187,15 @@
         "scheduled": "Tiettyyn aikaan",
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
+      "voiceRoomModes": {
+        "label": "Miten perheet liittyvät mukaan?",
+        "sogverse": "Sogversen puhehuone",
+        "sogverseDescription": "Puhehuone luodaan automaattisesti, ja se avautuu jokaista kertaa varten.",
+        "external": "Linkki muualla pidettävään kokoukseen",
+        "externalDescription": "Perheet liittyvät kokoukseen, jonka järjestät toisessa palvelussa – Zoomissa, Google Meetissä, Teamsissa tai missä tahansa muussa. Yleisölle, joka on suurempi kuin Sogversen huoneeseen mahtuu (50 henkeä).",
+        "none": "Ei puhehuonetta",
+        "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
+      },
       "endDateModes": {
         "ongoing": "Ei loppupäivää",
         "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
@@ -1215,6 +1228,7 @@
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
+        "voiceJoinInstructionsHint": "Miten perheet liittyvät kerroille, tällä kielellä kirjoitettuna. Julkinen: kuka tahansa voi lukea ohjeet, myös kirjautumattomat vierailijat.",
         "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "requiresGamerCreationsHint": "Tuotteille, joilta sopimus sitä vaatii. Viimeinen kerta pysyy huomiota vaativana, kunnes jokaiselta ryhmän pelaajalta on kirjattu teos. Perheille ei näy mitään eroa.",
@@ -1225,7 +1239,7 @@
         "regionLockHint": "Vain valitussa maassa asuvat perheet voivat ilmoittautua. Sijainti perustuu perheen omaan ilmoitukseen, joten tämä on kaupan opaste eikä ehdoton este – jo ilmoittautuneet säilyttävät paikkansa, vaikka muuttaisivat.",
         "spokenLanguageHint": "Pääkieli, jota kerroilla puhutaan.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
-        "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
+        "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
@@ -1259,6 +1273,9 @@
         "maxAgeInvalid": "Yläikärajan on oltava vähintään alaikärajan suuruinen",
         "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
         "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
+        "externalVoiceUrlRequired": "Anna kokouslinkki",
+        "externalVoiceUrlInvalid": "Kokouslinkin on oltava verkko-osoite, joka alkaa http:// tai https://",
+        "voiceJoinInstructionsRequired": "Kirjoita liittymisohjeet vähintään yhdellä kielellä",
         "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
         "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",

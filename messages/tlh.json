@@ -1033,6 +1033,7 @@
         "fields": {
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
+          "voiceRoom": "muv",
           "startDate": "tagh jaj",
           "endDate": "rIn jaj",
           "firstSession": "wa'DIch ghom",
@@ -1130,8 +1131,10 @@
         "name": "pong",
         "shortDescription": "QIn ngaj",
         "longDescription": "QIn nI’",
+        "voiceJoinInstructions": "muv ra’ghom",
         "topic": "Doch",
         "materialUrl": "ghojmoHmeH De’ URL",
+        "externalVoiceUrl": "ghom rar",
         "requiresGamerCreations": "chenmoHta’bogh Doch He poQlu’ Hoch toy’wI’vaD",
         "seatAudience": "quS Suq ’Iv",
         "tag": "’Iv chenmoHlu’pu’",
@@ -1168,6 +1171,7 @@
       "placeholders": {
         "selectTopic": "Doch yIwIv…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone ghomHom",
           "municipalityClub": "e.g. Tapiola Minecraft ghomHom · 2026 Hut",
@@ -1227,6 +1231,15 @@
         "scheduled": "poH ngu’lu’pu’bogh",
         "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
       },
+      "voiceRoomModes": {
+        "label": "chay’ muv qorDu’pu’?",
+        "sogverse": "Sogverse ghogh pa’",
+        "sogverseDescription": "ghogh pa’ chenmoHlu’ ’ej poSmoHlu’ Hoch ghom.",
+        "external": "latlh Daq ghom rar",
+        "externalDescription": "latlh Daq ghom muv qorDu’pu’ — Zoom, Google Meet, Teams, latlh je. Sogverse pa’ Dach law’qu’ ghotpu’ (50).",
+        "none": "ghogh pa’ tu’lu’be’",
+        "noneDescription": "Hol Hoch ghItlhbogh muv ra’ghom’e’ legh qorDu’pu’."
+      },
       "endDateModes": {
         "ongoing": "jaj van Hutlh",
         "ongoingDescription": "ghom taH; bImevqang ’e’ DawIvDI’ mev.",
@@ -1259,6 +1272,7 @@
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. QIn naQ, Doch ’aqroSDaq neH cha’lu’. nargh, tetlh, ’ej ghomHa’ ghItlh lo’laH.",
+        "voiceJoinInstructionsHint": "chay’ muv qorDu’pu’, Hol vam ghItlhlu’. Hoch laD laH: ’el’be’bogh ghotpu’ je.",
         "topicHint": "Doch qel malja’vam. qech-lojmIt lulegh qorDu’pu’ malja’Daq, ’ej De’ navDaq je.",
         "materialUrlHint": "vItlhutlh. Gedupu’vaD neH — ghu’pu’ luleghbe’.",
         "requiresGamerCreationsHint": "Doch poQbogh ghItlh ’oH. Hoch ghom toy’wI’ chenmoHta’ghach qonlu’pa’, Qu’ Qav rInbe’ ’ej buSlu’nIS. pagh pIm legh qorDu’pu’.",
@@ -1269,7 +1283,7 @@
         "regionLockHint": "wIvbogh SepDaq qorDu’pu’ neH ghIH. ’ach Daqchaj ja’ qorDu’ ’e’ Sov: malja’Daq De’wI’ per ’oH, veH tIn ’oHbe’. quS Suqbogh nuv chIlbe’ quSDaj, Sep chu’Daq jaHchugh je.",
         "spokenLanguageHint": "qepmeyDaq Hol potlh jatlhlu’.",
         "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
-        "voiceRoomAuto": "voice room chenmoHlu’.",
+        "externalVoiceUrlHint": "Hoch laD laH: ’el’be’bogh ghotpu’ je.",
         "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
         "siteHint": "qaStaHvIS Daq mab.",
         "eventSingleDay": "Qu’mey wa’ jaj qaS.",
@@ -1303,6 +1317,9 @@
         "maxAgeInvalid": "DIS tIn DIS mach tIn ’oHnIS",
         "municipalityRequired": "veng poQ rurmey ghomHom veng",
         "siteRequired": "Daq poQ Daq pa’ De’mey",
+        "externalVoiceUrlRequired": "ghom rar yIghItlh",
+        "externalVoiceUrlInvalid": "http:// pagh https:// lutagh ghom rar",
+        "voiceJoinInstructionsRequired": "wa’ Hol ghItlh muv ra’ghom",
         "scheduleRequired": "wa’ poH mach poQ",
         "materialUrlInvalid": "ghojmoHmeH De’ URL val ’oHnIS",
         "startDateRequired": "jaj tagh poQ",
