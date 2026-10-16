@@ -1,7 +1,8 @@
 # Testimonials
 
 Marketing's one store of testimonials — real words from real parents, gamers and gedus —
-and the home spots that put some of them on the public site. The admin pages are in
+and the places that put some of them on the public site: the home spots, and the landing
+pages' testimonials sections (`src/services/landing-pages/CLAUDE.md`). The admin pages are in
 `src/components/admin/testimonials/`, a tab of the Marketing hub; the public rendering is
 `src/components/home/testimonial.tsx`.
 
@@ -43,23 +44,36 @@ the home and About pages are the site's front door, so their composition is a de
 decision, made in a migration, while the words are an admin's. A spot renders what it
 holds, and an empty one renders nothing — the row's heading included.
 
-**The public reads the placed testimonials alone**, through `list_home_testimonials`, on
-an anon client per request; the store itself is admin-only. A failed read renders the
-home page and About without their quotes and logs the failure, rather than failing the
-site's front door.
+**The public reads the placed testimonials alone**, on an anon client per request; the
+store itself is admin-only. The home page and About read the home spots' through
+`list_home_testimonials`; a live landing page reads its own through
+`list_landing_page_testimonials`, which answers only what that page's published copy
+places, never a placement only in a working copy. Both read the words as they are now, so
+an edit shows everywhere at once and no page waits for a publish. A failed home read
+renders the home page and About without their quotes and logs the failure, rather than
+failing the site's front door; a landing page's read fails as the rest of that page does.
+
+**Every page lays testimonials out through one set of arrangements**
+(`src/components/home/`): the large centred quote, two across, three across, and About's
+showcase of all three. Home, About and a landing page's testimonials section render
+through them, so a quote looks the same wherever it is placed; a new look is a change
+there, never a page's own copy.
 
 **Testimonials are never deleted by the app.** Once created a testimonial stays — no
 admin page, MCP tool or database function deletes one, and no Data API role but the
 service role holds DELETE on the table (the DB test suite removes its own rows with it).
 So nothing shown on the site can lose its quote. A testimonial comes off the site by being
-removed from where it is shown: from a home spot by a migration, from anything an admin
-composes by editing that. Removing one language version is editing, and refuses the last.
+removed from where it is shown: from a home spot by a migration, from a landing page by
+saving its structure without it. Removing one language version is editing, and refuses the last.
 The home spots' foreign key restricts a hand delete of a placed testimonial all the same.
 
 **Where a testimonial is used is a list of usages, one kind of place per member of a
 union**, and the editor shows it above the words, which is what makes editing a used
 testimonial a visible decision. The admin read derives it and the MCP tools answer it. A
-new kind of place joins the union and the read's embed, and every consumer that assumes
-a home spot stops compiling until it handles the new kind.
+landing page is listed once whichever of its copies places the testimonial, saying whether
+readers see it there now, the next publish puts it there, or both, and links to the page's
+status page. A new kind of place joins the union and the admin read, and every consumer
+that reads usages by kind stops compiling until it handles the new kind.
 
-**Every write invalidates the whole `testimonials` key tree**, list and detail alike.
+**Every write invalidates the whole `testimonials` key tree**, list and detail alike, and the
+landing pages' tree, whose status pages show the words of what each page places.

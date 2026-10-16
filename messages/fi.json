@@ -795,6 +795,18 @@
           "inSection": "Osio {number} ({type}): {field}",
           "inItem": "Osio {number} ({type}), {item}: {field}",
           "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+        },
+        "testimonials": {
+          "heading": "Suosittelut",
+          "hint": "Niiden sanoja muokataan Suosittelut-osiossa, ja muutos näkyy julkaistulla sivulla heti.",
+          "section": "Osio {number} ({type}): {arrangement}",
+          "arrangements": {
+            "feature": "yksi suuri lainaus",
+            "pair": "kaksi rinnakkain",
+            "row": "kolme rivissä",
+            "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
+          },
+          "missing": "Suosittelu, jota ei enää ole tallessa"
         }
       },
       "status": {
@@ -845,7 +857,8 @@
         "points": "Kohdat",
         "steps": "Vaiheet",
         "faq": "Kysymykset ja vastaukset",
-        "cta": "Toimintakehote"
+        "cta": "Toimintakehote",
+        "testimonials": "Suosittelut"
       },
       "items": {
         "image": "Kuva {number}",
@@ -2076,7 +2089,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Etusivu ja Tietoa meistä -sivu lainaavat niistä sinne sijoitettuja.",
+      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Etusivu, Tietoa meistä -sivu ja laskeutumissivut lainaavat niistä sinne sijoitettuja.",
       "newTestimonial": "Uusi suosittelu",
       "backToList": "Takaisin suositteluihin",
       "newPage": {
@@ -2121,7 +2134,13 @@
         "none": "Sitä ei vielä näytetä missään.",
         "editNote": "Tallentaminen muuttaa sen sanat kaikkialla, missä se näkyy.",
         "home": "Etusivu: {spot}, {position, number}/{size, number}",
-        "about": "Tietoa meistä: Mitä vanhemmat kertovat"
+        "about": "Tietoa meistä: Mitä vanhemmat kertovat",
+        "landingPage": "Laskeutumissivu: {title}",
+        "landingPageState": {
+          "both": "Lukijat näkevät sen siellä nyt.",
+          "liveOnly": "Lukijat näkevät sen siellä seuraavaan julkaisuun asti, joka poistaa sen.",
+          "workingOnly": "Ei vielä lukijoiden nähtävissä: seuraava julkaisu tuo sen sinne."
+        }
       },
       "record": {
         "created": "Luotu {date}",
@@ -2143,7 +2162,8 @@
         "quoted": "Kieliversion {language} lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
         "saveFailed": "Suosittelua ei voitu tallentaa. Yritä uudelleen.",
         "saveFailedWithReason": "Suosittelua ei voitu tallentaa: {reason}"
-      }
+      },
+      "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}"
     }
   },
   "auth": {

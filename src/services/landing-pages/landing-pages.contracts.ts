@@ -12,6 +12,7 @@ import {
   type LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
 import { slugify } from "@/lib/slug";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 /**
  * Contracts for landing pages.
@@ -301,6 +302,11 @@ export interface AdminLandingPage {
   /** Null while the page is not live. */
   publication: PublishedLandingPage | null;
   hasUnpublishedChanges: boolean;
+  /**
+   * The current words of every testimonial the working copy places, by id —
+   * what its preview paints and its status shows. Empty when it places none.
+   */
+  testimonials: Readonly<Record<string, PublicTestimonial>>;
 }
 
 /** A copy's `image_paths` column, as the database derives it. */

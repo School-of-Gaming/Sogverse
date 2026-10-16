@@ -7,6 +7,8 @@ import {
   LANDING_IMAGE_SIDES,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
+  LANDING_TESTIMONIAL_ARRANGEMENTS,
+  LANDING_TESTIMONIAL_SLOTS,
   landingStructureProblem,
   missingInLandingVersion,
   type LandingSection,
@@ -137,6 +139,19 @@ interface McpLandingSection<Type extends LandingSectionType> {
     readonly ids: readonly string[];
   } | null;
 }
+
+/** Each arrangement with what it looks like, for the AI app. */
+const ARRANGEMENT_LOOKS: { readonly [Arrangement in keyof typeof LANDING_TESTIMONIAL_SLOTS]: string } = {
+  feature: "one large centred quote, as under the home page's hero",
+  pair: "two quotes side by side, as on About",
+  row: "three quotes in a row, as the home page's and About's \"What parents tell us\"",
+  showcase: "About's whole arrangement: one large quote, then two side by side, then three in a row, in that reading order",
+};
+
+const ARRANGEMENTS = LANDING_TESTIMONIAL_ARRANGEMENTS.map(
+  (arrangement) =>
+    `${arrangement} (exactly ${LANDING_TESTIMONIAL_SLOTS[arrangement]}: ${ARRANGEMENT_LOOKS[arrangement]})`,
+).join("; ");
 
 /** Placeholders the rule descriptions read as words. */
 const ANY_ID = "00000000-0000-4000-8000-000000000000";
@@ -287,6 +302,33 @@ export const MCP_LANDING_SECTIONS: {
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
   },
+  testimonials: {
+    about: `Testimonials from School of Gaming's store, placed by id and laid out by arrangement: ${ARRANGEMENTS}. testimonialIds lists exactly as many as the arrangement shows, each once, in reading order; a different count is refused. The ids come from list_testimonials, and an id no testimonial has is refused when the structure is saved. The testimonials' words — whom each is from and the quote, in every language — live in the store, never in the page: they are not written here and cannot be, readers see the store's current words on the live page straight away whenever a testimonial is edited, and each reader gets the testimonial's version in their language, else English, else the first written. A testimonial is real words from a real parent, gamer or gedu that the admin supplies: never invent one, and only create one with create_testimonial from words the admin gives you. To take a quote off this page, save the structure with this section changed — another testimonial in its place, another arrangement, or the section removed; testimonials themselves are never deleted. The eyebrow, heading and intro are optional words, never required.`,
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("testimonials"),
+      arrangement: z
+        .enum(LANDING_TESTIMONIAL_ARRANGEMENTS)
+        .describe(`How the testimonials are laid out, and so how many: ${ARRANGEMENTS}.`),
+      testimonialIds: z
+        .array(landingId.describe("A testimonial's id, as list_testimonials returns it."))
+        .refine(
+          (ids) => new Set(ids).size === ids.length,
+          "A testimonials section names each testimonial once",
+        )
+        .describe("The testimonials, in reading order: exactly as many as the arrangement shows."),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading. Optional."),
+      intro: plainText.describe("A line under the heading. Optional."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "testimonials", arrangement: "feature", testimonialIds: [ANY_ID] },
+      withOptional: {},
+    },
+    itemIds: () => null,
+  },
   faq: {
     about:
       "One to twenty questions and answers. Search engines read it as the page's FAQ, so write real questions a reader asks.",
@@ -422,7 +464,7 @@ function requiredPaths(section: LandingSection): string[] {
 /**
  * The required-text rule of one type, in words, read off the rule itself: the
  * fields a bare section of the type needs, then each one an optional shared
- * field adds.
+ * field adds — or "none" for a type that requires no words.
  */
 export function describeRequiredWords(type: LandingSectionType): string {
   const { minimal, withOptional } = MCP_LANDING_SECTIONS[type].ruleSamples;
@@ -432,7 +474,8 @@ export function describeRequiredWords(type: LandingSectionType): string {
       .filter((path) => !always.includes(path))
       .map((path) => `${path} when ${field} is set`),
   );
-  return [...always, ...conditional].join("; ");
+  const required = [...always, ...conditional];
+  return required.length === 0 ? "none" : required.join("; ");
 }
 
 /** What the arrangement rule refuses, from the rule itself. */

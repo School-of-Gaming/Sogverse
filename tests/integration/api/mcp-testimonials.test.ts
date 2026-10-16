@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MCP_TEST_ORIGIN as ORIGIN, callTool, resultText } from "../../helpers/mcp";
+import { MCP_TEST_ORIGIN as ORIGIN, callTool, mcpRequest, resultText } from "../../helpers/mcp";
 import type { AdminTestimonial } from "@/services/testimonials";
 
 /**
@@ -227,5 +227,80 @@ describe("writing", () => {
     const fault = await tool("remove_testimonial_language", { testimonialId: ID, locale: "en" });
     expect(fault.isError).toBe(true);
     expect(resultText(fault)).not.toContain("relation");
+  });
+});
+
+describe("landing pages", () => {
+  const PAGE = "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13";
+
+  it("lists each landing page placing a testimonial, live or saved, with its status page", async () => {
+    testimonials.getAdminTestimonial.mockResolvedValue({
+      ...PLACED,
+      usages: [
+        ...PLACED.usages,
+        {
+          kind: "landingPage",
+          pageId: PAGE,
+          titles: [
+            { locale: "en", title: "Gaming clubs in Espoo" },
+            { locale: "fi", title: "Pelikerhot Espoossa" },
+          ],
+          inLiveCopy: true,
+          inWorkingCopy: false,
+        },
+      ],
+    });
+
+    const result = await tool("get_testimonial", { testimonialId: ID });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      usedIn: [
+        { place: "home", spot: "safety" },
+        {
+          place: "landingPage",
+          pageId: PAGE,
+          title: "Gaming clubs in Espoo",
+          inLiveCopy: true,
+          inWorkingCopy: false,
+          adminLink: `${ORIGIN}/en/admin/landing-pages/${PAGE}`,
+        },
+      ],
+    });
+  });
+
+  it("still finds a home spot behind a landing page usage", async () => {
+    testimonials.listAdminTestimonials.mockResolvedValue([
+      {
+        ...PLACED,
+        usages: [
+          {
+            kind: "landingPage",
+            pageId: PAGE,
+            titles: [{ locale: "en", title: "Gaming clubs in Espoo" }],
+            inLiveCopy: true,
+            inWorkingCopy: true,
+          },
+          ...PLACED.usages,
+        ],
+      },
+    ]);
+
+    const result = await tool("list_home_testimonial_spots");
+
+    expect(result.structuredContent).toMatchObject({
+      spots: [
+        { spot: "feature", testimonials: [] },
+        { spot: "safety", testimonials: [{ position: 1, testimonialId: ID }] },
+        { spot: "row", testimonials: [] },
+      ],
+    });
+  });
+
+  it("tells the AI app an edit shows on live landing pages at once, and how a quote comes off one", async () => {
+    const result = await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }));
+    const text = await result.text();
+    expect(text).toContain("on every live landing page placing it, with no republish");
+    expect(text).toContain("from a landing page by saving that page's structure without it");
   });
 });

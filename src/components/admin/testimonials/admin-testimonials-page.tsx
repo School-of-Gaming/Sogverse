@@ -1,7 +1,7 @@
 "use client";
 
 import { Heading } from "@sog/ui";
-import { Clock, House, Languages, Plus } from "lucide-react";
+import { Clock, House, Languages, PanelsTopLeft, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   HOME_SPOT_SIZE,
   HOME_TESTIMONIAL_SPOTS,
   homePlacement,
+  landingPagePlacements,
   type AdminTestimonial,
 } from "@/services/testimonials";
 
@@ -190,6 +191,7 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
   const timeZone = useTimezone();
   const { quote, from } = useQuoteLine()(testimonial);
   const home = homePlacement(testimonial.usages);
+  const landingPages = landingPagePlacements(testimonial.usages).length;
 
   return (
     <div className="group relative flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-hover">
@@ -226,6 +228,12 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
             <span className="inline-flex items-center gap-1 text-foreground">
               <House className="h-3 w-3" aria-hidden />
               {t("onHome", { spot: t(`home.spots.${home.spot}`) })}
+            </span>
+          )}
+          {landingPages > 0 && (
+            <span className="inline-flex items-center gap-1 text-foreground">
+              <PanelsTopLeft className="h-3 w-3" aria-hidden />
+              {t("onLandingPages", { count: landingPages })}
             </span>
           )}
         </div>

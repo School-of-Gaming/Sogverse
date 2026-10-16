@@ -109,6 +109,7 @@ function renderBody(
       <LandingPageBody
         sections={overrides.sections ?? SECTIONS}
         imagePaths={PATHS}
+        testimonials={{}}
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}

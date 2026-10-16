@@ -11,7 +11,8 @@ import { Constants, type HomeTestimonialSpot } from "@/types";
  *
  * There is no API route here: the writes are admin-guarded RPCs the admin's
  * own session calls, the admin reads are plain table reads under the admin
- * policies, and the public read is `list_home_testimonials`.
+ * policies, and the public reads are `list_home_testimonials` and
+ * `list_landing_page_testimonials`.
  *
  * **A testimonial's words are per language.** Each version says whom the
  * quote is from (`from`, stored as `attribution`, since FROM is SQL's own
@@ -117,27 +118,54 @@ export interface TestimonialVersion {
 /**
  * One place a testimonial is shown. A discriminated union so a new kind of
  * place joins it as a member, and every surface listing where a testimonial
- * is used handles it by kind. A home spot puts it on About too, in the same
- * group.
+ * is used handles it by kind.
+ *
+ * - `home` — a home spot, which puts it on About too, in the same group.
+ * - `landingPage` — a landing page whose testimonials sections place it, in
+ *   its live copy, its working copy or both: a placement only in the working
+ *   copy reaches readers at the next publish, and one only in the live copy
+ *   leaves them at it.
  */
-export type TestimonialUsage = {
-  kind: "home";
-  spot: HomeTestimonialSpot;
-  /** From 1, in reading order within the spot. */
-  position: number;
-};
+export type TestimonialUsage =
+  | {
+      kind: "home";
+      spot: HomeTestimonialSpot;
+      /** From 1, in reading order within the spot. */
+      position: number;
+    }
+  | {
+      kind: "landingPage";
+      pageId: string;
+      /** The page's working titles, one per language it is written in; never empty. */
+      titles: { locale: SupportedLocale; title: string }[];
+      /** Whether readers see it there now: the published copy places it. */
+      inLiveCopy: boolean;
+      /** Whether the working copy places it, so the next publish keeps it there. */
+      inWorkingCopy: boolean;
+    };
+
+/** A testimonial's usage on a landing page. */
+export type LandingPageTestimonialUsage = Extract<TestimonialUsage, { kind: "landingPage" }>;
 
 /**
  * The home spot a testimonial fills, or null when it fills none — the one
  * home placement among its usages, since a testimonial is in one home
- * position at most. Every usage is a home spot today, so the answer is the
- * first; a new kind of place in `TestimonialUsage` stops this compiling until
- * it narrows by kind, which is the point.
+ * position at most.
  */
 export function homePlacement(
   usages: readonly TestimonialUsage[],
 ): { spot: HomeTestimonialSpot; position: number } | null {
-  return usages.at(0) ?? null;
+  for (const usage of usages) {
+    if (usage.kind === "home") return { spot: usage.spot, position: usage.position };
+  }
+  return null;
+}
+
+/** The landing pages a testimonial is placed on, in its usages' order. */
+export function landingPagePlacements(
+  usages: readonly TestimonialUsage[],
+): LandingPageTestimonialUsage[] {
+  return usages.filter((usage): usage is LandingPageTestimonialUsage => usage.kind === "landingPage");
 }
 
 /** Who wrote to a testimonial, and through which AI app. */
@@ -173,6 +201,20 @@ export interface PublicTestimonial {
 
 /** The home page's testimonials by spot, each spot in reading order and never over its size. */
 export type HomeTestimonials = Record<HomeTestimonialSpot, PublicTestimonial[]>;
+
+/** What `list_landing_page_testimonials` answers, written from its body. */
+export const landingPageTestimonialRows = z.array(
+  z.object({
+    testimonial_id: z.string().uuid(),
+    versions: z.array(
+      z.object({
+        locale: z.string(),
+        attribution: z.string(),
+        quote: z.string(),
+      }),
+    ),
+  }),
+);
 
 /** What `list_home_testimonials` answers, written from its body. */
 export const homeTestimonialRows = z.array(

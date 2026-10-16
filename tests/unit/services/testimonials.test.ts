@@ -14,6 +14,8 @@ import {
 import {
   QUOTATION_MARKS,
   hasQuotationMarks,
+  homePlacement,
+  landingPagePlacements,
   testimonialInput,
   testimonialWriteFailure,
 } from "@/services/testimonials/testimonials.contracts";
@@ -123,6 +125,40 @@ describe("TestimonialsService", () => {
     expect(home.row.map((testimonial) => testimonial.id)).toEqual([B, C]);
   });
 
+  it("reads a live landing page's testimonials through the public read, versions in locale order", async () => {
+    const { fetchMock, service } = stubbed([
+      {
+        testimonial_id: A,
+        versions: [
+          { locale: "fi", attribution: "Äiti", quote: "Yksi." },
+          { locale: "en", attribution: "Mum", quote: "One." },
+        ],
+      },
+    ]);
+
+    const live = await service.listLandingPageTestimonials(B);
+
+    expect(rpcCall(fetchMock)).toEqual({
+      path: "/rest/v1/rpc/list_landing_page_testimonials",
+      args: { p_page_id: B },
+    });
+    expect(live).toEqual([
+      {
+        id: A,
+        versions: [
+          { locale: "en", from: "Mum", quote: "One." },
+          { locale: "fi", from: "Äiti", quote: "Yksi." },
+        ],
+      },
+    ]);
+  });
+
+  it("answers a page id that is not a uuid with nothing, asking nobody", async () => {
+    const { fetchMock, service } = stubbed([]);
+    expect(await service.listLandingPageTestimonials("espoo")).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("writes `from` as the stored attribution", async () => {
     const { fetchMock, service } = stubbed(A);
 
@@ -158,5 +194,29 @@ describe("testimonialWriteFailure", () => {
       kind: "unknown",
     });
     expect(testimonialWriteFailure({ code: "42P01", message: "relation" })).toEqual({ kind: "unknown" });
+  });
+});
+
+describe("where a testimonial is used, by kind", () => {
+  const LANDING = {
+    kind: "landingPage" as const,
+    pageId: "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13",
+    titles: [{ locale: "en" as const, title: "Gaming clubs in Espoo" }],
+    inLiveCopy: true,
+    inWorkingCopy: false,
+  };
+
+  it("finds the home spot wherever it sits among the usages", () => {
+    expect(homePlacement([LANDING, { kind: "home", spot: "row", position: 2 }])).toEqual({
+      spot: "row",
+      position: 2,
+    });
+    expect(homePlacement([LANDING])).toBeNull();
+  });
+
+  it("lists the landing pages alone", () => {
+    expect(landingPagePlacements([{ kind: "home", spot: "feature", position: 1 }, LANDING])).toEqual([
+      LANDING,
+    ]);
   });
 });

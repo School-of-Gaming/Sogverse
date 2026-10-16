@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { AdminTestimonialsPage } from "@/components/admin/testimonials/admin-testimonials-page";
+import { TestimonialUsageCard } from "@/components/admin/testimonials/edit-testimonial-page";
 import { TestimonialEditor } from "@/components/admin/testimonials/testimonial-editor";
 import type { AdminTestimonial } from "@/services/testimonials";
 
@@ -103,5 +104,56 @@ describe("the testimonial editor", () => {
     expect(save).toHaveBeenCalledWith({
       versions: [{ locale: "en", from: "Mum, Finland", quote: "Gaming is fun." }],
     });
+  });
+});
+
+describe("where a testimonial is used", () => {
+  const PAGE = "746388a7-2edd-456b-b7d1-4e9828f85af9";
+  const OTHER = "9d1f06bf-9895-4f04-9ec5-3d86382afb8e";
+  const DRAFT = "94f2a395-3c9f-49f6-8770-f9f4c28bfd91";
+  const titles = [{ locale: "en" as const, title: "Gaming clubs in Espoo" }];
+
+  it("lists a home spot with About, and each landing page with its status page and copies", () => {
+    render(
+      <TestimonialUsageCard
+        usages={[
+          { kind: "home", spot: "safety", position: 1 },
+          { kind: "landingPage", pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+          { kind: "landingPage", pageId: OTHER, titles, inLiveCopy: true, inWorkingCopy: false },
+          { kind: "landingPage", pageId: DRAFT, titles, inLiveCopy: false, inWorkingCopy: true },
+        ]}
+      />,
+    );
+
+    const items = screen.getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "usage.home spot=home.spots.safety position=1 size=2",
+      "usage.about",
+      "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.both",
+      "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.liveOnly",
+      "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.workingOnly",
+    ]);
+    expect(within(items[2]).getByRole("link").getAttribute("href")).toContain(
+      `/admin/landing-pages/${PAGE}`,
+    );
+  });
+
+  it("marks a listed testimonial placed on landing pages, beside its home spot", () => {
+    render(
+      <AdminTestimonialsPage
+        testimonials={[
+          {
+            ...PLACED,
+            usages: [
+              ...PLACED.usages,
+              { kind: "landingPage", pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+            ],
+          },
+        ]}
+        status="success"
+      />,
+    );
+    expect(screen.getByText("onLandingPages count=1")).toBeTruthy();
+    expect(screen.getAllByText("onHome spot=home.spots.safety").length).toBeGreaterThan(0);
   });
 });

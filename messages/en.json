@@ -795,6 +795,18 @@
           "inSection": "Section {number} ({type}): {field}",
           "inItem": "Section {number} ({type}), {item}: {field}",
           "goneSection": "A section no longer on the page: {field}"
+        },
+        "testimonials": {
+          "heading": "Testimonials",
+          "hint": "Their words are edited in Testimonials, and an edit shows on the live page straight away.",
+          "section": "Section {number} ({type}): {arrangement}",
+          "arrangements": {
+            "feature": "one large quote",
+            "pair": "two side by side",
+            "row": "three in a row",
+            "showcase": "one large quote, two side by side, then three in a row"
+          },
+          "missing": "A testimonial no longer in the store"
         }
       },
       "status": {
@@ -845,7 +857,8 @@
         "points": "Points",
         "steps": "Steps",
         "faq": "Questions and answers",
-        "cta": "Call to action"
+        "cta": "Call to action",
+        "testimonials": "Testimonials"
       },
       "items": {
         "image": "Picture {number}",
@@ -2076,7 +2089,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Real words from parents, gamers and gedus, kept in one place. The home page and About quote the ones placed there.",
+      "subtitle": "Real words from parents, gamers and gedus, kept in one place. The home page, About and landing pages quote the ones placed there.",
       "newTestimonial": "New testimonial",
       "backToList": "Back to testimonials",
       "newPage": {
@@ -2121,7 +2134,13 @@
         "none": "It is not shown anywhere yet.",
         "editNote": "Saving changes its words everywhere it is shown.",
         "home": "Home page: {spot}, {position, number} of {size, number}",
-        "about": "About: What parents tell us"
+        "about": "About: What parents tell us",
+        "landingPage": "Landing page: {title}",
+        "landingPageState": {
+          "both": "Readers see it there now.",
+          "liveOnly": "Readers see it there until the next publish, which takes it off.",
+          "workingOnly": "Not shown to readers yet: the next publish puts it there."
+        }
       },
       "record": {
         "created": "Created {date}",
@@ -2143,7 +2162,8 @@
         "quoted": "The {language} quote starts or ends with a quotation mark. Leave the marks out: the site adds them in each language’s own style.",
         "saveFailed": "The testimonial could not be saved. Try again.",
         "saveFailedWithReason": "The testimonial could not be saved: {reason}"
-      }
+      },
+      "onLandingPages": "{count, plural, one {On # landing page} other {On # landing pages}}"
     }
   },
   "auth": {

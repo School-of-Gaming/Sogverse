@@ -23,6 +23,7 @@ import { HeroBackdrop } from "@/components/home/hero-backdrop";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import clubPhoto from "@/assets/marketing/club-lauttasaari.jpg";
 import { Testimonial } from "@/components/home/testimonial";
+import { FeatureTestimonial, TestimonialRow } from "@/components/home/testimonial-arrangements";
 import { readHomeTestimonials } from "@/components/home/home-testimonials.server";
 import { ROUTES, resolveLocale } from "@/lib/constants";
 import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
@@ -181,11 +182,7 @@ function HomeBody({ testimonials }: { testimonials: HomeTestimonials }) {
           the room between the quote and the hero backdrop's lower edge. */}
       {testimonials.feature.map((testimonial) => (
         <section key={testimonial.id} className="container mx-auto px-4 py-16 sm:pb-24">
-          <Testimonial
-            testimonial={testimonial}
-            size="feature"
-            className="mx-auto max-w-3xl"
-          />
+          <FeatureTestimonial testimonial={testimonial} />
         </section>
       ))}
 
@@ -287,11 +284,7 @@ function HomeBody({ testimonials }: { testimonials: HomeTestimonials }) {
               {t('testimonials.heading')}
             </Heading>
           </div>
-          <div className="mx-auto mt-12 grid max-w-5xl gap-10 md:grid-cols-3 lg:mt-16">
-            {testimonials.row.map((testimonial) => (
-              <Testimonial key={testimonial.id} testimonial={testimonial} />
-            ))}
-          </div>
+          <TestimonialRow testimonials={testimonials.row} className="mt-12 lg:mt-16" />
         </section>
       )}
 

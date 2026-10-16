@@ -17,7 +17,7 @@ CREATE TABLE public.testimonials (
 -- Name: TABLE testimonials; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.testimonials IS 'Marketing''s store of testimonials — real words from real parents, gamers and gedus: the record of who created each and who last saved it here, the words per language in testimonial_translations. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_testimonial, save_testimonial, save_testimonial_version and remove_testimonial_version, and nothing deletes a testimonial: once created it stays. The public reads only the testimonials placed on the home page, through list_home_testimonials.';
+COMMENT ON TABLE public.testimonials IS 'Marketing''s store of testimonials — real words from real parents, gamers and gedus: the record of who created each and who last saved it here, the words per language in testimonial_translations. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_testimonial, save_testimonial, save_testimonial_version and remove_testimonial_version, and nothing deletes a testimonial: once created it stays. The public reads only the testimonials placed somewhere public: the home page''s through list_home_testimonials, and a live landing page''s through list_landing_page_testimonials.';
 
 
 --

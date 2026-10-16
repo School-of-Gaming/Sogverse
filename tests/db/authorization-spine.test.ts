@@ -927,6 +927,12 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/testimonials.test.ts",
     why: "SECURITY DEFINER over testimonials, testimonial_translations and home_testimonials, which anon holds no grant on and authenticated reads only as an admin. It crosses that boundary to hand back the placed testimonials alone — the spot, the position, the id and every version's locale, attribution and quote of each testimonial a home spot holds — never an unplaced testimonial and never who created or saved one. It takes no argument and answers every caller identically, anon included, which the scope test proves along with the exact set of rows and keys",
   },
+  // A live landing page's testimonials, by the same widest reading as the
+  // home spots' read above: no user named, no uid read, one answer for all.
+  list_landing_page_testimonials: {
+    scopeTest: "tests/db/landing-testimonials.test.ts",
+    why: "SECURITY DEFINER over testimonials, testimonial_translations and landing_page_publications, the first two of which anon holds no grant on and authenticated reads only as an admin. It crosses that boundary to hand back only what one live landing page's published copy places — the id and every version's locale, attribution and quote of each testimonial its testimonials sections name — never a testimonial placed only in an unpublished working copy, never an unplaced one, and never who created or saved one. It reads no uid and answers every caller identically, anon included, which the scope test proves along with the live-copy-only boundary and the exact keys",
+  },
   is_public_team_photo: {
     scopeTest: "tests/db/team-profiles-public.test.ts",
     why: "the predicate of the team-photos public read policy, which anon evaluates itself, so it has to be executable by anon. SECURITY DEFINER over the team tables anon cannot read, and answers only yes or no: whether a name is the current photo of a profile list_public_team_profiles shows. It reveals nothing the public list does not, and answers every caller identically; the scope test asks it about a public photo, a hidden profile's, a former staffer's and a stray object, and proves the policy it backs lets anon read the first alone",
@@ -996,7 +1002,8 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  *
  * `list_home_testimonials` is the public home page's and About's quotes: the
  * testimonials the home spots hold, their words alone, and never the rest of
- * the admin-only store.
+ * the admin-only store. `list_landing_page_testimonials` is a live landing
+ * page's: the testimonials its published copy places, their words alone.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
@@ -1010,6 +1017,7 @@ const ANON_ALLOWLIST = new Set([
   "get_public_team_profile",
   "is_public_team_photo",
   "list_home_testimonials",
+  "list_landing_page_testimonials",
 ]);
 
 /**

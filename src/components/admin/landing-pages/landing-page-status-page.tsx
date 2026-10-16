@@ -28,11 +28,13 @@ import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
   landingPublishForecast,
+  landingTestimonialsSections,
   landingWriteFailure,
   type AdminLandingPage,
   type LandingPageDraft,
   type LandingPageDraftVersion,
   type LandingPublishForecast,
+  type LandingTestimonialsSection,
 } from "@/services/landing-pages";
 import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-chip";
 
@@ -54,7 +56,9 @@ export interface LandingPageStatusActions {
  * what readers see.
  *
  * Top to bottom: where the page stands with readers and who last saved it
- * (and through which AI app); the publishing row; then one card per written
+ * (and through which AI app); the publishing row; when the page has
+ * testimonials sections, each one's arrangement and the testimonials it
+ * places; then one card per written
  * language — complete or what it still needs, its address (and, when that
  * differs from the live one, that the next publish moves it), its preview of
  * the saved working copy and, while it is live, its live page.
@@ -78,6 +82,7 @@ export function LandingPageStatusPage({
   // The card's address warning is the publish confirmation's, so the two
   // never disagree: a live language the publish would take down moves nowhere.
   const { slugsChanging } = landingPublishForecast(page);
+  const testimonialSections = landingTestimonialsSections(page.draft.sections, page.testimonials);
 
   return (
     <div className="space-y-6">
@@ -97,6 +102,10 @@ export function LandingPageStatusPage({
       </div>
 
       <Publishing page={page} actions={actions} />
+
+      {testimonialSections.length > 0 && (
+        <PlacedTestimonials sections={testimonialSections} />
+      )}
 
       <section aria-labelledby="landing-page-languages" className="space-y-3">
         <Heading level={2} step="card-title" id="landing-page-languages">
@@ -329,6 +338,66 @@ function slugPath(slug: string, locale: SupportedLocale): string {
 }
 
 /**
+ * **Each testimonials section's arrangement and the testimonials it places**,
+ * in reading order, each a short excerpt and whom it is from in the admin's
+ * language, linking to its editor — where its words are changed, for every
+ * page showing it at once. Read from the working copy's structure, which the
+ * next publish puts live.
+ */
+function PlacedTestimonials({ sections }: { sections: readonly LandingTestimonialsSection[] }) {
+  const t = useTranslations("admin.landingPages");
+  const uiLocale = resolveLocale(useLocale());
+
+  return (
+    <section aria-labelledby="landing-page-testimonials" className="space-y-3">
+      <div className="space-y-1">
+        <Heading level={2} step="card-title" id="landing-page-testimonials">
+          {t("statusPage.testimonials.heading")}
+        </Heading>
+        <p className="text-sm text-muted-foreground">{t("statusPage.testimonials.hint")}</p>
+      </div>
+      <Card>
+        <CardContent className="divide-y divide-border p-0">
+          {sections.map((section) => (
+            <div key={section.sectionId} className="space-y-2 p-6 text-sm">
+              <p className="font-medium">
+                {t("statusPage.testimonials.section", {
+                  number: section.sectionNumber,
+                  type: t("sectionTypes.testimonials"),
+                  arrangement: t(`statusPage.testimonials.arrangements.${section.arrangement}`),
+                })}
+              </p>
+              <ol className="space-y-2">
+                {section.testimonials.map(({ testimonialId, versions }) => {
+                  const version = resolveTranslation(versions, uiLocale);
+                  return (
+                    <li key={testimonialId}>
+                      {version === null ? (
+                        <span className="text-muted-foreground">
+                          {t("statusPage.testimonials.missing")}
+                        </span>
+                      ) : (
+                        <Link
+                          href={ROUTES.admin.testimonial(testimonialId)}
+                          className="block rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                        >
+                          <span className="line-clamp-2 font-serif italic">{version.quote}</span>
+                          <span className="text-xs text-muted-foreground">{version.from}</span>
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+/**
  * One written language: complete or what it still needs, its address, its
  * preview and — while it is live — its live page. When the next publish would
  * move the language to a new address, the card warns that links to the old
@@ -476,6 +545,7 @@ const ITEM_KEYS: {
   image: "image",
   points: "points",
   steps: "steps",
+  testimonials: null,
   faq: "faq",
   cta: null,
 };
