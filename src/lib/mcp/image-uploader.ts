@@ -27,13 +27,14 @@ import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
  * through the model — it would have to read and repeat them, and a client
  * refuses a result that large anyway — so the model only opens the uploader,
  * and the uploader, a page the AI app renders in a sandboxed frame, reads the
- * admin's file, measures it, and finds the frame it already has the shape of
- * among the frames the opening offers. It never crops: a picture of no
- * offered shape is refused, on screen and to the model, so the admin can be
- * told why and re-crop it themselves. A picture that matches is scaled to
- * that frame's purpose's exact size and handed as a JPEG to the frame's
- * app-only tool through the AI app's own connection, then placed with the
- * tool the opening named. The view never holds a token: the AI app makes the
+ * admin's files — several at once where the destination takes more than
+ * one — measures each, and finds the frame it already has the shape of among
+ * the frames the opening offers. It never crops: a picture of no offered
+ * shape is refused, on screen and to the model, so the admin can be told why
+ * and re-crop it themselves, and the others go on. A picture that matches is
+ * scaled to that frame's purpose's exact size and handed as a JPEG to the
+ * frame's app-only tool through the AI app's own connection, one picture per
+ * call; the pictures stored are then placed with the tool the opening named. The view never holds a token: the AI app makes the
  * calls with its grant, so the gate in front of them is the endpoint's like
  * any other call.
  *
@@ -45,7 +46,7 @@ import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
  */
 
 /** The view's address. Hosts may cache a view by it, so a breaking change to the view's protocol names a new one. */
-export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader-2.html";
+export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader-3.html";
 
 /** What MCP Apps calls an HTML view. */
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
@@ -92,17 +93,29 @@ export const MAX_UPLOAD_BYTES = Math.min(
   Math.floor(((DEFAULT_MAX_REQUEST_BODY_SIZE - 64 * 1024) * 3) / 4),
 );
 
-/** Where the view puts a stored picture: a tool, its arguments, and the one the picture's id goes in. */
+/** Where the view puts the stored pictures: a tool, its arguments, and the one the pictures' ids go in. */
 export interface UploaderPlacement {
   tool: string;
   arguments: Record<string, unknown>;
   imageArgument: string;
+  /**
+   * Whether `imageArgument` takes a list of catalogue ids, in pick order, so a
+   * batch is placed in one call; otherwise it takes one id, and the view
+   * places each picture with a call of its own.
+   */
+  list: boolean;
   /** The upload button's words. */
   actionLabel: string;
-  /** What the view tells the admin once the picture is placed. */
+  /** What the view tells the admin once the pictures are placed. */
   done: string;
-  /** What the model is told once it is, after the entry's id and label. */
+  /** What the model is told once they are, after each file's entry. */
   outcome: string;
+}
+
+/** How many pictures one opening takes, and the sentence a picture past them is refused with. */
+export interface UploaderRoom {
+  pictures: number;
+  full: string;
 }
 
 /** One shape the uploader knows for an area: a catalogue purpose, and whether this opening takes it. */
@@ -123,12 +136,13 @@ export interface UploaderFrameSpec {
  * What the view is opened with, in the opening tool's result as `uploader`:
  * its words; every shape the area's pictures come in, each with its purpose's
  * exact size, the tool that stores it and whether this destination takes it;
- * what a picture of none of them is told; the largest JPEG a call carries;
- * and where the picture is placed — or null, when it is only added to the
- * catalogue and the model is told its id to place.
+ * what a picture of none of them is told; how many pictures the destination
+ * takes and whether they must all be one shape; the largest JPEG a call
+ * carries; and where the pictures are placed — or null, when they are only
+ * added to the catalogue and the model is told their ids to place.
  *
- * The view infers a picked picture's shape from these frames alone and
- * restates none of them.
+ * The view infers a picked picture's shape from these frames alone, counts
+ * against the room and compares shapes, and restates none of the rules.
  */
 export function uploaderOpening(view: {
   heading: string;
@@ -136,6 +150,18 @@ export function uploaderOpening(view: {
   frames: readonly UploaderFrameSpec[];
   /** What a picture of none of the frames' shapes is told, after its own size. */
   noFrame: string;
+  /**
+   * How many pictures the admin may add at once, or null for any number. A
+   * room of one turns the view's multi-select off; pictures past the room are
+   * refused before anything uploads.
+   */
+  room: UploaderRoom | null;
+  /**
+   * When every picture of a batch must be one shape, the rule's sentence:
+   * the first picture the view takes fixes the shape, and one of another is
+   * refused with it. Null when they need not.
+   */
+  oneShape: string | null;
   place: UploaderPlacement | null;
 }) {
   return {
@@ -146,6 +172,8 @@ export function uploaderOpening(view: {
       return { purpose, name, width, height, uploadTool, refusal };
     }),
     noFrame: view.noFrame,
+    room: view.room,
+    oneShape: view.oneShape,
     maxBytes: MAX_UPLOAD_BYTES,
     place: view.place,
   };

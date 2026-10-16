@@ -1,6 +1,7 @@
 import { z } from "zod-v4";
 import { describeMarkdownSubset } from "@/lib/authored-markdown-subset";
 import {
+  IMAGE_SECTION_MAX_PICTURES,
   LANDING_EMAIL_PATTERN,
   LANDING_ICONS,
   LANDING_ID_PATTERN,
@@ -213,7 +214,7 @@ export const MCP_LANDING_SECTIONS: {
       images: z
         .array(z.strictObject({ id: itemId, imageId: pictureId }))
         .min(1, "An image section shows at least one picture")
-        .max(4, "An image section shows at most four pictures")
+        .max(IMAGE_SECTION_MAX_PICTURES, "An image section shows at most four pictures")
         .refine(distinctGivenIds, "Two pictures share an id")
         .describe("The pictures, in order."),
     }),

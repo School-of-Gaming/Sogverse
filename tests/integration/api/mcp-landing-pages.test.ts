@@ -858,6 +858,23 @@ describe("pictures", () => {
     expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
+  /** The page with its image section holding `count` pictures, all wide. */
+  function withGallery(count: number): AdminLandingPage {
+    const images = Array.from({ length: count }, (_, n) => ({
+      id: `b2000000-0000-4000-8000-${String(n + 10).padStart(12, "0")}`,
+      imageId: CASTLE,
+    }));
+    return {
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: PAGE.draft.sections.map((section) =>
+          section.id === GALLERY ? { id: GALLERY, type: "image" as const, images } : section,
+        ),
+      },
+    };
+  }
+
   /** The three frames, each refused with `refusals[shape]` (null: taken). */
   function frames(refusals: { wide: string | null; square: string | null; portrait: string | null }) {
     return [
@@ -883,15 +900,18 @@ describe("pictures", () => {
         subject: "For “Gaming clubs in Espoo”",
         frames: frames({ wide: null, square: heroRule, portrait: heroRule }),
         noFrame: heroRule,
+        room: { pictures: 1, full: "A hero section shows one picture: only the first that fits is taken." },
+        oneShape: null,
         maxBytes: expect.any(Number),
         place: expect.objectContaining({
           tool: "set_landing_section_image",
           arguments: { pageId: ID, sectionId: HERO },
           imageArgument: "imageId",
+          list: false,
         }),
       },
     });
-    expect(resultText(result)).toContain("it takes a picture that is already wide 16:9");
+    expect(resultText(result)).toContain("it takes pictures that are already wide 16:9, one picture");
   });
 
   it("takes every shape for a text section, and for the catalogue alone", async () => {
@@ -907,7 +927,141 @@ describe("pictures", () => {
         },
       });
     }
-    expect(alone.structuredContent).toMatchObject({ sectionId: null, uploader: { place: null } });
+    expect(text.structuredContent).toMatchObject({
+      uploader: {
+        room: { pictures: 1, full: "A text section shows one picture: only the first that fits is taken." },
+        oneShape: null,
+        place: { imageArgument: "imageId", list: false },
+      },
+    });
+    // The catalogue alone takes any number, of any mix of shapes.
+    expect(alone.structuredContent).toMatchObject({
+      sectionId: null,
+      uploader: { room: null, oneShape: null, place: null },
+    });
+    expect(resultText(alone)).toContain("as many as they like at once");
+  });
+
+  it("takes as many pictures as an image section has room for, of one shape, placed in one call", async () => {
+    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
+
+    expect(result.structuredContent).toMatchObject({
+      uploader: {
+        room: {
+          pictures: 3,
+          full: "An image section shows at most four pictures, and this one has room for 3 more: the first 3 that fit are taken, in the order picked.",
+        },
+        oneShape: "An image section's pictures must all be one shape, so its grid lines up.",
+        place: {
+          tool: "set_landing_section_image",
+          arguments: { pageId: ID, sectionId: GALLERY },
+          imageArgument: "imageIds",
+          list: true,
+        },
+      },
+    });
+    expect(resultText(result)).toContain("up to 3 at once");
+
+    // One place left: the batch takes one picture, placed by its one id.
+    landing.getAdminPage.mockResolvedValue(withGallery(3));
+    const last = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
+    expect(last.structuredContent).toMatchObject({
+      uploader: {
+        room: {
+          pictures: 1,
+          full: "An image section shows at most four pictures, and this one has room for one more: only the first that fits is taken.",
+        },
+        place: { imageArgument: "imageId", list: false },
+      },
+    });
+
+    // Replacing one picture takes one, by imageId.
+    landing.getAdminPage.mockResolvedValue(PAGE);
+    const replacing = await tool("open_landing_image_uploader", {
+      pageId: ID,
+      sectionId: GALLERY,
+      pictureId: PICTURE_ITEM,
+    });
+    expect(replacing.structuredContent).toMatchObject({
+      uploader: {
+        room: { pictures: 1, full: "Replacing a picture takes one: only the first that fits is taken." },
+        oneShape: null,
+        place: { arguments: { pictureId: PICTURE_ITEM }, imageArgument: "imageId", list: false },
+      },
+    });
+  });
+
+  it("refuses to open on a full image section, before the admin picks anything", async () => {
+    landing.getAdminPage.mockResolvedValue(withGallery(4));
+
+    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("at most four pictures");
+  });
+
+  it("tells the AI app that several pictures can be picked at once, and how many each destination takes", async () => {
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string().optional() })) })
+      .parse(
+        (await readRpc(await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }))))
+          .result,
+      );
+    const opening = tools.find((t) => t.name === "open_landing_image_uploader")?.description;
+    expect(opening).toContain("several at once");
+    expect(opening).toContain("without a sectionId, any number");
+    expect(opening).toContain("as many as it has room for (it shows at most four), all of one shape");
+    expect(opening).toContain("each uploaded picture's new catalogue id, shape and the file name it came from");
+    const set = tools.find((t) => t.name === "set_landing_section_image")?.description;
+    expect(set).toContain("send imageIds in place of imageId");
+  });
+
+  it("adds several pictures to an image section in one write, in order, answering their item ids", async () => {
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: GALLERY,
+      imageIds: [FIELD, CASTLE],
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(landing.saveStructure).toHaveBeenCalledTimes(1);
+    const [, sections] = landing.saveStructure.mock.calls[0];
+    expect(sections[3].images).toEqual([
+      { id: PICTURE_ITEM, imageId: CASTLE },
+      { id: expect.stringMatching(/^[0-9a-f-]{36}$/), imageId: FIELD },
+      { id: expect.stringMatching(/^[0-9a-f-]{36}$/), imageId: CASTLE },
+    ]);
+    expect(result.structuredContent?.pictureIds).toEqual([sections[3].images[1].id, sections[3].images[2].id]);
+    expect(result.structuredContent).not.toHaveProperty("pictureId");
+  });
+
+  it("quotes the database's refusal of a batch it will not take, such as one of mixed shapes", async () => {
+    landing.saveStructure.mockRejectedValue(
+      dbError("23514", "An image section's pictures must all be one shape: wide 16:9 and square 1:1."),
+    );
+
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: GALLERY,
+      imageIds: [FIELD],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe("An image section's pictures must all be one shape: wide 16:9 and square 1:1.");
+  });
+
+  it.each([
+    ["more pictures than the section has room for", { sectionId: GALLERY, imageIds: [FIELD, FIELD, FIELD, FIELD] }, "has room for 3 more"],
+    ["several pictures for a hero", { sectionId: HERO, imageIds: [FIELD] }, "send imageId, not imageIds"],
+    ["imageIds with a pictureId", { sectionId: GALLERY, imageIds: [FIELD], pictureId: PICTURE_ITEM }, "leave pictureId out"],
+    ["both imageId and imageIds", { sectionId: GALLERY, imageId: FIELD, imageIds: [FIELD] }, "one of the two"],
+    ["neither imageId nor imageIds", { sectionId: GALLERY }, "one of the two"],
+  ])("refuses %s, saving nothing", async (_, args, named) => {
+    const result = await tool("set_landing_section_image", { pageId: ID, ...args });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
   it("takes only the shape an image section's other pictures already are", async () => {

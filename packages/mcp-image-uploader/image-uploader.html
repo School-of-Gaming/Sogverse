@@ -6,24 +6,17 @@
     <title>Picture uploader</title>
   </head>
   <body>
-    <main>
+    <main id="drop">
       <h1 id="heading">Picture</h1>
       <p id="subject" class="quiet">Waiting for Sogverse…</p>
 
       <label class="field">
-        <span>Picture</span>
+        <span id="file-label">Picture</span>
         <input id="file" type="file" accept="image/*" disabled />
+        <span id="file-hint" class="quiet hint"></span>
       </label>
 
-      <figure id="preview" hidden>
-        <img id="preview-image" alt="The picture as it will be saved" />
-        <figcaption id="preview-note" class="quiet"></figcaption>
-      </figure>
-
-      <label class="field">
-        <span>Label</span>
-        <input id="label" type="text" maxlength="200" disabled />
-      </label>
+      <ol id="files" hidden></ol>
 
       <div class="actions">
         <button id="upload" type="button" disabled>Upload</button>

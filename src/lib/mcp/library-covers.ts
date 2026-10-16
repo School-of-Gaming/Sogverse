@@ -141,7 +141,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
     "open_cover_uploader",
     {
       title: "Upload a Library cover",
-      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. The picture must already be ${COVER_RATIO} (within 1%): it is never cropped, only scaled to a ${width} × ${height} JPEG and saved in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. A picture of another shape is refused and nothing is uploaded; you are told its size and why, so explain it to the admin, who can crop the picture to ${COVER_RATIO} themselves (or in the Sogverse editor, whose crop they can drag) and pick it again — never offer to pad or crop it for them. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.`,
+      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device to become the article's cover. The picture must already be ${COVER_RATIO} (within 1%): it is never cropped, only scaled to a ${width} × ${height} JPEG and saved in Sogverse's picture catalogue, then set as the article's working-copy cover; readers see it after the next publish. It takes one picture: if the admin drops several, the first that fits is taken and the rest are refused. A picture of another shape is refused and nothing is uploaded; you are told its size and why, so explain it to the admin, who can crop the picture to ${COVER_RATIO} themselves (or in the Sogverse editor, whose crop they can drag) and pick it again — never offer to pad or crop it for them. The picture never passes through you, and you are told the new catalogue id once it is set. Use it when the admin wants a cover that is not in list_library_covers yet. Only AI apps that show MCP Apps views can upload; in any other the admin uploads in the Sogverse editor, whose link get_library_article gives.`,
       inputSchema: z.object({ articleId }),
       annotations: READ_ONLY,
       _meta: UPLOADER_VIEW_META,
@@ -175,10 +175,16 @@ export function registerLibraryCoverTools(server: McpServer): void {
               },
             ],
             noFrame: `A Library cover must be ${COVER_RATIO}.`,
+            room: {
+              pictures: 1,
+              full: "An article has one cover: only the first picture that fits is taken.",
+            },
+            oneShape: null,
             place: {
               tool: "set_library_article_cover",
               arguments: { articleId: id },
               imageArgument: "coverImageId",
+              list: false,
               actionLabel: "Upload and set as cover",
               done: "The cover is set. Readers see it after the next publish.",
               outcome: `It is now article ${id}'s working-copy cover; readers see it after the next publish.`,

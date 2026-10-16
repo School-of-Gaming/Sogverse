@@ -244,7 +244,7 @@ export function landingMarkdownValues(
 export { ctaSection } from "./cta";
 export { faqSection } from "./faq";
 export { heroSection } from "./hero";
-export { imageSection } from "./image";
+export { IMAGE_SECTION_MAX_PICTURES, imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
 export { stepsSection } from "./steps";
 export { LANDING_IMAGE_SIDES, textSection } from "./text";
