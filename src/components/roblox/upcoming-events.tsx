@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
-import { EventsRail } from "./events-rail";
+import { ProductRail } from "@/components/public/products/product-rail";
 import { Heading } from "@sog/ui";
 
 interface UpcomingEventsProps {
@@ -31,11 +31,12 @@ interface UpcomingEventsProps {
  * Presentational by design: it takes rows and renders them, so it stays
  * demoable from fixtures and the data work lives in the shell that wraps it
  * (`upcoming-events-section.tsx` prefetches, `upcoming-events-browse.tsx` keeps
- * the query live and applies the programme narrowing). This file is the frame —
- * heading, subheading, and the choice between the empty state and the rail —
+ * the query live and applies the programme narrowing, both through the shared
+ * product rail pipeline). This file is the frame — heading, subheading, the
+ * choice between the empty state and the rail, and the shop link under it —
  * and holds no interactive state of its own; the scrolling lives one level down
- * in `events-rail.tsx`, which is the only part that needs a client directive
- * and only exists when there is something to scroll.
+ * in the shared `ProductRail`, which only exists when there is something to
+ * scroll.
  *
  * The card is `ProductBrowseCard`, the same component the shop grid renders,
  * not a lookalike: a family who taps through from here and a family who found
@@ -57,7 +58,8 @@ interface UpcomingEventsProps {
  * more without touching anything. The grid it replaced hid more, not less —
  * a fourth event was a full scroll of the page below the fold, with nothing at
  * the third card saying it existed. At `lg` the rail fits three cards exactly,
- * so the desktop shape a reader already knows is unchanged.
+ * so the desktop shape a reader already knows is unchanged; one or two events
+ * sit centred in the row rather than against its left edge.
  */
 export function UpcomingEvents({
   products = [],
@@ -83,7 +85,13 @@ export function UpcomingEvents({
         </Card>
       ) : (
         <>
-          <EventsRail products={products} counts={counts} />
+          <div className="mt-12">
+            <ProductRail
+              products={products}
+              counts={counts}
+              labels={{ previous: t("previous"), next: t("next") }}
+            />
+          </div>
           {/* The completist's exit from the rail: the programme's shop slice in
               the shop's own vertical layout and filters — wider than the rail,
               which is online-only, so in-person programme products are reached
