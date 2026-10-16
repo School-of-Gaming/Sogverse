@@ -28,8 +28,10 @@ const {
   landingPagePath,
   resolveLandingPage,
 } = await import("@/components/landing-pages/landing-page-address");
-const { landingPageMetadata } = await import(
-  "@/components/landing-pages/landing-page-metadata"
+const { landingPageMetadata, landingPageSeo, landingSeoMetadata, renderedLandingSeo } =
+  await import("@/components/landing-pages/landing-page-metadata");
+const { landingPublishedCopy } = await import(
+  "@/services/landing-pages/landing-pages.forecast"
 );
 const { landingPageJsonLd } = await import(
   "@/components/landing-pages/landing-page-json-ld"
@@ -213,6 +215,128 @@ describe("landingPageMetadata", () => {
     const metadata = await landingPageMetadata(klingon, "tlh");
 
     expect(metadata.alternates).toEqual({ canonical: "/tlh/discover/qapla" });
+  });
+});
+
+const SITE = "https://site.test";
+
+describe("renderedLandingSeo", () => {
+  it("reads the metadata out as served: the template's suffix, absolute addresses, hreflang with x-default", async () => {
+    const seo = await landingPageSeo(PAGE, "fi");
+    if (seo === null) throw new Error("no version");
+
+    expect(renderedLandingSeo(seo, SITE)).toEqual({
+      title: "Pelikerhot Espoossa | School of Gaming",
+      titleLength: 38,
+      description: "Iltapäiväkerhot.",
+      canonical: `${SITE}/fi/tutustu/pelikerhot-espoo`,
+      hreflang: {
+        en: `${SITE}/en/discover/gaming-clubs-espoo`,
+        fi: `${SITE}/fi/tutustu/pelikerhot-espoo`,
+        "x-default": `${SITE}/en/discover/gaming-clubs-espoo`,
+      },
+      shareCard: {
+        title: "Pelikerhot Espoossa",
+        description: "Iltapäiväkerhot.",
+        imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/club.jpg`,
+        imageAlt: "Lapsia",
+        image: "hero",
+      },
+    });
+  });
+
+  it("names the site card when the hero has no picture", async () => {
+    const seo = await landingPageSeo(
+      { ...PAGE, sections: [{ id: HERO, type: "hero" }], imagePaths: {} },
+      "en",
+    );
+    if (seo === null) throw new Error("no version");
+
+    expect(renderedLandingSeo(seo, SITE).shareCard).toMatchObject({
+      imageUrl: `${SITE}/opengraph-images/site?locale=en`,
+      imageAlt: "en:metadata.og.site.alt",
+      image: "site-card",
+    });
+  });
+
+  it("counts a long title with its suffix", async () => {
+    const long = "Pelikerhot ja pelikasvatusta Espoon kouluille ja perheille koko lukuvuoden ajan";
+    const seo = await landingPageSeo(
+      { ...PAGE, versions: [{ ...PAGE.versions[0], title: long }] },
+      "en",
+    );
+    if (seo === null) throw new Error("no version");
+
+    const rendered = renderedLandingSeo(seo, SITE);
+    expect(rendered.title).toBe(`${long} | School of Gaming`);
+    expect(rendered.titleLength).toBe(long.length + " | School of Gaming".length);
+    expect(rendered.shareCard.title).toBe(long);
+  });
+
+  it("is the page's own metadata: the page and the MCP tools read one function", async () => {
+    for (const locale of ["en", "fi", "sv", "tlh"]) {
+      const seo = await landingPageSeo(PAGE, locale);
+      if (seo === null) throw new Error("no version");
+      const metadata = await landingPageMetadata(PAGE, locale);
+      expect(metadata).toEqual(landingSeoMetadata(seo));
+
+      const rendered = renderedLandingSeo(seo, SITE);
+      // Next applies the layout's template to the title and resolves every
+      // relative address on `metadataBase`, the site's origin.
+      expect(rendered.title).toBe(`${String(metadata.title)} | School of Gaming`);
+      expect(rendered.canonical).toBe(new URL(String(metadata.alternates?.canonical), SITE).href);
+      expect(rendered.shareCard.imageUrl).toBe(
+        new URL(seo.image.url, SITE).href,
+      );
+      expect(metadata.openGraph).toMatchObject({ title: rendered.shareCard.title, images: [seo.image] });
+    }
+  });
+});
+
+describe("landingPublishedCopy", () => {
+  const draftVersion = (
+    version: PublishedLandingPage["versions"][number],
+    missing: string[] = [],
+  ) => ({ ...version, missing });
+
+  it("is the working copy with its complete versions alone, as a publish would leave it", () => {
+    const copy = landingPublishedCopy({
+      draft: {
+        id: ID,
+        sections: PAGE.sections,
+        imagePaths: PAGE.imagePaths,
+        versions: [draftVersion(PAGE.versions[0]), draftVersion(PAGE.versions[1], ["title"])],
+        createdAt: "2026-08-01T08:00:00Z",
+        updatedAt: "2026-10-05T08:00:00Z",
+        lastSavedBy: null,
+        lastSavedVia: null,
+      },
+      publication: PAGE,
+    });
+
+    expect(copy).toEqual({
+      ...PAGE,
+      publishedAt: "2026-10-05T08:00:00Z",
+      versions: [PAGE.versions[0]],
+    });
+  });
+
+  it("is null when no version is complete", () => {
+    expect(
+      landingPublishedCopy({
+        draft: {
+          id: ID,
+          sections: PAGE.sections,
+          imagePaths: {},
+          versions: [draftVersion(PAGE.versions[0], ["summary"])],
+          createdAt: "2026-08-01T08:00:00Z",
+          updatedAt: "2026-10-05T08:00:00Z",
+          lastSavedBy: null,
+          lastSavedVia: null,
+        },
+        publication: null,
+      }),
+    ).toBeNull();
   });
 });
 

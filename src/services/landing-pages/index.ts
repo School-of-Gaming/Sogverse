@@ -31,6 +31,12 @@ export {
 } from "./landing-pages.contracts";
 export {
   landingPublishForecast,
+  landingPublishedCopy,
   type LandingPublishForecast,
 } from "./landing-pages.forecast";
-export { canonicaliseLandingLinks, type LandingWrite } from "./landing-pages.links";
+export {
+  canonicaliseLandingLinks,
+  type CanonicalLandingWrite,
+  type LandingLinkRewrite,
+  type LandingWrite,
+} from "./landing-pages.links";

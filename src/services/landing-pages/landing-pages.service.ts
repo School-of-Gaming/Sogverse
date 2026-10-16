@@ -30,7 +30,11 @@ import {
   type PublishedLandingPage,
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
-import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import {
+  canonicaliseLandingLinks,
+  siteSlugResolver,
+  type LandingLinkRewrite,
+} from "./landing-pages.links";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
 const UUID =
@@ -147,6 +151,16 @@ function toVersionPayload(version: ParsedLandingVersion) {
     default_slug: defaultLandingSlug(version.title),
     section_texts: version.sectionTexts,
   };
+}
+
+/**
+ * What a write answers: the page's id, and each own-site link the link hook
+ * stored at another address than the one written (`canonicaliseLandingLinks`)
+ * — empty when every link was stored as written.
+ */
+export interface LandingWriteResult {
+  id: string;
+  linkRewrites: LandingLinkRewrite[];
 }
 
 /**
@@ -305,8 +319,11 @@ export class LandingPageService {
   // Admin writes
   // -------------------------------------------------------------------------
 
-  /** Create a page's working copy, whole. Returns its id. */
-  async createPage(input: LandingPageInput): Promise<string> {
+  /**
+   * Create a page's working copy, whole. Returns its id, and each link stored
+   * at another address than the one written.
+   */
+  async createPage(input: LandingPageInput): Promise<LandingWriteResult> {
     const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
       resolver: this.slugResolver(),
     });
@@ -318,7 +335,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("create_landing_page returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**
@@ -326,7 +343,7 @@ export class LandingPageService {
    * shared fields. No version's words are written, except that a section the
    * structure drops takes its words in every language with it.
    */
-  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<string> {
+  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<LandingWriteResult> {
     const write = await canonicaliseLandingLinks(
       { sections: landingSections.parse(sections), versions: [] },
       { resolver: this.slugResolver() },
@@ -339,7 +356,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_structure returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**
@@ -350,7 +367,7 @@ export class LandingPageService {
    * The words are checked against the page's current structure, read first;
    * a page that does not exist is left to the database to refuse.
    */
-  async saveVersion(id: string, version: LandingVersionInput): Promise<string> {
+  async saveVersion(id: string, version: LandingVersionInput): Promise<LandingWriteResult> {
     const parsed = landingVersionInput.parse(version);
     const sections = await this.currentSections(id);
     const checked: ParsedLandingVersion = {
@@ -379,7 +396,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_version returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**

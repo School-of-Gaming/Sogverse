@@ -62,7 +62,7 @@ const buttonTarget = z
         .trim()
         .regex(/^\/(?!\/)/, "A site path starts with a single /")
         .describe(
-          "A page of this site by its path without a language prefix, e.g. /shop/<product id>; readers are taken to it in their own language.",
+          "A page of this site by its path without a language, e.g. /shop/<product id>; it opens in the language of the page the button is on. A path with a language or translated segments (/fi/kauppa/<id>) is accepted and stored without it, a slug page's address is stored at its id address, and a path no page is served from is refused.",
         ),
     }),
     z.strictObject({
@@ -72,7 +72,9 @@ const buttonTarget = z
         .trim()
         .url("Not a web address")
         .regex(/^https?:\/\//, "A web address starts with http:// or https://")
-        .describe("Another site's http(s) address. Uncommon: prefer a page of this site."),
+        .describe(
+          "Another site's http(s) address. Uncommon: prefer a page of this site. An address on this site sent here is stored as an internal path.",
+        ),
     }),
     z.strictObject({
       kind: z.literal("email"),

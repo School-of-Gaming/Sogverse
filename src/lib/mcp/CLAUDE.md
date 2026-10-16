@@ -80,7 +80,10 @@ their answers do: a section as "section N (Type label)", numbered from one.
 lets the admin do; an AI app learns them only from the tool descriptions, so each tool
 states the rules its writes are subject to — what is required, what publishing does, what
 changes a public address, what cannot be undone. Where a rule has a definition in code,
-the description is built from it rather than restated, so the two cannot drift.
+the description is built from it rather than restated, so the two cannot drift. Likewise a
+value a tool reports about what the public site serves — a landing page's rendered title
+or share card — is computed by the page's own code, run over the copy in question, and
+never by rules restated in the tool.
 
 **Rule: authored markdown written through a tool is checked against the field's use case
 and refused outside it** (`src/lib/authored-markdown-subset.ts`), naming each construct and

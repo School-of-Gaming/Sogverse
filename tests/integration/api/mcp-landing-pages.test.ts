@@ -61,6 +61,13 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
   findOrCreateCatalogueImage: (args: { file: File }) => mockFindOrCreate(args),
 }));
 
+// The site card's alt text reads the catalog, which a request outside a
+// rendered page reaches through `next-intl/server`; a stub says which locale asked.
+vi.mock("next-intl/server", () => ({
+  getTranslations: async (arg: { locale: string; namespace: string }) => (key: string) =>
+    `${arg.locale}:${arg.namespace}.${key}`,
+}));
+
 // The links name each locale's own address, so the real navigation is taken
 // over the shared setup's locale-blind mock.
 vi.unmock("@/i18n/navigation");
@@ -203,6 +210,10 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const method of Object.values(landing)) method.mockReset();
   landing.getAdminPage.mockResolvedValue(PAGE);
+  // A write answers its id and the links it stored elsewhere: none, unless a case says.
+  landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
+  landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [] });
+  landing.saveVersion.mockResolvedValue({ id: ID, linkRewrites: [] });
   catalogue.listImages.mockReset();
   catalogue.getUsage.mockReset();
   mockFindOrCreate.mockReset();
@@ -372,7 +383,7 @@ describe("reading", () => {
 
 describe("creating", () => {
   it("gives new sections ids, writes the first language and answers the address", async () => {
-    landing.createPage.mockResolvedValue(ID);
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
 
     const result = await tool("create_landing_page", {
       locale: "fi",
@@ -442,7 +453,7 @@ describe("creating", () => {
   });
 
   it("takes a button that opens an email", async () => {
-    landing.createPage.mockResolvedValue(ID);
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
 
     const result = await tool("create_landing_page", {
       locale: "en",
@@ -866,5 +877,173 @@ describe("pictures", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain("landing page picture must be exactly 1600 × 900");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("what a publish now would serve", () => {
+  const SUFFIX = " | School of Gaming";
+
+  it("gives each version the page's own rendered metadata, and what differs from what is live", async () => {
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [en, fi] = z
+      .array(z.object({ locale: z.string(), seo: z.unknown() }))
+      .parse(result.structuredContent?.versions);
+    expect(en.seo).toEqual({
+      title: `Gaming clubs in Espoo${SUFFIX}`,
+      titleLength: `Gaming clubs in Espoo${SUFFIX}`.length,
+      description: "After-school clubs.",
+      canonical: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      // English alone would be live: Finnish is left out until complete.
+      hreflang: {
+        en: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+        "x-default": `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      },
+      shareCard: {
+        title: "Gaming clubs in Espoo",
+        description: "After-school clubs.",
+        // The hero's picture, with the title for want of alt text.
+        imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/castle.jpg`,
+        imageAlt: "Gaming clubs in Espoo",
+        image: "hero",
+      },
+      // Live now with no hero picture, so readers are shared the site card.
+      liveDiffers: {
+        "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
+        "shareCard.imageAlt": "en:metadata.og.site.alt",
+        "shareCard.image": "site-card",
+      },
+    });
+    // A version a publish would leave out serves nothing.
+    expect(fi.seo).toBeNull();
+  });
+
+  it("names every language and x-default once two would be live, and the site card without a hero picture", async () => {
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [{ id: HERO, type: "hero" }],
+        imagePaths: {},
+        versions: [
+          { ...en, title: "A much longer title for the Espoo gaming clubs page than fits" },
+          { ...fi, missing: [] },
+        ],
+      },
+      publication: null,
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [enSeo, fiSeo] = z
+      .array(z.object({ seo: z.record(z.string(), z.unknown()) }))
+      .parse(result.structuredContent?.versions)
+      .map((version) => version.seo);
+    const hreflang = {
+      en: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      fi: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+      "x-default": `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+    };
+    expect(enSeo).toMatchObject({
+      title: `A much longer title for the Espoo gaming clubs page than fits${SUFFIX}`,
+      titleLength: 80,
+      hreflang,
+      shareCard: { image: "site-card", imageUrl: expect.stringMatching(/locale=en$/) },
+    });
+    expect(fiSeo).toMatchObject({
+      title: `Pelikerhot Espoossa${SUFFIX}`,
+      canonical: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+      hreflang,
+      shareCard: { image: "site-card", imageUrl: expect.stringMatching(/locale=fi$/) },
+    });
+    // Not live: nothing to differ from.
+    expect(enSeo).not.toHaveProperty("liveDiffers");
+  });
+
+  it("says what the values are in the tool's description", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    const get = tools.find((t) => t.name === "get_landing_page")?.description;
+    expect(get).toContain(`"<title>${SUFFIX}"`);
+    expect(get).toContain("Check these instead of fetching the page");
+    expect(get).toContain("site-card when the hero has none");
+    expect(get).toContain("liveDiffers");
+  });
+});
+
+describe("own-site links", () => {
+  const REWRITE = {
+    sectionId: TEXT,
+    section: "section 2 (Text)",
+    locale: "fi",
+    field: "body",
+    text: "kauppa",
+    from: "/fi/kauppa/123",
+    to: "/shop/123",
+  };
+
+  it("lists each link a save stored at another address, from → to", async () => {
+    landing.saveVersion.mockResolvedValue({ id: ID, linkRewrites: [REWRITE] });
+
+    const result = await tool("save_landing_page_text", {
+      pageId: ID,
+      locale: "fi",
+      title: "Pelikerhot Espoossa",
+      summary: "Kerhoja.",
+      sectionTexts: { [TEXT]: { body: "Katso [kauppa](/fi/kauppa/123)." } },
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent?.linkRewrites).toEqual([REWRITE]);
+  });
+
+  it("lists a structure save's button rewrites, and a create's", async () => {
+    const button = { ...REWRITE, sectionId: HERO, section: "section 1 (Hero)", locale: null, field: "button", text: null };
+    landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [button] });
+
+    const saved = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero", button: { kind: "internal", path: "/fi/kauppa/123" } }],
+    });
+    expect(saved.structuredContent?.linkRewrites).toEqual([button]);
+
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [button] });
+    const created = await tool("create_landing_page", {
+      locale: "en",
+      title: "Clubs",
+      sections: [{ type: "hero", button: { kind: "internal", path: "/fi/kauppa/123" } }],
+    });
+    expect(created.structuredContent?.linkRewrites).toEqual([button]);
+  });
+
+  it("carries no linkRewrites when every link was stored as written", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero" }],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).not.toHaveProperty("linkRewrites");
+  });
+
+  it("states how own-site links are stored in every write tool's description", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    for (const name of ["create_landing_page", "save_landing_page_structure", "save_landing_page_text"]) {
+      const description = tools.find((t) => t.name === name)?.description;
+      expect(description, name).toContain("on a Finnish page /shop/<product id> opens /fi/kauppa/<product id>");
+      expect(description, name).toContain("stored at that page's id address");
+      expect(description, name).toContain("A link to a path no page of the site is served from is refused");
+      expect(description, name).toContain("linkRewrites");
+    }
   });
 });

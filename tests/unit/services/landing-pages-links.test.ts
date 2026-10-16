@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { LandingSection } from "@/lib/landing-pages/sections";
-import type { SlugResolver } from "@/lib/links/own-site";
+import { localizeOwnSiteHref, type SlugResolver } from "@/lib/links/own-site";
 import {
   landingPageInput,
   landingWriteFailure,
@@ -180,5 +180,79 @@ describe("siteSlugResolver", () => {
     await expect(resolve("/team/[idOrSlug]", "en", "mikko")).resolves.toBeNull();
     expect(fake.libraryArticles).toHaveBeenCalledTimes(1);
     expect(fake.teamProfiles).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the rewrites a write reports", () => {
+  it("names each button stored at another address, from → to, and no language", async () => {
+    const result = await canonicaliseLandingLinks(
+      write(withButtons("/fi/kirjasto/opas", `${SITE}/sv/butik/123?x=1`)),
+      { resolver, siteUrl: SITE },
+    );
+    const [hero] = everySection();
+    const cta = everySection().at(-1);
+    expect(result.rewrites).toEqual([
+      {
+        sectionId: hero.id,
+        section: "section 1 (Hero)",
+        locale: null,
+        field: "button",
+        text: null,
+        from: "/fi/kirjasto/opas",
+        to: `/library/${ARTICLE}`,
+      },
+      {
+        sectionId: cta?.id,
+        section: `section ${everySection().length} (Call to action)`,
+        locale: null,
+        field: "button",
+        text: null,
+        from: `${SITE}/sv/butik/123?x=1`,
+        to: "/shop/123?x=1",
+      },
+    ]);
+  });
+
+  it("names each markdown link stored at another address, with its words, field and language", async () => {
+    const result = await canonicaliseLandingLinks(
+      write(everySection(), textsWith(
+        "See [the shop](/fi/kauppa/123), [a club](/kauppa/123) and [Espoo](/en/discover/espoo). [Unchanged](/shop).",
+        "Read [the guide][g].\n\n[g]: /fi/kirjasto/opas",
+      )),
+      { resolver, siteUrl: SITE },
+    );
+    expect(result.rewrites).toEqual([
+      expect.objectContaining({ sectionId: I.text, locale: "en", field: "body", text: "the shop", from: "/fi/kauppa/123", to: "/shop/123" }),
+      expect.objectContaining({ sectionId: I.text, field: "body", text: "a club", from: "/kauppa/123", to: "/shop/123" }),
+      expect.objectContaining({ sectionId: I.text, field: "body", text: "Espoo", from: "/en/discover/espoo", to: `/discover/${PAGE}` }),
+      expect.objectContaining({
+        sectionId: I.faq,
+        section: "section 6 (Questions and answers)",
+        locale: "en",
+        field: `items.${I.faqA}.answer`,
+        text: "the guide",
+        from: "/fi/kirjasto/opas",
+        to: `/library/${ARTICLE}`,
+      }),
+    ]);
+    // Reporting changes nothing about what is stored.
+    expect(result.versions[0].sectionTexts[I.text]).toMatchObject({
+      body: `See [the shop](/shop/123), [a club](/shop/123) and [Espoo](/discover/${PAGE}). [Unchanged](/shop).`,
+    });
+  });
+
+  it("reports nothing when every link is already stored as written", async () => {
+    const result = await canonicaliseLandingLinks(
+      write(withButtons("/shop/123", "https://example.com/x"), textsWith(
+        `See [the guide](/library/${ARTICLE}), [elsewhere](https://example.com) and [below](#faq).`,
+        "Fine.",
+      )),
+      { resolver, siteUrl: SITE },
+    );
+    expect(result.rewrites).toEqual([]);
+  });
+
+  it("stores what the tool descriptions say: shown in the page's language", () => {
+    expect(localizeOwnSiteHref("/shop/123", "fi", SITE)).toBe("/fi/kauppa/123");
   });
 });

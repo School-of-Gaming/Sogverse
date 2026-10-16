@@ -95,6 +95,13 @@ picture the page leads with, with the shown version's alt text; a hero without o
 the site-wide card. So placing a hero picture places it in every chat and feed the page is
 shared to, and a partner's mark in one needs that partner's sign-off (`src/CLAUDE.md`).
 
+**What the page serves to search engines and link previews is decided by one function**
+over a published copy, in `src/components/landing-pages/` — the title, description,
+canonical, `hreflang` and share card — which the page hands to Next and the MCP tools run
+over the copy a publish now would leave (the working copy's complete versions, built in
+this directory). Every rule about those values goes into that function, never beside it,
+so what an AI app is told the next publish serves is what it serves.
+
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
 
@@ -103,7 +110,9 @@ writer is held to the same links: own-site links in the markdown and in
 button targets are stored canonical there, a slug address at the id of the live page it
 names. A link leading to no page — or to a slug no live page has — refuses the write as a
 `check_violation` naming the link, so it reaches the admin like the database's own
-refusals. Nothing else in the save path touches a link.
+refusals. Each link stored at another address than the one written comes back from the
+write, from and to, for the MCP tools to report — a rewrite is the save working, not a
+refusal. Nothing else in the save path touches a link.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
 detail included, and the image catalogue's usage map.
