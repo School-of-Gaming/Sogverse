@@ -881,6 +881,13 @@ export interface GeduAssignedProductShell {
   end_date: string | null;
   is_remote: boolean;
   /**
+   * How the sessions are joined, and the meeting link when that is
+   * `external`. Folded with each translation's instructions by
+   * `productVoiceRoom()` in `src/lib/products/voice-room.ts`.
+   */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
+  /**
    * Does this product contractually require a creation from every
    * member? Staff-facing only, and carried in parity with the gedu group
    * feed's product shell — the page composes both documents.
@@ -890,6 +897,8 @@ export interface GeduAssignedProductShell {
     locale: string;
     name: string;
     description: string;
+    /** This locale's join instructions when the mode is `none`, else null. */
+    voice_join_instructions: string | null;
   }>;
   schedule_slots: Array<{
     weekday: number;

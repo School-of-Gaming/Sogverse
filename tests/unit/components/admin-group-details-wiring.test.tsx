@@ -390,9 +390,11 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       start_date: "2025-09-01",
       end_date: null,
       is_remote: false,
+      voice_room_mode: "sogverse",
+      external_voice_url: null,
       material_url: null,
       requires_gamer_creations: false,
-      translations: [{ locale: "en", name: "Monday Club", description: "" }],
+      translations: [{ locale: "en", name: "Monday Club", description: "", voice_join_instructions: null }],
       schedule_slots: [],
     },
     group: {

@@ -4210,6 +4210,7 @@
     "voiceRoom": "Röstrum",
     "leave": "Lämna",
     "failedToJoinRoom": "Kunde inte gå med i rummet",
+    "notASogverseRoom": "Den här sessionen hålls inte i ett röstrum i Sogverse. Gå tillbaka för att se hur du ansluter.",
     "sessionEnded": "Sessionen har avslutats",
     "disconnecting": "Kopplar från...",
     "connecting": "Ansluter...",

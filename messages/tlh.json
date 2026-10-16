@@ -4250,6 +4250,7 @@
     "voiceRoom": "jatlh Daq",
     "leave": "yIvoQ",
     "failedToJoinRoom": "Daq muv Dabe’lu’",
+    "notASogverseRoom": "Sogverse ghogh pa’Daq poHvam ngaSbe’. yIchegh ’ej chay’ muv yIlegh.",
     "sessionEnded": "poH mevlu’",
     "disconnecting": "vIvoQ...",
     "connecting": "vImuv...",

@@ -4210,6 +4210,7 @@
     "voiceRoom": "Äänihuone",
     "leave": "Poistu",
     "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
+    "notASogverseRoom": "Tätä kertaa ei pidetä Sogversen äänihuoneessa. Palaa takaisin, niin näet, miten siihen liitytään.",
     "sessionEnded": "Kerta on päättynyt",
     "disconnecting": "Katkaistaan yhteyttä...",
     "connecting": "Yhdistetään...",

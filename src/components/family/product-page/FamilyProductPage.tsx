@@ -7,6 +7,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { productVoiceRoom } from "@/lib/products/voice-room";
 import { useAuth, useNow } from "@/providers";
 import { useFamilyProductFeed } from "@/services/family-product-feed";
 import {
@@ -210,6 +211,7 @@ export function FamilyProductPage({
         }}
         plannedSessions={feed.planned_sessions}
         isRemote={feed.product.is_remote}
+        voiceRoom={productVoiceRoom(feed.product, feed.product.translations)}
         participant={participant}
         groupName={feed.group.name}
         // Handed over on both audiences: the body is what decides that a child

@@ -4897,6 +4897,7 @@
     "voiceRoom": "Voice Room",
     "leave": "Leave",
     "failedToJoinRoom": "Failed to join room",
+    "notASogverseRoom": "This session isn't held in a Sogverse voice room. Go back to see how to join it.",
     "sessionEnded": "Session has ended",
     "disconnecting": "Disconnecting...",
     "connecting": "Connecting...",

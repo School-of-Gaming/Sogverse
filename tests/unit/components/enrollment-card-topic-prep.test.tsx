@@ -94,6 +94,7 @@ function enrollment(
     productType: "consumer_club",
     topic: "roblox_studio",
     isRemote: true,
+    voiceRoom: { mode: "sogverse" },
     prepWindowEnd: new Date(NOW.getTime() + 10 * 86_400_000),
     nextSessionStart: new Date(NOW.getTime() + 3 * 86_400_000),
     nextSessionEnd: new Date(NOW.getTime() + 3 * 86_400_000 + 5_400_000),

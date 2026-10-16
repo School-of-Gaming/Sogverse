@@ -4210,6 +4210,7 @@
     "voiceRoom": "Salle vocale",
     "leave": "Quitter",
     "failedToJoinRoom": "Impossible de rejoindre la salle",
+    "notASogverseRoom": "Cette session ne se tient pas dans une salle vocale Sogverse. Revenez en arrière pour voir comment la rejoindre.",
     "sessionEnded": "La session est terminée",
     "disconnecting": "Déconnexion...",
     "connecting": "Connexion...",
