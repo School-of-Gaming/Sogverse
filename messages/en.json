@@ -5063,6 +5063,9 @@
   },
   "voiceButton": {
     "joinVoice": "Join voice room",
+    "joinMeeting": "Join meeting",
+    "opensInNewTab": "(opens in a new tab)",
+    "howToJoin": "How to join",
     "locked": "Opens {date} at {time}"
   },
   "yty": {

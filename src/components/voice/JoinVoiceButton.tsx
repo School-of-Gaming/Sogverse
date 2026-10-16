@@ -1,12 +1,26 @@
 "use client";
 
+import { useId, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AudioLines, Lock } from "lucide-react";
+import { AudioLines, ExternalLink, Info, Lock } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { getPathname } from "@/i18n/navigation";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
+import type {
+  ProductVoiceRoom,
+  VoiceJoinInstructions,
+} from "@/lib/products/voice-room";
 import { cn } from "@/lib/utils";
 import {
   INERT_HREF,
@@ -15,6 +29,11 @@ import {
 } from "@/lib/constants/routes";
 
 interface JoinVoiceButtonProps {
+  /**
+   * How the product's sessions are joined. It changes only what the *open*
+   * button does; the locked button is the same for every mode.
+   */
+  voiceRoom: ProductVoiceRoom;
   /** Whether the voice window is currently open for this product. */
   voiceIsOpen: boolean;
   /** Where the open button navigates. `"#"` keeps the button inert (in-person products). */
@@ -26,9 +45,11 @@ interface JoinVoiceButtonProps {
   /**
    * Optional click handler. When present, the open variant renders as a
    * `<button>` and `onJoinClick` fires instead of navigating to
-   * `voiceHref`. Used by the parent dashboard, which intercepts the click
-   * to open the switch-to-gamer dialog (the parent is signed in as
-   * themselves; the voice room is gated by the gamer's enrollment).
+   * `voiceHref` (or the external meeting). Used by the parent dashboard,
+   * which intercepts the click to open the switch-to-gamer dialog (the
+   * parent is signed in as themselves; the voice room is gated by the
+   * gamer's enrollment). Ignored when the product has no room, where the
+   * open button only shows instructions.
    */
   onJoinClick?: () => void;
   /**
@@ -49,14 +70,24 @@ interface JoinVoiceButtonProps {
 
 /**
  * The single Join Voice button shared across every surface that joins a
- * group voice room: the family enrollment cards and club pages, the gedu
+ * group's online session: the family enrollment cards and club pages, the gedu
  * dashboard's prominent group card, and every group card on the gedu
- * session-details page. An enabled `Link` to `/voice/group/[id]` when the window is open
- * (or a `<button>` firing `onJoinClick` when one is passed), a disabled
- * button with a lock icon + "Opens {date} at {time}" otherwise. That is the
- * whole of it: a seat with no group yet renders no button at all — the
- * enrollment card says so in its footer instead — so this component never
- * has to speak for an unplaced gamer.
+ * session-details page. Outside the session window it is a disabled button
+ * with a lock icon + "Opens {date} at {time}", whatever the product's voice
+ * room. During the window, what it does follows the product's choice:
+ *
+ * - **Sogverse room** — an enabled `Link` to `/voice/group/[id]` (or a
+ *   `<button>` firing `onJoinClick` when one is passed).
+ * - **External meeting** — a link to the meeting, opened in a new tab, for
+ *   every role; `onJoinClick` still wins when passed, so a parent on their
+ *   child's card switches account first exactly as for a Sogverse room.
+ * - **No room** — a button opening a dialog with the join instructions in the
+ *   reader's locale.
+ *
+ * That is the whole of it: a seat with no group yet renders no button at all —
+ * the enrollment card says so in its footer instead — so this component never
+ * has to speak for an unplaced gamer. Every surface reaches the three modes
+ * through this one component, so no caller branches on the mode itself.
  *
  * Copy is centralized in the `voiceButton.*` translation namespace so
  * every caller speaks the same words — adjusting the label means one edit
@@ -79,6 +110,7 @@ interface JoinVoiceButtonProps {
  * over it can see.
  */
 export function JoinVoiceButton({
+  voiceRoom,
   voiceIsOpen,
   voiceHref,
   opensDate,
@@ -97,6 +129,19 @@ export function JoinVoiceButton({
   const locale = useLocale();
 
   if (voiceIsOpen) {
+    if (voiceRoom.mode === "none") {
+      // `onJoinClick` is deliberately not consulted: reading instructions needs
+      // no account switch, so a parent on their child's card reads them as
+      // themselves.
+      return (
+        <JoinInstructionsButton
+          instructions={voiceRoom.instructions}
+          size={size}
+        />
+      );
+    }
+    const label =
+      voiceRoom.mode === "external" ? t("joinMeeting") : t("joinVoice");
     if (onJoinClick) {
       return (
         <button
@@ -105,8 +150,26 @@ export function JoinVoiceButton({
           className={cn(buttonVariants({ size }), "gap-1.5")}
         >
           <AudioLines className="h-4 w-4" />
-          {t("joinVoice")}
+          {label}
         </button>
+      );
+    }
+    if (voiceRoom.mode === "external") {
+      // The link is admin-supplied and the products table's CHECK only admits
+      // an http(s) address, so it goes to the anchor as stored. Another site,
+      // so a new tab that says so (`src/CLAUDE.md`, "Authored rich text").
+      return (
+        <a
+          href={voiceRoom.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ size }), "gap-1.5")}
+        >
+          <AudioLines className="h-4 w-4" aria-hidden />
+          {label}
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          <span className="sr-only">{` ${t("opensInNewTab")}`}</span>
+        </a>
       );
     }
     // An empty fallback is the "nothing safe to say" answer: the query is then
@@ -143,5 +206,52 @@ export function JoinVoiceButton({
       <Lock className="h-4 w-4" />
       {t("locked", { date: opensDate, time: opensTime })}
     </button>
+  );
+}
+
+/**
+ * The open button of a product with no voice room: it opens a dialog holding
+ * the join instructions the team wrote, in the reader's locale or the nearest
+ * one written. The text is plain and its line breaks are kept.
+ */
+function JoinInstructionsButton({
+  instructions,
+  size,
+}: {
+  instructions: readonly VoiceJoinInstructions[];
+  size: "sm" | "default";
+}) {
+  const t = useTranslations("voiceButton");
+  const c = useTranslations("common");
+  const locale = resolveLocale(useLocale());
+  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const text = resolveTranslation(instructions, locale)?.text ?? "";
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        className={cn(buttonVariants({ size }), "gap-1.5")}
+      >
+        <Info className="h-4 w-4" aria-hidden />
+        {t("howToJoin")}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent role="dialog" aria-modal aria-labelledby={titleId}>
+          <DialogHeader>
+            <DialogTitle id={titleId}>{t("howToJoin")}</DialogTitle>
+          </DialogHeader>
+          <p className="mt-4 whitespace-pre-line break-words text-sm">{text}</p>
+          <DialogFooter>
+            <Button type="button" autoFocus onClick={() => setOpen(false)}>
+              {c("close")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

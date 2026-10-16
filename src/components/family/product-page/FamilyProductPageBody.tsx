@@ -293,6 +293,7 @@ export function FamilyProductPageBody({
   creations,
   site,
   voiceHref,
+  voiceRoom,
   onJoinClick,
   entries,
   sourceTimeZone,
@@ -448,6 +449,7 @@ export function FamilyProductPageBody({
         {showJoin && (
           <div className="mt-4 flex">
             <JoinVoiceButton
+              voiceRoom={voiceRoom}
               voiceIsOpen={voiceState.voiceIsOpen}
               voiceHref={voiceHref}
               opensDate={voiceState.opensDate}

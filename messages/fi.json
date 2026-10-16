@@ -4376,6 +4376,9 @@
   },
   "voiceButton": {
     "joinVoice": "Liity äänihuoneeseen",
+    "joinMeeting": "Liity tapaamiseen",
+    "opensInNewTab": "(avautuu uuteen välilehteen)",
+    "howToJoin": "Näin liityt",
     "locked": "Avautuu {date} klo {time}"
   },
   "yty": {

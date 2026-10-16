@@ -4416,6 +4416,9 @@
   },
   "voiceButton": {
     "joinVoice": "ghogh pa’Daq yIghoS",
+    "joinMeeting": "qep yIjeS",
+    "opensInNewTab": "(chu’ DaqDaq poSmoH)",
+    "howToJoin": "chay’ DajeS?",
     "locked": "{date} {time}Daq poSmoH"
   },
   "yty": {

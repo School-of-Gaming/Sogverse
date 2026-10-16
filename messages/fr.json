@@ -4376,6 +4376,9 @@
   },
   "voiceButton": {
     "joinVoice": "Rejoindre la salle vocale",
+    "joinMeeting": "Rejoindre la réunion",
+    "opensInNewTab": "(s’ouvre dans un nouvel onglet)",
+    "howToJoin": "Comment rejoindre",
     "locked": "Ouvre le {date} à {time}"
   },
   "yty": {

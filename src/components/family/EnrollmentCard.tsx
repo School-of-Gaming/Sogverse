@@ -386,6 +386,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     nextSessionEnd,
     hasVoiceRoom,
     voiceHref,
+    voiceRoom,
     siteName,
     openHref,
     waitlistPosition,
@@ -840,6 +841,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                       />
                     ) : (
                       <JoinVoiceButton
+                        voiceRoom={voiceRoom}
                         voiceIsOpen={voiceIsOpen}
                         voiceHref={voiceHref}
                         // Present only on a *child's* card seen by their

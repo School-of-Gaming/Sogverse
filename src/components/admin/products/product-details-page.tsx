@@ -57,6 +57,7 @@ import {
   type EffectiveProductStatus,
 } from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
+import { productVoiceRoom } from "@/lib/products/voice-room";
 import { useNow, useTimezone } from "@/providers";
 import { personName } from "@/components/admin/person-name";
 import { GroupsPanel } from "./groups/groups-panel";
@@ -237,6 +238,7 @@ export function ProductDetailsPage({
             seatCount={product.seat_count}
             waitlistEnabled={product.waitlist_enabled}
             voiceAvailable={voiceAvailable}
+            voiceRoom={productVoiceRoom(product, product.product_translations)}
             voiceIsOpen={voice.voiceIsOpen}
             opensDate={voice.opensDate}
             opensTime={voice.opensTime}
