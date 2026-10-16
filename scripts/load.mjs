@@ -20,12 +20,14 @@
  * Windows process table where there is no `ps`.
  */
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 /** At or above this share of the CPU, a timeout says nothing about the test. */
 const SATURATED = 0.9;
 const SAMPLE_MS = 1000;
+const SAMPLES = 3;
 
 /** Total and idle CPU time across every core since boot. */
 function cpuTimes() {
@@ -39,12 +41,23 @@ function cpuTimes() {
 }
 
 /** The share of the CPU in use over one sample, 0 to 1. */
-async function cpuUse() {
+async function cpuSample() {
   const before = cpuTimes();
   await new Promise((resolve) => setTimeout(resolve, SAMPLE_MS));
   const after = cpuTimes();
   const total = after.total - before.total;
   return total > 0 ? 1 - (after.idle - before.idle) / total : 0;
+}
+
+/**
+ * The busiest of a few consecutive samples. A test run has lulls between
+ * files, and one sample that lands in a lull would report capacity in the
+ * middle of a saturated stretch — the wrong direction for this question.
+ */
+async function cpuUse() {
+  let busiest = 0;
+  for (let i = 0; i < SAMPLES; i++) busiest = Math.max(busiest, await cpuSample());
+  return busiest;
 }
 
 /** Every process's id and command line; an empty list if they cannot be read. */
@@ -98,10 +111,9 @@ function checkoutOf(args) {
   return match ? path.resolve(match[1]) : null;
 }
 
-/** Whether `dir` is `checkout` or a directory inside it. */
-function isInside(dir, checkout) {
-  const relative = path.relative(checkout, dir);
-  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+/** Two paths as one, ignoring case where the file system does. */
+function samePath(a, b) {
+  return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
 }
 
 // Sampled before the process list is read, so reading it is not in the sample.
@@ -113,29 +125,45 @@ const runs = all
   .map((p) => ({ kind: testRunKind(p.args), checkout: checkoutOf(p.args) }))
   .filter((run) => run.kind !== null);
 
+/**
+ * Where a run is, as precisely as its command line allows. A run is attributed
+ * by the `node_modules` it was started from, and a worktree nested inside a
+ * checkout has none of its own — it resolves upward to the enclosing
+ * checkout's — so a run attributed to a checkout holding nested worktrees may
+ * be in any of them. The process table carries no working directory to settle
+ * it, so the label says so rather than guessing.
+ */
+function placeOf(checkout) {
+  if (checkout === null) return "an unknown checkout";
+  const mine = samePath(checkout, here) ? "this checkout" : null;
+  const nests = existsSync(path.join(checkout, ".claude", "worktrees"))
+    ? "or a worktree nested inside it"
+    : null;
+  const notes = [mine, nests].filter((note) => note !== null).join(", ");
+  return notes === "" ? checkout : `${checkout} (${notes})`;
+}
+
 const percent = Math.round(use * 100);
-console.log(`CPU: ${percent}% in use across ${os.cpus().length} logical cores.`);
+console.log(`CPU: ${percent}% in use across ${os.cpus().length} logical cores (busiest of ${SAMPLES} one-second samples).`);
 if (all.length === 0) {
   console.log("Test runs: could not read the process list.");
 } else if (runs.length === 0) {
   console.log("Test runs in progress: none.");
 } else {
   console.log(`Test runs in progress: ${runs.length}.`);
-  for (const run of runs) {
-    const where = run.checkout === null ? "an unknown checkout" : run.checkout;
-    const mine = run.checkout !== null && isInside(here, run.checkout) ? " (this checkout)" : "";
-    console.log(`  - ${run.kind} in ${where}${mine}`);
-  }
+  for (const run of runs) console.log(`  - ${run.kind} in ${placeOf(run.checkout)}`);
 }
 
-const others = runs.filter((run) => run.checkout === null || !isInside(here, run.checkout));
-if (use >= SATURATED && others.length > 0) {
+// Every run counts toward the verdict, the reader's own checkout's included:
+// a run cannot be told apart from one in a nested worktree, and erring toward
+// "other runs are saturating the machine" is the safe direction here.
+if (use >= SATURATED && runs.length > 0) {
   console.log(
-    `Verdict: saturated by other test runs. A timeout now is most likely contention, not a defect — wait for capacity or agree with the other agents and sessions who runs what, then re-run that one file once.`,
+    "Verdict: saturated, with test runs in progress. A timeout now is most likely contention, not a defect — wait for capacity or agree with the other agents and sessions who runs what, then re-run that one file once.",
   );
 } else if (use >= SATURATED) {
   console.log(
-    "Verdict: saturated, but not by another test run. Something else is using the machine; a timeout now still says little about the test.",
+    "Verdict: saturated, but not by a test run. Something else is using the machine; a timeout now still says little about the test.",
   );
 } else {
   console.log(
