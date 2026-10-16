@@ -4,7 +4,6 @@ export {
   useAdminTestimonial,
   useAdminTestimonials,
   useCreateTestimonial,
-  useDeleteTestimonial,
   useSaveTestimonial,
 } from "./testimonials.queries";
 export {

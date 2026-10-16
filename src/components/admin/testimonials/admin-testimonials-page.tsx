@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Heading } from "@sog/ui";
-import { Clock, House, Languages, Plus, Trash2 } from "lucide-react";
+import { Clock, House, Languages, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -19,14 +17,8 @@ import {
   HOME_SPOT_SIZE,
   HOME_TESTIMONIAL_SPOTS,
   homePlacement,
-  testimonialWriteFailure,
   type AdminTestimonial,
 } from "@/services/testimonials";
-
-/** The write the list makes. It resolves once the list has been read again, and throws on refusal. */
-export interface AdminTestimonialsActions {
-  remove: (id: string) => Promise<void>;
-}
 
 /** The tab's create control, beside its description in the hub. */
 export function NewTestimonialAction() {
@@ -51,7 +43,11 @@ export function NewTestimonialAction() {
  * and About pages are the site's front door. An admin edits the words of a
  * placed testimonial, which change wherever it is shown.
  *
- * **Presentational**: the rows and the write arrive as props. The read's
+ * **Testimonials are never deleted** — once created they stay, so nothing
+ * shown on the site can lose its quote. One comes off the site by being
+ * removed from where it is shown.
+ *
+ * **Presentational**: the rows arrive as props. The read's
  * status is separate from the rows because "no testimonials yet", "the read
  * has not answered" and "the read failed" all arrive as no rows, and only the
  * first may print an empty state.
@@ -63,15 +59,12 @@ export function NewTestimonialAction() {
 export function AdminTestimonialsPage({
   testimonials,
   status,
-  actions,
 }: {
   /** Most recently saved first — the order the read delivers. */
   testimonials: readonly AdminTestimonial[];
   status: "pending" | "error" | "success";
-  actions: AdminTestimonialsActions;
 }) {
   const t = useTranslations("admin.testimonials");
-  const [deleting, setDeleting] = useState<AdminTestimonial | null>(null);
 
   return (
     <div className="space-y-6">
@@ -99,37 +92,13 @@ export function AdminTestimonialsPage({
           <ul className="space-y-2">
             {testimonials.map((testimonial) => (
               <li key={testimonial.id}>
-                <TestimonialRow
-                  testimonial={testimonial}
-                  onDelete={() => setDeleting(testimonial)}
-                />
+                <TestimonialRow testimonial={testimonial} />
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <ConfirmDialog
-        open={deleting !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleting(null);
-        }}
-        title={t("deleteConfirm.title")}
-        description={t("deleteConfirm.description")}
-        confirmLabel={t("deleteConfirm.confirm")}
-        cancelLabel={t("actions.cancel")}
-        confirmVariant="destructive"
-        holdWhileCommitting
-        onConfirm={async () => {
-          if (deleting !== null) await actions.remove(deleting.id);
-        }}
-        describeError={(failure) => {
-          const reason = testimonialWriteFailure(failure);
-          return reason.kind === "reason"
-            ? t("errors.deleteFailedWithReason", { reason: reason.reason })
-            : t("errors.deleteFailed");
-        }}
-      />
     </div>
   );
 }
@@ -208,24 +177,14 @@ function HomeSpots({ testimonials }: { testimonials: readonly AdminTestimonial[]
 
 /**
  * One testimonial: its quote and whom it is from, its languages, when it was
- * last saved, where it is shown, and the way to delete it.
+ * last saved, and where it is shown.
  *
  * **The whole card opens the editor**, through the stretched-link shape the
  * spotlight rows use: the quote is the anchor and its `::after` covers the
- * card; Delete is lifted above it with `relative z-10`.
- *
- * **A testimonial shown somewhere cannot be deleted**, so its Delete is
- * disabled, the row saying where it is shown and the button's title why,
- * rather than refused after the press. The database refuses it all the same,
- * and the dialog quotes that refusal should the two ever disagree.
+ * card. There is no Delete: a testimonial is never deleted, and comes off the
+ * site by being removed from where it is shown.
  */
-function TestimonialRow({
-  testimonial,
-  onDelete,
-}: {
-  testimonial: AdminTestimonial;
-  onDelete: () => void;
-}) {
+function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
   const t = useTranslations("admin.testimonials");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -272,18 +231,6 @@ function TestimonialRow({
         </div>
       </div>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="relative z-10 shrink-0"
-        disabled={testimonial.usages.length > 0}
-        title={testimonial.usages.length > 0 ? t("cannotDelete") : undefined}
-        onClick={onDelete}
-      >
-        <Trash2 aria-hidden />
-        {t("actions.delete")}
-      </Button>
       <NavChevron />
     </div>
   );

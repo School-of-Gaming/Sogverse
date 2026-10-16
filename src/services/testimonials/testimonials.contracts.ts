@@ -206,11 +206,10 @@ export const oauthClientNameRows = z.array(
  * What an admin is told when a testimonial write is refused. The database's
  * sentence is quoted where the code is one an admin can act on —
  * `check_violation` (no version, a version missing whom it is from or its
- * quote, a quote in quotation marks, removing the last version),
- * `no_data_found` (the testimonial or the version is gone) and
- * `foreign_key_violation` (deleting a testimonial that is shown somewhere,
- * the sentence naming where). Every other code carries a message written for
- * a developer, so it falls back to a generic line.
+ * quote, a quote in quotation marks, removing the last version) and
+ * `no_data_found` (the testimonial or the version is gone). Every other code
+ * carries a message written for a developer, so it falls back to a generic
+ * line.
  */
 export type TestimonialWriteFailure =
   | { kind: "reason"; reason: string }
@@ -219,7 +218,6 @@ export type TestimonialWriteFailure =
 const QUOTED_SQLSTATES: ReadonlySet<string> = new Set([
   "23514", // check_violation
   "P0002", // no_data_found
-  "23503", // foreign_key_violation
 ]);
 
 export function testimonialWriteFailure(error: unknown): TestimonialWriteFailure {

@@ -2094,7 +2094,6 @@
       "languagesLabel": "Languages",
       "saved": "Saved {date}",
       "onHome": "Home page: {spot}",
-      "cannotDelete": "It is shown on the home page and About, so it cannot be deleted.",
       "quoteHasMarks": "Leave the quotation marks out: the site adds them in each language’s own style.",
       "home": {
         "heading": "On the home page",
@@ -2136,22 +2135,14 @@
       },
       "actions": {
         "save": "Save",
-        "cancel": "Cancel",
-        "delete": "Delete"
-      },
-      "deleteConfirm": {
-        "title": "Delete this testimonial?",
-        "description": "It is removed from the store for good, in every language.",
-        "confirm": "Delete"
+        "cancel": "Cancel"
       },
       "errors": {
         "noVersion": "Write the testimonial in at least one language.",
         "versionIncomplete": "The {language} version needs its quote and whom it is from.",
         "quoted": "The {language} quote starts or ends with a quotation mark. Leave the marks out: the site adds them in each language’s own style.",
         "saveFailed": "The testimonial could not be saved. Try again.",
-        "saveFailedWithReason": "The testimonial could not be saved: {reason}",
-        "deleteFailed": "The testimonial could not be deleted. Try again.",
-        "deleteFailedWithReason": "The testimonial could not be deleted: {reason}"
+        "saveFailedWithReason": "The testimonial could not be saved: {reason}"
       }
     }
   },

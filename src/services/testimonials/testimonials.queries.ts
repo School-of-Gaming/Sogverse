@@ -67,13 +67,3 @@ export function useSaveTestimonial() {
     onSuccess: () => invalidate(),
   });
 }
-
-export function useDeleteTestimonial() {
-  const service = new TestimonialsService(getClient());
-  const invalidate = useTestimonialInvalidation();
-
-  return useMutation({
-    mutationFn: (id: string) => service.deleteTestimonial(id),
-    onSuccess: () => invalidate(),
-  });
-}

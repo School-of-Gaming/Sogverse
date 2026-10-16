@@ -2094,7 +2094,6 @@
       "languagesLabel": "Språk",
       "saved": "Sparat {date}",
       "onHome": "Startsidan: {spot}",
-      "cannotDelete": "Det visas på startsidan och Om oss, så det kan inte tas bort.",
       "quoteHasMarks": "Utelämna citattecknen: webbplatsen lägger till dem på varje språks eget sätt.",
       "home": {
         "heading": "På startsidan",
@@ -2136,22 +2135,14 @@
       },
       "actions": {
         "save": "Spara",
-        "cancel": "Avbryt",
-        "delete": "Ta bort"
-      },
-      "deleteConfirm": {
-        "title": "Ta bort det här omdömet?",
-        "description": "Det tas bort för gott, på alla språk.",
-        "confirm": "Ta bort"
+        "cancel": "Avbryt"
       },
       "errors": {
         "noVersion": "Skriv omdömet på minst ett språk.",
         "versionIncomplete": "Versionen på {language} behöver citatet och vem det är från.",
         "quoted": "Citatet på {language} börjar eller slutar med ett citattecken. Utelämna tecknen: webbplatsen lägger till dem på varje språks eget sätt.",
         "saveFailed": "Omdömet kunde inte sparas. Försök igen.",
-        "saveFailedWithReason": "Omdömet kunde inte sparas: {reason}",
-        "deleteFailed": "Omdömet kunde inte tas bort. Försök igen.",
-        "deleteFailedWithReason": "Omdömet kunde inte tas bort: {reason}"
+        "saveFailedWithReason": "Omdömet kunde inte sparas: {reason}"
       }
     }
   },

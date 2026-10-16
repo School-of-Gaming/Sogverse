@@ -2094,7 +2094,6 @@
       "languagesLabel": "Langues",
       "saved": "Enregistré le {date}",
       "onHome": "Page d’accueil : {spot}",
-      "cannotDelete": "Il est affiché sur la page d’accueil et la page À propos, il ne peut donc pas être supprimé.",
       "quoteHasMarks": "Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
       "home": {
         "heading": "Sur la page d’accueil",
@@ -2136,22 +2135,14 @@
       },
       "actions": {
         "save": "Enregistrer",
-        "cancel": "Annuler",
-        "delete": "Supprimer"
-      },
-      "deleteConfirm": {
-        "title": "Supprimer ce témoignage ?",
-        "description": "Il est supprimé définitivement, dans toutes les langues.",
-        "confirm": "Supprimer"
+        "cancel": "Annuler"
       },
       "errors": {
         "noVersion": "Écrivez le témoignage dans au moins une langue.",
         "versionIncomplete": "La version en {language} a besoin de la citation et de son auteur.",
         "quoted": "La citation en {language} commence ou se termine par un guillemet. Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
         "saveFailed": "Le témoignage n’a pas pu être enregistré. Réessayez.",
-        "saveFailedWithReason": "Le témoignage n’a pas pu être enregistré : {reason}",
-        "deleteFailed": "Le témoignage n’a pas pu être supprimé. Réessayez.",
-        "deleteFailedWithReason": "Le témoignage n’a pas pu être supprimé : {reason}"
+        "saveFailedWithReason": "Le témoignage n’a pas pu être enregistré : {reason}"
       }
     }
   },

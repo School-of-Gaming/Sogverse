@@ -34,7 +34,7 @@ COMMENT ON COLUMN public.home_testimonials."position" IS 'The testimonial''s pla
 -- Name: COLUMN home_testimonials.testimonial_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.home_testimonials.testimonial_id IS 'The testimonial shown there. A testimonial is in at most one home position (uq_home_testimonials_testimonial), so About never shows it twice. RESTRICT: a placed testimonial cannot be deleted — delete_testimonial refuses it first, naming the spot.';
+COMMENT ON COLUMN public.home_testimonials.testimonial_id IS 'The testimonial shown there. A testimonial is in at most one home position (uq_home_testimonials_testimonial), so About never shows it twice. RESTRICT: the app never deletes a testimonial, and this keeps a hand delete from taking a quote off the home page.';
 
 
 --

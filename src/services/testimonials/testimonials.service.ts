@@ -237,15 +237,6 @@ export class TestimonialsService {
 
     if (error) throw error;
   }
-
-  /**
-   * Remove a testimonial outright. The database refuses one shown anywhere,
-   * with a sentence naming where.
-   */
-  async deleteTestimonial(id: string): Promise<void> {
-    const { error } = await this.supabase.rpc("delete_testimonial", { p_id: id });
-    if (error) throw error;
-  }
 }
 
 function toVersionPayload(version: { locale: string; from: string; quote: string }) {

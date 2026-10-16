@@ -2138,7 +2138,6 @@
       "languagesLabel": "Holmey",
       "saved": "{date} pol",
       "onHome": "juH ghItlh: {spot}",
-      "cannotDelete": "juH ghItlh ’ej maH ghItlhDaq cha’lu’, vaj Qaw’laHbe’lu’.",
       "quoteHasMarks": "jatlh ghItlh mu’ yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
       "home": {
         "heading": "juH ghItlhDaq",
@@ -2180,22 +2179,14 @@
       },
       "actions": {
         "save": "yIpol",
-        "cancel": "yImev",
-        "delete": "yIQaw’"
-      },
-      "deleteConfirm": {
-        "title": "jatlhvam DaQaw’’a’?",
-        "description": "Hoch HolDaq reH Qaw’lu’.",
-        "confirm": "yIQaw’"
+        "cancel": "yImev"
       },
       "errors": {
         "noVersion": "wa’ HolDaq jatlh yIghItlh.",
         "versionIncomplete": "{language} jatlh ’ej ’Iv jatlh poQ.",
         "quoted": "{language} jatlh tagh pagh rIn jatlh ghItlh mu’. yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
         "saveFailed": "jatlh pollaHbe’lu’. yInIDqa’.",
-        "saveFailedWithReason": "jatlh pollaHbe’lu’: {reason}",
-        "deleteFailed": "jatlh Qaw’laHbe’lu’. yInIDqa’.",
-        "deleteFailedWithReason": "jatlh Qaw’laHbe’lu’: {reason}"
+        "saveFailedWithReason": "jatlh pollaHbe’lu’: {reason}"
       }
     }
   },

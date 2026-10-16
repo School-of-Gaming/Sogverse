@@ -35,9 +35,13 @@
 -- the words are an admin's. No Data API role holds a write grant on it and no
 -- function writes it.
 --
--- A placed testimonial cannot be deleted: delete_testimonial refuses it with a
--- sentence naming the spot, and the foreign key restricts beneath it. Editing
--- a placed testimonial's words is allowed — the admin page lists where it is
+-- **A testimonial is never deleted by the app**: once created it stays, so no
+-- page can lose a quote it shows. One comes off the site by being removed
+-- from where it is shown — for a home spot, by a migration. No function
+-- deletes one, and of the Data API roles only the service role holds DELETE,
+-- which no app path uses — it is how the DB test suite removes the rows it
+-- creates. The placements' foreign key restricts a hand delete of a placed one. Editing a
+-- placed testimonial's words is allowed — the admin page lists where it is
 -- used, which is what makes that a visible decision.
 --
 -- ACCESS
@@ -61,7 +65,7 @@ CREATE TABLE public.testimonials (
   last_saved_via uuid
 );
 
-COMMENT ON TABLE public.testimonials IS 'Marketing''s store of testimonials — real words from real parents, gamers and gedus: the record of who created each and who last saved it here, the words per language in testimonial_translations. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_testimonial, save_testimonial, save_testimonial_version, remove_testimonial_version and delete_testimonial. The public reads only the testimonials placed on the home page, through list_home_testimonials.';
+COMMENT ON TABLE public.testimonials IS 'Marketing''s store of testimonials — real words from real parents, gamers and gedus: the record of who created each and who last saved it here, the words per language in testimonial_translations. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_testimonial, save_testimonial, save_testimonial_version and remove_testimonial_version, and nothing deletes a testimonial: once created it stays. The public reads only the testimonials placed on the home page, through list_home_testimonials.';
 COMMENT ON COLUMN public.testimonials.created_at IS 'When the testimonial was created, stamped by stamp_testimonial_saver and never moved.';
 COMMENT ON COLUMN public.testimonials.created_by IS 'The admin who created the testimonial, stamped from auth.uid() by stamp_testimonial_saver and never changed by a save. NULL when the create had no signed-in caller (a migration, the service role, psql) or the account has since gone (SET NULL).';
 COMMENT ON COLUMN public.testimonials.created_via IS 'The OAuth client — an AI app connected through the MCP endpoint — the create came through, read from the token''s client_id claim by stamp_testimonial_saver. NULL for a create made in Sogverse itself, and whenever created_by is NULL. No foreign key: the client belongs to Supabase Auth, and the record outlives it.';
@@ -130,7 +134,7 @@ CREATE TABLE public.home_testimonials (
 
 COMMENT ON TABLE public.home_testimonials IS 'Which testimonial fills which position of which home spot; About shows the same testimonials in the same groups. Written only by migrations: which testimonial sits where on the site''s front door is a developer''s decision, while its words are an admin''s, so no Data API role holds a write grant and no function writes it. A spot may be partly filled or empty. SELECT for authenticated behind an admin policy; the public reads it through list_home_testimonials.';
 COMMENT ON COLUMN public.home_testimonials.position IS 'The testimonial''s place within its spot, from 1, in reading order. At most the spot''s size (chk_home_testimonials_spot_size).';
-COMMENT ON COLUMN public.home_testimonials.testimonial_id IS 'The testimonial shown there. A testimonial is in at most one home position (uq_home_testimonials_testimonial), so About never shows it twice. RESTRICT: a placed testimonial cannot be deleted — delete_testimonial refuses it first, naming the spot.';
+COMMENT ON COLUMN public.home_testimonials.testimonial_id IS 'The testimonial shown there. A testimonial is in at most one home position (uq_home_testimonials_testimonial), so About never shows it twice. RESTRICT: the app never deletes a testimonial, and this keeps a hand delete from taking a quote off the home page.';
 COMMENT ON CONSTRAINT chk_home_testimonials_spot_size ON public.home_testimonials IS 'A spot holds at most its size: feature 1, safety 2, row 3.';
 
 ALTER TABLE public.home_testimonials ENABLE ROW LEVEL SECURITY;
@@ -418,55 +422,6 @@ COMMENT ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) 
 REVOKE ALL ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) TO service_role;
-
-CREATE FUNCTION public.delete_testimonial(p_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO ''
-AS $$
-DECLARE
-  v_spot public.home_testimonial_spot;
-BEGIN
-  PERFORM public.assert_admin();
-
-  -- Locked first, so a placement cannot land between the check below and the
-  -- delete; the foreign key restricts beneath it either way.
-  PERFORM 1
-    FROM public.testimonials
-   WHERE id = p_id
-     FOR UPDATE;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Testimonial not found'
-      USING ERRCODE = 'no_data_found';
-  END IF;
-
-  -- Every place a testimonial can be shown is named here, so the refusal says
-  -- where it is used rather than which key it violates.
-  SELECT spot INTO v_spot
-    FROM public.home_testimonials
-   WHERE testimonial_id = p_id;
-
-  IF FOUND THEN
-    RAISE EXCEPTION 'This testimonial is shown in the home page''s % spot, and so on About too, so it cannot be deleted. Which testimonial fills a home spot is changed by a developer.',
-      CASE v_spot
-        WHEN 'feature' THEN 'feature (under the hero)'
-        WHEN 'safety'  THEN 'safety (beside the safety facts)'
-        WHEN 'row'     THEN 'row ("What parents tell us")'
-      END
-      USING ERRCODE = 'foreign_key_violation';
-  END IF;
-
-  DELETE FROM public.testimonials WHERE id = p_id;
-END;
-$$;
-
-COMMENT ON FUNCTION public.delete_testimonial(p_id uuid) IS 'Admin-gated removal of a testimonial outright, its versions with it (ON DELETE CASCADE). Refuses a testimonial shown anywhere with foreign_key_violation and a sentence naming where — today a home spot, and About through it; the foreign key from home_testimonials restricts beneath the check. An id no testimonial has raises no_data_found. SECURITY DEFINER because testimonials carries no write grant.';
-
-REVOKE ALL ON FUNCTION public.delete_testimonial(p_id uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.delete_testimonial(p_id uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.delete_testimonial(p_id uuid) TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 4. The public read

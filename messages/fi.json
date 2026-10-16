@@ -2094,7 +2094,6 @@
       "languagesLabel": "Kielet",
       "saved": "Tallennettu {date}",
       "onHome": "Etusivulla: {spot}",
-      "cannotDelete": "Se näkyy etusivulla ja Tietoa meistä -sivulla, joten sitä ei voi poistaa.",
       "quoteHasMarks": "Jätä lainausmerkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
       "home": {
         "heading": "Etusivulla",
@@ -2136,22 +2135,14 @@
       },
       "actions": {
         "save": "Tallenna",
-        "cancel": "Peruuta",
-        "delete": "Poista"
-      },
-      "deleteConfirm": {
-        "title": "Poistetaanko tämä suosittelu?",
-        "description": "Se poistetaan pysyvästi kaikilla kielillä.",
-        "confirm": "Poista"
+        "cancel": "Peruuta"
       },
       "errors": {
         "noVersion": "Kirjoita suosittelu vähintään yhdellä kielellä.",
         "versionIncomplete": "Kieliversio {language} tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
         "quoted": "Kieliversion {language} lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
         "saveFailed": "Suosittelua ei voitu tallentaa. Yritä uudelleen.",
-        "saveFailedWithReason": "Suosittelua ei voitu tallentaa: {reason}",
-        "deleteFailed": "Suosittelua ei voitu poistaa. Yritä uudelleen.",
-        "deleteFailedWithReason": "Suosittelua ei voitu poistaa: {reason}"
+        "saveFailedWithReason": "Suosittelua ei voitu tallentaa: {reason}"
       }
     }
   },

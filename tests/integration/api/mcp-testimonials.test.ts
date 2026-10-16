@@ -8,7 +8,7 @@ import type { AdminTestimonial } from "@/services/testimonials";
  * each tool sends the service, how it reads the answer back to the AI app —
  * where a testimonial is shown, the home spots — and that a quote in
  * quotation marks or a database refusal comes back as a tool error the app
- * can act on. No tool sets a home spot.
+ * can act on. No tool deletes a testimonial or sets a home spot.
  */
 
 const mockGetClaims = vi.fn();
@@ -26,7 +26,6 @@ const testimonials = {
   createTestimonial: vi.fn(),
   saveTestimonialVersion: vi.fn(),
   removeTestimonialVersion: vi.fn(),
-  deleteTestimonial: vi.fn(),
 };
 vi.mock("@/services/testimonials/testimonials.service", () => ({
   TestimonialsService: vi.fn(() => testimonials),
@@ -96,7 +95,7 @@ afterEach(() => {
 });
 
 describe("reading", () => {
-  it("lists every testimonial with where it is shown and whether it can be deleted", async () => {
+  it("lists every testimonial with where it is shown", async () => {
     const result = await tool("list_testimonials");
 
     expect(result.isError).toBeUndefined();
@@ -117,11 +116,10 @@ describe("reading", () => {
               shownOn: [`${ORIGIN}/en`, `${ORIGIN}/en/about#parents`],
             },
           ],
-          canDelete: false,
           lastSaved: { by: "Kyle Hutchinson", via: { name: "Claude" } },
           editorLink: `${ORIGIN}/en/admin/testimonials/${ID}`,
         },
-        { testimonialId: OTHER, usedIn: [], canDelete: true },
+        { testimonialId: OTHER, usedIn: [] },
       ],
     });
   });
@@ -145,7 +143,7 @@ describe("reading", () => {
     expect(resultText(result)).toBe("No testimonial has that id.");
   });
 
-  it("tells the AI app never to write a testimonial's words", async () => {
+  it("tells the AI app never to write a testimonial's words, and offers no delete and no spot setter", async () => {
     const response = await POST(
       new Request(`${ORIGIN}/api/mcp`, {
         method: "POST",
@@ -162,6 +160,7 @@ describe("reading", () => {
     const text = await response.text();
     expect(text).toContain("Never write, invent, embellish");
     expect(text).not.toContain("set_home");
+    expect(text).not.toContain("delete_testimonial");
   });
 });
 
@@ -216,24 +215,17 @@ describe("writing", () => {
     expect(testimonials.removeTestimonialVersion).toHaveBeenCalledWith(ID, "fi");
   });
 
-  it("returns the database's refusal of deleting a placed testimonial as it is written", async () => {
-    const sentence =
-      "This testimonial is shown in the home page's safety (beside the safety facts) spot, and so on About too, so it cannot be deleted. Which testimonial fills a home spot is changed by a developer.";
-    testimonials.deleteTestimonial.mockRejectedValue(dbError("23503", sentence));
+  it("returns a database refusal as it is written, and a fault of ours without its detail", async () => {
+    const sentence = "That is the testimonial's only language version, and a testimonial needs one";
+    testimonials.removeTestimonialVersion.mockRejectedValueOnce(dbError("23514", sentence));
+    const refused = await tool("remove_testimonial_language", { testimonialId: ID, locale: "en" });
+    expect(refused.isError).toBe(true);
+    expect(resultText(refused)).toBe(sentence);
 
-    const result = await tool("delete_testimonial", { testimonialId: ID });
-
-    expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
-  });
-
-  it("answers a fault of ours without its developer-facing detail", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
-    testimonials.deleteTestimonial.mockRejectedValue(dbError("42P01", "relation does not exist"));
-
-    const result = await tool("delete_testimonial", { testimonialId: ID });
-
-    expect(result.isError).toBe(true);
-    expect(resultText(result)).not.toContain("relation");
+    testimonials.removeTestimonialVersion.mockRejectedValueOnce(dbError("42P01", "relation does not exist"));
+    const fault = await tool("remove_testimonial_language", { testimonialId: ID, locale: "en" });
+    expect(fault.isError).toBe(true);
+    expect(resultText(fault)).not.toContain("relation");
   });
 });

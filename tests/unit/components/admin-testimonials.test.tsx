@@ -6,8 +6,8 @@ import type { AdminTestimonial } from "@/services/testimonials";
 
 /**
  * **The admin testimonial pages' rules.** The list's: the home spots are read
- * with what fills each and no control to change them, and a testimonial shown
- * somewhere cannot be deleted while one shown nowhere can. The editor's: a
+ * with what fills each and no control to change them, and no testimonial can
+ * be deleted. The editor's: a
  * quote typed in quotation marks is called out on the field and held back at
  * Save, with nothing sent.
  *
@@ -54,7 +54,6 @@ describe("the testimonials list", () => {
       <AdminTestimonialsPage
         testimonials={[PLACED, UNPLACED]}
         status="success"
-        actions={{ remove: vi.fn() }}
       />,
     );
 
@@ -64,19 +63,9 @@ describe("the testimonials list", () => {
     expect(screen.getByText(/home\.spotHeading spot=home\.spots\.feature filled=0 size=1/)).toBeTruthy();
   });
 
-  it("holds back deleting a testimonial shown somewhere", () => {
-    render(
-      <AdminTestimonialsPage
-        testimonials={[PLACED, UNPLACED]}
-        status="success"
-        actions={{ remove: vi.fn() }}
-      />,
-    );
-
-    const [placed, unplaced] = screen.getAllByRole("button", { name: "actions.delete" });
-    expect(placed.hasAttribute("disabled")).toBe(true);
-    expect(placed.getAttribute("title")).toBe("cannotDelete");
-    expect(unplaced.hasAttribute("disabled")).toBe(false);
+  it("offers no way to delete a testimonial", () => {
+    render(<AdminTestimonialsPage testimonials={[PLACED, UNPLACED]} status="success" />);
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });
 

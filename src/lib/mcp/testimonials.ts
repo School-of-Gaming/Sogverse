@@ -23,7 +23,7 @@ import type { HomeTestimonialSpot } from "@/types";
 /*
  * The testimonial tools: an admin keeps Marketing's store of testimonials from
  * an AI app — reads them and where each is shown, creates them, writes or
- * removes one language at a time, and deletes one shown nowhere. Every tool
+ * removes one language at a time. Nothing deletes a testimonial. Every tool
  * runs the testimonial service on the admin's own token-bound client, so the
  * admin-guarded functions decide exactly as they do in the editor, and a write
  * is stamped with the admin and the app it came through. Edits go through the
@@ -52,6 +52,9 @@ const NO_MARKS = `The quote is stored without quotation marks: the site wraps it
 
 const SPOTS =
   "The home page shows testimonials in three spots — feature (the one quote under the hero), safety (two, beside the safety facts) and row (three, under \"What parents tell us\") — and About shows the same ones. Which testimonial fills a spot is decided by a developer, never by a tool; editing a placed testimonial's words changes them on both pages at once.";
+
+const KEPT =
+  "Testimonials are never deleted: once created they stay. One comes off the site by being removed from where it is shown, and which testimonial fills a home spot is decided by a developer, never by a tool.";
 
 const NOT_FOUND = "No testimonial has that id.";
 
@@ -172,7 +175,6 @@ function testimonialView(testimonial: AdminTestimonial, origin: string) {
       quote: version.quote,
     })),
     usedIn: testimonial.usages.map((usage) => usageView(origin, usage)),
-    canDelete: testimonial.usages.length === 0,
     created: { at: testimonial.createdAt, ...testimonial.created },
     lastSaved: { at: testimonial.updatedAt, ...testimonial.lastSaved },
     editorLink: editorLink(origin, testimonial.id),
@@ -188,7 +190,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "list_testimonials",
     {
       title: "List testimonials",
-      description: `Every testimonial in School of Gaming's store, placed or not, most recently saved first: its id, every language version (whom it is from and the quote), where it is shown, whether it can be deleted, and who created and last saved it, when and through which AI app. ${REAL_WORDS} ${VERSIONS}`,
+      description: `Every testimonial in School of Gaming's store, placed or not, most recently saved first: its id, every language version (whom it is from and the quote), where it is shown, and who created and last saved it, when and through which AI app. ${REAL_WORDS} ${VERSIONS} ${KEPT}`,
       annotations: READ_ONLY,
     },
     (ctx) =>
@@ -329,27 +331,6 @@ export function registerTestimonialTools(server: McpServer): void {
         const testimonial = await service.getAdminTestimonial(id);
         if (testimonial === null) return refusal(NOT_FOUND);
         return answer(testimonialView(testimonial, origin));
-      }),
-  );
-
-  server.registerTool(
-    "delete_testimonial",
-    {
-      title: "Delete a testimonial",
-      description:
-        "Delete a testimonial from the store for good, every language with it. This cannot be undone. A testimonial shown anywhere — a home spot, and About through it — cannot be deleted, and the refusal names where it is shown; which testimonial fills a home spot is changed by a developer, not by a tool. Confirm with the admin before deleting.",
-      inputSchema: z.object({ testimonialId }),
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: true,
-        idempotentHint: false,
-        openWorldHint: false,
-      },
-    },
-    ({ testimonialId: id }, ctx) =>
-      asTestimonialAdmin(ctx, async ({ service }) => {
-        await service.deleteTestimonial(id);
-        return answer({ testimonialId: id, deleted: true });
       }),
   );
 }

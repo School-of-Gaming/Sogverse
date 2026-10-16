@@ -4451,7 +4451,6 @@ export type Database = {
         Returns: undefined
       }
       delete_spotlight: { Args: { p_id: string }; Returns: undefined }
-      delete_testimonial: { Args: { p_id: string }; Returns: undefined }
       demote_to_waitlist: {
         Args: { p_participation_id: string }
         Returns: Json

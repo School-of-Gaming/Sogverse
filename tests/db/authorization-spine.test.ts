@@ -201,18 +201,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   save_spotlight: { permittedRoles: ["admin"] },
   delete_spotlight: { permittedRoles: ["admin"] },
   repoint_spotlight_images: { permittedRoles: ["admin"] },
-  // The writers of testimonials — create, the editor's whole save, the
-  // one-language write and removal, and delete. No testimonial table carries
-  // a write grant, so these are the only path in; nothing writes the home
-  // spots but a migration. Past the admin guard, all-NULL arguments are
-  // refused with 22023 (create: no version array), `check_violation` (the
-  // one-language write: no quote) or `no_data_found` (the rest: no such
-  // testimonial) — errors, but not the forbidden one.
+  // The writers of testimonials — create, the editor's whole save, and the
+  // one-language write and removal. No testimonial table carries a write
+  // grant, so these are the only path in; nothing deletes a testimonial, and
+  // nothing writes the home spots but a migration. Past the admin guard,
+  // all-NULL arguments are refused with 22023 (create: no version array),
+  // `check_violation` (the one-language write: no quote) or `no_data_found`
+  // (the rest: no such testimonial) — errors, but not the forbidden one.
   create_testimonial: { permittedRoles: ["admin"] },
   save_testimonial: { permittedRoles: ["admin"] },
   save_testimonial_version: { permittedRoles: ["admin"] },
   remove_testimonial_version: { permittedRoles: ["admin"] },
-  delete_testimonial: { permittedRoles: ["admin"] },
   // One OAuth client's public description out of Supabase Auth, which no Data
   // API role can read — how the Library editor names the AI app a save came
   // through. Past the admin guard, a NULL id finds no client: an empty answer.

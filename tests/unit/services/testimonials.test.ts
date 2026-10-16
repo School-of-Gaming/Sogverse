@@ -150,9 +150,12 @@ describe("TestimonialsService", () => {
 
 describe("testimonialWriteFailure", () => {
   it("quotes the refusals written for an admin and hides the rest", () => {
-    expect(testimonialWriteFailure({ code: "23503", message: "Shown on the home page." })).toEqual({
+    expect(testimonialWriteFailure({ code: "23514", message: "The fi version needs its quote" })).toEqual({
       kind: "reason",
-      reason: "Shown on the home page.",
+      reason: "The fi version needs its quote",
+    });
+    expect(testimonialWriteFailure({ code: "23503", message: "violates foreign key" })).toEqual({
+      kind: "unknown",
     });
     expect(testimonialWriteFailure({ code: "42P01", message: "relation" })).toEqual({ kind: "unknown" });
   });

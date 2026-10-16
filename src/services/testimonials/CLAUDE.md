@@ -48,16 +48,18 @@ an anon client per request; the store itself is admin-only. A failed read render
 home page and About without their quotes and logs the failure, rather than failing the
 site's front door.
 
-**Where a testimonial is used is a list of usages, one kind of place per member of a
-union.** The admin read derives it, the editor lists each place with its public page, and
-the MCP tools answer it. A new kind of place joins the union, the read's embed, and the
-delete's check — and every consumer that assumes a home spot stops compiling until it
-handles the new kind.
+**Testimonials are never deleted by the app.** Once created a testimonial stays — no
+admin page, MCP tool or database function deletes one, and no Data API role but the
+service role holds DELETE on the table (the DB test suite removes its own rows with it).
+So nothing shown on the site can lose its quote. A testimonial comes off the site by being
+removed from where it is shown: from a home spot by a migration, from anything an admin
+composes by editing that. Removing one language version is editing, and refuses the last.
+The home spots' foreign key restricts a hand delete of a placed testimonial all the same.
 
-**A testimonial in use cannot be deleted.** `delete_testimonial` refuses it with a
-sentence naming the spot (`foreign_key_violation`), and the placement's foreign key
-restricts beneath the check. The list disables Delete for a used testimonial. Editing a
-used testimonial is allowed; the editor shows where it is used above the words, which is
-what makes that a visible decision.
+**Where a testimonial is used is a list of usages, one kind of place per member of a
+union**, and the editor shows it above the words, which is what makes editing a used
+testimonial a visible decision. The admin read derives it and the MCP tools answer it. A
+new kind of place joins the union and the read's embed, and every consumer that assumes
+a home spot stops compiling until it handles the new kind.
 
 **Every write invalidates the whole `testimonials` key tree**, list and detail alike.

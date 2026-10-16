@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
+  callRpcRaw,
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
@@ -29,15 +30,15 @@ import { TestimonialsService } from "@/services/testimonials/testimonials.servic
  * `list_home_testimonials` — the scope test the authorization spine names —
  * and every caller gets the same answer; a quote in quotation marks is
  * refused by the writers and by the table, mark by mark, and the apostrophes
- * are not; a placed testimonial cannot be deleted, the refusal naming its
- * spot, and the foreign key restricts beneath it; a spot holds at most its
+ * are not; no role and no function deletes a testimonial, and the foreign
+ * key restricts a hand delete of a placed one; a spot holds at most its
  * size; and the trigger stamps who created and last saved it, and through
  * which AI app.
  *
  * The migrations fill the six home positions with the site's own quotes, and
  * every assertion about them reads what is there rather than assuming it.
  * The testimonials this file creates are found by a quote prefix only it uses
- * and deleted at the end. Fixture UUID 900 (product-helpers.ts registry).
+ * and removed at the end on the service role, the one role that may. Fixture UUID 900 (product-helpers.ts registry).
  */
 
 /** A testimonial id that must NEVER exist. */
@@ -265,8 +266,6 @@ describe("testimonials", () => {
         expect(created.error?.code).toBe("42501");
         const saved = await client.rpc("save_testimonial", { p_id: id, p_versions: payload([FI]) });
         expect(saved.error?.code).toBe("42501");
-        const deleted = await client.rpc("delete_testimonial", { p_id: id });
-        expect(deleted.error?.code).toBe("42501");
       }
       expect((await service.getAdminTestimonial(id))?.versions).toEqual([EN]);
     });
@@ -299,19 +298,22 @@ describe("testimonials", () => {
   // Deleting, and the home spots
   // -------------------------------------------------------------------------
 
-  describe("deleting and the home spots", () => {
-    it("deletes a testimonial shown nowhere, its versions with it", async () => {
+  describe("keeping testimonials, and the home spots", () => {
+    it("lets no role delete a testimonial, and no function exists to", async () => {
       const id = await mint([EN, FI]);
-      await service.deleteTestimonial(id);
-      expect(await service.getAdminTestimonial(id)).toBeNull();
-      const { count } = await admin
-        .from("testimonial_translations")
-        .select("testimonial_id", { count: "exact", head: true })
-        .eq("testimonial_id", id);
-      expect(count).toBe(0);
+      for (const client of [adminAuth, ...Object.values(others), anon]) {
+        const { error } = await client.from("testimonials").delete().eq("id", id);
+        expect(error?.code).toBe("42501");
+      }
+      const { data: session } = await adminAuth.auth.getSession();
+      const rpc = await callRpcRaw(session.session?.access_token ?? "", "delete_testimonial", {
+        p_id: id,
+      });
+      expect(rpc.code).toBe("PGRST202");
+      expect((await service.getAdminTestimonial(id))?.versions).toEqual([EN, FI]);
     });
 
-    it("refuses deleting a placed testimonial, naming its spot, and the key restricts beneath", async () => {
+    it("restricts a hand delete of a placed testimonial", async () => {
       const { data: placement } = await admin
         .from("home_testimonials")
         .select("testimonial_id")
@@ -320,10 +322,6 @@ describe("testimonials", () => {
         .single();
       expect(placement).not.toBeNull();
       const placed = placement?.testimonial_id ?? MISSING;
-
-      const { error } = await adminAuth.rpc("delete_testimonial", { p_id: placed });
-      expect(error?.code).toBe("23503");
-      expect(error?.message).toMatch(/home page's safety .* spot, and so on About too/);
 
       const raw = await admin.from("testimonials").delete().eq("id", placed);
       expect(raw.error?.code).toBe("23503");
