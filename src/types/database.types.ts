@@ -1483,6 +1483,32 @@ export type Database = {
         }
         Relationships: []
       }
+      home_testimonials: {
+        Row: {
+          position: number
+          spot: Database["public"]["Enums"]["home_testimonial_spot"]
+          testimonial_id: string
+        }
+        Insert: {
+          position: number
+          spot: Database["public"]["Enums"]["home_testimonial_spot"]
+          testimonial_id: string
+        }
+        Update: {
+          position?: number
+          spot?: Database["public"]["Enums"]["home_testimonial_spot"]
+          testimonial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_testimonials_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: true
+            referencedRelation: "testimonials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_customers: {
         Row: {
           billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -3665,6 +3691,94 @@ export type Database = {
           },
         ]
       }
+      testimonial_translations: {
+        Row: {
+          attribution: string
+          locale: string
+          quote: string
+          testimonial_id: string
+        }
+        Insert: {
+          attribution: string
+          locale: string
+          quote: string
+          testimonial_id: string
+        }
+        Update: {
+          attribution?: string
+          locale?: string
+          quote?: string
+          testimonial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_translations_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "testimonials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_via: string | null
+          id: string
+          last_saved_by: string | null
+          last_saved_via: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_email_requests: {
         Row: {
           created_at: string
@@ -4190,6 +4304,10 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: string[]
       }
+      check_testimonial_version: {
+        Args: { p_attribution: string; p_locale: string; p_quote: string }
+        Returns: undefined
+      }
       claim_expired_seat_offer_notifications: {
         Args: { p_participation_id?: string }
         Returns: Json
@@ -4319,6 +4437,7 @@ export type Database = {
         Args: { p_enabled: boolean; p_image_id?: string; p_versions: Json }
         Returns: string
       }
+      create_testimonial: { Args: { p_versions: Json }; Returns: string }
       decline_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -4332,6 +4451,7 @@ export type Database = {
         Returns: undefined
       }
       delete_spotlight: { Args: { p_id: string }; Returns: undefined }
+      delete_testimonial: { Args: { p_id: string }; Returns: undefined }
       demote_to_waitlist: {
         Args: { p_participation_id: string }
         Returns: Json
@@ -4830,6 +4950,15 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      list_home_testimonials: {
+        Args: never
+        Returns: {
+          position: number
+          spot: Database["public"]["Enums"]["home_testimonial_spot"]
+          testimonial_id: string
+          versions: Json
+        }[]
+      }
       list_public_team_profiles: {
         Args: never
         Returns: {
@@ -4980,7 +5109,15 @@ export type Database = {
         Args: { p_id: string; p_locale: string }
         Returns: string
       }
+      remove_testimonial_version: {
+        Args: { p_id: string; p_locale: string }
+        Returns: string
+      }
       replace_spotlight_versions: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: undefined
+      }
+      replace_testimonial_versions: {
         Args: { p_id: string; p_versions: Json }
         Returns: undefined
       }
@@ -5110,6 +5247,19 @@ export type Database = {
           p_title?: string
           p_translations: Json
           p_user_id: string
+        }
+        Returns: string
+      }
+      save_testimonial: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
+      }
+      save_testimonial_version: {
+        Args: {
+          p_attribution: string
+          p_id: string
+          p_locale: string
+          p_quote: string
         }
         Returns: string
       }
@@ -5404,6 +5554,7 @@ export type Database = {
       gedu_assignment_role: "primary" | "assistant"
       gedu_qualification: "neuroinclusive" | "consumer_products"
       gender_type: "boy" | "girl" | "non_binary"
+      home_testimonial_spot: "feature" | "safety" | "row"
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
         | "online_safety"
@@ -5583,6 +5734,7 @@ export const Constants = {
       gedu_assignment_role: ["primary", "assistant"],
       gedu_qualification: ["neuroinclusive", "consumer_products"],
       gender_type: ["boy", "girl", "non_binary"],
+      home_testimonial_spot: ["feature", "safety", "row"],
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [
         "online_safety",

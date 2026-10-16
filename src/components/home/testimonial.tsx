@@ -1,62 +1,64 @@
-import type { ReactNode } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
+import type { PublicTestimonial } from "@/services/testimonials";
 
 /**
- * One parent's words, as the home page quotes them.
+ * One testimonial — a parent's, a gamer's or a gedu's own words — as the
+ * public pages quote it.
  *
  * The quote is set in the editorial serif, italic, because it is a person's
- * voice rather than ours; the attribution is ours and stays in the app face.
- * **Attribution is role and country only** ("Mum, Finland") — never a name or
- * a handle. The families consented to being quoted on those terms.
+ * voice rather than ours; whom it is from is ours and stays in the app face.
+ *
+ * **The quotation marks are the page's, never the testimonial's.** The stored
+ * quote carries none, and it is wrapped here in the reader's locale's own
+ * marks (`testimonial.quoted`), so every locale quotes in its own style and
+ * no writer has to know which. The version shown is the one the reader
+ * fallback picks; when it is in another language than the page's, it is
+ * marked with `lang`.
  *
  * Two sizes, one construct: `feature` is the single large quote directly under
  * the hero, `compact` is a quote among others in a row or beside a list.
- *
- * **`media` is the slot a photo arrives in later.** Nothing is drawn for it
- * today — no placeholder, no reserved box — so the quote stands on its own; a
- * caller that passes an image gets it beside the words (above them on a
- * phone) without restructuring the section that holds the quote.
  */
 export function Testimonial({
-  quote,
-  attribution,
+  testimonial,
   size = "compact",
-  media,
   className,
 }: {
-  /** The quote, already localised and carrying its own quotation marks. */
-  quote: string;
-  /** Role and country, e.g. "Mum, Finland". */
-  attribution: string;
+  testimonial: PublicTestimonial;
   size?: "feature" | "compact";
-  media?: ReactNode;
   className?: string;
 }) {
+  const t = useTranslations("testimonial");
+  const locale = resolveLocale(useLocale());
+  const version = resolveTranslation(testimonial.versions, locale);
+  if (version === null) return null;
+
   const feature = size === "feature";
+  // exact-locale: marking text shown in another language than the page's
+  const lang = version.locale === locale ? undefined : version.locale;
 
   return (
     <figure
+      lang={lang}
       className={cn(
-        "flex flex-col gap-6",
-        media && "md:flex-row md:items-center md:gap-10",
-        feature && !media && "items-center text-center",
+        "flex flex-col",
+        feature ? "items-center gap-5 text-center" : "gap-3",
         className,
       )}
     >
-      {media && <div className="shrink-0 md:w-2/5">{media}</div>}
-      <div className={cn("flex flex-col", feature ? "gap-5" : "gap-3")}>
-        <blockquote
-          className={cn(
-            "font-serif italic text-foreground",
-            feature ? "text-2xl leading-snug sm:text-3xl" : "text-xl leading-relaxed",
-          )}
-        >
-          {quote}
-        </blockquote>
-        <figcaption className="text-sm font-medium text-muted-foreground">
-          {attribution}
-        </figcaption>
-      </div>
+      <blockquote
+        className={cn(
+          "font-serif italic text-foreground",
+          feature ? "text-2xl leading-snug sm:text-3xl" : "text-xl leading-relaxed",
+        )}
+      >
+        {t("quoted", { quote: version.quote })}
+      </blockquote>
+      <figcaption className="text-sm font-medium text-muted-foreground">
+        {version.from}
+      </figcaption>
     </figure>
   );
 }

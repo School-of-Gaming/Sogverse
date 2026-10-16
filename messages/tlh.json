@@ -84,7 +84,10 @@
       "team": "ghom",
       "adminHolidayCalendars": "DuQ jaj Hovtay'",
       "adminHolidayCalendarNew": "DuQ jaj Hovtay' chu'",
-      "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH"
+      "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH",
+      "adminTestimonials": "jatlhmey",
+      "adminTestimonialNew": "jatlh chu’",
+      "adminTestimonialEdit": "jatlh choH"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -743,7 +746,6 @@
       "languagesLabel": "Holmey"
     },
     "spotlights": {
-      "title": "Hovmey",
       "subtitle": "Hoch QIn ghItlh bIngDaq Hoch Hov chenmoHlu’bogh lutu’ vavDu’ SoSDu’ je. chu’qu’ wa’DIch. Hoch laDwI’ Hol Dalo’ — Hol ghItlhlu’be’chugh, DIvI’ Hol; ghIq latlh Hol ghItlhlu’bogh.",
       "newSpotlight": "Hov chu’",
       "empty": "Hov tu’lu’be’ wej. wa’DIch yIghItlh.",
@@ -799,7 +801,6 @@
       }
     },
     "landingPages": {
-      "title": "Sap ghItlhmey",
       "subtitle": "DuSaQ, veng, malja’ qoj wanI’ ghItlhmey. nejwI’ jabbI’IDmey ’ej De’wI’ qoq Dochmey luSamnIS.",
       "empty": "Sap ghItlh tu’lu’be’. Sogverse rarlu’bogh De’wI’ qoq lo’lu’DI’ Sap ghItlhlu’.",
       "lastSaved": "Qav pollu’ {date}",
@@ -2116,6 +2117,85 @@
         "filterLabel": "jangmey yIwIv",
         "worthReading": "laDnIS ({count})",
         "all": "Hoch ({count})"
+      }
+    },
+    "testimonials": {
+      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq. jatlhmey lan juH ghItlhDaq ’ej maH ghItlhDaq.",
+      "newTestimonial": "jatlh chu’",
+      "backToList": "jatlhmeyDaq yIchegh",
+      "newPage": {
+        "title": "jatlh chu’",
+        "submit": "jatlh yIchenmoH"
+      },
+      "editPage": {
+        "title": "jatlh yIchoH"
+      },
+      "listLoadError": "jatlhmey laD Qagh. ghItlh yIchu’qa’.",
+      "loadError": "jatlhvam laD Qagh. ghItlh yIchu’qa’.",
+      "notFound": "Daqvam jatlh ghajbe’.",
+      "empty": "jatlh tu’lu’be’.",
+      "allHeading": "Hoch jatlhmey",
+      "languagesLabel": "Holmey",
+      "saved": "{date} pol",
+      "onHome": "juH ghItlh: {spot}",
+      "cannotDelete": "juH ghItlh ’ej maH ghItlhDaq cha’lu’, vaj Qaw’laHbe’lu’.",
+      "quoteHasMarks": "jatlh ghItlh mu’ yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
+      "home": {
+        "heading": "juH ghItlhDaq",
+        "hint": "wej DaqDaq juH ghItlh cha’ ’ej rap maH ghItlh. Daq jatlh wIv ngoqwI’; naDev mu’mey choHlu’.",
+        "spotHeading": "{spot} ({filled, number}/{size, number})",
+        "spots": {
+          "feature": "Hoch DungDaq",
+          "safety": "Hung Dol retlhDaq",
+          "row": "vav/SoSmey jatlhbogh"
+        },
+        "emptySpot": "pagh: Daqvam pagh cha’ ghItlh."
+      },
+      "fields": {
+        "languages": "Holmey",
+        "from": "vo’",
+        "quote": "jatlh"
+      },
+      "hints": {
+        "languages": "Hoch Hol DaghajDaq yIghItlh. Hoch Hol jatlh ’ej ’Iv jatlh poQ.",
+        "from": "’Iv jatlh — SoS, Suomi rur.",
+        "quote": "mu’meyDaj ra’bogh, jatlh ghItlh mu’ Hutlh: Hoch Hol mu’ chel ghItlhvam. latlh HolDaq mughlu’chugh QaQ; choHlu’chugh QaQbe’."
+      },
+      "usage": {
+        "heading": "nuqDaq lo’lu’",
+        "none": "pa’ cha’lu’be’ wa’logh.",
+        "editNote": "polchugh, Hoch DaqDaq mu’meyDaj choH.",
+        "home": "juH ghItlh: {spot}, {position, number}/{size, number}",
+        "about": "maH: vav/SoSmey jatlhbogh"
+      },
+      "record": {
+        "created": "{date} chenmoHlu’",
+        "createdBy": "{date} chenmoH {name}",
+        "createdByVia": "{date} chenmoH {name}, {app} lo’",
+        "createdByViaUnnamed": "{date} chenmoH {name}, De’wI’ QeD lo’",
+        "saved": "{date} pol Qav",
+        "savedBy": "{date} pol Qav {name}",
+        "savedByVia": "{date} pol Qav {name}, {app} lo’",
+        "savedByViaUnnamed": "{date} pol Qav {name}, De’wI’ QeD lo’"
+      },
+      "actions": {
+        "save": "yIpol",
+        "cancel": "yImev",
+        "delete": "yIQaw’"
+      },
+      "deleteConfirm": {
+        "title": "jatlhvam DaQaw’’a’?",
+        "description": "Hoch HolDaq reH Qaw’lu’.",
+        "confirm": "yIQaw’"
+      },
+      "errors": {
+        "noVersion": "wa’ HolDaq jatlh yIghItlh.",
+        "versionIncomplete": "{language} jatlh ’ej ’Iv jatlh poQ.",
+        "quoted": "{language} jatlh tagh pagh rIn jatlh ghItlh mu’. yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
+        "saveFailed": "jatlh pollaHbe’lu’. yInIDqa’.",
+        "saveFailedWithReason": "jatlh pollaHbe’lu’: {reason}",
+        "deleteFailed": "jatlh Qaw’laHbe’lu’. yInIDqa’.",
+        "deleteFailedWithReason": "jatlh Qaw’laHbe’lu’: {reason}"
       }
     }
   },
@@ -3776,8 +3856,7 @@
     "dashboard": "QaD",
     "users": "lo’wI’pu’",
     "libraryContent": "paq qach ghItlhmey",
-    "spotlights": "Hovmey",
-    "landingPages": "Sap ghItlhmey",
+    "marketing": "ngev",
     "platformVision": "Sogverse naj",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
@@ -3793,7 +3872,8 @@
   "adminHubs": {
     "titles": {
       "products": "ghomHom, pa’ Qugh, Qu’mey je",
-      "invoicing": "DIlmeH ghItlh"
+      "invoicing": "DIlmeH ghItlh",
+      "marketing": "ngev"
     },
     "tabs": {
       "products": "Doch",
@@ -3801,7 +3881,10 @@
       "holidayCalendars": "DuQ jaj Hovtay'",
       "municipalities": "vengmey",
       "invoiceCustomers": "DIlwI’pu’",
-      "gedus": "Gedupu’"
+      "gedus": "Gedupu’",
+      "landingPages": "Daq ghItlh",
+      "testimonials": "jatlhmey",
+      "spotlights": "wov"
     }
   },
   "home": {
@@ -3815,33 +3898,7 @@
       "guarantee": "30 jaj: Huch chegh lay’"
     },
     "testimonials": {
-      "heading": "vav/SoSmey jatlhbogh",
-      "items": {
-        "highlightOfTheWeek": {
-          "quote": "”Hogh Dun law’ ghom’a’. Hoch Hogh, puqloDwIj tam ’ej ghIjlu’bogh moj puq Hagh ’ej jach, puqpu’ rurbogh ghom. ghom’a’ Dol ’ej ghojmoHwI’pu’ laH, mupIvmoH.”",
-          "attribution": "SoS, Suomi"
-        },
-        "sighWithHappiness": {
-          "quote": "”pagh latlh Qu’, pagh latlh Hob — puqwIj Quch neH ’oH ghom’a’.”",
-          "attribution": "SoS, Suomi"
-        },
-        "largeGroups": {
-          "quote": "”ghom’a’mey tIn puqmaj bIt. ghom’a’vam Daq Hob maHoy ’ej jup chu’ maSuq.”",
-          "attribution": "SoS, Suomi"
-        },
-        "finnishImproved": {
-          "quote": "”wa’ jar neH — puqbe’wI’ Suomi Hol Dun law’! ghojmoHwI’pu’ val, QaQ, ’ej ghIQ. Qap!”",
-          "attribution": "SoS, Norway"
-        },
-        "funAndSupervised": {
-          "quote": "”Quj tlhab ’ej ghoS. qI’be’, ghobe’, ’ej pagh QoQ qab.”",
-          "attribution": "SoS, Suomi"
-        },
-        "positiveExperience": {
-          "quote": "”School of Gaming — puq vav/SoS je QaQ. jup chu’ tlhej Quj QaQ luSuq puqpu’ — QaQ Daq, ghojmoHwI’pu’ Qeq tlhej. vIQuvmoH!”",
-          "attribution": "vav, Suomi"
-        }
-      }
+      "heading": "vav/SoSmey jatlhbogh"
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",
@@ -3914,6 +3971,9 @@
       "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, Hoch QIn ghom Hoch Qoy.",
       "whereWeAre": "De’wI’ ghom’a’meymajDaq qo’ Hoch Daq qorDu’pu’ ghom. De’wI’ ghom’a’mey Hol: {languages}. ’ej yejHaD’a’maj Hoch? Qujmeh pa’ mach, ’ambo’ jot Daq: Lauttasaari, Helsinki, Finland. Qapla’!"
     }
+  },
+  "testimonial": {
+    "quoted": "”{quote}”"
   },
   "locations": {
     "picker": {

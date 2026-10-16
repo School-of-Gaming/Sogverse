@@ -6,7 +6,7 @@ Library's (`src/services/library/CLAUDE.md`) wherever this file says nothing dif
 the sections are the registry's, in `src/lib/landing-pages/sections/`.
 
 **Pages are written only through the MCP server** (`src/lib/mcp/`), by an AI app acting as
-the admin. In Sogverse an admin has the list of pages and, for each, a status page that is
+the admin. In Sogverse an admin has the list of pages, a tab of the Marketing hub, and, for each, a status page that is
 read-only apart from publishing: per language, complete or what is still missing, its
 preview and live links, and its address; for the page, whether it has unpublished
 changes, who last saved it and through which AI app, and Publish and Unpublish.

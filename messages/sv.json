@@ -91,7 +91,10 @@
       "team": "Team",
       "adminHolidayCalendars": "Lovkalendrar",
       "adminHolidayCalendarNew": "Ny lovkalender",
-      "adminHolidayCalendarEdit": "Redigera lovkalender"
+      "adminHolidayCalendarEdit": "Redigera lovkalender",
+      "adminTestimonials": "Omdömen",
+      "adminTestimonialNew": "Nytt omdöme",
+      "adminTestimonialEdit": "Redigera omdöme"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -699,7 +702,6 @@
       "languagesLabel": "Språk"
     },
     "spotlights": {
-      "title": "Spotlights",
       "subtitle": "Föräldrar ser varje påslagen spotlight längst ner i varje sessionsrapports e-post de får, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
       "newSpotlight": "Ny spotlight",
       "empty": "Inga spotlights än. Skriv den första.",
@@ -755,7 +757,6 @@
       }
     },
     "landingPages": {
-      "title": "Landningssidor",
       "subtitle": "Sidor för en skola, en stad, ett företag eller ett evenemang, skrivna för att sökmotorer och AI-appar ska hitta dem.",
       "empty": "Inga landningssidor än. Sidorna skrivs med en AI-app som är kopplad till Sogverse.",
       "lastSaved": "Senast sparad {date}",
@@ -2072,6 +2073,85 @@
         "filterLabel": "Vilka svar",
         "worthReading": "Värda att läsa ({count})",
         "all": "Alla ({count})"
+      }
+    },
+    "testimonials": {
+      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Startsidan och Om oss citerar dem som placerats där.",
+      "newTestimonial": "Nytt omdöme",
+      "backToList": "Tillbaka till omdömena",
+      "newPage": {
+        "title": "Nytt omdöme",
+        "submit": "Skapa omdöme"
+      },
+      "editPage": {
+        "title": "Redigera omdöme"
+      },
+      "listLoadError": "Omdömena kunde inte läsas in. Ladda om sidan och försök igen.",
+      "loadError": "Det här omdömet kunde inte läsas in. Ladda om sidan och försök igen.",
+      "notFound": "Inget omdöme har den här adressen.",
+      "empty": "Inga omdömen än.",
+      "allHeading": "Alla omdömen",
+      "languagesLabel": "Språk",
+      "saved": "Sparat {date}",
+      "onHome": "Startsidan: {spot}",
+      "cannotDelete": "Det visas på startsidan och Om oss, så det kan inte tas bort.",
+      "quoteHasMarks": "Utelämna citattecknen: webbplatsen lägger till dem på varje språks eget sätt.",
+      "home": {
+        "heading": "På startsidan",
+        "hint": "Startsidan visar dessa på tre ställen, och Om oss visar samma. Vilket omdöme som står var bestäms av en utvecklare; orden redigeras här.",
+        "spotHeading": "{spot} ({filled, number} av {size, number})",
+        "spots": {
+          "feature": "Under hjälteytan",
+          "safety": "Bredvid säkerhetsfakta",
+          "row": "Det här säger föräldrar"
+        },
+        "emptySpot": "Tomt: sidan visar ingenting på det här stället."
+      },
+      "fields": {
+        "languages": "Språk",
+        "from": "Från",
+        "quote": "Citat"
+      },
+      "hints": {
+        "languages": "Skriv det på alla språk du har det på. Varje språk behöver citatet och vem det är från.",
+        "from": "Vem citatet är från, så som det ska visas — till exempel Mamma, Finland.",
+        "quote": "Personens ord som de gavs, utan citattecken: webbplatsen lägger till varje språks egna. Att översätta dem till ett annat språk går bra; att ändra dem gör det inte."
+      },
+      "usage": {
+        "heading": "Var det används",
+        "none": "Det visas inte någonstans än.",
+        "editNote": "När du sparar ändras orden överallt där det visas.",
+        "home": "Startsidan: {spot}, {position, number} av {size, number}",
+        "about": "Om oss: Det här säger föräldrar"
+      },
+      "record": {
+        "created": "Skapat {date}",
+        "createdBy": "Skapat {date} av {name}",
+        "createdByVia": "Skapat {date} av {name} via {app}",
+        "createdByViaUnnamed": "Skapat {date} av {name} via en AI-app",
+        "saved": "Senast sparat {date}",
+        "savedBy": "Senast sparat {date} av {name}",
+        "savedByVia": "Senast sparat {date} av {name} via {app}",
+        "savedByViaUnnamed": "Senast sparat {date} av {name} via en AI-app"
+      },
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt",
+        "delete": "Ta bort"
+      },
+      "deleteConfirm": {
+        "title": "Ta bort det här omdömet?",
+        "description": "Det tas bort för gott, på alla språk.",
+        "confirm": "Ta bort"
+      },
+      "errors": {
+        "noVersion": "Skriv omdömet på minst ett språk.",
+        "versionIncomplete": "Versionen på {language} behöver citatet och vem det är från.",
+        "quoted": "Citatet på {language} börjar eller slutar med ett citattecken. Utelämna tecknen: webbplatsen lägger till dem på varje språks eget sätt.",
+        "saveFailed": "Omdömet kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Omdömet kunde inte sparas: {reason}",
+        "deleteFailed": "Omdömet kunde inte tas bort. Försök igen.",
+        "deleteFailedWithReason": "Omdömet kunde inte tas bort: {reason}"
       }
     }
   },
@@ -3736,8 +3816,7 @@
     "dashboard": "Instrumentpanel",
     "users": "Användare",
     "libraryContent": "Bibliotekets innehåll",
-    "spotlights": "Spotlights",
-    "landingPages": "Landningssidor",
+    "marketing": "Marknadsföring",
     "platformVision": "Plattformens vision",
     "uiComponents": "UI-komponenter",
     "uiPreviews": "UI-förhandsvisningar",
@@ -3753,7 +3832,8 @@
   "adminHubs": {
     "titles": {
       "products": "Klubbar, läger och evenemang",
-      "invoicing": "Fakturering"
+      "invoicing": "Fakturering",
+      "marketing": "Marknadsföring"
     },
     "tabs": {
       "products": "Produkter",
@@ -3761,7 +3841,10 @@
       "holidayCalendars": "Lovkalendrar",
       "municipalities": "Kommuner",
       "invoiceCustomers": "Faktureringskunder",
-      "gedus": "Geduer"
+      "gedus": "Geduer",
+      "landingPages": "Landningssidor",
+      "testimonials": "Omdömen",
+      "spotlights": "Spotlights"
     }
   },
   "home": {
@@ -3775,33 +3858,7 @@
       "guarantee": "30 dagars pengarna-tillbaka-garanti"
     },
     "testimonials": {
-      "heading": "Det här säger föräldrar",
-      "items": {
-        "highlightOfTheWeek": {
-          "quote": "”Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.”",
-          "attribution": "Mamma, Finland"
-        },
-        "sighWithHappiness": {
-          "quote": "”Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.”",
-          "attribution": "Mamma, Finland"
-        },
-        "largeGroups": {
-          "quote": "”Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.”",
-          "attribution": "Mamma, Finland"
-        },
-        "finnishImproved": {
-          "quote": "”Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!”",
-          "attribution": "Mamma, Norge"
-        },
-        "funAndSupervised": {
-          "quote": "”Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.”",
-          "attribution": "Mamma, Finland"
-        },
-        "positiveExperience": {
-          "quote": "”School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!”",
-          "attribution": "Pappa, Finland"
-        }
-      }
+      "heading": "Det här säger föräldrar"
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
@@ -3874,6 +3931,9 @@
       "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och varje chatt öppen för hela gruppen.",
       "whereWeAre": "Våra onlineklubbar hålls på {languages}, för familjer var som helst i världen. Och vårt globala huvudkontor? En mysig studio på Drumsö i Helsingfors, Finland, på en lugn liten ö."
     }
+  },
+  "testimonial": {
+    "quoted": "”{quote}”"
   },
   "locations": {
     "picker": {

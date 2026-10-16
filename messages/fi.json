@@ -91,7 +91,10 @@
       "team": "Tiimi",
       "adminHolidayCalendars": "Lomakalenterit",
       "adminHolidayCalendarNew": "Uusi lomakalenteri",
-      "adminHolidayCalendarEdit": "Muokkaa lomakalenteria"
+      "adminHolidayCalendarEdit": "Muokkaa lomakalenteria",
+      "adminTestimonials": "Suosittelut",
+      "adminTestimonialNew": "Uusi suosittelu",
+      "adminTestimonialEdit": "Muokkaa suosittelua"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -699,7 +702,6 @@
       "languagesLabel": "Kielet"
     },
     "spotlights": {
-      "title": "Nostot",
       "subtitle": "Vanhemmat näkevät jokaisen päällä olevan noston jokaisen heille lähetetyn sessioraportin sähköpostin lopussa, uusin ensin. Kukin lukija saa sen omalla kielellään, tai englanniksi, jos hänen kieltään ei ole kirjoitettu, tai muuten jollakin kirjoitetulla kielellä.",
       "newSpotlight": "Uusi nosto",
       "empty": "Ei vielä nostoja. Kirjoita ensimmäinen.",
@@ -755,7 +757,6 @@
       }
     },
     "landingPages": {
-      "title": "Laskeutumissivut",
       "subtitle": "Sivut koululle, kaupungille, yritykselle tai tapahtumalle – kirjoitettu hakukoneiden ja tekoälysovellusten löydettäviksi.",
       "empty": "Laskeutumissivuja ei vielä ole. Sivut kirjoitetaan Sogverseen yhdistetyllä tekoälysovelluksella.",
       "lastSaved": "Tallennettu viimeksi {date}",
@@ -2072,6 +2073,85 @@
         "filterLabel": "Näytettävät vastaukset",
         "worthReading": "Lukemisen arvoiset ({count})",
         "all": "Kaikki ({count})"
+      }
+    },
+    "testimonials": {
+      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Etusivu ja Tietoa meistä -sivu lainaavat niistä sinne sijoitettuja.",
+      "newTestimonial": "Uusi suosittelu",
+      "backToList": "Takaisin suositteluihin",
+      "newPage": {
+        "title": "Uusi suosittelu",
+        "submit": "Luo suosittelu"
+      },
+      "editPage": {
+        "title": "Muokkaa suosittelua"
+      },
+      "listLoadError": "Suositteluja ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loadError": "Tätä suosittelua ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "notFound": "Tällä osoitteella ei ole suosittelua.",
+      "empty": "Suositteluja ei ole vielä.",
+      "allHeading": "Kaikki suosittelut",
+      "languagesLabel": "Kielet",
+      "saved": "Tallennettu {date}",
+      "onHome": "Etusivulla: {spot}",
+      "cannotDelete": "Se näkyy etusivulla ja Tietoa meistä -sivulla, joten sitä ei voi poistaa.",
+      "quoteHasMarks": "Jätä lainausmerkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
+      "home": {
+        "heading": "Etusivulla",
+        "hint": "Etusivu näyttää nämä kolmessa kohdassa, ja Tietoa meistä -sivu näyttää samat. Kehittäjä päättää, mikä suosittelu on missäkin kohdassa; sen sanoja muokataan täällä.",
+        "spotHeading": "{spot} ({filled, number}/{size, number})",
+        "spots": {
+          "feature": "Pääkuvan alla",
+          "safety": "Turvallisuustietojen vieressä",
+          "row": "Mitä vanhemmat kertovat"
+        },
+        "emptySpot": "Tyhjä: sivu ei näytä tässä kohdassa mitään."
+      },
+      "fields": {
+        "languages": "Kielet",
+        "from": "Keneltä",
+        "quote": "Lainaus"
+      },
+      "hints": {
+        "languages": "Kirjoita se kaikilla kielillä, joilla se sinulla on. Jokainen kieli tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
+        "from": "Keneltä lainaus on, niin kuin se näytetään — esimerkiksi Äiti, Suomi.",
+        "quote": "Hänen sanansa sellaisinaan, ilman lainausmerkkejä: sivusto lisää kunkin kielen omat. Kääntäminen toiselle kielelle on sallittua, muuttaminen ei."
+      },
+      "usage": {
+        "heading": "Missä sitä käytetään",
+        "none": "Sitä ei vielä näytetä missään.",
+        "editNote": "Tallentaminen muuttaa sen sanat kaikkialla, missä se näkyy.",
+        "home": "Etusivu: {spot}, {position, number}/{size, number}",
+        "about": "Tietoa meistä: Mitä vanhemmat kertovat"
+      },
+      "record": {
+        "created": "Luotu {date}",
+        "createdBy": "Luotu {date}, {name}",
+        "createdByVia": "Luotu {date}, {name} sovelluksella {app}",
+        "createdByViaUnnamed": "Luotu {date}, {name} tekoälysovelluksella",
+        "saved": "Tallennettu viimeksi {date}",
+        "savedBy": "Tallennettu viimeksi {date}, {name}",
+        "savedByVia": "Tallennettu viimeksi {date}, {name} sovelluksella {app}",
+        "savedByViaUnnamed": "Tallennettu viimeksi {date}, {name} tekoälysovelluksella"
+      },
+      "actions": {
+        "save": "Tallenna",
+        "cancel": "Peruuta",
+        "delete": "Poista"
+      },
+      "deleteConfirm": {
+        "title": "Poistetaanko tämä suosittelu?",
+        "description": "Se poistetaan pysyvästi kaikilla kielillä.",
+        "confirm": "Poista"
+      },
+      "errors": {
+        "noVersion": "Kirjoita suosittelu vähintään yhdellä kielellä.",
+        "versionIncomplete": "Kieliversio {language} tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
+        "quoted": "Kieliversion {language} lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
+        "saveFailed": "Suosittelua ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Suosittelua ei voitu tallentaa: {reason}",
+        "deleteFailed": "Suosittelua ei voitu poistaa. Yritä uudelleen.",
+        "deleteFailedWithReason": "Suosittelua ei voitu poistaa: {reason}"
       }
     }
   },
@@ -3736,8 +3816,7 @@
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",
     "libraryContent": "Kirjaston sisältö",
-    "spotlights": "Nostot",
-    "landingPages": "Laskeutumissivut",
+    "marketing": "Markkinointi",
     "platformVision": "Alustan visio",
     "uiComponents": "UI-komponentit",
     "uiPreviews": "UI-esikatselut",
@@ -3753,7 +3832,8 @@
   "adminHubs": {
     "titles": {
       "products": "Kerhot, leirit ja tapahtumat",
-      "invoicing": "Laskutus"
+      "invoicing": "Laskutus",
+      "marketing": "Markkinointi"
     },
     "tabs": {
       "products": "Tuotteet",
@@ -3761,7 +3841,10 @@
       "holidayCalendars": "Lomakalenterit",
       "municipalities": "Kunnat",
       "invoiceCustomers": "Laskutusasiakkaat",
-      "gedus": "Gedut"
+      "gedus": "Gedut",
+      "landingPages": "Laskeutumissivut",
+      "testimonials": "Suosittelut",
+      "spotlights": "Nostot"
     }
   },
   "home": {
@@ -3775,33 +3858,7 @@
       "guarantee": "30 päivän rahat takaisin -takuu"
     },
     "testimonials": {
-      "heading": "Mitä vanhemmat kertovat",
-      "items": {
-        "highlightOfTheWeek": {
-          "quote": "”Kerho on pojan viikon kohokohta. Hiljaisesta ja arasta pojasta kuoriutuu joka viikko nauravainen ja kovaan ääneen höpöttävä lapsi, kun pääsee samanhenkisten lasten kanssa puuhailemaan. Kerhon sisältö ja kasvattajien osaaminen on yllättänyt minut todella positiivisesti.”",
-          "attribution": "Äiti, Suomi"
-        },
-        "sighWithHappiness": {
-          "quote": "”Mikään toinen asia, harrastus tai juttu ei ole saanut lastani huokailemaan sitä kuinka onnellinen on.”",
-          "attribution": "Äiti, Suomi"
-        },
-        "largeGroups": {
-          "quote": "”Isot ryhmät jännittävät lastamme. Tämä on täydellinen tapa meille harrastaa ja tutustua uusiin kavereihin.”",
-          "attribution": "Äiti, Suomi"
-        },
-        "finnishImproved": {
-          "quote": "”Tyttäreni suomen kieli on kehittynyt kuukaudessa valtavasti! Pelikasvattajat ovat olleet tosi taitavia, ystävällisiä ja pitkämielisiä. Tämä teidän juttu todella toimii!”",
-          "attribution": "Äiti, Norja"
-        },
-        "funAndSupervised": {
-          "quote": "”Pelaaminen on hauskaa ja valvottua. Ei kiusaamista eikä rähjäämistä tai pahaa mieltä.”",
-          "attribution": "Äiti, Suomi"
-        },
-        "positiveExperience": {
-          "quote": "”School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!”",
-          "attribution": "Isä, Suomi"
-        }
-      }
+      "heading": "Mitä vanhemmat kertovat"
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
@@ -3874,6 +3931,9 @@
       "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, ja jokainen chatti on koko ryhmän nähtävillä.",
       "whereWeAre": "Verkkokerhoihimme voi osallistua mistä päin maailmaa tahansa, ja kielinä ovat {languages}. Entä maailmanlaajuinen pääkonttorimme? Kodikas studio pienellä ja rauhallisella saarella, Lauttasaaressa Helsingissä, Suomessa."
     }
+  },
+  "testimonial": {
+    "quoted": "”{quote}”"
   },
   "locations": {
     "picker": {

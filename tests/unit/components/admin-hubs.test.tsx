@@ -145,7 +145,7 @@ describe("the hub's tab strip", () => {
 });
 
 describe("the rail entry of a hub", () => {
-  const railEntry = (hub: "products" | "invoicing") =>
+  const railEntry = (hub: "products" | "invoicing" | "marketing") =>
     screen.getByTitle(en.sidebar[hub]);
 
   it.each(
@@ -161,5 +161,18 @@ describe("the rail entry of a hub", () => {
     renderAt("/admin/camps/[id]", <Sidebar />);
     expect(railEntry("products").className).toContain("bg-act");
     expect(railEntry("invoicing").className).not.toContain("bg-act");
+  });
+
+  it("lights the marketing entry on a testimonial's, a spotlight's and a landing page's own pages", () => {
+    for (const pathname of [
+      "/admin/testimonials/[id]",
+      "/admin/testimonials/new",
+      "/admin/spotlights/[id]",
+      "/admin/landing-pages/[id]",
+    ]) {
+      const { unmount } = renderAt(pathname, <Sidebar />);
+      expect(railEntry("marketing").className).toContain("bg-act");
+      unmount();
+    }
   });
 });

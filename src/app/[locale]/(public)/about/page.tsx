@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { AboutFaq } from "@/components/about/about-faq";
 import { AboutSection } from "@/components/about/about-section";
 import { ParentTestimonials } from "@/components/about/parent-testimonials";
+import { readHomeTestimonials } from "@/components/home/home-testimonials.server";
 import { SectionPill } from "@/components/about/section-pill";
 import { YtySection } from "@/components/about/yty-section";
 import { Heading } from "@sog/ui";
+import type { HomeTestimonials } from "@/services/testimonials";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
@@ -38,8 +40,16 @@ export async function generateMetadata(): Promise<Metadata> {
  * still meets the About section's own hero rather than a second title above it.
  * It reads from `about`, a content namespace, not from `metadata` — that one is
  * stripped from the client bundle and names documents, not page content.
+ *
+ * The parents' quotes are the home spots' testimonials, read per request.
+ * The section stays, with its heading, even while every spot is empty: the
+ * section pill links to it.
  */
-export default function AboutPage() {
+export default async function AboutPage() {
+  return <AboutBody testimonials={await readHomeTestimonials()} />;
+}
+
+function AboutBody({ testimonials }: { testimonials: HomeTestimonials }) {
   const t = useTranslations("about");
 
   return (
@@ -52,7 +62,7 @@ export default function AboutPage() {
 
       <AboutSection id="about" />
 
-      <ParentTestimonials id="parents" />
+      <ParentTestimonials id="parents" testimonials={testimonials} />
 
       <AboutFaq id="faq" />
 

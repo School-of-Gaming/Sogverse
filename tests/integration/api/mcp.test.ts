@@ -173,6 +173,13 @@ describe("/api/mcp", () => {
       "set_landing_section_image",
       "open_landing_image_uploader",
       "upload_landing_image",
+      "list_testimonials",
+      "get_testimonial",
+      "list_home_testimonial_spots",
+      "create_testimonial",
+      "save_testimonial_version",
+      "remove_testimonial_language",
+      "delete_testimonial",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

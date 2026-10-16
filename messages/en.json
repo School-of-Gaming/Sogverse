@@ -91,7 +91,10 @@
       "team": "Team",
       "adminHolidayCalendars": "Holiday Calendars",
       "adminHolidayCalendarNew": "New Holiday Calendar",
-      "adminHolidayCalendarEdit": "Edit Holiday Calendar"
+      "adminHolidayCalendarEdit": "Edit Holiday Calendar",
+      "adminTestimonials": "Testimonials",
+      "adminTestimonialNew": "New testimonial",
+      "adminTestimonialEdit": "Edit testimonial"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -699,7 +702,6 @@
       "languagesLabel": "Languages"
     },
     "spotlights": {
-      "title": "Spotlights",
       "subtitle": "Parents see every spotlight that is switched on at the bottom of every session report email they are sent, newest first. Each reader gets it in their own language, or in English when theirs is not written, or else in a language that is.",
       "newSpotlight": "New spotlight",
       "empty": "No spotlights yet. Write the first one.",
@@ -755,7 +757,6 @@
       }
     },
     "landingPages": {
-      "title": "Landing pages",
       "subtitle": "Pages for a school, a city, a business or an event, written for search engines and AI apps to find.",
       "empty": "No landing pages yet. Pages are written with an AI app connected to Sogverse.",
       "lastSaved": "Last saved {date}",
@@ -2072,6 +2073,85 @@
         "filterLabel": "Which responses",
         "worthReading": "Worth reading ({count})",
         "all": "All ({count})"
+      }
+    },
+    "testimonials": {
+      "subtitle": "Real words from parents, gamers and gedus, kept in one place. The home page and About quote the ones placed there.",
+      "newTestimonial": "New testimonial",
+      "backToList": "Back to testimonials",
+      "newPage": {
+        "title": "New testimonial",
+        "submit": "Create testimonial"
+      },
+      "editPage": {
+        "title": "Edit testimonial"
+      },
+      "listLoadError": "The testimonials could not be loaded. Reload the page to try again.",
+      "loadError": "This testimonial could not be loaded. Reload the page to try again.",
+      "notFound": "No testimonial has this address.",
+      "empty": "No testimonials yet.",
+      "allHeading": "All testimonials",
+      "languagesLabel": "Languages",
+      "saved": "Saved {date}",
+      "onHome": "Home page: {spot}",
+      "cannotDelete": "It is shown on the home page and About, so it cannot be deleted.",
+      "quoteHasMarks": "Leave the quotation marks out: the site adds them in each language’s own style.",
+      "home": {
+        "heading": "On the home page",
+        "hint": "The home page shows these in three places, and About shows the same ones. Which testimonial fills a place is decided by a developer; its words are edited here.",
+        "spotHeading": "{spot} ({filled, number} of {size, number})",
+        "spots": {
+          "feature": "Under the hero",
+          "safety": "Beside the safety facts",
+          "row": "What parents tell us"
+        },
+        "emptySpot": "Nothing here: the page shows nothing in this place."
+      },
+      "fields": {
+        "languages": "Languages",
+        "from": "From",
+        "quote": "Quote"
+      },
+      "hints": {
+        "languages": "Write it in every language you have it in. Each language needs its quote and whom it is from.",
+        "from": "Whom the quote is from, as it should be shown — for example Mum, Finland.",
+        "quote": "Their words as they gave them, without quotation marks: the site adds each language’s own. Translating them into another language is fine; changing them is not."
+      },
+      "usage": {
+        "heading": "Where it is used",
+        "none": "It is not shown anywhere yet.",
+        "editNote": "Saving changes its words everywhere it is shown.",
+        "home": "Home page: {spot}, {position, number} of {size, number}",
+        "about": "About: What parents tell us"
+      },
+      "record": {
+        "created": "Created {date}",
+        "createdBy": "Created {date} by {name}",
+        "createdByVia": "Created {date} by {name} through {app}",
+        "createdByViaUnnamed": "Created {date} by {name} through an AI app",
+        "saved": "Last saved {date}",
+        "savedBy": "Last saved {date} by {name}",
+        "savedByVia": "Last saved {date} by {name} through {app}",
+        "savedByViaUnnamed": "Last saved {date} by {name} through an AI app"
+      },
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete"
+      },
+      "deleteConfirm": {
+        "title": "Delete this testimonial?",
+        "description": "It is removed from the store for good, in every language.",
+        "confirm": "Delete"
+      },
+      "errors": {
+        "noVersion": "Write the testimonial in at least one language.",
+        "versionIncomplete": "The {language} version needs its quote and whom it is from.",
+        "quoted": "The {language} quote starts or ends with a quotation mark. Leave the marks out: the site adds them in each language’s own style.",
+        "saveFailed": "The testimonial could not be saved. Try again.",
+        "saveFailedWithReason": "The testimonial could not be saved: {reason}",
+        "deleteFailed": "The testimonial could not be deleted. Try again.",
+        "deleteFailedWithReason": "The testimonial could not be deleted: {reason}"
       }
     }
   },
@@ -3736,8 +3816,7 @@
     "dashboard": "Dashboard",
     "users": "Users",
     "libraryContent": "Library Content",
-    "spotlights": "Spotlights",
-    "landingPages": "Landing Pages",
+    "marketing": "Marketing",
     "platformVision": "Platform Vision",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
@@ -3753,7 +3832,8 @@
   "adminHubs": {
     "titles": {
       "products": "Clubs, camps and events",
-      "invoicing": "Invoicing"
+      "invoicing": "Invoicing",
+      "marketing": "Marketing"
     },
     "tabs": {
       "products": "Products",
@@ -3761,7 +3841,10 @@
       "holidayCalendars": "Holiday calendars",
       "municipalities": "Municipalities",
       "invoiceCustomers": "Invoice customers",
-      "gedus": "Gedus"
+      "gedus": "Gedus",
+      "landingPages": "Landing pages",
+      "testimonials": "Testimonials",
+      "spotlights": "Spotlights"
     }
   },
   "home": {
@@ -3775,33 +3858,7 @@
       "guarantee": "30-day money-back guarantee"
     },
     "testimonials": {
-      "heading": "What parents tell us",
-      "items": {
-        "highlightOfTheWeek": {
-          "quote": "“The club is the highlight of my son’s week. Every week, my quiet and shy boy transforms into a laughing, loudly chatting child when he gets to interact with like-minded kids. The club’s content and the educators’ expertise have pleasantly surprised me.”",
-          "attribution": "Mum, Finland"
-        },
-        "sighWithHappiness": {
-          "quote": "“Nothing else, no activity or hobby, has made my child sigh with happiness like this.”",
-          "attribution": "Mum, Finland"
-        },
-        "largeGroups": {
-          "quote": "“Large groups make our child anxious. This is the perfect way for us to engage in a hobby and make new friends.”",
-          "attribution": "Mum, Finland"
-        },
-        "finnishImproved": {
-          "quote": "“My daughter’s Finnish has improved tremendously in just a month! The gaming educators have been very skilled, friendly, and patient. This really works!”",
-          "attribution": "Mum, Norway"
-        },
-        "funAndSupervised": {
-          "quote": "“Gaming is fun and supervised. No bullying, no arguing, or bad vibes.”",
-          "attribution": "Mum, Finland"
-        },
-        "positiveExperience": {
-          "quote": "“School of Gaming has been a really positive experience for both the child and the parents. The children have had great gaming experiences with new friends in a safe gaming environment with experienced instructors – I can recommend it!”",
-          "attribution": "Dad, Finland"
-        }
-      }
+      "heading": "What parents tell us"
     },
     "features": {
       "heading": "Make gaming a great hobby",
@@ -3874,6 +3931,9 @@
       "subheading": "Give your child a place to play, learn and make friends every week, with a Game Educator in every lesson and every chat open to the whole group.",
       "whereWeAre": "Our online clubs run in {languages}, for families anywhere in the world. And our global headquarters? A cosy studio in Lauttasaari, Helsinki, Finland, on a quiet little island."
     }
+  },
+  "testimonial": {
+    "quoted": "“{quote}”"
   },
   "roblox": {
     "hero": {
