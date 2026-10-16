@@ -95,6 +95,25 @@ picture the page leads with, with the shown version's alt text; a hero without o
 the site-wide card. So placing a hero picture places it in every chat and feed the page is
 shared to, and a partner's mark in one needs that partner's sign-off (`src/CLAUDE.md`).
 
+**A products section promotes shop products an admin picks, and its picks go stale by
+design.** Its structure names products by id — at least one, each once, in the admin's
+order, with no maximum, since the carousel scrolls — and its words, an eyebrow, a heading
+and an intro, are all optional, so it never makes a version incomplete. Each pick is drawn
+as the shop's own card in the product rail the Roblox page draws, so everything on a card
+is the shop's, live; a pick is drawn only while the shop's listing holds it, and a section
+whose picks are none of them listed is not drawn at all — no heading, no empty state.
+**A pick no product has is refused when a structure naming it is saved**, by the database
+and not by the link hook: a trigger on the working copy refuses it as a
+`foreign_key_violation` naming the section and the id, the same code a picture gone from
+the catalogue is refused with. It checks only the ids a save adds, so a write that only
+moves the structure's other contents — a catalogue replace or removal — is never refused by
+a pick it did not make. The published copy has no such check: an ended, unlisted or
+non-shop pick is not an error anywhere, only something the admin should swap. So **the
+admin read says, per products section of the working copy, which picks readers are not
+shown and why** — ended, not listed, not a product the shop sells, or no product at all
+any more — and the status page and the MCP tools both show it. Whether a pick is shown is
+the listing's own answer, the one the public page draws by; the reasons only explain it.
+
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
 
@@ -114,4 +133,10 @@ id — never by handing a segment to the route builder, because a slug resolves 
 locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
 contribution (structured data) are each an exhaustive map over the section
 types. Every section sits on the plain page ground: an admin chooses the order, so a
-tinted band could land beside another and read as one section.
+tinted band could land beside another and read as one section. **A page with products
+sections reads the shop's listing and seat counts on the server, once for all of them,
+before its HTML** — the live page and the preview alike, with no Suspense boundary — so
+the cards, or a section's absence, are in the first byte and nothing below them moves; a
+failed read seeds nothing, and the cards then arrive with the client's own fetch. Its
+structured data gains one shop-style `ItemList` per products section, naming the cards it
+draws, and never repeats a product's own markup, which stays on the product's page.

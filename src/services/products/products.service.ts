@@ -128,6 +128,20 @@ function buildListingQuery(supabase: AppSupabaseClient, types: ProductType[]) {
   return buildVisibleProductsQuery(supabase, types, LISTING_SELECT);
 }
 
+/**
+ * What a landing page's status read needs to say why a picked product is not
+ * on the shop's listing: whether it is a type the shop sells, whether it is
+ * listed, its term, and its name in each language it is written in. It reads
+ * any product, listed or not — the admin is the reader, and the point is the
+ * ones the listing leaves out.
+ */
+const LISTING_FACTS_SELECT =
+  "id, product_type, is_visible, start_date, end_date, timezone, product_translations(locale, name)";
+
+function buildListingFactsQuery(supabase: AppSupabaseClient, ids: readonly string[]) {
+  return supabase.from("products").select(LISTING_FACTS_SELECT).in("id", [...ids]);
+}
+
 function buildVisibleLocationsQuery(
   supabase: AppSupabaseClient,
   types: ProductType[],
@@ -181,6 +195,11 @@ export type ProductLocationRow = QueryData<
  */
 export type ProductListingRow = QueryData<
   ReturnType<typeof buildListingQuery>
+>[number];
+
+/** The facts behind a product's place on the listing, and its names. */
+export type ProductListingFactsRow = QueryData<
+  ReturnType<typeof buildListingFactsQuery>
 >[number];
 
 function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
@@ -820,6 +839,33 @@ export class ProductsService {
 
     if (error) throw error;
     return dropEndedProducts(data);
+  }
+
+  // The listing asked about several products at once: which of these ids the
+  // shop lists now. A landing page's status read is the caller — it reports a
+  // picked product the shop no longer shows — and it asks the listing itself
+  // for the reason the product page does: the rule is the query's filters plus
+  // the ended pass, and a restatement of it could disagree with what readers
+  // are shown.
+  async listVisibleListingAmong(
+    types: ProductType[],
+    ids: readonly string[],
+  ): Promise<ProductListingRow[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await buildListingQuery(this.supabase, types).in("id", [...ids]);
+
+    if (error) throw error;
+    return dropEndedProducts(data);
+  }
+
+  // The facts that explain a product's absence from the listing, for any of
+  // these ids, listed or not. An id no product has is simply absent.
+  async getListingFacts(ids: readonly string[]): Promise<ProductListingFactsRow[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await buildListingFactsQuery(this.supabase, ids);
+
+    if (error) throw error;
+    return data;
   }
 
   // Single-product detail fetch for the parent-facing detail page

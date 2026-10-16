@@ -112,6 +112,7 @@ function renderBody(
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}
+        products={null}
       />
     </NextIntlClientProvider>,
   );

@@ -12,6 +12,7 @@ import {
   type LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
 import { slugify } from "@/lib/slug";
+import type { LandingProductsSectionPicks } from "./landing-pages.product-picks";
 
 /**
  * Contracts for landing pages.
@@ -301,6 +302,12 @@ export interface AdminLandingPage {
   /** Null while the page is not live. */
   publication: PublishedLandingPage | null;
   hasUnpublishedChanges: boolean;
+  /**
+   * Each products section of the working copy, in page order, with which of
+   * its picks readers are shown now and why each other one is not; empty when
+   * the working copy has no products section.
+   */
+  productPicks: LandingProductsSectionPicks[];
 }
 
 /** A copy's `image_paths` column, as the database derives it. */

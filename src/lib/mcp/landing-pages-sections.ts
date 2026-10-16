@@ -287,6 +287,32 @@ export const MCP_LANDING_SECTIONS: {
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
   },
+  products: {
+    about:
+      "Products from the shop, each drawn as the shop's own card — name, schedule, ages, price, seats and whether registration is open, all live — in a carousel, in the order picked, each card linking to the product's shop page. Pick at least one, each once; there is no maximum, but a handful reads best. Find them with list_shop_products. Picks go stale every term: a product that has ended, or is taken off the shop's listing, or is not one the shop sells (a municipality club), is simply not drawn, and a section with none of its picks listed is not drawn at all, so readers never see a stale card. get_landing_page reports each products section's picks under productPicks — shown or not, and why not — so check it and swap in next term's products when a term ends. A pick no product has is refused when the structure is saved. The heading, eyebrow and intro are optional words, never required.",
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("products"),
+      productIds: z
+        .array(landingId.describe("A product's id, as list_shop_products returns it."))
+        .min(1, "A products section picks at least one product")
+        .refine(
+          (ids) => new Set(ids).size === ids.length,
+          "A products section names each product once",
+        )
+        .describe("The picked products, in the order their cards are shown."),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading. Optional."),
+      intro: plainText.describe("A line under the heading. Optional."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "products", productIds: [ANY_ID] },
+      withOptional: {},
+    },
+    itemIds: () => null,
+  },
   faq: {
     about:
       "One to twenty questions and answers. Search engines read it as the page's FAQ, so write real questions a reader asks.",
@@ -422,7 +448,7 @@ function requiredPaths(section: LandingSection): string[] {
 /**
  * The required-text rule of one type, in words, read off the rule itself: the
  * fields a bare section of the type needs, then each one an optional shared
- * field adds.
+ * field adds — or "none" for a type that requires no words.
  */
 export function describeRequiredWords(type: LandingSectionType): string {
   const { minimal, withOptional } = MCP_LANDING_SECTIONS[type].ruleSamples;
@@ -432,7 +458,8 @@ export function describeRequiredWords(type: LandingSectionType): string {
       .filter((path) => !always.includes(path))
       .map((path) => `${path} when ${field} is set`),
   );
-  return [...always, ...conditional].join("; ");
+  const required = [...always, ...conditional];
+  return required.length === 0 ? "none" : required.join("; ");
 }
 
 /** What the arrangement rule refuses, from the rule itself. */

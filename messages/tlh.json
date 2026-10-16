@@ -838,6 +838,21 @@
           "inSection": "{number} ’ay’ ({type}): {field}",
           "inItem": "{number} ’ay’ ({type}), {item}: {field}",
           "goneSection": "Sapvam ’ay’ tu’lu’be’: {field}"
+        },
+        "products": {
+          "heading": "Dochmey wIwIvta’bogh",
+          "section": "bID {number} ({type})",
+          "allShown": "{count, plural, one {Doch ’agh.} other {Dochmey Hoch # ’agh.}}",
+          "noneShown": "Doch pagh ’agh, bID leghbe’ laDwI’pu’. Dochmey chu’ yIwIv!",
+          "someHidden": "{shown}/{total} ’agh. ’aghbe’:",
+          "unnamed": "Doch pongHa’",
+          "hiddenItem": "{name}: {reasons}",
+          "reasons": {
+            "gone": "Doch tu’lu’be’",
+            "notInShop": "ngevwI’ Doch ghaHbe’",
+            "notListed": "ngevwI’Daq So’lu’",
+            "ended": "rIn"
+          }
         }
       },
       "status": {
@@ -888,7 +903,8 @@
         "points": "Dochmey",
         "steps": "mIwmey",
         "faq": "ghel ’ej jang",
-        "cta": "ra’ ghItlh"
+        "cta": "ra’ ghItlh",
+        "products": "Dochmey ngevlu’bogh"
       },
       "items": {
         "image": "mIllogh {number}",
@@ -3420,6 +3436,10 @@
     "empty": {
       "noProducts": "DaH pagh tu’lu’ — chu’ chenmoH.",
       "noMatches": "pagh Sam. tetlh yISay’moH."
+    },
+    "rail": {
+      "previous": "ret",
+      "next": "veb"
     }
   },
   "productAudience": {

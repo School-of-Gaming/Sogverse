@@ -5,6 +5,7 @@ export type {
   AdminProductListFilters,
   AdminProductListPage,
   ProductLocationRow,
+  ProductListingFactsRow,
   ProductDetailRow,
   ProductAdminDetailRow,
   ProductTranslationInput,

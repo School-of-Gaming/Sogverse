@@ -31,9 +31,10 @@ const {
 const { landingPageMetadata } = await import(
   "@/components/landing-pages/landing-page-metadata"
 );
-const { landingPageJsonLd } = await import(
+const { landingPageJsonLd, landingProductListsJsonLd } = await import(
   "@/components/landing-pages/landing-page-json-ld"
 );
+const { browseRow } = await import("../../../mocks/product-browse-row");
 const { landingStructuredParts } = await import(
   "@/components/landing-pages/landing-section-seo"
 );
@@ -273,6 +274,98 @@ describe("landingPageJsonLd", () => {
     expect(plain["@type"]).toBe("WebPage");
     expect(plain).not.toHaveProperty("mainEntity");
     expect(plain).not.toHaveProperty("primaryImageOfPage");
+  });
+});
+
+describe("landingProductListsJsonLd", () => {
+  const PICKS = "99999999-9999-4999-8999-999999999999";
+  const MORE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const P1 = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c01";
+  const P2 = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c02";
+  const P3 = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c03";
+  const LISTING = [
+    browseRow(P1, {
+      product_translations: [
+        { locale: "en", name: "Roblox club", short_description: "" },
+        { locale: "fi", name: "Roblox-kerho", short_description: "" },
+      ],
+    }),
+    browseRow(P2, { name: "Minecraft camp" }),
+  ];
+  const page = (sections: LocalizedLandingPage["sections"]) => ({ sections, sectionTexts: {} });
+
+  it("lists each products section's listed picks, in the admin's order, by name and page", () => {
+    const lists = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "en",
+      page: page([
+        { id: HERO, type: "hero" },
+        { id: PICKS, type: "products", productIds: [P2, P3, P1] },
+      ]),
+      listing: LISTING,
+    });
+    expect(lists).toEqual([
+      {
+        sectionId: PICKS,
+        list: {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Minecraft camp", url: `https://sog.test/en/shop/${P2}` },
+            { "@type": "ListItem", position: 2, name: "Roblox club", url: `https://sog.test/en/shop/${P1}` },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("names each product as its card does in the page's locale, at its canonical page", () => {
+    const [{ list }] = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "fi",
+      page: page([{ id: PICKS, type: "products", productIds: [P1, P2] }]),
+      listing: LISTING,
+    });
+    expect(list.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Roblox-kerho", url: `https://sog.test/fi/kauppa/${P1}` },
+      // Written in English alone, so its page canonicalises to the English one.
+      { "@type": "ListItem", position: 2, name: "Minecraft camp", url: `https://sog.test/en/shop/${P2}` },
+    ]);
+  });
+
+  it("repeats none of a product's own markup", () => {
+    const [{ list }] = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "en",
+      page: page([{ id: PICKS, type: "products", productIds: [P1] }]),
+      listing: LISTING,
+    });
+    expect(Object.keys(list.itemListElement[0]).sort()).toEqual(["@type", "name", "position", "url"]);
+  });
+
+  it("lists nothing for a section with none listed, and nothing at all without the listing", () => {
+    const sections = [
+      { id: PICKS, type: "products" as const, productIds: [P3] },
+      { id: MORE, type: "products" as const, productIds: [P1] },
+    ];
+    expect(
+      landingProductListsJsonLd({ siteUrl: "", locale: "en", page: page(sections), listing: LISTING }).map(
+        (entry) => entry.sectionId,
+      ),
+    ).toEqual([MORE]);
+    expect(
+      landingProductListsJsonLd({ siteUrl: "", locale: "en", page: page(sections), listing: null }),
+    ).toEqual([]);
+  });
+
+  it("leaves the page's own node as it was", () => {
+    const withPicks = landingPageJsonLd({
+      siteUrl: "https://sog.test",
+      canonicalPath: "/en/discover/x",
+      page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }, { id: PICKS, type: "products", productIds: [P1] }] },
+    });
+    expect(withPicks["@type"]).toBe("WebPage");
+    expect(JSON.stringify(withPicks)).not.toContain(P1);
   });
 });
 

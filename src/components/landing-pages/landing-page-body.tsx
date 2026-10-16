@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import type { ProductRailPrefetch } from "@/components/public/products/product-rail-selection";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import type {
@@ -19,6 +20,12 @@ export interface LandingPageBodyProps {
   textLocale: SupportedLocale;
   /** The page's locale — the URL's. */
   locale: SupportedLocale;
+  /**
+   * The shop's listing and seat counts for the page's products sections, read
+   * on the server (`prefetchLandingProducts`); null when the page has none or
+   * the read failed.
+   */
+  products: ProductRailPrefetch | null;
 }
 
 /**
@@ -37,10 +44,12 @@ export function LandingPageBody({
   sectionTexts,
   textLocale,
   locale,
+  products,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
+    products,
   };
   return (
     // exact-locale: marks text written in another language than the page with lang

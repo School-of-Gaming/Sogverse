@@ -9,7 +9,10 @@ import {
   SUPPORTED_LOCALES,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
+import {
+  describeMissingWords,
+  landingSectionName,
+} from "@/lib/landing-pages/describe-missing";
 import {
   landingMarkdownValues,
   landingSections,
@@ -45,6 +48,7 @@ import {
   landingPublishForecast,
   landingSlug,
   type AdminLandingPage,
+  type LandingPickReason,
 } from "@/services/landing-pages";
 import {
   LANDING_SLUG_MAX_LENGTH,
@@ -303,6 +307,34 @@ function publishForecast(page: AdminLandingPage, origin: string) {
   };
 }
 
+/** Why a picked product is not shown, as the AI app reads it. */
+const PICK_REASON_WORDS: { readonly [Reason in LandingPickReason]: string } = {
+  gone: "no product has this id any more",
+  notInShop: "it is not a product the shop sells (a municipality club)",
+  notListed: "it is not listed in the shop",
+  ended: "its term has ended",
+};
+
+/**
+ * Each products section's picks: shown now or not, and every reason a hidden
+ * one is not — read from the working copy, which the next publish puts live.
+ */
+function productPicks(page: AdminLandingPage) {
+  return page.productPicks.map((section) => ({
+    section: landingSectionName(section.sectionNumber, "products"),
+    sectionId: section.sectionId,
+    shown: section.shownCount,
+    picked: section.picks.length,
+    drawn: section.shownCount > 0,
+    picks: section.picks.map((pick) => ({
+      productId: pick.productId,
+      names: pick.names,
+      shown: pick.shown,
+      notShownBecause: pick.reasons.map((reason) => PICK_REASON_WORDS[reason]),
+    })),
+  }));
+}
+
 function lastSaved(draft: AdminLandingPage["draft"]) {
   return { at: draft.updatedAt, by: draft.lastSavedBy, via: draft.lastSavedVia };
 }
@@ -333,6 +365,7 @@ function pageView(page: AdminLandingPage, origin: string) {
       previewLink: previewLink(origin, draft.id, version.locale),
     })),
     hasUnpublishedChanges: page.hasUnpublishedChanges,
+    productPicks: productPicks(page),
     publish: publishForecast(page, origin),
     live:
       publication === null
@@ -400,7 +433,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it was taken off the shop's listing, it is not a product the shop sells) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -504,6 +537,7 @@ export function registerLandingPageTools(server: McpServer): void {
           address: slugLink(origin, version?.slug ?? "", input.locale),
           complete: version !== undefined && version.missing.length === 0,
           missing: version === undefined ? [] : missingWords(page, version),
+          productPicks: productPicks(page),
           previewLink: previewLink(origin, id, input.locale),
           adminLink: adminLink(origin, id),
         });
@@ -514,7 +548,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, and each language's completeness under the new structure. Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({ pageId, sections: mcpLandingStructure }),
         z.object({ pageId, sections: mcpLandingStructure }),
@@ -538,6 +572,7 @@ export function registerLandingPageTools(server: McpServer): void {
             .filter((section) => !kept.has(section.id))
             .map((section) => ({ id: section.id, type: section.type })),
           languages: languages(after),
+          productPicks: productPicks(after),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
           publish: publishForecast(after, origin),
         });

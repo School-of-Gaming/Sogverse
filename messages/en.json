@@ -794,6 +794,21 @@
           "inSection": "Section {number} ({type}): {field}",
           "inItem": "Section {number} ({type}), {item}: {field}",
           "goneSection": "A section no longer on the page: {field}"
+        },
+        "products": {
+          "heading": "Picked products",
+          "section": "Section {number} ({type})",
+          "allShown": "{count, plural, one {Its product is shown.} other {All # of its products are shown.}}",
+          "noneShown": "None of its products is shown, so readers don’t see this section. Swap in products the shop lists.",
+          "someHidden": "{shown} of {total} shown. Not shown:",
+          "unnamed": "A product with no name",
+          "hiddenItem": "{name}: {reasons}",
+          "reasons": {
+            "gone": "no product has this id any more",
+            "notInShop": "not a product the shop sells",
+            "notListed": "not listed in the shop",
+            "ended": "ended"
+          }
         }
       },
       "status": {
@@ -844,7 +859,8 @@
         "points": "Points",
         "steps": "Steps",
         "faq": "Questions and answers",
-        "cta": "Call to action"
+        "cta": "Call to action",
+        "products": "Products"
       },
       "items": {
         "image": "Picture {number}",
@@ -3380,6 +3396,10 @@
     "empty": {
       "noProducts": "Nothing here yet — new ones are on the way.",
       "noMatches": "No matches. Try clearing your filters."
+    },
+    "rail": {
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "productAudience": {

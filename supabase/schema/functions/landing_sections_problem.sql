@@ -80,6 +80,22 @@ BEGIN
         IF NOT public.landing_button_is_valid(v_section->'button') THEN
           RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
+      WHEN 'products' THEN
+        -- At least one pick and no upper bound: the carousel scrolls.
+        IF jsonb_typeof(v_section->'productIds') IS DISTINCT FROM 'array'
+           OR jsonb_array_length(v_section->'productIds') = 0 THEN
+          RETURN format('Section %s needs at least one product', v_id);
+        END IF;
+        v_item_ids := ARRAY[]::text[];
+        FOR v_item IN SELECT e FROM jsonb_array_elements(v_section->'productIds') AS t(e) LOOP
+          IF jsonb_typeof(v_item) IS DISTINCT FROM 'string' OR v_item #>> '{}' !~ c_uuid THEN
+            RETURN format('Every product of section %s must be a product''s lowercase uuid', v_id);
+          END IF;
+          IF v_item #>> '{}' = ANY (v_item_ids) THEN
+            RETURN format('Section %s names the product %s twice', v_id, v_item #>> '{}');
+          END IF;
+          v_item_ids := array_append(v_item_ids, v_item #>> '{}');
+        END LOOP;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
@@ -127,7 +143,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a picked product exists is check_landing_product_picks''.';
 
 
 --

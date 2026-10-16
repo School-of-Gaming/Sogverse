@@ -1,6 +1,8 @@
+import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
+  landingPickedProductIds,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
@@ -9,6 +11,7 @@ import {
 } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
+import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 import type { AppSupabaseClient } from "@/types";
 import {
@@ -31,6 +34,10 @@ import {
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
 import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import {
+  landingProductPicks,
+  type LandingProductsSectionPicks,
+} from "./landing-pages.product-picks";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
 const UUID =
@@ -220,7 +227,9 @@ export class LandingPageService {
    * One page's working copy and its published copy, or `null` when no page
    * has that id. An id that is not a UUID is answered as not found without a
    * query. Each draft version carries what it still needs before publishing
-   * takes it, by the TypeScript half of the required-text rule.
+   * takes it, by the TypeScript half of the required-text rule; each products
+   * section of the working copy, which of its picks readers are shown now and
+   * why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -276,7 +285,32 @@ export class LandingPageService {
         publishable(data),
         data.publication,
       ),
+      productPicks: await this.productPicksOf(sections),
     };
+  }
+
+  /**
+   * Each products section's picks, shown or not and why: the shop's listing
+   * asked about the picks — the answer the public page draws by — and the
+   * picks' own rows for the reasons. A structure with no products section
+   * reads nothing.
+   */
+  private async productPicksOf(
+    sections: readonly LandingSection[],
+  ): Promise<LandingProductsSectionPicks[]> {
+    const ids = landingPickedProductIds(sections);
+    if (ids.length === 0) return [];
+    const products = new ProductsService(this.supabase);
+    const [listed, facts] = await Promise.all([
+      products.listVisibleListingAmong(SHOP_PRODUCT_TYPES, ids),
+      products.getListingFacts(ids),
+    ]);
+    return landingProductPicks(
+      sections,
+      new Set(listed.map((row) => row.id)),
+      facts,
+      new Date(),
+    );
   }
 
   private async oauthClientNames(

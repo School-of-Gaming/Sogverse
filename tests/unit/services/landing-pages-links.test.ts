@@ -77,7 +77,7 @@ describe("canonicaliseLandingLinks", () => {
       { resolver, siteUrl: SITE },
     );
     const [hero] = result.sections ?? [];
-    const cta = result.sections?.at(-1);
+    const cta = result.sections?.find((section) => section.type === "cta");
     expect(hero).toMatchObject({ button: { kind: "internal", path: `/library/${ARTICLE}` } });
     expect(cta).toMatchObject({ button: { kind: "external", url: "https://example.com/x" } });
   });
@@ -88,7 +88,7 @@ describe("canonicaliseLandingLinks", () => {
       section.type === "cta" ? { ...section, button: { kind: "email", to: "hello@sog.gg" } } : section,
     );
     const result = await canonicaliseLandingLinks(write(sections), { resolver: lookups, siteUrl: SITE });
-    expect(result.sections?.at(-1)).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
+    expect(result.sections?.find((section) => section.type === "cta")).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
     expect(lookups).not.toHaveBeenCalled();
   });
 

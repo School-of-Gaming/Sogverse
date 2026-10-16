@@ -794,6 +794,21 @@
           "inSection": "Osio {number} ({type}): {field}",
           "inItem": "Osio {number} ({type}), {item}: {field}",
           "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+        },
+        "products": {
+          "heading": "Valitut tuotteet",
+          "section": "Osio {number} ({type})",
+          "allShown": "{count, plural, one {Sen tuote näkyy.} other {Kaikki sen # tuotetta näkyvät.}}",
+          "noneShown": "Mikään sen tuotteista ei näy, joten lukijat eivät näe tätä osiota. Vaihda tilalle tuotteita, jotka ovat kaupassa.",
+          "someHidden": "{shown}/{total} näkyy. Ei näy:",
+          "unnamed": "Nimetön tuote",
+          "hiddenItem": "{name}: {reasons}",
+          "reasons": {
+            "gone": "tällä tunnisteella ei ole enää tuotetta",
+            "notInShop": "ei ole kaupassa myytävä tuote",
+            "notListed": "ei ole esillä kaupassa",
+            "ended": "päättynyt"
+          }
         }
       },
       "status": {
@@ -844,7 +859,8 @@
         "points": "Kohdat",
         "steps": "Vaiheet",
         "faq": "Kysymykset ja vastaukset",
-        "cta": "Toimintakehote"
+        "cta": "Toimintakehote",
+        "products": "Tuotteet"
       },
       "items": {
         "image": "Kuva {number}",
@@ -3380,6 +3396,10 @@
     "empty": {
       "noProducts": "Täällä ei ole vielä mitään – uusia on tulossa.",
       "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
+    },
+    "rail": {
+      "previous": "Edelliset",
+      "next": "Seuraavat"
     }
   },
   "productAudience": {

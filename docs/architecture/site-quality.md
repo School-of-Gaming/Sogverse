@@ -157,7 +157,8 @@ Each one exists to make the posture above hold by construction rather than by me
   a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
   `@id`, an `Article` on each Library article, whose `publisher` names it the same
   way, a `WebPage` on each landing page, publisher the same, that becomes a `FAQPage`
-  when a section asks questions — each section type declares its contribution in one
+  when a section asks questions, with an `ItemList` beside it for each section promoting
+  shop products — each section type declares its contribution in one
   exhaustive map, so a new type has to say what it adds, if only nothing — and on each
   promoted product page a `Course` for a club — one `CourseInstance`
   whose weekly `courseSchedule` is the club's slots in its own timezone — or an `Event`
@@ -170,8 +171,10 @@ Each one exists to make the posture above hold by construction rather than by me
   a site's street address is staff data and the page never shows it. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
-  only the shop's listing can reach the `ItemList` because only that is ever prefetched
-  for the grid. Each item carries its position, its name and its page's canonical
+  only the shop's listing can reach an `ItemList` because only that is ever prefetched
+  for the grid, or for a landing page's products section, whose list names exactly the
+  cards it draws: the admin's picks the listing holds, in their order, and none of a
+  product's own markup. Each item carries its position, its name and its page's canonical
   URL — the address of the locale whose words that page shows at the shop's locale, so
   an item never points at a page that canonicalises elsewhere, while the card's own link
   stays at the shop's locale for the reader. Every one of those pages is promoted,

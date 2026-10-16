@@ -11,6 +11,7 @@ import {
   type OAuthGrant,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import type { CatalogueImageInsert } from "@/types";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contracts";
@@ -33,15 +34,17 @@ import { requiredTextCases } from "../helpers/landing-required-text-cases";
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
  * removal (a trigger) reaching both copies; the record of who last saved
- * and through which AI app; and the SQL half of the required-text rule held
- * equal to the TypeScript half.
+ * and through which AI app; the SQL half of the required-text rule held
+ * equal to the TypeScript half; and the products a products section picks —
+ * an id no product has refused at save, and the admin read saying which picks
+ * the shop's listing shows.
  *
  * No landing page table carries a write grant for any Data API role, so there
  * is no write-IDOR case to make: a direct write is refused at the grant, which
  * is asserted here once per table. Each wrong role is tried on every RPC with
  * a payload an admin would succeed with.
  *
- * Fixture UUIDs 834-83b (see the allocation registry in product-helpers.ts).
+ * Fixture UUIDs 834-83f (see the allocation registry in product-helpers.ts).
  * Every assertion is scoped to this file's own rows.
  */
 
@@ -61,6 +64,14 @@ const PRODUCT_PICTURE = "00000000-0000-0000-0000-000000000839";
 const PIC_DOOMED = "00000000-0000-0000-0000-00000000083a";
 const PIC_DOOMED_TOO = "00000000-0000-0000-0000-00000000083b";
 const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO];
+
+/** Products a products section picks: one the shop lists, one unlisted, one ended. */
+const LISTED = "00000000-0000-0000-0000-00000000083c";
+const UNLISTED = "00000000-0000-0000-0000-00000000083e";
+const ENDED = "00000000-0000-0000-0000-00000000083f";
+/** A product id that must NEVER exist. */
+const NO_PRODUCT = "00000000-0000-0000-0000-00000000083d";
+const PICKS = "00000000-0000-4000-8000-0000000008a8";
 
 /** Section and item ids inside the fixture structures. */
 const HERO = "00000000-0000-4000-8000-0000000008a6";
@@ -231,6 +242,7 @@ describe("landing pages", () => {
 
   afterAll(async () => {
     await cleanUp();
+    await deleteTestProducts(admin, [LISTED, UNLISTED, ENDED]);
   });
 
   // -------------------------------------------------------------------------
@@ -837,6 +849,117 @@ describe("landing pages", () => {
   // -------------------------------------------------------------------------
   // Pictures
   // -------------------------------------------------------------------------
+
+  describe("picked products", () => {
+    /** The fixture structure with a products section after the hero. */
+    const withPicks = (productIds: string[]): LandingSection[] => {
+      const [hero, cta] = structure();
+      return [hero, { id: PICKS, type: "products", productIds }, cta];
+    };
+
+    beforeAll(async () => {
+      await deleteTestProducts(admin, [LISTED, UNLISTED, ENDED]);
+      await createTestProduct(admin, { id: LISTED, seatCount: null });
+      await createTestProduct(admin, { id: UNLISTED, seatCount: null, isVisible: false });
+      await createTestProduct(admin, {
+        id: ENDED,
+        seatCount: null,
+        startDate: "2025-01-06",
+        endDate: "2025-06-02",
+      });
+    });
+
+    it("saves picks as structure, in order, and requires no words of them", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, withPicks([ENDED, LISTED]));
+      const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_A).single();
+      expect(data?.sections).toEqual(withPicks([ENDED, LISTED]));
+      // The English version stays complete: a products section asks for no words.
+      expect((await draftVersions(PAGE_A))[0].is_complete).toBe(true);
+    });
+
+    it("refuses a pick no product has, naming the section and the id, and saves nothing", async () => {
+      await reseed();
+      const { error } = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: withPicks([LISTED, NO_PRODUCT]),
+      });
+      expect(error?.code).toBe("23503");
+      expect(error?.message).toBe(
+        `Section 2 picks the product ${NO_PRODUCT}, and no product has that id`,
+      );
+      const created = await adminAuth.rpc("create_landing_page", {
+        p_sections: withPicks([NO_PRODUCT]),
+        p_versions: [{ locale: "en", title: "Fixture: no product" }],
+      });
+      expect(created.error?.code).toBe("23503");
+      const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_A).single();
+      expect(data?.sections).toEqual(structure());
+    });
+
+    it("refuses a section with no picks, a pick twice, or a pick that is not an id", async () => {
+      for (const productIds of [[], [LISTED, LISTED], ["a-club"]]) {
+        const { error } = await adminAuth.rpc("save_landing_page_structure", {
+          p_id: PAGE_A,
+          p_sections: withPicks(productIds),
+        });
+        expect(error?.code, JSON.stringify(productIds)).toBe("23514");
+      }
+    });
+
+    it("checks only the picks a save adds, so a pick gone since never blocks the page's other writes", async () => {
+      await reseed();
+      // A minted id, so no fixture range is spent on a product deleted mid-case.
+      const doomed = await createTestProduct(admin, { seatCount: null });
+      try {
+        await service.saveStructure(PAGE_A, withPicks([doomed, LISTED]));
+        await deleteTestProducts(admin, [doomed]);
+        // Reordering keeps the stale pick and adds nothing new: accepted.
+        await service.saveStructure(PAGE_A, withPicks([LISTED, doomed]));
+        // A catalogue replace rewrites the structure around it: accepted.
+        const { error } = await adminAuth.rpc("repoint_landing_images", {
+          p_from: PIC_A,
+          p_to: PIC_B,
+        });
+        expect(error).toBeNull();
+        // It still reads as gone.
+        const page = await service.getAdminPage(PAGE_A);
+        expect(page?.productPicks[0].picks.map((pick) => [pick.productId, pick.reasons])).toEqual([
+          [LISTED, []],
+          [doomed, ["gone"]],
+        ]);
+      } finally {
+        await deleteTestProducts(admin, [doomed]);
+      }
+    });
+
+    it("reads which picks the shop's listing shows, and why each other one is not", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, withPicks([UNLISTED, LISTED, ENDED]));
+      const page = await service.getAdminPage(PAGE_A);
+      expect(page?.productPicks).toEqual([
+        {
+          sectionId: PICKS,
+          sectionNumber: 2,
+          shownCount: 1,
+          picks: [
+            expect.objectContaining({ productId: UNLISTED, shown: false, reasons: ["notListed"] }),
+            expect.objectContaining({ productId: LISTED, shown: true, reasons: [] }),
+            expect.objectContaining({ productId: ENDED, shown: false, reasons: ["ended"] }),
+          ],
+        },
+      ]);
+    });
+
+    it("publishes a stale pick as it is: the published copy carries no product check", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, withPicks([ENDED]));
+      await service.publishPage(PAGE_A);
+      const live = await service.getPublishedPage(PAGE_A);
+      expect(live?.sections).toEqual(withPicks([ENDED]));
+      await service.unpublishPage(PAGE_A);
+    });
+  });
 
   describe("pictures from the image catalogue", () => {
     it("refuses a product picture, and one no longer in the catalogue", async () => {

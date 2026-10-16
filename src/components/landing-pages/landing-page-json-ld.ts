@@ -1,5 +1,9 @@
+import { productItemList } from "@/components/public/products/product-item-list";
+import { selectRailProducts } from "@/components/public/products/product-rail-selection";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { organizationId } from "@/lib/seo/organization";
+import type { ProductBrowseRow } from "@/types";
 import type { LocalizedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
 import { landingLeadPicture, landingStructuredParts } from "./landing-section-seo";
 
@@ -22,7 +26,8 @@ export interface LandingPageJsonLdInput {
  *   every questions section is its `mainEntity`, answered in plain text.
  * - **Each section type says what it contributes** (`LANDING_SECTION_SEO`):
  *   the hero its picture, as `primaryImageOfPage`; the questions sections
- *   their questions; the rest nothing.
+ *   their questions; the products sections a list of their own beside this
+ *   node (`landingProductListsJsonLd`); the rest nothing.
  * - The `name` and `description` are the version's title and summary, the
  *   same words as `<title>` and the meta description. `datePublished` is the
  *   day the page first went live, `dateModified` the day its live versions
@@ -76,4 +81,47 @@ export function landingPageJsonLd({
       name: "School of Gaming",
     },
   };
+}
+
+export interface LandingProductListsInput {
+  /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */
+  siteUrl: string;
+  /** The page's locale — the URL's, which the cards' names are read in. */
+  locale: SupportedLocale;
+  page: Pick<LocalizedLandingPage, "sections" | "sectionTexts">;
+  /**
+   * The shop's listing as the page read it (`prefetchLandingProducts`), or
+   * null when the read failed or the page has no products section.
+   */
+  listing: readonly ProductBrowseRow[] | null;
+}
+
+/**
+ * **The products a live landing page promotes, as one schema.org `ItemList`
+ * per products section** — each the shop listing page's list
+ * (`productItemList`): position, name and the product page's URL, and none of
+ * the product's own Course or Event markup, which stays on its page.
+ *
+ * Built from the same listing the cards are drawn from, by the same selection,
+ * so a list names exactly the cards the section shows, in the admin's order:
+ * a pick the shop no longer lists is in neither. A section with none listed
+ * contributes no list, and a failed listing read contributes none at all — an
+ * empty list would assert that nothing is on offer while the cards may still
+ * arrive. Each list is its own top-level node, beside the page's, as the shop
+ * grid's is beside the shop page's. Each comes with its section's id, for the
+ * page to key its blocks by.
+ */
+export function landingProductListsJsonLd({
+  siteUrl,
+  locale,
+  page,
+  listing,
+}: LandingProductListsInput) {
+  if (listing === null) return [];
+  return landingStructuredParts(page.sections, page.sectionTexts).flatMap((part) => {
+    if (part.kind !== "products") return [];
+    const shown = selectRailProducts(listing, { kind: "picks", productIds: part.productIds });
+    const list = productItemList(shown, locale, siteUrl);
+    return list === null ? [] : [{ sectionId: part.sectionId, list }];
+  });
 }

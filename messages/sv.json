@@ -794,6 +794,21 @@
           "inSection": "Avsnitt {number} ({type}): {field}",
           "inItem": "Avsnitt {number} ({type}), {item}: {field}",
           "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
+        },
+        "products": {
+          "heading": "Utvalda produkter",
+          "section": "Avsnitt {number} ({type})",
+          "allShown": "{count, plural, one {Dess produkt visas.} other {Alla # produkter visas.}}",
+          "noneShown": "Ingen av dess produkter visas, så läsarna ser inte det här avsnittet. Byt till produkter som finns i butiken.",
+          "someHidden": "{shown} av {total} visas. Visas inte:",
+          "unnamed": "En produkt utan namn",
+          "hiddenItem": "{name}: {reasons}",
+          "reasons": {
+            "gone": "ingen produkt har längre detta id",
+            "notInShop": "inte en produkt som butiken säljer",
+            "notListed": "inte listad i butiken",
+            "ended": "har avslutats"
+          }
         }
       },
       "status": {
@@ -844,7 +859,8 @@
         "points": "Punkter",
         "steps": "Steg",
         "faq": "Frågor och svar",
-        "cta": "Uppmaning"
+        "cta": "Uppmaning",
+        "products": "Produkter"
       },
       "items": {
         "image": "Bild {number}",
@@ -3380,6 +3396,10 @@
     "empty": {
       "noProducts": "Inget här ännu – nya är på väg.",
       "noMatches": "Inga träffar. Prova att rensa filtren."
+    },
+    "rail": {
+      "previous": "Föregående",
+      "next": "Nästa"
     }
   },
   "productAudience": {

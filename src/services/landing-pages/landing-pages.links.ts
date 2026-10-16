@@ -140,6 +140,7 @@ function buttonOf(section: LandingSection): ButtonTarget | undefined {
     case "image":
     case "points":
     case "steps":
+    case "products":
     case "faq":
       return undefined;
   }
@@ -154,6 +155,7 @@ function withButton(section: LandingSection, button: ButtonTarget): LandingSecti
     case "image":
     case "points":
     case "steps":
+    case "products":
     case "faq":
       return section;
   }

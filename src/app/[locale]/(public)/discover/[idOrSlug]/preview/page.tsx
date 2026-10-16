@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { prefetchLandingProducts } from "@/components/landing-pages/landing-page-products";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
@@ -27,7 +28,9 @@ export const metadata: Metadata = {
  * its own language; without one, the same fallback a
  * reader gets (English, then the first written). A version still being written
  * is shown as it stands, its unwritten words left out, since it is the one
- * being worked on.
+ * being worked on. Its products sections show what the live page would show
+ * now: the picks the shop lists, read with the admin's own session — which
+ * reads the same listing a reader's does.
  */
 export default async function LandingPagePreviewPage({
   params,
@@ -50,6 +53,8 @@ export default async function LandingPagePreviewPage({
   const version = resolveTranslation(draft.versions, locale);
   if (version === null) notFound();
 
+  const products = await prefetchLandingProducts(draft.sections);
+
   return (
     <LandingPageBody
       sections={draft.sections}
@@ -57,6 +62,7 @@ export default async function LandingPagePreviewPage({
       sectionTexts={version.sectionTexts}
       textLocale={version.locale}
       locale={locale}
+      products={products}
     />
   );
 }

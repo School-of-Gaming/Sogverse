@@ -83,6 +83,17 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "steps", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "steps", items: [{ id: ID2 }, { id: ID2 }] },
   ],
+  products: [
+    { id: ID, type: "products", productIds: [ID2] },
+    { id: ID, type: "products", productIds: [` ${ID2.toUpperCase()} `, ID3] },
+    { id: ID, type: "products", productIds: ids(40) },
+    { id: ID, type: "products", productIds: [] },
+    { id: ID, type: "products" },
+    { id: ID, type: "products", productIds: [ID2, ID2] },
+    { id: ID, type: "products", productIds: ["not a product"] },
+    { id: ID, type: "products", productIds: [{ id: ID2 }] },
+    { id: ID, type: "products", productIds: [ID2], items: [] },
+  ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "faq", items: ids(20).map((id) => ({ id })) },
@@ -129,6 +140,13 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
   steps: [
     { heading: "H", items: { [ID2]: { title: "T" } } },
     { items: { [ID2]: { icon: "star" } } },
+  ],
+  products: [
+    {},
+    { eyebrow: " This term ", heading: "Clubs in Espoo", intro: "Pick one." },
+    { heading: ["Clubs"] },
+    { items: {} },
+    { body: "Not a products field" },
   ],
   faq: [
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },
@@ -222,6 +240,7 @@ describe("the manual", () => {
       "heading; items.<item id>.question; items.<item id>.answer",
     );
     expect(describeRequiredWords("cta")).toBe("heading; buttonLabel");
+    expect(describeRequiredWords("products")).toBe("none");
   });
 
   it("names every type, the arrangement rule and the icons", () => {

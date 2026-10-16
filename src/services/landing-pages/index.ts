@@ -34,3 +34,10 @@ export {
   type LandingPublishForecast,
 } from "./landing-pages.forecast";
 export { canonicaliseLandingLinks, type LandingWrite } from "./landing-pages.links";
+export {
+  LANDING_PICK_REASONS,
+  landingProductPicks,
+  type LandingPickReason,
+  type LandingProductPick,
+  type LandingProductsSectionPicks,
+} from "./landing-pages.product-picks";

@@ -28,6 +28,7 @@ export const CASE_IDS = {
   steps: id(0x1005),
   faq: id(0x1006),
   cta: id(0x1007),
+  products: id(0x1008),
   picture: id(0x2001),
   pictureTwo: id(0x2002),
   imageItemA: id(0x3001),
@@ -37,6 +38,8 @@ export const CASE_IDS = {
   stepA: id(0x3005),
   stepB: id(0x3006),
   faqA: id(0x3007),
+  productA: id(0x4001),
+  productB: id(0x4002),
 } as const;
 
 const I = CASE_IDS;
@@ -74,6 +77,7 @@ export function everySection(): LandingSection[] {
       type: "cta",
       button: { kind: "external", url: "https://example.com" },
     },
+    { id: I.products, type: "products", productIds: [I.productA, I.productB] },
   ];
 }
 
@@ -124,6 +128,11 @@ export function everyText(): Texts {
         [I.stepA]: { title: "Sign up", body: "Pick a club." },
         [I.stepB]: { title: "Play", body: "Join the session." },
       },
+    },
+    [I.products]: {
+      eyebrow: "This term",
+      heading: "Clubs near you",
+      intro: "Online and in person.",
     },
     [I.faq]: {
       heading: "Questions",
@@ -264,6 +273,22 @@ export function requiredTextCases(): RequiredTextCase[] {
         `sections.${I.faq}.items.${I.faqA}.question`,
         `sections.${I.faq}.items.${I.faqA}.answer`,
       ],
+    },
+    {
+      name: "a products section with no words at all is complete: its words are optional",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: Object.fromEntries(
+        Object.entries(everyText()).filter(([key]) => key !== I.products),
+      ),
+      expected: [],
+    },
+    {
+      name: "a products section's optional words left blank are not asked for",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: { ...everyText(), [I.products]: { eyebrow: "", heading: " ", intro: 7 } },
+      expected: [],
     },
     {
       name: "text for a section the structure does not hold is ignored",

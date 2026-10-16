@@ -4,6 +4,7 @@ import { faqSection } from "./faq";
 import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
+import { productsSection } from "./products";
 import { stepsSection } from "./steps";
 import { textSection } from "./text";
 import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
@@ -31,6 +32,7 @@ export const LANDING_SECTION_TYPES = [
   "image",
   "points",
   "steps",
+  "products",
   "faq",
   "cta",
 ] as const;
@@ -43,6 +45,7 @@ export const LANDING_SECTIONS = {
   image: imageSection,
   points: pointsSection,
   steps: stepsSection,
+  products: productsSection,
   faq: faqSection,
   cta: ctaSection,
 } as const satisfies { [Type in LandingSectionType]: { type: Type } };
@@ -54,6 +57,7 @@ export const landingSection = z.discriminatedUnion("type", [
   imageSection.section,
   pointsSection.section,
   stepsSection.section,
+  productsSection.section,
   faqSection.section,
   ctaSection.section,
 ]);
@@ -64,6 +68,17 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
   LandingSection,
   { type: Type }
 >;
+
+/**
+ * Every product the structure's products sections pick, each once, in page
+ * order â€” what one read of the shop's listing has to cover for the page.
+ */
+export function landingPickedProductIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) =>
+    section.type === "products" ? section.productIds : [],
+  );
+  return [...new Set(ids)];
+}
 
 /** One section's words in one language, whichever type it is. */
 export type LandingSectionText = {
@@ -151,6 +166,8 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return pointsSection.missingText(section, text);
     case "steps":
       return stepsSection.missingText(section, text);
+    case "products":
+      return productsSection.missingText();
     case "faq":
       return faqSection.missingText(section, text);
     case "cta":
@@ -246,6 +263,7 @@ export { faqSection } from "./faq";
 export { heroSection } from "./hero";
 export { imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
+export { productsSection } from "./products";
 export { stepsSection } from "./steps";
 export { LANDING_IMAGE_SIDES, textSection } from "./text";
 export {
