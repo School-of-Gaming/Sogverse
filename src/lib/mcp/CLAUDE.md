@@ -50,6 +50,9 @@ they do for the admin in the browser. A tool reads who is calling with `readMcpC
 The one exception is the bytes of an uploaded picture, which go to its purpose's bucket on
 the service-role client exactly as the image catalogue's upload route sends them — that
 bucket has no other writer — while the catalogue row is still written on the admin's client.
+The analytics tools also read Vercel on the server's own analytics token, as the admin
+Analytics page does; that token never reaches the database, and its signups still read on
+the admin's client.
 
 ## Adding tools
 

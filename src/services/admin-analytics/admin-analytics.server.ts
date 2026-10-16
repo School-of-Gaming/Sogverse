@@ -6,6 +6,7 @@ import { cache } from "react";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
 import { walkPages } from "@/lib/supabase/paging";
 import { createClient } from "@/lib/supabase/server";
+import type { AppSupabaseClient } from "@/types";
 import {
   REQUEST_LOG_DAYS,
   VercelAnalyticsClient,
@@ -25,6 +26,7 @@ import {
   buildCampaigns,
   buildDayVisits,
   buildLandingPages,
+  buildPathViews,
   buildRoutes,
   daysOf,
   localePathFilter,
@@ -34,12 +36,15 @@ import {
   type AnalyticsCacheKey,
   type AnalyticsResult,
   type BreakdownRow,
+  type CampaignLabels,
   type CampaignRow,
   type LandingPageEntry,
   type LandingPageRow,
+  type PathViewsRow,
   type RouteRow,
   type ServedPageLoads,
   type SignupTally,
+  type TrafficPath,
   type WebAnalyticsOverview,
 } from "./admin-analytics.build";
 
@@ -61,7 +66,10 @@ import {
  * standing, and the other way round.
  *
  * The page is behind the proxy's admin gate, and its route checks the role
- * again before calling anything here.
+ * again before calling anything here. The MCP analytics tools
+ * (`src/lib/mcp/analytics.ts`) read through these same functions behind the
+ * MCP gate, handing in the admin's own token-bound client where a read touches
+ * the database; the page leaves it out and reads on its own session.
  */
 
 /** Views on production only, stated on every filter rather than left to the endpoint's default. */
@@ -128,13 +136,48 @@ async function vercelRead<T>(
 // Web Analytics: consenting visitors only
 // ---------------------------------------------------------------------------
 
-/** Pageviews and visitors per UTC day, and across the whole range. */
+/** What a Web Analytics read can be narrowed to: some pages, and campaign labels. */
+export interface TrafficFilter extends CampaignLabels {
+  paths: readonly TrafficPath[];
+}
+
+/**
+ * The whole OData filter for `filter`: production, any of the paths'
+ * addresses, and every campaign label given, matched exactly. A caller sizes
+ * it against `MAX_FILTER_LENGTH` before reading, since Vercel refuses a longer
+ * one.
+ */
+export function trafficFilterExpression(filter: TrafficFilter): string {
+  const addresses = [...new Set(filter.paths.flatMap((path) => path.addresses))];
+  const labels: [string, string | undefined][] = [
+    ["utmCampaign", filter.campaign],
+    ["utmSource", filter.source],
+    ["utmMedium", filter.medium],
+  ];
+  return [
+    PRODUCTION,
+    ...(addresses.length === 0
+      ? []
+      : [`(${addresses.map((address) => `requestPath eq ${odataString(address)}`).join(" or ")})`]),
+    ...labels.flatMap(([dimension, value]) =>
+      value === undefined ? [] : [`${dimension} eq ${odataString(value)}`],
+    ),
+  ].join(" and ");
+}
+
+/**
+ * Pageviews and visitors per UTC day, and across the whole range: the whole
+ * site, or what `filter` narrows it to, cached under its own filter.
+ */
 export function readWebAnalyticsOverview(
   range: { from: string; to: string },
   now: Date,
+  filter?: TrafficFilter,
 ): Promise<AnalyticsResult<WebAnalyticsOverview>> {
-  return vercelRead("overview", range, now, async (client, key) => {
-    const query = { filter: PRODUCTION, from: key.from, to: key.to };
+  const expression = filter === undefined ? PRODUCTION : trafficFilterExpression(filter);
+  const read = expression === PRODUCTION ? "overview" : `overview ${expression}`;
+  return vercelRead(read, range, now, async (client, key) => {
+    const query = { filter: expression, from: key.from, to: key.to };
     const [byDay, whole] = await Promise.all([
       client.aggregateVisits({ ...query, by: ["day"] }),
       // Grouped by environment, which the filter pins to one value: one row for
@@ -150,6 +193,26 @@ export function readWebAnalyticsOverview(
       visitors: whole[0]?.visitors ?? 0,
     };
   });
+}
+
+/** Each of `filter`'s paths' pageviews, address by address, under its campaign labels too. */
+export function readPathViews(
+  range: { from: string; to: string },
+  now: Date,
+  filter: TrafficFilter,
+): Promise<AnalyticsResult<PathViewsRow[]>> {
+  const expression = trafficFilterExpression(filter);
+  return vercelRead(`paths ${expression}`, range, now, async (client, key) =>
+    buildPathViews(
+      await client.aggregatePageviews({
+        by: ["requestPath"],
+        filter: expression,
+        from: key.from,
+        to: key.to,
+      }),
+      filter.paths,
+    ),
+  );
 }
 
 /** The top pages, one row per route across every language, each with its language split. */
@@ -262,6 +325,18 @@ export async function readServedPageLoads(
 // ---------------------------------------------------------------------------
 
 /**
+ * The client a database read runs on: the one handed in (an MCP tool's, bound
+ * to the admin's token), or else the page's own session.
+ *
+ * Awaited outside a read's `try`: building the session client reads cookies,
+ * and a dynamic-render signal travels as a thrown control-flow object that
+ * must not be reported as a failed read.
+ */
+async function databaseClient(client: AppSupabaseClient | undefined): Promise<AppSupabaseClient> {
+  return client ?? (await createClient());
+}
+
+/**
  * The parent accounts created in the range, counted per UTC day and per
  * campaign label triple. Read under the caller's own session — the admin policy
  * on `profiles` admits every row — and reduced to counts before anything leaves
@@ -269,11 +344,12 @@ export async function readServedPageLoads(
  * campaigns table both want it.
  */
 export const readSignups = cache(
-  async (from: string, to: string): Promise<AnalyticsResult<SignupTally>> => {
-    // Outside the `try`: building the server client reads cookies, and a
-    // dynamic-render signal travels as a thrown control-flow object that must
-    // not be reported as a failed read.
-    const supabase = await createClient();
+  async (
+    from: string,
+    to: string,
+    client?: AppSupabaseClient,
+  ): Promise<AnalyticsResult<SignupTally>> => {
+    const supabase = await databaseClient(client);
     try {
       const rows = await walkPages("admin analytics signups", (start, end) =>
         supabase
@@ -302,6 +378,7 @@ export const readSignups = cache(
 export async function readCampaigns(
   range: { from: string; to: string },
   now: Date,
+  client?: AppSupabaseClient,
 ): Promise<AnalyticsResult<CampaignRow[]>> {
   const [views, signups] = await Promise.all([
     vercelRead("campaigns", range, now, async (client, key) => {
@@ -312,7 +389,7 @@ export async function readCampaigns(
       ]);
       return { bySource, byMedium };
     }),
-    readSignups(range.from, range.to),
+    readSignups(range.from, range.to, client),
   ]);
   if (!views.ok) return views;
   if (!signups.ok) return signups;
@@ -349,6 +426,7 @@ async function readLandingPageDirectory(
 export async function readLandingPages(
   range: { from: string; to: string },
   now: Date,
+  client?: AppSupabaseClient,
 ): Promise<AnalyticsResult<LandingPageRow[]>> {
   const views = await vercelRead("landing", range, now, (client, key) =>
     client.aggregatePageviews({
@@ -359,8 +437,7 @@ export async function readLandingPages(
     }),
   );
   if (!views.ok) return views;
-  // Outside the `try`, for the same reason as the signups read.
-  const service = new LandingPageService(await createClient());
+  const service = new LandingPageService(await databaseClient(client));
   try {
     const pages = await readLandingPageDirectory(service);
     return { ok: true, data: buildLandingPages(views.data, pages), readAt: views.readAt };

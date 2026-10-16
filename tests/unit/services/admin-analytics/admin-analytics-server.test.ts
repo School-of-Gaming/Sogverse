@@ -67,13 +67,18 @@ vi.mock("@/services/landing-pages/landing-pages.service", () => ({
   },
 }));
 
+import { createFetchStubbedClient, postgrestPage } from "../../../mocks/postgrest-fetch";
+import { trafficPath } from "@/services/admin-analytics/admin-analytics.build";
 import {
   readCampaigns,
   readLandingPages,
+  readPathViews,
   readServedPageLoads,
   readSignups,
   readTopPages,
   readWebAnalyticsOverview,
+  trafficFilterExpression,
+  type TrafficFilter,
 } from "@/services/admin-analytics/admin-analytics.server";
 
 const NOW = new Date("2026-10-15T09:30:00Z");
@@ -364,5 +369,86 @@ describe("readLandingPages", () => {
         languages: [{ language: "fi", pageviews: 6 }],
       },
     ]);
+  });
+});
+
+describe("a filtered read, as the MCP analytics tools ask", () => {
+  const paths = ["/shop", "/fi/tutustu/pelaaja"].map((given) => {
+    const path = trafficPath(given);
+    if (path === null) throw new Error("unreachable");
+    return path;
+  });
+  const filter: TrafficFilter = { paths, campaign: "lynx's-a" };
+
+  it("narrows production to any of the paths' addresses and every label, quoted", () => {
+    expect(trafficFilterExpression(filter)).toBe(
+      "environment eq 'production' and (requestPath eq '/shop' or requestPath eq '/en/shop' or requestPath eq '/fi/kauppa' or requestPath eq '/sv/butik' or requestPath eq '/fr/boutique' or requestPath eq '/tlh/shop' or requestPath eq '/fi/tutustu/pelaaja') and utmCampaign eq 'lynx''s-a'",
+    );
+    expect(trafficFilterExpression({ paths: [] })).toBe("environment eq 'production'");
+  });
+
+  it("sends the filter to Vercel and caches it apart from the whole site's read", async () => {
+    answer((url) => {
+      const by = url.searchParams.getAll("by");
+      return json({
+        data:
+          by[0] === "day"
+            ? [{ timestamp: "2026-10-14T00:00:00.000Z", pageviews: 2, visitors: 1 }]
+            : [{ environment: "production", pageviews: 2, visitors: 1 }],
+      });
+    });
+
+    const narrowed = await readWebAnalyticsOverview(RANGE, NOW, filter);
+    expect(narrowed.ok && narrowed.data.pageviews).toBe(2);
+    expect(webAnalyticsCalls().map((url) => url.searchParams.get("filter"))).toEqual([
+      trafficFilterExpression(filter),
+      trafficFilterExpression(filter),
+    ]);
+
+    await readWebAnalyticsOverview(RANGE, NOW);
+    expect(webAnalyticsCalls()).toHaveLength(4);
+    expect(cache.options.map((option) => option.keyParts[1])).toEqual([
+      `overview ${trafficFilterExpression(filter)}`,
+      "overview",
+    ]);
+  });
+
+  it("reads each path's views address by address", async () => {
+    answer(() =>
+      json({
+        data: [
+          { requestPath: "/fi/kauppa", pageviews: 4 },
+          { requestPath: "/fi/tutustu/pelaaja", pageviews: 6 },
+        ],
+      }),
+    );
+    const result = await readPathViews(RANGE, NOW, filter);
+    expect(result.ok && result.data).toEqual([
+      { given: "/shop", pageviews: 4, addresses: [{ path: "/fi/kauppa", language: "fi", pageviews: 4 }] },
+      {
+        given: "/fi/tutustu/pelaaja",
+        pageviews: 6,
+        addresses: [{ path: "/fi/tutustu/pelaaja", language: "fi", pageviews: 6 }],
+      },
+    ]);
+    expect(webAnalyticsCalls()[0]?.searchParams.getAll("by")).toEqual(["requestPath"]);
+  });
+
+  it("reads signups on the client handed in, never the page's session", async () => {
+    const handedFetch = vi.fn<typeof fetch>(async () =>
+      postgrestPage(
+        [{ created_at: "2026-10-14T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null }],
+        { from: 0, total: 1 },
+      ),
+    );
+    // The page-session stub would answer two signups; the handed client one.
+    db.profiles = [
+      { created_at: "2026-10-13T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null },
+      { created_at: "2026-10-14T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null },
+    ];
+    const result = await readSignups(RANGE.from, RANGE.to, createFetchStubbedClient(handedFetch));
+    expect(result.ok && result.data.total).toBe(1);
+    expect(handedFetch).toHaveBeenCalled();
+    expect(db.calls).toEqual([]);
   });
 });

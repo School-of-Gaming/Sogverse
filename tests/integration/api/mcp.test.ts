@@ -173,6 +173,8 @@ describe("/api/mcp", () => {
       "set_landing_section_image",
       "open_landing_image_uploader",
       "upload_landing_image",
+      "get_analytics_summary",
+      "get_analytics_breakdown",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

@@ -77,7 +77,7 @@ const DAY_MS = 86_400_000;
 export const TRAFFIC_DATA_START = "2026-05-31";
 
 /** How far back Vercel keeps the counts on the team's plan: two years. */
-const TRAFFIC_RETENTION_YEARS = 2;
+export const TRAFFIC_RETENTION_YEARS = 2;
 
 /**
  * The earliest UTC day any Web Analytics count reaches back to at `now`: the

@@ -2,6 +2,12 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { PATHNAMES } from "@/i18n/pathnames";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
+import {
+  decodeExternalPathname,
+  localizeInternalPath,
+  splitLocalePrefix,
+  toInternalPathname,
+} from "@/lib/navigation/locale-path";
 
 /**
  * The pure half of the admin analytics page: which days a read covers, how
@@ -42,6 +48,11 @@ function parseDay(value: string | string[] | undefined): string | null {
   if (typeof value !== "string" || !BARE_DAY.test(value)) return null;
   const ms = Date.parse(`${value}T00:00:00Z`);
   return Number.isNaN(ms) || dayOf(ms) !== value ? null : value;
+}
+
+/** Whether `value` is a `YYYY-MM-DD` naming a real calendar day. */
+export function isCalendarDay(value: string): boolean {
+  return parseDay(value) !== null;
 }
 
 function dayMs(day: string): number {
@@ -638,4 +649,170 @@ export function buildBreakdown(
   return [...rows.values()].sort(
     (a, b) => b.pageviews - a.pageviews || compareText(a.value ?? "", b.value ?? ""),
   );
+}
+
+// ---------------------------------------------------------------------------
+// A question asked from outside the page: the MCP analytics tools
+// ---------------------------------------------------------------------------
+
+/** The range an AI app asks for: both end days, or the last N UTC days, today included. */
+export type RequestedRange = { from: string; to: string } | { lastDays: number };
+
+/**
+ * The days a question is answered over, or why it cannot be. Unlike the
+ * page's address, which falls back to its default, a question asked for days
+ * no count can exist on is refused, and a range narrowed to the days counts
+ * exist on says so in `adjusted`, so an answer is never read as covering days
+ * it does not.
+ */
+export type ResolvedRange =
+  | { ok: true; from: string; to: string; adjusted: string | null }
+  | { ok: false; reason: string };
+
+export function resolveRequestedRange(
+  requested: RequestedRange,
+  now: Date,
+  earliest: string,
+): ResolvedRange {
+  const today = utcToday(now);
+  const [from, to] =
+    "lastDays" in requested
+      ? [addDays(today, -(requested.lastDays - 1)), today]
+      : requested.from <= requested.to
+        ? [requested.from, requested.to]
+        : [requested.to, requested.from];
+  if (from > today) {
+    return { ok: false, reason: `${from} has not happened yet: today is ${today} (UTC).` };
+  }
+  if (to < earliest) {
+    return {
+      ok: false,
+      reason: `There are no figures before ${earliest}, the first UTC day the counts reach back to.`,
+    };
+  }
+  const notes: string[] = [];
+  if (from < earliest) notes.push(`starts at ${earliest}, the first UTC day the counts reach back to`);
+  if (to > today) notes.push(`ends today, ${today} (UTC)`);
+  return {
+    ok: true,
+    from: from < earliest ? earliest : from,
+    to: to > today ? today : to,
+    adjusted: notes.length === 0 ? null : `The range was narrowed: it ${notes.join(" and ")}.`,
+  };
+}
+
+/**
+ * A page path an AI app asked about, and every served address it counts.
+ *
+ * **A path with a language prefix is that address alone** — `/fi/kauppa`
+ * counts the Finnish shop and nothing else. **A path without one is the page
+ * in every language**: it is untranslated to its route and put back into each
+ * language's own address, so `/shop` and `/kauppa` both count `/en/shop`,
+ * `/fi/kauppa`, `/sv/butik` and the rest, plus the bare path itself, which is
+ * how addresses from before the language prefix were served. Translation runs
+ * through the app's own path normaliser, so it can never disagree with the
+ * addresses the site serves.
+ */
+export interface TrafficPath {
+  /** As the caller wrote it. */
+  given: string;
+  /** The language its prefix named, or null for a path counted in every language. */
+  locale: SupportedLocale | null;
+  /** Every served address it counts, exactly as Web Analytics stores them. */
+  addresses: string[];
+}
+
+/**
+ * A path or a full address read as a `TrafficPath`, or null when it is
+ * neither. Only the path counts: a query string, a fragment and the host are
+ * dropped, and so is a trailing slash, since no address is served with one.
+ */
+export function trafficPath(given: string): TrafficPath | null {
+  const trimmed = given.trim();
+  if (!trimmed.startsWith("/") && !/^https?:\/\//i.test(trimmed)) return null;
+  let pathname: string;
+  try {
+    pathname = new URL(trimmed, "https://path.invalid").pathname;
+  } catch {
+    return null;
+  }
+  const decoded = decodeExternalPathname(pathname);
+  if (decoded === null) return null;
+  const path = decoded.length > 1 ? decoded.replace(/\/+$/, "") : decoded;
+
+  const { locale, rest } = splitLocalePrefix(path);
+  if (locale !== null) {
+    return { given, locale, addresses: [rest === "/" ? `/${locale}` : `/${locale}${rest}`] };
+  }
+  const internal = toInternalPathname(path);
+  return {
+    given,
+    locale: null,
+    addresses: [
+      ...new Set([path, ...SUPPORTED_LOCALES.map((at) => localizeInternalPath(internal, at))]),
+    ],
+  };
+}
+
+/** One asked-for path's views, with each of its addresses that had any. */
+export interface PathViewsRow {
+  given: string;
+  pageviews: number;
+  addresses: { path: string; language: PathLanguage; pageviews: number }[];
+}
+
+/**
+ * Each asked-for path's views out of a read grouped by request path. Two
+ * paths that share an address both count it, so the rows can add up to more
+ * than the filtered total; every address keeps its own row, most viewed first.
+ */
+export function buildPathViews(
+  groups: readonly { values: { requestPath?: string }; pageviews: number }[],
+  paths: readonly TrafficPath[],
+): PathViewsRow[] {
+  const byAddress = new Map<string, number>();
+  for (const group of groups) {
+    const address = group.values.requestPath ?? "";
+    byAddress.set(address, (byAddress.get(address) ?? 0) + group.pageviews);
+  }
+  return paths.map((path) => {
+    const addresses = path.addresses
+      .map((address) => ({
+        path: address,
+        language: pathLanguage(address),
+        pageviews: byAddress.get(address) ?? 0,
+      }))
+      .filter((address) => address.pageviews > 0)
+      .sort((a, b) => b.pageviews - a.pageviews || compareText(a.path, b.path));
+    return {
+      given: path.given,
+      pageviews: addresses.reduce((sum, address) => sum + address.pageviews, 0),
+      addresses,
+    };
+  });
+}
+
+/** Campaign labels a question narrows to; an absent one is not narrowed on. */
+export interface CampaignLabels {
+  campaign?: string;
+  source?: string;
+  medium?: string;
+}
+
+/**
+ * The signups carrying every label asked for, matched exactly, letter case
+ * included, as the campaigns table joins them.
+ */
+export function signupsMatching(
+  campaigns: readonly SignupCampaignCount[],
+  labels: CampaignLabels,
+): number {
+  return campaigns
+    .filter(
+      (count) =>
+        (labels.campaign === undefined || count.campaign === labels.campaign) &&
+        (labels.source === undefined || count.source === labels.source) &&
+        (labels.medium === undefined || count.medium === labels.medium),
+    )
+    .reduce((sum, count) => sum + count.signups, 0);
 }

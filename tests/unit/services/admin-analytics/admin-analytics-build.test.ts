@@ -8,6 +8,7 @@ import {
   buildCampaigns,
   buildDayVisits,
   buildLandingPages,
+  buildPathViews,
   buildRoutes,
   buildTimeline,
   landingPagePaths,
@@ -16,7 +17,10 @@ import {
   pathLanguage,
   requestLogWindow,
   resolveAnalyticsRange,
+  resolveRequestedRange,
+  signupsMatching,
   tallySignups,
+  trafficPath,
   type LandingPageEntry,
 } from "@/services/admin-analytics/admin-analytics.build";
 
@@ -353,5 +357,143 @@ describe("buildBreakdown", () => {
       { value: "google.com", pageviews: 20 },
       { value: null, pageviews: 10 },
     ]);
+  });
+});
+
+describe("resolveRequestedRange", () => {
+  it("reads lastDays as the last N UTC days, today included", () => {
+    expect(resolveRequestedRange({ lastDays: 7 }, NOW, EARLIEST)).toEqual({
+      ok: true,
+      from: "2026-10-09",
+      to: "2026-10-15",
+      adjusted: null,
+    });
+  });
+
+  it("reads a reversed pair the right way round", () => {
+    expect(resolveRequestedRange({ from: "2026-10-10", to: "2026-10-01" }, NOW, EARLIEST)).toEqual({
+      ok: true,
+      from: "2026-10-01",
+      to: "2026-10-10",
+      adjusted: null,
+    });
+  });
+
+  it("narrows a range reaching outside the counts, and says so", () => {
+    const result = resolveRequestedRange({ from: "2026-01-01", to: "2026-12-31" }, NOW, EARLIEST);
+    expect(result).toMatchObject({ ok: true, from: EARLIEST, to: "2026-10-15" });
+    expect(result.ok && result.adjusted).toBe(
+      "The range was narrowed: it starts at 2026-05-31, the first UTC day the counts reach back to and ends today, 2026-10-15 (UTC).",
+    );
+  });
+
+  it("refuses a range wholly before the counts or wholly in the future", () => {
+    expect(resolveRequestedRange({ from: "2026-01-01", to: "2026-02-01" }, NOW, EARLIEST)).toEqual({
+      ok: false,
+      reason: "There are no figures before 2026-05-31, the first UTC day the counts reach back to.",
+    });
+    expect(resolveRequestedRange({ from: "2026-11-01", to: "2026-11-02" }, NOW, EARLIEST)).toEqual({
+      ok: false,
+      reason: "2026-11-01 has not happened yet: today is 2026-10-15 (UTC).",
+    });
+  });
+});
+
+describe("trafficPath", () => {
+  it("counts a path with a language prefix as that address alone", () => {
+    expect(trafficPath("/fi/kauppa")).toEqual({
+      given: "/fi/kauppa",
+      locale: "fi",
+      addresses: ["/fi/kauppa"],
+    });
+  });
+
+  it("counts a locale-less path in every language's own address", () => {
+    expect(trafficPath("/shop")?.addresses).toEqual([
+      "/shop",
+      "/en/shop",
+      "/fi/kauppa",
+      "/sv/butik",
+      "/fr/boutique",
+      "/tlh/shop",
+    ]);
+  });
+
+  it("untranslates a translated path before putting it back into every language", () => {
+    expect(trafficPath("/kauppa")?.addresses).toEqual(
+      expect.arrayContaining(["/kauppa", "/en/shop", "/fi/kauppa", "/sv/butik"]),
+    );
+  });
+
+  it("puts a landing page's id into every language's own landing segment", () => {
+    expect(trafficPath(`/discover/${PAGE}`)?.addresses).toEqual([
+      `/discover/${PAGE}`,
+      `/en/discover/${PAGE}`,
+      `/fi/tutustu/${PAGE}`,
+      `/sv/upptack/${PAGE}`,
+      `/fr/decouvrir/${PAGE}`,
+      `/tlh/discover/${PAGE}`,
+    ]);
+  });
+
+  it("reads a full address as its path, dropping the query, the fragment and a trailing slash", () => {
+    expect(trafficPath("https://sog.gg/fi/discover/pelaaja/?utm_source=meta#top")).toEqual({
+      given: "https://sog.gg/fi/discover/pelaaja/?utm_source=meta#top",
+      locale: "fi",
+      addresses: ["/fi/discover/pelaaja"],
+    });
+  });
+
+  it("counts a language's home at its bare prefix", () => {
+    expect(trafficPath("/sv/")?.addresses).toEqual(["/sv"]);
+    expect(trafficPath("/")?.addresses).toEqual(["/", "/en", "/fi", "/sv", "/fr", "/tlh"]);
+  });
+
+  it("refuses what is not a path", () => {
+    expect(trafficPath("shop")).toBeNull();
+    expect(trafficPath("mailto:someone@example.com")).toBeNull();
+  });
+});
+
+describe("buildPathViews", () => {
+  it("files each address's views under every asked-for path that counts it", () => {
+    const shop = trafficPath("/shop");
+    const finnish = trafficPath("/fi/kauppa");
+    if (shop === null || finnish === null) throw new Error("unreachable");
+    expect(
+      buildPathViews(
+        [
+          { values: { requestPath: "/en/shop" }, pageviews: 5 },
+          { values: { requestPath: "/fi/kauppa" }, pageviews: 8 },
+        ],
+        [shop, finnish],
+      ),
+    ).toEqual([
+      {
+        given: "/shop",
+        pageviews: 13,
+        addresses: [
+          { path: "/fi/kauppa", language: "fi", pageviews: 8 },
+          { path: "/en/shop", language: "en", pageviews: 5 },
+        ],
+      },
+      { given: "/fi/kauppa", pageviews: 8, addresses: [{ path: "/fi/kauppa", language: "fi", pageviews: 8 }] },
+    ]);
+  });
+});
+
+describe("signupsMatching", () => {
+  const campaigns = [
+    { campaign: "lynx-a", source: "meta", medium: "paid_social", signups: 3 },
+    { campaign: "lynx-a", source: "google", medium: "cpc", signups: 2 },
+    { campaign: "Lynx-A", source: "meta", medium: "paid_social", signups: 1 },
+    { campaign: null, source: null, medium: null, signups: 9 },
+  ];
+
+  it("counts the signups carrying every label asked for, letter case included", () => {
+    expect(signupsMatching(campaigns, { campaign: "lynx-a" })).toBe(5);
+    expect(signupsMatching(campaigns, { campaign: "lynx-a", source: "meta" })).toBe(3);
+    expect(signupsMatching(campaigns, { source: "meta" })).toBe(4);
+    expect(signupsMatching(campaigns, { medium: "email" })).toBe(0);
   });
 });
