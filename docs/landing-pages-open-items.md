@@ -63,33 +63,6 @@ re-encodes media on the server today; admin content is written through the MCP s
 well as the admin UI; an MCP tool cannot receive a file's bytes through the model, which
 is why uploads go through a view.
 
-### Picture upload from a URL (half of list #18) — waiting on marketing
-
-The other half — several pictures picked at once in the uploader view — is built (below).
-The question put to marketing: where do the pictures usually come from (own device, a
-Notion page, a school's or partner's website, Google Drive)? Worth building only if they
-are often already online; **a Notion picture is the case that would justify it**, since a
-picture in a Notion page has a temporary signed address any server can fetch.
-
-If built: a tool takes an address, the server fetches it and runs it through exactly the
-uploader's checks and refusals (JPEG, size, one of the accepted shapes, refused rather
-than cropped), with the guards any server fetch of a caller-supplied address needs —
-private and internal addresses refused, including after a redirect; a byte cap and a
-timeout; the type read from the bytes, never from the address or a header. It builds on
-the picture-shapes and multi-file branches, so it lands after them.
-
-### Shareable preview link (list #19) — waiting on marketing
-
-The ask: a token link so reviewers outside the admin team can see a page before it goes
-live. Today the preview at `/discover/<id>/preview` is admin-only. The owner is asking
-marketing why it is needed. If wanted, the recommended shape: one revocable link per
-page, created from the status page or an MCP tool; it shows the latest saved working
-copy (not a snapshot), read-only, noindex, in no sitemap; only a hash of the token is
-stored, and a visitor reads through one database function that takes the token and
-returns that page's working copy and nothing else. Open choices for the owner: expiry
-(14 days, or never and revoke only), one link per page or several, whether Library
-articles get it too, and a link per language.
-
 ### Status field per page (extra 4) — dropped unless marketing insists
 
 Draft / in review / approved for marketing's Notion approval flow. Today a page knows
