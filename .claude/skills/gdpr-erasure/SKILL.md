@@ -123,9 +123,10 @@ COMMIT;
   first.
 - **A Gedu or admin also has a `team-photos` folder named for their id** (`<user-id>/`),
   and deleting the account does not remove it: the profile row cascades away but nothing
-  links the objects to the user. An admin may have uploaded the photo on their behalf, so
-  the object's `owner` can be someone else and the scan can miss it — list that folder
-  and remove it through the Storage API before the delete. This procedure is written for
+  links the objects to the user. Every team photo is stored by the upload route on the
+  service role, so no object there has an `owner`, and a search by owner never finds one;
+  the folder is what names them. List `<user-id>/` in `team-photos` and remove every
+  object in it through the Storage API before the delete. This procedure is written for
   families; erasing staff also touches employment records, which is the owner's call
   before anything here runs.
 
@@ -142,8 +143,10 @@ which here means success.
   retention question.
 - **Brevo.** Transactional only; the app never adds anyone to a contact list. Send logs
   expire on Brevo's side.
-- **The old platform (SOGGA / Chargebee).** A family that predates Sogverse may still be
-  held there. Not covered by this procedure; say so when reporting the erasure done.
+- **The old platform's copies (the SOGGA archive / Chargebee).** A family that predates
+  Sogverse may still be held in the SOGGA archive on the owner's Google Drive (the old
+  platform's whole database, kept after its shutdown) and in Chargebee until that account
+  is closed. Not covered by this procedure; say so when reporting the erasure done.
 
 The same procedure removes an account made by mistake (a would-be gedu who signed up as a
 parent), which frees the address to sign up again. That is housekeeping, not an erasure

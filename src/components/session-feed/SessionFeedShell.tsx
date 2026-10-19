@@ -8,6 +8,7 @@ import { useTimezone } from "@/providers";
 import { NowDivider } from "./NowDivider";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
 import {
+  laterSessionCount,
   newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
@@ -162,7 +163,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
   /** Named so the divider's toggle can say which region it reveals into. */
   const listId = useId();
 
-  const { laterFuture, nextSession, soonerCancelled, past } = useMemo(
+  const { laterFuture, nextSession, soonerNotRunning, past } = useMemo(
     () => partitionFeedEntries(entries),
     [entries],
   );
@@ -184,14 +185,18 @@ export function SessionFeedShell<T extends FeedShellEntry>({
    * page thrown to a position nobody asked for.
    */
   const rows = useMemo((): ShellRow<T>[] => {
+    // A run beyond the next session holding nothing but holiday lines has no
+    // sessions to hide, so it is drawn in place with no divider — a toggle
+    // promising "0 more upcoming sessions" would be hiding only breaks.
+    const collapsible = laterSessionCount(laterFuture) > 0;
     const visible: T[] = [
-      ...(laterOpen ? laterFuture : []),
+      ...(laterOpen || !collapsible ? laterFuture : []),
       ...(nextSession === null ? [] : [nextSession]),
-      ...soonerCancelled,
+      ...soonerNotRunning,
       ...past.slice(0, pastWindow.visible),
     ];
     const dated = withMonthDividers(visible, timeZone);
-    if (laterFuture.length === 0 || nextSession === null) return dated;
+    if (!collapsible || nextSession === null) return dated;
 
     // Above the next session, and above the month label introducing it when
     // there is one: a month heading belongs against the entries it names, not
@@ -210,7 +215,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
     laterOpen,
     laterFuture,
     nextSession,
-    soonerCancelled,
+    soonerNotRunning,
     past,
     pastWindow.visible,
     timeZone,
@@ -245,7 +250,7 @@ export function SessionFeedShell<T extends FeedShellEntry>({
       return (
         <li key={row.key} ref={dividerRef}>
           <NowDivider
-            count={laterFuture.length}
+            count={laterSessionCount(laterFuture)}
             open={laterOpen}
             controls={listId}
             onToggle={toggleLater}

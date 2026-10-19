@@ -7,6 +7,7 @@ import { ROUTES } from "@/lib/constants";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow } from "@/types";
 import { EventsRail } from "./events-rail";
+import { Heading } from "@sog/ui";
 
 interface UpcomingEventsProps {
   /**
@@ -67,9 +68,9 @@ export function UpcomingEvents({
   return (
     <section className="container mx-auto px-4 py-16 sm:py-24">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <Heading level={2} step="display" align="center">
           {t("heading")}
-        </h2>
+        </Heading>
         <p className="mt-4 text-muted-foreground">{t("subheading")}</p>
       </div>
 

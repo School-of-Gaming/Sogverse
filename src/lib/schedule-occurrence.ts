@@ -17,7 +17,7 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 // The getUTC* fields only agree with that on a UTC runtime — in any non-UTC
 // environment (every user's browser) they read the wall clock shifted by the
 // runtime offset, which crosses midnight for early/late slots and lands on
-// the wrong weekday. Same rule as `getNextSessionStart` in enrollment.ts.
+// the wrong weekday.
 
 function splitTime(time: string): { hours: number; minutes: number } {
   const [hours, minutes] = time.split(":").map(Number);
@@ -70,7 +70,7 @@ export function nextOccurrenceInstant(
   // UTC has no DST, so day arithmetic there is exact on any runtime).
   // Stepping the zoned instant by 24-hour increments instead repeats or
   // skips a date when the runtime zone crosses a DST transition mid-walk
-  // (see the anti-pattern in CLAUDE.md and the same fix in enrollment.ts).
+  // (see the anti-pattern in src/CLAUDE.md).
   const refDate = new Date(
     Date.UTC(zonedNow.getFullYear(), zonedNow.getMonth(), zonedNow.getDate() + daysAhead),
   );

@@ -5,8 +5,8 @@ import {
   MAIL_FONT_STACK,
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
-import { sendableImageOrigin } from "./render-context";
-import { GROUND_TONES, pinnedFill } from "./utils";
+import { MAIL_SPACE, MAIL_TYPE, mailText } from "./type-scale";
+import { BODY_TEXT_STYLE, GROUND_TONES, pinnedFill } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -45,6 +45,13 @@ interface LayoutOptions {
  * force the cell taller.
  */
 const HEADER_RULE_HEIGHT = 6;
+
+/**
+ * The lockup's size and weight: the mail's title level, so the brand's name
+ * and the mail's own heading are one size. Its leading is left to the line
+ * box, which is all the header's one line needs.
+ */
+const LOCKUP_TYPE = `font-size:${MAIL_TYPE.title.fontSize}px;font-weight:${MAIL_TYPE.title.fontWeight};`;
 
 /**
  * The shell's two shapes, and the class names that switch between them.
@@ -91,6 +98,12 @@ const SHELL_CLASS = {
   panel: "shell-panel",
   /** The breathing room between the header rule and the content. */
   rhythm: "shell-rhythm",
+  /**
+   * The hairline above the footer. A phone has no card, so without it the
+   * footer reads as the last block's own small print; a wide viewport hides
+   * it, because the card's edge already ends the mail.
+   */
+  footerRule: "shell-footer-rule",
 } as const;
 
 /**
@@ -172,33 +185,27 @@ export const BRAND_MARK = {
  * mail at production, and the canonical per-environment URL is precisely that
  * value — the one `getOrigin` itself treats as the safe answer.
  *
+ * **Whatever that origin is, the mark is on it** — a dev machine's included. A
+ * mail built there carries a `localhost` src that no inbox can fetch. The layout
+ * still holds — the box is held open by attributes and the lockup beneath it
+ * says everything the badge said — though a client may draw its broken-image
+ * glyph in the box, as Gmail's proxy does. Only a dev-machine or test send gets
+ * one at send time: real mail is sent with reachable URLs (see `CLAUDE.md`, "Where a render
+ * is going").
+ *
  * **No origin, no image, no broken `src`.** An unset or malformed env yields the
- * text-only header rather than an `undefined/email/…` that resolves to nothing
- * and paints the exact broken box this feature exists to avoid. It is the same
- * degradation as a blocked image, one level up, and it is why unit tests that do
- * not stub the env still render — and still assert — the header as it has always
- * been.
- *
- * **A loopback origin counts as no origin.** A mail sent from a dev machine
- * (the admin testing tool runs locally too) would otherwise carry a
- * `localhost` src that no recipient's client can ever fetch — and a *failed*
- * fetch is worse than a blocked one: Gmail's proxy draws its broken-image
- * glyph inside the reserved box, which is exactly the nasty render the whole
- * design exists to avoid, and it was observed doing so in a real inbox. An
- * unreachable-by-construction src is morally a malformed one, so it takes the
- * same branch.
- *
- * Both halves of that are `sendableImageOrigin()`, shared with the testing
- * tool's demo photographs — the only other images this directory emits, and the
- * only other place the same question is asked. The shell never renders in the
- * preview context, so the mark keeps one shape here: a mail previewed from a dev
- * machine shows the header the same send would arrive with, which is the honest
- * render and costs nothing, because the lockup underneath already says
- * everything the badge said.
+ * text-only header rather than an `undefined/email/…`: there is no absolute URL
+ * to write, and a relative one would resolve against whatever page the mail is
+ * opened in.
  */
 function brandMarkSrc(): string | null {
-  const origin = sendableImageOrigin();
-  return origin ? new URL(BRAND_MARK.path, origin).toString() : null;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) return null;
+  try {
+    return new URL(BRAND_MARK.path, siteUrl).toString();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -338,6 +345,9 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
         border-radius: ${RADIUS.lg} !important;
         padding: 32px !important;
       }
+      .${SHELL_CLASS.footerRule} {
+        display: none !important;
+      }
       /* The fills that are chosen in relation to what sits behind them, and
          this block is where what sits behind them changes: a photo's reserved
          well and a quoted box are a tone *off* the ground, the outlined button
@@ -377,11 +387,10 @@ ${groundToneRules}
            is restored by the media query above, on this cell's class. -->
       <td class="${SHELL_CLASS.gutter}" align="center" style="padding:24px 16px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-          <!-- The brand mark, above the lockup and never instead of it. Its row
-               is absent entirely when no origin can be built, so this header
-               has exactly two shapes: mark-over-lockup, and the lockup alone
-               that every mail carried before the mark existed. See BRAND_MARK
-               and brandMarkRow() for why an image here is allowed to vanish. -->
+          <!-- The brand mark, above the lockup and never instead of it. A
+               render where it does not arrive is the lockup alone that every
+               mail carried before the mark existed. See BRAND_MARK and
+               brandMarkRow() for why an image here is allowed to vanish. -->
           ${brandMarkRow()}<!-- Lockup: brand first, platform second, spaced en dash between them.
                "brand-act" is what puts the brand half through the Gmail
                background-clip rule above — this header is one of the two places
@@ -396,7 +405,7 @@ ${groundToneRules}
                asserts the two spans still read as BRAND_LOCKUP exactly. -->
           <tr>
             <td align="center" style="padding-bottom:16px;">
-              <span class="brand-act" style="font-size:24px;font-weight:bold;color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="font-size:24px;font-weight:bold;color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
+              <span class="brand-act" style="${LOCKUP_TYPE}color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="${LOCKUP_TYPE}color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
             </td>
           </tr>
           <!-- The world rule under the lockup. See HEADER_RULE_HEIGHT. -->
@@ -425,14 +434,20 @@ ${groundToneRules}
                query is allowed to take in this shell. -->
           <tr>
             <td class="${SHELL_CLASS.panel}">
-              <div style="color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
+              <div style="${BODY_TEXT_STYLE}">
                 ${content}
               </div>
             </td>
           </tr>
+          <!-- The footer's hairline, for the phone layout only: with no card,
+               it is what ends the mail above the footer. The query hides it
+               where the card's edge does that job. -->
+          <tr class="${SHELL_CLASS.footerRule}">
+            <td style="height:${MAIL_SPACE.furniture}px;line-height:${MAIL_SPACE.furniture}px;font-size:0;border-bottom:1px solid ${DARK_THEME.border};">&nbsp;</td>
+          </tr>
           <!-- Footer -->
           <tr>
-            <td align="center" style="padding-top:24px;color:${DARK_THEME.mutedFg};font-size:12px;">
+            <td align="center" style="padding-top:24px;${mailText("small", DARK_THEME.mutedFg)}">
               ${footerText}
             </td>
           </tr>

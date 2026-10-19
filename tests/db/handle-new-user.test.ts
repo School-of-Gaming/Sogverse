@@ -119,9 +119,9 @@ describe("handle_new_user() role assignment", () => {
     expect(data!.user_id).toBe(user.id);
   });
 
-  // -- utm_source / utm_medium / utm_campaign --
+  // -- utm_source / utm_medium / utm_campaign / utm_content / utm_term --
   //
-  // The trigger sanitises these three keys in its own body rather than letting
+  // The trigger sanitises these five keys in its own body rather than letting
   // the CHECKs decide, and that is the whole subject here. handle_new_user
   // writes metadata straight through, so a value violating a CHECK would raise
   // inside the trigger and fail the entire auth signup — turning a stranger's
@@ -134,12 +134,12 @@ describe("handle_new_user() role assignment", () => {
   // on the way in the way the proxy does in a real journey.
   //
   // The cases run against `utm_campaign` unless a case is specifically about
-  // the fields being independent — the three share one predicate, written out
-  // three times in the migration, and the last test in the block is what pins
-  // that the copies agree.
+  // the fields being independent — the five share one predicate, written out
+  // five times in the trigger, and the independence test near the end of the
+  // block is what pins that the copies agree.
 
   describe("the utm columns", () => {
-    it("stores all three well-formed values", async () => {
+    it("stores all five well-formed values", async () => {
       const user = await createTestUser({
         email: "utm-plain@test.local",
         user_metadata: {
@@ -148,6 +148,8 @@ describe("handle_new_user() role assignment", () => {
           utm_source: "lynx",
           utm_medium: "email",
           utm_campaign: "lynx-summer-a",
+          utm_content: "hero-banner",
+          utm_term: "minecraft club",
         },
       });
 
@@ -155,6 +157,8 @@ describe("handle_new_user() role assignment", () => {
       expect(profile.utm_source).toBe("lynx");
       expect(profile.utm_medium).toBe("email");
       expect(profile.utm_campaign).toBe("lynx-summer-a");
+      expect(profile.utm_content).toBe("hero-banner");
+      expect(profile.utm_term).toBe("minecraft club");
     });
 
     it("preserves case rather than folding it", async () => {
@@ -202,6 +206,8 @@ describe("handle_new_user() role assignment", () => {
           utm_source: "google.com",
           utm_medium: "paid social",
           utm_campaign: "Rentrée scolaire — 20% off",
+          utm_content: "Video_15s.v2",
+          utm_term: "kerho+lapsille",
         },
       });
 
@@ -209,6 +215,8 @@ describe("handle_new_user() role assignment", () => {
       expect(profile.utm_source).toBe("google.com");
       expect(profile.utm_medium).toBe("paid social");
       expect(profile.utm_campaign).toBe("Rentrée scolaire — 20% off");
+      expect(profile.utm_content).toBe("Video_15s.v2");
+      expect(profile.utm_term).toBe("kerho+lapsille");
     });
 
     it("degrades a formula-shaped value to NULL without failing the signup", async () => {
@@ -240,6 +248,8 @@ describe("handle_new_user() role assignment", () => {
           utm_source: "+SUM(A1)",
           utm_medium: "  @SUM(A1)",
           utm_campaign: "-2+3",
+          utm_content: " =HYPERLINK(1)",
+          utm_term: "@SUM(A1)",
         },
       });
 
@@ -247,6 +257,8 @@ describe("handle_new_user() role assignment", () => {
       expect(profile.utm_source).toBeNull();
       expect(profile.utm_medium).toBeNull();
       expect(profile.utm_campaign).toBeNull();
+      expect(profile.utm_content).toBeNull();
+      expect(profile.utm_term).toBeNull();
       expect(profile.role).toBe("customer");
     });
 
@@ -348,12 +360,14 @@ describe("handle_new_user() role assignment", () => {
       expect(profile.utm_source).toBeNull();
       expect(profile.utm_medium).toBeNull();
       expect(profile.utm_campaign).toBeNull();
+      expect(profile.utm_content).toBeNull();
+      expect(profile.utm_term).toBeNull();
     });
 
-    it("refuses one field without touching the other two", async () => {
-      // The three predicates are written out separately in the migration, so
+    it("refuses a field without touching the others", async () => {
+      // The five predicates are written out separately in the trigger, so
       // this is what proves a refusal in one is not a refusal in all — and
-      // that the three copies did not drift into each other's columns.
+      // that the five copies did not drift into each other's columns.
       const user = await createTestUser({
         email: "utm-independent@test.local",
         user_metadata: {
@@ -362,6 +376,8 @@ describe("handle_new_user() role assignment", () => {
           utm_source: "lynx",
           utm_medium: "=SUM(A1)",
           utm_campaign: "lynx-summer-a",
+          utm_content: "hero-banner",
+          utm_term: "+SUM(A1)",
         },
       });
 
@@ -369,12 +385,14 @@ describe("handle_new_user() role assignment", () => {
       expect(profile.utm_source).toBe("lynx");
       expect(profile.utm_medium).toBeNull();
       expect(profile.utm_campaign).toBe("lynx-summer-a");
+      expect(profile.utm_content).toBe("hero-banner");
+      expect(profile.utm_term).toBeNull();
     });
 
     it("still cannot influence the assigned role", async () => {
       // The suite's standing subject, re-run against the UTM keys:
-      // three more caller-supplied values reaching the most sensitive function
-      // in the schema must widen nothing but three nullable text columns.
+      // five more caller-supplied values reaching the most sensitive function
+      // in the schema must widen nothing but five nullable text columns.
       const user = await createTestUser({
         email: "utm-escalation@test.local",
         user_metadata: {
@@ -393,7 +411,7 @@ describe("handle_new_user() role assignment", () => {
 });
 
 /**
- * The three `profiles.utm_*` columns are immutable provenance, which in this
+ * The five `profiles.utm_*` columns are immutable provenance, which in this
  * schema means exactly one thing: there is no UPDATE grant on any of them, at
  * any level, for either Data API role. The authorization spine pins the *set* of
  * updatable profile columns by exact equality, so a column with no grant
@@ -423,14 +441,20 @@ describe("the profiles.utm_* columns are write-once", () => {
   afterEach(async () => {
     await admin
       .from("profiles")
-      .update({ utm_source: null, utm_medium: null, utm_campaign: null })
+      .update({
+        utm_source: null,
+        utm_medium: null,
+        utm_campaign: null,
+        utm_content: null,
+        utm_term: null,
+      })
       .eq("id", TEST_IDS.CUSTOMER);
   });
 
   async function storedUtmOf(userId: string) {
     const { data, error } = await admin
       .from("profiles")
-      .select("utm_source,utm_medium,utm_campaign")
+      .select("utm_source,utm_medium,utm_campaign,utm_content,utm_term")
       .eq("id", userId)
       .single();
 
@@ -441,10 +465,10 @@ describe("the profiles.utm_* columns are write-once", () => {
   // 42501 = insufficient_privilege. The absence of a column grant fails the
   // statement outright rather than scoping it, which is why these assert an
   // error where the home-location IDOR case asserts an untouched row.
-  it("a parent cannot set their own attribution, on any of the three", async () => {
+  it("a parent cannot set their own attribution, on any of the five", async () => {
     // Written out rather than looped: a computed key widens the update payload
     // to `Record<string, string>`, which the generated client rejects, and the
-    // three statements are the point of the test anyway.
+    // five statements are the point of the test anyway.
     const source = await customerClient
       .from("profiles")
       .update({ utm_source: "self-awarded" })
@@ -463,10 +487,24 @@ describe("the profiles.utm_* columns are write-once", () => {
       .eq("id", TEST_IDS.CUSTOMER);
     expect(campaign.error?.code).toBe("42501");
 
+    const content = await customerClient
+      .from("profiles")
+      .update({ utm_content: "self-awarded" })
+      .eq("id", TEST_IDS.CUSTOMER);
+    expect(content.error?.code).toBe("42501");
+
+    const term = await customerClient
+      .from("profiles")
+      .update({ utm_term: "self-awarded" })
+      .eq("id", TEST_IDS.CUSTOMER);
+    expect(term.error?.code).toBe("42501");
+
     expect(await storedUtmOf(TEST_IDS.CUSTOMER)).toEqual({
       utm_source: null,
       utm_medium: null,
       utm_campaign: null,
+      utm_content: null,
+      utm_term: null,
     });
   });
 
@@ -496,7 +534,7 @@ describe("the profiles.utm_* columns are write-once", () => {
 
     const { data, error } = await customerClient
       .from("profiles")
-      .select("utm_source,utm_medium,utm_campaign")
+      .select("utm_source,utm_medium,utm_campaign,utm_content,utm_term")
       .eq("id", TEST_IDS.CUSTOMER)
       .single();
 
@@ -527,6 +565,18 @@ describe("the profiles.utm_* columns are write-once", () => {
       .eq("id", TEST_IDS.CUSTOMER);
     expect(campaign.error?.code).toBe("23514");
 
+    const content = await admin
+      .from("profiles")
+      .update({ utm_content: "=SUM(A1)" })
+      .eq("id", TEST_IDS.CUSTOMER);
+    expect(content.error?.code).toBe("23514");
+
+    const term = await admin
+      .from("profiles")
+      .update({ utm_term: "=SUM(A1)" })
+      .eq("id", TEST_IDS.CUSTOMER);
+    expect(term.error?.code).toBe("23514");
+
     // And the leading-space bypass the CHECK closes by testing btrim(v): a
     // service-role write cannot smuggle a formula in behind a space either.
     const { error: paddedError } = await admin
@@ -540,6 +590,8 @@ describe("the profiles.utm_* columns are write-once", () => {
       utm_source: null,
       utm_medium: null,
       utm_campaign: null,
+      utm_content: null,
+      utm_term: null,
     });
   });
 

@@ -1,8 +1,9 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Heading } from "@sog/ui";
 import { ExternalLink } from "lucide-react";
-import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +12,12 @@ import { landingPageHref } from "@/components/landing-pages/landing-page-address
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { LOCALE_CONFIG, resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import {
+  formattingLocale,
+  LOCALE_CONFIG,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
@@ -77,7 +83,7 @@ export function LandingPageStatusPage({
     <div className="space-y-6">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <h2 className="text-xl font-semibold">{version?.title ?? ""}</h2>
+          <Heading level={2} step="card-title">{version?.title ?? ""}</Heading>
           <LandingPageStatusChip
             status={landingPageStatus({
               isPublished: page.publication !== null,
@@ -93,9 +99,9 @@ export function LandingPageStatusPage({
       <Publishing page={page} actions={actions} />
 
       <section aria-labelledby="landing-page-languages" className="space-y-3">
-        <h2 id="landing-page-languages" className="text-lg font-semibold">
+        <Heading level={2} step="card-title" id="landing-page-languages">
           {t("statusPage.languagesHeading")}
-        </h2>
+        </Heading>
         {page.draft.versions.map((v) => (
           <LanguageCard
             key={v.locale}
@@ -104,6 +110,7 @@ export function LandingPageStatusPage({
             sections={page.draft.sections}
             publication={liveLocales.has(v.locale) ? page.publication : null}
             movingFrom={
+              // exact-locale: pairs each version with its own slug change
               slugsChanging.find((change) => change.locale === v.locale)?.from ?? null
             }
           />
@@ -264,11 +271,13 @@ function affirmative(enabled: boolean) {
  */
 function PublishForecast({ forecast }: { forecast: LandingPublishForecast }) {
   const t = useTranslations("admin.landingPages.publishConfirm");
-  const format = useFormatter();
+  const conjunction = new Intl.ListFormat(formattingLocale(useLocale()), {
+    type: "conjunction",
+  });
   const languageName = useLanguageNames();
   const language = (locale: SupportedLocale) => languageName(locale, LOCALE_CONFIG[locale].label);
   const list = (locales: readonly SupportedLocale[]) =>
-    format.list(locales.map(language), { type: "conjunction" });
+    conjunction.format(locales.map(language));
 
   const leftOut = forecast.wouldLeaveOut.filter(
     (locale) => !forecast.wouldTakeDown.includes(locale),
@@ -351,9 +360,9 @@ function LanguageCard({
       <CardContent className="space-y-3 p-6" role="region" aria-labelledby={headingId}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 id={headingId} className="font-semibold">
+            <Heading level={3} step="label" id={headingId}>
               {languageName(version.locale, LOCALE_CONFIG[version.locale].label)}
-            </h3>
+            </Heading>
             <p className="truncate text-sm text-muted-foreground">{version.title}</p>
           </div>
           <div className="flex shrink-0 flex-col-reverse gap-3 sm:flex-row">

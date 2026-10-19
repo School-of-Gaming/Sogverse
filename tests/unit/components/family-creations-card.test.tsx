@@ -378,6 +378,7 @@ function renderPage(
                 { weekday: 0, start_time: "17:00", duration_minutes: 90 },
               ],
             }}
+            plannedSessions={[]}
             isRemote={false}
             participant={AINO}
             groupName="Builders A"

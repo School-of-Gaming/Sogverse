@@ -199,6 +199,8 @@ describe("gedu invoicing", () => {
         billing_mode: "external_contract" as const,
         location_id: TEST_IDS.LOCATION_MUNICIPALITY,
         primary_gedu_fee_cents: 6000,
+        // A Friday inside the month, so its plan is clipped there.
+        end_date: "2026-03-20",
       },
       baseProduct(UNTAUGHT),
     ]);
@@ -414,7 +416,7 @@ describe("gedu invoicing", () => {
       expect(group?.cancelled_sessions).toEqual([CANCELLED]);
     });
 
-    it("carries each product's fees, type, schedule and term", () => {
+    it("carries each product's fees, type and term", () => {
       const consumer = adminDoc.products.find((p) => p.id === CONSUMER);
       expect(consumer).toMatchObject({
         product_type: "consumer_club",
@@ -423,7 +425,6 @@ describe("gedu invoicing", () => {
         end_date: "2026-06-24",
         primary_gedu_fee_cents: 5000,
         assistant_gedu_fee_cents: 3000,
-        schedule_slots: [{ weekday: 2, start_time: "14:00", duration_minutes: 60 }],
         location: null,
         municipality: null,
       });
@@ -432,6 +433,21 @@ describe("gedu invoicing", () => {
       expect(muni?.assistant_gedu_fee_cents).toBeNull();
       expect(muni?.product_type).toBe("municipality_club");
       expect(muni?.municipality?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
+    });
+
+    it("carries each product's planned dates in the month, clipped to its term", () => {
+      expect(adminDoc.products.find((p) => p.id === CONSUMER)?.planned_dates).toEqual([
+        "2026-03-04",
+        "2026-03-11",
+        "2026-03-18",
+        "2026-03-25",
+      ]);
+      // Its term ends on the 20th, so the 25th is not planned.
+      expect(adminDoc.products.find((p) => p.id === MUNI)?.planned_dates).toEqual([
+        "2026-03-04",
+        "2026-03-11",
+        "2026-03-18",
+      ]);
     });
 
     it("carries no product nobody holds a seat on", () => {

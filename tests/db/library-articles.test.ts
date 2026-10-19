@@ -263,6 +263,28 @@ describe("library articles", () => {
       expect(error?.code).toBe("22023");
     });
 
+    it("takes a locale code with a lowercase region, and refuses any other shape at the schema", async () => {
+      // Every translation table carries the same locale-format CHECK; this
+      // table stands in for all six.
+      const regional = await admin
+        .from("library_article_translations")
+        .insert({ article_id: ARTICLE_DRAFT, locale: "en-us", title: "Fixture: regional" });
+      expect(regional.error).toBeNull();
+
+      for (const locale of ["en-US", "en_us", "english"]) {
+        const { error } = await admin
+          .from("library_article_translations")
+          .insert({ article_id: ARTICLE_DRAFT, locale, title: "Fixture: malformed" });
+        expect(error?.code, locale).toBe("23514");
+      }
+
+      await admin
+        .from("library_article_translations")
+        .delete()
+        .eq("article_id", ARTICLE_DRAFT)
+        .eq("locale", "en-us");
+    });
+
     it("replaces the version set whole: a language left out is removed", async () => {
       await reseed();
       await service.saveArticle(ARTICLE_COMPLETE, {

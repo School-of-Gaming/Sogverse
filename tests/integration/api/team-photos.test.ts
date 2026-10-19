@@ -25,7 +25,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  *   the same 404, so no cache can hold a photo under any key but its own. The
  *   version is the md5 of the object path, as the public profile reads
  *   compute it in the database.
- * - **Only a JPEG or a WebP is served, sandboxed.** The route is outside the
+ * - **Only a JPEG is served, sandboxed.** The route is outside the
  *   proxy and so outside the app's CSP; a stored SVG echoed as one would run
  *   script from our origin.
  *
@@ -130,21 +130,33 @@ describe("GET /api/team/photos/[userId]", () => {
     expect(mockDownload).toHaveBeenCalledWith(`${USER_ID}/4b1f.jpg`);
   });
 
-  it("serves a WebP as a WebP, by name when storage names no type", async () => {
+  it("serves a JPEG by name when storage names no type", async () => {
+    mockDownload.mockResolvedValue({ data: new Blob([JPEG_BYTES]), error: null });
+
+    const response = await GET(...photoRequest(USER_ID));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/jpeg");
+  });
+
+  it("answers 404 for a WebP", async () => {
     mockList.mockResolvedValue({
       data: [{ id: "object-id", name: "4b1f.webp" }],
       error: null,
     });
-    mockDownload.mockResolvedValue({ data: new Blob([JPEG_BYTES]), error: null });
+    mockDownload.mockResolvedValue({
+      data: new Blob([JPEG_BYTES], { type: "image/webp" }),
+      error: null,
+    });
 
     const response = await GET(
       ...photoRequest(USER_ID, `?v=${versionOf(USER_ID, "4b1f.webp")}`),
     );
 
-    expect(response.headers.get("Content-Type")).toBe("image/webp");
+    expect(response.status).toBe(404);
   });
 
-  it("never echoes a stored type that is not a JPEG or a WebP", async () => {
+  it("never echoes a stored type that is not a JPEG", async () => {
     mockDownload.mockResolvedValue({
       data: new Blob([JPEG_BYTES], { type: "image/svg+xml" }),
       error: null,

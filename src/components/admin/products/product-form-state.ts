@@ -3,6 +3,12 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import type { AuthoredBodies } from "@/lib/authored-bodies";
+import {
+  newLocaleTabs,
+  sameLocaleDrafts,
+  type LocaleTabState,
+} from "@/lib/i18n/locale-tabs";
 import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
 import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
 import type { AttachableGamerPhotoConsentType } from "@/lib/constants/gamer-photo-consents";
@@ -96,12 +102,24 @@ export type TranslationDraft = {
   longDescription: string;
 };
 
+export const EMPTY_TRANSLATION: TranslationDraft = {
+  name: "",
+  shortDescription: "",
+  longDescription: "",
+};
+
+/** A complete language: a name and a short description. The long one is optional. */
+export function isCompleteTranslation(draft: TranslationDraft): boolean {
+  return draft.name.trim() !== "" && draft.shortDescription.trim() !== "";
+}
+
 export interface FormState {
-  // Per-locale name + descriptions. Admin starts with one tab (their UI locale)
-  // and can add more. Submission writes one product_translations row per
-  // locale present in this map. At least one filled locale is required (any).
-  translations: Partial<Record<SupportedLocale, TranslationDraft>>;
-  activeLocale: SupportedLocale;
+  // Per-locale name + descriptions, behind the shared language tabs
+  // (`@/lib/i18n/locale-tabs`). Admin starts with one tab (their UI locale) and
+  // can add more. Submission writes one product_translations row per tab with
+  // anything written in it; a tab left blank is not saved. At least one
+  // complete locale is required (any).
+  translations: LocaleTabState<TranslationDraft>;
 
   // Identity (non-translated). `topic` is the fixed product_topic enum; ""
   // is the unselected state the create form starts in.
@@ -218,6 +236,12 @@ export interface FormState {
   // club.
   invoiceCustomerId: string | null;
 
+  // The holiday calendars a club follows, as calendar row ids, in the order
+  // they were picked. Surfaced only where the type config's
+  // `followsHolidayCalendars` says so; for every other type it stays empty and
+  // is sent empty, because the database refuses a calendar on a camp or event.
+  holidayCalendarIds: string[];
+
   // Registration timing — `immediately` accepts signups as soon as the
   // product is published; `scheduled` opens at the picked date+time, read as a
   // wall clock in the product's own `timezone` above. The date/hour/minute
@@ -316,10 +340,7 @@ export function initialState(
   const initialPaidMode = defaultPaidMode(config);
   const startsCapped = capacityDefaultsToCapped(config, initialPaidMode);
   return {
-    translations: {
-      [uiLocale]: { name: "", shortDescription: "", longDescription: "" },
-    },
-    activeLocale: uiLocale,
+    translations: newLocaleTabs(uiLocale, EMPTY_TRANSLATION),
     topic: "",
     materialUrl: "",
     imageId: null,
@@ -365,6 +386,9 @@ export function initialState(
     // agreement behind it is signed, so the resting state is unlinked — and the
     // invoicing page is what flags it, at the point a file would be produced.
     invoiceCustomerId: null,
+    // No breaks until somebody picks a calendar. A default calendar would pause
+    // a club on dates nobody chose for it.
+    holidayCalendarIds: [],
     // Capacity defaults — see `capacityDefaultsToCapped` for who caps and why.
     uncapped: !startsCapped,
     // The waitlist only exists behind a cap, so it follows the same answer.
@@ -474,4 +498,57 @@ export function locationPickerMode(
     return config.requiresMunicipalityWhenOnline ? "municipality" : null;
   }
   return "site";
+}
+
+/**
+ * Whether the form holds exactly what `baseline` — the state it opened with —
+ * holds: what decides whether leaving it loses anything.
+ *
+ * The languages are compared as the shared per-locale comparison judges them —
+ * trimmed, blank tabs ignored, the tab being shown left out, and a long
+ * description also unchanged when it is the rich editor's own respelling of the
+ * one it opened with (`bodies`). Every other field is compared by value, all of
+ * them, so a field added to the form is covered without a line here.
+ *
+ * Form state rather than the payload a save would send: the payload cannot be
+ * built from a form that would not pass `validate()`, and an opening time of
+ * "immediately" resolves to the moment of the save.
+ */
+export function sameFormState(
+  form: FormState,
+  baseline: FormState,
+  bodies: AuthoredBodies,
+): boolean {
+  const { translations, ...rest } = form;
+  const { translations: openedTranslations, ...openedRest } = baseline;
+  return (
+    sameLocaleDrafts(translations.drafts, openedTranslations.drafts, {
+      fields: ["longDescription"],
+      bodies,
+    }) && sameValue(rest, openedRest)
+  );
+}
+
+/** Structural equality over what form state is made of: primitives, arrays, sets and plain records. */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (a instanceof Set && b instanceof Set) {
+    return a.size === b.size && [...a].every((item) => b.has(item));
+  }
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((item, i) => sameValue(item, b[i]));
+  }
+  if (isPlainRecord(a) && isPlainRecord(b)) {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    return [...keys].every((key) => sameValue(a[key], b[key]));
+  }
+  return false;
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    Object.getPrototypeOf(value) === Object.prototype
+  );
 }

@@ -15,7 +15,10 @@ import {
   resolveProductConfirmation,
   type ProductConfirmationMode,
 } from "@/lib/email-templates/product-confirmation";
-import type { InvitationSlot } from "@/lib/email-templates/product-confirmation-invitation";
+import {
+  invitationPlanWindow,
+  type InvitationSlot,
+} from "@/lib/email-templates/product-confirmation-invitation";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -26,7 +29,14 @@ import {
 } from "@/lib/email/family-recipients.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
+import { plannedSessionRows, type PlannedSession } from "@/lib/planned-sessions";
 import { formatProductLocation } from "@/lib/products/format-product-location";
+import {
+  holidayBreakLines,
+  holidayBreaksSpan,
+  productToday,
+} from "@/lib/products/holiday-breaks-shown";
+import { HolidayBreaksService } from "@/services/holiday-breaks/holiday-breaks.service";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { getOrigin } from "@/lib/url";
 import { formatCurrencyFromCents } from "@/lib/utils";
@@ -201,12 +211,6 @@ async function send({
         "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
-      // Embedded resources come back unordered, so a product without a
-      // translation in the reader's locale or in English would otherwise resolve
-      // its name from an arbitrary row. Alphabetical locale order is arbitrary
-      // too, but it is *stable*, which is all the fallback chain's last step
-      // needs.
-      .order("locale", { referencedTable: "product_translations" })
       .single(),
     client
       .from("profiles")
@@ -245,6 +249,48 @@ async function send({
   if (!customer?.email) return;
 
   const product = productResult.data;
+  // One clock for the whole send rather than one per render. Which occurrence a
+  // calendar entry starts at is a function of when the mail was composed, and a
+  // parent and a child comparing their two invitations are entitled to find the
+  // same one.
+  const now = new Date();
+
+  // The planned sessions the invitation states, over the span the composer
+  // walks its rule across. A second round trip rather than a fourth read beside
+  // the others, because the span is the product's own — its zone decides which
+  // day today is, and its end date where the span stops. A waitlist join
+  // carries no invitation, so it asks for no plan.
+  //
+  // The club's holiday breaks ride the same second round trip, beside it: their
+  // span is the product's own too — from today to the end of the term, or a
+  // year ahead of an open-ended club's today — and every mode states them, because the confirmation page
+  // lists them on every outcome. A failed read costs the list, not the mail:
+  // it is a row of the facts list, and the page drops it on the same failure.
+  const breaksSpan = holidayBreaksSpan(product, now);
+  const [plannedSessions, holidayBreakRows] = await Promise.all([
+    wantsSchedule
+      ? readPlannedSessions(client, productId, invitationPlanWindow({
+          now,
+          timezone: product.timezone,
+          endDate: product.end_date,
+        }))
+      : [],
+    breaksSpan === null
+      ? []
+      : new HolidayBreaksService(client)
+          .getHolidayBreaks(productId, breaksSpan.from, breaksSpan.to)
+          .catch((error: unknown) => {
+            // The message alone: this handler is what keeps the mail going, so
+            // it must not be able to throw itself, and inspecting an arbitrary
+            // error object can.
+            console.error("[product-confirmation email] holiday breaks unread", {
+              productId,
+              message: error instanceof Error ? error.message : String(error),
+            });
+            return [];
+          }),
+  ]);
+  const breaksToday = productToday(product.timezone, now);
   // The sentinel resolved before anything is built, so the mail only ever meets
   // a real mode. A seat offer is made on no-charge products alone, so the only
   // question left is who bears the cost.
@@ -296,11 +342,6 @@ async function send({
   const origin = getOrigin(request);
   const site = scheduleResult.data.locations;
   const slots = scheduleResult.data.schedule_slots;
-  // One clock for the whole send rather than one per render. Which occurrence a
-  // calendar entry starts at is a function of when the mail was composed, and a
-  // parent and a child comparing their two invitations are entitled to find the
-  // same one.
-  const now = new Date();
 
   // The parent's mail goes first, and a child's copy only follows a parent's
   // that went. That ordering is load-bearing for the skip below, which is why
@@ -408,6 +449,12 @@ async function send({
         spokenLanguageCode: product.spoken_language_code,
         now,
       },
+      // The confirmation page's list, by the same rule, in this reader's
+      // locale: the same breaks, the same names, the same compact ranges.
+      holidayBreaks: holidayBreakLines(holidayBreakRows, {
+        today: breaksToday,
+        locale,
+      }),
       invitation: !wantsSchedule
         ? null
         : {
@@ -419,8 +466,8 @@ async function send({
             productType: product.product_type,
             shortDescription,
             timezone: product.timezone,
-            startDate: product.start_date,
             endDate: product.end_date,
+            plannedSessions,
             slots: slots.map(
               (slot): InvitationSlot => ({
                 weekday: slot.weekday,
@@ -487,6 +534,25 @@ function attendeeNameFor(
 ): string {
   const row = recipient.kind === "gamer" ? participant : customer;
   return [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || row.first_name;
+}
+
+/**
+ * The product's planned sessions over one span, as the database plans them.
+ * A failed read fails the send like every other read here: an invitation
+ * composed without its plan would state a schedule nobody planned.
+ */
+async function readPlannedSessions(
+  client: AppSupabaseClient,
+  productId: string,
+  { from, to }: { from: string; to: string },
+): Promise<PlannedSession[]> {
+  const { data, error } = await client.rpc("planned_session_dates", {
+    p_product_id: productId,
+    p_from: from,
+    p_to: to,
+  });
+  if (error) throw error;
+  return plannedSessionRows.parse(data);
 }
 
 /**

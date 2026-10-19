@@ -252,6 +252,7 @@ const TESTS = {
   seatOfferSweep: "tests/integration/api/admin-seat-offers-sweep.test.ts",
   seatOfferInApp: "tests/integration/api/participations-seat-offer.test.ts",
   teamPhotos: "tests/integration/api/team-photos.test.ts",
+  teamPhotoUpload: "tests/integration/api/team-photo-upload.test.ts",
   sendTestDiscordMessage: "tests/integration/api/send-test-discord-message.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   sendTestSlackMessage: "tests/integration/api/send-test-slack-message.test.ts",
@@ -577,7 +578,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/complete-registration/route.ts": {
     adminClient:
-      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
+      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
     handlers: {
       POST: {
         posture: {
@@ -973,7 +974,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/gedu/complete-registration/route.ts": {
     adminClient:
-      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does and stamps registration_completed_at in the same transaction, then the profile columns authenticated has no UPDATE grant on — the three utm_* columns (their one consent-gated write) and email_verified_at (when Google verified the same address) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
+      "finishes an educator registration begun with Google, on the caller's own account and only while it still owes one: register_gedu (service_role only, because it grants the gedu role) promotes it exactly as the register route does and stamps registration_completed_at in the same transaction, then the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write) and email_verified_at (when Google verified the same address) — plus the auth user read (getUserById) for the Google identity's verification. It never deletes the user: the account is the person's own, and a failed promotion leaves it owing registration for a retry",
     handlers: {
       POST: {
         posture: {
@@ -1439,6 +1440,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.teamPhotos,
+      },
+    },
+  },
+
+  "src/app/api/team/profiles/[userId]/photo/route.ts": {
+    adminClient:
+      "the storage upload alone — the team-photos bucket admits no insert from a signed-in client, so this route is its only writer and every object in it has been through the re-encode and the size check. Who may store is decided before it on the caller's own client, by can_edit_team_profile, the same predicate the save and the bucket's delete policy ask; the admin client only performs the write that check has already allowed, into the folder of the person it was asked about",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["admin", "gedu"] },
+        body: {
+          kind: "multipart",
+          schema:
+            "one `file` and no other field: the route verifies it by byte cap and magic bytes and re-encodes it to the team photo's exact stored size — the target person is the path's uuid param, and no schema can describe the bytes",
+        },
+        test: TESTS.teamPhotoUpload,
       },
     },
   },

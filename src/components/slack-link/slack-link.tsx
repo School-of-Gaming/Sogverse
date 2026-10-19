@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 
 import slackMark from "@/assets/partners/slack-mark-color.svg";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -87,7 +88,7 @@ export function SlackLinkConfirm({
     <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
       <SlackMark />
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <Heading level={1} step="section" align="center">{t("title")}</Heading>
         <p className="text-muted-foreground">
           {t.rich("body", {
             username: slackUsername,
@@ -160,7 +161,7 @@ function Outcome({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       <SlackMark />
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{body}</p>
       </div>
       {children}

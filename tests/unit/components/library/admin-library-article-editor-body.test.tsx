@@ -18,7 +18,6 @@ import type { Editor } from "@tiptap/core";
  */
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
-  useFormatter: () => ({ list: (items: string[]) => items.join(" + ") }),
   useLocale: () => "en",
 }));
 

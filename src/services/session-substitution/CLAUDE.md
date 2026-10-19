@@ -187,8 +187,10 @@ request — so the gap is the pool's and not the database's. That is
 why each test is its own predicate and never a clause of *may substitute*: the admin writes
 ask that one too, and a clause there would turn the warning into a refusal.
 
-**No instants travel.** The pool emits the date plus the product's timezone and slots, and
-the client owns the calendar math, exactly as both feeds do.
+**Every read carries its session's instants from the database's plan** — the pool, the admin
+queue, the gedu's own live requests, a sub's seat and the notification snapshot alike. Both
+are null on a date the plan no longer has (an orphan, a date outside the term, or one on a
+holiday break), and every reader still shows such a row by its date alone.
 
 **Every surface describes the session the same way.** The pool, the admin page and a
 sub's own card on My SOG state the session's product — type, topic, language, timezone,
@@ -265,13 +267,13 @@ divergence would survive.
 
 ## What the picker can and cannot know
 
-**The picker lists the viewer's own upcoming sessions, expanded on the client
-from the seats they already hold**, under the app's one forward-looking rule and
-not a horizon of its own: an open-ended product projects its next eight
-occurrences and a dated one projects everything to its end date, which is what
-every other list of what is coming shows. The session card carries the same
-action under the same rule by construction rather than by a second test — a card
-exists only for an entry the feed projected.
+**The picker lists the viewer's own upcoming sessions, read from the planned
+sessions the seats they already hold carry**, under the app's one forward-looking
+rule and not a horizon of its own: an open-ended product lists its next eight
+sessions and a dated one everything to its end date, which is what every other
+list of what is coming shows. The session card carries the same action under the
+same rule by construction rather than by a second test — a card exists only for a
+date the plan holds.
 
 **The gedus' pool has no horizon.** It lists every open request dated today or
 later that the gedu could take, however far ahead — as the admin page's queue
@@ -373,7 +375,7 @@ appearing with it.
 
 Two consequences worth knowing before reading a surface:
 
-- **A date the schedule no longer projects has no start, so the 48 hours run back from
+- **A date the plan no longer holds has no start, so the 48 hours run back from
   product-local midnight of that date.** That is earlier than any real session on it
   would have opened — an admin moving a group's weekday must not lock a sub out of an
   afternoon they actually ran and still owe a report for — but it is **not** "open now":
@@ -451,9 +453,9 @@ raises** — anything unmatched falls to the generic line, because the server's 
 are untranslated and name UUIDs. There is no "the session has already started" refusal:
 that check is on the gedu's offer write and not on the approval.
 
-**The page sorts by the session's own start; the read cannot.** No instants travel on any
-substitution surface, so SQL orders by the calendar date and the client resolves each
-request's occurrence from the slots that ride with it. Two products meeting on one day in
+**The page sorts by the session's own start; the read orders by date.** An orphan has no
+instant, so SQL orders by the calendar date — the one key every row has — and the client
+sorts on the instants each row carries. Two products meeting on one day in
 two zones would otherwise sit in an order saying nothing about which is next, on a list an
 admin reads as a run of deadlines. An orphaned request — one whose weekday the schedule no
 longer names — has no start, sorts on its day, and claims no urgency.

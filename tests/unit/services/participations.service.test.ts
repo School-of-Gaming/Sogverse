@@ -86,20 +86,20 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
 
 describe("ParticipationsService.getMyUpcomingSessions", () => {
   const RPC_PATH = "/rest/v1/rpc/get_my_participation_subscription_states";
-  const CANCELLATIONS_PATH = "/rest/v1/rpc/get_my_session_cancellations";
+  const PLAN_PATH = "/rest/v1/rpc/get_my_planned_sessions";
 
   let fetchMock: FetchMock;
   let service: ParticipationsService;
 
   /**
    * Routes the three concurrent backend calls the method makes: the
-   * participations select, the subscription-state RPC and the session
-   * cancellations RPC (nothing cancelled unless a case says otherwise).
+   * participations select, the subscription-state RPC and the planned-sessions
+   * RPC (no sessions planned unless a case says otherwise).
    */
   function mockBackend(
     participations: unknown[],
     subscriptionStates: { rows: unknown[] } | { errorMessage: string },
-    cancellations: { rows: unknown[] } | { errorMessage: string } = {
+    plan: { rows: unknown[] } | { errorMessage: string } = {
       rows: [],
     },
   ) {
@@ -112,11 +112,11 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
             : postgrestError(subscriptionStates.errorMessage),
         );
       }
-      if (url.pathname === CANCELLATIONS_PATH) {
+      if (url.pathname === PLAN_PATH) {
         return Promise.resolve(
-          "rows" in cancellations
-            ? postgrestJson(cancellations.rows)
-            : postgrestError(cancellations.errorMessage),
+          "rows" in plan
+            ? postgrestJson(plan.rows)
+            : postgrestError(plan.errorMessage),
         );
       }
       if (url.pathname === "/rest/v1/participations") {
@@ -245,11 +245,25 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     consoleError.mockRestore();
   });
 
-  it("hands each seat its own group's cancelled dates", async () => {
+  /** One `get_my_planned_sessions` row, as PostgREST renders it. */
+  function planRow(participationId: string, date: string, cancelled = false) {
+    return {
+      participation_id: participationId,
+      session_date: date,
+      starts_at: `${date}T17:00:00+00:00`,
+      ends_at: `${date}T18:30:00+00:00`,
+      cancelled,
+    };
+  }
+
+  it("hands each seat its own planned sessions, with their cancellations", async () => {
     mockBackend([rawRow("p1", "Alex"), rawRow("p2", "Bobby")], { rows: [] }, {
       rows: [
-        { participation_id: "p1", session_date: "2026-10-13" },
-        { participation_id: "p1", session_date: "2026-10-20" },
+        planRow("p1", "2026-10-13", true),
+        planRow("p1", "2026-10-20"),
+        // A seat the caller is party to in the other role: the read answers
+        // for it, and no row of this audience picks it up.
+        planRow("p9", "2026-10-13"),
       ],
     });
 
@@ -257,20 +271,39 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
 
     const alex = result.find((r) => r.participationId === "p1");
     const bobby = result.find((r) => r.participationId === "p2");
-    expect(alex?.cancelledDates).toEqual(["2026-10-13", "2026-10-20"]);
-    expect(bobby?.cancelledDates).toEqual([]);
+    expect(alex?.plan).toEqual([
+      {
+        date: "2026-10-13",
+        startsAt: new Date("2026-10-13T17:00:00Z"),
+        endsAt: new Date("2026-10-13T18:30:00Z"),
+        cancelled: true,
+      },
+      {
+        date: "2026-10-20",
+        startsAt: new Date("2026-10-20T17:00:00Z"),
+        endsAt: new Date("2026-10-20T18:30:00Z"),
+        cancelled: false,
+      },
+    ]);
+    expect(bobby?.plan).toEqual([]);
   });
 
-  it("degrades to nothing cancelled (and does not throw) when the cancellations read errors", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+  // Unlike the badges, the plan is what every card's session comes from: an
+  // empty one would tell a family nothing is ahead of them.
+  it("throws when the planned-sessions read errors", async () => {
     mockBackend([rawRow("p1", "Alex")], { rows: [] }, { errorMessage: "boom" });
 
-    const result = await service.getMyUpcomingSessions("customer");
+    await expect(service.getMyUpcomingSessions("customer")).rejects.toThrow();
+  });
 
-    expect(result[0].cancelledDates).toEqual([]);
-    consoleError.mockRestore();
+  // A family learns only that a date is cancelled; a reason riding along
+  // fails the parse rather than reaching the card.
+  it("refuses a plan row carrying anything beyond the session and its flag", async () => {
+    mockBackend([rawRow("p1", "Alex")], { rows: [] }, {
+      rows: [{ ...planRow("p1", "2026-10-13", true), reason: "Holiday" }],
+    });
+
+    await expect(service.getMyUpcomingSessions("customer")).rejects.toThrow();
   });
 
   it("carries the site on an in-person product, raw for the viewer's locale", async () => {

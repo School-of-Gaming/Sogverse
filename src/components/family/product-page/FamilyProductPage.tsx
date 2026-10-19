@@ -43,13 +43,13 @@ import { getPathname } from "@/i18n/navigation";
  *
  * **`accessUntil` is threaded into the builder, not just into the notice.** A
  * cancelled enrollment must show nothing past its paid window *anywhere*, so
- * the same instant that words the notice also bounds the occurrence walk. Pass
- * it to one and not the other and the page says "last session on the 14th"
- * over a feed listing the 21st.
+ * the same instant that words the notice also bounds the feed. Pass it to one
+ * and not the other and the page says "last session on the 14th" over a feed
+ * listing the 21st.
  *
- * **The calendar math is not in either read.** The RPC returns schedule
- * parameters and stored rows; the walk forward, the walk backward and the merge
- * happen here, in a `useMemo` over the shared 30-second clock, so entry kinds
+ * **The clock is not in either read.** The RPC returns the planned sessions and
+ * the stored rows; the cut of an open-ended plan and the merge happen here, in
+ * a `useMemo` over the shared 30-second clock, so entry kinds
  * advance while the page is open. Both this memo and the feed component read
  * `useNow()`, which is one context value — every consumer sees the same instant
  * in the same commit, so the live tag and the entry kind it depends on cannot
@@ -136,16 +136,11 @@ export function FamilyProductPage({
         ? []
         : buildFamilySessionFeed({
             groupId: feed.group.id,
-            timezone: feed.product.timezone,
-            slots: feed.product.schedule_slots.map((slot) => ({
-              weekday: slot.weekday,
-              startTime: slot.start_time,
-              durationMinutes: slot.duration_minutes,
-            })),
-            startDate: feed.product.start_date,
-            endDate: feed.product.end_date,
+            plannedSessions: feed.planned_sessions,
+            openEnded: feed.product.end_date === null,
             sessions: feed.sessions,
             cancellations: feed.cancellations,
+            holidayBreaks: feed.holiday_breaks,
             now,
             accessUntil,
           }),
@@ -170,9 +165,12 @@ export function FamilyProductPage({
    * when the window covers nothing at all, which is the case the notice has its
    * own sentence for.
    */
-  // A cancelled date is not a session the window covers, so it is stepped over.
+  // A cancelled date or a holiday break is not a session the window covers, so
+  // it is stepped over.
   const lastSessionStart =
-    entries.find((entry) => entry.kind !== "cancelled")?.startsAt ?? null;
+    entries.find(
+      (entry) => entry.kind !== "cancelled" && entry.kind !== "holiday",
+    )?.startsAt ?? null;
 
   if (isPending) return <FamilyProductPageSkeleton audience={audience} />;
   if (feed === null) return <FamilyProductNotFound audience={audience} />;
@@ -210,6 +208,7 @@ export function FamilyProductPage({
           end_date: feed.product.end_date,
           schedule_slots: feed.product.schedule_slots,
         }}
+        plannedSessions={feed.planned_sessions}
         isRemote={feed.product.is_remote}
         participant={participant}
         groupName={feed.group.name}

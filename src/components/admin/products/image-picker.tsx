@@ -34,10 +34,15 @@ const PICKER_FRAMES = {
   product: { Frame: ProductBanner, width: "w-60", sizes: "240px" },
   library_cover: { Frame: LibraryCover, width: "w-72", sizes: "288px" },
   landing_image: { Frame: LandingImageFrame, width: "w-72", sizes: "288px" },
+  spotlight_image: { Frame: SpotlightImageFrame, width: "w-72", sizes: "288px" },
 } as const satisfies Record<
   CatalogueImagePurpose,
   {
-    Frame: typeof ProductBanner | typeof LibraryCover | typeof LandingImageFrame;
+    Frame:
+      | typeof ProductBanner
+      | typeof LibraryCover
+      | typeof LandingImageFrame
+      | typeof SpotlightImageFrame;
     width: string;
     sizes: string;
   }
@@ -55,6 +60,21 @@ function LandingImageFrame({
 }) {
   return (
     <FramedImage purpose="landing_image" src={src} className={className} sizes={sizes} />
+  );
+}
+
+/** A spotlight picture in its purpose's 2:1 frame. */
+function SpotlightImageFrame({
+  src,
+  className,
+  sizes,
+}: {
+  src: string | null;
+  className?: string;
+  sizes?: string;
+}) {
+  return (
+    <FramedImage purpose="spotlight_image" src={src} className={className} sizes={sizes} />
   );
 }
 

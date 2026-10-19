@@ -49,6 +49,9 @@
       "adminLibrary": "Contenu de la Bibliothèque",
       "adminLibraryArticleNew": "Nouvel article",
       "adminLibraryArticleEdit": "Modifier l’article",
+      "adminSpotlights": "Mises en avant",
+      "adminSpotlightNew": "Nouvelle mise en avant",
+      "adminSpotlightEdit": "Modifier la mise en avant",
       "adminLandingPages": "Pages d’atterrissage",
       "adminLandingPage": "Page d’atterrissage",
       "adminPlatformVision": "Vision de la plateforme",
@@ -85,7 +88,10 @@
       "teamProfile": "Mon profil",
       "adminTeamProfile": "Profil",
       "adminFeedback": "Avis",
-      "team": "Équipe"
+      "team": "Équipe",
+      "adminHolidayCalendars": "Calendriers de vacances",
+      "adminHolidayCalendarNew": "Nouveau calendrier de vacances",
+      "adminHolidayCalendarEdit": "Modifier le calendrier de vacances"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -375,7 +381,9 @@
         "timesIn": "horaires en {zone}",
         "nothingOn": "Rien de prévu",
         "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "holiday": "Vacances",
+        "holidayTitle": "Vacances – {name}. Pas de séance à cette date."
       },
       "cancellation": {
         "allTitle": "La séance de ce jour est annulée pour tous les groupes",
@@ -422,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Facturation municipale",
       "description": "Un mois de clubs municipaux : ce que chacun a assuré, et ce que la commune doit pour cela.",
       "previousMonth": "Mois précédent",
       "nextMonth": "Mois suivant",
@@ -444,6 +451,8 @@
       "billedNotRecorded": "Facturée, non enregistrée",
       "upcoming": "À venir",
       "cancelled": "Annulée",
+      "holiday": "Vacances",
+      "holidayNamed": "Vacances – {name}",
       "unrecordedSessions": "{count, plural, one {# non enregistrée} other {# non enregistrées}}",
       "sessionsFor": "Séances de {club}",
       "clubsIn": "Clubs de {municipality}",
@@ -465,7 +474,6 @@
       "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
     },
     "invoiceCustomers": {
-      "title": "Clients de facturation",
       "subtitle": "Les clients Fennoa à qui les séances d’un club municipal sont facturées.",
       "addCustomer": "Ajouter un client",
       "columns": {
@@ -523,6 +531,83 @@
         "hint": "Le client à qui les séances de ce club sont facturées. Un club sans client est signalé sur la page de facturation et ne produit aucun fichier de facture.",
         "manage": "Gérer les clients de facturation",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "subtitle": "Les vacances scolaires et autres pauses qu’un club peut suivre. Un club n’a aucune séance pendant les jours d’une pause.",
+      "addCalendar": "Ajouter un calendrier",
+      "columns": {
+        "name": "Nom",
+        "breaks": "Pauses",
+        "nextBreak": "Prochaine pause",
+        "clubs": "Clubs"
+      },
+      "noUpcomingBreak": "Aucune à venir",
+      "empty": "Aucun calendrier de vacances pour l’instant. Ajoutez le premier.",
+      "backToList": "Retour aux calendriers de vacances",
+      "notFound": "Aucun calendrier de vacances ne correspond à cet identifiant.",
+      "newPage": {
+        "title": "Nouveau calendrier de vacances",
+        "submit": "Créer le calendrier"
+      },
+      "editPage": {
+        "title": "Modifier le calendrier de vacances"
+      },
+      "sections": {
+        "calendar": "Calendrier",
+        "breaks": "Pauses",
+        "breaksDescription": "Une pause va de son premier à son dernier jour, inclus, et porte un nom dans chacune des langues du calendrier. Les familles voient le nom à la place des séances qu’elle supprime.",
+        "products": "Clubs qui suivent ce calendrier",
+        "productsDescription": "Une modification enregistrée des pauses change ces clubs immédiatement, y compris les mois passés."
+      },
+      "fields": {
+        "name": "Nom",
+        "languages": "Langues",
+        "firstDay": "Premier jour",
+        "lastDay": "Dernier jour",
+        "breakName": "Nom en {language}"
+      },
+      "hints": {
+        "name": "Seuls les administrateurs voient ce nom, par exemple Écoles d’Helsinki. Les familles ne voient que les noms des pauses.",
+        "languages": "Les langues sont celles du calendrier : en ajouter ou en retirer une ici vaut pour chaque pause. Chaque pause doit avoir un nom dans chacune. Les familles lisent le nom dans leur langue s’il existe, sinon en anglais ou dans la première langue rédigée."
+      },
+      "noBreaks": "Aucune pause pour l’instant.",
+      "checkLine": "{range} · {days, plural, one {# jour} other {# jours}} · semaine {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# jour} other {# jours}} · semaines {first}–{last}",
+      "addBreak": "Ajouter une pause",
+      "removeBreak": "Retirer {name}",
+      "noProducts": "Aucun club ne suit encore ce calendrier. Un club choisit ses calendriers sur sa propre page.",
+      "errors": {
+        "nameRequired": "Donnez un nom au calendrier.",
+        "datesRequired": "{name} doit avoir un premier et un dernier jour.",
+        "endBeforeStart": "{name} se termine avant de commencer.",
+        "breakNameMissing": "{name} doit avoir un nom en {language}.",
+        "overlap": "{first} et {second} se chevauchent. Un jour ne peut appartenir qu’à une seule pause.",
+        "saveFailed": "Le calendrier n’a pas pu être enregistré. Réessayez.",
+        "saveFailedWithReason": "Le calendrier n’a pas pu être enregistré — {reason}"
+      },
+      "impact": {
+        "title": "Enregistrer ces modifications ?",
+        "description": "{count, plural, one {Ce club change} other {Ces # clubs changent}} dès l’enregistrement.",
+        "futureRemoved": "Les familles ne verront aucune séance {count, plural, one {pendant # jour} other {pendant # jours}} : {dates}.",
+        "futureRestored": "Les familles reverront des séances {count, plural, one {pendant # jour} other {pendant # jours}} : {dates}.",
+        "pastRemoved": "{count, plural, one {Une séance passée disparaît} other {Des séances passées sur # jours disparaissent}} de l’historique des familles : {dates}.",
+        "pastRestored": "{count, plural, one {Une séance passée réapparaît} other {Des séances passées sur # jours réapparaissent}} dans l’historique des familles : {dates}.",
+        "recordsHidden": "{count, plural, one {# séance documentée est masquée} other {# séances documentées sont masquées}} aux familles.",
+        "recordsShown": "{count, plural, one {# séance documentée est de nouveau visible} other {# séances documentées sont de nouveau visibles}} pour les familles.",
+        "requestsStopped": "{count, plural, one {# demande de remplacement n’a plus} other {# demandes de remplacement n’ont plus}} de séance à couvrir.",
+        "requestsReopened": "{count, plural, one {# demande de remplacement a} other {# demandes de remplacement ont}} de nouveau une séance à couvrir."
+      },
+      "editBreak": "Modifier {name}",
+      "unnamedBreak": "Pause sans nom",
+      "dialog": {
+        "editTitle": "Modifier la pause",
+        "saveAndAddAnother": "Enregistrer et en ajouter une autre"
+      },
+      "breakErrors": {
+        "datesRequired": "Choisissez le premier et le dernier jour.",
+        "endBeforeStart": "Le dernier jour précède le premier.",
+        "nameMissing": "Donnez un nom à la pause en {language}."
       }
     },
     "library": {
@@ -611,11 +696,63 @@
         "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}",
         "versionTitleRequired": "La version en {language} doit avoir un titre."
       },
-      "versionComplete": "complète",
-      "versionIncomplete": "pas encore complète",
-      "addLocale": "Ajouter une langue",
-      "removeLocale": "Supprimer {language}",
       "languagesLabel": "Langues"
+    },
+    "spotlights": {
+      "title": "Mises en avant",
+      "subtitle": "Les parents voient chaque mise en avant activée en bas de chaque e-mail de compte rendu de session qu’ils reçoivent, de la plus récente à la plus ancienne. Chaque lecteur la reçoit dans sa langue, ou en anglais si la sienne n’est pas rédigée, ou sinon dans une langue qui l’est.",
+      "newSpotlight": "Nouvelle mise en avant",
+      "empty": "Aucune mise en avant pour l’instant. Rédigez la première.",
+      "backToList": "Retour aux mises en avant",
+      "notFound": "Aucune mise en avant ne correspond à cet identifiant.",
+      "loadError": "Impossible de charger cette mise en avant. Actualisez la page pour réessayer.",
+      "listLoadError": "Impossible de charger les mises en avant. Actualisez la page pour réessayer.",
+      "newPage": {
+        "title": "Nouvelle mise en avant",
+        "submit": "Enregistrer"
+      },
+      "editPage": {
+        "title": "Modifier la mise en avant"
+      },
+      "fields": {
+        "languages": "Langues",
+        "title": "Titre",
+        "body": "Texte",
+        "picture": "Image"
+      },
+      "hints": {
+        "languages": "Rédigez chaque langue à la main. Chaque langue a besoin d’un titre et du texte.",
+        "body": "Affiché sous le titre dans l’e-mail, mis en forme comme ici. Les liens sont autorisés.",
+        "picture": "Affichée au-dessus du titre dans l’e-mail, recadrée en 2:1. Une mise en avant peut être enregistrée sans image, mais il en faut une pour l’activer."
+      },
+      "bodyPlaceholder": "Rédigez la mise en avant…",
+      "actions": {
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "delete": "Supprimer"
+      },
+      "errors": {
+        "noVersion": "Une mise en avant a besoin d’un titre et d’un texte dans au moins une langue.",
+        "versionIncomplete": "La version {language} a besoin d’un titre et du texte.",
+        "saveFailed": "La mise en avant n’a pas pu être enregistrée. Réessayez.",
+        "saveFailedWithReason": "La mise en avant n’a pas pu être enregistrée — {reason}",
+        "deleteFailed": "La mise en avant n’a pas pu être supprimée. Réessayez.",
+        "deleteFailedWithReason": "La mise en avant n’a pas pu être supprimée — {reason}"
+      },
+      "languagesLabel": "Langues",
+      "created": "Créée le {date}",
+      "status": {
+        "on": "Dans les e-mails",
+        "off": "Hors des e-mails"
+      },
+      "switchLabel": "Dans les e-mails de compte rendu de session",
+      "needsPicture": "Ajoutez une image pour pouvoir l’activer.",
+      "deleteConfirm": {
+        "title": "Supprimer cette mise en avant ?",
+        "descriptionOn": "Elle quitte immédiatement les e-mails de compte rendu de session et ne pourra pas être récupérée. Son image reste dans le catalogue.",
+        "descriptionOff": "Elle ne pourra pas être récupérée. Son image reste dans le catalogue.",
+        "confirm": "Supprimer"
+      }
     },
     "landingPages": {
       "title": "Pages d’atterrissage",
@@ -788,26 +925,27 @@
     "products": {
       "types": {
         "consumerClub": {
-          "label": "club grand public",
-          "plural": "clubs grand public"
+          "label": "Club grand public",
+          "plural": "Clubs grand public"
         },
         "municipalityClub": {
-          "label": "club municipal",
-          "plural": "clubs municipaux"
+          "label": "Club municipal",
+          "plural": "Clubs municipaux"
         },
         "camp": {
-          "label": "stage",
-          "plural": "stages"
+          "label": "Stage",
+          "plural": "Stages"
         },
         "event": {
-          "label": "événement",
-          "plural": "événements"
+          "label": "Événement",
+          "plural": "Événements"
         }
       },
       "list": {
-        "subtitle": "Gérez les {plural} créés par les administrateurs.",
-        "new": "Ajouter un {label}",
-        "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
+        "subtitle": "Gérez les clubs, stages et événements créés par les administrateurs.",
+        "new": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}",
+        "empty": "{type, select, consumerClub {Pas encore de clubs grand public. Cliquez sur « Ajouter un club grand public » pour en créer un.} municipalityClub {Pas encore de clubs municipaux. Cliquez sur « Ajouter un club municipal » pour en créer un.} camp {Pas encore de stages. Cliquez sur « Ajouter un stage » pour en créer un.} other {Pas encore d’événements. Cliquez sur « Ajouter un événement » pour en créer un.}}",
+        "emptyAll": "Pas encore de clubs, de stages ni d’événements.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
         "online": "En ligne",
@@ -818,19 +956,20 @@
         "pendingHint": {
           "registrationOpens": "Ouverture des inscriptions le {date}",
           "startDate": "Début le {date}"
-        }
+        },
+        "newAny": "Ajouter",
+        "newDialogTitle": "Créer un club, un stage ou un événement"
       },
       "translations": {
         "label": "Langues",
-        "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée.",
-        "addLocale": "+ Ajouter une langue",
-        "removeLocale": "Retirer {locale}"
+        "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée."
       },
       "newPage": {
-        "back": "Retour aux {plural}",
-        "title": "Ajouter un {label}"
+        "back": "Retour aux {type, select, consumerClub {clubs grand public} municipalityClub {clubs municipaux} camp {stages} other {événements}}",
+        "title": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
       },
       "detailsPage": {
+        "title": "Détails du produit",
         "notFound": "Produit introuvable.",
         "uncapped": "Aucune limite de places",
         "listed": "Répertorié publiquement",
@@ -848,7 +987,6 @@
           "notRequired": "Non obligatoire"
         },
         "fields": {
-          "publicUrl": "Lien public",
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
           "startDate": "Date de début",
@@ -871,19 +1009,43 @@
           "requiresGamerCreations": "Créations des joueurs",
           "visibility": "Visibilité",
           "gamerPhotoConsents": "Questions photo",
-          "marketingConsents": "Questions marketing"
+          "marketingConsents": "Questions marketing",
+          "format": "Format",
+          "ageRange": "Tranche d’âge",
+          "publicLink": "Lien public",
+          "createdBy": "Créé par",
+          "createdOn": "Créé le"
         },
         "copyLink": "Copier le lien public",
-        "copied": "Copié"
+        "copied": "Copié",
+        "sections": {
+          "schedule": "Planning",
+          "placeAndAudience": "Lieu et public",
+          "seatsAndRegistration": "Places et inscriptions",
+          "pricing": "Tarifs",
+          "requirements": "Conditions et consentements",
+          "record": "Historique"
+        },
+        "unknownCreator": "Inconnu"
+      },
+      "holidayCalendars": {
+        "label": "Calendriers de vacances",
+        "hint": "Le club n’a aucune séance pendant les jours d’une pause des calendriers qu’il suit. Les familles voient chaque pause à la place des séances concernées.",
+        "manage": "Gérer les calendriers de vacances",
+        "nextBreak": "Prochaine : {name}, {dates}",
+        "noUpcomingBreak": "Aucune pause à venir",
+        "empty": "Aucun calendrier de vacances pour l’instant.",
+        "listUnavailable": "Impossible de charger les calendriers de vacances. Les calendriers que ce club suit déjà sont conservés à l’enregistrement.",
+        "none": "Aucun"
       },
       "editPage": {
         "back": "Retour au produit",
-        "kicker": "Modifier {label}",
+        "kicker": "Modifier {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
         "title": "Modifier {name}"
       },
       "clonePage": {
         "back": "Retour au produit",
-        "kicker": "Dupliquer {label}",
+        "kicker": "Dupliquer {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
         "title": "Duplication de {name}",
         "copySuffix": " (copie)"
       },
@@ -1115,7 +1277,7 @@
       },
       "actions": {
         "cancel": "Annuler",
-        "createLabel": "Créer un {label}"
+        "createLabel": "Créer un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
       },
       "status": {
         "pending": "En attente de démarrage",
@@ -1180,6 +1342,13 @@
             "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et l’utiliser sur cette page d’atterrissage.",
             "outcomeAdded": "Ajoutée au catalogue et choisie pour cette page d’atterrissage.",
             "outcomeExisting": "Déjà dans le catalogue — choisie pour cette page d’atterrissage."
+          },
+          "spotlightImage": {
+            "change": "Changer l’image",
+            "remove": "Retirer l’image",
+            "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 2:1, l’ajouter et l’utiliser sur cette mise en avant.",
+            "outcomeAdded": "Ajoutée au catalogue et choisie pour cette mise en avant.",
+            "outcomeExisting": "Déjà dans le catalogue — choisie pour cette mise en avant."
           }
         }
       },
@@ -1194,6 +1363,7 @@
         "live": "En ligne",
         "hidden": "Masqué",
         "draft": "Brouillon",
+        "switchedOff": "Désactivée",
         "replace": "Remplacer l’image",
         "remove": "Retirer du catalogue",
         "replaceConfirm": {
@@ -1250,6 +1420,19 @@
             "removeConsequence": "{count, plural, one {La page ci-dessous perdra cette image, même en ligne. Une section d’images laissée sans image est supprimée.} other {Les # pages ci-dessous perdront cette image, y compris celles en ligne. Une section d’images laissée sans image est supprimée.}}",
             "removeUnused": "Aucune page d’atterrissage n’utilise cette image. Elle sera définitivement retirée du catalogue.",
             "removeConfirm": "Retirer de {count, plural, one {# page} other {# pages}}"
+          },
+          "spotlightImage": {
+            "title": "Images des mises en avant",
+            "description": "Une même image peut servir à plusieurs mises en avant. Votre choix ne concerne que celle-ci, mais remplacer ou retirer une image touche toutes les mises en avant qui l’utilisent, y compris celles des e-mails de compte rendu de session.",
+            "usedBadge": "{count, plural, one {# mise en avant} other {# mises en avant}}",
+            "usedBy": "Mises en avant utilisant cette image",
+            "usedByNone": "Aucune mise en avant n’utilise cette image.",
+            "replaceConsequence": "{count, plural, one {La mise en avant ci-dessous affichera la nouvelle image, dès le prochain e-mail si elle est activée.} other {Les # mises en avant ci-dessous afficheront toutes la nouvelle image, dès le prochain e-mail pour celles qui sont activées.}}",
+            "replaceUnused": "Aucune mise en avant n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+            "replaceConfirm": "Remplacer sur {count, plural, one {# mise en avant} other {# mises en avant}}",
+            "removeConsequence": "{count, plural, one {La mise en avant ci-dessous perdra cette image et sera désactivée : elle quitte les e-mails de compte rendu de session jusqu’à ce que vous choisissiez une autre image et la réactiviez.} other {Les # mises en avant ci-dessous perdront cette image et seront désactivées : elles quittent les e-mails de compte rendu de session jusqu’à ce que vous choisissiez une autre image et réactiviez chacune.}}",
+            "removeUnused": "Aucune mise en avant n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+            "removeConfirm": "Retirer de {count, plural, one {# mise en avant} other {# mises en avant}}"
           }
         }
       },
@@ -1263,11 +1446,14 @@
         "searchGedu": "Rechercher des Gedus…",
         "searchMunicipality": "Rechercher des communes…",
         "noResults": "Aucun résultat.",
+        "type": "Type",
+        "allTypes": "Tous",
         "search": "Recherche",
         "searchPlaceholder": "Rechercher par nom…",
         "showing": "Affichage de {count} sur {total}",
         "clear": "Effacer",
-        "noMatches": "Pas de {plural} correspondant à la recherche et aux filtres sélectionnés."
+        "noMatches": "Aucun {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}} ne correspond à la recherche et aux filtres sélectionnés.",
+        "noMatchesAll": "Rien ne correspond à la recherche et aux filtres sélectionnés."
       },
       "geduPicker": {
         "searchPlaceholder": "Rechercher un nom ou un e-mail…",
@@ -1404,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Changer de club",
           "title": "Changer de club",
-          "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, la prochaine facture régularise le reste du mois, puis la famille paie le prix du nouveau club.",
+          "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, puis la famille paie le prix du nouveau club.",
           "searchPlaceholder": "Rechercher un club par son nom",
           "picker": {
             "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
@@ -1423,6 +1609,7 @@
             "current": "Paie actuellement",
             "target": "Nouveau prix",
             "proration": "La prochaine facture ajoute ou rembourse la différence pour le reste du mois.",
+            "nothingPaid": "Rien de plus n’est facturé avant le {date}. Ensuite, la famille paie le prix du nouveau club, moins toute remise dont elle bénéficie déjà.",
             "unavailable": "Aucun prix à afficher",
             "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
           },
@@ -1603,11 +1790,6 @@
       "marketing": {
         "title": "Marketing",
         "attribution": "Attribution",
-        "utm": {
-          "source": "Source",
-          "medium": "Support",
-          "campaign": "Campagne"
-        },
         "preferences": "Préférences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -1660,7 +1842,6 @@
       "addType": "Ajouter {type}"
     },
     "sites": {
-      "title": "Sites",
       "subtitle": "Tous les sites de la plateforme et les produits qui s’y déroulent.",
       "addSite": "Ajouter un site",
       "searchPlaceholder": "Rechercher un site par son nom…",
@@ -1727,6 +1908,9 @@
         "templateSubFlow": "Messages de remplacement : tous les états",
         "subPreviewSent": "Tous les messages ont été envoyés."
       }
+    },
+    "tools": {
+      "title": "Outils"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2277,7 +2461,7 @@
             "parentsEmail": "L’adresse e-mail du parent, présente uniquement tant que son <code>marketing_consent.granted</code> vaut <code>true</code>. Elle vaut <code>null</code> sinon, et elle redevient <code>null</code> lorsque le consentement est retiré.",
             "parentsCreatedAt": "La date de création du compte parent : la première étape de l’entonnoir, une famille créée.",
             "parentsLocation": "La commune dans laquelle se trouve le lieu de résidence déclaré par le parent, et son code pays à deux lettres ; <code>city</code> est le nom de la commune. <code>null</code> lorsque le parent n’a pas renseigné de lieu de résidence, ou que celui-ci ne se trouve dans aucune commune.",
-            "parentsUtm": "Les <code>utm_source</code>, <code>utm_medium</code> et <code>utm_campaign</code> du lien par lequel le compte a été créé, chacun à <code>null</code> en leur absence. Ils sont écrits une seule fois à l’inscription et uniquement lorsque le visiteur a accepté les cookies marketing : la plupart des enregistrements portent donc trois valeurs nulles. Par convention, les campagnes créées pour Lynx sont préfixées <code>lynx-</code>.",
+            "parentsUtm": "Les <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> et <code>utm_term</code> du lien par lequel le compte a été créé, chacun à <code>null</code> en leur absence. Ils sont écrits une seule fois à l’inscription et uniquement lorsque le visiteur a accepté les cookies marketing : la plupart des enregistrements portent donc cinq valeurs nulles. Par convention, les campagnes créées pour Lynx sont préfixées <code>lynx-</code>.",
             "parentsMarketingConsent": "La réponse actuelle de ce parent au consentement marketing de Lynx : <code>granted</code> et la date du dernier changement. <code>null</code> signifie que la question ne lui a jamais été posée, ce qui, pour l’envoi, équivaut à <code>false</code>.",
             "gamers": "Les enfants de la famille qui occupent une place sur un produit du Programme, en ont terminé un, ou attendent une place, une entrée chacun. Vide lorsque la famille n’est dans le périmètre que par une place qu’un parent occupe lui-même. Un enfant porte un prénom et aucune autre coordonnée : son identité, ce sont l’identifiant et le compte Roblox.",
             "gamersId": "L’identifiant de l’enfant, celui que les inscriptions portent sous le nom <code>participant_id</code>.",
@@ -2376,7 +2560,9 @@
             "pagesProductId": "Le produit dont c’est la page ; <code>null</code> pour la page d’atterrissage et pour la boutique.",
             "pagesPageviews": "Les vues de la page sur la plage, quelle qu’en soit la provenance.",
             "pagesByCampaign": "Les vues ventilées selon l’<code>utm_campaign</code> du lien. La ligne <code>null</code> regroupe toutes les vues qui n’en portaient aucune, y compris celles d’un visiteur qui a saisi l’adresse ou suivi un lien non balisé.",
-            "pagesBySourceMedium": "Les mêmes vues ventilées selon <code>utm_source</code> et <code>utm_medium</code> pris ensemble, pour lire séparément le trafic payant, social et e-mail. Les deux ventilations portent sur les mêmes vues et chacune totalise <code>pageviews</code> ; elles ne sont pas un tableau croisé l’une de l’autre.",
+            "pagesBySourceMedium": "Les mêmes vues ventilées selon <code>utm_source</code> et <code>utm_medium</code> pris ensemble, pour lire séparément le trafic payant, social et e-mail. Toutes les ventilations d’une page portent sur les mêmes vues et chacune totalise <code>pageviews</code> ; aucune n’est un tableau croisé d’une autre.",
+            "pagesByContent": "Les mêmes vues ventilées selon l’<code>utm_content</code> du lien, pour distinguer les annonces ou les liens d’une même campagne. La ligne <code>null</code> regroupe toutes les vues qui n’en portaient aucun.",
+            "pagesByTerm": "Les mêmes vues ventilées selon l’<code>utm_term</code> du lien, qu’une annonce payante sur un moteur de recherche renseigne généralement avec son mot-clé. La ligne <code>null</code> regroupe toutes les vues qui n’en portaient aucun.",
             "pagesByDay": "Les vues par jour calendaire, en UTC, pour une série temporelle."
           },
           "note": "Le script de Vercel ne s’exécute que pour un visiteur ayant accepté les statistiques dans le bandeau de cookies, et les valeurs UTM d’un enregistrement de famille ne sont écrites que pour un visiteur ayant accepté le marketing. Les deux conditions diffèrent, et celle des statistiques est la plus large : une vue comptée ici et une famille dans <code>/families</code> ne portent donc pas sur la même population. Un visiteur qui a tout accepté figure dans les deux, un visiteur qui n’a accepté que les statistiques ne figure qu’ici, et un visiteur qui a refusé le bandeau ne figure dans aucun des deux."
@@ -2932,7 +3118,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Facturation des Gedus",
     "adminDescription": "Un mois : les séances enregistrées par chaque Gedu, et le montant facturé à School of Gaming pour celles-ci.",
     "myTitle": "Facturation",
     "myDescription": "Ce que vous facturez à School of Gaming, mois par mois. Une séance est comptée dès que quelque chose est enregistré pour elle : présences, compte rendu ou note.",
@@ -2962,6 +3147,8 @@
     "notRecorded": "Non enregistrée",
     "upcoming": "À venir",
     "cancelled": "Annulée",
+    "holiday": "Vacances",
+    "holidayNamed": "Vacances – {name}",
     "absentSubstituted": "Absence – remplacement par {name}",
     "absentNoSubstitute": "Absence – sans remplacement",
     "substitutingFor": "en remplacement de {name}",
@@ -3029,7 +3216,8 @@
     "live": "En direct",
     "nextSession": "Prochaine séance",
     "upcoming": "Séance à venir",
-    "cancelled": "Annulée"
+    "cancelled": "Annulée",
+    "noSession": "Pas de séance"
   },
   "sessionFacts": {
     "remote": "En ligne",
@@ -3089,6 +3277,12 @@
     "linkCancel": "Annuler",
     "linkInvalid": "Cette adresse ne peut pas servir de lien. Utilisez une adresse web, une adresse e-mail ou un chemin interne à ce site.",
     "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
+  },
+  "localeTabs": {
+    "addLanguage": "Ajouter une langue",
+    "removeLanguage": "Supprimer {language}",
+    "complete": "complète",
+    "notComplete": "pas encore complète"
   },
   "header": {
     "nav": {
@@ -3274,7 +3468,8 @@
       "audience": "Public",
       "language": "Langue",
       "online": "En ligne",
-      "tbd": "À confirmer"
+      "tbd": "À confirmer",
+      "holidayBreaks": "Vacances"
     },
     "signupPanel": {
       "verb": {
@@ -3540,17 +3735,10 @@
   "sidebar": {
     "dashboard": "Tableau de bord",
     "users": "Utilisateurs",
-    "consumerClubs": "Clubs grand public",
-    "municipalityClubs": "Clubs municipaux",
-    "municipalityInvoicing": "Facturation municipale",
-    "invoiceCustomers": "Clients de facturation",
     "libraryContent": "Contenu de la Bibliothèque",
+    "spotlights": "Mises en avant",
     "landingPages": "Pages d’atterrissage",
     "platformVision": "Vision de la plateforme",
-    "geduInvoicing": "Facturation des Gedus",
-    "camps": "Stages",
-    "events": "Événements",
-    "sites": "Sites",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
     "testing": "Tests",
@@ -3558,7 +3746,23 @@
     "expandSidebar": "Déplier la barre latérale",
     "collapseSidebar": "Replier la barre latérale",
     "substitutions": "Remplacements",
-    "feedback": "Avis"
+    "feedback": "Avis",
+    "products": "Produits",
+    "invoicing": "Facturation"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Clubs, stages et événements",
+      "invoicing": "Facturation"
+    },
+    "tabs": {
+      "products": "Produits",
+      "sites": "Sites",
+      "holidayCalendars": "Calendriers de vacances",
+      "municipalities": "Municipalités",
+      "invoiceCustomers": "Clients de facturation",
+      "gedus": "Gedus"
+    }
   },
   "home": {
     "hero": {
@@ -4361,7 +4565,9 @@
         "ages": "{min}–{max} ans",
         "audienceParents": "Pour les parents",
         "audienceFamilies": "Pour les familles",
-        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans"
+        "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans",
+        "holidayBreaks": "Vacances",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {
@@ -5906,8 +6112,7 @@
         },
         "languages": "Langues",
         "languagesHint": "Le site ne traduit pas le profil. Ajoutez chaque langue dans laquelle il doit apparaître, et rédigez-le sous l’onglet de cette langue.",
-        "addLocale": "Ajouter une langue",
-        "removeLocale": "Supprimer {locale}",
+        "bioTooLong": "La bio est trop longue pour être enregistrée. Raccourcissez-la à {max} caractères maximum.",
         "shortDescription": "Présentation en une ligne",
         "shortDescriptionPlaceholder": "Fan de redstone et de speedrun",
         "longDescription": "Bio",

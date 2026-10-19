@@ -192,12 +192,15 @@ import { TEST_IDS } from "./constants";
  *                  is not there. Declared here for the reason 6ff and 6ee are:
  *                  allocate either to a real fixture and those cases quietly
  *                  start pointing at rows that exist
- *   7f1-7f4        chat-session-window.test.ts (four products because the thing
- *                  under test is the TIMEZONE and no single product can hold
- *                  four: UTC, a northern DST zone, a southern one — one of the
- *                  two is always on summer time — and a fixed-offset zone in
- *                  which it is just after local midnight, which is what
- *                  exercises the SQL window search's adjacent-day probe)
+ *   7f1-7f4, 7e4   chat-session-window.test.ts (one product per zone the open
+ *                  session window is read in, because a product has one zone:
+ *                  7f1 in UTC carries the midnight, term, overlap and
+ *                  cancellation cases, 7f2 and 7f3 are a northern and a
+ *                  southern DST zone, and 7f4 is the northern zone again with a
+ *                  slot at the wall clock its transitions skip and repeat. 7e4
+ *                  is the one whose session is in progress while the file runs,
+ *                  for the case that reads the real clock — kept apart so no
+ *                  fixed slot can share its window)
  *   7f7-7fd        admin-municipality-invoicing.test.ts (five municipality
  *                  clubs, two of them with a group: 7fa/7fb recorded a session
  *                  inside the month under test, 7fc/7fd sit wholly outside it in
@@ -326,6 +329,56 @@ import { TEST_IDS } from "./constants";
  *                  841, whose minted gedu files every request the file
  *                  enqueues; 842 is a substitution request id that must NEVER
  *                  exist, backing the "unknown request" snapshot case)
+ *   850-855        spotlights.test.ts — `spotlights` and `catalogue_images`
+ *                  rows rather than products: 850 a spotlight id that must
+ *                  NEVER exist, and 851-855 catalogue entries — four spotlight
+ *                  pictures (one removed during the run) and one Library cover
+ *                  a spotlight may not show
+ *   860-865        session-documents-plan.test.ts (the dated club 860 with its
+ *                  groups 861/862, the open-ended daily club 863 with its
+ *                  groups 864/865)
+ *   870-876        my-planned-sessions.test.ts (the open-ended daily club 870
+ *                  with group 871 and the seeded family's seat 872; the
+ *                  open-ended weekly club 873 with group 874, the seeded
+ *                  family's cancelled-membership seat 875 and the second
+ *                  family's unplaced seat 876)
+ *   880-883        admin-dashboard.test.ts's plan fixtures (the daily club 880
+ *                  whose term the window clips at both ends, with groups 881
+ *                  and 882 so a date can be cancelled by one or by both; the
+ *                  open-ended daily club 883). Apart from that file's 620-629
+ *                  block because the block was full when they arrived
+ *   890-895        holiday-calendars.test.ts (the dated Monday club 890 with
+ *                  its group 891, which follows the file's two overlapping
+ *                  calendars; the camp 892 a calendar is refused on; the
+ *                  open-ended daily club 893 with its group 894, taught by the
+ *                  seeded gedu, for the substitution case; 895 is a break and
+ *                  calendar id that must NEVER exist, backing the "unknown id"
+ *                  cases — declared here for the same reason 6ee and 6ff are.
+ *                  The calendars themselves are minted by the RPC under test
+ *                  and found by a name prefix only that file uses)
+ *   8a0-8a3        holiday-documents.test.ts (the dated Monday club 8a0 with
+ *                  its group 8a1, taught by the seeded gedu and holding the
+ *                  seeded gamer's seat; the open-ended daily club 8a2 with its
+ *                  group 8a3, for the admin dashboard's window around today.
+ *                  Its calendar is minted by the RPC and found by a name
+ *                  prefix only that file uses)
+ *   8b0-8b2        holiday-impact.test.ts (the dated Monday club 8b0, its term
+ *                  spanning 2021 to 2034 so a break can be past or future,
+ *                  with its group 8b1 holding the stored records and requests;
+ *                  8b2 is the short club following the same calendar that an
+ *                  edit away from its term leaves out of the preview. Its
+ *                  calendars are minted by the RPC and found by a name prefix
+ *                  only that file uses)
+ *   8c0-8ce        planned-sessions.test.ts (one product per shape of plan —
+ *                  a dated term 8c0, a camp week 8c1, an open-ended daily club
+ *                  8c2, the two DST zones 8c3/8c4, the cancelling product 8c5
+ *                  with its groups 8c6/8c7, the horizon club 8c8 with its group
+ *                  8c9, the late-starting club 8cd and the live-list club 8ce)
+ *   8d1-8d9, 8e0-8fa
+ *                  admin-product-list.test.ts (five products 8d1-8d5, one per
+ *                  shape the list's filters tell apart, with groups 8d8/8d9;
+ *                  8e0-8fa are the 27 products — one page and two more — the
+ *                  keyset cursor is walked across)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

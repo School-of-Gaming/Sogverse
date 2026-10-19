@@ -179,16 +179,24 @@ describe("chat RPCs", () => {
       ]);
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
+    // The term started a week ago: a session is only a session inside its
+    // product's term, and the helper's default start is tomorrow.
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, seatCount: 50, timezone: "UTC" });
+      await createTestProduct(admin, {
+        id,
+        seatCount: 50,
+        timezone: "UTC",
+        startDate: weekAgo,
+      });
     }
 
     // A slot whose window is open RIGHT NOW: the session started ten minutes
     // ago and runs an hour, so `ensure_chat_channel` finds it however long this
     // file takes. The product's timezone is UTC, so the weekday and wall clock
     // come straight off the UTC fields. If ten minutes ago fell before UTC
-    // midnight the slot lands on yesterday's weekday, which is the adjacent-day
-    // probe doing its job rather than a case to avoid.
+    // midnight the slot lands on yesterday's weekday, and the session is
+    // yesterday's, still running.
     const sessionStart = new Date(Date.now() - 10 * 60_000);
     await createScheduleSlot(admin, PRODUCT_LIVE, {
       // schedule_slots.weekday is 0 = Monday; getUTCDay() is 0 = Sunday.

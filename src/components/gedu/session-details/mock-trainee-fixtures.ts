@@ -113,6 +113,10 @@ export function buildTraineeWorkspaceFixture(now: Date): {
             is_my_group: false as const,
           },
     ),
+    // The workspace fixture's plan, which is its feed's own sessions — so
+    // the trainee's feed lays its rows over the same dates the gedu's does.
+    planned_sessions: data.planned_sessions,
+    final_session_date: data.final_session_date,
   };
 
   const feed: TraineeGroupFeed = {
@@ -147,6 +151,32 @@ export function buildTraineeWorkspaceFixture(now: Date): {
     gedus,
     cancellations,
     trainees: [{ id: TRAINEE_ID, first_name: "Veera" }],
+    // The workspace fixture's plan, which is its feed's own sessions — so
+    // the trainee's feed lays its rows over the same dates the gedu's does.
+    planned_sessions: data.planned_sessions,
+    // The workspace fixture's holiday lines, back as the breaks the document
+    // carries, each with the one session it withdrew.
+    holiday_breaks: entries.flatMap((entry) =>
+      entry.kind === "holiday"
+        ? [
+            {
+              id: entry.id.replace(/^holiday:/, ""),
+              startDate: entry.startDate,
+              endDate: entry.endDate,
+              names: [...entry.names],
+              withdrawnSessions: [
+                {
+                  date: productLocalDate(entry.startsAt, timeZone),
+                  startsAt: entry.startsAt,
+                  endsAt: entry.endsAt,
+                  cancelled: false,
+                },
+              ],
+            },
+          ]
+        : [],
+    ),
+    final_session_date: data.final_session_date,
   };
 
   return { product, feed };

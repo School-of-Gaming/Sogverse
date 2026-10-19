@@ -92,10 +92,11 @@ export const MAX_STAGED_CHAT_IMAGES = 6;
  * the reasoning for each figure in their own headers; these names exist so a
  * chat file imports them from the module every chat file already imports,
  * rather than reaching into another feature's contracts at each call site.
+ * The byte cap is not among them: it is the chat image purpose's own, in the
+ * image purpose registry.
  */
 export {
   SESSION_PHOTO_JPEG_QUALITY as CHAT_IMAGE_JPEG_QUALITY,
-  SESSION_PHOTO_MAX_BYTES as CHAT_IMAGE_MAX_BYTES,
   SESSION_PHOTO_MAX_EDGE as CHAT_IMAGE_MAX_EDGE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 

@@ -1,6 +1,11 @@
 import type { Database } from "@/types/database.types";
 import type { getPathname } from "@/i18n/navigation";
 import type { LibraryCategory } from "@/types";
+import {
+  PRODUCT_LIST_TYPE_PARAM,
+  adminProductSlug,
+  type AdminProductSlug,
+} from "@/lib/products/admin-product-list-type";
 
 type ProductType = Database["public"]["Enums"]["product_type"];
 
@@ -237,24 +242,10 @@ function shopBrowseHref(productType: ProductType) {
  * municipality clubs do NOT collapse — they map to distinct edit pages
  * (`/admin/consumer-clubs/[id]` vs `/admin/municipality-clubs/[id]`). Used to
  * link a gamer's/parent's assigned products from the admin user-detail page.
- * The legacy `/admin/products/[id]` surface is dead (see TODO.md) — never target it.
  */
-function adminProductSegment(productType: ProductType) {
-  switch (productType) {
-    case "consumer_club":
-      return "consumer-clubs" as const;
-    case "municipality_club":
-      return "municipality-clubs" as const;
-    case "camp":
-      return "camps" as const;
-    case "event":
-      return "events" as const;
-  }
-}
-
 function adminProductHref(productType: ProductType, productId: string) {
   const params = { id: productId };
-  switch (adminProductSegment(productType)) {
+  switch (adminProductSlug(productType)) {
     case "consumer-clubs":
       return { pathname: "/admin/consumer-clubs/[id]", params } as const;
     case "municipality-clubs":
@@ -268,7 +259,7 @@ function adminProductHref(productType: ProductType, productId: string) {
 
 function adminProductEditHref(productType: ProductType, productId: string) {
   const params = { id: productId };
-  switch (adminProductSegment(productType)) {
+  switch (adminProductSlug(productType)) {
     case "consumer-clubs":
       return { pathname: "/admin/consumer-clubs/[id]/edit", params } as const;
     case "municipality-clubs":
@@ -288,7 +279,7 @@ function adminProductCloneHref(
   sourceProductId: string,
 ) {
   const query = { cloneFrom: sourceProductId };
-  switch (adminProductSegment(productType)) {
+  switch (adminProductSlug(productType)) {
     case "consumer-clubs":
       return { pathname: "/admin/consumer-clubs/new", query } as const;
     case "municipality-clubs":
@@ -306,7 +297,7 @@ function adminProductGroupHref(
   groupId: string,
 ) {
   const params = { id: productId, groupId };
-  switch (adminProductSegment(productType)) {
+  switch (adminProductSlug(productType)) {
     case "consumer-clubs":
       return {
         pathname: "/admin/consumer-clubs/[id]/groups/[groupId]",
@@ -327,9 +318,20 @@ function adminProductGroupHref(
   }
 }
 
+/** A page's `searchParams` without the keys it types as absent. */
+function definedQuery(
+  query: Readonly<Record<string, string | string[] | undefined>>,
+): Record<string, string | string[]> {
+  const defined: Record<string, string | string[]> = {};
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) defined[key] = value;
+  }
+  return defined;
+}
+
 /** The string form, for the absolute URLs the notification mails build. */
 function adminProductPath(productType: ProductType, productId: string): string {
-  return `/admin/${adminProductSegment(productType)}/${productId}`;
+  return `/admin/${adminProductSlug(productType)}/${productId}`;
 }
 
 /** What the admin feedback pages can be opened on, as the routes spell it. */
@@ -349,27 +351,19 @@ const ADMIN_FEEDBACK_DETAIL_PATHNAMES = {
 } as const satisfies Record<FeedbackRouteKind, string>;
 
 /**
- * A product type's admin listing and create form — the two of its surfaces that
- * take no params, so a plain pathname is the whole href.
+ * A product type's admin create form — the one of its surfaces that takes no
+ * params, so a plain pathname is the whole href.
  *
- * They used to be built at their call sites from the product-type config's
- * `routeSlug`, which produced a `/admin/${slug}/…` template string the router
- * can no longer be handed: a typed href names a declared route, and a
- * concatenated segment names none.
+ * Keyed by `adminProductSlug` rather than built from it at the call sites: a
+ * `/admin/${slug}/…` template string cannot be handed to the router, because a
+ * typed href names a declared route and a concatenated segment names none.
  */
-const ADMIN_PRODUCT_LIST_PATHNAMES = {
-  "consumer-clubs": "/admin/consumer-clubs",
-  "municipality-clubs": "/admin/municipality-clubs",
-  camps: "/admin/camps",
-  events: "/admin/events",
-} as const;
-
 const ADMIN_PRODUCT_NEW_PATHNAMES = {
   "consumer-clubs": "/admin/consumer-clubs/new",
   "municipality-clubs": "/admin/municipality-clubs/new",
   camps: "/admin/camps/new",
   events: "/admin/events/new",
-} as const;
+} as const satisfies Record<AdminProductSlug, string>;
 
 /** Centralized route paths — import and reference instead of hardcoding string literals. */
 export const ROUTES = {
@@ -688,27 +682,40 @@ export const ROUTES = {
     product: adminProductHref,
     /** The string form, for absolute URLs built server-side (email). */
     productPath: adminProductPath,
-    /** A product type's admin listing (`/admin/camps`). */
-    productList: (productType: ProductType) =>
-      ADMIN_PRODUCT_LIST_PATHNAMES[adminProductSegment(productType)],
+    /** Every club, camp and event in one list, narrowed by its `type` param. */
+    products: "/admin/products",
+    /**
+     * The product list narrowed to one type (`/admin/products?type=camps`).
+     * `carry` is any other query to keep — an old list URL's own filters — and
+     * the type is written over whatever `type` it holds.
+     */
+    productList: (
+      productType: ProductType,
+      carry: Readonly<Record<string, string | string[] | undefined>> = {},
+    ) =>
+      ({
+        pathname: "/admin/products",
+        query: {
+          ...definedQuery(carry),
+          [PRODUCT_LIST_TYPE_PARAM]: adminProductSlug(productType),
+        },
+      }) as const,
     /** The create form for a product type (`/admin/camps/new`). */
     productNew: (productType: ProductType) =>
-      ADMIN_PRODUCT_NEW_PATHNAMES[adminProductSegment(productType)],
+      ADMIN_PRODUCT_NEW_PATHNAMES[adminProductSlug(productType)],
     /** The edit form for one product. */
     productEdit: adminProductEditHref,
     /** The create form, seeded from an existing product. */
     productClone: adminProductCloneHref,
     /** One group's detail page under its product. */
     productGroup: adminProductGroupHref,
-    consumerClubs: "/admin/consumer-clubs",
-    municipalityClubs: "/admin/municipality-clubs",
     /**
      * The month a municipality is invoiced for: every club it runs, how many
      * sessions each ran, and what that comes to. A read-only report over the
      * municipality clubs, which is why it is a page of its own rather than
-     * something under one club — it is about a month, not about one club. In the
-     * sidebar the owner placed it below Sites, at the end of the operational
-     * entries and above the tooling.
+     * something under one club — it is about a month, not about one club. It
+     * is the first tab of the invoicing hub, where the rail's Invoicing entry
+     * opens.
      */
     municipalityInvoicing: "/admin/municipality-invoicing",
     /**
@@ -751,6 +758,17 @@ export const ROUTES = {
      */
     invoiceCustomer: (id: string) =>
       ({ pathname: "/admin/invoice-customers/[id]", params: { id } }) as const,
+    /**
+     * The holiday calendars clubs follow — named lists of breaks whose dates
+     * are missing from every following club's plan. A collection of its own
+     * because one calendar (a city's school holidays) is followed by many clubs.
+     */
+    holidayCalendars: "/admin/holiday-calendars",
+    /** The create form. */
+    holidayCalendarNew: "/admin/holiday-calendars/new",
+    /** One calendar: the clubs following it, and its edit form. */
+    holidayCalendar: (id: string) =>
+      ({ pathname: "/admin/holiday-calendars/[id]", params: { id } }) as const,
     /** The Library's articles, published or not, and where they are written. */
     library: "/admin/library",
     /** The form a new article is written in. */
@@ -758,6 +776,16 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /**
+     * Every spotlight, switched on or not — the notes with a picture appended
+     * to every parent's session report email — and where each is switched on and off.
+     */
+    spotlights: "/admin/spotlights",
+    /** The form a new spotlight is written in. */
+    spotlightNew: "/admin/spotlights/new",
+    /** One spotlight's editor. */
+    spotlight: (id: string) =>
+      ({ pathname: "/admin/spotlights/[id]", params: { id } }) as const,
     /** Every landing page, live or not. They are written through the MCP server alone. */
     landingPages: "/admin/landing-pages",
     /**
@@ -771,8 +799,6 @@ export const ROUTES = {
      * they ask what the dream is. Static prose and artwork, English only.
      */
     platformVision: "/admin/platform-vision",
-    camps: "/admin/camps",
-    events: "/admin/events",
     /**
      * Every site on the platform — the `site` rows of the location tree, listed
      * and edited as things in their own right rather than as a field on

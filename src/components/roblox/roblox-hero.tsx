@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
@@ -30,41 +31,14 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
  * than below it. `PartnerLockup` handles its own row-to-stack switch at the
  * same breakpoint.
  *
- * The headline takes the app face, which is proportional: it carries no face
- * class of its own and inherits the one `<body>` sets. No `tracking-tight` and
- * no `text-balance` (the line breaks are authored in the copy).
- *
- * The headline still has two size scales, because the longest translation still
- * has to fit: the two-column layout gives the headline half the container, and
- * French's "des Créateurs" is the line that overflows where English's longest
- * does not. One scale for both would mean shrinking English to fit French, so
- * long copy gets its own smaller scale — see `longBeats` below. The mechanism
- * counts characters, not pixels, which was exact under a monospaced face and is
- * an approximation under a proportional one. Whether two scales are still
- * needed at the app face's widths, and what a hero should do about its longest
- * translation in general, is the library's hero question and is not decided
- * here.
+ * The headline is the `hero` step at one size for every locale, centred on a
+ * phone and flush left from `md`, where the composition splits. French's
+ * "des Créateurs" is the longest line: it fits the narrow step on a phone and
+ * the column from `lg`, and between `md` and `lg`, where the column is at its
+ * narrowest, it wraps at its space rather than shrinking every locale to fit.
  */
 export function RobloxHero() {
   const t = useTranslations("roblox");
-
-  // Does any line exceed the 8 characters the big scale allows? Read off the raw
-  // message (the rendered title is React elements) with its tags stripped.
-  const rawTitle: unknown = t.raw("hero.title");
-  const longBeats =
-    typeof rawTitle === "string" &&
-    rawTitle.replace(/<[^>]+>/g, "\n").split("\n").some((beat) => beat.length > 8);
-
-  // The wider sizes are still this component's and wait for the Heading
-  // adoption. The narrow one is where the two scales differ most: the library
-  // pins a narrow H1 step because a hero *slogan* cannot fit a phone at the
-  // full H1 size, and a short name can — so a headline whose lines all fit the
-  // big scale takes the full step on a phone too, and only the long
-  // translations fall back. The same character count decides both, so there is
-  // one switch and not two.
-  const sloganSize = longBeats
-    ? "text-4xl md:text-3xl lg:text-4xl xl:text-5xl"
-    : "text-h1 xl:text-6xl";
 
   return (
     // Same treatment as the home page hero, pulled up under the translucent
@@ -86,12 +60,12 @@ export function RobloxHero() {
                 centred under it on a phone, left-aligned beside the lockup
                 from `md`, with nothing measured at runtime. */}
             <div className="inline-block">
-              <h1 className={`font-bold leading-snug ${sloganSize}`}>
+              <Heading level={1} step="hero" align="center-narrow">
                 {t.rich("hero.title", {
                   br: () => <br />,
                   act: (chunks) => <span className="text-act">{chunks}</span>,
                 })}
-              </h1>
+              </Heading>
               <span className="mt-6 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
             </div>
             {/* The tagline is the promise, so it is drawn in ink at a size of

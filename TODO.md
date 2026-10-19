@@ -39,7 +39,6 @@
   - **Daily.co "room not found" 404s.** `dailyFetch` (`src/lib/daily.ts:51`) does a blanket `console.error` on *any* non-OK response, before throwing — even when the caller expects the 404 and handles it. `getDailyRoom` (`daily.ts:109`) catches the throw and returns null, so the 404 is fully absorbed, but the error line already fired. This fires for `/api/voice/instant/exists` (the existence check itself — returns 404 by design) and for `/api/voice/token` (the GET half of `getOrCreateDailyRoom`'s get-or-create — room doesn't exist yet, gets created, route returns 200). Fix: don't `console.error` inside `dailyFetch` for statuses the caller branches on (esp. 404); let the caller decide, or pass a flag to suppress.
   - **`AuthApiError: Invalid Refresh Token: Refresh Token Not Found`** from `serverless-middleware` (the proxy) on `/`, `/reset-password`, `/select-profile`. Routine `@supabase/ssr` dual-refresh: a visitor arrives with a stale/expired refresh-token cookie, the server refresh fails, they're treated as logged-out (responses are 200/307). Also its sibling `Too many concurrent token refresh requests` (409 conflict) — the browser/middleware refresh race. Drop both to `warn`/`info` where the proxy catches them.
   - **`generateLink error: User with this email not found`** on `/api/auth/forgot-password` — a reset requested for an unregistered email. The route correctly returns 200 (anti-enumeration); the log is the only noise. Drop to `info` or don't log.
-- [ ] **SOG-UI's hover layer is silently deleted by the class merger whenever it shares a call with a ground.** `bg-hover` is a background *image* by design, so it composes over any ground — but tailwind-merge classifies every `bg-*` class as a background colour, so `cn("bg-lifted", "bg-hover")` returns just `"bg-hover"` and the ground is gone. It fails quietly: the hover still shows, the ground vanishes only on the hovered element, and the diff that caused it looks correct. The date picker (`src/components/ui/date-picker.tsx`) works around it by concatenating `bg-hover` outside `cn`, with a comment; that is the wrong home. The fix belongs in SOG-UI: either teach the merger that `bg-hover` (and `bg-scrim`, `glass`) is its own group — tailwind-merge's `extendTailwindMerge` with a custom class group, exported from the library and used as Sogverse's `cn` — or ship the hover layer as a utility the merger cannot mistake for a colour. Add a unit test under `tests/unit/sog-ui/` that merges a ground with the hover layer and asserts both survive, so the class cannot regress.
 
 - [ ] **Add a `Select` primitive to `components/ui/` and sweep the ~7 hand-styled `<select>` class strings onto it.** There is no select primitive — every native `<select>` is styled by a hand-pasted copy of the same Tailwind string (the shape `input.tsx` already solves for `<input>`), and the copies have drifted: `AddGamerDialog.tsx`, `admin/gamer-personal-details.tsx` and `admin/testing/page.tsx` carry the full string, while three admin product forms (`schedule-slots-editor.tsx`, `fees-section.tsx`, `identity-section.tsx`) carry a truncated variant that silently lacks the focus ring and disabled styling. The primitive stays a thin wrapper over the **native** element — no custom popover/menu widget — and as a reused primitive it earns an `/admin/ui-components` demo.
 
@@ -71,8 +70,6 @@
 
   Everything else stays English everywhere: Minecraft Java/Education/Bedrock, Fortnite, Rocket League, Pokémon GO and Roblox Studio are product names, and the grouped "Minecraft" chip stays "Minecraft". **Open question before building: Creator Studio and Game Studio** are treated as our own programme names; if they are marketed under local names in Finland or Sweden, they move to the translated side under those names. **The shape is already sketched in the header of `src/lib/products/topics.ts`**: a topic carries either a literal label or a message key (the `labelKey` variant), so brand names can never be translated by accident, and label resolution changes in one place because nearly every read goes through the topic-label hook. The work: the variant in the registry, a `topics` namespace in all five catalogues, the hook resolving either form, a check of the few places that read a label directly (anything rendering outside React, such as a mail, needs a translator-taking resolver instead of the hook), a topic unit test asserting every keyed topic has a message in every locale, and rewriting the comments and `docs/architecture/products.md` that call the English-only decision settled.
 
-- [ ] **English dates read in US order — "September 3, 2026" — though the site's copy is UK English.** The shared date formatters in `src/lib/utils.ts` hand the app's locale straight to `Intl.DateTimeFormat`, and a bare `en` resolves to American conventions, so every English date written with `dateStyle` or a spelled-out month comes out month-first (seen 2026-09-29 on the Library editor's "Published September 3, 2026."). The likely fix is to format the `en` locale as `en-GB` in one place — the formatters, and next-intl's `useFormatter` if it is used for dates — rather than per call, and to check the other locales resolve as intended while there. Mind anything that compares or snapshots a formatted date (tests, emails, `.ics` text) before flipping it.
-
 - [ ] **The MCP picture uploader is English-only and always dark, whatever the admin's chat is.** Everything else an admin meets through the MCP follows their language — the AI answers in it, and the sign-in and consent pages are Sogverse's translated pages — so a Finnish admin's one switch into English is the uploader's labels and status lines, shown as a dark card even in a light chat. The host hands the view both the user's locale and its light/dark theme when it renders it, so the fix is local to `packages/mcp-image-uploader/`: carry its dozen strings in the site's locales with English as the fallback, and give it a light scheme chosen by the host's theme. Rebuild and commit `dist/` afterwards, as the package's freshness check requires.
 
 - [ ] **The admin WhatsApp page is hidden from the sidebar, not removed — decide whether it comes back or goes.** Taken off the rail on 2026-10-02 because nobody uses it and it took up space. The page (`/admin/whatsapp`), its route constant, its API routes and `src/services/whatsapp/` are all still live and reachable by URL; only the sidebar entry and its `sidebar.whatsapp` label went. To bring it back, re-add the entry to the admin list in `src/components/layout/sidebar.tsx` (and the label to all five catalogues — it is the brand name in every one). If it is not coming back, delete the page and everything behind it rather than leaving an unreachable feature to rot; its page is also one of the known sites in the error-localization item above.
@@ -83,6 +80,7 @@ Every supported country is seeded complete from GeoNames and admins never hand-t
 
 - [ ] **`LocationFormDialog`'s edit mode has no caller.** The admin site page renames a location now, so the hook and the `PATCH /api/admin/locations/[id]` route behind it are live — but the dialog's edit branch is not: its one call site (`src/components/admin/products/site-picker-dialog.tsx`) only ever opens it to add a site. Remove the branch, or point something at it.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.
+- [ ] **A gedu's coverage is read back unbounded, then saved by delete-and-reinsert, so a truncated read would delete ticks silently.** The coverage read (in `src/services/gedu-locations/`) selects every one of a gedu's rows with no count and no paging, and PostgREST stops at `max_rows` (1000) without an error. The editor then shows fewer ticks than are stored, and the next save — which deletes the gedu's whole set and writes back what is on screen — erases the rest, with nothing logged. Nobody ticks 1000 places, so this cannot happen today; it is here because when it does, it fails as lost data rather than as an error. The fix is minutes: walk the read through the shared paging primitive in `src/lib/supabase/`, which requests the exact count and refuses a short result.
 
 ### Family multi-select checkout — one flow for several family members
 
@@ -150,32 +148,6 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 - We do **not** record the customer's presentment currency. `payments`/`family_subscriptions` store EUR (our settlement currency) because, under single-currency settlement, Adaptive Pricing settles us the exact EUR price we set. If you later want "what the customer actually paid", it's in `session.presentment_details` (`presentment_amount` + `presentment_currency`) on the webhook event — capture it then; it needs a small schema add.
 - Stripe `Price` objects are immutable. `getOrCreateSubscriptionPrice` lazily creates one EUR Price per product and **replaces** it when the admin changes the amount, so new checkouts follow the catalogue. Existing subscribers keep the Price they bought on — nothing migrates a live subscription to the new amount, so a club can be advertised at one price while some parents keep paying an older one indefinitely.
 - Legacy `product_prices` rows in non-EUR currencies (from before the lockdown) are harmless and ignored — `existingFormState` only loads the `eur` row.
-
-### E2E Tests with Local Supabase
-
-**There is no E2E suite right now.** The old one was deleted in August 2026: it asserted on marketing copy and unauthenticated redirects, so it churned on every copy edit while catching nothing. What survived is a build + smoke job — it builds the app, serves the production build, and asserts security headers and the per-request CSP over plain HTTP with no browser involved. This section is the plan for adding a *meaningful* browser suite back, from scratch; it is not a hardening of anything that exists.
-
-The coverage worth having is the authenticated half — admin-only pages, role-based routing, CRUD flows. That needs real Supabase Auth + Postgres, and shouldn't depend on the remote instance.
-
-**Approach:** Run `supabase start` in CI to spin up a local Supabase stack (Postgres, Auth, Storage) in Docker. Existing migration files are applied automatically, giving an identical schema. Test accounts are created via `supabase/seed.sql`.
-
-Setup tasks:
-- [ ] Extend `supabase/seed.sql` with a gamer test account — it already carries admin, customer ×2 and gedu accounts (`*@test.local`, password `testpassword123`)
-- [ ] Add `.env.test.local` with local Supabase URL/keys (`supabase start` prints these)
-- [ ] Add a `tests/e2e/` directory and a Playwright project for it — the smoke config is deliberately browserless (one project, no device emulation, no retries, no browser install in CI), so browser tests need their own project rather than being folded into that one
-- [ ] Create a Playwright auth setup project that logs in via the UI and saves `storageState` per role
-- [ ] Add a CI job (separate from build + smoke, which must stay cheap): `supabase start` → build/serve with test env → run the browser projects, installing only the engines that job actually uses
-
-Test cases to add:
-- [ ] Admin can view `/admin/products` (sees "Products" heading)
-- [ ] Non-admin roles (customer, gedu, gamer) are redirected away from `/admin/*` to their own dashboard
-- [ ] Admin can create a product via the add form
-- [ ] Admin can edit an existing product
-- [ ] Real auth flows (register, login, logout)
-- [ ] Customer adding a gamer
-- [ ] Core purchase flow
-
-**Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
 ### Product image renditions — then re-enable AVIF
 
@@ -463,3 +435,24 @@ is a perfectly good outcome.
 
 - [ ] **About 1,240 of 1,590 parent accounts hold no School of Gaming marketing answer, so we can mail none of them.** Counted on prod 2026-10-08: 143 said yes and 213 said no, about 40% yes among those who answered. The rest were created before the parent-registration question went live around 1 September 2026, most of them in the bulk arrival of existing families in late August. An absent answer already means "do not mail", so nothing is wrong today, but the list we may mail is a fraction of the families we have. **The fix:** ask once in the app. On the next visit to the dashboard, a parent with no School of Gaming answer sees a single yes-or-no question. It saves through the same path as the Settings toggle, so the answer lands in the consent history the same way, and it never appears again once answered. It reaches only parents who sign in (about 220 of the unanswered signed in during the 30 days before the count), which is fine, because the rest simply stay unmailed. **Don't ask by email:** an email requesting marketing consent can itself count as marketing under GDPR. If Finland's existing-customer exception is to be relied on instead, that is a legal call, not an engineering one.
 - [ ] **New parent accounts still arrive without an answer.** Seven parent accounts created since 28 September 2026 hold none, so some way of creating a parent (an admin creating the account, the partner API, or adopting an outside Stripe subscription are the likely candidates) skips the question. Find the path and ask there, or accept that it is answered by the in-app question above.
+
+## Chargebee is still open, and still connected to our Stripe account
+
+SOGGA was shut down on 12 October 2026 and its data, Chargebee's included, is archived on the
+owner's Google Drive. Nothing in Chargebee charges anyone any more (checked 2026-10-12: the
+last three subscriptions end by 23 October, the 34 paused ones have no restart date), but the
+account still holds about 1,400 customers' personal data, and it can still charge cards
+through our Stripe account.
+
+- [ ] **Close the Chargebee account.** Only its owner can cancel, and the owner has left the
+  company, so it goes through Chargebee support from an Admin login (site `schoolofgaming`,
+  EU): ask them to cancel, or to transfer ownership so it can be cancelled from the site.
+  The data is deleted within 90 days of cancellation.
+- [ ] **Revoke Chargebee's Stripe connection.** It is a Stripe Connect app connection, app
+  `ca_0Ow2X6H1Mk28dhI5E0TnxHtNicjhgeO1` (Chargebee's payments carry it), and the dashboard
+  lists it nowhere we could find on 2026-10-12, Apps → Installed included. Ask Chargebee to
+  disconnect as part of the closure, or ask Stripe support to revoke it. Revoking leaves
+  every saved card and every migrated subscription in Stripe untouched: the cards belong to
+  our account, and the subscriptions were created by our own key. Archiving the Stripe
+  gateway inside Chargebee is not a substitute: Chargebee's docs do not say what that does
+  to the saved cards, and the same cards pay the migrated families' Stripe subscriptions.

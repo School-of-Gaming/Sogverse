@@ -477,31 +477,53 @@ const NO_ATTRIBUTION: UtmAttribution = {
   source: null,
   medium: null,
   campaign: null,
+  content: null,
+  term: null,
 };
-
-const ATTRIBUTION_LABELS = messages.admin.users.marketing.utm;
 
 describe("the admin marketing block", () => {
   // The admin details-page rule, made a test: every stored property is visible
   // on the details page. An attribution block that hid its empty fields made
   // "this account has no medium" and "this page does not show mediums" look
   // identical, which is the audit this card exists to allow failing silently.
-  it("shows all three attribution fields, empty ones included", () => {
+  it("shows all five attribution fields, empty ones included", () => {
     forCustomer.data = [];
     renderIntl(
       <UserMarketingCard
-        attribution={{ source: "lynx", medium: null, campaign: "lynx-summer-a" }}
+        attribution={{
+          ...NO_ATTRIBUTION,
+          source: "lynx",
+          campaign: "lynx-summer-a",
+          term: "minecraft",
+        }}
         customerId={CUSTOMER_ID}
       />,
     );
 
-    expect(screen.getByText(ATTRIBUTION_LABELS.source)).toBeTruthy();
-    expect(screen.getByText(ATTRIBUTION_LABELS.medium)).toBeTruthy();
-    expect(screen.getByText(ATTRIBUTION_LABELS.campaign)).toBeTruthy();
     expect(screen.getByText("lynx")).toBeTruthy();
     expect(screen.getByText("lynx-summer-a")).toBeTruthy();
-    // The one field this account never carried says so, rather than vanishing.
-    expect(screen.getByText(messages.common.notSet)).toBeTruthy();
+    expect(screen.getByText("minecraft")).toBeTruthy();
+    // The two fields this account never carried say so, rather than vanishing.
+    expect(screen.getAllByText(messages.common.notSet)).toHaveLength(2);
+  });
+
+  // The labels are the tags themselves, never translated: the name a marketer
+  // types into a link is the one they look for here, in every locale.
+  it("labels each field with its tag, in the order a campaign link spells them", () => {
+    forCustomer.data = [];
+    const { container } = renderIntl(
+      <UserMarketingCard attribution={NO_ATTRIBUTION} customerId={null} />,
+    );
+
+    expect(
+      Array.from(container.querySelectorAll("dt"), (dt) => dt.textContent),
+    ).toEqual([
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_content",
+      "utm_term",
+    ]);
   });
 
   // A gedu can arrive through a campaign link and can hold no marketing
@@ -512,12 +534,12 @@ describe("the admin marketing block", () => {
     forCustomer.data = [];
     renderIntl(
       <UserMarketingCard
-        attribution={{ source: "lynx", medium: null, campaign: null }}
+        attribution={{ ...NO_ATTRIBUTION, source: "lynx" }}
         customerId={null}
       />,
     );
 
-    expect(screen.getByText(ATTRIBUTION_LABELS.source)).toBeTruthy();
+    expect(screen.getByText("utm_source")).toBeTruthy();
     expect(
       screen.queryByText(messages.admin.users.marketing.preferences),
     ).toBeNull();

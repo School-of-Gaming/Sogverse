@@ -3,6 +3,7 @@
 import { PurchaseConfirmationView } from "@/components/public/products/purchase-confirmation-view";
 import {
   buildConfirmationFixture,
+  buildHolidayBreaksFixture,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import type { ProductTopic } from "@/types";
@@ -45,6 +46,7 @@ export function PurchaseConfirmationScene({
       outcome={outcome}
       waitlistPosition={waitlistPosition}
       firstChargeAt={firstChargeAt}
+      holidayBreaks={buildHolidayBreaksFixture(product)}
     />
   );
 }

@@ -1,9 +1,13 @@
 import { ROUTES } from "@/lib/constants";
-import type { SupportedLocale } from "@/lib/constants/locales";
+import {
+  formattingLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import {
   buildSessionFacts,
   sessionClockFace,
   sessionFactsProduct,
+  sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import { sessionRequirements } from "@/lib/products/session-requirements";
 import { formatDateOnly } from "@/lib/utils";
@@ -83,12 +87,11 @@ const URGENT_WITHIN_MS = 24 * 60 * 60 * 1000;
 /**
  * **Soonest session first**, which is not the order the read delivers.
  *
- * The read orders by calendar date, because a date is all SQL has — no instant
- * travels, on this surface or any other. Two products meeting on the same day
- * in two zones therefore arrive in an order that says nothing about which one
- * starts first, and an admin reading a queue top to bottom is reading it as a
- * run of deadlines. So the sort happens here, where the occurrences have been
- * resolved.
+ * The read orders by calendar date, because a date is the one key every row
+ * has — an orphan has no instant. Two products meeting on the same day in two
+ * zones therefore arrive in an order that says nothing about which one starts
+ * first, and an admin reading a queue top to bottom is reading it as a run of
+ * deadlines. So the sort happens here, on the instants the read carries.
  *
  * **An orphan sorts on its date and never after everything else.** It has no
  * start, but it has a day, and the row is still work: parking every orphan at
@@ -183,6 +186,7 @@ function toSubstitutionSession(
   const facts = buildSessionFacts({
     product: sessionFactsProduct(request.product),
     sessionDate: request.session_date,
+    ...sessionWindowOf(request),
     locale,
   });
 
@@ -238,7 +242,7 @@ function viewerZoneAbbrev(
   );
   if (!converts) return null;
 
-  const part = new Intl.DateTimeFormat(locale, {
+  const part = new Intl.DateTimeFormat(formattingLocale(locale), {
     timeZone: viewerTimeZone,
     timeZoneName: "short",
   })

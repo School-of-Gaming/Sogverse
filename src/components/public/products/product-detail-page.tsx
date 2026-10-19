@@ -20,6 +20,9 @@ import {
 import { useAuth } from "@/providers/auth-provider";
 import { useLocationsByIds } from "@/services/locations";
 import { useProductDetail } from "@/services/products";
+import { useHolidayBreaks } from "@/services/holiday-breaks";
+import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
+import type { HolidayBreak } from "@/lib/holiday-breaks";
 import { useGamerBirths, useMyGamers } from "@/services/gamers";
 import {
   useParticipationCounts,
@@ -40,6 +43,7 @@ import type {
   ConfirmedHomeLocation,
   SignupAgeBlock,
 } from "./signup-panel-view";
+import { Heading } from "@sog/ui";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -54,6 +58,9 @@ import type {
  * each render would be a new one for no reason.
  */
 const NO_BIRTHS: ReadonlyMap<string, GamerBirthMonthYear> = new Map();
+
+/** What a failed holiday-breaks read resolves to, stable for the same reason. */
+const NO_BREAKS: readonly HolidayBreak[] = [];
 
 interface ProductDetailPageProps {
   productId: string;
@@ -170,6 +177,38 @@ export function ProductDetailPage({
     setBirthsEverFailed(true);
   }
   const births = birthsReadFailed ? NO_BIRTHS : birthsRead;
+
+  // ---------------------------------------------------------------------
+  // The club's holiday breaks, for the facts card
+  //
+  // Anyone may read them, so they are asked for every viewer — but only of a
+  // club, and only once the row has said what its term is: the span runs from
+  // today to the end of the term, or a year ahead of today for an open-ended
+  // club, and a term already over reads nothing. That makes this a
+  // second hop like the births read, and the page waits for it for the same
+  // reason: the list is the facts card's last row, and below `2xl` that card
+  // sits above the topic card, so a list landing after paint would push the
+  // card down. The read keeps its previous answer across a re-key (a day
+  // turning over under an open tab moves the span's start), so the wait is a
+  // first resolution and never returns.
+  //
+  // **Its fail-open is latched like the two reads around it**, and for the
+  // same reason: a list inserted by a retry that later succeeds is a shift on
+  // data's own schedule. A failed read costs the list for this mount, and the
+  // page paints without it.
+  // ---------------------------------------------------------------------
+  const breaksSpan = product ? holidayBreaksSpan(product, now) : null;
+  const {
+    data: breakRows,
+    isPending: breaksPending,
+    failureCount: breaksFailures,
+  } = useHolidayBreaks(product?.id, breaksSpan);
+  const [breaksEverFailed, setBreaksEverFailed] = useState(false);
+  const breaksReadFailed = breaksEverFailed || breaksFailures > 0;
+  if (breaksReadFailed && !breaksEverFailed) {
+    setBreaksEverFailed(true);
+  }
+  const holidayBreaks = breaksReadFailed ? NO_BREAKS : (breakRows ?? NO_BREAKS);
 
   const { data: counts, isLoading: countsLoading } = useParticipationCounts(
     product ? [product.id] : [],
@@ -313,6 +352,7 @@ export function ProductDetailPage({
   if (
     productLoading ||
     authLoading ||
+    (breaksSpan !== null && breaksPending && !breaksReadFailed) ||
     (isCustomer && gamersLoading) ||
     (isCustomer && birthsNeverResolved && !birthsReadFailed) ||
     (isCustomer && countsLoading) ||
@@ -474,6 +514,7 @@ export function ProductDetailPage({
       <ProductDetailPageBody
         product={product}
         municipalitySlug={municipalitySlug}
+        holidayBreaks={holidayBreaks}
         signupPanel={
           <SignupPanel
             product={product}
@@ -566,7 +607,11 @@ function describeAgeBlock(
  * child changes them — so it is the one that carries the previous answer across
  * a re-key rather than returning to pending. Nothing here waits twice.
  *
- * A sixth read joins them on a narrow slice of visits: the keyed lookup of the
+ * A club's holiday breaks join them on every club, a second hop behind the
+ * product read because the span they are read over is the club's own term —
+ * the same first-resolution wait, failing open at the first failed attempt.
+ *
+ * A further read joins them on a narrow slice of visits: the keyed lookup of the
  * family's home location, waited on only where it can change what the signup
  * panel says — a region-locked product, a signed-in parent, a location stored
  * to resolve, and no pick confirmed in the panel's own dialog yet. It drops out
@@ -659,7 +704,9 @@ function DetailNotFound() {
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-lg font-semibold">{t("notFound.title")}</h2>
+          <Heading level={2} step="card-title" align="center">
+            {t("notFound.title")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>

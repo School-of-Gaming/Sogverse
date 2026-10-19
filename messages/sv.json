@@ -49,6 +49,9 @@
       "adminLibrary": "Bibliotekets innehåll",
       "adminLibraryArticleNew": "Ny artikel",
       "adminLibraryArticleEdit": "Redigera artikel",
+      "adminSpotlights": "Spotlights",
+      "adminSpotlightNew": "Ny spotlight",
+      "adminSpotlightEdit": "Redigera spotlight",
       "adminLandingPages": "Landningssidor",
       "adminLandingPage": "Landningssida",
       "adminPlatformVision": "Plattformens vision",
@@ -85,7 +88,10 @@
       "teamProfile": "Min profil",
       "adminTeamProfile": "Profil",
       "adminFeedback": "Feedback",
-      "team": "Team"
+      "team": "Team",
+      "adminHolidayCalendars": "Lovkalendrar",
+      "adminHolidayCalendarNew": "Ny lovkalender",
+      "adminHolidayCalendarEdit": "Redigera lovkalender"
     },
     "descriptions": {
       "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",
@@ -375,7 +381,9 @@
         "timesIn": "tider i {zone}",
         "nothingOn": "Inget inplanerat",
         "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "holiday": "Lov",
+        "holidayTitle": "Lov – {name}. Inget tillfälle detta datum."
       },
       "cancellation": {
         "allTitle": "Tillfället är inställt för alla grupper den här dagen",
@@ -422,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Kommunfakturering",
       "description": "En månad kommunklubbar: vad varje klubb genomförde och vad kommunen ska betala för det.",
       "previousMonth": "Föregående månad",
       "nextMonth": "Nästa månad",
@@ -444,6 +451,8 @@
       "billedNotRecorded": "Fakturerat, inte registrerat",
       "upcoming": "Kommande",
       "cancelled": "Inställt",
+      "holiday": "Lov",
+      "holidayNamed": "Lov – {name}",
       "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
       "sessionsFor": "Tillfällen för {club}",
       "clubsIn": "Klubbar i {municipality}",
@@ -465,7 +474,6 @@
       "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
     },
     "invoiceCustomers": {
-      "title": "Faktureringskunder",
       "subtitle": "Fennoa-kunderna som en kommunklubbs tillfällen faktureras till.",
       "addCustomer": "Lägg till en kund",
       "columns": {
@@ -523,6 +531,83 @@
         "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
         "manage": "Hantera faktureringskunder",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "subtitle": "Skollov och andra uppehåll som en klubb kan följa. En klubb har inga träffar under ett uppehålls dagar.",
+      "addCalendar": "Lägg till en kalender",
+      "columns": {
+        "name": "Namn",
+        "breaks": "Uppehåll",
+        "nextBreak": "Nästa uppehåll",
+        "clubs": "Klubbar"
+      },
+      "noUpcomingBreak": "Inga kommande",
+      "empty": "Inga lovkalendrar än. Lägg till den första.",
+      "backToList": "Tillbaka till lovkalendrar",
+      "notFound": "Det finns ingen lovkalender med detta id.",
+      "newPage": {
+        "title": "Ny lovkalender",
+        "submit": "Skapa kalender"
+      },
+      "editPage": {
+        "title": "Redigera lovkalender"
+      },
+      "sections": {
+        "calendar": "Kalender",
+        "breaks": "Uppehåll",
+        "breaksDescription": "Ett uppehåll varar från sin första till sin sista dag, båda inräknade, och har ett namn på vart och ett av kalenderns språk. Familjerna ser namnet i stället för de träffar det tar bort.",
+        "products": "Klubbar som följer kalendern",
+        "productsDescription": "En sparad ändring av uppehållen ändrar dessa klubbar direkt, även tidigare månader."
+      },
+      "fields": {
+        "name": "Namn",
+        "languages": "Språk",
+        "firstDay": "Första dag",
+        "lastDay": "Sista dag",
+        "breakName": "Namn på {language}"
+      },
+      "hints": {
+        "name": "Bara administratörer ser det här namnet, till exempel Helsingfors skolor. Familjerna ser bara uppehållens namn.",
+        "languages": "Språken hör till hela kalendern: lägger du till eller tar bort ett här gäller det varje uppehåll. Varje uppehåll behöver ett namn på varje språk. Familjerna läser namnet på sitt eget språk om det finns, annars på engelska eller det första språket som skrivits."
+      },
+      "noBreaks": "Inga uppehåll än.",
+      "checkLine": "{range} · {days, plural, one {# dag} other {# dagar}} · vecka {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# dag} other {# dagar}} · veckor {first}–{last}",
+      "addBreak": "Lägg till ett uppehåll",
+      "removeBreak": "Ta bort {name}",
+      "noProducts": "Ingen klubb följer den här kalendern än. En klubb väljer sina kalendrar på sin egen sida.",
+      "errors": {
+        "nameRequired": "Ge kalendern ett namn.",
+        "datesRequired": "{name} behöver en första och en sista dag.",
+        "endBeforeStart": "{name} slutar innan det börjar.",
+        "breakNameMissing": "{name} behöver ett namn på {language}.",
+        "overlap": "{first} och {second} överlappar. En dag kan bara höra till ett uppehåll.",
+        "saveFailed": "Kalendern kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Kalendern kunde inte sparas – {reason}"
+      },
+      "impact": {
+        "title": "Spara ändringarna?",
+        "description": "{count, plural, one {Den här klubben ändras} other {De här # klubbarna ändras}} så fort du sparar.",
+        "futureRemoved": "Familjerna ser ingen träff på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+        "futureRestored": "Familjerna ser träffar igen på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+        "pastRemoved": "{count, plural, one {En tidigare träff försvinner} other {Tidigare träffar på # dagar försvinner}} ur familjernas historik: {dates}.",
+        "pastRestored": "{count, plural, one {En tidigare träff kommer} other {Tidigare träffar på # dagar kommer}} tillbaka i familjernas historik: {dates}.",
+        "recordsHidden": "{count, plural, one {# dokumenterad träff döljs} other {# dokumenterade träffar döljs}} för familjerna.",
+        "recordsShown": "{count, plural, one {# dokumenterad träff visas} other {# dokumenterade träffar visas}} för familjerna igen.",
+        "requestsStopped": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} inte längre någon träff att täcka.",
+        "requestsReopened": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} en träff att täcka igen."
+      },
+      "editBreak": "Redigera {name}",
+      "unnamedBreak": "Namnlöst uppehåll",
+      "dialog": {
+        "editTitle": "Redigera uppehåll",
+        "saveAndAddAnother": "Spara och lägg till ett till"
+      },
+      "breakErrors": {
+        "datesRequired": "Välj första och sista dagen.",
+        "endBeforeStart": "Sista dagen är före den första.",
+        "nameMissing": "Ge uppehållet ett namn på {language}."
       }
     },
     "library": {
@@ -611,11 +696,63 @@
         "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
         "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
       },
-      "versionComplete": "färdig",
-      "versionIncomplete": "inte färdig än",
-      "addLocale": "Lägg till språk",
-      "removeLocale": "Ta bort {language}",
       "languagesLabel": "Språk"
+    },
+    "spotlights": {
+      "title": "Spotlights",
+      "subtitle": "Föräldrar ser varje påslagen spotlight längst ner i varje sessionsrapports e-post de får, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
+      "newSpotlight": "Ny spotlight",
+      "empty": "Inga spotlights än. Skriv den första.",
+      "backToList": "Tillbaka till spotlights",
+      "notFound": "Det finns ingen spotlight med det här id:t.",
+      "loadError": "Spotlighten kunde inte laddas. Uppdatera sidan för att försöka igen.",
+      "listLoadError": "Spotlightsen kunde inte laddas. Uppdatera sidan för att försöka igen.",
+      "newPage": {
+        "title": "Ny spotlight",
+        "submit": "Spara"
+      },
+      "editPage": {
+        "title": "Redigera spotlight"
+      },
+      "fields": {
+        "languages": "Språk",
+        "title": "Rubrik",
+        "body": "Text",
+        "picture": "Bild"
+      },
+      "hints": {
+        "languages": "Skriv varje språk för hand. Varje språk behöver en rubrik och texten.",
+        "body": "Visas under rubriken i e-posten, formaterad som här. Länkar är tillåtna.",
+        "picture": "Visas ovanför rubriken i e-posten, beskuren till 2:1. En spotlight kan sparas utan bild, men behöver en för att kunna slås på."
+      },
+      "bodyPlaceholder": "Skriv spotlighten…",
+      "actions": {
+        "save": "Spara",
+        "cancel": "Avbryt",
+        "delete": "Ta bort"
+      },
+      "errors": {
+        "noVersion": "En spotlight behöver en rubrik och text på minst ett språk.",
+        "versionIncomplete": "Versionen på {language} behöver både en rubrik och texten.",
+        "saveFailed": "Spotlighten kunde inte sparas. Försök igen.",
+        "saveFailedWithReason": "Spotlighten kunde inte sparas — {reason}",
+        "deleteFailed": "Spotlighten kunde inte tas bort. Försök igen.",
+        "deleteFailedWithReason": "Spotlighten kunde inte tas bort — {reason}"
+      },
+      "languagesLabel": "Språk",
+      "created": "Skapad {date}",
+      "status": {
+        "on": "I e-posten",
+        "off": "Inte i e-posten"
+      },
+      "switchLabel": "I sessionsrapporternas e-post",
+      "needsPicture": "Lägg till en bild för att kunna slå på den.",
+      "deleteConfirm": {
+        "title": "Ta bort den här spotlighten?",
+        "descriptionOn": "Den försvinner genast ur sessionsrapporternas e-post och kan inte återställas. Bilden blir kvar i biblioteket.",
+        "descriptionOff": "Den kan inte återställas. Bilden blir kvar i biblioteket.",
+        "confirm": "Ta bort"
+      }
     },
     "landingPages": {
       "title": "Landningssidor",
@@ -805,9 +942,10 @@
         }
       },
       "list": {
-        "subtitle": "Hantera {plural} som administratörer har skapat.",
-        "new": "Nytt {label}",
-        "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
+        "subtitle": "Hantera de klubbar, läger och evenemang som administratörer har skapat.",
+        "new": "{type, select, consumerClub {Ny konsumentklubb} municipalityClub {Ny kommunklubb} camp {Nytt läger} other {Nytt evenemang}}",
+        "empty": "{type, select, consumerClub {Inga konsumentklubbar än. Klicka på Ny konsumentklubb för att skapa en.} municipalityClub {Inga kommunklubbar än. Klicka på Ny kommunklubb för att skapa en.} camp {Inga läger än. Klicka på Nytt läger för att skapa ett.} other {Inga evenemang än. Klicka på Nytt evenemang för att skapa ett.}}",
+        "emptyAll": "Inga klubbar, läger eller evenemang än.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
         "online": "På distans",
@@ -818,19 +956,20 @@
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
           "startDate": "Startar {date}"
-        }
+        },
+        "newAny": "Ny",
+        "newDialogTitle": "Skapa en klubb, ett läger eller ett evenemang"
       },
       "translations": {
         "label": "Språk",
-        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt.",
-        "addLocale": "+ Lägg till språk",
-        "removeLocale": "Ta bort {locale}"
+        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt."
       },
       "newPage": {
-        "back": "Tillbaka till {plural}",
-        "title": "Nytt {label}"
+        "back": "Tillbaka till {type, select, consumerClub {konsumentklubbarna} municipalityClub {kommunklubbarna} camp {lägren} other {evenemangen}}",
+        "title": "{type, select, consumerClub {Ny konsumentklubb} municipalityClub {Ny kommunklubb} camp {Nytt läger} other {Nytt evenemang}}"
       },
       "detailsPage": {
+        "title": "Produktuppgifter",
         "notFound": "Produkten kunde inte hittas.",
         "uncapped": "Ingen platsgräns",
         "listed": "Listad publikt",
@@ -848,7 +987,6 @@
           "notRequired": "Krävs inte"
         },
         "fields": {
-          "publicUrl": "Publik länk",
           "topic": "Ämne",
           "materialUrl": "Lektionsmaterial",
           "startDate": "Startdatum",
@@ -871,19 +1009,43 @@
           "requiresGamerCreations": "Spelarnas skapelser",
           "visibility": "Synlighet",
           "gamerPhotoConsents": "Fotofrågor",
-          "marketingConsents": "Marknadsföringsfrågor"
+          "marketingConsents": "Marknadsföringsfrågor",
+          "format": "Format",
+          "ageRange": "Åldersintervall",
+          "publicLink": "Offentlig länk",
+          "createdBy": "Skapad av",
+          "createdOn": "Skapad den"
         },
         "copyLink": "Kopiera den publika länken",
-        "copied": "Kopierad"
+        "copied": "Kopierad",
+        "sections": {
+          "schedule": "Schema",
+          "placeAndAudience": "Plats och målgrupp",
+          "seatsAndRegistration": "Platser och anmälan",
+          "pricing": "Prissättning",
+          "requirements": "Krav och samtycken",
+          "record": "Historik"
+        },
+        "unknownCreator": "Okänd"
+      },
+      "holidayCalendars": {
+        "label": "Lovkalendrar",
+        "hint": "Klubben har inga träffar under något uppehåll i de kalendrar den följer. Familjerna ser uppehållet där träffarna annars skulle ha legat.",
+        "manage": "Hantera lovkalendrar",
+        "nextBreak": "Nästa: {name}, {dates}",
+        "noUpcomingBreak": "Inga kommande uppehåll",
+        "empty": "Det finns inga lovkalendrar än.",
+        "listUnavailable": "Lovkalendrarna kunde inte läsas in. De kalendrar klubben redan följer behålls när du sparar.",
+        "none": "Inga"
       },
       "editPage": {
         "back": "Tillbaka till produkten",
-        "kicker": "Redigera {label}",
+        "kicker": "Redigera {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}",
         "title": "Redigera {name}"
       },
       "clonePage": {
         "back": "Tillbaka till produkten",
-        "kicker": "Klona {label}",
+        "kicker": "Klona {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}",
         "title": "Klonar {name}",
         "copySuffix": " (kopia)"
       },
@@ -1115,7 +1277,7 @@
       },
       "actions": {
         "cancel": "Avbryt",
-        "createLabel": "Skapa {label}"
+        "createLabel": "Skapa {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}"
       },
       "status": {
         "pending": "Väntar på start",
@@ -1180,6 +1342,13 @@
             "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
             "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
             "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
+          },
+          "spotlightImage": {
+            "change": "Byt bild",
+            "remove": "Ta bort bild",
+            "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 2:1-ramen och den läggs till och används på den här spotlighten.",
+            "outcomeAdded": "Tillagd i biblioteket och vald för den här spotlighten.",
+            "outcomeExisting": "Finns redan i biblioteket — vald för den här spotlighten."
           }
         }
       },
@@ -1194,6 +1363,7 @@
         "live": "Publicerad",
         "hidden": "Dold",
         "draft": "Utkast",
+        "switchedOff": "Avstängd",
         "replace": "Ersätt bild",
         "remove": "Ta bort ur biblioteket",
         "replaceConfirm": {
@@ -1250,6 +1420,19 @@
             "removeConsequence": "{count, plural, one {Landningssidan nedan förlorar bilden, även om den är publicerad. En bildsektion som blir utan bilder tas bort.} other {Alla # landningssidor nedan förlorar bilden, även de publicerade. En bildsektion som blir utan bilder tas bort.}}",
             "removeUnused": "Ingen landningssida använder den här bilden. Den tas bort ur biblioteket för gott.",
             "removeConfirm": "Ta bort från {count, plural, one {# sida} other {# sidor}}"
+          },
+          "spotlightImage": {
+            "title": "Bilder för spotlights",
+            "description": "En bild kan användas av flera spotlights. Ditt val gäller bara den här spotlighten, men att ersätta eller ta bort en bild påverkar alla spotlights som använder den, även de som visas i sessionsrapporternas e-post.",
+            "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+            "usedBy": "Spotlights som använder bilden",
+            "usedByNone": "Ingen spotlight använder den här bilden.",
+            "replaceConsequence": "{count, plural, one {Spotlighten nedan kommer att visa den nya bilden, i nästa e-post om den är påslagen.} other {Alla # spotlights nedan kommer att visa den nya bilden, de påslagna i nästa e-post.}}",
+            "replaceUnused": "Ingen spotlight använder den här bilden. Den nya tar dess plats i biblioteket.",
+            "replaceConfirm": "Ersätt på {count, plural, one {# spotlight} other {# spotlights}}",
+            "removeConsequence": "{count, plural, one {Spotlighten nedan förlorar bilden och stängs av, så den försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på den igen.} other {Alla # spotlights nedan förlorar bilden och stängs av, så de försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på var och en igen.}}",
+            "removeUnused": "Ingen spotlight använder den här bilden. Den tas bort ur biblioteket för gott.",
+            "removeConfirm": "Ta bort från {count, plural, one {# spotlight} other {# spotlights}}"
           }
         }
       },
@@ -1263,11 +1446,14 @@
         "searchGedu": "Sök Geduer…",
         "searchMunicipality": "Sök kommuner…",
         "noResults": "Inga träffar.",
+        "type": "Typ",
+        "allTypes": "Alla",
         "search": "Sök",
         "searchPlaceholder": "Sök på namn…",
         "showing": "Visar {count} av {total}",
         "clear": "Rensa",
-        "noMatches": "Inga {plural} matchar sökningen och de valda filtren."
+        "noMatches": "Inga {type, select, consumerClub {konsumentklubbar} municipalityClub {kommunklubbar} camp {läger} other {evenemang}} matchar sökningen och de valda filtren.",
+        "noMatchesAll": "Inget matchar sökningen och de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",
@@ -1404,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Byt klubb",
           "title": "Byt klubb",
-          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, nästa faktura justerar för resten av månaden, och därefter betalar familjen den nya klubbens pris.",
+          "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, och därefter betalar familjen den nya klubbens pris.",
           "searchPlaceholder": "Sök klubbar på namn",
           "picker": {
             "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
@@ -1423,6 +1609,7 @@
             "current": "Betalar nu",
             "target": "Nytt pris",
             "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
+            "nothingPaid": "Inget mer debiteras före {date}. Därefter betalar familjen den nya klubbens pris, minus eventuell rabatt som de redan har.",
             "unavailable": "Inget pris att visa",
             "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
           },
@@ -1603,11 +1790,6 @@
       "marketing": {
         "title": "Marknadsföring",
         "attribution": "Ursprung",
-        "utm": {
-          "source": "Källa",
-          "medium": "Medium",
-          "campaign": "Kampanj"
-        },
         "preferences": "Inställningar",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -1660,7 +1842,6 @@
       "addType": "Lägg till {type}"
     },
     "sites": {
-      "title": "Lokaler",
       "subtitle": "Alla lokaler på plattformen och produkterna som körs i var och en.",
       "addSite": "Lägg till en lokal",
       "searchPlaceholder": "Sök lokal på namn…",
@@ -1727,6 +1908,9 @@
         "templateSubFlow": "Vikariemeddelanden: alla lägen",
         "subPreviewSent": "Alla meddelanden skickades."
       }
+    },
+    "tools": {
+      "title": "Verktyg"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2277,7 +2461,7 @@
             "parentsEmail": "Förälderns e-postadress, som finns med bara så länge förälderns <code>marketing_consent.granted</code> är <code>true</code>. Den är <code>null</code> annars, och den blir <code>null</code> igen när samtycket återkallas.",
             "parentsCreatedAt": "När föräldrakontot skapades: trattens första steg, en familj skapad.",
             "parentsLocation": "Kommunen som förälderns egenrapporterade hemort är eller ligger inom, och dess tvåbokstaviga landskod; <code>city</code> är kommunens namn. <code>null</code> när föräldern inte har angett någon hemort, eller när den inte ligger inom någon kommun.",
-            "parentsUtm": "<code>utm_source</code>, <code>utm_medium</code> och <code>utm_campaign</code> för den länk kontot skapades via, var och en <code>null</code> när den saknas. De skrivs en gång vid registreringen och bara där besökaren accepterade marknadsföringscookies, så de flesta poster bär tre null. Kampanjer som tagits fram för Lynx har enligt konvention prefixet <code>lynx-</code>.",
+            "parentsUtm": "<code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> och <code>utm_term</code> för den länk kontot skapades via, var och en <code>null</code> när den saknas. De skrivs en gång vid registreringen och bara där besökaren accepterade marknadsföringscookies, så de flesta poster bär fem null. Kampanjer som tagits fram för Lynx har enligt konvention prefixet <code>lynx-</code>.",
             "parentsMarketingConsent": "Den här förälderns nuvarande svar på Lynx marknadsföringssamtycke: <code>granted</code> och när det senast ändrades. <code>null</code> betyder att föräldern aldrig har blivit tillfrågad, vilket för utskick är samma sak som <code>false</code>.",
             "gamers": "Familjens barn som har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en, en post var. Tom när familjen omfattas bara genom en plats som en förälder själv har. Ett barn bär ett förnamn och inga andra kontaktuppgifter; identiteten är identifieraren och Roblox-kontot.",
             "gamersId": "Barnets identifierare, den som anmälningar bär som <code>participant_id</code>.",
@@ -2376,7 +2560,9 @@
             "pagesProductId": "Produkten vars sida det är; <code>null</code> för landningssidan och butiken.",
             "pagesPageviews": "Visningar av sidan i intervallet, oavsett vad som förde dem dit.",
             "pagesByCampaign": "Visningarna uppdelade efter <code>utm_campaign</code> på länken. Raden <code>null</code> är varje visning som inte bar någon, inklusive en besökare som skrev in adressen eller följde en omärkt länk.",
-            "pagesBySourceMedium": "Samma visningar uppdelade efter <code>utm_source</code> och <code>utm_medium</code> tillsammans, för att kunna läsa betald trafik, social trafik och e-posttrafik var för sig. De två uppdelningarna gäller samma visningar och var och en summerar till <code>pageviews</code>; de är inte en korstabell av varandra.",
+            "pagesBySourceMedium": "Samma visningar uppdelade efter <code>utm_source</code> och <code>utm_medium</code> tillsammans, för att kunna läsa betald trafik, social trafik och e-posttrafik var för sig. Alla uppdelningar av en sida gäller samma visningar och var och en summerar till <code>pageviews</code>; ingen är en korstabell av en annan.",
+            "pagesByContent": "Samma visningar uppdelade efter <code>utm_content</code> på länken, för att skilja annonserna eller länkarna inom en kampanj åt. Raden <code>null</code> är varje visning som inte bar någon.",
+            "pagesByTerm": "Samma visningar uppdelade efter <code>utm_term</code> på länken, som en betald sökannons oftast sätter till sitt sökord. Raden <code>null</code> är varje visning som inte bar någon.",
             "pagesByDay": "Visningarna per kalenderdag, i UTC, för en tidsserie."
           },
           "note": "Vercels skript körs bara för en besökare som accepterat analys i cookiebannern, och UTM-värdena på en familjepost skrivs bara för en besökare som accepterat marknadsföring. De två villkoren skiljer sig åt, och analysvillkoret är det bredare, så en visning som räknas här och en familj i <code>/families</code> är inte samma population: en besökare som accepterat allt finns i båda, en som bara accepterat analys finns bara här, och en som avvisat bannern finns i ingendera."
@@ -2932,7 +3118,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedufakturering",
     "adminDescription": "En månad: de tillfällen varje Gedu har registrerat och vad hen fakturerar School of Gaming för dem.",
     "myTitle": "Fakturering",
     "myDescription": "Vad du fakturerar School of Gaming för, en månad i taget. Ett tillfälle räknas med när något har registrerats för det – närvaro, en rapport eller en anteckning.",
@@ -2962,6 +3147,8 @@
     "notRecorded": "Inte registrerat",
     "upcoming": "Kommande",
     "cancelled": "Inställt",
+    "holiday": "Lov",
+    "holidayNamed": "Lov – {name}",
     "absentSubstituted": "Frånvarande – vikarie {name}",
     "absentNoSubstitute": "Frånvarande – ingen vikarie",
     "substitutingFor": "vikariat för {name}",
@@ -3029,7 +3216,8 @@
     "live": "Pågår",
     "nextSession": "Nästa tillfälle",
     "upcoming": "Kommande tillfälle",
-    "cancelled": "Inställt"
+    "cancelled": "Inställt",
+    "noSession": "Inget tillfälle"
   },
   "sessionFacts": {
     "remote": "På distans",
@@ -3089,6 +3277,12 @@
     "linkCancel": "Avbryt",
     "linkInvalid": "Den här adressen går inte att länka. Använd en webbadress, en e-postadress eller en sökväg på den här webbplatsen.",
     "opensInNewTab": "(öppnas i en ny flik)"
+  },
+  "localeTabs": {
+    "addLanguage": "Lägg till språk",
+    "removeLanguage": "Ta bort {language}",
+    "complete": "färdig",
+    "notComplete": "inte färdig än"
   },
   "header": {
     "nav": {
@@ -3274,7 +3468,8 @@
       "audience": "Målgrupp",
       "language": "Språk",
       "online": "Online",
-      "tbd": "Bekräftas senare"
+      "tbd": "Bekräftas senare",
+      "holidayBreaks": "Lov"
     },
     "signupPanel": {
       "verb": {
@@ -3540,17 +3735,10 @@
   "sidebar": {
     "dashboard": "Instrumentpanel",
     "users": "Användare",
-    "consumerClubs": "Konsumentklubbar",
-    "municipalityClubs": "Kommunklubbar",
-    "municipalityInvoicing": "Kommunfakturering",
-    "invoiceCustomers": "Faktureringskunder",
     "libraryContent": "Bibliotekets innehåll",
+    "spotlights": "Spotlights",
     "landingPages": "Landningssidor",
     "platformVision": "Plattformens vision",
-    "geduInvoicing": "Gedufakturering",
-    "camps": "Läger",
-    "events": "Evenemang",
-    "sites": "Lokaler",
     "uiComponents": "UI-komponenter",
     "uiPreviews": "UI-förhandsvisningar",
     "testing": "Testning",
@@ -3558,7 +3746,23 @@
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel",
     "substitutions": "Vikariat",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "products": "Produkter",
+    "invoicing": "Fakturering"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Klubbar, läger och evenemang",
+      "invoicing": "Fakturering"
+    },
+    "tabs": {
+      "products": "Produkter",
+      "sites": "Lokaler",
+      "holidayCalendars": "Lovkalendrar",
+      "municipalities": "Kommuner",
+      "invoiceCustomers": "Faktureringskunder",
+      "gedus": "Geduer"
+    }
   },
   "home": {
     "hero": {
@@ -4361,7 +4565,9 @@
         "ages": "Ålder {min}–{max}",
         "audienceParents": "För föräldrar",
         "audienceFamilies": "För familjer",
-        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}"
+        "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}",
+        "holidayBreaks": "Lov",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {
@@ -5906,8 +6112,7 @@
         },
         "languages": "Språk",
         "languagesHint": "Webbplatsen översätter inte profilen. Lägg till varje språk den ska finnas på och skriv den under det språkets flik.",
-        "addLocale": "Lägg till språk",
-        "removeLocale": "Ta bort {locale}",
+        "bioTooLong": "Beskrivningen är för lång för att sparas. Korta den till högst {max} tecken.",
         "shortDescription": "Presentation på en rad",
         "shortDescriptionPlaceholder": "Redstone-nörd och speedrun-fan",
         "longDescription": "Beskrivning",

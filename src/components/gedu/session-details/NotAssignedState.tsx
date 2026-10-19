@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionDetailsBackLink } from "@/components/group-workspace/BackLink";
 
@@ -15,7 +16,9 @@ export function NotAssignedState() {
       <SessionDetailsBackLink />
       <Card className="mt-6">
         <CardContent className="p-8 text-center">
-          <h2 className="text-base font-semibold">{t("notAssignedTitle")}</h2>
+          <Heading level={1} step="card-title" align="center">
+            {t("notAssignedTitle")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notAssignedBody")}
           </p>

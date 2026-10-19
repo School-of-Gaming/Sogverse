@@ -1,4 +1,5 @@
 import { getCountryConfig } from "@/lib/constants/location-hierarchies";
+import { formattingLocale } from "@/lib/constants/locales";
 
 /**
  * **The region lock, as the shop panel has to reason about it.**
@@ -203,7 +204,7 @@ export function countryDisplayName(code: string, locale: string): string {
   // malformed code is a data problem, and a try/catch here would swallow it.
   if (!/^[A-Za-z]{2}$/.test(code)) return fallback;
   return (
-    new Intl.DisplayNames([locale, "en"], {
+    new Intl.DisplayNames([formattingLocale(locale), "en"], {
       type: "region",
       fallback: "none",
     }).of(code) ?? fallback

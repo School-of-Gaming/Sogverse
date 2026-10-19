@@ -3,10 +3,8 @@ import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
-import {
-  TEAM_PHOTOS_BUCKET,
-  publicTeamPhotoUrl,
-} from "@/services/team-profiles/team-profiles.types";
+import { publicTeamPhotoUrl } from "@/services/team-profiles/team-profiles.types";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import {
   publicTeamProfileRows,
   type PublicTeamProfileRow,
@@ -116,7 +114,7 @@ describe("public team profiles", () => {
   async function upload(userId: string): Promise<string> {
     const path = `${userId}/${crypto.randomUUID()}.jpg`;
     const { error } = await admin.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .upload(path, photoBlob(), { contentType: "image/jpeg" });
     expect(error).toBeNull();
     return path;
@@ -186,7 +184,7 @@ describe("public team profiles", () => {
     path: string,
   ): Promise<boolean> {
     const { error } = await client.storage
-      .from(TEAM_PHOTOS_BUCKET)
+      .from(IMAGE_PURPOSES.team_photo.bucket)
       .download(path);
     return error === null;
   }
@@ -251,7 +249,7 @@ describe("public team profiles", () => {
   });
 
   afterAll(async () => {
-    const bucket = admin.storage.from(TEAM_PHOTOS_BUCKET);
+    const bucket = admin.storage.from(IMAGE_PURPOSES.team_photo.bucket);
     for (const id of minted) {
       const { data } = await bucket.list(id);
       const names = (data ?? []).map((object) => `${id}/${object.name}`);
@@ -509,7 +507,7 @@ describe("public team profiles", () => {
       const stray = await upload(zed.id);
 
       const { data, error } = await anon.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .list(zed.id);
       expect(error).toBeNull();
       expect((data ?? []).map((object) => `${zed.id}/${object.name}`)).toEqual([
@@ -517,13 +515,13 @@ describe("public team profiles", () => {
       ]);
       expect(await downloadAs(anon, stray)).toBe(false);
 
-      await admin.storage.from(TEAM_PHOTOS_BUCKET).remove([stray]);
+      await admin.storage.from(IMAGE_PURPOSES.team_photo.bucket).remove([stray]);
     });
 
     it("shows anon nothing in the folder of a person who is not public", async () => {
       for (const person of [hiddenAdmin, formerStaff]) {
         const { data, error } = await anon.storage
-          .from(TEAM_PHOTOS_BUCKET)
+          .from(IMAGE_PURPOSES.team_photo.bucket)
           .list(person.id);
         expect(error).toBeNull();
         expect(data).toEqual([]);
@@ -532,7 +530,7 @@ describe("public team profiles", () => {
 
     it("names no person who is not public at the bucket's root", async () => {
       const { data, error } = await anon.storage
-        .from(TEAM_PHOTOS_BUCKET)
+        .from(IMAGE_PURPOSES.team_photo.bucket)
         .list("", { limit: 10_000 });
       expect(error).toBeNull();
       const names = (data ?? []).map((entry) => entry.name);

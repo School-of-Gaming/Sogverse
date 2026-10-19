@@ -532,7 +532,16 @@ export function SwitchClubSheet({
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {t("prices.proration")}
+                      {check.data.settlement === "nothing_paid" &&
+                      check.data.nextChargeAt !== null
+                        ? t("prices.nothingPaid", {
+                            date: formatDate(
+                              check.data.nextChargeAt,
+                              uiLocale,
+                              { dateStyle: "medium", timeZone },
+                            ),
+                          })
+                        : t("prices.proration")}
                     </p>
                   </div>
                 )}

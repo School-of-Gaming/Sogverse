@@ -162,6 +162,48 @@ Which pages are promoted to crawlers, which are reachable but not promoted, and 
 
 **The analytics `route` dimension is supplied by the app, not computed by the framework's wrapper.** It is the internal template with the locale segment dropped, so every language of a page lands on one row while `request_path` keeps the per-language split.
 
+## Content written per locale
+
+Authored content — products, Library articles, landing pages, Team profiles — is stored
+one row per (thing, locale), and not every thing has every locale.
+
+**Rule: showing such content to a reader always goes through `resolveTranslation()`.** It
+picks the reader's locale, else English, else the earliest written locale in
+`SUPPORTED_LOCALES` order (a code the app does not ship ranks after those). The pick
+depends only on which locales are written, never on the order of the rows, so neither app
+code nor a database function orders rows for it. A database function returns every
+version and never picks one itself.
+
+**Every other lookup of one locale's row is exact on purpose and says why** — a slug
+address, an editor's tab, a writer saving a named version, an `hreflang` list — with a
+comment `exact-locale: <reason>` on its line or the line above. A unit test sweeps `src/`
+and `scripts/` for hand-written per-locale lookups and fails on an unmarked one; a lookup
+that is really a display pick is converted, not marked.
+
+## Editing content written per locale
+
+An editor that writes one version of an item per site locale — a product, a Library article, a Team profile — is composed from shared pieces, so an admin meets one behaviour in all of them. **Rule: a new per-locale editor composes these; it never grows its own tab state, blank-tab rule or draft comparison.**
+
+- **The tab set** (`src/lib/i18n/locale-tabs.ts`) — pure helpers the form applies inside its own state setter: one draft per written locale (every field a string) plus the tab shown, which tab opens, add/remove/select, the drafts a save stores, the save check, and the draft comparison.
+- **The tab bar** (`LocaleTabs`, `src/components/ui/`) — only the bar, and its own copy in the `localeTabs` namespace. The form wraps it in a `Field` whose hint states the form's content rule, and optionally hands it a completeness mark and an attention state per tab.
+- **The rich body editor and its body record** (`AuthoredBodyEditor` and `useAuthoredBodies`, `src/components/ui/authored-body-editor.tsx`) — one record per form, shared by every rich field on it, keyed per tab so a switch remounts the editor on that tab's draft.
+
+**Rule: a blank tab is not a version, in every editor.** A tab whose every field is blank once trimmed is dropped at save and ignored by the unsaved-changes check; a partly written tab is judged by the editor's content rule.
+
+**Rule: every per-locale editor tracks unsaved changes and guards leaving the page** with the shared unsaved-changes guard. The check is the locale drafts compared by the shared comparison *and* every non-locale field on the form — pictures, toggles, a price — compared alongside them.
+
+**Rule: a rich field written per locale goes through the shared body editor, and the comparison takes the form's body record.** The rich editor respells a body on load — its own markdown dialect, a trailing paragraph after a final list or heading — and reports it whether or not anything was typed, so a form wiring the editor's `onChange` straight into state reads every untouched body as an unsaved change. The editor also reads its value once, at mount, so a form that resets its values (a Discard) re-seeds through the record's reset rather than leaving the thrown-away text on screen. `tests/unit/rich-text-editor-importers.test.ts` enforces it: every file under `src/` that imports the rich editor is classified there — the shared body editor, or a field not written per locale with the reason — and a new importer fails until it is.
+
+**What each editor decides for itself, deliberately** — a new editor states each of these rather than inheriting one from a sibling:
+
+- **Its content rule**: what a savable version is, and whether the shared save check (something written, every written tab complete) is the rule at all.
+- **What "complete" means for the tab marks**, if it shows them, and any **publish or ready gate** beyond the save.
+- **Any attention state** — a fault a tab must show even when not the one open.
+- **Discard or not.** A standing page the admin keeps returning to carries one; a create/edit flow leaves by its own navigation.
+- **Its non-locale fields**, which join the unsaved-changes check.
+
+The editors today, each stating its own content rule in its code: Library (`src/components/admin/library/`), with a publish gate; Team profiles (`src/components/team/`), with a public gate and a Discard; Products (`src/components/admin/products/`); Spotlights (`src/components/admin/spotlights/`), with a title and a body required in every written tab at save and no publish step; Holiday calendars (`src/components/admin/holiday-calendars/`), whose tabs are the calendar's and hold every break's name.
+
 ## Usage patterns
 
 - **Server components / `generateMetadata()`** — `await getTranslations("namespace")` from `next-intl/server`.
@@ -187,7 +229,7 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 
 ## The locale config is the single point of control
 
-`LOCALE_CONFIG` in `src/lib/constants/locales.ts` holds everything that varies per locale — English label, native label, flag country, and the locale to render Stripe's own chrome in. `SUPPORTED_LOCALES` beside it is the ordered list, and the config `satisfies` a record keyed by it, so a locale with no config (or a config entry for no locale) fails the build. A unit test pins that the two are in the same order.
+`LOCALE_CONFIG` in `src/lib/constants/locales.ts` holds everything that varies per locale — English label, native label, flag country, the locale to render Stripe's own chrome in, and the tag `Intl` formats with. `SUPPORTED_LOCALES` beside it is the ordered list, and the config `satisfies` a record keyed by it, so a locale with no config (or a config entry for no locale) fails the build. A unit test pins that the two are in the same order.
 
 **Rule: per-locale data belongs in `LOCALE_CONFIG`, never in a second map keyed by locale.** The Stripe Checkout and Billing Portal routes each used to hand-maintain their own app-locale → Stripe-locale map; a new locale meant remembering both, and forgetting one shipped a page in the wrong language. The Stripe mapping is now a config field (typed as the intersection of Stripe's Checkout and Billing Portal locale enums, so a value only one surface accepts fails to compile), read through the shared helper that falls back to Stripe's `auto` for anything unsupported.
 
@@ -195,11 +237,13 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 
 **Rule: locale codes are bare language subtags** (`fr`, not `fr-FR`) — **and a bare code is never renamed.** The bare code is the generic variant of its language and serves every speaker with no closer match; a regional variant is added *beside* it, as lowercase `lang-region` (`/es-mx/` next to `/es/`): one entry in the locale list and one catalog, one column in every translated pathnames entry, and the `hreflang` set, sitemap and robots disallow iterate the list. Nothing is ever redirected or renamed to make room for a region, so a URL that worked keeps working — which is what makes adding one a locale addition rather than a migration. **Nothing may assume a locale segment is two letters**: the prefix matcher and the normalizer test membership in the locale list, never a shape. The header matcher already prefers an exact tag match over a language-subtag one. The tripwire comment lives at the locale list in `src/lib/constants/locales.ts`.
 
-**Open, and smaller than a second English: the bare `en` tag also decides how `Intl` formats.** A bare `en` resolves to US conventions, so every date the app renders for English readers leans American — most visibly in timezone names, which come out as "GMT+3" and "GMT+1" where a Helsinki or UK reader expects "EEST" and "BST" (surfaced by the session-report mail, which always names the product's zone; `fi`, `sv` and `fr` are unaffected because their bare tags already resolve to European conventions). The fix that fits is a *formatting* locale per UI locale — a `LOCALE_CONFIG` field handed to `Intl` and next-intl, `en-GB` for `en` — which changes nothing about the `locale` column, the cookie or URLs and so does not trip the rule above. It is still a site-wide decision about every clock face and date the app shows, not something a single surface should decide for itself, which is why it is recorded here rather than patched where it was noticed.
+**Rule: every `Intl` constructor and `toLocale*String` call formats with `formattingLocale()` of the app locale, never the app locale itself.** A locale's date, clock, list and number conventions are its `formatting` tag in `LOCALE_CONFIG` — `en-GB` for `en`, because a bare `en` hands `Intl` US conventions ("Sep 3", "02:20 PM", "GMT+3", "a, b, and c") where the site's English is UK English. The shared formatters in `src/lib/utils.ts` resolve it themselves, so their callers pass the app locale; next-intl's `useFormatter` is driven by the routing locale and so formats with the bare code, which is why its date and list formatters are not used. A unit test (`tests/unit/i18n/`) parses `src/` and fails on any such call — and any `localeCompare` given a locale — that passes something else or no locale at all, which formats in the runtime's; a fixed tag that is right on purpose is listed there with its reason.
 
 ## Adding a locale
 
-1. Add the code to `SUPPORTED_LOCALES` and its entry to `LOCALE_CONFIG` in `src/lib/constants/locales.ts` — label, native label, flag country, Stripe locale (`"auto"` if Stripe doesn't speak it). Place it **before** `tlh` in both.
+1. Add the code to `SUPPORTED_LOCALES` and its entry to `LOCALE_CONFIG` in `src/lib/constants/locales.ts` — label, native label, flag country, Stripe locale (`"auto"` if Stripe doesn't speak it), and its formatting tag — the `Intl` locale whose conventions its readers expect (`en-US` for an `en-us`). Place it **before** `tlh` in both.
+
+   **A locale whose formatting tag sets a 12-hour clock** (`en-US`) needs two clocks reworked first: the product schedule's viewer clock and the admin dashboard's schedule chips each render a fixed 24-hour "HH:MM" that is also their grouping and sort key, so each has to split the key from the display and render the display through `formattingLocale()`.
 2. Register its flag in `src/components/ui/flags.ts` (a named per-country import — never the barrel). `country` is typed against that registry, so an unregistered flag fails the build.
 3. Add its loader to the `messageLoaders` map in `messages.ts`.
 4. Create `messages/<code>.json` by copying `en.json` and translating every value — including the `metadata` namespace, whose keys are what the page titles, the `hreflang`-annotated descriptions and both social cards render at the new locale.

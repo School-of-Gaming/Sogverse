@@ -215,10 +215,10 @@ what the library names and spells no family — are in this package's `CLAUDE.md
 that a face variable goes on `<html>` and not `<body>`, and the display face's exception;
 the sentence-case rule stays there, because it is Heading's.
 
-### 2. Heading
+### 2. Heading — landed
 
-The first primitive. It carries the type scale: one component, a level and the words, no
-class prop.
+The first primitive. It carries the type scale: one component, an outline level and a step
+as two required props, a table of which steps each level may take, and no class prop.
 
 Why second: it is the largest single mechanical win the audit found (one weight change
 touched 48 files; 127 raw headings in 13 different class strings for one element), it is
@@ -226,15 +226,96 @@ grammar-bearing because it owns the scale, and it has no state. That makes it th
 first test of a closed API, of every-word-is-a-prop, and of the sweep mechanics, before any
 component with a state asks the same.
 
-Needs in the library first: the heading itself, every level side by side in the demo,
-including the H1 mobile step.
+Needs in the library first: the heading itself, every step side by side in the demo,
+including the narrow sizes of the steps that restep.
 
 Changes in Sogverse: every raw `h1` to `h4` becomes the component; the page-title and
 section-title class strings retire with them.
 
-Lint: raw `h1` to `h4` elements are banned in Sogverse's source.
+Lint: raw `h1` to `h6` elements are banned in Sogverse's source.
 
 Done when: no raw heading element remains in Sogverse and the lint holds it there.
+
+**What it landed (2026-10-15).** `Heading` takes an outline level, `h1` to `h4`, and a
+step, as two required props, because on every hand-written heading they had been one
+decision and a page either skipped a level to get the size it wanted or wore the wrong size
+to keep its outline. The two are not independent: a table beside the component lists the
+steps each level may take — `h1` hero, page-title, section, card-title or label; `h2`
+display, section, card-title or label; `h3` section, card-title or label; `h4` card-title
+or label — and a pair outside it does not compile. Each level has a ceiling, so a heading
+never takes a step louder than its place in the outline allows, and the steps named for
+what they title belong to one level: `hero` and `page-title` title a page and are `h1`'s
+alone, and `display` titles a story section and is `h2`'s alone. Below that, the step is
+the page's choice: the quietest one that still reads as a title. Beside them it takes an id, a language, an alignment (start, centre, or
+centred until `md` and start from it), a one-line truncation, a screen-reader-only form,
+and a ref with a focus-target flag for the screen that moves focus to its title on arrival.
+It takes no class and no colour. The scale's heading steps are named by role rather than by
+outline level: `hero` 48, `display` 36, `page-title` 30, `section` 24, `card-title` 18 and
+`label` 14, every one at 600 with no tracking and its own leading; `hero` and `display`
+drop to 34 and 28 below `md`, and nothing else changes size with the viewport. The body
+steps and the button label did not move. About 275 headings across some 145 files
+converted, `CardTitle` is deleted, and the dialog and sheet titles render `Heading` and
+take no class of their own.
+
+The rulings came from six principles the owner approved before any step was ruled, and
+every step and every converted site answers to one of them. **Size shows rank**, and
+nothing else does. **Two registers**: the story register — a public page, at `hero` and
+`display` — and the work register — an app page, topping out at `page-title` — on one
+scale, differing only in where it tops out. **Calm and few**: one heading weight, no
+tracking, and the step owns the line height, so no call site sets one. **Only the story
+steps restep**, and the hero outranks a section heading at every width. **Headings are
+ink**, with the public hero's act phrase the one declared departure, passed inside the
+words at that call site. **A heading titles a region, in sentence case**: the uppercase,
+tracked micro-headings became `label` where they titled a region and plain text where they
+did not. One value departs from the brand and says so beside itself: `card-title` is 600
+where the brand's small heading is Regular, because an 18px title at body weight cannot be
+told from the 18px body copy beside it. One gap is known and accepted: the landing-page
+hero splits into columns at `lg` while its heading changes alignment at `md`, so from 768
+to 1023px a start-aligned headline sits over centred words. It is left until the
+landing-page design is settled, since no landing page is live yet.
+
+**Spotlighting is opt-in** (owner, 2026-10-15: a page's main heading need not be
+spotlighted). The table had been read as a floor, so every app page's title stood at
+`page-title`; each level's top is a ceiling, and a heading takes the quietest step that
+still reads as a title. An app page's title is `section`, and `page-title` stays on the pages whose title is
+their point: the gamer's greeting, the profile picker, a Library article, a team member's
+profile, the policy pages and the gedu contract (each one document a reader came to read),
+the platform vision pitch, and the shop's screen-reader-only title. Within a page a heading
+is always smaller than the heading it sits under, which the types cannot see and review
+holds. A title is never smaller than the text it titles, so `label` titles a compact region
+— a list, chips, controls, fields, metadata — and a heading over prose is a `card-title`.
+A page that is one small object, a call screen or a not-found state, titles at
+`card-title`. One inversion is accepted: the gedu contract's clause headings are the fourth
+level under the page title, and the scale's one step left, `label`, sits under the
+clauses' own size.
+
+What holds it. The table is a type, so a pair outside it fails type-check at the call
+site; `tests/unit/sog-ui/heading.test.tsx` renders every pair the table allows and holds
+each step to sizes the theme declares, and the restep to the story steps alone; `tests/unit/sog-ui/raw-heading-ban.test.ts` runs violating and
+conforming lines through the ban; and the ban itself, in `eslint.config.mjs`, refuses a raw
+`h1`–`h6` written as JSX anywhere in `src/` or the library's demo, and a heading tag written as a string — held in
+a variable, defaulted in a parameter, picked by a ternary, carried as an object's value or
+typed as a literal — which is how a tag chosen at runtime escapes the first half. Its
+exemptions are named one by one: the markdown renderer and the authored-markdown table,
+which map a markdown level to a tag on purpose, are exempt from the string half; the alert
+primitive's file is exempt from the JSX half, because `AlertTitle` stays an `h5` until the
+alert adoption decides what an alert's title is. The adoption also fixed the class merger
+it would otherwise have tripped on: the library exports a tailwind-merge built from its own
+size list and layers, and Sogverse's `cn` uses it, so a type step survives a colour class
+beside it and the hover layer keeps the ground beneath it
+(`tests/unit/sog-ui/class-merge.test.ts`). The app's stylesheet scans the library's source,
+which its components are rendered from, and still not its demo or its docs.
+
+Where each rule lives: the steps, their sizes and the departure are doc comments in
+`packages/sog-ui/src/tokens/typography.ts`; the level-to-step table and what each prop is
+for are in the component's own; the rules no value can state — level is the outline and
+step is the attention, the ceiling, the steps that belong to one level and the opt-in
+spotlight, a heading smaller than the one
+it sits under, the label over a compact region, the two registers, one weight, headings are
+ink, a heading titles a region, and heading copy is sentence case in `messages/` too — are
+in this package's
+`CLAUDE.md` § Headings. `src/CLAUDE.md`'s headings rule is gone with this adoption, keeping
+only the caps rule for the markers that are not headings.
 
 ### 3. Button
 
@@ -262,10 +343,49 @@ import once nothing uses it.
 Done when: every clickable action in Sogverse is the library's button and its committing
 state is the library's.
 
+### 4. Body type
+
+The rest of the type scale: every size, weight, line height and letter spacing Sogverse
+still sets for itself once headings and button labels are the library's.
+
+Why fourth: Heading and Button each close one role in the scale, and this closes
+everything else, so until it lands the scale is a suggestion rather than the only sizes
+there are. It comes after them because it is the widest sweep in the list and the
+least interesting one per site; it should ride on sweep mechanics that two adoptions have
+already proven, and its rulings are easier once the heading and label steps are settled
+and only the body roles remain to decide. At the time of writing (2026-10-13), `src/`
+spends a raw Tailwind size class about 1,300 times across some 300 files, a hand-typed
+pixel size 82 times, and a weight class about 650 times, against 30 uses of the library's
+own steps.
+
+Needs in the library first: the steps the scale does not yet have. The app sets a lot of
+text at 16px and below 14px, and the scale has neither a plain body step at 16px nor
+anything smaller than `body-s`; whether those become steps, or their sites move to an
+existing one, is the owner's ruling, made from the demo with each candidate drawn in the
+places that spend it. So is authored markdown's middle heading level, which is still an
+off-scale 20px: the editor offers three heading levels that have to look distinct from one
+another, and the scale has nothing between `section`'s 24 and `card-title`'s 18, so the
+three levels need either a step between those two or a different three steps. And a text primitive, Heading's sibling: a step and the words, no
+class prop, because the seam has Sogverse write no type class at all, so a scale utility
+spent in Sogverse is a stop on the way rather than the end state.
+
+Changes in Sogverse: every raw size, weight, line-height and letter-spacing class converts
+to the text primitive at a scale step; the hand-typed pixel sizes either find a step or
+become the evidence for a new one.
+
+Lint: raw Tailwind size classes, arbitrary `text-[…]` sizes, and weight, line-height and
+letter-spacing classes are banned in Sogverse's source, with exemptions named one by one
+with reasons. Weight is the subtle one: the faces adoption allowed four weights in
+Sogverse's source, and this adoption decides whether a weight is ever a choice outside a
+step.
+
+Done when: every piece of text Sogverse sets takes its size from the library, and
+nothing in `src/` can name a size the scale does not have.
+
 ## After these
 
 The audit named the rest of the missing middle, in rough order of how many hand-rolled
 sites each retires: the inline error and alert, the empty state, the skeleton, the chip
 and status chip, the selection edge, the search input, the person row, the page header,
-select, table. Each takes its position when the adoptions above have landed and the shape of
+select, table, tabs. Each takes its position when the adoptions above have landed and the shape of
 an adoption is settled; none is defined in the library before its turn.

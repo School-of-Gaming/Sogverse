@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { getTranslations } from "next-intl/server";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  AdminGeduInvoicingHeading,
-  AdminGeduInvoicingPage,
-} from "@/components/gedu-invoicing/admin-gedu-invoicing-page";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
+import { AdminGeduInvoicingPage } from "@/components/gedu-invoicing/admin-gedu-invoicing-page";
 import { wireErrorMessage } from "@/lib/api/wire-error-message";
 import { resolveInvoicingMonthStart } from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
@@ -63,9 +61,15 @@ export default async function AdminGeduInvoicingRoute({
   const { month } = await searchParams;
   const monthStart = resolveInvoicingMonthStart(month);
   const result = await loadMonth(monthStart);
+  const t = await getTranslations("geduInvoicing");
+  const description = t("adminDescription");
 
   if (!result.ok) {
-    return <AdminGeduInvoicingLoadFailure reason={result.reason} />;
+    return (
+      <AdminHub hub="invoicing" description={description}>
+        <AdminGeduInvoicingLoadFailure reason={result.reason} />
+      </AdminHub>
+    );
   }
 
   const queryClient = new QueryClient();
@@ -75,16 +79,18 @@ export default async function AdminGeduInvoicingRoute({
   );
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <AdminGeduInvoicingPage
-        monthStart={monthStart}
-        initialSnapshot={result.snapshot}
-      />
-    </HydrationBoundary>
+    <AdminHub hub="invoicing" description={description}>
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <AdminGeduInvoicingPage
+          monthStart={monthStart}
+          initialSnapshot={result.snapshot}
+        />
+      </HydrationBoundary>
+    </AdminHub>
   );
 }
 
-/** The page's heading over a band saying why there is nothing under it. */
+/** A band saying why there is nothing under the page's description. */
 async function AdminGeduInvoicingLoadFailure({
   reason,
 }: {
@@ -93,8 +99,7 @@ async function AdminGeduInvoicingLoadFailure({
   const t = await getTranslations("geduInvoicing");
 
   return (
-    <div className="space-y-3 pb-12">
-      <AdminGeduInvoicingHeading />
+    <div className="pb-12">
       <Alert variant="destructive">
         <AlertDescription>
           {reason === null

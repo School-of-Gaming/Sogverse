@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildInvitation,
+  occurrenceDatesThrough,
   type InvitationInput,
 } from "@/lib/calendar-invitations/invitation";
 import {
@@ -859,5 +860,31 @@ describe("an object with nothing in it", () => {
         }),
       ),
     ).toEqual({ ok: false, reason: "no-occurrences" });
+  });
+
+  it("is not refused when a rule with no last day has its start excluded", () => {
+    const built = buildInvitation(
+      input({
+        recurrence: { kind: "weekly", weekdays: [0], interval: 1, until: null, count: null },
+        excludedDates: ["2026-09-07"],
+      }),
+    );
+    expect(built.ok).toBe(true);
+  });
+});
+
+describe("the rule's days through a cut", () => {
+  const mondays = { kind: "weekly" as const, weekdays: [0], interval: 1, count: null };
+
+  it("walks a rule with no last day as far as the cut, the start first", () => {
+    expect(
+      occurrenceDatesThrough("2026-09-07", { ...mondays, until: null }, "2026-09-28"),
+    ).toEqual(["2026-09-07", "2026-09-14", "2026-09-21", "2026-09-28"]);
+  });
+
+  it("stops at the rule's own last day when that comes first", () => {
+    expect(
+      occurrenceDatesThrough("2026-09-07", { ...mondays, until: "2026-09-14" }, "2026-12-31"),
+    ).toEqual(["2026-09-07", "2026-09-14"]);
   });
 });

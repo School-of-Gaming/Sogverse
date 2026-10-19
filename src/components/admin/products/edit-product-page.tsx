@@ -1,8 +1,10 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
+import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -24,9 +26,15 @@ export function EditProductPage({
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
-  const label = t(`types.${config.i18nKey}.label`);
 
-  const { data: product, isLoading } = useProductAdmin(productId);
+  const { data: product, isLoading: productLoading } =
+    useProductAdmin(productId);
+  // A club's form also waits for the holiday calendar list, so the picker
+  // paints with the rest of the form instead of pushing it down on arrival.
+  const calendarsPending = useHolidayCalendarListWait(
+    config.followsHolidayCalendars,
+  );
+  const isLoading = productLoading || calendarsPending;
 
   const detailsHref = ROUTES.admin.product(productType, productId);
 
@@ -47,17 +55,19 @@ export function EditProductPage({
 
       <div>
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t("editPage.kicker", { label: label.toLowerCase() })}
+          {t("editPage.kicker", { type: config.i18nKey })}
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {product
-            ? t("editPage.title", {
-                name:
-                  resolveTranslation(product.product_translations, uiLocale)
-                    ?.name ?? t("list.untitled"),
-              })
-            : " "}
-        </h1>
+        <div className="mt-1">
+          <Heading level={1} step="section">
+            {product
+              ? t("editPage.title", {
+                  name:
+                    resolveTranslation(product.product_translations, uiLocale)
+                      ?.name ?? t("list.untitled"),
+                })
+              : " "}
+          </Heading>
+        </div>
       </div>
 
       {isLoading && (

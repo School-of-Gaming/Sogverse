@@ -32,7 +32,13 @@ const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: mockAdminFrom,
-    rpc: mockAdminRpc,
+    // The confirmation mail's plan read is answered apart from the RPCs this
+    // file is about, so their call counts stay theirs. The fixture product has
+    // no slots, so its plan is empty.
+    rpc: (name: string, args: unknown) =>
+      name === "planned_session_dates"
+        ? Promise.resolve({ data: [], error: null })
+        : mockAdminRpc(name, args),
   })),
 }));
 
@@ -308,43 +314,41 @@ function mockAdmin(opts: AdminMockOptions = {}) {
     // translations, both people in one `.in()` query, and the catalogue price.
     if (table === "products") {
       return {
-        select: () => ({
+        select: (columns: string) => ({
           eq: () => ({
-            order: () => ({
-              single: () =>
-                Promise.resolve({
-                  data: {
-                    product_type: "consumer_club",
-                    billing_mode: "paid",
-                    topic: "minecraft_java",
-                    timezone: "Europe/Helsinki",
-                    start_date: null,
-                    end_date: null,
-                    is_remote: true,
-                    // The "Good to know" facts the mail mirrors from the
-                    // confirmation page.
-                    min_age: 8,
-                    max_age: 12,
-                    for_gamers: true,
-                    for_parents: false,
-                    spoken_language_code: "en",
-                    product_translations: [
-                      { locale: "en", name: "Test Club", short_description: "" },
-                    ],
-                  },
-                  error: null,
-                }),
-            }),
-            // The confirmation mail's second read: the schedule and the site
-            // its calendar invitation would be composed from. No slots here on
+            // Two reads end here: the product with its translations, and the
+            // confirmation mail's second read — the schedule and the site its
+            // calendar invitation would be composed from. No slots there on
             // purpose — what this file covers about that mail is which webhook
             // outcome sends it and to whom, and a fixture schedule would put a
             // calendar document nobody asserts on into every render.
             single: () =>
-              Promise.resolve({
-                data: { schedule_slots: [], locations: null },
-                error: null,
-              }),
+              Promise.resolve(
+                !columns.includes("product_translations")
+                  ? { data: { schedule_slots: [], locations: null }, error: null }
+                  : {
+                      data: {
+                        product_type: "consumer_club",
+                        billing_mode: "paid",
+                        topic: "minecraft_java",
+                        timezone: "Europe/Helsinki",
+                        start_date: null,
+                        end_date: null,
+                        is_remote: true,
+                        // The "Good to know" facts the mail mirrors from the
+                        // confirmation page.
+                        min_age: 8,
+                        max_age: 12,
+                        for_gamers: true,
+                        for_parents: false,
+                        spoken_language_code: "en",
+                        product_translations: [
+                          { locale: "en", name: "Test Club", short_description: "" },
+                        ],
+                      },
+                      error: null,
+                    },
+              ),
           }),
         }),
       };

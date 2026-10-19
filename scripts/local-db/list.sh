@@ -2,7 +2,7 @@
 #
 # `list` — every stack on this machine, whichever checkout it belongs to.
 #
-#   list.sh <checkout-path> <project-id> <port-base> <cli-version>
+#   list.sh <checkout-path> <project-id> <candidate-blocks> <cli-version>
 #
 # The arguments are the calling checkout's and are not used: a stack's state
 # directory already records which checkout it belongs to, and the point of this

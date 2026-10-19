@@ -46,7 +46,21 @@ export const STATUS_LABEL_KEY = {
   upcoming: "upcoming",
   cancelled: "cancelled",
   absent: "export.statusAway",
+  holiday: "holiday",
 } as const satisfies Record<GeduInvoiceLineKind, string>;
+
+/**
+ * A holiday line as the page words it: the break's name where it has one,
+ * else the bare word. Both files have room for the name, so both carry it.
+ */
+export function holidayLabel(
+  line: Pick<GeduInvoiceLine, "holidayName">,
+  t: GeduInvoicingTranslator,
+): string {
+  return line.holidayName
+    ? t("holidayNamed", { name: line.holidayName })
+    : t("holiday");
+}
 
 /**
  * The other gedu on a line: who this gedu stood in for, or who stood in for

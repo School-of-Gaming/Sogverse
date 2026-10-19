@@ -3,15 +3,17 @@
 import { useState } from "react";
 import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { utmRegistrationBody } from "@/lib/utm";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
@@ -99,11 +101,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           // The route cannot read `x-utm` off its own request: the proxy derives
           // that header from the query string of the request it is handling, and
           // this POST carries no UTM params. So they travel in the body.
-          utm: {
-            source: utm.source ?? undefined,
-            medium: utm.medium ?? undefined,
-            campaign: utm.campaign ?? undefined,
-          },
+          utm: utmRegistrationBody(utm),
         }),
       });
 
@@ -144,7 +142,7 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">{t("registerGedu.title")}</CardTitle>
+        <Heading level={1} step="section" align="center">{t("registerGedu.title")}</Heading>
         {/* The brand slogan for the people this page is addressed to, placed
             once and only here — lower and smaller than the title it sits
             under, which is the sanctioned shape for a slogan on a page. */}

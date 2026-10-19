@@ -188,6 +188,14 @@ const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.registerGedu];
 
+// The crawlers that fetch a pasted link to draw its preview card, matched on the
+// token each one's User-Agent carries: Slack, WhatsApp, Discord, Telegram, Meta's
+// (Facebook and Messenger, and iMessage, which borrows its UA), LinkedIn, X and
+// Microsoft Teams. A preview fetched by the sender's own app, as Signal's is,
+// arrives as an ordinary browser and cannot be told apart.
+const LINK_PREVIEW_CRAWLER =
+  /Slackbot|WhatsApp|Discordbot|TelegramBot|facebookexternalhit|Facebot|LinkedInBot|Twitterbot|SkypeUriPreview|MicrosoftPreview/i;
+
 /**
  * Build a Content-Security-Policy header value.
  * In production, uses a per-request nonce so only scripts explicitly tagged by
@@ -302,11 +310,12 @@ export async function proxy(request: NextRequest) {
   request.headers.set("x-nonce", nonce);
   request.headers.set("Content-Security-Policy", cspHeader);
 
-  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` on the landing
-  // URL, sanitised here and handed to the root layout, which seeds them into a
-  // client context provider so they survive the whole visit as client-side
-  // navigation. See src/lib/utm.ts for the constraints this feature is built to
-  // — including why reading the query string here is itself the moment ePrivacy
+  // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` /
+  // `utm_content` / `utm_term` on the landing URL, sanitised here and handed
+  // to the root layout, which seeds them into a client context provider so
+  // they survive the whole visit as client-side navigation. See
+  // src/lib/utm.ts for the constraints this feature is built to — including
+  // why reading the query string here is itself the moment ePrivacy
   // engages, whatever we do with the value afterwards.
   //
   // **Delete unconditionally, then set conditionally.** A browser can send its
@@ -619,6 +628,16 @@ export async function proxy(request: NextRequest) {
 
   // For protected routes, require authentication
   if (!userId) {
+    // A link-preview crawler gets a 404 rather than the login bounce: followed,
+    // the bounce previews every gated link as the sign-in page's card, and with
+    // nothing to fetch the app draws no card at all. These paths are already
+    // disallowed to crawlers in robots.txt, which Slack at least does not honour
+    // across the redirect; a human still gets the bounce with `?redirect=`.
+    if (LINK_PREVIEW_CRAWLER.test(request.headers.get("user-agent") ?? "")) {
+      const notFound = new NextResponse(null, { status: 404 });
+      notFound.headers.set("Content-Security-Policy", cspHeader);
+      return notFound;
+    }
     const loginUrl = localizedUrl(ROUTES.login);
     loginUrl.searchParams.set("redirect", externalPathname);
     return redirect(loginUrl);

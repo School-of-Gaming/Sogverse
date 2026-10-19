@@ -1,19 +1,13 @@
 "use client";
 
-import {
-  keepPreviousData,
-  useInfiniteQuery,
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { UsersService, type UserListFilters } from "./users.service";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
 import { sessionSubstitutionKeys } from "@/services/session-substitution/session-substitution.keys";
 import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
-import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
+import { useKeysetInfiniteQuery } from "@/hooks/use-keyset-infinite-query";
 import {
   USER_LIST_SEARCH_MIN_QUERY,
   type AdminGameAccountBody,
@@ -73,26 +67,16 @@ export function useProfile(
  * **Infinite rather than plain, and the same hook for all three surfaces** —
  * the users page, the participant picker and the gedu picker. Each shows the
  * newest page and grows as the reader scrolls into it, so the payload is
- * proportional to the screen rather than to the table; pages accumulate rather
- * than replace, so a revealed page appends *below* rows already painted and
- * nothing on screen moves.
+ * proportional to the screen rather than to the table.
  *
  * **`enabled` is what keeps an always-mounted sheet from reading.** Both picker
  * sheets are in the tree from the panel's first render, closed, so they can
  * animate open — and a sheet nobody has opened has no reader for a page of
  * people. The sheets latch "has been opened" and pass it here.
  *
- * **`keepPreviousData` is a layout decision, not a nicety.** A keystroke
- * changes the query key, so without it the list empties and refills on every
- * character: the rows a reader is looking at vanish, the "nothing matches" line
- * asserts itself before any answer exists, and the row they were reaching for
- * comes back at a different offset. Holding the previous page keeps whatever
- * survives the narrowing exactly where it was — which is what the layout rule
- * actually asks — and keeps the empty state from being claimed and then
- * contradicted a round trip later. The price is that what is on screen can be
- * one needle behind, which `isPlaceholderData` reports; a surface asking for
- * the *next* page must consult it, because the cursor on screen belongs to the
- * previous question.
+ * Paging, accumulation and holding the previous answer on screen while a new
+ * one is read are the shared keyset list hook's; what is particular here is
+ * the counting and the normalisation below.
  */
 export function useUserList(
   filters: UserListFilters,
@@ -119,26 +103,12 @@ export function useUserList(
     spokenLanguage: filters.spokenLanguage,
   };
 
-  // The page param is the keyset cursor, absent on the first page. Both the
-  // initial value and the query function's parameter are annotated: React
-  // Query infers the param type from several sites at once, and an
-  // `undefined` literal on its own narrows it to `undefined` — which then
-  // rejects the very cursor `getNextPageParam` hands back.
-  const firstPage: KeysetCursor | undefined = undefined;
-
-  return useInfiniteQuery({
+  return useKeysetInfiniteQuery({
     queryKey: userKeys.list(normalized, withTotal),
-    queryFn: ({ pageParam }: { pageParam: KeysetCursor | undefined }) =>
-      service.getUserListPage(normalized, { cursor: pageParam, withTotal }),
-    initialPageParam: firstPage,
-    // The keyset module owns what "there is more" means — a page shorter than
-    // it asked for is the end of the list — so the page size here and the one
-    // the read sends have to be the same constant or the question is answered
-    // wrongly in both directions.
-    getNextPageParam: (lastPage) =>
-      nextKeysetCursor(lastPage.rows, ADMIN_PEOPLE_LIST_PAGE_SIZE),
+    fetchPage: (cursor) =>
+      service.getUserListPage(normalized, { cursor, withTotal }),
+    pageSize: ADMIN_PEOPLE_LIST_PAGE_SIZE,
     enabled: options?.enabled ?? true,
-    placeholderData: keepPreviousData,
   });
 }
 

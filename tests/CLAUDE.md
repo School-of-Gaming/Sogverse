@@ -48,10 +48,9 @@ the inert `ResizeObserver` are there either way.
 Isolated because un-isolated measured no faster once there is no jsdom realm to rebuild
 per file (that is what it saves; the imports are re-run either way), and it would let a
 shared module keep whatever mocks were live when an earlier file first loaded it, so a
-later file's own mock could quietly fail to apply. Forks because suites that pin a
-timezone assign `process.env.TZ` at runtime, which a child process honours and a worker
-thread ignores — the failure shows only on a UTC runner, and a developer's box already
-in Helsinki never sees it, so a green local run under threads proves nothing. One pool
+later file's own mock could quietly fail to apply. Forks because a test's timezone pin
+and the config's UTC default are both runtime assignments to `TZ`, which a child process
+honours and a worker thread ignores — under threads neither takes effect. One pool
 because Vitest sizes a pool per pool *type* and runs projects concurrently: two pool
 types put two full-sized pools on the machine at once, which on a 4-vCPU runner doubled
 the summed collect and test time and, with coverage on, timed out a component test that
@@ -59,6 +58,13 @@ passes on its own. A test that stubs env still hands it back (`vi.stubEnv` with
 `vi.unstubAllEnvs()` in teardown, never a bare `process.env` assignment) — isolation
 makes that hygiene rather than a load-bearing rule, and hygiene is cheaper to keep than
 to restore.
+
+**Every run's default zone is UTC, on every machine** — both Vitest configs, the DB
+suite's included, set it, because UTC is what CI and the production servers run, so a
+test leaning on its author's own zone fails locally rather than after a push. A test
+about a viewer's zone pins one itself, stubbing `TZ` like any other env var: seeding
+`TimezoneProvider` is not enough, since after mount the provider replaces its seed with
+the runtime's zone.
 
 ## The rich-text editor stub
 
@@ -106,22 +112,15 @@ nothing. `TODO.md` holds the plan for a real browser suite against a local Supab
 
 DB tests hit a **real Postgres**, so one has to be pointed at them. CI is the authority:
 every push builds a database from `migrations/` plus `supabase/seed.sql` and runs
-`test:db` against it. The same suite runs locally against this checkout's own stack with
-`npm run test:db:local`, which resolves the stack, takes its URL and both keys from the
-stack itself rather than from `.env.local` — a file `npm run db -- up` rewrites and a dev
-server is reading — and hands vitest the three variables CI's step sets. Extra arguments
-go through (`npm run test:db:local -- tests/db/chat-rpcs.test.ts`). A bare `npm run
-test:db` is the CI invocation and reaches nothing on its own: `tests/db/setup.ts` fails
-fast when `SUPABASE_SERVICE_ROLE_KEY` is unset.
-
-**The stack has to carry `supabase/seed.sql` alone.** A stack gets one seed or the
-other and never both: `npm run db -- up` builds one on `supabase/rich-seed.sql`, with
-the CLI's own seeding switched off so `seed.sql` never runs on it, and `up
---no-rich-seed` builds one on `seed.sql` alone. The whole-table claims below are
-written against that minimal fixture set, so on a rich stack they fail for reasons that
-are not bugs — and the fixture rows themselves are not merely buried under a catalogue,
-they are absent, so the deterministic `TEST_IDS` resolve to nothing. `test:db:local`
-refuses a rich stack rather than let either kind of failure be read as a finding.
+`test:db` against it. Locally, `npm run test:db:local` does the same: it builds a
+throwaway database of its own from this checkout's `migrations/` and `seed.sql` (about a
+minute), hands vitest its URL and keys in the three variables CI's step sets, and removes
+it when the run ends. It runs beside this checkout's stack, which it never touches —
+the stack carries `supabase/rich-seed.sql`, against which the whole-table claims below
+would fail. Extra arguments go through to vitest (`npm run test:db:local --
+tests/db/chat-rpcs.test.ts`). A bare `npm run test:db` is the CI invocation and reaches
+nothing on its own: `tests/db/setup.ts` fails fast when `SUPABASE_SERVICE_ROLE_KEY` is
+unset.
 
 **A rerun needs no reset.** The suite cleans up after itself: two full runs back to back
 against one database both pass, and the database is left holding exactly `seed.sql`'s

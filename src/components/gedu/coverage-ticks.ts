@@ -23,6 +23,7 @@
  * is gone.
  */
 
+import { formattingLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import type { LocationWithChain } from "@/services/locations";
@@ -98,7 +99,7 @@ export function sortedTicks(
   locale: string,
 ): CoverageTick[] {
   return [...ticks.values()].sort((a, b) =>
-    a.label.localeCompare(b.label, locale),
+    a.label.localeCompare(b.label, formattingLocale(locale)),
   );
 }
 

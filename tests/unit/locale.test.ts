@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectLocaleFromHeader,
+  formattingLocale,
   matchLocaleFromHeader,
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
@@ -140,5 +141,24 @@ describe("matchLocaleFromHeader", () => {
     ]) {
       expect(matchLocaleFromHeader(header)).toBe(detectLocaleFromHeader(header));
     }
+  });
+});
+
+describe("formattingLocale", () => {
+  // A tag the runtime has no data for is not an error: Intl silently falls back
+  // to a parent or the default locale. So every tag must resolve to itself.
+  // supportedLocalesOf alone is too lenient — it accepts "en-XX" because "en"
+  // is supported, and a formatter built from it then formats as American "en".
+  it("maps every locale to a tag the runtime formats with as given", () => {
+    for (const locale of SUPPORTED_LOCALES) {
+      const tag = formattingLocale(locale);
+      expect(new Intl.DateTimeFormat(tag).resolvedOptions().locale, `${locale} → ${tag}`).toBe(tag);
+    }
+  });
+
+  it("formats anything unsupported as the default locale", () => {
+    expect(formattingLocale("de")).toBe("en-GB");
+    expect(formattingLocale("en-US")).toBe("en-GB");
+    expect(formattingLocale("")).toBe("en-GB");
   });
 });

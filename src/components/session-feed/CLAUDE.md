@@ -13,8 +13,8 @@ the admin rule below.
 - **Shared (here):** the feed shell (one keyed list: entries, month dividers, the
   now-divider, rail markers), the feed-shaping helpers (partition, past window, newest
   past), month labels and session labels, the scroll-anchor machinery, the report
-  renderer and its clamp arithmetic, the now-divider, the attendance tone tokens, and the
-  `AttendanceMark` type.
+  renderer and its clamp arithmetic, the now-divider, the cancelled and holiday lines, the
+  attendance tone tokens, and the `AttendanceMark` type.
 - **Gedu-only (stays in `gedu/session-feed/`):** the editors, the completeness ladder and
   owed/attention derivation, attendance rosters and summaries, the staff-note block, the
   alert badge, partial-save handling, and the workspace's mock fixtures.
@@ -26,6 +26,19 @@ and no dead zone opens between them. A session in progress is `future` on both f
 is the *current* session, not history. The builders stay separate — they emit different
 shapes, and that is where the privacy line is drawn — but they must never disagree about
 which side of the present a session is on. They are one timeline read by two audiences.
+
+**Rule: the feeds read the dates they are handed and never expand a schedule.** Each
+feed document carries the product's planned sessions — expanded once, in the database,
+from the term and the slots — and a feed lays its stored rows over them on the
+(group, product-local date) key, a row winning outright where both exist. The term
+bounds the plan, so a date outside it is in no feed, and every question about one date —
+may it be written, is its cancellation in effect, is its room open — is answered against
+the same plan in the database rather than by weekday arithmetic here. A date taken out of
+the plan therefore leaves every surface at once. Turning a date into a weekday anywhere
+under `src/` needs a written reason in the unit suite's plan-expansion guard, and the
+DB suite fails on any function besides the plan that walks dates; the shaping both feeds
+share — the open-ended cut and the next running session — lives with the plan's row
+schema in `src/lib/planned-sessions.ts`.
 
 **Rule: a cancelled session keeps its dated place on both feeds, drawn as the shared
 cancelled line, and is never the next session.** It is its own entry kind rather than a
@@ -47,15 +60,33 @@ per date; and it carries no badge of its own, because a pill inside the panel's 
 doubles the border and reads as noise rather than emphasis. A past cancellation is history
 with nothing left to act on. Both are the same on both feeds and in both future slots.
 
+**Rule: a holiday break is never planned, not cancelled — one quiet entry per break, on
+every feed, in the shape of a past cancellation.** A break's dates are absent from the
+plan the document carries, and the document names the break beside the plan with the
+sessions it withdrew. Each feed draws one entry per break — its own dates, one date for a
+one-day break, its name in the reader's locale, and a neutral "No session" tag — as the
+bordered muted entry a cancelled date already behind us takes, on either side of the
+present, and with no control on any surface, an admin's included: a holiday was never
+going to run, so there is nothing to warn about and nothing to act on, and it never takes
+an upcoming cancellation's warning panel. It is its own entry kind with no session
+fields, so no card, register, substitution or menu can reach it. A break shows only where
+it withdrew a session the feed would otherwise show — before the open-ended cut, and on
+the family feed inside a cancelled membership's paid window — and it is placed by those
+sessions, from the first one's start to the last one's end, which decides its date order
+and its side of the present. It is never the next session; one sooner than the next sits
+between it and the past like a cancelled date, so a gap of weeks is explained where it is
+met. The withdrawn sessions were never in the plan, so they take no slot from the
+open-ended cap.
+
 **Rule: a cancellation beats a record.** An admin may cancel a date that was already
 written up, and the cancelled line replaces the card: nothing recorded on the date —
 report, photos, attendance — is drawn on either feed, and the family document does not
 carry the row at all. The record stays in the database, frozen, and a restore brings the
 card back as it was, because the admin's word that the session did not happen is trusted
-over anything written about it. That holds after the schedule stops projecting the date:
+over anything written about it. That holds after the plan stops holding the date:
 the staff feed still gets the cancellation and draws the cancelled line at the record's
-own instants, while the family feed, which has neither the row nor a projection to place
-the date by, draws nothing there rather than the report. The feeds draw whatever
+own instants, while the family feed, which has neither the row nor a planned session to
+place the date by, draws nothing there rather than the report. The feeds draw whatever
 cancellations the document carries on a date they show; which cancellations are in effect
 is decided in the database, never re-derived here.
 
@@ -158,8 +189,8 @@ gets nothing.
 
 **Rule: exactly one session of a run can owe a fourth thing, and it is the last
 one.** On a product flagged as requiring a creation from every member, the run's
-**final session** — the last occurrence the schedule projects on or before the
-end date that the group has not cancelled — is not finished until every roster
+**final session** — the last date of the plan on or before the end date that
+the group has not cancelled, which the feed document names — is not finished until every roster
 member that session EXPECTED has
 at least one (the join-date rule below scopes this exactly as it scopes the
 register).
@@ -270,7 +301,7 @@ mark. Two rosters that visibly differ invite being collapsed into one; that
 collapse is the bug this corollary exists to prevent.
 
 **Corollary: a session that expected NOBODY drops the whole register block, not
-just its rows.** A group formed mid-term has occurrences every seat postdates,
+just its rows.** A group formed mid-term has sessions every seat postdates,
 and the editor there used to draw an "Attendance" heading, "0 of 0 marked", the
 hint explaining how to clear a mark, and then an empty list — four promises of a
 list and no list. The heading stays, because the editor's sections keep one
@@ -295,21 +326,14 @@ the dashboard badge — and a change to one is a change to both, in the same
 commit.** They answer the same question for two surfaces, and a badge counting a
 session the card calls finished is worse than either being wrong alone. The two
 places already share the whitespace-trimmed test for "has a report"; they also
-share the emailed test and its epoch gate, and now the creations condition —
-which means they share a **third** derivation as well, the one that says which
-occurrence is a run's last. Both walk the year ending at the end date, floored at
-the start date, and take the greatest date whose weekday a slot names and the
-group has not cancelled; a year is enough because slots are weekly, unless a whole
-year of the group's sessions is cancelled. A cancelled date is never owed on
-either side. The creations condition sits inside
+share the emailed test and its epoch gate, and now the creations condition. Which
+session is a run's last is *not* derived twice: the database answers it once, the
+count reads that answer and the card reads it from its document, so the two
+cannot name different final sessions. A cancelled date is never owed on either
+side. The creations condition sits inside
 the epoch-floored half on both sides, exactly as the emailed test does, so a
 pre-epoch final session keeps its check rather than losing it to a term that
-finished before the platform asked. There is a **fourth** thing they must agree
-on and it is easy to miss because neither side states it as a rule: the floor an
-undated run's occurrence walk starts from — a constant in the TypeScript, a
-`COALESCE` on the start date in the SQL — and the two numbers have to be the
-same number, because a product with no start date otherwise has a different
-history on the card than in the count.
+finished before the platform asked.
 
 ## The attribution chip
 
@@ -550,7 +574,7 @@ that itself, because it does not know which thumbnail that was.
   Reveals are instant — no
   spinner, no skeleton — because the data is already in memory: feeds arrive as one
   document (a weekly club is ~52 sessions/year; paged fetching was rejected because the
-  client projects past occurrences from the schedule, and a partial fetch makes stored
+  client lays the stored rows over the whole plan, and a partial fetch makes stored
   reports silently render as "no write-up").
 - **The report clamp is arithmetic, never measured**, so server and first client paint
   agree; the tolerance is documented beside the constants. In practice only the gedu feed

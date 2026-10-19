@@ -127,10 +127,13 @@ describe("chat image storage policy", () => {
     ]);
 
     await deleteTestProducts(admin, [PRODUCT_LIVE]);
+    // The term started a week ago: a session is only a session inside its
+    // product's term, and the helper's default start is tomorrow.
     await createTestProduct(admin, {
       id: PRODUCT_LIVE,
       seatCount: 50,
       timezone: "UTC",
+      startDate: new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10),
     });
 
     // A slot whose window is open RIGHT NOW: the session started ten minutes

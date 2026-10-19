@@ -10,6 +10,8 @@ import {
   sanitiseUtmValue,
   serialiseUtm,
   utmMetadataForConsent,
+  utmQueryParams,
+  utmRegistrationBody,
 } from "@/lib/utm";
 import type { ConsentState } from "@/lib/consent";
 
@@ -118,11 +120,17 @@ describe("readUtmFromSearchParams", () => {
     return readUtmFromSearchParams(new URLSearchParams(query));
   }
 
-  it("reads all three fields", () => {
-    expect(read("utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a")).toEqual({
+  it("reads all five fields", () => {
+    expect(
+      read(
+        "utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a&utm_content=hero-banner&utm_term=minecraft+club",
+      ),
+    ).toEqual({
       source: "lynx",
       medium: "email",
       campaign: "lynx-summer-a",
+      content: "hero-banner",
+      term: "minecraft club",
     });
   });
 
@@ -138,29 +146,39 @@ describe("readUtmFromSearchParams", () => {
   });
 
   it("nulls only the field that was repeated", () => {
-    // The three are independent, so a duplicated source must not cost a
-    // well-formed campaign.
-    expect(read("utm_source=a&utm_source=b&utm_campaign=lynx-summer-a")).toEqual({
+    // The five are independent, so a duplicated source must not cost a
+    // well-formed campaign, and a duplicated term must not cost the content.
+    expect(
+      read("utm_source=a&utm_source=b&utm_campaign=lynx-summer-a&utm_term=x&utm_term=y&utm_content=ad-3"),
+    ).toEqual({
       source: null,
       medium: null,
       campaign: "lynx-summer-a",
+      content: "ad-3",
+      term: null,
     });
   });
 
   it("nulls only the field that failed the sanitiser", () => {
-    expect(read("utm_source=%3DSUM(A1)&utm_campaign=lynx-summer-a")).toEqual({
+    expect(
+      read("utm_source=%3DSUM(A1)&utm_campaign=lynx-summer-a&utm_content=%3DSUM(A1)&utm_term=cpc"),
+    ).toEqual({
       source: null,
       medium: null,
       campaign: "lynx-summer-a",
+      content: null,
+      term: "cpc",
     });
   });
 });
 
 describe("hasUtmAttribution", () => {
-  it("is false only when all three fields are absent", () => {
+  it("is false only when all five fields are absent", () => {
     expect(hasUtmAttribution(NO_UTM_ATTRIBUTION)).toBe(false);
-    expect(hasUtmAttribution({ source: null, medium: null, campaign: "x" })).toBe(true);
-    expect(hasUtmAttribution({ source: "x", medium: null, campaign: null })).toBe(true);
+    expect(hasUtmAttribution({ ...NO_UTM_ATTRIBUTION, campaign: "x" })).toBe(true);
+    expect(hasUtmAttribution({ ...NO_UTM_ATTRIBUTION, source: "x" })).toBe(true);
+    expect(hasUtmAttribution({ ...NO_UTM_ATTRIBUTION, content: "x" })).toBe(true);
+    expect(hasUtmAttribution({ ...NO_UTM_ATTRIBUTION, term: "x" })).toBe(true);
   });
 });
 
@@ -173,6 +191,8 @@ describe("the x-utm header round trip", () => {
       source: "meta",
       medium: "paid social",
       campaign: "Rentrée scolaire — été 2026",
+      content: "Vidéo 3 · carré",
+      term: "jeux vidéo",
     };
     const serialised = serialiseUtm(utm);
     expect(serialised).not.toBeNull();
@@ -181,9 +201,10 @@ describe("the x-utm header round trip", () => {
   });
 
   it("serialises only the fields that survived", () => {
-    expect(serialiseUtm({ source: null, medium: null, campaign: "lynx-summer-a" })).toBe(
+    expect(serialiseUtm({ ...NO_UTM_ATTRIBUTION, campaign: "lynx-summer-a" })).toBe(
       "campaign=lynx-summer-a",
     );
+    expect(serialiseUtm({ ...NO_UTM_ATTRIBUTION, term: "cpc" })).toBe("term=cpc");
   });
 
   it("has no header value at all when nothing survived", () => {
@@ -191,15 +212,15 @@ describe("the x-utm header round trip", () => {
   });
 
   // The budget is on the *encoded* value, which is what the per-field cap
-  // cannot see: three fields of 200 code points are well inside their own
+  // cannot see: five fields of 200 code points are well inside their own
   // limit, and percent-encoding astral-plane characters multiplies each one by
   // roughly twelve. A header a stranger controls through the query string must
   // not be able to push a request past a hop's own ceiling.
   it("drops the whole attribution rather than truncating an over-long header", () => {
     // 200 code points each, every one encoding to 12 bytes — comfortably legal
-    // per field, and ~7,200 bytes once the three are serialised together.
+    // per field, and ~12,000 bytes once the five are serialised together.
     const wide = "𝔸".repeat(200);
-    const utm = { source: wide, medium: wide, campaign: wide };
+    const utm = { source: wide, medium: wide, campaign: wide, content: wide, term: wide };
 
     expect(sanitiseUtmValue(wide)).toBe(wide);
     expect(serialiseUtm(utm)).toBeNull();
@@ -210,6 +231,8 @@ describe("the x-utm header round trip", () => {
       source: "lynx",
       medium: "email",
       campaign: "a".repeat(200),
+      content: null,
+      term: null,
     };
 
     const serialised = serialiseUtm(utm);
@@ -218,14 +241,27 @@ describe("the x-utm header round trip", () => {
     expect(parseUtmHeader(serialised)).toEqual(utm);
   });
 
+  it("keeps all five fields at their full plain-ASCII length", () => {
+    // The budget must never bite on a real link: five maximal unencoded values
+    // serialise to about 1,050 bytes.
+    const full = "a".repeat(200);
+    const utm = { source: full, medium: full, campaign: full, content: full, term: full };
+
+    const serialised = serialiseUtm(utm);
+    expect(serialised).not.toBeNull();
+    expect(parseUtmHeader(serialised)).toEqual(utm);
+  });
+
   // Serialising never produces a repeat, so this only fires on a value that did
   // not come from serialiseUtm — which is the case the re-sanitise exists for,
   // and it has to answer the same way the query-string side does.
   it("nulls a repeated field on the header side too", () => {
-    expect(parseUtmHeader("campaign=good&campaign=bad&source=lynx")).toEqual({
+    expect(parseUtmHeader("campaign=good&campaign=bad&source=lynx&term=cpc")).toEqual({
       source: "lynx",
       medium: null,
       campaign: null,
+      content: null,
+      term: "cpc",
     });
   });
 
@@ -234,10 +270,12 @@ describe("the x-utm header round trip", () => {
     // unreachable in a real request — running the sanitiser again is what makes
     // "the value always came through our own sanitiser" a fact about this code
     // rather than a fact about the call order of two files.
-    expect(parseUtmHeader("source=%3DSUM(A1)&campaign=lynx")).toEqual({
+    expect(parseUtmHeader("source=%3DSUM(A1)&campaign=lynx&content=%2Bx")).toEqual({
       source: null,
       medium: null,
       campaign: "lynx",
+      content: null,
+      term: null,
     });
   });
 
@@ -250,7 +288,7 @@ describe("the x-utm header round trip", () => {
 
 /**
  * The consent gate on the write. Counsel reads a landing link's UTM parameters
- * as tracking under the MARKETING purpose, so the three `profiles.utm_*`
+ * as tracking under the MARKETING purpose, so the five `profiles.utm_*`
  * columns are filled only for a visitor whose stored answer granted it. This is
  * the only exported way to build the signup metadata, which is what stops a
  * registration route from persisting an attribution without first saying what
@@ -264,13 +302,21 @@ describe("utmMetadataForConsent", () => {
     decidedAt: "2026-09-14T10:15:00.000Z",
   });
   const GRANTED = answer(true, true);
-  const utm = { source: "Lynx", medium: "email", campaign: "lynx-summer-a" };
+  const utm = {
+    source: "Lynx",
+    medium: "email",
+    campaign: "lynx-summer-a",
+    content: "header-link",
+    term: "roblox",
+  };
 
-  it("carries all three fields when marketing consent was granted", () => {
+  it("carries all five fields when marketing consent was granted", () => {
     expect(utmMetadataForConsent(GRANTED, utm)).toEqual({
       utm_source: "Lynx",
       utm_medium: "email",
       utm_campaign: "lynx-summer-a",
+      utm_content: "header-link",
+      utm_term: "roblox",
     });
   });
 
@@ -336,6 +382,8 @@ describe("utm names", () => {
       source: "utm_source",
       medium: "utm_medium",
       campaign: "utm_campaign",
+      content: "utm_content",
+      term: "utm_term",
     });
     expect(UTM_HEADER).toBe("x-utm");
     expect(
@@ -346,9 +394,38 @@ describe("utm names", () => {
             marketing: true,
             decidedAt: "2026-09-14T10:15:00.000Z",
           },
-          { source: "a", medium: "b", campaign: "c" },
+          { source: "a", medium: "b", campaign: "c", content: "d", term: "e" },
         ),
       ),
-    ).toEqual(["utm_source", "utm_medium", "utm_campaign"]);
+    ).toEqual(["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]);
+  });
+});
+
+describe("the attribution leaving the tab", () => {
+  const utm = {
+    source: "lynx",
+    medium: null,
+    campaign: "lynx-summer-a",
+    content: "hero",
+    term: "minecraft",
+  };
+
+  it("puts every present field on the Google round trip's query, by its utm_* name", () => {
+    expect(utmQueryParams(utm)).toEqual({
+      utm_source: "lynx",
+      utm_campaign: "lynx-summer-a",
+      utm_content: "hero",
+      utm_term: "minecraft",
+    });
+  });
+
+  it("builds a registration body with every present field and no absent one", () => {
+    expect(utmRegistrationBody(utm)).toEqual({
+      source: "lynx",
+      campaign: "lynx-summer-a",
+      content: "hero",
+      term: "minecraft",
+    });
+    expect(utmRegistrationBody(NO_UTM_ATTRIBUTION)).toEqual({});
   });
 });

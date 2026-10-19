@@ -30,9 +30,31 @@ import { GET } from "@/app/api/gedu/invoicing/export/route";
 /** The fixture gedu who was away once — Aino Kallio. */
 const AINO = MY_GEDU_INVOICING_VIEWERS["was-away"];
 
-/** The working month narrowed to Aino, the way the caller-scoped RPC answers. */
+/**
+ * The working month narrowed to Aino, the way the caller-scoped RPC answers —
+ * on the wire. The fixture is the parsed document, and the route parses what
+ * the RPC hands it, so its holiday breaks go back into the database's spelling.
+ */
 function ainosMonth() {
-  return geduInvoicingMonthFixture(GEDU_INVOICING_WORKING_MONTH, AINO);
+  const month = geduInvoicingMonthFixture(GEDU_INVOICING_WORKING_MONTH, AINO);
+  return {
+    ...month,
+    products: month.products.map((product) => ({
+      ...product,
+      holiday_breaks: product.holiday_breaks.map((row) => ({
+        id: row.id,
+        start_date: row.startDate,
+        end_date: row.endDate,
+        names: row.names,
+        withdrawn_sessions: row.withdrawnSessions.map((session) => ({
+          session_date: session.date,
+          starts_at: session.startsAt.toISOString(),
+          ends_at: session.endsAt.toISOString(),
+          cancelled: session.cancelled,
+        })),
+      })),
+    })),
+  };
 }
 
 function request(query: string): Request {

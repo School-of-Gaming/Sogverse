@@ -10,7 +10,7 @@ import {
   type EntrySpec,
 } from "@/components/gedu/session-feed/mock-fixtures";
 import { isExpectedOnEntry } from "@/components/gedu/session-feed/entry-state";
-import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
 
 /**
  * The session-feed fixtures place every session relative to a `now` the caller

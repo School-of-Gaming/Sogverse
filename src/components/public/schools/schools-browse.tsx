@@ -24,6 +24,7 @@ import {
   type RegionGroup,
 } from "@/lib/schools/municipalities";
 import type { LocationType } from "@/types";
+import { Heading } from "@sog/ui";
 
 /** The long-tail arm asks the index for municipalities, in Finland, and nothing else. */
 const FALLBACK_TYPES: readonly LocationType[] = ["municipality"];
@@ -263,9 +264,9 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
             library lets carry a coloured phrase is a hero headline with its
             rule beneath (`brand.ts`, beside the label rule). This page has
             neither. */}
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <Heading level={1} step="section">
           {t("hero.title")}
-        </h1>
+        </Heading>
         <p className="text-lg text-muted-foreground">{t("hero.subtitle")}</p>
         <p className="text-base text-muted-foreground">{t("hero.howItWorks")}</p>
       </div>

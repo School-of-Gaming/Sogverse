@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { useDroppable } from "@dnd-kit/core";
 import {
   CalendarClock,
@@ -10,7 +11,7 @@ import {
   MailQuestion,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate } from "@/lib/utils";
@@ -92,15 +93,15 @@ export function WaitlistCard({
       )}
     >
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <div className="flex items-center gap-2">
           <Hourglass className="h-5 w-5 text-muted-foreground" />
-          {t("waitlist.title")}
+          <Heading level={3} step="label">{t("waitlist.title")}</Heading>
           {participations.length > 0 && (
             <Badge variant="outline" className="ml-1">
               {participations.length}
             </Badge>
           )}
-        </CardTitle>
+        </div>
         <p className="text-xs text-muted-foreground">{t("waitlist.subtitle")}</p>
       </CardHeader>
       <CardContent>
@@ -224,7 +225,6 @@ function SeatOfferControl({
           month: "short",
           hour: "2-digit",
           minute: "2-digit",
-          hour12: false,
           timeZone,
           timeZoneName: "short",
         });

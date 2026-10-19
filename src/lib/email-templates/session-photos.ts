@@ -1,10 +1,13 @@
 import { DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
+import { MAIL_SPACE } from "./type-scale";
 import { escapeHtml, groundFill } from "./utils";
 
 /**
  * The session report's photo grid — the one block in this directory whose
- * content is pictures.
+ * content is pictures. The report's spotlights draw their picture through it
+ * too, as a column of one, so every content picture a mail carries is boxed by
+ * the same arithmetic.
  *
  * **One photo per row, at every width.** It used to be two to a row, with an
  * odd tail spanning and a media query in the shell stacking the pairs on a
@@ -68,8 +71,8 @@ import { escapeHtml, groundFill } from "./utils";
 export const PHOTO_MAX_HEIGHT = 400;
 export const PHOTO_PHONE_COLUMN = 328;
 
-/** The vertical gap between one photo and the next. */
-const PHOTO_ROW_GAP = 8;
+/** The vertical gap between one photo and the next: the tight step. */
+const PHOTO_ROW_GAP = MAIL_SPACE.tight;
 
 /**
  * The well's tone: a step off whichever ground the shell has put it on.
@@ -247,7 +250,9 @@ function photoWell(photo: SessionReportPhoto): string {
  * The rows are separated by padding on the cell rather than by `cellspacing`,
  * because `cellspacing` puts the same gap around the outside of the table as
  * between its rows, and the space under the last photo belongs to the section
- * rather than to the grid.
+ * rather than to the grid. The grid states no margin of its own: the section
+ * that places it states the furniture step around the lead-in and the grid
+ * together.
  */
 export function sessionPhotoGrid(photos: readonly SessionReportPhoto[]): string {
   if (photos.length === 0) return "";
@@ -256,7 +261,7 @@ export function sessionPhotoGrid(photos: readonly SessionReportPhoto[]): string 
     return `<tr><td align="center" valign="top" style="${gap}">${photoWell(photo)}</td></tr>`;
   });
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;">
       ${rows.join("\n      ")}
     </table>`;
 }

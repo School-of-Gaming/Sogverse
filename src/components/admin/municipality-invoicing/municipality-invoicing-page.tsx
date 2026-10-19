@@ -177,13 +177,10 @@ export function MunicipalityInvoicingPage({
     invoice.municipalities.every((one) => openKeys.has(one.id));
 
   return (
-    // The scroll gutter is reserved because expanding a municipality is itself
-    // what makes the document scrollbar appear: without it, the reader's own
-    // click narrows the page under the figures they were reading and moves every
-    // one of them sideways.
-    <div className="space-y-3 pb-12" data-reserve-scroll-gutter>
-      <MunicipalityInvoicingHeading />
-
+    // The scroll gutter this page needs — expanding a municipality is itself
+    // what makes the document scrollbar appear — is reserved by the hub it
+    // renders in.
+    <div className="space-y-3 pb-12">
       {/* At least as tall as the small button, so a month with nothing to
           expand does not lose it and pull the stepper up the page. */}
       <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
@@ -275,33 +272,6 @@ const NO_SNAPSHOTS: readonly MunicipalityInvoicingSnapshot[] = [];
 /** The live page's own answer: another month of this route. */
 function adminMonthHref(month: string): MonthHref {
   return { pathname: ROUTES.admin.municipalityInvoicing, query: { month } };
-}
-
-/**
- * The page's title and its one-line description — the two things on it that wait
- * on nothing.
- *
- * It is a component rather than two lines written out twice, because the route
- * renders them above a failed read as well, where there is no invoice to put
- * underneath. The two copies had already drifted apart — a display heading over
- * the failure, a working-surface heading over the ledger — and a page whose title
- * changes size depending on whether the month loaded looks broken in exactly the
- * state where the reader is already being told that something went wrong.
- *
- * The size is the smallest that still reads as the page's own title: this is a
- * working surface rather than a page somebody arrives at, and a display heading
- * over a dense ledger spends a tenth of the first screen naming what the sidebar
- * named already.
- */
-export function MunicipalityInvoicingHeading() {
-  const t = useTranslations("admin.municipalityInvoicing");
-
-  return (
-    <div>
-      <h1 className="text-xl font-semibold">{t("title")}</h1>
-      <p className="text-sm text-muted-foreground">{t("description")}</p>
-    </div>
-  );
 }
 
 /**
@@ -804,8 +774,8 @@ function ClubTable({
  * secondary type beside the billed count, so a missing write-up can be chased
  * without opening anything — which matters because every club here is closed
  * by default. It is not a warning: those sessions are in the count and the
- * total, and nothing about the invoice is wrong. Dates still ahead of the club
- * and cancelled dates get no mention there.
+ * total, and nothing about the invoice is wrong. Dates still ahead of the club,
+ * cancelled dates and holidays get no mention there.
  *
  * **The whole row toggles the dates, and the club's name is the one thing on it
  * that does not.** A row this dense is read by pointing at it, and a reader
@@ -981,7 +951,8 @@ function ClubSessionDetail({
  * carries no amount at all: it has not happened, and printing €0 against a date
  * in the future would invite somebody to go looking for a session nobody has
  * missed. A cancelled one is muted and worth €0, past or future: it is settled,
- * and the word beside the zero is what tells it apart from a billed one.
+ * and the word beside the zero is what tells it apart from a billed one. A
+ * holiday reads the same way, naming its break: nothing was due that day.
  */
 function SessionRow({
   session,
@@ -1000,7 +971,11 @@ function SessionRow({
       isoWeek={session.isoWeek}
       locale={locale}
       tone={session.kind === "recorded" ? "plain" : "muted"}
-      outcome={t(SESSION_OUTCOME_KEY[session.kind])}
+      outcome={
+        session.kind === "holiday" && session.holidayName
+          ? t("holidayNamed", { name: session.holidayName })
+          : t(SESSION_OUTCOME_KEY[session.kind])
+      }
       amount={
         session.kind === "recorded" || session.kind === "unrecorded" ? (
           feeCents === null ? (
@@ -1021,4 +996,5 @@ const SESSION_OUTCOME_KEY = {
   unrecorded: "billedNotRecorded",
   upcoming: "upcoming",
   cancelled: "cancelled",
+  holiday: "holiday",
 } as const satisfies Record<InvoiceSession["kind"], string>;

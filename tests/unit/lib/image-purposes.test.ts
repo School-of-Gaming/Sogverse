@@ -96,31 +96,40 @@ describe("the image purpose registry", () => {
   });
 });
 
+describe("the registry's stored sizes", () => {
+  it("are positive whole pixel counts wherever a purpose fixes one", () => {
+    const malformed = purposes
+      .filter(([, spec]) => {
+        const size = spec.storedSize;
+        if (size === "as-uploaded") return false;
+        return ![size.width, size.height].every((edge) => Number.isInteger(edge) && edge > 0);
+      })
+      .map(([purpose]) => purpose);
+    expect(malformed).toEqual([]);
+  });
+});
+
 describe("the catalogue purposes derived from the registry", () => {
-  it("carry each catalogue purpose's bucket and stored size", () => {
-    const registry = new Map(purposes);
-    for (const [purpose, spec] of Object.entries(CATALOGUE_IMAGE_PURPOSES)) {
-      const registered = registry.get(purpose);
-      expect(registered?.catalogue, `${purpose} has no catalogue block in the registry`).toBeDefined();
-      expect(spec, purpose).toEqual({
-        bucket: registered?.bucket,
-        width: registered?.catalogue?.width,
-        height: registered?.catalogue?.height,
-      });
+  const cataloguePurposes = purposes.filter(([, spec]) => spec.catalogue);
+
+  it("are exactly the registry's catalogue purposes", () => {
+    expect(Object.keys(CATALOGUE_IMAGE_PURPOSES).sort()).toEqual(
+      cataloguePurposes.map(([purpose]) => purpose).sort(),
+    );
+  });
+
+  it("carry each catalogue purpose's bucket and its fixed stored size", () => {
+    const derived = new Map<string, unknown>(Object.entries(CATALOGUE_IMAGE_PURPOSES));
+    for (const [purpose, registered] of cataloguePurposes) {
+      expect(derived.get(purpose), purpose).toEqual(
+        Object.assign({ bucket: registered.bucket }, registered.storedSize),
+      );
     }
   });
 
-  it("are exactly the registry's purposes with a catalogue block", () => {
-    const withCatalogue = purposes
-      .filter(([, spec]) => spec.catalogue !== undefined)
-      .map(([purpose]) => purpose)
-      .sort();
-    expect(Object.keys(CATALOGUE_IMAGE_PURPOSES).sort()).toEqual(withCatalogue);
-  });
-
   it("are all public, since their URLs are built for anonymous readers", () => {
-    const privateCatalogue = purposes
-      .filter(([, spec]) => spec.catalogue !== undefined && spec.visibility !== "public")
+    const privateCatalogue = cataloguePurposes
+      .filter(([, spec]) => spec.visibility !== "public")
       .map(([purpose]) => purpose);
     expect(privateCatalogue).toEqual([]);
   });

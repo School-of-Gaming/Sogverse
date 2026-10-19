@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/lib/utils";
+import { formattingLocale } from "@/lib/constants/locales";
 
 /**
  * Localized "next session at" line — short weekday + day + long month +
@@ -6,17 +7,16 @@ import { formatDate, formatTime } from "@/lib/utils";
  * fit a Finnish long-form on a single row of the narrow column layout
  * ("lauantai" → "la"); the month word stays long since "toukokuuta"
  * reads naturally and most other locales keep month words short anyway.
- * `formatTime` normalizes the time column to 24h regardless of locale
- * default.
+ * The clock is the formatting locale's, a 24-hour one in every locale.
  *
  * Start and end are formatted separately rather than via `formatRange`:
  * when a session crosses midnight (start and end on different calendar
- * days), `formatRange` auto-promotes to "5/15/2026, 19:45 – 5/16/2026,
+ * days), `formatRange` auto-promotes to "15/05/2026, 19:45 – 16/05/2026,
  * 01:45" to disambiguate. The card always pairs this label with its
  * own date anchor that already tells the reader which day we mean, so
  * the bare time range reads correctly.
  *
- *   en → "Mon, May 1 · 16:00 – 18:00"
+ *   en → "Mon 1 May · 16:00 – 18:00"
  *   fi → "ma 1. toukokuuta · 16.00 – 18.00"
  *   sv → "mån 1 maj · 16:00 – 18:00"
  */
@@ -55,13 +55,16 @@ export function formatCountdownCompound(ms: number, locale: string): string {
   const minutes = totalMin % 60;
 
   const unit = (value: number, u: "day" | "hour" | "minute"): string =>
-    new Intl.NumberFormat(locale, {
+    new Intl.NumberFormat(formattingLocale(locale), {
       style: "unit",
       unit: u,
       unitDisplay: "long",
     }).format(value);
 
-  const list = new Intl.ListFormat(locale, { type: "unit", style: "narrow" });
+  const list = new Intl.ListFormat(formattingLocale(locale), {
+    type: "unit",
+    style: "narrow",
+  });
 
   if (days > 0) {
     return hours > 0

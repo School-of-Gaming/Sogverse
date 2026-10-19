@@ -13,7 +13,7 @@
  *
  * **Why the size can be declared.** The route serves every picture of a
  * purpose at one size, `ogPictureSize`, cropping to it whatever the stored
- * object is. The purpose's catalogue size (`CATALOGUE_IMAGE_PURPOSES`) only
+ * object is. The purpose's stored size (`CATALOGUE_IMAGE_PURPOSES`) only
  * decides what that size is; entries uploaded before sizes were enforced can
  * be any shape, so the stored bytes cannot be what makes the declaration true.
  * The rendition's pixel size is therefore known before it is fetched, and a

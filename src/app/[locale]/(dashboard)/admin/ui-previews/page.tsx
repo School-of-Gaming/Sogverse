@@ -1,5 +1,6 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only index of fixture-driven preview scenes; every string here is scene metadata or an explanation of the mechanism, not user-facing copy that ships in any locale */
 import { buttonVariants } from "@/components/ui/button";
+import { Heading } from "@sog/ui";
 import { previewScenePath } from "@/components/preview/href";
 import {
   PREVIEW_SCENE_LIST,
@@ -76,7 +77,7 @@ export default function AdminUIPreviewsPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">UI Previews</h1>
+        <Heading level={1} step="section">UI Previews</Heading>
         <p className="max-w-prose text-muted-foreground">
           Full-page preview scenes: one fixture-driven page each, served at{" "}
           <code>/preview/{"{surface}"}/{"{scenario}"}</code> inside the same
@@ -100,7 +101,7 @@ export default function AdminUIPreviewsPage() {
             className="space-y-3 rounded-lg border border-border p-6"
           >
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold">{scene.title}</h2>
+              <Heading level={2} step="card-title">{scene.title}</Heading>
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {scene.chrome} chrome &middot;{" "}
                 <code>/preview/{scene.surface}</code>

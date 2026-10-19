@@ -16,8 +16,15 @@ import {
   calendarInvitationStartDate,
   calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
+import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
+import {
+  MARKDOWN_CONTAINER,
+  MARKDOWN_LOOK,
+  type MarkdownLook,
+} from "@/lib/authored-markdown";
+import { MAIL_TYPE, MAIL_WEIGHT } from "@/lib/email-templates/type-scale";
 
 /**
  * The house style, enforced mechanically over the rendered output of every mail
@@ -50,6 +57,23 @@ const PALETTE = new Set(
 );
 
 const RADII = new Set(Object.values(RADIUS));
+
+/**
+ * Every size a mail may set: the mail's own levels, plus the authored-markdown
+ * looks — a report sets its own type, from the same definition the app reads,
+ * and its third heading level is a size the mail itself never uses.
+ */
+const MARKDOWN_LOOKS: MarkdownLook[] = [MARKDOWN_CONTAINER, ...Object.values(MARKDOWN_LOOK)];
+const TYPE_SIZES = new Set([
+  ...Object.values(MAIL_TYPE).map((level) => level.fontSize),
+  ...MARKDOWN_LOOKS.flatMap((look) => (look.fontSize === undefined ? [] : [look.fontSize])),
+]);
+
+/** The weights the mail face draws; anything else is a weight the reader's font fakes. */
+const TYPE_WEIGHTS = new Set<number>(Object.values(MAIL_WEIGHT));
+
+/** A button label's type after its colour, as the action level states it. */
+const ACTION_TYPE = `font-size:${MAIL_TYPE.action.fontSize}px;line-height:${MAIL_TYPE.action.lineHeight};font-weight:${MAIL_TYPE.action.fontWeight};`;
 
 /**
  * A brand fill and the only foreground allowed on it. The pairing is the single
@@ -164,6 +188,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     ageRange: "8-12",
     audience: "gamers",
     spokenLanguageCode: "fi",
+    holidayBreaks: "Autumn break 2026-10-19 2026-10-23; Christmas break 2026-12-21 2027-01-06",
     participationId: "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     attendeeName: "Marja Virtanen",
     attendeeEmail: "marja@example.com",
@@ -219,9 +244,12 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     copy: "family",
     // Three, so the sweep sees the photo grid at all: a pair of cells, an odd
     // one spanning the row, and three toned wells whose fills and corners have
-    // to answer to the same rules as everything else in a mail. The stub above
-    // is what makes the fixture URLs resolvable, exactly as it does the mark's.
+    // to answer to the same rules as everything else in a mail. The origin
+    // `fromRegistry` renders with is what the fixture URLs resolve against.
     photoCount: "3",
+    // Both demo spotlights, so the sweep sees a markdown link reach a mail —
+    // the one anchor no button or inline-link helper builds.
+    spotlights: "two",
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
@@ -280,7 +308,7 @@ function fromRegistry(
         { ...PARAMS[key], ...overrides },
         t,
         "en",
-        { to: "send" },
+        { origin: "https://sogverse.sog.gg" },
         tPrep,
       ).html,
     ],
@@ -450,22 +478,31 @@ describe("completeness", () => {
 describe("house style, over every mail we can send", () => {
   /**
    * Anchor provenance. Every link in a mail comes from `ctaButton`,
-   * `ctaButtonRow` or `inlineLink`, so the set of styles an anchor can carry is
-   * small and closed. A hand-rolled anchor is what bypassed every colour rule
-   * we had; this is the assertion that makes bypassing visible.
+   * `ctaButtonRow` or `inlineLink` — or from the markdown renderer, for an
+   * authored body whose use case keeps links (a spotlight's) — so the set of
+   * styles an anchor can carry is small and closed. A hand-rolled anchor is
+   * what bypassed every colour rule we had; this is the assertion that makes
+   * bypassing visible.
    */
   it("emits no anchor a helper did not build", () => {
+    const markdownLinkStyle =
+      /<a [^>]*style="([^"]*)"/.exec(
+        renderMarkdownForEmail("[a](https://example.com)", "spotlight"),
+      )?.[1] ?? null;
+    expect(markdownLinkStyle, "the markdown renderer drew no styled link").not.toBeNull();
     for (const [name, html] of allMails()) {
       // A mail with no link is fine — the help-request mail is written to us about
       // a person and asks the reader for nothing.
       const anchors = styleAttributes(html).filter((s) => s.tag === "a");
       for (const { style } of anchors) {
-        const isButton = /^display:(inline-)?block;padding:12px (8|32)px;font-size:14px;font-weight:bold;color:#[0-9a-fA-F]{6};text-decoration:none;$/.test(
+        const label = /^display:(?:inline-)?block;padding:12px (?:8|32)px;color:(#[0-9a-fA-F]{6});(.*)text-decoration:none;$/.exec(
           style,
         );
+        const isButton = label !== null && label[2] === ACTION_TYPE;
         const isInlineLink = style === `color:${BRAND.act};text-decoration:underline;`;
+        const isMarkdownLink = style === markdownLinkStyle;
         expect(
-          isButton || isInlineLink,
+          isButton || isInlineLink || isMarkdownLink,
           `${name}: hand-rolled anchor — use ctaButton/ctaButtonRow/inlineLink.\n  ${style}`,
         ).toBe(true);
       }
@@ -575,6 +612,52 @@ describe("house style, over every mail we can send", () => {
         expect(RADII, `${name}: border-radius ${radius[1]} is not in RADIUS`).toContain(radius[1]);
       }
     }
+  });
+
+  /**
+   * The scale has six levels and a mail sets nothing between them. A size
+   * typed into a builder is a level nobody decided, which is how a mail ends
+   * up with five sizes of small print. Zero is allowed for the one thing it
+   * is: a spacer cell whose non-breaking space must take no room.
+   *
+   * Every violation is collected before failing, so one run lists the whole
+   * sweep rather than the first stray size.
+   */
+  it("sets every font size from the type scale", () => {
+    const strays: string[] = [];
+    for (const [name, html] of allMails()) {
+      for (const declared of html.matchAll(/font-size:\s*([^;"!]+)/g)) {
+        const value = declared[1].trim();
+        if (value === "0" || value === "0px") continue;
+        const px = /^(\d+)px$/.exec(value);
+        if (px === null || !TYPE_SIZES.has(Number(px[1]))) strays.push(`${name}: ${value}`);
+      }
+    }
+    expect(
+      [...new Set(strays)],
+      "Sizes outside the type scale — set them through mailText() and a MAIL_TYPE level",
+    ).toEqual([]);
+  });
+
+  /**
+   * The mail face draws two weights. Any other number is a weight the reader's
+   * own font fakes or rounds, differently in each client, and a keyword
+   * (`bold`) is a weight nobody chose from the scale.
+   */
+  it("asks only for the weights the mail face draws", () => {
+    const strays: string[] = [];
+    for (const [name, html] of allMails()) {
+      for (const declared of html.matchAll(/font-weight:\s*([^;"!]+)/g)) {
+        const value = declared[1].trim();
+        if (!/^\d+$/.test(value) || !TYPE_WEIGHTS.has(Number(value))) {
+          strays.push(`${name}: ${value}`);
+        }
+      }
+    }
+    expect(
+      [...new Set(strays)],
+      "Weights the mail face does not draw — take them from MAIL_TYPE or MAIL_WEIGHT",
+    ).toEqual([]);
   });
 });
 

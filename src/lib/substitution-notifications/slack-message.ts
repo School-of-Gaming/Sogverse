@@ -5,6 +5,7 @@ import { PRODUCT_TOPICS } from "@/lib/products/topics";
 import {
   buildSessionFacts,
   sessionFactsProduct,
+  sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import type { GeduQualification, SubstitutionReason } from "@/types";
@@ -216,6 +217,7 @@ export function buildSubstitutionSlackMessage({
   const facts = buildSessionFacts({
     product: sessionFactsProduct(product),
     sessionDate: request.session_date,
+    ...sessionWindowOf(request),
     locale: LOCALE,
   });
   const when = substitutionDmWhen(facts, LOCALE);
@@ -380,7 +382,6 @@ function acceptedLine(approver: SnapshotPerson, approvedAt: string, timezone: st
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23",
     timeZone: timezone,
   })}`;
 }
@@ -393,7 +394,6 @@ function offeredLine(candidate: SnapshotCandidate, timezone: string): string {
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23",
     timeZone: timezone,
   })}`;
 }

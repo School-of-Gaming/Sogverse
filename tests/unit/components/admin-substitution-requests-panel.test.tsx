@@ -49,20 +49,23 @@ import { sessionFacts } from "../../mocks/session-facts";
  *
  * Translations echo their keys, so nothing here depends on English wording, and
  * the relative-time formatter echoes a fixed phrase: what this file is about is
- * the panel's behaviour, and the phrasing is `Intl`'s own.
+ * the panel's behaviour, and the phrasing is `Intl`'s own. The one exception is
+ * the declines line, whose translation also echoes the names it was handed, so
+ * the joined list can be read off the page.
  */
-/** The list formatter, observed: the declines line hands it the names. */
-const formatList = vi.hoisted(() =>
-  vi.fn((items: Iterable<string>) => [...items].join(", ")),
-);
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => {
-    const t = (key: string) => (namespace ? `${namespace}.${key}` : key);
+    const t = (key: string, values?: { names?: string }) => {
+      const echoed = namespace ? `${namespace}.${key}` : key;
+      return key === "declinedBy" && values?.names !== undefined
+        ? `${echoed} ${values.names}`
+        : echoed;
+    };
     t.rich = (key: string) => key;
     return t;
   },
-  useFormatter: () => ({ relativeTime: () => "in 3 hours", list: formatList }),
+  useFormatter: () => ({ relativeTime: () => "in 3 hours" }),
   useLocale: () => "en",
 }));
 
@@ -96,6 +99,8 @@ function candidate(id: string, firstName: string): UserListEntry {
     role: "gedu",
     spoken_languages: ["fi"],
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
     utm_medium: null,
     utm_source: null,
@@ -116,7 +121,7 @@ const CANDIDATES = [
 // through, so no sentinel is mounted.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: CANDIDATES, total: CANDIDATES.length }] },
+    data: { rows: CANDIDATES, total: CANDIDATES.length },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,
@@ -321,7 +326,6 @@ describe("the admin Substitutions page's queue panel", () => {
   });
 
   it("names who declined in one quiet line, and draws nothing when nobody has", () => {
-    formatList.mockClear();
     renderPanel(
       [
         {
@@ -337,15 +341,14 @@ describe("the admin Substitutions page's queue panel", () => {
     );
 
     // One line across two cards: the card with nobody declining draws none.
-    const lines = screen.getAllByText("admin.substitutions.declinedBy");
+    // The names are joined into one phrase in the reader's locale.
+    const lines = screen.getAllByText(
+      "admin.substitutions.declinedBy Eeli Virtanen and admin.substitutions.unnamed",
+    );
     expect(lines).toHaveLength(1);
     const declined = requestCards().find((card) => card.contains(lines[0]));
     if (declined === undefined) throw new Error("the line is on no card");
     expect(within(declined).getByText("admin.substitutions.noOffers")).toBeTruthy();
-    expect(formatList).toHaveBeenCalledWith(
-      ["Eeli Virtanen", "admin.substitutions.unnamed"],
-      { type: "conjunction" },
-    );
     // A line and no actions: the only presses on the card are the ones it had.
     expect(
       within(declined)

@@ -20,12 +20,16 @@ CREATE TABLE public.profiles (
     utm_medium text,
     utm_campaign text,
     registration_completed_at timestamp with time zone,
+    utm_content text,
+    utm_term text,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
     CONSTRAINT profiles_utm_campaign_format CHECK (((utm_campaign IS NULL) OR ((btrim(utm_campaign) <> ''::text) AND (char_length(btrim(utm_campaign)) <= 200) AND (utm_campaign !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_campaign), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
+    CONSTRAINT profiles_utm_content_format CHECK (((utm_content IS NULL) OR ((btrim(utm_content) <> ''::text) AND (char_length(btrim(utm_content)) <= 200) AND (utm_content !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_content), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
     CONSTRAINT profiles_utm_medium_format CHECK (((utm_medium IS NULL) OR ((btrim(utm_medium) <> ''::text) AND (char_length(btrim(utm_medium)) <= 200) AND (utm_medium !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_medium), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
-    CONSTRAINT profiles_utm_source_format CHECK (((utm_source IS NULL) OR ((btrim(utm_source) <> ''::text) AND (char_length(btrim(utm_source)) <= 200) AND (utm_source !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_source), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)])))))
+    CONSTRAINT profiles_utm_source_format CHECK (((utm_source IS NULL) OR ((btrim(utm_source) <> ''::text) AND (char_length(btrim(utm_source)) <= 200) AND (utm_source !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_source), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
+    CONSTRAINT profiles_utm_term_format CHECK (((utm_term IS NULL) OR ((btrim(utm_term) <> ''::text) AND (char_length(btrim(utm_term)) <= 200) AND (utm_term !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_term), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)])))))
 );
 
 
@@ -90,6 +94,20 @@ COMMENT ON COLUMN public.profiles.utm_campaign IS 'Optional marketing provenance
 --
 
 COMMENT ON COLUMN public.profiles.registration_completed_at IS 'When this account finished registering — gave its name, accepted the terms and answered the consents — or NULL while it still owes that. handle_new_user() sets it at creation for a password account, whose registration route supplies everything in the same request, and leaves it NULL for any other provider (Google), which arrives with none of it. After creation it is written only by service_role (the routes that complete a registration); there is deliberately no UPDATE grant at any level for authenticated or anon, because a parent able to set it could skip the terms. The proxy sends a customer whose value is NULL to the finish page from every protected page.';
+
+
+--
+-- Name: COLUMN profiles.utm_content; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.utm_content IS 'Optional marketing provenance: the utm_content from the link this account arrived through, or NULL. Same rules as utm_source — write-once, no UPDATE grant, case preserved, NULL on every gamer row.';
+
+
+--
+-- Name: COLUMN profiles.utm_term; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.utm_term IS 'Optional marketing provenance: the utm_term from the link this account arrived through, or NULL. Same rules as utm_source — write-once, no UPDATE grant, case preserved, NULL on every gamer row.';
 
 
 --

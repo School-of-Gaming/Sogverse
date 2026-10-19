@@ -35,6 +35,7 @@ export function landingPageAddress(
   page: AddressableLandingPage,
   locale: SupportedLocale,
 ): string {
+  // exact-locale: a slug resolves only in its own locale
   const slug = page.versions.find((version) => version.locale === locale)?.slug;
   return slug !== undefined && slug !== "" ? slug : page.id;
 }

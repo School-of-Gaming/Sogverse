@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
@@ -18,6 +19,7 @@ import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.con
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
 import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
+import { utmRegistrationBody } from "@/lib/utm";
 import { ContinueWithGoogle } from "./continue-with-google";
 import { NameFields, useNameSchemaFields } from "./name-fields";
 import { ParentAccountFields, useParentAccountFields } from "./parent-account-fields";
@@ -141,17 +143,13 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // locale the form is being read in is the best answer anyone has.
           locale,
           // Marketing provenance, written by the handle_new_user trigger to the
-          // three profiles.utm_* columns and never updatable afterwards. It
+          // five profiles.utm_* columns and never updatable afterwards. It
           // travels in the body (and from there into signup metadata) rather
           // than as a later profile write, because a client write would need
           // GRANT UPDATE on those columns TO authenticated, handing every user
           // the permanent ability to rewrite their own attribution; the grant is
           // the thing we are refusing, and the trigger is what lets us.
-          utm: {
-            source: utm.source ?? undefined,
-            medium: utm.medium ?? undefined,
-            campaign: utm.campaign ?? undefined,
-          },
+          utm: utmRegistrationBody(utm),
           // The product page this visit came from, so the account-creation
           // report can name it. The route re-checks it; nothing navigates on it.
           redirect: safeRedirect ?? undefined,
@@ -231,7 +229,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
     // stops the narrower of the two reading as an older screen.
     <Card className="w-full max-w-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">{t('register.title')}</CardTitle>
+        <Heading level={1} step="section" align="center">{t('register.title')}</Heading>
         <CardDescription className="text-center">
           {t('register.description')}
         </CardDescription>

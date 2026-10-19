@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { ApiError } from "@/lib/api/api-error";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
+import { IMMUTABLE_CACHE_CONTROL } from "@/lib/images/ingest-image.server";
+import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import type {
   AppSupabaseClient,
   CatalogueImage,
@@ -36,13 +38,6 @@ import type {
  * RLS policy and is therefore written on the caller's own session. Which
  * bucket is the entry's purpose's, from `CATALOGUE_IMAGE_PURPOSES`.
  */
-
-/**
- * A year. Safe by construction here in a way it was not before: an object is
- * named by the sha256 of its bytes and uploaded with `upsert: false`, so the
- * bytes at a given URL can never change.
- */
-const IMMUTABLE_CACHE_CONTROL = "31536000";
 
 /** The columns every route returns for an entry. */
 const ENTRY_COLUMNS = "id, label, sha256, path, purpose, created_at";
@@ -318,18 +313,12 @@ export async function vetCatalogueUpload(
   return resolved;
 }
 
-/**
- * The largest picture whose header this will accept, in pixels. Far above
- * any purpose's size; it only keeps a hostile header from being taken at its
- * word.
- */
-const MAX_INPUT_PIXELS = 4096 * 4096;
-
 /** How the size refusal names each purpose to the admin reading it. */
 const PURPOSE_NAME: Record<CatalogueImagePurpose, string> = {
   product: "product picture",
   library_cover: "Library cover",
   landing_image: "landing page picture",
+  spotlight_image: "spotlight picture",
 };
 
 /**

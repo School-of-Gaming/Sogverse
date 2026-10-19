@@ -9,6 +9,13 @@ import type {
   GamerPhotoConsentType,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
+import { z } from "zod";
+import { escapeLikePattern } from "@/lib/utils";
+import {
+  keysetPage,
+  quoteFilterValue,
+  type KeysetCursor,
+} from "@/lib/supabase/keyset";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
@@ -19,7 +26,15 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
-import { productIdResponse } from "./products.contracts";
+import {
+  plannedSessionRows,
+  type PlannedSession,
+} from "@/lib/planned-sessions";
+import {
+  productIdResponse,
+  productListFacetsRow,
+  type ProductListFacetsRow,
+} from "./products.contracts";
 
 // ---------------------------------------------------------------------------
 // Query builders + inferred row types. Each select lives in a standalone
@@ -199,38 +214,47 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // and PostgREST refuses the whole query with PGRST201, which the admin product
 // page shows as "product not found". That is why `image_path` carries no FK of
 // its own — see `src/services/catalogue-images/CLAUDE.md`.
+//
+// `product_holiday_calendars(holiday_calendars(id, name))` is the third: the
+// calendars a club follows, with each one's name so the details page can list
+// and link them and the form can seed its picker. Calendar names are
+// admin-readable only, which is why no family-facing query embeds it.
+//
+// `creator:profiles!products_created_by_fkey(id, first_name, last_name)` is the
+// admin who created the product, which the details page names and links. It is
+// hinted because products and profiles meet over more than one path, and it is
+// deliberately not `!inner`: a creator whose profile the reader cannot see must
+// leave the product readable with the creator unknown, never make the whole
+// product read as "not found".
+//
+// `invoice_customer:invoice_customers!products_invoice_customer_id_fkey(id,
+// invoice_name, fennoa_customer_no)` is the Fennoa buyer a municipality club is
+// invoiced to — only the three fields the details page names and links, never
+// the billing address, which belongs to the invoicing page. It rides on this
+// read so the name paints with the rest of the details rather than a round trip
+// later. The foreign key is nullable, so the embed is `null` on every product
+// with no customer, which is every type but a municipality club.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type)",
+      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name)), creator:profiles!products_created_by_fkey(id, first_name, last_name), invoice_customer:invoice_customers!products_invoice_customer_id_fkey(id, invoice_name, fennoa_customer_no)",
     )
     .eq("id", id)
     .maybeSingle();
 }
 
-// Admin per-type list. Carries the translations the row renders plus the
-// weekly schedule slots — clubs that differ only by weekday are otherwise
-// indistinguishable in the list without opening each one. The slot shape
-// (`weekday, start_time, duration_minutes`) matches what
-// `formatProductSchedule` consumes, so the list reuses the same schedule
-// formatter as the browse card. `product_type`, `start_date`, `end_date`,
-// `timezone`, `location_id` and `spoken_language_code` come from `*` (columns
-// on Product). `gedu_group_assignments(gedu_id)` is embedded for the admin
-// club-list filter on assigned educator; the rows the list renders ignore it,
-// so it's inert for camps/events. The embed is keyed off the assignment's own
-// `product_id` FK, so it spans every group on the product — an empty array
-// means no educator is assigned anywhere.
-//
-// The location embed carries one level of parent, which is exactly what the
-// admin club list's municipality filter needs: an online municipality club
-// points at the municipality itself, an in-person one at a site whose parent
-// is that municipality. Riding on this query is what lets that filter answer
-// the question without reading the locations table.
-//
-// The translations are the three columns a list row reads, never `*`: the long
-// description is most of a translation's bytes and no list renders it, so
-// selecting it made a municipality club list's payload three times its size.
+// The two admin product list reads below share one row: the translations a
+// row renders (the three columns it reads, never `*` — the long description is
+// most of a translation's bytes and no list renders it), the weekly schedule
+// slots in the shape `formatProductSchedule` consumes (clubs that differ only
+// by weekday are otherwise indistinguishable without opening each one), and
+// the location with one level of parent, which is enough to name a product's
+// municipality: an online municipality club points at the municipality itself,
+// an in-person one at a site whose parent is that municipality. Each builder
+// spells its select out as a literal, because the row type is inferred from it.
+
+// Every product of one type, newest first — the admin's club-switch picker.
 function buildProductsByTypeQuery(
   supabase: AppSupabaseClient,
   type: ProductType,
@@ -238,10 +262,43 @@ function buildProductsByTypeQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
     )
     .eq("product_type", type)
     .order("created_at", { ascending: false });
+}
+
+/**
+ * The admin product list's read: the same row, plus three empty embeds that
+ * exist only to be filtered on.
+ *
+ * An empty embed (`alias:table()`) puts nothing in the response; paired with a
+ * `not.is.null` filter on its alias it keeps only the products that have a
+ * matching child row. That is how a filter over a product's *children* — any of
+ * its names, any of its weekdays, its location — stays one ordinary PostgREST
+ * parameter on the products read, ANDed with the rest, rather than a second
+ * query. Each is aliased apart from the embed the row renders, because a filter
+ * on that one would narrow the rendered children too: a club on Monday and
+ * Wednesday filtered to Monday must still show both days. The gedu filter is
+ * not an embed, because a gedu's seat lives in one of two tables; the page read
+ * says how it narrows instead.
+ *
+ * It reads `products` itself rather than a view so the row type stays the
+ * table's own: a view's columns all come back nullable, and the row renders
+ * most of them.
+ *
+ * The order, the resume filter and the limit are `keysetPage`'s.
+ */
+function buildAdminProductListQuery(
+  supabase: AppSupabaseClient,
+  withCount: boolean,
+) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), name_match:product_translations(), day_match:schedule_slots(), municipality_match:locations()",
+      withCount ? { count: "exact" } : undefined,
+    );
 }
 
 // `topic` is a column on Product (the product_topic enum) — its label is
@@ -249,6 +306,59 @@ function buildProductsByTypeQuery(
 export type ProductWithDetails = QueryData<
   ReturnType<typeof buildProductsByTypeQuery>
 >[number];
+
+/** One row of the admin product list. */
+export type AdminProductListRow = QueryData<
+  ReturnType<typeof buildAdminProductListQuery>
+>[number];
+
+/**
+ * How many products one page of the admin product list carries: a screenful
+ * and a little, so the first page fills the viewport and there is something to
+ * scroll through. The hook decides "there is more" from a page coming back
+ * shorter than this, so the read and the hook share this one constant.
+ */
+export const ADMIN_PRODUCT_LIST_PAGE_SIZE = 25;
+
+/**
+ * Which products one page of the admin product list is about. Every field
+ * narrows the same read, as its own PostgREST parameter the database ANDs.
+ */
+export interface AdminProductListFilters {
+  /** One product type, or null for every type. */
+  type: ProductType | null;
+  /**
+   * What the admin typed, trimmed; empty is "no search". Matched as a
+   * case-insensitive substring of any one of the product's names, in every
+   * locale — an admin may have typed the English name while reading the list
+   * in Finnish.
+   */
+  search: string;
+  /** A weekday the product must be scheduled on (0 = Monday), or null. */
+  weekday: number | null;
+  /**
+   * A gedu holding a standing seat on any group of the product — assigned
+   * (primary or assistant) or a trainee — or null.
+   */
+  geduId: string | null;
+  /** The language the product is delivered in, or null. */
+  spokenLanguage: SpokenLanguageCode | null;
+  /** The municipality the product sits in, or null. */
+  municipalityId: string | null;
+}
+
+/** One keyset page of the admin product list. */
+export interface AdminProductListPage {
+  /** The page's rows, newest first. */
+  rows: AdminProductListRow[];
+  /**
+   * How many products match the filters — on the first page only, `null`
+   * after it. The count cannot change as the reader scrolls, so it is asked
+   * once rather than paid for per page; `null` means "not asked", never
+   * "none".
+   */
+  total: number | null;
+}
 
 // Parent-facing single-product detail, inferred from its own query rather than
 // from the browse row: one page reading one product can afford the whole row,
@@ -265,9 +375,17 @@ export type ProductDetailRow = NonNullable<
 // this is NOT filtered on listing, so admins can fetch an unlisted product and
 // a long-finished one alike. Carries the IDs the form needs to round-trip an
 // edit plus readable strings (the location chain).
-export type ProductAdminDetailRow = NonNullable<
+//
+// `creator` is widened to admit `null`. The generator reads the NOT NULL foreign
+// key and types the embed as always present, but the embed is a left join under
+// the profiles table's own row security: a creator the reader cannot see arrives
+// as `null`, and the details page shows the creator as unknown in that case.
+type AdminProductQueryRow = NonNullable<
   QueryData<ReturnType<typeof buildAdminProductQuery>>
 >;
+export type ProductAdminDetailRow = Omit<AdminProductQueryRow, "creator"> & {
+  creator: AdminProductQueryRow["creator"] | null;
+};
 
 export type ProductTranslationInput = {
   locale: SupportedLocale;
@@ -435,6 +553,14 @@ export type CreateProductInput = {
    */
   invoice_customer_id: string | null;
   /**
+   * The holiday calendars this club follows, as calendar row ids; empty for a
+   * club that follows none and for every other product type. A plain array
+   * that travels on every save: the RPC replaces the whole set on each call and
+   * reads NULL and `[]` alike, so an omission would detach every calendar. Only
+   * the two club types may follow one, which the RPC refuses otherwise.
+   */
+  holiday_calendar_ids: string[];
+  /**
    * The catalogue entry this product's picture comes from, or `null` for a
    * product with no picture. Required and nullable for the same reason `tag`
    * is: the route writes the column on every save, so an omitted field would
@@ -512,6 +638,10 @@ export type UpdateProductInput = {
    *  nullable on the update half too, and that is the load-bearing one: the RPC
    *  assigns every editable column, so an omitted id unlinks the club. */
   invoice_customer_id: string | null;
+  /** The club's holiday calendars — see CreateProductInput. The update half
+   *  is the load-bearing one: the RPC replaces the whole set on every call, so
+   *  an omitted answer would detach every calendar the club follows. */
+  holiday_calendar_ids: string[];
   /** Catalogue entry id, or `null` for no picture — see CreateProductInput.
    *  Required and nullable on the update half too, and that is the
    *  load-bearing one: the route writes the column on every save. */
@@ -526,6 +656,118 @@ export class ProductsService {
 
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * One keyset page of the admin product list, filtered as the admin asked.
+   *
+   * Listing and filtering are one read: the type, the language and the
+   * filters over a product's children are each an ordinary PostgREST
+   * parameter the database ANDs, and `keysetPage` owns the order, the resume
+   * filter and the limit — and with them the query's only top-level `or`,
+   * which is why the municipality filter's `or` is scoped to its embed. The
+   * gedu filter alone costs a small read first — the products the gedu is
+   * seated on — and then narrows the list to those ids, ANDed like the rest.
+   */
+  async getAdminListPage(
+    filters: AdminProductListFilters,
+    { cursor }: { cursor?: KeysetCursor } = {},
+  ): Promise<AdminProductListPage> {
+    // Asked on the first page only: an aggregate over the whole match set
+    // cannot change as the reader scrolls.
+    const withCount = cursor === undefined;
+    let query = buildAdminProductListQuery(this.supabase, withCount);
+
+    if (filters.type !== null) query = query.eq("product_type", filters.type);
+    if (filters.spokenLanguage !== null) {
+      query = query.eq("spoken_language_code", filters.spokenLanguage);
+    }
+
+    // PostgREST reads `*` in an ilike pattern as a wildcard before SQL sees it,
+    // and there is no escaping it — so it is dropped rather than left to match
+    // every name. No product is named with one.
+    const needle = filters.search.replaceAll("*", "").trim();
+    if (needle !== "") {
+      query = query
+        .ilike("name_match.name", `%${escapeLikePattern(needle)}%`)
+        .not("name_match", "is", null);
+    }
+    if (filters.weekday !== null) {
+      query = query
+        .eq("day_match.weekday", filters.weekday)
+        .not("day_match", "is", null);
+    }
+    if (filters.geduId !== null) {
+      query = query.in("id", await this.geduSeatProductIds(filters.geduId));
+    }
+    if (filters.municipalityId !== null) {
+      // The location itself when it is the municipality, or the site under it.
+      // Quoted, because the id comes off the URL and the `or` grammar reserves
+      // characters a hand-edited one could carry.
+      const id = quoteFilterValue(filters.municipalityId);
+      query = query
+        .or(`id.eq.${id},parent_id.eq.${id}`, {
+          referencedTable: "municipality_match",
+        })
+        .not("municipality_match", "is", null);
+    }
+
+    const { data, error, count } = await keysetPage(query, {
+      cursor,
+      pageSize: ADMIN_PRODUCT_LIST_PAGE_SIZE,
+    });
+
+    if (error) throw error;
+    return { rows: data, total: withCount ? count : null };
+  }
+
+  /**
+   * The products a gedu holds a standing seat on: an assignment (primary or
+   * assistant) or a trainee seat, the two tables a seat can live in. The gedu
+   * filter asks who is on a product, and a trainee is on it as much as a lead
+   * is — the difference is pay and permissions, not presence. A substitution is
+   * not a seat: a sub covering one afternoon is not one of a club's educators.
+   *
+   * Read first and handed to the list as `id=in.(…)` because matching either
+   * table is an `or` across two embeds, which would have to sit at the top
+   * level — where the keyset resume filter keeps the query's only `or`. Both
+   * reads are by an indexed `gedu_id` and bounded by one seat per product, and
+   * an empty answer becomes `in.()`, which keeps no product.
+   */
+  private async geduSeatProductIds(geduId: string): Promise<string[]> {
+    const [assignments, trainees] = await Promise.all([
+      this.supabase
+        .from("gedu_group_assignments")
+        .select("product_id")
+        .eq("gedu_id", geduId),
+      this.supabase
+        .from("gedu_group_trainees")
+        .select("product_id")
+        .eq("gedu_id", geduId),
+    ]);
+    if (assignments.error) throw assignments.error;
+    if (trainees.error) throw trainees.error;
+    return [
+      ...new Set(
+        [...assignments.data, ...trainees.data].map((seat) => seat.product_id),
+      ),
+    ];
+  }
+
+  /**
+   * The admin product list's facets: per product type, how many products
+   * exist and the values each filter can offer. One row per type — bounded by
+   * the enum, so a plain read.
+   */
+  async getListFacets(): Promise<ProductListFacetsRow[]> {
+    const { data, error } = await this.supabase
+      .from("product_list_facets")
+      .select(
+        "product_type, product_count, gedu_ids, weekdays, spoken_language_codes, municipalities",
+      );
+
+    if (error) throw error;
+    return z.array(productListFacetsRow).parse(data);
   }
 
   // Parent-facing list: the visible products a parent should be offered. The
@@ -632,6 +874,27 @@ export class ProductsService {
 
     if (error) throw error;
     return data;
+  }
+
+  /**
+   * A product's planned sessions in `[from, to]` (product-local `YYYY-MM-DD`,
+   * both inclusive), soonest first — the database's one expansion of the plan,
+   * which answers every caller identically. The admin product page reads it
+   * because no document it holds carries the plan.
+   */
+  async getPlannedSessions(
+    productId: string,
+    from: string,
+    to: string,
+  ): Promise<PlannedSession[]> {
+    const { data, error } = await this.supabase.rpc("planned_session_dates", {
+      p_product_id: productId,
+      p_from: from,
+      p_to: to,
+    });
+
+    if (error) throw error;
+    return plannedSessionRows.parse(data);
   }
 
   async updateProduct(

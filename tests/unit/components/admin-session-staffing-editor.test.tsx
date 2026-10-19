@@ -66,6 +66,8 @@ function candidate(id: string): UserListEntry {
     role: "gedu",
     spoken_languages: ["fi"],
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
     utm_medium: null,
     utm_source: null,
@@ -86,7 +88,7 @@ const CANDIDATES = [candidate(SANNA), candidate(PETRA), candidate(JOONAS)];
 // `IntersectionObserver`.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: CANDIDATES, total: CANDIDATES.length }] },
+    data: { rows: CANDIDATES, total: CANDIDATES.length },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

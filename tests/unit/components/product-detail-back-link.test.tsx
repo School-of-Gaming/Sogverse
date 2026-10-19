@@ -79,6 +79,7 @@ function renderBody(
           <ProductDetailPageBody
             product={row}
             municipalitySlug={municipalitySlug}
+            holidayBreaks={[]}
             signupPanel={<div data-testid="panel" />}
             signupActionable
           />

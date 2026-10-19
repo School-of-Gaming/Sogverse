@@ -49,6 +49,9 @@
       "adminLibrary": "Library Content",
       "adminLibraryArticleNew": "New Article",
       "adminLibraryArticleEdit": "Edit Article",
+      "adminSpotlights": "Spotlights",
+      "adminSpotlightNew": "New Spotlight",
+      "adminSpotlightEdit": "Edit Spotlight",
       "adminLandingPages": "Landing Pages",
       "adminLandingPage": "Landing Page",
       "adminPlatformVision": "Platform Vision",
@@ -85,7 +88,10 @@
       "teamProfile": "My profile",
       "adminTeamProfile": "Profile",
       "adminFeedback": "Feedback",
-      "team": "Team"
+      "team": "Team",
+      "adminHolidayCalendars": "Holiday Calendars",
+      "adminHolidayCalendarNew": "New Holiday Calendar",
+      "adminHolidayCalendarEdit": "Edit Holiday Calendar"
     },
     "descriptions": {
       "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -375,7 +381,9 @@
         "timesIn": "times in {zone}",
         "nothingOn": "Nothing on",
         "needsAttention": "Needs attention — this product is in the queue at the top of the page",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "holiday": "Holiday",
+        "holidayTitle": "Holiday — {name}. No session on this date."
       },
       "cancellation": {
         "allTitle": "Every group’s session on this date is cancelled",
@@ -422,7 +430,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "Municipality invoicing",
       "description": "One month of municipality clubs: what each one ran, and what the municipality owes for it.",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
@@ -444,6 +451,8 @@
       "billedNotRecorded": "Billed, not recorded",
       "upcoming": "Upcoming",
       "cancelled": "Cancelled",
+      "holiday": "Holiday",
+      "holidayNamed": "Holiday — {name}",
       "unrecordedSessions": "{count, plural, one {# not recorded} other {# not recorded}}",
       "sessionsFor": "Sessions of {club}",
       "clubsIn": "Clubs in {municipality}",
@@ -465,7 +474,6 @@
       "loadErrorWithReason": "Could not load the invoicing month — {reason}. Refresh to try again."
     },
     "invoiceCustomers": {
-      "title": "Invoice customers",
       "subtitle": "The Fennoa customers a municipality club’s sessions are invoiced to.",
       "addCustomer": "Add a customer",
       "columns": {
@@ -523,6 +531,83 @@
         "hint": "The customer this club’s sessions are invoiced to. A club without one is flagged on the invoicing page and produces no invoice file.",
         "manage": "Manage invoice customers",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "subtitle": "The school holidays and other breaks a club can follow. A club has no sessions on the days of a break.",
+      "addCalendar": "Add a calendar",
+      "columns": {
+        "name": "Name",
+        "breaks": "Breaks",
+        "nextBreak": "Next break",
+        "clubs": "Clubs"
+      },
+      "noUpcomingBreak": "None coming up",
+      "empty": "No holiday calendars yet. Add the first one.",
+      "backToList": "Back to holiday calendars",
+      "notFound": "There is no holiday calendar with this id.",
+      "newPage": {
+        "title": "New holiday calendar",
+        "submit": "Create calendar"
+      },
+      "editPage": {
+        "title": "Edit holiday calendar"
+      },
+      "sections": {
+        "calendar": "Calendar",
+        "breaks": "Breaks",
+        "breaksDescription": "Each break runs from its first day to its last day, both included, and has a name in each of the calendar’s languages. Families see the name in place of the sessions it removes.",
+        "products": "Clubs following this calendar",
+        "productsDescription": "Saving a change to the breaks changes these clubs straight away, past months included."
+      },
+      "fields": {
+        "name": "Name",
+        "languages": "Languages",
+        "firstDay": "First day",
+        "lastDay": "Last day",
+        "breakName": "Name in {language}"
+      },
+      "hints": {
+        "name": "Only admins see this name, such as Helsinki schools. Families only ever see the names of the breaks.",
+        "languages": "The languages are the calendar’s: adding or removing one here does it for every break. Every break needs a name in each. Families read the name in their own language where there is one, otherwise in English or the first language written."
+      },
+      "noBreaks": "No breaks yet.",
+      "checkLine": "{range} · {days, plural, one {# day} other {# days}} · week {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# day} other {# days}} · weeks {first}–{last}",
+      "addBreak": "Add a break",
+      "removeBreak": "Remove {name}",
+      "noProducts": "No club follows this calendar yet. A club picks its calendars on its own page.",
+      "errors": {
+        "nameRequired": "Give the calendar a name.",
+        "datesRequired": "{name} needs a first and a last day.",
+        "endBeforeStart": "{name} ends before it begins.",
+        "breakNameMissing": "{name} needs a name in {language}.",
+        "overlap": "{first} and {second} overlap. A day can only be in one break.",
+        "saveFailed": "The calendar could not be saved. Try again.",
+        "saveFailedWithReason": "The calendar could not be saved — {reason}"
+      },
+      "impact": {
+        "title": "Save these changes?",
+        "description": "{count, plural, one {This club changes} other {These # clubs change}} as soon as you save.",
+        "futureRemoved": "Families will see no session on {count, plural, one {# date} other {# dates}}: {dates}.",
+        "futureRestored": "Families will see sessions again on {count, plural, one {# date} other {# dates}}: {dates}.",
+        "pastRemoved": "{count, plural, one {A past session disappears} other {Past sessions on # dates disappear}} from families’ history: {dates}.",
+        "pastRestored": "{count, plural, one {A past session comes} other {Past sessions on # dates come}} back to families’ history: {dates}.",
+        "recordsHidden": "{count, plural, one {# written-up session is} other {# written-up sessions are}} hidden from families.",
+        "recordsShown": "{count, plural, one {# written-up session is} other {# written-up sessions are}} shown to families again.",
+        "requestsStopped": "{count, plural, one {# substitution request no longer has} other {# substitution requests no longer have}} a session to cover.",
+        "requestsReopened": "{count, plural, one {# substitution request has} other {# substitution requests have}} a session to cover again."
+      },
+      "editBreak": "Edit {name}",
+      "unnamedBreak": "Unnamed break",
+      "dialog": {
+        "editTitle": "Edit break",
+        "saveAndAddAnother": "Save and add another"
+      },
+      "breakErrors": {
+        "datesRequired": "Pick the first and the last day.",
+        "endBeforeStart": "The last day is before the first day.",
+        "nameMissing": "Give the break a name in {language}."
       }
     },
     "library": {
@@ -611,11 +696,63 @@
         "unpublishFailedWithReason": "The article could not be unpublished — {reason}",
         "versionTitleRequired": "The {language} version needs a title."
       },
-      "versionComplete": "complete",
-      "versionIncomplete": "not complete yet",
-      "addLocale": "Add a language",
-      "removeLocale": "Remove {language}",
       "languagesLabel": "Languages"
+    },
+    "spotlights": {
+      "title": "Spotlights",
+      "subtitle": "Parents see every spotlight that is switched on at the bottom of every session report email they are sent, newest first. Each reader gets it in their own language, or in English when theirs is not written, or else in a language that is.",
+      "newSpotlight": "New spotlight",
+      "empty": "No spotlights yet. Write the first one.",
+      "backToList": "Back to spotlights",
+      "notFound": "There is no spotlight with this id.",
+      "loadError": "Could not load this spotlight. Refresh to try again.",
+      "listLoadError": "Could not load the spotlights. Refresh to try again.",
+      "newPage": {
+        "title": "New spotlight",
+        "submit": "Save"
+      },
+      "editPage": {
+        "title": "Edit spotlight"
+      },
+      "fields": {
+        "languages": "Languages",
+        "title": "Title",
+        "body": "Text",
+        "picture": "Picture"
+      },
+      "hints": {
+        "languages": "Write each language by hand. Every language needs a title and the text.",
+        "body": "Set under the title in the email, formatted as it looks here. Links are allowed.",
+        "picture": "Shown above the title in the email, cropped to 2:1. A spotlight can be saved without one, but needs one to be switched on."
+      },
+      "bodyPlaceholder": "Write the spotlight…",
+      "actions": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete"
+      },
+      "errors": {
+        "noVersion": "A spotlight needs a title and text in at least one language.",
+        "versionIncomplete": "The {language} version needs both a title and the text.",
+        "saveFailed": "The spotlight could not be saved. Try again.",
+        "saveFailedWithReason": "The spotlight could not be saved — {reason}",
+        "deleteFailed": "The spotlight could not be deleted. Try again.",
+        "deleteFailedWithReason": "The spotlight could not be deleted — {reason}"
+      },
+      "languagesLabel": "Languages",
+      "created": "Created {date}",
+      "status": {
+        "on": "In emails",
+        "off": "Not in emails"
+      },
+      "switchLabel": "In session report emails",
+      "needsPicture": "Add a picture to switch it on.",
+      "deleteConfirm": {
+        "title": "Delete this spotlight?",
+        "descriptionOn": "It leaves session report emails straight away, and it cannot be brought back. Its picture stays in the catalogue.",
+        "descriptionOff": "It cannot be brought back. Its picture stays in the catalogue.",
+        "confirm": "Delete"
+      }
     },
     "landingPages": {
       "title": "Landing pages",
@@ -805,9 +942,10 @@
         }
       },
       "list": {
-        "subtitle": "Manage {plural} that admins have created.",
-        "new": "New {label}",
-        "empty": "No {plural} yet. Click New {label} to create one.",
+        "subtitle": "Manage the clubs, camps and events admins have created.",
+        "new": "New {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}",
+        "empty": "{type, select, consumerClub {No consumer clubs yet. Click New consumer club to create one.} municipalityClub {No municipality clubs yet. Click New municipality club to create one.} camp {No camps yet. Click New camp to create one.} other {No events yet. Click New event to create one.}}",
+        "emptyAll": "No clubs, camps or events yet.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
         "online": "Online",
@@ -818,19 +956,20 @@
         "pendingHint": {
           "registrationOpens": "Registration opens {date}",
           "startDate": "Starts {date}"
-        }
+        },
+        "newAny": "New",
+        "newDialogTitle": "Create a club, camp or event"
       },
       "translations": {
         "label": "Languages",
-        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in.",
-        "addLocale": "+ Add language",
-        "removeLocale": "Remove {locale}"
+        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in."
       },
       "newPage": {
-        "back": "Back to {plural}",
-        "title": "New {label}"
+        "back": "Back to {type, select, consumerClub {consumer clubs} municipalityClub {municipality clubs} camp {camps} other {events}}",
+        "title": "New {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}"
       },
       "detailsPage": {
+        "title": "Product details",
         "notFound": "Product not found.",
         "uncapped": "No seat limit",
         "listed": "Listed publicly",
@@ -848,7 +987,6 @@
           "notRequired": "Not required"
         },
         "fields": {
-          "publicUrl": "Public link",
           "topic": "Topic",
           "materialUrl": "Lesson material",
           "startDate": "Start date",
@@ -871,19 +1009,43 @@
           "requiresGamerCreations": "Gamer creations",
           "visibility": "Visibility",
           "gamerPhotoConsents": "Photo asks",
-          "marketingConsents": "Marketing asks"
+          "marketingConsents": "Marketing asks",
+          "format": "Format",
+          "ageRange": "Age range",
+          "publicLink": "Public link",
+          "createdBy": "Created by",
+          "createdOn": "Created on"
         },
         "copyLink": "Copy public link",
-        "copied": "Copied"
+        "copied": "Copied",
+        "sections": {
+          "schedule": "Schedule",
+          "placeAndAudience": "Place and audience",
+          "seatsAndRegistration": "Seats and registration",
+          "pricing": "Pricing",
+          "requirements": "Requirements and consents",
+          "record": "Record"
+        },
+        "unknownCreator": "Unknown"
+      },
+      "holidayCalendars": {
+        "label": "Holiday calendars",
+        "hint": "The club has no sessions on the days of any break in the calendars it follows. Families see each break where its sessions would have been.",
+        "manage": "Manage holiday calendars",
+        "nextBreak": "Next: {name}, {dates}",
+        "noUpcomingBreak": "No upcoming breaks",
+        "empty": "There are no holiday calendars yet.",
+        "listUnavailable": "The holiday calendars could not be loaded. The calendars this club already follows are kept when you save.",
+        "none": "None"
       },
       "editPage": {
         "back": "Back to product",
-        "kicker": "Edit {label}",
+        "kicker": "Edit {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}",
         "title": "Edit {name}"
       },
       "clonePage": {
         "back": "Back to product",
-        "kicker": "Clone {label}",
+        "kicker": "Clone {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}",
         "title": "Cloning {name}",
         "copySuffix": " (Copy)"
       },
@@ -1115,7 +1277,7 @@
       },
       "actions": {
         "cancel": "Cancel",
-        "createLabel": "Create {label}"
+        "createLabel": "Create {type, select, consumerClub {consumer club} municipalityClub {municipality club} camp {camp} other {event}}"
       },
       "status": {
         "pending": "Awaiting start",
@@ -1180,6 +1342,13 @@
             "dropPrompt": "Drop a file here, or choose one, to crop it to the 16:9 frame, add it and use it on this landing page.",
             "outcomeAdded": "Added to the catalogue and chosen for this landing page.",
             "outcomeExisting": "Already in the catalogue — chosen for this landing page."
+          },
+          "spotlightImage": {
+            "change": "Change picture",
+            "remove": "Remove picture",
+            "dropPrompt": "Drop a file here, or choose one, to crop it to the 2:1 frame, add it and use it on this spotlight.",
+            "outcomeAdded": "Added to the catalogue and chosen for this spotlight.",
+            "outcomeExisting": "Already in the catalogue — chosen for this spotlight."
           }
         }
       },
@@ -1194,6 +1363,7 @@
         "live": "Live",
         "hidden": "Hidden",
         "draft": "Draft",
+        "switchedOff": "Off",
         "replace": "Replace picture",
         "remove": "Remove from catalogue",
         "replaceConfirm": {
@@ -1250,6 +1420,19 @@
             "removeConsequence": "{count, plural, one {The landing page below will lose this picture, even while it is live. A pictures section left with none is removed.} other {All # landing pages below will lose this picture, the live ones included. A pictures section left with none is removed.}}",
             "removeUnused": "No landing page uses this picture. It will be removed from the catalogue for good.",
             "removeConfirm": "Remove from {count, plural, one {# page} other {# pages}}"
+          },
+          "spotlightImage": {
+            "title": "Spotlight pictures",
+            "description": "One picture can be used by several spotlights. Choosing one changes only this spotlight; replacing or removing one changes every spotlight using it, the ones in session report emails included.",
+            "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+            "usedBy": "Spotlights using this picture",
+            "usedByNone": "No spotlight uses this picture.",
+            "replaceConsequence": "{count, plural, one {The spotlight below will show the new picture, in the next email if it is switched on.} other {All # spotlights below will show the new picture, in the next email where they are switched on.}}",
+            "replaceUnused": "No spotlight uses this picture. The new one takes its place in the catalogue.",
+            "replaceConfirm": "Replace on {count, plural, one {# spotlight} other {# spotlights}}",
+            "removeConsequence": "{count, plural, one {The spotlight below will lose this picture and be switched off, so it leaves session report emails until you choose another picture and switch it back on.} other {All # spotlights below will lose this picture and be switched off, so they leave session report emails until you choose another picture and switch each back on.}}",
+            "removeUnused": "No spotlight uses this picture. It will be removed from the catalogue for good.",
+            "removeConfirm": "Remove from {count, plural, one {# spotlight} other {# spotlights}}"
           }
         }
       },
@@ -1263,11 +1446,14 @@
         "searchGedu": "Search Gedus…",
         "searchMunicipality": "Search municipalities…",
         "noResults": "No matches.",
+        "type": "Type",
+        "allTypes": "All",
         "search": "Search",
         "searchPlaceholder": "Search by name…",
         "showing": "Showing {count} of {total}",
         "clear": "Clear",
-        "noMatches": "No {plural} match the current search and filters."
+        "noMatches": "No {type, select, consumerClub {consumer clubs} municipalityClub {municipality clubs} camp {camps} other {events}} match the current search and filters.",
+        "noMatchesAll": "Nothing matches the current search and filters."
       },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",
@@ -1404,7 +1590,7 @@
         "switchClub": {
           "dropZone": "Switch club",
           "title": "Switch club",
-          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, the next invoice corrects for the rest of this month, and from then on they pay the new club's price.",
+          "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, and from then on they pay the new club's price.",
           "searchPlaceholder": "Search clubs by name",
           "picker": {
             "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
@@ -1423,6 +1609,7 @@
             "current": "Paying now",
             "target": "New price",
             "proration": "The next invoice adds or refunds the difference for the rest of this month.",
+            "nothingPaid": "Nothing more is charged before {date}. After that they pay the new club's price, less any discount they already have.",
             "unavailable": "No price to show",
             "error": "The price check did not come back. Pick the club again to retry."
           },
@@ -1603,11 +1790,6 @@
       "marketing": {
         "title": "Marketing",
         "attribution": "Attribution",
-        "utm": {
-          "source": "Source",
-          "medium": "Medium",
-          "campaign": "Campaign"
-        },
         "preferences": "Preferences",
         "schoolOfGaming": "School of Gaming",
         "lynxEducate": "Lynx Educate",
@@ -1660,7 +1842,6 @@
       "addType": "Add {type}"
     },
     "sites": {
-      "title": "Sites",
       "subtitle": "Every site on the platform, and the products running at each one.",
       "addSite": "Add a site",
       "searchPlaceholder": "Search sites by name…",
@@ -1686,7 +1867,7 @@
       "language": "Language",
       "toEmail": "To Email",
       "toEmailPlaceholder": "recipient@example.com",
-      "templateParameters": "Template Parameters",
+      "templateParameters": "Template parameters",
       "subject": "Subject",
       "sendTestEmail": "Send Test Email",
       "emailSentSuccess": "Email sent! Message ID: {messageId}",
@@ -1727,6 +1908,9 @@
         "templateSubFlow": "Substitution messages: every state",
         "subPreviewSent": "Every message sent."
       }
+    },
+    "tools": {
+      "title": "Tools"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2277,7 +2461,7 @@
             "parentsEmail": "The parent’s email address, present only while their <code>marketing_consent.granted</code> is <code>true</code>. It is <code>null</code> otherwise, and it becomes <code>null</code> again when consent is withdrawn.",
             "parentsCreatedAt": "When the parent account was created: the first step of the funnel, a family created.",
             "parentsLocation": "The municipality the parent’s self-reported home location is or lies within, with its two-letter country code; <code>city</code> is the municipality’s name. <code>null</code> when the parent has not set a home location, or it lies within no municipality.",
-            "parentsUtm": "The <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry three nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
+            "parentsUtm": "The <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> and <code>utm_term</code> of the link the account was created through, each <code>null</code> when absent. They are written once at registration and only where the visitor accepted marketing cookies, so most records carry five nulls. Campaigns issued for Lynx are prefixed <code>lynx-</code> by convention.",
             "parentsMarketingConsent": "This parent’s current answer to Lynx’s marketing consent: <code>granted</code> and when it was last changed. <code>null</code> means the parent has never been asked, which for sending purposes is the same as <code>false</code>.",
             "gamers": "The family’s children who hold a seat on a Programme product, have completed one, or are waiting for one, one entry each. Empty when the family is in scope only through a seat a parent holds themselves. A child carries a first name and no other contact detail; identity is the identifier and the Roblox account.",
             "gamersId": "The child’s identifier, the one enrolments carry as <code>participant_id</code>.",
@@ -2376,7 +2560,9 @@
             "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
             "pagesPageviews": "Views of the page in the range, whatever brought them.",
             "pagesByCampaign": "The views split by the <code>utm_campaign</code> on the link. The <code>null</code> row is every view that carried none, including a visitor who typed the address or followed an untagged link.",
-            "pagesBySourceMedium": "The same views split by <code>utm_source</code> and <code>utm_medium</code> together, for reading paid, social and email traffic apart. The two splits are of the same views and each sums to <code>pageviews</code>; they are not a cross-tab of one another.",
+            "pagesBySourceMedium": "The same views split by <code>utm_source</code> and <code>utm_medium</code> together, for reading paid, social and email traffic apart. Every split of a page is of the same views and each sums to <code>pageviews</code>; none is a cross-tab of another.",
+            "pagesByContent": "The same views split by the <code>utm_content</code> on the link, for telling apart the ads or links within one campaign. The <code>null</code> row is every view that carried none.",
+            "pagesByTerm": "The same views split by the <code>utm_term</code> on the link, which a paid search ad usually sets to its keyword. The <code>null</code> row is every view that carried none.",
             "pagesByDay": "The views per calendar day, in UTC, for a time series."
           },
           "note": "Vercel’s script runs only for a visitor who accepted analytics on the cookie banner, and the UTM values on a family record are written only for a visitor who accepted marketing. The two gates differ, and analytics is the wider one, so a view counted here and a family in <code>/families</code> are not the same population: a visitor who accepted everything is in both, one who accepted analytics alone is here only, and one who rejected the banner is in neither."
@@ -2932,7 +3118,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedu invoicing",
     "adminDescription": "One month: the sessions each Gedu recorded, and what they invoice School of Gaming for them.",
     "myTitle": "Invoicing",
     "myDescription": "What you invoice School of Gaming for, one month at a time. A session counts once something is recorded for it — attendance, a report or a note.",
@@ -2962,6 +3147,8 @@
     "notRecorded": "Not recorded",
     "upcoming": "Upcoming",
     "cancelled": "Cancelled",
+    "holiday": "Holiday",
+    "holidayNamed": "Holiday — {name}",
     "absentSubstituted": "Away — {name} substituted",
     "absentNoSubstitute": "Away — no substitute",
     "substitutingFor": "substituting for {name}",
@@ -3029,7 +3216,8 @@
     "live": "Live",
     "nextSession": "Next session",
     "upcoming": "Upcoming",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "noSession": "No session"
   },
   "sessionFacts": {
     "remote": "Remote",
@@ -3089,6 +3277,12 @@
     "linkCancel": "Cancel",
     "linkInvalid": "That address cannot be linked. Use a web address, an email address, or a path on this site.",
     "opensInNewTab": "(opens in a new tab)"
+  },
+  "localeTabs": {
+    "addLanguage": "Add a language",
+    "removeLanguage": "Remove {language}",
+    "complete": "complete",
+    "notComplete": "not complete yet"
   },
   "header": {
     "nav": {
@@ -3274,7 +3468,8 @@
       "audience": "Audience",
       "language": "Language",
       "online": "Online",
-      "tbd": "To be confirmed"
+      "tbd": "To be confirmed",
+      "holidayBreaks": "Holiday breaks"
     },
     "signupPanel": {
       "verb": {
@@ -3540,17 +3735,10 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",
-    "consumerClubs": "Consumer Clubs",
-    "municipalityClubs": "Municipality Clubs",
-    "municipalityInvoicing": "Municipality Invoicing",
-    "invoiceCustomers": "Invoice Customers",
     "libraryContent": "Library Content",
+    "spotlights": "Spotlights",
     "landingPages": "Landing Pages",
     "platformVision": "Platform Vision",
-    "geduInvoicing": "Gedu Invoicing",
-    "camps": "Camps",
-    "events": "Events",
-    "sites": "Sites",
     "uiComponents": "UI Components",
     "uiPreviews": "UI Previews",
     "testing": "Testing",
@@ -3558,7 +3746,23 @@
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar",
     "substitutions": "Substitutions",
-    "feedback": "Feedback"
+    "feedback": "Feedback",
+    "products": "Products",
+    "invoicing": "Invoicing"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "Clubs, camps and events",
+      "invoicing": "Invoicing"
+    },
+    "tabs": {
+      "products": "Products",
+      "sites": "Sites",
+      "holidayCalendars": "Holiday calendars",
+      "municipalities": "Municipalities",
+      "invoiceCustomers": "Invoice customers",
+      "gedus": "Gedus"
+    }
   },
   "home": {
     "hero": {
@@ -5048,7 +5252,9 @@
         "ages": "Ages {min}–{max}",
         "audienceParents": "For parents",
         "audienceFamilies": "For families",
-        "audienceFamiliesWithAges": "For families, ages {min}–{max}"
+        "audienceFamiliesWithAges": "For families, ages {min}–{max}",
+        "holidayBreaks": "Holiday breaks",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {
@@ -5906,8 +6112,7 @@
         },
         "languages": "Languages",
         "languagesHint": "The website doesn’t translate the profile. Add each language it should appear in, and write it under that language’s tab.",
-        "addLocale": "Add a language",
-        "removeLocale": "Remove {locale}",
+        "bioTooLong": "The bio is too long to save. Shorten it to {max} characters or fewer.",
         "shortDescription": "One-line introduction",
         "shortDescriptionPlaceholder": "Redstone nerd and speedrun fan",
         "longDescription": "Bio",

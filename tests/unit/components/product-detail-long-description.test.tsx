@@ -38,6 +38,7 @@ function renderBody(longDescription: string | null) {
         <NowProvider initialNow={new Date("2026-08-13T09:00:00Z")}>
           <ProductDetailPageBody
             product={withCopy}
+            holidayBreaks={[]}
             signupPanel={<div data-testid="panel" />}
             signupActionable
           />

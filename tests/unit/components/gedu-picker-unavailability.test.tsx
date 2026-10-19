@@ -66,6 +66,8 @@ function gedu(
     utm_source: null,
     utm_medium: null,
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
     // The two qualified educators: one speaks Finnish, the other only English.
     spoken_languages:
@@ -100,7 +102,7 @@ const GEDUS = [
 // `IntersectionObserver` out of these cases — paging has its own suite.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: GEDUS, total: GEDUS.length }] },
+    data: { rows: GEDUS, total: GEDUS.length },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

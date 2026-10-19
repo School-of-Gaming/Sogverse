@@ -2,6 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import type { FamilyProductPageAudience } from "./FamilyProductPageBody";
@@ -94,9 +95,9 @@ export function FamilyCreationsCard({
   return (
     <Card className="mt-5">
       <CardContent className="p-4 sm:p-5">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Heading level={2} step="card-title">
           {t("creationsHeading", { count: creations.length })}
-        </h2>
+        </Heading>
         {/* Under the heading rather than over it: the heading is what a reader
             scanning the page for this card finds, and the sentence is what they
             read once they have.

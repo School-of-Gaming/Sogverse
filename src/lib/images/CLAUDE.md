@@ -4,14 +4,48 @@
 
 **Every storage bucket is one image purpose**, declared once in the registry here with its
 bucket and its visibility (public, or private and reached only through a signed URL or a
-checking route). A purpose kept in the admin image catalogue also declares the exact size
-its entries are stored at; the catalogue's own purpose map is that slice of the registry,
-not a second list. A unit test parses the storage bucket schema and fails on a bucket with
+checking route). A unit test parses the storage bucket schema and fails on a bucket with
 no purpose, a purpose naming no bucket, or a visibility that disagrees with the bucket's
 `public` flag — so a new bucket gets its purpose in the same change.
 
-The team photo, session photo and chat image purposes are declared for that coverage only.
-Their upload routes keep their own handling and read nothing from the registry.
+**Every purpose declares the size its pictures are stored at**, or that they keep the shape
+they were uploaded in. Whatever crops a picture to a fixed size, and whatever checks a
+stored picture against it, reads the size from the registry — no feature declares a fixed
+size of its own. A picture that keeps its shape is never cropped; how far it may be scaled
+down is its feature's own limit, not the registry's.
+
+**Whether a purpose belongs to the admin image catalogue is a separate declaration**, not
+implied by a fixed size: a team photo is cropped to its frame but is one person's own
+picture and never a catalogue entry. The catalogue's purpose map is the slice of the
+registry marked catalogue, not a second list, and the compiler refuses a catalogue purpose
+without a fixed size, since the catalogue's crop and upload routes demand an exact one.
+
+**Every purpose declares the largest upload its route accepts**, and the route reads that
+figure from the registry, as does any browser check before posting.
+
+**The platform's maximum edge is declared once, beside the registry**: a picture kept as
+uploaded is held to it, the server decode bounds its input to its square, and a feature's
+check on a claimed size reads it. The database's dimension CHECKs state the same figure as
+their own bound.
+
+## Server uploads
+
+**A server upload route takes its bytes through the shared ingest steps in
+`ingest-image.server.ts`**: the byte cap from the purpose's registry entry, a sniff of the
+JPEG start-of-image marker (the declared content type is never consulted), then a
+re-encode that bakes the orientation into the pixels and drops all metadata, GPS
+included, and last a check of the measured size against the registry — exactly the
+stored size for a fixed-size purpose, no edge past the platform maximum for one kept as
+uploaded. What is stored is the re-encoded bytes, and what a row records is their
+measured size, never a size the client claimed. The steps answer a refusal with a reason
+and a status rather than throwing, so a route can put its own work between them (a cheap
+authorization read before the decode) and answers each reason in its own vocabulary. The
+route keeps its own authorization, the order of row and object, the compensation when a
+half fails, the object's name and its error codes. The image catalogue's writers stand
+outside these steps by design: their uploads come only from admins and are mostly graphics
+rather than camera photos, and the browser crop that produced them has already dropped the
+metadata, so they store the cropped JPEG byte for byte, named by its hash, after checking
+its cap, type and exact size (`src/services/catalogue-images/`).
 
 ## The preview budget
 

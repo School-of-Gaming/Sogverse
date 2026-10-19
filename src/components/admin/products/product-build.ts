@@ -24,9 +24,14 @@ import {
   isAttachableGamerPhotoConsent,
 } from "@/lib/constants/gamer-photo-consents";
 import { isSupportedCountry } from "@/lib/constants/location-hierarchies";
-import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
-import { openingLocaleTab } from "@/lib/i18n/locale-tabs";
+import {
+  checkLocaleDrafts,
+  draftsToSave,
+  openLocaleTabs,
+  writtenLocales,
+} from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/utils";
 import type {
@@ -38,6 +43,8 @@ import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {
   effectivePricingShape,
+  EMPTY_TRANSLATION,
+  isCompleteTranslation,
   locationPickerMode,
   offersUncapped,
   type FormState,
@@ -116,28 +123,21 @@ export function validate(
   state: FormState,
   config: ProductTypeConfig,
 ): ValidationFailure | null {
-  // Translations: at least one filled locale (any locale) and no
-  // half-filled tabs. The display fallback chain (preferred → en → first
-  // available) means a single locale of any kind is enough to render.
-  // Iterate the closed locale union and skip absent tabs — `translations`
-  // is a Partial record, so this visits exactly the locales the admin added.
-  let hasFilledLocale = false;
-  for (const locale of SUPPORTED_LOCALES) {
-    const v = state.translations[locale];
-    if (v && v.name.trim() && v.shortDescription.trim()) hasFilledLocale = true;
-  }
-
-  if (!hasFilledLocale) return err("translationRequired");
-
-  for (const locale of SUPPORTED_LOCALES) {
-    const v = state.translations[locale];
-    if (!v) continue;
-    if (!v.name.trim() || !v.shortDescription.trim()) {
-      // The locale *code*, not a display name: this validator is pure and
-      // cannot call useLanguageNames — the form resolves the code to the
-      // viewer's language name at the t() call site.
-      return err("translationIncomplete", { locale });
-    }
+  // Translations: the shared per-locale rule — something written, and every
+  // written tab complete (a name and a short description). A blank tab is
+  // ignored, and the save leaves it out. The display fallback chain
+  // (preferred → en → first available) means a single locale of any kind is
+  // enough to render.
+  const translations = checkLocaleDrafts(
+    state.translations.drafts,
+    isCompleteTranslation,
+  );
+  if (translations?.kind === "none") return err("translationRequired");
+  if (translations?.kind === "incomplete") {
+    // The locale *code*, not a display name: this validator is pure and
+    // cannot call useLanguageNames — the form resolves the code to the
+    // viewer's language name at the t() call site.
+    return err("translationIncomplete", { locale: translations.locale });
   }
 
   if (!state.topic) return err("topicRequired");
@@ -453,10 +453,10 @@ function buildSharedFields(
     finalSlots = [{ ...state.scheduleSlots[0], weekday }];
   }
 
+  // Every tab with anything written in it, in locale order; a blank tab is
+  // left out.
   const translations: UpdateProductInput["translations"] = [];
-  for (const locale of SUPPORTED_LOCALES) {
-    const v = state.translations[locale];
-    if (!v) continue;
+  for (const { locale, draft: v } of draftsToSave(state.translations.drafts)) {
     // A cleared editor does not serialise to "" — an empty ProseMirror document
     // still round-trips through the markdown serialiser as whitespace — so the
     // blank check is on the trimmed value, and a blank one becomes null ("no
@@ -625,6 +625,13 @@ function buildSharedFields(
       config.productType === "municipality_club"
         ? state.invoiceCustomerId
         : null,
+    // The club's holiday calendars, on every save including the empty array —
+    // the RPC replaces the whole set on each call, so an omission would detach
+    // them. Forced empty for a type that cannot follow one, so a stale draft
+    // never reaches the RPC's refusal.
+    holiday_calendar_ids: config.followsHolidayCalendars
+      ? state.holidayCalendarIds
+      : [],
   };
 }
 
@@ -715,29 +722,23 @@ function municipalityFeeDraft(
  *     "immediately" regardless of the stored value — see the comment at the
  *     derivation for why the row does not get a vote there.
  *   - `groups` is empty; the section is UI-only on both create and edit.
- *   - `activeLocale` follows the same fallback chain `resolveTranslation`
- *     uses for display: the admin's UI locale → en → first available. With
- *     ≥1 translation guaranteed by the RPC and trigger, the chain always
- *     resolves to a present row.
+ *   - The language tab it opens on is the version a reader of the admin's UI
+ *     locale is shown on the public page (`openLocaleTabs`).
  */
 export function existingFormState(
   product: ProductAdminDetailRow,
   config: ProductTypeConfig,
   uiLocale: SupportedLocale,
 ): FormState {
-  const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
-  // In the one fixed language order, so the tab an admin opens on is the
-  // version a reader of their UI locale is shown on the public page.
-  const translationLocales: SupportedLocale[] = [];
+  const drafts: Partial<Record<SupportedLocale, TranslationDraft>> = {};
+  // Only the locales the app ships; one it no longer does is left out.
   for (const t of inLocaleOrder(product.product_translations)) {
-    translations[t.locale] = {
+    drafts[t.locale] = {
       name: t.name,
       shortDescription: t.short_description,
       longDescription: t.long_description ?? "",
     };
-    translationLocales.push(t.locale);
   }
-  const activeLocale = openingLocaleTab(translationLocales, uiLocale);
 
   // EUR-only price map. A blank row is invalid for paid products, but
   // validate() catches that on save. Legacy non-EUR `product_prices` rows
@@ -798,8 +799,7 @@ export function existingFormState(
   const paidMode: PaidMode = product.billing_mode === "free" ? "free" : "paid";
 
   return {
-    translations,
-    activeLocale,
+    translations: openLocaleTabs(drafts, uiLocale, EMPTY_TRANSLATION),
     topic: product.topic,
     // Staff-only, so it rides in on its own embedded row rather than on the
     // product itself. No row at all is the ordinary "no lesson link" case.
@@ -903,6 +903,12 @@ export function existingFormState(
     // the customer list — a link is a foreign key with ON DELETE RESTRICT
     // behind it, so a stored id always names a row that exists.
     invoiceCustomerId: product.invoice_customer_id,
+    // Straight through from the join table. Unfiltered for the invoice
+    // customer's reason: each link is a foreign key, so a stored id always
+    // names a calendar that exists.
+    holidayCalendarIds: product.product_holiday_calendars.map(
+      (link) => link.holiday_calendars.id,
+    ),
     registrationOpensMode: mode,
     registrationOpensDate: opensDate,
     registrationOpensHour: opensHour,
@@ -937,11 +943,10 @@ export function cloneFormState(
   copySuffix: string,
 ): FormState {
   const base = existingFormState(product, config, uiLocale);
-  const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
-  for (const locale of SUPPORTED_LOCALES) {
-    const draft = base.translations[locale];
-    if (!draft) continue;
-    translations[locale] = { ...draft, name: `${draft.name}${copySuffix}` };
+  const drafts: Partial<Record<SupportedLocale, TranslationDraft>> = {};
+  for (const locale of writtenLocales(base.translations.drafts)) {
+    const draft = base.translations.drafts[locale] ?? EMPTY_TRANSLATION;
+    drafts[locale] = { ...draft, name: `${draft.name}${copySuffix}` };
   }
-  return { ...base, translations };
+  return { ...base, translations: { ...base.translations, drafts } };
 }

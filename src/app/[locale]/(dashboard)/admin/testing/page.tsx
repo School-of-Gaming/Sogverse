@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Mail, MonitorPlay } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   Alert,
   AlertDescription,
@@ -20,7 +21,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -169,11 +169,9 @@ export default function TestingPage() {
    * long as the dialog is up, and gets the form's current state by reopening
    * it.
    *
-   * The render is the same registry call the send route makes — but in the
-   * preview context, so a fixture whose art lives on this dev server is
-   * resolved against *this browser's* origin instead of being dropped as
-   * unreachable. The mail a recipient would get is the send's job; the mail as
-   * it was designed is this one's.
+   * The render is the same registry call the send route makes, with this
+   * browser's origin for the demo art to resolve against — the server actually
+   * serving it, whatever port that is on.
    *
    * The translator is an awaited dynamic import of one locale's messages, so
    * this is a chunk fetch rather than a round trip: nothing is drawn while it
@@ -205,7 +203,7 @@ export default function TestingPage() {
           templateApiParams(definition, params),
           translate,
           locale,
-          { to: "preview", origin: window.location.origin },
+          { origin: window.location.origin },
           translatePrep,
         );
         setPreview({
@@ -272,7 +270,7 @@ export default function TestingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <Heading level={1} step="section">{t('title')}</Heading>
         <p className="text-muted-foreground">
           {t('description')}
         </p>
@@ -282,7 +280,7 @@ export default function TestingPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            <CardTitle>{t('emailTool')}</CardTitle>
+            <Heading level={2} step="card-title">{t('emailTool')}</Heading>
           </div>
           <CardDescription>
             {t('emailToolDescription')}
@@ -334,9 +332,9 @@ export default function TestingPage() {
                 to load, rather than as a template that takes none. */}
             {selectedTemplate.fields.length > 0 && (
               <div className="space-y-3 rounded-md border border-border p-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <Heading level={3} step="label">
                   {t('templateParameters')}
-                </p>
+                </Heading>
                 {selectedTemplate.fields.map((field) => (
                   <Field
                     key={field.key}

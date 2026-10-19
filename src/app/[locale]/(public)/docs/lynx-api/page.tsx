@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
 import { PRODUCT_STATUS } from "@/services/partner/partner.contracts";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -104,15 +105,21 @@ function RowTable({
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl font-semibold">{children}</h2>;
+  return (
+    <Heading level={2} step="card-title">
+      {children}
+    </Heading>
+  );
 }
 
 /** A heading a reader scans for structure rather than reads as prose. */
 function SubHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mt-8 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-      {children}
-    </h3>
+    <div className="mt-8">
+      <Heading level={3} step="label">
+        {children}
+      </Heading>
+    </div>
   );
 }
 
@@ -168,7 +175,9 @@ function Resource({
     <Section id={id}>
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="outline" className="font-mono">GET</Badge>
-        <h2 className="break-all font-mono text-xl font-semibold">{path}</h2>
+        <Heading level={2} step="card-title">
+          <span className="break-all font-mono">{path}</span>
+        </Heading>
       </div>
       <p className="mt-2 text-muted-foreground">{title}</p>
       <p className="mt-4 text-muted-foreground">{intro}</p>
@@ -598,6 +607,16 @@ const TRAFFIC_FIELDS = [
     key: "resources.traffic.fields.pagesBySourceMedium",
   },
   {
+    name: "pages[].by_content",
+    type: "array",
+    key: "resources.traffic.fields.pagesByContent",
+  },
+  {
+    name: "pages[].by_term",
+    type: "array",
+    key: "resources.traffic.fields.pagesByTerm",
+  },
+  {
     name: "pages[].by_day",
     type: "array",
     key: "resources.traffic.fields.pagesByDay",
@@ -707,7 +726,13 @@ const FAMILIES_EXAMPLE = `{
       "email": "parent@example.com",
       "created_at": "2026-09-02T18:41:07Z",
       "location": { "city": "Lyon", "country_code": "FR" },
-      "utm": { "source": "lynx", "medium": "email", "campaign": "lynx-autumn-a" },
+      "utm": {
+        "source": "lynx",
+        "medium": "email",
+        "campaign": "lynx-autumn-a",
+        "content": "newsletter-banner",
+        "term": null
+      },
       "marketing_consent": { "granted": true, "updated_at": "2026-09-02T18:43:12Z" }
     }
   ],
@@ -810,6 +835,15 @@ const TRAFFIC_EXAMPLE = `{
         { "utm_source": "lynx", "utm_medium": "social", "pageviews": 655 },
         { "utm_source": null, "utm_medium": null, "pageviews": 1117 }
       ],
+      "by_content": [
+        { "utm_content": "newsletter-banner", "pageviews": 1412 },
+        { "utm_content": "story-carousel", "pageviews": 655 },
+        { "utm_content": null, "pageviews": 1117 }
+      ],
+      "by_term": [
+        { "utm_term": "roblox club", "pageviews": 410 },
+        { "utm_term": null, "pageviews": 2774 }
+      ],
       "by_day": [
         { "date": "2026-09-01", "pageviews": 212 },
         { "date": "2026-09-02", "pageviews": 240 }
@@ -827,6 +861,11 @@ const TRAFFIC_EXAMPLE = `{
         { "utm_source": "lynx", "utm_medium": "email", "pageviews": 611 },
         { "utm_source": null, "utm_medium": null, "pageviews": 316 }
       ],
+      "by_content": [
+        { "utm_content": "newsletter-banner", "pageviews": 611 },
+        { "utm_content": null, "pageviews": 316 }
+      ],
+      "by_term": [{ "utm_term": null, "pageviews": 927 }],
       "by_day": [
         { "date": "2026-09-01", "pageviews": 54 },
         { "date": "2026-09-02", "pageviews": 71 }
@@ -923,7 +962,9 @@ export default function LynxApiDocsPage() {
       {/* The header spans the same width as the reference below it: a narrower
           measure here read as a page that had been left-aligned by accident. */}
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <Heading level={1} step="section">
+          {t("title")}
+        </Heading>
         <p className="mt-4 text-lg text-muted-foreground">{t("lead")}</p>
       </header>
 
@@ -934,9 +975,9 @@ export default function LynxApiDocsPage() {
           aria-label={t("contents.heading")}
           className="lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:self-start lg:overflow-y-auto"
         >
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Heading level={2} step="label">
             {t("contents.heading")}
-          </h2>
+          </Heading>
           <ul className="mt-3 space-y-1.5 text-sm leading-relaxed">
             {contents.map(({ id, label }) => (
               <li key={id}>

@@ -69,6 +69,8 @@ function entry(id: string, firstName: string): UserListEntry {
     utm_source: null,
     utm_medium: null,
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
     locale: "fi",
     spoken_languages: [],
@@ -88,7 +90,7 @@ const FULL_PAGE = Array.from({ length: ADMIN_PEOPLE_LIST_PAGE_SIZE }, (_, i) =>
 
 function listWith(overrides: Record<string, unknown> = {}) {
   return {
-    data: { pages: [{ rows: FULL_PAGE, total: 312 }] },
+    data: { rows: FULL_PAGE, total: 312 },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: true,
@@ -189,7 +191,7 @@ describe("the admin users list grows as it is scrolled", () => {
 
   it("says so once the first page comes back empty", () => {
     listState = listWith({
-      data: { pages: [{ rows: [], total: 0 }] },
+      data: { rows: [], total: 0 },
       hasNextPage: false,
     });
     render(<AdminUsersPage />);

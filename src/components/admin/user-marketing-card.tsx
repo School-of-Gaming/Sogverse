@@ -1,13 +1,14 @@
 "use client";
 
 import { Megaphone } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useMarketingConsentsForCustomer } from "@/services/marketing-consents";
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/utils";
-import type { UtmAttribution } from "@/lib/utm";
+import { UTM_FIELDS, UTM_QUERY_PARAMS, type UtmAttribution } from "@/lib/utm";
 import type { MarketingConsentType } from "@/types";
 
 /**
@@ -21,9 +22,6 @@ const CONSENT_ORDER = [
   "school_of_gaming",
   "lynx_educate",
 ] as const satisfies readonly MarketingConsentType[];
-
-/** The three attribution fields, in the order a campaign link spells them. */
-const ATTRIBUTION_ORDER = ["source", "medium", "campaign"] as const;
 
 /**
  * Everything the admin detail page has to say about marketing, in one card:
@@ -42,17 +40,17 @@ const ATTRIBUTION_ORDER = ["source", "medium", "campaign"] as const;
  * Where the account came from: the UTM values a marketing link carried,
  * captured once at registration.
  *
- * **Read-only, and structurally so.** The three columns have no UPDATE grant,
+ * **Read-only, and structurally so.** The five columns have no UPDATE grant,
  * so an admin cannot change them through the app whatever this page offered —
  * see `src/lib/utm.ts` for the constraints the whole feature is built to, of
  * which write-once is one.
  *
- * **All three rows, always, empty ones included.** This is the admin
- * details-page rule doing its work: a property nobody can see is a property
- * nobody audits, and a block that hid the null fields made "this account has no
- * medium" and "this page does not show mediums" look identical. Gamer rows are
- * NULL by construction, which is why a gamer never sees this card at all rather
- * than seeing three empty rows.
+ * **All five rows, always, in the order a campaign link spells them, empty
+ * ones included.** This is the admin details-page rule doing its work: a
+ * property nobody can see is a property nobody audits, and a block that hid the
+ * null fields made "this account has no medium" and "this page does not show
+ * mediums" look identical. Gamer rows are NULL by construction, which is why a
+ * gamer never sees this card at all rather than seeing five empty rows.
  *
  * ---------------------------------------------------------------------------
  * PREFERENCES
@@ -83,7 +81,7 @@ export function UserMarketingCard({
   attribution,
   customerId,
 }: {
-  /** The three UTM columns as the server read them, nulls included. */
+  /** The five UTM columns as the server read them, nulls included. */
   attribution: UtmAttribution;
   /**
    * Whose consents to show, or `null` for a role that holds none. The gate is
@@ -109,26 +107,29 @@ export function UserMarketingCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Megaphone className="h-5 w-5 text-act" />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="@container space-y-6">
         <section>
-          {/* Furniture, not voice: a small tracked marker a reader scans as
-              structure. Both sub-headings are styled identically and case
-              together — de-capping one would read as a rendering fault beside
-              the other. */}
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <Heading level={3} step="label">
             {t("attribution")}
-          </h3>
+          </Heading>
           <dl className="mt-2 flex flex-col gap-1.5">
-            {ATTRIBUTION_ORDER.map((field) => {
+            {UTM_FIELDS.map((field) => {
               const value = attribution[field];
               return (
                 <div key={field} className="flex items-center gap-2 text-sm">
-                  <dt className="text-muted-foreground">{t(`utm.${field}`)}</dt>
+                  {/* The tag itself, untranslated, is the label: it is the
+                      name a marketer types into a link and reads in every
+                      tool, in every language, and the name the column and the
+                      partner API carry too. A friendlier word would be ours
+                      alone, and would need translating. */}
+                  <dt className="font-mono text-muted-foreground">
+                    {UTM_QUERY_PARAMS[field]}
+                  </dt>
                   {value === null ? (
                     <dd className="text-muted-foreground">{c("notSet")}</dd>
                   ) : (
@@ -149,13 +150,16 @@ export function UserMarketingCard({
 
         {customerId !== null && (
           <section>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Heading level={3} step="label">
               {t("preferences")}
-            </h3>
-            {/* Two abreast from `sm`: an admin surface is desktop-default, and
-                two one-line rows stacked down the middle of a wide page is the
-                layout that rule exists to prevent. */}
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            </Heading>
+            {/* Two abreast once the card is wide enough: an admin surface is
+                desktop-default, and two one-line rows stacked down the middle
+                of a wide page is the layout that rule exists to prevent. Keyed
+                to the card's own width rather than the viewport's, because the
+                user page puts this card in a narrow reference column on a wide
+                screen, where two rows abreast would truncate their labels. */}
+            <div className="mt-2 grid gap-3 @lg:grid-cols-2">
               {CONSENT_ORDER.map((consentType) => {
                 const row = consents?.find(
                   (candidate) => candidate.consent_type === consentType,

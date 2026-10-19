@@ -219,9 +219,9 @@ ban, and the ESLint config says so.
   map's key set "who has a creation", exactly what the owed derivation reads.
 
   **The obligation itself is derived in the body, not in either shell.** Whether this
-  run's final session is owed creations comes from the product's flag, the schedule's last
-  occurrence on or before the end date, and that map — all of which the shared body
-  already holds. A copy in each shell would be a second place for a gedu and an admin to
+  run's final session is owed creations comes from the product's flag, the final session
+  date the product document carries, and that map — all of which the shared body already
+  holds. A copy in each shell would be a second place for a gedu and an admin to
   disagree about whether the last session of a term is finished. The same value feeds
   three things — the session feed's completeness, the block on the final session's own
   card, and the roster's per-row marker — so a row can never be marked while the card

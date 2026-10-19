@@ -74,6 +74,8 @@ function family(
     utm_source: null,
     utm_medium: null,
     utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
     registration_completed_at: "2026-01-01T00:00:00.000Z",
     spoken_languages: [],
     created_at: "2026-01-01T00:00:00.000Z",
@@ -97,7 +99,7 @@ const LONELY_PARENT = family(IDS.lonelyParent, "Petri", []);
 // and the fixture is one page of the shared read.
 vi.mock("@/services/users", () => ({
   useUserList: () => ({
-    data: { pages: [{ rows: [PARENT, LONELY_PARENT], total: 2 }] },
+    data: { rows: [PARENT, LONELY_PARENT], total: 2 },
     isPending: false,
     isPlaceholderData: false,
     hasNextPage: false,

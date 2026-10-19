@@ -1,3 +1,5 @@
+import { formattingLocale } from "@/lib/constants/locales";
+
 /**
  * Order family members by first name, collated in the **viewer's own locale**
  * and tie-broken by id.
@@ -24,6 +26,6 @@ export function byFirstName<T extends { id: string; first_name: string }>(
   locale: string,
 ) {
   return (a: T, b: T): number =>
-    a.first_name.localeCompare(b.first_name, locale) ||
+    a.first_name.localeCompare(b.first_name, formattingLocale(locale)) ||
     a.id.localeCompare(b.id);
 }

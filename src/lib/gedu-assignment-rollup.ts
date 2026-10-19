@@ -7,13 +7,7 @@ import {
   buildSessionFacts,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
-import {
-  capPastCancellations,
-  endDateToCutoff,
-  enumerateRowOccurrences,
-  splitAtNextRunning,
-  startDateToCutoff,
-} from "@/lib/session-occurrence";
+import { nextRunning } from "@/lib/planned-sessions";
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
 import type { ProductType } from "@/types";
 import type {
@@ -36,11 +30,11 @@ import { INERT_HREF } from "@/lib/constants/routes";
  * reduction: it consumes the same assignment rows the per-occurrence expansion
  * does, and emits one summary per (product × group).
  *
- * The occurrence horizon is still walked, because the *next* session has to be
- * correct including the case where one is in progress right now — it is just
- * collapsed to its first element instead of being handed on as a list. A
- * recurring-schedule line replaces the enumerated dates, so the reader still
- * learns the cadence without reading eight rows to infer it.
+ * The seat's planned sessions are still read, because the *next* session has to
+ * be correct including the case where one is in progress right now — they are
+ * just collapsed to their first running element instead of being handed on as
+ * a list. A recurring-schedule line replaces the enumerated dates, so the
+ * reader still learns the cadence without reading eight rows to infer it.
  *
  * **What is gedu-specific is what is left here.** Whether a run has finished and
  * whether it is live are facts about a *product*, and which type noun a product
@@ -233,12 +227,20 @@ export function rollUpGeduAssignments({
 
   const summaries = rows
     // Substitution rows are the other roll-up's: a substitution is one dated afternoon, and
-    // running it through the schedule walk would draw a sub a recurring card
+    // drawing it as a run would give a sub a recurring card
     // claiming they teach the club every week. A trainee seat is a standing
     // seat on a group like an assignment, so it takes the same card.
     .filter((row) => row.kind !== "substitution")
     .map((row) => {
-    const { next, cancelledAhead } = nextOccurrenceFor(row, now, windowCloseMs);
+    // A cancelled session is skipped rather than named, so the Join never
+    // lights for a session that is not happening; one in progress is still
+    // the next one until the voice window after its end closes — precisely
+    // when the Join matters.
+    const { next, cancelledAhead } = nextRunning(
+      row.upcomingSessions,
+      now,
+      windowCloseMs,
+    );
     const hasVoiceRoom = row.product.isRemote === true;
     const key = geduAssignmentKey(row.product.id, row.groupId);
     return {
@@ -251,9 +253,9 @@ export function rollUpGeduAssignments({
       groupParticipantCount: row.groupParticipantCount,
       endDate: row.product.endDate,
       timezone: row.product.timezone,
-      nextSessionStart: next?.start ?? null,
-      nextSessionEnd: next?.end ?? null,
-      cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),
+      nextSessionStart: next?.startsAt ?? null,
+      nextSessionEnd: next?.endsAt ?? null,
+      cancelledAhead: cancelledAhead.map((session) => session.startsAt),
       hasVoiceRoom,
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
@@ -284,43 +286,6 @@ export function rollUpGeduAssignments({
   }));
   ranked.sort(byRunThenSoonestSession);
   return ranked.map((entry) => entry.summary);
-}
-
-/**
- * The soonest occurrence still worth showing for one assignment, and the
- * cancelled ones ahead of it.
- *
- * Capped at one *running* occurrence per walk: the roll-up only needs the head
- * of the list, and asking for the full horizon here would rebuild the very
- * enumeration this module exists to stop producing. The walk goes one past
- * whatever the group's cancellations could remove, and a cancelled session is
- * skipped rather than named, so the Join never lights for a session that is
- * not happening. An in-progress session is included — that is the soonest
- * meaningful moment for the card, and it is precisely when the Join button
- * matters.
- */
-function nextOccurrenceFor(
-  row: GeduAssignmentRow,
-  now: Date,
-  windowCloseMs: number,
-): {
-  next: { start: Date; end: Date } | null;
-  cancelledAhead: { start: Date; end: Date }[];
-} {
-  if (row.slots.length === 0) return { next: null, cancelledAhead: [] };
-
-  const cancelledDates = new Set(row.cancelledDates);
-  const occurrences = enumerateRowOccurrences({
-    slots: row.slots,
-    timezone: row.product.timezone,
-    now,
-    startBoundary: startDateToCutoff(row.product.startDate, row.product.timezone),
-    endBoundary: endDateToCutoff(row.product.endDate, row.product.timezone),
-    cap: capPastCancellations(1, cancelledDates.size, row.slots.length),
-    windowCloseMs,
-  });
-
-  return splitAtNextRunning(occurrences, row.product.timezone, cancelledDates);
 }
 
 /** A summary paired with the ended test's answer, resolved once. */
@@ -392,10 +357,10 @@ export interface GeduSubstitutionSummary {
    * admin page describe it. Its `sessionDate` is the other half of this card's
    * identity.
    *
-   * An orphaned date (one the schedule no longer projects) has no instants:
-   * a substitution keys on (group, date) like every session record, so an admin
+   * An orphaned date (one the plan no longer has) has no instants: a
+   * substitution keys on (group, date) like every session record, so an admin
    * moving the schedule's weekday afterwards leaves a row naming a day the
-   * schedule has stopped producing. The card then shows the date alone rather
+   * plan has stopped producing. The card then shows the date alone rather
    * than disappearing, which is what the orphaned-request rule asks of every
    * reader of one.
    */
@@ -411,7 +376,7 @@ export interface GeduSubstitutionSummary {
    * `accessOpensAt` is still ahead is drawn locked rather than withheld.
    *
    * **An orphaned date still has one**, and it is the database's own fallback
-   * rather than an absence of one: a date the schedule no longer projects has
+   * rather than an absence of one: a date the plan no longer has carries
    * no session start, so the SQL counts the 48 hours back from **product-local
    * midnight of the substitution date** — earlier than any real session that day
    * would have opened, and never "open now". A `null` here would have drawn an
@@ -463,7 +428,7 @@ const SUBSTITUTION_ACCESS_LEAD_MS = 48 * 60 * 60 * 1000;
 
 /**
  * The instant the 48 hours are counted back from: the substituted session's own
- * start, or — on a date the schedule no longer projects — **product-local
+ * start, or — on a date the plan no longer has — **product-local
  * midnight of that date**.
  *
  * The fallback is not a client invention; it is the second arm of the SQL
@@ -505,7 +470,7 @@ export interface SubstitutionRollUpArgs {
 
 /**
  * Roll the caller's substitutions up into one card each, **soonest substitution date
- * first**, with a date the schedule no longer projects last.
+ * first**, with a date the plan no longer has last.
  *
  * No clock: a substitution card stands from the moment the substitution is approved until the
  * substitution expires, and the database is what decides that — a row is returned
@@ -533,8 +498,10 @@ export function rollUpGeduSubstitutions({
 
     const key = geduAssignmentKey(row.product.id, row.groupId);
     const session = buildSessionFacts({
-      product: { ...row.product, slots: row.slots },
+      product: row.product,
       sessionDate: row.substitutionDate,
+      startsAt: row.substitutionStartsAt,
+      endsAt: row.substitutionEndsAt,
       locale,
     });
     const hasVoiceRoom = row.product.isRemote === true;
@@ -586,8 +553,8 @@ function substitutionWorkspaceHref(
 }
 
 /**
- * Soonest substituted session first; an orphaned date — one the schedule no longer
- * projects — sorts last, by its own date, then by product name.
+ * Soonest substituted session first; an orphaned date — one the plan no longer
+ * has — sorts last, by its own date, then by product name.
  *
  * The orphan has no instant to be ordered against and is history rather than
  * work, so it goes to the foot of the run for the same reason a finished

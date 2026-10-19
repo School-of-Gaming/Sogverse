@@ -34,7 +34,7 @@ interface LastSave {
  * **What was saved becomes the page's saved state, locally.** A save sends the
  * content the form was showing, so once it lands that content *is* the saved
  * profile, and handing it back to the body as the baseline is what disables
- * Save and Discard. A refetch would say the same with one difference that
+ * Save and Discard and stops the page asking before it is left. A refetch would say the same with one difference that
  * matters: the photo would come back under a fresh signed URL rather than the
  * one the form holds, and the form would read as changed. So the editor never
  * re-reads what it has just written.

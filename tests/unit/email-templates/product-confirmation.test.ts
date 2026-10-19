@@ -8,7 +8,11 @@ import {
   type ProductConfirmationEmailOptions,
   type ProductConfirmationOverviewInput,
 } from "@/lib/email-templates/product-confirmation";
-import type { ProductConfirmationInvitationInput } from "@/lib/email-templates/product-confirmation-invitation";
+import {
+  invitationPlanWindow,
+  type ProductConfirmationInvitationInput,
+} from "@/lib/email-templates/product-confirmation-invitation";
+import { planSessions } from "../../mocks/planned-sessions";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
@@ -16,6 +20,7 @@ import {
   type TopicPrepTranslator,
 } from "@/lib/email-templates/translator";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { styledName } from "@/lib/email-templates/utils";
 
 let t: EmailTranslator;
 /** The guide's own translator — the second namespace this mail reads. */
@@ -47,9 +52,16 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
   productType: "consumer_club",
   shortDescription: null,
   timezone: "Europe/Helsinki",
-  startDate: "2027-01-04",
   endDate: null,
   slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+  // What the database plans for it over the composer's window: every Monday.
+  plannedSessions: planSessions({
+    slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
+    startDate: "2027-01-04",
+    endDate: null,
+    timezone: "Europe/Helsinki",
+    ...invitationPlanWindow({ now: NOW, timezone: "Europe/Helsinki", endDate: null }),
+  }),
   isRemote: true,
   siteName: null,
   siteAddress: null,
@@ -91,6 +103,7 @@ const base: ProductConfirmationEmailOptions = {
   firstChargeDate: null,
   dashboardUrl: DASHBOARD_URL,
   overview: OVERVIEW,
+  holidayBreaks: [],
   invitation: null,
 };
 
@@ -277,7 +290,7 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("16:00–17:00");
       // A club's term range is folded in as an extra schedule line, exactly as
       // the page folds it — the weekly line never says when the term runs.
-      expect(html).toContain("May 31, 2027");
+      expect(html).toContain("31 May 2027");
       expect(html).toContain("Format");
       expect(html).toContain("Online");
       expect(html).toContain("Age range");
@@ -294,7 +307,7 @@ describe("buildProductConfirmationEmail", () => {
      * the viewer's zone differs from the product's; one option, one line.
      */
     it("appends the product zone's abbrev to the time-bearing line", () => {
-      expect(render(base)).toContain("16:00–17:00 (GMT+2)");
+      expect(render(base)).toContain("16:00–17:00 (EET)");
     });
 
     it("appends no abbrev where the schedule states no time", () => {
@@ -413,7 +426,7 @@ describe("buildProductConfirmationEmail", () => {
     it("keeps a waitlisted place in the words the type calls for", () => {
       const club = render({ mode: "waitlist", priceAmount: null });
       // The name arrives styled, so the assertion is on the sentence around it.
-      expect(club).toContain("Aino</span> keeps their place in line for the whole term.");
+      expect(club).toContain(`${styledName("Aino")} keeps their place in line for the whole term.`);
       expect(
         render({ mode: "waitlist", priceAmount: null, productType: "camp" }),
       ).toContain("keeps their place in line for the camp.");
@@ -763,7 +776,7 @@ describe("the plain-text twin", () => {
 describe("the zone the times are given in", () => {
   /** Europe/Helsinki in January (EET, UTC+2), as each locale's `Intl` sets it. */
   const ABBREV = [
-    ["en", "GMT+2"],
+    ["en", "EET"],
     ["fi", "UTC+2"],
     ["sv", "EET"],
     ["fr", "UTC+2"],
@@ -803,8 +816,8 @@ describe("the zone the times are given in", () => {
       },
     });
 
-    expect(winter).toContain("(GMT+2)");
-    expect(summer).toContain("(GMT+3)");
+    expect(winter).toContain("(EET)");
+    expect(summer).toContain("(EEST)");
   });
 });
 
@@ -958,5 +971,48 @@ describe("the “Before the first session” guide", () => {
     );
     expect(html).not.toContain(HEADING);
     expect(html).toContain("Minecraft 101");
+  });
+});
+
+/**
+ * The club's holiday breaks: one row of the facts list, as the confirmation
+ * page draws them as the last row of its "Good to know" card — chosen and
+ * worded by the caller through the shared rule, so the template only lays the
+ * lines out.
+ */
+describe("the holiday breaks row", () => {
+  const BREAKS = [
+    { name: "Winter break", range: "22–26 Feb" },
+    { name: "Easter <3", range: "26–29 Mar" },
+  ];
+
+  it("states each break under one label, its name in bold and its dates on the line under it, escaped", () => {
+    const html = render({ holidayBreaks: BREAKS });
+    expect(html).toContain("Holiday breaks");
+    expect(html).toMatch(/<strong[^>]*>Winter break<\/strong><br \/>22–26 Feb/);
+    // An admin-written name is a value off a row like any other.
+    expect(html).toMatch(/<strong[^>]*>Easter &lt;3<\/strong><br \/>26–29 Mar/);
+    expect(html).not.toContain("Easter <3");
+  });
+
+  it("states them in the text twin too, on one line", () => {
+    const body = productConfirmationText(
+      t,
+      resolve({ holidayBreaks: BREAKS, invitation: SCHEDULE }),
+    );
+    expect(body).toContain("Holiday breaks: Winter break, 22–26 Feb — Easter <3, 26–29 Mar");
+  });
+
+  it("states no row at all when there are none", () => {
+    expect(render({ holidayBreaks: [] })).not.toContain("Holiday breaks");
+    expect(
+      productConfirmationText(t, resolve({ holidayBreaks: [], invitation: SCHEDULE })),
+    ).not.toContain("Holiday breaks");
+  });
+
+  it("states them on the child's copy as well, since they are not a parent's fact", () => {
+    expect(render({ holidayBreaks: BREAKS, gamerCopy: true })).toMatch(
+      /<strong[^>]*>Winter break<\/strong><br \/>22–26 Feb/,
+    );
   });
 });

@@ -398,6 +398,50 @@ describe("proxy", () => {
       expect(url.pathname).toBe("/en/login");
       expect(url.searchParams.get("redirect")).toBe("/en/parent/purchases");
     });
+
+    // A gated link pasted in a chat app must preview as nothing, not as the
+    // login page's card.
+    const LINK_PREVIEW_USER_AGENTS = {
+      Slack: "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)",
+      WhatsApp: "WhatsApp/2.23.20.0 A",
+      Discord: "Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)",
+      Telegram: "TelegramBot (like TwitterBot)",
+      Meta: "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)",
+      iMessage: "Mozilla/5.0 (Macintosh) AppleWebKit/601.2.4 (KHTML, like Gecko) Version/9.0.1 Safari/601.2.4 facebookexternalhit/1.1 Facebot Twitterbot/1.0",
+      LinkedIn: "LinkedInBot/1.0 (compatible; Mozilla/5.0; Apache-HttpClient +http://www.linkedin.com)",
+      X: "Twitterbot/1.0",
+      Teams: "Mozilla/5.0 (Windows NT 6.1; WOW64) SkypeUriPreview Preview/0.5 skype-url-preview@microsoft.com",
+    };
+
+    it.each(Object.entries(LINK_PREVIEW_USER_AGENTS))(
+      "answers %s's link-preview crawler with a 404 instead of the bounce",
+      async (_app, userAgent) => {
+        mockNoUser();
+        const response = await proxy(
+          createNextRequest("/admin/products/123", undefined, { "user-agent": userAgent }),
+        );
+        expect(response.status).toBe(404);
+        expect(response.headers.get("location")).toBeNull();
+      },
+    );
+
+    it("answers a link-preview crawler with a 404 on every gated page, not only admin's", async () => {
+      mockNoUser();
+      for (const path of ["/parent/purchases", "/gedu", "/gamer", "/settings"]) {
+        const response = await proxy(
+          createNextRequest(path, undefined, { "user-agent": LINK_PREVIEW_USER_AGENTS.WhatsApp }),
+        );
+        expect(response.status, path).toBe(404);
+      }
+    });
+
+    it("lets a link-preview crawler through to a public page", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest("/shop", undefined, { "user-agent": LINK_PREVIEW_USER_AGENTS.WhatsApp }),
+      );
+      expect(response.status).toBe(200);
+    });
   });
 
   // --- Protected routes (correct role → allow) ---
@@ -843,11 +887,11 @@ describe("proxy", () => {
     it("emits the sanitised fields for utm params on the request", async () => {
       mockNoUser();
       const request = createNextRequest(
-        "/shop?utm_source=Lynx&utm_medium=email&utm_campaign=lynx-summer-a",
+        "/shop?utm_source=Lynx&utm_medium=email&utm_campaign=lynx-summer-a&utm_content=hero&utm_term=roblox+club",
       );
       await proxy(request);
       expect(utmHeaderAfter(request)).toBe(
-        "source=Lynx&medium=email&campaign=lynx-summer-a",
+        "source=Lynx&medium=email&campaign=lynx-summer-a&content=hero&term=roblox+club",
       );
     });
 
@@ -856,6 +900,10 @@ describe("proxy", () => {
       const request = createNextRequest("/shop?utm_campaign=lynx-summer-a");
       await proxy(request);
       expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+
+      const termOnly = createNextRequest("/shop?utm_term=minecraft");
+      await proxy(termOnly);
+      expect(utmHeaderAfter(termOnly)).toBe("term=minecraft");
     });
 
     it("emits nothing when there are no utm params at all", async () => {

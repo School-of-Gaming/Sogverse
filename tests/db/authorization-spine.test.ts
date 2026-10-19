@@ -135,6 +135,22 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // forbidden role never reaches the validation at all.
   create_invoice_customer: { permittedRoles: ["admin"] },
   update_invoice_customer: { permittedRoles: ["admin"] },
+  // The three writers of holiday calendars — the calendars, their breaks and
+  // the breaks' names, and which calendars a club follows. None of the four
+  // tables carries a write grant, so these guarded functions are the only way
+  // in. The positive half IS assertable with no fixture: past the guard,
+  // all-NULL arguments are refused by the name check with `check_violation`
+  // (create), by the calendar lookup with `no_data_found` (update), or do
+  // nothing at all (set_product_holiday_calendars on an empty set).
+  create_holiday_calendar: { permittedRoles: ["admin"] },
+  update_holiday_calendar: { permittedRoles: ["admin"] },
+  set_product_holiday_calendars: { permittedRoles: ["admin"] },
+  // What saving a calendar would change for every club following it. Writes
+  // nothing, but reads stored session records and substitution requests, which
+  // carry no `authenticated` grant. Past the guard, all-NULL arguments are
+  // refused by the calendar lookup with `no_data_found` — not the forbidden
+  // error.
+  preview_holiday_calendar_change: { permittedRoles: ["admin"] },
   // The four writers of the Library — the working copy's create and save, and
   // publish and unpublish, which copy it over or remove its public published
   // copy. Neither table carries a write grant for `authenticated`, so these are
@@ -174,6 +190,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   publish_landing_page: { permittedRoles: ["admin"] },
   unpublish_landing_page: { permittedRoles: ["admin"] },
   repoint_landing_images: { permittedRoles: ["admin"] },
+  // The writers of spotlights — create, the whole save and delete — and the
+  // image catalogue's replace for their pictures. Neither spotlight table
+  // carries a write grant for `authenticated`, so these are the only path in.
+  // Past the admin guard, all-NULL arguments are refused with
+  // `null_value_not_allowed` (create and save: no switch; repoint) or
+  // `no_data_found` (delete: no such spotlight) — errors, but not the
+  // forbidden one.
+  create_spotlight: { permittedRoles: ["admin"] },
+  save_spotlight: { permittedRoles: ["admin"] },
+  delete_spotlight: { permittedRoles: ["admin"] },
+  repoint_spotlight_images: { permittedRoles: ["admin"] },
   // One OAuth client's public description out of Supabase Auth, which no Data
   // API role can read — how the Library editor names the AI app a save came
   // through. Past the admin guard, a NULL id finds no client: an empty answer.
@@ -739,7 +766,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   ensure_chat_channel: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
-    why: "materializes the current session window's channel for a group the CALLER may join, guarded on is_voice_group_member. The interesting scope property is what it does NOT take: both window instants are derived here from the product's schedule and never accepted from the caller, because they feed the family read bound — a client-supplied value would let a member mint an arbitrary read window over the group's whole history. It also deliberately never calls ensure_group_session, so no chat action can manufacture a session row in the staff feeds",
+    why: "materializes the current session window's channel for a group the CALLER may join, guarded on is_voice_group_member. The interesting scope property is what it does NOT take: both window instants are derived in the database from the product's plan and never accepted from the caller, because they feed the family read bound — a client-supplied value would let a member mint an arbitrary read window over the group's whole history. It also deliberately never calls ensure_group_session, so no chat action can manufacture a session row in the staff feeds",
   },
   get_chat_channel_roster: {
     scopeTest: "tests/db/chat-rpcs.test.ts",
@@ -781,9 +808,9 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
-  get_my_session_cancellations: {
-    scopeTest: "tests/db/session-cancellation.test.ts",
-    why: "takes no argument at all: the seats it answers for are the active, placed participations whose customer_id or participant_id is auth.uid(), so a caller learns the cancelled upcoming dates of their own seats' groups and of nobody else's. It returns dates only — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, and requires the third to see nothing",
+  get_my_planned_sessions: {
+    scopeTest: "tests/db/my-planned-sessions.test.ts",
+    why: "takes no argument at all: the seats it answers for are the active participations whose customer_id or participant_id is auth.uid(), so a caller reads the planned sessions of their own seats and of nobody else's. SECURITY DEFINER only to fold in which dates the seat's group cancelled, and it carries that as a bare flag — never the reason, the stamp or the author, which stay admin-only. The scope test asks it as the seat's child, as the paying parent and as another family's parent, requires the third to see nothing of the first family's seats, and asks the reverse for the second family's own seat",
   },
   get_my_family_product_feed: {
     scopeTest: "tests/db/family-product-feed.test.ts",
@@ -829,6 +856,18 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/location-search.test.ts",
     why: "SECURITY INVOKER over `locations` and `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
   },
+  planned_session_dates: {
+    scopeTest: "tests/db/planned-sessions.test.ts",
+    why: "public catalogue facts over two anon-readable tables, identical for every caller. SECURITY INVOKER over `products` and `schedule_slots`, whose read policies admit every row to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — it only expands a product's term and weekly slots into dated sessions. It names no user and reads no uid; its arguments only pick a product and narrow a date span, clamped to 3660 days. The scope test proves an anonymous caller and the service role get identical rows",
+  },
+  product_holiday_breaks: {
+    scopeTest: "tests/db/holiday-calendars.test.ts",
+    why: "public catalogue facts, identical for every caller: the breaks of the holiday calendars a product follows, which planned_session_dates subtracts from the plan. SECURITY INVOKER over `product_holiday_calendars` and `holiday_breaks`, whose read policies admit every followed calendar's breaks to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — and it never reads a calendar's admin-only name or an unattached calendar's breaks, since it reaches breaks only through a product's link. It names no user and reads no uid; its arguments only pick a product and narrow a date span. The scope test proves an anonymous caller and an admin get identical rows",
+  },
+  holiday_breaks_document: {
+    scopeTest: "tests/db/holiday-documents.test.ts",
+    why: "public catalogue facts, identical for every caller: the `holiday_breaks` member the session documents carry, built from product_holiday_breaks, holiday_break_translations and planned_session_dates. SECURITY INVOKER, and every table behind it admits a followed calendar's breaks and their names to anon and authenticated alike, so it can answer with nothing a plain read of them would not already return — it reaches breaks only through a product's link, so never an unattached calendar's, and never reads a calendar's admin-only name. It names no user and reads no uid; its arguments only pick a product and narrow a date span. The scope test proves an anonymous caller and an admin get identical documents",
+  },
   // The three fold primitives below are a third shape the category has to
   // admit, and the widest reading of it: they read *no table at all*. Each is a
   // pure function of its arguments — strip diacritics, return a constant
@@ -856,7 +895,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   can_edit_team_profile: {
     scopeTest: "tests/db/team-profiles.test.ts",
-    why: "the edit predicate the team-photos storage policies are evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
+    why: "the edit predicate the team photo upload route asks on the caller's own client before it stores, and the team-photos delete policy is evaluated with, so it has to be executable by the querying role. SECURITY INVOKER: it answers from the caller's own role and a profiles row the caller's RLS already shows them, so it says only what the caller could read for themselves — whether the named person is themselves, or an admin or a Gedu while the caller is an admin. The scope test asks it as a Gedu, an admin, a parent and a gamer about themselves and about each other",
   },
   // The public team page's three reads. Self-scoping by the widest reading the
   // category admits, the one can_read_product sits on: none names a user,
@@ -890,6 +929,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
  * allow and nothing more.
  */
 const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
+  product_list_facets: {
+    scopeTest: "tests/db/product-list-facets.test.ts",
+    why: "security_invoker = true over `products`, `schedule_slots`, `gedu_group_assignments` and `locations`, so the caller's own RLS decides every count and every array exactly as a direct select of those four tables would. Every value is a correlated subquery or aggregate over rows the caller's policies already hand them — a product count, distinct weekdays, distinct languages, distinct assigned gedu ids, and the municipalities products sit in — so a row a policy filters out simply does not contribute. It takes no arguments and its rows are the product_type enum, so there is nothing to aim at another user. The one column a policy actually narrows is `gedu_ids`: a gedu reads only their own assignment rows and a parent only those on products their family takes part in, so neither learns which other educators staff a product; the scope test reads the same camp as an admin, a gedu and a parent and shows exactly that",
+  },
   user_list_entries: {
     scopeTest: "tests/db/user-list-entries.test.ts",
     why: "security_invoker = true over `profiles`, `parent_gamer`, `gamer_profiles`, `gedu_profiles`, `minecraft_accounts` and `roblox_accounts`, so the caller's own RLS decides every row exactly as a direct select of those six tables would. It cannot answer with anything a plain read of them would not already return — every derived value is a correlated subquery over the same tables, so a row the caller's policies filter out contributes NULL or is simply absent from an array rather than leaking. It carries no arguments at all, so there is nothing for a caller to aim at another user: the needle, the role pill, the language chip and the keyset cursor are ordinary filters applied to whatever set RLS already handed them, and each of them only ever narrows it. Two of its own properties are worth stating because they are the ones an author could get wrong: `linked_gamers` is assembled from `parent_gamer` under the caller's policies, so a caller who cannot see a link gets an empty array rather than somebody else's children — and gets that child as a top-level row instead, which is the same set of people either way; and `family_search_blob` folds a child's strings into the parent's row, so the blob is only as wide as the family the caller can already read. It replaced `user_search_index`, and the scope test is where the interesting half lives: from the identical query, a customer reaches their own family row with their own child embedded and cannot reach another customer at all, and a second customer with no relationship to the child cannot find that family by the child's game handle",
@@ -923,10 +966,23 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * approved profiles narrowed to what the page shows, and `is_public_team_photo`
  * is the team-photos public read policy's predicate, which anon evaluates
  * itself when the public photo route reads with no session.
+ *
+ * `planned_session_dates` is the session plan a public product page shows: a
+ * SECURITY INVOKER expansion of `products` and `schedule_slots`, which anon
+ * already reads in full, so it narrows that surface rather than widening it.
+ * It subtracts the product's holiday breaks, read through
+ * `product_holiday_breaks` as its caller — so anon needs that one too, and it
+ * returns only breaks anon may already select from the breaks table.
+ * `holiday_breaks_document` is those breaks with their names and the plan rows
+ * each withdrew, the shape every session document carries beside its plan,
+ * built as its caller from the same anon-readable rows.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
+  "planned_session_dates",
+  "product_holiday_breaks",
+  "holiday_breaks_document",
   "immutable_unaccent",
   "location_search_separator",
   "list_public_team_profiles",

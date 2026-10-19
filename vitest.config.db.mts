@@ -8,6 +8,8 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./tests/db/setup.ts"],
     include: ["tests/db/**/*.test.ts"],
+    // UTC, as CI and the production servers run, so no test leans on its author's zone.
+    env: { TZ: "UTC" },
     pool: "forks",
     fileParallelism: false,
     testTimeout: 15_000,

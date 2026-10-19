@@ -7,18 +7,9 @@ CREATE FUNCTION public.ensure_chat_channel(p_group_id uuid) RETURNS SETOF public
     SET search_path TO ''
     AS $$
 DECLARE
-  -- The voice join margins, as SQL literals and named as such. They mirror
-  -- VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES / _AFTER_MINUTES, which SQL
-  -- cannot see; the db test that pins these windows against the TypeScript
-  -- fixtures is what keeps the two honest.
-  c_open_margin  constant interval := interval '5 minutes';
-  c_close_margin constant interval := interval '5 minutes';
-
-  v_zone       text;
-  v_product_id uuid;
-  v_opens      timestamptz;
-  v_ends       timestamptz;
-  v_id         uuid;
+  v_opens timestamptz;
+  v_ends  timestamptz;
+  v_id    uuid;
 BEGIN
   -- Guard first. A NULL group is refused outright rather than allowed to fall
   -- through the predicate — an admin passes is_voice_group_member(NULL), and a
@@ -27,51 +18,14 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  SELECT p.id, p.timezone
-    INTO v_product_id, v_zone
-    FROM public.product_groups g
-    JOIN public.products p ON p.id = g.product_id
-   WHERE g.id = p_group_id;
-
-  IF v_zone IS NOT NULL THEN
-    SELECT o.opens_at, o.closes_at
-      INTO v_opens, v_ends
-      FROM (
-        SELECT
-          -- `timestamp AT TIME ZONE zone` resolves a wall clock in that zone to
-          -- the right instant, so nothing here does arithmetic of its own on a
-          -- local day.
-          ((cd.session_date + s.start_time) AT TIME ZONE v_zone) - c_open_margin
-            AS opens_at,
-          -- The duration is added to the INSTANT, not to the wall clock, so a
-          -- session straddling a transition keeps its real length.
-          ((cd.session_date + s.start_time) AT TIME ZONE v_zone)
-            + make_interval(mins => s.duration_minutes) + c_close_margin
-            AS closes_at
-          FROM (
-            -- Yesterday, today and tomorrow AS CALENDAR DATES in the product's
-            -- zone. Stepping a date is exact on any runtime; stepping an
-            -- instant by 24 hours is what breaks twice a year.
-            SELECT ((now() AT TIME ZONE v_zone)::date + probe.offset_days)
-                     AS session_date
-              FROM generate_series(-1, 1) AS probe(offset_days)
-          ) cd
-          JOIN public.schedule_slots s ON s.product_id = v_product_id
-           -- schedule_slots.weekday is 0 = Monday; ISODOW is 1 = Monday.
-           WHERE s.weekday = (EXTRACT(ISODOW FROM cd.session_date)::integer - 1)
-             -- Cancellation: a cancelled session opens no room, by the one
-             -- effective test every other reader asks.
-             AND NOT public.group_session_is_cancelled(p_group_id, cd.session_date)
-      ) o
-     WHERE now() >= o.opens_at
-       AND now() <  o.closes_at
-     -- Two slots' windows can overlap. The TypeScript path takes whichever slot
-     -- PostgREST happened to return first; this takes the earliest-opening one,
-     -- deterministically, so two callers a millisecond apart cannot materialize
-     -- two different channels for one room.
-     ORDER BY o.opens_at, o.closes_at
-     LIMIT 1;
-  END IF;
+  -- The earliest-opening window open now that the group has not cancelled: a
+  -- cancelled session opens no chat, as it opens no voice room.
+  SELECT w.opens_at, w.closes_at
+    INTO v_opens, v_ends
+    FROM public.group_open_session_windows(p_group_id) AS w
+   WHERE NOT w.cancelled
+   ORDER BY w.opens_at, w.closes_at
+   LIMIT 1;
 
   IF v_opens IS NULL THEN
     RAISE EXCEPTION 'No session window is open for this group'
@@ -106,7 +60,7 @@ $$;
 -- Name: FUNCTION ensure_chat_channel(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.ensure_chat_channel(p_group_id uuid) IS 'The current session window''s chat channel for a group, materialized if it does not exist yet. Guarded on is_voice_group_member, so exactly the people who may join the room may open its chat. Both window instants are derived HERE, from the product''s schedule, and are never accepted from the caller: they feed the family read bound, so a client-supplied value would let a member mint an arbitrary read window over the group''s history. The window search is this function''s own PL/pgSQL port of the voice token route''s TypeScript search — join margins as SQL literals and DST-safe by stepping CALENDAR dates in the product''s zone and probing the adjacent days, never by 24-hour arithmetic. Deliberately never calls ensure_group_session and never touches group_sessions: that function is unguarded behind staff-only callers, and a participant reaching it would manufacture phantom session rows in the staff feeds. Raises P0002 when no window is open, which the container renders as its one quiet "chat unavailable" line.';
+COMMENT ON FUNCTION public.ensure_chat_channel(p_group_id uuid) IS 'The current session window''s chat channel for a group, materialized if it does not exist yet. Guarded on is_voice_group_member, so exactly the people who may join the room may open its chat. Both window instants come from group_open_session_windows — the first open window the group has not cancelled — and are never accepted from the caller: they feed the family read bound, so a client-supplied value would let a member mint an arbitrary read window over the group''s history. The voice token route reads the same function, so a room and its chat agree on the window and so on the channel, whose key is (group, opening instant). Deliberately never calls ensure_group_session and never touches group_sessions: that function is unguarded behind staff-only callers, and a participant reaching it would manufacture phantom session rows in the staff feeds. Raises P0002 when no window is open, which the container renders as its one quiet "chat unavailable" line.';
 
 
 --

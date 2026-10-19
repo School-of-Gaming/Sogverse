@@ -108,6 +108,17 @@ The sidebar is `position: sticky; top: var(--header-height)` with an explicit `h
 - `position: sticky` keeps the sidebar visible as the document scrolls past it.
 - Explicit height + `self-start` override the flex default `align-items: stretch`, so the sidebar pins to the viewport-minus-header instead of matching `<main>`'s full height. Its internal `nav flex-1` + user-info layout keeps user info anchored to the bottom.
 
+**A hub is one rail entry over several pages, each a tab in a strip under the hub's title**
+(the clubs, camps and events hub; invoicing). The strip shows only on the hub's list pages,
+and the rail entry stays lit on every page of the hub and beneath it.
+
+**Rule: a page joins a hub by joining the hub definition (`src/components/admin/hubs/`), and
+nowhere else.** That one entry gives it both its tab and the rail highlight, so a page cannot
+be a tab of a hub while leaving the hub's entry dark. **Hub tabs are links to their own URLs,
+not an ARIA tablist**: the current one carries `aria-current="page"`. The owner placed this
+UI rule here because the library has no home for it yet, and it leaves this file with the
+tabs adoption (`packages/sog-ui/docs/adoption.md`).
+
 ## `<main>` width
 
 The dashboard `<main>` needs `min-w-0` so the flex item shrinks to its assigned width instead of growing to fit its widest unbreakable child. Without it, a long word (e.g. a Finnish/Swedish compound on the settings page) pushes `<main>` past the viewport and produces a stray horizontal scroll on narrow widths. (The `flex-col` public/auth layouts don't hit this — width is their cross axis.)
@@ -130,7 +141,7 @@ The exception is a **deliberate full-screen bespoke layout** — a centered lock
 
 Because the document is the single scroll container, a page that flips between fitting the viewport and overflowing it makes the *document* scrollbar appear/disappear, shifting all content sideways. This bites list pages whose data loads in below the fold (and now any page whose filters can shrink the list back above the fold).
 
-**Rule: To reserve the scrollbar gutter, render `data-reserve-scroll-gutter` on the page's root element — do not set `scrollbar-gutter` on a page-level `<div>`.** The gutter only has effect on the actual scroll container (the root element), so `globals.css` carries `html:has([data-reserve-scroll-gutter]) { scrollbar-gutter: stable; }`. The `:has()` keeps it opt-in: only pages that render the marker pay for the gutter, instead of forcing it on every route. Current opt-ins: the admin users page, the shared admin `ProductListPage` (the four product-list routes), and the shared public browse results (`/shop` and the `/schools/<municipality>` pages, whose chip filters can shrink the sections back above the fold). It's a no-op on overlay-scrollbar OSes (nothing to reserve).
+**Rule: To reserve the scrollbar gutter, render `data-reserve-scroll-gutter` on the page's root element — do not set `scrollbar-gutter` on a page-level `<div>`.** The gutter only has effect on the actual scroll container (the root element), so `globals.css` carries `html:has([data-reserve-scroll-gutter]) { scrollbar-gutter: stable; }`. The `:has()` keeps it opt-in: only pages that render the marker pay for the gutter, instead of forcing it on every route. Current opt-ins: the admin users page, every tab of both admin hubs (carried by the hub, so a page joining one opts in with it), and the shared public browse results (`/shop` and the `/schools/<municipality>` pages, whose chip filters can shrink the sections back above the fold). It's a no-op on overlay-scrollbar OSes (nothing to reserve).
 
 **Pages a reader moves between from one nav opt in together, or not at all.** The marker also decides the gutter *between* pages: one that reserves it and one that fits the window without it are a scrollbar's width apart, header included, so every move between them shifts the page sideways. The gedu's own destinations — My SOG, Substitutions, Invoicing and My profile — all opt in for that reason, and a new gedu destination joins them.
 

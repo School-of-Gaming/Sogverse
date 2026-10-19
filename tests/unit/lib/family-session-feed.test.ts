@@ -1,21 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
-import {
-  OPEN_ENDED_OCCURRENCE_CAP,
-  productLocalDate,
-  sessionEntryId,
-  UNDATED_PRODUCT_PAST_HORIZON_DAYS,
-} from "@/lib/session-occurrence";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
+import { productLocalDate, sessionEntryId } from "@/lib/session-occurrence";
 import type { FamilyFeedSession } from "@/services/family-product-feed";
 import type { FamilySessionEntry } from "@/components/family/product-page";
 import { partitionFeedEntries } from "@/components/session-feed";
+import { planSessions } from "../../mocks/planned-sessions";
 
 /**
- * The merge that makes a family's feed: the schedule walked both ways, stored
- * rows laid over the projections, and two entry kinds derived from nothing but
- * which side of `now` a session falls on.
+ * The merge that makes a family's feed: the planned sessions cut to the
+ * open-ended horizon, stored rows laid over them, and two entry kinds derived
+ * from nothing but which side of `now` a session falls on.
  *
- * It shares its arithmetic with the gedu builder and deliberately not its
+ * It shares its plan shaping with the gedu builder and deliberately not its
  * output, so what is worth testing here is the divergence: two kinds instead of
  * three, one child's mark instead of a roster, and the cancellation clamp the
  * staff feed has no reason to know about.
@@ -31,19 +28,46 @@ const NOW = new Date("2026-03-18T10:00:00.000Z");
 /** 0 = Monday, matching the schedule_slots convention. */
 const MONDAY_SLOT = { weekday: 0, startTime: "16:30", durationMinutes: 90 };
 
+type FeedArgs = Parameters<typeof buildFamilySessionFeed>[0];
+
+/**
+ * The product's schedule, which the test turns into the planned sessions the
+ * document would carry — the database's expansion, done test-side. Its
+ * open-ended span runs well past every paid-through date below, as the
+ * document's horizon is raised to one.
+ */
+interface Schedule {
+  slots?: { weekday: number; startTime: string; durationMinutes: number }[];
+  startDate?: string | null;
+  endDate?: string | null;
+}
+
 function build(
-  overrides: Partial<Parameters<typeof buildFamilySessionFeed>[0]> = {},
+  overrides: Partial<Omit<FeedArgs, "plannedSessions" | "openEnded">> &
+    Schedule = {},
 ) {
+  const {
+    slots = [MONDAY_SLOT],
+    startDate = "2026-01-05",
+    endDate = null,
+    ...rest
+  } = overrides;
+  const now = rest.now ?? NOW;
   return buildFamilySessionFeed({
     groupId: GROUP,
-    timezone: TZ,
-    slots: [MONDAY_SLOT],
-    startDate: "2026-01-05",
-    endDate: null,
+    plannedSessions: planSessions({
+      timezone: TZ,
+      slots,
+      startDate,
+      endDate,
+      now,
+    }),
+    openEnded: endDate === null,
     sessions: [],
     cancellations: [],
-    now: NOW,
-    ...overrides,
+    holidayBreaks: [],
+    now,
+    ...rest,
   });
 }
 
@@ -109,16 +133,6 @@ describe("buildFamilySessionFeed — ordering and horizon", () => {
     const emitted = dates(build({ startDate: "2026-03-02" }));
     expect(emitted.at(-1)).toBe("2026-03-02");
     expect(emitted).not.toContain("2026-02-23");
-  });
-
-  it("bounds an undated product's past at the documented horizon", () => {
-    const oldest = dates(build({ startDate: null })).at(-1);
-    const floor = new Date(
-      NOW.getTime() - UNDATED_PRODUCT_PAST_HORIZON_DAYS * 86_400_000,
-    );
-    expect(oldest?.localeCompare(productLocalDate(floor, TZ))).toBeGreaterThan(
-      -1,
-    );
   });
 
   it("emits nothing at all for a product with no slots and no rows", () => {
@@ -610,7 +624,7 @@ describe("buildFamilySessionFeed — cancelled sessions", () => {
       build({ cancellations: [{ session_date: "2026-03-23" }] }),
     );
     expect(partition.nextSession?.id).toBe(sessionEntryId(GROUP, "2026-03-30"));
-    expect(partition.soonerCancelled.map((entry) => entry.id)).toEqual([
+    expect(partition.soonerNotRunning.map((entry) => entry.id)).toEqual([
       sessionEntryId(GROUP, "2026-03-23"),
     ]);
     expect(partition.past[0]?.id).toBe(sessionEntryId(GROUP, "2026-03-16"));
@@ -654,5 +668,140 @@ describe("buildFamilySessionFeed — cancelled sessions", () => {
       cancellations: [{ session_date: "2026-04-06" }],
     });
     expect(byDate(entries, "2026-04-06")).toBeUndefined();
+  });
+});
+
+/**
+ * A holiday break is one calm line per break, placed by the sessions it
+ * withdrew — never the next session, never counted against the open-ended cap,
+ * and dropped where it withdrew nothing the feed would show.
+ */
+describe("buildFamilySessionFeed — holiday breaks", () => {
+  const EASTER = [{ locale: "en", name: "Easter break" }];
+
+  interface BreakSpec {
+    id: string;
+    startDate: string;
+    endDate: string;
+  }
+
+  /**
+   * The open-ended Monday plan with the breaks' dates taken out, as the
+   * document carries it, and each break with the sessions it withdrew.
+   */
+  function feed(breaks: BreakSpec[], extra: Partial<FeedArgs> = {}) {
+    const full = planSessions({
+      timezone: TZ,
+      slots: [MONDAY_SLOT],
+      startDate: "2026-01-05",
+      endDate: null,
+      now: NOW,
+    });
+    const inside = (spec: BreakSpec, date: string) =>
+      spec.startDate <= date && date <= spec.endDate;
+    return buildFamilySessionFeed({
+      groupId: GROUP,
+      plannedSessions: full.filter(
+        (session) => !breaks.some((spec) => inside(spec, session.date)),
+      ),
+      openEnded: true,
+      sessions: [],
+      cancellations: [],
+      holidayBreaks: breaks.map((spec) => ({
+        ...spec,
+        names: EASTER,
+        withdrawnSessions: full.filter((session) => inside(spec, session.date)),
+      })),
+      now: NOW,
+      ...extra,
+    });
+  }
+
+  const holidayIds = (entries: readonly FamilySessionEntry[]) =>
+    entries.filter((entry) => entry.kind === "holiday").map((entry) => entry.id);
+
+  it("draws one line per break, keyed by the break, in date order among the sessions", () => {
+    const entries = feed([
+      { id: "spring", startDate: "2026-03-02", endDate: "2026-03-06" },
+      { id: "easter", startDate: "2026-03-30", endDate: "2026-04-10" },
+    ]);
+    expect(holidayIds(entries)).toEqual(["holiday:easter", "holiday:spring"]);
+
+    const easter = entries.find((entry) => entry.id === "holiday:easter");
+    expect(easter).toMatchObject({
+      kind: "holiday",
+      startDate: "2026-03-30",
+      endDate: "2026-04-10",
+      names: EASTER,
+      upcoming: true,
+    });
+    // Placed by its first withdrawn session's start and its last one's end.
+    expect(easter?.startsAt).toEqual(new Date("2026-03-30T13:30:00.000Z"));
+    expect(easter?.endsAt).toEqual(new Date("2026-04-06T15:00:00.000Z"));
+
+    // Between the sessions either side of it, and strictly descending.
+    const ids = entries.map((entry) => entry.id);
+    const at = ids.indexOf("holiday:easter");
+    expect(ids[at - 1]).toBe(sessionEntryId(GROUP, "2026-04-13"));
+    expect(ids[at + 1]).toBe(sessionEntryId(GROUP, "2026-03-23"));
+    const starts = entries.map((entry) => entry.startsAt.getTime());
+    expect(starts).toEqual([...starts].sort((a, b) => b - a));
+
+    expect(entries.find((entry) => entry.id === "holiday:spring")).toMatchObject({
+      upcoming: false,
+    });
+  });
+
+  it("leaves out a break that withdrew no session", () => {
+    // Tuesday to Friday: a Monday club never meets inside it.
+    const entries = feed([
+      { id: "midweek", startDate: "2026-03-24", endDate: "2026-03-27" },
+    ]);
+    expect(holidayIds(entries)).toEqual([]);
+  });
+
+  it("is never the next session, and sits between it and the past when sooner", () => {
+    const partition = partitionFeedEntries(
+      feed([{ id: "week", startDate: "2026-03-23", endDate: "2026-03-27" }]),
+    );
+    expect(partition.nextSession?.id).toBe(sessionEntryId(GROUP, "2026-03-30"));
+    expect(partition.soonerNotRunning.map((entry) => entry.id)).toEqual([
+      "holiday:week",
+    ]);
+    expect(partition.past[0]?.id).toBe(sessionEntryId(GROUP, "2026-03-16"));
+  });
+
+  it("takes no slot from the open-ended cap, and stops at the cut", () => {
+    const entries = feed([
+      { id: "week", startDate: "2026-03-23", endDate: "2026-03-27" },
+      // Withdraws a Monday far past the eighth open session.
+      { id: "summer", startDate: "2026-06-29", endDate: "2026-07-03" },
+    ]);
+    expect(entries.filter((entry) => entry.kind === "future")).toHaveLength(
+      OPEN_ENDED_OCCURRENCE_CAP,
+    );
+    expect(holidayIds(entries)).toEqual(["holiday:week"]);
+  });
+
+  it("drops a break whose every withdrawn session is past the paid window", () => {
+    const entries = feed(
+      [
+        { id: "week", startDate: "2026-03-23", endDate: "2026-03-27" },
+        { id: "easter", startDate: "2026-04-06", endDate: "2026-04-17" },
+      ],
+      { accessUntil: new Date("2026-04-01T00:00:00.000Z") },
+    );
+    expect(holidayIds(entries)).toEqual(["holiday:week"]);
+  });
+
+  it("places a break straddling the paid window by the sessions inside it", () => {
+    const entries = feed(
+      [{ id: "long", startDate: "2026-03-23", endDate: "2026-04-10" }],
+      { accessUntil: new Date("2026-03-25T00:00:00.000Z") },
+    );
+    const line = entries.find((entry) => entry.id === "holiday:long");
+    // Still named by the break's own dates, placed by the one Monday kept.
+    expect(line).toMatchObject({ startDate: "2026-03-23", endDate: "2026-04-10" });
+    expect(line?.endsAt).toEqual(new Date("2026-03-23T16:00:00.000Z"));
   });
 });

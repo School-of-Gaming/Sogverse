@@ -16,10 +16,11 @@ import { formatCurrencyFromCents } from "@/lib/utils";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
-import { inLocaleOrder } from "@/lib/i18n/locale-order";
+import type { HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import { ProductOverviewCard } from "./product-overview-card";
+import { Heading } from "@sog/ui";
 
 // Signup summary — data-only presentational view (no fetching). A
 // non-tech-savvy parent has just paid, signed up for a free event, or joined a
@@ -66,6 +67,13 @@ interface PurchaseConfirmationViewProps {
    * same way — a bare start date when unclamped, the viewer's own day when not.
    */
   firstChargeAt?: string | null;
+  /**
+   * The club's holiday breaks, read by the page over the span the shared rule
+   * names, for the "Good to know" card — where the confirmation mail states
+   * the same list. Empty for anything that is not a club, and on a read that
+   * failed: the list is optional and the summary is not.
+   */
+  holidayBreaks?: readonly HolidayBreak[];
 }
 
 export function PurchaseConfirmationView({
@@ -75,6 +83,7 @@ export function PurchaseConfirmationView({
   outcome = "enrolled",
   waitlistPosition = null,
   firstChargeAt = null,
+  holidayBreaks = [],
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
   const tSelf = useTranslations("purchaseConfirmation.self");
@@ -83,7 +92,7 @@ export function PurchaseConfirmationView({
   const viewerTimezone = useTimezone();
 
   const isWaitlist = outcome === "waitlisted";
-  const tr = resolveTranslation(inLocaleOrder(product.product_translations), locale);
+  const tr = resolveTranslation(product.product_translations, locale);
   const productName = tr?.name ?? "";
   // The summary row keeps naming the person even on a self seat — the reader's
   // own first name is what they recognise beside "Enrolled", and it is the one
@@ -124,9 +133,11 @@ export function PurchaseConfirmationView({
               <CheckCircle2 className="h-8 w-8 text-act" />
             )}
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {isWaitlist ? t("waitlist.heading") : t("heading")}
-          </h1>
+          <div className="mt-4">
+            <Heading level={1} step="section" align="center">
+              {isWaitlist ? t("waitlist.heading") : t("heading")}
+            </Heading>
+          </div>
           <p className="mt-2 text-muted-foreground">
             {isWaitlist
               ? isSelfSeat
@@ -148,9 +159,9 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-8">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground">
+            <Heading level={2} step="card-title">
               {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
-            </h2>
+            </Heading>
             {/* The picture, at the 3:2 crop the card and the detail hero paint
                 — the parent is looking at the same photograph they clicked and
                 then read a page of, so it must be the same crop of it.
@@ -206,14 +217,14 @@ export function PurchaseConfirmationView({
         </Card>
 
         <div className="mt-6">
-          <ProductOverviewCard product={product} />
+          <ProductOverviewCard product={product} holidayBreaks={holidayBreaks} />
         </div>
 
         <Card className="mt-6">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground">
+            <Heading level={2} step="card-title">
               {t("nextTitle")}
-            </h2>
+            </Heading>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
               {isWaitlist ? (
                 <>
@@ -454,9 +465,11 @@ export function PurchaseConfirmationNotice({
               <Info className="h-7 w-7 text-act" />
             )}
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {copy.heading}
-          </h1>
+          <div className="mt-4">
+            <Heading level={1} step="section" align="center">
+              {copy.heading}
+            </Heading>
+          </div>
           <p className="mt-2 text-muted-foreground">{copy.subheading}</p>
         </div>
 
@@ -465,7 +478,7 @@ export function PurchaseConfirmationNotice({
             {/* Ghosts shaped like the summary card that replaces them. */}
             <Card className="mt-8">
               <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+                <div className="h-6 w-32 animate-pulse rounded bg-lifted" />
                 <div className="h-16 animate-pulse rounded-lg bg-lifted" />
                 <div className="h-4 animate-pulse rounded bg-lifted" />
                 <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
@@ -529,7 +542,9 @@ export function PurchaseConfirmationFallback() {
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-lg font-semibold">{t("notFound.title")}</h2>
+          <Heading level={2} step="card-title" align="center">
+            {t("notFound.title")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>

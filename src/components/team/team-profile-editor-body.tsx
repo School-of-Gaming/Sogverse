@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
+import { useAuthoredBodies } from "@/components/ui/authored-body-editor";
 import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
+import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { AppHref } from "@/lib/constants/routes";
@@ -17,10 +19,9 @@ import {
   TeamProfilePhotoSection,
   TeamProfileWritingSection,
   contentFromForm,
-  contentFromProfile,
   formFromProfile,
   profileWithContent,
-  sameContent,
+  sameAsSaved,
   teamProfileGap,
   teamProfileTooLong,
   type TeamProfileContent,
@@ -35,6 +36,7 @@ import {
   type TeamProfileStatus,
 } from "@/components/team/team-profile-status";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { Heading } from "@sog/ui";
 
 /**
  * The writes the page makes. Each is a backend action, so each is the
@@ -113,6 +115,9 @@ export type TeamProfileEditorProps = TeamProfileSaveState & {
  * lines under the checkbox change as the profile is completed and as it is
  * ticked; at the foot, that moves nothing but the save row.
  *
+ * **Leaving with unsaved changes asks first**, until a save lands — whoever
+ * is editing, the person or an admin.
+ *
  * The form's state is local UI state. Every write goes out through `actions`,
  * which the route owns.
  */
@@ -127,10 +132,12 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
     formFromProfile(props.profile, uiLocale),
   );
   const [on, setOn] = useState(savedOn);
+  // How the rich editor respells each bio it was seeded with, so an untouched
+  // bio is never an unsaved change.
+  const bodies = useAuthoredBodies();
 
   const content = contentFromForm(form, props.profile);
-  const dirty =
-    on !== savedOn || !sameContent(content, contentFromProfile(props.profile));
+  const dirty = on !== savedOn || !sameAsSaved(form, props.profile, bodies);
   const gap = teamProfileGap(content);
   const tooLong = teamProfileTooLong(content);
   const status = teamProfileStatus(props);
@@ -142,6 +149,8 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-24" data-reserve-scroll-gutter>
+      <UnsavedChangesGuard when={dirty} />
+
       {/* A person's own page's home is settings, beside the account facts
           the profile shows but does not edit; an admin editing someone
           else's came from that person's user page. */}
@@ -155,11 +164,11 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           : t("back")}
       </Link>
 
-      <h1 className="text-3xl font-bold tracking-tight">
+      <Heading level={1} step="section">
         {byAdmin
           ? ta("edit.pageTitle", { name: props.profile.firstName })
           : t("pageTitle")}
-      </h1>
+      </Heading>
 
       <div
         className={cn(
@@ -180,7 +189,11 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
             form={form}
             update={setForm}
           />
-          <TeamProfileWritingSection form={form} update={setForm} />
+          <TeamProfileWritingSection
+            form={form}
+            update={setForm}
+            bodies={bodies}
+          />
 
           <PublicSection
             byAdmin={byAdmin}
@@ -201,6 +214,9 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
               onClick={() => {
                 setForm(formFromProfile(props.profile, uiLocale));
                 setOn(savedOn);
+                // The bio editor read its text at mount: re-seed it from the
+                // saved bio, or it goes on showing what was thrown away.
+                bodies.reset();
               }}
             >
               {t("actions.discard")}
@@ -226,7 +242,7 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
 
         <TeamProfilePreview
           profile={profileWithContent(props.profile, content)}
-          readerLocale={form.activeLocale}
+          readerLocale={form.tabs.active}
           wide={wide}
         />
       </div>
@@ -397,9 +413,9 @@ function TeamProfilePreview({
           : "xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:flex xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:flex-col",
       )}
     >
-      <h2 id="team-profile-preview-heading" className="text-lg font-semibold">
+      <Heading level={2} step="card-title" id="team-profile-preview-heading">
         {t("heading")}
-      </h2>
+      </Heading>
       <TeamProfilePreviewFrame
         profile={profile}
         readerLocale={readerLocale}

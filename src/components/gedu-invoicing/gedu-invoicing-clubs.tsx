@@ -280,7 +280,7 @@ function GeduClubLines({
 }
 
 /**
- * One dated seat. The five kinds read differently on purpose:
+ * One dated seat. The six kinds read differently on purpose:
  *
  * - **Recorded** is the ordinary case and carries the fee and nothing else.
  * - **Not recorded** is a past date the gedu was expected at with nothing on
@@ -290,6 +290,8 @@ function GeduClubLines({
  * - **Cancelled** is settled and quiet at zero.
  * - **Away** is the gedu's own absence, quiet at zero, and names who stood in —
  *   or says nobody has — so a gedu can see why a date they hold did not pay.
+ * - **Holiday** is a date a holiday break covers, quiet at zero and naming the
+ *   break: the session was never due.
  *
  * A seat held as a substitute names the gedu it stood in for, whatever became of
  * the date. Both names are shown on both readers: the requester sees their own
@@ -324,7 +326,9 @@ function GeduLineRow({
           ? line.substitute === null
             ? t("absentNoSubstitute")
             : t("absentSubstituted", { name: fullName(line.substitute) })
-          : t(LINE_OUTCOME_KEY[line.kind])
+          : line.kind === "holiday" && line.holidayName
+            ? t("holidayNamed", { name: line.holidayName })
+            : t(LINE_OUTCOME_KEY[line.kind])
       }
       note={
         line.coveringFor === null
@@ -352,6 +356,7 @@ const LINE_TONE = {
   upcoming: "muted",
   cancelled: "muted",
   absent: "muted",
+  holiday: "muted",
 } as const satisfies Record<GeduInvoiceLineKind, DatedLineTone>;
 
 const LINE_OUTCOME_KEY = {
@@ -359,4 +364,5 @@ const LINE_OUTCOME_KEY = {
   unrecorded: "notRecorded",
   upcoming: "upcoming",
   cancelled: "cancelled",
+  holiday: "holiday",
 } as const satisfies Record<Exclude<GeduInvoiceLineKind, "absent">, string>;

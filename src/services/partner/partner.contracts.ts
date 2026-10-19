@@ -379,6 +379,8 @@ const partnerParent = z.object({
     source: z.string().nullable(),
     medium: z.string().nullable(),
     campaign: z.string().nullable(),
+    content: z.string().nullable(),
+    term: z.string().nullable(),
   }),
   /** Null where the parent has never been asked. */
   marketing_consent: consentState.nullable(),
@@ -505,6 +507,16 @@ const sourceMediumSplit = z.object({
   pageviews: z.number().int(),
 });
 
+const contentSplit = z.object({
+  utm_content: z.string().nullable(),
+  pageviews: z.number().int(),
+});
+
+const termSplit = z.object({
+  utm_term: z.string().nullable(),
+  pageviews: z.number().int(),
+});
+
 const daySplit = z.object({ date: isoDate, pageviews: z.number().int() });
 
 export const partnerProductsResponse = listEnvelope(partnerProduct);
@@ -529,6 +541,8 @@ export const partnerTrafficResponse = z.object({
       pageviews: z.number().int(),
       by_campaign: z.array(campaignSplit),
       by_source_medium: z.array(sourceMediumSplit),
+      by_content: z.array(contentSplit),
+      by_term: z.array(termSplit),
       by_day: z.array(daySplit),
     }),
   ),

@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
 import { POST } from "@/app/api/chat/images/route";
-import { CHAT_IMAGE_MAX_BYTES } from "@/lib/constants/chat";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import { CHAT_LOCKED_SQLSTATE } from "@/services/chat/chat.contracts";
 import {
   carriesExif,
@@ -264,7 +264,7 @@ describe("POST /api/chat/images", () => {
 
   it("refuses an upload over the byte cap, before reading its bytes", async () => {
     const tooBig = new File(
-      [new Uint8Array(CHAT_IMAGE_MAX_BYTES + 1)],
+      [new Uint8Array(IMAGE_PURPOSES.chat_image.maxBytes + 1)],
       "huge.jpg",
       { type: "image/jpeg" },
     );

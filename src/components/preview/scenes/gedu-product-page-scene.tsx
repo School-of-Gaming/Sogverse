@@ -385,7 +385,8 @@ export function GeduProductPageScene({
           prev.map((entry) =>
             entry.id === entryId &&
             entry.kind !== "no_record" &&
-            entry.kind !== "cancelled"
+            entry.kind !== "cancelled" &&
+            entry.kind !== "holiday"
               ? {
                   ...entry,
                   images: [
@@ -409,7 +410,9 @@ export function GeduProductPageScene({
   const handleRemovePhoto = (imageId: string): Promise<void> => {
     setEntries((prev) =>
       prev.map((entry) =>
-        entry.kind === "no_record" || entry.kind === "cancelled"
+        entry.kind === "no_record" ||
+        entry.kind === "cancelled" ||
+        entry.kind === "holiday"
           ? entry
           : {
               ...entry,

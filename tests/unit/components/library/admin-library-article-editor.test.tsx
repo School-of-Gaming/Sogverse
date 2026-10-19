@@ -35,7 +35,6 @@ vi.mock("next-intl", () => ({
           .map(([name, value]) => `${name}=${String(value)}`)
           .join(" ")}`
       : key,
-  useFormatter: () => ({ list: (items: string[]) => items.join(" + ") }),
   useLocale: () => "en",
 }));
 
@@ -43,23 +42,7 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
-vi.mock("@/components/admin/library/article-body-editor", () => ({
-  ArticleBodyEditor: ({
-    value,
-    onChange,
-    ariaLabel,
-  }: {
-    value: string;
-    onChange: (markdown: string) => void;
-    ariaLabel: string;
-  }) => (
-    <textarea
-      aria-label={ariaLabel}
-      defaultValue={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  ),
-}));
+vi.mock("@/components/ui/rich-text-editor", () => import("../../../mocks/rich-text-editor"));
 
 import {
   LibraryArticleEditor,
@@ -479,7 +462,7 @@ describe("the Library article editor", () => {
 
       expect(within(panel()).getByText("published")).toBeTruthy();
       expect(panel().textContent).toContain(
-        "statusPanel.publishedLine date=September 16, 2026",
+        "statusPanel.publishedLine date=16 September 2026",
       );
       expect(panel().textContent).not.toContain("statusPanel.changedLine");
     });
@@ -489,14 +472,14 @@ describe("the Library article editor", () => {
 
       expect(within(panel()).getByText("changed")).toBeTruthy();
       expect(panel().textContent).toContain(
-        "statusPanel.changedLine date=September 16, 2026",
+        "statusPanel.changedLine date=16 September 2026",
       );
       expect(panel().textContent).not.toContain("statusPanel.publishedLine");
     });
   });
 
   describe("the last save", () => {
-    const savedAt = "statusPanel.savedLine date=Sep 15, 2026, 11:05 AM";
+    const savedAt = "statusPanel.savedLine date=15 Sept 2026, 11:05";
 
     function draftSavedBy(
       lastSavedBy: string | null,
@@ -516,7 +499,7 @@ describe("the Library article editor", () => {
 
       expect(
         screen.getByText(
-          "statusPanel.savedByLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson",
+          "statusPanel.savedByLine date=15 Sept 2026, 11:05 name=Kyle Hutchinson",
         ),
       ).toBeTruthy();
     });
@@ -528,7 +511,7 @@ describe("the Library article editor", () => {
 
       expect(
         screen.getByText(
-          "statusPanel.savedByViaLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson app=Claude Code",
+          "statusPanel.savedByViaLine date=15 Sept 2026, 11:05 name=Kyle Hutchinson app=Claude Code",
         ),
       ).toBeTruthy();
     });
@@ -538,7 +521,7 @@ describe("the Library article editor", () => {
 
       expect(
         screen.getByText(
-          "statusPanel.savedByViaUnnamedLine date=Sep 15, 2026, 11:05 AM name=Kyle Hutchinson",
+          "statusPanel.savedByViaUnnamedLine date=15 Sept 2026, 11:05 name=Kyle Hutchinson",
         ),
       ).toBeTruthy();
     });
@@ -639,7 +622,7 @@ describe("the Library article editor", () => {
     const tab = (name: RegExp) => screen.getByRole("button", { name });
 
     function addLanguage(locale: string) {
-      fireEvent.change(screen.getByRole("combobox", { name: "addLocale" }), {
+      fireEvent.change(screen.getByRole("combobox", { name: "addLanguage" }), {
         target: { value: locale },
       });
     }
@@ -647,10 +630,11 @@ describe("the Library article editor", () => {
     it("opens on the saved language and marks whether it is complete", () => {
       renderEditor(LIVE);
       expect(tab(/^English/).getAttribute("aria-pressed")).toBe("true");
-      expect(tab(/^English/).textContent).toContain("versionComplete");
+      expect(tab(/^English/).textContent).toContain("complete");
+      expect(tab(/^English/).textContent).not.toContain("notComplete");
 
       cleanupAndRender(ARTICLE);
-      expect(tab(/^English/).textContent).toContain("versionIncomplete");
+      expect(tab(/^English/).textContent).toContain("notComplete");
     });
 
     it("keeps what was typed in each language across a switch", () => {
@@ -728,10 +712,10 @@ describe("the Library article editor", () => {
     it("removes a language, and keeps the last one", () => {
       renderEditor(LIVE);
       addLanguage("fi");
-      fireEvent.click(screen.getByRole("button", { name: "removeLocale language=Finnish" }));
+      fireEvent.click(screen.getByRole("button", { name: "removeLanguage language=Finnish" }));
       expect(screen.queryByRole("button", { name: /^Suomi/ })).toBeNull();
       expect(
-        screen.queryByRole("button", { name: /^removeLocale/ }),
+        screen.queryByRole("button", { name: /^removeLanguage/ }),
       ).toBeNull();
     });
   });

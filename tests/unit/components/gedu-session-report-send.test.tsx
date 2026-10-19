@@ -225,16 +225,13 @@ async function settle() {
  * wrong reason; on CI, which runs in UTC, the override wins and they fail. So
  * the runtime zone is pinned for this file, the same way the other
  * zone-sensitive unit tests do it — Node resets its default zone when
- * `process.env.TZ` is assigned — and restored afterwards.
+ * `TZ` is stubbed — and restored afterwards.
  */
-let originalTZ: string | undefined;
 beforeAll(() => {
-  originalTZ = process.env.TZ;
-  process.env.TZ = "Europe/Helsinki";
+  vi.stubEnv("TZ", "Europe/Helsinki");
 });
 afterAll(() => {
-  if (originalTZ === undefined) delete process.env.TZ;
-  else process.env.TZ = originalTZ;
+  vi.unstubAllEnvs();
 });
 
 beforeEach(() => {

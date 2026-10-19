@@ -1,8 +1,9 @@
 "use client";
 
 import { Gamepad2 } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { GAME_PLATFORMS, GameAccountField } from "@/components/game-account";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { useRobloxAccount } from "@/services/roblox";
@@ -59,22 +60,25 @@ export function UserGameAccountsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Gamepad2 className="h-5 w-5 text-act" />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* Side by side from `sm`: this is an admin surface, and two identity
-            rows stacked down the middle of a wide page is the layout the
-            desktop-default rule exists to prevent.
+      <CardContent className="@container">
+        {/* Side by side once the card is wide enough: this is an admin surface,
+            and two identity rows stacked down the middle of a wide page is the
+            layout the desktop-default rule exists to prevent. Keyed to the
+            card's own width rather than the viewport's, because the user page
+            puts this card in a narrow reference column on a wide screen, where
+            two fields abreast would leave each editor too narrow to type in.
 
             A failure sentence belongs to its own column rather than to the card,
             which is what the shared field gives us — with two columns, one slot
             at the bottom would make an admin work out which of the two it was
             about, even though the sentence names the platform. */}
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid gap-6 @lg:grid-cols-2">
           <GameAccountField
             platform="minecraft"
             label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}

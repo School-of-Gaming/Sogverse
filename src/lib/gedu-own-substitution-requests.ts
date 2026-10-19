@@ -5,6 +5,7 @@ import { toRequestState, type SubstitutionRequestState } from "@/lib/session-sta
 import {
   buildSessionFacts,
   sessionFactsProduct,
+  sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import type { LiveSubstitutionRequest } from "@/services/session-substitution";
@@ -58,6 +59,7 @@ export function buildOwnSubstitutionRequestRows(
         session: buildSessionFacts({
           product: sessionFactsProduct(request.product),
           sessionDate: request.session_date,
+          ...sessionWindowOf(request),
           locale,
         }),
         role: request.role,

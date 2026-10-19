@@ -8,6 +8,7 @@ import {
   getEmailTranslator,
   getTopicPrepTranslator,
 } from "@/lib/email-templates/translator";
+import { getOrigin } from "@/lib/url";
 import { parseEmails } from "@/lib/utils";
 import { resolveLocale } from "@/lib/constants/locales";
 
@@ -48,7 +49,7 @@ export const POST = defineRoute({
   // admin as a 500 carrying the thrown message, which is the incidental
   // forwarding shape. It is now logged and answered generically.
 
-  handler: async ({ body }) => {
+  handler: async ({ body, request }) => {
     const toEmails = parseEmails(body.toEmail);
     const emailSchema = z.string().email();
     for (const email of toEmails) {
@@ -87,10 +88,9 @@ export const POST = defineRoute({
     // knowing which mails carry a guide.
     const tPrep = await getTopicPrepTranslator(locale);
 
-    // The context is stated rather than left to the default, because this
-    // route is the send: what leaves here is fetched by a recipient's mail
-    // client, so a fixture whose art only a dev machine can reach drops it.
-    // The admin page's in-browser preview is the other half of that pair.
+    // The demo art resolves against this request's origin, as the admin page's
+    // preview resolves it against its browser's: a send from a dev machine
+    // carries `localhost` URLs, whose pictures fail to load in the inbox.
     // A builder may refuse the params it was given — a calendar invitation
     // whose run has nothing left in it is the case — and that refusal is an
     // answer about the request, not a fault of ours. It is answered the way
@@ -98,7 +98,13 @@ export const POST = defineRoute({
     // builder wrote for the admin to read.
     let rendered;
     try {
-      rendered = tmpl.render(paramsParsed.data, t, locale, { to: "send" }, tPrep);
+      rendered = tmpl.render(
+        paramsParsed.data,
+        t,
+        locale,
+        { origin: getOrigin(request) },
+        tPrep,
+      );
     } catch (error) {
       return NextResponse.json(
         { error: error instanceof Error ? error.message : String(error) },

@@ -7,6 +7,7 @@ import {
   SESSION_REPORT_NO_REPORT_SQLSTATE,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { STATUS } from "@/lib/constants/colors";
+import type { EnabledSpotlight } from "@/services/spotlights/spotlights.contracts";
 
 /**
  * POST /api/gedu/sessions/email-report — the fan-out that mails a session
@@ -64,6 +65,23 @@ const mockRpc = vi.fn();
 const mockFrom = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({ from: mockFrom }),
+}));
+
+// The spotlights read is the service's, and its own query shape is the service
+// suite's subject: here it is one call that answers, or throws. The client it
+// was built on is recorded, so the read is known to run on the service role.
+const mockListEnabledSpotlights =
+  vi.fn<() => Promise<EnabledSpotlight[]>>();
+const spotlightClients: unknown[] = [];
+vi.mock("@/services/spotlights/spotlights.service", () => ({
+  SpotlightsService: class {
+    constructor(client: unknown) {
+      spotlightClients.push(client);
+    }
+    listEnabledSpotlights() {
+      return mockListEnabledSpotlights();
+    }
+  },
 }));
 
 // --- Fixtures --------------------------------------------------------------
@@ -161,6 +179,32 @@ const IMAGES = [
   { id: "c1000000-0000-4000-8000-000000000001", width: 1600, height: 900 },
   { id: "c1000000-0000-4000-8000-000000000002", width: 900, height: 1600 },
   { id: "c1000000-0000-4000-8000-000000000003", width: 1200, height: 1200 },
+];
+
+/**
+ * Two enabled spotlights, newest first as the service hands them back. The
+ * first is written in English and Finnish, the second in English alone, so a
+ * Finnish reader gets one of each: their own version, and the fallback.
+ */
+const SPOTLIGHT_BUCKET =
+  "https://test-project.supabase.co/storage/v1/object/public/spotlight-images";
+
+const SPOTLIGHTS: EnabledSpotlight[] = [
+  {
+    id: "d1000000-0000-4000-8000-000000000001",
+    versions: [
+      { locale: "en", title: "Autumn camps", body: "See [the shop](https://test.sogverse.local/shop)." },
+      { locale: "fi", title: "Syysleirit", body: "Katso [kauppa](https://test.sogverse.local/shop)." },
+    ],
+    image: { url: `${SPOTLIGHT_BUCKET}/a.jpg`, width: 1200, height: 600 },
+    createdAt: "2026-08-10T09:00:00Z",
+  },
+  {
+    id: "d1000000-0000-4000-8000-000000000002",
+    versions: [{ locale: "en", title: "A Roblox club", body: "Starting soon." }],
+    image: { url: `${SPOTLIGHT_BUCKET}/b.jpg`, width: 1200, height: 600 },
+    createdAt: "2026-08-01T09:00:00Z",
+  },
 ];
 
 /** What the helper derives from an id: the public object, in the public bucket. */
@@ -526,6 +570,8 @@ describe("POST /api/gedu/sessions/email-report", () => {
     reads.sessionImages = [];
     imageOrder.length = 0;
     parentLinkLookups.length = 0;
+    spotlightClients.length = 0;
+    mockListEnabledSpotlights.mockResolvedValue([]);
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
     mockGedu();
     claimSucceeds();
@@ -754,12 +800,12 @@ describe("POST /api/gedu/sessions/email-report", () => {
     // A mail is rendered without the reader's own zone, so it says which one it
     // used — and the family page it links to labels the same session in the
     // viewer's zone, which only agrees if this one is named.
-    // The spaces around the en dash are plain ones: the formatter rewrites
-    // whichever space Intl's locale data sets there, because that data differs
+    // Neither locale sets a space beside the en dash; where locale data does,
+    // the formatter rewrites it to a plain one, because that data differs
     // between runtimes. Spelled out so a formatter change cannot pass this by
     // producing a different separator.
     expect(mailTo("vaino-parent@test.local").htmlContent).toContain(
-      "16:30 \u2013 18:00 GMT+3",
+      "16:30\u201318:00 EEST",
     );
     expect(mailTo("aino-parent@test.local").htmlContent).toContain(
       "16.30\u201318.00 UTC+3",
@@ -874,6 +920,101 @@ describe("POST /api/gedu/sessions/email-report", () => {
       ["id", SESSION_ID],
       ["report_emailed_at", CLAIMED_AT],
     ]);
+  });
+
+  // -- Spotlights --
+  //
+  // The admin's notes under every report. Read once per send on the service
+  // role, resolved per reader, and — unlike the photos — never a reason for the
+  // send to fail.
+
+  it("reads the spotlights once per send, on the service-role client", async () => {
+    mockListEnabledSpotlights.mockResolvedValue(SPOTLIGHTS);
+
+    await POST(createRequest());
+
+    expect(mockListEnabledSpotlights).toHaveBeenCalledTimes(1);
+    expect(spotlightClients).toHaveLength(1);
+    expect(spotlightClients[0]).toHaveProperty("from", mockFrom);
+  });
+
+  it("leaves the spotlights out of a child's own copy, and keeps them in the parent's and the staff copy", async () => {
+    mockListEnabledSpotlights.mockResolvedValue(SPOTLIGHTS);
+    setupAdminClient({
+      participations: [EMAIL_CHILD, PARTICIPATIONS[1], PARTICIPATIONS[2]],
+    });
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    const child = mailTo("aino@example.test").htmlContent;
+    expect(child).toContain("report from your ");
+    expect(child).not.toContain("/spotlight-images/");
+    expect(child).not.toContain("Autumn camps");
+    expect(child).not.toContain("A Roblox club");
+    expect(mailTo("aino-parent@test.local").htmlContent).toContain(
+      `<img src="${SPOTLIGHT_BUCKET}/a.jpg"`,
+    );
+    expect(staffCopies()[0].htmlContent).toContain(`<img src="${SPOTLIGHT_BUCKET}/a.jpg"`);
+  });
+
+  it("carries every spotlight into every parent's mail, each in its reader's version", async () => {
+    mockListEnabledSpotlights.mockResolvedValue(SPOTLIGHTS);
+
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    for (const mail of sentMails()) {
+      expect(mail.htmlContent).toContain(`<img src="${SPOTLIGHT_BUCKET}/a.jpg"`);
+      expect(mail.htmlContent).toContain(`<img src="${SPOTLIGHT_BUCKET}/b.jpg"`);
+      // Every reader has the second only in English, the fallback.
+      expect(mail.htmlContent).toContain("A Roblox club");
+    }
+    // Aino's parent reads in Finnish, and gets the Finnish version, link kept.
+    const finnish = mailTo("aino-parent@test.local").htmlContent;
+    expect(finnish).toContain("Syysleirit");
+    expect(finnish).not.toContain("Autumn camps");
+    expect(finnish).toMatch(/<a href="https:\/\/test\.sogverse\.local\/shop"[^>]*>kauppa<\/a>/);
+    // The adult reads in English; so does the staff copy, in the sender's.
+    expect(mailTo("sylvie@test.local").htmlContent).toContain("Autumn camps");
+    expect(staffCopies()[0].htmlContent).toContain("Autumn camps");
+    // Newest first, as the service ordered them.
+    const english = mailTo("sylvie@test.local").htmlContent;
+    expect(english.indexOf("Autumn camps")).toBeLessThan(english.indexOf("A Roblox club"));
+  });
+
+  it("sends the report with no spotlight section when none is enabled", async () => {
+    const response = await POST(createRequest());
+
+    expect(response.status).toBe(200);
+    for (const mail of sentMails()) {
+      expect(mail.htmlContent).not.toContain("/spotlight-images/");
+    }
+  });
+
+  it("sends the report without spotlights, and keeps the claim, when they cannot be read", async () => {
+    mockListEnabledSpotlights.mockRejectedValue(new Error("statement timeout"));
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const response = await POST(createRequest());
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ sent: 3, failed: 0, skipped: 0 });
+      expect(familyMails()).toHaveLength(3);
+      expect(staffCopies()).toHaveLength(1);
+      for (const mail of sentMails()) {
+        expect(mail.htmlContent).toContain("We built a castle");
+        expect(mail.htmlContent).not.toContain("/spotlight-images/");
+      }
+      expect(release.patch).toBeNull();
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("spotlights could not be read"),
+        expect.any(Error),
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   // -- Seats with nobody to mail --

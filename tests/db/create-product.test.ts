@@ -42,6 +42,12 @@ const CONSENT_PRIVACY = "roblox-privacy-policy";
 const INVOICE_CUSTOMER = "00000000-0000-0000-0000-00000000080a";
 const INVOICE_CUSTOMER_NUMBER = "F980A";
 
+/**
+ * The holiday calendar this file points a club at. Minted by its own RPC, so
+ * it is found by this name, which no other file uses.
+ */
+const HOLIDAY_CALENDAR_NAME = "Create-product fixture calendar";
+
 describe("create_product", () => {
   /** Service-role client — bypasses RLS, used to read back and to clean up. */
   let admin: SupabaseClient<Database>;
@@ -54,6 +60,7 @@ describe("create_product", () => {
 
   /** Every id the RPC handed back, deleted at the end of the file. */
   const created: string[] = [];
+  let holidayCalendar: string;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -76,6 +83,14 @@ describe("create_product", () => {
       city: "Espoo",
     });
     expect(buyer.error).toBeNull();
+
+    await admin.from("holiday_calendars").delete().eq("name", HOLIDAY_CALENDAR_NAME);
+    const calendar = await adminAuth.rpc("create_holiday_calendar", {
+      p_name: HOLIDAY_CALENDAR_NAME,
+      p_breaks: [],
+    });
+    expect(calendar.error).toBeNull();
+    holidayCalendar = calendar.data!;
   });
 
   afterAll(async () => {
@@ -83,6 +98,7 @@ describe("create_product", () => {
     // so a customer a club still points at cannot go.
     await deleteTestProducts(admin, created);
     await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin.from("holiday_calendars").delete().eq("name", HOLIDAY_CALENDAR_NAME);
   });
 
   /**
@@ -249,6 +265,73 @@ describe("create_product", () => {
       .select("document_slug")
       .eq("product_id", id);
     expect(data).toEqual([]);
+  });
+
+  it("sets the holiday calendars a club follows, and follows none when p_holiday_calendar_ids is omitted", async () => {
+    // A fourth delegated child set: like the consents, it goes through its
+    // join table's single guarded writer, so a create that stopped calling it
+    // would look exactly like the ordinary club following no calendar.
+    const calendarId = holidayCalendar;
+    const { data: id, error } = await adminAuth.rpc("create_product", {
+      p_product_type: "consumer_club",
+      p_billing_mode: "free",
+      p_translations: [
+        { locale: "en", name: "On holiday", short_description: "" },
+      ],
+      p_topic: "minecraft_java",
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_start_date: "2099-01-01",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_holiday_calendar_ids: [calendarId],
+    });
+    expect(error).toBeNull();
+    created.push(id!);
+
+    const { data } = await admin
+      .from("product_holiday_calendars")
+      .select("calendar_id")
+      .eq("product_id", id!);
+    expect(data).toEqual([{ calendar_id: calendarId }]);
+
+    const plain = await createProduct();
+    const { data: none } = await admin
+      .from("product_holiday_calendars")
+      .select("calendar_id")
+      .eq("product_id", plain);
+    expect(none).toEqual([]);
+  });
+
+  it("refuses a holiday calendar on a camp", async () => {
+    const { data, error } = await adminAuth.rpc("create_product", {
+      p_product_type: "camp",
+      p_billing_mode: "free",
+      p_translations: [
+        { locale: "en", name: "Camp on holiday", short_description: "" },
+      ],
+      p_topic: "minecraft_java",
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_start_date: "2099-06-01",
+      p_end_date: "2099-06-05",
+      p_for_gamers: true,
+      p_for_parents: false,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_holiday_calendar_ids: [holidayCalendar],
+    });
+    // The whole create rolls back, so no camp is left behind.
+    expect(data).toBeNull();
+    expect(error?.code).toBe("23514");
+    // The calendar refusal, not some other CHECK a camp could trip.
+    expect(error?.message).toMatch(/holiday calendars/i);
   });
 
   it("stores the Fennoa invoice customer on a municipality club", async () => {

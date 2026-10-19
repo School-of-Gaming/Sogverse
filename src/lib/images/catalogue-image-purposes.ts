@@ -11,11 +11,9 @@ export interface CatalogueImagePurposeSpec {
   readonly height: number;
 }
 
-/** The registry's purposes that carry a `catalogue` block. */
+/** The registry's purposes whose pictures are catalogue entries. */
 type RegistryCataloguePurpose = {
-  [P in ImagePurpose]: (typeof IMAGE_PURPOSES)[P] extends { readonly catalogue: object }
-    ? P
-    : never;
+  [P in ImagePurpose]: (typeof IMAGE_PURPOSES)[P]["catalogue"] extends true ? P : never;
 }[ImagePurpose];
 
 /** `true` exactly when the two unions have the same members. */
@@ -26,7 +24,7 @@ type SameMembers<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : fa
  *
  * A row's purpose is the `catalogue_image_purpose` enum, and the bucket and
  * size that purpose implies are read from the registry. If the enum gains a
- * member the registry gives no `catalogue` block, a row could name a purpose
+ * member the registry does not mark catalogue, a row could name a purpose
  * nothing knows how to store; if the registry marks a purpose catalogue that
  * the enum lacks, no row could ever carry it. Either drift turns this
  * conditional type `false`, and the `true` assigned to it stops type-checking.
@@ -37,10 +35,15 @@ const CATALOGUE_PURPOSES_MATCH_THE_ENUM: SameMembers<
 > = true;
 void CATALOGUE_PURPOSES_MATCH_THE_ENUM;
 
-/** One catalogue purpose's bucket and size, read from the registry. */
+/**
+ * One catalogue purpose's bucket and size, read from the registry. Reading the
+ * size's width and height here is what refuses a catalogue purpose stored as
+ * uploaded: the catalogue's crop draws to an exact size and its upload routes
+ * refuse anything else, so such a purpose stops this from type-checking.
+ */
 function cataloguePurposeSpec(purpose: CatalogueImagePurpose): CatalogueImagePurposeSpec {
-  const { bucket, catalogue } = IMAGE_PURPOSES[purpose];
-  return { bucket, width: catalogue.width, height: catalogue.height };
+  const { bucket, storedSize } = IMAGE_PURPOSES[purpose];
+  return { bucket, width: storedSize.width, height: storedSize.height };
 }
 
 /**
@@ -66,4 +69,5 @@ export const CATALOGUE_IMAGE_PURPOSES = {
   product: cataloguePurposeSpec("product"),
   library_cover: cataloguePurposeSpec("library_cover"),
   landing_image: cataloguePurposeSpec("landing_image"),
+  spotlight_image: cataloguePurposeSpec("spotlight_image"),
 } as const satisfies Record<CatalogueImagePurpose, CatalogueImagePurposeSpec>;

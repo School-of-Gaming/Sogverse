@@ -71,9 +71,12 @@ pinned to an old API version, so `search` calls take `--stripe-version 2020-08-2
   **Never infer them** — both columns are NOT NULL and drive age gating, so a blank blocks
   the child; seat the rest and ask for month and year. When the owner says to seat now anyway, write a
   placeholder inside the club's age band, name it as a placeholder in the report, and
-  support collects the real month and year. Look in SOGGA first (the `sogga-legacy-data` skill): a
-  migrated child's real name and birthdate are usually there, and only a Chargebee-only
-  signup has no SOGGA row at all. Old WooCommerce `childAge` metadata is stamped at
+  support collects the real month and year. Look in the SOGGA archive first — the old
+  platform's database as CSVs, on the owner's Google Drive (`sogga-archive-2026-10-12`),
+  whose README walks the joins: a migrated child's real name and birthdate are usually in
+  `public.users.csv`, reached from the Stripe sub's `metadata.chargebee_customer_id` →
+  `chargebee_subscriptions` (match `chargebee_customer_id`) → `chargebee_subscription_plans`
+  (`gamer_id`). Only a Chargebee-only signup has no row at all. Old WooCommerce `childAge` metadata is stamped at
   original signup and years stale — use it to confirm identity, never to derive an age.
 - **Minecraft:** resolve `https://api.mojang.com/users/profiles/minecraft/<name>` to a
   dashed UUID; store the username as given plus the UUID (null if unresolved).
@@ -263,16 +266,17 @@ the clipboard UTF-8-safely (€, –, ä reach a real person).
 - **A paid club with no `product_subscription_prices` row is normal** — it says nothing
   about whether the club still meets.
 
-## The standing sweep for unbound subs
+## The sweep for unbound subs
 
 Nothing ever links a pre-existing sub to a family who self-registers later, and a family
-parked for a missing birth month and year is never re-checked. So re-run this sweep rather than treating
-each report as a one-off: **from the Stripe side**, page every live sub (`active`,
-`trialing`, `past_due`, `unpaid`, paginating on `--starting-after`) and diff the ids
-against `family_subscriptions`. The Sogverse-side query (profiles with no customer and no
+parked for a missing birth month and year is never re-checked. **The remaining unbound subs
+are not worked proactively** (owner's ruling, 2026-10-12): a family whose sub is unbound
+contacts support if something is wrong, and is adopted then. Run the sweep only when the
+owner asks for a count: **from the Stripe side**, page every live sub (`active`,
+`trialing`, `past_due`, `unpaid`, `paused`, paginating on `--starting-after`) and diff the
+ids against `family_subscriptions`. The Sogverse-side query (profiles with no customer and no
 seat) finds only families who already registered — 5 where the real number was 26.
-Baseline 2026-08-17: 162 live subs, 26 unbound — triage named-club subs first, then
-generic bundles (need the organizer), then €0, already-cancelling and paused ones.
+Last count 2026-10-12: 167 live subs, 13 unbound (11 Chargebee-migrated, 2 hand-made).
 
 ## Verification
 

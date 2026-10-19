@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { MAX_IMAGE_EDGE } from "@/lib/images/image-purposes";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
+import { holidayBreakRows } from "@/lib/holiday-breaks";
+import { plannedSessionRows } from "@/lib/planned-sessions";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   substitutionRequestDocument,
@@ -300,10 +303,9 @@ export const groupTrainee = z.object({
 /**
  * Everything the group workspace renders for one group.
  *
- * There is no derived occurrence list in here on purpose: the RPC returns data
- * and TypeScript does the calendar math, so the merge of stored rows over
- * projected occurrences happens in one place on the client rather than twice in
- * two languages.
+ * The planned sessions arrive already expanded, from the database's one
+ * expansion of the plan; the merge of stored rows and cancellations over them
+ * happens on the client.
  */
 export const geduGroupFeed = z.object({
   product: z.object({
@@ -374,6 +376,24 @@ export const geduGroupFeed = z.object({
    * silently missing.
    */
   trainees: z.array(groupTrainee),
+  /**
+   * The product's planned sessions from its start date to its horizon — the
+   * end date of a dated product; on an open-ended one, the eighth session that
+   * has not ended and that the group has not cancelled — soonest first. Plain plan rows: `cancelled` is always `false` here,
+   * and the cancellations above are laid over them by date.
+   */
+  planned_sessions: plannedSessionRows,
+  /**
+   * The holiday breaks over the plan's span, each with the sessions it
+   * withdrew from the plan above. A holiday date carries its break and
+   * nothing else: no stored session and no cancellation lands on one.
+   */
+  holiday_breaks: holidayBreakRows,
+  /**
+   * The run's last session this group has not cancelled, product-local
+   * `YYYY-MM-DD`; null on an open-ended product, which has none.
+   */
+  final_session_date: z.string().nullable(),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
@@ -466,6 +486,9 @@ export const traineeGroupFeed = z.object({
   gedus: z.array(sessionStaffGedu),
   cancellations: z.array(sessionCancellation),
   trainees: z.array(groupTrainee),
+  planned_sessions: geduGroupFeed.shape.planned_sessions,
+  holiday_breaks: geduGroupFeed.shape.holiday_breaks,
+  final_session_date: geduGroupFeed.shape.final_session_date,
 });
 
 export type TraineeGroupFeed = z.infer<typeof traineeGroupFeed>;
@@ -718,17 +741,6 @@ export const SESSION_PHOTO_CAP = 5;
 export const SESSION_PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
 
 /**
- * The upload's byte cap — a generous 3 MB against a normalized output that
- * should be well under 1 MB.
- *
- * It is a bound on something already normalized rather than a limit on what a
- * gedu may pick, which is why it can be this loose: a 4K screenshot is a few
- * hundred KB by the time it leaves the browser. Anything near this figure means
- * the client-side pass did not run, and the route refuses rather than rescues.
- */
-export const SESSION_PHOTO_MAX_BYTES = 3 * 1024 * 1024;
-
-/**
  * The longest edge the browser downscales to, and the JPEG quality it
  * re-encodes at. Passed explicitly into the normalization pass — that module
  * carries fallbacks so it can be exercised alone, but these are the values the
@@ -738,21 +750,6 @@ export const SESSION_PHOTO_MAX_EDGE = 2048;
 
 /** @see SESSION_PHOTO_MAX_EDGE */
 export const SESSION_PHOTO_JPEG_QUALITY = 0.8;
-
-/**
- * The plausibility bound on an image's dimensions, and the code-side twin of
- * the table's CHECK.
- *
- * **Deliberately looser than the edge cap above, and not derived from it.** The
- * client normalizes to ~2048 px; this is a sanity bound, not a restatement of a
- * derived value. What it defends is layout arithmetic — the stored dimensions
- * are what the gallery and the email size their boxes from. The route applies
- * it twice: once to the claimed pair on the way in, so an obviously wrong form
- * is refused before any decode work, and once to what its re-encode actually
- * measured, which is the number that reaches the row. Both refusals carry a
- * stable code rather than a raw 23514, and the CHECK still stands behind them.
- */
-export const SESSION_PHOTO_MAX_DIMENSION = 4096;
 
 /**
  * The SQLSTATE `add_group_session_image` refuses with when the session already
@@ -786,9 +783,10 @@ export const SESSION_PHOTO_CAP_REACHED_SQLSTATE = "P0023";
  * - `decodeFailed` / `encodeFailed` — the browser pass, before any upload.
  * - `notJpeg` — the magic-byte check refused the bytes. The raw-HEIC door, and
  *   the one refusal whose copy tells the gedu to convert and try again.
- * - `tooLarge` — over {@link SESSION_PHOTO_MAX_BYTES}.
- * - `badDimensions` — the claimed width/height are missing or outside
- *   {@link SESSION_PHOTO_MAX_DIMENSION}.
+ * - `tooLarge` — over the session photo purpose's byte cap in the image
+ *   purpose registry.
+ * - `badDimensions` — the claimed width/height are missing or past the
+ *   platform's maximum edge.
  * - `capReached` — the session already holds {@link SESSION_PHOTO_CAP} photos.
  *   Reachable despite the editor hiding its add control, because two tabs can
  *   race and the RPC is what actually decides.
@@ -847,7 +845,7 @@ export function isSessionPhotoErrorCode(
  * The dimensions are the CLIENT'S claim about the JPEG it just encoded, and
  * they are **an early plausibility refusal and nothing else** — what the row
  * stores is what the route's own `sharp` re-encode measured. They are still
- * sent, and still bounded here, because refusing an implausible claim before
+ * sent, and still bounded here by the platform's maximum edge, because refusing an implausible claim before
  * any decode work happens is what gives the gedu the dimension copy rather than
  * a generic failure; a claim that passes this check and then decodes to
  * something else is refused just the same, by the route, against the measured
@@ -863,12 +861,12 @@ export const addSessionImageFields = z.object({
     .number()
     .int()
     .positive()
-    .max(SESSION_PHOTO_MAX_DIMENSION),
+    .max(MAX_IMAGE_EDGE),
   height: z.coerce
     .number()
     .int()
     .positive()
-    .max(SESSION_PHOTO_MAX_DIMENSION),
+    .max(MAX_IMAGE_EDGE),
 });
 
 export type AddSessionImageFields = z.infer<typeof addSessionImageFields>;

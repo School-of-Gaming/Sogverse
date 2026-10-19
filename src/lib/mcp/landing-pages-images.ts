@@ -1,5 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
+import { DEFAULT_LOCALE } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
@@ -223,7 +225,7 @@ export function registerLandingImageTools(server: McpServer): void {
       asLandingAdmin(ctx, async ({ service }) => {
         const page = await service.getAdminPage(input.pageId);
         if (page === null) return refusal(NOT_FOUND);
-        const title = page.draft.versions[0]?.title ?? "";
+        const title = resolveTranslation(page.draft.versions, DEFAULT_LOCALE)?.title ?? "";
         if (input.sectionId !== undefined) {
           const target = page.draft.sections.find((s) => s.id === input.sectionId);
           if (target === undefined) return refusal(`The page has no section ${input.sectionId}.`);

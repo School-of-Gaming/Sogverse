@@ -280,6 +280,8 @@ function assignedProduct(productType: ProductType): GeduAssignedProduct {
         roster: [],
       },
     ],
+    planned_sessions: [],
+    final_session_date: null,
   };
 }
 
@@ -322,6 +324,9 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     substitutions: [],
     cancellations: [],
     trainees: [],
+    planned_sessions: [],
+    holiday_breaks: [],
+    final_session_date: null,
   };
 }
 
@@ -856,7 +861,7 @@ describe("gedu product page — writing the creation", () => {
  * The preview scene has a scenario of its own for this — a flagged product whose
  * run is over — and that is where the signal is *looked at*. What is asserted
  * here is the chain behind it, which a screenshot cannot show: the product's
- * flag, the schedule's last occurrence, the roster's creations, and the tone and
+ * flag, the document's final session, the roster's creations, and the tone and
  * the name the button ends up wearing, including the two gates that must produce
  * nothing at all.
  *
@@ -906,15 +911,19 @@ function renderEndedRun(
   earlierSessions: readonly PastSessionFeedEntry[] = [],
 ): ReturnType<typeof render> {
   const product = assignedProduct("consumer_club");
+  const shell = {
+    ...product.product,
+    start_date: "2026-01-05",
+    end_date: RUN_END_DATE,
+    schedule_slots: MONDAY_SLOTS,
+    ...overrides,
+  };
   reads.product = {
     ...product,
-    product: {
-      ...product.product,
-      start_date: "2026-01-05",
-      end_date: RUN_END_DATE,
-      schedule_slots: MONDAY_SLOTS,
-      ...overrides,
-    },
+    product: shell,
+    // What the database answers for this run: its last Monday, the end date
+    // itself — and nothing on an open-ended one.
+    final_session_date: shell.end_date === null ? null : RUN_END_DATE,
   };
   reads.feed = groupFeed("consumer_club");
   feedEntries.value = [finalSessionEntry(), ...earlierSessions];
@@ -1052,6 +1061,8 @@ function renderUpcomingRun(): ReturnType<typeof render> {
       schedule_slots: MONDAY_SLOTS,
       requires_gamer_creations: true,
     },
+    // The database's answer: the end date is a Monday, so it is the last one.
+    final_session_date: UPCOMING_END_DATE,
   };
   reads.feed = groupFeed("consumer_club");
   feedEntries.value = [upcomingFinalSessionEntry()];

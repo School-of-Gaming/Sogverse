@@ -224,6 +224,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     id: IDS.product,
     created_at: "2025-08-01T00:00:00.000Z",
     created_by: "admin-1",
+    creator: { id: "admin-1", first_name: "Aino", last_name: "Admin" },
     updated_at: "2025-08-01T00:00:00.000Z",
     product_type: productType,
     billing_mode: "paid",
@@ -253,6 +254,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
     invoice_customer_id: null,
+    invoice_customer: null,
     registration_opens_at: "2025-08-01T00:00:00.000Z",
     timezone: "Europe/Helsinki",
     product_translations: [
@@ -272,6 +274,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_required_consents: [],
     product_marketing_consents: [],
     product_gamer_photo_consents: [],
+    product_holiday_calendars: [],
   };
 }
 
@@ -352,6 +355,7 @@ function adminSessions(): AdminProductSessions {
         gedus: [],
         substitutions: [],
         cancellations: [],
+        final_session_date: null,
       },
       {
         id: IDS.peerGroup,
@@ -366,8 +370,11 @@ function adminSessions(): AdminProductSessions {
         gedus: [],
         substitutions: [],
         cancellations: [],
+        final_session_date: null,
       },
     ],
+    planned_sessions: [],
+    holiday_breaks: [],
   };
 }
 
@@ -409,6 +416,9 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     // One trainee, so the suite can see the admin shell hand the feed's
     // trainees to the body rather than leave them behind.
     trainees: [{ id: IDS.trainee, first_name: "Oliver" }],
+    planned_sessions: [],
+    holiday_breaks: [],
+    final_session_date: null,
   };
 }
 

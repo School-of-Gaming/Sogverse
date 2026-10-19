@@ -1,6 +1,9 @@
+import type { QueryData } from "@supabase/supabase-js";
+import type { PlannedSession } from "@/lib/planned-sessions";
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
+  GeduAssignmentRole,
   ProductTopic,
   ProductType,
   SpokenLanguageCode,
@@ -29,9 +32,7 @@ export interface MyAssignedProductSessionRow {
     timezone: string;
     /**
      * Inclusive start date in product-local calendar (YYYY-MM-DD), or
-     * null for ongoing clubs. Matches the participations shape so the
-     * shared occurrence enumeration can clamp pre-start phantom
-     * occurrences out of the list.
+     * null for ongoing clubs. The card's schedule line states it.
      */
     startDate: string | null;
     /** Inclusive end date (YYYY-MM-DD), null for ongoing clubs. */
@@ -86,17 +87,24 @@ export interface MyAssignedProductSessionRow {
    */
   substitutionDate: string | null;
   /**
-   * This row's group's cancelled session dates, product-local `YYYY-MM-DD`,
-   * from the day before today onwards. A card skips them when naming the next
-   * session and names the ones before it; the absence picker never offers one.
+   * A standing seat's planned sessions, from the day before today to the
+   * group's plan horizon, soonest first, each `cancelled` where the group
+   * cancelled it. A card names its next session from them and the absence
+   * picker lists them. Empty on a `substitution` row.
    */
-  cancelledDates: readonly string[];
+  upcomingSessions: PlannedSession[];
   /**
    * Whether a `substitution` row's date is cancelled — asked of the date itself,
-   * because the card stands for days after it and `cancelledDates` starts the
-   * day before today. False on an `assignment` row.
+   * because the card stands for days after it. False on the other kinds.
    */
   substitutionCancelled: boolean;
+  /**
+   * When a `substitution` row's session runs, from the plan — `null` on a date
+   * the plan no longer has (an orphan, a date outside the term, or one on a
+   * holiday break), and on the other kinds.
+   */
+  substitutionStartsAt: Date | null;
+  substitutionEndsAt: Date | null;
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
@@ -106,6 +114,56 @@ export interface MyAssignedProductSessionRow {
     startTime: string;
     durationMinutes: number;
   }>;
+}
+
+/**
+ * The columns both halves of the admin seat read take: the group by id and
+ * name, and the product by id, type and the translation names a row shows.
+ * One string, so the two halves cannot drift into different shapes.
+ */
+const ADMIN_SEAT_EMBEDS =
+  "created_at, group:product_groups!inner(id, name), product:products!inner(id, product_type, product_translations(locale, name))";
+
+function buildAdminAssignmentSeatsQuery(
+  supabase: AppSupabaseClient,
+  geduId: string,
+) {
+  return supabase
+    .from("gedu_group_assignments")
+    .select(`role, ${ADMIN_SEAT_EMBEDS}`)
+    .eq("gedu_id", geduId);
+}
+
+function buildAdminTraineeSeatsQuery(
+  supabase: AppSupabaseClient,
+  geduId: string,
+) {
+  return supabase
+    .from("gedu_group_trainees")
+    .select(ADMIN_SEAT_EMBEDS)
+    .eq("gedu_id", geduId);
+}
+
+type AdminTraineeSeatQueryRow = QueryData<
+  ReturnType<typeof buildAdminTraineeSeatsQuery>
+>[number];
+
+/**
+ * One standing seat a gedu holds, for the admin user page's "Assigned
+ * products" section: a lead assignment (`primary` / `assistant`) or a trainee
+ * seat, on one group of one product. A gedu holds at most one seat per
+ * product, of either kind, so a product never appears twice.
+ *
+ * Substitutions are not seats and are not here: a sub covering one afternoon
+ * is not one of the group's educators.
+ */
+export interface AdminGeduSeatRow {
+  /** The seat's role — an assignment's pay class, or `trainee`. */
+  role: GeduAssignmentRole | "trainee";
+  /** When the seat was given, the order the section lists them in. */
+  createdAt: string;
+  group: AdminTraineeSeatQueryRow["group"];
+  product: AdminTraineeSeatQueryRow["product"];
 }
 
 /**
@@ -121,6 +179,37 @@ export class AssignmentsService {
     const { data, error } = await this.supabase.rpc("get_my_assigned_products");
     if (error) throw error;
     return parseMyAssignedProductRows(data);
+  }
+
+  /**
+   * Every standing seat the given gedu holds — lead assignments and trainee
+   * seats together, newest first — for the admin user page. Plain table reads
+   * under RLS: an admin reads every row of both tables, and nobody else
+   * reaches another gedu's rows.
+   */
+  async getSeatsForGedu(geduId: string): Promise<AdminGeduSeatRow[]> {
+    const [assignments, trainees] = await Promise.all([
+      buildAdminAssignmentSeatsQuery(this.supabase, geduId),
+      buildAdminTraineeSeatsQuery(this.supabase, geduId),
+    ]);
+    if (assignments.error) throw assignments.error;
+    if (trainees.error) throw trainees.error;
+
+    const seats: AdminGeduSeatRow[] = [
+      ...assignments.data.map((row) => ({
+        role: row.role,
+        createdAt: row.created_at,
+        group: row.group,
+        product: row.product,
+      })),
+      ...trainees.data.map((row) => ({
+        role: "trainee" as const,
+        createdAt: row.created_at,
+        group: row.group,
+        product: row.product,
+      })),
+    ];
+    return seats.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   /**
@@ -223,8 +312,16 @@ function toMyAssignedProductSessionRow(
     groupId: row.group_id,
     kind: row.kind,
     substitutionDate: row.substitution_date,
-    cancelledDates: row.cancelled_dates,
+    upcomingSessions: row.upcoming_sessions,
     substitutionCancelled: row.substitution_cancelled,
+    substitutionStartsAt:
+      row.substitution_starts_at === null
+        ? null
+        : new Date(row.substitution_starts_at),
+    substitutionEndsAt:
+      row.substitution_ends_at === null
+        ? null
+        : new Date(row.substitution_ends_at),
     groupCount: row.group_count,
     participantCount: row.participant_count,
     slots: row.product.schedule_slots.map((s) => ({

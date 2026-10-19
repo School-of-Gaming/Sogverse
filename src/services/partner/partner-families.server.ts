@@ -187,6 +187,8 @@ type FamilyProfile = Pick<
   | "utm_source"
   | "utm_medium"
   | "utm_campaign"
+  | "utm_content"
+  | "utm_term"
 >;
 
 async function readProfiles(
@@ -198,7 +200,7 @@ async function readProfiles(
     const { data, error } = await db
       .from("profiles")
       .select(
-        "id, first_name, last_name, email, created_at, home_location_id, utm_source, utm_medium, utm_campaign",
+        "id, first_name, last_name, email, created_at, home_location_id, utm_source, utm_medium, utm_campaign, utm_content, utm_term",
       )
       .in("id", chunk);
     if (error) throw error;
@@ -352,6 +354,8 @@ export async function readPartnerFamilies(
               source: profile.utm_source,
               medium: profile.utm_medium,
               campaign: profile.utm_campaign,
+              content: profile.utm_content,
+              term: profile.utm_term,
             },
             marketing_consent: consent,
           },

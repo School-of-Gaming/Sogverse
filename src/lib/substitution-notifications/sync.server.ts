@@ -13,8 +13,7 @@ import {
   openDiscordDmChannel,
   sendDiscordChannelMessage,
 } from "@/lib/discord-api.server";
-import { discordSubLogoUrl } from "@/lib/discord-substitution-message";
-import { sendableImageOrigin } from "@/lib/email-templates/render-context";
+import { discordSubLogoUrl, discordReachableOrigin } from "@/lib/discord-substitution-message";
 import {
   isSlackSubstitutionsConfigured,
   postSlackBlocks,
@@ -206,7 +205,7 @@ class DmSync {
   ) {
     // Discord fetches the logo and opens the button's link itself, so both
     // need an origin it can reach — a dev machine's has neither.
-    const origin = sendableImageOrigin();
+    const origin = discordReachableOrigin();
     this.logoUrl = discordSubLogoUrl(origin);
     this.mySogUrl = origin === null ? null : new URL(ROUTES.gedu.dashboard, origin).toString();
   }
@@ -226,6 +225,7 @@ class DmSync {
       recipient.locale !== null && isSupportedLocale(recipient.locale)
         ? recipient.locale
         : DEFAULT_LOCALE;
+    // exact-locale: a cache of the DM copy per app locale, keyed by the locale already settled above
     let copy = this.copies.get(locale);
     if (copy === undefined) {
       copy = loadDiscordSubOfferCopy(locale);
@@ -235,6 +235,7 @@ class DmSync {
   }
 
   private sessionFor(locale: SupportedLocale): SubstitutionDmSession {
+    // exact-locale: a cache of the DM session per app locale, not a pick among content versions
     let session = this.sessions.get(locale);
     if (session === undefined) {
       session = substitutionDmSession(this.snapshot, locale);

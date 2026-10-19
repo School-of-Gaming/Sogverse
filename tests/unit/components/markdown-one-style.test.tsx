@@ -49,6 +49,7 @@ const VARIANTS = [
   "profile",
   "article",
   "landing",
+  "spotlight",
 ] as const satisfies readonly MarkdownUseCase[];
 
 /** Every element the one map styles; a test below holds it equal to the map. */
@@ -177,6 +178,13 @@ describe("the one markdown style", () => {
     expect(marketing.querySelector("a")?.className).toBe(
       MARKDOWN_ELEMENT_CLASSES.a,
     );
+  });
+
+  it("keeps links but no headings in a spotlight", () => {
+    const root = renderRoot("spotlight");
+    expect(root.querySelector("h1, h2, h3, h4, h5, h6")).toBeNull();
+    expect(root.textContent).toContain("Title");
+    expect(root.querySelector("a")?.className).toBe(MARKDOWN_ELEMENT_CLASSES.a);
   });
 
   it("keeps neither headings nor links in a profile, only their words", () => {

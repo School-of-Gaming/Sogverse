@@ -15,7 +15,7 @@ function that has no clock, no query and no translator of its own.
 ## What the invoice counts
 
 **A municipality is billed for every session that was due and not cancelled.** A session
-is due on a date the club's schedule projects and on a date where one of its groups holds a
+is due on a date the club's plan holds and on a date where one of its groups holds a
 stored session row. Session records are materialized lazily — one is written the moment an
 educator records a report, a note or an attendance mark, and not before — so a row is the
 evidence that somebody was there; but a missing write-up is not evidence that nobody was,
@@ -31,8 +31,12 @@ per group and date, and the collapse happens in the builder: it is a rule of the
 not a property of the data, and doing it in the query would have thrown away which groups
 met.
 
-**The club's weekly slots are projected across the month**, clipped to its own term, both
-ends inclusive. A projected date with no stored row splits on whether it has passed:
+**The plan comes from the database.** The month's document carries each club's planned
+dates inside the month — its weekly slots expanded over the month and clipped to its term,
+both ends inclusive, by the one database function that expands every plan in the app — so
+this page agrees with every other surface about which days a club meets, and does no
+weekday arithmetic of its own. A planned date with no stored row splits on whether it has
+passed:
 
 - **Before today — unrecorded, and billed.** It was due, so it bills at the club's fee
   exactly as a recorded session does, and it is in every count and every total. It keeps
@@ -45,16 +49,16 @@ ends inclusive. A projected date with no stored row splits on whether it has pas
   printing an amount against it would bill a session not yet owed.
 
 **A cancelled date is the third answer, and it holds either side of today.** An admin can
-cancel a session, and a projected date no group of the club ran and that is cancelled is
+cancel a session, and a planned date no group of the club ran and that is cancelled is
 shown as **cancelled**: worth nothing, printed at zero in a muted tone. It is settled, so a
 future one says cancelled rather than upcoming. Because a cancellation is the only thing
 that stops a due date billing, three rules fix exactly what it covers:
 
-- **Only a projected date gets a cancelled line.** The document carries only the
+- **Only a planned date gets a cancelled line.** The document carries only the
   cancellations in effect — the database's one answer, the same every surface reads — so
-  one left with neither a projection nor a record is never on it. One over a record the
-  schedule has since stopped projecting is on it and keeps that record off the bill, but
-  it has no projected date to mark, so it renders no line.
+  one left with neither a planned date nor a record is never on it. One over a record the
+  plan no longer holds is on it and keeps that record off the bill, but it has no planned
+  date to mark, so it renders no line.
 - **A club cancels per group and is invoiced per date, so a date is cancelled only when
   every group the club has cancelled it.** The document lists every group of the club,
   including one that neither met nor cancelled all month — the rows and cancellations alone
@@ -72,12 +76,22 @@ dates: the recorded ones no cancellation covers, plus the unrecorded ones. A rec
 and an unrecorded one are never the same date, so the two add. A customer whose clubs'
 due dates were all cancelled has nothing to invoice and is refused on that ground.
 
+**A holiday is never billed, and it is not unrecorded.** A holiday break on a calendar the
+club follows withdraws the dates it covers from the plan, so they are never planned dates;
+the document carries the month's breaks beside the plan, each with the dates it withdrew.
+Each withdrawn date is a **holiday** line on the page, printed at zero in a muted tone and
+named with the break — it is settled either side of today, like a cancellation, because
+nothing was due. It is outside the billed count and every total, so it is in no Finvoice
+file: the file's rows are the billed counts. A stored row or a cancellation on a holiday
+date counts for nothing — the document leaves both out — so a holiday line is the only
+thing a holiday date can be.
+
 "Today" is **the club's own local today**, resolved in the club's timezone, because every
 date on either side of that comparison is one of the club's own local dates. A UTC "today"
 is off by one for several hours of every day, and the error always lands on the newest
 session — the one most likely to be looked at.
 
-**Records beat projections.** A stored row on a date the schedule does not project still
+**Records beat the plan.** A stored row on a date the plan does not hold still
 counts; a date carrying both is one line, and that line is recorded. This is the same rule
 every session feed in the app follows, and it has to stay the same rule: two surfaces
 disagreeing about whether a day happened is worse than either answer.
@@ -85,32 +99,29 @@ disagreeing about whether a day happened is worse than either answer.
 **But a date after the club's local today never bills, whatever is stored on it.** Nothing
 in the database stops an educator writing a note against a session that has not happened
 yet, and such a row would otherwise invoice a municipality for a session still ahead of it.
-A stored row dated later than today is therefore **upcoming** — the same line a projection
-with no row gets — and is outside the count. A row dated *today* counts: the comparison is
-between two of the club's own local dates, and an educator writing up the afternoon's
+A stored row dated later than today is therefore **upcoming** — the same line a planned
+date with no row gets — and is outside the count. A row dated *today* counts: the comparison
+is between two of the club's own local dates, and an educator writing up the afternoon's
 session is recording one that ran. This is the one place the invoice is deliberately
 smaller than the stored evidence would make it, and the direction is the point — a total
 that is short is a question somebody asks, and a total that is long is one nobody does.
 
-**A club with no weekly slots has no claim to project, and renders without a schedule
+**A club with no weekly slots has nothing planned, and renders without a schedule
 line at all.** It is a shape production has and staging did not — a club whose schedule was
 never filled in, or emptied after the term began — and it reaches the invoice on the
-strength of its stored rows alone. Nothing about it is exceptional: it has no projected
+strength of its stored rows alone. Nothing about it is exceptional: it has no planned
 dates, so nothing is due beyond its rows and nothing bills unrecorded, and its schedule
 column is simply empty rather than printing a weekly cadence it does not have. What it must
 never do is fail: one such club would otherwise take the whole month's invoice down with it, so the
 build is required to survive every document the wire contract accepts.
 
-**Projection is offered wherever the club has a start date.** That date is the whole of the
-"had it begun" rule: the walk is clipped to it, so a term that starts after the month being
-invoiced projects nothing without a second test for it. A club with no first day has no date
-to start walking from — guessing one would invent billed sessions — and it can still appear
-on the invoice, on the strength of its stored rows alone.
+**The term is the whole of the "had it begun" rule**: the plan is clipped to it, so a term
+that starts after the month being invoiced plans nothing there without a second test for it.
 
 A club's lifecycle is nowhere in this page's arithmetic, deliberately. A stored status was
 here once, and it was the defect: it never advanced past its initial value, so a test on it
-was a test that never passed, and projection was dead for every club on the invoice. The
-term dates say everything a projection needs to know.
+was a test that never passed, and every club on the invoice lost its planned dates. The
+term dates say everything the plan needs to know.
 
 **A club is on the invoice iff it has at least one line of any kind in the month**, and a
 municipality is on it iff at least one of its clubs is. An empty club row would say it did
@@ -125,7 +136,7 @@ every month that has not been sent yet.
 
 **The schedule and the term are read the same way, and the consequence is worth stating.**
 Editing a club's weekly slots or moving its start or end date changes, retroactively, which
-dates a past month projects — and because a passed projected date bills, it changes that
+dates a past month plans — and because a passed planned date bills, it changes that
 month's **totals** too, not only its lines. A month looked at last week can bill a different
 amount today, and a club that has just had its schedule corrected is expected to. That is
 the same contract as the fee: an invoice is recomputed from today's facts until it is sent,
@@ -362,7 +373,7 @@ one club otherwise read the same. The free text names the whole period (`1–3/2
 invoice is dated the first day after the period, and the filename and number take the
 period's last month. **A monthly file states none of the period elements** and is the
 shape the imports were verified against; the elements a period file adds are the part of
-it that is checked against Fennoa on its first import. Cancelled sessions stay out of every
+it that is checked against Fennoa on its first import. Cancelled sessions and holidays stay out of every
 file.
 
 ## How the month is read
@@ -460,7 +471,7 @@ the billed count, and beside it, in quiet secondary type, how many of those bill
 are not recorded — so a missing write-up can be chased with every club still closed. It is
 deliberately not a warning: those sessions are in the count and the total, the invoice is
 right, and a warning tone there would read as a figure to doubt. Dates still ahead of the
-club and cancelled dates are never mentioned there.
+club, cancelled dates and holidays are never mentioned there.
 
 **The dates behind a club's number are a second disclosure, under its own line.** A compact
 table of the club's month, two columns wide: the day, its ISO week and what became of it as
@@ -486,8 +497,8 @@ name and four figures.
 **The document's scroll gutter is reserved.** Expanding a municipality is itself what puts
 the page over the fold, so without the reservation the reader's own click summons a
 scrollbar, narrows the viewport and moves every figure they were reading sideways — a shift
-caused by the very action that was supposed to show them more. The opt-in attribute on the
-page's root is the repo's own mechanism for this; the rule lives in
+caused by the very action that was supposed to show them more. The invoicing hub the page
+renders in carries the repo's opt-in attribute for every one of its tabs; the rule lives in
 `src/components/layout/CLAUDE.md`.
 
 **Below the width the columns need, the table scrolls sideways rather than stacking.** This is
@@ -518,7 +529,7 @@ The app's rule is that anything with a time of day renders in the **viewer's** z
 club's schedule summary on this page renders in the **club's own** zone instead,
 deliberately.
 
-Every date on this page is a club-local calendar date — the session rows, the projected
+Every date on this page is a club-local calendar date — the session rows, the planned
 dates, the club's own today — because that is what a session record is keyed to. A schedule
 summary converted into the reader's zone can name a weekday those dates never fall on: a
 line reading Tuesday sitting above a column of Mondays, for a reader one zone west of

@@ -45,6 +45,8 @@ export function traineeWorkspaceData(
           }
         : group,
     ),
+    planned_sessions: product.planned_sessions,
+    final_session_date: product.final_session_date,
   };
 }
 

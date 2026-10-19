@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { CalendarClock, CircleCheck, Heart, Loader2, MailX } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -187,9 +188,9 @@ export function SeatOfferResponse({
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">
+          <Heading level={1} step="section" align="center">
             {lapsed ? t("expired.confirmTitle") : t("offer.confirmTitle")}
-          </h1>
+          </Heading>
           <p className="text-muted-foreground">
             {lapsed ? t("expired.confirmBody") : t("offer.confirmBody")}
           </p>
@@ -235,7 +236,7 @@ export function SeatOfferResponse({
           aria-hidden
         />
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{t("expired.title")}</h1>
+          <Heading level={1} step="section" align="center">{t("expired.title")}</Heading>
           <p className="text-muted-foreground">
             {t("expired.body", { days: SEAT_OFFER_WINDOW_DAYS })}
           </p>
@@ -267,7 +268,7 @@ export function SeatOfferResponse({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       <CalendarClock className="h-12 w-12 text-act" aria-hidden />
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{t("offer.title")}</h1>
+        <Heading level={1} step="section" align="center">{t("offer.title")}</Heading>
         <p className="text-muted-foreground">
           {step.isSelfSeat
             ? t("offer.self", { productName: step.productName })
@@ -411,7 +412,7 @@ function Outcome({
     <div className="flex w-full max-w-sm flex-col items-center gap-6 text-center">
       {icon}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         <p className="text-muted-foreground">{body}</p>
       </div>
       {children}

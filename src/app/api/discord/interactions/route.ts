@@ -33,6 +33,7 @@ import {
   parseSessionValue,
   parseSubCustomId,
   pickedSessionOption,
+  discordReachableOrigin,
   type DiscordComponentsMessage,
   type DiscordContentMessage,
   type DiscordSubCopy,
@@ -58,7 +59,6 @@ import {
 import { deriveNotificationState } from "@/lib/substitution-notifications/state";
 import { drainSubstitutionNotifications } from "@/lib/substitution-notifications/sync.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendableImageOrigin } from "@/lib/email-templates/render-context";
 import { getOrigin } from "@/lib/url";
 // The module by name rather than the package index: that re-exports
 // `"use client"` query hooks, which a route has no business loading.
@@ -481,6 +481,7 @@ async function sendSubStep(
       return;
     }
     const locale = gedu.locale ?? discordLanguage;
+    // exact-locale: picks which message catalogue to load, not a written version
     const copy = locale === discordLanguage ? fallback : await loadDiscordSubCopy(locale);
     fallback = copy;
     const now = new Date();
@@ -543,7 +544,7 @@ async function sendSubStep(
  * Discord could not fetch it, as from a dev machine.
  */
 function subLogoUrl(): string | null {
-  return discordSubLogoUrl(sendableImageOrigin());
+  return discordSubLogoUrl(discordReachableOrigin());
 }
 
 /**

@@ -1,7 +1,11 @@
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-import { CHAT_IMAGE_MAX_BYTES } from "@/lib/constants/chat";
-import { reencodeJpeg } from "@/lib/images/reencode-jpeg.server";
+import {
+  IMMUTABLE_CACHE_CONTROL,
+  readImageFile,
+  reencodeForPurpose,
+  type ImageIngestRefusal,
+} from "@/lib/images/ingest-image.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 // The contracts module directly rather than the feature barrel: the barrel also
 // carries the React Query hooks, which are a browser module this route has no
@@ -17,14 +21,12 @@ import {
 const ROUTE_LABEL = "/api/chat/images";
 
 /**
- * A year. The object is named by a message id that can never be reused and is
- * uploaded with `upsert: false`, so the bytes behind one name cannot change.
- * The same figure the session photos and the product catalogue use.
+ * An ingest refusal as this route answers it: its status, and no code — the
+ * chat surface answers every refused send with the failed bubble and its retry.
  */
-const IMMUTABLE_CACHE_CONTROL = "31536000";
-
-/** JPEG's start-of-image marker, followed by the first segment's own marker. */
-const JPEG_SOI = [0xff, 0xd8, 0xff];
+function ingestRefusal({ detail, status }: ImageIngestRefusal): ApiError {
+  return new ApiError(detail, status);
+}
 
 /**
  * POST /api/chat/images — send one picture into a chat channel.
@@ -62,7 +64,8 @@ const JPEG_SOI = [0xff, 0xd8, 0xff];
  * the row stores have to be measured rather than claimed — a fabricated
  * `1 × 20000` would be a layout bomb in every viewer's log. The route
  * re-encodes; it does not rescue: an image whose true dimensions are
- * implausible is refused by the RPC's own bound.
+ * implausible is refused, by the shared ingest step's edge check and the RPC's
+ * own bound behind it.
  *
  * **Row, then object, then flag — and a 200 means all three committed.** The
  * order is what keeps the guard in front of the bytes, and the flag is what
@@ -129,15 +132,11 @@ export const POST = defineRoute({
     // baked into the pixels and every scrap of metadata — EXIF, GPS, the
     // capture time — is dropped, which is the enforced half of the safety
     // guarantee: no client can post a picture of a child carrying coordinates.
-    let stored;
-    try {
-      stored = await reencodeJpeg(upload.bytes);
-    } catch (cause) {
-      throw new ApiError(
-        `the upload would not decode past its JPEG marker: ${String(cause)}`,
-        415,
-      );
-    }
+    // A picture whose longer edge is past the platform's maximum is refused
+    // here, with the RPC's own bound behind it.
+    const reencoded = await reencodeForPurpose(upload.bytes, "chat_image");
+    if (!reencoded.ok) throw ingestRefusal(reencoded);
+    const stored = reencoded.value;
 
     // --- 3. The row, on the caller's own client ------------------------------
     const { data: createdAt, error } = await supabase.rpc(
@@ -309,35 +308,9 @@ async function readChatImageUpload(request: Request): Promise<ChatImageUpload> {
     );
   }
 
-  const file = formData.get("file");
-  if (!(file instanceof File)) {
-    throw new ApiError("no 'file' field in the form", 400);
-  }
-
-  // Size before bytes, and not to save memory: `formData()` above has already
-  // buffered the whole body, and what bounds that is the platform's ~4.5 MB
-  // request limit. The order is about the answer — an over-cap file gets the
-  // same refusal whatever its first three bytes say.
-  if (file.size > CHAT_IMAGE_MAX_BYTES) {
-    throw new ApiError(
-      `the upload is ${file.size} bytes, over the ${CHAT_IMAGE_MAX_BYTES} cap`,
-      413,
-    );
-  }
-
-  const bytes = Buffer.from(await file.arrayBuffer());
-
-  // The magic-byte sniff, and the whole of what "this is a JPEG" means here.
-  // The declared content type is the client's claim about its own file and is
-  // not consulted. It runs before the re-encode rather than being left to it:
-  // sharp would happily decode a PNG or a WebP, and one format in the bucket is
-  // a property worth keeping deliberately rather than by accident.
-  if (!JPEG_SOI.every((byte, index) => bytes[index] === byte)) {
-    throw new ApiError(
-      "the upload does not begin with a JPEG start-of-image marker",
-      415,
-    );
-  }
+  const file = await readImageFile(formData, "chat_image");
+  if (!file.ok) throw ingestRefusal(file);
+  const bytes = file.value;
 
   const parsed = chatImageUploadFields.safeParse({
     id: formData.get("id"),

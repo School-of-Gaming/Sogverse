@@ -1,9 +1,11 @@
 // Resolves a session photo's row id to its storage object name and public URL.
 // Kept pure so callers don't need a Supabase client to render an image.
 
+import { IMAGE_PURPOSES } from "./image-purposes";
+
 /** The bucket these objects live in — one name, shared by the URL below and
  *  the route's admin-client upload and delete. */
-export const SESSION_IMAGES_BUCKET = "session-images";
+export const SESSION_IMAGES_BUCKET = IMAGE_PURPOSES.session_photo.bucket;
 
 /**
  * **The object name is derived, never stored.** A session photo's object is

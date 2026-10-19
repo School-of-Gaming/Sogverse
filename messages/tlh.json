@@ -49,6 +49,9 @@
       "adminLibrary": "paq qach ghItlhmey",
       "adminLibraryArticleNew": "ghItlh chu’",
       "adminLibraryArticleEdit": "ghItlh yIchoH",
+      "adminSpotlights": "Hovmey",
+      "adminSpotlightNew": "Hov chu’",
+      "adminSpotlightEdit": "Hov yIchoH",
       "adminLandingPages": "Sap ghItlhmey",
       "adminLandingPage": "Sap ghItlh",
       "adminPlatformVision": "Sogverse naj",
@@ -78,7 +81,10 @@
       "teamProfile": "Del’a’wIj",
       "adminTeamProfile": "Del’a’",
       "adminFeedback": "ja'chuq",
-      "team": "ghom"
+      "team": "ghom",
+      "adminHolidayCalendars": "DuQ jaj Hovtay'",
+      "adminHolidayCalendarNew": "DuQ jaj Hovtay' chu'",
+      "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH"
     },
     "descriptions": {
       "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -419,7 +425,9 @@
         "timesIn": "poHmey: {zone}",
         "nothingOn": "pagh",
         "needsAttention": "poQ Qu’ – De’vam tu’lu’ ’etlhDaq QaDDaq",
-        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}"
+        "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+        "holiday": "leSpoH",
+        "holidayTitle": "leSpoH — {name}. jajvam may’ tu’lu’be’."
       },
       "cancellation": {
         "allTitle": "jajvam Hoch ghommey poH qIllu’ – yay’ Dun",
@@ -466,7 +474,6 @@
       }
     },
     "municipalityInvoicing": {
-      "title": "veng DIlmeH ghItlh",
       "description": "wa’ jar ghomHom veng: nuq qaSpu’, ’ej nuq DIlnIS veng.",
       "previousMonth": "jar wa’Dich",
       "nextMonth": "jar veb",
@@ -488,6 +495,8 @@
       "billedNotRecorded": "DIl ’ach qonlu’pu’be’",
       "upcoming": "qaSbe’lI’",
       "cancelled": "qIllu’",
+      "holiday": "leSpoH",
+      "holidayNamed": "leSpoH — {name}",
       "unrecordedSessions": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
       "sessionsFor": "{club} qaSpu'",
       "clubsIn": "{municipality} ghomHommey",
@@ -509,7 +518,6 @@
       "loadErrorWithReason": "DIl jar laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID."
     },
     "invoiceCustomers": {
-      "title": "DIlwI’pu’",
       "subtitle": "Fennoa DIlwI’pu’: veng ghomHom qaSpu’ DIlbogh ghotpu’.",
       "addCustomer": "DIlwI’ yIchel",
       "columns": {
@@ -567,6 +575,83 @@
         "hint": "ghomHomvam qaSpu’ DIlbogh ghot. DIlwI’ ghajbe’bogh ghomHom — DIl ghItlh chenbe’, ’ej DIl HaqwI’Daq ngoQlu’.",
         "manage": "DIlwI’pu’ yIQorgh",
         "option": "{name} ({number})"
+      }
+    },
+    "holidayCalendars": {
+      "subtitle": "Warriors rest too. On these days the club does not meet — even Kahless took a break.",
+      "addCalendar": "Hovtay' chel",
+      "columns": {
+        "name": "pong",
+        "breaks": "DuQ",
+        "nextBreak": "DuQ veb",
+        "clubs": "ghommey"
+      },
+      "noUpcomingBreak": "DuQ pagh. Battle continues!",
+      "empty": "Hovtay' pagh. wa'DIch yIchel!",
+      "backToList": "Hovtay' tetlhDaq yIchegh",
+      "notFound": "Hovtay' Datu'be'. Perhaps it fled in dishonour.",
+      "newPage": {
+        "title": "Hovtay' chu'",
+        "submit": "Hovtay' yIchenmoH"
+      },
+      "editPage": {
+        "title": "Hovtay' yIchoH"
+      },
+      "sections": {
+        "calendar": "Hovtay'",
+        "breaks": "DuQ",
+        "breaksDescription": "A rest runs from its first day to its last, both included, and bears a name in every tongue of the calendar. Families see the name where the sessions it removes would have been.",
+        "products": "Hovtay' tlha'bogh ghommey",
+        "productsDescription": "Saving changes these clubs at once — past moons included. Choose wisely, warrior."
+      },
+      "fields": {
+        "name": "pong",
+        "languages": "Hol",
+        "firstDay": "jaj wa'DIch",
+        "lastDay": "jaj Qav",
+        "breakName": "pong ({language})"
+      },
+      "hints": {
+        "name": "Only the High Council of admins sees this name. Families see only the names of the rests.",
+        "languages": "The tongues belong to the whole calendar: add or remove one here and every rest obeys. Every rest needs a name in each. Families read their own tongue, else English, else the first one written."
+      },
+      "noBreaks": "DuQ pagh.",
+      "checkLine": "{range} · {days, plural, one {# jaj} other {# jaj}} · Hogh {week}",
+      "checkLineWeeks": "{range} · {days, plural, one {# jaj} other {# jaj}} · Hogh {first}–{last}",
+      "addBreak": "DuQ chel",
+      "removeBreak": "{name} yIteq",
+      "noProducts": "No club follows this calendar yet. A club chooses its calendars on its own page.",
+      "errors": {
+        "nameRequired": "Hovtay' pong yInob!",
+        "datesRequired": "{name} needs a first and a last day.",
+        "endBeforeStart": "{name} ends before it begins. Not even time travel allows this.",
+        "breakNameMissing": "{name} needs a name in {language}.",
+        "overlap": "{first} and {second} clash. One day, one rest.",
+        "saveFailed": "Hovtay' pollaHbe'. yInIDqa'!",
+        "saveFailedWithReason": "Hovtay' pollaHbe' — {reason}"
+      },
+      "impact": {
+        "title": "choHmeyvam DapolneS'a'?",
+        "description": "{count, plural, one {This club changes} other {These # clubs change}} the moment you save.",
+        "futureRemoved": "Families see no session on {count, plural, one {# day} other {# days}}: {dates}.",
+        "futureRestored": "Families see sessions again on {count, plural, one {# day} other {# days}}: {dates}.",
+        "pastRemoved": "{count, plural, one {A past session vanishes} other {Past sessions on # days vanish}} from families’ history: {dates}.",
+        "pastRestored": "{count, plural, one {A past session returns} other {Past sessions on # days return}} to families’ history: {dates}.",
+        "recordsHidden": "{count, plural, one {# written-up session is} other {# written-up sessions are}} hidden from families.",
+        "recordsShown": "{count, plural, one {# written-up session is} other {# written-up sessions are}} shown to families again.",
+        "requestsStopped": "{count, plural, one {# substitution request has} other {# substitution requests have}} no session left to cover.",
+        "requestsReopened": "{count, plural, one {# substitution request has} other {# substitution requests have}} a session to cover again."
+      },
+      "editBreak": "{name} yIchoH",
+      "unnamedBreak": "DuQ pong Hutlh",
+      "dialog": {
+        "editTitle": "DuQ yIchoH",
+        "saveAndAddAnother": "yIpol ’ej latlh yIchel"
+      },
+      "breakErrors": {
+        "datesRequired": "jaj wa’DIch jaj Qav je yIwIv!",
+        "endBeforeStart": "The last day comes before the first. Not even time travel allows this.",
+        "nameMissing": "DuQ pong yInob ({language})!"
       }
     },
     "library": {
@@ -655,11 +740,63 @@
         "unpublishFailedWithReason": "ghItlh ngeH qIllu’be’ – {reason}",
         "versionTitleRequired": "pong poQ {language} ghItlh."
       },
-      "versionComplete": "naQ",
-      "versionIncomplete": "naQbe’ wej",
-      "addLocale": "Hol chu’",
-      "removeLocale": "{language} yIteq",
       "languagesLabel": "Holmey"
+    },
+    "spotlights": {
+      "title": "Hovmey",
+      "subtitle": "Hoch QIn ghItlh bIngDaq Hoch Hov chenmoHlu’bogh lutu’ vavDu’ SoSDu’ je. chu’qu’ wa’DIch. Hoch laDwI’ Hol Dalo’ — Hol ghItlhlu’be’chugh, DIvI’ Hol; ghIq latlh Hol ghItlhlu’bogh.",
+      "newSpotlight": "Hov chu’",
+      "empty": "Hov tu’lu’be’ wej. wa’DIch yIghItlh.",
+      "backToList": "Hovmey yIchegh",
+      "notFound": "ID’vam ghajbogh Hov tu’lu’be’.",
+      "loadError": "Hov’e’ laHlaHbe’. nIDqa’meH yIchu’qa’.",
+      "listLoadError": "Hovmey laHlaHbe’. nIDqa’meH yIchu’qa’. batlh yIvang.",
+      "newPage": {
+        "title": "Hov chu’",
+        "submit": "yIpol"
+      },
+      "editPage": {
+        "title": "Hov yIchoH"
+      },
+      "fields": {
+        "languages": "Holmey",
+        "title": "pong",
+        "body": "ghItlh",
+        "picture": "nagh beQ"
+      },
+      "hints": {
+        "languages": "Hoch Hol ghopDaj yIghItlh. pong ghItlh je poQ Hoch Hol.",
+        "body": "ghItlhDaq pong bIng ’oH, naDev rur. rarwI’mey chaw’lu’.",
+        "picture": "ghItlhDaq pong Dung ’oH, 2:1 pe’lu’. nagh beQ Hutlhbogh Hov pollaH, ’ach chenmoHmeH nagh beQ poQ."
+      },
+      "bodyPlaceholder": "Hov yIghItlh…",
+      "actions": {
+        "save": "yIpol",
+        "cancel": "yImev",
+        "delete": "yIteq"
+      },
+      "errors": {
+        "noVersion": "wa’ Hol puS pong ghItlh je poQ Hov.",
+        "versionIncomplete": "{language} Hol: pong ghItlh je poQ.",
+        "saveFailed": "Hov pollaHbe’. yInIDqa’.",
+        "saveFailedWithReason": "Hov pollaHbe’ — {reason}",
+        "deleteFailed": "Hov teqlaHbe’. yInIDqa’.",
+        "deleteFailedWithReason": "Hov teqlaHbe’ — {reason}"
+      },
+      "languagesLabel": "Holmey",
+      "created": "chenmoHlu’: {date}",
+      "status": {
+        "on": "chenmoHlu’",
+        "off": "Qaw’lu’"
+      },
+      "switchLabel": "QIn ghItlhmeyDaq",
+      "needsPicture": "chenmoHmeH nagh beQ yIchel.",
+      "deleteConfirm": {
+        "title": "Hovvam DateqneS’a’?",
+        "descriptionOn": "QIn ghItlhmeyvo’ DaH mej, ’ej chegh not. qachDaq ratlh nagh beQDaj.",
+        "descriptionOff": "chegh not. qachDaq ratlh nagh beQDaj.",
+        "confirm": "yIteq"
+      }
     },
     "landingPages": {
       "title": "Sap ghItlhmey",
@@ -849,9 +986,10 @@
         }
       },
       "list": {
-        "subtitle": "{plural} yIQI’.",
-        "new": "{label} chu’",
-        "empty": "{plural} pagh. {label} chu’ yIchu’.",
+        "subtitle": "ghomHom, pa’ Qugh, Qu’mey je yIQI’.",
+        "new": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} chu’",
+        "empty": "{type, select, consumerClub {ghomHom tlhIngan pagh. ghomHom tlhIngan chu’ yIchu’.} municipalityClub {ghomHom veng pagh. ghomHom veng chu’ yIchu’.} camp {pa’ Qugh pagh. pa’ Qugh chu’ yIchu’.} other {Qu’mey pagh. Qu’ chu’ yIchu’.}}",
+        "emptyAll": "ghomHom pagh, pa’ Qugh pagh, Qu’mey pagh.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
         "online": "HeHDaq",
@@ -862,19 +1000,20 @@
         "pendingHint": {
           "registrationOpens": "{date}: ghIt poSchoH",
           "startDate": "{date}: tagh"
-        }
+        },
+        "newAny": "chu’",
+        "newDialogTitle": "ghomHom, pa’ Qugh, Qu’ ghap yIchenmoH"
       },
       "translations": {
         "label": "Hol",
-        "hint": "Hol DIchu’. wa’ DoS DIchu’ poQ. vavmey Hol vIqIm; pagh, DIvI’ Hol; pagh, Hol DIchu’bogh.",
-        "addLocale": "+ Hol chu’",
-        "removeLocale": "{locale} pe’"
+        "hint": "Hol DIchu’. wa’ DoS DIchu’ poQ. vavmey Hol vIqIm; pagh, DIvI’ Hol; pagh, Hol DIchu’bogh."
       },
       "newPage": {
-        "back": "{plural} vIcheghmoH",
-        "title": "{label} chu’"
+        "back": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} vIcheghmoH",
+        "title": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} chu’"
       },
       "detailsPage": {
+        "title": "Doch De’",
         "notFound": "Davchugh ghaj.",
         "uncapped": "quS veH pagh",
         "listed": "tetlhDaq tu’lu’",
@@ -892,7 +1031,6 @@
           "notRequired": "poQbe’lu’"
         },
         "fields": {
-          "publicUrl": "Hoch He",
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
           "startDate": "tagh jaj",
@@ -915,19 +1053,43 @@
           "requiresGamerCreations": "toy’wI’ chenmoHtaHbogh Doch",
           "visibility": "leghlu",
           "gamerPhotoConsents": "mIllogh tlhobmey",
-          "marketingConsents": "QIn tlhobmey"
+          "marketingConsents": "QIn tlhobmey",
+          "format": "rurmeH",
+          "ageRange": "qan SaH",
+          "publicLink": "Hoch rap Dorgh",
+          "createdBy": "chenmoHpu’wI’",
+          "createdOn": "chenmoHpu’bogh jaj"
         },
         "copyLink": "Hoch He yIghItlhqa'",
-        "copied": "ghItlhqa'lu'ta'"
+        "copied": "ghItlhqa'lu'ta'",
+        "sections": {
+          "schedule": "poH nab",
+          "placeAndAudience": "Daq ’ej ghom",
+          "seatsAndRegistration": "quSmey ’ej ghItlh",
+          "pricing": "Huch",
+          "requirements": "ruv ’ej Qochbe’ghach",
+          "record": "qun"
+        },
+        "unknownCreator": "Sovbe’lu’"
+      },
+      "holidayCalendars": {
+        "label": "DuQ jaj Hovtay'",
+        "hint": "The club lays down its bat'leths on every rest day of the calendars it swears by. Families see the rest where battle would have been.",
+        "manage": "Hovtay' yIloH",
+        "nextBreak": "veb: {name}, {dates}",
+        "noUpcomingBreak": "DuQ pagh. Battle continues!",
+        "empty": "Hovtay' pagh. Not yet forged.",
+        "listUnavailable": "Hovtay' laDlaHbe'! The calendars this club already honours survive the save.",
+        "none": "pagh"
       },
       "editPage": {
         "back": "Doch vIcheghmoH",
-        "kicker": "{label} yIchoH",
+        "kicker": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIchoH",
         "title": "{name} yIchoH"
       },
       "clonePage": {
         "back": "Doch vIcheghmoH",
-        "kicker": "{label} yIvelqa’",
+        "kicker": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIvelqa’",
         "title": "{name} velqa’lu’",
         "copySuffix": " (velqa’)"
       },
@@ -1159,7 +1321,7 @@
       },
       "actions": {
         "cancel": "pegh",
-        "createLabel": "{label} yIchu’"
+        "createLabel": "{type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’}} yIchu’"
       },
       "status": {
         "pending": "taghbe’",
@@ -1224,6 +1386,13 @@
             "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 16:9 ’echletvaD Dape’, qachDaq chellu’, ’ej navvamDaq lo’lu’.",
             "outcomeAdded": "qachDaq chellu’, ’ej navvamvaD wIvlu’.",
             "outcomeExisting": "qachDaq tu’lu’ — navvamvaD wIvlu’."
+          },
+          "spotlightImage": {
+            "change": "nagh beQ yIchoH",
+            "remove": "nagh beQ yIteq",
+            "dropPrompt": "naDev DocH yIpum, qoj yIwIv. 2:1 ’echletvaD Dape’, qachDaq chellu’, ’ej HovvamDaq lo’lu’.",
+            "outcomeAdded": "qachDaq chellu’, ’ej HovvamvaD wIvlu’.",
+            "outcomeExisting": "qachDaq tu’lu’ — HovvamvaD wIvlu’."
           }
         }
       },
@@ -1238,6 +1407,7 @@
         "live": "cha’lu’",
         "hidden": "So’lu’",
         "draft": "nab",
+        "switchedOff": "Qaw’lu’",
         "replace": "nagh beQ yIchoH",
         "remove": "qachvo’ yIteq",
         "replaceConfirm": {
@@ -1294,6 +1464,19 @@
             "removeConsequence": "{count, plural, one {bIngDaq nav nagh beQvam Hutlh.} other {bIngDaq Hoch # navmey nagh beQvam luHutlh.}}",
             "removeUnused": "nagh beQvam lo’ pagh nav. qachvo’ reH teqlu’.",
             "removeConfirm": "{count, plural, one {# navvo’} other {# navmeyvo’}} yIteq"
+          },
+          "spotlightImage": {
+            "title": "Hov nagh beQmey",
+            "description": "wa’ nagh beQ lo’laH law’ Hovmey. naDev wIvlIj Hovvam neH choH; ’ach nagh beQ DachoHchugh qoj DateqchughvaD, Hoch lo’bogh Hovmey luchoH — QIn ghItlhmeyDaq ’oHbogh je.",
+            "usedBadge": "{count, plural, one {# Hov} other {# Hovmey}}",
+            "usedBy": "nagh beQvam lo’bogh Hovmey",
+            "usedByNone": "nagh beQvam lo’ pagh Hov.",
+            "replaceConsequence": "{count, plural, one {bIngDaq Hov nagh beQ chu’ cha’ — QIn veb ghItlhDaq.} other {bIngDaq Hoch # Hovmey nagh beQ chu’ lucha’ — QIn veb ghItlhDaq.}}",
+            "replaceUnused": "nagh beQvam lo’ pagh Hov. qachDaq DaqDaj tlhap chu’bogh.",
+            "replaceConfirm": "{count, plural, one {# HovDaq} other {# HovmeyDaq}} yIchoH",
+            "removeConsequence": "{count, plural, one {bIngDaq Hov nagh beQvam Hutlh, ’ej Qaw’lu’. QIn ghItlhmeyvo’ mej.} other {bIngDaq Hoch # Hovmey nagh beQvam luHutlh, ’ej Qaw’lu’. QIn ghItlhmeyvo’ mej.}}",
+            "removeUnused": "nagh beQvam lo’ pagh Hov. qachvo’ reH teqlu’.",
+            "removeConfirm": "{count, plural, one {# Hovvo’} other {# Hovmeyvo’}} yIteq"
           }
         }
       },
@@ -1307,11 +1490,14 @@
         "searchGedu": "Gedu yISam…",
         "searchMunicipality": "veng yISam…",
         "noResults": "pagh SammoHlu’.",
+        "type": "Segh",
+        "allTypes": "Hoch",
         "search": "nej",
         "searchPlaceholder": "pong nej…",
         "showing": "cha’lu’ {count}/{total}",
         "clear": "yIteq",
-        "noMatches": "pagh {plural} DaSamlaH. yInej 'ej yIwIv latlh!"
+        "noMatches": "pagh {type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} DaSamlaH. yInej 'ej yIwIv latlh!",
+        "noMatchesAll": "pagh DaSamlaH. yInej 'ej yIwIv latlh!"
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj ’ehmaH yInej…",
@@ -1448,7 +1634,7 @@
         "switchClub": {
           "dropZone": "ghom’a’ yIchIj",
           "title": "ghom’a’ yIchIj",
-          "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; jarvam chuq chIm ghItlh veb; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
+          "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
           "searchPlaceholder": "pongDaq ghom’a’ yISam",
           "picker": {
             "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
@@ -1467,6 +1653,7 @@
             "current": "DaH DIl",
             "target": "Huch chu’",
             "proration": "jarvam chuq pIm chel pagh nobHa’ ghItlh veb.",
+            "nothingPaid": "{date} pa’ latlh DIl qorDu’ ’e’ poQbe’ chuq. ghIq ghom chu’ Huch DIl, ’ach Huch tlhab’e’ ghaj qorDu’ luteq.",
             "unavailable": "Huch cha’lu’be’",
             "error": "cheghbe’ Huch chov. ghom’a’ yIwIvqa’."
           },
@@ -1647,11 +1834,6 @@
       "marketing": {
         "title": "ghum",
         "attribution": "He",
-        "utm": {
-          "source": "mung",
-          "medium": "Duj",
-          "campaign": "veS"
-        },
         "preferences": "chaw’mey",
         "schoolOfGaming": "noH Quj yejHaD",
         "lynxEducate": "Lynx Educate",
@@ -1704,7 +1886,6 @@
       "addType": "{type} yIchel"
     },
     "sites": {
-      "title": "Daqmey",
       "subtitle": "Hoch Daqmey, ’ej Daq HochvaD qaStaHbogh wanI’mey.",
       "addSite": "Daq yIchel",
       "searchPlaceholder": "Daq pong yIghItlh…",
@@ -1771,6 +1952,9 @@
         "templateSubFlow": "QIn tlhIn: Hoch Dotlh",
         "subPreviewSent": "Hoch QIn ngeHta’."
       }
+    },
+    "tools": {
+      "title": "janmey"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -2321,7 +2505,7 @@
             "parentsEmail": "vav QIn Daq — tu'lu' neH <code>marketing_consent.granted</code>Daj <code>true</code> 'oHtaHvIS. latlhDaq <code>null</code>, 'ej chaw' lujDI' <code>null</code> mojqa'.",
             "parentsCreatedAt": "ghorgh chenmoHlu' vav account: He'So' wa'DIch nuq — qorDu' chenmoHlu'.",
             "parentsLocation": "vav jatlhpu'bogh juH Daq ngaSbogh veng je cha' ghItlh Sep ngoq; <code>city</code> 'oH veng pong'e'. <code>null</code> vav 'angbe'DI' qoj vengDaq ngaSbe'DI'.",
-            "parentsUtm": "tlhegh <code>utm_source</code>, <code>utm_medium</code> je <code>utm_campaign</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' wej null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
+            "parentsUtm": "tlhegh <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code> je <code>utm_term</code> — account chenmoHlu'bogh tlhegh; Hoch <code>null</code> Hutlhbogh. wa'logh neH ghItlhlu' muvDI', 'ej ngeH chab laj leghwI'DI' neH — vaj puS De'wI' vagh null qeng. LynxvaD chenmoHlu'bogh mIwmey <code>lynx-</code> qeng.",
             "parentsMarketingConsent": "DaH Lynx ngeH chaw'vaD vavvam jang: <code>granted</code> 'ej ghorgh choHlu' Qav. <code>null</code>: not yu'lu'pu' — ngeHmeH <code>false</code> rur.",
             "gamers": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' puqpu', Hoch wa' ghItlh. vav Daq nIteb neH qorDu' veH 'elmoHDI' chIm. puq qeng wa'DIch pong neH — latlh jatlhmeH Daq Hutlh; pong mI' je Roblox account neH.",
             "gamersId": "puq pong mI' — muvmoHghachmey <code>participant_id</code> qengbogh.",
@@ -2420,7 +2604,9 @@
             "pagesProductId": "De'wI' — nav ghajbogh; <code>null</code> mut navvaD malja' navvaD je.",
             "pagesPageviews": "veHDaq nav leghghachmey — nuq qem 'e' qelbe'lu'.",
             "pagesByCampaign": "tlhegh <code>utm_campaign</code> tlha' leghghachmey Sep. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach — Daq ghItlhbogh leghwI', qoj per Hutlhbogh tlhegh tlha'bogh je.",
-            "pagesBySourceMedium": "leghghachmey rap, 'ach <code>utm_source</code> je <code>utm_medium</code> boqDaj tlha' Sep — Huch leng, ghom leng, je QIn leng pIm leghmeH. cha' Sepmey leghghachmey rap qel, 'ej Hoch <code>pageviews</code> chav; latlh SepvaD chIm tetlh chenmoHbe'.",
+            "pagesBySourceMedium": "leghghachmey rap, 'ach <code>utm_source</code> je <code>utm_medium</code> boqDaj tlha' Sep — Huch leng, ghom leng, je QIn leng pIm leghmeH. Hoch Sepmey leghghachmey rap qel, 'ej Hoch <code>pageviews</code> chav; latlh SepvaD chIm tetlh chenmoHbe'.",
+            "pagesByContent": "leghghachmey rap, 'ach tlhegh <code>utm_content</code> tlha' Sep — wa' veS 'olvetlhmey tlheghmey je pIm leghmeH. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach.",
+            "pagesByTerm": "leghghachmey rap, 'ach tlhegh <code>utm_term</code> tlha' Sep — Huch nejwI' mu' lan pagh. <code>null</code> tlhegh: 'oH Hutlhbogh Hoch leghghach.",
             "pagesByDay": "Hoch jaj leghghachmey, UTC-Daq, poH tlhegh chenmoHmeH."
           },
           "note": "Vercel ghItlh vangtaH neH leghwI' chab beQDaq De' ghom laj, 'ej qorDu' De'wI'Daq UTM mI'mey ghItlhlu' neH leghwI' ngeH lajDI'. cha' veHmey pIm, 'ej De' ghom veH tIn law'; vaj naDev toghlu'bogh leghghach je <code>/families</code>-Daq qorDu' rapbe': Hoch lajbogh leghwI' cha'Daq tu'lu'; De' ghom neH lajbogh naDev neH; chab beQ lajbe'bogh pagh Daq."
@@ -2972,7 +3158,6 @@
     }
   },
   "geduInvoicing": {
-    "adminTitle": "Gedu DIlmeH ghItlh",
     "adminDescription": "wa’ jar: SeSSIy’mey ghItlhlu’pu’bogh Gedu Hoch, ’ej School of Gaming DIlmeH nuq poQ.",
     "myTitle": "DIlmeH ghItlh",
     "myDescription": "School of Gaming DIlmeH nuq DapoQ, wa’ jar neH. SeSSIy’ ghItlhlu’DI’ vaj togh — ghoS, ja’ pagh qonta’.",
@@ -3002,6 +3187,8 @@
     "notRecorded": "ghItlhbe’lu’",
     "upcoming": "ghoSqu’",
     "cancelled": "qIllu’",
+    "holiday": "leSpoH",
+    "holidayNamed": "leSpoH — {name}",
     "absentSubstituted": "Dachbe’ — lIw {name}",
     "absentNoSubstitute": "Dachbe’ — lIwwI’ tu’lu’be’",
     "substitutingFor": "{name} lIw",
@@ -3069,7 +3256,8 @@
     "live": "qaStaH",
     "nextSession": "may’ veb",
     "upcoming": "may’ pIq",
-    "cancelled": "qIllu’"
+    "cancelled": "qIllu’",
+    "noSession": "may’ tu’lu’be’"
   },
   "sessionFacts": {
     "remote": "HeHDaq",
@@ -3129,6 +3317,12 @@
     "linkCancel": "qIl",
     "linkInvalid": "Daqvam vIrarlaHbe’. qoDHa’ Daq, QIn Daq, ghap Sogverse He yIlo’.",
     "opensInNewTab": "(chu’ DaqDaq poSmoH)"
+  },
+  "localeTabs": {
+    "addLanguage": "Hol chu’",
+    "removeLanguage": "{language} yIteq",
+    "complete": "naQ",
+    "notComplete": "naQbe’ wej"
   },
   "header": {
     "nav": {
@@ -3314,7 +3508,8 @@
       "audience": "ghotpu’",
       "language": "Hol",
       "online": "QumDaq",
-      "tbd": "Sov pagh"
+      "tbd": "Sov pagh",
+      "holidayBreaks": "SuvwI’pu’ leSbogh poHmey"
     },
     "signupPanel": {
       "verb": {
@@ -3580,17 +3775,10 @@
   "sidebar": {
     "dashboard": "QaD",
     "users": "lo’wI’pu’",
-    "consumerClubs": "ghomHom tlhIngan",
-    "municipalityClubs": "ghomHom veng",
-    "municipalityInvoicing": "veng DIlmeH ghItlh",
-    "invoiceCustomers": "DIlwI’pu’",
     "libraryContent": "paq qach ghItlhmey",
+    "spotlights": "Hovmey",
     "landingPages": "Sap ghItlhmey",
     "platformVision": "Sogverse naj",
-    "geduInvoicing": "Gedu DIlmeH ghItlh",
-    "camps": "pa’ Qugh",
-    "events": "Qu’mey",
-    "sites": "Daqmey",
     "uiComponents": "UI ngoQmey",
     "uiPreviews": "UI cha’ghachmey",
     "testing": "Qu’ nI’moH",
@@ -3598,7 +3786,23 @@
     "expandSidebar": "HeDmey ’an",
     "collapseSidebar": "HeDmey SoQmoH",
     "substitutions": "lIwmey",
-    "feedback": "ja'chuq"
+    "feedback": "ja'chuq",
+    "products": "Doch",
+    "invoicing": "DIlmeH ghItlh"
+  },
+  "adminHubs": {
+    "titles": {
+      "products": "ghomHom, pa’ Qugh, Qu’mey je",
+      "invoicing": "DIlmeH ghItlh"
+    },
+    "tabs": {
+      "products": "Doch",
+      "sites": "Daqmey",
+      "holidayCalendars": "DuQ jaj Hovtay'",
+      "municipalities": "vengmey",
+      "invoiceCustomers": "DIlwI’pu’",
+      "gedus": "Gedupu’"
+    }
   },
   "home": {
     "hero": {
@@ -4401,7 +4605,9 @@
         "ages": "qan {min}–{max}",
         "audienceParents": "vavpu’vaD",
         "audienceFamilies": "qorDu’pu’vaD",
-        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
+        "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}",
+        "holidayBreaks": "SuvwI’pu’ leSbogh poHmey",
+        "holidayBreak": "{name}, {range}"
       }
     },
     "verifyEmail": {
@@ -4991,8 +5197,7 @@
         },
         "languages": "Holmey",
         "languagesHint": "Hol mughlu’be’. Hoch Hol yIchel ’ej Hol tetlhDaq yIghItlh.",
-        "addLocale": "Hol chu’",
-        "removeLocale": "{locale} yIteq",
+        "bioTooLong": "ghaH tIq law’; pollaHbe’. {max} ngutlh yIlaghmoH.",
         "shortDescription": "wa’ tlhegh QIn",
         "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
         "longDescription": "ghaH",

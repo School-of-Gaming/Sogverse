@@ -11,7 +11,12 @@ import {
   PRODUCT_CONFIRMATION_MODES,
   type ProductConfirmationEmailOptions,
 } from "./product-confirmation";
-import type { InvitationSlot } from "./product-confirmation-invitation";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import {
+  invitationPlanWindow,
+  type InvitationPlannedSession,
+  type InvitationSlot,
+} from "./product-confirmation-invitation";
 import { formatProductLocation } from "@/lib/products/format-product-location";
 import {
   fail,
@@ -21,6 +26,7 @@ import {
   noneOrDate,
   noneOrText,
   optionalDate,
+  requireDate,
   requireEmail,
   requireTime,
   requireWeekday,
@@ -80,6 +86,11 @@ import {
   SESSION_REPORT_PHOTO_COUNT_LABELS,
   sessionReportPhotoFixtures,
 } from "./fixtures/session-report-photos";
+import {
+  SESSION_REPORT_SPOTLIGHT_CHOICES,
+  SESSION_REPORT_SPOTLIGHT_LABELS,
+  sessionReportSpotlightFixtures,
+} from "./fixtures/session-report-spotlights";
 import type { EmailRenderContext } from "./render-context";
 import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator, TopicPrepTranslator } from "./translator";
@@ -90,7 +101,8 @@ import {
   PRODUCT_TOPIC_VALUES,
 } from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
-import { formatDate, formatTimeRange } from "@/lib/utils";
+import { formattingLocale } from "@/lib/constants/locales";
+import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/utils";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";
@@ -175,8 +187,9 @@ export interface TemplateDefinition {
    * Validate raw params against `schema`, then build the subject line, HTML
    * email content and Reply-To. Throws a ZodError when params are malformed.
    *
-   * `context` says where the render is going, and defaults to the send — the
-   * destination that has to be safe when a caller has not thought about it.
+   * `context` is the render's own origin, which the testing tool's demo art
+   * resolves against. A render that asks for no demo art may leave it out; one
+   * that asks for some without it throws.
    *
    * `tPrep` is the **second** translator, scoped to the top-level `topicPrep`
    * namespace, for the one template whose mail carries a document the app's own
@@ -210,12 +223,17 @@ function defineTemplate<P extends TemplateParams>(entry: {
   schema: z.ZodType<P>;
   /**
    * Build the HTML email content from validated params. The context is there
-   * for a template whose markup depends on where the render is going — one
-   * does, and it is the fixture photographs, whose URLs are only fetchable
-   * from a dev machine by the browser previewing them. A builder that does not
-   * care simply declares three parameters and takes the fourth for free.
+   * for a template whose markup carries demo art — one does, the session
+   * report, whose fixture pictures resolve against the render's origin. A
+   * builder that does not care simply declares three parameters and takes the
+   * fourth for free.
    */
-  build: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  build: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
   /**
    * Generate the email subject line from validated params and translator. The
    * locale is there for a subject that prints a formatted value of its own —
@@ -223,7 +241,12 @@ function defineTemplate<P extends TemplateParams>(entry: {
    * the same reason `build` takes it: a subject derived from the same resolved
    * options has to resolve them the same way.
    */
-  subject: (params: P, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  subject: (
+    params: P,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
   /**
    * Reply-To for this template, defaulting to the support inbox — which is the
    * answer for every mail we send *to* a family. Only a template whose real
@@ -243,7 +266,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
     params: P,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => RenderedAttachment[];
   /**
    * The plain-text body, for a template that states one. See
@@ -253,7 +276,7 @@ function defineTemplate<P extends TemplateParams>(entry: {
     params: P,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => string | undefined;
   resolveParams?: TemplateDefinition["resolveParams"];
 }): TemplateDefinition {
@@ -292,11 +315,21 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
     params: P,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
     tPrep: TopicPrepTranslator | null,
   ) => R;
-  build: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
-  subject: (resolved: R, t: EmailTranslator, locale: string, context: EmailRenderContext) => string;
+  build: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
+  subject: (
+    resolved: R,
+    t: EmailTranslator,
+    locale: string,
+    context: EmailRenderContext | undefined,
+  ) => string;
   /**
    * `undefined` is a real answer, not an omission: a template can owe a text
    * body only on the renders that carry a calendar part, and the signup
@@ -307,13 +340,13 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
     resolved: R,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => string | undefined;
   attachments?: (
     resolved: R,
     t: EmailTranslator,
     locale: string,
-    context: EmailRenderContext,
+    context: EmailRenderContext | undefined,
   ) => RenderedAttachment[];
   replyTo?: (params: P) => string;
   resolveParams?: TemplateDefinition["resolveParams"];
@@ -322,7 +355,7 @@ function defineResolvedTemplate<P extends TemplateParams, R>(entry: {
   return {
     ...rest,
     schema,
-    render: (rawParams, t, locale, context = { to: "send" }, tPrep) => {
+    render: (rawParams, t, locale, context, tPrep) => {
       const params = schema.parse(rawParams);
       const resolved = resolve(params, t, locale, context, tPrep ?? null);
       const files = attachments?.(resolved, t, locale, context);
@@ -517,6 +550,82 @@ function parseInvitationSlots(value: string): InvitationSlot[] {
 }
 
 /**
+ * The plan a test send's invitation is composed from.
+ *
+ * **The form has no product row, so there is no database plan to read.** It
+ * stands in with what `planned_session_dates` answers for a product with these
+ * slots and dates — every date in the span the composer walks on which the typed
+ * schedule has a slot, soonest first — which is the plan of a product nothing
+ * has taken a day out of. A test send therefore never states an `EXDATE`; that
+ * shape is the live send's, and the unit tests are where it is exercised.
+ */
+function formPlannedSessions({
+  slots,
+  startDate,
+  endDate,
+  timezone,
+  now,
+}: {
+  slots: readonly InvitationSlot[];
+  startDate: string | null;
+  endDate: string | null;
+  timezone: string;
+  now: Date;
+}): InvitationPlannedSession[] {
+  if (startDate === null) return [];
+  const window = invitationPlanWindow({ now, timezone, endDate });
+  const first = Date.parse(`${startDate > window.from ? startDate : window.from}T00:00:00Z`);
+  const last = Date.parse(`${window.to}T00:00:00Z`);
+  const sessions: InvitationPlannedSession[] = [];
+  // UTC-pinned calendar days, so the walk cannot repeat or skip a date at a
+  // daylight-saving transition; only the instants are read in the zone.
+  for (let day = first; day <= last; day += 86_400_000) {
+    const date = formatInTimeZone(new Date(day), "UTC", "yyyy-MM-dd");
+    const weekday = (new Date(day).getUTCDay() + 6) % 7;
+    const onTheDay = slots
+      .filter((slot) => slot.weekday === weekday)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    for (const slot of onTheDay) {
+      const startsAt = fromZonedTime(`${date}T${slot.startTime}:00`, timezone);
+      sessions.push({
+        date,
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + slot.durationMinutes * 60_000),
+      });
+    }
+  }
+  return sessions;
+}
+
+/**
+ * The holiday-breaks field — `;`-separated `Name YYYY-MM-DD YYYY-MM-DD`
+ * entries, or the none token — as the formatted lines the mail states. A name
+ * may hold spaces, so the two dates are read off the end of each entry.
+ */
+function parseFormHolidayBreaks(
+  value: string,
+  locale: string,
+  today: string,
+): { name: string; range: string }[] {
+  if (isNoneToken(value)) return [];
+  return value
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "")
+    .map((entry) => {
+      const parts = entry.split(/\s+/);
+      const endDate = requireDate(parts.at(-1) ?? "", "Holiday breaks end date");
+      const startDate = requireDate(parts.at(-2) ?? "", "Holiday breaks start date");
+      const name = parts.slice(0, -2).join(" ");
+      if (name === "") fail("Holiday breaks", "a name before the two dates", entry);
+      return {
+        name,
+        range: formatCompactDateRange(startDate, endDate, locale, today),
+      };
+    });
+}
+
+/**
  * The form's strings as the options the mail is built from, resolved once.
  *
  * `now` is the resolver's own — the live sends read the clock at the moment
@@ -527,6 +636,7 @@ function parseInvitationSlots(value: string): InvitationSlot[] {
 function resolveProductConfirmationOptions(
   params: ProductConfirmationParams,
   now: Date,
+  locale: string,
 ): ProductConfirmationEmailOptions {
   const startDate = optionalDate(params.startDate, "Start date");
   const endDate = noneOrDate(params.endDate, "End date");
@@ -598,6 +708,14 @@ function resolveProductConfirmationOptions(
       spokenLanguageCode: params.spokenLanguageCode,
       now,
     },
+    // Typed as the list the live send would already have chosen, and worded
+    // here by the same compact range the live send uses, in the render's
+    // locale — so a test send shows every locale's range shape.
+    holidayBreaks: parseFormHolidayBreaks(
+      params.holidayBreaks,
+      locale,
+      formatInTimeZone(now, params.timezone, "yyyy-MM-dd"),
+    ),
     invitation: {
       // Minted when the form names none, exactly as the explorer mints a UID:
       // the identifier is a function of the seat, and a test send has no seat.
@@ -617,13 +735,19 @@ function resolveProductConfirmationOptions(
       // text input posts its placeholder.
       shortDescription: noneOrText(params.shortDescription),
       timezone: params.timezone,
-      startDate,
       // Three more of the token fields, alongside the description above and the
       // schedule below. Every one of them is a text input, so the absence is a
       // typed word rather than a cleared box — see `FORM_NONE_TOKEN` for why an
       // empty one cannot carry it.
       endDate,
       slots,
+      plannedSessions: formPlannedSessions({
+        slots,
+        startDate,
+        endDate,
+        timezone: params.timezone,
+        now,
+      }),
       isRemote,
       siteName,
       siteAddress: noneOrText(params.siteAddress),
@@ -720,6 +844,12 @@ const SESSION_REPORT_PHOTO_OPTIONS = SESSION_REPORT_PHOTO_COUNTS.map((value) => 
   value,
 }));
 
+/** Whether to hang the demo spotlights under the mail. */
+const SESSION_REPORT_SPOTLIGHT_OPTIONS = SESSION_REPORT_SPOTLIGHT_CHOICES.map((value) => ({
+  label: SESSION_REPORT_SPOTLIGHT_LABELS[value],
+  value,
+}));
+
 function resolveSessionReport(
   {
     sample: sampleId,
@@ -727,10 +857,11 @@ function resolveSessionReport(
     reportMarkdown,
     copy,
     photoCount,
+    spotlights,
     ...rest
   }: SessionReportParams,
   locale: string,
-  context: EmailRenderContext,
+  context: EmailRenderContext | undefined,
 ): SessionReportEmailOptions {
   const sample =
     SESSION_REPORT_SAMPLES.find((candidate) => candidate.id === sampleId) ??
@@ -750,6 +881,7 @@ function resolveSessionReport(
     sessionTime: formatTimeRange(sample.startsAt, sample.endsAt, locale, viewerTimezone),
     reportMarkdown: reportMarkdown.trim() === "" ? sample.markdown : reportMarkdown,
     photos: sessionReportPhotoFixtures(Number(photoCount), context),
+    spotlights: sessionReportSpotlightFixtures(spotlights, context),
   };
 }
 
@@ -829,6 +961,7 @@ const productConfirmationParamsSchema = z.object({
   ageRange: z.string(),
   audience: z.enum(["gamers", "parents", "families"]),
   spokenLanguageCode: z.enum(Constants.public.Enums.spoken_language),
+  holidayBreaks: z.string(),
 
   // --- What the calendar invitation is composed from. ---
   //
@@ -962,6 +1095,8 @@ const sessionReportParamsSchema = z.object({
   copy: z.enum(SESSION_REPORT_COPIES),
   /** How many demo photos to attach. Required for the same reason `copy` is. */
   photoCount: z.enum(SESSION_REPORT_PHOTO_COUNTS),
+  /** Whether to attach the demo spotlights. Required for the same reason `copy` is. */
+  spotlights: z.enum(SESSION_REPORT_SPOTLIGHT_CHOICES),
 });
 
 type SessionReportParams = z.infer<typeof sessionReportParamsSchema>;
@@ -1465,7 +1600,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       userRole: p.userRole,
       userEmail: p.userEmail,
       message: p.message,
-      sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+      sentAt: new Date().toLocaleString(formattingLocale(locale), { dateStyle: "medium", timeStyle: "short" }),
       isGamer: p.userRole === "gamer",
       parentEmail: p.parentEmail ?? undefined,
       gamerOwnMailbox: p.gamerOwnMailbox,
@@ -1573,6 +1708,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         type: "select",
         options: SPOKEN_LANGUAGE_OPTIONS,
       },
+      {
+        key: "holidayBreaks",
+        label: `Good to know – Holiday breaks, \`;\`-separated \`Name YYYY-MM-DD YYYY-MM-DD\` entries (\`${FORM_NONE_TOKEN}\` for none)`,
+        placeholder: "Autumn break 2026-10-19 2026-10-23; Christmas break 2026-12-21 2027-01-06",
+      },
 
       {
         key: "slots",
@@ -1669,7 +1809,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         // it is a section this mail carries, not a section it is made of.
         tPrep,
         locale,
-        resolveProductConfirmationOptions(p, new Date()),
+        resolveProductConfirmationOptions(p, new Date(), locale),
       ),
     build: (content, t, locale) => buildProductConfirmationEmail(t, locale, content),
     // Shared with the live sends rather than restated here — see the function's
@@ -1700,10 +1840,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "deadline",
         label: "Deadline (formatted)",
-        // Exactly what the live send produces for `en` — a 24-hour clock, and
-        // month before day. A placeholder that sets the value differently to
-        // the code teaches whoever is testing the mail the wrong shape.
-        placeholder: "Monday, August 31 at 14:20 GMT+3",
+        // Exactly what the live send produces for `en` — day before month, a
+        // 24-hour clock and the zone's short name. A placeholder that sets the
+        // value differently to the code teaches whoever is testing the mail the
+        // wrong shape.
+        placeholder: "Monday 31 August at 14:20 EEST",
       },
       {
         key: "acceptUrl",
@@ -1743,10 +1884,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "offeredAt",
         label: "Offered at (formatted)",
-        // What the live staff send produces — pinned to the 24-hour clock like
+        // What the live staff send produces for `en` — a 24-hour clock like
         // every other seat-offer surface, so the stamp staff read matches the
         // one on the admin card.
-        placeholder: "Wed, Aug 26, 14:20 GMT+3",
+        placeholder: "Wed 26 Aug, 14:20 EEST",
       },
       {
         key: "adminProductUrl",
@@ -1774,6 +1915,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "copy", label: "Which copy", type: "select", options: SESSION_REPORT_COPY_OPTIONS },
       { key: "sample", label: "Sample report", type: "select", options: SESSION_REPORT_SAMPLE_OPTIONS },
       { key: "photoCount", label: "Photos", type: "select", options: SESSION_REPORT_PHOTO_OPTIONS },
+      { key: "spotlights", label: "Spotlights", type: "select", options: SESSION_REPORT_SPOTLIGHT_OPTIONS },
       { key: "viewerTimezone", label: "Timezone to format in", type: "select", options: VIEWER_TIMEZONE_OPTIONS },
       {
         key: "reportMarkdown",
@@ -1821,7 +1963,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         key: "deadline",
         label: "Deadline (formatted)",
         // The same string the parent's mail states — one deadline, two readers.
-        placeholder: "Monday, August 31 at 14:20 GMT+3",
+        placeholder: "Monday 31 August at 14:20 EEST",
       },
       { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "https://sogverse.sog.gg/gamer" },
     ],

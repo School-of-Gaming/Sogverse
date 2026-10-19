@@ -149,6 +149,16 @@ describe("buildTrafficPage", () => {
         { values: { utmSource: "lynx", utmMedium: "email" }, pageviews: 70 },
         { values: { utmSource: "lynx", utmMedium: "" }, pageviews: 30 },
       ],
+      byContent: [
+        { values: { utmContent: "" }, pageviews: 920 },
+        { values: { utmContent: "hero-banner" }, pageviews: 80 },
+      ],
+      byTerm: [
+        { values: { utmTerm: "" }, pageviews: 600 },
+        { values: { utmTerm: "roblox club" }, pageviews: 40 },
+        { values: { utmTerm: "minecraft club" }, pageviews: 40 },
+        { values: { utmTerm: "" }, pageviews: 320 },
+      ],
       byDay: [
         { values: { day: "2026-09-02" }, pageviews: 600 },
         { values: { day: "2026-09-01" }, pageviews: 400 },
@@ -171,6 +181,15 @@ describe("buildTrafficPage", () => {
         { utm_source: "lynx", utm_medium: null, pageviews: 30 },
         { utm_source: null, utm_medium: null, pageviews: 900 },
       ],
+      by_content: [
+        { utm_content: "hero-banner", pageviews: 80 },
+        { utm_content: null, pageviews: 920 },
+      ],
+      by_term: [
+        { utm_term: "minecraft club", pageviews: 40 },
+        { utm_term: "roblox club", pageviews: 40 },
+        { utm_term: null, pageviews: 920 },
+      ],
       by_day: [
         { date: "2026-09-01", pageviews: 400 },
         { date: "2026-09-02", pageviews: 600 },
@@ -182,6 +201,8 @@ describe("buildTrafficPage", () => {
     const reads = {
       byCampaign: [{ values: { utmCampaign: "" }, pageviews: 10 }],
       bySourceMedium: [{ values: { utmSource: "", utmMedium: "" }, pageviews: 10 }],
+      byContent: [{ values: { utmContent: "" }, pageviews: 10 }],
+      byTerm: [{ values: { utmTerm: "" }, pageviews: 10 }],
       byDay: [{ values: { day: "2026-09-01" }, pageviews: 10 }],
     };
     expect(buildTrafficPage("shop", null, RANGE, reads)).not.toBeNull();
@@ -197,6 +218,18 @@ describe("buildTrafficPage", () => {
         bySourceMedium: [{ values: { utmSource: "", utmMedium: "" }, pageviews: 9 }],
       }),
     ).toBeNull();
+    expect(
+      buildTrafficPage("shop", null, RANGE, {
+        ...reads,
+        byContent: [{ values: { utmContent: "" }, pageviews: 11 }],
+      }),
+    ).toBeNull();
+    expect(
+      buildTrafficPage("shop", null, RANGE, {
+        ...reads,
+        byTerm: [{ values: { utmTerm: "" }, pageviews: 9 }],
+      }),
+    ).toBeNull();
   });
 
   it("throws on a day outside the range rather than dropping its views", () => {
@@ -204,6 +237,8 @@ describe("buildTrafficPage", () => {
       buildTrafficPage("product", PRODUCT, RANGE, {
         byCampaign: [{ values: { utmCampaign: "" }, pageviews: 1 }],
         bySourceMedium: [{ values: { utmSource: "", utmMedium: "" }, pageviews: 1 }],
+        byContent: [{ values: { utmContent: "" }, pageviews: 1 }],
+        byTerm: [{ values: { utmTerm: "" }, pageviews: 1 }],
         byDay: [{ values: { day: "2026-09-15" }, pageviews: 1 }],
       }),
     ).toThrow(/outside/);
@@ -211,13 +246,21 @@ describe("buildTrafficPage", () => {
 
   it("answers an unviewed page with zero and empty splits", () => {
     expect(
-      buildTrafficPage("shop", null, RANGE, { byCampaign: [], bySourceMedium: [], byDay: [] }),
+      buildTrafficPage("shop", null, RANGE, {
+        byCampaign: [],
+        bySourceMedium: [],
+        byContent: [],
+        byTerm: [],
+        byDay: [],
+      }),
     ).toEqual({
       page: "shop",
       product_id: null,
       pageviews: 0,
       by_campaign: [],
       by_source_medium: [],
+      by_content: [],
+      by_term: [],
       by_day: [],
     });
   });

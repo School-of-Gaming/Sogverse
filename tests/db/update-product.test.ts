@@ -106,6 +106,10 @@ describe("update_product", () => {
       DECOY_PRODUCT_ID,
     ]);
     await admin.from("invoice_customers").delete().eq("id", INVOICE_CUSTOMER);
+    await admin
+      .from("holiday_calendars")
+      .delete()
+      .eq("name", "Update-product fixture calendar");
   });
 
   /**
@@ -886,6 +890,63 @@ describe("update_product", () => {
     );
     expect(error).toBeNull();
     expect(await requiredConsents()).toEqual([]);
+  });
+
+  // -------------------------------------------------------------------------
+  // Holiday calendars — the same delegated set, one join table over
+  // -------------------------------------------------------------------------
+
+  /** Minted by the RPC; found by this name, which only this file uses. */
+  const CALENDAR_NAME = "Update-product fixture calendar";
+
+  async function followedCalendars() {
+    const { data } = await admin
+      .from("product_holiday_calendars")
+      .select("calendar_id")
+      .eq("product_id", PRODUCT_ID);
+    return (data ?? []).map((r) => r.calendar_id);
+  }
+
+  async function fixtureCalendar(): Promise<string> {
+    const existing = await admin
+      .from("holiday_calendars")
+      .select("id")
+      .eq("name", CALENDAR_NAME)
+      .maybeSingle();
+    if (existing.data !== null) return existing.data.id;
+    const { data, error } = await adminAuth.rpc("create_holiday_calendar", {
+      p_name: CALENDAR_NAME,
+      p_breaks: [],
+    });
+    expect(error).toBeNull();
+    if (data === null) throw new Error("no calendar id");
+    return data;
+  }
+
+  it("sets the holiday calendars a club follows, and clears them when p_holiday_calendar_ids is omitted", async () => {
+    // Delegated to set_product_holiday_calendars like the consents above, so
+    // the same NULL-clears shape holds — and the same footgun: a save that
+    // forgets the field detaches every calendar.
+    await freshProduct();
+    const calendar = await fixtureCalendar();
+
+    const set = await adminAuth.rpc("update_product", {
+      ...consentUpdateArgs("Calendars set"),
+      p_holiday_calendar_ids: [calendar],
+    });
+    expect(set.error).toBeNull();
+    expect(await followedCalendars()).toEqual([calendar]);
+
+    const forgotten = await adminAuth.rpc(
+      "update_product",
+      consentUpdateArgs("Calendars forgotten"),
+    );
+    expect(forgotten.error).toBeNull();
+    expect(await followedCalendars()).toEqual([]);
+
+    // The product goes before the calendar can: the link is ON DELETE RESTRICT.
+    await deleteTestProducts(admin, [PRODUCT_ID]);
+    await admin.from("holiday_calendars").delete().eq("id", calendar);
   });
 
   // -------------------------------------------------------------------------

@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
@@ -19,7 +20,8 @@ import {
   renderScheduleLinesForDetail,
 } from "@/lib/products/format-product-schedule";
 import { cn, formatDate } from "@/lib/utils";
-import { computeVoiceState } from "@/lib/voice-window";
+import type { PlannedSession } from "@/lib/planned-sessions";
+import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { FamilyProductBackLink } from "./BackLink";
@@ -118,6 +120,11 @@ export interface FamilyProductPageBodyProps {
    * somewhere else, and none of them belongs on a page about one enrollment.
    */
   schedule: FamilyProductSchedule;
+  /**
+   * The product's planned sessions as the family document carries them,
+   * soonest first and unmarked — what the Join reads the next session from.
+   */
+  plannedSessions: readonly PlannedSession[];
   /**
    * Whether the product runs in a voice room rather than a building. The
    * question is `is_remote`, never "does it have a site": a remote
@@ -269,6 +276,7 @@ export function FamilyProductPageBody({
   audience,
   productName,
   schedule,
+  plannedSessions,
   isRemote,
   participant,
   groupName,
@@ -307,7 +315,7 @@ export function FamilyProductPageBody({
 
   // A cancelled session opens no room, so the Join names the soonest one that
   // is going to run. The feed carries every cancelled date the room could land
-  // on: it holds the same forward horizon the room's walk does.
+  // on: it holds the same cut of the plan the room looks across.
   const cancelledDates = useMemo(
     () =>
       new Set(
@@ -320,13 +328,13 @@ export function FamilyProductPageBody({
   const voiceState = useMemo(
     () =>
       computeVoiceState({
-        product: schedule,
+        plan: markCancelled(plannedSessions, cancelledDates),
+        openEnded: schedule.end_date === null,
         now,
         locale,
         timeZone,
-        cancelledDates,
       }),
-    [schedule, now, locale, timeZone, cancelledDates],
+    [plannedSessions, schedule.end_date, now, locale, timeZone, cancelledDates],
   );
 
   // A room only exists on a remote product, and only while the product still
@@ -351,9 +359,11 @@ export function FamilyProductPageBody({
           {p(schedule.product_type)}
         </span>
 
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {productName}
-        </h1>
+        <div className="mt-1">
+          <Heading level={1} step="section">
+            {productName}
+          </Heading>
+        </div>
 
         {/* The identity lines. The product name above is the page's primary
             identity on every copy; what differs is what a reader needs
@@ -544,9 +554,11 @@ export function FamilyProductPageBody({
       />
 
       <section className="mt-6">
-        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t("feedHeading")}
-        </h2>
+        <div className="mb-3">
+          <Heading level={2} step="card-title">
+            {t("feedHeading")}
+          </Heading>
+        </div>
         <FamilySessionFeed
           entries={entries}
           sourceTimeZone={sourceTimeZone}
@@ -627,7 +639,9 @@ function ProblemNotice({
 }
 
 /**
- * One standing note: a micro-heading and the paragraph under it.
+ * One standing note: a heading and the paragraph under it. An h2: the card
+ * holding the notes has no title of its own, so each note titles its own
+ * region of the page.
  *
  * Plain text, not markdown, because that is what the field is — the standing
  * notes are stored as plain text on both scopes, and rendering them through the
@@ -638,9 +652,9 @@ function ProblemNotice({
 function NoteBlock({ heading, body }: { heading: string; body: string }) {
   return (
     <div>
-      <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <Heading level={2} step="card-title">
         {heading}
-      </h3>
+      </Heading>
       <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed">
         {body}
       </p>

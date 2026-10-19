@@ -179,12 +179,12 @@ describe("buildSessionPickerMessage", () => {
     );
     expect(options(select).slice(0, 2)).toEqual([
       {
-        label: "Tue, Oct 6, 16:00 – 17:30 GMT+3",
+        label: "Tue 6 Oct, 16:00–17:30 EEST",
         description: "Minecraft Club — A · Kallio School",
         value: `${GROUP_A}:2026-10-06`,
       },
       {
-        label: "Thu, Oct 8, 16:00 – 17:30 GMT+3",
+        label: "Thu 8 Oct, 16:00–17:30 EEST",
         description: "Roblox Studio · Remote",
         value: `${GROUP_B}:2026-10-08`,
       },
@@ -313,7 +313,7 @@ describe("the admin preview", () => {
 });
 
 describe("the request modal", () => {
-  const picked = { label: "Tue, Oct 6, 16:00 – 17:30 GMT+3", description: "Minecraft Club — A · Kallio School" };
+  const picked = { label: "Tue 6 Oct, 16:00–17:30 EEST", description: "Minecraft Club — A · Kallio School" };
   const modalTexts = (components: DiscordComponent[]) =>
     components.filter((component) => component.type === 10).map((component) => String(component.content));
   const labels = (components: DiscordComponent[]) =>
@@ -329,7 +329,7 @@ describe("the request modal", () => {
     });
     expect(modal.title).toBe("Request a substitute");
     expect(modalTexts(modal.components)).toEqual([
-      "**Tue, Oct 6, 16:00 – 17:30 GMT+3**\nMinecraft Club — A · Kallio School",
+      "**Tue 6 Oct, 16:00–17:30 EEST**\nMinecraft Club — A · Kallio School",
       "Your reason and note are shown to admins only.",
     ]);
     const [reason, note] = labels(modal.components);
@@ -350,7 +350,7 @@ describe("the request modal", () => {
 
   it("falls back to the session's date, in the copy's locale, when the picked option is not known", () => {
     const modal = buildRequestModal({ copy: en, groupId: GROUP_A, sessionDate: "2026-10-06", picked: null });
-    expect(modalTexts(modal.components)[0]).toBe("**Tue, Oct 6**");
+    expect(modalTexts(modal.components)[0]).toBe("**Tue 6 Oct**");
 
     // Never the raw ISO date, whatever the locale.
     const finnish = buildRequestModal({ copy: fi, groupId: GROUP_A, sessionDate: "2026-10-06", picked: null });
@@ -383,7 +383,7 @@ describe("the request modal", () => {
     });
 
     expect(pickedSessionOption(pressed, `${GROUP_B}:2026-10-08`)).toEqual({
-      label: "Thu, Oct 8, 16:00 – 17:30 GMT+3",
+      label: "Thu 8 Oct, 16:00–17:30 EEST",
       description: "Minecraft Club — A · Kallio School",
     });
     expect(pickedSessionOption(pressed, `${GROUP_A}:2026-12-01`)).toBeNull();
@@ -399,7 +399,7 @@ describe("the outcome", () => {
     const message = buildFiledMessage({ copy: en, logoUrl: LOGO, session: picked });
 
     expect(texts(message)).toContain(
-      "✅ Substitute requested for Minecraft Club — A on Tue, Oct 6, 16:00 – 17:30 GMT+3.",
+      "✅ Substitute requested for Minecraft Club — A on Tue 6 Oct, 16:00–17:30 EEST.",
     );
     expect(buttons(message)).toHaveLength(0);
   });
@@ -411,7 +411,7 @@ describe("the outcome", () => {
       session: { sessionDate: "2026-12-01" },
     });
 
-    expect(texts(message)).toContain("**Tue, Dec 1**");
+    expect(texts(message)).toContain("**Tue 1 Dec**");
     expect(texts(message)).toContain(
       "✅ You’ve asked for a substitute for this session. Waiting for one.",
     );

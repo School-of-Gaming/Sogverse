@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { TEAM_PHOTOS_BUCKET } from "./team-profiles.types";
+import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 
 /**
  * Reading a public team profile's photo, for the photo route and the share
@@ -23,23 +23,17 @@ import { TEAM_PHOTOS_BUCKET } from "./team-profiles.types";
  * anything. The card embeds the bytes and has no photo version to name.
  */
 
-/** The only types served: what the photo editor saves. */
-const SERVED_TYPES = ["image/jpeg", "image/webp"] as const;
-export type PublicTeamPhotoType = (typeof SERVED_TYPES)[number];
-
-function isServedType(type: string): type is PublicTeamPhotoType {
-  return (SERVED_TYPES as readonly string[]).includes(type);
-}
+/** The only type served: what the team photo upload route stores. */
+export type PublicTeamPhotoType = "image/jpeg";
 
 /**
- * The content type to serve a stored photo as: the stored type when it is a
- * JPEG or a WebP, otherwise the one its name's extension says, otherwise none.
+ * The content type to serve a stored photo as: JPEG when it is stored as one or
+ * its name's extension says so, otherwise none.
  * Never any other stored type — an SVG served from our origin runs script.
  */
 function contentTypeOf(name: string, stored: string): PublicTeamPhotoType | null {
-  if (isServedType(stored)) return stored;
+  if (stored === "image/jpeg") return stored;
   const lower = name.toLowerCase();
-  if (lower.endsWith(".webp")) return "image/webp";
   if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
   return null;
 }
@@ -68,7 +62,7 @@ export async function readPublicTeamPhoto(
   userId: string,
   version: string | null,
 ): Promise<PublicTeamPhoto> {
-  const bucket = anon.storage.from(TEAM_PHOTOS_BUCKET);
+  const bucket = anon.storage.from(IMAGE_PURPOSES.team_photo.bucket);
 
   // The storage policy shows anon at most one object in the folder: the
   // current photo of a public profile.
@@ -100,7 +94,7 @@ export async function readPublicTeamPhoto(
   if (contentType === null) {
     return {
       ok: false,
-      reason: `public team photo for ${userId} is not a JPEG or a WebP`,
+      reason: `public team photo for ${userId} is not a JPEG`,
     };
   }
 

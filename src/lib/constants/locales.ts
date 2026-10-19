@@ -61,6 +61,15 @@ interface LocaleDefinition {
    * not speak, rather than silently picking the wrong language.
    */
   stripe: StripeLocale;
+  /**
+   * The BCP 47 tag every `Intl` API and `toLocale*String` call formats with for
+   * this locale — the one place a locale's date, clock, list and number
+   * conventions are decided. It is separate from the locale code because a bare
+   * code such as `en` means US conventions to `Intl`, while our English is UK
+   * English. A regional locale added later gets its own entry with its own tag
+   * (`en-us` → `"en-US"`).
+   */
+  formatting: string;
 }
 
 /**
@@ -81,14 +90,6 @@ interface LocaleDefinition {
  * two letters** — the URL prefix matcher and the path normalizer test
  * membership in this list, never a shape. `detectLocaleFromHeader` already
  * prefers an exact tag match over a language-subtag one.
- *
- * A related but smaller open question: the bare `en` tag is also what `Intl`
- * formats with, and bare `en` means US conventions — timezone names render as
- * "GMT+3" / "GMT+1" where a Helsinki or UK reader expects "EEST" / "BST". The
- * fit for that is a per-locale *formatting* tag in `LOCALE_CONFIG` (`en-GB`
- * for `en`), which leaves the locale code, column, cookie and URLs alone; it
- * is a site-wide decision about every date the app renders, tracked in
- * `src/i18n/CLAUDE.md`.
  *
  * Written out as a literal tuple rather than derived from `LOCALE_CONFIG`'s
  * keys: `Object.keys` is typed `string[]`, and narrowing it back to this tuple
@@ -117,24 +118,28 @@ export const LOCALE_CONFIG = {
     nativeLabel: "English",
     country: "GB",
     stripe: "en",
+    formatting: "en-GB",
   },
   fi: {
     label: "Finnish",
     nativeLabel: "Suomi",
     country: "FI",
     stripe: "fi",
+    formatting: "fi",
   },
   sv: {
     label: "Swedish",
     nativeLabel: "Svenska",
     country: "SE",
     stripe: "sv",
+    formatting: "sv",
   },
   fr: {
     label: "French",
     nativeLabel: "Français",
     country: "FR",
     stripe: "fr",
+    formatting: "fr",
   },
   // Klingon stays last — see the ordering rule on SUPPORTED_LOCALES.
   tlh: {
@@ -142,6 +147,8 @@ export const LOCALE_CONFIG = {
     nativeLabel: "Klingon",
     country: "KLINGON",
     stripe: "auto",
+    // Klingon formats its dates, clocks and lists as English.
+    formatting: "en-GB",
   },
 } as const satisfies Record<SupportedLocale, LocaleDefinition>;
 
@@ -292,4 +299,14 @@ export function resolveLocale(
  */
 export function stripeLocaleOrAuto(value: unknown): StripeLocale {
   return isSupportedLocale(value) ? LOCALE_CONFIG[value].stripe : "auto";
+}
+
+/**
+ * The `Intl` locale tag to format with for an app locale. Every `Intl.*`
+ * constructor and `toLocale*String` call that renders for a reader takes this,
+ * never the app locale itself. Takes a plain string because next-intl's
+ * `useLocale()` returns one; anything unsupported formats as `DEFAULT_LOCALE`.
+ */
+export function formattingLocale(locale: string): string {
+  return LOCALE_CONFIG[resolveLocale(locale)].formatting;
 }

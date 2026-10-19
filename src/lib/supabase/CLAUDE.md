@@ -118,8 +118,27 @@ a non-unique column alone repeats and drops rows at every tie — so the orderin
 resume filter and the derivation of the next cursor belong to one place per order, never
 assembled per call site.
 
+**Rule: a list a person scrolls through writes only its read, its key and its rows; the
+shared pieces do the rest.** Its service read builds the filters and hands the query to
+`keysetPage()`, returning the page's rows and, on the first page only, the count; its
+query hook normalises the filters into the key and passes that read to
+`useKeysetInfiniteQuery()` with the read's own page-size constant; the component renders
+the flattened rows and mounts the sentinel from `useKeysetSentinel()` below the last one
+while more follow. Paging, accumulation, holding the previous answer during a new
+question, and when asking for more is safe all live in those shared hooks
+(`src/hooks/`), so none of it is restated per surface.
+
 **The resume filter is the query's top-level `or`, which is the one composition constraint
 this shape carries.** Every other filter is its own parameter and PostgREST ANDs them, so a
 search, a role filter and a set of ids compose freely; a second top-level `or` is a second
 thing to get wrong, so a search that genuinely wants several columns ORed together belongs
 in a searchable column on the view, where it is one filter again.
+
+**A filter over a row's children — any of its names, any of its weekdays — goes on an
+aliased empty embed, never on the embed the row renders.** `alias:child_table()` plus
+`alias=not.is.null` keeps the rows with a matching child and puts nothing in the response;
+filtering the rendered embed instead would also narrow the children painted on the row. An
+`or` among a child's own columns is scoped to that embed, so it does not compete with the
+cursor's. A match against children in *either of two tables* is an `or` across embeds,
+which only the top level can hold — so it reads the matching parent ids first and filters
+`id=in.(…)`, one more parameter the cursor composes with.

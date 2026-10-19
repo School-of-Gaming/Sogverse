@@ -13,6 +13,7 @@ import type { Database, Json } from "./database.types";
 // member-flair types.
 import type { GamerCreation } from "@/services/member-flair/member-flair.contracts";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
+import type { PlannedSession } from "@/lib/planned-sessions";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases
@@ -298,6 +299,19 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 // also where the trimming and country-code rules are stated.
 export type InvoiceCustomer =
   Database["public"]["Tables"]["invoice_customers"]["Row"];
+
+// Holiday calendars — Row aliases only, for the same reason as InvoiceCustomer:
+// none of the four tables carries a write grant, and the writers are
+// create_holiday_calendar, update_holiday_calendar and
+// set_product_holiday_calendars.
+export type HolidayCalendar =
+  Database["public"]["Tables"]["holiday_calendars"]["Row"];
+export type HolidayBreak =
+  Database["public"]["Tables"]["holiday_breaks"]["Row"];
+export type HolidayBreakTranslation =
+  Database["public"]["Tables"]["holiday_break_translations"]["Row"];
+export type ProductHolidayCalendar =
+  Database["public"]["Tables"]["product_holiday_calendars"]["Row"];
 /**
  * How often an invoice customer is invoiced: every calendar month, quarter or
  * half-year. The period arithmetic lives in `@/lib/finvoice`.
@@ -352,6 +366,16 @@ export type LibraryArticleTranslationRow =
   Database["public"]["Tables"]["library_article_translations"]["Row"];
 export type LibraryArticlePublicationTranslationRow =
   Database["public"]["Tables"]["library_article_publication_translations"]["Row"];
+
+// Spotlights — admin-written notes appended to every parent's session report email:
+// the picture and the enabled switch in `spotlights`, the title and body per
+// site locale in `spotlight_translations`. Row aliases only: neither table
+// carries a write grant for any Data API role, and the spotlight RPCs — with
+// the image catalogue's `repoint_spotlight_images` and removal trigger — are
+// the only writers. `image_path` is derived from `image_id` by a trigger.
+export type SpotlightRow = Database["public"]["Tables"]["spotlights"]["Row"];
+export type SpotlightTranslationRow =
+  Database["public"]["Tables"]["spotlight_translations"]["Row"];
 
 // Landing pages — `landing_pages` is a page's admin-only working copy and
 // `landing_page_publications` its public published copy, whose row existing is
@@ -874,6 +898,13 @@ export interface GeduAssignedProduct {
   product: GeduAssignedProductShell;
   my_group_id: string;
   groups: GeduAssignedProductGroup[];
+  /** The product's planned sessions, soonest first, cancellations unmarked. */
+  planned_sessions: PlannedSession[];
+  /**
+   * The run's last session the reader's group has not cancelled,
+   * product-local `YYYY-MM-DD`; null on an open-ended product.
+   */
+  final_session_date: string | null;
 }
 
 // whatsapp_contacts

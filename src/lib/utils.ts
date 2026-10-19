@@ -1,11 +1,12 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { mergeClasses } from "@sog/ui";
 import { type SupportedCurrency } from "@/lib/constants/currency";
+import { formattingLocale } from "@/lib/constants/locales";
 import { ageOnDate } from "@/lib/gamer-age-eligibility";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return mergeClasses(clsx(inputs));
 }
 
 /** Narrow an arbitrary string to a key of `obj`. The predicate is backed by a real Object.hasOwn check. */
@@ -40,7 +41,7 @@ export function formatCurrency(
   currency: SupportedCurrency,
   locale: string,
 ): string {
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(formattingLocale(locale), {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amount);
@@ -102,15 +103,17 @@ export function sumCents(values: Iterable<number>): number {
 // an explicit viewer zone, never the runtime default (CLAUDE.md viewer-zone
 // rule). The required `timeZone` is the type-level enforcement of that rule —
 // the compiler rejects a call that omits it, no lint heuristic needed.
+//
+// The `locale` taken by every helper below is the app locale; each resolves it
+// through `formattingLocale()` itself, so callers never pass an `Intl` tag.
 const TIME_OF_DAY: Intl.DateTimeFormatOptions = {
   hour: "2-digit",
   minute: "2-digit",
-  hour12: false,
 };
 
 export function formatTime(date: Date | string, locale: string, timeZone: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale, { ...TIME_OF_DAY, timeZone }).format(d);
+  return new Intl.DateTimeFormat(formattingLocale(locale), { ...TIME_OF_DAY, timeZone }).format(d);
 }
 
 /** A thin or narrow no-break space directly before or after a range's en dash. */
@@ -118,7 +121,7 @@ const RANGE_DASH_SPACE = /[\u2009\u202f](?=\u2013)|(?<=\u2013)[\u2009\u202f]/g;
 
 /**
  * A start–end range — one session's clock face — in the given zone, with the
- * zone's short name appended ("16:30 – 18:00 GMT+3"). Both ends are formatted
+ * zone's short name appended ("16:30–18:00 EEST"). Both ends are formatted
  * from their own instants: the end is never a duration string-added to the
  * local start, which a DST transition inside the session would corrupt
  * (CLAUDE.md viewer-zone rule).
@@ -144,7 +147,7 @@ export function formatTimeRange(
 ): string {
   const s = typeof start === "string" ? new Date(start) : start;
   const e = typeof end === "string" ? new Date(end) : end;
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(formattingLocale(locale), {
     ...TIME_OF_DAY,
     timeZone,
     timeZoneName: "short",
@@ -163,7 +166,7 @@ export function formatDate(
   options: Intl.DateTimeFormatOptions & { timeZone: string },
 ): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale, options).format(d);
+  return new Intl.DateTimeFormat(formattingLocale(locale), options).format(d);
 }
 
 /**
@@ -187,7 +190,7 @@ export function formatDate(
  * render (e.g. `{ weekday: "long" }` for the weekday name).
  */
 export function formatDateOnly(date: string, locale: string, options?: Intl.DateTimeFormatOptions): string {
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(formattingLocale(locale), {
     ...(options ?? { dateStyle: "medium" }),
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
@@ -211,6 +214,57 @@ export function formatDateRange(
     return `${formatDateOnly(startDate, locale)} – ${formatDateOnly(endDate, locale)}`;
   }
   return formatDateOnly(startDate, locale);
+}
+
+/**
+ * A short zoneless range from two ISO dates, both inclusive — "13–17 Oct",
+ * "13 Oct – 17 Nov", "22 Dec 2026 – 6 Jan 2027" — for a run of days read
+ * beside other dates rather than as a headline: a holiday break in a list or a
+ * feed. `Intl.DateTimeFormat#formatRange` writes the compact forms itself, so
+ * each locale collapses the shared month and year its own way. One day names
+ * one date.
+ *
+ * **The year appears only where the reader needs it**: a range that crosses a
+ * year boundary always carries it (the formatter adds it unasked), and a range
+ * inside a single year carries it when that year is not the one `today` falls
+ * in. `today` is the caller's `YYYY-MM-DD`, from the same request-stable clock
+ * as the rest of the page, so the server and the first client render agree.
+ *
+ * UTC-pinned like `formatDateOnly`. **The space either side of the dash is
+ * decided here, not taken from `Intl`**: the dash is spaced exactly when either
+ * end holds a space of its own ("13 Oct – 17 Nov", "19–23 Oct"). CLDR moves
+ * that spacing between releases — CLDR 48 spaced English's same-month range and
+ * unspaced Swedish's cross-month one — so taking it from the runtime would make
+ * the server's Node and the reader's browser disagree, and the hydration
+ * mismatch `formatTimeRange` normalises away would come back as a whole space.
+ */
+export function formatCompactDateRange(
+  startDate: string,
+  endDate: string,
+  locale: string,
+  today: string,
+): string {
+  const startYear = startDate.slice(0, 4);
+  const showYear =
+    startYear !== endDate.slice(0, 4) || startYear !== today.slice(0, 4);
+  const format = new Intl.DateTimeFormat(formattingLocale(locale), {
+    day: "numeric",
+    month: "short",
+    ...(showYear ? { year: "numeric" } : {}),
+    timeZone: "UTC",
+  });
+  const start = new Date(`${startDate}T00:00:00Z`);
+  if (endDate <= startDate) return format.format(start);
+  const parts = format.formatRangeToParts(start, new Date(`${endDate}T00:00:00Z`));
+  const endHoldsSpace = parts.some(
+    (part) => part.source !== "shared" && part.type === "literal" && /\s/.test(part.value),
+  );
+  const dash = endHoldsSpace ? " – " : "–";
+  return parts
+    .map((part) =>
+      part.source === "shared" && part.value.includes("–") ? part.value.replace(/\s*–\s*/, dash) : part.value,
+    )
+    .join("");
 }
 
 

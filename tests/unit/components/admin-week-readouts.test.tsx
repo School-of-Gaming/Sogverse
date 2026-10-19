@@ -128,7 +128,7 @@ describe("the first and last session facts", () => {
         month: "long",
         year: "numeric",
       }),
-    ).toBe("Wednesday, August 19, 2026");
+    ).toBe("Wednesday, 19 August 2026");
     expect(
       formatDateOnly(last, "en", {
         weekday: "long",
@@ -136,7 +136,7 @@ describe("the first and last session facts", () => {
         month: "long",
         year: "numeric",
       }),
-    ).toBe("Wednesday, December 9, 2026");
+    ).toBe("Wednesday, 9 December 2026");
   });
 });
 
@@ -171,7 +171,7 @@ describe("the dashboard's week header", () => {
    */
   it("leads with the week number, then the dates it covers", () => {
     expect(renderSchedulePanel("en").textContent).toContain(
-      "wk 34 · 8/17 – 8/23/2026",
+      "wk 34 · 17/08 – 23/08/2026",
     );
   });
 
@@ -217,6 +217,6 @@ describe("the coming-up feed", () => {
     // appended to the date, not substituted for it and not floated into the
     // cohort list beside it.
     const column = container.querySelector("p.tabular-nums");
-    expect(column?.textContent).toBe("Mon 8/17 · wk 34");
+    expect(column?.textContent).toBe("Mon 17/08 · wk 34");
   });
 });

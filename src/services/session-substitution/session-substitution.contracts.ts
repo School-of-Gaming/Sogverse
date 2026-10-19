@@ -134,7 +134,7 @@ export type AnonymousSubstitutionRequestDocument = z.infer<
   typeof anonymousSubstitutionRequestDocument
 >;
 
-/** One recurring slot, product-local wall clock, for the client's calendar walk. */
+/** One recurring slot, product-local wall clock: the cadence a schedule line states. */
 const sessionScheduleSlot = z.object({
   weekday: z.number(),
   start_time: z.string(),
@@ -160,8 +160,8 @@ const sessionProductTranslation = z.object({
  * who is absent, why, and what the role pays travel beside it, under each
  * read's own rules.
  *
- * **No instants travel.** It hands over the slots and the timezone, exactly as
- * both session feeds do, and the client owns the calendar math.
+ * It describes the product, not the date: the session's instants travel beside
+ * it, on each read's own row ({@link sessionWindowFields}).
  */
 export const sessionProductDocument = z.object({
   id: z.string(),
@@ -186,6 +186,18 @@ export const sessionProductDocument = z.object({
 export type SessionProductDocument = z.infer<typeof sessionProductDocument>;
 
 /**
+ * **When the session runs, from the database's plan** — the bounds of the
+ * group's planned session on the request's date, as PostgREST renders a
+ * timestamptz. Both are null on a date the plan no longer has: an orphan, after
+ * the schedule moved off its weekday, or a date outside the product's term.
+ * Every reader still shows such a row, by its date alone.
+ */
+export const sessionWindowFields = {
+  starts_at: z.string().nullable(),
+  ends_at: z.string().nullable(),
+};
+
+/**
  * **One of the caller's own live requests** — the request document as its
  * requester reads it, plus the session it is on: the group's name and the
  * product shell every substitution surface describes a session from.
@@ -201,6 +213,7 @@ export type SessionProductDocument = z.infer<typeof sessionProductDocument>;
 export const liveSubstitutionRequest = substitutionRequestDocument.extend({
   group_name: z.string(),
   product: sessionProductDocument,
+  ...sessionWindowFields,
   /**
    * Whether the session is cancelled. Its request is still live — the filing
    * write refuses a second one there, so the picker still disables it — but a
@@ -224,10 +237,6 @@ export const liveSubstitutionRequests = z.array(liveSubstitutionRequest);
  * needs to know about. What a volunteer decides on is the session: when it is,
  * where, what it is about, which language, and what the role pays.
  *
- * **No instants travel.** The read emits the date plus the product's slots and
- * timezone, exactly as both session feeds do, and the client owns the calendar
- * math — there is one schedule expansion in this codebase and it is not in SQL.
- *
  * `fee_cents` is the fee for *this* role, and null where the product has not
  * set one. Null is a blank field rather than a volunteer session: nothing flags
  * it, which is the existing treatment of a missing assistant fee.
@@ -237,6 +246,7 @@ export const openSubstitutionRequest = z.object({
   group_id: z.string(),
   group_name: z.string(),
   session_date: z.string(),
+  ...sessionWindowFields,
   role: geduAssignmentRole,
   fee_cents: z.number().nullable(),
   /**
@@ -308,9 +318,9 @@ export type AdminSubstitutionDecline = z.infer<typeof adminSubstitutionDecline>;
  * surface it was collected for — everywhere else it is admin-only or absent.
  *
  * An **orphaned** request is still in this list, deliberately: an admin moving
- * the schedule's weekday after a request was filed leaves a date the schedule
- * no longer projects. The read orders by date and never by a derived instant,
- * so such a row arrives like any other and an admin can clear it.
+ * the schedule's weekday after a request was filed leaves a date the plan no
+ * longer has. The read orders by date and never by an instant, so such a row
+ * arrives like any other, with null instants, and an admin can clear it.
  */
 const adminSubstitutionRequestBase = z.object({
   id: z.string(),
@@ -318,6 +328,7 @@ const adminSubstitutionRequestBase = z.object({
   group_name: z.string(),
   /** Product-local calendar date, `YYYY-MM-DD`. */
   session_date: z.string(),
+  ...sessionWindowFields,
   /** The role being substituted — the absent gedu's, and what it is paid as. */
   role: geduAssignmentRole,
   reason: substitutionReason.nullable(),
@@ -326,11 +337,7 @@ const adminSubstitutionRequestBase = z.object({
   requested_by: z.string(),
   requested_by_first_name: z.string(),
   requested_by_last_name: z.string(),
-  /**
-   * The session's product. Its slots ride on the **request's** own product, so
-   * the only absence they can carry is "no slot names this weekday" — the
-   * orphaned request, which a row renders as a bare date.
-   */
+  /** The session's product. */
   product: sessionProductDocument,
   /** Answers of `offer` only, in the order they were given. */
   offers: z.array(adminSubstitutionOffer),

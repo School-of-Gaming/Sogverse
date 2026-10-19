@@ -47,6 +47,14 @@
 # articles without a cover, and that is how the seed shows a live article on
 # the NO IMAGE placeholder; a cover whose category has no article is one more
 # entry for the cover picker to offer.
+#
+# SPOTLIGHT PICTURES TOO. A file named `spotlight-<n>` is a spotlight's
+# picture: purpose `spotlight_image`, object in the `spotlight-images` bucket
+# (JPEG only, each file exactly 1200 x 600). The rich seed creates its
+# spotlights switched off and with no picture, because an enabled spotlight
+# must have one; the nth file, in name order, becomes the picture of the nth
+# spotlight oldest first, and each is then switched on. A file count that
+# differs from the spotlight count fails this step by name.
 set -euo pipefail
 
 checkout=$1
@@ -57,6 +65,7 @@ service_key=$4
 images_dir="$checkout/supabase/seed-images"
 product_bucket=product-images
 cover_bucket=library-covers
+spotlight_bucket=spotlight-images
 
 if [ ! -d "$images_dir" ]; then
   echo "No $images_dir to upload; the products will keep their placeholders." >&2
@@ -72,6 +81,7 @@ trap 'rm -rf "$work"' EXIT
 # on, because they differ in purpose, in bucket and in what they are linked to.
 : > "$work/manifest"
 : > "$work/covers"
+: > "$work/spotlights"
 for file in "$images_dir"/*; do
   [ -f "$file" ] || continue
   base=$(basename "$file")
@@ -92,6 +102,9 @@ for file in "$images_dir"/*; do
     library-*)
       printf '%s\t%s\t%s\t%s\n' "${topic#library-}" "$sha" "$ext" "$file" >> "$work/covers"
       ;;
+    spotlight-*)
+      printf '%s\t%s\t%s\t%s\n' "${topic#spotlight-}" "$sha" "$ext" "$file" >> "$work/spotlights"
+      ;;
     *)
       printf '%s\t%s\t%s\t%s\n' "$topic" "$sha" "$ext" "$file" >> "$work/manifest"
       ;;
@@ -105,6 +118,11 @@ fi
 
 if [ ! -s "$work/covers" ]; then
   echo "$images_dir holds no Library covers (library-<category>.jpg)." >&2
+  exit 1
+fi
+
+if [ ! -s "$work/spotlights" ]; then
+  echo "$images_dir holds no spotlight pictures (spotlight-<n>.jpg)." >&2
   exit 1
 fi
 
@@ -163,6 +181,9 @@ done < "$work/manifest"
 while IFS=$'\t' read -r _ sha ext file; do
   upload "$cover_bucket" "$sha" "$ext" "$file"
 done < "$work/covers"
+while IFS=$'\t' read -r _ sha ext file; do
+  upload "$spotlight_bucket" "$sha" "$ext" "$file"
+done < "$work/spotlights"
 
 # The manifest as a SQL row set, written once and inlined twice below. A temp
 # table would read better and is not available: the statements run under
@@ -174,6 +195,9 @@ awk -F'\t' '{
 awk -F'\t' '{
   printf "%s      (%c%s%c, %c%s%c, %c%s%c)", (NR == 1 ? "" : ",\n"), 39, $1, 39, 39, $2, 39, 39, $3, 39
 } END { print "" }' "$work/covers" > "$work/covers.sql"
+awk -F'\t' '{
+  printf "%s      (%c%s%c, %c%s%c, %c%s%c)", (NR == 1 ? "" : ",\n"), 39, $1, 39, 39, $2, 39, 39, $3, 39
+} END { print "" }' "$work/spotlights" > "$work/spotlights.sql"
 
 # The catalogue half. Written as a file rather than piped inline because it is
 # built from the manifest and is easier to read back when something fails.
@@ -221,6 +245,14 @@ awk -F'\t' '{
   echo " WHERE s.category::public.library_article_category IS NOT NULL"
   echo " ON CONFLICT (purpose, sha256) DO NOTHING;"
   echo
+  # The spotlights' entries, of purpose `spotlight_image`.
+  echo "INSERT INTO public.catalogue_images (label, sha256, path, purpose)"
+  echo "SELECT 'Spotlight picture ' || s.n, s.sha, s.sha || '.' || s.ext, 'spotlight_image'"
+  echo "  FROM (VALUES"
+  cat "$work/spotlights.sql"
+  echo "       ) AS s(n, sha, ext)"
+  echo " ON CONFLICT (purpose, sha256) DO NOTHING;"
+  echo
   # The completeness check runs as the session role rather than as
   # `authenticated`, because it reads storage.objects: neither bucket carries a
   # read policy a signed-in admin could pass, so under the impersonated claims
@@ -251,6 +283,30 @@ awk -F'\t' '{
   echo "  JOIN public.catalogue_images i ON i.purpose = 'library_cover' AND i.sha256 = s.sha"
   echo " WHERE p.category::text = s.category;"
   echo
+  # The spotlights' pictures, as the session role for the covers' reason:
+  # neither spotlight table carries a write grant. The nth file in name order
+  # goes to the nth spotlight oldest first, and the same statement switches it
+  # on, which the enabled-needs-a-picture CHECK admits because the picture
+  # arrives with it. The image-path trigger still derives each path.
+  echo "DO \$\$"
+  echo "BEGIN"
+  echo "  IF (SELECT count(*) FROM public.spotlights) <> $(wc -l < "$work/spotlights") THEN"
+  echo "    RAISE EXCEPTION 'The rich seed wrote % spotlights and supabase/seed-images holds $(wc -l < "$work/spotlights") spotlight-<n>.jpg files; give each spotlight one.',"
+  echo "      (SELECT count(*) FROM public.spotlights);"
+  echo "  END IF;"
+  echo "END"
+  echo "\$\$;"
+  echo "UPDATE public.spotlights sp"
+  echo "   SET image_id = i.id, enabled = true"
+  echo "  FROM (SELECT id, row_number() OVER (ORDER BY created_at, id) AS n"
+  echo "          FROM public.spotlights) AS o"
+  echo "  JOIN (SELECT s.sha, row_number() OVER (ORDER BY s.n) AS n"
+  echo "          FROM (VALUES"
+  cat "$work/spotlights.sql"
+  echo "               ) AS s(n, sha, ext)) AS f ON f.n = o.n"
+  echo "  JOIN public.catalogue_images i ON i.purpose = 'spotlight_image' AND i.sha256 = f.sha"
+  echo " WHERE sp.id = o.id;"
+  echo
   echo "DO \$\$"
   echo "DECLARE v_missing text;"
   echo "        v_absent text;"
@@ -270,11 +326,13 @@ awk -F'\t' '{
   echo "    FROM public.catalogue_images i"
   echo "   WHERE (EXISTS (SELECT 1 FROM public.products p WHERE p.image_id = i.id)"
   echo "          OR EXISTS (SELECT 1 FROM public.library_articles a WHERE a.cover_image_id = i.id)"
-  echo "          OR EXISTS (SELECT 1 FROM public.library_article_publications l WHERE l.cover_image_id = i.id))"
+  echo "          OR EXISTS (SELECT 1 FROM public.library_article_publications l WHERE l.cover_image_id = i.id)"
+  echo "          OR EXISTS (SELECT 1 FROM public.spotlights sp WHERE sp.image_id = i.id))"
   echo "     AND NOT EXISTS (SELECT 1 FROM storage.objects o"
   echo "                      WHERE o.bucket_id = CASE i.purpose"
   echo "                                            WHEN 'product' THEN '$product_bucket'"
   echo "                                            WHEN 'library_cover' THEN '$cover_bucket'"
+  echo "                                            WHEN 'spotlight_image' THEN '$spotlight_bucket'"
   echo "                                          END"
   echo "                        AND o.name = i.path);"
   echo "  IF v_absent IS NOT NULL THEN"
@@ -296,7 +354,7 @@ awk -F'\t' '{
 docker exec -i "supabase_db_$project" \
   psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$work/link.sql" >/dev/null
 
-echo "Product images: $(wc -l < "$work/manifest") files to the $product_bucket bucket and $(wc -l < "$work/covers") Library covers to the $cover_bucket bucket, $uploaded newly uploaded."
+echo "Product images: $(wc -l < "$work/manifest") files to the $product_bucket bucket, $(wc -l < "$work/covers") Library covers to the $cover_bucket bucket and $(wc -l < "$work/spotlights") spotlight pictures to the $spotlight_bucket bucket, $uploaded newly uploaded."
 
 # TEAM PHOTOS. The rich seed saves every admin's and Gedu's team profile with
 # its checkbox on, which save_team_profile allows only with a photo, so the
