@@ -44,8 +44,8 @@ in the run, once `EnterWorktree` has legitimately moved the session into one.
    ```
 
    It verifies the base, creates the worktree at `.claude/worktrees/<short-name>`
-   on branch `feat/<short-name>`, junctions any nested install, and copies
-   `.env.local` in. **Do not run `npm install`** — the worktree resolves
+   on branch `feat/<short-name>`, junctions any nested install, copies
+   `.env.local` in, and seeds the type-check caches from a sibling worktree. **Do not run `npm install`** — the worktree resolves
    `node_modules` upward from the parent checkout, so an install costs several
    minutes and a gigabyte for nothing. The script's header carries the reasoning
    for all of it, including the one case it cannot cover: a branch that *will*
