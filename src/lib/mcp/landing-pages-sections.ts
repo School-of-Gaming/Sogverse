@@ -349,7 +349,7 @@ export const MCP_LANDING_SECTIONS: {
         {
           question: plainText.describe("The question."),
           answer: markdownText.describe(
-            `The answer: markdown limited to ${describeMarkdownSubset("landing")}.`,
+            `The answer: markdown limited to ${describeMarkdownSubset("landing-faq")}. No headings: the question is the answer's heading.`,
           ),
         },
         "question",

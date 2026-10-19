@@ -2812,6 +2812,12 @@ export default function AdminUIComponentsPage() {
           test instead of demoed here.
         </p>
         <p className="text-sm text-muted-foreground">
+          Each question is a heading inside the summary of its row, so search
+          engines and assistants can tie an answer to its question. The caller
+          states the level, one below its own heading over the list: H4 here,
+          under the H2 of this section and the H3 of each demo.
+        </p>
+        <p className="text-sm text-muted-foreground">
           The block shapes below are built by calling the shared answer tags
           rather than by hand-writing an <code>ol</code> or a <code>ul</code>:
           those tags are what the real FAQs render through, so a demo that
@@ -2820,6 +2826,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A list of questions">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "plain",
@@ -2916,6 +2923,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A single question">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "only",

@@ -2150,10 +2150,10 @@
         "createdBy": "Créé le {date} par {name}",
         "createdByVia": "Créé le {date} par {name} via {app}",
         "createdByViaUnnamed": "Créé le {date} par {name} via une application d’IA",
-        "saved": "Enregistré pour la dernière fois le {date}",
-        "savedBy": "Enregistré pour la dernière fois le {date} par {name}",
-        "savedByVia": "Enregistré pour la dernière fois le {date} par {name} via {app}",
-        "savedByViaUnnamed": "Enregistré pour la dernière fois le {date} par {name} via une application d’IA"
+        "saved": "Dernier enregistrement le {date}",
+        "savedBy": "Dernier enregistrement le {date} par {name}",
+        "savedByVia": "Dernier enregistrement le {date} par {name} via {app}",
+        "savedByViaUnnamed": "Dernier enregistrement le {date} par {name} via une application d’IA"
       },
       "actions": {
         "save": "Enregistrer",

@@ -49,6 +49,7 @@ const VARIANTS = [
   "profile",
   "article",
   "landing",
+  "landing-faq",
   "spotlight",
 ] as const satisfies readonly MarkdownUseCase[];
 

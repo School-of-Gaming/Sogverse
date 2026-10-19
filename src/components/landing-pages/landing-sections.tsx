@@ -574,7 +574,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
         question,
         answer:
           answer === null ? null : (
-            <Markdown variant="landing" emphasis="quiet">
+            <Markdown variant="landing-faq" emphasis="quiet">
               {answer}
             </Markdown>
           ),
@@ -586,7 +586,12 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
-          <FaqAccordion items={items} />
+          {/* The questions sit under the section's H2, or stand as H2s where
+              the section has no heading written yet. */}
+          <FaqAccordion
+            items={items}
+            questionLevel={written(text.heading) === null ? 2 : 3}
+          />
         </div>
       </div>
     </section>

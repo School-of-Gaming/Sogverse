@@ -98,7 +98,7 @@ const ADDRESSES =
 const STRUCTURE_WRITES =
   "Removing a section drops its words in every language, and so does sending it without its id, which makes it a new section; the same holds for items. Keep every id you want to keep.";
 
-const MARKDOWN = `Markdown fields (a text section's body, an FAQ answer) take only ${describeMarkdownSubset("landing")}; anything else is refused with the construct named, and nothing is saved. Every other field is plain text.`;
+const MARKDOWN = `Markdown fields take only their own subset: a text section's body ${describeMarkdownSubset("landing")}; an FAQ answer ${describeMarkdownSubset("landing-faq")}, with no headings, since the question is the answer's heading. Anything else is refused with the construct named, and nothing is saved. Every other field is plain text.`;
 
 const OFFER_PREVIEW =
   "After creating a page, or after a large change, offer the admin the preview link.";
@@ -229,15 +229,15 @@ function readSectionWords(
       }
     }
   }
-  for (const { path, value } of landingMarkdownValues(section.type, parsed.data)) {
-    const outside = markdownOutsideSubset(value, "landing");
+  for (const { path, value, useCase } of landingMarkdownValues(section.type, parsed.data)) {
+    const outside = markdownOutsideSubset(value, useCase);
     if (outside.length === 0) continue;
     const named = outside
       .map(({ construct, lines }) =>
         lines.length === 0 ? construct : `${construct} on line ${lines.join(", ")}`,
       )
       .join("; ");
-    problems.push(at(path.split("."), `uses markdown a landing page does not show — ${named}`));
+    problems.push(at(path.split("."), `uses markdown this field does not show — ${named}`));
   }
   return problems.length === 0 ? { words: parsed.data } : { problems };
 }

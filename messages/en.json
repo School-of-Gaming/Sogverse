@@ -2148,12 +2148,12 @@
       "record": {
         "created": "Created {date}",
         "createdBy": "Created {date} by {name}",
-        "createdByVia": "Created {date} by {name} through {app}",
-        "createdByViaUnnamed": "Created {date} by {name} through an AI app",
+        "createdByVia": "Created {date} by {name} via {app}",
+        "createdByViaUnnamed": "Created {date} by {name} via an AI app",
         "saved": "Last saved {date}",
         "savedBy": "Last saved {date} by {name}",
-        "savedByVia": "Last saved {date} by {name} through {app}",
-        "savedByViaUnnamed": "Last saved {date} by {name} through an AI app"
+        "savedByVia": "Last saved {date} by {name} via {app}",
+        "savedByViaUnnamed": "Last saved {date} by {name} via an AI app"
       },
       "actions": {
         "save": "Save",

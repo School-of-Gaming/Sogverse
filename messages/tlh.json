@@ -861,10 +861,10 @@
       "statusPanel": {
         "publishedLine": "{date} ngeHlu’.",
         "changedLine": "{date} ngeHlu’pu’bogh ghItlh legh laDwI’pu’.",
-        "savedLine": "Qav pollu’ {date}.",
-        "savedByLine": "{date} Qav polpu’ {name}.",
-        "savedByViaLine": "{date} {app} lo’taHvIS Qav polpu’ {name}.",
-        "savedByViaUnnamedLine": "{date} De’wI’ qoq lo’taHvIS Qav polpu’ {name}."
+        "savedLine": "poltaHvIS: {date}.",
+        "savedByLine": "poltaHvIS: {date}. polta’pu’ {name}.",
+        "savedByViaLine": "poltaHvIS: {date}. {app} lo’taHvIS polta’pu’ {name}.",
+        "savedByViaUnnamedLine": "poltaHvIS: {date}. De’wI’ yab lo’taHvIS polta’pu’ {name}."
       },
       "viewLive": "Daqvam yIlegh",
       "preview": "wej yIlegh",
@@ -2193,11 +2193,11 @@
         "created": "{date} chenmoHlu’",
         "createdBy": "{date} chenmoH {name}",
         "createdByVia": "{date} chenmoH {name}, {app} lo’",
-        "createdByViaUnnamed": "{date} chenmoH {name}, De’wI’ QeD lo’",
-        "saved": "{date} pol Qav",
-        "savedBy": "{date} pol Qav {name}",
-        "savedByVia": "{date} pol Qav {name}, {app} lo’",
-        "savedByViaUnnamed": "{date} pol Qav {name}, De’wI’ QeD lo’"
+        "createdByViaUnnamed": "{date} chenmoH {name}, De’wI’ yab lo’",
+        "saved": "poltaHvIS: {date}",
+        "savedBy": "poltaHvIS: {date}. polta’pu’ {name}",
+        "savedByVia": "poltaHvIS: {date}. {app} lo’taHvIS polta’pu’ {name}",
+        "savedByViaUnnamed": "poltaHvIS: {date}. De’wI’ yab lo’taHvIS polta’pu’ {name}"
       },
       "actions": {
         "save": "yIpol",
