@@ -39,7 +39,7 @@ node scripts/preview-export/export.mjs --selftest   # no app, no login
 | `--locales` | Default `en,fi,sv,fr`. (Klingon, `tlh`, is our easter-egg locale, not one a review covers.) |
 | `--viewports` | `desktop` (1440×900), `mobile` (360×800), or both (the default). |
 | `--only <slug,…>` | Just these entries. |
-| `--stack local\|staging` | Only when the server cannot say what it runs against — see "Which accounts". |
+| `--stack local` | Only when the server cannot say what it runs against — see "Which accounts". |
 | `--selftest` | Composes placeholder pages, so the whole pipeline runs with no app. |
 
 Everything lands in one folder — dated, and suffixed `-2`, `-3` if that folder
@@ -148,8 +148,10 @@ is rather than by what its caller remembers.
 run fetches the login page at `--base` and reads the Supabase origin the server
 is configured with out of its `Content-Security-Policy` header, the first
 concrete URL in `connect-src`. A loopback origin (`http://127.0.0.1:<port>`) is a
-local stack (`npm run db -- up`); a `https://<ref>.supabase.co` one is staging,
-which is what a local dev server points at otherwise. The tool may run from a
+local stack (`npm run db -- up`); a hosted one is staging only when it is
+exactly `https://<SUPABASE_PROJECT_REF>.supabase.co` (that variable is staging by
+this repo's convention, read from `.env.local`), and any other origin, production
+included, is refused before anything is typed. The tool may run from a
 different checkout than the one serving, so its own `.env.local` says nothing
 about the server.
 
@@ -167,7 +169,9 @@ project. `.env.local` is not even loaded against a local stack. No value is ever
 printed.
 
 When the header names no Supabase origin, the run refuses and asks for
-`--stack local` or `--stack staging`. The flag never overrides a detection: one
+`--stack local`. `--stack staging` is refused there, since staging is only signed
+in to once its origin has matched the ref. The flag never fills in an origin the
+header names but no rule recognises, and never overrides a detection: one
 that disagrees with the server is the refusal, since obeying it would type one
 backend's password into the other's login form.
 

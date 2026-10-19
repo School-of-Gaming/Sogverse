@@ -40,12 +40,14 @@ step asks for; in a run covering admin and non-admin pages, the admin entries ca
 - **Which accounts is the server's answer.** The run reads the Supabase origin out of
   the CSP header the server at `--base` sends: a loopback one is a local stack
   (`npm run db -- up`), signed in with the rich seed's `admin@`, `parent@` (PIN 1111) and
-  `gedu@example.com`, password `password`; a `*.supabase.co` one is staging, signed in
+  `gedu@example.com`, password `password`; `https://<SUPABASE_PROJECT_REF>.supabase.co`
+  is staging, signed in
   with `STAGING_ADMIN_*` and `STAGING_PARENT_*` from `.env.local`. Staging has no gedu,
   so a gedu viewer there is refused by name. So a branch on its own stack is shot by
-  pointing `--base` at its server, from any checkout. If the header names no origin,
-  the run asks for `--stack local|staging`; a flag that contradicts the server is
-  refused.
+  pointing `--base` at its server, from any checkout. Any other origin, production
+  included, is refused. If the header names no origin, the run asks for
+  `--stack local` (`--stack staging` is refused: there is nothing to verify it
+  against); a flag that contradicts the server is refused.
 - **Signed out** (a preset with `signedOut: true`): reads no credentials, and every shot
   is a first visit in a fresh browser. **`--base` may be any http/https origin** —
   production, a Vercel preview, a local server. The public pages need this: signed in,

@@ -60,8 +60,10 @@
  * each entry is shot as its viewer — the admin unless it names another. Which
  * accounts exist depends on the database the server at `--base` runs against,
  * and the tool asks the server rather than assuming: its CSP names the
- * configured Supabase origin (`lib.mjs` says how). Against a **local stack**
- * every viewer is the rich seed's account; against **staging** the admin is
+ * configured Supabase origin (`lib.mjs` says how), and a hosted one counts as
+ * staging only when it is `SUPABASE_PROJECT_REF`'s project — any other is
+ * refused. Against a **local stack** every viewer is the rich seed's account;
+ * against **staging** the admin is
  * `STAGING_ADMIN_EMAIL` / `STAGING_ADMIN_PASSWORD` and the parent (and through
  * them a gamer) `STAGING_PARENT_EMAIL` / `_PASSWORD` / `_PIN`, from `.env.local`
  * (the shell wins if it exports them), and there is no staging gedu. Each
@@ -130,6 +132,7 @@ import {
   assertPinVerified,
   assertProbeLanding,
   credentialsFor,
+  isLoopbackHost,
   pickGamer,
   resolveBase,
   resolveStack,
@@ -383,8 +386,14 @@ async function detectStack() {
       "  Is the dev server up?");
   }
   const origin = supabaseOriginFromCsp(csp);
+  // A hosted origin is staging only if it is `SUPABASE_PROJECT_REF`'s project,
+  // which `.env.local` holds; a local stack needs nothing from the file.
+  if (origin && !isLoopbackHost(new URL(origin).hostname)) loadEnvLocal();
   return guarded(() =>
-    resolveStack(stackFromSupabaseOrigin(origin), arg("stack")),
+    resolveStack(
+      stackFromSupabaseOrigin(origin, process.env.SUPABASE_PROJECT_REF),
+      arg("stack"),
+    ),
   );
 }
 
@@ -1349,11 +1358,10 @@ const planned = planShots(preset, SIGNED_OUT);
 // Before the browser: a signed-in run with no credentials for one of its
 // viewers cannot see that viewer's pages, and finding that out after a launch
 // is noise in front of the one line that matters. Which credentials those are
-// is the server's answer, so it is asked first; `.env.local` is loaded only
-// for staging, whose accounts it holds. A signed-out run asks nothing and
-// never loads the file.
+// is the server's answer, so it is asked first; detecting staging loads
+// `.env.local`, which holds staging's ref and accounts, and a local stack never
+// does. A signed-out run asks nothing and never loads the file.
 const STACK = SIGNED_OUT ? null : await detectStack();
-if (STACK === "staging") loadEnvLocal();
 const VIEWERS = new Map();
 for (const { viewer } of planned) {
   if (!viewer || VIEWERS.has(viewer.key)) continue;

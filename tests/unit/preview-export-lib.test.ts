@@ -39,16 +39,41 @@ describe("supabaseOriginFromCsp", () => {
 });
 
 describe("stackFromSupabaseOrigin", () => {
-  it("calls a loopback origin a local stack and a supabase.co one staging", () => {
-    expect(stackFromSupabaseOrigin("http://127.0.0.1:20121")).toBe("local");
-    expect(stackFromSupabaseOrigin("http://localhost:54321")).toBe("local");
-    expect(stackFromSupabaseOrigin("https://abcdefgh.supabase.co")).toBe("staging");
+  const ref = "stagingref";
+
+  it("calls a loopback origin a local stack, and the staging project staging", () => {
+    expect(stackFromSupabaseOrigin("http://127.0.0.1:20121", ref)).toBe("local");
+    expect(stackFromSupabaseOrigin("http://localhost:54321", undefined)).toBe("local");
+    expect(stackFromSupabaseOrigin("https://stagingref.supabase.co", ref)).toBe("staging");
   });
 
-  it("cannot tell from anything else", () => {
-    expect(stackFromSupabaseOrigin(null)).toBeNull();
-    expect(stackFromSupabaseOrigin("http://abcdefgh.supabase.co")).toBeNull();
-    expect(stackFromSupabaseOrigin("https://supabase.example.com")).toBeNull();
+  it("refuses any other hosted project, production included", () => {
+    expect(() => stackFromSupabaseOrigin("https://prodref.supabase.co", ref)).toThrow(
+      /not the staging project/,
+    );
+  });
+
+  it("refuses a hosted project when there is no staging ref to check it against", () => {
+    expect(() => stackFromSupabaseOrigin("https://stagingref.supabase.co", undefined)).toThrow(
+      /SUPABASE_PROJECT_REF is not set/,
+    );
+  });
+
+  it("refuses an origin that is neither loopback nor hosted Supabase", () => {
+    expect(() => stackFromSupabaseOrigin("https://supabase.example.com", ref)).toThrow(/neither/);
+    expect(() => stackFromSupabaseOrigin("http://stagingref.supabase.co", ref)).toThrow(/neither/);
+  });
+
+  it("refuses such an origin before --stack is consulted", () => {
+    for (const flag of ["local", "staging"]) {
+      expect(() =>
+        resolveStack(stackFromSupabaseOrigin("https://supabase.example.com", ref), flag),
+      ).toThrow(/neither/);
+    }
+  });
+
+  it("says nothing when there is no origin, leaving it to --stack", () => {
+    expect(stackFromSupabaseOrigin(null, ref)).toBeNull();
   });
 });
 
@@ -56,7 +81,12 @@ describe("resolveStack", () => {
   it("takes the detection, and the flag only when there is none", () => {
     expect(resolveStack("local", undefined)).toBe("local");
     expect(resolveStack("local", "local")).toBe("local");
-    expect(resolveStack(null, "staging")).toBe("staging");
+    expect(resolveStack("staging", "staging")).toBe("staging");
+    expect(resolveStack(null, "local")).toBe("local");
+  });
+
+  it("refuses --stack staging when there is no origin to verify", () => {
+    expect(() => resolveStack(null, "staging")).toThrow(/cannot stand in/);
   });
 
   it("refuses a flag that disagrees with the server", () => {

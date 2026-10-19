@@ -96,17 +96,45 @@ export function supabaseOriginFromCsp(csp) {
 
 /**
  * `"local"` — a stack on this machine, which carries the rich seed's accounts;
- * `"staging"` — a hosted Supabase project, which is staging for every local dev
- * server; `null` — the header did not say, and the run needs `--stack`.
+ * `"staging"` — the staging project, whose accounts `.env.local` holds; `null`
+ * — the header named no origin, and the run needs `--stack`. Any other origin
+ * is refused.
+ *
+ * **Staging is a verified match, never a guess from the domain.** Every hosted
+ * project lives under `supabase.co`, production included, so the domain alone
+ * would hand the staging admin's password to a server pointed at production.
+ * `SUPABASE_PROJECT_REF` is staging by this repo's convention (production has
+ * its own variable), so only `https://<that ref>.supabase.co` is staging; any
+ * other project, or no ref to compare with, is refused.
+ *
+ * **An origin the header names but no rule recognises is refused, not left
+ * open.** `--stack` answers only a server that said nothing; one that names a
+ * backend this tool has no accounts for has said where its login form posts,
+ * and no flag should send a password there.
  */
-export function stackFromSupabaseOrigin(origin) {
+export function stackFromSupabaseOrigin(origin, stagingRef) {
   if (!origin) return null;
   const { protocol, hostname } = new URL(origin);
   if (isLoopbackHost(hostname)) return "local";
   if (protocol === "https:" && hostname.endsWith(".supabase.co")) {
-    return "staging";
+    if (!stagingRef) {
+      throw new Error(
+        `The server runs against ${origin}, and SUPABASE_PROJECT_REF is not set\n` +
+          "  (.env.local or the environment), so there is no staging project to\n" +
+          "  check it against. Refusing to type a staging password into it.",
+      );
+    }
+    if (hostname === `${stagingRef}.supabase.co`) return "staging";
+    throw new Error(
+      `The server runs against ${origin}, which is not the staging project\n` +
+        `  (SUPABASE_PROJECT_REF, ${stagingRef}.supabase.co). Refusing to sign in:\n` +
+        "  this tool only has accounts for a local stack and staging.",
+    );
   }
-  return null;
+  throw new Error(
+    `The server runs against ${origin}, which is neither a local stack nor a\n` +
+      "  hosted Supabase project. Refusing to sign in; --stack cannot override it.",
+  );
 }
 
 export const STACKS = ["local", "staging"];
@@ -119,10 +147,24 @@ export const STACKS = ["local", "staging"];
  * server left open; a flag that disagrees with what the server says would type
  * one backend's password into the other's login form, so the disagreement is
  * the error.
+ *
+ * **The flag can only say `local`.** Staging is the server's verified answer —
+ * its origin matched against `SUPABASE_PROJECT_REF` — and a server that names
+ * no origin leaves nothing to verify, so `--stack staging` would be a guess
+ * with the staging password riding on it. The seed's password is throwaway,
+ * so `--stack local` costs nothing if it is wrong.
  */
 export function resolveStack(detected, flag) {
   if (flag !== undefined && !STACKS.includes(flag)) {
     throw new Error(`--stack must be one of ${STACKS.join(", ")}, not "${flag}".`);
+  }
+  if (!detected && flag === "staging") {
+    throw new Error(
+      "--stack staging cannot stand in for the server: staging is only signed in\n" +
+        "  to once the server's Supabase origin is checked against\n" +
+        "  SUPABASE_PROJECT_REF, and its Content-Security-Policy names none.\n" +
+        "  Set NEXT_PUBLIC_SUPABASE_URL for that server, or pass --stack local.",
+    );
   }
   if (detected && flag && detected !== flag) {
     throw new Error(
@@ -136,7 +178,8 @@ export function resolveStack(detected, flag) {
     throw new Error(
       "Could not tell whether the server at --base runs against a local stack or\n" +
         "  staging: its Content-Security-Policy names no Supabase origin.\n" +
-        "  Pass --stack local or --stack staging.",
+        "  Pass --stack local, or set NEXT_PUBLIC_SUPABASE_URL for that server\n" +
+        "  so staging can be verified.",
     );
   }
   return stack;
