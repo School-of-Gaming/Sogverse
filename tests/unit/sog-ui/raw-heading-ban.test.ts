@@ -41,6 +41,8 @@ describe("the raw heading ban", () => {
   it.each([
     ["held in a variable", 'const Title = "h2"; const a = <Title>Words</Title>;'],
     ["held in a template literal", "const Title = `h3`; const a = <Title>Words</Title>;"],
+    ["built from a level", "const Title = `h${level}`; const a = <Title>Words</Title>;"],
+    ["built from a level as const", "const Title = `h${level}` as const; const a = <Title>Words</Title>;"],
     ["defaulted in a parameter", 'function Card({ as: Title = "h2" }) { return <Title>Words</Title>; }'],
     ["picked by a ternary", 'const Title = big ? "h2" : "div"; const a = <Title>Words</Title>;'],
     ["carried in an object", 'const tags = { title: "h3" };'],
@@ -51,7 +53,7 @@ describe("the raw heading ban", () => {
   it("passes strings that are not a heading tag, and a tag name used only as a key or a comparison", () => {
     expect(
       violations(
-        'const a = "html"; const b = big ? "hr" : "header"; const c = { h2: "title" }; const d = level === "h2";',
+        'const a = "html"; const b = big ? "hr" : "header"; const c = { h2: "title" }; const d = level === "h2"; const e = `h${n}px`;',
       ),
     ).toBe(0);
   });

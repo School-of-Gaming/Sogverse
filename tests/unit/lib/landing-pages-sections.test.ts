@@ -195,10 +195,17 @@ describe("the required-text rule (its TypeScript half)", () => {
 });
 
 describe("the markdown fields", () => {
-  /** The fields a type's text schema declares with the `landing` markdown schema. */
-  function declaredMarkdown(schema: z.ZodTypeAny): LandingMarkdownField[] {
+  /** Where a markdown field sits, without the use case it renders under. */
+  type FieldPlace = { field: string } | { items: string; field: string };
+
+  function placeOf(spec: LandingMarkdownField): FieldPlace {
+    return "items" in spec ? { items: spec.items, field: spec.field } : { field: spec.field };
+  }
+
+  /** The fields a type's text schema declares with the markdown schema. */
+  function declaredMarkdown(schema: z.ZodTypeAny): FieldPlace[] {
     if (!(schema instanceof z.ZodObject)) return [];
-    const fields: LandingMarkdownField[] = [];
+    const fields: FieldPlace[] = [];
     for (const [name, field] of Object.entries<z.ZodTypeAny>(schema.shape)) {
       if (field === markdownText) fields.push({ field: name });
       const inner = field instanceof z.ZodOptional ? field.unwrap() : field;
@@ -212,7 +219,7 @@ describe("the markdown fields", () => {
   }
 
   it.each(LANDING_SECTION_TYPES)("are exactly the %s text schema's markdown fields", (type) => {
-    expect(LANDING_SECTIONS[type].markdownFields).toEqual(
+    expect(LANDING_SECTIONS[type].markdownFields.map(placeOf)).toEqual(
       declaredMarkdown(LANDING_SECTIONS[type].text),
     );
   });
@@ -223,9 +230,9 @@ describe("the markdown fields", () => {
         heading: "Questions",
         items: { [I.faqA]: { question: "Why?", answer: "Because." }, [I.stepA]: { question: "How?" } },
       }),
-    ).toEqual([{ path: `items.${I.faqA}.answer`, value: "Because." }]);
+    ).toEqual([{ path: `items.${I.faqA}.answer`, value: "Because.", useCase: "landing-faq" }]);
     expect(landingMarkdownValues("text", { heading: "Hi", body: "**Hello**" })).toEqual([
-      { path: "body", value: "**Hello**" },
+      { path: "body", value: "**Hello**", useCase: "landing" },
     ]);
     expect(isLandingMarkdownPath("faq", `items.${I.faqA}.answer`)).toBe(true);
     expect(isLandingMarkdownPath("faq", `items.${I.faqA}.question`)).toBe(false);

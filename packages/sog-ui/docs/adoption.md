@@ -289,15 +289,21 @@ A page that is one small object, a call screen or a not-found state, titles at
 level under the page title, and the scale's one step left, `label`, sits under the
 clauses' own size.
 
+**`item-title` was added (2026-10-19)** for the FAQ questions, 16px at 600, offered at `h2`
+to `h4`: `card-title`'s 18 matched the dashboards' 18px FAQ heading above the questions,
+and `label`'s 14 was smaller than the answers they title, so each broke one of the two
+rules.
+
 What holds it. The table is a type, so a pair outside it fails type-check at the call
 site; `tests/unit/sog-ui/heading.test.tsx` renders every pair the table allows and holds
 each step to sizes the theme declares, and the restep to the story steps alone; `tests/unit/sog-ui/raw-heading-ban.test.ts` runs violating and
 conforming lines through the ban; and the ban itself, in `eslint.config.mjs`, refuses a raw
 `h1`–`h6` written as JSX anywhere in `src/` or the library's demo, and a heading tag written as a string — held in
 a variable, defaulted in a parameter, picked by a ternary, carried as an object's value or
-typed as a literal — which is how a tag chosen at runtime escapes the first half. Its
-exemptions are named one by one: the markdown renderer and the authored-markdown table,
-which map a markdown level to a tag on purpose, are exempt from the string half; the alert
+typed as a literal, or built from a level — which is how a tag chosen at runtime escapes
+the first half. Its exemptions are named one by one: the app's markdown renderer, the
+authored-markdown table and the mail's markdown renderer, which map a markdown level to a
+tag on purpose, are exempt from the string half; the alert
 primitive's file is exempt from the JSX half, because `AlertTitle` stays an `h5` until the
 alert adoption decides what an alert's title is. The adoption also fixed the class merger
 it would otherwise have tripped on: the library exports a tailwind-merge built from its own
