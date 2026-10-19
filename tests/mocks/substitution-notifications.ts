@@ -128,12 +128,14 @@ export function notificationSnapshot(
       spoken_language_code: "fi",
       timezone: "Europe/Helsinki",
       is_remote: false,
+      voice_room_mode: "sogverse",
+      external_voice_url: null,
       start_date: "2026-08-10",
       end_date: "2026-12-16",
       site_name: "Kallio School",
       translations: [
-        { locale: "en", name: "Minecraft Club", description: "" },
-        { locale: "fi", name: "Minecraft-klubi", description: "" },
+        { locale: "en", name: "Minecraft Club", description: "", voice_join_instructions: null },
+        { locale: "fi", name: "Minecraft-klubi", description: "", voice_join_instructions: null },
       ],
       // Wednesday — Monday is 0.
       schedule_slots: [{ weekday: 2, start_time: "16:00:00", duration_minutes: 90 }],

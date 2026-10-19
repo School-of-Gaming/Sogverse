@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { FAQ_ITEM_KEYS } from "@/components/about/about-faq";
 import {
   landingPageCanonicalPath,
@@ -14,6 +15,7 @@ import { LOCALE_CONFIG } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+import { isProductionDeployment } from "@/lib/seo/deployment";
 import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
 import { createAnonClient } from "@/lib/supabase/anon";
 import {
@@ -290,7 +292,12 @@ async function readLiveLandingPages() {
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * Production only, like the sitemap: the file exists to point AI assistants at
+ * the site, and no other deployment may be found (`src/lib/seo/deployment.ts`).
+ */
 export async function GET() {
+  if (!isProductionDeployment()) notFound();
   const messages = await loadMessages("en");
   const [published, landingPages] = await Promise.all([
     readLiveArticles().catch((error: unknown) => {

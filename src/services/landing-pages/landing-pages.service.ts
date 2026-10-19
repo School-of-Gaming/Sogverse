@@ -1,3 +1,4 @@
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
@@ -17,6 +18,7 @@ import type { AppSupabaseClient } from "@/types";
 import {
   defaultLandingSlug,
   hasUnpublishedChanges,
+  landingCopyTitle,
   landingImagePaths,
   landingPageInput,
   landingVersionInput,
@@ -415,6 +417,44 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("remove_landing_page_version returned no id");
+    return data;
+  }
+
+  /**
+   * Clone a page's working copy into a new, unpublished page, in one database
+   * call. Returns the new page's id.
+   *
+   * Everything is copied verbatim — the structure with its pictures, and each
+   * language's summary and words — except that every section and item takes
+   * a new id (the words re-keyed with them, by the database) and each
+   * language's title is marked as a copy in that language's own word, from
+   * `copyMarker`. Its slug is derived from the new title as any version
+   * without one takes its title's, and numbered by the database (`-2`, `-3`,
+   * …) when another page already holds it in that locale. Only `source`'s
+   * versions are named, and each must still be on the page; the database
+   * refuses an id no page has with `no_data_found`.
+   *
+   * No words are sent, so the link hook has nothing to see: the copied words'
+   * links were made canonical when they were saved.
+   */
+  async clonePage(
+    source: Pick<LandingPageDraft, "id" | "versions">,
+    copyMarker: (locale: SupportedLocale) => Promise<string>,
+  ): Promise<string> {
+    const versions = await Promise.all(
+      source.versions.map(async (version) => {
+        const title = landingCopyTitle(version.title, await copyMarker(version.locale));
+        return { locale: version.locale, title, default_slug: defaultLandingSlug(title) };
+      }),
+    );
+
+    const { data, error } = await this.supabase.rpc("clone_landing_page", {
+      p_id: source.id,
+      p_versions: versions,
+    });
+
+    if (error) throw error;
+    if (!data) throw new Error("clone_landing_page returned no id");
     return data;
   }
 

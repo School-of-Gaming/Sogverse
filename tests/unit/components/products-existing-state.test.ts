@@ -30,6 +30,7 @@ describe("existingFormState", () => {
         name: "Build Club",
         shortDescription: "Build castles together.",
         longDescription: "",
+        voiceJoinInstructions: "",
       },
     });
     expect(state.translations.active).toBe("en");
@@ -137,6 +138,7 @@ describe("existingFormState", () => {
         name: "Build Club",
         short_description: "Build castles together.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -146,6 +148,7 @@ describe("existingFormState", () => {
         name: "Byggklubb",
         short_description: "Bygg slott tillsammans.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -164,6 +167,7 @@ describe("existingFormState", () => {
         name: "Rakentajien kerho",
         short_description: "Rakennetaan yhdessä.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -181,6 +185,7 @@ describe("existingFormState", () => {
       name: `Club ${locale}`,
       short_description: "",
       long_description: null,
+      voice_join_instructions: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }));
@@ -229,6 +234,7 @@ describe("buildUpdateInput round-trip", () => {
         name: "Build Club",
         short_description: "Build castles together.",
         long_description: null,
+        voice_join_instructions: null,
       },
     ]);
   });
@@ -244,6 +250,7 @@ describe("buildUpdateInput round-trip", () => {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
         longDescription: "",
+        voiceJoinInstructions: "",
       },
     };
     const input = buildUpdateInput(state, consumerConfig);
@@ -296,6 +303,7 @@ describe("buildUpdateInput round-trip", () => {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
         longDescription: "",
+        voiceJoinInstructions: "",
       },
     };
     expect(buildUpdateInput(state, consumerConfig).tag).toBe("neuroinclusive");
@@ -325,6 +333,7 @@ describe("buildUpdateInput round-trip", () => {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
         longDescription: "",
+        voiceJoinInstructions: "",
       },
     };
     expect(buildUpdateInput(state, consumerConfig).region_lock_country).toBe(
@@ -357,6 +366,7 @@ describe("buildUpdateInput round-trip", () => {
         name: "Build Club Renamed",
         shortDescription: "Build castles together.",
         longDescription: "",
+        voiceJoinInstructions: "",
       },
     };
     expect(
@@ -477,7 +487,7 @@ describe("sameFormState", () => {
         active: "fi",
         drafts: {
           en: { ...en, name: `  ${en.name} ` },
-          fi: { name: "", shortDescription: " ", longDescription: "\n" },
+          fi: { name: "", shortDescription: " ", longDescription: "\n", voiceJoinInstructions: "" },
         },
       },
     };
@@ -489,6 +499,7 @@ describe("sameFormState", () => {
     product.product_translations = product.product_translations.map((row) => ({
       ...row,
       long_description: "* one\n* two",
+      voice_join_instructions: null,
     }));
     const baseline = existingFormState(product, consumerConfig, "en");
     const en = baseline.translations.drafts.en;

@@ -10,17 +10,13 @@ import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
 import {
-  HOME_SPOT_SIZE,
-  HOME_TESTIMONIAL_SPOTS,
   QUOTATION_MARKS,
   hasQuotationMarks,
-  homePlacement,
   testimonialWriteFailure,
   type AdminTestimonial,
   type TestimonialUsage,
 } from "@/services/testimonials/testimonials.contracts";
 import { TestimonialsService } from "@/services/testimonials/testimonials.service";
-import type { HomeTestimonialSpot } from "@/types";
 
 /*
  * The testimonial tools: an admin keeps Marketing's store of testimonials from
@@ -31,9 +27,6 @@ import type { HomeTestimonialSpot } from "@/types";
  * is stamped with the admin and the app it came through. Edits go through the
  * one-language writers, never the editor's whole save
  * (`src/services/testimonials/CLAUDE.md`).
- *
- * The home spots are read here and never set: which testimonial fills a home
- * spot is a developer's decision, made in a migration.
  */
 
 // ---------------------------------------------------------------------------
@@ -55,11 +48,8 @@ const NO_MARKS = `The quote is stored without quotation marks: the site wraps it
 const LANDING =
   "A landing page shows testimonials through its testimonials sections, which name them by id: editing a testimonial's words changes them on every live landing page placing it at once, with no republish. usedIn lists each landing page placing it, whether readers see it there now (inLiveCopy) and whether the page's saved working copy places it, so the next publish keeps it there (inWorkingCopy). It comes off a landing page when that page's structure is saved without it, and a page is changed with the landing page tools.";
 
-const SPOTS =
-  "The home page shows testimonials in three spots — feature (the one quote under the hero), safety (two, beside the safety facts) and row (three, under \"What parents tell us\") — and About shows the same ones. Which testimonial fills a spot is decided by a developer, never by a tool; editing a placed testimonial's words changes them on both pages at once.";
-
 const KEPT =
-  "Testimonials are never deleted: once created they stay. One comes off the site by being removed from where it is shown — from a landing page by saving that page's structure without it — and which testimonial fills a home spot is decided by a developer, never by a tool.";
+  "Testimonials are never deleted: once created they stay. One comes off the site by being removed from where it is shown — from a landing page by saving that page's structure without it.";
 
 const NOT_FOUND = "No testimonial has that id.";
 
@@ -140,48 +130,24 @@ function marksRefusal(at: string, text: string): CallToolResult | null {
 // Answers
 // ---------------------------------------------------------------------------
 
-const SPOT_DESCRIPTION: Record<HomeTestimonialSpot, string> = {
-  feature: "the single quote under the hero",
-  safety: "beside the safety facts",
-  row: "the \"What parents tell us\" row",
-};
-
 function editorLink(origin: string, id: string): string {
   return `${origin}${getPathname({ href: ROUTES.admin.testimonial(id), locale: "en" })}`;
 }
 
 /**
- * One place a testimonial is shown, as the AI app reads it, by kind: a home
- * spot with the public pages it puts the testimonial on, or a landing page
+ * One place a testimonial is shown, as the AI app reads it: a landing page
  * with whether readers see it there now and whether the next publish keeps
- * it, and the page's status page in Sogverse admin. A new kind of place in
- * `TestimonialUsage` stops this compiling until it is given its own answer.
+ * it, and the page's status page in Sogverse admin.
  */
 function usageView(origin: string, usage: TestimonialUsage) {
-  switch (usage.kind) {
-    case "home":
-      return {
-        place: usage.kind,
-        spot: usage.spot,
-        spotDescription: SPOT_DESCRIPTION[usage.spot],
-        position: usage.position,
-        spotSize: HOME_SPOT_SIZE[usage.spot],
-        shownOn: [
-          `${origin}${getPathname({ href: ROUTES.home, locale: "en" })}`,
-          // The section About quotes the home spots in.
-          `${origin}${getPathname({ href: ROUTES.about, locale: "en" })}#parents`,
-        ],
-      };
-    case "landingPage":
-      return {
-        place: usage.kind,
-        pageId: usage.pageId,
-        title: resolveTranslation(usage.titles, "en")?.title ?? null,
-        inLiveCopy: usage.inLiveCopy,
-        inWorkingCopy: usage.inWorkingCopy,
-        adminLink: adminLink(origin, usage.pageId),
-      };
-  }
+  return {
+    place: "landingPage",
+    pageId: usage.pageId,
+    title: resolveTranslation(usage.titles, "en")?.title ?? null,
+    inLiveCopy: usage.inLiveCopy,
+    inWorkingCopy: usage.inWorkingCopy,
+    adminLink: adminLink(origin, usage.pageId),
+  };
 }
 
 function testimonialView(testimonial: AdminTestimonial, origin: string) {
@@ -209,7 +175,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "list_testimonials",
     {
       title: "List testimonials",
-      description: `Every testimonial in School of Gaming's store, placed or not, most recently saved first: its id, every language version (whom it is from and the quote), where it is shown — home spots and landing pages — and who created and last saved it, when and through which AI app. A landing page's testimonials section places testimonials by the ids listed here. ${REAL_WORDS} ${VERSIONS} ${LANDING} ${KEPT}`,
+      description: `Every testimonial in School of Gaming's store, placed or not, most recently saved first: its id, every language version (whom it is from and the quote), the landing pages it is shown on, and who created and last saved it, when and through which AI app. A landing page's testimonials section places testimonials by the ids listed here. ${REAL_WORDS} ${VERSIONS} ${LANDING} ${KEPT}`,
       annotations: READ_ONLY,
     },
     (ctx) =>
@@ -225,7 +191,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "get_testimonial",
     {
       title: "Read a testimonial",
-      description: `One testimonial whole: every language version, every place it is shown — a home spot with the public pages' links, each landing page with its status page in Sogverse admin — who created and last saved it, and the link to its editor in Sogverse. ${VERSIONS} ${LANDING}`,
+      description: `One testimonial whole: every language version, each landing page it is shown on with that page's status page in Sogverse admin, who created and last saved it, and the link to its editor in Sogverse. ${VERSIONS} ${LANDING}`,
       inputSchema: z.object({ testimonialId }),
       annotations: READ_ONLY,
     },
@@ -238,48 +204,10 @@ export function registerTestimonialTools(server: McpServer): void {
   );
 
   server.registerTool(
-    "list_home_testimonial_spots",
-    {
-      title: "List the home page's testimonial spots",
-      description: `The home page's testimonial spots in page order, each with its size and the testimonials filling it in reading order. ${SPOTS} A spot may be partly filled or empty; the page then shows what it has.`,
-      annotations: READ_ONLY,
-    },
-    (ctx) =>
-      asTestimonialAdmin(ctx, async ({ service }) => {
-        const testimonials = await service.listAdminTestimonials();
-        return answer({
-          spots: HOME_TESTIMONIAL_SPOTS.map((spot) => ({
-            spot,
-            description: SPOT_DESCRIPTION[spot],
-            size: HOME_SPOT_SIZE[spot],
-            testimonials: testimonials
-              .flatMap((testimonial) => {
-                const home = homePlacement(testimonial.usages);
-                return home?.spot === spot
-                  ? [
-                      {
-                        position: home.position,
-                        testimonialId: testimonial.id,
-                        versions: testimonial.versions.map((version) => ({
-                          locale: version.locale,
-                          from: version.from,
-                          quote: version.quote,
-                        })),
-                      },
-                    ]
-                  : [];
-              })
-              .sort((a, b) => a.position - b.position),
-          })),
-        });
-      }),
-  );
-
-  server.registerTool(
     "create_testimonial",
     {
       title: "Create a testimonial",
-      description: `Add a testimonial the admin has supplied to the store, with one or more language versions; add more languages later with save_testimonial_version. It is placed nowhere, so no public page shows it. ${REAL_WORDS} ${VERSIONS} ${NO_MARKS}`,
+      description: `Add a testimonial the admin has supplied to the store, with one or more language versions; add more languages later with save_testimonial_version. ${REAL_WORDS} ${VERSIONS} ${NO_MARKS}`,
       inputSchema: z.object({
         versions: z
           .array(z.object({ locale, from, quote }))
@@ -311,7 +239,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "save_testimonial_version",
     {
       title: "Save a testimonial's language version",
-      description: `Write one language version of a testimonial — whom it is from and the quote together, replacing what that language held — or add a language it does not have yet. No other language is touched. If the testimonial is shown on the home page, the change shows there and on About at once, and on every live landing page placing it, with no republish: read get_testimonial first and tell the admin where it is shown. ${REAL_WORDS} ${NO_MARKS}`,
+      description: `Write one language version of a testimonial — whom it is from and the quote together, replacing what that language held — or add a language it does not have yet. No other language is touched. If the testimonial is placed on a landing page, the change shows at once on every live landing page placing it, with no republish: read get_testimonial first and tell the admin where it is shown. ${REAL_WORDS} ${NO_MARKS}`,
       inputSchema: z.object({ testimonialId, locale, from, quote }),
       annotations: OVERWRITES,
     },

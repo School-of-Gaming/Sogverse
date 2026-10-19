@@ -14,10 +14,12 @@ import {
   TestimonialPair,
   TestimonialRow,
   TestimonialShowcase,
+  type ShownTestimonial,
 } from "@/components/home/testimonial-arrangements";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import type {
   ButtonTarget,
@@ -489,18 +491,30 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
  * exactly as the home page and About lay theirs — through the same shared
  * arrangements — under the section's optional header.
  *
- * Each quote is the store's current words, picked for the reader's locale by
- * `Testimonial`. Those words are the testimonial's rather than the version's,
- * so the arrangement is marked with the page's language wherever the version
- * shown is in another: `Testimonial` then marks its own quote against the
- * page's. A testimonial the read did not answer leaves its slot out, and a
- * section with none to show is not drawn at all.
+ * Each quote is the store's current words, in the version the reader fallback
+ * picks for the page's locale. Those words are the testimonial's rather than
+ * the version's, so the arrangement is marked with the page's language
+ * wherever the version shown is in another, and a quote in another language
+ * than the page's is marked with its own. A testimonial the read did not
+ * answer leaves its slot out, and a section with none to show is not drawn at
+ * all.
  */
 function TestimonialsSection({ section, text, context }: LandingSectionProps<"testimonials">) {
-  const pick = (ids: readonly string[]) =>
+  const pick = (ids: readonly string[]): ShownTestimonial[] =>
     ids.flatMap((id) => {
       const testimonial = context.testimonial(id);
-      return testimonial === null ? [] : [testimonial];
+      const version =
+        testimonial === null ? null : resolveTranslation(testimonial.versions, context.locale);
+      if (version === null) return [];
+      return [
+        {
+          key: id,
+          quote: version.quote,
+          attribution: version.from,
+          // exact-locale: marking a quote shown in another language than the page's
+          lang: version.locale === context.locale ? undefined : version.locale,
+        },
+      ];
     });
   const shown = pick(section.testimonialIds);
   if (shown.length === 0) return null;

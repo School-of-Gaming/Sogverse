@@ -1483,32 +1483,6 @@ export type Database = {
         }
         Relationships: []
       }
-      home_testimonials: {
-        Row: {
-          position: number
-          spot: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id: string
-        }
-        Insert: {
-          position: number
-          spot: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id: string
-        }
-        Update: {
-          position?: number
-          spot?: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "home_testimonials_testimonial_id_fkey"
-            columns: ["testimonial_id"]
-            isOneToOne: true
-            referencedRelation: "testimonials"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invoice_customers: {
         Row: {
           billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -2634,6 +2608,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at: string
+          voice_join_instructions: string | null
         }
         Insert: {
           created_at?: string
@@ -2643,6 +2618,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Update: {
           created_at?: string
@@ -2652,6 +2628,7 @@ export type Database = {
           product_id?: string
           short_description?: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Relationships: [
           {
@@ -2670,6 +2647,7 @@ export type Database = {
           created_at: string
           created_by: string
           end_date: string | null
+          external_voice_url: string | null
           for_gamers: boolean
           for_parents: boolean
           id: string
@@ -2694,6 +2672,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
+          voice_room_mode: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled: boolean
         }
         Insert: {
@@ -2702,6 +2681,7 @@ export type Database = {
           created_at?: string
           created_by: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2726,6 +2706,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Update: {
@@ -2734,6 +2715,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2758,6 +2740,7 @@ export type Database = {
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Relationships: [
@@ -4327,6 +4310,10 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: Json
       }
+      clone_landing_page: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
+      }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
@@ -4403,6 +4390,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -4429,6 +4417,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -4948,15 +4937,6 @@ export type Database = {
       leave_my_waitlist_spot: {
         Args: { p_participation_id: string }
         Returns: Json
-      }
-      list_home_testimonials: {
-        Args: never
-        Returns: {
-          position: number
-          spot: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id: string
-          versions: Json
-        }[]
       }
       list_landing_page_testimonials: {
         Args: { p_page_id: string }
@@ -5490,6 +5470,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -5516,6 +5497,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -5560,7 +5542,6 @@ export type Database = {
       gedu_assignment_role: "primary" | "assistant"
       gedu_qualification: "neuroinclusive" | "consumer_products"
       gender_type: "boy" | "girl" | "non_binary"
-      home_testimonial_spot: "feature" | "safety" | "row"
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
         | "online_safety"
@@ -5599,6 +5580,7 @@ export type Database = {
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
+      voice_room_mode: "sogverse" | "external" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5740,7 +5722,6 @@ export const Constants = {
       gedu_assignment_role: ["primary", "assistant"],
       gedu_qualification: ["neuroinclusive", "consumer_products"],
       gender_type: ["boy", "girl", "non_binary"],
-      home_testimonial_spot: ["feature", "safety", "row"],
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [
         "online_safety",
@@ -5782,6 +5763,7 @@ export const Constants = {
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
+      voice_room_mode: ["sogverse", "external", "none"],
     },
   },
 } as const

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createFetchStubbedClient,
   postgrestJson,
+  postgrestPage,
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
@@ -14,8 +15,6 @@ import {
 import {
   QUOTATION_MARKS,
   hasQuotationMarks,
-  homePlacement,
-  landingPagePlacements,
   testimonialInput,
   testimonialWriteFailure,
 } from "@/services/testimonials/testimonials.contracts";
@@ -23,7 +22,6 @@ import { TestimonialsService } from "@/services/testimonials/testimonials.servic
 
 const A = "11111111-2222-4333-8444-555555555555";
 const B = "66666666-7777-4888-9999-aaaaaaaaaaaa";
-const C = "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff";
 
 /**
  * The REAL Supabase client over a fake fetch transport answering `body`, so
@@ -95,34 +93,41 @@ describe("the editor's save check", () => {
 });
 
 describe("TestimonialsService", () => {
-  it("groups the home testimonials by spot in reading order, versions in locale order", async () => {
-    const { service } = stubbed([
-          { spot: "row", position: 2, testimonial_id: C, versions: [{ locale: "en", attribution: "Dad", quote: "Two." }] },
-          { spot: "row", position: 1, testimonial_id: B, versions: [{ locale: "en", attribution: "Mum", quote: "One." }] },
-          {
-            spot: "feature",
-            position: 1,
-            testimonial_id: A,
-            versions: [
-              { locale: "fi", attribution: "Äiti", quote: "Yksi." },
-              { locale: "en", attribution: "Mum", quote: "One." },
-            ],
-          },
-        ]);
+  it("reads a testimonial with its versions in locale order and `from` for the stored attribution", async () => {
+    const row = {
+      id: A,
+      created_at: "2026-10-16T09:00:00Z",
+      created_via: null,
+      updated_at: "2026-10-16T10:00:00Z",
+      last_saved_via: null,
+      creator: { first_name: "Kyle", last_name: "Hutchinson" },
+      last_saver: null,
+      versions: [
+        { locale: "fi", attribution: "Äiti", quote: "Yksi." },
+        { locale: "en", attribution: "Mum", quote: "One." },
+      ],
+    };
+    // The testimonial's row, and no landing page placing it.
+    const fetchMock: FetchMock = vi.fn<typeof fetch>();
+    fetchMock.mockImplementation(async (input) =>
+      requestedUrl(input).pathname.endsWith("/landing_pages")
+        ? postgrestPage([], { from: 0, total: 0 })
+        : postgrestJson(row),
+    );
+    const service = new TestimonialsService(createFetchStubbedClient(fetchMock));
 
-    const home = await service.listHomeTestimonials();
-
-    expect(home.feature).toEqual([
-      {
-        id: A,
-        versions: [
-          { locale: "en", from: "Mum", quote: "One." },
-          { locale: "fi", from: "Äiti", quote: "Yksi." },
-        ],
-      },
-    ]);
-    expect(home.safety).toEqual([]);
-    expect(home.row.map((testimonial) => testimonial.id)).toEqual([B, C]);
+    expect(await service.getAdminTestimonial(A)).toEqual({
+      id: A,
+      versions: [
+        { locale: "en", from: "Mum", quote: "One." },
+        { locale: "fi", from: "Äiti", quote: "Yksi." },
+      ],
+      usages: [],
+      createdAt: "2026-10-16T09:00:00Z",
+      created: { by: "Kyle Hutchinson", via: null },
+      updatedAt: "2026-10-16T10:00:00Z",
+      lastSaved: { by: null, via: null },
+    });
   });
 
   it("reads a live landing page's testimonials through the public read, versions in locale order", async () => {
@@ -194,29 +199,5 @@ describe("testimonialWriteFailure", () => {
       kind: "unknown",
     });
     expect(testimonialWriteFailure({ code: "42P01", message: "relation" })).toEqual({ kind: "unknown" });
-  });
-});
-
-describe("where a testimonial is used, by kind", () => {
-  const LANDING = {
-    kind: "landingPage" as const,
-    pageId: "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13",
-    titles: [{ locale: "en" as const, title: "Gaming clubs in Espoo" }],
-    inLiveCopy: true,
-    inWorkingCopy: false,
-  };
-
-  it("finds the home spot wherever it sits among the usages", () => {
-    expect(homePlacement([LANDING, { kind: "home", spot: "row", position: 2 }])).toEqual({
-      spot: "row",
-      position: 2,
-    });
-    expect(homePlacement([LANDING])).toBeNull();
-  });
-
-  it("lists the landing pages alone", () => {
-    expect(landingPagePlacements([{ kind: "home", spot: "feature", position: 1 }, LANDING])).toEqual([
-      LANDING,
-    ]);
   });
 });

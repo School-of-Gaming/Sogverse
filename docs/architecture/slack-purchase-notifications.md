@@ -146,12 +146,19 @@ such a message is read within minutes of the purchase.
 
 ## Link previews (unfurls)
 
-The message's three links all unfurl. The shop link unfurls correctly (real product
-image and name, built on purpose by the product metadata). The two admin links unfurl
-as the useless "Sign In" card — a gated URL 307s to `/login`, a public page with a
-genuine OG card — tripling every message's height. The owner's ruling (2026-08-23):
-exactly one preview, the shop link. The decided fix is
-`../plans/suppress-admin-link-unfurls.md`; when it lands, this section gains the
-result. Verified dead ends (do not re-try): robots.txt is live and correct but is not
-the lever; the labelled-link form still unfurls; there is no Stripe-side or Slack-side
-per-link toggle; backticking a URL kills the unfurl and the clickability together.
+Exactly one link unfurls, the shop link (owner's ruling, 2026-08-23): its card is the
+real product image and name, built on purpose by the product metadata. The two admin
+links unfurl as nothing, because the proxy answers a signed-out link-preview crawler —
+Slack's, and the other chat apps' — with a 404 on every gated page instead of the
+login bounce. Without that, a gated URL 307s to `/login`, a public page with a genuine
+OG card, and every admin link previews as the useless "Sign In" card, tripling the
+message's height. A human still gets the bounce with `?redirect=`.
+
+Verified dead ends (do not re-try): robots.txt is live and correct but Slack does not
+honour it across the redirect; the labelled-link form still unfurls; there is no
+Stripe-side or Slack-side per-link toggle; backticking a URL kills the unfurl and the
+clickability together; stripping the OG tags from `/login` leaves a smaller card built
+from its title and description, not none.
+
+Slack caches an unfurl per URL, so checking this by pasting a link needs one Slack has
+never seen — a fresh product id, or a throwaway query string.

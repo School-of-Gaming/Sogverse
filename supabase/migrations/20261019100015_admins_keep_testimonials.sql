@@ -1,7 +1,7 @@
 -- Admins keep testimonials.
 --
 -- A testimonial is real words from a real parent, gamer or gedu, kept by
--- Marketing in one store, and the public pages show the ones placed there.
+-- Marketing in one store.
 --
 -- THE SHAPE
 --
@@ -23,33 +23,16 @@
 -- 4. Nothing else: no original language, no status, no kind of giver, no
 --    names, places, photos or dates of the admin's own.
 --
--- THE HOME SPOTS
---
--- The home page shows testimonials in three named spots, and About shows
--- exactly the same ones in the same three groups: `feature` (the single quote
--- under the hero, 1), `safety` (beside the safety facts, 2) and `row` (the
--- "What parents tell us" row, 3). `home_testimonials` holds which testimonial
--- fills which position of which spot. **Its rows are written only by
--- migrations**: the home and About pages are the site's front door, so which
--- testimonial sits where is a developer's decision, made in a migration, while
--- the words are an admin's. No Data API role holds a write grant on it and no
--- function writes it.
---
--- **A testimonial is never deleted by the app**: once created it stays, so no
--- page can lose a quote it shows. One comes off the site by being removed
--- from where it is shown — for a home spot, by a migration. No function
--- deletes one, and of the Data API roles only the service role holds DELETE,
--- which no app path uses — it is how the DB test suite removes the rows it
--- creates. The placements' foreign key restricts a hand delete of a placed one. Editing a
--- placed testimonial's words is allowed — the admin page lists where it is
--- used, which is what makes that a visible decision.
+-- **A testimonial is never deleted by the app**: once created it stays. No
+-- function deletes one, and of the Data API roles only the service role holds
+-- DELETE, which no app path uses — it is how the DB test suite removes the
+-- rows it creates.
 --
 -- ACCESS
 --
 -- The store is Marketing's internal collection: admin-only for the Data API,
 -- SELECT for authenticated behind an admin policy, nothing for anon, and no
--- write grant — the writers are the admin-guarded functions below. The public
--- reads the placed testimonials alone, through list_home_testimonials.
+-- write grant — the writers are the admin-guarded functions below.
 
 -- ---------------------------------------------------------------------------
 -- 1. The tables
@@ -65,7 +48,7 @@ CREATE TABLE public.testimonials (
   last_saved_via uuid
 );
 
-COMMENT ON TABLE public.testimonials IS 'Marketing''s store of testimonials — real words from real parents, gamers and gedus: the record of who created each and who last saved it here, the words per language in testimonial_translations. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_testimonial, save_testimonial, save_testimonial_version and remove_testimonial_version, and nothing deletes a testimonial: once created it stays. The public reads only the testimonials placed on the home page, through list_home_testimonials.';
+COMMENT ON TABLE public.testimonials IS 'Marketing''s store of testimonials — real words from real parents, gamers and gedus: the record of who created each and who last saved it here, the words per language in testimonial_translations. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_testimonial, save_testimonial, save_testimonial_version and remove_testimonial_version, and nothing deletes a testimonial: once created it stays.';
 COMMENT ON COLUMN public.testimonials.created_at IS 'When the testimonial was created, stamped by stamp_testimonial_saver and never moved.';
 COMMENT ON COLUMN public.testimonials.created_by IS 'The admin who created the testimonial, stamped from auth.uid() by stamp_testimonial_saver and never changed by a save. NULL when the create had no signed-in caller (a migration, the service role, psql) or the account has since gone (SET NULL).';
 COMMENT ON COLUMN public.testimonials.created_via IS 'The OAuth client — an AI app connected through the MCP endpoint — the create came through, read from the token''s client_id claim by stamp_testimonial_saver. NULL for a create made in Sogverse itself, and whenever created_by is NULL. No foreign key: the client belongs to Supabase Auth, and the record outlives it.';
@@ -111,40 +94,6 @@ CREATE POLICY admins_read_testimonial_translations ON public.testimonial_transla
 
 GRANT SELECT ON TABLE public.testimonial_translations TO authenticated;
 GRANT ALL ON TABLE public.testimonial_translations TO service_role;
-
-CREATE TYPE public.home_testimonial_spot AS ENUM ('feature', 'safety', 'row');
-
-COMMENT ON TYPE public.home_testimonial_spot IS 'A named place on the home page that shows testimonials, About showing the same ones in the same groups: feature (the single quote under the hero, one testimonial), safety (beside the safety facts, two) and row (the "What parents tell us" row, three).';
-
-CREATE TABLE public.home_testimonials (
-  spot           public.home_testimonial_spot NOT NULL,
-  position       smallint NOT NULL,
-  testimonial_id uuid NOT NULL REFERENCES public.testimonials(id) ON DELETE RESTRICT,
-  PRIMARY KEY (spot, position),
-  CONSTRAINT uq_home_testimonials_testimonial UNIQUE (testimonial_id),
-  CONSTRAINT chk_home_testimonials_spot_size CHECK (
-    position >= 1
-    AND position <= CASE spot
-                      WHEN 'feature' THEN 1
-                      WHEN 'safety'  THEN 2
-                      WHEN 'row'     THEN 3
-                    END
-  )
-);
-
-COMMENT ON TABLE public.home_testimonials IS 'Which testimonial fills which position of which home spot; About shows the same testimonials in the same groups. Written only by migrations: which testimonial sits where on the site''s front door is a developer''s decision, while its words are an admin''s, so no Data API role holds a write grant and no function writes it. A spot may be partly filled or empty. SELECT for authenticated behind an admin policy; the public reads it through list_home_testimonials.';
-COMMENT ON COLUMN public.home_testimonials.position IS 'The testimonial''s place within its spot, from 1, in reading order. At most the spot''s size (chk_home_testimonials_spot_size).';
-COMMENT ON COLUMN public.home_testimonials.testimonial_id IS 'The testimonial shown there. A testimonial is in at most one home position (uq_home_testimonials_testimonial), so About never shows it twice. RESTRICT: the app never deletes a testimonial, and this keeps a hand delete from taking a quote off the home page.';
-COMMENT ON CONSTRAINT chk_home_testimonials_spot_size ON public.home_testimonials IS 'A spot holds at most its size: feature 1, safety 2, row 3.';
-
-ALTER TABLE public.home_testimonials ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY admins_read_home_testimonials ON public.home_testimonials
-  FOR SELECT TO authenticated
-  USING ((SELECT public.is_admin()));
-
-GRANT SELECT ON TABLE public.home_testimonials TO authenticated;
-GRANT ALL ON TABLE public.home_testimonials TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 2. Who created it and who last saved it
@@ -302,7 +251,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_testimonial(p_versions jsonb) IS 'Admin-gated create of a testimonial; returns its id. p_versions is the whole version set, as replace_testimonial_versions takes it — at least one {locale, attribution, quote}, each with both fields and no quotation marks around the quote. Who created it, and through which AI app, is stamped by the trigger. It is placed nowhere. SECURITY DEFINER because neither testimonial table carries a write grant.';
+COMMENT ON FUNCTION public.create_testimonial(p_versions jsonb) IS 'Admin-gated create of a testimonial; returns its id. p_versions is the whole version set, as replace_testimonial_versions takes it — at least one {locale, attribution, quote}, each with both fields and no quotation marks around the quote. Who created it, and through which AI app, is stamped by the trigger. SECURITY DEFINER because neither testimonial table carries a write grant.';
 
 REVOKE ALL ON FUNCTION public.create_testimonial(p_versions jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.create_testimonial(p_versions jsonb) TO authenticated;
@@ -334,7 +283,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.save_testimonial(p_id uuid, p_versions jsonb) IS 'Admin-gated whole save of a testimonial, the editor''s: p_versions is the whole version set, as replace_testimonial_versions takes it, replacing what was stored — a locale it omits is removed. A placed testimonial may be saved; its words change wherever it is shown. Returns its id; an id no testimonial has raises no_data_found. SECURITY DEFINER because neither testimonial table carries a write grant.';
+COMMENT ON FUNCTION public.save_testimonial(p_id uuid, p_versions jsonb) IS 'Admin-gated whole save of a testimonial, the editor''s: p_versions is the whole version set, as replace_testimonial_versions takes it, replacing what was stored — a locale it omits is removed. Returns its id; an id no testimonial has raises no_data_found. SECURITY DEFINER because neither testimonial table carries a write grant.';
 
 REVOKE ALL ON FUNCTION public.save_testimonial(p_id uuid, p_versions jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.save_testimonial(p_id uuid, p_versions jsonb) TO authenticated;
@@ -422,36 +371,3 @@ COMMENT ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) 
 REVOKE ALL ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.remove_testimonial_version(p_id uuid, p_locale text) TO service_role;
-
--- ---------------------------------------------------------------------------
--- 4. The public read
--- ---------------------------------------------------------------------------
-
-CREATE FUNCTION public.list_home_testimonials()
-RETURNS TABLE(spot public.home_testimonial_spot, "position" smallint, testimonial_id uuid, versions jsonb)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path TO ''
-AS $$
-  SELECT h.spot,
-         h.position,
-         h.testimonial_id,
-         COALESCE(
-           (SELECT jsonb_agg(jsonb_build_object(
-                     'locale', t.locale,
-                     'attribution', t.attribution,
-                     'quote', t.quote))
-              FROM public.testimonial_translations t
-             WHERE t.testimonial_id = h.testimonial_id),
-           '[]'::jsonb)
-    FROM public.home_testimonials h
-   ORDER BY h.spot, h.position;
-$$;
-
-COMMENT ON FUNCTION public.list_home_testimonials() IS 'The home page''s and About''s testimonials: every testimonial placed in a home spot, with its spot, its position there and every language version as a JSON array of {locale, attribution, quote} (in no particular order: the reader picks theirs in the app). Crosses the boundary that the testimonial store is admin-only and anon holds no grant on it, and hands back only what a placement puts on the public pages — never an unplaced testimonial, and never who created or saved one. Ordered by spot (feature, safety, row), then position. Takes no argument and answers every caller identically.';
-
-REVOKE ALL ON FUNCTION public.list_home_testimonials() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.list_home_testimonials() TO anon;
-GRANT EXECUTE ON FUNCTION public.list_home_testimonials() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.list_home_testimonials() TO service_role;

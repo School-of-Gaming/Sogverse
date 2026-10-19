@@ -271,6 +271,10 @@ export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 // the tag module under src/components/public/products/ re-exports it and owns the
 // label-key resolution.
 export type ProductTag = Database["public"]["Enums"]["product_tag"];
+// How an online product's sessions are joined: the Sogverse voice room, a link
+// to a meeting elsewhere, or no room and written instructions. An in-person
+// product is always `sogverse` (a CHECK on products).
+export type VoiceRoomMode = Database["public"]["Enums"]["voice_room_mode"];
 // A human language a club is delivered in / a person speaks — the value in
 // `products.spoken_language_code` and each entry of `profiles.spoken_languages`.
 // Deliberately NOT the UI locale, which is which translation of the app someone
@@ -378,17 +382,12 @@ export type SpotlightTranslationRow =
   Database["public"]["Tables"]["spotlight_translations"]["Row"];
 
 // Testimonials — Marketing's store: who created and last saved each in
-// `testimonials`, whom it is from and the quote per site locale in
-// `testimonial_translations`, and which testimonial fills which home spot in
-// `home_testimonials`, which only migrations write. Row aliases only: no
-// testimonial table carries a write grant for any Data API role.
+// `testimonials`, and whom it is from and the quote per site locale in
+// `testimonial_translations`. Row aliases only: no testimonial table carries
+// a write grant for any Data API role.
 export type TestimonialRow = Database["public"]["Tables"]["testimonials"]["Row"];
 export type TestimonialTranslationRow =
   Database["public"]["Tables"]["testimonial_translations"]["Row"];
-export type HomeTestimonialRow =
-  Database["public"]["Tables"]["home_testimonials"]["Row"];
-export type HomeTestimonialSpot =
-  Database["public"]["Enums"]["home_testimonial_spot"];
 
 // Landing pages — `landing_pages` is a page's admin-only working copy and
 // `landing_page_publications` its public published copy, whose row existing is
@@ -890,6 +889,13 @@ export interface GeduAssignedProductShell {
   end_date: string | null;
   is_remote: boolean;
   /**
+   * How the sessions are joined, and the meeting link when that is
+   * `external`. Folded with each translation's instructions by
+   * `productVoiceRoom()` in `src/lib/products/voice-room.ts`.
+   */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
+  /**
    * Does this product contractually require a creation from every
    * member? Staff-facing only, and carried in parity with the gedu group
    * feed's product shell — the page composes both documents.
@@ -899,6 +905,8 @@ export interface GeduAssignedProductShell {
     locale: string;
     name: string;
     description: string;
+    /** This locale's join instructions when the mode is `none`, else null. */
+    voice_join_instructions: string | null;
   }>;
   schedule_slots: Array<{
     weekday: number;

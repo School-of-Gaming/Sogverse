@@ -878,7 +878,8 @@
         "alt": "Texte alternatif",
         "question": "Question",
         "answer": "Réponse"
-      }
+      },
+      "copyMarker": "(copie)"
     },
     "geduRole": {
       "primary": "Gedu principal",
@@ -1003,6 +1004,7 @@
         "fields": {
           "topic": "Thème",
           "materialUrl": "Matériel pédagogique",
+          "voiceRoom": "Connexion",
           "startDate": "Date de début",
           "endDate": "Date de fin",
           "firstSession": "Première séance",
@@ -1070,10 +1072,10 @@
         "audienceDescription": "À qui cela s’adresse.",
         "where": "Où",
         "whereDescription": {
-          "consumerClub": "En ligne ou en présentiel. Les clubs en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les clubs en présentiel se déroulent sur un site précis.",
+          "consumerClub": "En ligne ou en présentiel. Les clubs en présentiel se déroulent sur un site précis.",
           "municipalityClub": "Financé par une commune précise. Les clubs en ligne choisissent directement la commune ; les clubs en présentiel choisissent un site situé sur son territoire.",
-          "camp": "En ligne ou en présentiel. Les stages en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les stages en présentiel se déroulent sur un site précis.",
-          "event": "En ligne ou en présentiel. Les événements en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les événements en présentiel se déroulent sur un site précis."
+          "camp": "En ligne ou en présentiel. Les stages en présentiel se déroulent sur un site précis.",
+          "event": "En ligne ou en présentiel. Les événements en présentiel se déroulent sur un site précis."
         },
         "when": "Quand",
         "whenDescription": {
@@ -1100,8 +1102,10 @@
         "name": "Nom",
         "shortDescription": "Description courte",
         "longDescription": "Description longue",
+        "voiceJoinInstructions": "Instructions de connexion",
         "topic": "Thème",
         "materialUrl": "URL du matériel pédagogique",
+        "externalVoiceUrl": "Lien de la réunion",
         "requiresGamerCreations": "Chaque joueur doit avoir un lien vers sa création",
         "seatAudience": "Qui peut occuper une place",
         "tag": "Conçu pour",
@@ -1138,6 +1142,7 @@
       "placeholders": {
         "selectTopic": "Choisir un thème…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "ex. Club Minecraft Redstone",
           "municipalityClub": "ex. Club Minecraft de Montreuil · Printemps 2026",
@@ -1197,6 +1202,15 @@
         "scheduled": "À un moment précis",
         "scheduledDescription": "Les parents voient un compte à rebours jusque-là. Pratique pour les lancements en mode billetterie."
       },
+      "voiceRoomModes": {
+        "label": "Comment les familles rejoignent-elles les séances ?",
+        "sogverse": "Salle vocale Sogverse",
+        "sogverseDescription": "Une salle vocale est créée automatiquement et s’ouvre pour chaque séance.",
+        "external": "Lien vers une réunion ailleurs",
+        "externalDescription": "Les familles rejoignent une réunion que vous organisez sur un autre service. Pour les publics plus nombreux qu’une salle vocale Sogverse ne peut accueillir (50 personnes).",
+        "none": "Pas de salle vocale",
+        "noneDescription": "Les familles voient à la place les instructions de connexion que vous rédigez pour chaque langue."
+      },
       "endDateModes": {
         "ongoing": "Aucune date de fin",
         "ongoingDescription": "Le club se poursuit indéfiniment jusqu’à ce que vous décidiez d’y mettre fin.",
@@ -1229,6 +1243,7 @@
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
+        "voiceJoinInstructionsHint": "Comment les familles rejoignent les séances, rédigé pour cette langue. Public : n’importe qui peut le lire, y compris les visiteurs non connectés.",
         "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
         "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque joueur du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
@@ -1238,8 +1253,7 @@
         "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
         "regionLockHint": "Seules les familles du pays choisi peuvent s’inscrire. Le lieu est celui que la famille a elle-même déclaré : c’est donc une indication dans la boutique plutôt qu’un blocage strict, et toute personne déjà inscrite conserve sa place même si elle déménage.",
         "spokenLanguageHint": "La langue principale parlée pendant les sessions.",
-        "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
-        "voiceRoomAuto": "Une salle vocale sera créée automatiquement pour ce produit.",
+        "externalVoiceUrlHint": "Public : n’importe qui peut lire ce lien, y compris les visiteurs non connectés.",
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
         "siteHint": "Où les sessions se déroulent physiquement.",
         "eventSingleDay": "Les événements ont lieu à une seule date.",
@@ -1273,6 +1287,9 @@
         "maxAgeInvalid": "L’âge maximum doit être supérieur ou égal à l’âge minimum",
         "municipalityRequired": "La commune est obligatoire pour les clubs municipaux en ligne",
         "siteRequired": "Le site est obligatoire pour les produits en présentiel",
+        "externalVoiceUrlRequired": "Saisissez le lien de la réunion",
+        "externalVoiceUrlInvalid": "Le lien de la réunion doit être une adresse web commençant par http:// ou https://",
+        "voiceJoinInstructionsRequired": "Rédigez des instructions de connexion dans au moins une langue",
         "scheduleRequired": "Au moins un créneau est requis",
         "materialUrlInvalid": "L’URL du matériel pédagogique doit être une URL valide",
         "startDateRequired": "La date de début est obligatoire",
@@ -2089,7 +2106,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit. La page d’accueil, la page À propos et les pages d’atterrissage citent ceux qui y sont placés.",
+      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit. Les pages d’atterrissage citent ceux qui y sont placés.",
       "newTestimonial": "Nouveau témoignage",
       "backToList": "Retour aux témoignages",
       "newPage": {
@@ -2106,19 +2123,7 @@
       "allHeading": "Tous les témoignages",
       "languagesLabel": "Langues",
       "saved": "Enregistré le {date}",
-      "onHome": "Page d’accueil : {spot}",
       "quoteHasMarks": "Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
-      "home": {
-        "heading": "Sur la page d’accueil",
-        "hint": "La page d’accueil les affiche à trois endroits, et la page À propos affiche les mêmes. Un développeur décide quel témoignage occupe quel endroit ; ses mots se modifient ici.",
-        "spotHeading": "{spot} ({filled, number} sur {size, number})",
-        "spots": {
-          "feature": "Sous la bannière",
-          "safety": "À côté des faits sur la sécurité",
-          "row": "Ce qu’en disent les parents"
-        },
-        "emptySpot": "Vide : la page n’affiche rien à cet endroit."
-      },
       "fields": {
         "languages": "Langues",
         "from": "De la part de",
@@ -2133,8 +2138,6 @@
         "heading": "Où il est utilisé",
         "none": "Il n’est encore affiché nulle part.",
         "editNote": "L’enregistrement modifie ses mots partout où il est affiché.",
-        "home": "Page d’accueil : {spot}, {position, number} sur {size, number}",
-        "about": "À propos : Ce qu’en disent les parents",
         "landingPage": "Page d’atterrissage : {title}",
         "landingPageState": {
           "both": "Les lecteurs le voient là maintenant.",
@@ -3869,7 +3872,33 @@
       "guarantee": "Satisfait ou remboursé pendant 30 jours"
     },
     "testimonials": {
-      "heading": "Ce qu’en disent les parents"
+      "heading": "Ce qu’en disent les parents",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise.",
+          "attribution": "Maman, Finlande"
+        },
+        "sighWithHappiness": {
+          "quote": "Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça.",
+          "attribution": "Maman, Finlande"
+        },
+        "largeGroups": {
+          "quote": "Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis.",
+          "attribution": "Maman, Finlande"
+        },
+        "finnishImproved": {
+          "quote": "Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment !",
+          "attribution": "Maman, Norvège"
+        },
+        "funAndSupervised": {
+          "quote": "Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance.",
+          "attribution": "Maman, Finlande"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande !",
+          "attribution": "Papa, Finlande"
+        }
+      }
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",
@@ -4264,6 +4293,7 @@
     "voiceRoom": "Salle vocale",
     "leave": "Quitter",
     "failedToJoinRoom": "Impossible de rejoindre la salle",
+    "notASogverseRoom": "Cette session ne se tient pas dans une salle vocale Sogverse. Revenez en arrière pour voir comment la rejoindre.",
     "sessionEnded": "La session est terminée",
     "disconnecting": "Déconnexion...",
     "connecting": "Connexion...",
@@ -4429,6 +4459,9 @@
   },
   "voiceButton": {
     "joinVoice": "Rejoindre la salle vocale",
+    "joinMeeting": "Rejoindre la réunion",
+    "opensInNewTab": "(s’ouvre dans un nouvel onglet)",
+    "howToJoin": "Comment rejoindre",
     "locked": "Ouvre le {date} à {time}"
   },
   "yty": {

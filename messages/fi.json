@@ -92,9 +92,9 @@
       "adminHolidayCalendars": "Lomakalenterit",
       "adminHolidayCalendarNew": "Uusi lomakalenteri",
       "adminHolidayCalendarEdit": "Muokkaa lomakalenteria",
-      "adminTestimonials": "Suosittelut",
-      "adminTestimonialNew": "Uusi suosittelu",
-      "adminTestimonialEdit": "Muokkaa suosittelua"
+      "adminTestimonials": "Asiakaskokemukset",
+      "adminTestimonialNew": "Uusi asiakaskokemus",
+      "adminTestimonialEdit": "Muokkaa asiakaskokemusta"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -797,8 +797,8 @@
           "goneSection": "Osio, jota sivulla ei enää ole: {field}"
         },
         "testimonials": {
-          "heading": "Suosittelut",
-          "hint": "Niiden sanoja muokataan Suosittelut-osiossa, ja muutos näkyy julkaistulla sivulla heti.",
+          "heading": "Asiakaskokemukset",
+          "hint": "Niiden sanoja muokataan Asiakaskokemukset-osiossa, ja muutos näkyy julkaistulla sivulla heti.",
           "section": "Osio {number} ({type}): {arrangement}",
           "arrangements": {
             "feature": "yksi suuri lainaus",
@@ -806,7 +806,7 @@
             "row": "kolme rivissä",
             "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
           },
-          "missing": "Suosittelu, jota ei enää ole tallessa"
+          "missing": "Asiakaskokemus, jota ei enää ole tallessa"
         }
       },
       "status": {
@@ -858,7 +858,7 @@
         "steps": "Vaiheet",
         "faq": "Kysymykset ja vastaukset",
         "cta": "Toimintakehote",
-        "testimonials": "Suosittelut"
+        "testimonials": "Asiakaskokemukset"
       },
       "items": {
         "image": "Kuva {number}",
@@ -878,7 +878,8 @@
         "alt": "Vaihtoehtoinen teksti",
         "question": "Kysymys",
         "answer": "Vastaus"
-      }
+      },
+      "copyMarker": "(kopio)"
     },
     "geduRole": {
       "primary": "Vastaava Gedu",
@@ -1003,6 +1004,7 @@
         "fields": {
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
+          "voiceRoom": "Liittyminen",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
           "firstSession": "Ensimmäinen kerta",
@@ -1070,10 +1072,10 @@
         "audienceDescription": "Kenelle tämä on tarkoitettu.",
         "where": "Missä",
         "whereDescription": {
-          "consumerClub": "Verkossa tai paikan päällä. Verkkokerhot ovat avoimia kaikille — sijaintia ei tarvita. Lähikerhot pidetään tietyssä toimipisteessä.",
+          "consumerClub": "Verkossa tai paikan päällä. Lähikerhot pidetään tietyssä toimipisteessä.",
           "municipalityClub": "Tietty kunta maksaa. Verkkokerhoissa valitaan kunta suoraan; lähikerhoissa toimipiste sen sisältä.",
-          "camp": "Verkossa tai paikan päällä. Verkkoleirit ovat avoimia kaikille — sijaintia ei tarvita. Lähileirit pidetään tietyssä toimipisteessä.",
-          "event": "Verkossa tai paikan päällä. Verkkotapahtumat ovat avoimia kaikille — sijaintia ei tarvita. Lähitapahtumat pidetään tietyssä toimipisteessä."
+          "camp": "Verkossa tai paikan päällä. Lähileirit pidetään tietyssä toimipisteessä.",
+          "event": "Verkossa tai paikan päällä. Lähitapahtumat pidetään tietyssä toimipisteessä."
         },
         "when": "Ajankohta",
         "whenDescription": {
@@ -1100,8 +1102,10 @@
         "name": "Nimi",
         "shortDescription": "Lyhyt kuvaus",
         "longDescription": "Pitkä kuvaus",
+        "voiceJoinInstructions": "Liittymisohjeet",
         "topic": "Aihe",
         "materialUrl": "Oppimateriaalin osoite",
+        "externalVoiceUrl": "Kokouslinkki",
         "requiresGamerCreations": "Jokaiselta pelaajalta vaaditaan linkki omaan teokseensa",
         "seatAudience": "Kuka voi ottaa paikan",
         "tag": "Kenelle suunniteltu",
@@ -1138,6 +1142,7 @@
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
           "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
@@ -1197,6 +1202,15 @@
         "scheduled": "Tiettyyn aikaan",
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
+      "voiceRoomModes": {
+        "label": "Miten perheet liittyvät mukaan?",
+        "sogverse": "Sogversen äänihuone",
+        "sogverseDescription": "Äänihuone luodaan automaattisesti, ja se avautuu jokaista kertaa varten.",
+        "external": "Linkki muualla pidettävään kokoukseen",
+        "externalDescription": "Perheet liittyvät kokoukseen, jonka järjestät toisessa palvelussa. Suuremmalle yleisölle kuin Sogversen äänihuoneeseen mahtuu (50 henkeä).",
+        "none": "Ei äänihuonetta",
+        "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
+      },
       "endDateModes": {
         "ongoing": "Ei loppupäivää",
         "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
@@ -1229,6 +1243,7 @@
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
+        "voiceJoinInstructionsHint": "Miten perheet liittyvät kerroille, tällä kielellä kirjoitettuna. Julkinen: kuka tahansa voi lukea ohjeet, myös kirjautumattomat vierailijat.",
         "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "requiresGamerCreationsHint": "Tuotteille, joilta sopimus sitä vaatii. Viimeinen kerta pysyy huomiota vaativana, kunnes jokaiselta ryhmän pelaajalta on kirjattu teos. Perheille ei näy mitään eroa.",
@@ -1238,8 +1253,7 @@
         "tagHint": "Valinnainen. Perheet näkevät sen merkintänä selauskortissa ja tuotesivulla. Se kertoo, kenelle kerrat on suunniteltu – ei sitä, kuka voi ottaa paikan.",
         "regionLockHint": "Vain valitussa maassa asuvat perheet voivat ilmoittautua. Sijainti perustuu perheen omaan ilmoitukseen, joten tämä on kaupan opaste eikä ehdoton este – jo ilmoittautuneet säilyttävät paikkansa, vaikka muuttaisivat.",
         "spokenLanguageHint": "Pääkieli, jota kerroilla puhutaan.",
-        "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
-        "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
+        "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
@@ -1273,6 +1287,9 @@
         "maxAgeInvalid": "Yläikärajan on oltava vähintään alaikärajan suuruinen",
         "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
         "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
+        "externalVoiceUrlRequired": "Anna kokouslinkki",
+        "externalVoiceUrlInvalid": "Kokouslinkin on oltava verkko-osoite, joka alkaa http:// tai https://",
+        "voiceJoinInstructionsRequired": "Kirjoita liittymisohjeet vähintään yhdellä kielellä",
         "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
         "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",
@@ -2089,36 +2106,24 @@
       }
     },
     "testimonials": {
-      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Etusivu, Tietoa meistä -sivu ja laskeutumissivut lainaavat niistä sinne sijoitettuja.",
-      "newTestimonial": "Uusi suosittelu",
-      "backToList": "Takaisin suositteluihin",
+      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Laskeutumissivut lainaavat niistä sinne sijoitettuja.",
+      "newTestimonial": "Uusi asiakaskokemus",
+      "backToList": "Takaisin asiakaskokemuksiin",
       "newPage": {
-        "title": "Uusi suosittelu",
-        "submit": "Luo suosittelu"
+        "title": "Uusi asiakaskokemus",
+        "submit": "Luo asiakaskokemus"
       },
       "editPage": {
-        "title": "Muokkaa suosittelua"
+        "title": "Muokkaa asiakaskokemusta"
       },
-      "listLoadError": "Suositteluja ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
-      "loadError": "Tätä suosittelua ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
-      "notFound": "Tällä osoitteella ei ole suosittelua.",
-      "empty": "Suositteluja ei ole vielä.",
-      "allHeading": "Kaikki suosittelut",
+      "listLoadError": "Asiakaskokemuksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loadError": "Tätä asiakaskokemusta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "notFound": "Tällä osoitteella ei ole asiakaskokemusta.",
+      "empty": "Asiakaskokemuksia ei ole vielä.",
+      "allHeading": "Kaikki asiakaskokemukset",
       "languagesLabel": "Kielet",
       "saved": "Tallennettu {date}",
-      "onHome": "Etusivulla: {spot}",
       "quoteHasMarks": "Jätä lainausmerkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
-      "home": {
-        "heading": "Etusivulla",
-        "hint": "Etusivu näyttää nämä kolmessa kohdassa, ja Tietoa meistä -sivu näyttää samat. Kehittäjä päättää, mikä suosittelu on missäkin kohdassa; sen sanoja muokataan täällä.",
-        "spotHeading": "{spot} ({filled, number}/{size, number})",
-        "spots": {
-          "feature": "Pääkuvan alla",
-          "safety": "Turvallisuustietojen vieressä",
-          "row": "Mitä vanhemmat kertovat"
-        },
-        "emptySpot": "Tyhjä: sivu ei näytä tässä kohdassa mitään."
-      },
       "fields": {
         "languages": "Kielet",
         "from": "Keneltä",
@@ -2133,8 +2138,6 @@
         "heading": "Missä sitä käytetään",
         "none": "Sitä ei vielä näytetä missään.",
         "editNote": "Tallentaminen muuttaa sen sanat kaikkialla, missä se näkyy.",
-        "home": "Etusivu: {spot}, {position, number}/{size, number}",
-        "about": "Tietoa meistä: Mitä vanhemmat kertovat",
         "landingPage": "Laskeutumissivu: {title}",
         "landingPageState": {
           "both": "Lukijat näkevät sen siellä nyt.",
@@ -2157,11 +2160,11 @@
         "cancel": "Peruuta"
       },
       "errors": {
-        "noVersion": "Kirjoita suosittelu vähintään yhdellä kielellä.",
-        "versionIncomplete": "Kieliversio {language} tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
-        "quoted": "Kieliversion {language} lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
-        "saveFailed": "Suosittelua ei voitu tallentaa. Yritä uudelleen.",
-        "saveFailedWithReason": "Suosittelua ei voitu tallentaa: {reason}"
+        "noVersion": "Kirjoita asiakaskokemus vähintään yhdellä kielellä.",
+        "versionIncomplete": "Kielelle {language} tarvitaan sekä lainaus että tieto siitä, keneltä se on.",
+        "quoted": "{language}: lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
+        "saveFailed": "Asiakaskokemusta ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Asiakaskokemusta ei voitu tallentaa: {reason}"
       },
       "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}"
     }
@@ -3854,7 +3857,7 @@
       "invoiceCustomers": "Laskutusasiakkaat",
       "gedus": "Gedut",
       "landingPages": "Laskeutumissivut",
-      "testimonials": "Suosittelut",
+      "testimonials": "Asiakaskokemukset",
       "spotlights": "Nostot"
     }
   },
@@ -3869,7 +3872,33 @@
       "guarantee": "30 päivän rahat takaisin -takuu"
     },
     "testimonials": {
-      "heading": "Mitä vanhemmat kertovat"
+      "heading": "Mitä vanhemmat kertovat",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Kerho on pojan viikon kohokohta. Hiljaisesta ja arasta pojasta kuoriutuu joka viikko nauravainen ja kovaan ääneen höpöttävä lapsi, kun pääsee samanhenkisten lasten kanssa puuhailemaan. Kerhon sisältö ja kasvattajien osaaminen on yllättänyt minut todella positiivisesti.",
+          "attribution": "Äiti, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "Mikään toinen asia, harrastus tai juttu ei ole saanut lastani huokailemaan sitä kuinka onnellinen on.",
+          "attribution": "Äiti, Suomi"
+        },
+        "largeGroups": {
+          "quote": "Isot ryhmät jännittävät lastamme. Tämä on täydellinen tapa meille harrastaa ja tutustua uusiin kavereihin.",
+          "attribution": "Äiti, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "Tyttäreni suomen kieli on kehittynyt kuukaudessa valtavasti! Pelikasvattajat ovat olleet tosi taitavia, ystävällisiä ja pitkämielisiä. Tämä teidän juttu todella toimii!",
+          "attribution": "Äiti, Norja"
+        },
+        "funAndSupervised": {
+          "quote": "Pelaaminen on hauskaa ja valvottua. Ei kiusaamista eikä rähjäämistä tai pahaa mieltä.",
+          "attribution": "Äiti, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!",
+          "attribution": "Isä, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
@@ -4264,6 +4293,7 @@
     "voiceRoom": "Äänihuone",
     "leave": "Poistu",
     "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
+    "notASogverseRoom": "Tätä kertaa ei pidetä Sogversen äänihuoneessa. Palaa takaisin, niin näet, miten siihen liitytään.",
     "sessionEnded": "Kerta on päättynyt",
     "disconnecting": "Katkaistaan yhteyttä...",
     "connecting": "Yhdistetään...",
@@ -4429,6 +4459,9 @@
   },
   "voiceButton": {
     "joinVoice": "Liity äänihuoneeseen",
+    "joinMeeting": "Liity kokoukseen",
+    "opensInNewTab": "(avautuu uuteen välilehteen)",
+    "howToJoin": "Näin liityt",
     "locked": "Avautuu {date} klo {time}"
   },
   "yty": {
@@ -4609,7 +4642,7 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "Verkossa – Oma SOG",
         "locationInPerson": "{site}, {address}",
-        "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
+        "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja äänihuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
         "whereInPerson": "Tapaamispaikka on {site}.",
         "whereAddress": "Osoite: {address}",
         "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",

@@ -776,14 +776,11 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
-    /**
-     * Every testimonial — real words from parents, gamers and gedus — with
-     * the home spots that show some of them.
-     */
+    /** Every testimonial — real words from parents, gamers and gedus. */
     testimonials: "/admin/testimonials",
     /** The form a new testimonial is written in. */
     testimonialNew: "/admin/testimonials/new",
-    /** One testimonial's editor, with where it is used. */
+    /** One testimonial's editor. */
     testimonial: (id: string) =>
       ({ pathname: "/admin/testimonials/[id]", params: { id } }) as const,
     /**

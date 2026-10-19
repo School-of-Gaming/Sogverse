@@ -7,23 +7,20 @@ import {
   FeatureTestimonial,
   TestimonialPair,
   TestimonialRow,
+  type ShownTestimonial,
 } from "@/components/home/testimonial-arrangements";
-import type { PublicTestimonial } from "@/services/testimonials";
 
-const testimonial = (id: string, quote: string): PublicTestimonial => ({
-  id,
-  versions: [{ locale: "en", from: "Mum, Finland", quote }],
+const testimonial = (key: string, quote: string): ShownTestimonial => ({
+  key,
+  quote,
+  attribution: "Mum, Finland",
 });
 
-const ONE = testimonial("8a0f3c1e-5b7d-4e2a-9c61-3d4e5f6a7b80", "The highlight of the week.");
-const TWO = [
-  testimonial("1b2c3d4e-5f60-4718-8293-a4b5c6d7e8f9", "Fun and supervised."),
-  testimonial("2c3d4e5f-6071-4829-93a4-b5c6d7e8f90a", "A positive experience."),
-];
+const ONE = testimonial("one", "The highlight of the week.");
 const THREE = [
-  testimonial("3d4e5f60-7182-493a-a4b5-c6d7e8f90a1b", "A sigh of happiness."),
-  testimonial("4e5f6071-8293-4a4b-b5c6-d7e8f90a1b2c", "Large groups are hard."),
-  testimonial("5f607182-93a4-4b5c-86d7-e8f90a1b2c3d", "Her Finnish improved."),
+  testimonial("sigh", "A sigh of happiness."),
+  testimonial("groups", "Large groups are hard."),
+  testimonial("finnish", "Her Finnish improved."),
 ];
 
 function inEnglish(node: React.ReactNode) {
@@ -46,9 +43,7 @@ const classes = (element: Element | null | undefined) =>
  */
 describe("the shared testimonial arrangements", () => {
   it("lays About out exactly as before: the feature, the pair, the row", () => {
-    const { container } = inEnglish(
-      <ParentTestimonials id="parents" testimonials={{ feature: [ONE], safety: TWO, row: THREE }} />,
-    );
+    const { container } = inEnglish(<ParentTestimonials id="parents" />);
     const section = container.querySelector("section#parents");
     const [feature] = section?.querySelectorAll(":scope > figure") ?? [];
     const [pair, row] = section?.querySelectorAll(":scope > .grid") ?? [];
@@ -79,6 +74,15 @@ describe("the shared testimonial arrangements", () => {
     expect(classes(row.container.querySelector(".grid"))).toEqual(
       new Set(["mx-auto", "mt-12", "grid", "max-w-5xl", "gap-10", "md:grid-cols-3", "lg:mt-16"]),
     );
+  });
+
+  it("marks a quote with its language only when it is not the page's", () => {
+    const { container } = inEnglish(
+      <TestimonialRow testimonials={[{ ...ONE, lang: "fi" }, testimonial("two", "Fun and supervised.")]} />,
+    );
+    const [marked, plain] = container.querySelectorAll("figure");
+    expect(marked.getAttribute("lang")).toBe("fi");
+    expect(plain.hasAttribute("lang")).toBe(false);
   });
 
   it("draws nothing for a group with no testimonial", () => {

@@ -387,6 +387,8 @@ import { TEST_IDS } from "./constants";
  *                  testimonial id that must NEVER exist. Its testimonials are
  *                  minted by the RPC and found by a quote prefix only that file
  *                  uses
+ *   913            landing-pages.test.ts — not a product: the testimonial its
+ *                  clone fixture places, inserted and removed by that file
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

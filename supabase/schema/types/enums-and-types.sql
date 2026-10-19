@@ -128,24 +128,6 @@ CREATE TYPE public.gender_type AS ENUM (
 
 
 --
--- Name: home_testimonial_spot; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.home_testimonial_spot AS ENUM (
-    'feature',
-    'safety',
-    'row'
-);
-
-
---
--- Name: TYPE home_testimonial_spot; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TYPE public.home_testimonial_spot IS 'A named place on the home page that shows testimonials, About showing the same ones in the same groups: feature (the single quote under the hero, one testimonial), safety (beside the safety facts, two) and row (the "What parents tell us" row, three).';
-
-
---
 -- Name: invoice_billing_cadence; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -394,5 +376,23 @@ CREATE TYPE public.user_role AS ENUM (
     'gamer',
     'gedu'
 );
+
+
+--
+-- Name: voice_room_mode; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.voice_room_mode AS ENUM (
+    'sogverse',
+    'external',
+    'none'
+);
+
+
+--
+-- Name: TYPE voice_room_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.voice_room_mode IS 'How an online product''s sessions are joined. sogverse: the Sogverse voice room, opened during each session''s window — the default, and the only value an in-person product may hold. external: a meeting held on another service, at products.external_voice_url. none: no room of any kind; a family is shown the product''s join instructions instead, written per locale in product_translations.voice_join_instructions. external and none are a STOPGAP for audiences larger than a Sogverse room holds (50 people), to be removed once Sogverse rooms can hold more — see docs/investigations/voice-room-scale.md.';
 
 

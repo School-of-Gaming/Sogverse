@@ -6,11 +6,9 @@ import { TestimonialEditor } from "@/components/admin/testimonials/testimonial-e
 import type { AdminTestimonial } from "@/services/testimonials";
 
 /**
- * **The admin testimonial pages' rules.** The list's: the home spots are read
- * with what fills each and no control to change them, and no testimonial can
- * be deleted. The editor's: a
- * quote typed in quotation marks is called out on the field and held back at
- * Save, with nothing sent.
+ * **The admin testimonial pages' rules.** The list's: no testimonial can be
+ * deleted. The editor's: a quote typed in quotation marks is called out on the
+ * field and held back at Save, with nothing sent.
  *
  * Translations echo their key, so nothing here depends on wording.
  */
@@ -32,40 +30,26 @@ vi.mock("@/hooks/use-language-names", () => ({
   useLanguageNames: () => (_locale: string, fallback: string) => fallback,
 }));
 
-const PLACED: AdminTestimonial = {
+const PARENT: AdminTestimonial = {
   id: "0e6b9a52-31d4-4c7e-8f20-6a5d4c3b2a19",
   versions: [{ locale: "en", from: "Mum, Finland", quote: "Gaming is fun and supervised." }],
-  usages: [{ kind: "home", spot: "safety", position: 1 }],
+  usages: [],
   createdAt: "2026-10-16T09:00:00Z",
   created: { by: null, via: null },
   updatedAt: "2026-10-16T10:00:00Z",
   lastSaved: { by: null, via: null },
 };
 
-const UNPLACED: AdminTestimonial = {
-  ...PLACED,
+const GEDU: AdminTestimonial = {
+  ...PARENT,
   id: "7c2d1e0f-9a8b-4c6d-8e5f-4a3b2c1d0e9f",
   versions: [{ locale: "en", from: "Gedu Pixel", quote: "I love these sessions." }],
-  usages: [],
 };
 
 describe("the testimonials list", () => {
-  it("reads the home spots and offers no way to change them", () => {
-    render(
-      <AdminTestimonialsPage
-        testimonials={[PLACED, UNPLACED]}
-        status="success"
-      />,
-    );
-
-    const spots = screen.getByText("home.heading").closest("div")!.parentElement!;
-    expect(within(spots).queryAllByRole("button")).toHaveLength(0);
-    expect(screen.getByText(/home\.spotHeading spot=home\.spots\.safety filled=1 size=2/)).toBeTruthy();
-    expect(screen.getByText(/home\.spotHeading spot=home\.spots\.feature filled=0 size=1/)).toBeTruthy();
-  });
-
   it("offers no way to delete a testimonial", () => {
-    render(<AdminTestimonialsPage testimonials={[PLACED, UNPLACED]} status="success" />);
+    render(<AdminTestimonialsPage testimonials={[PARENT, GEDU]} status="success" />);
+    expect(screen.getByText("Gedu Pixel")).toBeTruthy();
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });
@@ -113,47 +97,51 @@ describe("where a testimonial is used", () => {
   const DRAFT = "94f2a395-3c9f-49f6-8770-f9f4c28bfd91";
   const titles = [{ locale: "en" as const, title: "Gaming clubs in Espoo" }];
 
-  it("lists a home spot with About, and each landing page with its status page and copies", () => {
+  it("lists each landing page with its status page and copies", () => {
     render(
       <TestimonialUsageCard
         usages={[
-          { kind: "home", spot: "safety", position: 1 },
-          { kind: "landingPage", pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
-          { kind: "landingPage", pageId: OTHER, titles, inLiveCopy: true, inWorkingCopy: false },
-          { kind: "landingPage", pageId: DRAFT, titles, inLiveCopy: false, inWorkingCopy: true },
+          { pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+          { pageId: OTHER, titles, inLiveCopy: true, inWorkingCopy: false },
+          { pageId: DRAFT, titles, inLiveCopy: false, inWorkingCopy: true },
         ]}
       />,
     );
 
     const items = screen.getAllByRole("listitem");
     expect(items.map((item) => item.textContent)).toEqual([
-      "usage.home spot=home.spots.safety position=1 size=2",
-      "usage.about",
       "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.both",
       "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.liveOnly",
       "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.workingOnly",
     ]);
-    expect(within(items[2]).getByRole("link").getAttribute("href")).toContain(
+    expect(within(items[0]).getByRole("link").getAttribute("href")).toContain(
       `/admin/landing-pages/${PAGE}`,
     );
   });
 
-  it("marks a listed testimonial placed on landing pages, beside its home spot", () => {
+  it("says a testimonial shown nowhere is not shown anywhere yet", () => {
+    render(<TestimonialUsageCard usages={[]} />);
+    expect(screen.getByText("usage.none")).toBeTruthy();
+    expect(screen.queryByText("usage.editNote")).toBeNull();
+  });
+
+  it("marks a listed testimonial with how many landing pages place it", () => {
     render(
       <AdminTestimonialsPage
         testimonials={[
           {
-            ...PLACED,
+            ...PARENT,
             usages: [
-              ...PLACED.usages,
-              { kind: "landingPage", pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+              { pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+              { pageId: OTHER, titles, inLiveCopy: false, inWorkingCopy: true },
             ],
           },
+          GEDU,
         ]}
         status="success"
       />,
     );
-    expect(screen.getByText("onLandingPages count=1")).toBeTruthy();
-    expect(screen.getAllByText("onHome spot=home.spots.safety").length).toBeGreaterThan(0);
+    expect(screen.getByText("onLandingPages count=2")).toBeTruthy();
+    expect(screen.queryAllByText(/onLandingPages/)).toHaveLength(1);
   });
 });

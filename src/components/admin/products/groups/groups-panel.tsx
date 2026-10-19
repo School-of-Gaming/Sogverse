@@ -32,6 +32,7 @@ import { SwitchClubSheet } from "./switch-club-sheet";
 import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import { computeAge } from "@/lib/utils";
 import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
@@ -78,6 +79,8 @@ interface GroupsPanelProps {
    * session still ahead of it.
    */
   voiceAvailable: boolean;
+  /** How the product's sessions are joined, for the Join button. */
+  voiceRoom: ProductVoiceRoom;
   /** Whether the shared session window is currently open. */
   voiceIsOpen: boolean;
   /** Pre-formatted "next open" date label for the locked Join button. */
@@ -118,6 +121,7 @@ export function GroupsPanel({
   seatCount,
   waitlistEnabled,
   voiceAvailable,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -309,6 +313,7 @@ export function GroupsPanel({
       seatCount={seatCount}
       waitlistEnabled={waitlistEnabled}
       voiceAvailable={voiceAvailable}
+      voiceRoom={voiceRoom}
       voiceIsOpen={voiceIsOpen}
       opensDate={opensDate}
       opensTime={opensTime}

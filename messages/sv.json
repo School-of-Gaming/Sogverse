@@ -878,7 +878,8 @@
         "alt": "Alternativtext",
         "question": "Fråga",
         "answer": "Svar"
-      }
+      },
+      "copyMarker": "(kopia)"
     },
     "geduRole": {
       "primary": "Huvud-Gedu",
@@ -1003,6 +1004,7 @@
         "fields": {
           "topic": "Ämne",
           "materialUrl": "Lektionsmaterial",
+          "voiceRoom": "Anslutning",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
           "firstSession": "Första tillfället",
@@ -1070,10 +1072,10 @@
         "audienceDescription": "Vem detta är till för.",
         "where": "Var",
         "whereDescription": {
-          "consumerClub": "Online eller på plats. Onlineklubbar är öppna för alla — ingen plats behövs. Klubbar på plats körs i en specifik lokal.",
+          "consumerClub": "Online eller på plats. Klubbar på plats körs i en specifik lokal.",
           "municipalityClub": "Bekostas av en specifik kommun. Onlineklubbar väljer kommunen direkt; klubbar på plats väljer en lokal inom den.",
-          "camp": "Online eller på plats. Onlineläger är öppna för alla — ingen plats behövs. Läger på plats körs i en specifik lokal.",
-          "event": "Online eller på plats. Onlineevenemang är öppna för alla — ingen plats behövs. Evenemang på plats körs i en specifik lokal."
+          "camp": "Online eller på plats. Läger på plats körs i en specifik lokal.",
+          "event": "Online eller på plats. Evenemang på plats körs i en specifik lokal."
         },
         "when": "När",
         "whenDescription": {
@@ -1100,8 +1102,10 @@
         "name": "Namn",
         "shortDescription": "Kort beskrivning",
         "longDescription": "Lång beskrivning",
+        "voiceJoinInstructions": "Anslutningsinstruktioner",
         "topic": "Ämne",
         "materialUrl": "URL till lektionsmaterial",
+        "externalVoiceUrl": "Möteslänk",
         "requiresGamerCreations": "Varje spelare behöver en länk till sin skapelse",
         "seatAudience": "Vem kan ta en plats",
         "tag": "Utformad för",
@@ -1138,6 +1142,7 @@
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
           "municipalityClub": "t.ex. Tapiola Minecraft-klubb · Vår 2026",
@@ -1197,6 +1202,15 @@
         "scheduled": "Vid en specifik tid",
         "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
       },
+      "voiceRoomModes": {
+        "label": "Hur ansluter familjerna?",
+        "sogverse": "Sogverse-röstrum",
+        "sogverseDescription": "Ett röstrum skapas automatiskt och öppnas inför varje träff.",
+        "external": "Länk till ett möte någon annanstans",
+        "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett Sogverse-röstrum rymmer (50 personer).",
+        "none": "Inget röstrum",
+        "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
+      },
       "endDateModes": {
         "ongoing": "Inget slutdatum",
         "ongoingDescription": "Klubben pågår tills vidare tills du bestämmer dig för att avsluta den.",
@@ -1229,6 +1243,7 @@
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
+        "voiceJoinInstructionsHint": "Hur familjerna ansluter till träffarna, skrivet för det här språket. Offentligt: vem som helst kan läsa det, även besökare som inte är inloggade.",
         "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
         "materialUrlHint": "Valfritt. Endast för Geduer — familjer ser aldrig detta.",
         "requiresGamerCreationsHint": "För produkter där ett avtal kräver det. Det sista tillfället är markerat som att det behöver åtgärd tills varje spelare i gruppen har en skapelse registrerad. Familjer ser ingen skillnad.",
@@ -1238,8 +1253,7 @@
         "tagHint": "Valfritt. Familjer ser den som en märkning på butikskortet och produktsidan. Den säger vem tillfällena är utformade för, inte vem som får ta en plats.",
         "regionLockHint": "Endast familjer i det valda landet kan anmäla sig. Platsen är den familjen själv har uppgett, så det här är en vägvisning i butiken snarare än ett hårt hinder – och den som redan är anmäld behåller sin plats även om hen flyttar.",
         "spokenLanguageHint": "Det huvudsakliga språk som talas under tillfällena.",
-        "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
-        "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
+        "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
@@ -1273,6 +1287,9 @@
         "maxAgeInvalid": "Max ålder måste vara större än eller lika med min ålder",
         "municipalityRequired": "Kommun krävs för online-kommunklubbar",
         "siteRequired": "Lokal krävs för produkter på plats",
+        "externalVoiceUrlRequired": "Ange möteslänken",
+        "externalVoiceUrlInvalid": "Möteslänken måste vara en webbadress som börjar med http:// eller https://",
+        "voiceJoinInstructionsRequired": "Skriv anslutningsinstruktioner på minst ett språk",
         "scheduleRequired": "Minst en schemarad krävs",
         "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
         "startDateRequired": "Startdatum krävs",
@@ -2089,7 +2106,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Startsidan, Om oss och landningssidorna citerar dem som placerats där.",
+      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Landningssidorna citerar dem som placerats där.",
       "newTestimonial": "Nytt omdöme",
       "backToList": "Tillbaka till omdömena",
       "newPage": {
@@ -2106,19 +2123,7 @@
       "allHeading": "Alla omdömen",
       "languagesLabel": "Språk",
       "saved": "Sparat {date}",
-      "onHome": "Startsidan: {spot}",
       "quoteHasMarks": "Utelämna citattecknen: webbplatsen lägger till dem på varje språks eget sätt.",
-      "home": {
-        "heading": "På startsidan",
-        "hint": "Startsidan visar dessa på tre ställen, och Om oss visar samma. Vilket omdöme som står var bestäms av en utvecklare; orden redigeras här.",
-        "spotHeading": "{spot} ({filled, number} av {size, number})",
-        "spots": {
-          "feature": "Under hjälteytan",
-          "safety": "Bredvid säkerhetsfakta",
-          "row": "Det här säger föräldrar"
-        },
-        "emptySpot": "Tomt: sidan visar ingenting på det här stället."
-      },
       "fields": {
         "languages": "Språk",
         "from": "Från",
@@ -2133,8 +2138,6 @@
         "heading": "Var det används",
         "none": "Det visas inte någonstans än.",
         "editNote": "När du sparar ändras orden överallt där det visas.",
-        "home": "Startsidan: {spot}, {position, number} av {size, number}",
-        "about": "Om oss: Det här säger föräldrar",
         "landingPage": "Landningssida: {title}",
         "landingPageState": {
           "both": "Läsarna ser det där nu.",
@@ -3869,7 +3872,33 @@
       "guarantee": "30 dagars pengarna-tillbaka-garanti"
     },
     "testimonials": {
-      "heading": "Det här säger föräldrar"
+      "heading": "Det här säger föräldrar",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.",
+          "attribution": "Mamma, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.",
+          "attribution": "Mamma, Finland"
+        },
+        "largeGroups": {
+          "quote": "Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.",
+          "attribution": "Mamma, Finland"
+        },
+        "finnishImproved": {
+          "quote": "Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!",
+          "attribution": "Mamma, Norge"
+        },
+        "funAndSupervised": {
+          "quote": "Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.",
+          "attribution": "Mamma, Finland"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!",
+          "attribution": "Pappa, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",
@@ -4264,6 +4293,7 @@
     "voiceRoom": "Röstrum",
     "leave": "Lämna",
     "failedToJoinRoom": "Kunde inte gå med i rummet",
+    "notASogverseRoom": "Den här sessionen hålls inte i ett röstrum i Sogverse. Gå tillbaka för att se hur du ansluter.",
     "sessionEnded": "Sessionen har avslutats",
     "disconnecting": "Kopplar från...",
     "connecting": "Ansluter...",
@@ -4429,6 +4459,9 @@
   },
   "voiceButton": {
     "joinVoice": "Gå med i röstrum",
+    "joinMeeting": "Gå med i mötet",
+    "opensInNewTab": "(öppnas i en ny flik)",
+    "howToJoin": "Så går du med",
     "locked": "Öppnar {date} kl. {time}"
   },
   "yty": {

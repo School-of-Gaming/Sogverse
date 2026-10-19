@@ -1,11 +1,11 @@
 "use client";
 
 import { Heading } from "@sog/ui";
-import { Clock, House, Languages, PanelsTopLeft, Plus } from "lucide-react";
+import { Clock, Languages, PanelsTopLeft, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
@@ -13,13 +13,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import {
-  HOME_SPOT_SIZE,
-  HOME_TESTIMONIAL_SPOTS,
-  homePlacement,
-  landingPagePlacements,
-  type AdminTestimonial,
-} from "@/services/testimonials";
+import type { AdminTestimonial } from "@/services/testimonials";
 
 /** The tab's create control, beside its description in the hub. */
 export function NewTestimonialAction() {
@@ -34,19 +28,11 @@ export function NewTestimonialAction() {
 }
 
 /**
- * The Testimonials tab: the home spots and what fills them, then every
- * testimonial in the store, most recently saved first, each with its quote in
- * the admin's own language, whom it is from, its languages, when it was saved
- * and where it is used.
+ * The Testimonials tab: every testimonial in the store, most recently saved
+ * first, each with its quote in the admin's own language, whom it is from,
+ * its languages, when it was saved and where it is used.
  *
- * **The home spots are read here and never set here.** Which testimonial
- * fills a home spot is a developer's decision, made in a migration: the home
- * and About pages are the site's front door. An admin edits the words of a
- * placed testimonial, which change wherever it is shown.
- *
- * **Testimonials are never deleted** — once created they stay, so nothing
- * shown on the site can lose its quote. One comes off the site by being
- * removed from where it is shown.
+ * **Testimonials are never deleted** — once created they stay.
  *
  * **Presentational**: the rows arrive as props. The read's
  * status is separate from the rows because "no testimonials yet", "the read
@@ -77,8 +63,6 @@ export function AdminTestimonialsPage({
         </Alert>
       )}
 
-      {status === "success" && <HomeSpots testimonials={testimonials} />}
-
       {status === "success" && testimonials.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
@@ -99,99 +83,25 @@ export function AdminTestimonialsPage({
           </ul>
         </section>
       )}
-
     </div>
   );
 }
 
-/** A testimonial's quote in the admin's own language, in the page's marks. */
-function useQuoteLine(): (testimonial: AdminTestimonial) => { quote: string; from: string } {
-  const q = useTranslations("testimonial");
-  const uiLocale = resolveLocale(useLocale());
-  return (testimonial) => {
-    const version = resolveTranslation(testimonial.versions, uiLocale);
-    return {
-      quote: version === null ? "" : q("quoted", { quote: version.quote }),
-      from: version?.from ?? "",
-    };
-  };
-}
-
 /**
- * The home spots in page order, each with what fills it in reading order and
- * how many it holds. About shows the same three groups.
- */
-function HomeSpots({ testimonials }: { testimonials: readonly AdminTestimonial[] }) {
-  const t = useTranslations("admin.testimonials");
-  const quoteLine = useQuoteLine();
-
-  return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <Heading level={2} step="card-title">{t("home.heading")}</Heading>
-        <p className="text-sm text-muted-foreground">{t("home.hint")}</p>
-      </CardHeader>
-      <CardContent className="grid gap-6 lg:grid-cols-3">
-        {HOME_TESTIMONIAL_SPOTS.map((spot) => {
-          const filling = testimonials
-            .flatMap((testimonial) => {
-              const home = homePlacement(testimonial.usages);
-              return home?.spot === spot ? [{ testimonial, position: home.position }] : [];
-            })
-            .sort((a, b) => a.position - b.position);
-          return (
-            <div key={spot} className="min-w-0 space-y-2">
-              <Heading level={3} step="label">
-                {t("home.spotHeading", {
-                  spot: t(`home.spots.${spot}`),
-                  filled: filling.length,
-                  size: HOME_SPOT_SIZE[spot],
-                })}
-              </Heading>
-              {filling.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("home.emptySpot")}</p>
-              ) : (
-                <ol className="space-y-2">
-                  {filling.map(({ testimonial }) => {
-                    const { quote, from } = quoteLine(testimonial);
-                    return (
-                      <li key={testimonial.id}>
-                        <Link
-                          href={ROUTES.admin.testimonial(testimonial.id)}
-                          className="block rounded-md text-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-                        >
-                          <span className="line-clamp-2 font-serif italic">{quote}</span>
-                          <span className="text-xs text-muted-foreground">{from}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ol>
-              )}
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
-
-/**
- * One testimonial: its quote and whom it is from, its languages, when it was
- * last saved, and where it is shown.
+ * One testimonial: its quote, in the admin's own language and the page's
+ * marks, whom it is from, its languages, when it was last saved, and how many
+ * landing pages place it.
  *
  * **The whole card opens the editor**, through the stretched-link shape the
  * spotlight rows use: the quote is the anchor and its `::after` covers the
- * card. There is no Delete: a testimonial is never deleted, and comes off the
- * site by being removed from where it is shown.
+ * card. There is no Delete: a testimonial is never deleted.
  */
 function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
   const t = useTranslations("admin.testimonials");
+  const q = useTranslations("testimonial");
   const locale = useLocale();
   const timeZone = useTimezone();
-  const { quote, from } = useQuoteLine()(testimonial);
-  const home = homePlacement(testimonial.usages);
-  const landingPages = landingPagePlacements(testimonial.usages).length;
+  const version = resolveTranslation(testimonial.versions, resolveLocale(locale));
 
   return (
     <div className="group relative flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-hover">
@@ -200,9 +110,9 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
           href={ROUTES.admin.testimonial(testimonial.id)}
           className="line-clamp-2 font-serif italic after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
         >
-          {quote}
+          {version === null ? "" : q("quoted", { quote: version.quote })}
         </Link>
-        <p className="mt-1 text-sm font-medium text-muted-foreground">{from}</p>
+        <p className="mt-1 text-sm font-medium text-muted-foreground">{version?.from}</p>
         <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Languages className="h-3 w-3" aria-hidden />
@@ -224,16 +134,10 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
               })}
             </time>
           </span>
-          {home && (
-            <span className="inline-flex items-center gap-1 text-foreground">
-              <House className="h-3 w-3" aria-hidden />
-              {t("onHome", { spot: t(`home.spots.${home.spot}`) })}
-            </span>
-          )}
-          {landingPages > 0 && (
+          {testimonial.usages.length > 0 && (
             <span className="inline-flex items-center gap-1 text-foreground">
               <PanelsTopLeft className="h-3 w-3" aria-hidden />
-              {t("onLandingPages", { count: landingPages })}
+              {t("onLandingPages", { count: testimonial.usages.length })}
             </span>
           )}
         </div>

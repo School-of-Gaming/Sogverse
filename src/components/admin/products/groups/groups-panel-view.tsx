@@ -50,6 +50,7 @@ import type {
   ProductType,
 } from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 
 /**
  * Everything the groups panel *does*, as callbacks the caller owns.
@@ -144,6 +145,8 @@ interface GroupsPanelViewProps {
   seatCount: number | null;
   waitlistEnabled: boolean;
   voiceAvailable: boolean;
+  /** How the product's sessions are joined, for the Join button. */
+  voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
@@ -341,6 +344,7 @@ export function GroupsPanelView({
   seatCount,
   waitlistEnabled,
   voiceAvailable,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -667,6 +671,7 @@ export function GroupsPanelView({
                 gamePlatform={gamePlatform}
                 robloxRenders={robloxRenders}
                 voiceAvailable={voiceAvailable}
+                voiceRoom={voiceRoom}
                 voiceIsOpen={voiceIsOpen}
                 opensDate={opensDate}
                 opensTime={opensTime}

@@ -43,7 +43,12 @@
  *     capture,                   // "viewport" | "fullPage" | { selector }
  *     waitFor?,                  // a selector to wait for before shooting
  *     banner?,                   // signed-out only: "rejected" (default) | "up"
+ *     viewer?,                   // signed-in only: "admin" (default) | "parent"
+ *                                //   | "gedu" | "gamer" | "gamer:<first name>"
+ *     viewports?,                // e.g. ["desktop"]; narrows --viewports
  *   }
+ *
+ * A preset may also set `viewer` once for every entry that names none.
  *
  * **A group is one image**, so grouping is how a preset decides what a reader
  * receives as a unit — and the tool refuses more than ten groups, because ten
@@ -52,11 +57,20 @@
  * ## Signed in or signed out — the preset decides
  *
  * **Signed in** is the default. `/preview/*` and every dashboard are gated, so
- * the run needs an admin account on staging (which is what local dev points
- * at). It reads **`STAGING_ADMIN_EMAIL`** and **`STAGING_ADMIN_PASSWORD`** from
- * `.env.local` (the shell wins if it exports them), drives the real login form
- * once, and reuses that session for every shot. Neither value is ever printed.
- * The consent banner is answered with a stored refusal, so it never mounts.
+ * each entry is shot as its viewer — the admin unless it names another. Which
+ * accounts exist depends on the database the server at `--base` runs against,
+ * and the tool asks the server rather than assuming: its CSP names the
+ * configured Supabase origin (`lib.mjs` says how), and a hosted one counts as
+ * staging only when it is `SUPABASE_PROJECT_REF`'s project — any other is
+ * refused. Against a **local stack** every viewer is the rich seed's account;
+ * against **staging** the admin is
+ * `STAGING_ADMIN_EMAIL` / `STAGING_ADMIN_PASSWORD` and the parent (and through
+ * them a gamer) `STAGING_PARENT_EMAIL` / `_PASSWORD` / `_PIN`, from `.env.local`
+ * (the shell wins if it exports them), and there is no staging gedu. Each
+ * viewer drives the real login form once and that session is reused for every
+ * shot it views; a parent is PIN-unlocked, and a gamer is the parent switched
+ * into a child's session. No value is ever printed. The consent banner is
+ * answered with a stored refusal, so it never mounts.
  *
  * **Signed out** is a property of the preset, `signedOut: true`, never a flag:
  * the public pages are only worth photographing as a visitor sees them — a
@@ -81,10 +95,12 @@
  * ## The one guard, and its reason
  *
  * **A signed-in run only ever points a browser at loopback, and there is no
- * override flag — because it types a real admin password into whatever
- * `--base` names.** A signed-out run types nothing, so it accepts any `http` or
- * `https` origin: production, a Vercel preview deployment, a local server. The
- * guard runs before the browser starts and before the credentials are read.
+ * override flag — because it types a real password into whatever `--base`
+ * names.** A signed-out run types nothing, so it accepts any `http` or `https`
+ * origin: production, a Vercel preview deployment, a local server. The guard
+ * runs before the browser starts and before the credentials are read, and the
+ * seed's password goes only to a server on a local stack, staging's only to a
+ * server on staging.
  *
  * ## The sibling
  *
@@ -105,11 +121,29 @@ import {
   rmSync,
   statSync,
 } from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 import sharp from "sharp";
 import { outputDir } from "../lib/output.mjs";
+import {
+  assertPinVerified,
+  assertProbeLanding,
+  credentialsFor,
+  isLoopbackHost,
+  pickGamer,
+  resolveBase,
+  resolveStack,
+  shotLandingError,
+  signInOrder,
+  stackFromSupabaseOrigin,
+  supabaseOriginFromCsp,
+  viewerOf,
+  viewportsOf,
+  VIEWER_PROBE,
+} from "./lib.mjs";
 
 const TOOL_DIR = import.meta.dirname;
 const REPO_ROOT = path.resolve(TOOL_DIR, "..", "..");
@@ -157,51 +191,13 @@ const list = (value) =>
 
 const SELFTEST = process.argv.includes("--selftest");
 
-/**
- * The hosts a **signed-in** run may point a browser at — **loopback only, and
- * there is no override flag.**
- *
- * A signed-in run types a real admin password into the login form at whatever
- * `--base` names, so that one flag decides who receives a working staging
- * credential. A typo, a URL pasted out of a chat message or a copied command
- * line is all it would take to hand it to a stranger's server, and the person
- * running it would see nothing but an ordinary sign-in failure afterwards.
- *
- * Same list, same reasoning and the same absent flag as `assertCaptureOrigin`
- * in `scripts/page-capture/lib.mjs`. A deployed origin, if one is ever wanted
- * for a signed-in run, is added here as a literal — never as a flag, an
- * environment variable, or a suffix pattern, since anyone can register a
- * hostname that ends the right way.
- *
- * **A signed-out run is not held to it, because the reason does not reach
- * it**: it reads no credential and types nothing, so the worst a wrong `--base`
- * can do is photograph the wrong site. That is decided by the preset's
- * `signedOut`, and a signed-out run never reads the credentials at all — the
- * two halves of the exemption are the same property.
- */
-const ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
-
-function resolveBase(raw, signedOut) {
-  let parsed;
+/** `fail` with the message of whichever guard in `lib.mjs` refused. */
+function guarded(fn) {
   try {
-    parsed = new URL(raw);
-  } catch {
-    fail(
-      `--base is not a URL: ${raw}\n  Expected something like http://localhost:3005`,
-    );
+    return fn();
+  } catch (error) {
+    return fail(error.message);
   }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    fail(`--base must be http or https, not "${parsed.protocol}" (${raw}).`);
-  }
-  if (!signedOut && !ALLOWED_HOSTS.includes(parsed.hostname)) {
-    fail(
-      `--base points at "${parsed.hostname}", which is not a local dev server\n` +
-        `  (allowed: ${ALLOWED_HOSTS.join(", ")}, on any port).\n` +
-        `  This preset signs in with a real staging admin password, so it only\n` +
-        `  ever types it into a server on this machine. There is no override flag.`,
-    );
-  }
-  return parsed.origin;
 }
 
 /** Set once the preset is loaded and says whether the run signs in. */
@@ -245,7 +241,11 @@ if (VIEWPORTS.length === 0) {
 // The preset
 // ---------------------------------------------------------------------------
 
-const PRESET_NAME = arg("preset", SELFTEST ? "selftest" : "topic-copy");
+// A `--pages` file names the run by its own file name, so its output folder is
+// not filed under the default preset's.
+const PRESET_NAME = arg("pages")
+  ? path.basename(arg("pages"), path.extname(arg("pages")))
+  : arg("preset", SELFTEST ? "selftest" : "topic-copy");
 
 async function loadPreset() {
   // `--pages` is the escape hatch for a one-off list nobody wants to commit;
@@ -320,10 +320,22 @@ function planShots(preset, signedOut) {
     for (const entry of group.entries) {
       if (ONLY.length > 0 && !ONLY.includes(entry.slug)) continue;
       const banner = bannerFor(entry, signedOut);
+      const viewer = guarded(() => viewerOf(entry, preset));
+      // An entry may narrow the run's widths — an admin-only page beside family
+      // pages is shot at desktop alone — but never widen them.
+      const narrowed = guarded(() =>
+        viewportsOf(
+          entry,
+          ALL_VIEWPORTS.map((v) => v.name),
+        ),
+      );
+      const widths = narrowed
+        ? VIEWPORTS.filter((v) => narrowed.includes(v.name))
+        : VIEWPORTS;
       for (const locale of LOCALES) {
         const route =
           typeof entry.route === "function" ? entry.route(locale) : entry.route;
-        for (const viewport of VIEWPORTS) {
+        for (const viewport of widths) {
           shots.push({
             group: group.label,
             slug: entry.slug,
@@ -332,6 +344,7 @@ function planShots(preset, signedOut) {
             capture: entry.capture ?? "viewport",
             waitFor: entry.waitFor ?? null,
             banner,
+            viewer,
             locale,
             viewport: viewport.name,
             url: pageUrl(locale, route),
@@ -349,25 +362,48 @@ function planShots(preset, signedOut) {
 // ---------------------------------------------------------------------------
 
 /**
- * Asserted before anything is launched or planned, because the whole run is
- * worthless without it — every page it wants is behind the gate.
+ * Which database the server at `--base` runs against — asked of the server
+ * itself, because the checkout this tool runs from need not be the one serving.
+ * `lib.mjs` reads the answer off the CSP header every page is sent with.
  */
-function credentials() {
-  const email = process.env.STAGING_ADMIN_EMAIL;
-  const password = process.env.STAGING_ADMIN_PASSWORD;
-  if (!email || !password) {
-    fail(
-      "STAGING_ADMIN_EMAIL and STAGING_ADMIN_PASSWORD must be set in " +
-        ".env.local (or the environment). They are an admin account on " +
-        "staging; the pages this tool exports are gated and it cannot see a " +
-        "single one without them.",
-    );
+async function detectStack() {
+  // Through `node:http` on a connection of its own rather than `fetch`: fetch
+  // pools the socket, and a refusal's `process.exit` while a pooled socket is
+  // still open aborts Node on Windows with a libuv assertion instead of the
+  // refusal's own exit code.
+  const url = new URL(`${BASE}/en/login`);
+  const get = url.protocol === "https:" ? https.get : http.get;
+  let csp;
+  try {
+    csp = await new Promise((resolve, reject) => {
+      get(url, { agent: false }, (response) => {
+        response.destroy();
+        resolve(response.headers["content-security-policy"] ?? null);
+      }).on("error", reject);
+    });
+  } catch (error) {
+    fail(`Nothing answered at ${BASE} (${error.code ?? error.message}).\n` +
+      "  Is the dev server up?");
   }
-  return { email, password };
+  const origin = supabaseOriginFromCsp(csp);
+  // A hosted origin is staging only if it is `SUPABASE_PROJECT_REF`'s project,
+  // which `.env.local` holds; a local stack needs nothing from the file.
+  if (origin && !isLoopbackHost(new URL(origin).hostname)) loadEnvLocal();
+  return guarded(() =>
+    resolveStack(
+      stackFromSupabaseOrigin(origin, process.env.SUPABASE_PROJECT_REF),
+      arg("stack"),
+    ),
+  );
 }
 
-async function signIn(context) {
-  const { email, password } = credentials();
+/**
+ * Sign one viewer in through the real login form, then make it the viewer the
+ * entry asked for: a parent is PIN-unlocked, and a gamer is that parent
+ * switched into a child's session — the two calls the app's own PIN gate and
+ * profile switcher make.
+ */
+async function signIn(context, viewer, { email, password, pin, source }) {
 
   const page = await context.newPage();
   await page.goto(`${BASE}/en/login`, { waitUntil: "domcontentloaded" });
@@ -447,25 +483,105 @@ async function signIn(context) {
     await page.waitForTimeout(250);
   }
 
-  // The proof is not the cookie either — it is whether a gated page answers. An
-  // account without the admin role holds a perfectly good session and is still
-  // bounced by the proxy.
-  await page.goto(`${BASE}/en/preview/products/consumer-club`, {
-    waitUntil: "domcontentloaded",
-  });
-  if (page.url().includes("/login")) {
-    await page.close();
+  // The login page is done with. Closed rather than reused, because the
+  // sign-in's own navigation off /login may still be in flight, and anything
+  // the page did next would race it.
+  await page.close();
+
+  if (!session) {
     fail(
-      "Sign-in failed — a gated page still redirects to the login page.\n" +
+      `Sign-in as ${viewer.key} failed — no Supabase session cookie was written.\n` +
         (message ? `  The login form said: ${message.trim()}\n` : "") +
-        `  A Supabase session cookie was ${
-          session ? "written, so the account signed in but is not an admin" : "never written"
-        }.\n` +
-        "  Check STAGING_ADMIN_EMAIL / STAGING_ADMIN_PASSWORD, and that the " +
-        "account has the admin role.",
+        `  Check ${source}.`,
     );
   }
-  await page.close();
+
+  // Calls the app itself makes, through the context's own request client: it
+  // sends the context's cookies and stores the ones each answer sets, and needs
+  // no page. What each call was for is then checked in the jar itself.
+  const call = async (route, body) => {
+    const url = `${BASE}${route}`;
+    const response =
+      body === null
+        ? await context.request.get(url)
+        : await context.request.post(url, { data: body });
+    return {
+      status: response.status(),
+      json: await response.json().catch(() => null),
+    };
+  };
+
+  // A parent is PIN-locked after every sign-in: the proxy bounces every page
+  // to the unlock gate until the PIN is verified.
+  if (pin) {
+    const unlocked = await call("/api/auth/pin/verify", { pin });
+    guarded(() =>
+      assertPinVerified(viewer.key, unlocked.status, unlocked.json, source),
+    );
+    const jar = await context.cookies(BASE);
+    if (!jar.some((c) => c.name === PIN_COOKIE)) {
+      fail(
+        `The PIN unlock for ${viewer.key} was accepted, but its ${PIN_COOKIE} ` +
+          `cookie never reached the browser.`,
+      );
+    }
+  }
+
+  if (viewer.role === "gamer") {
+    const family = await call("/api/family/list", null);
+    const gamer = guarded(() =>
+      pickGamer(family.json?.family ?? [], viewer.gamer),
+    );
+    const before = await sessionToken(context);
+    const switched = await call("/api/auth/switch-account", {
+      userId: gamer.id,
+    });
+    if (switched.status !== 200) {
+      fail(
+        `Switching into ${gamer.first_name}'s session failed ` +
+          `(HTTP ${switched.status}).`,
+      );
+    }
+    const after = await sessionToken(context);
+    if (!after || after === before) {
+      fail(
+        `Switching into ${gamer.first_name}'s session was accepted, but the ` +
+          `browser still holds the parent's session cookie.`,
+      );
+    }
+  }
+
+  // The proof is not the cookie — it is whether a page only this viewer is let
+  // into answers. A session as the wrong role is bounced by the proxy, and so
+  // is a parent still behind the PIN gate.
+  const probe = `/en${VIEWER_PROBE[viewer.role]}`;
+  const probePage = await context.newPage();
+  await probePage.goto(`${BASE}${probe}`, { waitUntil: "domcontentloaded" });
+  const landed = new URL(probePage.url()).pathname;
+  await probePage.close();
+  try {
+    assertProbeLanding(viewer.key, probe, landed);
+  } catch (error) {
+    fail(
+      `${error.message}\n` +
+        (message ? `  The login form said: ${message.trim()}\n` : "") +
+        `  Check ${source}, and that the account has the ${viewer.role} role.`,
+    );
+  }
+}
+
+/** The app's PIN-unlock cookie, as `src/lib/pin-session.ts` names it. */
+const PIN_COOKIE = "sog_pin_verified";
+
+/**
+ * The Supabase session cookie's value in this context, its chunks joined, or
+ * `null` — compared before and after a switch to prove the session changed.
+ */
+async function sessionToken(context) {
+  const chunks = (await context.cookies(BASE))
+    .filter((c) => /^sb-.*auth-token/.test(c.name))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return chunks.length > 0 ? chunks.map((c) => c.value).join("") : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -483,6 +599,13 @@ async function shoot(page, shot) {
     .context()
     .addCookies([{ name: "locale", value: shot.locale, url: BASE }]);
   await page.goto(shot.url, { waitUntil: "domcontentloaded" });
+  // A page the viewer is not let into is bounced to a gate, and a picture of
+  // the gate labelled as the page is worse than no picture.
+  const bounced = shotLandingError(
+    new URL(shot.url).pathname,
+    new URL(page.url()).pathname,
+  );
+  if (bounced) throw new Error(`${shot.viewer?.key ?? "signed out"}: ${bounced}`);
   // Network idle plus fonts: a shot taken mid-webfont-swap measures and reads
   // differently from the page the reviewer is being asked about.
   await page.waitForLoadState("networkidle").catch(() => {});
@@ -1226,17 +1349,29 @@ if (SELFTEST) {
 // which guard `--base` answers to, and whether the credentials are read at all.
 const preset = await loadPreset();
 const SIGNED_OUT = preset.signedOut === true;
-BASE = resolveBase(arg("base", "http://localhost:3005"), SIGNED_OUT);
-
-// Before the browser: a signed-in run with no credentials cannot see a single
-// page, and finding that out after a launch is noise in front of the one line
-// that matters. A signed-out run never loads the file that holds them.
-if (!SIGNED_OUT) {
-  loadEnvLocal();
-  credentials();
-}
+BASE = guarded(() =>
+  resolveBase(arg("base", "http://localhost:3005"), SIGNED_OUT),
+);
 
 const planned = planShots(preset, SIGNED_OUT);
+
+// Before the browser: a signed-in run with no credentials for one of its
+// viewers cannot see that viewer's pages, and finding that out after a launch
+// is noise in front of the one line that matters. Which credentials those are
+// is the server's answer, so it is asked first; detecting staging loads
+// `.env.local`, which holds staging's ref and accounts, and a local stack never
+// does. A signed-out run asks nothing and never loads the file.
+const STACK = SIGNED_OUT ? null : await detectStack();
+const VIEWERS = new Map();
+for (const { viewer } of planned) {
+  if (!viewer || VIEWERS.has(viewer.key)) continue;
+  VIEWERS.set(viewer.key, {
+    viewer,
+    credentials: guarded(() =>
+      credentialsFor(viewer.role, STACK, new URL(BASE).hostname, process.env),
+    ),
+  });
+}
 if (planned.length === 0) {
   fail(
     `Nothing to shoot. ${
@@ -1252,9 +1387,14 @@ if (planned.length === 0) {
 const OUT = arg("out") ?? freshOutputDir();
 mkdirSync(OUT, { recursive: true });
 
+/** How the run was signed, for the start line and the index's header. */
+const SIGNED_AS = SIGNED_OUT
+  ? "signed out"
+  : `signed in on ${STACK === "local" ? "a local stack" : "staging"} as ` +
+    [...VIEWERS.keys()].join(", ");
+
 console.error(
-  `[preview-export] ${preset.title} · ${BASE} · ` +
-    `${SIGNED_OUT ? "signed out" : "signed in as the staging admin"} · ` +
+  `[preview-export] ${preset.title} · ${BASE} · ${SIGNED_AS} · ` +
     `${LOCALES.join(",")} · ${planned.length} shots → ${OUT}`,
 );
 
@@ -1360,29 +1500,36 @@ async function shootSignedOut(shot) {
   }
 }
 
-// Signed in: one context per viewport, all carrying the one sign-in. Signing
-// in per viewport would be several sessions for no reason, and the login form
-// is not what this tool is exercising.
-const contexts = {};
-if (!SIGNED_OUT) {
+// Signed in: per viewer, one sign-in, then one context per viewport carrying
+// it. Signing in per viewport or per shot would be several sessions for no
+// reason, and the login form is not what this tool is exercising. Every viewer
+// signs in before the first shot, so a refused one stops the run before it has
+// spent minutes on the others.
+//
+// **Gamers first, and the order is load-bearing**: a gamer's switch out of the
+// parent ends every session the parent account holds, so a parent viewer
+// signed in before it would shoot nothing but the login page. `signInOrder`
+// says why in full.
+const contexts = [];
+const pages = {};
+const pageKey = (viewerKey, viewport) => `${viewerKey}|${viewport}`;
+const ordered = signInOrder([...VIEWERS.values()].map((v) => v.viewer));
+for (const { viewer, credentials } of ordered.map((v) => VIEWERS.get(v.key))) {
   const first = await browser.newContext(contextOptions(VIEWPORTS[0]));
   await prepareContext(first, { storeRefusal: true });
-  await signIn(first);
+  await signIn(first, viewer, credentials);
   const storageState = await first.storageState();
 
-  contexts[VIEWPORTS[0].name] = first;
+  contexts.push(first);
+  pages[pageKey(viewer.key, VIEWPORTS[0].name)] = await first.newPage();
   for (const viewport of VIEWPORTS.slice(1)) {
     const context = await browser.newContext(
       contextOptions(viewport, { storageState }),
     );
     await prepareContext(context, { storeRefusal: true });
-    contexts[viewport.name] = context;
+    contexts.push(context);
+    pages[pageKey(viewer.key, viewport.name)] = await context.newPage();
   }
-}
-
-const pages = {};
-for (const [name, context] of Object.entries(contexts)) {
-  pages[name] = await context.newPage();
 }
 
 const results = [];
@@ -1390,7 +1537,7 @@ for (const shot of planned) {
   try {
     const result = SIGNED_OUT
       ? await shootSignedOut(shot)
-      : await shoot(pages[shot.viewport], shot);
+      : await shoot(pages[pageKey(shot.viewer.key, shot.viewport)], shot);
     results.push(result);
     console.error(
       `  ${result.state === "ok" ? "✓" : "·"} ${shot.file}` +
@@ -1408,7 +1555,7 @@ for (const shot of planned) {
   }
 }
 
-for (const context of Object.values(contexts)) await context.close();
+for (const context of contexts) await context.close();
 await browser.close();
 
 const ok = results.filter((r) => r.state === "ok").length;
@@ -1421,7 +1568,7 @@ writeIndex(OUT, composites, {
   title: preset.title,
   preset: PRESET_NAME,
   date: DATE,
-  base: `${BASE} · ${SIGNED_OUT ? "signed out" : "signed in"}`,
+  base: `${BASE} · ${SIGNED_AS}`,
   branch,
   sha,
   ok,

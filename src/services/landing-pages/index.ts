@@ -9,6 +9,7 @@ export {
 export {
   defaultLandingSlug,
   hasUnpublishedChanges,
+  landingCopyTitle,
   landingPageInput,
   landingSlug,
   landingVersionInput,

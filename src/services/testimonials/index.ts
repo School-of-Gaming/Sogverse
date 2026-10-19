@@ -7,18 +7,12 @@ export {
   useSaveTestimonial,
 } from "./testimonials.queries";
 export {
-  HOME_SPOT_SIZE,
-  HOME_TESTIMONIAL_SPOTS,
   QUOTATION_MARKS,
   hasQuotationMarks,
-  homePlacement,
-  landingPagePlacements,
   testimonialInput,
   testimonialVersionInput,
   testimonialWriteFailure,
   type AdminTestimonial,
-  type HomeTestimonials,
-  type LandingPageTestimonialUsage,
   type PublicTestimonial,
   type TestimonialInput,
   type TestimonialSaver,

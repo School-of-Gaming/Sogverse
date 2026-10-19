@@ -1,4 +1,5 @@
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod-v4";
 import {
   describeMarkdownSubset,
@@ -7,6 +8,7 @@ import {
 import {
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
+  type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
@@ -103,6 +105,9 @@ const OFFER_PREVIEW =
 
 const NO_DELETE =
   "There is no delete: unpublishing takes a page down and keeps it to work on.";
+
+const CLONE_REWRITE =
+  "A clone is a starting structure, not a page to publish: before it is published, every word of every language must be rewritten for the new page's own audience. Near-identical pages that only swap a city or an audience are what search engines penalise as doorway pages, and the penalty can reach the page the clone was made from. Rename each language's title, which carries a copy marker in that language, and give it a slug of its own; remove the languages the new page does not need with remove_landing_page_language.";
 
 // ---------------------------------------------------------------------------
 // Inputs
@@ -389,6 +394,16 @@ function pageView(page: AdminLandingPage, origin: string) {
   };
 }
 
+/**
+ * Each locale's own word for a copy, from its message file: a clone's title
+ * is marked in the language it is written in, since each title derives that
+ * language's slug.
+ */
+async function copyMarker(locale: SupportedLocale): Promise<string> {
+  const t = await getTranslations({ locale, namespace: "admin.landingPages" });
+  return t("copyMarker");
+}
+
 /** Each language's completeness, after a write. */
 function languages(page: AdminLandingPage) {
   return page.draft.versions.map((version) => ({
@@ -544,6 +559,44 @@ export function registerLandingPageTools(server: McpServer): void {
           missing: version === undefined ? [] : missingWords(page, version),
           previewLink: previewLink(origin, id, input.locale),
           adminLink: adminLink(origin, id),
+        });
+      }),
+  );
+
+  server.registerTool(
+    "clone_landing_page",
+    {
+      title: "Clone a landing page",
+      description: `Start a new landing page as a copy of an existing one's saved working copy, made in one step on the server: its structure with every picture, and every language version's summary and words, are copied as they are, while every section and item gets a new id (the words stay with their sections and items). Each language's title is the source's followed by a copy marker in that language, and its slug is derived from that new title, numbered (-2, -3, …) when another page already has it in that language. The clone is created unpublished, and the source is not changed. The answer gives the new page's id, each language's title, slug, address once published, completeness and preview link (previewLink), and the new page's status page in Sogverse admin (adminLink). ${CLONE_REWRITE} ${SLUGS}`,
+      inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    ({ pageId: id }, ctx) =>
+      asLandingAdmin(ctx, async ({ service, origin }) => {
+        const source = await service.getAdminPage(id);
+        if (source === null) return refusal(NOT_FOUND);
+        const cloneId = await service.clonePage(source.draft, copyMarker);
+        const page = await service.getAdminPage(cloneId);
+        if (page === null) return refusal(NOT_FOUND);
+        return answer({
+          pageId: cloneId,
+          clonedFrom: id,
+          live: false,
+          versions: page.draft.versions.map((version) => ({
+            locale: version.locale,
+            title: version.title,
+            slug: version.slug,
+            address: slugLink(origin, version.slug, version.locale),
+            complete: version.missing.length === 0,
+            missing: missingWords(page, version),
+            previewLink: previewLink(origin, cloneId, version.locale),
+          })),
+          adminLink: adminLink(origin, cloneId),
         });
       }),
   );

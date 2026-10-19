@@ -1,6 +1,5 @@
 import { Testimonial } from "@/components/home/testimonial";
 import { cn } from "@/lib/utils";
-import type { PublicTestimonial } from "@/services/testimonials";
 
 /*
  * **The arrangements testimonials are laid out in, wherever the site shows
@@ -14,26 +13,56 @@ import type { PublicTestimonial } from "@/services/testimonials";
  * - `TestimonialShowcase` — About's whole arrangement: the feature, then the
  *   pair, then the row.
  *
- * Each takes `className` for its placement alone — the room above it, which
- * depends on what sits there — never for its look. The quotes are peers with
- * no action of their own, so they sit on the page ground rather than in cards.
- * A group with no testimonial renders nothing.
+ * They take the words as data, whoever supplied them: Home and About pass
+ * their own message strings, a landing page the store's version its reader
+ * gets. Each takes `className` for its placement alone — the room above it,
+ * which depends on what sits there — never for its look. The quotes are peers
+ * with no action of their own, so they sit on the page ground rather than in
+ * cards. A group with no testimonial renders nothing.
  */
+
+/** One quote as an arrangement places it. */
+export interface ShownTestimonial {
+  /** Unique within the arrangement. */
+  key: string;
+  /** The words, without quotation marks. */
+  quote: string;
+  /** Whom the quote is from. */
+  attribution: string;
+  /** The language the words are in, only when it is not the page's. */
+  lang?: string;
+}
+
+function Quote({
+  testimonial,
+  size,
+  className,
+}: {
+  testimonial: ShownTestimonial;
+  size?: "feature";
+  className?: string;
+}) {
+  return (
+    <Testimonial
+      quote={testimonial.quote}
+      attribution={testimonial.attribution}
+      lang={testimonial.lang}
+      size={size}
+      className={className}
+    />
+  );
+}
 
 /** One quote, large and centred in a reading measure. */
 export function FeatureTestimonial({
   testimonial,
   className,
 }: {
-  testimonial: PublicTestimonial;
+  testimonial: ShownTestimonial;
   className?: string;
 }) {
   return (
-    <Testimonial
-      testimonial={testimonial}
-      size="feature"
-      className={cn("mx-auto max-w-3xl", className)}
-    />
+    <Quote testimonial={testimonial} size="feature" className={cn("mx-auto max-w-3xl", className)} />
   );
 }
 
@@ -42,7 +71,7 @@ function TestimonialGrid({
   columns,
   className,
 }: {
-  testimonials: readonly PublicTestimonial[];
+  testimonials: readonly ShownTestimonial[];
   columns: "md:grid-cols-2" | "md:grid-cols-3";
   className?: string;
 }) {
@@ -50,7 +79,7 @@ function TestimonialGrid({
   return (
     <div className={cn("mx-auto grid max-w-5xl gap-10", columns, className)}>
       {testimonials.map((testimonial) => (
-        <Testimonial key={testimonial.id} testimonial={testimonial} />
+        <Quote key={testimonial.key} testimonial={testimonial} />
       ))}
     </div>
   );
@@ -61,7 +90,7 @@ export function TestimonialPair({
   testimonials,
   className,
 }: {
-  testimonials: readonly PublicTestimonial[];
+  testimonials: readonly ShownTestimonial[];
   className?: string;
 }) {
   return <TestimonialGrid testimonials={testimonials} columns="md:grid-cols-2" className={className} />;
@@ -72,7 +101,7 @@ export function TestimonialRow({
   testimonials,
   className,
 }: {
-  testimonials: readonly PublicTestimonial[];
+  testimonials: readonly ShownTestimonial[];
   className?: string;
 }) {
   return <TestimonialGrid testimonials={testimonials} columns="md:grid-cols-3" className={className} />;
@@ -80,9 +109,9 @@ export function TestimonialRow({
 
 /** The showcase's three groups, each in reading order. */
 export interface TestimonialShowcaseGroups {
-  feature: readonly PublicTestimonial[];
-  pair: readonly PublicTestimonial[];
-  row: readonly PublicTestimonial[];
+  feature: readonly ShownTestimonial[];
+  pair: readonly ShownTestimonial[];
+  row: readonly ShownTestimonial[];
 }
 
 /**
@@ -101,7 +130,7 @@ export function TestimonialShowcase({
     <>
       {groups.feature.map((testimonial) => (
         <FeatureTestimonial
-          key={testimonial.id}
+          key={testimonial.key}
           testimonial={testimonial}
           className={cn(afterHeading && "mt-12 lg:mt-16")}
         />

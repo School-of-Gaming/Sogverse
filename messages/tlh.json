@@ -922,7 +922,8 @@
         "alt": "mIllogh ghItlh",
         "question": "ghel",
         "answer": "jang"
-      }
+      },
+      "copyMarker": "(velqa’)"
     },
     "geduRole": {
       "primary": "Gedu wa’DIch",
@@ -1047,6 +1048,7 @@
         "fields": {
           "topic": "Doch",
           "materialUrl": "ghojmoHmeH De’",
+          "voiceRoom": "muv",
           "startDate": "tagh jaj",
           "endDate": "rIn jaj",
           "firstSession": "wa'DIch ghom",
@@ -1114,10 +1116,10 @@
         "audienceDescription": "’Iv lop.",
         "where": "nuqDaq",
         "whereDescription": {
-          "consumerClub": "rurmey, qoj Daq. rurmey ghomHom Hoch lu’leghlu’ — Daq poQbe’. Daq ghomHom Daq ngu’lu’.",
+          "consumerClub": "rurmey, qoj Daq. Daq ghomHom Daq ngu’lu’.",
           "municipalityClub": "wa’ veng Huch nob. rurmey ghomHom veng wIv neH; Daq ghomHom Daq vengDaq wIv.",
-          "camp": "rurmey, qoj Daq. rurmey pa’ Qugh Hoch lu’leghlu’ — Daq poQbe’. Daq pa’ Qugh Daq ngu’lu’.",
-          "event": "rurmey, qoj Daq. rurmey Qu’ Hoch lu’leghlu’ — Daq poQbe’. Daq Qu’ Daq ngu’lu’."
+          "camp": "rurmey, qoj Daq. Daq pa’ Qugh Daq ngu’lu’.",
+          "event": "rurmey, qoj Daq. Daq Qu’ Daq ngu’lu’."
         },
         "when": "poH",
         "whenDescription": {
@@ -1144,8 +1146,10 @@
         "name": "pong",
         "shortDescription": "QIn ngaj",
         "longDescription": "QIn nI’",
+        "voiceJoinInstructions": "muv ra’ghom",
         "topic": "Doch",
         "materialUrl": "ghojmoHmeH De’ URL",
+        "externalVoiceUrl": "ghom rar",
         "requiresGamerCreations": "chenmoHta’bogh Doch He poQlu’ Hoch toy’wI’vaD",
         "seatAudience": "quS Suq ’Iv",
         "tag": "’Iv chenmoHlu’pu’",
@@ -1182,6 +1186,7 @@
       "placeholders": {
         "selectTopic": "Doch yIwIv…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone ghomHom",
           "municipalityClub": "e.g. Tapiola Minecraft ghomHom · 2026 Hut",
@@ -1241,6 +1246,15 @@
         "scheduled": "poH ngu’lu’pu’bogh",
         "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
       },
+      "voiceRoomModes": {
+        "label": "chay’ muv qorDu’pu’?",
+        "sogverse": "Sogverse ghogh pa’",
+        "sogverseDescription": "ghogh pa’ chenmoHlu’ ’ej poSmoHlu’ Hoch ghom.",
+        "external": "latlh Daq ghom rar",
+        "externalDescription": "latlh Daq ghom muv qorDu’pu’. Sogverse ghogh pa’ Dach law’qu’ ghotpu’ (50).",
+        "none": "ghogh pa’ tu’lu’be’",
+        "noneDescription": "Hol Hoch ghItlhbogh muv ra’ghom’e’ legh qorDu’pu’."
+      },
       "endDateModes": {
         "ongoing": "jaj van Hutlh",
         "ongoingDescription": "ghom taH; bImevqang ’e’ DawIvDI’ mev.",
@@ -1273,6 +1287,7 @@
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. QIn naQ, Doch ’aqroSDaq neH cha’lu’. nargh, tetlh, ’ej ghomHa’ ghItlh lo’laH.",
+        "voiceJoinInstructionsHint": "chay’ muv qorDu’pu’, Hol vam ghItlhlu’. Hoch laD laH: ’el’be’bogh ghotpu’ je.",
         "topicHint": "Doch qel malja’vam. qech-lojmIt lulegh qorDu’pu’ malja’Daq, ’ej De’ navDaq je.",
         "materialUrlHint": "vItlhutlh. Gedupu’vaD neH — ghu’pu’ luleghbe’.",
         "requiresGamerCreationsHint": "Doch poQbogh ghItlh ’oH. Hoch ghom toy’wI’ chenmoHta’ghach qonlu’pa’, Qu’ Qav rInbe’ ’ej buSlu’nIS. pagh pIm legh qorDu’pu’.",
@@ -1282,8 +1297,7 @@
         "tagHint": "poQbe’lu’. per legh qorDu’pu’ — tetlh HaSta ’ej Doch HaSta. ’Iv chenmoHlu’pu’ ja’ per; quS Suqbogh nuv ja’be’.",
         "regionLockHint": "wIvbogh SepDaq qorDu’pu’ neH ghIH. ’ach Daqchaj ja’ qorDu’ ’e’ Sov: malja’Daq De’wI’ per ’oH, veH tIn ’oHbe’. quS Suqbogh nuv chIlbe’ quSDaj, Sep chu’Daq jaHchugh je.",
         "spokenLanguageHint": "qepmeyDaq Hol potlh jatlhlu’.",
-        "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
-        "voiceRoomAuto": "voice room chenmoHlu’.",
+        "externalVoiceUrlHint": "Hoch laD laH: ’el’be’bogh ghotpu’ je.",
         "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
         "siteHint": "qaStaHvIS Daq mab.",
         "eventSingleDay": "Qu’mey wa’ jaj qaS.",
@@ -1317,6 +1331,9 @@
         "maxAgeInvalid": "DIS tIn DIS mach tIn ’oHnIS",
         "municipalityRequired": "veng poQ rurmey ghomHom veng",
         "siteRequired": "Daq poQ Daq pa’ De’mey",
+        "externalVoiceUrlRequired": "ghom rar yIghItlh",
+        "externalVoiceUrlInvalid": "http:// pagh https:// lutagh ghom rar",
+        "voiceJoinInstructionsRequired": "wa’ Hol ghItlh muv ra’ghom",
         "scheduleRequired": "wa’ poH mach poQ",
         "materialUrlInvalid": "ghojmoHmeH De’ URL val ’oHnIS",
         "startDateRequired": "jaj tagh poQ",
@@ -2133,7 +2150,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey – wa’ Daq. jatlhmey lan juH ghItlhDaq, maH ghItlhDaq Daq ghItlhmeyDaq je.",
+      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq. jatlhmey lan Daq ghItlhmeyDaq.",
       "newTestimonial": "jatlh chu’",
       "backToList": "jatlhmeyDaq yIchegh",
       "newPage": {
@@ -2150,19 +2167,7 @@
       "allHeading": "Hoch jatlhmey",
       "languagesLabel": "Holmey",
       "saved": "{date} pol",
-      "onHome": "juH ghItlh: {spot}",
       "quoteHasMarks": "jatlh ghItlh mu’ yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
-      "home": {
-        "heading": "juH ghItlhDaq",
-        "hint": "wej DaqDaq juH ghItlh cha’ ’ej rap maH ghItlh. Daq jatlh wIv ngoqwI’; naDev mu’mey choHlu’.",
-        "spotHeading": "{spot} ({filled, number}/{size, number})",
-        "spots": {
-          "feature": "Hoch DungDaq",
-          "safety": "Hung Dol retlhDaq",
-          "row": "vav/SoSmey jatlhbogh"
-        },
-        "emptySpot": "pagh: Daqvam pagh cha’ ghItlh."
-      },
       "fields": {
         "languages": "Holmey",
         "from": "vo’",
@@ -2177,8 +2182,6 @@
         "heading": "nuqDaq lo’lu’",
         "none": "pa’ cha’lu’be’ wa’logh.",
         "editNote": "polchugh, Hoch DaqDaq mu’meyDaj choH.",
-        "home": "juH ghItlh: {spot}, {position, number}/{size, number}",
-        "about": "maH: vav/SoSmey jatlhbogh",
         "landingPage": "Daq ghItlh: {title}",
         "landingPageState": {
           "both": "DaH legh laHwI’pu’.",
@@ -3909,7 +3912,33 @@
       "guarantee": "30 jaj: Huch chegh lay’"
     },
     "testimonials": {
-      "heading": "vav/SoSmey jatlhbogh"
+      "heading": "vav/SoSmey jatlhbogh",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Hogh Dun law’ ghom’a’. Hoch Hogh, puqloDwIj tam ’ej ghIjlu’bogh moj puq Hagh ’ej jach, puqpu’ rurbogh ghom. ghom’a’ Dol ’ej ghojmoHwI’pu’ laH, mupIvmoH.",
+          "attribution": "SoS, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "pagh latlh Qu’, pagh latlh Hob — puqwIj Quch neH ’oH ghom’a’.",
+          "attribution": "SoS, Suomi"
+        },
+        "largeGroups": {
+          "quote": "ghom’a’mey tIn puqmaj bIt. ghom’a’vam Daq Hob maHoy ’ej jup chu’ maSuq.",
+          "attribution": "SoS, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "wa’ jar neH — puqbe’wI’ Suomi Hol Dun law’! ghojmoHwI’pu’ val, QaQ, ’ej ghIQ. Qap!",
+          "attribution": "SoS, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "Quj tlhab ’ej ghoS. qI’be’, ghobe’, ’ej pagh QoQ qab.",
+          "attribution": "SoS, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming — puq vav/SoS je QaQ. jup chu’ tlhej Quj QaQ luSuq puqpu’ — QaQ Daq, ghojmoHwI’pu’ Qeq tlhej. vIQuvmoH!",
+          "attribution": "vav, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",
@@ -4304,6 +4333,7 @@
     "voiceRoom": "jatlh Daq",
     "leave": "yIvoQ",
     "failedToJoinRoom": "Daq muv Dabe’lu’",
+    "notASogverseRoom": "Sogverse ghogh pa’Daq poHvam ngaSbe’. yIchegh ’ej chay’ muv yIlegh.",
     "sessionEnded": "poH mevlu’",
     "disconnecting": "vIvoQ...",
     "connecting": "vImuv...",
@@ -4469,6 +4499,9 @@
   },
   "voiceButton": {
     "joinVoice": "ghogh pa’Daq yIghoS",
+    "joinMeeting": "qep yIjeS",
+    "opensInNewTab": "(chu’ DaqDaq poSmoH)",
+    "howToJoin": "chay’ DajeS?",
     "locked": "{date} {time}Daq poSmoH"
   },
   "yty": {

@@ -5,10 +5,9 @@ import type { AdminTestimonial } from "@/services/testimonials";
 /**
  * **The testimonial tools, through the real endpoint.** The real gate, SDK and
  * tool module, with the testimonial service mocked: what is under test is what
- * each tool sends the service, how it reads the answer back to the AI app —
- * where a testimonial is shown, the home spots — and that a quote in
- * quotation marks or a database refusal comes back as a tool error the app
- * can act on. No tool deletes a testimonial or sets a home spot.
+ * each tool sends the service, how it reads the answer back to the AI app,
+ * and that a quote in quotation marks or a database refusal comes back as a
+ * tool error the app can act on. No tool deletes a testimonial.
  */
 
 const mockGetClaims = vi.fn();
@@ -45,24 +44,23 @@ const CLIENT_ID = "5b0a3f0e-1c55-4c43-8d2e-6a7f3f0f2a90";
 
 const tool = (name: string, args: Record<string, unknown> = {}) => callTool(POST, name, args);
 
-const PLACED: AdminTestimonial = {
+const PARENT: AdminTestimonial = {
   id: ID,
   versions: [
     { locale: "en", from: "Mum, Finland", quote: "Gaming is fun and supervised." },
     { locale: "fi", from: "Äiti, Suomi", quote: "Pelaaminen on hauskaa ja valvottua." },
   ],
-  usages: [{ kind: "home", spot: "safety", position: 1 }],
+  usages: [],
   createdAt: "2026-10-16T09:00:00Z",
   created: { by: null, via: null },
   updatedAt: "2026-10-16T10:00:00Z",
   lastSaved: { by: "Kyle Hutchinson", via: { clientId: CLIENT_ID, name: "Claude" } },
 };
 
-const UNPLACED: AdminTestimonial = {
-  ...PLACED,
+const GEDU: AdminTestimonial = {
+  ...PARENT,
   id: OTHER,
   versions: [{ locale: "en", from: "Gedu Pixel", quote: "I love these sessions." }],
-  usages: [],
 };
 
 function dbError(code: string, message: string) {
@@ -86,8 +84,8 @@ beforeEach(() => {
   });
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const method of Object.values(testimonials)) method.mockReset();
-  testimonials.getAdminTestimonial.mockResolvedValue(PLACED);
-  testimonials.listAdminTestimonials.mockResolvedValue([PLACED, UNPLACED]);
+  testimonials.getAdminTestimonial.mockResolvedValue(PARENT);
+  testimonials.listAdminTestimonials.mockResolvedValue([PARENT, GEDU]);
 });
 
 afterEach(() => {
@@ -95,7 +93,7 @@ afterEach(() => {
 });
 
 describe("reading", () => {
-  it("lists every testimonial with where it is shown", async () => {
+  it("lists every testimonial with its versions, its record and its editor", async () => {
     const result = await tool("list_testimonials");
 
     expect(result.isError).toBeUndefined();
@@ -107,31 +105,10 @@ describe("reading", () => {
             { locale: "en", language: "English", from: "Mum, Finland", quote: "Gaming is fun and supervised." },
             { locale: "fi", from: "Äiti, Suomi" },
           ],
-          usedIn: [
-            {
-              place: "home",
-              spot: "safety",
-              position: 1,
-              spotSize: 2,
-              shownOn: [`${ORIGIN}/en`, `${ORIGIN}/en/about#parents`],
-            },
-          ],
           lastSaved: { by: "Kyle Hutchinson", via: { name: "Claude" } },
           editorLink: `${ORIGIN}/en/admin/testimonials/${ID}`,
         },
-        { testimonialId: OTHER, usedIn: [] },
-      ],
-    });
-  });
-
-  it("lists the home spots in page order with what fills each", async () => {
-    const result = await tool("list_home_testimonial_spots");
-
-    expect(result.structuredContent).toMatchObject({
-      spots: [
-        { spot: "feature", size: 1, testimonials: [] },
-        { spot: "safety", size: 2, testimonials: [{ position: 1, testimonialId: ID }] },
-        { spot: "row", size: 3, testimonials: [] },
+        { testimonialId: OTHER, versions: [{ locale: "en", from: "Gedu Pixel" }] },
       ],
     });
   });
@@ -143,7 +120,7 @@ describe("reading", () => {
     expect(resultText(result)).toBe("No testimonial has that id.");
   });
 
-  it("tells the AI app never to write a testimonial's words, and offers no delete and no spot setter", async () => {
+  it("tells the AI app never to write a testimonial's words, and offers no delete", async () => {
     const response = await POST(
       new Request(`${ORIGIN}/api/mcp`, {
         method: "POST",
@@ -159,7 +136,6 @@ describe("reading", () => {
     );
     const text = await response.text();
     expect(text).toContain("Never write, invent, embellish");
-    expect(text).not.toContain("set_home");
     expect(text).not.toContain("delete_testimonial");
   });
 });
@@ -194,7 +170,7 @@ describe("writing", () => {
     expect(testimonials.saveTestimonialVersion).not.toHaveBeenCalled();
   });
 
-  it("writes one language and answers where the testimonial is shown", async () => {
+  it("writes one language and answers with the testimonial as it now stands", async () => {
     const result = await tool("save_testimonial_version", {
       testimonialId: ID,
       locale: "sv",
@@ -207,7 +183,7 @@ describe("writing", () => {
       from: "Mamma, Finland",
       quote: "Spelandet är roligt och övervakat.",
     });
-    expect(result.structuredContent).toMatchObject({ usedIn: [{ spot: "safety" }] });
+    expect(result.structuredContent).toMatchObject({ testimonialId: ID, versions: [{ locale: "en" }, { locale: "fi" }] });
   });
 
   it("removes one language through the one-language writer", async () => {
@@ -235,11 +211,9 @@ describe("landing pages", () => {
 
   it("lists each landing page placing a testimonial, live or saved, with its status page", async () => {
     testimonials.getAdminTestimonial.mockResolvedValue({
-      ...PLACED,
+      ...PARENT,
       usages: [
-        ...PLACED.usages,
         {
-          kind: "landingPage",
           pageId: PAGE,
           titles: [
             { locale: "en", title: "Gaming clubs in Espoo" },
@@ -256,7 +230,6 @@ describe("landing pages", () => {
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toMatchObject({
       usedIn: [
-        { place: "home", spot: "safety" },
         {
           place: "landingPage",
           pageId: PAGE,
@@ -269,30 +242,28 @@ describe("landing pages", () => {
     });
   });
 
-  it("still finds a home spot behind a landing page usage", async () => {
+  it("lists every testimonial with where it is used, nothing for one shown nowhere", async () => {
     testimonials.listAdminTestimonials.mockResolvedValue([
       {
-        ...PLACED,
+        ...PARENT,
         usages: [
           {
-            kind: "landingPage",
             pageId: PAGE,
             titles: [{ locale: "en", title: "Gaming clubs in Espoo" }],
             inLiveCopy: true,
             inWorkingCopy: true,
           },
-          ...PLACED.usages,
         ],
       },
+      GEDU,
     ]);
 
-    const result = await tool("list_home_testimonial_spots");
+    const result = await tool("list_testimonials");
 
     expect(result.structuredContent).toMatchObject({
-      spots: [
-        { spot: "feature", testimonials: [] },
-        { spot: "safety", testimonials: [{ position: 1, testimonialId: ID }] },
-        { spot: "row", testimonials: [] },
+      testimonials: [
+        { testimonialId: ID, usedIn: [{ place: "landingPage", pageId: PAGE, inLiveCopy: true, inWorkingCopy: true }] },
+        { testimonialId: OTHER, usedIn: [] },
       ],
     });
   });

@@ -6,7 +6,6 @@ import { TEST_CREDENTIALS } from "./constants";
 import { landingSections, type LandingSection } from "@/lib/landing-pages/sections";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import {
-  homeTestimonialRows,
   landingPageTestimonialRows,
   type TestimonialVersionInput,
 } from "@/services/testimonials/testimonials.contracts";
@@ -27,8 +26,8 @@ import {
  * Pinned on the public read: anon is answered the testimonials a LIVE page's
  * published copy places, with their current words, so an edit shows without
  * a republish; never one placed only in a working copy, nor on an unpublished
- * page; and every caller is answered alike. The home spots' read is
- * unchanged beside it.
+ * page; and every caller is answered alike, while the store itself stays
+ * closed to anon.
  *
  * Fixture UUIDs 910-912 (product-helpers.ts registry): two landing pages and
  * a testimonial id that must NEVER exist. Its testimonials are minted through
@@ -316,13 +315,8 @@ describe("landing page testimonials", () => {
       }
     });
 
-    it("leaves the home spots' read as it was, and keeps the store from anon", async () => {
+    it("keeps the store itself from anon", async () => {
       await reseed();
-      const home = await anon.rpc("list_home_testimonials");
-      expect(home.error).toBeNull();
-      const rows = homeTestimonialRows.parse(home.data);
-      expect(rows.length).toBeGreaterThan(0);
-      expect(rows.some((row) => t.includes(row.testimonial_id))).toBe(false);
       expect((await anon.from("testimonials").select("id").limit(1)).error?.code).toBe("42501");
     });
   });
@@ -337,14 +331,10 @@ describe("landing page testimonials", () => {
       // The live page's working copy keeps t[1] and t[2], drops t[0] and adds t[4].
       await pages.saveStructure(PAGE_LIVE, structure("row", [t[4], t[1], t[2]]));
 
-      const usage = async (id: string) =>
-        (await testimonials.getAdminTestimonial(id))?.usages.filter(
-          (u) => u.kind === "landingPage",
-        );
+      const usage = async (id: string) => (await testimonials.getAdminTestimonial(id))?.usages;
 
       expect(await usage(t[0])).toEqual([
         {
-          kind: "landingPage",
           pageId: PAGE_LIVE,
           titles: [{ locale: "en", title: "Fixture testimonials page" }],
           inLiveCopy: true,

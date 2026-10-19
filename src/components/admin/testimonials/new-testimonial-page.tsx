@@ -9,7 +9,7 @@ import { TestimonialEditor } from "./testimonial-editor";
 
 /**
  * `/admin/testimonials/new` — the data shell around a new testimonial's
- * editor. Saving creates it, placed nowhere, and returns to the list;
+ * editor. Saving creates it and returns to the list;
  * `replace` rather than `push`, so Back from there does not return to a blank
  * form for a testimonial that now exists.
  */

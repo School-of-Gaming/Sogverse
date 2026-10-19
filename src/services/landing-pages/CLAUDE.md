@@ -37,6 +37,23 @@ that moment, and refused if it carries words for a section the page does not hav
 copy alone and refuses the page's last one: a live language stays live until the next
 publish, which takes it down.
 
+**A clone is a create whose content the database copies in one call**, so no word passes
+through the application or the AI app. Everything in the source's working copy is copied
+verbatim — the structure, the pictures (catalogue entries are shared, so the clone names
+the same ones) and each language's summary and words — with two departures. Every section
+and every item gets a new id, and each language's words are re-keyed by the same map, so
+they stay on what they were written for and the clone shares no id with its source. And
+each language's title is the source's followed by a copy marker in that language's own
+word, from the message files rather than the admin's locale, because each title derives
+that language's slug: the slug is the new title's, derived in the application as for a
+version without one, and the database numbers it (`-2`, `-3`, …, cut to the length cap)
+while any page holds it in that locale, live or working. The clone is unpublished and
+stamped with its saver like any create. The application names the languages to copy, and
+one the source does not have is refused. The tool's description carries the rule that
+matters most: a clone is a starting structure, and every word is rewritten for the new
+page before it is published, since near-identical pages that only swap a city or an
+audience are what search engines penalise as doorway pages.
+
 **A version is complete when its title, summary and slug are written and every section
 has every required word in that language.** Which words a type requires is declared in
 its section module; the same rule is written once more in SQL, which is what publishing
@@ -123,7 +140,8 @@ writer is held to the same links: own-site links in the markdown and in
 button targets are stored canonical there, a slug address at the id of the live page it
 names. A link leading to no page — or to a slug no live page has — refuses the write as a
 `check_violation` naming the link, so it reaches the admin like the database's own
-refusals. Nothing else in the save path touches a link.
+refusals. Nothing else in the save path touches a link. A clone sends no words, so it has
+none to check: the words it copies were made canonical when they were saved.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
 detail included, the image catalogue's usage map, and the `testimonials` tree, whose

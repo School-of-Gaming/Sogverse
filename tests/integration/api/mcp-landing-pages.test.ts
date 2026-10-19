@@ -13,6 +13,7 @@ import type {
   AdminLandingPageListItem,
 } from "@/services/landing-pages";
 import type { CatalogueImage } from "@/types";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
 /**
  * **The landing page tools, through the real endpoint.** The real gate, SDK
@@ -39,6 +40,7 @@ const landing = {
   listAdminPages: vi.fn(),
   getAdminPage: vi.fn(),
   createPage: vi.fn(),
+  clonePage: vi.fn(),
   saveStructure: vi.fn(),
   saveVersion: vi.fn(),
   removeVersion: vi.fn(),
@@ -65,6 +67,23 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
 // over the shared setup's locale-blind mock.
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
+
+// Each locale's own message file, as the clone's copy markers are read.
+vi.mock("next-intl/server", async () => {
+  const catalogs = {
+    en: (await import("../../../messages/en.json")).default,
+    fi: (await import("../../../messages/fi.json")).default,
+    sv: (await import("../../../messages/sv.json")).default,
+    fr: (await import("../../../messages/fr.json")).default,
+    tlh: (await import("../../../messages/tlh.json")).default,
+  };
+  return {
+    getTranslations: async ({ locale, namespace }: { locale: keyof typeof catalogs; namespace: string }) => {
+      expect(namespace).toBe("admin.landingPages");
+      return (key: "copyMarker") => catalogs[locale].admin.landingPages[key];
+    },
+  };
+});
 
 const { POST } = await import("@/app/api/mcp/route");
 
@@ -495,6 +514,122 @@ describe("creating", () => {
     expect(resultText(result)).toContain(named);
     expect(resultText(result)).not.toMatch(/sections[.,]\d/);
     expect(landing.createPage).not.toHaveBeenCalled();
+  });
+});
+
+describe("cloning", () => {
+  const CLONE = "7c2d4e6f-1a3b-4c5d-8e9f-0a1b2c3d4e5f";
+  /** The clone as the database leaves it: PAGE's working copy, new ids, marked titles. */
+  const CLONED: AdminLandingPage = {
+    draft: {
+      ...PAGE.draft,
+      id: CLONE,
+      versions: [
+        { ...PAGE.draft.versions[0], title: "Gaming clubs in Espoo (Copy)", slug: "gaming-clubs-in-espoo-copy" },
+        { ...PAGE.draft.versions[1], title: "Pelikerhot Espoossa (kopio)", slug: "pelikerhot-espoossa-kopio-2" },
+      ],
+      lastSavedVia: { clientId: CLIENT_ID, name: "Claude" },
+    },
+    publication: null,
+    hasUnpublishedChanges: true,
+    testimonials: {},
+  };
+
+  it("clones in one call with each language's own copy marker, and answers the clone's titles, slugs and links", async () => {
+    landing.getAdminPage.mockResolvedValueOnce(PAGE).mockResolvedValueOnce(CLONED);
+    landing.clonePage.mockResolvedValue(CLONE);
+
+    const result = await tool("clone_landing_page", { pageId: ID });
+
+    expect(result.isError).toBeUndefined();
+    expect(landing.clonePage).toHaveBeenCalledTimes(1);
+    const [source, copyMarker] = landing.clonePage.mock.calls[0];
+    expect(source).toEqual(PAGE.draft);
+    const markers = await Promise.all(
+      SUPPORTED_LOCALES.map(async (locale) => [locale, await copyMarker(locale)]),
+    );
+    expect(Object.fromEntries(markers)).toEqual({
+      en: "(Copy)",
+      fi: "(kopio)",
+      sv: "(kopia)",
+      fr: "(copie)",
+      tlh: "(velqa’)",
+    });
+    for (const write of [landing.createPage, landing.saveStructure, landing.saveVersion]) {
+      expect(write).not.toHaveBeenCalled();
+    }
+
+    expect(result.structuredContent).toEqual({
+      pageId: CLONE,
+      clonedFrom: ID,
+      live: false,
+      versions: [
+        {
+          locale: "en",
+          title: "Gaming clubs in Espoo (Copy)",
+          slug: "gaming-clubs-in-espoo-copy",
+          address: `${ORIGIN}/en/discover/gaming-clubs-in-espoo-copy`,
+          complete: true,
+          missing: [],
+          previewLink: `${ORIGIN}/en/discover/${CLONE}/preview`,
+        },
+        {
+          locale: "fi",
+          title: "Pelikerhot Espoossa (kopio)",
+          slug: "pelikerhot-espoossa-kopio-2",
+          address: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa-kopio-2`,
+          complete: false,
+          missing: [FI_MISSING],
+          previewLink: `${ORIGIN}/fi/tutustu/${CLONE}/esikatselu`,
+        },
+      ],
+      adminLink: `${ORIGIN}/en/admin/landing-pages/${CLONE}`,
+    });
+  });
+
+  it("answers an id no page has as a tool error, cloning nothing", async () => {
+    landing.getAdminPage.mockResolvedValue(null);
+
+    const result = await tool("clone_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe("No landing page has that id.");
+    expect(landing.clonePage).not.toHaveBeenCalled();
+  });
+
+  it("quotes the database's refusal", async () => {
+    const sentence = "The page has no sv version to copy";
+    landing.clonePage.mockRejectedValue(dbError("23514", sentence));
+
+    const result = await tool("clone_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(sentence);
+  });
+
+  it("tells the AI app a clone is a structure to rewrite, never a page to publish as it is", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({
+        tools: z.array(
+          z.object({
+            name: z.string(),
+            description: z.string(),
+            annotations: z.object({ readOnlyHint: z.boolean(), destructiveHint: z.boolean() }),
+          }),
+        ),
+      })
+      .parse(body.result);
+    const clone = tools.find((t) => t.name === "clone_landing_page");
+
+    expect(clone?.description).toContain("every word of every language must be rewritten");
+    expect(clone?.description).toContain("doorway pages");
+    expect(clone?.description).toContain("Rename each language's title");
+    expect(clone?.description).toContain("remove_landing_page_language");
+    expect(clone?.description).toContain("created unpublished");
+    expect(clone?.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false });
   });
 });
 
