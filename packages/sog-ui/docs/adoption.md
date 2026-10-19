@@ -300,9 +300,10 @@ each step to sizes the theme declares, and the restep to the story steps alone; 
 conforming lines through the ban; and the ban itself, in `eslint.config.mjs`, refuses a raw
 `h1`–`h6` written as JSX anywhere in `src/` or the library's demo, and a heading tag written as a string — held in
 a variable, defaulted in a parameter, picked by a ternary, carried as an object's value or
-typed as a literal — which is how a tag chosen at runtime escapes the first half. Its
-exemptions are named one by one: the markdown renderer and the authored-markdown table,
-which map a markdown level to a tag on purpose, are exempt from the string half; the alert
+typed as a literal, or built from a level — which is how a tag chosen at runtime escapes
+the first half. Its exemptions are named one by one: the app's markdown renderer, the
+authored-markdown table and the mail's markdown renderer, which map a markdown level to a
+tag on purpose, are exempt from the string half; the alert
 primitive's file is exempt from the JSX half, because `AlertTitle` stays an `h5` until the
 alert adoption decides what an alert's title is. The adoption also fixed the class merger
 it would otherwise have tripped on: the library exports a tailwind-merge built from its own

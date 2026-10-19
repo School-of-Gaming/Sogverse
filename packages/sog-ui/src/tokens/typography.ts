@@ -318,8 +318,9 @@ export type TypeStep = {
  * tracked tight, none is bold, none is set at body weight. A reader tells two
  * ranks apart by size alone, so each step sits clearly below the one above it
  * and no two steps share a style. Each carries its own line height, tighter as
- * the size grows — except `item-title`, set at the leading of the body text it
- * sits among rather than of its size — so no call site sets a leading.
+ * the size grows — except `item-title`, whose 1.5 is looser than `label`'s
+ * because it keeps the line height an FAQ question had before it became a
+ * heading — so no call site sets a leading.
  *
  * **Two registers, one scale.** `hero` and `display` are the story register —
  * a public page telling the brand's story to a mixed audience, at the sizes a
@@ -464,8 +465,8 @@ export const TYPE_SCALE = [
    * The title of one item among a run of like items — a question in an FAQ,
    * for example — sitting under the region's own heading.
    *
-   * Set at the body size the item's own text is set in, and told apart from
-   * it by weight alone: under an 18px `card-title` it could not take 18
+   * 16px, the size of the text it titles, and told apart from that text by
+   * weight alone: under an 18px `card-title` it could not take 18
    * without matching the heading it sits under, and at `label`'s 14 it would
    * be smaller than the answer it titles.
    */

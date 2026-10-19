@@ -85,7 +85,7 @@ export function FaqAccordion({ items, questionLevel }: FaqAccordionProps) {
               `::-webkit-details-marker` rule in WebKit; the chevron below
               replaces it so the affordance sits on the side the reader's thumb
               is already on. */}
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md px-3 py-4 text-left font-semibold transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act sm:px-4 sm:py-5 [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md px-3 py-4 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act sm:px-4 sm:py-5 [&::-webkit-details-marker]:hidden">
             <Heading level={questionLevel} step="item-title">
               {item.question}
             </Heading>
