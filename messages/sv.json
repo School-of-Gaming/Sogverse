@@ -1057,10 +1057,10 @@
         "audienceDescription": "Vem detta är till för.",
         "where": "Var",
         "whereDescription": {
-          "consumerClub": "Online eller på plats. Onlineklubbar är öppna för alla — ingen plats behövs. Klubbar på plats körs i en specifik lokal.",
+          "consumerClub": "Online eller på plats. Klubbar på plats körs i en specifik lokal.",
           "municipalityClub": "Bekostas av en specifik kommun. Onlineklubbar väljer kommunen direkt; klubbar på plats väljer en lokal inom den.",
-          "camp": "Online eller på plats. Onlineläger är öppna för alla — ingen plats behövs. Läger på plats körs i en specifik lokal.",
-          "event": "Online eller på plats. Onlineevenemang är öppna för alla — ingen plats behövs. Evenemang på plats körs i en specifik lokal."
+          "camp": "Online eller på plats. Läger på plats körs i en specifik lokal.",
+          "event": "Online eller på plats. Evenemang på plats körs i en specifik lokal."
         },
         "when": "När",
         "whenDescription": {

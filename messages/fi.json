@@ -1057,10 +1057,10 @@
         "audienceDescription": "Kenelle tämä on tarkoitettu.",
         "where": "Missä",
         "whereDescription": {
-          "consumerClub": "Verkossa tai paikan päällä. Verkkokerhot ovat avoimia kaikille — sijaintia ei tarvita. Lähikerhot pidetään tietyssä toimipisteessä.",
+          "consumerClub": "Verkossa tai paikan päällä. Lähikerhot pidetään tietyssä toimipisteessä.",
           "municipalityClub": "Tietty kunta maksaa. Verkkokerhoissa valitaan kunta suoraan; lähikerhoissa toimipiste sen sisältä.",
-          "camp": "Verkossa tai paikan päällä. Verkkoleirit ovat avoimia kaikille — sijaintia ei tarvita. Lähileirit pidetään tietyssä toimipisteessä.",
-          "event": "Verkossa tai paikan päällä. Verkkotapahtumat ovat avoimia kaikille — sijaintia ei tarvita. Lähitapahtumat pidetään tietyssä toimipisteessä."
+          "camp": "Verkossa tai paikan päällä. Lähileirit pidetään tietyssä toimipisteessä.",
+          "event": "Verkossa tai paikan päällä. Lähitapahtumat pidetään tietyssä toimipisteessä."
         },
         "when": "Ajankohta",
         "whenDescription": {

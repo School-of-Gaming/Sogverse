@@ -1057,10 +1057,10 @@
         "audienceDescription": "À qui cela s’adresse.",
         "where": "Où",
         "whereDescription": {
-          "consumerClub": "En ligne ou en présentiel. Les clubs en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les clubs en présentiel se déroulent sur un site précis.",
+          "consumerClub": "En ligne ou en présentiel. Les clubs en présentiel se déroulent sur un site précis.",
           "municipalityClub": "Financé par une commune précise. Les clubs en ligne choisissent directement la commune ; les clubs en présentiel choisissent un site situé sur son territoire.",
-          "camp": "En ligne ou en présentiel. Les stages en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les stages en présentiel se déroulent sur un site précis.",
-          "event": "En ligne ou en présentiel. Les événements en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les événements en présentiel se déroulent sur un site précis."
+          "camp": "En ligne ou en présentiel. Les stages en présentiel se déroulent sur un site précis.",
+          "event": "En ligne ou en présentiel. Les événements en présentiel se déroulent sur un site précis."
         },
         "when": "Quand",
         "whenDescription": {

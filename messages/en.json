@@ -1057,10 +1057,10 @@
         "audienceDescription": "Who this is intended for.",
         "where": "Where",
         "whereDescription": {
-          "consumerClub": "Online or in person. Online clubs are offered to anyone — no location needed. In-person clubs run at a specific site.",
+          "consumerClub": "Online or in person. In-person clubs run at a specific site.",
           "municipalityClub": "Paid for by a specific municipality. Online clubs pick the municipality directly; in-person clubs pick a site within it.",
-          "camp": "Online or in person. Online camps are offered to anyone — no location needed. In-person camps run at a specific site.",
-          "event": "Online or in person. Online events are offered to anyone — no location needed. In-person events run at a specific site."
+          "camp": "Online or in person. In-person camps run at a specific site.",
+          "event": "Online or in person. In-person events run at a specific site."
         },
         "when": "When",
         "whenDescription": {

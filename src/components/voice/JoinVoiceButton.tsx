@@ -162,7 +162,6 @@ export function JoinVoiceButton({
           rel="noopener noreferrer"
           className={cn(buttonVariants({ size }), "gap-1.5")}
         >
-          <AudioLines className="h-4 w-4" aria-hidden />
           {t("joinMeeting")}
           <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           <span className="sr-only">{` ${t("opensInNewTab")}`}</span>
