@@ -9,6 +9,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { Heading } from "@sog/ui";
 
 /**
  * **One person, as a portrait that opens their page** — the Team index's item.
@@ -60,26 +61,25 @@ export function TeamMemberCard({
         zoomOnHover
         className="ring-act ring-offset-4 ring-offset-background group-has-[a:focus-visible]:ring-2"
       />
-      {/* One size for every name per step, from the type scale, stepping
-          once at `md`. Below it, at 14px, a twenty-character nickname (about
-          164px) fits its column on its own line from 390px wide, three
-          columns at 640 included (187px), and breaks inside itself only on
-          the narrowest phones, where the column is 156px at 360 — accepted.
-          From `md`, at 18px (about 211px), every column is at least 229px.
-          A name too wide for one line puts the nickname whole on the
-          second. */}
-      <h3 className="mt-3 break-words text-body-s font-semibold leading-snug md:text-h4">
-        <Link
-          href={href}
-          className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
-        >
-          {teamMemberHeadline(profile, (nickname) => (
-            <span className="inline-block max-w-full text-act">
-              {nickname}
-            </span>
-          ))}
-        </Link>
-      </h3>
+      {/* One size for every name, the card title. A twenty-character
+          nickname (about 211px) fits its column on its own line from `md`,
+          where every column is at least 229px, and breaks inside itself in
+          the narrower columns below it. A name too wide for one line puts the
+          nickname whole on the second. */}
+      <div className="mt-3 break-words">
+        <Heading level={3} step="card-title">
+          <Link
+            href={href}
+            className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none"
+          >
+            {teamMemberHeadline(profile, (nickname) => (
+              <span className="inline-block max-w-full text-act">
+                {nickname}
+              </span>
+            ))}
+          </Link>
+        </Heading>
+      </div>
       <p className="mt-0.5 text-xs text-muted-foreground md:text-body-s">
         {subline}
       </p>

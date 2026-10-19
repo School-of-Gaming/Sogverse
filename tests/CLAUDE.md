@@ -48,10 +48,9 @@ the inert `ResizeObserver` are there either way.
 Isolated because un-isolated measured no faster once there is no jsdom realm to rebuild
 per file (that is what it saves; the imports are re-run either way), and it would let a
 shared module keep whatever mocks were live when an earlier file first loaded it, so a
-later file's own mock could quietly fail to apply. Forks because suites that pin a
-timezone assign `process.env.TZ` at runtime, which a child process honours and a worker
-thread ignores — the failure shows only on a UTC runner, and a developer's box already
-in Helsinki never sees it, so a green local run under threads proves nothing. One pool
+later file's own mock could quietly fail to apply. Forks because a test's timezone pin
+and the config's UTC default are both runtime assignments to `TZ`, which a child process
+honours and a worker thread ignores — under threads neither takes effect. One pool
 because Vitest sizes a pool per pool *type* and runs projects concurrently: two pool
 types put two full-sized pools on the machine at once, which on a 4-vCPU runner doubled
 the summed collect and test time and, with coverage on, timed out a component test that
@@ -59,6 +58,13 @@ passes on its own. A test that stubs env still hands it back (`vi.stubEnv` with
 `vi.unstubAllEnvs()` in teardown, never a bare `process.env` assignment) — isolation
 makes that hygiene rather than a load-bearing rule, and hygiene is cheaper to keep than
 to restore.
+
+**Every run's default zone is UTC, on every machine** — both Vitest configs, the DB
+suite's included, set it, because UTC is what CI and the production servers run, so a
+test leaning on its author's own zone fails locally rather than after a push. A test
+about a viewer's zone pins one itself, stubbing `TZ` like any other env var: seeding
+`TimezoneProvider` is not enough, since after mount the provider replaces its seed with
+the runtime's zone.
 
 ## The rich-text editor stub
 

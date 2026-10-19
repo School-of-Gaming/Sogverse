@@ -28,7 +28,7 @@ import {
 } from "./brand.ts";
 import { PICKS } from "./picks.ts";
 import { GLASS, HOVER, SCRIM } from "./surfaces.ts";
-import { FACES, TYPE_SCALE } from "./typography.ts";
+import { FACES, typeSizes } from "./typography.ts";
 
 /** CSS pixels → rem at the 16px root, with no trailing zeros. */
 export function remFromPx(px: number): string {
@@ -219,24 +219,11 @@ function faceLines(): string[] {
 }
 
 function typeScaleLines(): string[] {
-  return TYPE_SCALE.flatMap((step) => {
-    const lines = [
-      declaration(step.cssName, remFromPx(step.px)),
-      declaration(`${step.cssName}--line-height`, String(step.lineHeight)),
-      declaration(`${step.cssName}--font-weight`, String(step.weight)),
-    ];
-    if (step.mobilePx !== null) {
-      lines.push(
-        declaration(`${step.cssName}-mobile`, remFromPx(step.mobilePx)),
-        declaration(
-          `${step.cssName}-mobile--line-height`,
-          String(step.lineHeight),
-        ),
-        declaration(`${step.cssName}-mobile--font-weight`, String(step.weight)),
-      );
-    }
-    return lines;
-  });
+  return typeSizes().flatMap(({ cssName, px, step }) => [
+    declaration(cssName, remFromPx(px)),
+    declaration(`${cssName}--line-height`, String(step.lineHeight)),
+    declaration(`${cssName}--font-weight`, String(step.weight)),
+  ]);
 }
 
 /** The whole stylesheet, as a string. Pure — the test calls this instead of reading disk. */

@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   LockedButton,
@@ -38,6 +39,10 @@ import type {
 } from "@/components/game-account";
 import type { RobloxRenderMap } from "@/services/roblox";
 import { platformForTopic } from "@/lib/products/topics";
+import {
+  productVoiceRoom,
+  type ProductVoiceRoom,
+} from "@/lib/products/voice-room";
 import type { Withheld } from "@/lib/withheld";
 import type { GamerCreation } from "@/types";
 import {
@@ -580,6 +585,12 @@ export function GroupWorkspace({
    */
   const platform = platformForTopic(data.product.topic);
 
+  /** How this product's sessions are joined — one answer for every group. */
+  const voiceRoom = useMemo(
+    () => productVoiceRoom(data.product, data.product.translations),
+    [data.product],
+  );
+
   const { assignedGroup, peerGroups } = useMemo(() => {
     // The reader's own group is always drawn in full; a name-only row is only
     // ever a sister group, so it can never be the one found here.
@@ -792,9 +803,11 @@ export function GroupWorkspace({
             {p(data.product.product_type)}
           </span>
 
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-            {productName}
-          </h1>
+          <div className="mt-1">
+            <Heading level={1} step="section">
+              {productName}
+            </Heading>
+          </div>
 
           {assignedGroup && (
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
@@ -841,6 +854,7 @@ export function GroupWorkspace({
               group={assignedGroup}
               heading={groupHeading}
               isRemote={data.product.is_remote}
+              voiceRoom={voiceRoom}
               voiceIsOpen={ownVoiceState.voiceIsOpen}
               opensDate={ownVoiceState.opensDate}
               opensTime={ownVoiceState.opensTime}
@@ -859,6 +873,7 @@ export function GroupWorkspace({
           <OtherGroupsRailCard
             peerGroups={peerGroups}
             isRemote={data.product.is_remote}
+            voiceRoom={voiceRoom}
             voiceIsOpen={voiceState.voiceIsOpen}
             opensDate={voiceState.opensDate}
             opensTime={voiceState.opensTime}
@@ -1033,9 +1048,9 @@ function RailCard({
     <Card>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          <Heading level={2} step="card-title">
             {title}
-          </h2>
+          </Heading>
           {trailing}
         </div>
         {children}
@@ -1084,6 +1099,7 @@ function ParticipantCount({ count }: { count: number }) {
 function OtherGroupsRailCard({
   peerGroups,
   isRemote,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -1097,6 +1113,7 @@ function OtherGroupsRailCard({
    */
   peerGroups: readonly WorkspaceGroupRow[];
   isRemote: boolean;
+  voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
@@ -1165,6 +1182,7 @@ function OtherGroupsRailCard({
               {isRemote && (
                 <div className="flex justify-center pt-0.5">
                   <JoinVoiceButton
+                    voiceRoom={voiceRoom}
                     voiceIsOpen={voiceIsOpen}
                     voiceHref={ROUTES.voice.groupSession(group.id)}
                     opensDate={opensDate}
@@ -1255,6 +1273,7 @@ function GroupRailCard({
   group,
   heading,
   isRemote,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -1272,6 +1291,7 @@ function GroupRailCard({
   /** The card's heading, or `undefined` for the gedu's "My Group". */
   heading?: string;
   isRemote: boolean;
+  voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
@@ -1326,6 +1346,7 @@ function GroupRailCard({
       {isRemote && (
         <div className="flex justify-center">
           <JoinVoiceButton
+            voiceRoom={voiceRoom}
             voiceIsOpen={voiceIsOpen}
             voiceHref={ROUTES.voice.groupSession(group.id)}
             opensDate={opensDate}
@@ -1341,9 +1362,9 @@ function GroupRailCard({
       )}
 
       <div className="space-y-1.5">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Heading level={3} step="label">
           {g("gedus")}
-        </p>
+        </Heading>
         {/* One run: the gedus, then the trainees, each trainee's chip tagged
             with the seat — the same list the admin groups panel shows, where a
             trainee shares the gedus' pill with "Trainee" in the role's
@@ -1361,9 +1382,9 @@ function GroupRailCard({
       </div>
 
       <div className="space-y-2 border-t border-border pt-3">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Heading level={3} step="label">
           {t("participantsLabel")}
-        </p>
+        </Heading>
         {roster.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
         ) : (

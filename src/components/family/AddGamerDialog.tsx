@@ -526,10 +526,7 @@ export function AddGamerFormCard({
           centred two-line question above left-aligned radios reads as a page
           title rather than as the thing labelling them. */}
       <DialogHeader className="text-left">
-        {/* `leading-snug` over the primitive's `leading-none`: a one-word title
-            never wraps, and a question naming a child does — at 360px its
-            wrapped lines collide on the tighter leading. */}
-        <DialogTitle id={titleId} className="leading-snug">
+        <DialogTitle id={titleId} align="start">
           {step === "signIn"
             ? s("question", { name: trimmedName })
             : step === "accounts"

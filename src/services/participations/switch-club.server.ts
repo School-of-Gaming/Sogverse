@@ -31,6 +31,7 @@ import { sendProductConfirmationEmail } from "@/services/participations/product-
 import type {
   SwitchClubCheckResponse,
   SwitchClubRefusal,
+  SwitchClubSettlement,
 } from "@/services/participations/switch-club.contracts";
 
 /**
@@ -105,6 +106,59 @@ export interface SwitchClubCommitFacts {
    */
   stripePriceId: string;
   targetProduct: TargetProduct;
+  /**
+   * Decided by the check from the period the family is in, and sent as is:
+   * `none` for a period the family paid nothing for, so nothing is settled
+   * for money never taken, and `create_prorations` for a paid one.
+   */
+  prorationBehavior: Extract<
+    Stripe.SubscriptionUpdateParams.ProrationBehavior,
+    "create_prorations" | "none"
+  >;
+}
+
+/**
+ * How the rest of the current period would be settled by a price change, or
+ * null when the switch must be refused.
+ *
+ * Classic billing mode credits unused time at the CURRENT price whether or not
+ * it was ever paid, so a proration is only right for a period the family
+ * actually paid for. A period they paid nothing for is switched with no
+ * proration at all — nothing more is charged in it, and the next charge is at
+ * the new price, less any discount the subscription carries. Anything in
+ * between (an open, past due, void or uncollectible
+ * invoice) is refused, because no answer about the money would be true. That
+ * is why this is a hard gate rather than a picker warning.
+ *
+ * - A trial is a period paid nothing for, whatever its latest invoice says.
+ * - A paid invoice totalling zero is one only when it OPENED the period — the
+ *   first invoice, or a renewal. That covers a 100%-off coupon (one-off or
+ *   lasting, when the next charge may be zero too) and a club bought before it
+ *   starts, whose first invoice is €0 and whose first charge falls on the
+ *   billing date. A zero mid-period invoice (a
+ *   plan change, a trial added by hand) says nothing about whether the period
+ *   itself was paid, so it is refused. `total` is the amount after discounts
+ *   and before any customer balance, so an invoice settled from the family's
+ *   balance is never mistaken for a period paid nothing for.
+ * - A paid invoice with money taken is a paid period.
+ */
+function settlementOf(
+  subscription: Stripe.Subscription,
+): SwitchClubSettlement | null {
+  if (subscription.status === "trialing") return "nothing_paid";
+
+  const invoice = subscription.latest_invoice;
+  if (invoice === null || typeof invoice !== "object") return null;
+  if (invoice.status !== "paid") return null;
+
+  if (
+    invoice.total === 0 &&
+    (invoice.billing_reason === "subscription_create" ||
+      invoice.billing_reason === "subscription_cycle")
+  ) {
+    return "nothing_paid";
+  }
+  return invoice.amount_paid > 0 ? "prorate" : null;
 }
 
 export interface SwitchClubCheck extends SwitchClubCheckResponse {
@@ -272,6 +326,8 @@ export async function checkSwitchClub({
   let item: Stripe.SubscriptionItem | null = null;
   let currencyMismatch = false;
   let subscriptionEndsAt: string | null = null;
+  let settlement: SwitchClubSettlement | null = null;
+  let nextChargeAt: string | null = null;
   if (subscriptionRow) {
     const subscription = await stripe.subscriptions.retrieve(
       subscriptionRow.stripe_subscription_id,
@@ -314,17 +370,30 @@ export async function checkSwitchClub({
     subscriptionEndsAt =
       endsAtUnix !== null ? new Date(endsAtUnix * 1000).toISOString() : null;
 
-    // Classic billing mode credits unused time at the CURRENT price whether or
-    // not it was ever paid, so a subscription whose latest invoice is open,
-    // past due or zero would yield a proration credit for money we never took.
-    // That is why this gate is hard rather than a picker warning.
-    const invoice = subscription.latest_invoice;
-    const invoicePaid =
-      invoice !== null &&
-      typeof invoice === "object" &&
-      invoice.status === "paid" &&
-      invoice.amount_paid > 0;
-    if (!invoicePaid) refusals.push("latest_invoice_not_paid");
+    const decided = settlementOf(subscription);
+    if (decided === null) {
+      refusals.push("latest_invoice_not_paid");
+    } else {
+      settlement = decided;
+      if (decided === "nothing_paid") {
+        // The next charge falls at a trial's `trial_end`, or at any other
+        // period's end. The current period's end is the trial's end too while
+        // one runs, so the fallback only matters if Stripe ever omits it.
+        const endsAtUnix =
+          (subscription.status === "trialing" ? subscription.trial_end : null) ??
+          currentPeriodEndOf(subscription);
+        // Stripe always answers a live subscription with its period's end, so
+        // a missing one is a read we cannot trust rather than a period of no
+        // length — and the sheet cannot tell the admin when the next charge is.
+        if (endsAtUnix === null) {
+          throw new ApiError(
+            "Stripe returned no period end for this subscription",
+            502,
+          );
+        }
+        nextChargeAt = new Date(endsAtUnix * 1000).toISOString();
+      }
+    }
   }
 
   // The two narrowings that are NOT refusals. `isSupportedCurrency` is the
@@ -335,8 +404,9 @@ export async function checkSwitchClub({
   // subscription our checkout creates records one, so a row without it gives
   // the RPC no expected state to be bound to, and the commit declines rather
   // than moving money against an unknown.
-  const commitFacts =
+  const commitFacts: SwitchClubCommitFacts | null =
     refusals.length === 0 &&
+    settlement !== null &&
     subscriptionRow !== null &&
     subscriptionRow.stripe_price_id !== null &&
     item !== null &&
@@ -350,6 +420,8 @@ export async function checkSwitchClub({
           subscriptionItemId: item.id,
           stripePriceId: subscriptionRow.stripe_price_id,
           targetProduct: target,
+          prorationBehavior:
+            settlement === "nothing_paid" ? "none" : "create_prorations",
         }
       : null;
 
@@ -359,6 +431,8 @@ export async function checkSwitchClub({
     targetAmountCents: targetPrice?.price_cents ?? null,
     refusals,
     subscriptionEndsAt,
+    settlement,
+    nextChargeAt,
     commitFacts,
     groupNotOnTarget,
     currencyMismatch,
@@ -479,10 +553,13 @@ export async function commitSwitchClub({
       items: [
         { id: facts.subscriptionItemId, price: priceRow.stripe_price_id },
       ],
-      // Stripe credits unused time at the old price and debits the remainder at
-      // the new one on the SAME next invoice, so a price difference is settled
-      // by the mechanism built for it and no customer balance is created.
-      proration_behavior: "create_prorations",
+      // Decided by the check. For a paid period Stripe credits unused time at
+      // the old price and debits the remainder at the new one on the SAME next
+      // invoice, so a price difference is settled by the mechanism built for it
+      // and no customer balance is created. For a period paid nothing for,
+      // nothing is settled: nothing more is charged in it, and the next charge
+      // is at the new price, less any discount the subscription carries.
+      proration_behavior: facts.prorationBehavior,
       metadata: rewrittenSubscriptionMetadata(request, facts),
       description: await rewrittenSubscriptionDescription(supabase, facts),
     },
@@ -497,9 +574,12 @@ export async function commitSwitchClub({
       // a NEW Stripe price and then the price-cache write failed, a retry from
       // the same dialog sends this same key with a different `items[0].price`,
       // and Stripe answers a reused key carrying a different body with an
-      // `idempotency_error` — a plain 500 here. Closing and reopening the
-      // dialog mints a fresh request id and recovers, so the cost of the rare
-      // case is one confusing failure and a reopen.
+      // `idempotency_error` — a plain 500 here. The same happens when the
+      // period turns over between two presses in one dialog (a trial ends, a
+      // renewal lands): each press re-runs the check, so the second can send
+      // the other `proration_behavior` under the same key. Closing and
+      // reopening the dialog mints a fresh request id and recovers either way,
+      // so the cost of the rare case is one confusing failure and a reopen.
       idempotencyKey: switchClubIdempotencyKey({
         participationId,
         targetProductId,

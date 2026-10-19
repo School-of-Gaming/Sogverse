@@ -52,6 +52,7 @@ export function FamilyProductPageScene({
       schedule={fixture.schedule}
       plannedSessions={fixture.plannedSessions}
       isRemote={fixture.isRemote}
+      voiceRoom={fixture.voiceRoom}
       participant={fixture.participant}
       groupName={fixture.groupName}
       // Passed on both audiences deliberately: the body is what decides a child

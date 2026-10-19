@@ -75,6 +75,11 @@ export const GET = defineRoute({
       // Stated, not gated on: a family who cancelled and changed their mind is
       // exactly who an admin switches, and what the sheet needs is the fact.
       subscriptionEndsAt: check.subscriptionEndsAt,
+      // How the rest of the period is settled, so the sheet tells the admin
+      // what the family will see: a difference on the next invoice, or
+      // nothing more charged before the next billing date.
+      settlement: check.settlement,
+      nextChargeAt: check.nextChargeAt,
       // Present only when true, like every flag that is normally absent — and
       // never a refusal, because the two records disagreeing about one
       // subscription is a thing to fix in Stripe rather than an answer about
@@ -88,7 +93,8 @@ export const GET = defineRoute({
  * POST /api/admin/products/[id]/participations/[participationId]/switch
  *
  * Re-runs the check, moves the Stripe subscription onto the target club's
- * canonical price with `create_prorations`, then moves the row.
+ * canonical price — prorated for a paid period, unprorated for one paid
+ * nothing for, as the check decided — then moves the row.
  *
  * **If the database step fails, nothing is undone in Stripe.** The answer names
  * that state (`stripeUpdated: true`) and the same commit is safe to press

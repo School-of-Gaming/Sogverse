@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
@@ -66,6 +66,20 @@ function valueOf(label: string): HTMLElement {
   if (!(value instanceof HTMLElement)) throw new Error(`no value for ${label}`);
   return value;
 }
+
+/**
+ * The creation date is rendered in the viewer's zone, and the
+ * `TimezoneProvider` seed above only answers the first render: after mount the
+ * provider overrides it with the runtime's own zone. So the runtime zone is
+ * pinned to Helsinki for this file — Node resets its default zone when
+ * `TZ` is stubbed — and restored afterwards.
+ */
+beforeAll(() => {
+  vi.stubEnv("TZ", "Europe/Helsinki");
+});
+afterAll(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("the admin product details card", () => {
   afterEach(() => {

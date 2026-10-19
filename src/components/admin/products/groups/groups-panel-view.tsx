@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { Heading } from "@sog/ui";
 import {
   DndContext,
   DragOverlay,
@@ -15,7 +16,7 @@ import { ArrowRightLeft, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
@@ -49,6 +50,7 @@ import type {
   ProductType,
 } from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 
 /**
  * Everything the groups panel *does*, as callbacks the caller owns.
@@ -143,6 +145,8 @@ interface GroupsPanelViewProps {
   seatCount: number | null;
   waitlistEnabled: boolean;
   voiceAvailable: boolean;
+  /** How the product's sessions are joined, for the Join button. */
+  voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
@@ -340,6 +344,7 @@ export function GroupsPanelView({
   seatCount,
   waitlistEnabled,
   voiceAvailable,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -456,10 +461,10 @@ export function GroupsPanelView({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />
-            {t("title")}
-          </CardTitle>
+            <Heading level={2} step="card-title">{t("title")}</Heading>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -558,10 +563,10 @@ export function GroupsPanelView({
             place at the end of the row. */}
         <div className="space-y-3">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              {t("title")}
-            </h2>
+              <Heading level={2} step="card-title">{t("title")}</Heading>
+            </div>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -666,6 +671,7 @@ export function GroupsPanelView({
                 gamePlatform={gamePlatform}
                 robloxRenders={robloxRenders}
                 voiceAvailable={voiceAvailable}
+                voiceRoom={voiceRoom}
                 voiceIsOpen={voiceIsOpen}
                 opensDate={opensDate}
                 opensTime={opensTime}

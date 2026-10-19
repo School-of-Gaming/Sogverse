@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Heading } from "@sog/ui";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { UncertifiedGedu } from "./admin-dashboard-data";
 import { GeduCertificationQueue } from "./gedu-certification-queue";
 
@@ -54,14 +55,14 @@ export function GeduCertificationPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-baseline gap-2 text-xl">
-          {t("title")}
+        <div className="flex items-baseline gap-2">
+          <Heading level={2} step="card-title">{t("title")}</Heading>
           {gedus.length > 0 && (
             <span className="text-sm font-normal text-muted-foreground">
               {gedus.length}
             </span>
           )}
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <GeduCertificationQueue gedus={gedus} onCertify={onCertifyGedu} />

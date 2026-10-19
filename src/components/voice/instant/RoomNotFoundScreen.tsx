@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/providers";
@@ -33,7 +34,9 @@ export function RoomNotFoundScreen({ code }: RoomNotFoundScreenProps) {
       <Card>
         <CardContent className="space-y-6 py-12 text-center">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold">{t("title")}</h1>
+            <Heading level={1} step="section" align="center">
+              {t("title")}
+            </Heading>
             <p className="text-sm text-muted-foreground">{t("body")}</p>
           </div>
 

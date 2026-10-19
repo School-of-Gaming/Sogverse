@@ -34,6 +34,7 @@ function validConsumerState(): FormState {
       name: "Test Club",
       shortDescription: "A great club",
       longDescription: "",
+      voiceJoinInstructions: "",
     },
   };
   s.topic = "minecraft_java";
@@ -61,7 +62,7 @@ function validConsumerState(): FormState {
 function validMuniState(): FormState {
   const s = initialState(muniConfig, "en");
   s.translations.drafts = {
-    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: "" },
+    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: "", voiceJoinInstructions: "" },
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
@@ -80,7 +81,7 @@ function validMuniState(): FormState {
 function validCampState(): FormState {
   const s = initialState(campConfig, "en");
   s.translations.drafts = {
-    en: { name: "Test Camp", shortDescription: "A great camp", longDescription: "" },
+    en: { name: "Test Camp", shortDescription: "A great camp", longDescription: "", voiceJoinInstructions: "" },
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
@@ -100,7 +101,7 @@ function validCampState(): FormState {
 function validEventState(): FormState {
   const s = initialState(eventConfig, "en");
   s.translations.drafts = {
-    en: { name: "Test Event", shortDescription: "A great event", longDescription: "" },
+    en: { name: "Test Event", shortDescription: "A great event", longDescription: "", voiceJoinInstructions: "" },
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
@@ -116,7 +117,7 @@ describe("validate", () => {
     it("requires at least one filled locale", () => {
       const s = validConsumerState();
       s.translations.drafts = {
-        en: { name: "", shortDescription: "", longDescription: "" },
+        en: { name: "", shortDescription: "", longDescription: "", voiceJoinInstructions: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -129,7 +130,7 @@ describe("validate", () => {
       // still resolves for any viewer.
       const s = validConsumerState();
       s.translations.drafts = {
-        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "" },
+        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "", voiceJoinInstructions: "" },
       };
       expect(validate(s, consumerConfig)).toBeNull();
     });
@@ -141,8 +142,9 @@ describe("validate", () => {
           name: "Test Club",
           shortDescription: "A great club",
           longDescription: "",
+          voiceJoinInstructions: "",
         },
-        sv: { name: "Klubb", shortDescription: "", longDescription: "" },
+        sv: { name: "Klubb", shortDescription: "", longDescription: "", voiceJoinInstructions: "" },
       };
       const result = validate(s, consumerConfig);
       // The locale *code*: the validator is pure, so the form resolves the
@@ -156,7 +158,7 @@ describe("validate", () => {
     it("accepts whitespace-only as empty (trims for emptiness check)", () => {
       const s = validConsumerState();
       s.translations.drafts = {
-        en: { name: "   ", shortDescription: "   ", longDescription: "" },
+        en: { name: "   ", shortDescription: "   ", longDescription: "", voiceJoinInstructions: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -169,7 +171,7 @@ describe("validate", () => {
       const s = validConsumerState();
       s.translations.drafts = {
         ...s.translations.drafts,
-        fi: { name: " ", shortDescription: "", longDescription: "\n" },
+        fi: { name: " ", shortDescription: "", longDescription: "\n", voiceJoinInstructions: "" },
       };
       expect(validate(s, consumerConfig)).toBeNull();
     });
@@ -178,7 +180,7 @@ describe("validate", () => {
       const s = validConsumerState();
       s.translations.drafts = {
         ...s.translations.drafts,
-        fi: { name: "", shortDescription: "", longDescription: "Pitkä kuvaus" },
+        fi: { name: "", shortDescription: "", longDescription: "Pitkä kuvaus", voiceJoinInstructions: "" },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationIncomplete",
@@ -189,9 +191,9 @@ describe("validate", () => {
     it("names the first incomplete tab in locale order", () => {
       const s = validConsumerState();
       s.translations.drafts = {
-        fr: { name: "Club", shortDescription: "", longDescription: "" },
-        en: { name: "Club", shortDescription: "A club", longDescription: "" },
-        sv: { name: "", shortDescription: "En klubb", longDescription: "" },
+        fr: { name: "Club", shortDescription: "", longDescription: "", voiceJoinInstructions: "" },
+        en: { name: "Club", shortDescription: "A club", longDescription: "", voiceJoinInstructions: "" },
+        sv: { name: "", shortDescription: "En klubb", longDescription: "", voiceJoinInstructions: "" },
       };
       // SUPPORTED_LOCALES puts sv before fr.
       expect(validate(s, consumerConfig)).toEqual({
@@ -888,6 +890,7 @@ describe("buildCreateInput", () => {
         name: "  Padded Club  ",
         shortDescription: "  Padded desc  ",
         longDescription: "",
+        voiceJoinInstructions: "",
       },
     };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -896,18 +899,20 @@ describe("buildCreateInput", () => {
       name: "Padded Club",
       short_description: "Padded desc",
       long_description: null,
+      voice_join_instructions: null,
     });
   });
 
   it("sends every written tab in locale order and leaves a blank one out", () => {
     const s = validConsumerState();
     s.translations.drafts = {
-      sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "" },
-      fi: { name: "  ", shortDescription: "", longDescription: "\n\n" },
+      sv: { name: "Klubb", shortDescription: "En klubb", longDescription: "", voiceJoinInstructions: "" },
+      fi: { name: "  ", shortDescription: "", longDescription: "\n\n", voiceJoinInstructions: "" },
       en: {
         name: "Club",
         shortDescription: "A club",
         longDescription: "# About\n",
+        voiceJoinInstructions: "",
       },
     };
     const out = buildUpdateInput(s, consumerConfig);
@@ -917,12 +922,14 @@ describe("buildCreateInput", () => {
         name: "Club",
         short_description: "A club",
         long_description: "# About",
+        voice_join_instructions: null,
       },
       {
         locale: "sv",
         name: "Klubb",
         short_description: "En klubb",
         long_description: null,
+        voice_join_instructions: null,
       },
     ]);
   });
@@ -1662,6 +1669,8 @@ function mockDetailRow(
     tag: null,
     region_lock_country: null,
     requires_gamer_creations: false,
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     spoken_language_code: "en",
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },
@@ -1689,6 +1698,7 @@ function mockDetailRow(
         name: "Summer Club",
         short_description: "A great club",
         long_description: null,
+        voice_join_instructions: null,
         created_at: "2026-01-01T00:00:00Z",
         updated_at: "2026-01-01T00:00:00Z",
       },
@@ -1698,6 +1708,7 @@ function mockDetailRow(
         name: "Kesäkerho",
         short_description: "Mahtava kerho",
         long_description: null,
+        voice_join_instructions: null,
         created_at: "2026-01-01T00:00:00Z",
         updated_at: "2026-01-01T00:00:00Z",
       },
@@ -1741,11 +1752,13 @@ describe("cloneFormState", () => {
       name: "Summer Club (Copy)",
       shortDescription: "A great club",
       longDescription: "",
+      voiceJoinInstructions: "",
     });
     expect(state.translations.drafts.fi).toEqual({
       name: "Kesäkerho (Copy)",
       shortDescription: "Mahtava kerho",
       longDescription: "",
+      voiceJoinInstructions: "",
     });
   });
 
@@ -1805,6 +1818,7 @@ describe("cloneFormState", () => {
       name: "Summer Club (Copy)",
       short_description: "A great club",
       long_description: null,
+      voice_join_instructions: null,
     });
   });
 });
@@ -1827,6 +1841,7 @@ describe("long description", () => {
         name: "Test Club",
         shortDescription: "A great club",
         longDescription,
+        voiceJoinInstructions: "",
       },
     };
     const out = buildCreateInput(state, "consumer_club", consumerConfig);
@@ -1859,6 +1874,7 @@ describe("long description", () => {
             name: "Summer Club",
             short_description: "A great club",
             long_description: markdown,
+            voice_join_instructions: null,
             created_at: "2026-01-01T00:00:00Z",
             updated_at: "2026-01-01T00:00:00Z",
           },
@@ -1942,5 +1958,161 @@ describe("marketing consent types", () => {
       "en",
     );
     expect(state.marketingConsentTypes).toEqual(new Set());
+  });
+});
+
+describe("the voice room on the wire", () => {
+  it("starts a new product on a Sogverse room and sends it with no link", () => {
+    const s = validConsumerState();
+    expect(s.voiceRoomMode).toBe("sogverse");
+    expect(validate(s, consumerConfig)).toBeNull();
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.voice_room_mode).toBe("sogverse");
+    expect(out.external_voice_url).toBeNull();
+    expect(out.translations[0].voice_join_instructions).toBeNull();
+  });
+
+  it("requires a meeting link on the external mode, and a web one", () => {
+    const s = validConsumerState();
+    s.voiceRoomMode = "external";
+    s.externalVoiceUrl = "   ";
+    expect(validate(s, consumerConfig)?.messageKey).toBe(
+      "externalVoiceUrlRequired",
+    );
+    s.externalVoiceUrl = "javascript:alert(1)";
+    expect(validate(s, consumerConfig)?.messageKey).toBe(
+      "externalVoiceUrlInvalid",
+    );
+    s.externalVoiceUrl = "zoom.us/j/123";
+    expect(validate(s, consumerConfig)?.messageKey).toBe(
+      "externalVoiceUrlInvalid",
+    );
+  });
+
+  it("sends the link as the parser's serialization, only on the external mode", () => {
+    const s = validConsumerState();
+    s.voiceRoomMode = "external";
+    s.externalVoiceUrl = "  HTTPS://Zoom.us/j/123?pwd=x  ";
+    expect(validate(s, consumerConfig)).toBeNull();
+    const out = buildUpdateInput(s, consumerConfig);
+    expect(out.voice_room_mode).toBe("external");
+    expect(out.external_voice_url).toBe("https://zoom.us/j/123?pwd=x");
+
+    // Moving off the mode keeps the typed link in state but sends none.
+    s.voiceRoomMode = "sogverse";
+    expect(buildUpdateInput(s, consumerConfig).external_voice_url).toBeNull();
+    expect(s.externalVoiceUrl).not.toBe("");
+  });
+
+  it("requires join instructions in at least one language on the no-room mode", () => {
+    const s = validConsumerState();
+    s.voiceRoomMode = "none";
+    expect(validate(s, consumerConfig)?.messageKey).toBe(
+      "voiceJoinInstructionsRequired",
+    );
+    s.translations.drafts.en = {
+      ...s.translations.drafts.en!,
+      voiceJoinInstructions: "  \n ",
+    };
+    expect(validate(s, consumerConfig)?.messageKey).toBe(
+      "voiceJoinInstructionsRequired",
+    );
+  });
+
+  it("sends each language's instructions, trimmed, with a blank one as null", () => {
+    const s = validConsumerState();
+    s.voiceRoomMode = "none";
+    s.translations.drafts.en = {
+      ...s.translations.drafts.en!,
+      voiceJoinInstructions: "  Call 0800 123 456.\n",
+    };
+    s.translations.drafts.fi = {
+      name: "Kerho",
+      shortDescription: "Mahtava kerho",
+      longDescription: "",
+      voiceJoinInstructions: "",
+    };
+    expect(validate(s, consumerConfig)).toBeNull();
+    const out = buildUpdateInput(s, consumerConfig);
+    expect(out.voice_room_mode).toBe("none");
+    expect(out.external_voice_url).toBeNull();
+    expect(
+      out.translations.map((t) => [t.locale, t.voice_join_instructions]),
+    ).toEqual([
+      ["en", "Call 0800 123 456."],
+      ["fi", null],
+    ]);
+  });
+
+  it("sends no instructions under any other mode, and ignores a tab holding only them", () => {
+    const s = validConsumerState();
+    s.translations.drafts.en = {
+      ...s.translations.drafts.en!,
+      voiceJoinInstructions: "Stale instructions",
+    };
+    // A tab with nothing but hidden instructions in it is not a language.
+    s.translations.drafts.sv = {
+      name: "",
+      shortDescription: "",
+      longDescription: "",
+      voiceJoinInstructions: "Gamla instruktioner",
+    };
+    expect(validate(s, consumerConfig)).toBeNull();
+    const out = buildUpdateInput(s, consumerConfig);
+    expect(out.translations.map((t) => t.locale)).toEqual(["en"]);
+    expect(out.translations[0].voice_join_instructions).toBeNull();
+  });
+
+  it("puts an in-person product on a Sogverse room whatever the hidden choice holds", () => {
+    const s = validConsumerState();
+    s.voiceRoomMode = "external";
+    s.externalVoiceUrl = "not a link";
+    s.isRemote = false;
+    s.locationId = "site-1";
+    // The choice is not asked of an in-person product, so it is not judged.
+    expect(validate(s, consumerConfig)).toBeNull();
+    const out = buildUpdateInput(s, consumerConfig);
+    expect(out.voice_room_mode).toBe("sogverse");
+    expect(out.external_voice_url).toBeNull();
+  });
+
+  it("round-trips a stored choice through the edit form", () => {
+    const external = existingFormState(
+      mockDetailRow({
+        voice_room_mode: "external",
+        external_voice_url: "https://meet.example.com/abc",
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(external.voiceRoomMode).toBe("external");
+    expect(external.externalVoiceUrl).toBe("https://meet.example.com/abc");
+    expect(buildUpdateInput(external, consumerConfig).external_voice_url).toBe(
+      "https://meet.example.com/abc",
+    );
+
+    const base = mockDetailRow();
+    const none = existingFormState(
+      mockDetailRow({
+        voice_room_mode: "none",
+        product_translations: base.product_translations.map((t) => ({
+          ...t,
+          voice_join_instructions: t.locale === "fi" ? "Soita numeroon." : null,
+        })),
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(none.voiceRoomMode).toBe("none");
+    expect(none.externalVoiceUrl).toBe("");
+    expect(none.translations.drafts.fi?.voiceJoinInstructions).toBe(
+      "Soita numeroon.",
+    );
+    expect(none.translations.drafts.en?.voiceJoinInstructions).toBe("");
+    expect(
+      buildUpdateInput(none, consumerConfig).translations.map(
+        (t) => t.voice_join_instructions,
+      ),
+    ).toEqual([null, "Soita numeroon."]);
   });
 });

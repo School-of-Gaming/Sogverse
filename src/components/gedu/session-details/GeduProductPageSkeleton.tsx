@@ -45,7 +45,7 @@ export function GeduProductPageSkeleton() {
         {/* The standing-notes row. */}
         <Card className="mt-6">
           <CardContent className="space-y-3 p-4 sm:p-5">
-            <div className="h-3 w-32 animate-pulse rounded bg-lifted" />
+            <div className="h-6 w-32 animate-pulse rounded bg-lifted" />
             <div className="h-4 w-full animate-pulse rounded bg-lifted" />
             <div className="h-4 w-4/5 animate-pulse rounded bg-lifted" />
           </CardContent>
@@ -94,11 +94,11 @@ function GhostEntry({ lines }: { lines: number }) {
   );
 }
 
-/** One rail card: its small heading, then a run of rows. */
+/** One rail card: its title, then a run of rows. */
 function GhostRailCard({ rows }: { rows: number }) {
   return (
     <div className="space-y-3 rounded-lg border border-border p-4">
-      <div className="h-3 w-24 animate-pulse rounded bg-lifted" />
+      <div className="h-6 w-24 animate-pulse rounded bg-lifted" />
       {Array.from({ length: rows }, (_, row) => (
         <div key={row} className="h-12 animate-pulse rounded-md bg-lifted" />
       ))}

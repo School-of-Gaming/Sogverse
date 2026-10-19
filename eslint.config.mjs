@@ -291,7 +291,7 @@ const noGreyAsHover = [
  * without a compiler. The generated CSS is the artifact both ends already agree
  * on — a test regenerates and diffs it — so reading it is reading the theme.
  *
- * The `--x--y` shapes (`--text-h1--font-weight`) are companions of a token, not
+ * The `--x--y` shapes (`--text-hero--font-weight`) are companions of a token, not
  * tokens, and are filtered out: a class can never name one.
  */
 const themeCss = readFileSync(
@@ -513,7 +513,7 @@ const noUnregisteredColourToken = Object.keys(EXTRA_KEYWORDS).flatMap((prefix) =
  * Derived rather than typed out, for the reason the colour tokens above are:
  * @sog/ui adds a face and this file learns it on the next lint run; @sog/ui
  * retires one and every class still naming it starts failing the same day. The
- * pattern is anchored at the start of a declaration so `--text-h1--font-weight`
+ * pattern is anchored at the start of a declaration so `--text-hero--font-weight`
  * — a companion of a type step, which no class can ever name — is not read as a
  * face called `weight`.
  */
@@ -734,6 +734,50 @@ const sogverseFaceBans = [
   ...noFontFamilyDeclaration,
   ...noUnknownFaceClass,
 ];
+
+/**
+ * Every heading Sogverse draws is SOG-UI's `Heading`, and a raw `h1`–`h6` is how
+ * one stops being: a tag and a size chosen together at the call site, which is
+ * the decision the primitive splits into an outline level and a step.
+ *
+ * Written as JSX, the tag is caught by its element name. Chosen at runtime —
+ * held in a variable, defaulted in a parameter, picked by a ternary, carried in
+ * an object or typed as a prop's literal union, then rendered as `<Title>` — it
+ * is caught as a string in one of those positions. A string anywhere else (a
+ * `createElement` argument, a comparison) is not reported, so the ban raises no
+ * false alarm on code that merely mentions a tag name; the files that map
+ * markdown heading levels to tag names on purpose are exempted by name below.
+ *
+ * Exported so a test can run a violating line and a conforming one through it.
+ */
+const noRawHeadingJsx = [
+  {
+    selector: String.raw`JSXOpeningElement[name.name=/^h[1-6]$/]`,
+    message:
+      "No raw heading elements in Sogverse. Use `Heading` from @sog/ui, which takes the outline level and the step as two props.",
+  },
+];
+
+const HEADING_TAG = String.raw`/^h[1-6]$/`;
+const noHeadingTagStrings = [
+  "VariableDeclarator > ",
+  "AssignmentPattern > ",
+  "ConditionalExpression > ",
+  "Property > ",
+  "TSLiteralType > ",
+].flatMap((position) =>
+  [
+    `Literal[value=${HEADING_TAG}]`,
+    `TemplateLiteral[expressions.length=0][quasis.0.value.cooked=${HEADING_TAG}]`,
+  ].map((node) => ({
+    // A property's key is its name, not a tag it holds: only its value counts.
+    selector: `${position}${node}${position === "Property > " ? ".value" : ""}`,
+    message:
+      "No heading tag chosen at runtime in Sogverse. Render `Heading` from @sog/ui and pass the outline level as its `level` prop.",
+  })),
+);
+
+const noRawHeadingElements = [...noRawHeadingJsx, ...noHeadingTagStrings];
 
 const sogverseColourBans = [
   ...noHexColourLiterals(
@@ -1009,6 +1053,44 @@ const eslintConfig = defineConfig([
         ...sogverseColourBans,
         ...noColourFunctions,
         ...sogverseFaceBans,
+        ...noRawHeadingElements,
+      ],
+    },
+  },
+  {
+    // `AlertTitle` is still an `h5`, and stays one until the alert adoption
+    // decides what an alert's title is — a heading, or the first line of a
+    // message. It is the one raw heading left in Sogverse, so its file is
+    // exempt from that ban alone; every other ban the `src/**` block sets is
+    // restated, since this block replaces that one's options rather than
+    // merging with them.
+    files: ["src/components/ui/alert.tsx"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        ...sogverseColourBans,
+        ...noColourFunctions,
+        ...sogverseFaceBans,
+        ...noHeadingTagStrings,
+      ],
+    },
+  },
+  {
+    // The two files that map a markdown heading level to the tag it is painted
+    // as, which is a table of tag names by design: `lib/authored-markdown.ts`
+    // holds where each use case's headings sit in the outline, and the markdown
+    // renderer types the levels it is handed and renders the mapped tag. Neither
+    // is a heading the app titles a region with — what they paint is held by
+    // the authored-markdown look — so they are exempt from the ban on a tag
+    // chosen at runtime, and still from writing a raw heading as JSX. Every
+    // other ban the `src/**` block sets is restated, since this block replaces
+    // that one's options rather than merging with them.
+    files: ["src/components/ui/markdown.tsx", "src/lib/authored-markdown.ts"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        ...sogverseColourBans,
+        ...noColourFunctions,
+        ...sogverseFaceBans,
+        ...noRawHeadingJsx,
       ],
     },
   },
@@ -1024,7 +1106,7 @@ const eslintConfig = defineConfig([
     // length so a later sweep does not take it on pattern.
     files: ["src/lib/voice/glow.ts"],
     rules: {
-      "no-restricted-syntax": ["error", ...sogverseColourBans, ...sogverseFaceBans],
+      "no-restricted-syntax": ["error", ...sogverseColourBans, ...sogverseFaceBans, ...noRawHeadingElements],
     },
   },
   {
@@ -1072,6 +1154,9 @@ const eslintConfig = defineConfig([
         // drawn, not typed — the words beside it are the app's, in the app's
         // face.
         ...sogverseFaceBans,
+        // And from nothing about headings: the words around a picture are
+        // titled the app's way.
+        ...noRawHeadingElements,
       ],
     },
   },
@@ -1136,6 +1221,7 @@ const eslintConfig = defineConfig([
         // required to write.
         ...noSpelledFamily,
         ...noUnknownFaceClass,
+        ...noRawHeadingElements,
       ],
     },
   },
@@ -1182,11 +1268,12 @@ const eslintConfig = defineConfig([
       ],
     },
   },
-  // The two class-level bans reach the demo, because the demo is a consumer and
-  // is held to every rule a Sogverse page is held to. A grey written as a hover
-  // and a raw palette class are both things a *consumer* writes, and the demo is
-  // the reference for how a consumer writes them — a reference showing the wrong
-  // class teaches it to every page that copies it.
+  // The two class-level bans and the raw-heading ban reach the demo, because the
+  // demo is a consumer and is held to every rule a Sogverse page is held to. A
+  // grey written as a hover, a raw palette class and a hand-written `h1` are all
+  // things a *consumer* writes, and the demo is the reference for how a consumer
+  // writes them — a reference showing the wrong one teaches it to every page
+  // that copies it.
   //
   // The hex ban still stops short of here, on its own terms: it is the library's
   // rule about where colour is authored, and a consumer spelling one is a
@@ -1194,7 +1281,11 @@ const eslintConfig = defineConfig([
   {
     files: ["packages/*/demo/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-syntax": ["error", ...noPaletteColourClasses, ...noGreyAsHover],
+      "no-restricted-syntax": ["error",
+        ...noPaletteColourClasses,
+        ...noGreyAsHover,
+        ...noRawHeadingElements,
+      ],
     },
   },
   {
@@ -1273,8 +1364,14 @@ const eslintConfig = defineConfig([
     // comes from its own arguments or the repo, and reading and writing files
     // at computed paths is the entire job. Left on it fires fifty times here and
     // says nothing, which is worse than silence — it trains the next reader to
-    // scroll past the category. It stays on everywhere else.
-    files: ["scripts/**/*.{mjs,ts}", "packages/*/scripts/**/*.ts"],
+    // scroll past the category. A build config is the same case: it runs at
+    // build time, and the paths it probes are its own directory's ancestors.
+    // It stays on everywhere else.
+    files: [
+      "scripts/**/*.{mjs,ts}",
+      "packages/*/scripts/**/*.ts",
+      "packages/sog-ui/demo/next.config.ts",
+    ],
     rules: {
       "security/detect-non-literal-fs-filename": "off",
     },
@@ -1308,4 +1405,4 @@ export default eslintConfig;
  * the day a test goes red rather than the day a colour quietly stops being
  * enforced.
  */
-export { noAbsentBorderColour, noUnregisteredColourToken };
+export { noAbsentBorderColour, noRawHeadingElements, noUnregisteredColourToken };

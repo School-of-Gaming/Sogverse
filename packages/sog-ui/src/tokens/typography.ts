@@ -303,59 +303,182 @@ export type TypeStep = {
 /**
  * The working type scale.
  *
- * Seven steps and no more: hero, three headings, two body sizes and the button
+ * Nine steps and no more: six heading steps, two body sizes and the button
  * label. A surface that wants a size the scale does not have is asking for a
  * step, which is a decision made here, not an arbitrary value written into a
  * page.
  *
- * **Only H1 resteps for a narrow viewport.** A hero size cannot fit the mobile
- * floor, so its narrow step is pinned here rather than re-decided per page;
- * every other step ships one size at every width, because a heading that
- * changes size at a breakpoint costs more in inconsistency than it buys in fit.
+ * **The heading steps are named by role, not by outline level.** Which `h1`–`h4`
+ * element a heading is belongs to the page's outline; which step it wears
+ * belongs to what it titles. The two are separate props of `Heading`, and the
+ * table of which steps each level may take lives beside it.
+ *
+ * **Size shows rank, and nothing else does.** Every heading step is set in the
+ * app face at one weight, 600, with the face's own letter spacing: no step is
+ * tracked tight, none is bold, none is set at body weight. A reader tells two
+ * ranks apart by size alone, so each step sits clearly below the one above it
+ * and no two steps share a style. Each carries its own line height, tighter as
+ * the size grows, so no call site sets a leading.
+ *
+ * **Two registers, one scale.** `hero` and `display` are the story register —
+ * a public page telling the brand's story to a mixed audience, at the sizes a
+ * headline needs. `page-title` is the work register's top — the opt-in
+ * spotlight on an app page, where a person has come to get something done and
+ * a 36px heading would shout over the work; an app page's title is `section`
+ * unless the page chooses the spotlight. `section`, `card-title` and `label`
+ * serve both. Same face, same
+ * weight, same rules: the registers differ in where the scale tops out, never
+ * in how a heading is drawn.
+ *
+ * **Only the story steps — `hero` and `display` — restep for a narrow
+ * viewport.** They are the two sized for a wide public page, and a phone cannot
+ * carry them, so each one's narrow size is pinned here rather than re-decided
+ * per page. Both drop at `md` together, and the hero outranks a section heading
+ * at every width: 48 over 36 wide, 34 over 28 narrow. The work-register steps
+ * are already sized for a phone and ship one size at every width, because a
+ * heading that changes size at a breakpoint costs more in inconsistency than it
+ * buys in fit.
+ *
+ * **No heading step carries a colour.** A heading is ink; the one declared
+ * departure, the public hero's act phrase, is in `brand.ts` and is drawn at its
+ * call site.
  */
 export const TYPE_SCALE = [
-  /** Hero headlines. */
+  /**
+   * A public page's hero headline — the first thing a stranger reads, one per
+   * page at most.
+   *
+   * For the story register only: the home page, About, a partner or landing
+   * page's opening line. Never an app page's title (that is `section`, or a
+   * spotlit `page-title`) and never a section heading, however important the
+   * section — a second hero on a page is two pages competing for one reader.
+   *
+   * A story step, so it resteps: 48px cannot hold a three-or-four-word headline
+   * at the mobile floor, so it drops to 34 there — still above `display`'s
+   * narrow 28, so the hero outranks a section heading on a phone too. At 34
+   * every hero line the product breaks by hand still sits whole in a 375px
+   * phone's column, in every locale. The tightest leading in the
+   * scale, because a display line of a few large words reads as one shape and
+   * loose leading breaks it into separate lines.
+   */
   {
-    id: "h1",
-    cssName: "--text-h1",
-    label: "H1",
+    id: "hero",
+    cssName: "--text-hero",
+    label: "Hero",
     face: "sans",
     px: 48,
-    mobilePx: 30,
+    mobilePx: 34,
     weight: 600,
     lineHeight: 1.1,
   },
-  /** Section titles. */
+  /**
+   * A public page's section heading — the story register's second rank, under
+   * the hero.
+   *
+   * Never on an app page: no section of an app page needs 36px, and on one it
+   * would outrank the page's own title. A section inside an app page is
+   * `section`.
+   *
+   * A story step, so it resteps with the hero: 36px is sized for a wide public
+   * page, and on a phone a section heading at that size reads as loud as the
+   * hero above it. It drops to 28 below `md`, under the hero's 34 and still
+   * above `section`'s 24.
+   */
   {
-    id: "h2",
-    cssName: "--text-h2",
-    label: "H2",
+    id: "display",
+    cssName: "--text-display",
+    label: "Display",
     face: "sans",
     px: 36,
+    mobilePx: 28,
+    weight: 600,
+    lineHeight: 1.2,
+  },
+  /**
+   * The top of the work register: the opt-in spotlight for a page whose title
+   * is its point — a greeting, a choice the whole page asks, a document the
+   * reader came to read, a person's profile. One per page at most.
+   *
+   * Not an app page's title by default: that is `section`, because most app
+   * pages' titles only say where the reader is, and spotlighting is opt-in.
+   * Never a public page's hero, which is a headline rather than a title. One
+   * size at every width: a spotlit title is a line of one to four words and
+   * fits the mobile floor as it is.
+   */
+  {
+    id: "page-title",
+    cssName: "--text-page-title",
+    label: "Page title",
+    face: "sans",
+    px: 30,
     mobilePx: null,
     weight: 600,
     lineHeight: 1.2,
   },
-  /** Card and sub-section titles. */
+  /**
+   * An app page's title by default, and a section within a page — in both
+   * registers: an app page's section under a spotlit `page-title`, and a story
+   * sub-section under a `display` heading.
+   *
+   * The default for an app page's `h1` because spotlighting is opt-in: a title
+   * that only says where the reader is takes the quietest step that still
+   * reads as a page's title. Never a card's title — a card is an object on the
+   * page, not a region of it.
+   */
   {
-    id: "h3",
-    cssName: "--text-h3",
-    label: "H3",
+    id: "section",
+    cssName: "--text-section",
+    label: "Section",
     face: "sans",
     px: 24,
     mobilePx: null,
     weight: 600,
     lineHeight: 1.3,
   },
-  /** Small headings, set at body weight so they read as a lead rather than a shout. */
+  /**
+   * The title of a card, dialog, sheet or panel — an object's name, in both
+   * registers — and of a region over prose under a quiet page title. Also the
+   * quietest a page's own title goes, for a page that is one small object: a
+   * call screen, a not-found state.
+   *
+   * **Declared departure: 600, where the brand sets its small heading at
+   * Regular 400.** One heading weight is the rule for the whole scale, and
+   * this is the step where the brand's own value would break it: an 18px
+   * title at 400 is `body-l`'s size and weight, so beside body copy it cannot
+   * be told from the paragraph under it and reads as a lead sentence rather
+   * than as a heading — size showing rank, failing at the small end. The
+   * departure is on the weight alone.
+   */
   {
-    id: "h4",
-    cssName: "--text-h4",
-    label: "H4",
+    id: "card-title",
+    cssName: "--text-card-title",
+    label: "Card title",
     face: "sans",
     px: 18,
     mobilePx: null,
-    weight: 400,
+    weight: 600,
+    lineHeight: 1.4,
+  },
+  /**
+   * A small heading over a compact region — a list, a row of chips, a set of
+   * controls or fields, a block of metadata — in both registers. A heading over
+   * prose takes `card-title` instead: a title is never smaller than the text it
+   * titles.
+   *
+   * Sentence case, untracked: it is a heading because it titles a region, and
+   * a heading is not furniture. A small marker that does not title a region —
+   * an eyebrow above a heading, a field label, a pill — is not a heading and
+   * does not take this step. Body-s's size, set apart from the line beneath it
+   * by weight alone.
+   */
+  {
+    id: "label",
+    cssName: "--text-label",
+    label: "Label",
+    face: "sans",
+    px: 14,
+    mobilePx: null,
+    weight: 600,
     lineHeight: 1.4,
   },
   /** Main body copy, with the loosest line height in the scale because it is the one people read. */
@@ -394,6 +517,36 @@ export const TYPE_SCALE = [
 ] as const satisfies readonly TypeStep[];
 
 export type TypeStepId = (typeof TYPE_SCALE)[number]["id"];
+
+/** One size the theme declares from the scale, under the CSS token that names it. */
+export type TypeSize = {
+  /** The CSS token, and the `text-*` utility Tailwind generates from it. */
+  readonly cssName: `--text-${string}`;
+  /** The size in CSS pixels. */
+  readonly px: number;
+  /** The step the size belongs to, which carries its weight and line height. */
+  readonly step: TypeStep;
+};
+
+/**
+ * Every size the theme declares from the scale, in scale order: each step's own
+ * size, followed — where the step resteps — by its narrow-viewport size, named
+ * by the step's token with `-mobile` appended.
+ *
+ * The naming is decided once, here, because two things have to agree on it: the
+ * generator, which declares the tokens, and the class merger, which has to
+ * recognise every `text-*` utility those tokens produce as a size.
+ */
+export function typeSizes(): readonly TypeSize[] {
+  return TYPE_SCALE.flatMap((step): TypeSize[] =>
+    step.mobilePx === null
+      ? [{ cssName: step.cssName, px: step.px, step }]
+      : [
+          { cssName: step.cssName, px: step.px, step },
+          { cssName: `${step.cssName}-mobile`, px: step.mobilePx, step },
+        ],
+  );
+}
 
 // -------------------------------------------------------------- type rules
 

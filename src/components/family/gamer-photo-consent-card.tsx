@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import {
@@ -102,7 +102,7 @@ export function GamerPhotoConsentCard({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Camera className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>

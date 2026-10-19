@@ -18,7 +18,7 @@ import { MinecraftPasswordResetCardView } from "./minecraft-password-reset-card-
  * chat is reset again rather than recovered — so the button coming back is the
  * correct end state, not a race.
  */
-export function MinecraftPasswordResetCard() {
+export function MinecraftPasswordResetCard({ level }: { level: 2 | 3 }) {
   const t = useTranslations("tools.minecraftPasswordReset");
   const mutation = useResetMinecraftPasswords();
 
@@ -31,6 +31,7 @@ export function MinecraftPasswordResetCard() {
       // "something went wrong" and the real one stays in the console.
       error={mutation.isError ? t("requestFailed") : null}
       onSubmit={(usernames) => mutation.mutate(usernames)}
+      level={level}
     />
   );
 }

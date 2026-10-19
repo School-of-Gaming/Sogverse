@@ -380,6 +380,7 @@ function renderPage(
             }}
             plannedSessions={[]}
             isRemote={false}
+            voiceRoom={{ mode: "sogverse" }}
             participant={AINO}
             groupName="Builders A"
             gedus={[]}

@@ -23,6 +23,7 @@
     "check-translations": "node scripts/check-translations.mjs",
     "db": "node scripts/local-db.mjs",
     "gates": "node scripts/gates.mjs",
+    "load": "node scripts/load.mjs",
     "perf:insights": "node scripts/speed-insights.mjs"
   },
   "dependencies": {
@@ -63,7 +64,6 @@
     "remark-parse": "^11.0.0",
     "sharp": "^0.35.5",
     "stripe": "^17.7.0",
-    "tailwind-merge": "^2.6.1",
     "tiptap-markdown": "^0.9.0",
     "unified": "^11.0.5",
     "zod": "^3.25.76",

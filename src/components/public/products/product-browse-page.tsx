@@ -14,6 +14,7 @@ import {
   type ShopCategory,
 } from "./shop-categories";
 import { ProductBrowseResults } from "./product-browse-results";
+import { Heading } from "@sog/ui";
 
 interface ProductBrowsePageProps {
   /** Categories to render as sections, in display order — already expanded
@@ -66,7 +67,9 @@ export function ProductBrowseBody(
   const t = useTranslations("productBrowse");
   return (
     <div className="py-8 sm:py-12">
-      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <Heading level={1} step="page-title" srOnly>
+        {t("pageTitle")}
+      </Heading>
       <ProductBrowseResults {...props} />
     </div>
   );

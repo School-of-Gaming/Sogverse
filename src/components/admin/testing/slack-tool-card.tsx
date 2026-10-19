@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { Hash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,7 +11,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -84,7 +84,7 @@ export function SlackToolCard() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Hash className="h-5 w-5" />
-          <CardTitle>{t("slack.tool")}</CardTitle>
+          <Heading level={2} step="card-title">{t("slack.tool")}</Heading>
         </div>
         <CardDescription>{t("slack.toolDescription")}</CardDescription>
       </CardHeader>
@@ -122,9 +122,9 @@ export function SlackToolCard() {
 
           {template === "text" && (
             <div className="space-y-3 rounded-md border border-border p-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <Heading level={3} step="label">
                 {t("templateParameters")}
-              </p>
+              </Heading>
               <Field label={t("slack.message")} htmlFor="slackText">
                 <Textarea
                   id="slackText"

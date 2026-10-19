@@ -33,6 +33,8 @@ CREATE TABLE public.products (
     image_id uuid,
     requires_gamer_creations boolean DEFAULT false NOT NULL,
     invoice_customer_id uuid,
+    voice_room_mode public.voice_room_mode DEFAULT 'sogverse'::public.voice_room_mode NOT NULL,
+    external_voice_url text,
     CONSTRAINT chk_products_age_range CHECK (((min_age IS NULL) OR (max_age IS NULL) OR (max_age >= min_age))),
     CONSTRAINT chk_products_ages_iff_for_gamers CHECK (
 CASE
@@ -42,8 +44,14 @@ END),
     CONSTRAINT chk_products_date_range CHECK (((start_date IS NULL) OR (end_date IS NULL) OR (end_date >= start_date))),
     CONSTRAINT chk_products_event_single_date CHECK (((product_type <> 'event'::public.product_type) OR (NOT (end_date IS DISTINCT FROM start_date)))),
     CONSTRAINT chk_products_external_contract_muni CHECK (((billing_mode <> 'external_contract'::public.billing_mode) OR (product_type = 'municipality_club'::public.product_type))),
+    CONSTRAINT chk_products_external_voice_url_iff_external CHECK (
+CASE
+    WHEN (voice_room_mode = 'external'::public.voice_room_mode) THEN ((external_voice_url IS NOT NULL) AND (external_voice_url ~* '^https?://[^[:space:]/?#]+([/?#][^[:space:]]*)?$'::text))
+    ELSE (external_voice_url IS NULL)
+END),
     CONSTRAINT chk_products_has_an_audience CHECK ((for_gamers OR for_parents)),
     CONSTRAINT chk_products_in_person_has_location CHECK (((is_remote = true) OR (location_id IS NOT NULL))),
+    CONSTRAINT chk_products_in_person_voice_room_is_sogverse CHECK ((is_remote OR (voice_room_mode = 'sogverse'::public.voice_room_mode))),
     CONSTRAINT chk_products_invoice_customer_only_for_muni CHECK (((invoice_customer_id IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_municipality_fee_only_for_muni CHECK (((municipality_fee_cents IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_non_consumer_has_end_date CHECK (((product_type = 'consumer_club'::public.product_type) OR (end_date IS NOT NULL))),
@@ -113,6 +121,20 @@ COMMENT ON COLUMN public.products.requires_gamer_creations IS 'Does this product
 --
 
 COMMENT ON COLUMN public.products.invoice_customer_id IS 'The Fennoa customer this municipality club is invoiced to, or NULL where nobody has said yet. Per CLUB rather than per municipality on purpose: one city can be two customers (library clubs and school clubs under two agreements) and an association can be the customer for clubs running in a municipality it is not, so this may NEVER be derived from location_id. Nullable and refused later, exactly like municipality_fee_cents: a club is created before anybody has agreed who pays for it, so the invoicing page is what flags a club with no customer and blocks its file. Restricted to municipality clubs by chk_products_invoice_customer_only_for_muni, the same shape the fee column carries. ON DELETE RESTRICT, which is what makes "no delete in v1" free: a customer a club points at cannot be removed. NOTE ON EXPOSURE: `products` carries a table-level SELECT grant for `anon`, so this column joins the set an unauthenticated reader can select — known and accepted by the owner for the fee columns already, and what leaks is an opaque id, since invoice_customers itself is admin-only and holds everything that would say who the customer is.';
+
+
+--
+-- Name: COLUMN products.voice_room_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on an in-person product by chk_products_in_person_voice_room_is_sogverse. The admin chooses it on the product form, beside online versus in person. Mode none goes with join instructions on the translations, a rule across two tables that create_product and update_product enforce rather than a CHECK.';
+
+
+--
+-- Name: COLUMN products.external_voice_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.products.external_voice_url IS 'PUBLIC TO EVERYONE, LOGGED-OUT VISITORS INCLUDED. products carries a table-level SELECT grant for anon and its read policy admits every product, so anybody can read this link through the Data API without an account, a seat or a session window. That is a KNOWN AND ACCEPTED RISK, decided by the owner: the meeting is marketed publicly anyway. Do not put a link here that must stay private. The meeting a family is sent to when voice_room_mode is external, and NULL otherwise (chk_products_external_voice_url_iff_external, which also requires an http or https address so a javascript: or mistyped value cannot be stored). Admin-supplied and otherwise unrestricted: any meeting service will do. A STOPGAP for audiences larger than a Sogverse room holds; remove the column, with the external mode, once Sogverse rooms can hold more than 50 people — see docs/investigations/voice-room-scale.md.';
 
 
 --
