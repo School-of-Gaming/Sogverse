@@ -1389,6 +1389,9 @@ const eslintConfig = defineConfig([
     // entries above.
     "packages/*/demo/.next/**",
     "packages/*/demo/next-env.d.ts",
+    // Other checkouts: a bare-path run from the main checkout (`lint:file`
+    // with no files lints `.`) would otherwise sweep every worktree.
+    ".claude/worktrees/**",
   ]),
 ]);
 
