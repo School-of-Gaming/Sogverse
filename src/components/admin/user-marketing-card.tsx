@@ -9,7 +9,7 @@ import {
   useMarketingConsentsForCustomer,
 } from "@/services/marketing-consents/marketing-consents.queries";
 import { useTimezone } from "@/providers";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { UTM_FIELDS, UTM_QUERY_PARAMS, type UtmAttribution } from "@/lib/utm";
 import type { MarketingConsentType } from "@/types";
 

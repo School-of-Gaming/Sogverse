@@ -29,7 +29,7 @@ import { useRequiredAuth } from "@/providers/auth-provider";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { CreateGamerInput, GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {

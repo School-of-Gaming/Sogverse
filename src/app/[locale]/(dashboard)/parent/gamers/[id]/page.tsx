@@ -30,7 +30,7 @@ import {
 import { useMinecraftAccount } from "@/services/minecraft/minecraft.queries";
 import { useRobloxAccount } from "@/services/roblox/roblox.queries";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { useTimezone } from "@/providers";
 
 export default function GamerDetailsPage() {

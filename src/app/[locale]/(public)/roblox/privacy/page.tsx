@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { robloxCardMetadata } from "../card-metadata";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { rawString } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { rawPolicyBlocks } from "@/components/legal/policy-content";

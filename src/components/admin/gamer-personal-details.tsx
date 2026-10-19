@@ -41,7 +41,7 @@ import {
   GAMER_USERNAME_MAX_LENGTH,
   gamerUsernameFromEmail,
 } from "@/lib/gamer-sign-in";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import {
   Constants,
   type GamerProfile,

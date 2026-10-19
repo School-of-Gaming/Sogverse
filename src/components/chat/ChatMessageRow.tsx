@@ -6,7 +6,7 @@ import type { ChatReactionCode } from "@/lib/constants/chat";
 import { MAX_CHAT_MESSAGE_LENGTH } from "@/lib/constants/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { ChatMessageCapabilities } from "./capabilities";
 import {
   chatBodyMentions,

@@ -24,7 +24,7 @@ import {
   type MissingWordsDescription,
 } from "@/lib/landing-pages/describe-missing";
 import type { LandingSectionType } from "@/lib/landing-pages/sections";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import {
   landingPublishForecast,

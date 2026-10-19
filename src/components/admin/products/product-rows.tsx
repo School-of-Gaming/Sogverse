@@ -17,7 +17,7 @@ import { ProductBanner } from "@/components/ui/product-banner";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
+import { formatDate, formatDateOnly, formatDateRange } from "@/lib/date-format";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import { formatProductWeeks } from "@/lib/products/format-product-term-dates";
 import { ProductStatusChip } from "./product-status-chip";

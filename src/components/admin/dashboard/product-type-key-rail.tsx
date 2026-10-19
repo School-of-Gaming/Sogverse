@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,

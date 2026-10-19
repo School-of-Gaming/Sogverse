@@ -33,7 +33,7 @@ import {
   type MissingRequirement,
   type SessionRequirements,
 } from "@/lib/products/session-requirements";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useQualificationNames } from "@/components/admin/qualification-names";
 
 /**

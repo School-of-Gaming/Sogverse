@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupPending } from "@/services/groups/groups.queries";

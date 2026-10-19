@@ -25,7 +25,7 @@ import {
   SESSION_PHOTO_MAX_EDGE,
   type SessionPhotoErrorCode,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { sessionPhotoErrorCode } from "./photo-failure";
 import {
   SessionPhotoConsentList,

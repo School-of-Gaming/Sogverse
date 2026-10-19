@@ -23,7 +23,8 @@ import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-c
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users/users.service";

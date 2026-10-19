@@ -22,7 +22,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   isTeamProfileNotReadyError,
   type TeamProfile,

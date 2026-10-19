@@ -33,7 +33,9 @@ import {
   type CustomerFile,
 } from "@/lib/finvoice";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { cn, formatCurrencyFromCents, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDateOnly } from "@/lib/date-format";
 import type {
   MunicipalityInvoicingSnapshot,
 } from "@/services/municipality-invoicing/municipality-invoicing.contracts";

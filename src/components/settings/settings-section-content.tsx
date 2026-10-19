@@ -45,7 +45,7 @@ import {
 } from "@/services/users/users.queries";
 import { useLocationsByIds } from "@/services/locations/locations.queries";
 import { type LocationWithChain } from "@/services/locations/locations.service";
-import { toE164Digits } from "@/lib/utils";
+import { toE164Digits } from "@/lib/constants/phone";
 import {
   useMyMinecraftAccount,
   useUpdateMyMinecraft,

@@ -9,7 +9,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { type GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
-import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 import { loadMessages, type Messages } from "@/i18n/messages";
 import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution/session-substitution.contracts";
 import { Constants, type SubstitutionReason } from "@/types";

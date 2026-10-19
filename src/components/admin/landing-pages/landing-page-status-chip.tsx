@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type {
   AdminLandingPageListItem,
 } from "@/services/landing-pages/landing-pages.contracts";

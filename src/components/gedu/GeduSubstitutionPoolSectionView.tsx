@@ -21,7 +21,7 @@ import {
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
 import { useNow, useTimezone } from "@/providers";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 
 export interface GeduSubstitutionPoolSectionViewProps {
   /**

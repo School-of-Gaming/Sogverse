@@ -1,7 +1,7 @@
 import { buildGroupWorkspaceFixture } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isRedactedMember } from "@/components/group-workspace/types";
 import { productLocalDate } from "@/lib/session-occurrence";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { gamerBirthOf } from "@/lib/gamer-birth";
 import type {
   TraineeAssignedProduct,

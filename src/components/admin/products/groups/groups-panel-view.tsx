@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { BlockedMoveDialog } from "./blocked-move-dialog";
 import { ParticipantChip } from "./participant-chip";

@@ -156,7 +156,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed

@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FramedImage } from "@/components/ui/framed-image";
 import {
   useUploadCatalogueImage,

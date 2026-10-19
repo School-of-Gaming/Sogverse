@@ -24,12 +24,9 @@ import {
   formatProductSchedule,
   joinScheduleGroups,
 } from "@/lib/products/format-product-schedule";
-import {
-  cn,
-  formatCurrencyFromCents,
-  formatDate,
-  formatDateOnly,
-} from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { useNow, useTimezone } from "@/providers";
 import { useProductGroups } from "@/services/groups/groups.queries";
 import { useProductsByType } from "@/services/products/products.queries";

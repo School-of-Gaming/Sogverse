@@ -15,7 +15,8 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import {
   spotlightWriteFailure,

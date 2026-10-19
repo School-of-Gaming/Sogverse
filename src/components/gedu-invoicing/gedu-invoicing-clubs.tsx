@@ -13,7 +13,7 @@ import {
 } from "@/components/invoicing-ledger/ledger";
 import { ROUTES } from "@/lib/constants";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import {
   fullName,
   type GeduInvoice,

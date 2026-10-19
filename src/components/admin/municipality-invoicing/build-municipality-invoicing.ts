@@ -15,7 +15,7 @@ import {
   type ProductScheduleSummary,
 } from "@/lib/products/format-product-schedule";
 import { productLocalDate } from "@/lib/session-occurrence";
-import { sumCents } from "@/lib/utils";
+import { sumCents } from "@/lib/money";
 import type {
   InvoiceCustomerRow,
 } from "@/services/invoice-customers/invoice-customers.contracts";

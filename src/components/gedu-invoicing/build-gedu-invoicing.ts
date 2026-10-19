@@ -15,7 +15,7 @@ import {
   type SubstitutionRequestInput,
 } from "@/lib/session-staffing";
 import { productLocalDate } from "@/lib/session-occurrence";
-import { sumCents } from "@/lib/utils";
+import { sumCents } from "@/lib/money";
 import type {
   GeduInvoicingGedu,
   GeduInvoicingGroup,

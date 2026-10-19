@@ -39,7 +39,7 @@ import {
 import { HolidayBreaksService } from "@/services/holiday-breaks/holiday-breaks.service";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { getOrigin } from "@/lib/url";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import type { AppSupabaseClient } from "@/types";
 
 /**

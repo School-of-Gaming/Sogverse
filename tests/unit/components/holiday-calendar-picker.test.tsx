@@ -29,7 +29,7 @@ vi.mock("@/services/holiday-calendars/holiday-calendars.queries", () => ({
 }));
 
 import { HolidayCalendarPicker } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange } from "@/lib/date-format";
 import type {
   HolidayCalendarSummary,
 } from "@/services/holiday-calendars/holiday-calendars.service";

@@ -35,7 +35,7 @@ import { robloxIdsFrom } from "./panel-rules";
 import { useRobloxRenders } from "@/services/roblox/roblox.queries";
 import { platformForTopic } from "@/lib/products/topics";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";

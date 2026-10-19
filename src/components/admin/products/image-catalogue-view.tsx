@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { FramedImage } from "@/components/ui/framed-image";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   CATALOGUE_IMAGE_LABEL_MAX_LENGTH,
   catalogueImageLabel,

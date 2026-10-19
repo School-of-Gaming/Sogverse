@@ -46,7 +46,7 @@ import { personName } from "@/components/admin/person-name";
 import { useQualificationNames } from "@/components/admin/qualification-names";
 import { useTimezone } from "@/providers";
 import type { GeduQualification } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 interface GeduQualificationsCardProps {
   geduId: string;

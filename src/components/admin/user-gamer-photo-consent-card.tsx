@@ -11,7 +11,7 @@ import {
   useGamerPhotoConsents,
 } from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import { useTimezone } from "@/providers";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 /**
  * What a gamer's parent has said about photographs of them.

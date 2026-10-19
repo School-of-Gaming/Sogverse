@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { FullscreenImageViewer } from "@/components/ui/fullscreen-image-viewer";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   CHAT_IMAGE_THUMB_HEIGHT,
   chatThumbnailWidth,

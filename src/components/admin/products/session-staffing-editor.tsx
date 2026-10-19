@@ -30,7 +30,8 @@ import type {
   GeduAssignmentRole,
   SessionStaffing,
 } from "@/lib/session-staffing";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 import { Constants, type SubstitutionReason } from "@/types";
 import type {
   MissingRequirement,

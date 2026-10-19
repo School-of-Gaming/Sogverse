@@ -32,7 +32,7 @@ import { useClickOutside } from "@/hooks/use-click-outside";
 import { trackDashboardNav } from "@/lib/analytics";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
 import { byFirstName } from "@/lib/family-order";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { commitAccountSwitch } from "@/services/family/switch-account";
 import { switchGateFor, type SwitchGate } from "@/services/family/switch-gate";
 import {

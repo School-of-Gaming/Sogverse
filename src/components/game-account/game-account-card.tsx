@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useRobloxRender } from "@/services/roblox/roblox.queries";
 import { GameUsernameEditableRow } from "./game-username-editable-row";
 import {

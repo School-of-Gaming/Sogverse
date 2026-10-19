@@ -705,7 +705,7 @@ describe("buildCreateInput", () => {
   it("converts the monthly price to cents as price_cents for clubs", () => {
     // Consumer clubs charge a flat monthly subscription, so the monthly input
     // becomes price_cents and the session input is ignored. See decimalToCents
-    // in src/lib/utils.ts.
+    // in src/lib/money.ts.
     const s = validConsumerState();
     s.prices.eur = { session: "10.005", month: "30.99" };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);

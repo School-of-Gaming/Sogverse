@@ -5,7 +5,7 @@ import {
   trimOpenEndedFuture,
   type PlannedSession,
 } from "@/lib/planned-sessions";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/date-format";
 
 /**
  * Whether a session's group voice room is joinable *right now*. The window

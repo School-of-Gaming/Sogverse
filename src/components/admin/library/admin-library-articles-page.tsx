@@ -22,7 +22,7 @@ import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type {
   AdminLibraryArticleListItem,

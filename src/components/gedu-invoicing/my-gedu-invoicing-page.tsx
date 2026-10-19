@@ -20,7 +20,8 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { cn, formatCurrencyFromCents } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { useNow } from "@/providers";
 import {
   useMyGeduInvoicingMonth,

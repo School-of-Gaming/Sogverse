@@ -5,7 +5,7 @@ import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Identicon } from "@/components/ui/identicon";
 import type { FamilyMember } from "@/services/family/family.service";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { AppHref } from "@/lib/constants/routes";
 
 export type TileSize = "default" | "sm";

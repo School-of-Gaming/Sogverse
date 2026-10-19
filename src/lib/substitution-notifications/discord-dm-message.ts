@@ -23,7 +23,8 @@ import {
   sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
-import { formatCurrencyFromCents, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 import { loadMessages, type Messages } from "@/i18n/messages";
 import type { GeduAssignmentRole, SubstitutionOfferResponse } from "@/types";
 import type { SubstitutionNotificationSnapshot } from "./snapshot.contracts";

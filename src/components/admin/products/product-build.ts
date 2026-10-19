@@ -33,7 +33,7 @@ import {
   writtenLocales,
 } from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
-import { decimalToCents } from "@/lib/utils";
+import { decimalToCents } from "@/lib/money";
 import type {
   CreateProductInput,
   ProductAdminDetailRow,

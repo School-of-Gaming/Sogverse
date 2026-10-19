@@ -7,7 +7,7 @@ import { Field } from "@/components/ui/field";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange } from "@/lib/date-format";
 import {
   useHolidayCalendars,
 } from "@/services/holiday-calendars/holiday-calendars.queries";

@@ -136,6 +136,22 @@ const noServiceBarrelImports = [
 ];
 
 /**
+ * A grab-bag `utils` module under `src/lib/`.
+ *
+ * Every helper lives in the module about its subject, so a change to one
+ * reaches only the files that use it — which is what the gates' changed-file
+ * test selection reads. A shared `@/lib/utils` made every importer of any
+ * helper depend on all of them.
+ */
+const noUtilsHubImports = [
+  {
+    regex: "^(?:@/|(?:\\.\\./)+(?:src/)?)lib/utils(?:\\.ts)?$",
+    message:
+      "There is no @/lib/utils. Import the module that defines the helper: cn from @/lib/cn; isKeyOf and findOption from @/lib/type-guards; formatCurrency*, decimalToCents and sumCents from @/lib/money; formatDate*, formatTime* and the date ranges from @/lib/date-format; parseTime from @/lib/time-of-day; escapeLikePattern and searchTerms from @/lib/search; capitalize and parseEmails from @/lib/strings; toE164Digits from @/lib/constants/phone; DAYS_OF_WEEK from @/lib/constants/days-of-week; computeAge from @/lib/gamer-age-eligibility.",
+  },
+];
+
+/**
  * A family spelled out, banned wherever a face is set.
  *
  * @sog/ui names the faces and Sogverse references them; a family typed into
@@ -886,7 +902,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -899,7 +915,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -923,7 +939,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports],
+        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -964,6 +980,7 @@ const eslintConfig = defineConfig([
           ...noNextFontOutsideLayout,
           ...noZodV4OutsideMcp,
           ...noServiceBarrelImports,
+          ...noUtilsHubImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -1264,7 +1281,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },

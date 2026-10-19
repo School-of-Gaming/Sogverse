@@ -73,7 +73,7 @@ import {
 import { personName } from "@/components/admin/person-name";
 import { useTimezone } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 interface GeduCertificationCardProps {
   geduId: string;

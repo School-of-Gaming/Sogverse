@@ -10,7 +10,7 @@ import type {
 import type { UserListEntry } from "@/services/users/users.contracts";
 import { ROUTES } from "@/lib/constants";
 import { formatDayMonth } from "@/lib/calendar-date";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { sessionFacts } from "../../mocks/session-facts";
 
 /**

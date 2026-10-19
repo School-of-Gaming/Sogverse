@@ -20,7 +20,8 @@ import {
 } from "@/components/invoicing-ledger/month-stepper";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { cn, formatCurrencyFromCents } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { useNow } from "@/providers";
 import {
   useAdminGeduInvoicingMonth,

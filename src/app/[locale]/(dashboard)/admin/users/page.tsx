@@ -18,7 +18,7 @@ import {
 } from "@/services/gedu/gedu-contract.queries";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { UserRole } from "@/types";
 
 /**

@@ -8,7 +8,7 @@ import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { GeduCriminalRecordCheck } from "@/services/gedu/gedu-profiles.service";
 import type { GeduContractAcceptance } from "@/types";

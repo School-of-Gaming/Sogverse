@@ -1,6 +1,6 @@
 import { addCalendarDays, monthsAfter } from "@/lib/calendar-date";
 import { monthEndOf } from "@/lib/invoicing/month";
-import { sumCents } from "@/lib/utils";
+import { sumCents } from "@/lib/money";
 import {
   buildMunicipalityInvoicing,
   type InvoiceClub,

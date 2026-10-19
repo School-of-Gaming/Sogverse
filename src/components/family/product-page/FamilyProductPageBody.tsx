@@ -19,7 +19,8 @@ import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
 } from "@/lib/products/format-product-schedule";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
