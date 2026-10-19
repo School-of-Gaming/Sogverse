@@ -83,7 +83,6 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 | Worktree | Item | Points for the review |
 |---|---|---|
 | `landing-email-capture` | #2 email sign-up section, Brevo double opt-in | Sogverse stores nothing about the lead except a one-hour hashed-IP rate-limit table — confirm that is acceptable. Account holders are not synced to Brevo (deferred). Brevo setup outstanding (below). |
-| `admin-analytics` | #4 admin Analytics page, and extra 3's two read-only MCP tools | All admins see the page. "Pages served" needs a Vercel token with observability access (below). The tools refuse page-level signups rather than guess, and refuse a range wholly before the data starts. Needs polish before it goes live. |
 | `discover-index` | #10 `/discover` index, breadcrumbs, IndexNow | Publish and Unpublish (landing pages and Library) now go through admin API routes so IndexNow can fire; the API route wrapper now returns the database error code where it discloses errors; the production check is duplicated byte for byte with the one already on `dev` (`src/lib/seo/deployment.ts`) on purpose; the index has no closing call to action though the site-quality rule asks every public page for one; the Finnish copy wants a native check. |
 | `landing-share-card` | #12 share title and picture per page | In the MCP tools, leaving a share field out of a save clears it — decide whether that is acceptable. |
 | `landing-picture-shapes` | #14 pictures in three shapes (wide 16:9, square, portrait 4:5), never cropped | Library covers uploaded through the AI app are now refused rather than cropped when not 16:9; a column was renamed to hold each picture's purpose; the uploader view has a new address. Not yet tried in a real AI app. |
@@ -105,9 +104,8 @@ renderer).
 - **Brevo:** a list, a double opt-in template and the contact attributes the email
   sign-up sends; the env vars are named in `.env.local.example` on its branch and are
   empty in `.env.local`. Needed before `landing-email-capture` can go live.
-- **Vercel:** a token with observability access for the Analytics page's "pages served";
-  until then it shows that Vercel refused. A real `INDEXNOW_KEY` on production for
-  `discover-index`. Env vars go through the `vercel-env-vars` skill.
+- **Vercel:** a real `INDEXNOW_KEY` on production for `discover-index`. Env vars go
+  through the `vercel-env-vars` skill.
 - **Google Search Console:** the `sog.gg` Domain property is verified by a TXT record in
   the DNS — keep it. Three owners without an `@sog.gg` address are to be reviewed.
 

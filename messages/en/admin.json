@@ -1773,6 +1773,87 @@
       "all": "All ({count})"
     }
   },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "How many people reach the site, what they read and which campaigns bring them. Every day on this page is a UTC day.",
+    "range": {
+      "label": "Date range",
+      "preset": "Last {days} days",
+      "from": "From",
+      "to": "To",
+      "apply": "Show",
+      "showing": "Showing {from} – {to}.",
+      "dataStarts": "Vercel's figures start on {date}."
+    },
+    "readAt": "Read from Vercel at {time}. Kept for up to an hour.",
+    "noLanguage": "No language in the address",
+    "languageCount": "{language} {count}",
+    "showAll": "Show all {count}",
+    "showFewer": "Show fewer",
+    "errors": {
+      "unconfigured": "Vercel isn't connected on this deployment, so these figures can't be read.",
+      "refused": "Vercel refused to give these figures to this site's access token. The token needs access to them before they can show here.",
+      "failed": "These figures couldn't be read just now. Try again in a few minutes."
+    },
+    "traffic": {
+      "heading": "Traffic",
+      "chart": "Traffic per day",
+      "visitors": "Visitors (approx.)",
+      "caption": "Only visitors who accepted analytics on the cookie banner are counted. Visitors are counted per device, so that number is approximate.",
+      "series": {
+        "pageviews": "Pageviews",
+        "visitors": "Visitors"
+      }
+    },
+    "landing": {
+      "heading": "Landing pages",
+      "caption": "Pageviews of each landing page, every language of a page counted together. Only visitors who accepted analytics are counted.",
+      "columns": {
+        "page": "Page",
+        "pageviews": "Pageviews"
+      },
+      "unmatched": "No landing page uses this address now",
+      "empty": "No landing page was viewed in this range."
+    },
+    "campaigns": {
+      "heading": "Campaigns",
+      "caption": "Pageviews by the campaign in the link. Only visitors who accepted analytics are counted.",
+      "columns": {
+        "campaign": "Campaign",
+        "sources": "Source",
+        "mediums": "Medium",
+        "pageviews": "Pageviews"
+      },
+      "none": "No campaign",
+      "noValue": "none",
+      "empty": "Nothing was viewed in this range."
+    },
+    "pages": {
+      "heading": "Top pages",
+      "caption": "Pageviews per page, every language of a page on one row. Open a row to see the languages it was read in. Only visitors who accepted analytics are counted.",
+      "columns": {
+        "page": "Page",
+        "pageviews": "Pageviews"
+      },
+      "noSplit": "The language split isn't available for this read.",
+      "empty": "No page was viewed in this range."
+    },
+    "breakdowns": {
+      "heading": "Where visitors come from",
+      "caption": "Pageviews by the site a visitor came from, their country and their device. Only visitors who accepted analytics are counted.",
+      "referrers": "Referrers",
+      "countries": "Countries",
+      "devices": "Devices",
+      "noReferrer": "Direct, or not passed on",
+      "unknown": "Unknown",
+      "empty": "Nothing to show for this range.",
+      "deviceTypes": {
+        "desktop": "Desktop",
+        "mobile": "Mobile",
+        "tablet": "Tablet"
+      }
+    }
+  },
   "testimonials": {
     "subtitle": "Real words from parents, gamers and gedus, kept in one place. Landing pages quote the ones placed there.",
     "newTestimonial": "New testimonial",

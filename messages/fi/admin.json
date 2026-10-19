@@ -1773,6 +1773,87 @@
       "all": "Kaikki ({count})"
     }
   },
+  "analytics": {
+    "title": "Analytiikka",
+    "subtitle": "Kuinka moni sivustolle tulee, mitä he lukevat ja mitkä kampanjat heidät tuovat. Jokainen tämän sivun päivä on UTC-päivä.",
+    "range": {
+      "label": "Aikaväli",
+      "preset": "Viimeiset {days} päivää",
+      "from": "Alkaen",
+      "to": "Asti",
+      "apply": "Näytä",
+      "showing": "Näytetään {from} – {to}.",
+      "dataStarts": "Vercelin luvut alkavat {date}."
+    },
+    "readAt": "Luettu Vercelistä klo {time}. Säilytetään enintään tunnin.",
+    "noLanguage": "Osoitteessa ei ole kieltä",
+    "languageCount": "{language} {count}",
+    "showAll": "Näytä kaikki {count}",
+    "showFewer": "Näytä vähemmän",
+    "errors": {
+      "unconfigured": "Vercel ei ole yhdistettynä tässä ympäristössä, joten näitä lukuja ei voi lukea.",
+      "refused": "Vercel ei antanut näitä lukuja tämän sivuston käyttöavaimelle. Avain tarvitsee niihin pääsyn, ennen kuin ne voivat näkyä tässä.",
+      "failed": "Näitä lukuja ei juuri nyt voitu lukea. Yritä uudelleen muutaman minuutin päästä."
+    },
+    "traffic": {
+      "heading": "Liikenne",
+      "chart": "Liikenne päivittäin",
+      "visitors": "Kävijät (arvio)",
+      "caption": "Mukana ovat vain kävijät, jotka hyväksyivät analytiikan evästebannerissa. Kävijät lasketaan laitteittain, joten heidän määränsä on suuntaa antava.",
+      "series": {
+        "pageviews": "Sivunkatselut",
+        "visitors": "Kävijät"
+      }
+    },
+    "landing": {
+      "heading": "Laskeutumissivut",
+      "caption": "Kunkin laskeutumissivun katselut, sivun kaikki kielet yhteensä. Mukana vain analytiikan hyväksyneet kävijät.",
+      "columns": {
+        "page": "Sivu",
+        "pageviews": "Katselut"
+      },
+      "unmatched": "Mikään laskeutumissivu ei enää käytä tätä osoitetta",
+      "empty": "Yhtään laskeutumissivua ei katseltu tällä aikavälillä."
+    },
+    "campaigns": {
+      "heading": "Kampanjat",
+      "caption": "Sivunkatselut linkin kampanjan mukaan. Mukana vain analytiikan hyväksyneet kävijät.",
+      "columns": {
+        "campaign": "Kampanja",
+        "sources": "Lähde",
+        "mediums": "Media",
+        "pageviews": "Katselut"
+      },
+      "none": "Ei kampanjaa",
+      "noValue": "ei mitään",
+      "empty": "Tällä aikavälillä ei ollut katseluita."
+    },
+    "pages": {
+      "heading": "Suosituimmat sivut",
+      "caption": "Katselut sivuittain, sivun kaikki kielet yhdellä rivillä. Avaa rivi nähdäksesi, millä kielillä sitä luettiin. Mukana vain analytiikan hyväksyneet kävijät.",
+      "columns": {
+        "page": "Sivu",
+        "pageviews": "Katselut"
+      },
+      "noSplit": "Kielijako ei ole saatavilla tälle lukukerralle.",
+      "empty": "Yhtään sivua ei katseltu tällä aikavälillä."
+    },
+    "breakdowns": {
+      "heading": "Mistä kävijät tulevat",
+      "caption": "Katselut sen sivuston mukaan, jolta kävijä tuli, sekä maan ja laitteen mukaan. Mukana vain analytiikan hyväksyneet kävijät.",
+      "referrers": "Viittaajat",
+      "countries": "Maat",
+      "devices": "Laitteet",
+      "noReferrer": "Suoraan, tai tietoa ei välitetty",
+      "unknown": "Tuntematon",
+      "empty": "Tällä aikavälillä ei ole näytettävää.",
+      "deviceTypes": {
+        "desktop": "Tietokone",
+        "mobile": "Puhelin",
+        "tablet": "Tabletti"
+      }
+    }
+  },
   "testimonials": {
     "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Laskeutumissivut lainaavat niistä sinne sijoitettuja.",
     "newTestimonial": "Uusi asiakaskokemus",

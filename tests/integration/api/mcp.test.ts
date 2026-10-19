@@ -179,6 +179,8 @@ describe("/api/mcp", () => {
       "create_testimonial",
       "save_testimonial_version",
       "remove_testimonial_language",
+      "get_analytics_summary",
+      "get_analytics_breakdown",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

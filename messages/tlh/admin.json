@@ -1773,6 +1773,87 @@
       "all": "Hoch ({count})"
     }
   },
+  "analytics": {
+    "title": "De' poj",
+    "subtitle": "SaH 'ar? chay' laD? 'Iv campaign qaS? Hoch jaj UTC jaj ghaH.",
+    "range": {
+      "label": "poH",
+      "preset": "{days} jaj Qav",
+      "from": "pagh",
+      "to": "pa'",
+      "apply": "cha'",
+      "showing": "{from} – {to} 'oH.",
+      "dataStarts": "{date} Vercel mI' tagh."
+    },
+    "readAt": "{time} Vercel vIlaD. wa' rep pol.",
+    "noLanguage": "Hol tu'be'lu'",
+    "languageCount": "{language} {count}",
+    "showAll": "Hoch {count} cha'",
+    "showFewer": "puS cha'",
+    "errors": {
+      "unconfigured": "Vercel rarbe'lu', mI' laDlaHbe'.",
+      "refused": "Vercel lojmIt ngaQHa'moHwI' lajbe'. mI' cha'laHbe'.",
+      "failed": "DaH mI' laDlaHbe'. tugh yInIDqa'."
+    },
+    "traffic": {
+      "heading": "lup",
+      "chart": "Hoch jaj lup",
+      "visitors": "SuchwI' ('ach)",
+      "caption": "cookie DIr laj SuchwI' neH toghlu'. SuchwI' mI' Qagh.",
+      "series": {
+        "pageviews": "nab leghlu'pu'bogh",
+        "visitors": "SuchwI'"
+      }
+    },
+    "landing": {
+      "heading": "Saq nab",
+      "caption": "Hoch Saq nab leghlu'pu'bogh. Hoch Hol rap. cookie DIr laj SuchwI' neH.",
+      "columns": {
+        "page": "nab",
+        "pageviews": "leghlu'"
+      },
+      "unmatched": "DaH Saq nab Sammo'be' Daqvam",
+      "empty": "poHvam Saq nab leghlu'be'."
+    },
+    "campaigns": {
+      "heading": "campaign",
+      "caption": "campaign leghlu'pu'bogh. cookie DIr laj SuchwI' neH.",
+      "columns": {
+        "campaign": "campaign",
+        "sources": "Hal",
+        "mediums": "jan",
+        "pageviews": "leghlu'"
+      },
+      "none": "campaign pagh",
+      "noValue": "pagh",
+      "empty": "poHvam vay' leghlu'be'."
+    },
+    "pages": {
+      "heading": "nab Qav",
+      "caption": "Hoch nab leghlu'pu'bogh. Hoch Hol wa' tlhegh. tlhegh poSmoH, Hol yIlegh. cookie DIr laj SuchwI' neH.",
+      "columns": {
+        "page": "nab",
+        "pageviews": "leghlu'"
+      },
+      "noSplit": "DaH Hol chuq tu'laHbe'lu'.",
+      "empty": "poHvam nab leghlu'be'."
+    },
+    "breakdowns": {
+      "heading": "nuqDaq SuchwI' ghoS",
+      "caption": "nab leghlu'pu'bogh: Daq, Sep, jan je. cookie DIr laj SuchwI' neH.",
+      "referrers": "ngeHwI'",
+      "countries": "Sep",
+      "devices": "jan",
+      "noReferrer": "nIH, pagh ngeHlu'be'",
+      "unknown": "Sovbe'lu'",
+      "empty": "poHvam vay' tu'lu'be'.",
+      "deviceTypes": {
+        "desktop": "De'wI' tIn",
+        "mobile": "ghogh HablI'",
+        "tablet": "De'wI' mach"
+      }
+    }
+  },
   "testimonials": {
     "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq. jatlhmey lan Daq ghItlhmeyDaq.",
     "newTestimonial": "jatlh chu’",

@@ -1773,6 +1773,87 @@
       "all": "Alla ({count})"
     }
   },
+  "analytics": {
+    "title": "Analys",
+    "subtitle": "Hur många som når webbplatsen, vad de läser och vilka kampanjer som för dem hit. Varje dag på den här sidan är en UTC-dag.",
+    "range": {
+      "label": "Datumintervall",
+      "preset": "Senaste {days} dagarna",
+      "from": "Från",
+      "to": "Till",
+      "apply": "Visa",
+      "showing": "Visar {from} – {to}.",
+      "dataStarts": "Vercels siffror börjar {date}."
+    },
+    "readAt": "Läst från Vercel kl. {time}. Sparas i upp till en timme.",
+    "noLanguage": "Inget språk i adressen",
+    "languageCount": "{language} {count}",
+    "showAll": "Visa alla {count}",
+    "showFewer": "Visa färre",
+    "errors": {
+      "unconfigured": "Vercel är inte anslutet i den här miljön, så siffrorna kan inte läsas.",
+      "refused": "Vercel vägrade lämna ut siffrorna till den här webbplatsens åtkomstnyckel. Nyckeln behöver åtkomst till dem innan de kan visas här.",
+      "failed": "Siffrorna kunde inte läsas just nu. Försök igen om några minuter."
+    },
+    "traffic": {
+      "heading": "Trafik",
+      "chart": "Trafik per dag",
+      "visitors": "Besökare (ungefär)",
+      "caption": "Bara besökare som godkände analys i cookiebannern räknas. Besökare räknas per enhet, så det antalet är ungefärligt.",
+      "series": {
+        "pageviews": "Sidvisningar",
+        "visitors": "Besökare"
+      }
+    },
+    "landing": {
+      "heading": "Landningssidor",
+      "caption": "Sidvisningar för varje landningssida, alla språk av en sida räknade tillsammans. Bara besökare som godkände analys räknas.",
+      "columns": {
+        "page": "Sida",
+        "pageviews": "Sidvisningar"
+      },
+      "unmatched": "Ingen landningssida använder den här adressen längre",
+      "empty": "Ingen landningssida visades under det här intervallet."
+    },
+    "campaigns": {
+      "heading": "Kampanjer",
+      "caption": "Sidvisningar efter kampanjen i länken. Bara besökare som godkände analys räknas.",
+      "columns": {
+        "campaign": "Kampanj",
+        "sources": "Källa",
+        "mediums": "Medium",
+        "pageviews": "Sidvisningar"
+      },
+      "none": "Ingen kampanj",
+      "noValue": "ingen",
+      "empty": "Inget visades under det här intervallet."
+    },
+    "pages": {
+      "heading": "Populäraste sidorna",
+      "caption": "Sidvisningar per sida, alla språk av en sida på en rad. Öppna en rad för att se vilka språk den lästes på. Bara besökare som godkände analys räknas.",
+      "columns": {
+        "page": "Sida",
+        "pageviews": "Sidvisningar"
+      },
+      "noSplit": "Språkfördelningen är inte tillgänglig för den här läsningen.",
+      "empty": "Ingen sida visades under det här intervallet."
+    },
+    "breakdowns": {
+      "heading": "Var besökarna kommer ifrån",
+      "caption": "Sidvisningar efter webbplatsen besökaren kom från, deras land och deras enhet. Bara besökare som godkände analys räknas.",
+      "referrers": "Hänvisare",
+      "countries": "Länder",
+      "devices": "Enheter",
+      "noReferrer": "Direkt, eller inte vidarebefordrat",
+      "unknown": "Okänt",
+      "empty": "Inget att visa för det här intervallet.",
+      "deviceTypes": {
+        "desktop": "Dator",
+        "mobile": "Mobil",
+        "tablet": "Surfplatta"
+      }
+    }
+  },
   "testimonials": {
     "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Landningssidorna citerar dem som placerats där.",
     "newTestimonial": "Nytt omdöme",

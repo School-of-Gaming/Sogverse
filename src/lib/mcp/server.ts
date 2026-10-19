@@ -1,4 +1,5 @@
 import { createMcpHandler } from "mcp-handler";
+import { registerAnalyticsTools } from "@/lib/mcp/analytics";
 import { registerCoreTools } from "@/lib/mcp/core";
 import { registerImageUploader } from "@/lib/mcp/image-uploader";
 import { registerLibraryTools } from "@/lib/mcp/library";
@@ -25,6 +26,7 @@ export function createSogverseMcpHandler(): (request: Request) => Promise<Respon
       registerLandingPageTools(server);
       registerLandingImageTools(server);
       registerTestimonialTools(server);
+      registerAnalyticsTools(server);
     },
     {
       serverInfo: { name: "sogverse", version: "1.0.0" },
@@ -35,7 +37,7 @@ export function createSogverseMcpHandler(): (request: Request) => Promise<Respon
         if (event.type === "REQUEST_RECEIVED") console.info(`[mcp] ${event.method}`);
       },
       instructions:
-        "Sogverse is School of Gaming's platform. This server acts as the signed-in School of Gaming admin. Call whoami first to confirm which environment you are connected to. The Library tools read, write and publish the parent-facing articles of the public Library, and choose, show and upload their covers. The landing page tools write, publish and unpublish the marketing landing pages on the public site, and choose, show and upload their pictures. The testimonial tools keep the store of real words from parents, gamers and gedus that the site quotes: never write, invent or improve a testimonial's words — store what the admin supplies, translated faithfully where asked.",
+        "Sogverse is School of Gaming's platform. This server acts as the signed-in School of Gaming admin. Call whoami first to confirm which environment you are connected to. The Library tools read, write and publish the parent-facing articles of the public Library, and choose, show and upload their covers. The landing page tools write, publish and unpublish the marketing landing pages on the public site, and choose, show and upload their pictures. The testimonial tools keep the store of real words from parents, gamers and gedus that the site quotes: never write, invent or improve a testimonial's words — store what the admin supplies, translated faithfully where asked. The analytics tools read the site's traffic, by page and by campaign, as the admin Analytics page counts them.",
     },
   );
 }
