@@ -21,11 +21,12 @@ the npm script already carries `--run`, so the doubled flag is a vitest error ("
 a single value for option --run").
 
 `npm run gates` runs only the `unit/` + `integration/` files whose import closure the
-change touches, plus every file whose closure imports `fs`, `child_process` or a glob
-library — the sweeps that read the repo from disk always run. So a test that reads files
-must reach them through one of those imports, never only through something like
-`sharp(path)` or a TypeScript program that opens files itself: the selector would see an
-ordinary test and skip it when the files it reads change.
+change touches, plus every file whose closure imports `fs`, `child_process`, a glob
+library or one of the libraries the selector lists as opening the paths they are handed
+— the sweeps that read the repo from disk always run. So code that hands a file path to
+a library not on that list (`sharp(path)`, a TypeScript program) adds the library to the
+selector's list in the same change: otherwise the selector sees an ordinary test and
+skips it when the files it reads change.
 
 ## Node is the default environment; the DOM is opted into
 

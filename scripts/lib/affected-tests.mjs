@@ -14,18 +14,31 @@
  *                 and dynamic imports, walked through Vite's transform the way
  *                 `vitest --changed` walks them), is in the change.
  *   disk-reading  Some module in its closure, outside node_modules, imports the
- *                 file system, a child process or a glob library. Such a test
- *                 reads the repo from disk — a sweep, a registry, a stylesheet —
- *                 and the import graph cannot see what it reads, so it always
- *                 runs. Derived from the graph on every run; there is no list.
- *   unwalkable    A module in its closure failed to transform, so its imports are
- *                 unknown. The test is run, and will most likely report why.
+ *                 file system, a child process, a glob library, or a library
+ *                 that opens files it is handed by path (DISK_MODULES below).
+ *                 Such a test reads the repo from disk — a sweep, a registry, a
+ *                 stylesheet, a font — and the import graph cannot see what it
+ *                 reads, so it always runs. Which modules do so is derived from
+ *                 the graph on every run; only the libraries are listed.
+ *   unwalkable    A module in its closure failed to transform, or imports a
+ *                 relative, root-relative or `@/` specifier that resolves to
+ *                 nothing on disk (Vite's SSR transform leaves an unresolved
+ *                 specifier in place rather than throwing). Its imports are not
+ *                 all known, so the test is run, and will most likely report
+ *                 why. A bare package specifier that does not resolve is not
+ *                 this: the walk never follows packages.
  *
  * Everything runs when a changed path is a force trigger (below), when the diff
- * cannot be computed (no origin/dev, shallow clone, not a git repo), or when a
- * closure reaches source outside this checkout, which a worktree resolving a
- * workspace package to the main checkout would do — the walk would then be
- * blind to this checkout's copy. It never falls back to zero tests.
+ * cannot be computed (no origin/dev, shallow clone, not a git repo), when a
+ * project's setup files select every test (below), or when a closure reaches
+ * source outside this checkout, which a worktree resolving a workspace package
+ * to the main checkout would do — the walk would then be blind to this
+ * checkout's copy. It never falls back to zero tests.
+ *
+ * The setup files run before every test in their project, so their closures
+ * are walked too, and whatever would select one test from a setup closure
+ * selects them all: a changed path in it, or a module in it that reads the
+ * disk, is unwalkable, or lies outside this checkout.
  *
  * What this does not see, and what covers it: a deleted or renamed module is in
  * no closure, so a test still importing it is caught by type-check, which stays
@@ -48,8 +61,8 @@ const BASE = 'origin/dev';
 // A change to any of these runs everything. Each one changes how tests behave
 // without being a module some test imports — or is imported so widely that
 // walking for it buys nothing.
-//   - the setup files (read from the config below, not listed here), the shared
-//     mocks and helpers: imported by nearly every test or injected into all;
+//   - the shared mocks and helpers: imported by nearly every test (the setup
+//     files, injected into all, are covered by walking their closures);
 //   - vitest.config.mts: the aliases, environments and pools;
 //   - any tsconfig.json: esbuild reads the nearest one's compiler options when
 //     transforming;
@@ -66,7 +79,9 @@ const FORCE_BASENAMES = ['package.json', 'tsconfig.json'];
 
 // A module importing one of these reads or lists files, or runs a process that
 // may. Matched against the bare specifier, with or without `node:`, and against
-// a resolved path inside node_modules.
+// a resolved path inside node_modules. A library that is handed a path and
+// opens the file itself belongs here too, since its caller imports no fs; one
+// this repo only ever hands bytes (sharp) does not.
 const DISK_MODULES = [
   'fs',
   'fs/promises',
@@ -80,6 +95,8 @@ const DISK_MODULES = [
   'execa',
   'tinyexec',
   'cross-spawn',
+  // Font.register({ src: <path> }) reads the invoice PDF's fonts itself.
+  '@react-pdf/renderer',
 ];
 
 const args = process.argv.slice(2);
@@ -111,8 +128,8 @@ function changedPaths(root) {
   }
 }
 
-function forceTrigger(rel, setupFiles) {
-  if (FORCE_FILES.includes(rel) || setupFiles.has(rel)) return true;
+function forceTrigger(rel) {
+  if (FORCE_FILES.includes(rel)) return true;
   if (FORCE_DIRS.some((d) => rel.startsWith(d))) return true;
   return FORCE_BASENAMES.includes(path.posix.basename(rel));
 }
@@ -125,9 +142,10 @@ const isDiskModule = (dep) => {
 };
 
 /**
- * Walks every test's import closure the way Vitest's own `--changed` does:
- * transform the module, follow its static and dynamic deps that exist on disk
- * outside node_modules. Records, per module, whether it imports the disk.
+ * Walks import closures the way Vitest's own `--changed` does: transform the
+ * module, follow its static and dynamic deps that exist on disk outside
+ * node_modules. Records, per module, whether it imports the disk, and marks it
+ * failed when it did not transform or a local dep resolves to nothing.
  */
 function makeWalker(root) {
   const cache = new Map(); // project name -> Map(moduleId -> { deps, disk, failed })
@@ -148,34 +166,50 @@ function makeWalker(root) {
       const raw = [...(transformed.deps || []), ...(transformed.dynamicDeps || [])];
       const deps = [];
       let disk = false;
+      let failed = false;
       for (const dep of raw) {
         if (isDiskModule(dep)) disk = true;
         const clean = dep.split('?')[0];
+        // Vite rewrites a dep it resolved to `/@fs/<absolute>` or a root-relative
+        // path, and names its own virtual modules `/@id/…`. A relative or `@/`
+        // specifier left raw is one it could not resolve; anything else is a
+        // bare package, which the walk never follows.
+        if (clean.startsWith('/@id/')) continue;
         const fsPath = clean.startsWith('/@fs/')
           ? clean.slice(process.platform === 'win32' ? 5 : 4)
-          : path.join(project.config.root, clean);
-        if (!fsPath.includes('node_modules') && existsSync(fsPath)) deps.push(fsPath.replace(/\\/g, '/'));
+          : clean.startsWith('/')
+            ? path.join(project.config.root, clean)
+            : /^\.{1,2}\//.test(clean)
+              ? path.resolve(path.dirname(id), clean)
+              : null;
+        if (fsPath === null) {
+          if (clean.startsWith('@/')) failed = true;
+          continue;
+        }
+        if (fsPath.includes('node_modules')) continue;
+        if (existsSync(fsPath)) deps.push(fsPath.replace(/\\/g, '/'));
+        else failed = true;
       }
-      return { deps, disk, failed: false };
+      return { deps, disk, failed };
     })();
     modules.set(id, entry);
     return entry;
   };
 
-  /** The closure of one test file: its module paths, and whether any reads disk. */
-  return async (spec) => {
+  /** The closure of one module: its module paths, and whether any reads disk. */
+  return async (project, moduleId) => {
     const seen = new Set();
     let disk = false;
     let failed = false;
     const walk = async (id) => {
       if (seen.has(id)) return;
       seen.add(id);
-      const info = await visit(spec.project, id);
+      const info = await visit(project, id);
       disk ||= info.disk;
       failed ||= info.failed;
       await Promise.all(info.deps.map(walk));
     };
-    await walk(spec.moduleId);
+    await walk(moduleId);
     const outside = [...seen].filter((p) => !norm(p).startsWith(`${norm(root)}/`));
     return { paths: new Set([...seen].map(norm)), disk, failed, outside };
   };
@@ -193,10 +227,7 @@ async function select(vitest, specs) {
   const diff = changedPaths(root);
   if (diff.error) return all(`${diff.error}; running the full suite`);
 
-  const setupFiles = new Set(
-    vitest.projects.flatMap((p) => p.config.setupFiles).map((f) => path.relative(diff.top, f).replace(/\\/g, '/')),
-  );
-  const trigger = diff.paths.find((p) => forceTrigger(p, setupFiles));
+  const trigger = diff.paths.find(forceTrigger);
   if (trigger) return all(`${trigger} changed`);
 
   const changed = new Set(diff.paths.map((p) => norm(path.join(diff.top, p))));
@@ -207,13 +238,31 @@ async function select(vitest, specs) {
   }
 
   const closureOf = makeWalker(root);
-  const closures = await Promise.all(specs.map(async (spec) => [spec, await closureOf(spec)]));
+  const rel = (p) => path.relative(root, p).replace(/\\/g, '/');
+
+  // A setup file runs before every test in its project, so whatever would
+  // select one test from its closure selects them all.
+  for (const project of vitest.projects) {
+    for (const setup of project.config.setupFiles) {
+      const c = await closureOf(project, setup);
+      const name = `${rel(setup)} (${project.name} project setup)`;
+      const hit = [...c.paths].find((p) => changed.has(p));
+      if (hit) return all(`${rel(hit)} changed, in the closure of ${name}`);
+      if (c.outside.length > 0) return all(`${name} imports ${c.outside[0]}, outside this checkout`);
+      if (c.disk) return all(`${name} reads the disk, so every test does`);
+      if (c.failed) return all(`${name} is unwalkable`);
+    }
+  }
+
+  const closures = await Promise.all(
+    specs.map(async (spec) => [spec, await closureOf(spec.project, spec.moduleId)]),
+  );
 
   const outside = closures.find(([, c]) => c.outside.length > 0);
   if (outside) {
     const [spec, c] = outside;
     return all(
-      `${path.relative(root, spec.moduleId)} imports ${c.outside[0]}, outside this checkout, ` +
+      `${rel(spec.moduleId)} imports ${c.outside[0]}, outside this checkout, ` +
         'which the walk cannot match against this checkout’s changes; running the full suite',
     );
   }

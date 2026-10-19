@@ -1,20 +1,34 @@
 import { defineConfig, coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { readFileSync } from "fs";
 import path from "path";
 
-const sogUi = path.resolve(__dirname, "./packages/sog-ui/src");
+// The workspace package from this checkout, one alias per JS entry in its
+// package.json `exports` (a stylesheet entry is never imported by a test).
+// Resolved through node_modules instead, a worktree gets the main checkout's
+// copy — it has no node_modules of its own — so its tests would exercise the
+// wrong code and the affected-test walk would miss its changes.
+const sogUiRoot = path.resolve(__dirname, "./packages/sog-ui");
+const sogUiExports: Record<string, unknown> = JSON.parse(
+  readFileSync(path.join(sogUiRoot, "package.json"), "utf8"),
+).exports;
+const sogUiAlias = Object.entries(sogUiExports).flatMap(([subpath, target]) => {
+  // A conditional or wildcard export would need resolving here; fail loudly
+  // rather than let it fall back to node_modules.
+  if (typeof target !== "string" || subpath.includes("*")) {
+    throw new Error(`vitest.config.mts: cannot alias the @sog/ui export ${subpath}`);
+  }
+  if (!/\.[cm]?[jt]sx?$/.test(target)) return [];
+  const specifier = `@sog/ui${subpath.slice(1)}`.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [{ find: new RegExp(`^${specifier}$`), replacement: path.join(sogUiRoot, target) }];
+});
 
 const alias = [
   { find: "@", replacement: path.resolve(__dirname, "./src") },
   // Stub Next.js's `server-only` marker so route handlers that import it
   // (transitively or directly) can be imported into Vitest tests.
   { find: "server-only", replacement: path.resolve(__dirname, "./tests/mocks/server-only.ts") },
-  // The workspace package from this checkout, mirroring its package.json
-  // exports. Resolved through node_modules instead, a worktree gets the main
-  // checkout's copy — it has no node_modules of its own — so its tests would
-  // exercise the wrong code and the affected-test walk would miss its changes.
-  { find: /^@sog\/ui$/, replacement: `${sogUi}/index.ts` },
-  { find: /^@sog\/ui\/tokens\/(brand|typography)$/, replacement: `${sogUi}/tokens/$1.ts` },
+  ...sogUiAlias,
 ];
 
 const roots = ["tests/unit", "tests/integration"];
