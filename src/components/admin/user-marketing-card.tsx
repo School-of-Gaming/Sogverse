@@ -1,9 +1,10 @@
 "use client";
 
 import { Megaphone } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useMarketingConsentsForCustomer } from "@/services/marketing-consents";
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/utils";
@@ -106,20 +107,16 @@ export function UserMarketingCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Megaphone className="h-5 w-5 text-act" />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="@container space-y-6">
         <section>
-          {/* Furniture, not voice: a small tracked marker a reader scans as
-              structure. Both sub-headings are styled identically and case
-              together — de-capping one would read as a rendering fault beside
-              the other. */}
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <Heading level={3} step="label">
             {t("attribution")}
-          </h3>
+          </Heading>
           <dl className="mt-2 flex flex-col gap-1.5">
             {UTM_FIELDS.map((field) => {
               const value = attribution[field];
@@ -153,9 +150,9 @@ export function UserMarketingCard({
 
         {customerId !== null && (
           <section>
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <Heading level={3} step="label">
               {t("preferences")}
-            </h3>
+            </Heading>
             {/* Two abreast once the card is wide enough: an admin surface is
                 desktop-default, and two one-line rows stacked down the middle
                 of a wide page is the layout that rule exists to prevent. Keyed

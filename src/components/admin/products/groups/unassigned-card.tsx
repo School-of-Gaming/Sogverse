@@ -1,9 +1,10 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { Heading } from "@sog/ui";
 import { Inbox } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
@@ -44,15 +45,15 @@ export function UnassignedCard({
       )}
     >
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <div className="flex items-center gap-2">
           <Inbox className="h-5 w-5 text-muted-foreground" />
-          {t("unassigned.title")}
+          <Heading level={3} step="label">{t("unassigned.title")}</Heading>
           {participations.length > 0 && (
             <Badge variant="outline" className="ml-1">
               {participations.length}
             </Badge>
           )}
-        </CardTitle>
+        </div>
         <p className="text-xs text-muted-foreground">
           {t("unassigned.subtitle")}
         </p>

@@ -1,12 +1,12 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { mergeClasses } from "@sog/ui";
 import { type SupportedCurrency } from "@/lib/constants/currency";
 import { formattingLocale } from "@/lib/constants/locales";
 import { ageOnDate } from "@/lib/gamer-age-eligibility";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return mergeClasses(clsx(inputs));
 }
 
 /** Narrow an arbitrary string to a key of `obj`. The predicate is backed by a real Object.hasOwn check. */

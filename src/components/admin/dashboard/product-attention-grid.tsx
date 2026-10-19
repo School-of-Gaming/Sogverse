@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
 import {
   Coins,
@@ -116,12 +117,12 @@ export function ProductAttentionGrid({
 
   return (
     <section aria-label={t("productsLabel")} className="space-y-3">
-      <h3 className="flex items-baseline gap-2 text-sm font-semibold">
-        {t("productsHeading")}
+      <div className="flex items-baseline gap-2">
+        <Heading level={3} step="label">{t("productsHeading")}</Heading>
         <span className="text-xs font-normal text-muted-foreground">
           {ordered.length}
         </span>
-      </h3>
+      </div>
       <ul className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {ordered.map((product) => (
           <li key={product.productId}>

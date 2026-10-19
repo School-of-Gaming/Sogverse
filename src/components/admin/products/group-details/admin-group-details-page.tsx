@@ -563,6 +563,10 @@ function Workspace({
         start_date: sessions.product.start_date,
         end_date: sessions.product.end_date,
         is_remote: sessions.product.is_remote,
+        // The feed's copy, beside the translations whose instructions go
+        // with it.
+        voice_room_mode: feed.product.voice_room_mode,
+        external_voice_url: feed.product.external_voice_url,
         // The feed's copy rather than the admin row's: the two shells are in
         // deliberate parity on the gedu side, and taking the flag from the same
         // document the roster's creations come from is what keeps the
@@ -598,6 +602,8 @@ function Workspace({
       sessions,
       group.final_session_date,
       feed.product.translations,
+      feed.product.voice_room_mode,
+      feed.product.external_voice_url,
       feed.product.requires_gamer_creations,
       feed.roster,
       groupId,

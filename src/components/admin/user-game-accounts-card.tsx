@@ -1,8 +1,9 @@
 "use client";
 
 import { Gamepad2 } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { GAME_PLATFORMS, GameAccountField } from "@/components/game-account";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { useRobloxAccount } from "@/services/roblox";
@@ -59,10 +60,10 @@ export function UserGameAccountsCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Gamepad2 className="h-5 w-5 text-act" />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="@container">

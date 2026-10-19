@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Heading } from "@sog/ui";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
@@ -389,7 +390,7 @@ export default function WhatsAppInboxPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <Heading level={1} step="section">{t('title')}</Heading>
         <p className="text-muted-foreground">
           {t('description')}
         </p>

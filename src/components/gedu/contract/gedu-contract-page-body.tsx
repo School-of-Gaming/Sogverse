@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, BadgeCheck, FileSignature, Scale } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
@@ -90,7 +91,12 @@ export function GeduContractPageBody({
       </Link>
 
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
+        {/* Spotlit, as a policy page's title is: the page is the one document
+            a gedu signs, and the contract's own outline needs three steps under
+            this title for its section titles to sit above their clauses. */}
+        <Heading level={1} step="page-title">
+          {t("pageTitle")}
+        </Heading>
         <p className="text-muted-foreground">{t("intro")}</p>
       </header>
 
@@ -107,8 +113,8 @@ export function GeduContractPageBody({
           failed, and anything under it would be pushed down when it does. */}
       <CriminalRecordCheckSection standing={criminalRecordCheck} />
 
-      {/* The document draws its own h1 — the contract's own title, which is not
-          this page's title and must not be reworded into one. */}
+      {/* The document draws its own title as an h2 — the contract's own title,
+          which is not this page's title and must not be reworded into one. */}
       <GeduContractDocumentView document={contract} />
 
       {/* The panel is the page's one action, so it sits under the text it is
@@ -226,15 +232,10 @@ export function GeduContractPageBody({
  * an educator handing over a document about their own criminal history is
  * exactly who is owed that sentence.
  *
- * **Its label is a styled paragraph, not a heading, and that is load-bearing.**
- * This page already has two h1s by design — its own title, and the contract
- * document's, which is the document's and must not be reworded into a section
- * title. An h2 sitting between them would hand the page's heading list a level
- * this section never earned, splitting the two h1s with a rank that belongs to
- * neither. So the label takes the same uppercase-label
- * treatment the admin certification card gives its section labels: it looks
- * like a heading and is not one, and the page's outline is exactly what it was
- * before this section existed.
+ * Its title is an h2 under the page's own, a sibling of the contract
+ * document's title: the box is one region of the page, and its title sits over
+ * two sentences of prose, so it is a card title rather than a label — a title
+ * is never smaller than the text it titles.
  */
 function CriminalRecordCheckSection({
   standing,
@@ -247,9 +248,9 @@ function CriminalRecordCheckSection({
 
   return (
     <section className="space-y-3 rounded-lg border border-border p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <Heading level={2} step="card-title">
         {t("title")}
-      </p>
+      </Heading>
       <p className="text-sm text-muted-foreground">{t("howItWorks")}</p>
       <p className="text-sm text-muted-foreground">{t("noCopyKept")}</p>
       {/* One glyph for the check across every surface it appears on, admin and

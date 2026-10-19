@@ -224,6 +224,7 @@ export function GeduAssignmentCard({
     nextSessionEnd,
     hasVoiceRoom,
     voiceHref,
+    voiceRoom,
     openHref,
     attentionCount,
     siteName,
@@ -445,6 +446,7 @@ export function GeduAssignmentCard({
               // thing lifted above the stretched link covering the card.
               <span className="relative z-10">
                 <JoinVoiceButton
+                  voiceRoom={voiceRoom}
                   voiceIsOpen={voiceIsOpen}
                   voiceHref={voiceHref}
                   opensDate={formatDate(nextSessionStart, locale, {

@@ -114,6 +114,7 @@ const PANEL_PROPS = {
   seatCount: null,
   waitlistEnabled: false,
   voiceAvailable: false,
+  voiceRoom: { mode: "sogverse" } as const,
   voiceIsOpen: false,
   opensDate: "",
   opensTime: "",

@@ -119,7 +119,7 @@ A hard moment is a mail about money gone wrong, a mistake of ours, or anything e
 
 | Level | Size / leading / weight | Read from | Used for |
 |---|---|---|---|
-| title | 24 / 1.3 / 700 | markdown top heading (SOG-UI `h3`) | a mail's opening heading; a mail section heading |
+| title | 24 / 1.3 / 700 | markdown top heading (SOG-UI `section`) | a mail's opening heading; a mail section heading |
 | subtitle | 20 / 1.375 / 700 | markdown second heading | a second-rank title inside a mail section |
 | body | 16 / 1.625 / 400 | markdown container | paragraphs, list items, fact values, callout sentences, a quoted message, the shell's content |
 | lead-in | 16 / 1.625 / 700 | body, at markdown's strong weight | the bold line that introduces a list or block |

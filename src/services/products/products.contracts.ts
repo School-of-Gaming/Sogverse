@@ -27,6 +27,10 @@ const productTranslationInput = z.object({
   // the RPC stores SQL NULL. The form folds a blank editor to null rather than
   // sending "", which the column's CHECK refuses.
   long_description: z.string().nullable(),
+  // How to join the sessions in this locale when the product has no voice
+  // room; null = none written here. Like the long description, the form folds a
+  // blank field to null, and the RPC refuses instructions on any other mode.
+  voice_join_instructions: z.string().nullable(),
 });
 
 const scheduleSlotInput = z.object({
@@ -135,6 +139,20 @@ const productDataBase = z.object({
   material_url: z.string().nullable(),
   location_id: z.string().nullable(),
   is_remote: z.boolean(),
+  // How an online product's sessions are joined: the Sogverse voice room, a
+  // meeting on another service at `external_voice_url`, or no room and the
+  // join instructions each translation carries. Both are required, and the
+  // link required-nullable, for `requires_gamer_creations`' and `tag`'s
+  // reasons: the RPC assigns both on every call with the mode defaulting to
+  // `sogverse` and the link to NULL, so an omitted field would put a product
+  // back on a Sogverse room without anybody asking.
+  //
+  // Only shape is checked here. That the link belongs to the external mode and
+  // is http(s), that an in-person product stays on `sogverse`, and that the
+  // instructions go with mode `none`, are the database's rules — CHECKs on
+  // `products` and the RPC's own refusal — not rules restated at the boundary.
+  voice_room_mode: z.enum(Constants.public.Enums.voice_room_mode),
+  external_voice_url: z.string().nullable(),
   // The day the product begins, and the whole of what starts it. Required and
   // non-nullable, matching a NOT NULL column: a product nobody could point at a
   // starting day is not a product, and the lifecycle every reader derives is a

@@ -110,6 +110,15 @@ export const POST = defineRoute({
       p_requires_gamer_creations: body.requires_gamer_creations,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
+      // How the sessions are joined. The mode is unconditional, never
+      // `?? undefined`: its parameter defaults to 'sogverse', so an omission
+      // would move a product off an outside link or instructions on an edit made
+      // for some other reason. The link is an omission when null, which is
+      // how leaving the external mode clears it — safe only because the
+      // contract demands the field. The join instructions ride on the
+      // translations.
+      p_voice_room_mode: body.voice_room_mode,
+      p_external_voice_url: body.external_voice_url ?? undefined,
       p_timezone: body.timezone,
       p_registration_opens_at: body.registration_opens_at,
       p_is_visible: body.is_visible,

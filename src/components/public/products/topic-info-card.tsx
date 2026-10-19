@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PRODUCT_TOPICS, topicHasInfoCard } from "@/lib/products/topics";
 import type { TopicMetaWithInfoCard } from "@/lib/products/topics";
 import type { ProductTopic } from "@/types";
+import { Heading } from "@sog/ui";
 
 // "About {name}" card on the product detail page. Helps a non-gamer parent
 // understand what their child will be playing or building in, what (if
@@ -47,15 +48,9 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
     <Card>
       <CardContent className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          {/* Never `uppercase` here, whatever the neighbouring labels do: the
-              heading interpolates a brand literal, and CSS `uppercase` would
-              mangle the casing the brand rule protects ("Pokémon GO" → "POKÉMON
-              GO"). A card heading is the page speaking, so it is sentence case
-              anyway and matches the overview card beside it — but the reason it
-              can never go back stands on its own. */}
-          <h2 className="text-sm font-semibold text-muted-foreground">
+          <Heading level={2} step="card-title">
             {t("topicInfo.heading", { name: meta.label })}
-          </h2>
+          </Heading>
           {info.pegi !== undefined && (
             <Badge variant="outline" className="shrink-0">
               {t("topicInfo.pegi", { age: info.pegi })}

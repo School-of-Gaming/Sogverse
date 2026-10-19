@@ -3,6 +3,7 @@
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { TopicPrepPlan } from "@/lib/products/topics";
+import { Heading } from "@sog/ui";
 
 // The "Before the first session" guide, rendered from the topic's prep block
 // and the `topicPrep` catalog. One component, three surfaces — the confirmation
@@ -59,9 +60,9 @@ export function TopicPrepContent({
   return (
     <div className="space-y-4">
       {showHeading && (
-        <h2 className="text-sm font-semibold text-muted-foreground">
+        <Heading level={2} step="card-title">
           {t("heading")}
-        </h2>
+        </Heading>
       )}
 
       <p className="text-sm text-muted-foreground">{intro}</p>

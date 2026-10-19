@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -337,16 +338,16 @@ export function SessionFeedbackScreen<
         {lead !== undefined && (
           <p className="text-sm text-muted-foreground">{lead}</p>
         )}
-        {/* `tabIndex={-1}` so the mount effect can land focus here: it makes
-            the heading programmatically focusable without adding a tab stop a
-            reader has to pass through on the way down the column. */}
-        <h1
+        {/* A focus target, so the mount effect can land focus here. */}
+        <Heading
+          level={1}
+          step="section"
+          align="center"
           ref={headingRef}
-          tabIndex={-1}
-          className="text-2xl font-semibold tracking-tight focus:outline-none"
+          focusTarget
         >
           {t("heading")}
-        </h1>
+        </Heading>
       </div>
 
       {/* The rhythm between statements is the app's section gap, not a squeeze:

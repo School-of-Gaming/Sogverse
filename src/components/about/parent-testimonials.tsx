@@ -6,6 +6,7 @@ import {
   safetyTestimonialKeys,
   type TestimonialKey,
 } from "@/components/home/testimonial-keys";
+import { Heading } from "@sog/ui";
 
 interface ParentTestimonialsProps {
   /** Anchor id for the section nav. */
@@ -34,9 +35,11 @@ export function ParentTestimonials({ id }: ParentTestimonialsProps) {
 
   return (
     <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
-      <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
-        {t("heading")}
-      </h2>
+      <div className="mx-auto max-w-2xl">
+        <Heading level={2} step="display" align="center">
+          {t("heading")}
+        </Heading>
+      </div>
       <Testimonial
         size="feature"
         quote={t(`items.${featureTestimonialKey}.quote`)}

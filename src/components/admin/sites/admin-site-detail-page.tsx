@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,7 +9,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
@@ -125,7 +125,9 @@ export function AdminSiteDetailPage({ siteId }: { siteId: string }) {
           than a guess, and nothing below them moves when the row lands. */}
       <div className="space-y-1">
         <p className="min-h-5 truncate text-sm text-muted-foreground">{path}</p>
-        <h1 className="min-h-9 text-3xl font-bold">{name}</h1>
+        <div className="min-h-7.75">
+          <Heading level={1} step="section">{name}</Heading>
+        </div>
       </div>
 
       <SiteBody
@@ -217,7 +219,7 @@ function SiteBody({
 
       <Card className="min-w-0">
         <CardHeader>
-          <CardTitle className="text-base">{t("productsHeading")}</CardTitle>
+          <Heading level={2} step="card-title">{t("productsHeading")}</Heading>
         </CardHeader>
         <CardContent>
           {products === undefined ? (

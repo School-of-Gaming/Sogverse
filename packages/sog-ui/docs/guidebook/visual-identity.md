@@ -90,10 +90,6 @@ The palette is loud on purpose, and the same restraint that governs vocabulary s
 
 | Style | Font | Size | Weight | Line height | Use |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| H1 | Poppins | 48-56px | SemiBold 600 | 1.1 | Hero headlines |
-| H2 | Poppins | 36-40px | SemiBold 600 | 1.2 | Section titles |
-| H3 | Poppins | 24-28px | SemiBold 600 | 1.3 | Card and sub-section titles |
-| H4 | Poppins | 18-20px | Regular 400 | 1.4 | Small headings |
 | Body L | Poppins | 18px | Regular 400 | 1.7 | Main body copy |
 | Body S | Poppins | 14px | Regular 400 | 1.5 | Captions, labels, nav |
 | CTA | Poppins | 16px | SemiBold 600 | 1 | Button labels |

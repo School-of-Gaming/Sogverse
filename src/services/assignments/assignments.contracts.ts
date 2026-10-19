@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { plannedSessionRows } from "@/lib/planned-sessions";
+import {
+  voiceJoinInstructionsWireField,
+  voiceRoomWireFields,
+} from "@/lib/products/voice-room";
 import { Constants } from "@/types";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
@@ -25,6 +29,7 @@ const productTranslationSummary = z.object({
   locale: z.string(),
   name: z.string(),
   description: z.string(),
+  ...voiceJoinInstructionsWireField,
 });
 
 const scheduleSlotSummary = z.object({
@@ -95,6 +100,8 @@ export const geduAssignedProduct = z.object({
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     is_remote: z.boolean(),
+    /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
+    ...voiceRoomWireFields,
     /**
      * Does this product contractually require a creation from every
      * member? Staff-facing only. Carried here in deliberate parity with the

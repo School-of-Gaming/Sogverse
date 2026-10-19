@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Heading } from "@sog/ui";
 import { MinecraftPasswordResetCard } from "@/components/tools/minecraft-password-reset-card";
 import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantRoomCard";
 
@@ -25,12 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
  * there to be used by content that has width — tables, columns, a reference
  * rail — and a second column here would be an empty one. One cap for both, so
  * the two cards' edges line up rather than stepping in and out down the page.
+ *
+ * The cards sit straight under the page title, so they title at `h2`; on the
+ * gedu dashboard the same cards sit inside its Tools section and title at `h3`.
  */
-export default function AdminToolsPage() {
+export default async function AdminToolsPage() {
+  const t = await getTranslations("admin.tools");
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <MinecraftPasswordResetCard />
-      <CreateInstantRoomCard />
+      <Heading level={1} step="section">{t("title")}</Heading>
+      <MinecraftPasswordResetCard level={2} />
+      <CreateInstantRoomCard level={2} />
     </div>
   );
 }

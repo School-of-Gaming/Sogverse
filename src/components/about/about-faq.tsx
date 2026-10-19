@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { rawString } from "@/lib/i18n/raw-messages";
+import { Heading } from "@sog/ui";
 
 /**
  * The public FAQ's questions, ordered for a parent deciding whether to sign
@@ -113,9 +114,9 @@ export function AboutFaq({ id }: AboutFaqProps) {
     >
       <JsonLd data={faqPageJsonLd} />
       <div className="mx-auto max-w-3xl">
-        <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
+        <Heading level={2} step="display" align="center">
           {t("heading")}
-        </h2>
+        </Heading>
         <div className="mt-12">
           <FaqAccordion items={items} questionLevel={3} />
         </div>

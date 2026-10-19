@@ -989,6 +989,7 @@
         "fields": {
           "topic": "Aihe",
           "materialUrl": "Oppimateriaali",
+          "voiceRoom": "Liittyminen",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
           "firstSession": "Ensimmäinen kerta",
@@ -1056,10 +1057,10 @@
         "audienceDescription": "Kenelle tämä on tarkoitettu.",
         "where": "Missä",
         "whereDescription": {
-          "consumerClub": "Verkossa tai paikan päällä. Verkkokerhot ovat avoimia kaikille — sijaintia ei tarvita. Lähikerhot pidetään tietyssä toimipisteessä.",
+          "consumerClub": "Verkossa tai paikan päällä. Lähikerhot pidetään tietyssä toimipisteessä.",
           "municipalityClub": "Tietty kunta maksaa. Verkkokerhoissa valitaan kunta suoraan; lähikerhoissa toimipiste sen sisältä.",
-          "camp": "Verkossa tai paikan päällä. Verkkoleirit ovat avoimia kaikille — sijaintia ei tarvita. Lähileirit pidetään tietyssä toimipisteessä.",
-          "event": "Verkossa tai paikan päällä. Verkkotapahtumat ovat avoimia kaikille — sijaintia ei tarvita. Lähitapahtumat pidetään tietyssä toimipisteessä."
+          "camp": "Verkossa tai paikan päällä. Lähileirit pidetään tietyssä toimipisteessä.",
+          "event": "Verkossa tai paikan päällä. Lähitapahtumat pidetään tietyssä toimipisteessä."
         },
         "when": "Ajankohta",
         "whenDescription": {
@@ -1086,8 +1087,10 @@
         "name": "Nimi",
         "shortDescription": "Lyhyt kuvaus",
         "longDescription": "Pitkä kuvaus",
+        "voiceJoinInstructions": "Liittymisohjeet",
         "topic": "Aihe",
         "materialUrl": "Oppimateriaalin osoite",
+        "externalVoiceUrl": "Kokouslinkki",
         "requiresGamerCreations": "Jokaiselta pelaajalta vaaditaan linkki omaan teokseensa",
         "seatAudience": "Kuka voi ottaa paikan",
         "tag": "Kenelle suunniteltu",
@@ -1124,6 +1127,7 @@
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "materialUrl": "https://drive.sog.gg/...",
+        "externalVoiceUrl": "https://",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
           "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
@@ -1183,6 +1187,15 @@
         "scheduled": "Tiettyyn aikaan",
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
+      "voiceRoomModes": {
+        "label": "Miten perheet liittyvät mukaan?",
+        "sogverse": "Sogversen äänihuone",
+        "sogverseDescription": "Äänihuone luodaan automaattisesti, ja se avautuu jokaista kertaa varten.",
+        "external": "Linkki muualla pidettävään kokoukseen",
+        "externalDescription": "Perheet liittyvät kokoukseen, jonka järjestät toisessa palvelussa. Suuremmalle yleisölle kuin Sogversen äänihuoneeseen mahtuu (50 henkeä).",
+        "none": "Ei äänihuonetta",
+        "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
+      },
       "endDateModes": {
         "ongoing": "Ei loppupäivää",
         "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
@@ -1215,6 +1228,7 @@
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
+        "voiceJoinInstructionsHint": "Miten perheet liittyvät kerroille, tällä kielellä kirjoitettuna. Julkinen: kuka tahansa voi lukea ohjeet, myös kirjautumattomat vierailijat.",
         "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "requiresGamerCreationsHint": "Tuotteille, joilta sopimus sitä vaatii. Viimeinen kerta pysyy huomiota vaativana, kunnes jokaiselta ryhmän pelaajalta on kirjattu teos. Perheille ei näy mitään eroa.",
@@ -1224,8 +1238,7 @@
         "tagHint": "Valinnainen. Perheet näkevät sen merkintänä selauskortissa ja tuotesivulla. Se kertoo, kenelle kerrat on suunniteltu – ei sitä, kuka voi ottaa paikan.",
         "regionLockHint": "Vain valitussa maassa asuvat perheet voivat ilmoittautua. Sijainti perustuu perheen omaan ilmoitukseen, joten tämä on kaupan opaste eikä ehdoton este – jo ilmoittautuneet säilyttävät paikkansa, vaikka muuttaisivat.",
         "spokenLanguageHint": "Pääkieli, jota kerroilla puhutaan.",
-        "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
-        "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
+        "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
@@ -1259,6 +1272,9 @@
         "maxAgeInvalid": "Yläikärajan on oltava vähintään alaikärajan suuruinen",
         "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
         "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
+        "externalVoiceUrlRequired": "Anna kokouslinkki",
+        "externalVoiceUrlInvalid": "Kokouslinkin on oltava verkko-osoite, joka alkaa http:// tai https://",
+        "voiceJoinInstructionsRequired": "Kirjoita liittymisohjeet vähintään yhdellä kielellä",
         "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
         "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",
@@ -1590,7 +1606,7 @@
         "switchClub": {
           "dropZone": "Vaihda kerhoa",
           "title": "Vaihda kerhoa",
-          "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, seuraava lasku oikaisee tämän kuukauden loppuosan, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
+          "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
           "searchPlaceholder": "Hae kerhoja nimellä",
           "picker": {
             "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
@@ -1609,6 +1625,7 @@
             "current": "Maksaa nyt",
             "target": "Uusi hinta",
             "proration": "Seuraava lasku lisää tai hyvittää erotuksen tämän kuukauden loppuosalta.",
+            "nothingPaid": "Ennen {date} ei veloiteta enää mitään. Sen jälkeen perhe maksaa uuden kerhon hinnan, josta vähennetään perheen mahdollinen nykyinen alennus.",
             "unavailable": "Ei hintaa näytettäväksi",
             "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
           },
@@ -1907,6 +1924,9 @@
         "templateSubFlow": "Tuurausviestit: kaikki tilat",
         "subPreviewSent": "Kaikki viestit lähetetty."
       }
+    },
+    "tools": {
+      "title": "Työkalut"
     },
     "whatsapp": {
       "title": "WhatsApp",
@@ -4189,6 +4209,7 @@
     "voiceRoom": "Äänihuone",
     "leave": "Poistu",
     "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
+    "notASogverseRoom": "Tätä kertaa ei pidetä Sogversen äänihuoneessa. Palaa takaisin, niin näet, miten siihen liitytään.",
     "sessionEnded": "Kerta on päättynyt",
     "disconnecting": "Katkaistaan yhteyttä...",
     "connecting": "Yhdistetään...",
@@ -4354,6 +4375,9 @@
   },
   "voiceButton": {
     "joinVoice": "Liity äänihuoneeseen",
+    "joinMeeting": "Liity kokoukseen",
+    "opensInNewTab": "(avautuu uuteen välilehteen)",
+    "howToJoin": "Näin liityt",
     "locked": "Avautuu {date} klo {time}"
   },
   "yty": {
@@ -4534,7 +4558,7 @@
         "summary": "{productName} – {participantName}",
         "locationOnline": "Verkossa – Oma SOG",
         "locationInPerson": "{site}, {address}",
-        "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja puhehuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
+        "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja äänihuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
         "whereInPerson": "Tapaamispaikka on {site}.",
         "whereAddress": "Osoite: {address}",
         "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",

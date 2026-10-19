@@ -43,6 +43,7 @@ import type {
   ConfirmedHomeLocation,
   SignupAgeBlock,
 } from "./signup-panel-view";
+import { Heading } from "@sog/ui";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -703,7 +704,9 @@ function DetailNotFound() {
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-lg font-semibold">{t("notFound.title")}</h2>
+          <Heading level={2} step="card-title" align="center">
+            {t("notFound.title")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>

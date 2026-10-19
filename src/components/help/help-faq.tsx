@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   FaqAccordion,
   type FaqAccordionItem,
@@ -159,7 +160,9 @@ function HelpFaqBlock({ items }: { items: readonly FaqAccordionItem[] }) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold">{t("faqHeading")}</h3>
+      <Heading level={3} step="card-title">
+        {t("faqHeading")}
+      </Heading>
       <FaqAccordion items={items} questionLevel={4} />
     </div>
   );
