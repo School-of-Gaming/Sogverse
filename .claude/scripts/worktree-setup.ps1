@@ -237,10 +237,16 @@ foreach ($config in (git -C $target ls-files -- '*tsconfig*.json')) {
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
   if (-not $donor) { continue }
-  Copy-Item -LiteralPath $donor.FullName -Destination (Join-Path $target $rel)
   $from = $donor.FullName.Substring($root.Length + '\.claude\worktrees\'.Length).Split('\')[0]
-  Ok "seeded $rel from $from"
-  $seeded++
+  # A cold cache costs one slow type-check; an aborted setup leaves a worktree
+  # a retry refuses to overwrite. So a copy that fails (the donor mid-rewrite
+  # by a sibling's tsc) warns and moves on.
+  try {
+    Copy-Item -LiteralPath $donor.FullName -Destination (Join-Path $target $rel)
+    Ok "seeded $rel from $from"
+    $seeded++
+  }
+  catch { Warn "could not seed $rel from $from ($($_.Exception.Message)) - it runs cold" }
 }
 if ($seeded -eq 0) { Step "none seeded (no sibling worktree has run a type-check) - the first type-check runs cold" }
 

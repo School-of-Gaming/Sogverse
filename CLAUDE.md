@@ -9,7 +9,7 @@ npm run dev              # Start dev server
 npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
-npm run lint:file -- <files>  # ESLint on just these files, keeping the cache — a bare `npx eslint` deletes .eslintcache
+npm run lint:file -- <f> # ESLint on just these files, keeping the cache — a bare `npx eslint` deletes .eslintcache
 npm run type-check       # TypeScript check (tsc --noEmit)
 npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + tests (runs all, reports every failure)
 npm run test             # Vitest unit tests
