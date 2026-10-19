@@ -839,6 +839,18 @@
           "inSection": "{number} ’ay’ ({type}): {field}",
           "inItem": "{number} ’ay’ ({type}), {item}: {field}",
           "goneSection": "Sapvam ’ay’ tu’lu’be’: {field}"
+        },
+        "testimonials": {
+          "heading": "jatlhmey",
+          "hint": "jatlhmeyDaq mu’meychaj DachoHlu’, ’ej Sapvam lo’lu’bogh Daq SIbI’ cha’lu’.",
+          "section": "{number} ’ay’ ({type}): {arrangement}",
+          "arrangements": {
+            "feature": "wa’ jatlh tIn",
+            "pair": "cha’ jatlh retlhDaq",
+            "row": "wej jatlh tlhegh",
+            "showcase": "wa’ jatlh tIn, cha’ retlhDaq, wej tlhegh"
+          },
+          "missing": "jatlh polbe’lu’choH"
         }
       },
       "status": {
@@ -889,7 +901,8 @@
         "points": "Dochmey",
         "steps": "mIwmey",
         "faq": "ghel ’ej jang",
-        "cta": "ra’ ghItlh"
+        "cta": "ra’ ghItlh",
+        "testimonials": "jatlhmey"
       },
       "items": {
         "image": "mIllogh {number}",
@@ -2137,7 +2150,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq.",
+      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq. jatlhmey lan Daq ghItlhmeyDaq.",
       "newTestimonial": "jatlh chu’",
       "backToList": "jatlhmeyDaq yIchegh",
       "newPage": {
@@ -2165,6 +2178,17 @@
         "from": "’Iv jatlh — SoS, Suomi rur.",
         "quote": "mu’meyDaj ra’bogh, jatlh ghItlh mu’ Hutlh: Hoch Hol mu’ chel ghItlhvam. latlh HolDaq mughlu’chugh QaQ; choHlu’chugh QaQbe’."
       },
+      "usage": {
+        "heading": "nuqDaq lo’lu’",
+        "none": "pa’ cha’lu’be’ wa’logh.",
+        "editNote": "polchugh, Hoch DaqDaq mu’meyDaj choH.",
+        "landingPage": "Daq ghItlh: {title}",
+        "landingPageState": {
+          "both": "DaH legh laHwI’pu’.",
+          "liveOnly": "veb ghItlh cha’lu’pa’ legh laHwI’pu’; vaj teqlu’.",
+          "workingOnly": "wa’logh leghbe’ laHwI’pu’: veb ghItlh cha’lu’DI’ lanlu’."
+        }
+      },
       "record": {
         "created": "{date} chenmoHlu’",
         "createdBy": "{date} chenmoH {name}",
@@ -2185,7 +2209,8 @@
         "quoted": "{language} jatlh tagh pagh rIn jatlh ghItlh mu’. yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
         "saveFailed": "jatlh pollaHbe’lu’. yInIDqa’.",
         "saveFailedWithReason": "jatlh pollaHbe’lu’: {reason}"
-      }
+      },
+      "onLandingPages": "{count, plural, one {# Daq ghItlhDaq} other {# Daq ghItlhDaq}}"
     }
   },
   "auth": {

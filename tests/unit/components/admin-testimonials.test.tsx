@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { AdminTestimonialsPage } from "@/components/admin/testimonials/admin-testimonials-page";
+import { TestimonialUsageCard } from "@/components/admin/testimonials/edit-testimonial-page";
 import { TestimonialEditor } from "@/components/admin/testimonials/testimonial-editor";
 import type { AdminTestimonial } from "@/services/testimonials";
 
@@ -32,6 +33,7 @@ vi.mock("@/hooks/use-language-names", () => ({
 const PARENT: AdminTestimonial = {
   id: "0e6b9a52-31d4-4c7e-8f20-6a5d4c3b2a19",
   versions: [{ locale: "en", from: "Mum, Finland", quote: "Gaming is fun and supervised." }],
+  usages: [],
   createdAt: "2026-10-16T09:00:00Z",
   created: { by: null, via: null },
   updatedAt: "2026-10-16T10:00:00Z",
@@ -86,5 +88,60 @@ describe("the testimonial editor", () => {
     expect(save).toHaveBeenCalledWith({
       versions: [{ locale: "en", from: "Mum, Finland", quote: "Gaming is fun." }],
     });
+  });
+});
+
+describe("where a testimonial is used", () => {
+  const PAGE = "746388a7-2edd-456b-b7d1-4e9828f85af9";
+  const OTHER = "9d1f06bf-9895-4f04-9ec5-3d86382afb8e";
+  const DRAFT = "94f2a395-3c9f-49f6-8770-f9f4c28bfd91";
+  const titles = [{ locale: "en" as const, title: "Gaming clubs in Espoo" }];
+
+  it("lists each landing page with its status page and copies", () => {
+    render(
+      <TestimonialUsageCard
+        usages={[
+          { pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+          { pageId: OTHER, titles, inLiveCopy: true, inWorkingCopy: false },
+          { pageId: DRAFT, titles, inLiveCopy: false, inWorkingCopy: true },
+        ]}
+      />,
+    );
+
+    const items = screen.getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.both",
+      "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.liveOnly",
+      "usage.landingPage title=Gaming clubs in Espoousage.landingPageState.workingOnly",
+    ]);
+    expect(within(items[0]).getByRole("link").getAttribute("href")).toContain(
+      `/admin/landing-pages/${PAGE}`,
+    );
+  });
+
+  it("says a testimonial shown nowhere is not shown anywhere yet", () => {
+    render(<TestimonialUsageCard usages={[]} />);
+    expect(screen.getByText("usage.none")).toBeTruthy();
+    expect(screen.queryByText("usage.editNote")).toBeNull();
+  });
+
+  it("marks a listed testimonial with how many landing pages place it", () => {
+    render(
+      <AdminTestimonialsPage
+        testimonials={[
+          {
+            ...PARENT,
+            usages: [
+              { pageId: PAGE, titles, inLiveCopy: true, inWorkingCopy: true },
+              { pageId: OTHER, titles, inLiveCopy: false, inWorkingCopy: true },
+            ],
+          },
+          GEDU,
+        ]}
+        status="success"
+      />,
+    );
+    expect(screen.getByText("onLandingPages count=2")).toBeTruthy();
+    expect(screen.queryAllByText(/onLandingPages/)).toHaveLength(1);
   });
 });

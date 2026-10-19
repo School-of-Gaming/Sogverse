@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createFetchStubbedClient,
   postgrestJson,
+  postgrestPage,
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
@@ -20,6 +21,7 @@ import {
 import { TestimonialsService } from "@/services/testimonials/testimonials.service";
 
 const A = "11111111-2222-4333-8444-555555555555";
+const B = "66666666-7777-4888-9999-aaaaaaaaaaaa";
 
 /**
  * The REAL Supabase client over a fake fetch transport answering `body`, so
@@ -92,7 +94,7 @@ describe("the editor's save check", () => {
 
 describe("TestimonialsService", () => {
   it("reads a testimonial with its versions in locale order and `from` for the stored attribution", async () => {
-    const { service } = stubbed({
+    const row = {
       id: A,
       created_at: "2026-10-16T09:00:00Z",
       created_via: null,
@@ -104,7 +106,15 @@ describe("TestimonialsService", () => {
         { locale: "fi", attribution: "Äiti", quote: "Yksi." },
         { locale: "en", attribution: "Mum", quote: "One." },
       ],
-    });
+    };
+    // The testimonial's row, and no landing page placing it.
+    const fetchMock: FetchMock = vi.fn<typeof fetch>();
+    fetchMock.mockImplementation(async (input) =>
+      requestedUrl(input).pathname.endsWith("/landing_pages")
+        ? postgrestPage([], { from: 0, total: 0 })
+        : postgrestJson(row),
+    );
+    const service = new TestimonialsService(createFetchStubbedClient(fetchMock));
 
     expect(await service.getAdminTestimonial(A)).toEqual({
       id: A,
@@ -112,11 +122,46 @@ describe("TestimonialsService", () => {
         { locale: "en", from: "Mum", quote: "One." },
         { locale: "fi", from: "Äiti", quote: "Yksi." },
       ],
+      usages: [],
       createdAt: "2026-10-16T09:00:00Z",
       created: { by: "Kyle Hutchinson", via: null },
       updatedAt: "2026-10-16T10:00:00Z",
       lastSaved: { by: null, via: null },
     });
+  });
+
+  it("reads a live landing page's testimonials through the public read, versions in locale order", async () => {
+    const { fetchMock, service } = stubbed([
+      {
+        testimonial_id: A,
+        versions: [
+          { locale: "fi", attribution: "Äiti", quote: "Yksi." },
+          { locale: "en", attribution: "Mum", quote: "One." },
+        ],
+      },
+    ]);
+
+    const live = await service.listLandingPageTestimonials(B);
+
+    expect(rpcCall(fetchMock)).toEqual({
+      path: "/rest/v1/rpc/list_landing_page_testimonials",
+      args: { p_page_id: B },
+    });
+    expect(live).toEqual([
+      {
+        id: A,
+        versions: [
+          { locale: "en", from: "Mum", quote: "One." },
+          { locale: "fi", from: "Äiti", quote: "Yksi." },
+        ],
+      },
+    ]);
+  });
+
+  it("answers a page id that is not a uuid with nothing, asking nobody", async () => {
+    const { fetchMock, service } = stubbed([]);
+    expect(await service.listLandingPageTestimonials("espoo")).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("writes `from` as the stored attribution", async () => {

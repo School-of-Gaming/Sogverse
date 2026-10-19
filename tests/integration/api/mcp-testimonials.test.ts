@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MCP_TEST_ORIGIN as ORIGIN, callTool, resultText } from "../../helpers/mcp";
+import { MCP_TEST_ORIGIN as ORIGIN, callTool, mcpRequest, resultText } from "../../helpers/mcp";
 import type { AdminTestimonial } from "@/services/testimonials";
 
 /**
@@ -50,6 +50,7 @@ const PARENT: AdminTestimonial = {
     { locale: "en", from: "Mum, Finland", quote: "Gaming is fun and supervised." },
     { locale: "fi", from: "Äiti, Suomi", quote: "Pelaaminen on hauskaa ja valvottua." },
   ],
+  usages: [],
   createdAt: "2026-10-16T09:00:00Z",
   created: { by: null, via: null },
   updatedAt: "2026-10-16T10:00:00Z",
@@ -202,5 +203,74 @@ describe("writing", () => {
     const fault = await tool("remove_testimonial_language", { testimonialId: ID, locale: "en" });
     expect(fault.isError).toBe(true);
     expect(resultText(fault)).not.toContain("relation");
+  });
+});
+
+describe("landing pages", () => {
+  const PAGE = "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13";
+
+  it("lists each landing page placing a testimonial, live or saved, with its status page", async () => {
+    testimonials.getAdminTestimonial.mockResolvedValue({
+      ...PARENT,
+      usages: [
+        {
+          pageId: PAGE,
+          titles: [
+            { locale: "en", title: "Gaming clubs in Espoo" },
+            { locale: "fi", title: "Pelikerhot Espoossa" },
+          ],
+          inLiveCopy: true,
+          inWorkingCopy: false,
+        },
+      ],
+    });
+
+    const result = await tool("get_testimonial", { testimonialId: ID });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      usedIn: [
+        {
+          pageId: PAGE,
+          title: "Gaming clubs in Espoo",
+          inLiveCopy: true,
+          inWorkingCopy: false,
+          adminLink: `${ORIGIN}/en/admin/landing-pages/${PAGE}`,
+        },
+      ],
+    });
+  });
+
+  it("lists every testimonial with where it is used, nothing for one shown nowhere", async () => {
+    testimonials.listAdminTestimonials.mockResolvedValue([
+      {
+        ...PARENT,
+        usages: [
+          {
+            pageId: PAGE,
+            titles: [{ locale: "en", title: "Gaming clubs in Espoo" }],
+            inLiveCopy: true,
+            inWorkingCopy: true,
+          },
+        ],
+      },
+      GEDU,
+    ]);
+
+    const result = await tool("list_testimonials");
+
+    expect(result.structuredContent).toMatchObject({
+      testimonials: [
+        { testimonialId: ID, usedIn: [{ pageId: PAGE, inLiveCopy: true, inWorkingCopy: true }] },
+        { testimonialId: OTHER, usedIn: [] },
+      ],
+    });
+  });
+
+  it("tells the AI app an edit shows on live landing pages at once, and how a quote comes off one", async () => {
+    const result = await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }));
+    const text = await result.text();
+    expect(text).toContain("on every live landing page placing it, with no republish");
+    expect(text).toContain("from a landing page by saving that page's structure without it");
   });
 });

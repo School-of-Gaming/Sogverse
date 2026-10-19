@@ -795,6 +795,18 @@
           "inSection": "Avsnitt {number} ({type}): {field}",
           "inItem": "Avsnitt {number} ({type}), {item}: {field}",
           "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
+        },
+        "testimonials": {
+          "heading": "Omdömen",
+          "hint": "Orden redigeras under Omdömen, och en ändring syns direkt på den publicerade sidan.",
+          "section": "Avsnitt {number} ({type}): {arrangement}",
+          "arrangements": {
+            "feature": "ett stort citat",
+            "pair": "två bredvid varandra",
+            "row": "tre i rad",
+            "showcase": "ett stort citat, två bredvid varandra och sedan tre i rad"
+          },
+          "missing": "Ett omdöme som inte längre finns kvar"
         }
       },
       "status": {
@@ -845,7 +857,8 @@
         "points": "Punkter",
         "steps": "Steg",
         "faq": "Frågor och svar",
-        "cta": "Uppmaning"
+        "cta": "Uppmaning",
+        "testimonials": "Omdömen"
       },
       "items": {
         "image": "Bild {number}",
@@ -2093,7 +2106,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe.",
+      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Landningssidorna citerar dem som placerats där.",
       "newTestimonial": "Nytt omdöme",
       "backToList": "Tillbaka till omdömena",
       "newPage": {
@@ -2121,6 +2134,17 @@
         "from": "Vem citatet är från, så som det ska visas — till exempel Mamma, Finland.",
         "quote": "Personens ord som de gavs, utan citattecken: webbplatsen lägger till varje språks egna. Att översätta dem till ett annat språk går bra; att ändra dem gör det inte."
       },
+      "usage": {
+        "heading": "Var det används",
+        "none": "Det visas inte någonstans än.",
+        "editNote": "När du sparar ändras orden överallt där det visas.",
+        "landingPage": "Landningssida: {title}",
+        "landingPageState": {
+          "both": "Läsarna ser det där nu.",
+          "liveOnly": "Läsarna ser det där fram till nästa publicering, som tar bort det.",
+          "workingOnly": "Visas inte för läsarna än: nästa publicering lägger dit det."
+        }
+      },
       "record": {
         "created": "Skapat {date}",
         "createdBy": "Skapat {date} av {name}",
@@ -2141,7 +2165,8 @@
         "quoted": "Citatet på {language} börjar eller slutar med ett citattecken. Utelämna tecknen: webbplatsen lägger till dem på varje språks eget sätt.",
         "saveFailed": "Omdömet kunde inte sparas. Försök igen.",
         "saveFailedWithReason": "Omdömet kunde inte sparas: {reason}"
-      }
+      },
+      "onLandingPages": "{count, plural, one {På # landningssida} other {På # landningssidor}}"
     }
   },
   "auth": {

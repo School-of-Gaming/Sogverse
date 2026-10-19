@@ -4,7 +4,9 @@ import { cn } from "@/lib/utils";
 /**
  * One testimonial — a parent's, a gamer's or a gedu's own words — as the
  * public pages quote it. It takes the words as data and does not care where
- * they come from: the home page and About pass their own message strings.
+ * they come from: the home page and About pass their own message strings, a
+ * landing page the store's version its reader gets, marked with `lang` when
+ * that version is in another language than the page's.
  *
  * The quote is set in the editorial serif, italic, because it is a person's
  * voice rather than ours; whom it is from is ours and stays in the app face.
@@ -20,13 +22,16 @@ import { cn } from "@/lib/utils";
 export function Testimonial({
   quote,
   attribution,
+  lang,
   size = "compact",
   className,
 }: {
-  /** The words, localised and without quotation marks. */
+  /** The words, without quotation marks. */
   quote: string;
   /** Whom the quote is from, e.g. "Mum, Finland". */
   attribution: string;
+  /** The language the words are in, only when it is not the page's. */
+  lang?: string;
   size?: "feature" | "compact";
   className?: string;
 }) {
@@ -35,6 +40,7 @@ export function Testimonial({
 
   return (
     <figure
+      lang={lang}
       className={cn(
         "flex flex-col",
         feature ? "items-center gap-5 text-center" : "gap-3",

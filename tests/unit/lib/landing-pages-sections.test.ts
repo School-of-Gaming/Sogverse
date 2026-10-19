@@ -5,6 +5,7 @@ import {
   LANDING_SECTIONS,
   isLandingMarkdownPath,
   landingMarkdownValues,
+  landingPlacedTestimonialIds,
   landingSection,
   landingSections,
   landingSectionTextsSchema,
@@ -19,6 +20,7 @@ import {
   everyText,
   requiredTextCases,
 } from "../../helpers/landing-required-text-cases";
+import { testimonialSlotCases } from "../../helpers/landing-testimonial-slot-cases";
 
 describe("the section registry", () => {
   it("declares every type once, under its own name", () => {
@@ -238,5 +240,62 @@ describe("the markdown fields", () => {
     expect(isLandingMarkdownPath("faq", `items.${I.faqA}.question`)).toBe(false);
     expect(isLandingMarkdownPath("text", "body")).toBe(true);
     expect(isLandingMarkdownPath("cta", "body")).toBe(false);
+  });
+});
+
+describe("a testimonials section", () => {
+  it.each(testimonialSlotCases().map((c) => [c.name, c] as const))(
+    "holds %s to its arrangement's count, by the verdict SQL is held to",
+    (_, testCase) => {
+      const parsed = landingSections.safeParse(testCase.sections);
+      expect(parsed.success).toBe(testCase.problem === null);
+      if (!parsed.success) {
+        expect(parsed.error.issues).toEqual([
+          expect.objectContaining({ path: [1, "testimonialIds"], message: testCase.problem }),
+        ]);
+      }
+    },
+  );
+
+  it("refuses the same testimonial twice in one section", () => {
+    const parsed = landingSection.safeParse({
+      id: I.testimonials,
+      type: "testimonials",
+      arrangement: "pair",
+      testimonialIds: [I.testimonialA, I.testimonialA],
+    });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
+      "A testimonials section names each testimonial once",
+    ]);
+  });
+
+  it("refuses an arrangement it does not know", () => {
+    expect(
+      landingSection.safeParse({
+        id: I.testimonials,
+        type: "testimonials",
+        arrangement: "grid",
+        testimonialIds: [I.testimonialA],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("requires no words, so it never makes a version incomplete", () => {
+    expect(
+      missingInLandingVersion(
+        [{ id: I.hero, type: "hero" }, ...everySection().filter((section) => section.type === "testimonials")],
+        { title: "t", summary: "s", slug: "s", sectionTexts: { [I.hero]: { headline: "H" } } },
+      ),
+    ).toEqual([]);
+  });
+
+  it("lists every placed testimonial once, in page order", () => {
+    const sections = landingSections.parse([
+      { id: I.hero, type: "hero" },
+      { id: I.testimonials, type: "testimonials", arrangement: "pair", testimonialIds: [I.testimonialB, I.testimonialA] },
+      { id: I.text, type: "testimonials", arrangement: "feature", testimonialIds: [I.testimonialA] },
+    ]);
+    expect(landingPlacedTestimonialIds(sections)).toEqual([I.testimonialB, I.testimonialA]);
   });
 });

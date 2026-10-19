@@ -107,6 +107,26 @@ loses that picture, and an image section left with none is dropped with its word
 done by a trigger on the catalogue's own delete, so it needs nothing from the remover.
 Either moves the working copy's "last saved" time and saver, as a cover removal does.
 
+**Testimonials are placed by id from the structure and read live from the store**
+(`src/services/testimonials/`). A testimonials section names an arrangement and exactly as
+many distinct testimonial ids as it shows — `feature` 1, `pair` 2, `row` 3, `showcase` 6,
+the layouts the home page and About use, drawn through the one set of arrangements the
+three pages share — and a save with another count is refused with a sentence naming both.
+The count is checked in the registry and again in the SQL structure check, and a DB test
+holds the two to one answer over every arrangement and count. An id no testimonial has is
+refused loudly by a trigger on the working copy, which checks only the ids a save adds, so
+a write that moves only the structure's other contents is never refused by a placement it
+did not make. **Neither copy carries a testimonial's words**: the live page reads them per
+request through the public read that answers only what the published copy places, so an
+edit to a testimonial shows on every live page at once, without a republish, while a
+testimonial placed only in a working copy stays admin-only; the preview and the status
+page read the working copy's from the store under the admin policy. Each reader gets the
+testimonial's own version by the reader fallback, independent of the page version shown.
+The section's only words are an optional header, so it never makes a version incomplete,
+and it contributes no structured data — review markup a site writes about itself earns
+nothing. Its words are never written through a landing page tool, and a quote comes off a
+page by saving the structure without it.
+
 **A page's link preview is its hero's picture**, the one its structured data names as the
 picture the page leads with, with the shown version's alt text; a hero without one shares
 the site-wide card. So placing a hero picture places it in every chat and feed the page is
@@ -124,7 +144,8 @@ refusals. Nothing else in the save path touches a link. A clone sends no words, 
 none to check: the words it copies were made canonical when they were saved.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
-detail included, and the image catalogue's usage map.
+detail included, the image catalogue's usage map, and the `testimonials` tree, whose
+"where it is used" names each page's copies.
 
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the

@@ -1,10 +1,14 @@
 "use client";
 
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
@@ -12,12 +16,18 @@ import {
   useSaveTestimonial,
   type AdminTestimonial,
   type TestimonialSaver,
+  type TestimonialUsage,
 } from "@/services/testimonials";
 import { TestimonialEditor } from "./testimonial-editor";
 
 /**
- * `/admin/testimonials/[id]` — one testimonial's editor, and who created and
- * last saved it.
+ * `/admin/testimonials/[id]` — one testimonial's editor, where it is used,
+ * and who created and last saved it.
+ *
+ * **Where it is used sits above the editor**, so editing the words of a
+ * testimonial the site shows is a visible decision: a save changes them on
+ * every live landing page placing it at once — none of them waits for a
+ * publish.
  *
  * A save resolves only once the testimonial has been read again, so the page
  * already describes the saved copy when the button comes back. Nothing is
@@ -37,6 +47,7 @@ export function EditTestimonialPage({ testimonialId }: { testimonialId: string }
     >
       {testimonial && (
         <>
+          <TestimonialUsageCard usages={testimonial.usages} />
           <TestimonialEditor
             testimonial={testimonial}
             save={async (input) => {
@@ -63,6 +74,57 @@ export function EditTestimonialPage({ testimonialId }: { testimonialId: string }
         </Card>
       )}
     </AdminEditorPageShell>
+  );
+}
+
+/**
+ * Every landing page the testimonial is shown on, each a link to its status
+ * page in admin, the way a site's page lists the products connected to it,
+ * saying whether readers see it there now, the next publish puts it there, or
+ * both.
+ */
+export function TestimonialUsageCard({ usages }: { usages: readonly TestimonialUsage[] }) {
+  const t = useTranslations("admin.testimonials");
+  const uiLocale = resolveLocale(useLocale());
+
+  const line = (usage: TestimonialUsage) => {
+    const state =
+      usage.inLiveCopy && usage.inWorkingCopy
+        ? "both"
+        : usage.inLiveCopy
+          ? "liveOnly"
+          : "workingOnly";
+    return (
+      <li key={usage.pageId} className="space-y-0.5">
+        <Link
+          href={ROUTES.admin.landingPage(usage.pageId)}
+          className="text-act underline-offset-4 hover:underline"
+        >
+          {t("usage.landingPage", {
+            title: resolveTranslation(usage.titles, uiLocale)?.title ?? "",
+          })}
+        </Link>
+        <p className="text-muted-foreground">{t(`usage.landingPageState.${state}`)}</p>
+      </li>
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader className="space-y-1">
+        <Heading level={2} step="card-title">{t("usage.heading")}</Heading>
+        {usages.length > 0 && (
+          <p className="text-sm text-muted-foreground">{t("usage.editNote")}</p>
+        )}
+      </CardHeader>
+      <CardContent>
+        {usages.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("usage.none")}</p>
+        ) : (
+          <ul className="space-y-2 text-sm">{usages.map(line)}</ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

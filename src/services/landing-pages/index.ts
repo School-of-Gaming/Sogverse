@@ -35,3 +35,8 @@ export {
   type LandingPublishForecast,
 } from "./landing-pages.forecast";
 export { canonicaliseLandingLinks, type LandingWrite } from "./landing-pages.links";
+export {
+  landingTestimonialsSections,
+  testimonialsById,
+  type LandingTestimonialsSection,
+} from "./landing-pages.testimonials";

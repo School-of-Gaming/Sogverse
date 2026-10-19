@@ -3,7 +3,9 @@ import { z } from "zod-v4";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { LOCALE_CONFIG, SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { readMcpCaller } from "@/lib/mcp/auth";
+import { adminLink } from "@/lib/mcp/landing-pages-call";
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
@@ -12,12 +14,13 @@ import {
   hasQuotationMarks,
   testimonialWriteFailure,
   type AdminTestimonial,
+  type TestimonialUsage,
 } from "@/services/testimonials/testimonials.contracts";
 import { TestimonialsService } from "@/services/testimonials/testimonials.service";
 
 /*
  * The testimonial tools: an admin keeps Marketing's store of testimonials from
- * an AI app — reads them, creates them, writes or
+ * an AI app — reads them and where each is shown, creates them, writes or
  * removes one language at a time. Nothing deletes a testimonial. Every tool
  * runs the testimonial service on the admin's own token-bound client, so the
  * admin-guarded functions decide exactly as they do in the editor, and a write
@@ -42,7 +45,11 @@ const VERSIONS =
 
 const NO_MARKS = `The quote is stored without quotation marks: the site wraps it in each language's own. A quote starting or ending with any of ${[...QUOTATION_MARKS].join(" ")} is refused; apostrophes are fine.`;
 
-const KEPT = "Testimonials are never deleted: once created they stay.";
+const LANDING =
+  "A landing page shows testimonials through its testimonials sections, which name them by id: editing a testimonial's words changes them on every live landing page placing it at once, with no republish. usedIn lists each landing page placing it, whether readers see it there now (inLiveCopy) and whether the page's saved working copy places it, so the next publish keeps it there (inWorkingCopy). It comes off a landing page when that page's structure is saved without it, and a page is changed with the landing page tools.";
+
+const KEPT =
+  "Testimonials are never deleted: once created they stay. One comes off the site by being removed from where it is shown — from a landing page by saving that page's structure without it.";
 
 const NOT_FOUND = "No testimonial has that id.";
 
@@ -127,6 +134,21 @@ function editorLink(origin: string, id: string): string {
   return `${origin}${getPathname({ href: ROUTES.admin.testimonial(id), locale: "en" })}`;
 }
 
+/**
+ * One place a testimonial is shown, as the AI app reads it: a landing page
+ * with whether readers see it there now and whether the next publish keeps
+ * it, and the page's status page in Sogverse admin.
+ */
+function usageView(origin: string, usage: TestimonialUsage) {
+  return {
+    pageId: usage.pageId,
+    title: resolveTranslation(usage.titles, "en")?.title ?? null,
+    inLiveCopy: usage.inLiveCopy,
+    inWorkingCopy: usage.inWorkingCopy,
+    adminLink: adminLink(origin, usage.pageId),
+  };
+}
+
 function testimonialView(testimonial: AdminTestimonial, origin: string) {
   return {
     testimonialId: testimonial.id,
@@ -136,6 +158,7 @@ function testimonialView(testimonial: AdminTestimonial, origin: string) {
       from: version.from,
       quote: version.quote,
     })),
+    usedIn: testimonial.usages.map((usage) => usageView(origin, usage)),
     created: { at: testimonial.createdAt, ...testimonial.created },
     lastSaved: { at: testimonial.updatedAt, ...testimonial.lastSaved },
     editorLink: editorLink(origin, testimonial.id),
@@ -151,7 +174,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "list_testimonials",
     {
       title: "List testimonials",
-      description: `Every testimonial in School of Gaming's store, most recently saved first: its id, every language version (whom it is from and the quote), and who created and last saved it, when and through which AI app. ${REAL_WORDS} ${VERSIONS} ${KEPT}`,
+      description: `Every testimonial in School of Gaming's store, placed or not, most recently saved first: its id, every language version (whom it is from and the quote), the landing pages it is shown on, and who created and last saved it, when and through which AI app. A landing page's testimonials section places testimonials by the ids listed here. ${REAL_WORDS} ${VERSIONS} ${LANDING} ${KEPT}`,
       annotations: READ_ONLY,
     },
     (ctx) =>
@@ -167,7 +190,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "get_testimonial",
     {
       title: "Read a testimonial",
-      description: `One testimonial whole: every language version, who created and last saved it, and the link to its editor in Sogverse. ${VERSIONS}`,
+      description: `One testimonial whole: every language version, each landing page it is shown on with that page's status page in Sogverse admin, who created and last saved it, and the link to its editor in Sogverse. ${VERSIONS} ${LANDING}`,
       inputSchema: z.object({ testimonialId }),
       annotations: READ_ONLY,
     },
@@ -215,7 +238,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "save_testimonial_version",
     {
       title: "Save a testimonial's language version",
-      description: `Write one language version of a testimonial — whom it is from and the quote together, replacing what that language held — or add a language it does not have yet. No other language is touched. ${REAL_WORDS} ${NO_MARKS}`,
+      description: `Write one language version of a testimonial — whom it is from and the quote together, replacing what that language held — or add a language it does not have yet. No other language is touched. If the testimonial is placed on a landing page, the change shows at once on every live landing page placing it, with no republish: read get_testimonial first and tell the admin where it is shown. ${REAL_WORDS} ${NO_MARKS}`,
       inputSchema: z.object({ testimonialId, locale, from, quote }),
       annotations: OVERWRITES,
     },
@@ -239,7 +262,7 @@ export function registerTestimonialTools(server: McpServer): void {
     {
       title: "Remove a testimonial's language version",
       description:
-        "Remove one language version of a testimonial; the others stay. A testimonial keeps at least one version, so its last one cannot be removed. Readers of that language then see the English version, else the first one written.",
+        "Remove one language version of a testimonial; the others stay. A testimonial keeps at least one version, so its last one cannot be removed. Readers of that language then see the English version, else the first one written, wherever it is shown — live landing pages included, at once.",
       inputSchema: z.object({ testimonialId, locale }),
       annotations: {
         readOnlyHint: false,

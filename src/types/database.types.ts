@@ -4938,6 +4938,13 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      list_landing_page_testimonials: {
+        Args: { p_page_id: string }
+        Returns: {
+          testimonial_id: string
+          versions: Json
+        }[]
+      }
       list_public_team_profiles: {
         Args: never
         Returns: {

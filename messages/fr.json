@@ -795,6 +795,18 @@
           "inSection": "Section {number} ({type}) : {field}",
           "inItem": "Section {number} ({type}), {item} : {field}",
           "goneSection": "Une section qui n’est plus sur la page : {field}"
+        },
+        "testimonials": {
+          "heading": "Témoignages",
+          "hint": "Leurs mots se modifient dans Témoignages, et une modification apparaît aussitôt sur la page en ligne.",
+          "section": "Section {number} ({type}) : {arrangement}",
+          "arrangements": {
+            "feature": "une grande citation",
+            "pair": "deux côte à côte",
+            "row": "trois en ligne",
+            "showcase": "une grande citation, deux côte à côte, puis trois en ligne"
+          },
+          "missing": "Un témoignage qui n’est plus conservé"
         }
       },
       "status": {
@@ -845,7 +857,8 @@
         "points": "Points",
         "steps": "Étapes",
         "faq": "Questions et réponses",
-        "cta": "Appel à l’action"
+        "cta": "Appel à l’action",
+        "testimonials": "Témoignages"
       },
       "items": {
         "image": "Image {number}",
@@ -2093,7 +2106,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit.",
+      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit. Les pages d’atterrissage citent ceux qui y sont placés.",
       "newTestimonial": "Nouveau témoignage",
       "backToList": "Retour aux témoignages",
       "newPage": {
@@ -2121,6 +2134,17 @@
         "from": "De qui vient la citation, telle qu’elle doit s’afficher — par exemple Maman, Finlande.",
         "quote": "Ses mots tels qu’ils ont été donnés, sans guillemets : le site ajoute ceux de chaque langue. Les traduire dans une autre langue est permis ; les modifier ne l’est pas."
       },
+      "usage": {
+        "heading": "Où il est utilisé",
+        "none": "Il n’est encore affiché nulle part.",
+        "editNote": "L’enregistrement modifie ses mots partout où il est affiché.",
+        "landingPage": "Page d’atterrissage : {title}",
+        "landingPageState": {
+          "both": "Les lecteurs le voient là maintenant.",
+          "liveOnly": "Les lecteurs le voient là jusqu’à la prochaine publication, qui le retire.",
+          "workingOnly": "Pas encore montré aux lecteurs : la prochaine publication l’y place."
+        }
+      },
       "record": {
         "created": "Créé le {date}",
         "createdBy": "Créé le {date} par {name}",
@@ -2141,7 +2165,8 @@
         "quoted": "La citation en {language} commence ou se termine par un guillemet. Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
         "saveFailed": "Le témoignage n’a pas pu être enregistré. Réessayez.",
         "saveFailedWithReason": "Le témoignage n’a pas pu être enregistré : {reason}"
-      }
+      },
+      "onLandingPages": "{count, plural, one {Sur # page d’atterrissage} other {Sur # pages d’atterrissage}}"
     }
   },
   "auth": {

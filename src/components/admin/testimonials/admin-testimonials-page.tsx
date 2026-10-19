@@ -1,7 +1,7 @@
 "use client";
 
 import { Heading } from "@sog/ui";
-import { Clock, Languages, Plus } from "lucide-react";
+import { Clock, Languages, PanelsTopLeft, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
@@ -30,7 +30,7 @@ export function NewTestimonialAction() {
 /**
  * The Testimonials tab: every testimonial in the store, most recently saved
  * first, each with its quote in the admin's own language, whom it is from,
- * its languages and when it was saved.
+ * its languages, when it was saved and where it is used.
  *
  * **Testimonials are never deleted** — once created they stay.
  *
@@ -89,7 +89,8 @@ export function AdminTestimonialsPage({
 
 /**
  * One testimonial: its quote, in the admin's own language and the page's
- * marks, whom it is from, its languages and when it was last saved.
+ * marks, whom it is from, its languages, when it was last saved, and how many
+ * landing pages place it.
  *
  * **The whole card opens the editor**, through the stretched-link shape the
  * spotlight rows use: the quote is the anchor and its `::after` covers the
@@ -133,6 +134,12 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
               })}
             </time>
           </span>
+          {testimonial.usages.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-foreground">
+              <PanelsTopLeft className="h-3 w-3" aria-hidden />
+              {t("onLandingPages", { count: testimonial.usages.length })}
+            </span>
+          )}
         </div>
       </div>
 
