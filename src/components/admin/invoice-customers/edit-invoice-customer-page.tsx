@@ -7,7 +7,7 @@ import { ROUTES } from "@/lib/constants";
 import {
   useInvoiceCustomer,
   useUpdateInvoiceCustomer,
-} from "@/services/invoice-customers";
+} from "@/services/invoice-customers/invoice-customers.queries";
 import { InvoiceCustomerForm } from "./invoice-customer-form";
 import { InvoiceCustomerPageShell } from "./invoice-customer-page-shell";
 import { invoiceCustomerDraft } from "./invoice-customer-draft";

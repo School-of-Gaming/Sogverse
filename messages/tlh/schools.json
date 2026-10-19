@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "title": "venglIjDaq Qup ghomHommey",
+    "subtitle": "Suomngan vengmey tlhej ghomHommey chenmoH School of Gaming. venglIj yISam ’ej nuq tu’lu’ yIlegh.",
+    "howItWorks": "venglIj ghaj, juHvo’ rurmey ghap puqlIj DuSaQDaq ghomHom. vummeH lughoSmoH Qup pIn’a’ reH tu’lu’."
+  },
+  "search": {
+    "label": "venglIj yISam",
+    "placeholder": "vengmey yISam…",
+    "noMatches": "”{query}” rur veng pagh. ghItlh yI’ol pagh retlh veng yInID."
+  },
+  "available": {
+    "empty": "ghomHommaj wa’DIch ghoS. venglIj yISam ’ej wImaSpu’a’ yIlegh."
+  },
+  "status": {
+    "available": "ghomHommey tu’lu’",
+    "noClubs": "ghomHom pagh"
+  },
+  "waitlistNote": "puS Daqmey, ’ej motlh loSwI’mey ghaj ghomHommey. puqlIj mev chugh, yILIjHa’ bIH, vaj latlh pelaajavaD Daq nob.",
+  "notListed": {
+    "title": "venglIj Daleghbe’a’?",
+    "body": "veng tlhej kuntakerhomey chenmoH, ’ej reH chu’ wIchel. DaH muvbe’ venglIj chugh, maHvaD yIja’:",
+    "openClubs": "Hoch lumuvlaH ghomHommaj ’op je; nuqDaq yIn pelaaja ’e’ qelbe’."
+  },
+  "municipality": {
+    "heading": "{name} ghomHommey"
+  }
+}

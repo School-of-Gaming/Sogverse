@@ -1,0 +1,195 @@
+{
+  "title": "Privacy Policy",
+  "lastUpdated": "Last updated: {date}",
+  "intro": {
+    "heading": "The short version",
+    "paragraphs": [
+      "School of Gaming exists to give children a safe, fun place to learn through gaming. This page lists the main things we hold about your child, and why — in plain language instead of legal jargon, so you can check it for yourself. A gamer account exists only inside your own account, and it carries an internal Sogverse address rather than a real email unless you choose to give your child their own.",
+      "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing {supportEmail}."
+    ]
+  },
+  "sections": {
+    "whoWeAre": {
+      "heading": "Who we are",
+      "paragraphs": [
+        "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. We’re responsible for looking after the personal information you and your child share with us — in legal terms, we’re the \"data controller\".",
+        "Here are our official details:"
+      ],
+      "bullets": [
+        "School of Gaming Galactic Oy (business ID 3110461-1)",
+        "Isokatu 56, 90100 Oulu, Finland",
+        "Email: {supportEmail}"
+      ]
+    },
+    "infoWeCollect": {
+      "heading": "The information we collect",
+      "paragraphs": [
+        "We try to collect as little as possible — only what we genuinely need to run Sogverse. Here’s what that looks like:"
+      ],
+      "bullets": [
+        "Your name, email address, and (if you add one) phone number — so we can set up your account and keep in touch about your child’s clubs.",
+        "Your language and currency preferences — so the site shows up the way you expect.",
+        "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
+        "Payment details are handled directly in Stripe. We never see or store your full card number.",
+        "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly. We store your family surname on their account too, because your child is part of your account; Gedus and other gamers never see it. Their account itself uses an internal Sogverse address rather than a real email, unless you choose to give them a sign-in with their own email address; we then hold that address and send them their own copy of the emails we send you about their clubs, camps and events.",
+        "Optionally, your child’s username in the games their clubs use — today that’s Minecraft and Roblox — and the account id that game gives them, so we can recognise them in the game and so they can connect to our Minecraft server during sessions.",
+        "Session records our Game Educators write — attendance, session reports, and short notes that help us support your child in the group.",
+        "Messages your child sends in a session’s chat — so the Gedu and the group can read them during the session, and so we can look into a concern afterwards. A message your child removes is hidden from the group but kept until the account is closed.",
+        "Feedback your child gives us about their sessions — any ratings and any note they choose to give when we ask how a session went — so we can see how our sessions are going and make them better.",
+        "The technical information any website needs to run — sign-in sessions, request logs and, only if you choose it, anonymous usage statistics. See \"Technical information\" and \"Cookies, analytics and advertising\" below.",
+        "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, and only if you’ve allowed marketing cookies, so that we and our partners know which outreach actually reaches families. Saying no to marketing later doesn’t remove a tag that was already stored."
+      ]
+    },
+    "technical": {
+      "heading": "Technical information",
+      "paragraphs": [
+        "Running a website means some technical information passes through the companies that host and secure it for us. None of it is something we ask you for, and we don’t keep a copy of it in any table of ours — it exists in our providers’ systems for as long as they need it to keep the site working and safe, and we don’t extend that. Here is what it is and where it goes:"
+      ],
+      "bullets": [
+        "Sign-in records — when you sign in, Supabase, which runs our accounts, keeps a record of the session: when it started, the browser and device it came from and its internet address. That is what lets us keep you signed in and end a session that shouldn’t be there. The record is deleted when the session ends, and everything goes when the account does.",
+        "Requests and errors — every page you open is a request to Vercel, which hosts the site. Like any host, Vercel logs it: the page, the time, your browser and device type and its internet address, and any error it caused. We use those logs to keep the site running and to find faults. Vercel also counts requests to each part of the site on its own servers — totals, not people — and that count runs without any cookie or consent. It is separate from the analytics you can switch on or off below.",
+        "Cookies and analytics — a few necessary cookies, and analytics and marketing only if you choose them. All of it is set out in \"Cookies, analytics and advertising\" below.",
+        "Live sessions — during a voice session your child’s device connects to Daily.co directly, so Daily sees its internet address and connection details for the length of the call. See \"Voice and video sessions\" below.",
+        "What we don’t do — we don’t run an error-tracking or logging service of our own, we never store your internet address or browser details in any table of ours, and none of this is used to build a profile of you or your child."
+      ]
+    },
+    "childrensPrivacy": {
+      "heading": "Children’s privacy comes first",
+      "paragraphs": [
+        "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
+        "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
+        "What we hold about a child is set out above under \"The information we collect\" and \"Technical information\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
+        "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
+      ]
+    },
+    "howWeUse": {
+      "heading": "How we use your information",
+      "paragraphs": [
+        "We use the information above only to run Sogverse and give your family a good experience — specifically:"
+      ],
+      "bullets": [
+        "To create and manage your account and your child’s account.",
+        "To place your child in the right club, camp, or event group and connect them with a Game Educator.",
+        "To run the live voice and video sessions.",
+        "To take payments and send receipts, reminders, and important updates about your clubs.",
+        "To answer your questions when you contact us for help.",
+        "To keep Sogverse safe, fix problems, and make it better over time."
+      ]
+    },
+    "legalBasis": {
+      "heading": "Why we’re allowed to use it",
+      "paragraphs": [
+        "Data-protection law (the GDPR) asks us to have a clear reason for using your information. Ours are simple:"
+      ],
+      "bullets": [
+        "To deliver what you signed up for — the clubs, camps and events you’ve signed your child up for, paid or free (our contract with you).",
+        "Because a parent has given permission on their child’s behalf (consent).",
+        "To meet our legal duties, such as keeping accounting records for payments.",
+        "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
+        "Your consent, for the analytics and marketing cookies and the campaign tag — which you can withdraw at any time from Privacy choices at the bottom of every page."
+      ]
+    },
+    "providers": {
+      "heading": "The companies that help us run Sogverse",
+      "paragraphs": [
+        "Running an online service means relying on a few trusted companies for things like hosting, payments, and email. They only handle your information to do their job for us, under contracts that require them to keep it safe. The main ones are:"
+      ],
+      "bullets": [
+        "Supabase — securely stores your account, family, and club information.",
+        "Stripe — processes payments. Your card details go straight to Stripe; we never see them.",
+        "Brevo — sends our emails, such as receipts and reminders.",
+        "Daily.co — powers the live voice and video sessions; your child’s device connects to it directly during a session.",
+        "Vercel — hosts the website, so every request passes through it (see \"Technical information\"), and provides anonymous usage statistics if you allow analytics.",
+        "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
+        "Roblox — receives your child’s Roblox account id, so we can confirm the account, and your browser fetches their avatar picture from Roblox directly.",
+        "Mojang (Microsoft) — receives your child’s Minecraft username, so we can confirm the account.",
+        "mc-heads.net — your browser fetches the picture of your child’s Minecraft character from it directly, using their Minecraft username, which is public in the game. It is a free public service rather than a contractor of ours, and it sees only that request.",
+        "Meta (Facebook and Instagram) — through the Meta Pixel in your browser and reports from our servers, sees how you use our site, so we can show you our ads there and measure how they perform. When you create an account or sign up, our servers also send Meta scrambled (hashed) copies of your email address and of your School of Gaming account id, and which club, camp or event you signed up for or created your account from, so it can recognise you if you use Facebook or Instagram and tell that it is the same parent from one visit to the next. Neither the address nor the id itself is ever sent, and never your child’s name, age or other details about them. Only if you allow marketing cookies.",
+        "Google (Analytics and Ads) — through a tag manager in your browser, sees which of our public pages you visit and what you signed up for, so we can measure how our advertising performs and show you our ads. Only if you allow marketing cookies — not analytics: the analytics you can switch on is Vercel’s alone."
+      ]
+    },
+    "partners": {
+      "heading": "The Creator Academy, run with Lynx Educate",
+      "blocks": [
+        "If you enrol your child in the Creator Academy, which we run in collaboration with Roblox, we share what the programme needs with Lynx Educate, who deliver it with us, and a limited set with Roblox for its research into the programme. Lynx Educate receives:",
+        [
+          "The campaign tag on your account — source, medium and campaign — so they can see which outreach brought your family to the programme.",
+          "Your first name, surname and email address — so they can reach you about the programme.",
+          "The municipality and country you gave as your family’s home, if you gave one.",
+          "Your child’s first name.",
+          "Your child’s birth month and year — we never ask for the day.",
+          "Your child’s Roblox username and the account id Roblox gives it.",
+          "Which terms and policies you accepted when you enrolled, and your answers to the marketing and photography questions.",
+          "The enrolment itself — the club, camp or event, the group your child is in, and when they signed up.",
+          "Whether your child was marked present or absent at each session.",
+          "The title and link of anything your child publishes on Roblox, as a Game Educator records it.",
+          "Photographs attached to a session report — only where you allowed photography."
+        ],
+        "Lynx uses it to run the programme, on the basis of the programme terms you accept when you enrol and its legitimate interest in running it safely — except the campaign tag, which is shared only if you allowed marketing cookies, and photographs, which are shared only where you ticked the box. What Roblox receives, and everything else about the programme, is in the <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy>."
+      ]
+    },
+    "cookies": {
+      "heading": "Cookies, analytics and advertising",
+      "paragraphs": [
+        "A few cookies are simply how the site works: they keep you signed in and remember when you’ve switched between the accounts in your family, remember that you entered your parent PIN, hold your language and timezone, store the cookie choice you make, and remember that you’ve closed the guide we show before a first session. These don’t need your consent — without them there is no site to consent to.",
+        "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs in your browser until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
+        "There are two things to say yes or no to:"
+      ],
+      "bullets": [
+        "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
+        "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta and Google — see how you use our site, so they can show you our ads and we can tell which ads work. Google’s tags reach your browser through a tag manager, which lets us and the partner who runs our campaigns add or remove a platform without changing the site; whichever platforms it carries are named in the list above, and that list carries a date. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data these scripts keep in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
+      ]
+    },
+    "voice": {
+      "heading": "Voice and video sessions",
+      "paragraphs": [
+        "Live clubs, camps, and events take place over voice and video, powered by Daily.co. Sessions are run live by our trained Game Educators, and we use it only to deliver the session your child signed up for.",
+        "Your child’s device connects to Daily.co directly for the call, so Daily sees its internet address and connection details for as long as the session lasts, and Daily’s own software reports faults it meets in the browser back to Daily. To put your child in the right room we give Daily their first name and, where they have added one, their game username and the id that game gives them, so the Gedu and the other gamers in the room can see who is speaking. The audio and video are not recorded."
+      ]
+    },
+    "retention": {
+      "heading": "How long we keep your information",
+      "paragraphs": [
+        "We keep your information for as long as you have an account with us. If you close your account, we delete or anonymise your information — except where the law requires us to keep certain records longer, such as Finnish accounting law, which requires payment records to be kept for several years."
+      ]
+    },
+    "storage": {
+      "heading": "Where your information is kept",
+      "paragraphs": [
+        "Some of the companies that help us (listed above) are based outside the European Union, for example in the United States. When your information is sent to them, we make sure it’s protected by the safeguards data-protection law requires — usually the European Commission’s Standard Contractual Clauses."
+      ]
+    },
+    "rights": {
+      "heading": "Your rights — and your child’s",
+      "paragraphs": [
+        "You’re in control of your information. At any time you can ask us to:"
+      ],
+      "bullets": [
+        "Show you what information we hold about you and your child.",
+        "Correct anything that’s wrong.",
+        "Delete your information (the \"right to be forgotten\").",
+        "Give you a copy to take elsewhere.",
+        "Stop or limit how we use it."
+      ]
+    },
+    "security": {
+      "heading": "Keeping your information safe",
+      "paragraphs": [
+        "We protect your information with industry-standard measures: encrypted connections, passwords stored only in scrambled form, and strict limits on who can access data. No system is ever perfectly secure, but we work hard to keep your family’s information safe."
+      ]
+    },
+    "changes": {
+      "heading": "Changes to this policy",
+      "paragraphs": [
+        "We may update this policy from time to time — for example, if we add a new feature. When we make an important change, we’ll update the date at the top and, where it matters, let you know."
+      ]
+    },
+    "contact": {
+      "heading": "Getting in touch and your right to complain",
+      "paragraphs": [
+        "To use any of the rights above, or if you have a question about your privacy or your child’s information, just email {supportEmail}. There’s no charge, we’ll always reply, and email is the best way to reach us.",
+        "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at <linkTietosuoja>tietosuoja.fi</linkTietosuoja>."
+      ]
+    }
+  }
+}

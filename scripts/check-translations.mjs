@@ -1,6 +1,7 @@
 /**
- * CI check: verify all translation keys in en.json exist with non-empty values
- * in every other locale file. Exits with code 1 if any issues are found.
+ * CI check: verify all translation keys in the `en` catalog exist with
+ * non-empty values in every other locale's catalog (`messages/<locale>/`, one
+ * file per namespace). Exits with code 1 if any issues are found.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join, basename } from "node:path";
@@ -126,20 +127,73 @@ const DASHBOARD_NAME_KEY = "dashboardSections.pageTitle";
  */
 const ENGLISH_DASHBOARD_NAME_ALLOWED = {};
 
-const sourceFile = join(MESSAGES_DIR, `${SOURCE_LOCALE}.json`);
-const sourceMessages = JSON.parse(readFileSync(sourceFile, "utf-8"));
+let hasErrors = false;
+
+/**
+ * A locale is a directory of one JSON file per namespace, assembled by the
+ * directory's `index.ts`, which imports each one statically. The index is what
+ * the app loads, so a namespace file it does not import is copy nobody sees,
+ * and an import with no file breaks the build: both are reported here, before
+ * the catalog is read.
+ */
+function loadLocale(locale) {
+  const dir = join(MESSAGES_DIR, locale);
+  const files = readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .map((f) => basename(f, ".json"));
+  const index = readFileSync(join(dir, "index.ts"), "utf-8");
+  const imported = [...index.matchAll(/^import (\w+) from "\.\/(\w+)\.json";$/gm)].map(
+    ([, binding, file]) => {
+      if (binding !== file) {
+        hasErrors = true;
+        console.error(`\n[${locale}] index.ts imports ./${file}.json as "${binding}"; name the binding after its file.`);
+      }
+      return file;
+    },
+  );
+  const unlisted = files.filter((f) => !imported.includes(f));
+  if (unlisted.length > 0) {
+    hasErrors = true;
+    console.error(`\n[${locale}] ${unlisted.length} namespace file(s) not imported by index.ts:`);
+    for (const f of unlisted) console.error(`  - ${f}.json`);
+  }
+  // The exported `messages` object literal must carry every imported binding: a
+  // namespace imported but left out is copy nobody sees, and for `tlh` it is
+  // invisible, because the loader falls back to English.
+  const literal = index.match(/\bmessages\s*=\s*\{([^}]*)\}/);
+  if (!literal) {
+    hasErrors = true;
+    console.error(`\n[${locale}] index.ts has no \`messages\` object literal to check its namespaces against.`);
+  } else {
+    const listed = new Set(
+      literal[1]
+        .split(",")
+        .map((entry) => entry.trim().split(":")[0].trim())
+        .filter(Boolean),
+    );
+    for (const ns of imported.filter((f) => !listed.has(f))) {
+      hasErrors = true;
+      console.error(`\n[${locale}] namespace "${ns}" is imported by index.ts but missing from its exported messages object.`);
+    }
+  }
+  const messages = {};
+  for (const ns of imported.filter((f) => files.includes(f))) {
+    messages[ns] = JSON.parse(readFileSync(join(dir, `${ns}.json`), "utf-8"));
+  }
+  return messages;
+}
+
+const sourceMessages = loadLocale(SOURCE_LOCALE);
 const sourceKeys = flattenKeys(sourceMessages);
 const sourceKeySet = new Set(Object.keys(sourceKeys));
 const englishDashboardName = sourceKeys[DASHBOARD_NAME_KEY];
 
-const localeFiles = readdirSync(MESSAGES_DIR)
-  .filter((f) => f.endsWith(".json") && basename(f, ".json") !== SOURCE_LOCALE);
+const locales = readdirSync(MESSAGES_DIR, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && entry.name !== SOURCE_LOCALE)
+  .map((entry) => entry.name);
 
-let hasErrors = false;
-
-for (const file of localeFiles) {
-  const locale = basename(file, ".json");
-  const messages = JSON.parse(readFileSync(join(MESSAGES_DIR, file), "utf-8"));
+for (const locale of locales) {
+  const messages = loadLocale(locale);
   const keys = flattenKeys(messages);
   const keySet = new Set(Object.keys(keys));
 

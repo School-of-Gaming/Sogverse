@@ -1,0 +1,79 @@
+{
+  "title": "Luojien akatemian lasten turvallisuuden toimintaohje",
+  "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa.",
+  "lastUpdated": "Tarkistettu viimeksi: {date}",
+  "intro": {
+    "heading": "Sitoumuksemme",
+    "blocks": [
+      "Jokaisella Ohjelmaan osallistuvalla lapsella on oikeus tuntea olonsa turvalliseksi, tulla kunnioitetuksi ja saada suojelua – osallistuipa hän verkossa tai lähitapahtumassa. Tämä näkyy siinä, miten Ohjelma on rakennettu: jokaisen lapsen tili on liitetty vanhemman tiliin, viestintä tapahtuu ryhmässä eikä lasten välillä ole yksityisviestejä, ja mukaan pääsevät vain ilmoittautuneet osallistujat ja taustatarkistetut pelikasvattajat."
+    ]
+  },
+  "sections": {
+    "covers": {
+      "heading": "Keitä tämä koskee",
+      "blocks": [
+        "Tämä toimintaohje koskee kaikkia Lynx Educaten ja School of Gamingin työntekijöitä, pelikasvattajia (eli ”Geduja”), vapaaehtoisia ja kaikkia sopimuskumppaneita, jotka ovat tekemisissä lasten kanssa tämän Ohjelman kautta."
+      ]
+    },
+    "vetting": {
+      "heading": "Ennen kuin pelikasvattaja työskentelee lasten kanssa",
+      "blocks": [
+        "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:",
+        [
+          "Yli 18 vuoden ikä. Jokainen pelikasvattaja on aikuinen.",
+          "Taustatarkistus. Jokainen Gedu näyttää meille lasten kanssa työskenteleville tarkoitetun rikosrekisteriotteen, ennen kuin hänet nimetään mihinkään ryhmään – näin tiedämme, kuka viettää aikaa lapsesi kanssa. Tarkistamme otteen itse, emmekä saa ottaa siitä kopiota, joten emme ota.",
+          "School of Gamingin pelikasvattajan peruskurssi, joka jokaisen Gedun on suoritettava hyväksytysti.",
+          "Pelikasvattajan oppaamme, jossa kerrotaan, miten odotamme Gedun käyttäytyvän, ja jossa ryhmän ilmapiiri asetetaan hänen vastuulleen.",
+          "Allekirjoitettu sopimus School of Gamingin kanssa, joka käydään läpi henkilökuntamme kanssa ennen allekirjoittamista. Siinä kuvataan kirjallinen menettely – ensin varoitus ja keskustelu – jota noudatamme, jos Gedu ei täytä näitä odotuksia."
+        ]
+      ]
+    },
+    "online": {
+      "heading": "Verkkotapaamisissa",
+      "blocks": [
+        [
+          "Jokaisen Pelaajan tili on liitetty vanhemman tiliin; lapset eivät voi ilmoittautua itse.",
+          "Lasten välillä ei ole suoraviestejä – kaikki viestintä tapahtuu ryhmässä, ja koulutettu pelikasvattaja valvoo sitä aktiivisesti.",
+          "Mukaan pääsevät vain ilmoittautuneet Pelaajat ja taustatarkistetut pelikasvattajat – ulkopuolisia kutsuja tai kontakteja ei sallita.",
+          "Tapaamisia ei tallenneta."
+        ]
+      ]
+    },
+    "inPerson": {
+      "heading": "Lähitapahtumissa",
+      "blocks": [
+        "Pelikasvattajamme ohjaavat tapaamisen, mutta he eivät ole tapahtuman järjestäjiä. Lynx Educate vastaa siitä, että sen käyttämät tilat soveltuvat tapaamiseen ja täyttävät Ohjelman lasten turvallisuutta koskevat vaatimukset. Käytännön järjestelyt voivat vaihdella tilan mukaan."
+      ]
+    },
+    "behaviour": {
+      "heading": "Käyttäytyminen ja kurinpito",
+      "blocks": [
+        "SOG:n ohjaamissa tapaamisissa arjen käyttäytymistilanteet käsitellään School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ja kurinpidon ohjeen</linkDiscipline> mukaisesti. Ohje etenee tukevasti ja askel kerrallaan, ennen kuin lapsi poistetaan tapaamisesta tai yhteisöstä."
+      ]
+    },
+    "escalation": {
+      "heading": "Huolen eteneminen",
+      "blocks": [
+        "School of Gaming käsittelee huolet ensisijaisesti, koska se on päivittäin tekemisissä osallistujien kanssa. Kaikki lasten turvallisuutta koskevat huolet – kaltoinkohtelu, häirintä, itsensä vahingoittaminen tai vakava loukkaantuminen – siirretään Lynx Educatelle 24 tunnin kuluessa, ja Lynx ilmoittaa asiasta viipymättä Robloxille silloin, kun se on tarpeen. Jos lapsi voi olla välittömässä vaarassa, otamme ensin yhteyttä hätäpalveluihin ja vasta sen jälkeen etenemme sisäisesti."
+      ]
+    },
+    "concern": {
+      "heading": "Jos sinulla on huoli",
+      "blocks": [
+        "Jos sinulla tai lapsellasi on lasten turvallisuutta koskeva huoli, ota yhteyttä School of Gamingiin osoitteeseen {supportEmail} tai Lynx Educateen osoitteeseen support@lynxeducate.com."
+      ]
+    },
+    "data": {
+      "heading": "Tiedot ja valokuvat",
+      "blocks": [
+        "Lapsi näkyy valokuvassa tunnistettavasti vain, jos hänen vanhempansa on rastittanut lasta koskevan vapaaehtoisen mediasuostumuksen ilmoittautumisen yhteydessä. Vanhempi voi muuttaa vastausta milloin tahansa lapsen sivulla Oma SOG -näkymässä, ja pelikasvattaja kysyy lapselta ennen valokuvan ottamista, vaikka vanhempi olisi antanut suostumuksen. <linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, mitä suostumus kattaa. Tapahtumasta tai työpajasta voidaan ottaa yleiskuvia etäältä, kun yksikään lapsi ei ole tunnistettavissa."
+      ]
+    },
+    "review": {
+      "heading": "Toimintaohjeen tarkistaminen",
+      "blocks": [
+        "Tarkistamme tämän toimintaohjeen vuosittain."
+      ]
+    }
+  }
+}

@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { staticImageModule } from "../../mocks/static-image";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enDiscordLink from "@/../messages/en/discordLink.json";
 import {
   DiscordLinkConfirm,
   DiscordLinkDead,
 } from "@/components/discord-link/discord-link";
+
+const messages = { discordLink: enDiscordLink };
 
 /**
  * The confirm card turns the route's answer into the state the reader acts

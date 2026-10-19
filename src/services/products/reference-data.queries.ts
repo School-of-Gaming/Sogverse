@@ -6,7 +6,9 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
-import { adminSessionKeys } from "@/services/admin-sessions";
+import {
+  adminSessionKeys,
+} from "@/services/admin-sessions/admin-sessions.keys";
 // The keys module rather than the package index: that index re-exports the
 // service class, and this file only needs the cache key factory.
 import { siteKeys } from "@/services/sites/sites.queries";

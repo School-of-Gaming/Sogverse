@@ -2,13 +2,16 @@ import { useState } from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enCommon from "@/../messages/en/common.json";
 import {
   SitePanel,
   type SiteDetailsDraft,
   type SiteNotesDraft,
 } from "@/components/group-workspace/SitePanel";
 import type { AppHref } from "@/lib/constants/routes";
+
+const messages = { gedu: enGedu, common: enCommon };
 
 /**
  * ============================================================================

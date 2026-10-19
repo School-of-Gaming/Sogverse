@@ -10,7 +10,7 @@ import {
   usePublishedLibraryArticles,
   useSaveLibraryArticle,
   useUnpublishLibraryArticle,
-} from "@/services/library";
+} from "@/services/library/library.queries";
 import { LibraryArticleEditor } from "./library-article-editor";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 

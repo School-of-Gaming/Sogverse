@@ -12,7 +12,9 @@ import {
   type FormState,
 } from "@/components/admin/products/product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 
 // Validation + payload-building moved out of ProductForm so it can be
 // tested without rendering. These tests cover the *complex, easily-broken*
@@ -703,7 +705,7 @@ describe("buildCreateInput", () => {
   it("converts the monthly price to cents as price_cents for clubs", () => {
     // Consumer clubs charge a flat monthly subscription, so the monthly input
     // becomes price_cents and the session input is ignored. See decimalToCents
-    // in src/lib/utils.ts.
+    // in src/lib/money.ts.
     const s = validConsumerState();
     s.prices.eur = { session: "10.005", month: "30.99" };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);

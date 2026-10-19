@@ -112,12 +112,14 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 import { POST } from "@/app/api/discord/interactions/route";
-import fiMessages from "../../../messages/fi.json";
+import fiGedu from "../../../messages/fi/gedu.json";
 import {
   SNAPSHOT_IDS,
   notificationSnapshot,
   snapshotCandidate,
 } from "../../mocks/substitution-notifications";
+
+const fiMessages = { gedu: fiGedu };
 
 function interactionRequest(
   payload: unknown,

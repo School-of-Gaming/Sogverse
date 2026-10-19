@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enChat from "@/../messages/en/chat.json";
 import { ChatMessageRow } from "@/components/chat";
 import { deriveChatMessageCapabilities } from "@/components/chat/capabilities";
 import type { ChatAccount, ChatMessage } from "@/components/chat/types";
+
+const messages = { chat: enChat };
 
 /**
  * ============================================================================

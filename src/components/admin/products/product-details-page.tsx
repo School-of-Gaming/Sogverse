@@ -15,7 +15,9 @@ import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
-import { cn, formatCurrencyFromCents, formatDate, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { formatInTimeZone } from "date-fns-tz";
 import { addCalendarDays } from "@/lib/calendar-date";
 import type { PlannedSession } from "@/lib/planned-sessions";
@@ -49,8 +51,10 @@ import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents
 import {
   usePlannedSessions,
   useProductAdmin,
+} from "@/services/products/products.queries";
+import {
   type ProductAdminDetailRow,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import {
   effectiveStatus,

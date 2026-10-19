@@ -4,7 +4,7 @@ import * as React from "react";
 import { cva } from "class-variance-authority";
 import { Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The row's container classes, by size and state. Only the container is

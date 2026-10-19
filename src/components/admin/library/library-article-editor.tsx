@@ -45,7 +45,7 @@ import {
   writtenLocales,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import {
   isCompleteVersion,
@@ -53,7 +53,7 @@ import {
   type AdminLibraryArticle,
   type LibraryArticleDraft,
   type LibraryArticleInput,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 import {
   EMPTY_VERSION,
   emptyLibraryArticleForm,

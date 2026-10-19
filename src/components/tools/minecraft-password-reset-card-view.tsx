@@ -22,7 +22,7 @@ import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { MINECRAFT_EDUCATION_DOMAINS } from "@/lib/constants/minecraft-education";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   MINECRAFT_PASSWORD_RESET_MAX_USERNAMES,
   type MinecraftPasswordResetFailure,

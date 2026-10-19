@@ -1,0 +1,30 @@
+{
+  "uncertified": {
+    "title": "Awaiting certification",
+    "body": "An admin needs to certify your Gedu account before you can start voice rooms or reset Minecraft Education passwords. Both tools appear here as soon as you’re certified."
+  },
+  "minecraftPasswordReset": {
+    "title": "Minecraft Education passwords",
+    "description": "Reset the password on a shared Minecraft Education account and read the new one straight off the screen.",
+    "inputLabel": "Usernames or addresses",
+    "inputPlaceholder": "builder07, redstone12@gamer.sog.gg, creeper03",
+    "inputHint": "One or many — separate them with spaces, commas or new lines. Bare usernames work, and so do full addresses on {domains}.",
+    "submit": "{count, plural, =0 {Reset passwords} one {Reset 1 password} other {Reset # passwords}}",
+    "submitting": "Resetting…",
+    "unsupportedDomainEntries": "{count, plural, one {Not a Minecraft Education address, so it won’t be sent: {entries}. Use a bare username or an address on {domains}.} other {Not Minecraft Education addresses, so they won’t be sent: {entries}. Use bare usernames or addresses on {domains}.}}",
+    "tooMany": "That’s {count} usernames — reset at most {max} at a time.",
+    "requestFailed": "Something went wrong. Please try again.",
+    "resultsHeading": "New passwords",
+    "copyAll": "Copy all {count}",
+    "copied": "Copied",
+    "copyPasswordFor": "Copy the new password for {upn}",
+    "mustChangeOnFirstSignIn": "Must be changed on first sign-in",
+    "errors": {
+      "invalidUsername": "Not a valid entry. Enter a username on its own, or a full Minecraft Education address.",
+      "unsupportedDomain": "Only accounts on {domains} can be reset.",
+      "notFound": "No account found on {domains}.",
+      "azureAuth": "Couldn’t reach Microsoft. The Azure credentials may have expired — tell an admin.",
+      "graphError": "Microsoft refused the change (error {status}). Please try again."
+    }
+  }
+}

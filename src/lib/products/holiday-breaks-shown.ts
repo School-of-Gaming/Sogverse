@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { breakName, type HolidayBreak } from "@/lib/holiday-breaks";
-import { formatCompactDateRange } from "@/lib/utils";
+import { formatCompactDateRange } from "@/lib/date-format";
 import type { ProductType } from "@/types";
 
 /**

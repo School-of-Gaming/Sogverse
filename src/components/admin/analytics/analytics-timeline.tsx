@@ -13,7 +13,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { formattingLocale } from "@/lib/constants/locales";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import type { AnalyticsResult, DayVisits } from "@/services/admin-analytics/admin-analytics.build";
 import { AnalyticsFailure, ReadAt } from "./analytics-view";
 

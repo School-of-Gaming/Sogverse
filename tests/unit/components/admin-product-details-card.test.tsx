@@ -1,12 +1,28 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import enProductTag from "@/../messages/en/productTag.json";
+import enConsentDocuments from "@/../messages/en/consentDocuments.json";
+import enProductDetail from "@/../messages/en/productDetail.json";
+import enProductAudience from "@/../messages/en/productAudience.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 import { syntheticConsumerProduct } from "../../mocks/product-admin-detail-row";
+
+const messages = {
+  admin: enAdmin,
+  common: enCommon,
+  productTag: enProductTag,
+  consentDocuments: enConsentDocuments,
+  productDetail: enProductDetail,
+  productAudience: enProductAudience,
+};
 
 /**
  * ============================================================================
@@ -28,7 +44,7 @@ const reads = vi.hoisted(() => ({
   product: undefined as unknown,
 }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: () => ({ data: reads.product, isLoading: false }),
   usePlannedSessions: () => ({ data: [], isPending: false }),
 }));

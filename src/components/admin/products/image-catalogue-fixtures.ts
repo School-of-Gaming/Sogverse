@@ -1,4 +1,7 @@
-import type { CatalogueImageUsage, ProductPictureUser } from "@/services/catalogue-images";
+import type {
+  CatalogueImageUsage,
+  ProductPictureUser,
+} from "@/services/catalogue-images/catalogue-images.service";
 import type { CatalogueImage } from "@/types";
 
 /**

@@ -1,0 +1,50 @@
+{
+  "pageTitle": "Boutique",
+  "sections": {
+    "clubs": "Clubs",
+    "camps": "Stages",
+    "events": "Événements"
+  },
+  "filters": {
+    "type": "Type",
+    "audience": "Public",
+    "designedFor": "Conçu pour",
+    "typeClubs": "Clubs",
+    "typeCamps": "Stages",
+    "typeEvents": "Événements",
+    "topic": "Univers",
+    "format": "Format",
+    "formatOnline": "En ligne",
+    "formatInPerson": "En présentiel",
+    "price": "Prix",
+    "priceFree": "Gratuit",
+    "pricePaid": "Payant",
+    "language": "Langue",
+    "age": "Âge",
+    "days": "Jours",
+    "clearAll": "Effacer",
+    "filterBy": "Filtrer par",
+    "title": "Filtres",
+    "activeCount": "{count, plural, one {# filtre actif} other {# filtres actifs}}",
+    "removeFilter": "Retirer {label}"
+  },
+  "card": {
+    "ages": "{min}–{max} ans",
+    "perMonth": "{price} / mois",
+    "upfrontTotal": "{price}",
+    "free": "Gratuit",
+    "notAvailableInCurrency": "Pas en {currency}",
+    "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
+    "viewDetails": "Voir",
+    "cardLink": "{action} — {name}",
+    "manage": "Gérer",
+    "fullDisabled": "Complet",
+    "alreadyStarted": "Déjà commencé",
+    "alreadyEnded": "Déjà terminé",
+    "online": "En ligne"
+  },
+  "empty": {
+    "noProducts": "Rien ici pour l’instant — de nouvelles offres arrivent.",
+    "noMatches": "Aucun résultat. Essayez d’effacer vos filtres."
+  }
+}

@@ -8,11 +8,11 @@ import {
   ParticipationsService,
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import { resolveCustomerFamilyViaRls } from "@/services/family/family.server";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import { resolveBillingAccountsViaRls } from "@/services/billing/billing.server";
-import type { BillingAccount } from "@/services/billing";
+import type { BillingAccount } from "@/services/billing/billing.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");

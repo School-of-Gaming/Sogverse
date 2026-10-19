@@ -8,8 +8,18 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enProductBrowse from "@/../messages/en/productBrowse.json";
+import enProductAudience from "@/../messages/en/productAudience.json";
+import enProductTag from "@/../messages/en/productTag.json";
+import enCommon from "@/../messages/en/common.json";
 import { ProductBrowseFilterPanel } from "@/components/public/products/product-browse-filter-panel";
+
+const messages = {
+  productBrowse: enProductBrowse,
+  productAudience: enProductAudience,
+  productTag: enProductTag,
+  common: enCommon,
+};
 
 /**
  * **The filter rows are mounted in one place at a time, and the sheet keeps

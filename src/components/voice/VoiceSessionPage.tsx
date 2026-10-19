@@ -24,17 +24,19 @@ import {
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
   useTraineeGroupOverlay,
-} from "@/services/member-flair";
+} from "@/services/member-flair/member-flair.queries";
 import {
   isEmptySessionFeedback,
+} from "@/services/session-feedback/session-feedback.contracts";
+import {
   useOwnSessionFeedback,
   useSaveSessionFeedback,
-} from "@/services/session-feedback";
+} from "@/services/session-feedback/session-feedback.queries";
 import {
   NOT_A_SOGVERSE_ROOM,
-  useVoiceToken,
   type VoiceRoomStanding,
-} from "@/services/voice";
+} from "@/services/voice/voice.contracts";
+import { useVoiceToken } from "@/services/voice/voice.queries";
 import { ApiError } from "@/lib/api/api-error";
 import type { SessionFeedbackResult } from "@/components/voice/feedback/session-feedback-items";
 import type { GamerCreation } from "@/types";

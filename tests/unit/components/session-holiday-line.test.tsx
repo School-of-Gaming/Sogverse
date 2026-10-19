@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import fiSessionBadge from "@/../messages/fi/sessionBadge.json";
 import { SessionHolidayLine } from "@/components/session-feed";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
+
+const en = { sessionBadge: enSessionBadge };
+const fi = { sessionBadge: fiSessionBadge };
 
 /**
  * The holiday entry both feeds draw: the break's bare dates in the compact

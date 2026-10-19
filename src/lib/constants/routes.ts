@@ -776,6 +776,13 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /** Every testimonial — real words from parents, gamers and gedus. */
+    testimonials: "/admin/testimonials",
+    /** The form a new testimonial is written in. */
+    testimonialNew: "/admin/testimonials/new",
+    /** One testimonial's editor. */
+    testimonial: (id: string) =>
+      ({ pathname: "/admin/testimonials/[id]", params: { id } }) as const,
     /**
      * Every spotlight, switched on or not — the notes with a picture appended
      * to every parent's session report email — and where each is switched on and off.

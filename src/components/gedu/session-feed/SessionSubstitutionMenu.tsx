@@ -6,7 +6,9 @@ import {
   useLockExplanation,
   type LockExplanation,
 } from "@/components/ui/locked-control";
-import { substitutionRequestFailureKey } from "@/services/session-substitution";
+import {
+  substitutionRequestFailureKey,
+} from "@/services/session-substitution/session-substitution.refusals";
 import { SessionCardMenu } from "./SessionCardMenu";
 import {
   SessionSubstitutionRequestDialog,

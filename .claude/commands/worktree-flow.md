@@ -44,13 +44,16 @@ in the run, once `EnterWorktree` has legitimately moved the session into one.
    ```
 
    It verifies the base, creates the worktree at `.claude/worktrees/<short-name>`
-   on branch `feat/<short-name>`, junctions any nested install, and copies
-   `.env.local` in. **Do not run `npm install`** — the worktree resolves
-   `node_modules` upward from the parent checkout, so an install costs several
-   minutes and a gigabyte for nothing. The script's header carries the reasoning
-   for all of it, including the one case it cannot cover: a branch that *will*
+   on branch `feat/<short-name>`, junctions any nested install, copies
+   `.env.local` in, and seeds the type-check caches from a sibling worktree.
+   **Do not run `npm install`** — the worktree resolves `node_modules` upward
+   from the parent checkout, so an install costs several minutes and a gigabyte
+   for nothing. The script's header carries the reasoning
+   for all of it, including the two cases it cannot cover: a branch that *will*
    change dependencies needs `npm install` inside the worktree after that change
-   lands, and only then.
+   lands, and only then; and a branch that edits `packages/sog-ui` sees the main
+   checkout's SOG-UI until it points the app at its own copy, with uncommitted
+   edits the header lists.
 
    Picking up a branch that already exists: add `-Existing`, which checks it out
    without a base, then go straight to step 2.
@@ -306,12 +309,13 @@ session's context is at its largest, so a command here costs several times what 
 same command cost in Phase 1. Batch what can be batched — independent commands
 belong in one call — and prefer the script wherever one exists.
 
-1. **Confirm clean:** `npm run gates` — lint, type-check, translations and the
-   full suite, in one call. It runs every gate whatever the earlier ones did,
-   so one invocation returns the complete picture instead of one failure per
-   cycle, and prints nothing for a gate that passes. Phase 2's per-file test
-   runs were for iteration; landing gets the whole suite. Everything must be
-   committed too.
+1. **Confirm clean:** `npm run gates` — lint, type-check, translations and every
+   test the branch can affect, in one call. It runs every gate whatever the
+   earlier ones did, so one invocation returns the complete picture instead of
+   one failure per cycle, and prints nothing for a gate that passes. Phase 2's
+   per-file test runs were for iteration; landing gets every test the whole
+   branch can reach, and CI runs the full suite on `dev` after the push.
+   Everything must be committed too.
 
    A run is current as long as HEAD hasn't moved: when the gates already
    passed on the exact commit being merged, say so and skip the re-run — the

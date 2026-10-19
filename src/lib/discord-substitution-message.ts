@@ -9,8 +9,13 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { type GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
-import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
-import { loadMessages, type Messages } from "@/i18n/messages";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { commonMessages } from "@/i18n/namespaces/common";
+import { discordSubMessages } from "@/i18n/namespaces/discordSub";
+import { geduMessages } from "@/i18n/namespaces/gedu";
+import { sessionFactsMessages } from "@/i18n/namespaces/sessionFacts";
 import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution/session-substitution.contracts";
 import { Constants, type SubstitutionReason } from "@/types";
 
@@ -201,17 +206,26 @@ export function parseReasonValue(value: string): SubstitutionReason | null {
  */
 export interface DiscordSubCopy {
   locale: SupportedLocale;
-  sub: ReturnType<typeof createTranslator<Messages, "discordSub">>;
-  picker: ReturnType<typeof createTranslator<Messages, "gedu.substitution">>;
-  form: ReturnType<typeof createTranslator<Messages, "gedu.sessionFeed">>;
-  facts: ReturnType<typeof createTranslator<Messages, "sessionFacts">>;
-  common: ReturnType<typeof createTranslator<Messages, "common">>;
+  sub: ReturnType<typeof createTranslator<DiscordSubMessages, "discordSub">>;
+  picker: ReturnType<typeof createTranslator<DiscordSubMessages, "gedu.substitution">>;
+  form: ReturnType<typeof createTranslator<DiscordSubMessages, "gedu.sessionFeed">>;
+  facts: ReturnType<typeof createTranslator<DiscordSubMessages, "sessionFacts">>;
+  common: ReturnType<typeof createTranslator<DiscordSubMessages, "common">>;
 }
+
+/** The namespaces the command's messages read, and no others. */
+type DiscordSubMessages = Pick<Messages, "discordSub" | "gedu" | "sessionFacts" | "common">;
 
 export async function loadDiscordSubCopy(
   locale: SupportedLocale,
 ): Promise<DiscordSubCopy> {
-  const messages = await loadMessages(locale);
+  const [discordSub, gedu, sessionFacts, common] = await Promise.all([
+    loadNamespace(discordSubMessages, locale),
+    loadNamespace(geduMessages, locale),
+    loadNamespace(sessionFactsMessages, locale),
+    loadNamespace(commonMessages, locale),
+  ]);
+  const messages: DiscordSubMessages = { discordSub, gedu, sessionFacts, common };
   return {
     locale,
     sub: createTranslator({ locale, messages, namespace: "discordSub" }),

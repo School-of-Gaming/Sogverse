@@ -1,0 +1,13 @@
+{
+  "successTitle": "Sähköposti vahvistettu",
+  "successDescription": "Kiitos – nyt tiedämme, että tämä osoite tavoittaa sinut, eikä mikään tärkeä jää saamatta.",
+  "goToDashboard": "Siirry Oma SOG -sivulle",
+  "invalidTitle": "Tämä linkki ei enää toimi",
+  "invalidDescription": "Vahvistuslinkki lakkaa toimimasta, kun tilin sähköpostiosoite vaihtuu. Avaa asetukset ja lähetä itsellesi uusi linkki.",
+  "goToSettings": "Siirry asetuksiin",
+  "gamerVerifiedTitle": "Sähköpostiosoitteesi on vahvistettu",
+  "gamerChoosePasswordDescription": "Seuraavaksi valitse salasanasi – lähetämme sinulle linkin sähköpostitse.",
+  "gamerSendPasswordLink": "Lähetä minulle salasanalinkki",
+  "gamerPasswordLinkSent": "Lähetetty. Katso sähköpostisi.",
+  "gamerPasswordLinkFailed": "Se ei onnistunut. Yritä uudelleen."
+}

@@ -18,13 +18,17 @@ import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
-import { geduContractKeys } from "@/services/gedu";
+import { geduContractKeys } from "@/services/gedu/gedu-contract.keys";
 import { createMockProfile } from "../../mocks/supabase";
 import type { GeduContractAcceptance, Profile } from "@/types";
+
+const messages = { gedu: enGedu, settings: enSettings, common: enCommon };
 
 /**
  * **The gedu contract settings card is born in its real state, and there is no
@@ -53,14 +57,14 @@ const auth: { profile: Profile } = {
 };
 
 vi.mock("@/providers", () => providersModule(() => auth.profile));
-vi.mock("@/services/users", () => usersServiceModule());
-vi.mock("@/services/locations", () => locationsServiceModule());
-vi.mock("@/services/minecraft", () => minecraftServiceModule());
-vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/services/users/users.queries", () => usersServiceModule());
+vi.mock("@/services/locations/locations.queries", () => locationsServiceModule());
+vi.mock("@/services/minecraft/minecraft.queries", () => minecraftServiceModule());
+vi.mock("@/services/roblox/roblox.queries", () => robloxServiceModule());
 vi.mock("@/components/settings/notification-preferences-card", () =>
   notificationPreferencesCardModule(),
 );
-vi.mock("@/services/marketing-consents", () =>
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () =>
   marketingConsentsServiceModule(),
 );
 vi.mock("@/components/game-account", () => gameAccountModule());

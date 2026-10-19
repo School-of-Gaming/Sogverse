@@ -18,12 +18,11 @@ import {
   MessageSquareHeart,
   Receipt,
   Sparkles,
-  Spotlight,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useAuth } from "@/providers";
 import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { adminHubPrefixes, isAtOrBeneath } from "@/components/admin/hubs/admin-hubs";
@@ -34,7 +33,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "testing"
   | "tools" | "products" | "invoicing"
-  | "libraryContent" | "spotlights" | "landingPages" | "analytics" | "platformVision"
+  | "libraryContent" | "marketing" | "analytics" | "platformVision"
   | "substitutions" | "feedback";
 
 interface NavItemDef {
@@ -83,10 +82,16 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
       matches: adminHubPrefixes("invoicing"),
     },
     { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
-    { href: ROUTES.admin.spotlights, labelKey: "spotlights", icon: <Spotlight className="h-5 w-5" /> },
-    { href: ROUTES.admin.landingPages, labelKey: "landingPages", icon: <Megaphone className="h-5 w-5" /> },
-    // Under the landing pages because it is mostly read about them: which
-    // pages and which campaigns bring families in.
+    // The public site's persuasion in one hub: the landing pages, the
+    // testimonials it quotes and the spotlights the report emails carry.
+    {
+      href: ROUTES.admin.landingPages,
+      labelKey: "marketing",
+      icon: <Megaphone className="h-5 w-5" />,
+      matches: adminHubPrefixes("marketing"),
+    },
+    // Under marketing because it is mostly read about it: which pages and
+    // which campaigns bring visitors in.
     { href: ROUTES.admin.analytics, labelKey: "analytics", icon: <ChartLine className="h-5 w-5" /> },
     // Last of the content entries and above the tooling: it is read, not
     // worked in, and an admin reaches it from a link far more than by habit.

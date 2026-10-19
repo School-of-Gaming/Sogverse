@@ -35,7 +35,7 @@ import {
   MARKDOWN_USE_CASES,
   type MarkdownUseCase,
 } from "@/lib/authored-markdown";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * A small rich-text editor over a **markdown** value: markdown goes in, the

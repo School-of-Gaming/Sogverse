@@ -9,8 +9,9 @@ npm run dev              # Start dev server
 npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
+npm run lint:file -- <f> # ESLint on just these files, keeping the cache — a bare `npx eslint` deletes .eslintcache
 npm run type-check       # TypeScript check (tsc --noEmit)
-npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + tests (runs all, reports every failure)
+npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + the tests the change can affect vs origin/dev (runs all, reports every failure; -- --all for every test, -- --list to see the selection)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
@@ -130,6 +131,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Library — articles, their working and published copies | `src/services/library/` |
 | Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
 | Spotlights — the admin notes appended to every parent's session report email | `src/services/spotlights/` |
+| Testimonials — the store of real words from parents, gamers and gedus, the landing pages that quote them, and the arrangements every page lays them out in | `src/services/testimonials/` |
 | Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { OutboundLink } from "@/components/ui/outbound-link";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {

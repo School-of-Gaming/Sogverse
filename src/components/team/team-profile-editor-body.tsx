@@ -12,7 +12,7 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import type { AppHref } from "@/lib/constants/routes";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   FormSection,
   TeamProfileAboutSection,

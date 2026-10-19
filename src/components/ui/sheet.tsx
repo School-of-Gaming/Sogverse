@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
 import { useDocumentScrollLock } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * How long the scrim's fade and the panel's slide take, in milliseconds. It is

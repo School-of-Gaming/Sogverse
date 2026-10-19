@@ -1,7 +1,9 @@
 "use client";
 
 import type { ProductBrowseRow } from "@/types";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import { ProductBrowsePage } from "./product-browse-page";
 import { visibleCategories } from "./shop-categories";
 import { useShopCategories } from "./use-shop-categories";

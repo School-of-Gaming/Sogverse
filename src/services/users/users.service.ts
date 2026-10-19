@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Profile, ProfileUpdate, UserRole, AppSupabaseClient } from "@/types";
-import { escapeLikePattern, searchTerms } from "@/lib/utils";
+import { escapeLikePattern, searchTerms } from "@/lib/search";
 import { walkPages } from "@/lib/supabase/paging";
 import { keysetPage, type KeysetCursor } from "@/lib/supabase/keyset";
 import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";

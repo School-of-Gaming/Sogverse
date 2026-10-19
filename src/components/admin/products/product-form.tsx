@@ -13,7 +13,7 @@ import {
   LOCALE_CONFIG,
   resolveLocale,
 } from "@/lib/constants/locales";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { useLocale } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";

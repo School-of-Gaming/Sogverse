@@ -163,7 +163,7 @@ function HelpFaqBlock({ items }: { items: readonly FaqAccordionItem[] }) {
       <Heading level={3} step="card-title">
         {t("faqHeading")}
       </Heading>
-      <FaqAccordion items={items} />
+      <FaqAccordion items={items} questionLevel={4} />
     </div>
   );
 }

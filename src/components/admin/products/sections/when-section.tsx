@@ -14,7 +14,8 @@ import {
   lastSessionDate,
 } from "@/lib/session-dates";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 import { useNow } from "@/providers";
 import { HolidayCalendarPicker } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { FormSection } from "../form-primitives";

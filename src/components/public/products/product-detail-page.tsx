@@ -18,16 +18,18 @@ import {
   type GamerAgeBlock,
 } from "@/lib/gamer-age-eligibility";
 import { useAuth } from "@/providers/auth-provider";
-import { useLocationsByIds } from "@/services/locations";
-import { useProductDetail } from "@/services/products";
-import { useHolidayBreaks } from "@/services/holiday-breaks";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import { useProductDetail } from "@/services/products/products.queries";
+import {
+  useHolidayBreaks,
+} from "@/services/holiday-breaks/holiday-breaks.queries";
 import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
-import { useGamerBirths, useMyGamers } from "@/services/gamers";
+import { useGamerBirths, useMyGamers } from "@/services/gamers/gamers.queries";
 import {
   useParticipationCounts,
   useProductSeatCountsRealtime,
-} from "@/services/participations";
+} from "@/services/participations/participations.queries";
 import {
   deriveRegistrationState,
   registrationCtaKind,

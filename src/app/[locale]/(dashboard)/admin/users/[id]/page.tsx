@@ -23,15 +23,20 @@ import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-c
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
-import { UsersService } from "@/services/users";
-import { GamerService } from "@/services/gamers";
-import { MinecraftService } from "@/services/minecraft";
-import { RobloxService } from "@/services/roblox";
-import { ParticipationsService } from "@/services/participations";
-import type { AdminGamerParticipationRow } from "@/services/participations";
+import { UsersService } from "@/services/users/users.service";
+import { GamerService } from "@/services/gamers/gamers.service";
+import { MinecraftService } from "@/services/minecraft/minecraft.service";
+import { RobloxService } from "@/services/roblox/roblox.service";
+import {
+  ParticipationsService,
+} from "@/services/participations/participations.service";
+import type {
+  AdminGamerParticipationRow,
+} from "@/services/participations/participations.service";
 // From the service module, for the reason given for the contract service below.
 import {
   AssignmentsService,

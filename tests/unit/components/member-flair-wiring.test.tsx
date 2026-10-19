@@ -9,12 +9,18 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enCommon from "@/../messages/en/common.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { GeduProductPage } from "@/components/gedu/session-details/GeduProductPage";
-// The real service, reached past the barrel this file mocks — the refusal test
+// The real service, which this file leaves unmocked — the refusal test
 // below drives it over a fake transport so the error the dialog meets is the one
 // supabase-js actually builds.
 import { MemberFlairService } from "@/services/member-flair/member-flair.service";
@@ -22,12 +28,24 @@ import type {
   FutureSessionFeedEntry,
   PastSessionFeedEntry,
 } from "@/components/gedu/session-feed";
-import type { GeduGroupFeed } from "@/services/gedu-sessions";
+import type {
+  GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import type { GeduAssignedProduct, ProductType } from "@/types";
 import {
   createFetchStubbedClient,
   postgrestJson,
 } from "../../mocks/postgrest-fetch";
+
+const messages = {
+  gedu: enGedu,
+  productType: enProductType,
+  common: enCommon,
+  memberFlair: enMemberFlair,
+  voiceButton: enVoiceButton,
+  sessionBadge: enSessionBadge,
+  sessionFeed: enSessionFeed,
+};
 
 // The rich-text note fields are opaque here: nothing below opens one, types
 // into one, or asserts on the markdown one produces (the "Private note" a test
@@ -135,16 +153,13 @@ const noopMutation = vi.hoisted(() => () => ({
   isPending: false,
 }));
 
-vi.mock("@/services/assignments", () => ({
+vi.mock("@/services/assignments/assignments.queries", () => ({
   useGeduAssignedProduct: () => ({ data: reads.product, isPending: false }),
 }));
 
-// The hooks are stubbed; everything else — the SQLSTATEs the shared save module
-// reads at module scope, the photo cap and accept list the photo block reads —
-// is kept real, so a constant added to the contracts cannot silently become
-// `undefined` in here.
-vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/gedu-sessions")>()),
+// The hooks the page binds are stubbed; the constants and SQLSTATEs the shared save
+// module and the photo block read live in the contracts module, which nothing mocks.
+vi.mock("@/services/gedu-sessions/gedu-sessions.queries", () => ({
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
   useSetSessionNotes: noopMutation,
   useEmailSessionReport: noopMutation,
@@ -159,17 +174,20 @@ vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
 // resolver: this page asks a product what it wants asked and the roster what
 // their parents answered, and an ordinary product asks nothing — which is the
 // shape every fixture here has.
-vi.mock("@/services/gamer-photo-consents", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/gamer-photo-consents")>()),
+vi.mock("@/services/gamer-photo-consents/product-gamer-photo-consents.queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents/product-gamer-photo-consents.queries")>()),
   useProductGamerPhotoConsentTypes: () => ({ data: [] }),
+}));
+vi.mock("@/services/gamer-photo-consents/gamer-photo-consents.queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents/gamer-photo-consents.queries")>()),
   useGamerPhotoConsentsForGamers: () => ({ data: [] }),
 }));
 
-vi.mock("@/services/minecraft", () => ({
+vi.mock("@/services/minecraft/minecraft.queries", () => ({
   useUpdateGroupMemberMinecraft: noopMutation,
 }));
 
-vi.mock("@/services/roblox", () => ({
+vi.mock("@/services/roblox/roblox.queries", () => ({
   useUpdateGroupMemberRoblox: noopMutation,
   useRobloxRenders: () => ({ data: undefined }),
 }));
@@ -177,15 +195,14 @@ vi.mock("@/services/roblox", () => ({
 // The two writes a gedu may make about their own seat. Stubbed for the same
 // reason every other mutation here is: this suite is about the roster's flair,
 // and an unstubbed hook reaches for a QueryClient this tree does not provide.
-// Everything else is kept real — the note-length cap the substitution dialog reads is
-// a constant of this module, and a wholesale mock makes it `undefined` here.
-vi.mock("@/services/session-substitution", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+// The note-length cap the substitution dialog reads lives in the contracts module,
+// which nothing mocks.
+vi.mock("@/services/session-substitution/session-substitution.queries", () => ({
   useRequestSessionSubstitution: noopMutation,
   useWithdrawSessionSubstitutionRequest: noopMutation,
 }));
 
-vi.mock("@/services/member-flair", () => ({
+vi.mock("@/services/member-flair/member-flair.queries", () => ({
   useSetGamerGroupNote: () => ({ mutateAsync: setNote, isPending: false }),
   useSetGamerGroupCreations: () => ({
     mutateAsync: setCreations,

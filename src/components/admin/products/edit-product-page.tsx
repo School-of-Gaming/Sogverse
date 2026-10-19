@@ -8,7 +8,7 @@ import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { useProductAdmin } from "@/services/products";
+import { useProductAdmin } from "@/services/products/products.queries";
 import { ProductFormEdit } from "./product-form-edit";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";

@@ -36,6 +36,18 @@ export const ADMIN_HUBS = {
     ],
     alsoCovers: [],
   },
+  // What the public site says to win families: the landing pages, the
+  // testimonials the site quotes, and the spotlights the session report
+  // emails carry. Each tab's detail, new and edit pages sit beneath its own
+  // path, so its prefix already lights the entry there.
+  marketing: {
+    tabs: [
+      { id: "landingPages", href: ROUTES.admin.landingPages },
+      { id: "testimonials", href: ROUTES.admin.testimonials },
+      { id: "spotlights", href: ROUTES.admin.spotlights },
+    ],
+    alsoCovers: [],
+  },
 } as const satisfies Record<
   string,
   {
@@ -51,7 +63,7 @@ export type AdminHubTabId =
   (typeof ADMIN_HUBS)[AdminHubId]["tabs"][number]["id"];
 
 /** Every hub, in rail order. */
-export const ADMIN_HUB_IDS: readonly AdminHubId[] = ["products", "invoicing"];
+export const ADMIN_HUB_IDS: readonly AdminHubId[] = ["products", "invoicing", "marketing"];
 
 /**
  * Whether `pathname` is `prefix` or a page beneath it. A segment boundary, so

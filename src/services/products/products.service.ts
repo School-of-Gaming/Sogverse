@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
-import { escapeLikePattern } from "@/lib/utils";
+import { escapeLikePattern } from "@/lib/search";
 import {
   keysetPage,
   quoteFilterValue,

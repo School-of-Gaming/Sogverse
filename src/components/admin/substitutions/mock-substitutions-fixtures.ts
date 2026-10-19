@@ -3,7 +3,7 @@ import type {
   AdminSubstitutionRequest,
   OpenAdminSubstitutionRequest,
   SubstitutedAdminSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Fixtures for the Substitutions preview scene.

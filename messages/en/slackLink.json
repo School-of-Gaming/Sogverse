@@ -1,0 +1,29 @@
+{
+  "confirm": {
+    "title": "Link your Slack account",
+    "body": "Link the Slack account <b>@{username}</b> to your School of Gaming admin account? That Slack account will be able to approve substitutes on your behalf. Only link an account that is yours.",
+    "action": "Link account",
+    "failed": "Something went wrong and your account wasn’t linked. Try again."
+  },
+  "linked": {
+    "title": "Linked to @{username}",
+    "body": "You can now approve substitutes from Slack.",
+    "goToDashboard": "Go to the dashboard"
+  },
+  "used": {
+    "title": "This link has already been used",
+    "body": "Each link works once. Run <code>/link</code> in Slack again to get a new one."
+  },
+  "expired": {
+    "title": "This link has expired",
+    "body": "Links expire after 10 minutes. Run <code>/link</code> in Slack again to get a new one."
+  },
+  "missingToken": {
+    "title": "This link is incomplete",
+    "body": "Run <code>/link</code> in Slack again to get a new one."
+  },
+  "refused": {
+    "title": "Only admins can link a Slack account",
+    "body": "This account can’t link one. If you’re an admin, sign in with your admin account."
+  }
+}

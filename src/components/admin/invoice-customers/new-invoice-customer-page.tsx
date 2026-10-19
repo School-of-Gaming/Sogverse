@@ -3,7 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
-import { useCreateInvoiceCustomer } from "@/services/invoice-customers";
+import {
+  useCreateInvoiceCustomer,
+} from "@/services/invoice-customers/invoice-customers.queries";
 import { InvoiceCustomerForm } from "./invoice-customer-form";
 import { InvoiceCustomerPageShell } from "./invoice-customer-page-shell";
 import { emptyInvoiceCustomerDraft } from "./invoice-customer-draft";

@@ -6,7 +6,7 @@ import { Markdown } from "@/components/ui/markdown";
 import { Link } from "@/i18n/navigation";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { LibraryCategory } from "../categories";
 import {
