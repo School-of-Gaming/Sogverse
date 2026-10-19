@@ -188,31 +188,6 @@ The family enrollment cards and the hook behind them (`src/components/family/`) 
 - [ ] Once the bulk of UI surfaces consume `useTimezone()`, flip `NextIntlClientProvider`'s `timeZone` prop in `src/providers/index.tsx` from `DEFAULT_TIMEZONE` to the live value so `useFormatter().dateTime()` follows the same source of truth (today it still hardcodes `Europe/Helsinki`; the comment in the file flags this).
 - [ ] Consider the pages that still show a client-side React Query skeleton on load and would benefit from the server-prefetch + `initialData` pattern; adopt page-by-page. Drop the per-page skeleton at the same time so the win is visible. (The family dashboards and the family product page have both been through this and are the shape to copy.)
 
-### Enable next-intl typed messages + locale-parity test
-
-We have no compile-time safety on translation keys today. A dead-key audit during the products browse review deleted `admin.products.hints.{free,paid}Detail` because the heuristic missed that `billing-section.tsx:76` references them via `t(\`hints.${mode}Detail\`)`. The bug only surfaced as a runtime `IntlError: MISSING_MESSAGE` in the browser — no test, lint, or type-check caught it.
-
-Two layers worth setting up together:
-
-**1. next-intl typed messages augmentation.** Add a `global.d.ts` (or `next-intl.d.ts`) declaring the `IntlMessages` interface from the canonical `en.json` shape. Once in place, every `t('foo.bar')` and every well-typed dynamic template (`t(\`hints.${mode}Detail\`)` where `mode` is a literal union, not `string`) is checked against the actual bundle. The exact `freeDetail`/`paidDetail` deletion above would have failed `tsc --noEmit` and gone red in CI before merge.
-
-Caveats to be honest about:
-  - Only catches dynamic templates when the variable is typed as a literal union. If someone widens to `string`, the check silently degrades. Worth pairing with a lint rule that disallows raw `string` template parts in `t(\`...\`)` calls.
-  - Only the canonical bundle (en.json) is type-checked. Drift across the other locales is not caught — see (2).
-
-**2. Locale-parity unit test.** Small Vitest test (`tests/unit/i18n/locale-parity.test.ts` or similar) that:
-  - Loads all five bundles
-  - Flattens each to its set of leaf key paths
-  - Asserts every non-en bundle's key set equals en's — except `tlh`, which deliberately **omits** the legal-page keys (see `src/i18n/CLAUDE.md`), so its assertion is "en's set minus the legal namespaces"
-  - Fails CI if any locale is missing a key (or has an extra one)
-
-Catches the case where en.json gets a new key but a translation file is forgotten — common when adding features.
-
-- [ ] Set up next-intl typed messages augmentation (one-liner global.d.ts referencing en.json)
-- [ ] Verify `npm run type-check` flags a deliberately-mistyped key in a sandbox before committing
-- [ ] Add `tests/unit/i18n/locale-parity.test.ts` comparing flat key sets across all five bundles
-- [ ] Optionally: lint rule rejecting `t(\`...${someVar}...\`)` where `someVar` is `string` rather than a literal union
-
 ### Dead-code detection (knip) — reconsider
 
 We keep circling back to wanting an automated dead-code check (unused exports/files/deps). Knip has been evaluated several times before for various reasons and not adopted; parking the latest analysis here so the next pass starts from it rather than re-deriving.
