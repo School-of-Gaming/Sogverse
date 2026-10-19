@@ -23,11 +23,14 @@ import { HeroBackdrop } from "@/components/home/hero-backdrop";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import clubPhoto from "@/assets/marketing/club-lauttasaari.jpg";
 import { Testimonial } from "@/components/home/testimonial";
-import { readHomeTestimonials } from "@/components/home/home-testimonials.server";
+import {
+  featureTestimonialKey,
+  rowTestimonialKeys,
+  safetyTestimonialKeys,
+} from "@/components/home/testimonial-keys";
 import { ROUTES, resolveLocale } from "@/lib/constants";
 import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
 import { cn } from "@/lib/utils";
-import type { HomeTestimonials } from "@/services/testimonials";
 
 /**
  * The home page states no title or description of its own — it inherits the
@@ -88,17 +91,7 @@ function TrustLine({ className }: { className?: string }) {
   );
 }
 
-/**
- * The page reads one thing from the database: the testimonials placed in
- * the three home spots. Each spot renders what it
- * holds, and a spot holding none renders nothing — the row's heading
- * included — rather than a placeholder.
- */
-export default async function HomePage() {
-  return <HomeBody testimonials={await readHomeTestimonials()} />;
-}
-
-function HomeBody({ testimonials }: { testimonials: HomeTestimonials }) {
+export default function HomePage() {
   const t = useTranslations('home');
   const locale = resolveLocale(useLocale());
 
@@ -179,15 +172,14 @@ function HomeBody({ testimonials }: { testimonials: HomeTestimonials }) {
       {/* The emotional proof: one parent's words, large, straight after the
           offer. No heading — the quote is the section. Its top padding is
           the room between the quote and the hero backdrop's lower edge. */}
-      {testimonials.feature.map((testimonial) => (
-        <section key={testimonial.id} className="container mx-auto px-4 py-16 sm:pb-24">
-          <Testimonial
-            testimonial={testimonial}
-            size="feature"
-            className="mx-auto max-w-3xl"
-          />
-        </section>
-      ))}
+      <section className="container mx-auto px-4 py-16 sm:pb-24">
+        <Testimonial
+          size="feature"
+          quote={t(`testimonials.items.${featureTestimonialKey}.quote`)}
+          attribution={t(`testimonials.items.${featureTestimonialKey}.attribution`)}
+          className="mx-auto max-w-3xl"
+        />
+      </section>
 
       {/* Features Section */}
       <section className="container mx-auto px-4 py-24">
@@ -267,33 +259,37 @@ function HomeBody({ testimonials }: { testimonials: HomeTestimonials }) {
               <ArrowRight aria-hidden="true" className="h-4 w-4" />
             </Link>
           </div>
-          {testimonials.safety.length > 0 && (
-            <div className="flex flex-col gap-10 lg:col-start-2">
-              {testimonials.safety.map((testimonial) => (
-                <Testimonial key={testimonial.id} testimonial={testimonial} />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col gap-10 lg:col-start-2">
+            {safetyTestimonialKeys.map((key) => (
+              <Testimonial
+                key={key}
+                quote={t(`testimonials.items.${key}.quote`)}
+                attribution={t(`testimonials.items.${key}.attribution`)}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
       {/* More parents: joy, a child for whom large groups are hard, and
           language. The quotes are peers with no action of their own, so they
           sit on the page ground under one heading rather than in cards. */}
-      {testimonials.row.length > 0 && (
-        <section className="container mx-auto px-4 py-16 sm:py-24">
-          <div className="mx-auto max-w-2xl">
-            <Heading level={2} step="display" align="center">
-              {t('testimonials.heading')}
-            </Heading>
-          </div>
-          <div className="mx-auto mt-12 grid max-w-5xl gap-10 md:grid-cols-3 lg:mt-16">
-            {testimonials.row.map((testimonial) => (
-              <Testimonial key={testimonial.id} testimonial={testimonial} />
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="container mx-auto px-4 py-16 sm:py-24">
+        <div className="mx-auto max-w-2xl">
+          <Heading level={2} step="display" align="center">
+            {t('testimonials.heading')}
+          </Heading>
+        </div>
+        <div className="mx-auto mt-12 grid max-w-5xl gap-10 md:grid-cols-3 lg:mt-16">
+          {rowTestimonialKeys.map((key) => (
+            <Testimonial
+              key={key}
+              quote={t(`testimonials.items.${key}.quote`)}
+              attribution={t(`testimonials.items.${key}.attribution`)}
+            />
+          ))}
+        </div>
+      </section>
 
       {/* How It Works Section */}
       <section className="bg-card py-24">

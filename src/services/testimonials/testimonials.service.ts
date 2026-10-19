@@ -1,17 +1,13 @@
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
-import type { AppSupabaseClient, HomeTestimonialSpot } from "@/types";
+import type { AppSupabaseClient } from "@/types";
 import {
-  HOME_TESTIMONIAL_SPOTS,
-  homeTestimonialRows,
   oauthClientNameRows,
   testimonialInput,
   testimonialVersionInput,
   type AdminTestimonial,
-  type HomeTestimonials,
   type TestimonialInput,
   type TestimonialSaver,
-  type TestimonialUsage,
   type TestimonialVersion,
   type TestimonialVersionInput,
 } from "./testimonials.contracts";
@@ -21,11 +17,11 @@ const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * A testimonial whole, as the admin reads it: its versions, its home spot,
- * and both savers' profiles — embedded by their constraints' names, since the
+ * A testimonial whole, as the admin reads it: its versions and both savers'
+ * profiles — embedded by their constraints' names, since the
  * two are keys to the same table; an admin reads every profile.
  */
-const ADMIN_COLUMNS = `id, created_at, created_via, updated_at, last_saved_via, creator:profiles!testimonials_created_by_fkey(first_name, last_name), last_saver:profiles!testimonials_last_saved_by_fkey(first_name, last_name), versions:testimonial_translations(locale, attribution, quote), home:home_testimonials(spot, position)`;
+const ADMIN_COLUMNS = `id, created_at, created_via, updated_at, last_saved_via, creator:profiles!testimonials_created_by_fkey(first_name, last_name), last_saver:profiles!testimonials_last_saved_by_fkey(first_name, last_name), versions:testimonial_translations(locale, attribution, quote)`;
 
 interface Profile {
   first_name: string;
@@ -41,7 +37,6 @@ interface AdminRow {
   creator: Profile | null;
   last_saver: Profile | null;
   versions: readonly { locale: string; attribution: string; quote: string }[];
-  home: { spot: HomeTestimonialSpot; position: number } | null;
 }
 
 function profileName(profile: Profile | null): string | null {
@@ -59,24 +54,12 @@ function versionsOf(
 }
 
 /**
- * Every place a testimonial is shown, from what its row embeds. A new kind of
- * place adds its embed to the read and its member here.
- */
-function usagesOf(row: Pick<AdminRow, "home">): TestimonialUsage[] {
-  return row.home === null
-    ? []
-    : [{ kind: "home", spot: row.home.spot, position: row.home.position }];
-}
-
-/**
  * Testimonials: Marketing's store of real words from parents, gamers and
- * gedus, and the read the home page and About make of the placed ones.
+ * gedus.
  *
  * Every method runs on the injected client and nothing here calls `fetch()`.
  * The admin reads run under the tables' admin-only SELECT policies; the
  * writes are admin-guarded RPCs — no testimonial table carries a write grant.
- * Which testimonial fills a home spot is never written here: only migrations
- * write it.
  *
  * **The admin order is most recently saved first**, `id` breaking a tie.
  */
@@ -84,43 +67,12 @@ export class TestimonialsService {
   constructor(private supabase: AppSupabaseClient) {}
 
   // -------------------------------------------------------------------------
-  // The public read
-  // -------------------------------------------------------------------------
-
-  /**
-   * The testimonials placed in the home spots, by spot in reading order —
-   * what the home page and About show. Every caller gets the same answer,
-   * signed in or not. Bounded by construction: six positions at most.
-   */
-  async listHomeTestimonials(): Promise<HomeTestimonials> {
-    const { data, error } = await this.supabase.rpc("list_home_testimonials");
-    if (error) throw error;
-
-    const spots: HomeTestimonials = { feature: [], safety: [], row: [] };
-    const rows = homeTestimonialRows
-      .parse(data)
-      .toSorted(
-        (a, b) =>
-          HOME_TESTIMONIAL_SPOTS.indexOf(a.spot) -
-            HOME_TESTIMONIAL_SPOTS.indexOf(b.spot) || a.position - b.position,
-      );
-    for (const row of rows) {
-      const versions = versionsOf(row.versions);
-      // A testimonial always has a version; one the app cannot show in any
-      // locale it ships would paint an empty quote, so it is left out.
-      if (versions.length === 0) continue;
-      spots[row.spot].push({ id: row.testimonial_id, versions });
-    }
-    return spots;
-  }
-
-  // -------------------------------------------------------------------------
   // Admin reads
   // -------------------------------------------------------------------------
 
   /**
-   * Every testimonial, placed or not, most recently saved first, with its
-   * versions, where it is shown and who created and last saved it.
+   * Every testimonial, most recently saved first, with its versions and who
+   * created and last saved it.
    * Admin-only by RLS: a non-admin caller gets an empty list.
    */
   async listAdminTestimonials(): Promise<AdminTestimonial[]> {
@@ -181,7 +133,7 @@ export class TestimonialsService {
   // Admin writes
   // -------------------------------------------------------------------------
 
-  /** Create a testimonial with its whole version set. Returns its id. It is placed nowhere. */
+  /** Create a testimonial with its whole version set. Returns its id. */
   async createTestimonial(input: TestimonialInput): Promise<string> {
     const parsed = testimonialInput.parse(input);
 
@@ -261,7 +213,6 @@ function toAdminTestimonial(
   return {
     id: row.id,
     versions: versionsOf(row.versions),
-    usages: usagesOf(row),
     createdAt: row.created_at,
     created: saver(row.creator, row.created_via, names),
     updatedAt: row.updated_at,

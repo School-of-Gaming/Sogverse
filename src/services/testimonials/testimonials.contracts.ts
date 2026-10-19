@@ -3,15 +3,14 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { Constants, type HomeTestimonialSpot } from "@/types";
 
 /**
  * Contracts for testimonials — real words from real parents, gamers and gedus,
- * kept in one store by Marketing, and the home spots that show some of them.
+ * kept in one store by Marketing.
  *
  * There is no API route here: the writes are admin-guarded RPCs the admin's
- * own session calls, the admin reads are plain table reads under the admin
- * policies, and the public read is `list_home_testimonials`.
+ * own session calls, and the reads are plain table reads under the admin
+ * policies.
  *
  * **A testimonial's words are per language.** Each version says whom the
  * quote is from (`from`, stored as `attribution`, since FROM is SQL's own
@@ -43,25 +42,6 @@ export function hasQuotationMarks(quote: string): boolean {
     QUOTATION_MARKS.includes(trimmed[trimmed.length - 1])
   );
 }
-
-// ---------------------------------------------------------------------------
-// The home spots
-// ---------------------------------------------------------------------------
-
-/**
- * The home page's spots in page order, each with how many testimonials it
- * holds: the feature quote under the hero, the pair beside the safety facts,
- * and the "What parents tell us" row. About shows the same three groups. The
- * sizes are the database's CHECK on the placements, restated for the pages
- * that lay a spot out.
- */
-export const HOME_TESTIMONIAL_SPOTS = Constants.public.Enums.home_testimonial_spot;
-
-export const HOME_SPOT_SIZE: Record<HomeTestimonialSpot, number> = {
-  feature: 1,
-  safety: 2,
-  row: 3,
-};
 
 // ---------------------------------------------------------------------------
 // What an admin writes
@@ -114,32 +94,6 @@ export interface TestimonialVersion {
   quote: string;
 }
 
-/**
- * One place a testimonial is shown. A discriminated union so a new kind of
- * place joins it as a member, and every surface listing where a testimonial
- * is used handles it by kind. A home spot puts it on About too, in the same
- * group.
- */
-export type TestimonialUsage = {
-  kind: "home";
-  spot: HomeTestimonialSpot;
-  /** From 1, in reading order within the spot. */
-  position: number;
-};
-
-/**
- * The home spot a testimonial fills, or null when it fills none — the one
- * home placement among its usages, since a testimonial is in one home
- * position at most. Every usage is a home spot today, so the answer is the
- * first; a new kind of place in `TestimonialUsage` stops this compiling until
- * it narrows by kind, which is the point.
- */
-export function homePlacement(
-  usages: readonly TestimonialUsage[],
-): { spot: HomeTestimonialSpot; position: number } | null {
-  return usages.at(0) ?? null;
-}
-
 /** Who wrote to a testimonial, and through which AI app. */
 export interface TestimonialSaver {
   /** The admin's name, or null when none is recorded (a migration, an account since removed). */
@@ -156,39 +110,11 @@ export interface AdminTestimonial {
   id: string;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: TestimonialVersion[];
-  /** Every place it is shown; empty when it is shown nowhere. */
-  usages: TestimonialUsage[];
   createdAt: string;
   created: TestimonialSaver;
   updatedAt: string;
   lastSaved: TestimonialSaver;
 }
-
-/** A placed testimonial as the public pages read it: its words, nothing about who keeps it. */
-export interface PublicTestimonial {
-  id: string;
-  /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
-  versions: TestimonialVersion[];
-}
-
-/** The home page's testimonials by spot, each spot in reading order and never over its size. */
-export type HomeTestimonials = Record<HomeTestimonialSpot, PublicTestimonial[]>;
-
-/** What `list_home_testimonials` answers, written from its body. */
-export const homeTestimonialRows = z.array(
-  z.object({
-    spot: z.enum(HOME_TESTIMONIAL_SPOTS),
-    position: z.number().int().min(1),
-    testimonial_id: z.string().uuid(),
-    versions: z.array(
-      z.object({
-        locale: z.string(),
-        attribution: z.string(),
-        quote: z.string(),
-      }),
-    ),
-  }),
-);
 
 /**
  * What `get_oauth_client` answers, narrowed to what naming an AI app needs.

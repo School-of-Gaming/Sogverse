@@ -2092,7 +2092,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Real words from parents, gamers and gedus, kept in one place. The home page and About quote the ones placed there.",
+      "subtitle": "Real words from parents, gamers and gedus, kept in one place.",
       "newTestimonial": "New testimonial",
       "backToList": "Back to testimonials",
       "newPage": {
@@ -2109,19 +2109,7 @@
       "allHeading": "All testimonials",
       "languagesLabel": "Languages",
       "saved": "Saved {date}",
-      "onHome": "Home page: {spot}",
       "quoteHasMarks": "Leave the quotation marks out: the site adds them in each language’s own style.",
-      "home": {
-        "heading": "On the home page",
-        "hint": "The home page shows these in three places, and About shows the same ones. Which testimonial fills a place is decided by a developer; its words are edited here.",
-        "spotHeading": "{spot} ({filled, number} of {size, number})",
-        "spots": {
-          "feature": "Under the hero",
-          "safety": "Beside the safety facts",
-          "row": "What parents tell us"
-        },
-        "emptySpot": "Nothing here: the page shows nothing in this place."
-      },
       "fields": {
         "languages": "Languages",
         "from": "From",
@@ -2131,13 +2119,6 @@
         "languages": "Write it in every language you have it in. Each language needs its quote and whom it is from.",
         "from": "Whom the quote is from, as it should be shown — for example Mum, Finland.",
         "quote": "Their words as they gave them, without quotation marks: the site adds each language’s own. Translating them into another language is fine; changing them is not."
-      },
-      "usage": {
-        "heading": "Where it is used",
-        "none": "It is not shown anywhere yet.",
-        "editNote": "Saving changes its words everywhere it is shown.",
-        "home": "Home page: {spot}, {position, number} of {size, number}",
-        "about": "About: What parents tell us"
       },
       "record": {
         "created": "Created {date}",
@@ -3865,7 +3846,33 @@
       "guarantee": "30-day money-back guarantee"
     },
     "testimonials": {
-      "heading": "What parents tell us"
+      "heading": "What parents tell us",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "The club is the highlight of my son’s week. Every week, my quiet and shy boy transforms into a laughing, loudly chatting child when he gets to interact with like-minded kids. The club’s content and the educators’ expertise have pleasantly surprised me.",
+          "attribution": "Mum, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "Nothing else, no activity or hobby, has made my child sigh with happiness like this.",
+          "attribution": "Mum, Finland"
+        },
+        "largeGroups": {
+          "quote": "Large groups make our child anxious. This is the perfect way for us to engage in a hobby and make new friends.",
+          "attribution": "Mum, Finland"
+        },
+        "finnishImproved": {
+          "quote": "My daughter’s Finnish has improved tremendously in just a month! The gaming educators have been very skilled, friendly, and patient. This really works!",
+          "attribution": "Mum, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "Gaming is fun and supervised. No bullying, no arguing, or bad vibes.",
+          "attribution": "Mum, Finland"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming has been a really positive experience for both the child and the parents. The children have had great gaming experiences with new friends in a safe gaming environment with experienced instructors – I can recommend it!",
+          "attribution": "Dad, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Make gaming a great hobby",

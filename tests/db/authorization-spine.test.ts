@@ -203,11 +203,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   repoint_spotlight_images: { permittedRoles: ["admin"] },
   // The writers of testimonials — create, the editor's whole save, and the
   // one-language write and removal. No testimonial table carries a write
-  // grant, so these are the only path in; nothing deletes a testimonial, and
-  // nothing writes the home spots but a migration. Past the admin guard,
-  // all-NULL arguments are refused with 22023 (create: no version array),
-  // `check_violation` (the one-language write: no quote) or `no_data_found`
-  // (the rest: no such testimonial) — errors, but not the forbidden one.
+  // grant, so these are the only path in, and nothing deletes a testimonial.
+  // Past the admin guard, all-NULL arguments are refused with 22023 (create:
+  // no version array), `check_violation` (the one-language write: no quote)
+  // or `no_data_found` (the rest: no such testimonial) — errors, but not the
+  // forbidden one.
   create_testimonial: { permittedRoles: ["admin"] },
   save_testimonial: { permittedRoles: ["admin"] },
   save_testimonial_version: { permittedRoles: ["admin"] },
@@ -921,12 +921,6 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/team-profiles-public.test.ts",
     why: "SECURITY INVOKER filter over list_public_team_profiles by one id, so it can answer with nothing the list would not: the id only narrows the public set, and an id that is not in it (not approved, not staff, no one) returns no row. Answers every caller identically, which the scope test proves for anon and every signed-in role",
   },
-  // The home page's and About's testimonials, by the same widest reading as
-  // the team reads above: no user named, no uid read, one answer for all.
-  list_home_testimonials: {
-    scopeTest: "tests/db/testimonials.test.ts",
-    why: "SECURITY DEFINER over testimonials, testimonial_translations and home_testimonials, which anon holds no grant on and authenticated reads only as an admin. It crosses that boundary to hand back the placed testimonials alone — the spot, the position, the id and every version's locale, attribution and quote of each testimonial a home spot holds — never an unplaced testimonial and never who created or saved one. It takes no argument and answers every caller identically, anon included, which the scope test proves along with the exact set of rows and keys",
-  },
   is_public_team_photo: {
     scopeTest: "tests/db/team-profiles-public.test.ts",
     why: "the predicate of the team-photos public read policy, which anon evaluates itself, so it has to be executable by anon. SECURITY DEFINER over the team tables anon cannot read, and answers only yes or no: whether a name is the current photo of a profile list_public_team_profiles shows. It reveals nothing the public list does not, and answers every caller identically; the scope test asks it about a public photo, a hidden profile's, a former staffer's and a stray object, and proves the policy it backs lets anon read the first alone",
@@ -993,10 +987,6 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * `holiday_breaks_document` is those breaks with their names and the plan rows
  * each withdrew, the shape every session document carries beside its plan,
  * built as its caller from the same anon-readable rows.
- *
- * `list_home_testimonials` is the public home page's and About's quotes: the
- * testimonials the home spots hold, their words alone, and never the rest of
- * the admin-only store.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
@@ -1009,7 +999,6 @@ const ANON_ALLOWLIST = new Set([
   "list_public_team_profiles",
   "get_public_team_profile",
   "is_public_team_photo",
-  "list_home_testimonials",
 ]);
 
 /**

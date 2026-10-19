@@ -1,32 +1,23 @@
 "use client";
 
-import { Fragment } from "react";
-import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
+import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import {
-  HOME_SPOT_SIZE,
   useAdminTestimonial,
   useSaveTestimonial,
   type AdminTestimonial,
   type TestimonialSaver,
-  type TestimonialUsage,
 } from "@/services/testimonials";
 import { TestimonialEditor } from "./testimonial-editor";
 
 /**
- * `/admin/testimonials/[id]` — one testimonial's editor, where it is used,
- * and who created and last saved it.
- *
- * **Where it is used sits above the editor**, so editing the words of a
- * testimonial the home page shows is a visible decision: a save changes them
- * there and on About at once.
+ * `/admin/testimonials/[id]` — one testimonial's editor, and who created and
+ * last saved it.
  *
  * A save resolves only once the testimonial has been read again, so the page
  * already describes the saved copy when the button comes back. Nothing is
@@ -46,7 +37,6 @@ export function EditTestimonialPage({ testimonialId }: { testimonialId: string }
     >
       {testimonial && (
         <>
-          <TestimonialUsageCard usages={testimonial.usages} />
           <TestimonialEditor
             testimonial={testimonial}
             save={async (input) => {
@@ -73,59 +63,6 @@ export function EditTestimonialPage({ testimonialId }: { testimonialId: string }
         </Card>
       )}
     </AdminEditorPageShell>
-  );
-}
-
-/**
- * Every place the testimonial is shown, each a link to the public page, the
- * way a site's page lists the products connected to it. A home spot puts it
- * on About too, so it lists both.
- */
-function TestimonialUsageCard({ usages }: { usages: readonly TestimonialUsage[] }) {
-  const t = useTranslations("admin.testimonials");
-
-  return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <Heading level={2} step="card-title">{t("usage.heading")}</Heading>
-        {usages.length > 0 && (
-          <p className="text-sm text-muted-foreground">{t("usage.editNote")}</p>
-        )}
-      </CardHeader>
-      <CardContent>
-        {usages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("usage.none")}</p>
-        ) : (
-          <ul className="space-y-2 text-sm">
-            {/* Every usage is a home spot today, which puts the testimonial
-                on About too; a new kind of place in the usage type stops
-                this compiling until it is given its own line. */}
-            {usages.map((usage) => (
-              <Fragment key={`${usage.kind}-${usage.spot}`}>
-                {/* Plain text: the proxy sends a signed-in visitor from Home
-                    to their dashboard, so a link would land the admin on
-                    /admin. About shows the same testimonials and links. */}
-                <li>
-                  {t("usage.home", {
-                    spot: t(`home.spots.${usage.spot}`),
-                    position: usage.position,
-                    size: HOME_SPOT_SIZE[usage.spot],
-                  })}
-                </li>
-                <li>
-                  <Link
-                    href={{ pathname: ROUTES.about, hash: "parents" }}
-                    className="text-act underline-offset-4 hover:underline"
-                  >
-                    {t("usage.about")}
-                  </Link>
-                </li>
-              </Fragment>
-            ))}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 

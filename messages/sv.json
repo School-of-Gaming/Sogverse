@@ -2092,7 +2092,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Startsidan och Om oss citerar dem som placerats där.",
+      "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe.",
       "newTestimonial": "Nytt omdöme",
       "backToList": "Tillbaka till omdömena",
       "newPage": {
@@ -2109,19 +2109,7 @@
       "allHeading": "Alla omdömen",
       "languagesLabel": "Språk",
       "saved": "Sparat {date}",
-      "onHome": "Startsidan: {spot}",
       "quoteHasMarks": "Utelämna citattecknen: webbplatsen lägger till dem på varje språks eget sätt.",
-      "home": {
-        "heading": "På startsidan",
-        "hint": "Startsidan visar dessa på tre ställen, och Om oss visar samma. Vilket omdöme som står var bestäms av en utvecklare; orden redigeras här.",
-        "spotHeading": "{spot} ({filled, number} av {size, number})",
-        "spots": {
-          "feature": "Under hjälteytan",
-          "safety": "Bredvid säkerhetsfakta",
-          "row": "Det här säger föräldrar"
-        },
-        "emptySpot": "Tomt: sidan visar ingenting på det här stället."
-      },
       "fields": {
         "languages": "Språk",
         "from": "Från",
@@ -2131,13 +2119,6 @@
         "languages": "Skriv det på alla språk du har det på. Varje språk behöver citatet och vem det är från.",
         "from": "Vem citatet är från, så som det ska visas — till exempel Mamma, Finland.",
         "quote": "Personens ord som de gavs, utan citattecken: webbplatsen lägger till varje språks egna. Att översätta dem till ett annat språk går bra; att ändra dem gör det inte."
-      },
-      "usage": {
-        "heading": "Var det används",
-        "none": "Det visas inte någonstans än.",
-        "editNote": "När du sparar ändras orden överallt där det visas.",
-        "home": "Startsidan: {spot}, {position, number} av {size, number}",
-        "about": "Om oss: Det här säger föräldrar"
       },
       "record": {
         "created": "Skapat {date}",
@@ -3865,7 +3846,33 @@
       "guarantee": "30 dagars pengarna-tillbaka-garanti"
     },
     "testimonials": {
-      "heading": "Det här säger föräldrar"
+      "heading": "Det här säger föräldrar",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.",
+          "attribution": "Mamma, Finland"
+        },
+        "sighWithHappiness": {
+          "quote": "Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.",
+          "attribution": "Mamma, Finland"
+        },
+        "largeGroups": {
+          "quote": "Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.",
+          "attribution": "Mamma, Finland"
+        },
+        "finnishImproved": {
+          "quote": "Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!",
+          "attribution": "Mamma, Norge"
+        },
+        "funAndSupervised": {
+          "quote": "Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.",
+          "attribution": "Mamma, Finland"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!",
+          "attribution": "Pappa, Finland"
+        }
+      }
     },
     "features": {
       "heading": "Gör spelande till en fantastisk hobby",

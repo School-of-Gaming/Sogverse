@@ -2092,7 +2092,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit. La page d’accueil et la page À propos citent ceux qui y sont placés.",
+      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit.",
       "newTestimonial": "Nouveau témoignage",
       "backToList": "Retour aux témoignages",
       "newPage": {
@@ -2109,19 +2109,7 @@
       "allHeading": "Tous les témoignages",
       "languagesLabel": "Langues",
       "saved": "Enregistré le {date}",
-      "onHome": "Page d’accueil : {spot}",
       "quoteHasMarks": "Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
-      "home": {
-        "heading": "Sur la page d’accueil",
-        "hint": "La page d’accueil les affiche à trois endroits, et la page À propos affiche les mêmes. Un développeur décide quel témoignage occupe quel endroit ; ses mots se modifient ici.",
-        "spotHeading": "{spot} ({filled, number} sur {size, number})",
-        "spots": {
-          "feature": "Sous la bannière",
-          "safety": "À côté des faits sur la sécurité",
-          "row": "Ce qu’en disent les parents"
-        },
-        "emptySpot": "Vide : la page n’affiche rien à cet endroit."
-      },
       "fields": {
         "languages": "Langues",
         "from": "De la part de",
@@ -2131,13 +2119,6 @@
         "languages": "Écrivez-le dans toutes les langues dont vous disposez. Chaque langue a besoin de la citation et de son auteur.",
         "from": "De qui vient la citation, telle qu’elle doit s’afficher — par exemple Maman, Finlande.",
         "quote": "Ses mots tels qu’ils ont été donnés, sans guillemets : le site ajoute ceux de chaque langue. Les traduire dans une autre langue est permis ; les modifier ne l’est pas."
-      },
-      "usage": {
-        "heading": "Où il est utilisé",
-        "none": "Il n’est encore affiché nulle part.",
-        "editNote": "L’enregistrement modifie ses mots partout où il est affiché.",
-        "home": "Page d’accueil : {spot}, {position, number} sur {size, number}",
-        "about": "À propos : Ce qu’en disent les parents"
       },
       "record": {
         "created": "Créé le {date}",
@@ -3865,7 +3846,33 @@
       "guarantee": "Satisfait ou remboursé pendant 30 jours"
     },
     "testimonials": {
-      "heading": "Ce qu’en disent les parents"
+      "heading": "Ce qu’en disent les parents",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise.",
+          "attribution": "Maman, Finlande"
+        },
+        "sighWithHappiness": {
+          "quote": "Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça.",
+          "attribution": "Maman, Finlande"
+        },
+        "largeGroups": {
+          "quote": "Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis.",
+          "attribution": "Maman, Finlande"
+        },
+        "finnishImproved": {
+          "quote": "Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment !",
+          "attribution": "Maman, Norvège"
+        },
+        "funAndSupervised": {
+          "quote": "Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance.",
+          "attribution": "Maman, Finlande"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande !",
+          "attribution": "Papa, Finlande"
+        }
+      }
     },
     "features": {
       "heading": "Le jeu vidéo, un vrai loisir",

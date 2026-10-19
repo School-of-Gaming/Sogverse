@@ -1483,32 +1483,6 @@ export type Database = {
         }
         Relationships: []
       }
-      home_testimonials: {
-        Row: {
-          position: number
-          spot: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id: string
-        }
-        Insert: {
-          position: number
-          spot: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id: string
-        }
-        Update: {
-          position?: number
-          spot?: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "home_testimonials_testimonial_id_fkey"
-            columns: ["testimonial_id"]
-            isOneToOne: true
-            referencedRelation: "testimonials"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invoice_customers: {
         Row: {
           billing_cadence: Database["public"]["Enums"]["invoice_billing_cadence"]
@@ -4960,15 +4934,6 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
-      list_home_testimonials: {
-        Args: never
-        Returns: {
-          position: number
-          spot: Database["public"]["Enums"]["home_testimonial_spot"]
-          testimonial_id: string
-          versions: Json
-        }[]
-      }
       list_public_team_profiles: {
         Args: never
         Returns: {
@@ -5566,7 +5531,6 @@ export type Database = {
       gedu_assignment_role: "primary" | "assistant"
       gedu_qualification: "neuroinclusive" | "consumer_products"
       gender_type: "boy" | "girl" | "non_binary"
-      home_testimonial_spot: "feature" | "safety" | "row"
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       library_article_category:
         | "online_safety"
@@ -5747,7 +5711,6 @@ export const Constants = {
       gedu_assignment_role: ["primary", "assistant"],
       gedu_qualification: ["neuroinclusive", "consumer_products"],
       gender_type: ["boy", "girl", "non_binary"],
-      home_testimonial_spot: ["feature", "safety", "row"],
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       library_article_category: [
         "online_safety",

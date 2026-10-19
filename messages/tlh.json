@@ -2136,7 +2136,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq. jatlhmey lan juH ghItlhDaq ’ej maH ghItlhDaq.",
+      "subtitle": "vav/SoSmey, Qujwi’pu’, ghojmoHwI’pu’ je mu’mey — wa’ Daq.",
       "newTestimonial": "jatlh chu’",
       "backToList": "jatlhmeyDaq yIchegh",
       "newPage": {
@@ -2153,19 +2153,7 @@
       "allHeading": "Hoch jatlhmey",
       "languagesLabel": "Holmey",
       "saved": "{date} pol",
-      "onHome": "juH ghItlh: {spot}",
       "quoteHasMarks": "jatlh ghItlh mu’ yIlan’e’: Hoch Hol mIwDaq chel ghItlhvam.",
-      "home": {
-        "heading": "juH ghItlhDaq",
-        "hint": "wej DaqDaq juH ghItlh cha’ ’ej rap maH ghItlh. Daq jatlh wIv ngoqwI’; naDev mu’mey choHlu’.",
-        "spotHeading": "{spot} ({filled, number}/{size, number})",
-        "spots": {
-          "feature": "Hoch DungDaq",
-          "safety": "Hung Dol retlhDaq",
-          "row": "vav/SoSmey jatlhbogh"
-        },
-        "emptySpot": "pagh: Daqvam pagh cha’ ghItlh."
-      },
       "fields": {
         "languages": "Holmey",
         "from": "vo’",
@@ -2175,13 +2163,6 @@
         "languages": "Hoch Hol DaghajDaq yIghItlh. Hoch Hol jatlh ’ej ’Iv jatlh poQ.",
         "from": "’Iv jatlh — SoS, Suomi rur.",
         "quote": "mu’meyDaj ra’bogh, jatlh ghItlh mu’ Hutlh: Hoch Hol mu’ chel ghItlhvam. latlh HolDaq mughlu’chugh QaQ; choHlu’chugh QaQbe’."
-      },
-      "usage": {
-        "heading": "nuqDaq lo’lu’",
-        "none": "pa’ cha’lu’be’ wa’logh.",
-        "editNote": "polchugh, Hoch DaqDaq mu’meyDaj choH.",
-        "home": "juH ghItlh: {spot}, {position, number}/{size, number}",
-        "about": "maH: vav/SoSmey jatlhbogh"
       },
       "record": {
         "created": "{date} chenmoHlu’",
@@ -3905,7 +3886,33 @@
       "guarantee": "30 jaj: Huch chegh lay’"
     },
     "testimonials": {
-      "heading": "vav/SoSmey jatlhbogh"
+      "heading": "vav/SoSmey jatlhbogh",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Hogh Dun law’ ghom’a’. Hoch Hogh, puqloDwIj tam ’ej ghIjlu’bogh moj puq Hagh ’ej jach, puqpu’ rurbogh ghom. ghom’a’ Dol ’ej ghojmoHwI’pu’ laH, mupIvmoH.",
+          "attribution": "SoS, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "pagh latlh Qu’, pagh latlh Hob — puqwIj Quch neH ’oH ghom’a’.",
+          "attribution": "SoS, Suomi"
+        },
+        "largeGroups": {
+          "quote": "ghom’a’mey tIn puqmaj bIt. ghom’a’vam Daq Hob maHoy ’ej jup chu’ maSuq.",
+          "attribution": "SoS, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "wa’ jar neH — puqbe’wI’ Suomi Hol Dun law’! ghojmoHwI’pu’ val, QaQ, ’ej ghIQ. Qap!",
+          "attribution": "SoS, Norway"
+        },
+        "funAndSupervised": {
+          "quote": "Quj tlhab ’ej ghoS. qI’be’, ghobe’, ’ej pagh QoQ qab.",
+          "attribution": "SoS, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming — puq vav/SoS je QaQ. jup chu’ tlhej Quj QaQ luSuq puqpu’ — QaQ Daq, ghojmoHwI’pu’ Qeq tlhej. vIQuvmoH!",
+          "attribution": "vav, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "toy’a’ QaQ Hob yIchenmoH",

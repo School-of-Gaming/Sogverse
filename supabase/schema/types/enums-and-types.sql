@@ -128,24 +128,6 @@ CREATE TYPE public.gender_type AS ENUM (
 
 
 --
--- Name: home_testimonial_spot; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.home_testimonial_spot AS ENUM (
-    'feature',
-    'safety',
-    'row'
-);
-
-
---
--- Name: TYPE home_testimonial_spot; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TYPE public.home_testimonial_spot IS 'A named place on the home page that shows testimonials, About showing the same ones in the same groups: feature (the single quote under the hero, one testimonial), safety (beside the safety facts, two) and row (the "What parents tell us" row, three).';
-
-
---
 -- Name: invoice_billing_cadence; Type: TYPE; Schema: public; Owner: -
 --
 

@@ -1,47 +1,42 @@
-import { useLocale, useTranslations } from "next-intl";
-import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import type { PublicTestimonial } from "@/services/testimonials";
 
 /**
  * One testimonial — a parent's, a gamer's or a gedu's own words — as the
- * public pages quote it.
+ * public pages quote it. It takes the words as data and does not care where
+ * they come from: the home page and About pass their own message strings.
  *
  * The quote is set in the editorial serif, italic, because it is a person's
  * voice rather than ours; whom it is from is ours and stays in the app face.
+ * **Attribution is role and country only** ("Mum, Finland") — never a name or
+ * a handle. The families consented to being quoted on those terms.
  *
- * **The quotation marks are the page's, never the testimonial's.** The stored
- * quote carries none, and it is wrapped here in the reader's locale's own
- * marks (`testimonial.quoted`), so every locale quotes in its own style and
- * no writer has to know which. The version shown is the one the reader
- * fallback picks; when it is in another language than the page's, it is
- * marked with `lang`.
+ * **The quotation marks are the component's, never the quote's.** A quote is
+ * passed without them and wrapped here in the reader's locale's own marks
+ * (`testimonial.quoted`), so every locale quotes in its own style and no
+ * writer has to know which.
  *
  * Two sizes, one construct: `feature` is the single large quote directly under
  * the hero, `compact` is a quote among others in a row or beside a list.
  */
 export function Testimonial({
-  testimonial,
+  quote,
+  attribution,
   size = "compact",
   className,
 }: {
-  testimonial: PublicTestimonial;
+  /** The words, localised and without quotation marks. */
+  quote: string;
+  /** Whom the quote is from, e.g. "Mum, Finland". */
+  attribution: string;
   size?: "feature" | "compact";
   className?: string;
 }) {
   const t = useTranslations("testimonial");
-  const locale = resolveLocale(useLocale());
-  const version = resolveTranslation(testimonial.versions, locale);
-  if (version === null) return null;
-
   const feature = size === "feature";
-  // exact-locale: marking text shown in another language than the page's
-  const lang = version.locale === locale ? undefined : version.locale;
 
   return (
     <figure
-      lang={lang}
       className={cn(
         "flex flex-col",
         feature ? "items-center gap-5 text-center" : "gap-3",
@@ -54,10 +49,10 @@ export function Testimonial({
           feature ? "text-2xl leading-snug sm:text-3xl" : "text-xl leading-relaxed",
         )}
       >
-        {t("quoted", { quote: version.quote })}
+        {t("quoted", { quote })}
       </blockquote>
       <figcaption className="text-sm font-medium text-muted-foreground">
-        {version.from}
+        {attribution}
       </figcaption>
     </figure>
   );

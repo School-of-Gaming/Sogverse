@@ -8,30 +8,22 @@ import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
 import {
-  HOME_SPOT_SIZE,
-  HOME_TESTIMONIAL_SPOTS,
   QUOTATION_MARKS,
   hasQuotationMarks,
-  homePlacement,
   testimonialWriteFailure,
   type AdminTestimonial,
-  type TestimonialUsage,
 } from "@/services/testimonials/testimonials.contracts";
 import { TestimonialsService } from "@/services/testimonials/testimonials.service";
-import type { HomeTestimonialSpot } from "@/types";
 
 /*
  * The testimonial tools: an admin keeps Marketing's store of testimonials from
- * an AI app — reads them and where each is shown, creates them, writes or
+ * an AI app — reads them, creates them, writes or
  * removes one language at a time. Nothing deletes a testimonial. Every tool
  * runs the testimonial service on the admin's own token-bound client, so the
  * admin-guarded functions decide exactly as they do in the editor, and a write
  * is stamped with the admin and the app it came through. Edits go through the
  * one-language writers, never the editor's whole save
  * (`src/services/testimonials/CLAUDE.md`).
- *
- * The home spots are read here and never set: which testimonial fills a home
- * spot is a developer's decision, made in a migration.
  */
 
 // ---------------------------------------------------------------------------
@@ -50,11 +42,7 @@ const VERSIONS =
 
 const NO_MARKS = `The quote is stored without quotation marks: the site wraps it in each language's own. A quote starting or ending with any of ${[...QUOTATION_MARKS].join(" ")} is refused; apostrophes are fine.`;
 
-const SPOTS =
-  "The home page shows testimonials in three spots — feature (the one quote under the hero), safety (two, beside the safety facts) and row (three, under \"What parents tell us\") — and About shows the same ones. Which testimonial fills a spot is decided by a developer, never by a tool; editing a placed testimonial's words changes them on both pages at once.";
-
-const KEPT =
-  "Testimonials are never deleted: once created they stay. One comes off the site by being removed from where it is shown, and which testimonial fills a home spot is decided by a developer, never by a tool.";
+const KEPT = "Testimonials are never deleted: once created they stay.";
 
 const NOT_FOUND = "No testimonial has that id.";
 
@@ -135,34 +123,8 @@ function marksRefusal(at: string, text: string): CallToolResult | null {
 // Answers
 // ---------------------------------------------------------------------------
 
-const SPOT_DESCRIPTION: Record<HomeTestimonialSpot, string> = {
-  feature: "the single quote under the hero",
-  safety: "beside the safety facts",
-  row: "the \"What parents tell us\" row",
-};
-
 function editorLink(origin: string, id: string): string {
   return `${origin}${getPathname({ href: ROUTES.admin.testimonial(id), locale: "en" })}`;
-}
-
-/**
- * One place a testimonial is shown, as the AI app reads it. Every usage is a
- * home spot today; a new kind of place in `TestimonialUsage` stops this
- * compiling until it is given its own answer.
- */
-function usageView(origin: string, usage: TestimonialUsage) {
-  return {
-    place: usage.kind,
-    spot: usage.spot,
-    spotDescription: SPOT_DESCRIPTION[usage.spot],
-    position: usage.position,
-    spotSize: HOME_SPOT_SIZE[usage.spot],
-    shownOn: [
-      `${origin}${getPathname({ href: ROUTES.home, locale: "en" })}`,
-      // The section About quotes the home spots in.
-      `${origin}${getPathname({ href: ROUTES.about, locale: "en" })}#parents`,
-    ],
-  };
 }
 
 function testimonialView(testimonial: AdminTestimonial, origin: string) {
@@ -174,7 +136,6 @@ function testimonialView(testimonial: AdminTestimonial, origin: string) {
       from: version.from,
       quote: version.quote,
     })),
-    usedIn: testimonial.usages.map((usage) => usageView(origin, usage)),
     created: { at: testimonial.createdAt, ...testimonial.created },
     lastSaved: { at: testimonial.updatedAt, ...testimonial.lastSaved },
     editorLink: editorLink(origin, testimonial.id),
@@ -190,7 +151,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "list_testimonials",
     {
       title: "List testimonials",
-      description: `Every testimonial in School of Gaming's store, placed or not, most recently saved first: its id, every language version (whom it is from and the quote), where it is shown, and who created and last saved it, when and through which AI app. ${REAL_WORDS} ${VERSIONS} ${KEPT}`,
+      description: `Every testimonial in School of Gaming's store, most recently saved first: its id, every language version (whom it is from and the quote), and who created and last saved it, when and through which AI app. ${REAL_WORDS} ${VERSIONS} ${KEPT}`,
       annotations: READ_ONLY,
     },
     (ctx) =>
@@ -206,7 +167,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "get_testimonial",
     {
       title: "Read a testimonial",
-      description: `One testimonial whole: every language version, every place it is shown with the public pages' links, who created and last saved it, and the link to its editor in Sogverse. ${VERSIONS}`,
+      description: `One testimonial whole: every language version, who created and last saved it, and the link to its editor in Sogverse. ${VERSIONS}`,
       inputSchema: z.object({ testimonialId }),
       annotations: READ_ONLY,
     },
@@ -219,48 +180,10 @@ export function registerTestimonialTools(server: McpServer): void {
   );
 
   server.registerTool(
-    "list_home_testimonial_spots",
-    {
-      title: "List the home page's testimonial spots",
-      description: `The home page's testimonial spots in page order, each with its size and the testimonials filling it in reading order. ${SPOTS} A spot may be partly filled or empty; the page then shows what it has.`,
-      annotations: READ_ONLY,
-    },
-    (ctx) =>
-      asTestimonialAdmin(ctx, async ({ service }) => {
-        const testimonials = await service.listAdminTestimonials();
-        return answer({
-          spots: HOME_TESTIMONIAL_SPOTS.map((spot) => ({
-            spot,
-            description: SPOT_DESCRIPTION[spot],
-            size: HOME_SPOT_SIZE[spot],
-            testimonials: testimonials
-              .flatMap((testimonial) => {
-                const home = homePlacement(testimonial.usages);
-                return home?.spot === spot
-                  ? [
-                      {
-                        position: home.position,
-                        testimonialId: testimonial.id,
-                        versions: testimonial.versions.map((version) => ({
-                          locale: version.locale,
-                          from: version.from,
-                          quote: version.quote,
-                        })),
-                      },
-                    ]
-                  : [];
-              })
-              .sort((a, b) => a.position - b.position),
-          })),
-        });
-      }),
-  );
-
-  server.registerTool(
     "create_testimonial",
     {
       title: "Create a testimonial",
-      description: `Add a testimonial the admin has supplied to the store, with one or more language versions; add more languages later with save_testimonial_version. It is placed nowhere, so no public page shows it. ${REAL_WORDS} ${VERSIONS} ${NO_MARKS}`,
+      description: `Add a testimonial the admin has supplied to the store, with one or more language versions; add more languages later with save_testimonial_version. ${REAL_WORDS} ${VERSIONS} ${NO_MARKS}`,
       inputSchema: z.object({
         versions: z
           .array(z.object({ locale, from, quote }))
@@ -292,7 +215,7 @@ export function registerTestimonialTools(server: McpServer): void {
     "save_testimonial_version",
     {
       title: "Save a testimonial's language version",
-      description: `Write one language version of a testimonial — whom it is from and the quote together, replacing what that language held — or add a language it does not have yet. No other language is touched. If the testimonial is shown on the home page, the change shows there and on About at once: read get_testimonial first and tell the admin where it is shown. ${REAL_WORDS} ${NO_MARKS}`,
+      description: `Write one language version of a testimonial — whom it is from and the quote together, replacing what that language held — or add a language it does not have yet. No other language is touched. ${REAL_WORDS} ${NO_MARKS}`,
       inputSchema: z.object({ testimonialId, locale, from, quote }),
       annotations: OVERWRITES,
     },

@@ -13,8 +13,8 @@ export const testimonialKeys = {
 };
 
 /**
- * Every testimonial for the admin list, most recently saved first, with where
- * each is shown. Admin-only by RLS: a non-admin caller gets an empty list.
+ * Every testimonial for the admin list, most recently saved first. Admin-only
+ * by RLS: a non-admin caller gets an empty list.
  */
 export function useAdminTestimonials() {
   const service = new TestimonialsService(getClient());

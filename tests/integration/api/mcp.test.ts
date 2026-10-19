@@ -175,7 +175,6 @@ describe("/api/mcp", () => {
       "upload_landing_image",
       "list_testimonials",
       "get_testimonial",
-      "list_home_testimonial_spots",
       "create_testimonial",
       "save_testimonial_version",
       "remove_testimonial_language",

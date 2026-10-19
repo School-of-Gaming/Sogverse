@@ -382,17 +382,12 @@ export type SpotlightTranslationRow =
   Database["public"]["Tables"]["spotlight_translations"]["Row"];
 
 // Testimonials — Marketing's store: who created and last saved each in
-// `testimonials`, whom it is from and the quote per site locale in
-// `testimonial_translations`, and which testimonial fills which home spot in
-// `home_testimonials`, which only migrations write. Row aliases only: no
-// testimonial table carries a write grant for any Data API role.
+// `testimonials`, and whom it is from and the quote per site locale in
+// `testimonial_translations`. Row aliases only: no testimonial table carries
+// a write grant for any Data API role.
 export type TestimonialRow = Database["public"]["Tables"]["testimonials"]["Row"];
 export type TestimonialTranslationRow =
   Database["public"]["Tables"]["testimonial_translations"]["Row"];
-export type HomeTestimonialRow =
-  Database["public"]["Tables"]["home_testimonials"]["Row"];
-export type HomeTestimonialSpot =
-  Database["public"]["Enums"]["home_testimonial_spot"];
 
 // Landing pages — `landing_pages` is a page's admin-only working copy and
 // `landing_page_publications` its public published copy, whose row existing is

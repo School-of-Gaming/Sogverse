@@ -2092,7 +2092,7 @@
       }
     },
     "testimonials": {
-      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Etusivu ja Tietoa meistä -sivu lainaavat niistä sinne sijoitettuja.",
+      "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa.",
       "newTestimonial": "Uusi suosittelu",
       "backToList": "Takaisin suositteluihin",
       "newPage": {
@@ -2109,19 +2109,7 @@
       "allHeading": "Kaikki suosittelut",
       "languagesLabel": "Kielet",
       "saved": "Tallennettu {date}",
-      "onHome": "Etusivulla: {spot}",
       "quoteHasMarks": "Jätä lainausmerkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
-      "home": {
-        "heading": "Etusivulla",
-        "hint": "Etusivu näyttää nämä kolmessa kohdassa, ja Tietoa meistä -sivu näyttää samat. Kehittäjä päättää, mikä suosittelu on missäkin kohdassa; sen sanoja muokataan täällä.",
-        "spotHeading": "{spot} ({filled, number}/{size, number})",
-        "spots": {
-          "feature": "Pääkuvan alla",
-          "safety": "Turvallisuustietojen vieressä",
-          "row": "Mitä vanhemmat kertovat"
-        },
-        "emptySpot": "Tyhjä: sivu ei näytä tässä kohdassa mitään."
-      },
       "fields": {
         "languages": "Kielet",
         "from": "Keneltä",
@@ -2131,13 +2119,6 @@
         "languages": "Kirjoita se kaikilla kielillä, joilla se sinulla on. Jokainen kieli tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
         "from": "Keneltä lainaus on, niin kuin se näytetään — esimerkiksi Äiti, Suomi.",
         "quote": "Hänen sanansa sellaisinaan, ilman lainausmerkkejä: sivusto lisää kunkin kielen omat. Kääntäminen toiselle kielelle on sallittua, muuttaminen ei."
-      },
-      "usage": {
-        "heading": "Missä sitä käytetään",
-        "none": "Sitä ei vielä näytetä missään.",
-        "editNote": "Tallentaminen muuttaa sen sanat kaikkialla, missä se näkyy.",
-        "home": "Etusivu: {spot}, {position, number}/{size, number}",
-        "about": "Tietoa meistä: Mitä vanhemmat kertovat"
       },
       "record": {
         "created": "Luotu {date}",
@@ -3865,7 +3846,33 @@
       "guarantee": "30 päivän rahat takaisin -takuu"
     },
     "testimonials": {
-      "heading": "Mitä vanhemmat kertovat"
+      "heading": "Mitä vanhemmat kertovat",
+      "items": {
+        "highlightOfTheWeek": {
+          "quote": "Kerho on pojan viikon kohokohta. Hiljaisesta ja arasta pojasta kuoriutuu joka viikko nauravainen ja kovaan ääneen höpöttävä lapsi, kun pääsee samanhenkisten lasten kanssa puuhailemaan. Kerhon sisältö ja kasvattajien osaaminen on yllättänyt minut todella positiivisesti.",
+          "attribution": "Äiti, Suomi"
+        },
+        "sighWithHappiness": {
+          "quote": "Mikään toinen asia, harrastus tai juttu ei ole saanut lastani huokailemaan sitä kuinka onnellinen on.",
+          "attribution": "Äiti, Suomi"
+        },
+        "largeGroups": {
+          "quote": "Isot ryhmät jännittävät lastamme. Tämä on täydellinen tapa meille harrastaa ja tutustua uusiin kavereihin.",
+          "attribution": "Äiti, Suomi"
+        },
+        "finnishImproved": {
+          "quote": "Tyttäreni suomen kieli on kehittynyt kuukaudessa valtavasti! Pelikasvattajat ovat olleet tosi taitavia, ystävällisiä ja pitkämielisiä. Tämä teidän juttu todella toimii!",
+          "attribution": "Äiti, Norja"
+        },
+        "funAndSupervised": {
+          "quote": "Pelaaminen on hauskaa ja valvottua. Ei kiusaamista eikä rähjäämistä tai pahaa mieltä.",
+          "attribution": "Äiti, Suomi"
+        },
+        "positiveExperience": {
+          "quote": "School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!",
+          "attribution": "Isä, Suomi"
+        }
+      }
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
