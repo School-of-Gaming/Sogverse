@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Heading } from "@sog/ui";
 import { Clock, Languages, Plus, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,6 +26,18 @@ export interface AdminSpotlightsActions {
   remove: (id: string) => Promise<void>;
 }
 
+/** The tab's create control, beside its description in the Marketing hub. */
+export function NewSpotlightAction() {
+  const t = useTranslations("admin.spotlights");
+
+  return (
+    <Link href={ROUTES.admin.spotlightNew} className={buttonVariants({ className: "gap-1.5" })}>
+      <Plus className="h-4 w-4" />
+      {t("newSpotlight")}
+    </Link>
+  );
+}
+
 /**
  * Every spotlight, switched on or not, newest first — the order the session
  * report email appends them in — each with its picture, its title in the
@@ -41,7 +52,7 @@ export interface AdminSpotlightsActions {
  *
  * **No loading affordance.** The read is one walk over a handful of rows an
  * office writes by hand, and lands in a frame or two. Until it does, nothing
- * renders under the heading.
+ * renders under the hub's description.
  *
  * **Whether it is in the emails is read here and changed in the editor**,
  * where it is saved with the picture it depends on.
@@ -62,16 +73,6 @@ export function AdminSpotlightsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Heading level={1} step="section">{t("title")}</Heading>
-          <p className="max-w-3xl text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <Link href={ROUTES.admin.spotlightNew} className={buttonVariants()}>
-          <Plus className="mr-1 h-4 w-4" />
-          {t("newSpotlight")}
-        </Link>
-      </div>
 
       {/* A failed refetch under a painted list keeps the rows it had, so the
           line is only for a page that has nothing to show. */}

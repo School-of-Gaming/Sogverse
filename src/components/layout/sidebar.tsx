@@ -17,7 +17,6 @@ import {
   MessageSquareHeart,
   Receipt,
   Sparkles,
-  Spotlight,
   Wrench,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +32,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "uiComponents" | "uiPreviews" | "testing"
   | "tools" | "products" | "invoicing"
-  | "libraryContent" | "spotlights" | "landingPages" | "platformVision"
+  | "libraryContent" | "marketing" | "platformVision"
   | "substitutions" | "feedback";
 
 interface NavItemDef {
@@ -82,8 +81,14 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
       matches: adminHubPrefixes("invoicing"),
     },
     { href: ROUTES.admin.library, labelKey: "libraryContent", icon: <BookOpen className="h-5 w-5" /> },
-    { href: ROUTES.admin.spotlights, labelKey: "spotlights", icon: <Spotlight className="h-5 w-5" /> },
-    { href: ROUTES.admin.landingPages, labelKey: "landingPages", icon: <Megaphone className="h-5 w-5" /> },
+    // The public site's persuasion in one hub: the landing pages, the
+    // testimonials it quotes and the spotlights the report emails carry.
+    {
+      href: ROUTES.admin.landingPages,
+      labelKey: "marketing",
+      icon: <Megaphone className="h-5 w-5" />,
+      matches: adminHubPrefixes("marketing"),
+    },
     // Last of the content entries and above the tooling: it is read, not
     // worked in, and an admin reaches it from a link far more than by habit.
     { href: ROUTES.admin.platformVision, labelKey: "platformVision", icon: <Sparkles className="h-5 w-5" /> },

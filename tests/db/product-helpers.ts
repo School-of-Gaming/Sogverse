@@ -379,6 +379,9 @@ import { TEST_IDS } from "./constants";
  *                  shape the list's filters tell apart, with groups 8d8/8d9;
  *                  8e0-8fa are the 27 products — one page and two more — the
  *                  keyset cursor is walked across)
+ *   900            testimonials.test.ts — not a product: a testimonial id that
+ *                  must NEVER exist. Its testimonials are minted by the RPC
+ *                  under test and found by a quote prefix only that file uses
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

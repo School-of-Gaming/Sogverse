@@ -91,7 +91,10 @@
       "team": "Équipe",
       "adminHolidayCalendars": "Calendriers de vacances",
       "adminHolidayCalendarNew": "Nouveau calendrier de vacances",
-      "adminHolidayCalendarEdit": "Modifier le calendrier de vacances"
+      "adminHolidayCalendarEdit": "Modifier le calendrier de vacances",
+      "adminTestimonials": "Témoignages",
+      "adminTestimonialNew": "Nouveau témoignage",
+      "adminTestimonialEdit": "Modifier le témoignage"
     },
     "descriptions": {
       "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",
@@ -699,7 +702,6 @@
       "languagesLabel": "Langues"
     },
     "spotlights": {
-      "title": "Mises en avant",
       "subtitle": "Les parents voient chaque mise en avant activée en bas de chaque e-mail de compte rendu de session qu’ils reçoivent, de la plus récente à la plus ancienne. Chaque lecteur la reçoit dans sa langue, ou en anglais si la sienne n’est pas rédigée, ou sinon dans une langue qui l’est.",
       "newSpotlight": "Nouvelle mise en avant",
       "empty": "Aucune mise en avant pour l’instant. Rédigez la première.",
@@ -755,7 +757,6 @@
       }
     },
     "landingPages": {
-      "title": "Pages d’atterrissage",
       "subtitle": "Des pages pour une école, une ville, une entreprise ou un événement, écrites pour être trouvées par les moteurs de recherche et les applications d’IA.",
       "empty": "Aucune page d’atterrissage pour l’instant. Les pages s’écrivent avec une application d’IA connectée à Sogverse.",
       "lastSaved": "Dernier enregistrement {date}",
@@ -2089,6 +2090,57 @@
         "filterLabel": "Quelles réponses",
         "worthReading": "À lire en priorité ({count})",
         "all": "Toutes ({count})"
+      }
+    },
+    "testimonials": {
+      "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit.",
+      "newTestimonial": "Nouveau témoignage",
+      "backToList": "Retour aux témoignages",
+      "newPage": {
+        "title": "Nouveau témoignage",
+        "submit": "Créer le témoignage"
+      },
+      "editPage": {
+        "title": "Modifier le témoignage"
+      },
+      "listLoadError": "Les témoignages n’ont pas pu être chargés. Rechargez la page pour réessayer.",
+      "loadError": "Ce témoignage n’a pas pu être chargé. Rechargez la page pour réessayer.",
+      "notFound": "Aucun témoignage n’a cette adresse.",
+      "empty": "Aucun témoignage pour l’instant.",
+      "allHeading": "Tous les témoignages",
+      "languagesLabel": "Langues",
+      "saved": "Enregistré le {date}",
+      "quoteHasMarks": "Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
+      "fields": {
+        "languages": "Langues",
+        "from": "De la part de",
+        "quote": "Citation"
+      },
+      "hints": {
+        "languages": "Écrivez-le dans toutes les langues dont vous disposez. Chaque langue a besoin de la citation et de son auteur.",
+        "from": "De qui vient la citation, telle qu’elle doit s’afficher — par exemple Maman, Finlande.",
+        "quote": "Ses mots tels qu’ils ont été donnés, sans guillemets : le site ajoute ceux de chaque langue. Les traduire dans une autre langue est permis ; les modifier ne l’est pas."
+      },
+      "record": {
+        "created": "Créé le {date}",
+        "createdBy": "Créé le {date} par {name}",
+        "createdByVia": "Créé le {date} par {name} via {app}",
+        "createdByViaUnnamed": "Créé le {date} par {name} via une application d’IA",
+        "saved": "Enregistré pour la dernière fois le {date}",
+        "savedBy": "Enregistré pour la dernière fois le {date} par {name}",
+        "savedByVia": "Enregistré pour la dernière fois le {date} par {name} via {app}",
+        "savedByViaUnnamed": "Enregistré pour la dernière fois le {date} par {name} via une application d’IA"
+      },
+      "actions": {
+        "save": "Enregistrer",
+        "cancel": "Annuler"
+      },
+      "errors": {
+        "noVersion": "Écrivez le témoignage dans au moins une langue.",
+        "versionIncomplete": "La version en {language} a besoin de la citation et de son auteur.",
+        "quoted": "La citation en {language} commence ou se termine par un guillemet. Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
+        "saveFailed": "Le témoignage n’a pas pu être enregistré. Réessayez.",
+        "saveFailedWithReason": "Le témoignage n’a pas pu être enregistré : {reason}"
       }
     }
   },
@@ -3753,8 +3805,7 @@
     "dashboard": "Tableau de bord",
     "users": "Utilisateurs",
     "libraryContent": "Contenu de la Bibliothèque",
-    "spotlights": "Mises en avant",
-    "landingPages": "Pages d’atterrissage",
+    "marketing": "Marketing",
     "platformVision": "Vision de la plateforme",
     "uiComponents": "Composants UI",
     "uiPreviews": "Aperçus UI",
@@ -3770,7 +3821,8 @@
   "adminHubs": {
     "titles": {
       "products": "Clubs, stages et événements",
-      "invoicing": "Facturation"
+      "invoicing": "Facturation",
+      "marketing": "Marketing"
     },
     "tabs": {
       "products": "Produits",
@@ -3778,7 +3830,10 @@
       "holidayCalendars": "Calendriers de vacances",
       "municipalities": "Municipalités",
       "invoiceCustomers": "Clients de facturation",
-      "gedus": "Gedus"
+      "gedus": "Gedus",
+      "landingPages": "Pages d’atterrissage",
+      "testimonials": "Témoignages",
+      "spotlights": "Mises en avant"
     }
   },
   "home": {
@@ -3795,27 +3850,27 @@
       "heading": "Ce qu’en disent les parents",
       "items": {
         "highlightOfTheWeek": {
-          "quote": "« Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise. »",
+          "quote": "Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise.",
           "attribution": "Maman, Finlande"
         },
         "sighWithHappiness": {
-          "quote": "« Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça. »",
+          "quote": "Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça.",
           "attribution": "Maman, Finlande"
         },
         "largeGroups": {
-          "quote": "« Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis. »",
+          "quote": "Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis.",
           "attribution": "Maman, Finlande"
         },
         "finnishImproved": {
-          "quote": "« Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment ! »",
+          "quote": "Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment !",
           "attribution": "Maman, Norvège"
         },
         "funAndSupervised": {
-          "quote": "« Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance. »",
+          "quote": "Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance.",
           "attribution": "Maman, Finlande"
         },
         "positiveExperience": {
-          "quote": "« School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande ! »",
+          "quote": "School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande !",
           "attribution": "Papa, Finlande"
         }
       }
@@ -3891,6 +3946,9 @@
       "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un animateur ou une animatrice à chaque séance et chaque chat ouvert à tout le groupe.",
       "whereWeAre": "Nos clubs en ligne se déroulent en {languages}, pour les familles du monde entier. Et notre siège mondial ? Un studio douillet à Lauttasaari, à Helsinki, en Finlande, sur une petite île tranquille."
     }
+  },
+  "testimonial": {
+    "quoted": "« {quote} »"
   },
   "locations": {
     "picker": {

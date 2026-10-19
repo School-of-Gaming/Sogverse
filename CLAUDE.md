@@ -130,6 +130,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Library — articles, their working and published copies | `src/services/library/` |
 | Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
 | Spotlights — the admin notes appended to every parent's session report email | `src/services/spotlights/` |
+| Testimonials — the store of real words from parents, gamers and gedus | `src/services/testimonials/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
