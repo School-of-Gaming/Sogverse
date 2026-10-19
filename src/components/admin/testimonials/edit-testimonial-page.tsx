@@ -102,14 +102,15 @@ function TestimonialUsageCard({ usages }: { usages: readonly TestimonialUsage[] 
                 this compiling until it is given its own line. */}
             {usages.map((usage) => (
               <Fragment key={`${usage.kind}-${usage.spot}`}>
+                {/* Plain text: the proxy sends a signed-in visitor from Home
+                    to their dashboard, so a link would land the admin on
+                    /admin. About shows the same testimonials and links. */}
                 <li>
-                  <Link href={ROUTES.home} className="text-act underline-offset-4 hover:underline">
-                    {t("usage.home", {
-                      spot: t(`home.spots.${usage.spot}`),
-                      position: usage.position,
-                      size: HOME_SPOT_SIZE[usage.spot],
-                    })}
-                  </Link>
+                  {t("usage.home", {
+                    spot: t(`home.spots.${usage.spot}`),
+                    position: usage.position,
+                    size: HOME_SPOT_SIZE[usage.spot],
+                  })}
                 </li>
                 <li>
                   <Link
