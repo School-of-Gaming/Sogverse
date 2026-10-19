@@ -43,7 +43,17 @@ vi.mock("next-intl/server", () => {
       const catalog = catalogs[locale];
       if (catalog === undefined) throw new Error(`No catalog for "${locale}" in this test`);
       const path = namespace.split(".");
-      return (key: string) => String(lookup(catalog, [...path, key]));
+      // A missing message throws, worded like the provider guard in
+      // `tests/setup.ts`, rather than drawing "undefined" on the card.
+      return (key: string) => {
+        const message = lookup(catalog, [...path, key]);
+        if (typeof message !== "string") {
+          throw new Error(
+            `MISSING_MESSAGE: Could not resolve \`${namespace}.${key}\` in messages for locale \`${locale}\`.`,
+          );
+        }
+        return message;
+      };
     },
   };
 });

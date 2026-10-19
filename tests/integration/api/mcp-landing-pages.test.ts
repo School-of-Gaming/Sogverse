@@ -80,7 +80,14 @@ vi.mock("next-intl/server", async () => {
   return {
     getTranslations: async ({ locale, namespace }: { locale: keyof typeof catalogs; namespace: string }) => {
       expect(namespace).toBe("admin.landingPages");
-      return (key: "copyMarker") => catalogs[locale].landingPages[key];
+      return (key: "copyMarker") => {
+        const message: unknown = catalogs[locale].landingPages[key];
+        // A missing message throws, worded like the provider guard in `tests/setup.ts`.
+        if (typeof message !== "string") {
+          throw new Error(`MISSING_MESSAGE: Could not resolve \`admin.landingPages.${key}\` in messages for locale \`${locale}\`.`);
+        }
+        return message;
+      };
     },
   };
 });

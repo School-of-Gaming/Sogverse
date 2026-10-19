@@ -52,7 +52,14 @@ vi.mock("next-intl/server", async () => {
   return {
     getTranslations: async ({ namespace }: { namespace: string }) => {
       expect(namespace).toBe("library.categories");
-      return (key: keyof typeof library.categories) => library.categories[key];
+      return (key: keyof typeof library.categories) => {
+        const message: unknown = library.categories[key];
+        // A missing message throws, worded like the provider guard in `tests/setup.ts`.
+        if (typeof message !== "string") {
+          throw new Error(`MISSING_MESSAGE: Could not resolve \`library.categories.${key}\` in messages for locale \`en\`.`);
+        }
+        return message;
+      };
     },
   };
 });

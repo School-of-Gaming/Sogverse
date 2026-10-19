@@ -50,7 +50,9 @@ vi.mock("next-intl/server", () => ({
   getTranslations: (namespace: "verifyEmail" | "common") =>
     Promise.resolve((key: string) => {
       const value: unknown = (messages[namespace] as Record<string, unknown>)[key];
-      if (typeof value !== "string") throw new Error(`no ${namespace}.${key}`);
+      if (typeof value !== "string") {
+        throw new Error(`MISSING_MESSAGE: Could not resolve \`${namespace}.${key}\` in messages for locale \`en\`.`);
+      }
       return value;
     }),
 }));
