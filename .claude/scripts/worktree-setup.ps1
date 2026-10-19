@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
   Set up a /worktree-flow worktree: verify the base, create the worktree and
-  branch, junction the nested installs, copy .env.local.
+  branch, junction the nested installs, copy .env.local. With -Existing, check
+  out a branch that already exists instead of creating one.
 
 .DESCRIPTION
   This is the *how* for Phase 1; worktree-flow states the obligations and when to
@@ -37,17 +38,31 @@
 
 .PARAMETER Branch
   Branch to create. Defaults to feat/<Name>. The feat/ prefix is the convention;
-  feature/ and bare names in the history are drift.
+  feature/ and bare names in the history are drift. With -Existing, the branch to
+  check out instead.
 
 .PARAMETER Base
   Base to branch from. Defaults to dev. Anything else is echoed back loudly, so a
-  deliberate choice and a mistake never look alike in the transcript.
+  deliberate choice and a mistake never look alike in the transcript. Refused
+  with -Existing, which has no base.
 
 .PARAMETER SkipFetch
   Skip the fetch and the base check. For a base already known current this minute.
 
+.PARAMETER Existing
+  Check out a local branch that already exists rather than create one — a branch
+  built elsewhere and picked up by a new session, or a worktree being relocated.
+  The branch must exist locally and must not be checked out in any other worktree.
+  There is no base to verify, so the fetch and base check are skipped; everything
+  after them runs as for a new branch. Without it, a branch that already exists
+  is refused.
+
 .EXAMPLE
   .\.claude\scripts\worktree-setup.ps1 -Name gamer-creations
+
+.EXAMPLE
+  .\.claude\scripts\worktree-setup.ps1 -Name landing-clone -Existing
+  Sets up .claude/worktrees/landing-clone on the existing branch feat/landing-clone.
 #>
 
 [CmdletBinding()]
@@ -55,7 +70,8 @@ param(
   [Parameter(Mandatory = $true)][string]$Name,
   [string]$Branch,
   [string]$Base = 'dev',
-  [switch]$SkipFetch
+  [switch]$SkipFetch,
+  [switch]$Existing
 )
 
 $ErrorActionPreference = 'Stop'
@@ -87,19 +103,37 @@ Write-Host "Worktree setup" -ForegroundColor Cyan
 Write-Host "  repo      $root"
 Write-Host "  worktree  $target"
 Write-Host "  branch    $Branch"
-Write-Host "  base      $Base"
-if ($Base -ne 'dev') { Warn "base is not dev - using $Base because it was asked for" }
+if ($Existing) { Write-Host "  base      (none - existing branch)" }
+else {
+  Write-Host "  base      $Base"
+  if ($Base -ne 'dev') { Warn "base is not dev - using $Base because it was asked for" }
+}
 Write-Host ""
 
 if (Test-Path -LiteralPath $target) { Die "already exists: $target" }
-if (git -C $root rev-parse --verify --quiet "refs/heads/$Branch") { Die "branch already exists: $Branch" }
+if ($Existing) {
+  if ($PSBoundParameters.ContainsKey('Base')) { Die "-Base has no meaning with -Existing: the branch already exists" }
+  if (-not (git -C $root rev-parse --verify --quiet "refs/heads/$Branch")) {
+    Die "no local branch $Branch - -Existing checks out a branch that already exists. Fetch or create it first."
+  }
+  # git refuses a branch checked out twice; say where it is instead of git's text.
+  $cur = $null
+  foreach ($line in (git -C $root worktree list --porcelain)) {
+    if ($line -like 'worktree *') { $cur = ($line.Substring(9) -replace '/', '\') }
+    elseif ($line -eq "branch refs/heads/$Branch") { Die "$Branch is already checked out in $cur" }
+  }
+}
+elseif (git -C $root rev-parse --verify --quiet "refs/heads/$Branch") { Die "branch already exists: $Branch" }
 
 # --- 1. Verify the base ------------------------------------------------------
 # No setting can enforce this, because no setting fetches. main trails dev by
 # hundreds of commits, so a branch cut from a stale base starts life missing work
 # it will later collide with.
 Write-Host "1. Base"
-if ($SkipFetch) {
+if ($Existing) {
+  Step "skipped (-Existing) - $Branch already exists, so there is no base to verify; checking it out as it stands at $(git -C $root rev-parse --short $Branch)"
+}
+elseif ($SkipFetch) {
   Warn "skipping the fetch (-SkipFetch) - $Base is assumed current"
 }
 else {
@@ -132,9 +166,16 @@ else {
 
 # --- 2. Create the worktree --------------------------------------------------
 Write-Host "2. Worktree"
-git -C $root worktree add $target -b $Branch $Base
-if (-not $?) { Die "git worktree add failed" }
-Ok "created $Branch at $target"
+if ($Existing) {
+  git -C $root worktree add $target $Branch
+  if (-not $?) { Die "git worktree add failed" }
+  Ok "checked out existing $Branch at $target"
+}
+else {
+  git -C $root worktree add $target -b $Branch $Base
+  if (-not $?) { Die "git worktree add failed" }
+  Ok "created $Branch at $target"
+}
 
 # --- 3. Junction the nested installs -----------------------------------------
 Write-Host "3. Nested installs"

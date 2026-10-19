@@ -28,6 +28,7 @@ import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
 import type { ProductImageSelection } from "../product-image-selection";
 import {
+  asksJoinInstructions,
   EMPTY_TRANSLATION,
   isCompleteTranslation,
   type FormState,
@@ -168,6 +169,28 @@ export function IdentitySection({
           </div>
         )}
       </Field>
+
+      {/* The join instructions of a product with no voice room, written per
+          locale beside the rest of this tab's copy. Shown only while that is
+          the Where section's choice; hidden, the field keeps what was typed but
+          the save sends nothing from it. Plain text, not markdown. */}
+      {asksJoinInstructions(state) && (
+        <Field
+          label={t("labels.voiceJoinInstructions")}
+          htmlFor={`p-join-instructions-${locale}`}
+          hint={t("hints.voiceJoinInstructionsHint")}
+        >
+          <Textarea
+            id={`p-join-instructions-${locale}`}
+            value={activeDraft.voiceJoinInstructions}
+            lang={locale}
+            onChange={(e) =>
+              setActiveTranslation({ voiceJoinInstructions: e.target.value })
+            }
+            rows={4}
+          />
+        </Field>
+      )}
 
       <ImagePicker
         purpose="product"

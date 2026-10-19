@@ -57,6 +57,7 @@ import {
   type EffectiveProductStatus,
 } from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
+import { productVoiceRoom } from "@/lib/products/voice-room";
 import { useNow, useTimezone } from "@/providers";
 import { personName } from "@/components/admin/person-name";
 import { GroupsPanel } from "./groups/groups-panel";
@@ -201,6 +202,13 @@ export function ProductDetailsPage({
     timeZone,
   });
   const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
+  const voiceRoom = productVoiceRoom(product, product.product_translations);
+  // The same pick a family's "How to join" dialog makes, so a locale with no
+  // instructions of its own falls back exactly as theirs does.
+  const joinInstructions =
+    voiceRoom.mode === "none"
+      ? (resolveTranslation(voiceRoom.instructions, uiLocale)?.text ?? null)
+      : null;
   const topicName = topicLabel(product.topic);
 
   return (
@@ -237,6 +245,7 @@ export function ProductDetailsPage({
             seatCount={product.seat_count}
             waitlistEnabled={product.waitlist_enabled}
             voiceAvailable={voiceAvailable}
+            voiceRoom={voiceRoom}
             voiceIsOpen={voice.voiceIsOpen}
             opensDate={voice.opensDate}
             opensTime={voice.opensTime}
@@ -247,6 +256,7 @@ export function ProductDetailsPage({
           product={product}
           plannedSessions={plannedSessions}
           topicName={topicName}
+          joinInstructions={joinInstructions}
           uiLocale={uiLocale}
           timeZone={timeZone}
           t={t}
@@ -371,6 +381,7 @@ function ProductDetailsCard({
   product,
   plannedSessions,
   topicName,
+  joinInstructions,
   uiLocale,
   timeZone,
   t,
@@ -380,6 +391,8 @@ function ProductDetailsCard({
   /** The product's plan; `undefined` only when the read failed. */
   plannedSessions: readonly PlannedSession[] | undefined;
   topicName: string | null;
+  /** The join instructions of the translation the header shows, or null. */
+  joinInstructions: string | null;
   uiLocale: string;
   timeZone: string;
   t: ReturnType<typeof useTranslations<"admin.products">>;
@@ -664,6 +677,32 @@ function ProductDetailsCard({
                   tbd: tFamily("tbd"),
                 })}
               </DetailRow>
+
+              {/* How an online product's sessions are joined. The meeting link
+                  is shown whole, since it is what an admin checks; the join
+                  instructions are the version the header's copy comes from,
+                  one locale's, like the rest of that copy. */}
+              {product.is_remote && (
+                <DetailRow label={t("detailsPage.fields.voiceRoom")}>
+                  <div>{t(`voiceRoomModes.${product.voice_room_mode}`)}</div>
+                  {product.voice_room_mode === "external" &&
+                    product.external_voice_url && (
+                      <a
+                        href={product.external_voice_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-all text-act underline-offset-2 hover:underline"
+                      >
+                        {product.external_voice_url}
+                      </a>
+                    )}
+                  {product.voice_room_mode === "none" && joinInstructions && (
+                    <p className="whitespace-pre-wrap text-muted-foreground">
+                      {joinInstructions}
+                    </p>
+                  )}
+                </DetailRow>
+              )}
 
               {/* Null only for a row carrying neither an audience label nor an
                   age range, which the schema's CHECKs make unreachable — the row

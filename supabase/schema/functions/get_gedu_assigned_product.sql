@@ -71,6 +71,8 @@ BEGIN
     'start_date',   p.start_date,
     'end_date',     p.end_date,
     'is_remote',    p.is_remote,
+    'voice_room_mode', p.voice_room_mode,
+    'external_voice_url', p.external_voice_url,
     -- In shell parity with get_gedu_group_feed's, for the same reason the
     -- rosters are in parity: the page composes both documents.
     'requires_gamer_creations', p.requires_gamer_creations,
@@ -79,7 +81,8 @@ BEGIN
                jsonb_build_object(
                  'locale',      pt.locale,
                  'name',        pt.name,
-                 'description', pt.short_description
+                 'description', pt.short_description,
+                 'voice_join_instructions', pt.voice_join_instructions
                )
              )
         FROM product_translations pt

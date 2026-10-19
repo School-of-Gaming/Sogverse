@@ -26,6 +26,7 @@ function product(overrides: Partial<ProductJsonLdSubject> = {}): ProductJsonLdSu
         name: "Minecraft club",
         short_description: "Build together every week.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: STAMP,
         updated_at: STAMP,
       },

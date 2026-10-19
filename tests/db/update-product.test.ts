@@ -963,6 +963,105 @@ describe("update_product", () => {
   // The seeded family has exactly two gamers (GAMER, GAMER_2), both children of
   // CUSTOMER, and uq_participations_active_or_waitlisted allows one live row per
   // gamer per product — which is why each case seeds at most two rows.
+  describe("the voice room", () => {
+    function voiceUpdateArgs(instructions: string | null) {
+      return {
+        p_id: PRODUCT_ID,
+        p_billing_mode: "paid" as const,
+        p_translations: [
+          {
+            locale: "en",
+            name: "Webinar",
+            short_description: "",
+            voice_join_instructions: instructions,
+          },
+        ],
+        p_topic: "minecraft_java" as const,
+        p_for_gamers: true,
+        p_for_parents: false,
+        p_min_age: 7,
+        p_max_age: 12,
+        p_spoken_language_code: "en" as const,
+        p_is_remote: true,
+        p_timezone: "Europe/Helsinki",
+        p_registration_opens_at: new Date().toISOString(),
+        p_start_date: "2099-01-01",
+        p_seat_count: 10,
+      };
+    }
+
+    async function voiceRow() {
+      const { data: product } = await admin
+        .from("products")
+        .select("voice_room_mode, external_voice_url")
+        .eq("id", PRODUCT_ID)
+        .single();
+      const { data: translations } = await admin
+        .from("product_translations")
+        .select("locale, voice_join_instructions")
+        .eq("product_id", PRODUCT_ID)
+        .order("locale");
+      return { product, translations };
+    }
+
+    it("moves a product to no room with instructions, and back to a Sogverse room by omission", async () => {
+      await freshProduct();
+
+      const toNone = await adminAuth.rpc("update_product", {
+        ...voiceUpdateArgs("Join by phone: 0800 123 456."),
+        p_voice_room_mode: "none",
+      });
+      expect(toNone.error).toBeNull();
+      expect(await voiceRow()).toEqual({
+        product: { voice_room_mode: "none", external_voice_url: null },
+        translations: [
+          { locale: "en", voice_join_instructions: "Join by phone: 0800 123 456." },
+        ],
+      });
+
+      // Omitting both voice arguments is how the RPC hears "a Sogverse room
+      // with no link"; the instructions have to go in the same save.
+      const back = await adminAuth.rpc("update_product", voiceUpdateArgs(null));
+      expect(back.error).toBeNull();
+      expect(await voiceRow()).toEqual({
+        product: { voice_room_mode: "sogverse", external_voice_url: null },
+        translations: [{ locale: "en", voice_join_instructions: null }],
+      });
+    });
+
+    it("refuses to leave the no-room mode while a translation still carries instructions", async () => {
+      await freshProduct();
+      const toNone = await adminAuth.rpc("update_product", {
+        ...voiceUpdateArgs("Join by phone."),
+        p_voice_room_mode: "none",
+      });
+      expect(toNone.error).toBeNull();
+
+      const { error } = await adminAuth.rpc("update_product", {
+        ...voiceUpdateArgs("Join by phone."),
+        p_voice_room_mode: "external",
+        p_external_voice_url: "https://meet.example.com/x",
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/belong only to a product with no voice room/);
+      // The whole save rolled back.
+      expect((await voiceRow()).product).toEqual({
+        voice_room_mode: "none",
+        external_voice_url: null,
+      });
+    });
+
+    it("refuses the no-room mode once the last instructions are cleared", async () => {
+      await freshProduct();
+      const { error } = await adminAuth.rpc("update_product", {
+        ...voiceUpdateArgs(null),
+        p_voice_room_mode: "none",
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/needs join instructions/);
+    });
+  });
+
   describe("waitlist deletion when the flag goes off", () => {
     /**
      * Fresh product + no participations, before every case — plus the decoy

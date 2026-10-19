@@ -146,10 +146,12 @@ function sampleSnapshot(
       spoken_language_code: "fi",
       timezone: DEFAULT_TIMEZONE,
       is_remote: false,
+      voice_room_mode: "sogverse",
+      external_voice_url: null,
       start_date: null,
       end_date: null,
       site_name: "Sample School",
-      translations: [{ locale: "en", name: "Minecraft Club", description: "" }],
+      translations: [{ locale: "en", name: "Minecraft Club", description: "", voice_join_instructions: null }],
       schedule_slots: [
         {
           // Monday is 0, as the schedule slots count.
