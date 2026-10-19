@@ -865,7 +865,8 @@
         "alt": "Alternativtext",
         "question": "Fråga",
         "answer": "Svar"
-      }
+      },
+      "copyMarker": "(kopia)"
     },
     "geduRole": {
       "primary": "Huvud-Gedu",
