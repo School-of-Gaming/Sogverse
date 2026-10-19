@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { ShieldCheck, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getClient } from "@/lib/supabase/client";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { PinService } from "@/services/pin/pin.service";
 import { PinSet } from "./pin-set";
 import { PinNotice } from "./pin-notice";

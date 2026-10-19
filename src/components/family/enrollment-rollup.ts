@@ -2,7 +2,7 @@ import {
   formatProductSchedule,
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";

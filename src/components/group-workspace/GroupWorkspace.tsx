@@ -26,7 +26,7 @@ import {
   type SessionFeedGamer,
   type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { sessionEntryId } from "@/lib/session-occurrence";

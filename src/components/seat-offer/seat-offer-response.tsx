@@ -8,7 +8,7 @@ import { Heading } from "@sog/ui";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { SEAT_OFFER_WINDOW_DAYS } from "@/lib/constants/seat-offer";
 import { parseJsonResponse } from "@/lib/api/json-response";

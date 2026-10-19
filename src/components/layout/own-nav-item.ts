@@ -1,4 +1,5 @@
-import { ROUTES, type UserRole } from "@/lib/constants";
+import { type UserRole } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * The gedu pages that carry **their own item in the chrome**, rather than being

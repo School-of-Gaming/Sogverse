@@ -1,5 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   formattingLocale,
   type SupportedLocale,

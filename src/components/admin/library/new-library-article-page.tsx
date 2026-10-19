@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { useCreateLibraryArticle } from "@/services/library/library.queries";
 import { LibraryArticleEditor } from "./library-article-editor";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";

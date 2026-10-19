@@ -30,7 +30,8 @@ import {
 } from "@/components/layout/own-nav-item";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { trackDashboardNav } from "@/lib/analytics";
-import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { byFirstName } from "@/lib/family-order";
 import { cn } from "@/lib/cn";
 import { commitAccountSwitch } from "@/services/family/switch-account";

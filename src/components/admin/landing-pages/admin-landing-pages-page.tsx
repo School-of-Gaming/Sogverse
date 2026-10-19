@@ -14,7 +14,7 @@ import {
   ADMIN_LIST_SEARCH_PARAM,
   useDebouncedUrlParamState,
 } from "@/components/admin/admin-list-url-state";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/cn";

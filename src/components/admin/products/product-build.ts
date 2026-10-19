@@ -13,7 +13,7 @@ import {
   CURRENCY_CONFIG,
   isSupportedCurrency,
   SUPPORTED_CURRENCIES,
-} from "@/lib/constants";
+} from "@/lib/constants/currency";
 import { completeConsentBundles } from "@/lib/constants/consent-documents";
 import {
   ATTACHABLE_MARKETING_CONSENT_TYPES,

@@ -22,7 +22,7 @@ import {
   MonthStepper,
   type MonthHref,
 } from "@/components/invoicing-ledger/month-stepper";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow } from "@/providers";
 import {

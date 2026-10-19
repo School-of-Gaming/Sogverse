@@ -8,7 +8,7 @@ import type {
   SubstitutionRequest,
 } from "@/components/admin/substitutions/admin-substitutions-data";
 import type { UserListEntry } from "@/services/users/users.contracts";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { formatDayMonth } from "@/lib/calendar-date";
 import { formatDateOnly } from "@/lib/date-format";
 import { sessionFacts } from "../../mocks/session-facts";

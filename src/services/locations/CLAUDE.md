@@ -1133,9 +1133,8 @@ look at.
 ## Per-country labels & hierarchy config
 
 `SUPPORTED_COUNTRIES`, `resolveLabels`, `getChildLevel`, and the `HierarchyLevel`/
-`nameI18n` types live in `src/lib/constants/location-hierarchies.ts` (re-exported from
-`src/lib/constants`). This config table drives level labels and the naming of the level
-below a given row: it says what a country's levels are *called*, while the table says what
+`nameI18n` types live in `src/lib/constants/location-hierarchies.ts`. This config table
+drives level labels and the naming of the level below a given row: it says what a country's levels are *called*, while the table says what
 its divisions *are*.
 
 Localized labels apply **only** to the country whose language matches the user's UI locale

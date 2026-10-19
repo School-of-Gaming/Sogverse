@@ -13,7 +13,7 @@ import { cloneFormState } from "./product-build";
 import { ProductFormCreate } from "./product-form-create";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface NewProductPageProps {
   productType: ProductType;

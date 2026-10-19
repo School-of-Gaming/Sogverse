@@ -7,7 +7,7 @@ import { GROUND_TONES, pinnedFill } from "@/lib/email-templates/utils";
 import { mailText } from "@/lib/email-templates/type-scale";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
-import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
+import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants/brand";
 import {
   MAIL_FONT_STACK,
   MAIL_WORD_ENGINE_FONT_STACK,

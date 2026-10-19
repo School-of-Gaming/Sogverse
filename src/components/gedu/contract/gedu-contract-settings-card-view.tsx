@@ -16,7 +16,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";

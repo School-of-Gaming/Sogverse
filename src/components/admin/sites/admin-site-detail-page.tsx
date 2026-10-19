@@ -20,7 +20,7 @@ import {
   type SiteNotesDraft,
 } from "@/components/group-workspace/SitePanel";
 import { createSiteDetailsSave } from "@/components/group-workspace/site-details-save";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";

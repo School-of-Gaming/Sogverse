@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { selectClubsInMunicipality } from "@/lib/schools/municipalities";
 import {
   useVisibleProductsByTypes,

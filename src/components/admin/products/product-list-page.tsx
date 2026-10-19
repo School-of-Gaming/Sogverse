@@ -26,7 +26,7 @@ import {
 import { ProductListFilters } from "./product-list-filters";
 import { PRODUCT_LIST_PARAMS } from "./product-list-url-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { cn } from "@/lib/cn";
 
 /**

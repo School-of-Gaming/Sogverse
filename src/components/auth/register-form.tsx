@@ -14,7 +14,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/co
 import { getClient } from "@/lib/supabase/client";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { ROUTES } from "@/lib/constants/routes";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";

@@ -7,7 +7,7 @@ import sv from "@/../messages/sv";
 import tlh from "@/../messages/tlh";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { policyTextSegments } from "@/components/legal/policy-content";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 
 /**

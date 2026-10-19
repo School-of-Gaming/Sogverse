@@ -12,7 +12,7 @@ import type {
   ProductPictureUser,
 } from "@/services/catalogue-images/catalogue-images.service";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * **Which products, Library articles and landing pages a catalogue entry reaches**, in the

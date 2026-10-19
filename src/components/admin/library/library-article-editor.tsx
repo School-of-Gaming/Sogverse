@@ -29,7 +29,7 @@ import {
 } from "@/components/library/article-address";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   formattingLocale,
   LOCALE_CONFIG,

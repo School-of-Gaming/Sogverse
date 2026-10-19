@@ -13,7 +13,7 @@ import {
   describeMarkdownSubset,
   markdownOutsideSubset,
 } from "@/lib/authored-markdown-subset";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   DEFAULT_LOCALE,
   LOCALE_CONFIG,

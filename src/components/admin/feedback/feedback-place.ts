@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import type { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { FeedbackListDimension, FeedbackScope, FeedbackScopeKind } from "./aggregate-feedback";
 
 /** A link target the app's own typed `Link` accepts. */

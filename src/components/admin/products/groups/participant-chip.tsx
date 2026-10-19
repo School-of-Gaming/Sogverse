@@ -8,7 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Identicon } from "@/components/ui/identicon";
 import { GameUsernameRow } from "@/components/game-account";
-import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { computeAge } from "@/lib/gamer-age-eligibility";
 import { cn } from "@/lib/cn";
 import { gamerBirthOf } from "@/lib/gamer-birth";

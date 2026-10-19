@@ -30,7 +30,8 @@ import {
   safetyTestimonialKeys,
   type TestimonialKey,
 } from "@/components/home/testimonial-keys";
-import { ROUTES, resolveLocale } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
+import { ROUTES } from "@/lib/constants/routes";
 import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
 import { cn } from "@/lib/cn";
 

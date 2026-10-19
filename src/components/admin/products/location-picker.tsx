@@ -19,7 +19,7 @@ import {
 } from "@/lib/locations/stored-pick";
 import { SitePanel } from "@/components/group-workspace/SitePanel";
 import { useSiteNotes } from "@/services/sites/sites.queries";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { MUNI_CLUB_COUNTRY_CODE } from "./product-type-config";
 import { SitePickerDialog } from "./site-picker-dialog";
 

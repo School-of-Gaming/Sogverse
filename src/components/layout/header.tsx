@@ -11,12 +11,9 @@ import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/cn";
-import {
-  ROLE_DASHBOARD_PATHS,
-  ROUTES,
-  SENDER_NAME,
-  type UserRole,
-} from "@/lib/constants";
+import { SENDER_NAME } from "@/lib/constants/brand";
+import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { AccountMenu } from "@/components/layout/account-menu";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import {

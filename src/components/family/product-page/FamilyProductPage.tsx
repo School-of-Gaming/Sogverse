@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";

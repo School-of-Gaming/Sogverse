@@ -14,7 +14,7 @@ import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CertifyWithWarningsDialog } from "@/components/admin/certify-with-warnings-dialog";
 import { PersonChip } from "@/components/ui/person-chip";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { cn } from "@/lib/cn";
 import type { UncertifiedGedu } from "./admin-dashboard-data";
 

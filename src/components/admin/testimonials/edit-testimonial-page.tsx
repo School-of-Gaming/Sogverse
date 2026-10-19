@@ -6,7 +6,7 @@ import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { formatDate } from "@/lib/date-format";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";

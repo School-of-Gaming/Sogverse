@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 import {
   GAMER_USERNAME_PATTERN,
   normalizeGamerUsername,

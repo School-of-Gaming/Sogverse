@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 import { useRouter } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { useCreateSpotlight } from "@/services/spotlights/spotlights.queries";
 import { SpotlightEditor } from "./spotlight-editor";
 

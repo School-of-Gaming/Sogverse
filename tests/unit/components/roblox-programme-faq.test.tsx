@@ -3,7 +3,7 @@ import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import enRoblox from "@/../messages/en/roblox.json";
 import { ProgrammeFaq } from "@/components/roblox/programme-faq";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 
 const messages = { roblox: enRoblox };

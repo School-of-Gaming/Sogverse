@@ -7,7 +7,7 @@ import {
 import { planSessions } from "../../mocks/planned-sessions";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**

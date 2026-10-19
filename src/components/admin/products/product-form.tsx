@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthoredBodies } from "@/components/ui/authored-body-editor";
 import { Button } from "@/components/ui/button";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
-import { isSupportedCurrency } from "@/lib/constants";
+import { isSupportedCurrency } from "@/lib/constants/currency";
 import {
   isSupportedLocale,
   LOCALE_CONFIG,
