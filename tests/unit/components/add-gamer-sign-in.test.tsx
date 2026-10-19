@@ -1,12 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enFamily from "@/../messages/en/family.json";
+import enGamerSignIn from "@/../messages/en/gamerSignIn.json";
+import enCommon from "@/../messages/en/common.json";
+import enGameAccount from "@/../messages/en/gameAccount.json";
 import { AddGamerFormCard } from "@/components/family";
 import { ApiError } from "@/lib/api/api-error";
 import { GAMER_EMAIL_TAKEN, GAMER_USERNAME_TAKEN } from "@/services/gamers";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 import type { CreateGamerInput } from "@/types";
+
+const messages = {
+  family: enFamily,
+  gamerSignIn: enGamerSignIn,
+  common: enCommon,
+  gameAccount: enGameAccount,
+};
 
 /**
  * **The add-gamer form is three pages for every parent: who the child is, how

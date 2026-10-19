@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
+import enAdminHubs from "@/../messages/en/adminHubs.json";
+import enSidebar from "@/../messages/en/sidebar.json";
+import enCommon from "@/../messages/en/common.json";
 import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import {
   ADMIN_HUBS,
@@ -9,6 +11,8 @@ import {
   adminHubForPathname,
 } from "@/components/admin/hubs/admin-hubs";
 import { Sidebar } from "@/components/layout/sidebar";
+
+const en = { adminHubs: enAdminHubs, sidebar: enSidebar, common: enCommon };
 
 /**
  * **The admin hubs: which hub a page is in, which tab is current, and that the

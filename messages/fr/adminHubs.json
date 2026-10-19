@@ -1,0 +1,14 @@
+{
+  "titles": {
+    "products": "Clubs, stages et événements",
+    "invoicing": "Facturation"
+  },
+  "tabs": {
+    "products": "Produits",
+    "sites": "Sites",
+    "holidayCalendars": "Calendriers de vacances",
+    "municipalities": "Municipalités",
+    "invoiceCustomers": "Clients de facturation",
+    "gedus": "Gedus"
+  }
+}

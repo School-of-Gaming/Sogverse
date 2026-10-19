@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enProductTag from "@/../messages/en/productTag.json";
+import enCommon from "@/../messages/en/common.json";
 import { SessionStaffingEditor } from "@/components/admin/products/session-staffing-editor";
 import {
   deriveSessionStaffing,
@@ -10,6 +12,8 @@ import {
 } from "@/lib/session-staffing";
 import type { UserListEntry } from "@/services/users";
 import type { SessionRequirements } from "@/lib/products/session-requirements";
+
+const messages = { admin: enAdmin, productTag: enProductTag, common: enCommon };
 
 /**
  * ============================================================================

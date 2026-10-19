@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "title": "Du temps d’écran<br></br>au temps qui<br></br>fait<br></br><act>grandir</act>",
+    "subtitle": "Des clubs chaque semaine pour les 7 à 17 ans, en ligne et en présentiel, à partir de 59 € par mois : un animateur mène chaque séance sur Minecraft, Roblox, Fortnite et bien d’autres."
+  },
+  "findClub": "Trouver un club",
+  "trust": {
+    "cancel": "Résiliable à tout moment, sans frais",
+    "guarantee": "Satisfait ou remboursé pendant 30 jours"
+  },
+  "testimonials": {
+    "heading": "Ce qu’en disent les parents",
+    "items": {
+      "highlightOfTheWeek": {
+        "quote": "« Le club est le moment fort de la semaine de mon fils. Chaque semaine, mon garçon calme et timide se transforme en un enfant rieur et bavard quand il retrouve des enfants qui lui ressemblent. Le contenu du club et le savoir-faire des animateurs m’ont agréablement surprise. »",
+        "attribution": "Maman, Finlande"
+      },
+      "sighWithHappiness": {
+        "quote": "« Rien d’autre, aucune activité ni aucun loisir, n’a jamais fait soupirer mon enfant de bonheur comme ça. »",
+        "attribution": "Maman, Finlande"
+      },
+      "largeGroups": {
+        "quote": "« Les grands groupes rendent notre enfant anxieux. C’est la façon idéale pour nous d’avoir un loisir et de nous faire de nouveaux amis. »",
+        "attribution": "Maman, Finlande"
+      },
+      "finnishImproved": {
+        "quote": "« Le finnois de ma fille a énormément progressé en un mois seulement ! Les animateurs ont été très compétents, bienveillants et patients. Ça marche vraiment ! »",
+        "attribution": "Maman, Norvège"
+      },
+      "funAndSupervised": {
+        "quote": "« Le jeu est amusant et encadré. Pas de harcèlement, pas de disputes, pas de mauvaise ambiance. »",
+        "attribution": "Maman, Finlande"
+      },
+      "positiveExperience": {
+        "quote": "« School of Gaming a été une expérience vraiment positive, pour l’enfant comme pour les parents. Les enfants ont vécu de super moments de jeu avec de nouveaux amis, dans un environnement de jeu sûr, avec des animateurs expérimentés – je recommande ! »",
+        "attribution": "Papa, Finlande"
+      }
+    }
+  },
+  "features": {
+    "heading": "Le jeu vidéo, un vrai loisir",
+    "subheading": "Comme le foot ou la musique, avec de bons amis et quelqu’un pour guider.",
+    "minecraftClubs": {
+      "title": "Chaque séance a son animateur",
+      "description": "Nos animateurs sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de se faire des amis en ligne, de construire son identité à travers un écran. Chaque séance est encadrée par quelqu’un qui comprend vraiment."
+    },
+    "screenTime": {
+      "title": "Conçu pour développer de vraies compétences",
+      "description": "Des clubs pensés pour que le jeu soit formateur : les enfants développent des compétences concrètes, se lient d’amitié, et vivent des aventures qui leur appartiennent."
+    },
+    "newFriends": {
+      "title": "De nouveaux amis, de vrais liens",
+      "description": "Les enfants se font de vrais amis. Les aventures partagées créent des liens durables. L’engagement du joueur : se traiter avec bienveillance, en ligne comme dans la vie."
+    },
+    "parents": {
+      "title": "Les parents, dans la boucle",
+      "description": "Vous n’êtes pas mis de côté. On vous tient au courant, on vous implique, et on vous donne les clés pour accompagner votre enfant dans son parcours de jeu."
+    }
+  },
+  "safety": {
+    "heading": "Comment mon enfant est-il protégé ?",
+    "facts": {
+      "vetted": {
+        "title": "Extrait de casier judiciaire exigé",
+        "description": "Nous exigeons de chaque animateur ou animatrice un extrait de casier judiciaire pour le travail auprès d’enfants avant de le certifier."
+      },
+      "noDirectMessages": {
+        "title": "Chaque chat est celui de tout le groupe",
+        "description": "Le chat d’une séance s’adresse à toute la salle, où l’animateur ou l’animatrice le voit."
+      },
+      "groupOnlyRooms": {
+        "title": "Réservé au groupe",
+        "description": "La salle vocale d’un club ouvre cinq minutes avant la séance et ferme cinq minutes après, et seuls le groupe, ses animateurs et notre équipe peuvent y entrer."
+      },
+      "notRecorded": {
+        "title": "Aucune séance enregistrée",
+        "description": "Rien dans l’application n’enregistre, ne transcrit ni ne stocke le son ou la vidéo d’une séance."
+      },
+      "parentPin": {
+        "title": "Un code PIN avant tout achat",
+        "description": "Tout achat exige un code PIN parent à quatre chiffres que personne d’autre que vous ne connaît, et votre enfant ne peut pas accéder à votre compte parent sans lui."
+      }
+    },
+    "faqLink": "Lire les réponses complètes dans notre FAQ",
+    "photo": {
+      "alt": "Des enfants devant des ordinateurs dans un club School of Gaming, vus de dos, avec leur animateur assis à côté d’eux",
+      "caption": "Un club en présentiel dans notre studio de Lauttasaari, à Helsinki."
+    }
+  },
+  "howItWorks": {
+    "heading": "Apprendre en jouant.",
+    "subheading": "Comment ça marche : rejoignez un club, un stage ou un événement en trois étapes simples.",
+    "step1": {
+      "title": "Créez votre compte",
+      "description": "Inscrivez-vous en tant que parent et créez les comptes de jeu de vos enfants."
+    },
+    "step2": {
+      "title": "Choisissez un club",
+      "description": "Parcourez les clubs disponibles et inscrivez vos enfants dans celui qui colle à leur emploi du temps et à leurs envies."
+    },
+    "step3": {
+      "title": "À vous de jouer !",
+      "description": "Chaque semaine, vos enfants rejoignent leur animateur et plongent dans une nouvelle aventure avec leurs amis."
+    }
+  },
+  "cta": {
+    "heading": "Prêt à transformer le temps d’écran en temps qui fait grandir ?",
+    "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un animateur ou une animatrice à chaque séance et chaque chat ouvert à tout le groupe.",
+    "whereWeAre": "Nos clubs en ligne se déroulent en {languages}, pour les familles du monde entier. Et notre siège mondial ? Un studio douillet à Lauttasaari, à Helsinki, en Finlande, sur une petite île tranquille."
+  }
+}

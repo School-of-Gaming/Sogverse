@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enProductDetail from "@/../messages/en/productDetail.json";
+import enProductAudience from "@/../messages/en/productAudience.json";
+import enProductTag from "@/../messages/en/productTag.json";
+import enProductBrowse from "@/../messages/en/productBrowse.json";
+import enSchools from "@/../messages/en/schools.json";
+import enProductTagDetail from "@/../messages/en/productTagDetail.json";
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
 import { buildScenarioFixture } from "@/components/public/products/mock-detail-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { ProductDetailRow } from "@/services/products";
+
+const messages = {
+  productDetail: enProductDetail,
+  productAudience: enProductAudience,
+  productTag: enProductTag,
+  productBrowse: enProductBrowse,
+  schools: enSchools,
+  productTagDetail: enProductTagDetail,
+};
 
 /**
  * **A product with no long description has to render as a product with no long

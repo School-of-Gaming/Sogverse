@@ -59,10 +59,10 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
 }));
 
 vi.mock("next-intl/server", async () => {
-  const en = (await import("../../../messages/en.json")).default;
+  const library = (await import("../../../messages/en/library.json")).default;
   return {
-    getTranslations: async () => (key: keyof typeof en.library.categories) =>
-      en.library.categories[key],
+    getTranslations: async () => (key: keyof typeof library.categories) =>
+      library.categories[key],
   };
 });
 

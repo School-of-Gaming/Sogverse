@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "title": "Ruutuajasta<br></br><act>laatuaikaa</act>",
+    "subtitle": "Viikoittaiset kerhot 7–17-vuotiaille verkossa ja paikan päällä alkaen 59 € kuukaudessa: pelikasvattaja ohjaa jokaista kertaa Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä."
+  },
+  "findClub": "Etsi kerho",
+  "trust": {
+    "cancel": "Peru milloin tahansa maksutta",
+    "guarantee": "30 päivän rahat takaisin -takuu"
+  },
+  "testimonials": {
+    "heading": "Mitä vanhemmat kertovat",
+    "items": {
+      "highlightOfTheWeek": {
+        "quote": "”Kerho on pojan viikon kohokohta. Hiljaisesta ja arasta pojasta kuoriutuu joka viikko nauravainen ja kovaan ääneen höpöttävä lapsi, kun pääsee samanhenkisten lasten kanssa puuhailemaan. Kerhon sisältö ja kasvattajien osaaminen on yllättänyt minut todella positiivisesti.”",
+        "attribution": "Äiti, Suomi"
+      },
+      "sighWithHappiness": {
+        "quote": "”Mikään toinen asia, harrastus tai juttu ei ole saanut lastani huokailemaan sitä kuinka onnellinen on.”",
+        "attribution": "Äiti, Suomi"
+      },
+      "largeGroups": {
+        "quote": "”Isot ryhmät jännittävät lastamme. Tämä on täydellinen tapa meille harrastaa ja tutustua uusiin kavereihin.”",
+        "attribution": "Äiti, Suomi"
+      },
+      "finnishImproved": {
+        "quote": "”Tyttäreni suomen kieli on kehittynyt kuukaudessa valtavasti! Pelikasvattajat ovat olleet tosi taitavia, ystävällisiä ja pitkämielisiä. Tämä teidän juttu todella toimii!”",
+        "attribution": "Äiti, Norja"
+      },
+      "funAndSupervised": {
+        "quote": "”Pelaaminen on hauskaa ja valvottua. Ei kiusaamista eikä rähjäämistä tai pahaa mieltä.”",
+        "attribution": "Äiti, Suomi"
+      },
+      "positiveExperience": {
+        "quote": "”School of Gaming on ollut todella positiivinen kokemus sekä lapselle että vanhemmille. Lapset ovat saaneet hienoja pelikokemuksia uusien pelikaverien kanssa turvallisessa peliympäristössä kokeneitten ohjaajien kanssa – voin suositella!”",
+        "attribution": "Isä, Suomi"
+      }
+    }
+  },
+  "features": {
+    "heading": "Tee pelaamisesta hieno harrastus",
+    "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa.",
+    "minecraftClubs": {
+      "title": "Joka kerralla mukana on Gedu",
+      "description": "Pelikasvattajamme eli Gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa pelikasvattaja, joka todella ymmärtää."
+    },
+    "screenTime": {
+      "title": "Suunniteltu kartuttamaan oikeita taitoja",
+      "description": "Ammattilaisten suunnittelemat kerhot muuttavat pelaamisen leikilliseksi oppimiskokemukseksi, jossa lapset kehittyvät monipuolisesti ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
+    },
+    "newFriends": {
+      "title": "Uusia ystäviä, aitoja yhteyksiä",
+      "description": "Lapset luovat aitoja, kestäviä ystävyyksiä jaettujen seikkailujen kautta. Ketään ei jätetä ilman ystävää. Jokainen pelaaja lupaa kohdella toisia ystävällisesti — verkossa ja sen ulkopuolella."
+    },
+    "parents": {
+      "title": "Koko perhe mukaan",
+      "description": "Pidämme vanhemmat ajan tasalla ja mukana lastensa pelipolulla. Vanhempien tukeminen on meille yhtä tärkeää kuin itse kerhot."
+    }
+  },
+  "safety": {
+    "heading": "Miten lapseni turvallisuudesta huolehditaan?",
+    "facts": {
+      "vetted": {
+        "title": "Rikosrekisteriote vaaditaan",
+        "description": "Edellytämme, että jokainen Gedu näyttää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, ennen kuin hyväksymme hänet."
+      },
+      "noDirectMessages": {
+        "title": "Jokainen chatti on koko ryhmän",
+        "description": "Kerran chatti menee koko huoneelle, jossa Gedu näkee sen."
+      },
+      "groupOnlyRooms": {
+        "title": "Vain oma ryhmä pääsee sisään",
+        "description": "Kerhon äänihuone avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain ryhmän jäsenet, sen Gedut ja henkilökuntamme."
+      },
+      "notRecorded": {
+        "title": "Kertoja ei tallenneta",
+        "description": "Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa."
+      },
+      "parentPin": {
+        "title": "Ostoihin tarvitaan PIN-koodi",
+        "description": "Ostaminen vaatii nelinumeroisen vanhemman PIN-koodin, jonka vain sinä tiedät, eikä lapsesi pääse ilman sitä vanhemman tilillesi."
+      }
+    },
+    "faqLink": "Lue tarkemmat vastaukset UKK-osiosta",
+    "photo": {
+      "alt": "Lapset tietokoneiden ääressä School of Gamingin kerhossa takaapäin kuvattuna, vieressä istuu heidän pelikasvattajansa",
+      "caption": "Lähikerho studiollamme Lauttasaaressa Helsingissä."
+    }
+  },
+  "howItWorks": {
+    "heading": "Oppimista pelaamalla.",
+    "subheading": "Näin se toimii: liity kerhoon, leirille tai tapahtumaan kolmella helpolla askeleella.",
+    "step1": {
+      "title": "Luo tilisi",
+      "description": "Rekisteröidy vanhempana ja luo pelaajatilit lapsillesi."
+    },
+    "step2": {
+      "title": "Valitse kerho",
+      "description": "Selaa kerhojamme ja ilmoita pelaajasi sopiviin kerhoihin aikataulun ja kiinnostusten mukaan."
+    },
+    "step3": {
+      "title": "Liity seikkailuun",
+      "description": "Pelaajasi kirjautuvat joka viikko, tapaavat pelikasvattajansa ja sukeltavat seikkailuun uusien ystävien kanssa."
+    }
+  },
+  "cta": {
+    "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
+    "subheading": "Anna lapsellesi paikka pelata, oppia ja saada ystäviä joka viikko: pelikasvattaja ohjaa jokaista kertaa, ja jokainen chatti on koko ryhmän nähtävillä.",
+    "whereWeAre": "Verkkokerhoihimme voi osallistua mistä päin maailmaa tahansa, ja kielinä ovat {languages}. Entä maailmanlaajuinen pääkonttorimme? Kodikas studio pienellä ja rauhallisella saarella, Lauttasaaressa Helsingissä, Suomessa."
+  }
+}

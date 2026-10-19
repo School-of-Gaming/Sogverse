@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // The date the terms *text* last changed — bump it whenever the copy below
-// (in messages/*.json) is edited. A date-only value, rendered through the
+// (in messages/*/terms.json) is edited. A date-only value, rendered through the
 // locale-aware, UTC-pinned `formatDateOnly` helper rather than hardcoded per
 // language (a plain calendar date carries no zone).
 const LAST_UPDATED = "2026-08-31";

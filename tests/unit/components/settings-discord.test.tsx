@@ -16,10 +16,13 @@ import {
 import { staticImageModule } from "../../mocks/static-image";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The Discord field is staff's, and it shows the link the route read.** The

@@ -2,12 +2,22 @@ import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enSessionFacts from "@/../messages/en/sessionFacts.json";
+import enCommon from "@/../messages/en/common.json";
 import { GeduSubstitutionPoolSection } from "@/components/gedu/GeduSubstitutionPoolSection";
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+
+const messages = {
+  gedu: enGedu,
+  productType: enProductType,
+  sessionFacts: enSessionFacts,
+  common: enCommon,
+};
 
 /**
  * ============================================================================

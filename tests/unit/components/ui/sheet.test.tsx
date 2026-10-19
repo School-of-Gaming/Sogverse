@@ -3,8 +3,10 @@ import { hydrateRoot, type Root } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enCommon from "@/../messages/en/common.json";
 import { Sheet, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
+const messages = { common: enCommon };
 
 /**
  * **A sheet can stand mounted on a page the server renders.**

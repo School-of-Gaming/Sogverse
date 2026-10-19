@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "title": "Där<br></br>skärmtid<br></br>blir<br></br><act>kvalitetstid</act>",
+    "subtitle": "Klubbar varje vecka för 7–17-åringar, online och på plats, från 59 € per månad: en spelfostrare leder varje tillfälle i Minecraft, Roblox, Fortnite och mer."
+  },
+  "findClub": "Hitta en klubb",
+  "trust": {
+    "cancel": "Säg upp när du vill, kostnadsfritt",
+    "guarantee": "30 dagars pengarna-tillbaka-garanti"
+  },
+  "testimonials": {
+    "heading": "Det här säger föräldrar",
+    "items": {
+      "highlightOfTheWeek": {
+        "quote": "”Klubben är höjdpunkten i min sons vecka. Varje vecka förvandlas min tysta och blyga pojke till ett skrattande barn som pratar högt, när han får umgås med likasinnade barn. Klubbens innehåll och ledarnas kunnande har överraskat mig positivt.”",
+        "attribution": "Mamma, Finland"
+      },
+      "sighWithHappiness": {
+        "quote": "”Ingenting annat, ingen aktivitet eller hobby, har fått mitt barn att sucka av lycka så här.”",
+        "attribution": "Mamma, Finland"
+      },
+      "largeGroups": {
+        "quote": "”Stora grupper gör vårt barn oroligt. Det här är det perfekta sättet för oss att ha en hobby och få nya vänner.”",
+        "attribution": "Mamma, Finland"
+      },
+      "finnishImproved": {
+        "quote": "”Min dotters finska har blivit enormt mycket bättre på bara en månad! Spelfostrarna har varit väldigt skickliga, vänliga och tålmodiga. Det här fungerar verkligen!”",
+        "attribution": "Mamma, Norge"
+      },
+      "funAndSupervised": {
+        "quote": "”Spelandet är roligt och övervakat. Ingen mobbning, inga gräl och ingen dålig stämning.”",
+        "attribution": "Mamma, Finland"
+      },
+      "positiveExperience": {
+        "quote": "”School of Gaming har varit en riktigt positiv upplevelse för både barnet och föräldrarna. Barnen har fått fina spelupplevelser med nya vänner i en trygg spelmiljö med erfarna ledare – jag kan rekommendera det!”",
+        "attribution": "Pappa, Finland"
+      }
+    }
+  },
+  "features": {
+    "heading": "Gör spelande till en fantastisk hobby",
+    "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell spelfostrare som finns där för att vägleda och hjälpa.",
+    "minecraftClubs": {
+      "title": "Varje tillfälle har en Gedu",
+      "description": "Våra spelfostrare — Geduer — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje tillfälle leds av någon som verkligen förstår."
+    },
+    "screenTime": {
+      "title": "Utformat för riktiga färdigheter",
+      "description": "Skickligt utformade klubbar förvandlar spelande till en lekfull lärandeupplevelse där barn utvecklar riktiga färdigheter och har roligt med det de älskar."
+    },
+    "newFriends": {
+      "title": "Nya vänner, äkta band",
+      "description": "Barn bygger genuina, varaktiga vänskaper genom gemensamma äventyr. Ingen lämnas utan en vän. Spelarens ed innebär att behandla varandra med vänlighet — online och offline."
+    },
+    "parents": {
+      "title": "Föräldrar är med",
+      "description": "Spelfostran för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
+    }
+  },
+  "safety": {
+    "heading": "Hur hålls mitt barn tryggt?",
+    "facts": {
+      "vetted": {
+        "title": "Krav på straffregisterutdrag",
+        "description": "Vi kräver att varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
+      },
+      "noDirectMessages": {
+        "title": "Varje chatt är hela gruppens",
+        "description": "Chatten under ett tillfälle går till hela rummet, där Gedun ser den."
+      },
+      "groupOnlyRooms": {
+        "title": "Bara gruppen kommer in",
+        "description": "En klubbs röstrum öppnar fem minuter innan tillfället och stänger fem minuter efter det, och bara gruppen, dess Geduer och vår personal kan komma in."
+      },
+      "notRecorded": {
+        "title": "Tillfällena spelas inte in",
+        "description": "Ingenting i appen spelar in, transkriberar eller lagrar ljudet eller videon från ett tillfälle."
+      },
+      "parentPin": {
+        "title": "PIN-kod krävs för köp",
+        "description": "Att köpa något kräver en fyrsiffrig föräldra-PIN som bara du känner till, och ditt barn kommer inte in på ditt föräldrakonto utan den."
+      }
+    },
+    "faqLink": "Läs hela svaren i vår FAQ",
+    "photo": {
+      "alt": "Barn vid datorer i en School of Gaming-klubb, fotograferade bakifrån, med sin spelfostrare sittande bredvid",
+      "caption": "En klubb på plats i vår studio på Drumsö i Helsingfors."
+    }
+  },
+  "howItWorks": {
+    "heading": "Lärande genom spelande.",
+    "subheading": "Så fungerar det: gå med i en klubb, ett läger eller ett evenemang i tre enkla steg.",
+    "step1": {
+      "title": "Skapa ditt konto",
+      "description": "Registrera dig som förälder och skapa spelarkonton åt dina barn."
+    },
+    "step2": {
+      "title": "Välj en klubb",
+      "description": "Bläddra bland våra klubbar och anmäl dina spelare till dem som passar deras schema och intressen."
+    },
+    "step3": {
+      "title": "Ge dig ut på äventyr",
+      "description": "Dina spelare loggar in varje vecka, träffar sin Gedu och ger sig ut på äventyret med nya vänner."
+    }
+  },
+  "cta": {
+    "heading": "Redo att förvandla spelande till lärande?",
+    "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och varje chatt öppen för hela gruppen.",
+    "whereWeAre": "Våra onlineklubbar hålls på {languages}, för familjer var som helst i världen. Och vårt globala huvudkontor? En mysig studio på Drumsö i Helsingfors, Finland, på en lugn liten ö."
+  }
+}

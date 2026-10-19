@@ -245,6 +245,12 @@ own wrapped navigation module (`@/i18n/navigation`) and the browser Supabase cli
 (`@/lib/supabase/client`), exposing `mockSupabaseClient` for assertions. Components and
 hooks under test get a working router and Supabase client without per-test wiring.
 
+**It also wraps next-intl's `NextIntlClientProvider` so a missing message throws.** A
+component test hands the provider only the namespace files its tree reads
+(`src/i18n/CLAUDE.md`), and a namespace left out then fails the test by name instead of
+rendering a key the assertions may never look at. A test that mocks `next-intl` itself
+replaces the wrapper along with the rest.
+
 **The wrapped navigation mock is not optional decoration.** Components name routes
 through that module now, and its hooks read a routing context that a rendered component
 has no locale to supply — without the mock every test rendering a link fails. The stub's

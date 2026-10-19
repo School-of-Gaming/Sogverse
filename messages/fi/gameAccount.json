@@ -1,0 +1,15 @@
+{
+  "label": "{platform}-käyttäjänimi",
+  "usernameLabel": "{platform}-käyttäjänimi",
+  "placeholder": "esim. {example}",
+  "verifying": "Vahvistetaan...",
+  "notFound": "{platform}-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
+  "verifiedUser": "{username} (vahvistettu)",
+  "unverified": "{username} (ei vielä vahvistettu)",
+  "none": "(ei tiedossa)",
+  "edit": "Muokkaa {platform}-käyttäjänimeä",
+  "editFor": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
+  "save": "Tallenna",
+  "cancel": "Peruuta",
+  "saveFailed": "{platform}-käyttäjänimen päivittäminen epäonnistui."
+}

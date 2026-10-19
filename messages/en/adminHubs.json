@@ -1,0 +1,14 @@
+{
+  "titles": {
+    "products": "Clubs, camps and events",
+    "invoicing": "Invoicing"
+  },
+  "tabs": {
+    "products": "Products",
+    "sites": "Sites",
+    "holidayCalendars": "Holiday calendars",
+    "municipalities": "Municipalities",
+    "invoiceCustomers": "Invoice customers",
+    "gedus": "Gedus"
+  }
+}

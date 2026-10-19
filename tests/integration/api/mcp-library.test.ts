@@ -48,11 +48,11 @@ vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
 vi.mock("next-intl/server", async () => {
-  const en = (await import("../../../messages/en.json")).default;
+  const library = (await import("../../../messages/en/library.json")).default;
   return {
     getTranslations: async ({ namespace }: { namespace: string }) => {
       expect(namespace).toBe("library.categories");
-      return (key: keyof typeof en.library.categories) => en.library.categories[key];
+      return (key: keyof typeof library.categories) => library.categories[key];
     },
   };
 });

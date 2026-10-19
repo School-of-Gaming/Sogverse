@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "title": "Where<br></br>Screen Time<br></br>Becomes<br></br><act>Quality Time</act>",
+    "subtitle": "Weekly clubs for ages 7–17, online and in person, from €59 per month: a Game Educator leads every lesson in Minecraft, Roblox, Fortnite and more."
+  },
+  "findClub": "Find a club",
+  "trust": {
+    "cancel": "Cancel any time, at no cost",
+    "guarantee": "30-day money-back guarantee"
+  },
+  "testimonials": {
+    "heading": "What parents tell us",
+    "items": {
+      "highlightOfTheWeek": {
+        "quote": "“The club is the highlight of my son’s week. Every week, my quiet and shy boy transforms into a laughing, loudly chatting child when he gets to interact with like-minded kids. The club’s content and the educators’ expertise have pleasantly surprised me.”",
+        "attribution": "Mum, Finland"
+      },
+      "sighWithHappiness": {
+        "quote": "“Nothing else, no activity or hobby, has made my child sigh with happiness like this.”",
+        "attribution": "Mum, Finland"
+      },
+      "largeGroups": {
+        "quote": "“Large groups make our child anxious. This is the perfect way for us to engage in a hobby and make new friends.”",
+        "attribution": "Mum, Finland"
+      },
+      "finnishImproved": {
+        "quote": "“My daughter’s Finnish has improved tremendously in just a month! The gaming educators have been very skilled, friendly, and patient. This really works!”",
+        "attribution": "Mum, Norway"
+      },
+      "funAndSupervised": {
+        "quote": "“Gaming is fun and supervised. No bullying, no arguing, or bad vibes.”",
+        "attribution": "Mum, Finland"
+      },
+      "positiveExperience": {
+        "quote": "“School of Gaming has been a really positive experience for both the child and the parents. The children have had great gaming experiences with new friends in a safe gaming environment with experienced instructors – I can recommend it!”",
+        "attribution": "Dad, Finland"
+      }
+    }
+  },
+  "features": {
+    "heading": "Make gaming a great hobby",
+    "subheading": "Gaming is a hobby just like any other — better with good friends and with a professional Game Educator who is there to guide and help.",
+    "minecraftClubs": {
+      "title": "Every lesson has a Gedu",
+      "description": "Our Game Educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every lesson is guided by someone who truly gets it."
+    },
+    "screenTime": {
+      "title": "Designed to build real skills",
+      "description": "Skilfully designed clubs turn gaming into a playful learning experience where children develop real skills and have fun doing what they love."
+    },
+    "newFriends": {
+      "title": "New friends, real connections",
+      "description": "Children build genuine, lasting friendships through shared adventures. No one is left without a friend. The gamer’s oath means treating each other with kindness — online and offline."
+    },
+    "parents": {
+      "title": "Parents are part of it",
+      "description": "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child’s gaming journey."
+    }
+  },
+  "safety": {
+    "heading": "How is my child kept safe?",
+    "facts": {
+      "vetted": {
+        "title": "Record checks required",
+        "description": "We require every Gedu to show us a criminal record extract for working with children before we certify them."
+      },
+      "noDirectMessages": {
+        "title": "Every chat is the whole group’s",
+        "description": "Chat in a lesson goes to the whole room, where the Gedu can see it."
+      },
+      "groupOnlyRooms": {
+        "title": "Only the group gets in",
+        "description": "A club’s voice room opens five minutes before the lesson and closes five minutes after it, and only that group, its Gedus and our staff can enter."
+      },
+      "notRecorded": {
+        "title": "Lessons are not recorded",
+        "description": "Nothing in the app records, transcribes or stores the voice or video of a lesson."
+      },
+      "parentPin": {
+        "title": "A PIN before any spending",
+        "description": "Buying anything needs a four-digit parent PIN that only you know, and your child can’t get into your parent account without it."
+      }
+    },
+    "faqLink": "Read the full answers in our FAQ",
+    "photo": {
+      "alt": "Children at computers in a School of Gaming club, seen from behind, with their Game Educator sitting beside them",
+      "caption": "An in-person club at our studio in Lauttasaari, Helsinki."
+    }
+  },
+  "howItWorks": {
+    "heading": "Learning by Gaming.",
+    "subheading": "How it works: join a club, camp or event in three simple steps.",
+    "step1": {
+      "title": "Create your account",
+      "description": "Sign up as a parent and create gamer accounts for your children."
+    },
+    "step2": {
+      "title": "Pick a club",
+      "description": "Browse our clubs and enrol your gamers in the ones that fit their schedule and interests."
+    },
+    "step3": {
+      "title": "Join the adventure",
+      "description": "Your gamers log in each week, meet their Gedu, and dive into the adventure with new friends."
+    }
+  },
+  "cta": {
+    "heading": "Ready to turn gaming into learning?",
+    "subheading": "Give your child a place to play, learn and make friends every week, with a Game Educator in every lesson and every chat open to the whole group.",
+    "whereWeAre": "Our online clubs run in {languages}, for families anywhere in the world. And our global headquarters? A cosy studio in Lauttasaari, Helsinki, Finland, on a quiet little island."
+  }
+}

@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, createEvent, fireEvent, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enChat from "@/../messages/en/chat.json";
+import enCommon from "@/../messages/en/common.json";
+import enGedu from "@/../messages/en/gedu.json";
 import { ChatMessageList, type ChatLogHandlers } from "@/components/chat";
 import type { ChatAccount, ChatMessage } from "@/components/chat/types";
+
+const messages = { chat: enChat, common: enCommon, gedu: enGedu };
 
 /**
  * ============================================================================

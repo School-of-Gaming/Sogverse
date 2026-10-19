@@ -8,8 +8,18 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enVoice from "@/../messages/en/voice.json";
+import enCommon from "@/../messages/en/common.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
 import { useVoiceMemberFlair } from "@/components/voice/VoiceMemberFlairProvider";
+
+const messages = {
+  voice: enVoice,
+  common: enCommon,
+  gedu: enGedu,
+  memberFlair: enMemberFlair,
+};
 
 /**
  * ============================================================================

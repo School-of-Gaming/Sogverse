@@ -1,0 +1,111 @@
+{
+  "hero": {
+    "title": "naDev<br></br>Daq tIv<br></br>moj<br></br><act>Qap tIv</act>",
+    "subtitle": "Hoch Hogh ghom’a’mey, 7–17 ben puqpu’, De’wI’Daq naDevDaq je, 59 € jar Hoch vo’ Suq: Hoch qep Gedu’ DevtaH — Minecraft, Roblox, Fortnite latlh je."
+  },
+  "findClub": "ghom’a’ yInej",
+  "trust": {
+    "cancel": "rInmoH Hoch poH, Huch Hutlh",
+    "guarantee": "30 jaj: Huch chegh lay’"
+  },
+  "testimonials": {
+    "heading": "vav/SoSmey jatlhbogh",
+    "items": {
+      "highlightOfTheWeek": {
+        "quote": "”Hogh Dun law’ ghom’a’. Hoch Hogh, puqloDwIj tam ’ej ghIjlu’bogh moj puq Hagh ’ej jach, puqpu’ rurbogh ghom. ghom’a’ Dol ’ej ghojmoHwI’pu’ laH, mupIvmoH.”",
+        "attribution": "SoS, Suomi"
+      },
+      "sighWithHappiness": {
+        "quote": "”pagh latlh Qu’, pagh latlh Hob — puqwIj Quch neH ’oH ghom’a’.”",
+        "attribution": "SoS, Suomi"
+      },
+      "largeGroups": {
+        "quote": "”ghom’a’mey tIn puqmaj bIt. ghom’a’vam Daq Hob maHoy ’ej jup chu’ maSuq.”",
+        "attribution": "SoS, Suomi"
+      },
+      "finnishImproved": {
+        "quote": "”wa’ jar neH — puqbe’wI’ Suomi Hol Dun law’! ghojmoHwI’pu’ val, QaQ, ’ej ghIQ. Qap!”",
+        "attribution": "SoS, Norway"
+      },
+      "funAndSupervised": {
+        "quote": "”Quj tlhab ’ej ghoS. qI’be’, ghobe’, ’ej pagh QoQ qab.”",
+        "attribution": "SoS, Suomi"
+      },
+      "positiveExperience": {
+        "quote": "”School of Gaming — puq vav/SoS je QaQ. jup chu’ tlhej Quj QaQ luSuq puqpu’ — QaQ Daq, ghojmoHwI’pu’ Qeq tlhej. vIQuvmoH!”",
+        "attribution": "vav, Suomi"
+      }
+    }
+  },
+  "features": {
+    "heading": "toy’a’ QaQ Hob yIchenmoH",
+    "subheading": "toy’a’ QaQ Hob ’oH Hoch latlh rur — juppu’ QaQ je Gedu’ tIqqu’ tI’ang.",
+    "minecraftClubs": {
+      "title": "Hoch qep: Gedu’ tu’lu’",
+      "description": "Gedu’pu’ — toy’wI’pu’ chaH. bIH Sovchu’ puqpu’ pong je jupwI’ chenmoHlu’ HablI’ je moQ. Hoch poH chaH bIH ghoStaH."
+    },
+    "screenTime": {
+      "title": "laHmey teH chenmoHmeH ngoQ",
+      "description": "ghom’a’mey tIv chenmoH — puqpu’ laHmey boqmoH je tIvqu’."
+    },
+    "newFriends": {
+      "title": "jupwI’ chu’, jonlu’ Daj",
+      "description": "puqpu’ jupwI’ Daj chenmoH jaHDaq QoQ. pagh jup Hutlh. toy’wI’ batlh ghoH — HablI’ je moQ."
+    },
+    "parents": {
+      "title": "vav/SoSmey Qu’ SoH",
+      "description": "vav/SoS ghojmoHghach nIvbe’ ghom’a’mey. maH vav/SoSmey SoQ, tIqhom, je puq toy’a’ghach boqmoH."
+    }
+  },
+  "safety": {
+    "heading": "chay’ puqwIj Qanlu’?",
+    "facts": {
+      "vetted": {
+        "title": "Gedu’pu’ nuDlu’",
+        "description": "Hoch Gedu’ ghe’naQ De’ ’aghlu’ — wa’DIch luQaw’be’lu’."
+      },
+      "noDirectMessages": {
+        "title": "Hoch QIn ghom Hoch Qoy",
+        "description": "qep QIn Hoch pa’ Qoy, Gedu’ legh."
+      },
+      "groupOnlyRooms": {
+        "title": "ghom neH ’el",
+        "description": "vagh tup qep tagh pa’ poSmoHlu’, vagh tup qep rIn pa’ SoQmoHlu’ — ghom neH, Gedu’pu’chaj, ’ej beqmaj ’el."
+      },
+      "notRecorded": {
+        "title": "qep qonlu’be’",
+        "description": "qep ghogh ’ej mIllogh pagh qon, pagh ghItlh, pagh pol."
+      },
+      "parentPin": {
+        "title": "Huch ngaSmeH PIN",
+        "description": "vay’ Daje’meH PIN loS mI’ DaSovbogh neH poQlu’ — PIN Hutlhchugh puqlI’, vav accountlIj ’ellaHbe’."
+      }
+    },
+    "faqLink": "FAQ jangmey tIlaD",
+    "photo": {
+      "alt": "noH Quj yejHaD ghomDaq De’wI’mey lo’ puqpu’ — chaH DoHDaq Gedu’ ba’",
+      "caption": "Lauttasaari, Helsinki: maH Qujmeh pa’Daq ghom puqpu’."
+    }
+  },
+  "howItWorks": {
+    "heading": "QujtaHvIS ghojtaH.",
+    "subheading": "chay’ qaS: wej mIwmey ngeD — ghom’a’, ragh, wanI’ ghap yImuv.",
+    "step1": {
+      "title": "Account yIchenmoH",
+      "description": "vav/SoS Account yIchenmoH — puqpu’ toy’wI’ accountmey yIchenmoH."
+    },
+    "step2": {
+      "title": "ghom’a’ yIwIv",
+      "description": "ghom’a’mey tInej — toy’wI’pu’ DIS je ngoQ Daj yIwIv."
+    },
+    "step3": {
+      "title": "QoQ yImuv",
+      "description": "Hoch Hogh ’el toy’wI’pu’lI’, Gedu’chaj lughom, ’ej juppu’ chu’ tlhej lengDaq luSup."
+    }
+  },
+  "cta": {
+    "heading": "toy’a’ ghojmoH DaneH’a’?",
+    "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, Hoch QIn ghom Hoch Qoy.",
+    "whereWeAre": "De’wI’ ghom’a’meymajDaq qo’ Hoch Daq qorDu’pu’ ghom. De’wI’ ghom’a’mey Hol: {languages}. ’ej yejHaD’a’maj Hoch? Qujmeh pa’ mach, ’ambo’ jot Daq: Lauttasaari, Helsinki, Finland. Qapla’!"
+  }
+}

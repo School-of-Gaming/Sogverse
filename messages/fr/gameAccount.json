@@ -1,0 +1,15 @@
+{
+  "label": "Nom d’utilisateur {platform}",
+  "usernameLabel": "Nom d’utilisateur {platform}",
+  "placeholder": "ex. {example}",
+  "verifying": "Vérification...",
+  "notFound": "Compte {platform} introuvable. Vérifiez le nom d’utilisateur et réessayez.",
+  "verifiedUser": "{username} (vérifié)",
+  "unverified": "{username} (pas encore vérifié)",
+  "none": "(Inconnu)",
+  "edit": "Modifier le nom d’utilisateur {platform}",
+  "editFor": "Modifier le nom d’utilisateur {platform} de {name}",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "saveFailed": "Échec de la mise à jour du nom d’utilisateur {platform}."
+}

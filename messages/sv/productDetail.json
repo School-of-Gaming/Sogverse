@@ -1,0 +1,182 @@
+{
+  "jumpToSignup": "{verb} nu!",
+  "back": {
+    "consumer_club": "Tillbaka till klubbarna",
+    "municipality_club": "Tillbaka till kommunklubbarna",
+    "camp": "Tillbaka till lägren",
+    "event": "Tillbaka till evenemangen"
+  },
+  "typeLabel": {
+    "consumer_club": "Klubb",
+    "municipality_club": "Kommunklubb",
+    "camp": "Läger",
+    "event": "Evenemang"
+  },
+  "sections": {
+    "overview": "Bra att veta"
+  },
+  "topicInfo": {
+    "heading": "Om {name}",
+    "pegi": "PEGI {age}",
+    "topics": {
+      "minecraft_java": {
+        "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer. Det är den våra distansklubbar använder, eftersom den stöder verktygen våra spelfostrare behöver.",
+        "note": "För våra distansklubbar behöver ditt barn Minecraft på en dator. På Minecrafts egen webbplats säljs det som ”Minecraft: Java & Bedrock Edition for PC”. Det är ett engångsköp och inte en prenumeration, och det inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
+        "linkLabel": "Skaffa Minecraft för PC"
+      },
+      "minecraft_bedrock": {
+        "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
+        "note": "Minecraft Bedrock ingår inte i priset. Det är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan. Det exemplar som räknas är det för enheten ditt barn ska spela på. På en spelkonsol kräver onlinespel dessutom konsolens betalda onlinemedlemskap.",
+        "linkLabel": "Var du köper det"
+      },
+      "minecraft_education": {
+        "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för ledda grupper. Byggandet är detsamma, trevligt och öppet, och det finns extra verktyg för den vuxna som leder tillfället.",
+        "note": "Det finns inget att köpa och inget skolkonto att ordna. School of Gaming tillhandahåller de Minecraft Education-konton som deltagarna använder under tillfällena. För distansklubbar är själva spelet en gratis nedladdning från Microsoft Store eller från Minecraft Educations egen webbplats. Det fungerar på Windows- och Mac-datorer såväl som på iPad och Chromebook.",
+        "linkLabel": "Om Minecraft Education"
+      },
+      "fortnite": {
+        "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar det tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våldsamma detaljer. Matcherna är tävlingsinriktade och spelas online med andra människor.",
+        "note": "Fortnite är gratis att ladda ner och spela, så det finns inget spel att köpa. Att spela kräver ett gratis Epic Games-konto. Vissa valfria extrasaker kostar pengar, till exempel utstyrslar. Epics föräldrakontroller sitter på kontot i stället för på en enhet, och de kan begränsa sådana köp.",
+        "linkLabel": "Skaffa Fortnite"
+      },
+      "pokemon_go": {
+        "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss. Det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
+        "note": "Pokémon GO är gratis att ladda ner och spela, så det finns inget spel att köpa. Det kräver en telefon med GPS och mobildata, samt ett gratis konto. För ett barn under 13 år skapas kontot av en förälder och förblir länkat till förälderns. Det finns valfria köp i appen, som föräldrakontroller kan begränsa. Det spelas utomhus på riktiga platser. Det håller dessutom skärmen, GPS:en och mobildatan igång hela tiden, så batteriet räcker inte länge.",
+        "linkLabel": "Var du laddar ner det"
+      },
+      "roblox_studio": {
+        "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och skriver riktig kod. Deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela, och det är ett första steg in i riktig spelutveckling.",
+        "note": "Roblox Studio är gratis, så det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac, inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsinställningar. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
+        "linkLabel": "Skaffa Roblox Studio"
+      },
+      "rocket_league": {
+        "description": "Rocket League är fotboll som spelas med raketdrivna bilar. Två lag kör runt på en arena och försöker knuffa in en jättestor boll i motståndarlagets mål, i korta matcher på ungefär fem minuter. Stilen är ljus och tecknad och det finns inget våld. Det är en sport och inte ett skjutspel, så det går lätt att följa från sidan även om man aldrig spelat själv. Nästan varje mål bygger på att laget samarbetar, och det är därför spelet passar så bra i en klubb.",
+        "note": "Rocket League är gratis att ladda ner och spela, så det finns inget spel att köpa. Att spela kräver ett gratis Epic Games-konto. Spelet fungerar på Windows-datorer, PlayStation, Xbox och Nintendo Switch. Spelare på olika enheter kan spela tillsammans, så ditt barns enhet behöver inte vara samma som någon annans. Det finns valfria köp i spelet, som dekorationer till bilarna, som föräldrakontroller kan begränsa.",
+        "linkLabel": "Skaffa Rocket League"
+      }
+    }
+  },
+  "info": {
+    "schedule": "Schema",
+    "where": "Plats",
+    "format": "Format",
+    "ages": "Ålder {min}–{max}",
+    "ageRange": "Åldersintervall",
+    "audience": "Målgrupp",
+    "language": "Språk",
+    "online": "Online",
+    "tbd": "Bekräftas senare",
+    "holidayBreaks": "Lov"
+  },
+  "signupPanel": {
+    "verb": {
+      "consumer_club": "Anmäl dig",
+      "municipality_club": "Registrera dig",
+      "camp": "Anmäl dig",
+      "event": "Gå med"
+    },
+    "noun": {
+      "consumer_club": "Anmälan",
+      "municipality_club": "Registrering",
+      "camp": "Anmälan",
+      "event": "Deltagande"
+    },
+    "ctaReadyWaiting": "Redo och väntar",
+    "ctaActive": "{verb} nu",
+    "ctaActiveWithPrice": "{verb} nu {price}",
+    "ctaActiveWithPriceSub": "{verb} nu · {price}/mån",
+    "ctaSubmitting": "Ett ögonblick…",
+    "ctaAddGamer": "Lägg till en gamer först",
+    "ctaAllSet": "Du är klar",
+    "ctaAgreeConsent": "Ge det obligatoriska samtycket",
+    "ctaWaitlist": "Gå med på väntelistan",
+    "ctaSignIn": "Logga in",
+    "ctaCreateAccount": "Skapa konto",
+    "gamerAlreadySignedUp": {
+      "consumer_club": "Redan anmäld",
+      "municipality_club": "Redan registrerad",
+      "camp": "Redan anmäld",
+      "event": "Redan med"
+    },
+    "gamerAlreadyWaitlisted": "På väntelistan",
+    "gamerUnderAge": "Under {min} år",
+    "gamerOverAge": "Över {max} år",
+    "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
+    "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
+    "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
+    "rules": {
+      "title": "Våra regler",
+      "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>.",
+      "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
+      "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
+      "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>.",
+      "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, vilket beskrivs närmare i <policy>policyn mot mobbning och disciplin</policy>."
+    },
+    "consents": {
+      "heading": "Samtycke",
+      "agree": "Jag har läst och godkänner dessa dokument.",
+      "bundles": {
+        "robloxProgramme": "Jag har läst och godkänner Skaparnas akademis <terms>användarvillkor</terms> och <privacy>integritetspolicy</privacy>.",
+        "robloxProgrammeTitle": "Skaparnas akademis användarvillkor och integritetspolicy"
+      },
+      "gamerPhoto": {
+        "lynxEducate": "Foton och videor på mitt barn får tas med i sessionsrapporter, delas med Lynx Educate och Roblox för effektrapportering och användas på School of Gamings, Lynx Educates och Roblox webbplatser och sociala medier. Detaljerna finns i <privacy>Skaparnas akademis integritetspolicy</privacy>.",
+        "lynxEducateTitle": "Foton och videor på ditt barn",
+        "hint": "Valfritt — du kan ändra detta när som helst på ditt barns sida i Min SOG."
+      },
+      "marketing": {
+        "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst.",
+        "lynxEducateTitle": "Nyheter från Lynx Educate",
+        "hint": "Valfritt — du kan ändra detta när som helst i dina inställningar."
+      }
+    },
+    "whoAreYouSigningUp": {
+      "consumer_club": "Vem anmäler du?",
+      "municipality_club": "Vem registrerar du?",
+      "camp": "Vem anmäler du?",
+      "event": "Vem går med?"
+    },
+    "seatIsFor": "Vem platsen är för",
+    "selected": "Vald",
+    "agePill": "Ålder {age}",
+    "parentPill": "Förälder",
+    "regionLock": {
+      "heading": "Din plats",
+      "note": "Den här produkten erbjuds bara i vissa länder. Ange var din familj bor.",
+      "setLocation": "Lägg till din plats",
+      "wrongCountry": "Den här produkten erbjuds bara i ett land: <name>{country}</name>.",
+      "eligible": "Bara för familjer i ditt land: {country}",
+      "eligibleLocation": "Din familjs plats: {location}",
+      "dialogTitle": "Var bor din familj?",
+      "dialogDescription": "Vi använder det för att se vilka klubbar, läger och evenemang som erbjuds där du bor. Du kan ändra det senare i dina inställningar.",
+      "dialogField": "Din plats",
+      "dialogSave": "Spara plats"
+    }
+  },
+  "pricing": {
+    "subscriptionHint": "Faktureras månadsvis · avsluta när som helst.",
+    "free": "Gratis",
+    "freeHint": "Ingen betalning behövs.",
+    "external": "Bekostas av din kommun",
+    "upfrontHint": "Engångsbetalning.",
+    "notAvailable": "Pris inte tillgängligt i {currency} ännu.",
+    "cadenceMonth": "/ mån",
+    "firstChargeOn": "Första betalningen {date} — inget att betala i dag.",
+    "guarantee": {
+      "title": "30 dagars pengarna-tillbaka-garanti",
+      "body": "Om det inte passar ditt barn betalar vi tillbaka — utan krångel och utan jobbiga samtal. De 30 dagarna räknas från ditt barns första träff.",
+      "contact": "Mejla bara <link>{email}</link>, så löser en riktig människa det."
+    }
+  },
+  "countdown": {
+    "days": "dagar",
+    "hours": "tim",
+    "minutes": "min",
+    "seconds": "sek"
+  },
+  "notFound": {
+    "title": "Vi hittade inte den",
+    "description": "Den kan ha tagits bort eller länken är fel. Bläddra bland tillgängliga alternativ nedan.",
+    "cta": "Tillbaka till bläddring"
+  }
+}

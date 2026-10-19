@@ -15,10 +15,13 @@ import {
 } from "../../mocks/settings-page";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockGamerProfile } from "../../mocks/supabase";
 import type { GamerSignIn, Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The settings page asks whether an address reaches a person, not whether its

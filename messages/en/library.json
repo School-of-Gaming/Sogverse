@@ -1,0 +1,35 @@
+{
+  "name": "Library",
+  "readingTime": "{minutes, plural, one {# min read} other {# min read}}",
+  "article": {
+    "breadcrumbLabel": "Breadcrumb",
+    "more": "More from the Library",
+    "share": {
+      "heading": "Share this article",
+      "copyLink": "Copy link",
+      "copied": "Link copied",
+      "on": "Share on {platform} (opens in a new tab)",
+      "email": "Email",
+      "byEmail": "Share by email",
+      "native": "Share…"
+    }
+  },
+  "index": {
+    "title": "School of Gaming’s <act>Library</act>",
+    "intro": "Practical guidance for parents on online safety, everyday gaming at home, and what children learn through play.",
+    "empty": "Nothing here yet",
+    "all": "All",
+    "filterLabel": "Categories"
+  },
+  "categories": {
+    "onlineSafety": "Online safety",
+    "screenTime": "Screen time & family life",
+    "learning": "Learning through games",
+    "gamesExplained": "Games explained",
+    "forSchools": "For schools"
+  },
+  "cta": {
+    "heading": "Ready to get started?",
+    "button": "Get started"
+  }
+}

@@ -1,0 +1,179 @@
+{
+  "pageTitle": "maH tIqel",
+  "sectionNav": "ghItlhvam DevwI’",
+  "hero": {
+    "title": "noH Quj yejHaD tIqel",
+    "subtitle": "naDev Quj yay’ moj. puqpu’, Gedu’pu’ Dun, je Qujmey puqpu’ muSHa’bogh — Minecraft, Roblox, Fortnite latlh je — DIboqmoH. jup chu’ luSuq, laHmey teH luchenmoH, ’ej lutIvqu’."
+  },
+  "quote": {
+    "text": "”DaHjaj bIHtaHbogh, chalDaq qablaHbogh neH ’oH.”",
+    "attribution": "— The Princi-Pal"
+  },
+  "mission": {
+    "heading": "maH ngoQ",
+    "text": "Hoch QIn nIvbe’. toy’a’ QaQ Hob ’oH Hoch latlh Hob rur. puqpu’ toy’taHghach muSHa’ wIlo’ — juppu’ QaQ je Gedu’ tIqqu’ — DaH batlh Qapla’.",
+    "photoAlt": "cha’ noH Quj yejHaD beqpu’ — Sut Doq tuQ, lupDujDaq Qam",
+    "meetTeam": "ghom yIghov"
+  },
+  "values": {
+    "heading": "maH nuq muSHa’",
+    "playIsEssential": {
+      "title": "toy’a’ nIS puqpu’",
+      "description": "toy’a’ ’oH puq vum. tlhIngan tIq je Duj nIS. maH ghom’a’mey wI’el toy’a’ peghHa’ — Qunwaj, HIv, je bIH ghojmoHwI’ — nItlhDaq QaD Hoch je."
+    },
+    "friendsCarry": {
+      "title": "juppu’ bIH HoS",
+      "description": "pagh jup Hutlh nIS. toy’a’ je jupwI’ poH puqpu’ Hoch Dujmey HeghoH. maH ghom’a’meyDaq, puqpu’ jupwI’ wItIvqu’moH jaH QoQ tu’lu’meH."
+    },
+    "keepChildrenSafe": {
+      "title": "moQ DIvI’ Daq puqpu’ yISuq",
+      "description": "Sogverse: ghom DaqmeyDaq jatlh toy’wI’pu’ — qep QIn Hoch pa’ Qoy, Gedu’ legh. Hoch toy’wI’ account chenmoH vav, ’ej vav account tlhej boqlu’; chay’ ’el puq ’e’ wIv vav — vav account neH, pagh pong pegh mu’ je, pagh jabbI’ID Daq ’ol pegh mu’ je. qIp ’ej tlhejHa’: not wIchaw’."
+    },
+    "familyInTheLoop": {
+      "title": "qorDu’ Qu’ SoH",
+      "description": "vav/SoSmey nIvbe’. SoH QaD puq toy’a’ghach ghoS Hoch ngoQmey — toy’a’, chenmoH, jupwI’ Suq — QaD Daq ’oH."
+    }
+  },
+  "howClubsWork": {
+    "heading": "ghom’a’mey nuq",
+    "paragraph1": "wa’ tup Hoch, toy’wI’pu’ ’el — Gedu’ chaHvaD jatlh. Gedu’ QaD jaj De’, puq HoS je ngoQ moj — jaH pIq je Haq.",
+    "paragraph2": "maH Gedu’pu’ toy’wI’pu’ chaH. bIH Sovchu’ puqpu’ je tengchaH ngupwI’pu’ jupwI’ chenmoHlu’ HablI’ je moQ. batlh vum chaH Hoch tup.",
+    "paragraph3": "Hoch maH ghom’a’mey HaqwI’ De’ ngeH — toy’wI’pu’ je ghoS, chenmoh, je HaqwI’. Hoch tup, qoH laHmey, Duj De’, je Qapla’ wanI’ nIvqu’.",
+    "paragraph4": "Hoch toy’wI’ batlh ’Ip — Qujdaq, ghogh QInDaq, jaj Hoch yIntaHvIS je. Dat rap ngoQmey.",
+    "photoAlt": "De’wI’mey tlhegh — maH Qujmeh pa’Daq ghom loS",
+    "photoCaption": "maH Qujmeh pa’ — Lauttasaari, Helsinki. pa’Daq ghom puqpu’ ’op."
+  },
+  "forParents": {
+    "heading": "vav/SoSmey",
+    "paragraph1": "vav/SoS toy’a’ ghojmoHghach nIvbe’ — ghom’a’mey rur. maH vav/SoSmey HoS boq wImuS — batlh puq toy’a’ghach bIghoH.",
+    "paragraph2": "SoH QaD — ngoQmey, qo’mey, je Huch — puq batlh Daq Gedu’pu’ QaQ DaH ghoH."
+  },
+  "easterEgg": {
+    "heading": "You found the Klingon translation!",
+    "intro": "This interface has been translated into tlhIngan Hol as a tribute to Star Trek and its fans. Here are some of our favourite translations:",
+    "brandNameLabel": "School of Gaming",
+    "brandNameValue": "noH Quj yejHaD",
+    "brandNameMeaning": "War Game Academy — because to a Klingon, all games are battle training",
+    "taglineLabel": "Where screen time becomes quality time",
+    "taglineValue": "naDev Quj yay’ moj",
+    "taglineMeaning": "Here, games become victory",
+    "deleteLabel": "Delete",
+    "deleteValue": "yIHoH",
+    "deleteMeaning": "Kill it!",
+    "closeLabel": "Close",
+    "closeValue": "yISoQmoH",
+    "closeMeaning": "Make it shut up!",
+    "cancelLabel": "Cancel",
+    "cancelValue": "yImev",
+    "cancelMeaning": "Stop!",
+    "getStartedLabel": "Get Started",
+    "getStartedValue": "DaH yIqet",
+    "getStartedMeaning": "Run now!",
+    "passwordLabel": "Forgot password?",
+    "passwordValue": "mu’mey DaSovbe’?",
+    "passwordMeaning": "You don’t know the words?",
+    "errorLabel": "Unexpected error",
+    "errorValue": "Qagh Daj ’oH",
+    "errorMeaning": "It is an interesting error",
+    "copyrightLabel": "All rights reserved",
+    "copyrightValue": "Hoch batlh",
+    "copyrightMeaning": "All honour",
+    "learnMoreLabel": "Learn More",
+    "learnMoreValue": "bIghojnIS",
+    "learnMoreMeaning": "You need to learn",
+    "deletingLabel": "Deleting...",
+    "deletingValue": "vIHoH...",
+    "deletingMeaning": "I’m killing...",
+    "englishLabel": "English (language name)",
+    "englishValue": "tera’ngan Hol",
+    "englishMeaning": "Earther language",
+    "okLabel": "OK",
+    "okValue": "Qapla’",
+    "okMeaning": "Success!",
+    "privacyLabel": "Privacy Policy",
+    "privacyValue": "Privacy Policy (So’wI’)",
+    "privacyMeaning": "So’wI’ is a cloaking device — what a Klingon calls keeping something out of sight",
+    "termsLabel": "Terms & Conditions",
+    "termsValue": "Terms of the Pact",
+    "termsMeaning": "The pact is the agreement itself, sworn to before the first battle",
+    "honorLabel": "Anti-Bullying",
+    "honorValue": "Code of Honor",
+    "honorMeaning": "A warrior who preys on the weak has no honour to speak of",
+    "retiredNote": "Those last three names are retired. The Privacy Policy, the Terms & Conditions and the Anti-Bullying Policy now read the same in every locale, Federation Standard included — they are binding documents, and no family should have to decode their own rights. An honourable translation, but the wrong battlefield for one.",
+    "note": "Date and time formatting appears in English because the browser’s Intl APIs don’t have Klingon locale data. Klingons don’t use a 7-day week anyway.",
+    "qapla": "Qapla’!"
+  },
+  "faq": {
+    "heading": "qaSchuq SeghHommey",
+    "items": {
+      "whatIsSogverse": {
+        "question": "Sogverse ’oH nuq?",
+        "answer": "<p>noH Quj yejHaD pat ’oH Sogverse’e’. ghom’a’mey, raghmey, wanI’mey je qeng — Minecraft, Roblox, Fortnite latlh je Daq DevtaH toy’wI’ po’pu’ — Gedupu’, naDev Hoch luponglu’bogh pong.</p>"
+      },
+      "productTypes": {
+        "question": "ghom’a’mey, raghmey, wanI’mey: chay’ juHHa’chuq?",
+        "answer": "<p>ghom’a’mey rurchuq qaSchuq. raghmey, ghojmoHwI’ poH qaSchuq. wanI’mey wa’logh neH qaSchuq.</p>"
+      },
+      "whoLeads": {
+        "question": "’Iv Dev may’mey, ’ej chay’ nuDlu’ Gedupu’?",
+        "answer": "<p>may’ Hoch Dev Gedu — toy’wI’ je ghaH, ’ej Quj qoDDaq HurDaq je puqpu’ QaHlaH.</p><p>Hoch GeduvaD cha’ Doch wIpoQ: patlh nob che’wI’ ’e’ nypa’, puqpu’ qIHmeH HeS ta’ ghItlh maHvaD cha’nIS — rikosrekisteriote ’oH; yejquv qumvo’ ghaH yISuq, ’ej maHvaD cha’DI’, jav maSmey qanbe’nIS — ’ej Qu’ chut ghItlh laDnIS ’ej lajnIS. ghItlh nav wIpolbe’, ’ej ghItlhvo’ pagh wIqon: cha’lu’pu’ ’e’ neH ’ej ghorgh ’e’ neH wIqon.</p><p>account chenmoH neH: ghom poSmoHbe’. patlh nob che’wI’ ’e’ nypa’, ghomDaq lanlu’be’ Gedu, ’ej Gedu janmey lo’laHbe’.</p>"
+      },
+      "safety": {
+        "question": "puqwI’ luja’laH’a’ novpu’? vay’ qonlu’’a’?",
+        "answer": "<p>ghobe’ — ghom’a’ ghogh pa’ ’oH pa’ pegh’e’: Sam ’Iv? pagh! ghom may’ poH neH tu’lu’ — may’ taghpa’ vagh tup poSmoH, ’ej may’ rInDI’ vagh tup SoQmoH. ’ellaH ghomvetlh nuvpu’, ghom’a’vetlhDaq vumbogh Gedu, noH Quj yejHaD che’wI’pu’ je — chaH neH. ’elmeH vay’ nIDDI’, may’wI’maj SeHlawDaq nuDbej: ghomvetlhDaq pa’ Hutlhbogh puq ’ellaHbe’.</p><p>may’ QInmey pa’ Hoch ghoS, wa’ puqvaD mob ghoSbe’ not, ’ej mu’mey rap mIlloghmey qeng. pa’Daq yIn QInmey, ’ej poH rap poStaH pa’ — pa’Daq laD puqlI’, ’ej pa’ SoQpu’DI’, poSqa’meH mIw tu’lu’be’. ’ach DIpol: ghom’a’ DevtaH Gedupu’, noH Quj yejHaD che’wI’pu’ je: jatlhlu’pu’bogh luqIhqa’laH, ’ej ghovmo’ SeHlaH. QIn teqDI’ vay’, Daqchaj SIq lan — Qaw’be’.</p><p>may’ ’e’ qonbe’lu’. pat qoDDaq may’ wab, may’ mIllogh je qonbe’lu’, mu’ghom moHbe’lu’, polbe’lu’ — ’ej pa’Daq qonwI’ SeHwI’ janmey tu’lu’be’.</p><p>Gedu che’wI’pu’ je neH ghaj SeHwI’ janmey, ’ej Hop leSpoH: wab jan SovmoH qoj jon, mIlQeD chu’Ha’ qoj jon, QInmeyDaq vay’ SovmoH, Daq mobDaq vay’ vIH, ’ej Daqmey Hoch jatlh. Quj qoD ghItlh QInmey: latlh Doch bIH, ’ej Qujmey SeH — noH Quj yejHaD Minecraft may’wI’Daq toy’wI’ SovmoHlaH, chaghlaH, ngIllaH je Gedupu’maj.</p>"
+      },
+      "howToStart": {
+        "question": "chay’ jIQaplaH?",
+        "answer": "<p>vav account yIchenmoH. jIH SOGvo’ toy’wI’ puqlI’ yIchel. ngevwI’ yInuD ’ej yIchel! chelmeH nagh beQ tlhob: ’Iv pa’? ’ej toy’wI’ Daghajbe’taHchugh, DachelmeH ra’.</p><p>bIchelpu’DI’, may’ wa’DIchDaj taghpa’ Gedu ghajbogh ghomDaq puqlI’ wIlan, ’ej cha’maj jIH SOGDaq ghom’a’ nargh.</p><p>accountlIjvo’ may’mey muv puqlI’ — profileDaj DawIv — jIH SOGDaq ’elmeH ngoq Daj DanobtaHbe’chugh.</p>"
+      },
+      "isItASchool": {
+        "question": "ghojmoHmeH yejHaD ’oH’a’?",
+        "answer": "<p>ghobe’. Hob ’oH Quj’e’, Hoch latlh Hob rur, ’ej vaj wIqaSmoH: Dev ’ej QaH Gedu — nuD ’ej patlh nob pagh. SogverseDaq puqvaD patlh mI’ nobbe’lu’, juH Qu’ nobbe’lu’, wIv’a’ qaSmoHbe’lu’ je.</p><p>’ach ghomDaj ghaj puqlI’, ghaH Sovbogh Gedu ghaj, ’ej may’ Hoch rInDI’ qonta’ Hev — vaj Qu’chaj ’ej chay’ qaSpu’ Dalegh.</p>"
+      },
+      "ages": {
+        "question": "’Iv DISmey qel?",
+        "answer": "<p>ghom’a’, ragh, wanI’ je Hoch ghaj DIS SaH; HalDaq ’ej ngevwI’Daq nagh beQDaq cha’lu’. ngevwI’Daq DIS nuDwI’ tu’lu’: puqlI’ DISvaD lI’bogh DaSammeH QaH. pat Hoch: Soch DIS — wa’maH Soch DIS.</p><p>DIS chutmey ghaj Qujmey je, ’ej Quj Hoch DIS chut cha’lu’ ghom’a’, ragh, wanI’ HalDaq. wa’maH chorgh DIS poQbogh Quj wIqengbe’ not. Suomngan SepDaq Suomngan chutmey wIpab: DISDaj wej DIS Dung SaHbogh Quj QujlaH puq, vav SaHtaHvIS ’ej chaw’taHvIS.</p><p>nuqDaq bIDabtaHchugh je, bIchelpa’ HalDaq cha’lu’ Quj DIS chut ’ej Qu’ DIS SaH je. puqlI’ Dachelchugh, cha’ DalajtaH.</p>"
+      },
+      "games": {
+        "question": "nuq Qujmey Dalo’? Quj je’nISbe’’a’ puqwI’?",
+        "answer": "<p>naDev qaS ghom’a’meymaj, raghmeymaj, wanI’meymaj je: Minecraft (Java, Bedrock, Education je), Roblox Studio, Fortnite, Rocket League, Pokémon GO je. may’mey latlh je tu’lu’: noH Quj, ra’ghItlh, qulHom qech, Quj chenmoHghach je. ghom’a’, ragh, wanI’ Hoch HalDaq Quj pong ’ej nuq poQ ja’chu’.</p><p>Huch Hutlh Fortnite, Rocket League, Pokémon GO, Roblox Studio je — ’ach Huch Hutlhbogh accountmey poQ puqlI’.</p><p>Huch poQ Minecraft Java Minecraft Bedrock je: wa’logh chenmoHwI’vo’ luje’ qorDu’lI’. maHvaD Huch Danobbe’, ’ej Segh qel — vaj Segh ’ej Daq ja’ Hal. Minecraft Education: pagh yIje’, ’ej yejHaD account yIchenmoHQo’ — may’Daq lo’lu’bogh accountmey nob noH Quj yejHaD, ’ej Quj neH lIng puqlI’, Huch Hutlh.</p>"
+      },
+      "equipment": {
+        "question": "nuq janmey poQ puqwI’?",
+        "answer": "<p>Quj qel, ’ej Hoch ghom’a’, ragh, wanI’ HalDaq ja’lu’.</p><p>Minecraft Java: De’wI’ poQ — Windows, Mac, Linux ghap; Quj SeHlaw, jabbI’ID jan, nagh beQ Segh je lI’be’. Roblox Studio: Windows De’wI’mey Mac je neH — nagh beQ, Chromebook, jabbI’ID jan, Quj SeHlaw je lI’be’. Minecraft Bedrock: Quj SeHlawmey, jabbI’ID janmey, nagh beQmey, Windows De’wI’mey je. Rocket League: Windows De’wI’mey, PlayStation, Xbox, Nintendo Switch je. Pokémon GO: jabbI’ID jan qoj nagh beQ poQ, GPS mIw je, HurDaq Qujlu’mo’.</p><p>Hal qoDDaq qaS may’mey ’ej ghogh lo’lu’, vaj wab jan poQ puqlI’ je — may’ jIHDaq wab jan wIvwI’ ’ej vIHbogh nuDwI’ tetlh tu’lu’, vaj jatlhpa’ wab jan lugh wIvpu’ ’e’ nuDlaH.</p>"
+      },
+      "billing": {
+        "question": "nuq Huch poQ, ’ej chay’ Huch nge’lu’?",
+        "answer": "<p>ghom’a’, ragh, wanI’ Hoch ghaj Huch mI’ mob; HalDaq cha’lu’ — euro, ’ej Huch nob naQ.</p><p>nuq DachelDI’ Huch mIw qel: ghom’a’ ’oH jar Huch nge’ghach’e’ — jar Hoch nge’lu’, ’ej poH bIt poQbe’lu’; ragh wanI’ je: bIchelDI’ wa’logh neH Huch Danob, ’ej pagh ratlh; ghomHom veng: veng Huch nob, vaj maHvaD pagh Danob. ghom’a’ Hoch puq pa’ ghaj Huch nge’ghach mob, puq ghom’a’ je pong; vaj cha’ puqpu’ cha’ ghom’a’mey je ghajbogh qorDu’ legh loS tetlhmey. ghom’a’ taghpa’ Dachelchugh, jajvetlh pagh nge’lu’: bIrarpa’ Huch wa’DIch jaj ja’ Hal.</p><p>HuchHommeylIj, jabbI’IDmeylIj, Huch nge’ghachmeylIj je: jIH SOGDaq Huch je tlhob nagh beQDaq tu’lu’, ’ej Stripe Hung Hal poSmoH.</p>"
+      },
+      "cancellation": {
+        "question": "vImevlaH’a’, ’ej chay’ Huch bonobqa’?",
+        "answer": "<p>jar Huch nge’ghach ’oH ghom’a’’e’, ’ej poH bIt poQbe’: DaneHDI’ yImev, Huch Hutlh, jIH SOGDaq Huch je tlhob nagh beQvo’ — Stripe Hung Hal poSmoH. DaDIlpu’bogh poH rInDI’, pa’Daj ghajtaH puqlI’ — ’ej ghom’a’ HalDaq may’Daj Qav jaj legh.</p><p>wa’maH wej jaj Hoch (30 jaj) Huch nobqa’ghach ghaj ghom’a’ Hoch je: puqlI’vaD QaQbe’chugh, may’ wa’DIchDaj rInpu’DI’ 30 jaj qaStaHvIS {supportEmail} Daq yIngeH, ’ej ghom’a’vetlhvaD DaDIlpu’bogh Hoch wInobqa’ — ghItlh nav poQbe’lu’, meq poQbe’lu’ je.</p><p>pIm raghmey: wa’logh DIllu’. ragh taghpa’ wa’maH loS jaj (qoj law’) bImevchugh, Hoch wInobqa’; Soch jaj wa’maH loS jaj je joj, vaghmaH euro Qu’ Huch wIteq ’ej latlh wInobqa’; ragh taghpa’ Soch jaj puS, Huch wInobqa’laHbe’ — pa’ polta’lu’ ’ej puqlI’vaD ghuHmoHta’lu’mo’ — rop ngeD, qoj DaSeHlaHbe’bogh vay’ tu’lu’chugh neH. roptaHmo’ ghoSlaHbe’chugh puqlI’, Qel ghItlh {supportEmail} Daq yIngeH, ’ej Huch wInobqa’.</p>"
+      },
+      "severalChildren": {
+        "question": "puqpu’ law’ vIghaj — chay’ Qap accountmey Huch je?",
+        "answer": "<p>wa’ vav account Daghaj. jIH SOGvo’ Hoch puqvaD toy’wI’ account DachenmoH — pong wa’DIch, boghtaHvIS maS DIS je, ’ej DaneHchugh loD be’ ghap. account chenmoH pagh puq. Soch toy’wI’pu’: accountlIj veH ’oH.</p><p>Huch: SoH DaSeH. ghom’a’ Hoch puq pa’ ghaj tetlh mob, vaj wa’ wa’ DanuDlaH ’ej DamevlaH; ’ej jIH SOGDaq Huch je tlhob nagh beQvo’ Hoch DaSam.</p><p>qorDu’ ngoq je’wI’ tu’lu’be’, ’ej puq Hoch account chu’ chenmoHnISbe’lu’.</p>"
+      },
+      "languages": {
+        "question": "nuq Hol lo’lu’ may’meyDaq?",
+        "answer": "<p>cha’ ngoQmey pIm bIH, ’ej rapnISbe’.</p><p>ghom’a’, ragh, wanI’ Hoch: wa’ Hol neH lo’ — Suomngan Hol, Swed Hol, DIvI’ Hol, vuS Hol ghap. HalDaq legh, ’ej ngevwI’Daq wIvwI’ ’oH.</p><p>’ach Sogverse DalaDmeH Hol: SoH DawIv, Hal nach wIvwI’Daq. DachoHDI’, pat Hol choH — puqlI’ may’mey Hol choHbe’. vaj Suomngan Hol jatlhbogh vav: Suomngan HolDaq Hal laD, ’ej DIvI’ Hol ghom’a’Daq puqDaj chel.</p>"
+      },
+      "municipalityClubs": {
+        "question": "nuq ’oH ghomHom veng’e’, ’ej chay’ wImuv?",
+        "answer": "<p>Suomngan veng tlhej wIchenmoHbogh ghom’a’ ’oH ghomHom veng’e’. veng qel: juHDaq Hal qoDDaq ghomlaH, qoj puqlI’ yejHaDDaq pa’ ghomlaH. cha’logh Dev Gedu Dun.</p><p>veng Huch nob, vaj bIchelDI’ maHvaD pagh Danob — ’ach vengmey puS: qorDu’vaD Huch mach poQ, ’ej ja’chuq chaH. ngoq poQbe’lu’, tlhob poQbe’lu’ je: ghomHom veng HalDaq vengraj yISam. pa’ maSIchpu’chugh, ghom’a’mey legh ’ej puqlI’ SIbI’ yIchel — Huch mIw tu’lu’be’.</p><p>pa’mey puS, ’ej motlh loSwI’pu’ tetlh tu’lu’: ghoStaHbe’chugh puqlI’, maHvaD yIja’ — vaj toy’wI’ vebvaD pa’ wInoblaH. Hoch poSbogh ghom’a’mey je wIchenmoH: naDev muvlaH toy’wI’, Daq Hoch yIntaHvIS.</p>"
+      },
+      "gamerAccounts": {
+        "question": "chay’ ’el puqwI’, ’ej nuq ’oH vav PIN’e’?",
+        "answer": "<p>chay’ ’el puqlI’ ’e’ DawIv, Hoch puqvaD, jIH SOGDaq. motlh ’elmeH ngoq Daj ghajbe’ toy’wI’ account: Sogverse qoD Daq ghaj — jabbI’ID Daq teH ghajbe’ — vav accountlIj tlhej boqlu’, ’ej accountlIjvo’ profileDaj DawIvDI’, Sogverse ’el puqlI’. DaneHchugh, pong pegh mu’ je DanoblaH, pagh jabbI’ID DaqDaj — ’olDI’ puq, pegh mu’ wIv.</p><p>DawIvbogh Hoch: puq ’elmeH ngoq accountDaj neH poSmoH — ponglIj mu’lIj joq lo’taHbogh puq: accountlIj qoj loDnI’ be’nI’ account ’ol laHbe’ pagh. mej ’ej ’elqa’: SoH ghaH ’ej pegh mu’lIj lo’, pagh loDnI’ be’nI’ je ghaj pong pegh mu’ je. ’ach accountlIjvo’ ’elbogh loDnI’ be’nI’: accountlIjvo’ neH yISuch. ’ej accountlIjvo’ ’elpu’bogh puq: latlh DaqDaq wIvmeH vav PINlIj poQ.</p><p>vav Daq ’elmeH loS mI’ PIN poQlu’, ’ej SoH neH Sov: vaj Hal qawwI’Daq polta’bogh mu’ pegh: je’meH qoj vav account lo’meH lI’be’. puq profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’.</p><p>PIN DalIjchugh, accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj ”PIN DalIj’a’?” qIptaHvIS puq, jabbI’ID neH DangeHmoH.</p>"
+      },
+      "childData": {
+        "question": "nuq De’ puqwI’vo’ bopol?",
+        "answer": "<p>puqlI’ De’:</p><list><item>pong wa’DIch, boghtaHvIS maS DIS je — jaj wItlhobbe’ — ’ej DaneHchugh loD be’ ghap.</item><item>qorDu’lI’ pong Qav, qorDu’lI’ ’ay’ ghaHmo’ puqlI’. qorDu’lI’ HurDaq cha’lu’be’ pagh: Gedu tetlhDaq ghogh pa’Daq je puqlI’ pong wa’DIch, DISDaj, ’ej Dachelpu’bogh Quj pong cha’lu’.</item><item>accountDaj Sogverse qoD Daq — jabbI’ID Daq teH ghajbe’, DaqDaj DanobtaHbe’chugh; Danobpu’chugh, Daqvetlh wIpol. DawIvbogh Hoch: Gedu tetlhDaq ghogh pa’Daq je puqlI’ jabbI’ID Daq cha’lu’be’ not.</item><item>DaneHchugh, ghom’a’Daj Qujmey pongDaj ’ej Quj nobbogh mI’, may’Daq wIngu’meH. Quj nuvDaj mIllogh: Quj SeHlawmeyvo’ Sublu’, vaj tetlh cha’DI’ vay’, Minecraft Roblox ghap SIch pong.</item><item>pongDaj retlhDaq mIllogh: mIllogh teH ’oHbe’. Quj account rarlu’be’chugh, account mI’vo’ chenbogh Segh ’oH.</item></list><p>latlh: ghom’a’ vumlaHmeH poQbogh De’ wIpol — muvpu’bogh ghom’a’mey, raghmey, wanI’mey; pawwI’ ngu’ghachmey; Gedupu’Daj qonbogh may’ De’mey ngajbogh qonta’mey je; may’meyDaq QInmey ’ej pa’Daq lanlu’bogh mIlloghmey; chenmoHta’meyDaj Gedu rarbogh ghomDaq; pa’Daj qonlu’bogh chaw’ghachmey; ’ej may’ De’Daq Gedu chelbogh mIlloghmey. Gedu SeHghach je qonlu’ — Daq mobDaq puq vIHlu’chugh, QInmeyDaq SovmoHlu’chugh je, qonta’ lan. may’ De’ mIlloghmey may’ luDel, wa’ puq luDelbe’ — ghom qorDu’ Hoch luleghlaH ghom HalDaq, ’ej may’ De’ tlhej jabbI’ID luHev.</p><p>puqlI’ De’ DaleghmeH, DaghItlhqa’meH, qoj DaQaw’meH: {supportEmail} Daq yIngeH. account DaghajtaHvIS De’lIj wIpol; account DaSoQmoHchugh, wIQaw’ qoj pong wIteq — ’ach chut poQchugh, poH nI’ De’ puS wIpol, Suomngan Huch chut poQmo’ Huch qonta’vaD.</p>"
+      },
+      "becomeGedu": {
+        "question": "chay’ Gedu vImoj?",
+        "answer": "<p>Gedupu’ chelmeH HalDaq Gedu account yIchenmoH: ponglIj, jabbI’ID DaqlIj, mu’ peghlIj je tlhob; ’ej DaneHchugh, jabbI’ID jan mI’lIj, DajatlhboghHolmey, pa’ DavumlaHbogh So’ Daqmey, Minecraft Roblox pong ghap. SIbI’ bI’ellaH.</p><p>patlh nob che’wI’ ’e’ Danypa’, cha’ Doch wIpoQ: Qu’ chut ghItlh DalaD ’ej Dalaj, ’ej puqpu’ qIHmeH HeS ta’ ghItlh (rikosrekisteriote) maHvaD Dacha’ — yejquv qumvo’ SoH yISuq, ’ej jav maSmey qanbe’nIS. ghItlh nav wIpolbe’.</p><p>patlh: Hoch poSmoH. patlh Hutlh: ghomDaq lanlu’be’, ’ej Gedu janmey Dalo’laHbe’.</p>"
+      }
+    }
+  }
+}

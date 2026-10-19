@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
+import enDocs from "@/../messages/en/docs.json";
 import LynxApiDocsPage from "@/app/[locale]/(public)/docs/lynx-api/page";
 import { PRODUCT_STATUS } from "@/services/partner/partner.contracts";
+
+const en = { docs: enDocs };
 
 /**
  * The published page is the partner's contract and the wire schema is what the

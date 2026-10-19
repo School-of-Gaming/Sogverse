@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enParent from "@/../messages/en/parent.json";
+import enGamerSignIn from "@/../messages/en/gamerSignIn.json";
+import enCommon from "@/../messages/en/common.json";
 import { GamerSignInCard } from "@/components/family";
 import { ApiError } from "@/lib/api/api-error";
 import type { GamerSignIn } from "@/types";
+
+const messages = { parent: enParent, gamerSignIn: enGamerSignIn, common: enCommon };
 
 /**
  * **The card a parent uses to change how one of their children signs in — and,

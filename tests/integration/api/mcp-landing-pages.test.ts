@@ -71,16 +71,16 @@ vi.unmock("next/navigation");
 // Each locale's own message file, as the clone's copy markers are read.
 vi.mock("next-intl/server", async () => {
   const catalogs = {
-    en: (await import("../../../messages/en.json")).default,
-    fi: (await import("../../../messages/fi.json")).default,
-    sv: (await import("../../../messages/sv.json")).default,
-    fr: (await import("../../../messages/fr.json")).default,
-    tlh: (await import("../../../messages/tlh.json")).default,
+    en: (await import("../../../messages/en/admin.json")).default,
+    fi: (await import("../../../messages/fi/admin.json")).default,
+    sv: (await import("../../../messages/sv/admin.json")).default,
+    fr: (await import("../../../messages/fr/admin.json")).default,
+    tlh: (await import("../../../messages/tlh/admin.json")).default,
   };
   return {
     getTranslations: async ({ locale, namespace }: { locale: keyof typeof catalogs; namespace: string }) => {
       expect(namespace).toBe("admin.landingPages");
-      return (key: "copyMarker") => catalogs[locale].admin.landingPages[key];
+      return (key: "copyMarker") => catalogs[locale].landingPages[key];
     },
   };
 });
