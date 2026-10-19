@@ -83,10 +83,12 @@ function request(
       spoken_language_code: "fi",
       timezone: TIME_ZONE,
       is_remote: true,
+      voice_room_mode: "sogverse",
+      external_voice_url: null,
       start_date: "2026-01-06",
       end_date: null,
       site_name: null,
-      translations: [{ locale: "en", name, description: "" }],
+      translations: [{ locale: "en", name, description: "", voice_join_instructions: null }],
       schedule_slots: [
         { weekday: 2, start_time: "17:00", duration_minutes: 90 },
       ],

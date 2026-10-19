@@ -70,6 +70,7 @@ function enrollment(
     // card is where they mean anything.
     topic: "minecraft_java",
     isRemote: true,
+    voiceRoom: { mode: "sogverse" },
     // Not read by the sort either; the window rule has its own describe below.
     prepWindowEnd: null,
     nextSessionStart: start,
@@ -232,6 +233,7 @@ function translations(name: string): ProductTranslation[] {
       name,
       short_description: "",
       long_description: null,
+      voice_join_instructions: null,
       product_id: "p",
       created_at: "",
       updated_at: "",
@@ -267,6 +269,7 @@ function sessionRow(
     startDate: null,
     endDate: null,
     isRemote: true,
+    voiceRoom: { mode: "sogverse" },
     site: null,
     translations: translations("Minecraft Explorers Club"),
     ...(productOverrides ?? {}),
@@ -316,6 +319,7 @@ function waitlistRow(
       startDate: null,
       endDate: null,
       isRemote: true,
+      voiceRoom: { mode: "sogverse" },
       translations: translations("Fortnite Creative Club"),
       ...(product ?? {}),
     },

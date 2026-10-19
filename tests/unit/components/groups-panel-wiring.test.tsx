@@ -350,6 +350,7 @@ function renderPanel(
         seatCount={null}
         waitlistEnabled
         voiceAvailable={false}
+        voiceRoom={{ mode: "sogverse" }}
         voiceIsOpen={false}
         opensDate=""
         opensTime=""

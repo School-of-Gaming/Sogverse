@@ -15,6 +15,7 @@ import type {
   MyWaitlistRow,
 } from "@/services/participations";
 import type { ProductTopic, ProductType } from "@/types";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";
 import type {
   AppHref,
@@ -112,6 +113,12 @@ export interface FamilyEnrollmentSummary {
    * room behind it that ever will.
    */
   hasVoiceRoom: boolean;
+  /**
+   * How the product's sessions are joined, with the join instructions still
+   * per locale. Meaningful only where `hasVoiceRoom` is true; an in-person
+   * product is always `sogverse`.
+   */
+  voiceRoom: ProductVoiceRoom;
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
   /**
@@ -812,6 +819,7 @@ function sessionSummary(
     nextSessionEnd: next === null ? null : next.endsAt,
     cancelledAhead: cancelledAhead.map((session) => session.startsAt),
     hasVoiceRoom,
+    voiceRoom: product.voiceRoom,
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
     // there is nothing to navigate to. The card renders no Join in either case.
@@ -894,6 +902,7 @@ function waitlistSummary(
     nextSessionEnd: null,
     cancelledAhead: [],
     hasVoiceRoom: product.isRemote,
+    voiceRoom: product.voiceRoom,
     voiceHref: INERT_HREF,
     siteName: null,
     openHref: INERT_HREF,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { getPathname } from "@/i18n/navigation";
 import { INERT_HREF } from "@/lib/constants/routes";
+import { joinSwitchLanding } from "@/lib/products/voice-room";
 import { AddGamerDialog } from "@/components/family/AddGamerDialog";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { useFamilyEnrollments } from "@/components/family/use-family-enrollments";
@@ -100,7 +101,7 @@ export function ParentDashboardShell({
     gamerId: string;
     gamerFirstName: string;
     productName: string;
-    redirectUrl: string;
+    redirectUrl: string | undefined;
   } | null>(null);
 
   /**
@@ -152,13 +153,15 @@ export function ParentDashboardShell({
     // dialog ever opening with nowhere to land rather than a path a parent
     // can take.
     if (enrollment.voiceHref === INERT_HREF) return;
+    const landing = joinSwitchLanding(enrollment.voiceRoom, enrollment.voiceHref);
     setSwitchTarget({
       gamerId: gamer.id,
       gamerFirstName: gamer.firstName,
       productName: enrollment.productName,
       // A concrete URL: the switch ends in a full-page navigation, so the
       // typed href is resolved here, in the locale the parent is reading.
-      redirectUrl: getPathname({ href: enrollment.voiceHref, locale }),
+      // None means the gamer's own My SOG, where they press the Join.
+      redirectUrl: landing && getPathname({ href: landing, locale }),
     });
   }
 
