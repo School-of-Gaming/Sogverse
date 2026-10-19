@@ -17,6 +17,7 @@ import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contr
 import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
   buttonTarget,
+  LANDING_SECTION_TYPES,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
@@ -1014,16 +1015,23 @@ describe("landing pages", () => {
       return data ?? [];
     }
 
-    /** Every section and item id of a structure, in order. */
+    /**
+     * Every section and item id of a structure, in order. An item is what the
+     * clone takes one to be: an object with a string `id` in any list a section
+     * holds, whatever the list is called.
+     */
     function idsOf(sections: readonly LandingSection[]): string[] {
+      const itemId = (entry: unknown) =>
+        typeof entry === "object" && entry !== null && "id" in entry && typeof entry.id === "string" ? [entry.id] : [];
       return sections.flatMap((section) => [
         section.id,
-        ...("items" in section ? section.items.map((entry) => entry.id) : []),
-        ...("images" in section ? section.images.map((entry) => entry.id) : []),
+        ...Object.values(section).flatMap((field: unknown) => (Array.isArray(field) ? field.flatMap(itemId) : [])),
       ]);
     }
 
     it("copies the structure and every language's words with new ids, the words still on their sections and items", async () => {
+      // A new section type fails here until `RICH` carries one of it.
+      expect(new Set(RICH.map((section) => section.type))).toEqual(new Set(LANDING_SECTION_TYPES));
       const source = await richSource();
       expect(source.draft.versions.map((v) => v.missing)).toEqual([[], []]);
       const clone = await cloneOf(source.draft);
