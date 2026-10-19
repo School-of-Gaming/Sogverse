@@ -14,6 +14,8 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
     tag: null,
     region_lock_country: null,
     requires_gamer_creations: false,
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     spoken_language_code: "en",
     // The link is the id; `image_path` is the column the trigger derives from
     // it, and the embed is what the form's image card paints from.
@@ -36,8 +38,10 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
     invoice_customer_id: null,
+    invoice_customer: null,
     is_visible: true,
     created_by: "admin-1",
+    creator: { id: "admin-1", first_name: "Aino", last_name: "Admin" },
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     product_translations: [
@@ -47,6 +51,7 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
         name: "Build Club",
         short_description: "Build castles together.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },

@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
@@ -33,6 +34,7 @@ import type {
   FamilySessionEntry,
 } from "./types";
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 
 /**
  * The **family product page**: one enrollment, one child, everything that has
@@ -131,6 +133,11 @@ export interface FamilyProductPageBodyProps {
    * testing for one would print an address for a club that meets online.
    */
   isRemote: boolean;
+  /**
+   * How the product's sessions are joined — the Sogverse room, a meeting
+   * elsewhere, or instructions per locale. Always `sogverse` in person.
+   */
+  voiceRoom: ProductVoiceRoom;
   /**
    * Whoever holds the seat this page is about — the child on a parent's or a
    * child's copy, the reader themselves on a self seat. The id seeds the
@@ -286,6 +293,7 @@ export function FamilyProductPageBody({
   creations,
   site,
   voiceHref,
+  voiceRoom,
   onJoinClick,
   entries,
   sourceTimeZone,
@@ -358,9 +366,11 @@ export function FamilyProductPageBody({
           {p(schedule.product_type)}
         </span>
 
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {productName}
-        </h1>
+        <div className="mt-1">
+          <Heading level={1} step="section">
+            {productName}
+          </Heading>
+        </div>
 
         {/* The identity lines. The product name above is the page's primary
             identity on every copy; what differs is what a reader needs
@@ -439,6 +449,7 @@ export function FamilyProductPageBody({
         {showJoin && (
           <div className="mt-4 flex">
             <JoinVoiceButton
+              voiceRoom={voiceRoom}
               voiceIsOpen={voiceState.voiceIsOpen}
               voiceHref={voiceHref}
               opensDate={voiceState.opensDate}
@@ -551,9 +562,11 @@ export function FamilyProductPageBody({
       />
 
       <section className="mt-6">
-        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t("feedHeading")}
-        </h2>
+        <div className="mb-3">
+          <Heading level={2} step="card-title">
+            {t("feedHeading")}
+          </Heading>
+        </div>
         <FamilySessionFeed
           entries={entries}
           sourceTimeZone={sourceTimeZone}
@@ -634,7 +647,9 @@ function ProblemNotice({
 }
 
 /**
- * One standing note: a micro-heading and the paragraph under it.
+ * One standing note: a heading and the paragraph under it. An h2: the card
+ * holding the notes has no title of its own, so each note titles its own
+ * region of the page.
  *
  * Plain text, not markdown, because that is what the field is — the standing
  * notes are stored as plain text on both scopes, and rendering them through the
@@ -645,9 +660,9 @@ function ProblemNotice({
 function NoteBlock({ heading, body }: { heading: string; body: string }) {
   return (
     <div>
-      <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <Heading level={2} step="card-title">
         {heading}
-      </h3>
+      </Heading>
       <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed">
         {body}
       </p>

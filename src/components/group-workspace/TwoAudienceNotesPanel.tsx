@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { Loader2, Pencil } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -386,9 +387,9 @@ export function TwoAudienceNotesPanel({
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Heading level={2} step="card-title">
           {copy.heading}
-        </h2>
+        </Heading>
         {(headerLink !== undefined || editable) && (
           <div className="flex shrink-0 items-center gap-2">
             {headerLink}

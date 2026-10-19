@@ -8,13 +8,13 @@ import {
   ScrollText,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
@@ -57,7 +57,7 @@ export function GeduContractSettingsCardView({
       <CardHeader>
         <div className="flex items-center gap-2">
           <ScrollText className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>

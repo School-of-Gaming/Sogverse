@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { AlertCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   NOTIFICATION_TOGGLES,
@@ -129,7 +130,7 @@ export function NotificationPreferencesCard() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Heading } from "@sog/ui";
 import { Clock, Languages, Plus, Tag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -60,7 +61,7 @@ export function AdminLibraryArticlesPage({
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link

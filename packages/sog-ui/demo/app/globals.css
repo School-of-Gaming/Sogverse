@@ -10,6 +10,11 @@
    and keeps the answer from depending on which directory the CLI was run from. */
 @source "../";
 
+/* The library's own source, because the demo renders its primitives and a class a
+   component writes is a class this stylesheet has to contain — the same reason
+   Sogverse's stylesheet scans it. */
+@source "../../src";
+
 body {
   font-family: var(--font-sans);
 }

@@ -64,8 +64,8 @@ is added here: a new opinion goes to SOG-UI, and the construct joins the adoptio
 except where the owner places one here because the library has no home for it yet, and
 such a rule leaves with its adoption like the rest.
 The UI sections below (layout and scrolling, loading and disabled state, button order,
-cards, the headings rule, the UI component reference and preview scenes) are that
-transitional state.
+cards, the caps rule for non-heading markers, the UI component reference and preview
+scenes) are that transitional state.
 
 Colour and the faces have already left: the tokens, the grounds, the one-theme rule, the
 ban on a hardcoded colour, the exhaustive list of faces and the rule that this app defines
@@ -300,9 +300,15 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 ## Styling
 
-**Rule: headings are sentence case — never Title Case Every Word, never ALL CAPS.** Proper nouns keep their capitals and nothing else does; this is a house rule, owner-adopted 2026-08-24, and it has teeth because inconsistent heading case is the one typographic slip a reader notices on every page at once. It binds the heading text in `messages/` and the CSS on the element alike, so `uppercase` on a real heading is the same defect as a Title-Cased string.
-
-**The test is voice versus furniture, and the HTML tag does not decide it.** Sentence case wherever the brand is *speaking* — a page title, a card heading, a section heading a reader reads as a sentence; caps are institutional costume there. Caps are permitted on *furniture*: the small, muted, tracked markers a reader scans as structure rather than reads as prose — eyebrows, pills, field labels, table headers, the micro-heading over a list. The brand's own topic-pill spec is bold caps, which is what settles it. An `h2` can be furniture and often is: the tag is there for the accessibility outline, and a `text-[11px]` muted marker over a rail card is a label whether it is an `h2`, a `p` or a `span`. **The corollary that catches the real mistakes: a furniture element and its identically-styled siblings case together** — de-capping an `h2` label while the `span` beside it keeps its caps is the defect, not the fix. And **caps and letterspacing travel as a pair**: a heading that goes sentence case drops its `tracking-wide`/`tracking-wider` in the same edit, because tracked lowercase reads as a rendering fault.
+**Rule: a non-heading marker may be set in caps, and when it is, caps and letterspacing
+travel as a pair.** Headings are SOG-UI's (`packages/sog-ui/CLAUDE.md`); this rule is
+about the small, muted markers a reader scans as structure rather than reads as prose —
+eyebrows, pills, field labels, table headers. The brand's own topic-pill spec is bold caps,
+which is what settles it. **The corollary that catches the real mistakes: a marker and its
+identically-styled siblings case together** — de-capping one label while the one beside it
+keeps its caps is the defect, not the fix. And a marker that goes sentence case drops its
+`tracking-wide`/`tracking-wider` in the same edit, because tracked lowercase reads as a
+rendering fault.
 
 ## Authored rich text
 

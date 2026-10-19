@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { Heading } from "@sog/ui";
 import { cn } from "@/lib/utils";
 
 /**
@@ -300,27 +301,55 @@ function DialogContent({
   );
 }
 
+/**
+ * Where a dialog title's lines sit when its call site does not say.
+ *
+ * **It travels through context because the header decides it.** A header
+ * centres its words on a phone and starts them from `md`, and a heading states
+ * its own alignment rather than inheriting one, so a title inside a header has
+ * to be told what the header is doing; a title set straight into the content,
+ * with no header around it, starts at every width like the content does.
+ */
+type DialogTitleAlign = "start" | "center-narrow";
+
+const DialogTitleAlignContext = React.createContext<DialogTitleAlign>("start");
+
 function DialogHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
-      {...props}
-    />
+    <DialogTitleAlignContext.Provider value="center-narrow">
+      <div
+        className={cn("flex flex-col space-y-1.5 text-center md:text-left", className)}
+        {...props}
+      />
+    </DialogTitleAlignContext.Provider>
   );
 }
 
-function DialogTitle({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
+interface DialogTitleProps {
+  children: React.ReactNode;
+  /** For `aria-labelledby` on a control the title also names. */
+  id?: string;
+  /**
+   * Overrides the header's alignment — for a header that starts its words at
+   * every width, or a title that sits in a row beside an icon.
+   */
+  align?: DialogTitleAlign;
+}
+
+/**
+ * The dialog's title: an `h2`, because a dialog is a new layer above the page
+ * and its title is that layer's first region, at the `card-title` step because
+ * a dialog is an object rather than a page.
+ */
+function DialogTitle({ children, id, align }: DialogTitleProps) {
+  const headerAlign = React.useContext(DialogTitleAlignContext);
   return (
-    <h2
-      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
-      {...props}
-    />
+    <Heading level={2} step="card-title" id={id} align={align ?? headerAlign}>
+      {children}
+    </Heading>
   );
 }
 

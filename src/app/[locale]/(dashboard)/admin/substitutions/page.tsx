@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { getTranslations } from "next-intl/server";
+import { Heading } from "@sog/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdminSubstitutionsPage } from "@/components/admin/substitutions/AdminSubstitutionsPage";
 import { createClient } from "@/lib/supabase/server";
@@ -128,7 +129,7 @@ async function AdminSubstitutionsLoadFailure({
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <Heading level={1} step="section">{t("title")}</Heading>
         <p className="text-muted-foreground">{t("description")}</p>
       </div>
       {/* The reason is a message off the wire, never translated copy — it is

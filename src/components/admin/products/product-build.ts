@@ -42,6 +42,8 @@ import type {
 import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {
+  asksJoinInstructions,
+  draftsForMode,
   effectivePricingShape,
   EMPTY_TRANSLATION,
   isCompleteTranslation,
@@ -68,6 +70,9 @@ export type ValidationKey =
   | "maxAgeInvalid"
   | "municipalityRequired"
   | "siteRequired"
+  | "externalVoiceUrlRequired"
+  | "externalVoiceUrlInvalid"
+  | "voiceJoinInstructionsRequired"
   | "scheduleRequired"
   | "materialUrlInvalid"
   | "startDateRequired"
@@ -99,9 +104,9 @@ function err(
 
 /**
  * Whether a string is a link we are willing to store and later render as an
- * `href` — parseable **and** on the web. Both fields it guards end up as the
- * `href` of an anchor an admin or a gedu clicks, and nothing legitimate is
- * lost: a lesson-plan drive link is `https://`.
+ * `href` — parseable **and** on the web. Every field it guards ends up as the
+ * `href` of an anchor somebody clicks, and nothing legitimate is lost: a
+ * lesson-plan drive link and a meeting link are both `https://`.
  *
  * The predicate itself is the shared navigation helper, which is where the
  * reasoning for the scheme allow-list lives. One copy, because "may this string
@@ -128,8 +133,11 @@ export function validate(
   // ignored, and the save leaves it out. The display fallback chain
   // (preferred → en → first available) means a single locale of any kind is
   // enough to render.
+  //
+  // Judged on the drafts as the save will send them: under any mode but "no
+  // voice room" the hidden instructions field is not part of a translation.
   const translations = checkLocaleDrafts(
-    state.translations.drafts,
+    draftsForMode(state),
     isCompleteTranslation,
   );
   if (translations?.kind === "none") return err("translationRequired");
@@ -173,6 +181,29 @@ export function validate(
     locationPickerMode(config, state.isRemote) !== null;
   if (showLocationPicker && !state.locationId) {
     return err(state.isRemote ? "municipalityRequired" : "siteRequired");
+  }
+
+  // The voice room choice is asked only of an online product, and each mode's
+  // value only of that mode: whatever the hidden fields still hold is not sent,
+  // so it is not judged either. A blank field gets its own sentence, as the
+  // seat count's does — nothing was typed, so nothing is wrong with it.
+  if (state.isRemote && state.voiceRoomMode === "external") {
+    if (state.externalVoiceUrl.trim() === "") {
+      return err("externalVoiceUrlRequired");
+    }
+    if (!isWebUrl(state.externalVoiceUrl)) return err("externalVoiceUrlInvalid");
+  }
+  // The instructions are written per locale, and mirror the RPC's own rule:
+  // no room needs them in at least one language. Any one is enough, as with
+  // the rest of a translation — a reader is shown theirs, else English, else
+  // the first written.
+  if (
+    asksJoinInstructions(state) &&
+    !draftsToSave(state.translations.drafts).some(
+      ({ draft }) => draft.voiceJoinInstructions.trim() !== "",
+    )
+  ) {
+    return err("voiceJoinInstructionsRequired");
   }
 
   if (state.scheduleSlots.length === 0) return err("scheduleRequired");
@@ -362,6 +393,37 @@ function resolveRegistrationOpensAt(state: FormState): string {
 }
 
 /**
+ * The voice room pair as the CHECKs on `products` require it: an in-person
+ * product is always `sogverse`, and the link travels only with the external
+ * mode — null otherwise, whatever the hidden field still holds. Both are sent
+ * on every save, because the RPC assigns them on every call. (The join
+ * instructions ride on the translations; see `draftsForMode`.)
+ *
+ * The link is stored as the URL parser's own serialization rather than as
+ * typed, so what the Join button is later handed is exactly the string that
+ * passed the scheme check. An unparseable link is unreachable here — validate()
+ * refuses it — and is asserted rather than coerced.
+ */
+function voiceRoomFields(
+  state: FormState,
+): Pick<UpdateProductInput, "voice_room_mode" | "external_voice_url"> {
+  const mode = state.isRemote ? state.voiceRoomMode : "sogverse";
+  let externalVoiceUrl: string | null = null;
+  if (mode === "external") {
+    externalVoiceUrl = resolveWebUrl(state.externalVoiceUrl);
+    if (externalVoiceUrl === null) {
+      throw new Error(
+        "buildSharedFields called before validate(): the external voice link is not a web address",
+      );
+    }
+  }
+  return {
+    voice_room_mode: mode,
+    external_voice_url: externalVoiceUrl,
+  };
+}
+
+/**
  * Day of week for a YYYY-MM-DD calendar date, returned in our schema's
  * convention (0=Mon..6=Sun). Independent of browser timezone — the date
  * string is parsed as a calendar date in the local TZ via the (year,
@@ -453,10 +515,15 @@ function buildSharedFields(
     finalSlots = [{ ...state.scheduleSlots[0], weekday }];
   }
 
+  const voice = voiceRoomFields(state);
+
   // Every tab with anything written in it, in locale order; a blank tab is
-  // left out.
+  // left out. The drafts are the mode's (`draftsForMode`): under any mode but
+  // "no voice room" the instructions are blanked, so they reach the RPC as null
+  // on every translation, which is what its own rule requires.
   const translations: UpdateProductInput["translations"] = [];
-  for (const { locale, draft: v } of draftsToSave(state.translations.drafts)) {
+  for (const { locale, draft: v } of draftsToSave(draftsForMode(state))) {
+    const instructions = v.voiceJoinInstructions.trim();
     // A cleared editor does not serialise to "" — an empty ProseMirror document
     // still round-trips through the markdown serialiser as whitespace — so the
     // blank check is on the trimmed value, and a blank one becomes null ("no
@@ -468,6 +535,9 @@ function buildSharedFields(
       name: v.name.trim(),
       short_description: v.shortDescription.trim(),
       long_description: longDescription === "" ? null : longDescription,
+      // Blank folds to null for the long description's reason: the column's
+      // CHECK refuses a blank value, so there is one spelling of "none here".
+      voice_join_instructions: instructions === "" ? null : instructions,
     });
   }
 
@@ -526,6 +596,7 @@ function buildSharedFields(
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
+    ...voice,
     start_date: state.startDate,
     end_date:
       config.scheduleShape === "single_date"
@@ -737,6 +808,7 @@ export function existingFormState(
       name: t.name,
       shortDescription: t.short_description,
       longDescription: t.long_description ?? "",
+      voiceJoinInstructions: t.voice_join_instructions ?? "",
     };
   }
 
@@ -839,6 +911,10 @@ export function existingFormState(
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,
+    // Straight through, with an absent link as the empty field it is: the
+    // CHECK guarantees it is present exactly when the mode is external.
+    voiceRoomMode: product.voice_room_mode,
+    externalVoiceUrl: product.external_voice_url ?? "",
     // Straight through, deliberately unfiltered — the opposite treatment to the
     // region lock above, for the opposite reason. A lock the picker cannot offer
     // is a gate nobody can pass, so loading it as "unlocked" loses nothing; a

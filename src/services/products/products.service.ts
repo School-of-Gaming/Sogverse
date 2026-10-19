@@ -7,6 +7,7 @@ import type {
   SpokenLanguageCode,
   MarketingConsentType,
   GamerPhotoConsentType,
+  VoiceRoomMode,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -219,11 +220,26 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
 // calendars a club follows, with each one's name so the details page can list
 // and link them and the form can seed its picker. Calendar names are
 // admin-readable only, which is why no family-facing query embeds it.
+//
+// `creator:profiles!products_created_by_fkey(id, first_name, last_name)` is the
+// admin who created the product, which the details page names and links. It is
+// hinted because products and profiles meet over more than one path, and it is
+// deliberately not `!inner`: a creator whose profile the reader cannot see must
+// leave the product readable with the creator unknown, never make the whole
+// product read as "not found".
+//
+// `invoice_customer:invoice_customers!products_invoice_customer_id_fkey(id,
+// invoice_name, fennoa_customer_no)` is the Fennoa buyer a municipality club is
+// invoiced to — only the three fields the details page names and links, never
+// the billing address, which belongs to the invoicing page. It rides on this
+// read so the name paints with the rest of the details rather than a round trip
+// later. The foreign key is nullable, so the embed is `null` on every product
+// with no customer, which is every type but a municipality club.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name))",
+      "*, catalogue_images(label, path), product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_required_consents(document_slug), product_marketing_consents(consent_type), product_gamer_photo_consents(consent_type), product_holiday_calendars(holiday_calendars(id, name)), creator:profiles!products_created_by_fkey(id, first_name, last_name), invoice_customer:invoice_customers!products_invoice_customer_id_fkey(id, invoice_name, fennoa_customer_no)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -360,9 +376,17 @@ export type ProductDetailRow = NonNullable<
 // this is NOT filtered on listing, so admins can fetch an unlisted product and
 // a long-finished one alike. Carries the IDs the form needs to round-trip an
 // edit plus readable strings (the location chain).
-export type ProductAdminDetailRow = NonNullable<
+//
+// `creator` is widened to admit `null`. The generator reads the NOT NULL foreign
+// key and types the embed as always present, but the embed is a left join under
+// the profiles table's own row security: a creator the reader cannot see arrives
+// as `null`, and the details page shows the creator as unknown in that case.
+type AdminProductQueryRow = NonNullable<
   QueryData<ReturnType<typeof buildAdminProductQuery>>
 >;
+export type ProductAdminDetailRow = Omit<AdminProductQueryRow, "creator"> & {
+  creator: AdminProductQueryRow["creator"] | null;
+};
 
 export type ProductTranslationInput = {
   locale: SupportedLocale;
@@ -371,6 +395,9 @@ export type ProductTranslationInput = {
   // The marketing blurb as authored markdown; null = no long description for
   // this locale (the RPC stores SQL NULL).
   long_description: string | null;
+  // Plain-text join instructions for a product with no voice room; null = none
+  // in this locale, and null on every translation under any other mode.
+  voice_join_instructions: string | null;
 };
 
 export type ScheduleSlotInput = {
@@ -470,6 +497,22 @@ export type CreateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
+  /**
+   * How an online product's sessions are joined: `sogverse` (the Sogverse
+   * voice room), `external` (a meeting on another service at
+   * `external_voice_url`), or `none` (no room; families read the join
+   * instructions each translation carries). An in-person product is always
+   * `sogverse` with no link — the CHECKs on `products` refuse anything else —
+   * and the RPC refuses mode `none` without instructions in any translation,
+   * or instructions under any other mode.
+   *
+   * Both are required, the link required-nullable: the RPC assigns both on
+   * every call, so an omission would reset the product to a Sogverse room. The
+   * link and the instructions are readable by anyone, logged-out visitors
+   * included, which the owner has accepted — see the column comments.
+   */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
   start_date: string;
   end_date: string | null;
   timezone: string;
@@ -585,6 +628,11 @@ export type UpdateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
+  /** How the sessions are joined — see CreateProductInput. Required on the
+   *  update half too, and that is the load-bearing one: the RPC assigns both
+   *  on every call, so an omission resets the product to a Sogverse room. */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
   start_date: string;
   end_date: string | null;
   timezone: string;

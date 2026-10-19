@@ -28,8 +28,11 @@ interface SwitchProfileDialogProps {
    * the tile *is* the CTA.
    */
   target: FamilyMember;
-  /** Full-page navigation destination once the switch lands. */
-  redirectUrl: string;
+  /**
+   * Full-page navigation destination once the switch lands. Omitted, the
+   * switch lands on the target's own dashboard.
+   */
+  redirectUrl?: string;
   /** Dialog title — the caller owns the feature-specific copy and namespace. */
   title: ReactNode;
   /**
@@ -67,8 +70,9 @@ interface SwitchProfileDialogProps {
  * the same everywhere it happens.
  *
  * Both directions of the switch reuse this:
- *  - parent → gamer, to drop the parent straight into a gamer's voice room,
- *    from an enrollment card on the parent dashboard or a family club page.
+ *  - parent → gamer, from a Join on an enrollment card on the parent
+ *    dashboard or a family club page: straight into the gamer's Sogverse room,
+ *    or onto the gamer's My SOG for a product joined some other way.
  *  - gamer → parent, so a gamer who clicked "Add Gamer" can switch into the
  *    parent who's allowed to create one (`FamilyProfileSelector`). There the
  *    `redirectUrl` carries the add-gamer intent marker so the form re-opens

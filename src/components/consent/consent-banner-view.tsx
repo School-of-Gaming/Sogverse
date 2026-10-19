@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { ROUTES } from "@/lib/constants";
 import type { ConsentPurposes } from "@/lib/consent";
+import { Heading } from "@sog/ui";
 
 /**
  * Where the strip is drawn.
@@ -123,12 +124,9 @@ export function ConsentBannerView({
     >
       <div className="mx-auto max-w-5xl space-y-3 px-4 py-3">
         <div className="space-y-1">
-          <h2
-            id={headingId}
-            className="text-sm font-semibold text-foreground"
-          >
+          <Heading level={2} step="card-title" id={headingId}>
             {t("heading")}
-          </h2>
+          </Heading>
           {/* The policy link lives inside the sentence rather than on a row of
               its own: a link row is a second thing to read before answering,
               and the words that should carry the link are different words in

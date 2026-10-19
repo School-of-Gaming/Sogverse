@@ -852,7 +852,7 @@ describe("what the entry's notes say", () => {
 describe("every locale composes a whole document", () => {
   const PINNED: Record<string, string> = {
     en: "the voice room opens",
-    fi: "puhehuone avautuu",
+    fi: "äänihuone avautuu",
     sv: "röstrummet öppnar",
     fr: "le salon vocal ouvre",
     tlh: "ghogh pa’",
