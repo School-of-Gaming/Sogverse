@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
  *
  * The quote is set in the editorial serif, italic, because it is a person's
  * voice rather than ours; whom it is from is ours and stays in the app face.
- * **Attribution is role and country only** ("Mum, Finland") — never a name or
- * a handle. The families consented to being quoted on those terms.
  *
  * **The quotation marks are the component's, never the quote's.** A quote is
  * passed without them and wrapped here in the reader's locale's own marks
