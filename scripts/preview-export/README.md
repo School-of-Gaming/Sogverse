@@ -146,14 +146,15 @@ is rather than by what its caller remembers.
 
 **The server is asked, never assumed.** Before anything launches, a signed-in
 run fetches the login page at `--base` and reads the Supabase origin the server
-is configured with out of its `Content-Security-Policy` header, the first
-concrete URL in `connect-src`. A loopback origin (`http://127.0.0.1:<port>`) is a
+is configured with out of its `Content-Security-Policy` header, the URL
+straight after `'self'` in `connect-src`. A loopback origin (`http://127.0.0.1:<port>`) is a
 local stack (`npm run db -- up`); a hosted one is staging only when it is
 exactly `https://<SUPABASE_PROJECT_REF>.supabase.co` (that variable is staging by
 this repo's convention, read from `.env.local`), and any other origin, production
 included, is refused before anything is typed. The tool may run from a
-different checkout than the one serving, so its own `.env.local` says nothing
-about the server.
+different checkout than the one serving, so its own `.env.local` never stands
+in for the server's answer; it only supplies the staging ref that answer is
+checked against.
 
 | Viewer | Local stack (the rich seed) | Staging (`.env.local`) |
 |---|---|---|

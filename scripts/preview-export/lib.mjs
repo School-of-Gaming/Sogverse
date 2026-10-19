@@ -69,12 +69,13 @@ export function resolveBase(raw, signedOut) {
  * **Asking the server, not a checkout.** The tool may run from one checkout
  * while `--base` is served by another, so the only file that knows which
  * database the server talks to is one the tool may not be able to see. The CSP
- * says it out loud: its `connect-src` names the configured Supabase origin as
- * the first concrete URL after `'self'` — `http://127.0.0.1:<port>` on a local
- * stack, `https://<ref>.supabase.co` on a hosted project. The wildcards that
- * follow it (`https://*.supabase.co`, the third parties) are never that origin,
- * and a server without the variable set falls back to the wildcard alone, which
- * is reported as "cannot tell" rather than guessed at.
+ * says it out loud: its `connect-src` names the configured Supabase origin in
+ * the slot straight after `'self'` — `http://127.0.0.1:<port>` on a local
+ * stack, `https://<ref>.supabase.co` on a hosted project. Only that slot is
+ * read: the third-party hosts further along are concrete URLs too, and a
+ * server without the variable set puts the wildcard `https://*.supabase.co`
+ * in the slot instead, which is reported as "cannot tell" rather than guessed
+ * at.
  */
 export function supabaseOriginFromCsp(csp) {
   if (!csp) return null;
@@ -82,16 +83,14 @@ export function supabaseOriginFromCsp(csp) {
     .split(";")
     .map((d) => d.trim().split(/\s+/))
     .find((tokens) => tokens[0] === "connect-src");
-  if (!directive) return null;
-  for (const token of directive.slice(1)) {
-    if (!/^https?:\/\//.test(token) || token.includes("*")) continue;
-    try {
-      return new URL(token).origin;
-    } catch {
-      // A malformed token is not the origin; keep looking.
-    }
+  if (!directive || directive[1] !== "'self'") return null;
+  const token = directive[2];
+  if (!token || !/^https?:\/\//.test(token) || token.includes("*")) return null;
+  try {
+    return new URL(token).origin;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 /**

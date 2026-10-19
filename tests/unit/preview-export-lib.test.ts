@@ -23,7 +23,7 @@ const csp = (supabase: string) =>
   )} https://*.supabase.co wss://*.supabase.co https://*.daily.co https://www.google.com; img-src 'self'`;
 
 describe("supabaseOriginFromCsp", () => {
-  it("reads a local stack's origin, the first concrete URL in connect-src", () => {
+  it("reads a local stack's origin, the URL straight after 'self' in connect-src", () => {
     expect(supabaseOriginFromCsp(csp("http://127.0.0.1:20121"))).toBe("http://127.0.0.1:20121");
   });
 
@@ -35,6 +35,17 @@ describe("supabaseOriginFromCsp", () => {
     expect(supabaseOriginFromCsp("connect-src 'self' https://*.supabase.co wss://*.supabase.co")).toBeNull();
     expect(supabaseOriginFromCsp(null)).toBeNull();
     expect(supabaseOriginFromCsp("default-src 'self'")).toBeNull();
+  });
+
+  it("never mistakes a third-party host for the origin when the server fell back to the wildcard", () => {
+    // The proxy's connect-src when NEXT_PUBLIC_SUPABASE_URL is unset: the
+    // wildcard fills the Supabase slot, and concrete hosts follow it.
+    const fallback =
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://www.googletagmanager.com https://www.google.com";
+    expect(supabaseOriginFromCsp(fallback)).toBeNull();
+    expect(resolveStack(stackFromSupabaseOrigin(supabaseOriginFromCsp(fallback), "stagingref"), "local")).toBe(
+      "local",
+    );
   });
 });
 
