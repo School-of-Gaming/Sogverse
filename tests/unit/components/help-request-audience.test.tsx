@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import enHelpSection from "@/../messages/en/helpSection.json";
 import enCommon from "@/../messages/en/common.json";
 import { HelpRequestCardView } from "@/components/help/help-request-card-view";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 
 const messages = { helpSection: enHelpSection, common: enCommon };
 

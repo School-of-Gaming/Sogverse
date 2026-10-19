@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants/brand";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import {
   getEmailTranslator,

@@ -17,7 +17,7 @@ import type {
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * Fixtures for the family product-page preview scenes — the product shell, the

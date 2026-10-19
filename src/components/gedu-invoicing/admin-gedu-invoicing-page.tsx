@@ -18,7 +18,7 @@ import {
   MonthStepper,
   type MonthHref,
 } from "@/components/invoicing-ledger/month-stepper";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
 import { formatCurrencyFromCents } from "@/lib/money";

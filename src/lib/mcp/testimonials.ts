@@ -1,7 +1,7 @@
 import type { CallToolResult, McpServer, ServerContext } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_CONFIG, SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { readMcpCaller } from "@/lib/mcp/auth";

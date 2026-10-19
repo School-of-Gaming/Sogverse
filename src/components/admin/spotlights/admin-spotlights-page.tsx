@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FramedImage } from "@/components/ui/framed-image";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";

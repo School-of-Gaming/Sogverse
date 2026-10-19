@@ -24,7 +24,8 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";

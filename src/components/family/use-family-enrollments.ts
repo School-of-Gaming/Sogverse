@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import { useFamily } from "@/services/family/family.queries";

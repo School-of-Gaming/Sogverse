@@ -17,7 +17,7 @@ import {
 } from "@/components/gedu/mock-substitutions-fixtures";
 import { buttonVariants } from "@/components/ui/button";
 import { NowProvider, TimezoneProvider } from "@/providers";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { alreadyRequestedSessionKeys } from "@/lib/gedu-upcoming-sessions";
 
 const messages = {

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { SitePickerDialog } from "@/components/admin/products/site-picker-dialog";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   LOCATION_SEARCH_MAX_QUERY,

@@ -24,7 +24,8 @@ import {
   SkeletonTile,
 } from "./ProfileTiles";
 import type { SessionProvenance } from "@/lib/session-provenance";
-import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import { byFirstName } from "@/lib/family-order";
 
 /**

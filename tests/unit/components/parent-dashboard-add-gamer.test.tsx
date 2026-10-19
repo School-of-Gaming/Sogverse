@@ -13,7 +13,7 @@ import enTopicPrep from "@/../messages/en/topicPrep.json";
 import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { ParentDashboardPageBody } from "@/components/parent/parent-dashboard-page-body";
 import { buildParentDashboardFixture } from "@/components/parent/mock-dashboard-fixtures";
-import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
 import {
   AuthProvider,
   NowProvider,

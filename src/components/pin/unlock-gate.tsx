@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { toInternalPathname } from "@/lib/navigation/locale-path";
 import { usePinIsSet } from "@/services/pin/pin.queries";

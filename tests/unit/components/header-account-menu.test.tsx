@@ -7,7 +7,7 @@ import enFamily from "@/../messages/en/family.json";
 import enDashboardSections from "@/../messages/en/dashboardSections.json";
 import enPin from "@/../messages/en/pin.json";
 import { AccountMenu } from "@/components/layout/account-menu";
-import type { UserRole } from "@/lib/constants";
+import type { UserRole } from "@/lib/constants/roles";
 
 const messages = {
   header: enHeader,

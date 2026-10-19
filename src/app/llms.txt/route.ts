@@ -14,7 +14,7 @@ import { aboutMessages } from "@/i18n/namespaces/about";
 import { homeMessages } from "@/i18n/namespaces/home";
 import { metadataMessages } from "@/i18n/namespaces/metadata";
 import { getPathname } from "@/i18n/navigation";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { LOCALE_CONFIG } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { messageToPlainText } from "@/lib/i18n/plain-text";

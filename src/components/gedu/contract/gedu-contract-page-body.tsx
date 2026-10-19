@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { GeduCriminalRecordCheck } from "@/services/gedu/gedu-profiles.service";

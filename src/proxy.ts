@@ -3,7 +3,7 @@ import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import {
   DEFAULT_LOCALE,

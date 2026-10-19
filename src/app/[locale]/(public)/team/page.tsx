@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { teamMemberAddress } from "@/components/team/team-address";
 import { TeamIndexBody } from "@/components/team/public/team-index-body";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { createClient } from "@/lib/supabase/server";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";

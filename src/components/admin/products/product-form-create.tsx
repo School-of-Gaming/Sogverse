@@ -11,7 +11,7 @@ import { initialState, type FormState } from "./product-form-state";
 import { ProductFormShell } from "./product-form";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface ProductFormCreateProps {
   productType: ProductType;

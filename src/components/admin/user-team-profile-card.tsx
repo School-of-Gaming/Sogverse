@@ -14,7 +14,7 @@ import {
   teamProfileStatus,
 } from "@/components/team/team-profile-status";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,

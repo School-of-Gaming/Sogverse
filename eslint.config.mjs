@@ -136,6 +136,19 @@ const noServiceBarrelImports = [
 ];
 
 /**
+ * The constants directory imported as a directory, for the same reason:
+ * `@/lib/constants` re-exported every constants module, so editing any one of
+ * them selected every test that read any constant.
+ */
+const noConstantsBarrelImports = [
+  {
+    regex: "^@/lib/constants(?:/index)?$",
+    message:
+      "Import the module that defines the constant (e.g. @/lib/constants/roles, @/lib/constants/brand). src/lib/constants has no index barrel.",
+  },
+];
+
+/**
  * A grab-bag `utils` module under `src/lib/`.
  *
  * Every helper lives in the module about its subject, so a change to one
@@ -963,7 +976,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -975,7 +988,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports, ...noLibSiblingUtilsImport],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports, ...noLibSiblingUtilsImport],
       }],
     },
   },
@@ -988,7 +1001,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports, ...noUtilsHubImports],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -1012,7 +1025,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
+        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -1053,6 +1066,7 @@ const eslintConfig = defineConfig([
           ...noNextFontOutsideLayout,
           ...noZodV4OutsideMcp,
           ...noServiceBarrelImports,
+          ...noConstantsBarrelImports,
           ...noUtilsHubImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
@@ -1335,7 +1349,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },

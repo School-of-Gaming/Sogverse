@@ -9,7 +9,7 @@ import type {
 } from "@/types";
 import { AddGamerDialog } from "@/components/family";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { isAdvertisedProduct } from "@/lib/marketing-events";

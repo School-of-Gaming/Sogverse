@@ -12,7 +12,7 @@ import { filterProducts } from "./filter-products";
 import type { BrowseSurface } from "./browse-surface";
 import { useOfferedBrowseFilters } from "./use-browse-filters";
 import { withBrowseState } from "./browse-state";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilterPanel } from "./product-browse-filter-panel";
 import type { AppHrefObject } from "@/lib/constants/routes";

@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { teamMemberPublicAddress } from "@/components/team/team-address";
 import { TeamProfileEditor } from "@/components/team/team-profile-editor";
 import { redirect } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 // The service module, not the package index: the index re-exports the
 // `"use client"` query hooks, which a Server Component would pull in as client

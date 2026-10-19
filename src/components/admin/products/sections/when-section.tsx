@@ -6,7 +6,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { StatusLine } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
-import { PRODUCT_TIMEZONES } from "@/lib/constants";
+import { PRODUCT_TIMEZONES } from "@/lib/constants/location-hierarchies";
 import { formatAdminTermWeeks } from "@/lib/products/format-product-term-dates";
 import {
   firstSessionDate,

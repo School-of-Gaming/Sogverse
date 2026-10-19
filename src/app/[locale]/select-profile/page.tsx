@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { readSessionProvenance } from "@/lib/auth";
 import type { SessionProvenance } from "@/lib/session-provenance";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
 import { Header } from "@/components/layout";
 import { SelectProfileView } from "@/components/select-profile";

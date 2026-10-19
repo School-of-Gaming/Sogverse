@@ -30,7 +30,7 @@ import { productWhereLine } from "./product-where-line";
 import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import type { AdminProductListRow } from "@/services/products/products.service";
 import type { ProductType } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 // `pendingHintKey` lives in effective-status.ts (UI-free decision tree). This
 // thin wrapper formats the value for display, through the user's locale

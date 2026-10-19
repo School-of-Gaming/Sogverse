@@ -8,7 +8,7 @@ import frHeader from "@/../messages/fr/header.json";
 import frCommon from "@/../messages/fr/common.json";
 import frDashboardSections from "@/../messages/fr/dashboardSections.json";
 import { Header } from "@/components/layout/header";
-import type { UserRole } from "@/lib/constants";
+import type { UserRole } from "@/lib/constants/roles";
 
 const en = { header: enHeader, common: enCommon, dashboardSections: enDashboardSections };
 const fr = { header: frHeader, common: frCommon, dashboardSections: frDashboardSections };

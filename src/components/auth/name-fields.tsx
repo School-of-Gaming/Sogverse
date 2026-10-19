@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 
 /**
  * The name rules every registration form holds a parent or a Gedu to, as

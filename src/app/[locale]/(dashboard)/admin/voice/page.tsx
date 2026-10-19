@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * The instant-room page folded into Tools, which now holds every

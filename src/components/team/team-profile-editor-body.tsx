@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { AppHref } from "@/lib/constants/routes";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";

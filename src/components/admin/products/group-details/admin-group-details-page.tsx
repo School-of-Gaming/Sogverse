@@ -29,7 +29,7 @@ import {
 } from "@/components/admin/products/session-cancellation";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { sessionEntryId } from "@/lib/session-occurrence";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { useNow } from "@/providers";
 import {
   useAdminAddSessionImage,

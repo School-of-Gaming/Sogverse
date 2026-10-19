@@ -11,7 +11,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { landingPageHref } from "@/components/landing-pages/landing-page-address";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   formattingLocale,
   LOCALE_CONFIG,

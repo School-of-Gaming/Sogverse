@@ -11,7 +11,7 @@ import {
 } from "@/components/landing-pages/landing-page-address";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";

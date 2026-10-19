@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { SeatOfferState } from "@/lib/seat-offer-state";

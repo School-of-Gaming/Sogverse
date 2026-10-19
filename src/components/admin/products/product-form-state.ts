@@ -1,7 +1,5 @@
-import {
-  DEFAULT_PRODUCT_TIMEZONE,
-  type SupportedCurrency,
-} from "@/lib/constants";
+import type { SupportedCurrency } from "@/lib/constants/currency";
+import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
