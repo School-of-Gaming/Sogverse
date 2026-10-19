@@ -2113,15 +2113,11 @@
         "refused": "Vercel refused to give these figures to this site's access token. The token needs access to them before they can show here.",
         "failed": "These figures couldn't be read just now. Try again in a few minutes."
       },
-      "views": {
-        "title": "Pageviews",
-        "visitors": "{count, plural, one {about # visitor} other {about # visitors}}",
-        "caption": "Only visitors who accepted analytics on the cookie banner are counted. Visitors are counted per device, so that number is approximate."
-      },
-      "timeline": {
-        "heading": "Over time",
-        "traffic": "Traffic per day",
-        "utcDays": "Days are UTC days, midnight to midnight.",
+      "traffic": {
+        "heading": "Traffic",
+        "chart": "Traffic per day",
+        "visitors": "Visitors (approx.)",
+        "caption": "Only visitors who accepted analytics on the cookie banner are counted. Visitors are counted per device, so that number is approximate.",
         "series": {
           "pageviews": "Pageviews",
           "visitors": "Visitors"
@@ -2157,7 +2153,7 @@
           "page": "Page",
           "pageviews": "Pageviews"
         },
-        "noSplit": "The language split changed while it was being read. Reload in a moment to see it.",
+        "noSplit": "The language split isn't available for this read.",
         "empty": "No page was viewed in this range."
       },
       "breakdowns": {
@@ -2168,7 +2164,6 @@
         "devices": "Devices",
         "noReferrer": "Direct, or not passed on",
         "unknown": "Unknown",
-        "rest": "{count, plural, one {# more} other {# more}}",
         "empty": "Nothing to show for this range.",
         "deviceTypes": {
           "desktop": "Desktop",

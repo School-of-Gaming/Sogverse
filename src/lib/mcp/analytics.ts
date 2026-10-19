@@ -57,8 +57,8 @@ const LANDING_ADDRESSES = SUPPORTED_LOCALES.map(
 ).join(", ");
 
 /** The limits every figure is read under, built from the constants that set them. */
-export const ANALYTICS_CAVEATS = [
-  "Pageviews and visitors (Vercel Web Analytics) count only visitors who accepted analytics cookies, so real traffic is higher; among visitors arriving from ads roughly one in ten has been measured accepting. Always say so when quoting them.",
+const ANALYTICS_CAVEATS = [
+  "Pageviews and visitors (Vercel Web Analytics) count only visitors who accepted analytics cookies, so real traffic is higher. Always say so when quoting them.",
   "Visitors are distinct device ids over the range or group asked for, approximate, and never add up across days or groups.",
   `Every day is a UTC day. Web Analytics reaches back to ${TRAFFIC_DATA_START}, when it was switched on, and is kept for ${TRAFFIC_RETENTION_YEARS} years; a range reaching outside that is narrowed and the answer says so.`,
   "Vercel figures are cached for the hour they were read in; readAt says when.",

@@ -2113,15 +2113,11 @@
         "refused": "Vercel a refusé ces chiffres au jeton d'accès de ce site. Le jeton doit y avoir accès pour qu'ils s'affichent ici.",
         "failed": "Ces chiffres n'ont pas pu être lus pour l'instant. Réessayez dans quelques minutes."
       },
-      "views": {
-        "title": "Pages vues",
-        "visitors": "{count, plural, one {environ # visiteur} other {environ # visiteurs}}",
-        "caption": "Seuls les visiteurs qui ont accepté les statistiques dans le bandeau des cookies sont comptés. Les visiteurs sont comptés par appareil, ce nombre est donc approximatif."
-      },
-      "timeline": {
-        "heading": "Au fil du temps",
-        "traffic": "Trafic par jour",
-        "utcDays": "Les jours sont des jours UTC, de minuit à minuit.",
+      "traffic": {
+        "heading": "Trafic",
+        "chart": "Trafic par jour",
+        "visitors": "Visiteurs (approx.)",
+        "caption": "Seuls les visiteurs qui ont accepté les statistiques dans le bandeau des cookies sont comptés. Les visiteurs sont comptés par appareil, ce nombre est donc approximatif.",
         "series": {
           "pageviews": "Pages vues",
           "visitors": "Visiteurs"
@@ -2157,7 +2153,7 @@
           "page": "Page",
           "pageviews": "Pages vues"
         },
-        "noSplit": "La répartition par langue a changé pendant la lecture. Rechargez dans un instant pour la voir.",
+        "noSplit": "La répartition par langue n'est pas disponible pour cette lecture.",
         "empty": "Aucune page n'a été vue sur cette période."
       },
       "breakdowns": {
@@ -2168,7 +2164,6 @@
         "devices": "Appareils",
         "noReferrer": "Accès direct, ou non transmis",
         "unknown": "Inconnu",
-        "rest": "{count, plural, one {# autre} other {# autres}}",
         "empty": "Rien à afficher pour cette période.",
         "deviceTypes": {
           "desktop": "Ordinateur",

@@ -1,6 +1,5 @@
 import "server-only";
 
-import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/ui/card";
 import type { AnalyticsRange } from "@/services/admin-analytics/admin-analytics.build";
 import {
@@ -10,14 +9,12 @@ import {
   readTopPages,
   readWebAnalyticsOverview,
 } from "@/services/admin-analytics/admin-analytics.server";
-import { AnalyticsTimeline } from "./analytics-timeline";
+import { TrafficCard } from "./analytics-timeline";
 import {
   AnalyticsFailure,
   Breakdowns,
   CampaignsTable,
   LandingPagesTable,
-  MeasureCard,
-  MeasureFailure,
   ReadAt,
   TopPagesTable,
 } from "./analytics-view";
@@ -39,61 +36,31 @@ function Ghost({ className }: { className: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// The range's totals
+// Traffic: the range's totals and its days, from one read
 // ---------------------------------------------------------------------------
 
-/** The totals card's width, shared by the card and its skeleton. */
-const OVERVIEW_WIDTH = "max-w-md";
-
-export function OverviewSkeleton() {
-  return (
-    <Card className={`flex min-h-48 flex-col gap-3 p-5 ${OVERVIEW_WIDTH}`} aria-hidden>
-      <Ghost className="h-4 w-28" />
-      <Ghost className="h-10 w-36" />
-      <Ghost className="h-3 w-full" />
-      <Ghost className="h-3 w-4/5" />
-    </Card>
-  );
+/** The traffic card itself, drawn with its figures, chart and read time as ghosts. */
+export function TrafficSkeleton() {
+  return <TrafficCard state={{ status: "loading" }} />;
 }
 
-export async function OverviewSection({ range, now }: SectionProps) {
-  const t = await getTranslations("admin.analytics.views");
+export async function TrafficSection({ range, now }: SectionProps) {
   const result = await readWebAnalyticsOverview(range, now);
   return (
-    <div className={OVERVIEW_WIDTH}>
-      {result.ok ? (
-        <MeasureCard
-          title={t("title")}
-          figure={result.data.pageviews}
-          detail={t("visitors", { count: result.data.visitors })}
-          caption={t("caption")}
-          footer={<ReadAt readAt={result.readAt} />}
-        />
-      ) : (
-        <MeasureFailure title={t("title")} caption={t("caption")} reason={result.reason} />
-      )}
-    </div>
+    <TrafficCard
+      state={
+        result.ok
+          ? {
+              status: "ready",
+              pageviews: result.data.pageviews,
+              visitors: result.data.visitors,
+              days: result.data.days,
+              readAt: result.readAt,
+            }
+          : { status: "failed", reason: result.reason }
+      }
+    />
   );
-}
-
-// ---------------------------------------------------------------------------
-// Over time
-// ---------------------------------------------------------------------------
-
-export function TimelineSkeleton() {
-  return (
-    <Card className="space-y-6 p-5" aria-hidden>
-      <Ghost className="h-4 w-32" />
-      <Ghost className="h-60 w-full" />
-    </Card>
-  );
-}
-
-/** Every day of the range, its pageviews and visitors. */
-export async function TimelineSection({ range, now }: SectionProps) {
-  const result = await readWebAnalyticsOverview(range, now);
-  if (!result.ok) return <AnalyticsFailure reason={result.reason} />;
-  return <AnalyticsTimeline rows={result.data.days} />;
 }
 
 // ---------------------------------------------------------------------------

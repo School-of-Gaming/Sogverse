@@ -77,6 +77,13 @@ export function AnalyticsShell({
   );
 }
 
+/**
+ * Each date field's width: the date at its longest locale format beside the
+ * week badge at its longest label (Klingon's "Hogh 38"), with room to spare.
+ * The field shrinks its date text first, so anything narrower clips the date.
+ */
+const DATE_FIELD_WIDTH = "w-64";
+
 function pillClass(active: boolean): string {
   return cn(
     "inline-flex items-center rounded-full border border-border px-3 py-1 text-xs font-medium transition-colors",
@@ -142,7 +149,7 @@ function RangePicker({
             weekPick={{ edge: "start", weekdays: [] }}
             rangeEnd={to}
             disabled={pending}
-            className="w-48"
+            className={DATE_FIELD_WIDTH}
           />
         </label>
         <label className="space-y-1 text-xs text-muted-foreground">
@@ -155,7 +162,7 @@ function RangePicker({
             weekPick={{ edge: "end", weekdays: [] }}
             rangeStart={from}
             disabled={pending}
-            className="w-48"
+            className={DATE_FIELD_WIDTH}
           />
         </label>
         <Button type="submit" size="sm" variant="outline" disabled={pending || from === "" || to === ""}>
@@ -226,57 +233,6 @@ export function AnalyticsFailure({
 }
 
 // ---------------------------------------------------------------------------
-// The range's totals
-// ---------------------------------------------------------------------------
-
-/** One measure: its figure, what else it says, and what it counts. */
-export function MeasureCard({
-  title,
-  figure,
-  detail,
-  caption,
-  footer,
-}: {
-  title: string;
-  figure: number;
-  detail?: string;
-  caption: string;
-  footer?: ReactNode;
-}) {
-  const count = useCount();
-  return (
-    <Card className="flex h-full flex-col gap-2 p-5">
-      <p className="text-sm font-semibold">{title}</p>
-      <p className="flex min-h-10 items-end gap-2">
-        <span className="text-4xl font-semibold leading-none tabular-nums">{count(figure)}</span>
-        {detail && <span className="text-sm text-muted-foreground">{detail}</span>}
-      </p>
-      <p className="text-xs text-muted-foreground">{caption}</p>
-      {footer && <div className="mt-auto space-y-1 pt-1">{footer}</div>}
-    </Card>
-  );
-}
-
-/** A measure that could not be read: its title and what it counts stay, the figure is the failure. */
-export function MeasureFailure({
-  title,
-  caption,
-  reason,
-}: {
-  title: string;
-  caption: string;
-  reason: Extract<AnalyticsResult<unknown>, { ok: false }>["reason"];
-}) {
-  return (
-    <Card className="flex h-full flex-col gap-2 p-5">
-      <p className="text-sm font-semibold">{title}</p>
-      <AnalyticsFailure reason={reason} />
-      <p className="text-xs text-muted-foreground">{caption}</p>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Tables
 // ---------------------------------------------------------------------------
 
@@ -306,20 +262,29 @@ function LanguageLine({ languages }: { languages: { language: PathLanguage; page
   );
 }
 
-/** The "Show all" control under a long table. */
+/**
+ * The "Show all" control under a long list. It sits after the last row, so
+ * expanding grows the list downward and nothing above it moves.
+ */
 function ShowAll({
   total,
+  limit,
   expanded,
   onToggle,
+  className,
 }: {
   total: number;
+  /** How many rows the list shows collapsed; at or under it there is nothing to show. */
+  limit: number;
   expanded: boolean;
   onToggle: () => void;
+  /** The control's padding, which follows the list's own. */
+  className: string;
 }) {
   const t = useTranslations("admin.analytics");
-  if (total <= COLLAPSED_ROWS) return null;
+  if (total <= limit) return null;
   return (
-    <div className="border-t border-border px-4 py-2">
+    <div className={cn("border-t border-border", className)}>
       <Button type="button" variant="ghost" size="sm" onClick={onToggle}>
         {expanded ? t("showFewer") : t("showAll", { count: total })}
       </Button>
@@ -422,7 +387,13 @@ export function TopPagesTable({ rows }: { rows: RouteRow[] }) {
           ))}
         </tbody>
       </table>
-      <ShowAll total={rows.length} expanded={expanded} onToggle={() => setExpanded(!expanded)} />
+      <ShowAll
+        total={rows.length}
+        limit={COLLAPSED_ROWS}
+        expanded={expanded}
+        onToggle={() => setExpanded(!expanded)}
+        className="px-4 py-2"
+      />
     </Card>
   );
 }
@@ -479,12 +450,18 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
           ))}
         </tbody>
       </table>
-      <ShowAll total={rows.length} expanded={expanded} onToggle={() => setExpanded(!expanded)} />
+      <ShowAll
+        total={rows.length}
+        limit={COLLAPSED_ROWS}
+        expanded={expanded}
+        onToggle={() => setExpanded(!expanded)}
+        className="px-4 py-2"
+      />
     </Card>
   );
 }
 
-/** How many values a breakdown lists before folding the rest into "everything else". */
+/** How many values a breakdown lists before "Show all". */
 const BREAKDOWN_ROWS = 8;
 
 /** One breakdown as a short ranked list with each value's share of the views. */
@@ -501,36 +478,44 @@ export function BreakdownList({
   const t = useTranslations("admin.analytics.breakdowns");
   const count = useCount();
   const locale = useLocale();
+  const [expanded, setExpanded] = useState(false);
   const total = rows.reduce((sum, row) => sum + row.pageviews, 0);
   const share = new Intl.NumberFormat(formattingLocale(locale), {
     style: "percent",
     maximumFractionDigits: 0,
   });
-  const top = rows.slice(0, BREAKDOWN_ROWS);
-  const rest = rows.slice(BREAKDOWN_ROWS).reduce((sum, row) => sum + row.pageviews, 0);
-  const lines = [
-    ...top.map((row) => ({ key: JSON.stringify(row.value), label: name(row.value), pageviews: row.pageviews })),
-    ...(rest > 0 ? [{ key: "rest", label: t("rest", { count: rows.length - BREAKDOWN_ROWS }), pageviews: rest }] : []),
-  ];
+  const shown = expanded ? rows : rows.slice(0, BREAKDOWN_ROWS);
   return (
     <Card className="space-y-2 p-4">
       <Heading level={3} step="label">{title}</Heading>
-      {lines.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <ul className="divide-y divide-border">
-          {lines.map((line) => (
-            <li key={line.key} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
-              <span className="min-w-0 break-words">{line.label}</span>
-              <span className="shrink-0 tabular-nums">
-                {count(line.pageviews)}
-                <span className="ml-2 inline-block w-10 text-right text-xs text-muted-foreground">
-                  {share.format(total === 0 ? 0 : line.pageviews / total)}
+        <div>
+          <ul className="divide-y divide-border">
+            {shown.map((row) => (
+              <li
+                key={JSON.stringify(row.value)}
+                className="flex items-baseline justify-between gap-3 py-1.5 text-sm"
+              >
+                <span className="min-w-0 break-words">{name(row.value)}</span>
+                <span className="shrink-0 tabular-nums">
+                  {count(row.pageviews)}
+                  <span className="ml-2 inline-block w-10 text-right text-xs text-muted-foreground">
+                    {share.format(total === 0 ? 0 : row.pageviews / total)}
+                  </span>
                 </span>
-              </span>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+          <ShowAll
+            total={rows.length}
+            limit={BREAKDOWN_ROWS}
+            expanded={expanded}
+            onToggle={() => setExpanded(!expanded)}
+            className="pt-2"
+          />
+        </div>
       )}
     </Card>
   );

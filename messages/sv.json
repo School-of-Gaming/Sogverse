@@ -2113,15 +2113,11 @@
         "refused": "Vercel vägrade lämna ut siffrorna till den här webbplatsens åtkomstnyckel. Nyckeln behöver åtkomst till dem innan de kan visas här.",
         "failed": "Siffrorna kunde inte läsas just nu. Försök igen om några minuter."
       },
-      "views": {
-        "title": "Sidvisningar",
-        "visitors": "{count, plural, one {cirka # besökare} other {cirka # besökare}}",
-        "caption": "Bara besökare som godkände analys i cookiebannern räknas. Besökare räknas per enhet, så det antalet är ungefärligt."
-      },
-      "timeline": {
-        "heading": "Över tid",
-        "traffic": "Trafik per dag",
-        "utcDays": "Dagarna är UTC-dagar, midnatt till midnatt.",
+      "traffic": {
+        "heading": "Trafik",
+        "chart": "Trafik per dag",
+        "visitors": "Besökare (ungefär)",
+        "caption": "Bara besökare som godkände analys i cookiebannern räknas. Besökare räknas per enhet, så det antalet är ungefärligt.",
         "series": {
           "pageviews": "Sidvisningar",
           "visitors": "Besökare"
@@ -2157,7 +2153,7 @@
           "page": "Sida",
           "pageviews": "Sidvisningar"
         },
-        "noSplit": "Språkfördelningen ändrades medan den lästes. Ladda om om en stund för att se den.",
+        "noSplit": "Språkfördelningen är inte tillgänglig för den här läsningen.",
         "empty": "Ingen sida visades under det här intervallet."
       },
       "breakdowns": {
@@ -2168,7 +2164,6 @@
         "devices": "Enheter",
         "noReferrer": "Direkt, eller inte vidarebefordrat",
         "unknown": "Okänt",
-        "rest": "{count, plural, one {# till} other {# till}}",
         "empty": "Inget att visa för det här intervallet.",
         "deviceTypes": {
           "desktop": "Dator",

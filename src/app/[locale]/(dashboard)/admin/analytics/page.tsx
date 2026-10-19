@@ -8,12 +8,10 @@ import {
   BreakdownsSkeleton,
   CampaignsSection,
   LandingPagesSection,
-  OverviewSkeleton,
-  OverviewSection,
   TableSkeleton,
-  TimelineSection,
-  TimelineSkeleton,
   TopPagesSection,
+  TrafficSection,
+  TrafficSkeleton,
 } from "@/components/admin/analytics/analytics-sections";
 import { AnalyticsSection, AnalyticsShell } from "@/components/admin/analytics/analytics-view";
 import { requireRole } from "@/lib/auth";
@@ -53,13 +51,13 @@ export default async function AdminAnalyticsRoute({
 
   return (
     <AnalyticsShell range={range} earliest={earliest} today={utcToday(now)}>
-      <Suspense key={`overview-${key}`} fallback={<OverviewSkeleton />}>
-        <OverviewSection {...props} />
+      <Suspense key={`traffic-${key}`} fallback={<TrafficSkeleton />}>
+        <TrafficSection {...props} />
       </Suspense>
 
-      <AnalyticsSection heading={t("timeline.heading")}>
-        <Suspense key={`timeline-${key}`} fallback={<TimelineSkeleton />}>
-          <TimelineSection {...props} />
+      <AnalyticsSection heading={t("breakdowns.heading")} caption={t("breakdowns.caption")}>
+        <Suspense key={`breakdowns-${key}`} fallback={<BreakdownsSkeleton />}>
+          <BreakdownsSection {...props} />
         </Suspense>
       </AnalyticsSection>
 
@@ -78,12 +76,6 @@ export default async function AdminAnalyticsRoute({
       <AnalyticsSection heading={t("pages.heading")} caption={t("pages.caption")}>
         <Suspense key={`pages-${key}`} fallback={<TableSkeleton rows={10} />}>
           <TopPagesSection {...props} />
-        </Suspense>
-      </AnalyticsSection>
-
-      <AnalyticsSection heading={t("breakdowns.heading")} caption={t("breakdowns.caption")}>
-        <Suspense key={`breakdowns-${key}`} fallback={<BreakdownsSkeleton />}>
-          <BreakdownsSection {...props} />
         </Suspense>
       </AnalyticsSection>
     </AnalyticsShell>

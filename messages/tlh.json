@@ -2157,15 +2157,11 @@
         "refused": "Vercel lojmIt ngaQHa'moHwI' lajbe'. mI' cha'laHbe'.",
         "failed": "DaH mI' laDlaHbe'. tugh yInIDqa'."
       },
-      "views": {
-        "title": "nab leghlu'pu'bogh",
-        "visitors": "{count, plural, one {# SuchwI' 'ach} other {# SuchwI' 'ach}}",
-        "caption": "cookie DIr laj SuchwI' neH toghlu'. SuchwI' mI' Qagh."
-      },
-      "timeline": {
-        "heading": "poH chuqmo'",
-        "traffic": "Hoch jaj lup",
-        "utcDays": "UTC jaj chaH.",
+      "traffic": {
+        "heading": "lup",
+        "chart": "Hoch jaj lup",
+        "visitors": "SuchwI' ('ach)",
+        "caption": "cookie DIr laj SuchwI' neH toghlu'. SuchwI' mI' Qagh.",
         "series": {
           "pageviews": "nab leghlu'pu'bogh",
           "visitors": "SuchwI'"
@@ -2201,7 +2197,7 @@
           "page": "nab",
           "pageviews": "leghlu'"
         },
-        "noSplit": "laDtaHvIS Hol choHlu'. tugh yIlI'qa'.",
+        "noSplit": "DaH Hol chuq tu'laHbe'lu'.",
         "empty": "poHvam nab leghlu'be'."
       },
       "breakdowns": {
@@ -2212,7 +2208,6 @@
         "devices": "jan",
         "noReferrer": "nIH, pagh ngeHlu'be'",
         "unknown": "Sovbe'lu'",
-        "rest": "{count, plural, one {# latlh} other {# latlh}}",
         "empty": "poHvam vay' tu'lu'be'.",
         "deviceTypes": {
           "desktop": "De'wI' tIn",
