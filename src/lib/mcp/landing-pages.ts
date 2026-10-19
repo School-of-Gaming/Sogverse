@@ -227,7 +227,7 @@ function readSectionWords(
         lines.length === 0 ? construct : `${construct} on line ${lines.join(", ")}`,
       )
       .join("; ");
-    problems.push(at(path.split("."), `uses markdown a landing page does not show — ${named}`));
+    problems.push(at(path.split("."), `uses markdown this field does not show — ${named}`));
   }
   return problems.length === 0 ? { words: parsed.data } : { problems };
 }

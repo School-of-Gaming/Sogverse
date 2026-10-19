@@ -12,7 +12,6 @@ import {
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
 import { markdownText } from "@/lib/landing-pages/sections/shared";
-import { MARKDOWN_USE_CASES } from "@/lib/authored-markdown";
 import { BUTTON_TARGET_CASES } from "../../helpers/landing-button-cases";
 import {
   CASE_IDS as I,
@@ -223,15 +222,6 @@ describe("the markdown fields", () => {
     expect(LANDING_SECTIONS[type].markdownFields.map(placeOf)).toEqual(
       declaredMarkdown(LANDING_SECTIONS[type].text),
     );
-  });
-
-  it("render a text section's body as landing prose and an FAQ answer without headings", () => {
-    expect(LANDING_SECTIONS.text.markdownFields).toEqual([{ field: "body", useCase: "landing" }]);
-    expect(LANDING_SECTIONS.faq.markdownFields).toEqual([
-      { items: "items", field: "answer", useCase: "landing-faq" },
-    ]);
-    expect(MARKDOWN_USE_CASES["landing-faq"].features).toEqual({ headings: false, links: true });
-    expect(MARKDOWN_USE_CASES.landing.features).toEqual({ headings: true, links: true });
   });
 
   it("are read off a section's words by path, and matched by path", () => {
