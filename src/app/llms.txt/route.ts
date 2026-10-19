@@ -8,7 +8,11 @@ import {
   libraryArticleCanonicalPath,
   libraryArticleLocales,
 } from "@/components/library/article/article-metadata";
-import { loadMessages } from "@/i18n/messages";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { aboutMessages } from "@/i18n/namespaces/about";
+import { homeMessages } from "@/i18n/namespaces/home";
+import { metadataMessages } from "@/i18n/namespaces/metadata";
 import { getPathname } from "@/i18n/navigation";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { LOCALE_CONFIG } from "@/lib/constants/locales";
@@ -190,7 +194,7 @@ function landingPageLines(
 }
 
 function buildLlmsTxt(
-  messages: Awaited<ReturnType<typeof loadMessages>>,
+  messages: Pick<Messages, "about" | "home" | "metadata">,
   baseUrl: string,
   published: readonly PublishedLibraryArticleSummary[] | null,
   landingPages: readonly PublishedLandingPageSummary[] | null,
@@ -298,7 +302,12 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   if (!isProductionDeployment()) notFound();
-  const messages = await loadMessages("en");
+  const [about, home, metadata] = await Promise.all([
+    loadNamespace(aboutMessages, "en"),
+    loadNamespace(homeMessages, "en"),
+    loadNamespace(metadataMessages, "en"),
+  ]);
+  const messages = { about, home, metadata };
   const [published, landingPages] = await Promise.all([
     readLiveArticles().catch((error: unknown) => {
       console.error("[llms.txt] the live Library articles were not read:", error);

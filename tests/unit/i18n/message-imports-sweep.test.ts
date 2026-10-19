@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, sep } from "node:path";
+import { dirname, join, posix, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -21,8 +21,11 @@ import { describe, expect, it } from "vitest";
  *   concatenation. The graph cannot see it at all, so whatever it loads drops
  *   out of every namespace's test run.
  *
- * And app code reaches the catalogs only through the loader in `src/i18n/`, so
- * the loader is the one module in `src/` naming a path into `messages/`.
+ * And app code reaches the catalogs only through `src/i18n/`: the whole-catalog
+ * loader, and the per-namespace tables under `src/i18n/namespaces/`, each of
+ * which names only its own namespace's files. Only the request config takes the
+ * whole catalog; any other app module loading it would put every namespace back
+ * in its closure, so it loads the namespaces it reads from their tables.
  *
  * The surface is the files on disk, read on every run.
  */
@@ -42,13 +45,34 @@ const WHOLE_CATALOG_TESTS: Record<string, string> = {
 };
 
 /**
- * A value import of the catalog loader: `import … from`, a bare `import "…"`,
- * `export … from`, or a dynamic `import(…)`, `require(…)` or `vi.importActual(…)`.
- * `import type` / `export type` are erased at build time and do not count, and a
+ * App modules that genuinely need every namespace, and so load the whole catalog.
+ */
+const WHOLE_CATALOG_APP_MODULES: Record<string, string> = {
+  // next-intl's request config: every page's messages, before the layout strips
+  // the server-only namespaces for the client.
+  "src/i18n/request.ts": "the app's own request config hands next-intl the whole catalog",
+};
+
+const LOADER = "src/i18n/messages";
+
+/** Whether a module specifier, written in `file`, names the catalog loader. */
+function namesLoader(file: string, specifier: string): boolean {
+  const bare = specifier.replace(/\.ts$/, "");
+  if (bare.startsWith("@/")) return `src/${bare.slice(2)}` === LOADER;
+  if (bare.startsWith(".")) return posix.join(posix.dirname(file), bare) === LOADER;
+  return false;
+}
+
+/**
+ * A value import of the catalog loader from `file`, by the alias or by a
+ * relative path: `import … from`, a bare `import "…"`, `export … from`, or a
+ * dynamic `import(…)`, `require(…)` or `vi.importActual(…)`. `import type` /
+ * `export type` are erased at build time and do not count, and a
  * `vi.mock("@/i18n/messages")` names the module without loading it.
  */
-function importsLoader(text: string): boolean {
-  return [...text.matchAll(/["']@\/i18n\/messages(?:\.ts)?["']/g)].some((match) => {
+function importsLoader(text: string, file: string): boolean {
+  return [...text.matchAll(/["']([^"'\n]*\/messages(?:\.ts)?)["']/g)].some((match) => {
+    if (!namesLoader(file, match[1])) return false;
     // The statement up to the module name: from the previous `;` (or the file start).
     const before = text.slice(text.lastIndexOf(";", match.index) + 1, match.index);
     if (/\b(?:import|require|importActual)\s*\(\s*$/.test(before)) return true;
@@ -104,20 +128,34 @@ describe("imports of the message catalogs", () => {
   it("a test imports no value from the catalog loader", () => {
     const offenders = files("tests")
       .filter(({ file }) => file !== THIS_FILE && !(file in WHOLE_CATALOG_TESTS))
-      .filter(({ text }) => importsLoader(text))
+      .filter(({ file, text }) => importsLoader(text, file))
       .map(({ file }) => file);
     expect(offenders).toEqual([]);
   });
 
+  it("app code imports no value from the catalog loader, but the modules that need every namespace", () => {
+    const importers = files("src")
+      .filter(({ file, text }) => importsLoader(text, file))
+      .map(({ file }) => file);
+    expect([...importers].sort()).toEqual(Object.keys(WHOLE_CATALOG_APP_MODULES).sort());
+  });
+
   it("recognises each form of loader import, and not a type import or a mock", () => {
-    expect(importsLoader('import { loadMessages } from "@/i18n/messages";')).toBe(true);
-    expect(importsLoader('import {\n  loadMessages,\n} from "@/i18n/messages";')).toBe(true);
-    expect(importsLoader('import "@/i18n/messages";')).toBe(true);
-    expect(importsLoader('export { loadMessages } from "@/i18n/messages";')).toBe(true);
-    expect(importsLoader('const m = await import("@/i18n/messages");')).toBe(true);
-    expect(importsLoader('await vi.importActual("@/i18n/messages");')).toBe(true);
-    expect(importsLoader('import type { Messages } from "@/i18n/messages";')).toBe(false);
-    expect(importsLoader('vi.mock("@/i18n/messages", () => ({}));')).toBe(false);
+    const test = "tests/unit/x.test.ts";
+    expect(importsLoader('import { loadMessages } from "@/i18n/messages";', test)).toBe(true);
+    expect(importsLoader('import {\n  loadMessages,\n} from "@/i18n/messages";', test)).toBe(true);
+    expect(importsLoader('import "@/i18n/messages";', test)).toBe(true);
+    expect(importsLoader('export { loadMessages } from "@/i18n/messages";', test)).toBe(true);
+    expect(importsLoader('const m = await import("@/i18n/messages");', test)).toBe(true);
+    expect(importsLoader('await vi.importActual("@/i18n/messages");', test)).toBe(true);
+    expect(importsLoader('import type { Messages } from "@/i18n/messages";', test)).toBe(false);
+    expect(importsLoader('vi.mock("@/i18n/messages", () => ({}));', test)).toBe(false);
+    // By relative path, resolved from the importing file.
+    expect(importsLoader('import { loadMessages } from "./messages";', "src/i18n/x.ts")).toBe(true);
+    expect(importsLoader('import { loadMessages } from "../i18n/messages";', "src/lib/x.ts")).toBe(true);
+    expect(importsLoader('import type { Messages } from "./messages";', "src/i18n/x.ts")).toBe(false);
+    // Another module that happens to be named `messages` is not the loader.
+    expect(importsLoader('import { x } from "./messages";', "src/lib/x.ts")).toBe(false);
   });
 
   it("names every path into messages/ as a literal, never a computed one", () => {
@@ -133,11 +171,29 @@ describe("imports of the message catalogs", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("app code reads the catalogs only through the loader", () => {
+  it("app code reads the catalogs only through the loader and the namespace tables", () => {
     const readers = files("src")
       .filter(({ text }) => messagePaths(text).length > 0)
-      .map(({ file }) => file);
+      .map(({ file }) => file)
+      .filter((file) => !file.startsWith("src/i18n/namespaces/"));
     expect(readers).toEqual(["src/i18n/messages.ts"]);
+  });
+
+  it("a namespace table names only its own namespace's files", () => {
+    const tables = files("src/i18n/namespaces");
+    expect(tables.length).toBeGreaterThan(0);
+    const offenders = tables.flatMap(({ file, text }) => {
+      const namespace = posix.basename(file, ".ts");
+      const paths = messagePaths(text);
+      if (paths.length === 0) return [`${file}: names no namespace file`];
+      return paths
+        .filter((path) => {
+          const tail = path.slice(path.lastIndexOf("../messages/") + "../messages/".length);
+          return /^[a-z]+\/([A-Za-z]+)\.json$/.exec(tail)?.[1] !== namespace;
+        })
+        .map((path) => `${file}: ${path}`);
+    });
+    expect(offenders).toEqual([]);
   });
 
   it("names only tests that exist as whole-catalog readers", () => {
