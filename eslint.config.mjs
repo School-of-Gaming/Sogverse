@@ -814,10 +814,14 @@ const noHeadingTagStrings = [
   "ConditionalExpression > ",
   "Property > ",
   "TSLiteralType > ",
+  // `as const` wraps the string, so it no longer sits directly in its variable.
+  "TSAsExpression > ",
 ].flatMap((position) =>
   [
     `Literal[value=${HEADING_TAG}]`,
     `TemplateLiteral[expressions.length=0][quasis.0.value.cooked=${HEADING_TAG}]`,
+    // `h${level}`: the tag built from a level, the most natural spelling of all.
+    `TemplateLiteral[expressions.length=1][quasis.0.value.cooked="h"][quasis.1.value.cooked=""]`,
   ].map((node) => ({
     // A property's key is its name, not a tag it holds: only its value counts.
     selector: `${position}${node}${position === "Property > " ? ".value" : ""}`,
@@ -827,6 +831,49 @@ const noHeadingTagStrings = [
 );
 
 const noRawHeadingElements = [...noRawHeadingJsx, ...noHeadingTagStrings];
+
+/**
+ * Every ban a mail is held to apart from the heading ban, shared by the email
+ * block and the mail markdown renderer's exemption from the heading ban's
+ * string half.
+ */
+const emailBans = [
+  ...noHexColourLiterals(
+    "No colour literals in an email. Import BRAND / DARK_THEME from @/lib/constants/colors, which derives the palette from @sog/ui.",
+  ),
+  ...noPaletteColourClasses,
+  ...noGreyAsHover,
+  ...noColourFunctions,
+  {
+    selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
+    message:
+      "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
+  },
+  // A family typed into a mail, on the same terms as the radius above and
+  // for the same reason: a mail has no class to write, so naming Arial in
+  // the markup is the easy path, and it is how the mail's face and the
+  // app's stopped being one decision. The two selectors are the two
+  // spellings — a template literal (what every template here writes) and a
+  // plain string.
+  //
+  // The pattern requires a family *name* after the colon, so the only form
+  // that survives is `font-family:${…}` — an interpolation, whose template
+  // chunk ends at the colon with nothing after it. That is the derived
+  // stack and nothing else can reach the mail.
+  ...["TemplateElement[value.raw", "Literal[value"].map((node) => ({
+    selector: String.raw`${node}=/font-family\s*:\s*['"a-zA-Z-]/]`,
+    message:
+      "No font-family literals in an email. Import MAIL_FONT_STACK from @/lib/constants/typography, which derives the mail face from @sog/ui — and a mail never loads a webfont.",
+  })),
+  // The rest of the face seam, restated because the email block replaces the
+  // `src/**` one. The `font-family:` half of `sogverseFaceBans` is
+  // deliberately left out and only the narrower ban directly above stands
+  // here: a mail is the one surface that writes that declaration at all,
+  // and the app-wide form would report the interpolated stack the mail is
+  // required to write.
+  ...noSpelledFamily,
+  ...noUnknownFaceClass,
+];
 
 const sogverseColourBans = [
   ...noHexColourLiterals(
@@ -1249,42 +1296,23 @@ const eslintConfig = defineConfig([
       // class, so a number typed into markup is the easy path and is how two
       // radii and a footer grey drifted away from the app in the first place.
       "no-restricted-syntax": ["error",
-        ...noHexColourLiterals(
-          "No colour literals in an email. Import BRAND / DARK_THEME from @/lib/constants/colors, which derives the palette from @sog/ui.",
-        ),
-        ...noPaletteColourClasses,
-        ...noGreyAsHover,
-        ...noColourFunctions,
-        {
-          selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
-          message:
-            "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
-        },
-        // A family typed into a mail, on the same terms as the radius above and
-        // for the same reason: a mail has no class to write, so naming Arial in
-        // the markup is the easy path, and it is how the mail's face and the
-        // app's stopped being one decision. The two selectors are the two
-        // spellings — a template literal (what every template here writes) and a
-        // plain string.
-        //
-        // The pattern requires a family *name* after the colon, so the only form
-        // that survives is `font-family:${…}` — an interpolation, whose template
-        // chunk ends at the colon with nothing after it. That is the derived
-        // stack and nothing else can reach the mail.
-        ...["TemplateElement[value.raw", "Literal[value"].map((node) => ({
-          selector: String.raw`${node}=/font-family\s*:\s*['"a-zA-Z-]/]`,
-          message:
-            "No font-family literals in an email. Import MAIL_FONT_STACK from @/lib/constants/typography, which derives the mail face from @sog/ui — and a mail never loads a webfont.",
-        })),
-        // The rest of the face seam, restated because this block replaces the
-        // one above. The `font-family:` half of `sogverseFaceBans` is
-        // deliberately left out and only the narrower ban directly above stands
-        // here: a mail is the one surface that writes that declaration at all,
-        // and the app-wide form would report the interpolated stack the mail is
-        // required to write.
-        ...noSpelledFamily,
-        ...noUnknownFaceClass,
+        ...emailBans,
         ...noRawHeadingElements,
+      ],
+    },
+  },
+  {
+    // The mail's markdown renderer maps a markdown heading level to the tag it
+    // writes into the mail's HTML, the same table by design as the two app
+    // markdown files exempted above, so it is exempt from the ban on a tag
+    // chosen at runtime and still from writing a raw heading as JSX. The
+    // email block's other bans are restated, since this block replaces that
+    // one's options rather than merging with them.
+    files: ["src/lib/email-templates/markdown.ts"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        ...emailBans,
+        ...noRawHeadingJsx,
       ],
     },
   },

@@ -922,6 +922,12 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/team-profiles-public.test.ts",
     why: "SECURITY INVOKER filter over list_public_team_profiles by one id, so it can answer with nothing the list would not: the id only narrows the public set, and an id that is not in it (not approved, not staff, no one) returns no row. Answers every caller identically, which the scope test proves for anon and every signed-in role",
   },
+  // A live landing page's testimonials, by the same widest reading as the
+  // team reads above: no user named, no uid read, one answer for all.
+  list_landing_page_testimonials: {
+    scopeTest: "tests/db/landing-testimonials.test.ts",
+    why: "SECURITY DEFINER over testimonials, testimonial_translations and landing_page_publications, the first two of which anon holds no grant on and authenticated reads only as an admin. It crosses that boundary to hand back only what one live landing page's published copy places — the id and every version's locale, attribution and quote of each testimonial its testimonials sections name — never a testimonial placed only in an unpublished working copy, never an unplaced one, and never who created or saved one. It reads no uid and answers every caller identically, anon included, which the scope test proves along with the live-copy-only boundary and the exact keys",
+  },
   is_public_team_photo: {
     scopeTest: "tests/db/team-profiles-public.test.ts",
     why: "the predicate of the team-photos public read policy, which anon evaluates itself, so it has to be executable by anon. SECURITY DEFINER over the team tables anon cannot read, and answers only yes or no: whether a name is the current photo of a profile list_public_team_profiles shows. It reveals nothing the public list does not, and answers every caller identically; the scope test asks it about a public photo, a hidden profile's, a former staffer's and a stray object, and proves the policy it backs lets anon read the first alone",
@@ -988,6 +994,10 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * `holiday_breaks_document` is those breaks with their names and the plan rows
  * each withdrew, the shape every session document carries beside its plan,
  * built as its caller from the same anon-readable rows.
+ *
+ * `list_landing_page_testimonials` is a live landing page's quotes: the
+ * testimonials its published copy places, their words alone, and never the
+ * rest of the admin-only store.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
@@ -1000,6 +1010,7 @@ const ANON_ALLOWLIST = new Set([
   "list_public_team_profiles",
   "get_public_team_profile",
   "is_public_team_photo",
+  "list_landing_page_testimonials",
 ]);
 
 /**

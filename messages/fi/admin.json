@@ -463,6 +463,18 @@
         "inSection": "Osio {number} ({type}): {field}",
         "inItem": "Osio {number} ({type}), {item}: {field}",
         "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+      },
+      "testimonials": {
+        "heading": "Asiakaskokemukset",
+        "hint": "Niiden sanoja muokataan Asiakaskokemukset-osiossa, ja muutos näkyy julkaistulla sivulla heti.",
+        "section": "Osio {number} ({type}): {arrangement}",
+        "arrangements": {
+          "feature": "yksi suuri lainaus",
+          "pair": "kaksi rinnakkain",
+          "row": "kolme rivissä",
+          "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
+        },
+        "missing": "Asiakaskokemus, jota ei enää ole tallessa"
       }
     },
     "status": {
@@ -513,7 +525,8 @@
       "points": "Kohdat",
       "steps": "Vaiheet",
       "faq": "Kysymykset ja vastaukset",
-      "cta": "Toimintakehote"
+      "cta": "Toimintakehote",
+      "testimonials": "Asiakaskokemukset"
     },
     "items": {
       "image": "Kuva {number}",
@@ -1761,7 +1774,7 @@
     }
   },
   "testimonials": {
-    "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa.",
+    "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Laskeutumissivut lainaavat niistä sinne sijoitettuja.",
     "newTestimonial": "Uusi asiakaskokemus",
     "backToList": "Takaisin asiakaskokemuksiin",
     "newPage": {
@@ -1789,6 +1802,17 @@
       "from": "Keneltä lainaus on, niin kuin se näytetään — esimerkiksi Äiti, Suomi.",
       "quote": "Hänen sanansa sellaisinaan, ilman lainausmerkkejä: sivusto lisää kunkin kielen omat. Kääntäminen toiselle kielelle on sallittua, muuttaminen ei."
     },
+    "usage": {
+      "heading": "Missä sitä käytetään",
+      "none": "Sitä ei vielä näytetä missään.",
+      "editNote": "Tallentaminen muuttaa sen sanat kaikkialla, missä se näkyy.",
+      "landingPage": "Laskeutumissivu: {title}",
+      "landingPageState": {
+        "both": "Lukijat näkevät sen siellä nyt.",
+        "liveOnly": "Lukijat näkevät sen siellä seuraavaan julkaisuun asti, joka poistaa sen.",
+        "workingOnly": "Ei vielä lukijoiden nähtävissä: seuraava julkaisu tuo sen sinne."
+      }
+    },
     "record": {
       "created": "Luotu {date}",
       "createdBy": "Luonut {name} {date}",
@@ -1809,6 +1833,7 @@
       "quoted": "{language}: lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
       "saveFailed": "Asiakaskokemusta ei voitu tallentaa. Yritä uudelleen.",
       "saveFailedWithReason": "Asiakaskokemusta ei voitu tallentaa: {reason}"
-    }
+    },
+    "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}"
   }
 }

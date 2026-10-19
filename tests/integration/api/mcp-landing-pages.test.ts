@@ -170,6 +170,7 @@ const PAGE: AdminLandingPage = {
     ],
   },
   hasUnpublishedChanges: true,
+  testimonials: {},
 };
 
 const LIST_ITEM: AdminLandingPageListItem = {
@@ -538,6 +539,7 @@ describe("cloning", () => {
     },
     publication: null,
     hasUnpublishedChanges: true,
+    testimonials: {},
   };
 
   it("clones in one call with each language's own copy marker, and answers the clone's titles, slugs and links", async () => {
@@ -668,6 +670,7 @@ describe("saving", () => {
   it("writes one language's words checked against the structure", async () => {
     const sectionTexts = {
       [HERO]: { headline: "Pelikerhot", buttonLabel: "Kauppaan", imageAlt: "Linna" },
+      [TEXT]: { heading: "Kerhossa", body: "## Rakennamme\n\nYhdessä." },
       [FAQ]: { heading: "Kysymyksiä", items: { [QUESTION]: { question: "Mitä?", answer: "**Pelejä**." } } },
       [GALLERY]: { alts: { [PICTURE_ITEM]: "Linna" } },
     };
@@ -716,7 +719,12 @@ describe("saving", () => {
     [
       "markdown outside the landing subset",
       { [TEXT]: { heading: "x", body: "![A castle](https://x.test/c.jpg)" } },
-      "The words of section 2 (Text), body: uses markdown a landing page does not show — an image (![alt](url)) on line 1",
+      "The words of section 2 (Text), body: uses markdown this field does not show — an image (![alt](url)) on line 1",
+    ],
+    [
+      "a heading in an FAQ answer, which its question already heads",
+      { [FAQ]: { items: { [QUESTION]: { question: "Why?", answer: "Because.\n\n## More" } } } },
+      "The words of section 3 (Questions and answers), question 1, answer: uses markdown this field does not show — a level-2 heading (##) on line 3",
     ],
   ])("refuses %s, naming it, and saves nothing", async (_, sectionTexts, named) => {
     const result = await tool("save_landing_page_text", {
@@ -1007,5 +1015,136 @@ describe("pictures", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain("landing page picture must be exactly 1600 × 900");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("testimonials sections", () => {
+  const QUOTES = "a1000000-0000-4000-8000-000000000009";
+  const ONE = "c1000000-0000-4000-8000-000000000001";
+  const TWO = "c1000000-0000-4000-8000-000000000002";
+  const THREE = "c1000000-0000-4000-8000-000000000003";
+  const LONG =
+    "Our son talks about the club all week and has made friends there he now plays with every evening.";
+
+  const withQuotes: AdminLandingPage = {
+    ...PAGE,
+    draft: {
+      ...PAGE.draft,
+      sections: [
+        ...PAGE.draft.sections,
+        { id: QUOTES, type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO] },
+      ],
+    },
+    testimonials: {
+      [ONE]: {
+        id: ONE,
+        versions: [
+          { locale: "en", from: "Mum, Espoo", quote: LONG },
+          { locale: "fi", from: "Äiti, Espoo", quote: "Poikamme puhuu kerhosta koko viikon." },
+        ],
+      },
+      [TWO]: { id: TWO, versions: [{ locale: "sv", from: "Pappa, Vasa", quote: "Roligt." }] },
+    },
+  };
+
+  it("reads each section's arrangement and its testimonials, told apart by whom and an excerpt", async () => {
+    landing.getAdminPage.mockResolvedValue(withQuotes);
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      testimonials: [
+        {
+          section: "section 5 (Testimonials)",
+          sectionId: QUOTES,
+          arrangement: "pair",
+          slots: 2,
+          testimonials: [
+            {
+              testimonialId: ONE,
+              from: "Mum, Espoo",
+              excerpt: `${LONG.slice(0, 79).trimEnd()}…`,
+              languages: ["en", "fi"],
+            },
+            { testimonialId: TWO, from: "Pappa, Vasa", excerpt: "Roligt.", languages: ["sv"] },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("saves a section placing testimonials by id and arrangement", async () => {
+    const sections = [
+      ...PAGE.draft.sections,
+      { id: QUOTES, type: "testimonials", arrangement: "row", testimonialIds: [ONE, TWO, THREE] },
+    ];
+    landing.getAdminPage.mockResolvedValue(PAGE);
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(result.isError).toBeUndefined();
+    expect(landing.saveStructure).toHaveBeenCalledWith(ID, sections);
+  });
+
+  it("refuses a count its arrangement does not show, saying both, and saves nothing", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO, THREE] },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(
+      "A pair arrangement shows exactly 2 testimonials; this section has 3",
+    );
+    expect(resultText(result)).toContain("Section 2 (Testimonials)");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
+  it("refuses the same testimonial twice before anything is sent", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { type: "testimonials", arrangement: "pair", testimonialIds: [ONE, ONE] },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("A testimonials section names each testimonial once");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
+  it("quotes the database's refusal of an id no testimonial has", async () => {
+    landing.saveStructure.mockRejectedValue(
+      dbError("23503", `Section 2 places the testimonial ${THREE}, and no testimonial has that id`),
+    );
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { type: "testimonials", arrangement: "feature", testimonialIds: [THREE] },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(
+      `Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
+    );
+  });
+
+  it("describes the arrangements, where the ids come from and that the words live in the store", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    const save = tools.find((t) => t.name === "save_landing_page_structure");
+    expect(save?.description).toContain("showcase (exactly 6:");
+    expect(save?.description).toContain("list_testimonials");
+    expect(save?.description).toContain("never invent one");
+    expect(save?.description).toContain("To take a quote off this page");
   });
 });

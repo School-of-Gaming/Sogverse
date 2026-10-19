@@ -9,8 +9,8 @@ import {
  * kept in one store by Marketing.
  *
  * There is no API route here: the writes are admin-guarded RPCs the admin's
- * own session calls, and the reads are plain table reads under the admin
- * policies.
+ * own session calls, the admin reads are plain table reads under the admin
+ * policies, and the public read is `list_landing_page_testimonials`.
  *
  * **A testimonial's words are per language.** Each version says whom the
  * quote is from (`from`, stored as `attribution`, since FROM is SQL's own
@@ -94,6 +94,22 @@ export interface TestimonialVersion {
   quote: string;
 }
 
+/**
+ * One place a testimonial is shown: a landing page whose testimonials
+ * sections place it, in its live copy, its working copy or both. A placement
+ * only in the working copy reaches readers at the next publish, and one only
+ * in the live copy leaves them at it.
+ */
+export type TestimonialUsage = {
+  pageId: string;
+  /** The page's working titles, one per language it is written in; never empty. */
+  titles: { locale: SupportedLocale; title: string }[];
+  /** Whether readers see it there now: the published copy places it. */
+  inLiveCopy: boolean;
+  /** Whether the working copy places it, so the next publish keeps it there. */
+  inWorkingCopy: boolean;
+};
+
 /** Who wrote to a testimonial, and through which AI app. */
 export interface TestimonialSaver {
   /** The admin's name, or null when none is recorded (a migration, an account since removed). */
@@ -110,11 +126,34 @@ export interface AdminTestimonial {
   id: string;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: TestimonialVersion[];
+  /** Every place it is shown; empty when it is shown nowhere. */
+  usages: TestimonialUsage[];
   createdAt: string;
   created: TestimonialSaver;
   updatedAt: string;
   lastSaved: TestimonialSaver;
 }
+
+/** A placed testimonial as the public pages read it: its words, nothing about who keeps it. */
+export interface PublicTestimonial {
+  id: string;
+  /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
+  versions: TestimonialVersion[];
+}
+
+/** What `list_landing_page_testimonials` answers, written from its body. */
+export const landingPageTestimonialRows = z.array(
+  z.object({
+    testimonial_id: z.string().uuid(),
+    versions: z.array(
+      z.object({
+        locale: z.string(),
+        attribution: z.string(),
+        quote: z.string(),
+      }),
+    ),
+  }),
+);
 
 /**
  * What `get_oauth_client` answers, narrowed to what naming an AI app needs.

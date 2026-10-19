@@ -957,7 +957,23 @@ describe("landing pages", () => {
     const S_STEPS = "00000000-0000-4000-8000-0000000008b5";
     const S_FAQ = "00000000-0000-4000-8000-0000000008b6";
     const S_CTA = "00000000-0000-4000-8000-0000000008b7";
+    const S_QUOTE = "00000000-0000-4000-8000-0000000008b8";
     const item = (n: number) => `00000000-0000-4000-8000-0000000008c${n}`;
+    /** The testimonial the fixture places, which a save refuses unless it exists. */
+    const TESTIMONIAL = "00000000-0000-0000-0000-000000000913";
+
+    beforeAll(async () => {
+      const { error } = await admin.from("testimonials").insert({ id: TESTIMONIAL });
+      expect(error).toBeNull();
+      const words = await admin
+        .from("testimonial_translations")
+        .insert({ testimonial_id: TESTIMONIAL, locale: "en", attribution: "Mum, fixture", quote: "Clone fixture quote" });
+      expect(words.error).toBeNull();
+    });
+
+    afterAll(async () => {
+      await admin.from("testimonials").delete().eq("id", TESTIMONIAL);
+    });
 
     /** One section of every type, every item-bearing one with its items. */
     const RICH: LandingSection[] = [
@@ -967,6 +983,7 @@ describe("landing pages", () => {
       { id: S_POINTS, type: "points", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },
       { id: S_STEPS, type: "steps", items: [{ id: item(5) }, { id: item(6) }] },
       { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
+      { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
       { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
     ];
 
@@ -981,6 +998,7 @@ describe("landing pages", () => {
         [S_POINTS]: { heading: w("points"), items: { [item(3)]: pair(3, "point"), [item(4)]: pair(4, "point") } },
         [S_STEPS]: { heading: w("steps"), items: { [item(5)]: pair(5, "step"), [item(6)]: pair(6, "step") } },
         [S_FAQ]: { heading: w("faq"), items: { [item(7)]: { question: w("question 7"), answer: w("answer 7") } } },
+        [S_QUOTE]: { heading: w("testimonials") },
         [S_CTA]: { heading: w("cta"), buttonLabel: w("cta button") },
       };
     }

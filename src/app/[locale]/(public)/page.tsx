@@ -23,10 +23,12 @@ import { HeroBackdrop } from "@/components/home/hero-backdrop";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import clubPhoto from "@/assets/marketing/club-lauttasaari.jpg";
 import { Testimonial } from "@/components/home/testimonial";
+import { FeatureTestimonial, TestimonialRow } from "@/components/home/testimonial-arrangements";
 import {
   featureTestimonialKey,
   rowTestimonialKeys,
   safetyTestimonialKeys,
+  type TestimonialKey,
 } from "@/components/home/testimonial-keys";
 import { ROUTES, resolveLocale } from "@/lib/constants";
 import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
@@ -102,6 +104,12 @@ export default function HomePage() {
     icon: featureIcons[i],
   }));
 
+  const quote = (key: TestimonialKey) => ({
+    key,
+    quote: t(`testimonials.items.${key}.quote`),
+    attribution: t(`testimonials.items.${key}.attribution`),
+  });
+
   return (
     <>
       {/* Hero Section */}
@@ -173,12 +181,7 @@ export default function HomePage() {
           offer. No heading — the quote is the section. Its top padding is
           the room between the quote and the hero backdrop's lower edge. */}
       <section className="container mx-auto px-4 py-16 sm:pb-24">
-        <Testimonial
-          size="feature"
-          quote={t(`testimonials.items.${featureTestimonialKey}.quote`)}
-          attribution={t(`testimonials.items.${featureTestimonialKey}.attribution`)}
-          className="mx-auto max-w-3xl"
-        />
+        <FeatureTestimonial testimonial={quote(featureTestimonialKey)} />
       </section>
 
       {/* Features Section */}
@@ -280,15 +283,7 @@ export default function HomePage() {
             {t('testimonials.heading')}
           </Heading>
         </div>
-        <div className="mx-auto mt-12 grid max-w-5xl gap-10 md:grid-cols-3 lg:mt-16">
-          {rowTestimonialKeys.map((key) => (
-            <Testimonial
-              key={key}
-              quote={t(`testimonials.items.${key}.quote`)}
-              attribution={t(`testimonials.items.${key}.attribution`)}
-            />
-          ))}
-        </div>
+        <TestimonialRow testimonials={rowTestimonialKeys.map(quote)} className="mt-12 lg:mt-16" />
       </section>
 
       {/* How It Works Section */}

@@ -11,8 +11,12 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
 import {
+  describeMissingWords,
+  landingSectionName,
+} from "@/lib/landing-pages/describe-missing";
+import {
+  LANDING_TESTIMONIAL_SLOTS,
   landingMarkdownValues,
   landingSections,
   type LandingSection,
@@ -43,18 +47,15 @@ import {
   withIds,
 } from "@/lib/mcp/landing-pages-sections";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
-import {
-  landingPublishForecast,
-} from "@/services/landing-pages/landing-pages.forecast";
-import {
-  landingSlug,
-  type AdminLandingPage,
-} from "@/services/landing-pages/landing-pages.contracts";
+import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
   LANDING_SLUG_MAX_LENGTH,
   LANDING_SUMMARY_MAX_LENGTH,
   LANDING_TITLE_MAX_LENGTH,
+  landingSlug,
+  type AdminLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
+import { landingTestimonialsSections } from "@/services/landing-pages/landing-pages.testimonials";
 
 /*
  * The landing page tools: an admin authors, publishes and unpublishes the
@@ -95,7 +96,7 @@ const ADDRESSES =
 const STRUCTURE_WRITES =
   "Removing a section drops its words in every language, and so does sending it without its id, which makes it a new section; the same holds for items. Keep every id you want to keep.";
 
-const MARKDOWN = `Markdown fields (a text section's body, an FAQ answer) take only ${describeMarkdownSubset("landing")}; anything else is refused with the construct named, and nothing is saved. Every other field is plain text.`;
+const MARKDOWN = `Markdown fields take only their own subset: a text section's body ${describeMarkdownSubset("landing")}; an FAQ answer ${describeMarkdownSubset("landing-faq")}, with no headings, since the question is the answer's heading. Anything else is refused with the construct named, and nothing is saved. Every other field is plain text.`;
 
 const OFFER_PREVIEW =
   "After creating a page, or after a large change, offer the admin the preview link.";
@@ -226,15 +227,15 @@ function readSectionWords(
       }
     }
   }
-  for (const { path, value } of landingMarkdownValues(section.type, parsed.data)) {
-    const outside = markdownOutsideSubset(value, "landing");
+  for (const { path, value, useCase } of landingMarkdownValues(section.type, parsed.data)) {
+    const outside = markdownOutsideSubset(value, useCase);
     if (outside.length === 0) continue;
     const named = outside
       .map(({ construct, lines }) =>
         lines.length === 0 ? construct : `${construct} on line ${lines.join(", ")}`,
       )
       .join("; ");
-    problems.push(at(path.split("."), `uses markdown a landing page does not show — ${named}`));
+    problems.push(at(path.split("."), `uses markdown this field does not show — ${named}`));
   }
   return problems.length === 0 ? { words: parsed.data } : { problems };
 }
@@ -310,6 +311,38 @@ function publishForecast(page: AdminLandingPage, origin: string) {
   };
 }
 
+/** The longest excerpt of a quote an answer carries, in characters. */
+const EXCERPT_LENGTH = 80;
+
+function excerpt(quote: string): string {
+  return quote.length <= EXCERPT_LENGTH ? quote : `${quote.slice(0, EXCERPT_LENGTH - 1).trimEnd()}…`;
+}
+
+/**
+ * Each testimonials section of the working copy — which the next publish
+ * puts live — with its arrangement and each testimonial it places in reading
+ * order: its id, and whom it is from and the start of its quote in English,
+ * else the first language written, so the AI app can tell them apart.
+ * get_testimonial reads one whole.
+ */
+function placedTestimonials(page: AdminLandingPage) {
+  return landingTestimonialsSections(page.draft.sections, page.testimonials).map((section) => ({
+    section: landingSectionName(section.sectionNumber, "testimonials"),
+    sectionId: section.sectionId,
+    arrangement: section.arrangement,
+    slots: LANDING_TESTIMONIAL_SLOTS[section.arrangement],
+    testimonials: section.testimonials.map(({ testimonialId, versions }) => {
+      const version = resolveTranslation(versions, "en");
+      return {
+        testimonialId,
+        from: version?.from ?? null,
+        excerpt: version === null ? null : excerpt(version.quote),
+        languages: versions.map((v) => v.locale),
+      };
+    }),
+  }));
+}
+
 function lastSaved(draft: AdminLandingPage["draft"]) {
   return { at: draft.updatedAt, by: draft.lastSavedBy, via: draft.lastSavedVia };
 }
@@ -340,6 +373,7 @@ function pageView(page: AdminLandingPage, origin: string) {
       previewLink: previewLink(origin, draft.id, version.locale),
     })),
     hasUnpublishedChanges: page.hasUnpublishedChanges,
+    testimonials: placedTestimonials(page),
     publish: publishForecast(page, origin),
     live:
       publication === null
@@ -417,7 +451,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -569,7 +603,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, and each language's completeness under the new structure. Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials). Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({ pageId, sections: mcpLandingStructure }),
         z.object({ pageId, sections: mcpLandingStructure }),
@@ -593,6 +627,7 @@ export function registerLandingPageTools(server: McpServer): void {
             .filter((section) => !kept.has(section.id))
             .map((section) => ({ id: section.id, type: section.type })),
           languages: languages(after),
+          testimonials: placedTestimonials(after),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
           publish: publishForecast(after, origin),
         });

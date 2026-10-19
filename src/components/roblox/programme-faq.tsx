@@ -129,7 +129,7 @@ export function ProgrammeFaq() {
             {t("heading")}
           </Heading>
           <div className="mt-12">
-            <FaqAccordion items={items} />
+            <FaqAccordion items={items} questionLevel={3} />
           </div>
         </div>
       </div>

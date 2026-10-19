@@ -2,6 +2,7 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
+  landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
@@ -11,6 +12,8 @@ import {
 import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import { TestimonialsService } from "@/services/testimonials/testimonials.service";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import type { AppSupabaseClient } from "@/types";
 import {
   defaultLandingSlug,
@@ -33,6 +36,7 @@ import {
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
 import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import { testimonialsById } from "./landing-pages.testimonials";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
 const UUID =
@@ -222,7 +226,8 @@ export class LandingPageService {
    * One page's working copy and its published copy, or `null` when no page
    * has that id. An id that is not a UUID is answered as not found without a
    * query. Each draft version carries what it still needs before publishing
-   * takes it, by the TypeScript half of the required-text rule.
+   * takes it, by the TypeScript half of the required-text rule; the page
+   * carries the current words of every testimonial its working copy places.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -278,7 +283,20 @@ export class LandingPageService {
         publishable(data),
         data.publication,
       ),
+      testimonials: await this.testimonialWords(sections),
     };
+  }
+
+  /**
+   * The words of the testimonials a structure places, read from the store
+   * under the admin's own policy; a structure placing none reads nothing.
+   */
+  private async testimonialWords(
+    sections: readonly LandingSection[],
+  ): Promise<Record<string, PublicTestimonial>> {
+    const ids = landingPlacedTestimonialIds(sections);
+    if (ids.length === 0) return {};
+    return testimonialsById(await new TestimonialsService(this.supabase).listTestimonialWords(ids));
   }
 
   private async oauthClientNames(
