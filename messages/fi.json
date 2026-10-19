@@ -92,9 +92,9 @@
       "adminHolidayCalendars": "Lomakalenterit",
       "adminHolidayCalendarNew": "Uusi lomakalenteri",
       "adminHolidayCalendarEdit": "Muokkaa lomakalenteria",
-      "adminTestimonials": "Suosittelut",
-      "adminTestimonialNew": "Uusi suosittelu",
-      "adminTestimonialEdit": "Muokkaa suosittelua"
+      "adminTestimonials": "Asiakaskokemukset",
+      "adminTestimonialNew": "Uusi asiakaskokemus",
+      "adminTestimonialEdit": "Muokkaa asiakaskokemusta"
     },
     "descriptions": {
       "signIn": "Kirjaudu School of Gaming -tilillesi. Näet pelaajiesi tulevat kerrat, hallitset ilmoittautumisia ja pidät perheesi tiedot ajan tasalla.",
@@ -2094,20 +2094,20 @@
     },
     "testimonials": {
       "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa.",
-      "newTestimonial": "Uusi suosittelu",
-      "backToList": "Takaisin suositteluihin",
+      "newTestimonial": "Uusi asiakaskokemus",
+      "backToList": "Takaisin asiakaskokemuksiin",
       "newPage": {
-        "title": "Uusi suosittelu",
-        "submit": "Luo suosittelu"
+        "title": "Uusi asiakaskokemus",
+        "submit": "Luo asiakaskokemus"
       },
       "editPage": {
-        "title": "Muokkaa suosittelua"
+        "title": "Muokkaa asiakaskokemusta"
       },
-      "listLoadError": "Suositteluja ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
-      "loadError": "Tätä suosittelua ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
-      "notFound": "Tällä osoitteella ei ole suosittelua.",
-      "empty": "Suositteluja ei ole vielä.",
-      "allHeading": "Kaikki suosittelut",
+      "listLoadError": "Asiakaskokemuksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loadError": "Tätä asiakaskokemusta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "notFound": "Tällä osoitteella ei ole asiakaskokemusta.",
+      "empty": "Asiakaskokemuksia ei ole vielä.",
+      "allHeading": "Kaikki asiakaskokemukset",
       "languagesLabel": "Kielet",
       "saved": "Tallennettu {date}",
       "quoteHasMarks": "Jätä lainausmerkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
@@ -2136,11 +2136,11 @@
         "cancel": "Peruuta"
       },
       "errors": {
-        "noVersion": "Kirjoita suosittelu vähintään yhdellä kielellä.",
-        "versionIncomplete": "Kieliversio {language} tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
-        "quoted": "Kieliversion {language} lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
-        "saveFailed": "Suosittelua ei voitu tallentaa. Yritä uudelleen.",
-        "saveFailedWithReason": "Suosittelua ei voitu tallentaa: {reason}"
+        "noVersion": "Kirjoita asiakaskokemus vähintään yhdellä kielellä.",
+        "versionIncomplete": "Kielelle {language} tarvitaan sekä lainaus että tieto siitä, keneltä se on.",
+        "quoted": "{language}: lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
+        "saveFailed": "Asiakaskokemusta ei voitu tallentaa. Yritä uudelleen.",
+        "saveFailedWithReason": "Asiakaskokemusta ei voitu tallentaa: {reason}"
       }
     }
   },
@@ -3832,7 +3832,7 @@
       "invoiceCustomers": "Laskutusasiakkaat",
       "gedus": "Gedut",
       "landingPages": "Laskeutumissivut",
-      "testimonials": "Suosittelut",
+      "testimonials": "Asiakaskokemukset",
       "spotlights": "Nostot"
     }
   },
