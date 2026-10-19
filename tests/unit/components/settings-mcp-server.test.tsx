@@ -15,10 +15,13 @@ import {
 } from "../../mocks/settings-page";
 import { act, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The MCP card is the admin's, and it hands over exactly the URL the route

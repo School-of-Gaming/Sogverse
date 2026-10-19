@@ -15,11 +15,14 @@ import {
 import type { ReactNode } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { NotificationPreference, Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The viewer chooses which notifications reach them, by channel, and every

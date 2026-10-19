@@ -1,0 +1,21 @@
+{
+  "newcomer": "New",
+  "newcomerTooltip": "New to this group — joined {days, plural, =0 {today} one {# day ago} other {# days ago}}",
+  "openMember": "Note and creation about {name}",
+  "openMemberCreationOwed": "Note and creation about {name} — a creation is still needed",
+  "memberTitle": "About {name}",
+  "noteAudience": "Gedus and admins",
+  "noteLabel": "Private note",
+  "noteHint": "Only Gedus and admins see this. It stays with this group, session to session.",
+  "notePlaceholder": "Anything to note about {name} in this group.",
+  "noteLastEdited": "Last edited by {name}",
+  "creationAudience": "Families see this",
+  "creationLabel": "Creation",
+  "creationHint": "Something {name} has made in this group. Their own family sees it on their page.",
+  "creationTitleLabel": "Creation title",
+  "creationTitlePlaceholder": "What they made",
+  "creationUrlLabel": "Creation link",
+  "creationUrlPlaceholder": "Link to it",
+  "creationIncomplete": "A creation needs both a title and a link.",
+  "saveFailed": "That didn’t save. Try again."
+}

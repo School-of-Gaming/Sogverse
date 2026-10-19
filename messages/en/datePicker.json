@@ -1,0 +1,9 @@
+{
+  "openCalendar": "Open calendar",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "weekNumber": "Week number",
+  "goToWeek": "Go to week",
+  "selectWeek": "Select week {week}",
+  "today": "Today"
+}

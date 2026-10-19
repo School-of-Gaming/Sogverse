@@ -1,0 +1,41 @@
+{
+  "offer": {
+    "title": "En plats har blivit ledig",
+    "child": "En plats har blivit ledig för {participantName} i {productName}. Vill du fortfarande ha den?",
+    "self": "En plats har blivit ledig för dig i {productName}. Vill du fortfarande ha den?",
+    "deadline": "Svara senast {deadline}. Därefter går platsen vidare till nästa familj i kön.",
+    "accept": "Ta platsen",
+    "decline": "Nej tack",
+    "confirmTitle": "Vill du lämna platsen?",
+    "confirmBody": "Vi erbjuder den till nästa familj på väntelistan, och det här erbjudandet går inte att öppna igen.",
+    "confirmAction": "Ja, jag är säker",
+    "confirmCancel": "Tillbaka",
+    "error": "Något gick fel och ditt svar sparades inte. Försök igen eller skriv till oss på {supportEmail}."
+  },
+  "accepted": {
+    "title": "Platsen är sparad",
+    "body": "Vi har hållit platsen åt er. Du hittar den i Min SOG tillsammans med allt annat familjen är anmäld till.",
+    "action": "Gå till Min SOG"
+  },
+  "declined": {
+    "title": "Tack för att du sa till",
+    "body": "Vi har tagit bort platsen från din lista. Tack vare ditt svar kan en annan familj få den redan i dag i stället för att den står tom."
+  },
+  "expired": {
+    "title": "Erbjudandet har gått ut",
+    "body": "Ett platserbjudande är öppet i {days} dagar, och det här hann gå ut innan vi hörde från dig.",
+    "declinePrompt": "Du står kvar på väntelistan. Om familjen inte längre behöver någon plats kan du säga till nu, så frigörs den för någon annan.",
+    "declineAction": "Lämna platsen",
+    "confirmTitle": "Vill du lämna din plats?",
+    "confirmBody": "Vi tar bort dig från väntelistan. Går du med igen senare börjar du sist i kön."
+  },
+  "used": {
+    "title": "Den här länken är redan använd",
+    "body": "Inbjudan är inte längre öppen. Allt familjen är anmäld till, och varje plats du väntar på, finns i Min SOG.",
+    "action": "Gå till Min SOG"
+  },
+  "invalid": {
+    "title": "Länken fungerade inte",
+    "body": "Den kan ha kapats av ditt e-postprogram eller kopierats bara till hälften. Försök öppna den från e-postmeddelandet igen, eller skriv till oss på {supportEmail} så hjälper vi till."
+  }
+}

@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enVoice from "@/../messages/en/voice.json";
 import { SessionFeedbackScreen } from "@/components/voice/feedback/SessionFeedbackScreen";
 import type { SessionFeedbackInitialState } from "@/components/voice/feedback/SessionFeedbackScreen";
 import {
@@ -9,6 +9,8 @@ import {
   SESSION_FEEDBACK_RATING_KEYS,
   type SessionFeedbackResult,
 } from "@/components/voice/feedback/session-feedback-items";
+
+const messages = { voice: enVoice };
 
 /**
  * The screen opens on a state it is handed, collects answers and reports them

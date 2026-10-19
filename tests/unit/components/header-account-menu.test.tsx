@@ -1,9 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enHeader from "@/../messages/en/header.json";
+import enCommon from "@/../messages/en/common.json";
+import enFamily from "@/../messages/en/family.json";
+import enDashboardSections from "@/../messages/en/dashboardSections.json";
+import enPin from "@/../messages/en/pin.json";
 import { AccountMenu } from "@/components/layout/account-menu";
 import type { UserRole } from "@/lib/constants";
+
+const messages = {
+  header: enHeader,
+  common: enCommon,
+  family: enFamily,
+  dashboardSections: enDashboardSections,
+  pin: enPin,
+};
 
 /**
  * The header avatar is the only account affordance on every page: it is where

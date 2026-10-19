@@ -1,0 +1,14 @@
+{
+  "readMore": "Läs mer",
+  "showLess": "Visa mindre",
+  "lastEditedBy": "Av {name}",
+  "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}",
+  "photos": {
+    "list": "Bilder från tillfället",
+    "open": "Öppna bild {index} av {count}",
+    "viewer": "Bild {index} av {count}",
+    "previous": "Föregående bild",
+    "next": "Nästa bild",
+    "close": "Stäng bilden"
+  }
+}

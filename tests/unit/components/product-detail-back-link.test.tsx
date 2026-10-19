@@ -1,8 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
-import sv from "@/../messages/sv.json";
+import enProductDetail from "@/../messages/en/productDetail.json";
+import enProductAudience from "@/../messages/en/productAudience.json";
+import enProductTag from "@/../messages/en/productTag.json";
+import enProductBrowse from "@/../messages/en/productBrowse.json";
+import enSchools from "@/../messages/en/schools.json";
+import enProductTagDetail from "@/../messages/en/productTagDetail.json";
+import enRichText from "@/../messages/en/richText.json";
+import svProductDetail from "@/../messages/sv/productDetail.json";
+import svProductAudience from "@/../messages/sv/productAudience.json";
+import svProductTag from "@/../messages/sv/productTag.json";
+import svProductBrowse from "@/../messages/sv/productBrowse.json";
+import svSchools from "@/../messages/sv/schools.json";
+import svProductTagDetail from "@/../messages/sv/productTagDetail.json";
+import svRichText from "@/../messages/sv/richText.json";
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
 import {
   buildScenarioFixture,
@@ -10,6 +22,25 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { ProductDetailRow } from "@/services/products/products.service";
+
+const en = {
+  productDetail: enProductDetail,
+  productAudience: enProductAudience,
+  productTag: enProductTag,
+  productBrowse: enProductBrowse,
+  schools: enSchools,
+  productTagDetail: enProductTagDetail,
+  richText: enRichText,
+};
+const sv = {
+  productDetail: svProductDetail,
+  productAudience: svProductAudience,
+  productTag: svProductTag,
+  productBrowse: svProductBrowse,
+  schools: svSchools,
+  productTagDetail: svProductTagDetail,
+  richText: svRichText,
+};
 
 /**
  * **The back link on `/schools/<slug>/[id]` names its municipality, and nothing

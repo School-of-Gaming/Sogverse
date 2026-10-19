@@ -1,0 +1,72 @@
+{
+  "title": "Conditions générales d’utilisation de l’Académie des Créateurs",
+  "subtitle": "À l’attention des familles qui inscrivent leur enfant au Programme d’éducation numérique en France, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox.",
+  "lastUpdated": "Mise à jour : {date}",
+  "intro": {
+    "heading": "En bref",
+    "blocks": [
+      "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme de l’Académie des Créateurs. Il s’agit d’un programme commun, proposé par Lynx Educate et School of Gaming, en collaboration avec Roblox. Si quelque chose n’est pas clair, écrivez à <strong>support@lynxeducate.com</strong>."
+    ]
+  },
+  "sections": {
+    "involved": {
+      "heading": "Qui intervient",
+      "blocks": [
+        [
+          "<strong>Lynx Educate SAS</strong> et <strong>School of Gaming Galactic Oy (« SOG »)</strong> conçoivent et mettent en œuvre ce Programme ensemble — dans ce document, « nous » désigne les deux entités conjointement, sauf mention contraire.",
+          "<strong>Roblox Corporation</strong> (« Roblox ») parraine le Programme et fournit la plateforme sur laquelle votre enfant créera. Roblox n’est pas partie aux présentes Conditions."
+        ],
+        "L’inscription et les sessions se déroulent sur la plateforme de School of Gaming (« Sogverse »). En vous inscrivant, vous acceptez les présentes conditions propres au Programme, qui s’appliquent en complément des conditions générales en vigueur de <linkTerms>School of Gaming</linkTerms> et de Lynx et qui prévalent sur celles-ci en cas de contradiction."
+      ]
+    },
+    "eligibility": {
+      "heading": "Qui peut participer",
+      "blocks": [
+        "Le Programme s’adresse aux jeunes de 13–17 ans résidant en France, inscrits par un parent ou un représentant légal. Un parent ou un représentant légal doit effectuer l’inscription et donner son consentement au nom de l’enfant."
+      ]
+    },
+    "whatsInvolved": {
+      "heading": "En quoi cela consiste",
+      "blocks": [
+        "Votre enfant participera à des sessions (en ligne et/ou en présentiel, selon ce à quoi vous l’avez inscrit) conçues pour enseigner la création de jeux sur la plateforme Roblox, jusqu’à la publication de son propre jeu ou de son propre objet. Les parents sont invités à des sessions distinctes consacrées à la sécurité en ligne et au contrôle parental."
+      ]
+    },
+    "cost": {
+      "heading": "Coût",
+      "blocks": [
+        "Le Programme est gratuit pour les familles inscrites."
+      ]
+    },
+    "safety": {
+      "heading": "Sécurité et encadrement",
+      "blocks": [
+        "Chaque session est encadrée par un animateur formé. Les règles de conduite et notre approche de la protection de l’enfance sont détaillées dans notre <strong><linkRobloxSafeguarding>Politique commune de protection de l’enfance</linkRobloxSafeguarding></strong>, disponible sur demande."
+      ]
+    },
+    "information": {
+      "heading": "Vos informations",
+      "blocks": [
+        "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre <strong><linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy></strong>. En vous inscrivant, vous confirmez avoir lu et compris cette politique.",
+        "Lors de l’inscription à un programme Roblox, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme. Pour en savoir plus, consultez la <strong><linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy></strong>."
+      ]
+    },
+    "media": {
+      "heading": "Photos, vidéos et communication",
+      "blocks": [
+        "Toute photographie ou vidéo de votre enfant, et leur utilisation à des fins de communication, dépend uniquement de ce que vous avez choisi lors de l’inscription. Ces choix sont facultatifs et vous pouvez changer d’avis à tout moment sur la page de votre enfant dans Mon SOG."
+      ]
+    },
+    "concern": {
+      "heading": "Si vous avez une inquiétude",
+      "blocks": [
+        "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à support@lynxeducate.com ou à {supportEmail} — nous veillerons à ce que votre message parvienne aux bonnes personnes."
+      ]
+    },
+    "changes": {
+      "heading": "Modifications des présentes conditions",
+      "blocks": [
+        "Nous pouvons mettre à jour ces conditions ; nous mettrons toujours à jour la date ci-dessus et vous informerons directement en cas de changement important."
+      ]
+    }
+  }
+}

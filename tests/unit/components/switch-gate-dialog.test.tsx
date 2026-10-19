@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { useState } from "react";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enFamily from "@/../messages/en/family.json";
+import enCommon from "@/../messages/en/common.json";
+import enPin from "@/../messages/en/pin.json";
 import {
   SwitchGateBody,
   type SwitchGateMode,
@@ -18,6 +20,8 @@ import {
   SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
 } from "@/services/family/family.contracts";
+
+const messages = { family: enFamily, common: enCommon, pin: enPin };
 
 /**
  * What stands between a child and somebody else's account.

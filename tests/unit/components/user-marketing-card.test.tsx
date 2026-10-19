@@ -14,12 +14,16 @@ import {
 import type { ReactNode } from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
+import enAdmin from "@/../messages/en/admin.json";
 import { UserMarketingCard } from "@/components/admin/user-marketing-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { UtmAttribution } from "@/lib/utm";
 import type { MarketingConsent, MarketingConsentType, Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon, admin: enAdmin };
 
 /**
  * **A marketing consent is answered by ticking a box inside the Profile card,

@@ -1,0 +1,9 @@
+{
+  "title": "Recadrez l’image",
+  "description": "Faites glisser l’image pour la placer dans le cadre, et zoomez pour l’ajuster.",
+  "zoom": "Zoom",
+  "confirm": "Utiliser l’image",
+  "unreadable": "Ce fichier ne peut pas être ouvert comme une image ici. Choisissez une image JPEG, PNG ou WebP. Les photos d’iPhone au format HEIC doivent d’abord être converties.",
+  "chooseAnother": "Choisir une autre image",
+  "failed": "L’image n’a pas pu être recadrée. Réessayez, ou choisissez une autre image."
+}

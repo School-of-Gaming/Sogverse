@@ -1,10 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
-import fr from "@/../messages/fr.json";
+import enHeader from "@/../messages/en/header.json";
+import enCommon from "@/../messages/en/common.json";
+import enDashboardSections from "@/../messages/en/dashboardSections.json";
+import frHeader from "@/../messages/fr/header.json";
+import frCommon from "@/../messages/fr/common.json";
+import frDashboardSections from "@/../messages/fr/dashboardSections.json";
 import { Header } from "@/components/layout/header";
 import type { UserRole } from "@/lib/constants";
+
+const en = { header: enHeader, common: enCommon, dashboardSections: enDashboardSections };
+const fr = { header: frHeader, common: frCommon, dashboardSections: frDashboardSections };
 
 /**
  * The header strip's nav.

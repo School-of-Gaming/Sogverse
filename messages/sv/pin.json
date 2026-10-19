@@ -1,0 +1,37 @@
+{
+  "create": {
+    "enterTitle": "Skapa en föräldra-PIN",
+    "confirmTitle": "Bekräfta din PIN",
+    "description": "Varje köp, varje anmälan och varje ändring av vilka dina barn spelar med kräver den här PIN-koden först. Bara du känner till den, så ingenting på det här kontot kan köpas eller ändras utan dig."
+  },
+  "unlock": {
+    "title": "Ange din föräldra-PIN",
+    "description": "Köp och ändringar av dina barns konton kräver den här PIN-koden, så bara du kan göra dem.",
+    "forgot": "Glömt din PIN?"
+  },
+  "mismatch": "PIN-koderna matchade inte. Vi försöker igen.",
+  "deleteDigit": "Radera sista siffran",
+  "forgotSent": {
+    "title": "Kolla din e-post",
+    "description": "Om ditt konto har en e-postadress registrerad har vi skickat en länk för att återställa din PIN. Länken upphör att gälla om 24 timmar.",
+    "back": "Tillbaka till PIN-inmatning"
+  },
+  "reset": {
+    "description": "Ange en ny 4-siffrig PIN som bara du känner till.",
+    "enterTitle": "Välj en ny PIN",
+    "confirmTitle": "Bekräfta din nya PIN",
+    "successTitle": "PIN återställd",
+    "successDescription": "Din föräldra-PIN har uppdaterats. Logga in och ange den för att fortsätta.",
+    "invalidTitle": "Länken har upphört",
+    "invalidDescription": "Den här länken för PIN-återställning är ogiltig eller har upphört. Logga in och begär en ny.",
+    "backToLogin": "Tillbaka till inloggning"
+  },
+  "change": {
+    "newTitle": "Välj en ny PIN",
+    "confirmTitle": "Bekräfta din nya PIN",
+    "cancel": "Avbryt",
+    "successTitle": "PIN uppdaterad",
+    "successDescription": "Din föräldra-PIN har ändrats.",
+    "backToSettings": "Tillbaka till inställningar"
+  }
+}

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enLibrary from "@/../messages/en/library.json";
 import { TimezoneProvider } from "@/providers";
 import type {
   AdminLibraryArticle,
@@ -51,6 +51,8 @@ vi.mock("@/services/library/library.service", () => ({
 import LibraryArticlePreviewPage, {
   metadata,
 } from "@/app/[locale]/(public)/library/[idOrSlug]/preview/page";
+
+const messages = { library: enLibrary };
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 

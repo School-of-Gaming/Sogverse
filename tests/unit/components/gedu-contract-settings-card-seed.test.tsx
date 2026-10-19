@@ -18,13 +18,17 @@ import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { GeduContractSettingsCard } from "@/components/gedu/contract/gedu-contract-settings-card";
 import { buildGeduContractAcceptance } from "@/components/gedu/contract/mock-contract-fixtures";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { geduContractKeys } from "@/services/gedu/gedu-contract.keys";
 import { createMockProfile } from "../../mocks/supabase";
 import type { GeduContractAcceptance, Profile } from "@/types";
+
+const messages = { gedu: enGedu, settings: enSettings, common: enCommon };
 
 /**
  * **The gedu contract settings card is born in its real state, and there is no

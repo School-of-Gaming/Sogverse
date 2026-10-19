@@ -2,8 +2,10 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enCommon from "@/../messages/en/common.json";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
+const messages = { common: enCommon };
 
 /**
  * ============================================================================

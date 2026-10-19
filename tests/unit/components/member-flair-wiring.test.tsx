@@ -9,7 +9,13 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enCommon from "@/../messages/en/common.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
@@ -30,6 +36,16 @@ import {
   createFetchStubbedClient,
   postgrestJson,
 } from "../../mocks/postgrest-fetch";
+
+const messages = {
+  gedu: enGedu,
+  productType: enProductType,
+  common: enCommon,
+  memberFlair: enMemberFlair,
+  voiceButton: enVoiceButton,
+  sessionBadge: enSessionBadge,
+  sessionFeed: enSessionFeed,
+};
 
 // The rich-text note fields are opaque here: nothing below opens one, types
 // into one, or asserts on the markdown one produces (the "Private note" a test

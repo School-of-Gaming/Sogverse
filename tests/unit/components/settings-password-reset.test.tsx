@@ -16,10 +16,13 @@ import {
 } from "../../mocks/settings-page";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile, createMockGamerProfile } from "../../mocks/supabase";
 import type { Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The Security card's password button sends a reset mail; it does not

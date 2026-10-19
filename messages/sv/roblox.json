@@ -1,0 +1,147 @@
+{
+  "hero": {
+    "title": "Skaparnas<br></br><act>akademi</act>",
+    "subtitle": "Bygg det. Spela det. Äg det.",
+    "blurb": "Gratis för tonåringar. Publicera ditt eget Roblox-spel.",
+    "cta": "Häng med!"
+  },
+  "lockup": {
+    "heading": "Ett samarbete mellan",
+    "sogAlt": "School of Gaming",
+    "lynxAlt": "Lynx Educate",
+    "robloxAlt": "Roblox"
+  },
+  "what": {
+    "eyebrow": "Vad är det här",
+    "heading": "Lär dig bygga i Roblox.",
+    "paragraph1": "Skaparnas akademi ger 13–17-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming i samarbete med Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+    "paragraph2": "Programmet siktar mot att deltagarna publicerar sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
+  },
+  "why": {
+    "eyebrow": "Varför vara med",
+    "heading": "Mer än att lära sig koda",
+    "skills": {
+      "title": "Mänskliga färdigheter",
+      "description": "Roblox Studio, AI-assisterad design och grunderna i kodningslogik — som man lär sig tillsammans med andra, inte ensam."
+    },
+    "people": {
+      "title": "Hitta ditt gäng",
+      "description": "Träffa andra skapare som älskar att bygga lika mycket som du."
+    },
+    "portfolio": {
+      "title": "Bygg din portfölj",
+      "description": "Du går härifrån med en riktig, publicerad skapelse att visa upp."
+    },
+    "recognised": {
+      "title": "Bli uppmärksammad",
+      "description": "De bästa projekten visas upp på vår avslutningsfest."
+    },
+    "fun": {
+      "title": "Äkta kul",
+      "description": "Kreativt, socialt och gjort för att avnjutas."
+    },
+    "safe": {
+      "title": "Var trygg online",
+      "description": "Egna föräldrasessioner om digital trygghet, gott bemötande och föräldrakontroller."
+    }
+  },
+  "how": {
+    "eyebrow": "Så fungerar det",
+    "heading": "Kom igång i fyra enkla steg",
+    "subheading": "Välj det format som passar: på plats eller online, från en timme till nio veckor.",
+    "step1": {
+      "title": "Välj ett evenemang",
+      "description": "Bland alternativen nedan — vi lägger till nya ofta, så titta in igen."
+    },
+    "step2": {
+      "title": "Skapa ditt konto",
+      "description": "Direkt på anmälningssidan. Snabbt och gratis för nya föräldrar."
+    },
+    "step3": {
+      "title": "Fyll i din tonårings uppgifter",
+      "description": "Några uppgifter för att slutföra anmälan."
+    },
+    "step4": {
+      "title": "Kolla din inkorg",
+      "description": "Du får bekräftelse och allt du behöver veta inför första tillfället."
+    }
+  },
+  "events": {
+    "heading": "Kommande evenemang",
+    "subheading": "Vi lägger till nya evenemang ofta — titta in och se vad som är på gång.",
+    "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång.",
+    "previous": "Föregående evenemang",
+    "next": "Nästa evenemang",
+    "browseShop": "Utforska butiken"
+  },
+  "parents": {
+    "eyebrow": "För föräldrar",
+    "heading": "Vi vet att trygghet online spelar roll",
+    "body": "Parallellt med tonårsprogrammet håller vi egna föräldrasessioner om digital trygghet, föräldrakontroller och hur du stöttar din tonårings skapande.",
+    "cta": "Se våra föräldrasessioner"
+  },
+  "faq": {
+    "heading": "Vanliga frågor",
+    "items": {
+      "programme": {
+        "question": "Vad är Programmet?",
+        "answer": "<p>Ett gratis speldesignprogram där unga lär sig bygga i Roblox, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.</p><p>Det genomförs både online och på plats runt om i Frankrike, och avslutas med att ditt barn publicerar sitt eget spel eller föremål.</p>"
+      },
+      "eligibility": {
+        "question": "Vem kan vara med?",
+        "answer": "<p>Unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare.</p>"
+      },
+      "cost": {
+        "question": "Kostar det något?",
+        "answer": "<p>Nej, Programmet är 100 % gratis för anmälda familjer!</p>"
+      },
+      "experience": {
+        "question": "Behöver mitt barn redan kunna Roblox?",
+        "answer": "<p>Ingen tidigare erfarenhet behövs — träffarna är upplagda för att lära ut spelbyggande från grunderna hela vägen till publicering.</p>"
+      },
+      "where": {
+        "question": "Var hålls träffarna?",
+        "answer": "<p>Träffar på plats hålls i Paris, Lille, Strasbourg och Bordeaux. Träffar online är öppna för familjer var som helst i Frankrike.</p><p>Längden varierar från 60 minuter till 9 veckor.</p>",
+        "answer2": "Se det enskilda evenemanget för detaljer."
+      },
+      "language": {
+        "question": "Vilket språk hålls träffarna på?",
+        "answer": "<p>Träffarna hålls på franska.</p>"
+      },
+      "equipment": {
+        "question": "Vilken utrustning behöver mitt barn?",
+        "answer": "<p>En dator (Windows eller Mac) med internetuppkoppling, samt tillgång till Roblox Studio.</p>",
+        "answer2": "Till evenemang online ansluter deltagarna med sin egen dator med Roblox Studio installerat. Vid evenemang på plats finns datorer och utrustning tillgängliga i lokalen."
+      },
+      "dataSharing": {
+        "question": "Delas mitt barns uppgifter med Roblox?",
+        "answer": "<p>Vissa kontouppgifter delas med Lynx Educate och Roblox för att genomföra Programmet och för att utvärdera Programmets effekt. Alla detaljer finns i vår <linkPrivacy>integritetspolicy</linkPrivacy>.</p>"
+      },
+      "media": {
+        "question": "Kommer mitt barn att fotograferas eller filmas?",
+        "answer": "<p>Träffarna kan fotograferas. Ditt barn syns på ett foto bara om du kryssar i det frivilliga mediavalet när du anmäler barnet, och du kan ändra svaret när som helst på barnets sida i Min SOG.</p>"
+      },
+      "facilitators": {
+        "question": "Vem håller i träffarna, och hur kontrolleras de?",
+        "answer": "<p>Spelfostrarna är utbildade och kontrollerade av School of Gaming enligt vår gemensamma <linkSafeguarding>barnskyddspolicy</linkSafeguarding>.</p>"
+      },
+      "contact": {
+        "question": "Vem kontaktar jag med frågor?",
+        "answer": "<p>Skriv till <linkEmail>{email}</linkEmail> med frågor eller funderingar.</p>"
+      }
+    }
+  },
+  "cta": {
+    "heading": "Redo att börja?",
+    "body": "Platserna är begränsade.",
+    "button": "Kom igång"
+  },
+  "legal": {
+    "roblox": "Ordmärket Roblox, Roblox-logotypen och Roblox Tilt är bland Roblox Corporations registrerade och oregistrerade varumärken i USA och andra länder. Används med tillstånd.",
+    "lynx": "Lynx Educate och Lynx Educate-logotypen är varumärken som tillhör Lynx Educate. Används med tillstånd.",
+    "documents": "Dokument för Skaparnas akademi",
+    "privacy": "Integritetspolicy",
+    "safeguarding": "Barnskyddspolicy",
+    "terms": "Användarvillkor"
+  }
+}

@@ -83,7 +83,10 @@ mockListPublishedLandingPages.mockResolvedValue([
 const { GET } = await import("@/app/llms.txt/route");
 const { PATHNAMES } = await import("@/i18n/pathnames");
 const { FAQ_ITEM_KEYS } = await import("@/components/about/about-faq");
-const { default: en } = await import("@/../messages/en.json");
+const en = {
+  metadata: (await import("@/../messages/en/metadata.json")).default,
+  about: (await import("@/../messages/en/about.json")).default,
+};
 
 const body = await (await GET()).text();
 

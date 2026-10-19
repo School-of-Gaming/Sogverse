@@ -1,0 +1,74 @@
+{
+  "title": "Lutte contre le harcèlement et discipline",
+  "lastUpdated": "Dernière mise à jour : {date}",
+  "intro": {
+    "heading": "En bref",
+    "paragraphs": [
+      "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place — et la plateforme Sogverse n’a pas de messagerie privée : les échanges se font dans des espaces de groupe partagés, et les messages écrits pendant un appel sont diffusés à toute la salle et ne sont jamais conservés.",
+      "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner. Nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
+    ]
+  },
+  "sections": {
+    "commitment": {
+      "heading": "Les enfants d’abord. Toujours.",
+      "paragraphs": [
+        "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos animateurs et par les autres enfants."
+      ]
+    },
+    "approach": {
+      "heading": "Comment nous traitons les problèmes",
+      "paragraphs": [
+        "Quand un enfant se comporte d’une façon qui blesse ou perturbe les autres, nos animateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d’une manière adaptée à son âge. L’objectif est toujours d’aider l’enfant à comprendre l’effet de ce qu’il a fait et à le réparer — pas simplement de le punir.",
+        "Nous réglons la plupart des situations en douceur, par un mot discret. Si le comportement se poursuit, nous passons à des mesures plus fermes, une étape à la fois. Les étapes ci-dessous constituent l’échelle que nous suivons, et vous serez tenu informé au fur et à mesure."
+      ]
+    },
+    "step1": {
+      "heading": "Étape 1 — Un rappel et une réparation",
+      "paragraphs": [
+        "Le Gedu parle avec votre enfant de ce qui s’est passé et de l’effet produit sur les autres, et l’aide à trouver une meilleure façon de réagir. C’est fait avec douceur et sans dramatiser — par exemple : « Souviens-toi de ne pas prendre des affaires dans le coffre de quelqu’un d’autre sans demander. Tu pourrais plutôt lui proposer un échange. »"
+      ]
+    },
+    "step2": {
+      "heading": "Étape 2 — Un mot en tête-à-tête",
+      "paragraphs": [
+        "Si cela se reproduit, le Gedu s’entretient seul à seul avec votre enfant pour réfléchir à ce qu’il a fait et à l’effet que cela a sur les autres. Nous vous préviendrons également à la maison que nous avons parlé avec votre enfant de son comportement au club."
+      ]
+    },
+    "step3": {
+      "heading": "Étape 3 — Une intervention pendant la session",
+      "paragraphs": [
+        "Si le comportement perturbateur se poursuit, le Gedu intervient pour l’arrêter pendant la session — par exemple en coupant le micro de votre enfant un moment ou en limitant ce qu’il peut faire dans le jeu. Le Gedu en parle en privé avec votre enfant, et nous vous envoyons un message à la maison."
+      ]
+    },
+    "step4": {
+      "heading": "Étape 4 — Une pause pendant une session",
+      "paragraphs": [
+        "Si les choses ne s’apaisent toujours pas, le Gedu peut demander à votre enfant de rester en retrait pour le reste de la session. Si une pause plus longue est nécessaire, nous vous prévenons à l’avance. Le Gedu en discute en privé avec votre enfant, nous vous envoyons un message à la maison, et notre bureau ({supportEmail}) prend part à la conversation."
+      ]
+    },
+    "step5": {
+      "heading": "Étape 5 — Une mise à l’écart de la communauté",
+      "paragraphs": [
+        "Si le comportement persiste malgré tout ce qui précède, un enfant peut être écarté de la communauté School of Gaming pendant un temps — cela concerne ses clubs et Sogverse lui-même, y compris nos serveurs de jeu. Notre bureau vous contacte pour vous expliquer la décision, et nous en parlons aussi avec votre enfant."
+      ]
+    },
+    "step6": {
+      "heading": "Étape 6 — Un nouveau départ plus tard",
+      "paragraphs": [
+        "Une mise à l’écart n’est pas nécessairement définitive. Votre enfant peut revenir quand vous et lui vous sentez tous les deux prêts. S’il revient et que le comportement n’a pas changé, nous mettrons définitivement fin à sa participation plutôt que de reprendre l’échelle depuis le début — mais notre espoir, toujours, c’est un nouveau départ réussi."
+      ]
+    },
+    "partnership": {
+      "heading": "Nous sommes dans le même bateau",
+      "paragraphs": [
+        "C’est vous qui connaissez le mieux votre enfant, et nous obtenons les meilleurs résultats en travaillant ensemble. Si vous avez la moindre inquiétude sur la façon dont votre enfant vit les choses — ou si vous pensez qu’il est traité méchamment par quelqu’un — dites-le-nous. Partager les mêmes attentes à la maison et au club fait une vraie différence."
+      ]
+    },
+    "contact": {
+      "heading": "Nous contacter",
+      "paragraphs": [
+        "Si vous avez des questions sur cette politique, ou si vous souhaitez parler de quelque chose qui s’est passé, écrivez à notre bureau à {supportEmail}. Une vraie personne vous répondra, et nous sommes là pour vous aider."
+      ]
+    }
+  }
+}

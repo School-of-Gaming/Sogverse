@@ -48,11 +48,18 @@ vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
 vi.mock("next-intl/server", async () => {
-  const en = (await import("../../../messages/en.json")).default;
+  const library = (await import("../../../messages/en/library.json")).default;
   return {
     getTranslations: async ({ namespace }: { namespace: string }) => {
       expect(namespace).toBe("library.categories");
-      return (key: keyof typeof en.library.categories) => en.library.categories[key];
+      return (key: keyof typeof library.categories) => {
+        const message: unknown = library.categories[key];
+        // A missing message throws, worded like the provider guard in `tests/setup.ts`.
+        if (typeof message !== "string") {
+          throw new Error(`MISSING_MESSAGE: Could not resolve \`library.categories.${key}\` in messages for locale \`en\`.`);
+        }
+        return message;
+      };
     },
   };
 });

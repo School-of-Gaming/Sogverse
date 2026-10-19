@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enHome from "@/../messages/en/home.json";
 import { ParentTestimonials } from "@/components/about/parent-testimonials";
+
+const messages = { home: enHome };
 
 /**
  * **About carries every parent quote the home page shows.** A signed-in reader

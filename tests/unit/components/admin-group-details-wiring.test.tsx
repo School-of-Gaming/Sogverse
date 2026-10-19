@@ -9,7 +9,13 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
@@ -25,6 +31,16 @@ import type {
   ProductAdminDetailRow,
 } from "@/services/products/products.service";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
+
+const messages = {
+  admin: enAdmin,
+  common: enCommon,
+  gedu: enGedu,
+  productType: enProductType,
+  memberFlair: enMemberFlair,
+  voiceButton: enVoiceButton,
+  sessionBadge: enSessionBadge,
+};
 
 // The note fields are opaque here: nothing below opens one, types into one,
 // or asserts on the markdown one produces. Stubbing the editor keeps
