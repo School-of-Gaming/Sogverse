@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   ChartContainer,
   ChartLegend,
@@ -131,7 +132,7 @@ export function AnalyticsTimeline({
   return (
     <Card className="space-y-6 p-5">
       <div className="space-y-2" role="group" aria-label={t("traffic")}>
-        <h3 className="text-sm font-semibold">{t("traffic")}</h3>
+        <Heading level={3} step="label">{t("traffic")}</Heading>
         <ChartContainer config={traffic} className="h-60 w-full">
           <LineChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }} aria-label={t("traffic")} aria-describedby={trafficId}>
             <CartesianGrid vertical={false} />
@@ -179,7 +180,7 @@ export function AnalyticsTimeline({
 
       {hasSignups && (
         <div className="space-y-2" role="group" aria-label={t("signups")}>
-          <h3 className="text-sm font-semibold">{t("signups")}</h3>
+          <Heading level={3} step="label">{t("signups")}</Heading>
           <ChartContainer config={signups} className="h-36 w-full">
             <BarChart data={rows} margin={{ top: 8, right: 12, bottom: 0, left: 0 }} aria-label={t("signups")} aria-describedby={signupsId}>
               <CartesianGrid vertical={false} />

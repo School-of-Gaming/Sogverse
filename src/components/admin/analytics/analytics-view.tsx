@@ -3,6 +3,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -59,7 +60,7 @@ export function AnalyticsShell({
     <div className="space-y-8 pb-12">
       <div className="space-y-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <p className="max-w-3xl text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         {/* Keyed by the range so its date inputs reseed from the address after a
@@ -185,7 +186,7 @@ export function AnalyticsSection({
   return (
     <section className="space-y-3">
       <div className="space-y-1">
-        <h2 className="text-base font-semibold">{heading}</h2>
+        <Heading level={2} step="card-title">{heading}</Heading>
         {caption && <p className="max-w-3xl text-xs text-muted-foreground">{caption}</p>}
       </div>
       {children}
@@ -525,8 +526,8 @@ export function BreakdownList({
     ...(rest > 0 ? [{ key: "rest", label: t("rest", { count: rows.length - BREAKDOWN_ROWS }), pageviews: rest }] : []),
   ];
   return (
-    <Card className="p-4">
-      <h3 className="pb-2 text-sm font-semibold">{title}</h3>
+    <Card className="space-y-2 p-4">
+      <Heading level={3} step="label">{title}</Heading>
       {lines.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
