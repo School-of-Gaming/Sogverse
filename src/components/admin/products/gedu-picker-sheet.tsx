@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/sheet";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { useUserList } from "@/services/users/users.queries";
-import { type UserListEntry } from "@/services/users/users.contracts";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import {
   useGedusCoveringProduct,
 } from "@/services/gedu-locations/gedu-locations.queries";

@@ -28,7 +28,7 @@ import {
   useLocationsByIds,
   useUpdateLocation,
 } from "@/services/locations/locations.queries";
-import { type LocationWithChain } from "@/services/locations/locations.service";
+import type { LocationWithChain } from "@/services/locations/locations.service";
 import { useUpdateSiteNotes } from "@/services/products/reference-data.queries";
 import {
   useProductsAtSite,

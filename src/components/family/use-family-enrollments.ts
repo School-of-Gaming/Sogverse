@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import { useFamily } from "@/services/family/family.queries";
-import { type FamilyMember } from "@/services/family/family.service";
+import type { FamilyMember } from "@/services/family/family.service";
 import {
   seedAge,
   useMyUpcomingSessionRows,

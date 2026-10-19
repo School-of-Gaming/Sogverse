@@ -43,7 +43,7 @@ import {
   chatImagePath,
   isChatLockedError,
 } from "@/services/chat/chat.contracts";
-import { type ChatHistory } from "@/services/chat/chat.service";
+import type { ChatHistory } from "@/services/chat/chat.service";
 import {
   toChatAccounts,
   toChatMessages,

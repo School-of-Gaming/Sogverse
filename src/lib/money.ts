@@ -1,4 +1,4 @@
-import { type SupportedCurrency } from "@/lib/constants/currency";
+import type { SupportedCurrency } from "@/lib/constants/currency";
 import { formattingLocale } from "@/lib/constants/locales";
 
 export function formatCurrency(

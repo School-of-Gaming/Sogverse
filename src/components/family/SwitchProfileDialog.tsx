@@ -16,7 +16,7 @@ import {
   type FamilyMember,
   type SwitchAccountCredentials,
 } from "@/services/family/family.service";
-import { type SwitchGate } from "@/services/family/switch-gate";
+import type { SwitchGate } from "@/services/family/switch-gate";
 import { ProfileTile, ProfileTilesRow } from "./ProfileTiles";
 import { SwitchGateBody } from "./SwitchGateDialog";
 

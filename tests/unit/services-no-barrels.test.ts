@@ -55,7 +55,15 @@ function resolvesToFile(specifier: string): boolean {
   );
 }
 
-describe("service barrels", () => {
+describe("service barrels and the utils hub", () => {
+  it("src/lib has no utils module and no utils directory", () => {
+    const libDir = join(repoRoot, "src", "lib");
+    const hubs = readdirSync(libDir)
+      .filter((name) => name === "utils" || name.startsWith("utils."))
+      .map((name) => `src/lib/${name}`);
+    expect(hubs).toEqual([]);
+  });
+
   it("no src/services directory holds an index file", () => {
     const indexes = walk(servicesDir)
       .filter((path) => /^index\.[cm]?[jt]sx?$/.test(path.split(sep).at(-1) ?? ""))

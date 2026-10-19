@@ -130,11 +130,9 @@ vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
 }));
 
-// The hooks are stubbed and the key factory is kept real: the shell awaits an
-// invalidation on it after every substitution write, and a stubbed key would let a
-// rename through.
-vi.mock("@/services/admin-sessions/admin-sessions.queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/admin-sessions/admin-sessions.queries")>()),
+// The key factory lives in the keys module, which nothing mocks, so it stays real
+// here; this mock only stubs the hooks the shell binds.
+vi.mock("@/services/admin-sessions/admin-sessions.queries", () => ({
   useAdminProductSessions: () => ({ data: reads.sessions, isPending: false }),
   useAdminSetSessionNotes: noopMutation,
   useAdminRecordAttendance: noopMutation,
@@ -153,12 +151,9 @@ vi.mock("@/services/admin-sessions/admin-sessions.queries", async (importOrigina
   }),
 }));
 
-// The hooks are stubbed; everything else — the SQLSTATEs the shared save module
-// reads at module scope, the photo cap and accept list the photo block reads —
-// is kept real, so a constant added to the contracts cannot silently become
-// `undefined` in here.
-vi.mock("@/services/gedu-sessions/gedu-sessions.queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/gedu-sessions/gedu-sessions.queries")>()),
+// Only the feed read is stubbed; the constants and SQLSTATEs the shared save module
+// and the photo block read live in the contracts module, which nothing mocks.
+vi.mock("@/services/gedu-sessions/gedu-sessions.queries", () => ({
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
 }));
 
@@ -191,8 +186,7 @@ vi.mock("@/services/roblox/roblox.queries", () => ({
 // The three admin substitution writes the staffing editor is bound to. Nothing here
 // opens that editor — the feed is empty below, so there is no card to draw one
 // on — but the shell binds all three on every render.
-vi.mock("@/services/session-substitution/session-substitution.queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-substitution/session-substitution.queries")>()),
+vi.mock("@/services/session-substitution/session-substitution.queries", () => ({
   useSetSessionSubstitution: noopMutation,
   useClearSessionSubstitution: noopMutation,
   useWithdrawSessionSubstitutionRequestAsAdmin: noopMutation,

@@ -145,9 +145,23 @@ const noServiceBarrelImports = [
  */
 const noUtilsHubImports = [
   {
-    regex: "^(?:@/|(?:\\.\\./)+(?:src/)?)lib/utils(?:\\.ts)?$",
+    regex: "^(?:@/|(?:\\.\\./)+(?:src/)?)lib/utils(?:\\.ts|/.+)?$",
     message:
       "There is no @/lib/utils. Import the module that defines the helper: cn from @/lib/cn; isKeyOf and findOption from @/lib/type-guards; formatCurrency*, decimalToCents and sumCents from @/lib/money; formatDate*, formatTime* and the date ranges from @/lib/date-format; parseTime from @/lib/time-of-day; escapeLikePattern and searchTerms from @/lib/search; capitalize and parseEmails from @/lib/strings; toE164Digits from @/lib/constants/phone; DAYS_OF_WEEK from @/lib/constants/days-of-week; computeAge from @/lib/gamer-age-eligibility.",
+  },
+];
+
+/**
+ * The same hub, reached as a sibling from a file directly under `src/lib/`.
+ *
+ * Applied only to those files: a `./utils` anywhere else is that directory's
+ * own module (the email templates have one), and the specifier alone cannot
+ * tell the two apart.
+ */
+const noLibSiblingUtilsImport = [
+  {
+    regex: "^\\./utils(?:\\.ts)?$",
+    message: noUtilsHubImports[0].message,
   },
 ];
 
@@ -903,6 +917,18 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
         patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
+      }],
+    },
+  },
+  {
+    // Files directly under src/lib/, which also name the hub as `./utils`. The
+    // src/** block's list above is restated because this block replaces that rule.
+    files: ["src/lib/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        paths: noMailFaceOutsideMail,
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports, ...noLibSiblingUtilsImport],
       }],
     },
   },

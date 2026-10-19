@@ -141,12 +141,9 @@ vi.mock("@/services/assignments/assignments.queries", () => ({
   useGeduAssignedProduct: () => ({ data: reads.product, isPending: false }),
 }));
 
-// The hooks are stubbed; everything else — the SQLSTATEs the shared save module
-// reads at module scope, the photo cap and accept list the photo block reads —
-// is kept real, so a constant added to the contracts cannot silently become
-// `undefined` in here.
-vi.mock("@/services/gedu-sessions/gedu-sessions.queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/gedu-sessions/gedu-sessions.queries")>()),
+// The hooks the page binds are stubbed; the constants and SQLSTATEs the shared save
+// module and the photo block read live in the contracts module, which nothing mocks.
+vi.mock("@/services/gedu-sessions/gedu-sessions.queries", () => ({
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
   useSetSessionNotes: noopMutation,
   useEmailSessionReport: noopMutation,
@@ -182,10 +179,9 @@ vi.mock("@/services/roblox/roblox.queries", () => ({
 // The two writes a gedu may make about their own seat. Stubbed for the same
 // reason every other mutation here is: this suite is about the roster's flair,
 // and an unstubbed hook reaches for a QueryClient this tree does not provide.
-// Everything else is kept real — the note-length cap the substitution dialog reads is
-// a constant of this module, and a wholesale mock makes it `undefined` here.
-vi.mock("@/services/session-substitution/session-substitution.queries", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-substitution/session-substitution.queries")>()),
+// The note-length cap the substitution dialog reads lives in the contracts module,
+// which nothing mocks.
+vi.mock("@/services/session-substitution/session-substitution.queries", () => ({
   useRequestSessionSubstitution: noopMutation,
   useWithdrawSessionSubstitutionRequest: noopMutation,
 }));

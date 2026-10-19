@@ -12,7 +12,7 @@ import {
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
 import { useUserList } from "@/services/users/users.queries";
-import { type UserListEntry } from "@/services/users/users.contracts";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import {
   useGeduContractAcceptanceMap,
 } from "@/services/gedu/gedu-contract.queries";

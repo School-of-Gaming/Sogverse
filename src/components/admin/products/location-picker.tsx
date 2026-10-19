@@ -5,7 +5,7 @@ import { MapPin, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useLocationsByIds } from "@/services/locations/locations.queries";
-import { type LocationWithChain } from "@/services/locations/locations.service";
+import type { LocationWithChain } from "@/services/locations/locations.service";
 import {
   LocationPickerDialog,
   useBoundCountryName,

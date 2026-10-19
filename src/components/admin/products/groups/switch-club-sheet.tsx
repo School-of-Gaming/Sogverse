@@ -30,7 +30,7 @@ import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { useNow, useTimezone } from "@/providers";
 import { useProductGroups } from "@/services/groups/groups.queries";
 import { useProductsByType } from "@/services/products/products.queries";
-import { type ProductWithDetails } from "@/services/products/products.service";
+import type { ProductWithDetails } from "@/services/products/products.service";
 import {
   SwitchClubCommitError,
   useSwitchClub,

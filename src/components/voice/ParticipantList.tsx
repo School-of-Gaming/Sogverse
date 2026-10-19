@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
 import { robloxAccountId } from "@/components/game-account";
 import { useLiveRobloxRenders } from "@/services/roblox/roblox.queries";
-import { type RobloxRenderMap } from "@/services/roblox/roblox.contracts";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useVoiceMemberFlair } from "./VoiceMemberFlairProvider";
 import { useVoiceModeratorLocks } from "./VoiceModeratorLocks";
