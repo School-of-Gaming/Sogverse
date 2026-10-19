@@ -26,7 +26,7 @@ import {
   testimonialWriteFailure,
   type AdminTestimonial,
   type TestimonialInput,
-} from "@/services/testimonials";
+} from "@/services/testimonials/testimonials.contracts";
 import {
   EMPTY_VERSION,
   emptyTestimonialForm,

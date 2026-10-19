@@ -5,14 +5,16 @@ import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
+import type {
+  AdminTestimonial,
+  TestimonialSaver,
+} from "@/services/testimonials/testimonials.contracts";
 import {
   useAdminTestimonial,
   useSaveTestimonial,
-  type AdminTestimonial,
-  type TestimonialSaver,
-} from "@/services/testimonials";
+} from "@/services/testimonials/testimonials.queries";
 import { TestimonialEditor } from "./testimonial-editor";
 
 /**

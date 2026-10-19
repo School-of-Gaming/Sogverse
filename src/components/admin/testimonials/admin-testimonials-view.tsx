@@ -1,6 +1,6 @@
 "use client";
 
-import { useAdminTestimonials } from "@/services/testimonials";
+import { useAdminTestimonials } from "@/services/testimonials/testimonials.queries";
 import { AdminTestimonialsPage } from "./admin-testimonials-page";
 
 /** The live data shell for `/admin/testimonials`: one read, into the body beside it. */

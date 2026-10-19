@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { AdminTestimonialsPage } from "@/components/admin/testimonials/admin-testimonials-page";
 import { TestimonialEditor } from "@/components/admin/testimonials/testimonial-editor";
-import type { AdminTestimonial } from "@/services/testimonials";
+import type { AdminTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 /**
  * **The admin testimonial pages' rules.** The list's: no testimonial can be
