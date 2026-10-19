@@ -160,7 +160,7 @@ const noUtilsHubImports = [
   {
     regex: "^(?:@/|(?:\\.\\./)+(?:src/)?)lib/utils(?:\\.ts|/.+)?$",
     message:
-      "There is no @/lib/utils. Import the module that defines the helper: cn from @/lib/cn; isKeyOf and findOption from @/lib/type-guards; formatCurrency*, decimalToCents and sumCents from @/lib/money; formatDate*, formatTime* and the date ranges from @/lib/date-format; parseTime from @/lib/time-of-day; escapeLikePattern and searchTerms from @/lib/search; capitalize and parseEmails from @/lib/strings; toE164Digits from @/lib/constants/phone; DAYS_OF_WEEK from @/lib/constants/days-of-week; computeAge from @/lib/gamer-age-eligibility.",
+      "There is no @/lib/utils. Import the module that defines the helper: cn from @/lib/cn; isKeyOf and findOption from @/lib/type-guards; formatCurrency*, decimalToCents and sumCents from @/lib/money; formatDate*, formatTime* and the date ranges from @/lib/date-format; escapeLikePattern and searchTerms from @/lib/search; capitalize and parseEmails from @/lib/strings; toE164Digits from @/lib/constants/phone; DAYS_OF_WEEK from @/lib/constants/days-of-week; computeAge from @/lib/gamer-age-eligibility.",
   },
 ];
 
