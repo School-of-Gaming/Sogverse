@@ -59,6 +59,9 @@ describe("FaqAccordion", () => {
 
     const heading = container.querySelector("summary > h4");
     expect(heading?.textContent).toBe("Only question");
+    // The question takes SOG-UI's item-title step: the body size of its
+    // answer, set apart by weight.
+    expect(heading?.classList).toContain("text-item-title");
     expect(container.querySelectorAll("h1, h2, h3, h5, h6")).toHaveLength(0);
   });
 });

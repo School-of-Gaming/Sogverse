@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { Heading, type HeadingLevel } from "@sog/ui";
 
 export interface FaqAccordionItem {
   /** Stable React key — the caller's own message key for the entry. */
@@ -27,7 +28,7 @@ interface FaqAccordionProps {
    * at every call site because only the caller can see the page's outline, and
    * a guessed default skips a level on whichever page it guesses wrong for.
    */
-  questionLevel: 2 | 3 | 4;
+  questionLevel: Exclude<HeadingLevel, 1>;
 }
 
 /**
@@ -47,10 +48,9 @@ interface FaqAccordionProps {
  * while NVDA and JAWS announce both. The row stays fully operable and its
  * question is still read out everywhere, which is what matters. Going back to a
  * span gives up the outline, and swapping in an ARIA disclosure widget to get
- * both gives up everything the native element is here for. The heading carries
- * no typography of its own: the base styles already set every heading to
- * inherit its size and weight with no margin, so it looks exactly as the span
- * did.
+ * both gives up everything the native element is here for. The heading takes
+ * the `item-title` step, the body size the old span was set at, so the row
+ * looks exactly as it did.
  *
  * Expanding an answer pushes the rows below it down. That is the direct result
  * of the reader's own tap, on the surface they tapped, so the layout rule is
@@ -76,7 +76,6 @@ interface FaqAccordionProps {
  */
 export function FaqAccordion({ items, questionLevel }: FaqAccordionProps) {
   if (items.length === 0) return null;
-  const Question = `h${questionLevel}` as const;
 
   return (
     <div className="divide-y divide-border">
@@ -87,7 +86,9 @@ export function FaqAccordion({ items, questionLevel }: FaqAccordionProps) {
               replaces it so the affordance sits on the side the reader's thumb
               is already on. */}
           <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md px-3 py-4 text-left font-semibold transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act sm:px-4 sm:py-5 [&::-webkit-details-marker]:hidden">
-            <Question>{item.question}</Question>
+            <Heading level={questionLevel} step="item-title">
+              {item.question}
+            </Heading>
             <ChevronDown
               aria-hidden="true"
               className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"

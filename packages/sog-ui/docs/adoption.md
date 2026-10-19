@@ -289,6 +289,11 @@ A page that is one small object, a call screen or a not-found state, titles at
 level under the page title, and the scale's one step left, `label`, sits under the
 clauses' own size.
 
+**`item-title` was added (2026-10-19)** for the FAQ questions, 16px at 600, offered at `h2`
+to `h4`: `card-title`'s 18 matched the dashboards' 18px FAQ heading above the questions,
+and `label`'s 14 was smaller than the answers they title, so each broke one of the two
+rules.
+
 What holds it. The table is a type, so a pair outside it fails type-check at the call
 site; `tests/unit/sog-ui/heading.test.tsx` renders every pair the table allows and holds
 each step to sizes the theme declares, and the restep to the story steps alone; `tests/unit/sog-ui/raw-heading-ban.test.ts` runs violating and
