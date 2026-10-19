@@ -2,12 +2,20 @@ import { defineConfig, coverageConfigDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-const alias = {
-  "@": path.resolve(__dirname, "./src"),
+const sogUi = path.resolve(__dirname, "./packages/sog-ui/src");
+
+const alias = [
+  { find: "@", replacement: path.resolve(__dirname, "./src") },
   // Stub Next.js's `server-only` marker so route handlers that import it
   // (transitively or directly) can be imported into Vitest tests.
-  "server-only": path.resolve(__dirname, "./tests/mocks/server-only.ts"),
-};
+  { find: "server-only", replacement: path.resolve(__dirname, "./tests/mocks/server-only.ts") },
+  // The workspace package from this checkout, mirroring its package.json
+  // exports. Resolved through node_modules instead, a worktree gets the main
+  // checkout's copy — it has no node_modules of its own — so its tests would
+  // exercise the wrong code and the affected-test walk would miss its changes.
+  { find: /^@sog\/ui$/, replacement: `${sogUi}/index.ts` },
+  { find: /^@sog\/ui\/tokens\/(brand|typography)$/, replacement: `${sogUi}/tokens/$1.ts` },
+];
 
 const roots = ["tests/unit", "tests/integration"];
 

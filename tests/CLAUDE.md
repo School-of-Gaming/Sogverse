@@ -20,6 +20,13 @@ run a single file, use `npx vitest run <file>` — never `npm run test -- --run 
 the npm script already carries `--run`, so the doubled flag is a vitest error ("Expected
 a single value for option --run").
 
+`npm run gates` runs only the `unit/` + `integration/` files whose import closure the
+change touches, plus every file whose closure imports `fs`, `child_process` or a glob
+library — the sweeps that read the repo from disk always run. So a test that reads files
+must reach them through one of those imports, never only through something like
+`sharp(path)` or a TypeScript program that opens files itself: the selector would see an
+ordinary test and skip it when the files it reads change.
+
 ## Node is the default environment; the DOM is opted into
 
 Booting a jsdom realm is the single largest cost in this suite, and it was being paid by

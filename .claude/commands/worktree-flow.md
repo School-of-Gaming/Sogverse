@@ -306,12 +306,13 @@ session's context is at its largest, so a command here costs several times what 
 same command cost in Phase 1. Batch what can be batched — independent commands
 belong in one call — and prefer the script wherever one exists.
 
-1. **Confirm clean:** `npm run gates` — lint, type-check, translations and the
-   full suite, in one call. It runs every gate whatever the earlier ones did,
-   so one invocation returns the complete picture instead of one failure per
-   cycle, and prints nothing for a gate that passes. Phase 2's per-file test
-   runs were for iteration; landing gets the whole suite. Everything must be
-   committed too.
+1. **Confirm clean:** `npm run gates` — lint, type-check, translations and every
+   test the branch can affect, in one call. It runs every gate whatever the
+   earlier ones did, so one invocation returns the complete picture instead of
+   one failure per cycle, and prints nothing for a gate that passes. Phase 2's
+   per-file test runs were for iteration; landing gets every test the whole
+   branch can reach, and CI runs the full suite on `dev` after the push.
+   Everything must be committed too.
 
    A run is current as long as HEAD hasn't moved: when the gates already
    passed on the exact commit being merged, say so and skip the re-run — the
