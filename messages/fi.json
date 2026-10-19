@@ -2123,13 +2123,13 @@
       },
       "record": {
         "created": "Luotu {date}",
-        "createdBy": "Luotu {date}, {name}",
-        "createdByVia": "Luotu {date}, {name} sovelluksella {app}",
-        "createdByViaUnnamed": "Luotu {date}, {name} tekoälysovelluksella",
+        "createdBy": "Luonut {name} {date}",
+        "createdByVia": "Luonut {name} {date} sovelluksen {app} kautta",
+        "createdByViaUnnamed": "Luonut {name} {date} tekoälysovelluksen kautta",
         "saved": "Tallennettu viimeksi {date}",
-        "savedBy": "Tallennettu viimeksi {date}, {name}",
-        "savedByVia": "Tallennettu viimeksi {date}, {name} sovelluksella {app}",
-        "savedByViaUnnamed": "Tallennettu viimeksi {date}, {name} tekoälysovelluksella"
+        "savedBy": "Tallentanut viimeksi {name} {date}",
+        "savedByVia": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta",
+        "savedByViaUnnamed": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta"
       },
       "actions": {
         "save": "Tallenna",
