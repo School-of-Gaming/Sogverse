@@ -7,10 +7,10 @@ import type {
   SubstitutionOffer,
   SubstitutionRequest,
 } from "@/components/admin/substitutions/admin-substitutions-data";
-import type { UserListEntry } from "@/services/users";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import { ROUTES } from "@/lib/constants";
 import { formatDayMonth } from "@/lib/calendar-date";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { sessionFacts } from "../../mocks/session-facts";
 
 /**
@@ -119,7 +119,7 @@ const CANDIDATES = [
 
 // The picker reads one page of the shared people list; nothing left to page
 // through, so no sentinel is mounted.
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUserList: () => ({
     data: { rows: CANDIDATES, total: CANDIDATES.length },
     isPending: false,
@@ -133,7 +133,7 @@ vi.mock("@/services/users", () => ({
 
 // Who covers an in-person session's site, as the database answers it for the
 // picker: nobody on this page's fixtures.
-vi.mock("@/services/gedu-locations", () => ({
+vi.mock("@/services/gedu-locations/gedu-locations.queries", () => ({
   useGedusCoveringProduct: (productId: string | null) => ({
     data: productId === null ? undefined : new Set<string>(),
     isError: false,

@@ -5,7 +5,7 @@ import {
   holidayBreaksSpan,
   shownHolidayBreaks,
 } from "@/lib/products/holiday-breaks-shown";
-import { formatCompactDateRange } from "@/lib/utils";
+import { formatCompactDateRange } from "@/lib/date-format";
 
 /**
  * The compact bare-date range every holiday list draws, and the rule deciding

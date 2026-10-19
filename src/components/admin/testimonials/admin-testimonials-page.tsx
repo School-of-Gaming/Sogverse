@@ -11,9 +11,9 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
-import type { AdminTestimonial } from "@/services/testimonials";
+import type { AdminTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 /** The tab's create control, beside its description in the hub. */
 export function NewTestimonialAction() {

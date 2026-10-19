@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { sessionImageUrl } from "@/lib/images/session-image-url";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   SESSION_PHOTO_THUMB_HEIGHT,
   sessionThumbnailWidth,

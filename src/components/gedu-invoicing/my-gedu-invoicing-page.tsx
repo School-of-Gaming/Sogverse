@@ -20,12 +20,15 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { cn, formatCurrencyFromCents } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { useNow } from "@/providers";
 import {
   useMyGeduInvoicingMonth,
+} from "@/services/gedu-invoicing/gedu-invoicing.queries";
+import {
   type GeduInvoicingSnapshot,
-} from "@/services/gedu-invoicing";
+} from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 import { buildGeduInvoicing, type GeduInvoice } from "./build-gedu-invoicing";
 import {
   geduInvoiceExportHref,

@@ -1,0 +1,26 @@
+{
+  "welcomeNamed": "Welcome, {name}!",
+  "fallbackName": "Gamer",
+  "subtitle": "Ready to play and learn?",
+  "emptyDashboard": "Nothing here yet. Ask a parent to look at the clubs and camps with you, and pick one together.",
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "How do I join my session when it starts?",
+        "answer": "<p>First, open My SOG and find your club. What happens next depends on where your club meets.</p><p>If it meets online, there is a button on it:</p><steps><step>Until your session is close, the button stays locked, and it tells you the day and time it opens.</step><step>Five minutes before your session starts, that button changes to “Join voice room”.</step><step>Tap it. You are in.</step></steps><p>There is nothing to install and no code to type.</p><p>If it meets in person, there is no button. Your club shows the name of the place instead, and your club’s page shows its address too. Be there when your session starts.</p><p>If your club says instead that you are signed up and we are matching you with a Gedu and a group, there is no button or place on it yet. You are in — we just have not put you in a group. That happens before your first session, and your Gedu will be there when it does.</p>"
+      },
+      "cannotBeHeard": {
+        "question": "Nobody can hear me in the voice room — what do I check?",
+        "answer": "<p>Check these in order. It is almost always the first one.</p><steps><step>Is your microphone button red? That means you are muted. Tap it to unmute.</step><step>Does the button show a padlock? Your Gedu has locked your microphone for a moment. They will unlock it.</step><step>Tap the small arrow next to the microphone button. It opens your microphone settings, where you can pick the right microphone from the list.</step><step>Now talk, and look for the bar under the list. If there is no bar at all, your microphone is off rather than quiet — go back to step 1. If the bar is there but never moves, something else on your device has your microphone.</step></steps><p>If you see a red message saying we cannot reach your microphone, close any other app or tab that is using it, allow microphone access in your browser’s settings, and tap Reload.</p><p>Still nobody? Tell your Gedu in the session — they can help.</p>"
+      },
+      "cannotHearOthers": {
+        "question": "I cannot hear anyone in the voice room — what do I check?",
+        "answer": "<p>Check these in order:</p><steps><step>Turn your device’s volume up, and check your headphones are plugged in properly.</step><step>Look at the zones. You only hear the people in the same zone as you, so if everyone else is somewhere else, tap the zone they are in to move in with them.</step><step>If your Gedu moved you into a zone on purpose, stay there. They will bring you back.</step></steps><p>If the others are in your zone, your volume is up and it is still silent, tell your Gedu — say it out loud, or write it in the chat if your room has one. They can see who is in the room and help.</p>"
+      },
+      "someoneIsMean": {
+        "question": "What if someone is mean to me in a session?",
+        "answer": "<p>Tell your Gedu or a parent. You never have to deal with mean behaviour on your own, and telling an adult is not telling tales.</p><p>Your Gedu will always take it seriously and help sort out what happened. Being mean to others or breaking the club rules has consequences. Everyone has the right to feel safe and welcome in the club.</p>"
+      }
+    }
+  }
+}

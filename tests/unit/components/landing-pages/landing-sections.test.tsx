@@ -1,12 +1,14 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRichText from "@/../messages/en/richText.json";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
 import { LANDING_SECTION_TYPES } from "@/lib/landing-pages/sections";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import { LANDING_SECTION_RENDERERS } from "@/components/landing-pages/landing-sections";
+
+const messages = { richText: enRichText };
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");

@@ -1,5 +1,5 @@
 import { User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Avatar shown when the viewer is signed out (or, faded, while auth is still

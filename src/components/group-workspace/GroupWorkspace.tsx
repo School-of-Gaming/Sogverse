@@ -30,14 +30,14 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { sessionEntryId } from "@/lib/session-occurrence";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type {
   GameAccountStatus,
   GamePlatform,
 } from "@/components/game-account";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { platformForTopic } from "@/lib/products/topics";
 import {
   productVoiceRoom,

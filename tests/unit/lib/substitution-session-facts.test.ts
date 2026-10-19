@@ -5,7 +5,9 @@ import {
   sessionFactsProduct,
   sessionWindowOf,
 } from "@/lib/substitution-session-facts";
-import type { SessionProductDocument } from "@/services/session-substitution";
+import type {
+  SessionProductDocument,
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * The one derivation every substitution surface describes a session through.

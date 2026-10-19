@@ -47,17 +47,15 @@ import {
   withIds,
 } from "@/lib/mcp/landing-pages-sections";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
-import {
-  landingPublishForecast,
-  landingSlug,
-  landingTestimonialsSections,
-  type AdminLandingPage,
-} from "@/services/landing-pages";
+import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
   LANDING_SLUG_MAX_LENGTH,
   LANDING_SUMMARY_MAX_LENGTH,
   LANDING_TITLE_MAX_LENGTH,
+  landingSlug,
+  type AdminLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
+import { landingTestimonialsSections } from "@/services/landing-pages/landing-pages.testimonials";
 
 /*
  * The landing page tools: an admin authors, publishes and unpublishes the

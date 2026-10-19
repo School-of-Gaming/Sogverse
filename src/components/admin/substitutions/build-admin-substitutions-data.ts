@@ -10,12 +10,12 @@ import {
   sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import { sessionRequirements } from "@/lib/products/session-requirements";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import type {
   AdminSubstitutionRequest,
   OpenAdminSubstitutionRequest,
   SubstitutedAdminSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 import type {
   AdminSubstitutionsData,
   SubstitutedSession,

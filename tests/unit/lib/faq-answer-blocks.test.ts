@@ -1,11 +1,68 @@
 import { describe, expect, it } from "vitest";
-import en from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
-import sv from "@/../messages/sv.json";
-import fr from "@/../messages/fr.json";
-import tlh from "@/../messages/tlh.json";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import enAbout from "@/../messages/en/about.json";
+import enParent from "@/../messages/en/parent.json";
+import enGamer from "@/../messages/en/gamer.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enRoblox from "@/../messages/en/roblox.json";
+import fiAbout from "@/../messages/fi/about.json";
+import fiParent from "@/../messages/fi/parent.json";
+import fiGamer from "@/../messages/fi/gamer.json";
+import fiGedu from "@/../messages/fi/gedu.json";
+import fiRoblox from "@/../messages/fi/roblox.json";
+import svAbout from "@/../messages/sv/about.json";
+import svParent from "@/../messages/sv/parent.json";
+import svGamer from "@/../messages/sv/gamer.json";
+import svGedu from "@/../messages/sv/gedu.json";
+import svRoblox from "@/../messages/sv/roblox.json";
+import frAbout from "@/../messages/fr/about.json";
+import frParent from "@/../messages/fr/parent.json";
+import frGamer from "@/../messages/fr/gamer.json";
+import frGedu from "@/../messages/fr/gedu.json";
+import frRoblox from "@/../messages/fr/roblox.json";
+import tlhAbout from "@/../messages/tlh/about.json";
+import tlhParent from "@/../messages/tlh/parent.json";
+import tlhGamer from "@/../messages/tlh/gamer.json";
+import tlhGedu from "@/../messages/tlh/gedu.json";
+import tlhRoblox from "@/../messages/tlh/roblox.json";
+
+// The namespaces holding the FAQ surfaces enumerated below, per locale.
+const en = {
+  about: enAbout,
+  parent: enParent,
+  gamer: enGamer,
+  gedu: enGedu,
+  roblox: enRoblox,
+};
+const fi = {
+  about: fiAbout,
+  parent: fiParent,
+  gamer: fiGamer,
+  gedu: fiGedu,
+  roblox: fiRoblox,
+};
+const sv = {
+  about: svAbout,
+  parent: svParent,
+  gamer: svGamer,
+  gedu: svGedu,
+  roblox: svRoblox,
+};
+const fr = {
+  about: frAbout,
+  parent: frParent,
+  gamer: frGamer,
+  gedu: frGedu,
+  roblox: frRoblox,
+};
+const tlh = {
+  about: tlhAbout,
+  parent: tlhParent,
+  gamer: tlhGamer,
+  gedu: tlhGedu,
+  roblox: tlhRoblox,
+};
 
 /**
  * Every FAQ answer, in every catalog, is well-formed tag markup.

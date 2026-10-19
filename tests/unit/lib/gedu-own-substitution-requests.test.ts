@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildOwnSubstitutionRequestRows } from "@/lib/gedu-own-substitution-requests";
-import type { LiveSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  LiveSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**

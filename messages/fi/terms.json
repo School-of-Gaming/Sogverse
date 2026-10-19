@@ -1,0 +1,94 @@
+{
+  "title": "Käyttöehdot",
+  "lastUpdated": "Päivitetty viimeksi: {date}",
+  "intro": {
+    "heading": "Lyhyesti",
+    "paragraphs": [
+      "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
+      "Lyhyesti: kerhomme toimivat verkossa, ja niitä ohjaavat koulutetut pelikasvattajamme. Voit perua kuukausittaisen kerhon milloin tahansa, ja jokaisessa kerhossa on 30 päivän rahat takaisin -takuu: jos kerho ei ole oikea lapsellesi, kerro meille 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme koko maksun. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen {supportEmail}, niin oikea ihminen auttaa."
+    ]
+  },
+  "sections": {
+    "whoWeAre": {
+      "heading": "Kenen kanssa teet sopimuksen",
+      "paragraphs": [
+        "Sogversea pyörittää School of Gaming Galactic Oy (”School of Gaming”, ”me”), suomalainen yritys. Nämä ehdot koskevat aina, kun käytät Sogversea tai ostat jonkin kerhomme, leirimme tai tapahtumamme.",
+        "Viralliset tietomme:"
+      ],
+      "bullets": [
+        "School of Gaming Galactic Oy (y-tunnus 3110461-1)",
+        "Isokatu 56, 90100 Oulu",
+        "Sähköposti: {supportEmail}"
+      ]
+    },
+    "service": {
+      "heading": "Miten kerhomme toimivat",
+      "paragraphs": [
+        "Lähes kaikki toimintamme tapahtuu verkossa – lapsesi osallistuu kerhoon, leirille tai tapahtumaan kotoa käsin verkkosivustomme kautta. Jos jokin tuote toimii toisin, esimerkiksi lähitapahtuma, kerromme siitä aina selkeästi tuotteen sivulla ennen ostoa."
+      ]
+    },
+    "games": {
+      "heading": "Pelit, joita lapsesi pelaa",
+      "paragraphs": [
+        "Kerhomme rakentuvat muiden yritysten tekemien videopelien, kuten Minecraftin, ympärille. Noudatamme Suomen virallisia ikärajasuosituksia.",
+        "Käytännössä tämä tarkoittaa, että lapsi voi pelata peliä, jonka ikäraja on enintään kolme vuotta hänen omaa ikäänsä korkeampi, kunhan vanhempi on paikalla ja hyväksyy sen – mutta ei koskaan peliä, jonka ikäraja on 18 vuotta. Kun ilmoitat lapsesi mukaan, vahvistat samalla hyväksyväsi käytettävien pelien ikärajat."
+      ]
+    },
+    "online": {
+      "heading": "Turvallisesti verkossa",
+      "paragraphs": [
+        "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta. Koulutetut pelikasvattajamme (kutsumme heitä Geduiksi) ohjaavat istunnot livenä."
+      ]
+    },
+    "pricing": {
+      "heading": "Hinnat ja maksaminen",
+      "paragraphs": [
+        "Kaikki hinnat näkyvät euroina ja sisältävät arvonlisäveron. Voimme muuttaa hintojamme ajoittain, mutta muutos ei koskaan vaikuta kerhoon, josta jo maksat, ilman että kerromme siitä ensin."
+      ]
+    },
+    "clubsCancellation": {
+      "heading": "Kuukausittaisen kerhon peruminen",
+      "paragraphs": [
+        "Kerhomme toimivat kuukausitilauksena, ja voit perua sen milloin tahansa – mitään määräaikaista sitoutumista ei ole. Voit tehdä sen itse omalta tililtäsi, ja lapsesi säilyttää paikkansa sen kuukauden loppuun, jonka olet jo maksanut.",
+        "Haluamme myös, että voit kokeilla meitä huoletta, joten jokaisessa kerhossa on 30 päivän rahat takaisin -takuu. Jos kerho ei osoittaudu lapsellesi sopivaksi, lähetä viesti osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerhokerrastaan, niin palautamme kaiken, mitä olet kyseisestä kerhosta maksanut. Lomaketta ei tarvitse täyttää eikä syytä tarvitse kertoa."
+      ]
+    },
+    "campsCancellation": {
+      "heading": "Leirin peruminen",
+      "paragraphs": [
+        "Leirit varataan ja maksetaan kertamaksuna, joten niiden perumisehdot ovat hieman erilaiset. Jos joudut perumaan leirin:"
+      ],
+      "bullets": [
+        "Vähintään 14 päivää ennen leirin alkua: saat koko maksun takaisin.",
+        "7–14 päivää ennen: palautamme maksun, mutta pidätämme 50 euron hallinnointikulun.",
+        "Alle 7 päivää ennen: emme valitettavasti voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole sairaustapaus tai muu sinusta riippumaton syy.",
+        "Jos lapsesi ei voi osallistua sairauden vuoksi, palautamme maksun, kun lähetät meille lääkärintodistuksen osoitteeseen {supportEmail}."
+      ]
+    },
+    "conduct": {
+      "heading": "Käytös ja lapsen poistaminen kerhosta",
+      "paragraphs": [
+        "Haluamme jokaisen lapsen tuntevan olonsa turvalliseksi ja tervetulleeksi, joten emme hyväksy kiusaamista tai käytöstä, joka pilaa muiden kokemuksen. Kun ongelma syntyy, lähdemme aina liikkeelle tukemalla lasta ja auttamalla häntä korjaamaan tilanteen – koko toimintatapamme on kuvattu <linkDiscipline>kiusaamisen ehkäisyn ja kurinpidon ohjeessamme</linkDiscipline>.",
+        "Vasta näiden tukea antavien vaiheiden jälkeen, ja jos myrkyllinen tai häiritsevä käytös tai kiusaaminen jatkuu, voimme päättää lapsen osallistumisen. Keskustelemme asiasta aina ensin kanssasi."
+      ]
+    },
+    "privacy": {
+      "heading": "Perheesi yksityisyys",
+      "paragraphs": [
+        "Käsittelemme perheesi tietoja Suomen ja EU:n tietosuojalainsäädännön mukaisesti, ja säilytämme lapsestasi niin vähän tietoa kuin pystymme: pelaajatilin luot sinä, sillä on Sogversen sisäinen osoite lapsesi oman sähköpostiosoitteen sijaan, ellet anna hänelle omaa, eikä sitä käytetä koskaan mainontaan lapselle. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
+      ]
+    },
+    "changes": {
+      "heading": "Muutokset näihin ehtoihin",
+      "paragraphs": [
+        "Voimme päivittää näitä ehtoja ajoittain, esimerkiksi jos lisäämme uudenlaisen kerhon tai muutamme jonkin asian toimintaa. Kun teemme merkittävän muutoksen, päivitämme tämän sivun yläreunan päivämäärän, ja tärkeissä asioissa ilmoitamme siitä sinulle suoraan."
+      ]
+    },
+    "contact": {
+      "heading": "Yhteydenotto",
+      "paragraphs": [
+        "Jos jokin tässä jää epäselväksi tai haluat keskustella jostakin, lähetä viesti osoitteeseen {supportEmail}. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
+      ]
+    }
+  }
+}

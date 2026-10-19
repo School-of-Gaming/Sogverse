@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import messages from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
-import fr from "@/../messages/fr.json";
-import sv from "@/../messages/sv.json";
-import tlh from "@/../messages/tlh.json";
+import messages from "@/../messages/en";
+import fi from "@/../messages/fi";
+import fr from "@/../messages/fr";
+import sv from "@/../messages/sv";
+import tlh from "@/../messages/tlh";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { policyTextSegments } from "@/components/legal/policy-content";
 import { SUPPORT_EMAIL } from "@/lib/constants";

@@ -4,7 +4,9 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
 import type { BrowseSurface } from "./browse-surface";

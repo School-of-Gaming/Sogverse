@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MCP_TEST_ORIGIN as ORIGIN, callTool, mcpRequest, resultText } from "../../helpers/mcp";
-import type { AdminTestimonial } from "@/services/testimonials";
+import type { AdminTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 /**
  * **The testimonial tools, through the real endpoint.** The real gate, SDK and

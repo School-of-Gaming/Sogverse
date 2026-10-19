@@ -4,7 +4,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
-import { useCreateProduct } from "@/services/products";
+import { useCreateProduct } from "@/services/products/products.queries";
 import { buildCreateInput } from "./product-build";
 import { type ProductImageSelection } from "./product-image-selection";
 import { initialState, type FormState } from "./product-form-state";

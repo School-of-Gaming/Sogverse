@@ -8,11 +8,11 @@ import { Field } from "@/components/ui/field";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FramedImage } from "@/components/ui/framed-image";
 import {
   useUploadCatalogueImage,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.queries";
 import type { CatalogueImagePurpose } from "@/types";
 import { CATALOGUE_COPY } from "./catalogue-copy";
 import { useCatalogueCrop } from "./catalogue-crop";

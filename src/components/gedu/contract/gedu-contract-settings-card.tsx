@@ -1,6 +1,8 @@
 "use client";
 
-import { useGeduContractAcceptances } from "@/services/gedu";
+import {
+  useGeduContractAcceptances,
+} from "@/services/gedu/gedu-contract.queries";
 import type { GeduContractAcceptance } from "@/types";
 import {
   findGeduContractAcceptance,

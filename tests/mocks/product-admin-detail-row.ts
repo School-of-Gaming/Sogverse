@@ -1,4 +1,6 @@
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 
 /** Synthetic admin-detail row covering every field the form touches. */
 export function syntheticConsumerProduct(): ProductAdminDetailRow {

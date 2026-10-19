@@ -3,7 +3,7 @@ name: prune-message-keys
 description: Find and delete message keys nothing can reach, verifying every deletion with the compiler.
 ---
 
-Find orphaned keys in `messages/*.json` and delete them. Run this occasionally — it is
+Find orphaned keys in the catalogs (`messages/<locale>/<namespace>.json`) and delete them. Run this occasionally — it is
 hygiene, not a gate. There is deliberately no CI check: the mechanics are easy and the
 judgement is not, so this is a reasoning job with the compiler as its proof.
 
@@ -14,7 +14,7 @@ two-thirds of them and being certain beats finding all of them and being wrong o
 
 ## Why the compiler is your proof
 
-`src/i18n/types.ts` registers the catalog (`typeof en.json`) as next-intl's
+`src/i18n/types.ts` registers the catalog (the type of `messages/en/index.ts`) as next-intl's
 `AppConfig["Messages"]`, so a translator's key parameter is typed as the union of its
 namespace's keys. **Deleting a key that is used is therefore a build error**, and that has
 been verified by execution for all of:
@@ -103,10 +103,13 @@ the compiler will catch for you. The last one is the opposite and nothing will c
    — settle the set first, then apply it from a pristine copy. Deleting and restoring
    incrementally lands each restored key at the end of its parent object instead of where
    it was, which turns a clean diff into an unreviewable one. Edit with a throwaway script,
-   never by hand: every `messages/*.json` round-trips byte-identically through
+   never by hand: every namespace file round-trips byte-identically through
    `JSON.stringify(parsed, null, 2) + "\n"`, so a script cannot reflow the file, and a hand
-   edit will. Prune emptied parent objects. `tlh` legitimately lacks some keys — tolerate a
-   miss there rather than erroring.
+   edit will. Prune emptied parent objects. A whole dead namespace is its file in each
+   locale's directory *and* its two lines in that directory's `index.ts` — delete all of
+   them (`check-translations` reports a file the index does not import). `tlh`
+   legitimately lacks some keys and whole namespaces — tolerate a miss there rather than
+   erroring.
 3. **Run `npx tsc --noEmit`.** Every key it names is live: restore it and repeat from step 3.
    Errors name the key *relative* to its namespace, so match by dotted suffix.
    - If you hit `Argument of type 'string' is not assignable to parameter of type 'never'`,
@@ -117,7 +120,7 @@ the compiler will catch for you. The last one is the opposite and nothing will c
 4. **Loop until `tsc` is clean.** What is still deleted is proven unreachable.
 5. **Gates, all of them:** `npx tsc --noEmit`, `npm run lint`, `npm run check-translations`,
    `npm run test`. Note that `check-translations` only *warns* about stale keys in the
-   non-English catalogs — so confirm yourself that all five files lost the same keys.
+   non-English catalogs — so confirm yourself that all five catalogs lost the same keys.
 6. **Commit** on a branch off `dev`, and report: what was deleted grouped by namespace, what
    you left behind and why (the `t.raw()` namespaces, anything ambiguous), and any cluster
    that points at an earlier incomplete removal.

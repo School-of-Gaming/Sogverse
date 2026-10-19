@@ -30,8 +30,9 @@ import { useNow, useTimezone } from "@/providers";
 import {
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
-} from "@/services/session-substitution";
-import { cn, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
+} from "@/services/session-substitution/session-substitution.refusals";
+import { cn } from "@/lib/cn";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 
 /**
  * **"Can't make a session?"** — the Substitutions page's way into filing an

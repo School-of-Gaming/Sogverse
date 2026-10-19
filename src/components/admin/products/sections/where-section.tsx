@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Constants } from "@/types";

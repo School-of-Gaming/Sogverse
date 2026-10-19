@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { BlockedMoveDialog } from "./blocked-move-dialog";
 import { ParticipantChip } from "./participant-chip";
@@ -38,10 +38,10 @@ import {
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
-import type { GroupPending } from "@/services/groups";
+import type { GroupPending } from "@/services/groups/groups.queries";
 import type {
   BillingMode,
   GeduAssignmentRole,

@@ -26,7 +26,7 @@ import { FLAGS, type FlagComponent } from "@/components/ui/flags";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
 import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
 import { resolveLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 // The flag registry is keyed by the countries we have imported a flag for;
 // a country config's `code` is a plain string. Widening the registry once, at

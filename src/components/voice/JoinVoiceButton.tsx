@@ -21,7 +21,7 @@ import type {
   ProductVoiceRoom,
   VoiceJoinInstructions,
 } from "@/lib/products/voice-room";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   INERT_HREF,
   type AppHref,

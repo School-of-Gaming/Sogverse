@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRoblox from "@/../messages/en/roblox.json";
 import { ProgrammeFaq } from "@/components/roblox/programme-faq";
 import { SUPPORT_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
+
+const messages = { roblox: enRoblox };
 
 /**
  * **The Programme FAQ draws its rows from the shared accordion, and everything

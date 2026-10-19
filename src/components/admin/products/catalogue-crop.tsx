@@ -1,7 +1,9 @@
 "use client";
 
 import { useImageCrop, type ImageCrop } from "@/components/ui/use-image-crop";
-import { CATALOGUE_IMAGE_PURPOSES } from "@/services/catalogue-images";
+import {
+  CATALOGUE_IMAGE_PURPOSES,
+} from "@/lib/images/catalogue-image-purposes";
 import type { CatalogueImagePurpose } from "@/types";
 
 export type CatalogueCrop = ImageCrop;

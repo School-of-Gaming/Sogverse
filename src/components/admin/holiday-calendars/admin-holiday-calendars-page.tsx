@@ -9,11 +9,11 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange } from "@/lib/date-format";
 import type {
   HolidayCalendarBreak,
   HolidayCalendarSummary,
-} from "@/services/holiday-calendars";
+} from "@/services/holiday-calendars/holiday-calendars.service";
 
 /**
  * The break a calendar's row names as its next: the first, soonest first,

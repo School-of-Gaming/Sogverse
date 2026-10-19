@@ -27,7 +27,7 @@ import type {
   LandingSectionType,
 } from "@/lib/landing-pages/sections";
 import { buttonTargetHref } from "@/lib/links/button-target";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import {

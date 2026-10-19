@@ -9,11 +9,11 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import { nextRunning } from "@/lib/planned-sessions";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductTopic, ProductType } from "@/types";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";

@@ -182,7 +182,7 @@ Answered through its own buttons, never by writing the consent cookie. Per entry
 
 - `banner: "rejected"` (the default) — wait for the banner, press its "Reject
   all", wait for it to go, then shoot. The button's name comes from the locale's
-  own `messages/<locale>.json`, so the button pressed is the one a reader of that
+  own `messages/<locale>/consent.json`, so the button pressed is the one a reader of that
   language presses.
 - `banner: "up"` — shoot the first screen with the banner still showing, which is
   what a first visit looks like. Only a `"viewport"` capture may ask for it.

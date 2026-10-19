@@ -673,8 +673,7 @@ no.
 Standard service pattern: `LocationsService` takes an `AppSupabaseClient`, reads run on
 the injected client, writes `fetch()` the admin API. `locations.queries.ts` exposes the
 React Query hooks and the `locationKeys` factory; `locations.contracts.ts` holds the zod
-schemas shared by route and service plus the search RPC's result shape; `index.ts`
-re-exports.
+schemas shared by route and service plus the search RPC's result shape.
 
 Search is the **one read that goes through a route** rather than the injected client, for
 the caching reason above; the injected client is deliberately unused by it, as it is by

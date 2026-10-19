@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
-import fi from "../../../messages/fi.json";
+import fiGeduInvoicing from "../../../messages/fi/geduInvoicing.json";
 import {
   GEDU_INVOICING_WORKING_MONTH,
   MY_GEDU_INVOICING_VIEWERS,
@@ -26,6 +26,8 @@ vi.mock("@/lib/auth", () => ({
 const mockRpc = vi.fn();
 
 import { GET } from "@/app/api/gedu/invoicing/export/route";
+
+const fi = { geduInvoicing: fiGeduInvoicing };
 
 /** The fixture gedu who was away once — Aino Kallio. */
 const AINO = MY_GEDU_INVOICING_VIEWERS["was-away"];

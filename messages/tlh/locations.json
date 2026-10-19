@@ -1,0 +1,26 @@
+{
+  "picker": {
+    "coverageTitle": "DaSo’laHbogh Daqmey yIwIv",
+    "coverageDescription": "DaSo’laHbogh Hoch yIwIv. wa’ wIv qoDDaq Hoch So’lu’, vaj Sep DawIvDI’ vengmeyDaj Hoch DaSo’.",
+    "searchPlaceholder": "pong, mI’, ghap QIn mI’ yInej…",
+    "searchingEverywhere": "Hoch Sepmey wInej",
+    "searchingCountry": "{country} neH wInej",
+    "allCountries": "Hoch Sepmey",
+    "noResults": "pagh! ”{query}” rurbogh Daq tu’lu’be’.",
+    "keepTyping": "{count} ghItlhmey yIghItlh ’ej nejwI’ vIchu’.",
+    "nothingHere": "naDev pagh tu’lu’.",
+    "showingSome": "{total} Daqmey tu’lu’. {shown} neH wI’ang. yIghItlhtaH ’ej yInej.",
+    "loadMore": "latlh yI’ang",
+    "browseInto": "{name} qoDDaq nuq tu’lu’ — yI’ang",
+    "confirm": "yIruch",
+    "confirming": "poSmoHtaH…",
+    "clearSearch": "nejmey yIteq",
+    "tickedCount": "{count, plural, =0 {pagh wIvlu’} one {# Daq wIvlu’} other {# Daqmey wIvlu’}}",
+    "done": "pItlh"
+  },
+  "home": {
+    "choose": "DaqlIj yIchel",
+    "dialogTitle": "nuqDaq bIDab?",
+    "dialogDescription": "tetlh yIlaD, ghap pong ghap QIn mI’ yIlo’."
+  }
+}

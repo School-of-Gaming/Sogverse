@@ -27,15 +27,17 @@ import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   useLocationsByIds,
   useUpdateLocation,
-  type LocationWithChain,
-} from "@/services/locations";
-import { useUpdateSiteNotes } from "@/services/products";
+} from "@/services/locations/locations.queries";
+import type { LocationWithChain } from "@/services/locations/locations.service";
+import { useUpdateSiteNotes } from "@/services/products/reference-data.queries";
 import {
   useProductsAtSite,
   useSiteNotes,
+} from "@/services/sites/sites.queries";
+import {
   type SiteNotes,
   type SiteProductRow,
-} from "@/services/sites";
+} from "@/services/sites/sites.service";
 import { sitePlacePath } from "./site-place-path";
 
 /**

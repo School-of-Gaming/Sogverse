@@ -14,13 +14,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { useNow, useTimezone } from "@/providers";
 import { seatOfferRemaining, seatOfferState } from "@/lib/seat-offer-state";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { chipGameIdentity, type SeatOfferAvailability } from "./panel-rules";
 
 interface WaitlistCardProps {

@@ -157,3 +157,25 @@ export function possibleAgeOnDate(
 function lastDayOfMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
+
+/**
+ * A gamer's age in whole years today, by `ageOnDate`'s rule: a year older from
+ * the 1st of their birth month.
+ *
+ * `timeZone` is required: "today" is the viewer's calendar date in their
+ * IANA zone (e.g. `Europe/Helsinki`), not the runtime's, and the 1st of a
+ * month begins at a different instant in each. Client callers pass
+ * `useTimezone()`; server callers pass `await getServerTimezone()` (see
+ * `src/lib/timezone.server.ts`).
+ */
+export function computeAge(birth: GamerBirthMonthYear, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)!.value;
+  return ageOnDate(birth, `${part("year")}-${part("month")}-${part("day")}`);
+}

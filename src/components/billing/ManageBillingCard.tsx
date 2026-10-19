@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { BillingService, type BillingAccount } from "@/services/billing";
+import {
+  BillingService,
+  type BillingAccount,
+} from "@/services/billing/billing.service";
 
 /** One portal button's worth of already-localized copy. */
 export interface BillingAccountSummary {

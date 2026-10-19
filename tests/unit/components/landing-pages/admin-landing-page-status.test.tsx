@@ -41,7 +41,7 @@ import type {
   AdminLandingPage,
   LandingPageDraftVersion,
   PublishedLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 
 const PAGE_ID = "746388a7-2edd-456b-b7d1-4e9828f85af9";
 const HERO_ID = "9d1f06bf-9895-4f04-9ec5-3d86382afb8e";

@@ -412,7 +412,7 @@ async function signIn(context, viewer, { email, password, pin, source }) {
    *
    * This is the one race that actually bites: the dev server compiles a route
    * on first request (and again whenever something it depends on is edited
-   * mid-run — a translator saving `messages/fi.json` is enough), and the
+   * mid-run — a translator saving a file under `messages/fi/` is enough), and the
    * document is served and interactive-looking well before hydration attaches
    * the submit handler. A click that lands in that window does a plain native
    * form submit back to `/login`: no request to the auth endpoint, no alert, no
@@ -683,8 +683,8 @@ function bannerStringsFor(locale) {
   const read = (l) => {
     try {
       return JSON.parse(
-        readFileSync(path.join(REPO_ROOT, "messages", `${l}.json`), "utf8"),
-      ).consent;
+        readFileSync(path.join(REPO_ROOT, "messages", l, "consent.json"), "utf8"),
+      );
     } catch {
       return undefined;
     }
@@ -698,7 +698,7 @@ function bannerStringsFor(locale) {
   if (!strings.heading || !strings.rejectAll) {
     fail(
       "Could not read the consent banner's heading and reject button from " +
-        "messages/*.json.",
+        "messages/<locale>/consent.json.",
     );
   }
   bannerStrings.set(locale, strings);

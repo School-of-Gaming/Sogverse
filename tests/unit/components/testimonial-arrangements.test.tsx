@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enHome from "@/../messages/en/home.json";
+import enTestimonial from "@/../messages/en/testimonial.json";
 import { ParentTestimonials } from "@/components/about/parent-testimonials";
 import {
   FeatureTestimonial,
@@ -9,6 +10,8 @@ import {
   TestimonialRow,
   type ShownTestimonial,
 } from "@/components/home/testimonial-arrangements";
+
+const messages = { home: enHome, testimonial: enTestimonial };
 
 const testimonial = (key: string, quote: string): ShownTestimonial => ({
   key,

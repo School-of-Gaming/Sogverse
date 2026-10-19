@@ -1,11 +1,13 @@
 import type { ProductSite } from "@/components/group-workspace/GroupWorkspace";
 import type { WorkspaceProduct } from "@/components/group-workspace/types";
 import { WITHHELD, type Withheld } from "@/lib/withheld";
-import type { TraineeAssignedProduct } from "@/services/assignments";
+import type {
+  TraineeAssignedProduct,
+} from "@/services/assignments/assignments.contracts";
 import type {
   TraineeGroupFeed,
   TraineeRosterEntry,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import type { GamerCreation } from "@/types";
 
 /**

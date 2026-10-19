@@ -12,12 +12,16 @@ import {
   productVoiceRoom,
 } from "@/lib/products/voice-room";
 import { useAuth, useNow } from "@/providers";
-import { useFamilyProductFeed } from "@/services/family-product-feed";
+import {
+  useFamilyProductFeed,
+} from "@/services/family-product-feed/family-product-feed.queries";
 import {
   seedAge,
   useMyUpcomingSessionRows,
+} from "@/services/participations/participations.queries";
+import {
   type MyUpcomingSessionRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { SessionAudience } from "@/types";
 import { FamilyProductNotFound } from "./FamilyProductNotFound";
 import { FamilyProductPageBody } from "./FamilyProductPageBody";

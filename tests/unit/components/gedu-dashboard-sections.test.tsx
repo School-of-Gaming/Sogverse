@@ -1,12 +1,32 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enDashboardSections from "@/../messages/en/dashboardSections.json";
+import enHelpSection from "@/../messages/en/helpSection.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enTools from "@/../messages/en/tools.json";
+import enProductType from "@/../messages/en/productType.json";
+import enActivityCard from "@/../messages/en/activityCard.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enSessionFacts from "@/../messages/en/sessionFacts.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
 import { GeduDashboardPageBody } from "@/components/gedu/gedu-dashboard-page-body";
 import { buildGeduDashboardFixture } from "@/components/gedu/mock-dashboard-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSectionView";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
+
+const messages = {
+  dashboardSections: enDashboardSections,
+  helpSection: enHelpSection,
+  gedu: enGedu,
+  tools: enTools,
+  productType: enProductType,
+  activityCard: enActivityCard,
+  sessionBadge: enSessionBadge,
+  sessionFacts: enSessionFacts,
+  voiceButton: enVoiceButton,
+};
 
 /**
  * **The dashboard's headings are the page's shape, and its shape follows what

@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
-import fr from "@/../messages/fr.json";
-import sv from "@/../messages/sv.json";
-import tlh from "@/../messages/tlh.json";
+import en from "@/../messages/en/testimonial.json";
+import fi from "@/../messages/fi/testimonial.json";
+import fr from "@/../messages/fr/testimonial.json";
+import sv from "@/../messages/sv/testimonial.json";
+import tlh from "@/../messages/tlh/testimonial.json";
 import { Testimonial } from "@/components/home/testimonial";
 
-function renderIn(locale: string, messages: Record<string, unknown>) {
+function renderIn(locale: string, messages: { quoted: string }) {
   return render(
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={{ testimonial: messages }}>
       <Testimonial quote="Gaming is fun and supervised." attribution="Mum, Finland" />
     </NextIntlClientProvider>,
   );

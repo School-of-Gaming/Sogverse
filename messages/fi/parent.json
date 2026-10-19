@@ -1,0 +1,136 @@
+{
+  "waitlist": {
+    "footerReassuranceCustomer": "Jonossa sijalla {position} — lähetämme sähköpostia heti, kun paikka vapautuu.",
+    "footerReassuranceGamer": "Olet jonossa sijalla {position} — lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
+    "leave": {
+      "trigger": "Poistu jonotuslistalta",
+      "confirmTitle": "Poistutaanko jonotuslistalta?",
+      "confirmDescription": "{name} menettää paikkansa jonossa ({product}).",
+      "confirmDescriptionSelf": "Menetät paikkasi jonossa ({product}).",
+      "confirmCta": "Poistu jonotuslistalta",
+      "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
+    },
+    "seatOffer": {
+      "title": "Paikka vapautui",
+      "bodyChild": "{name} voi saada paikan, jos haluat sen edelleen.",
+      "bodySelf": "Paikka on sinun, jos haluat sen edelleen.",
+      "bodyGamer": "Kysyimme vanhemmaltasi, haluatteko paikan edelleen.",
+      "deadline": "Vastaa viimeistään {deadline}, tai paikka siirtyy jonossa seuraavalle perheelle.",
+      "lapsed": "Tarjous ehti umpeutua, eikä paikkaa voi enää ottaa vastaan. Jos et enää tarvitse paikkaa, kerro siitä silti. Se auttaa meitä.",
+      "accept": "Otan paikan",
+      "decline": "Ei kiitos",
+      "confirmTitle": "Luovutko paikasta?",
+      "confirmBodyChild": "{name} menettää paikkansa jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
+      "confirmBodySelf": "Menetät paikkasi jonossa, ja tarjoamme paikkaa seuraavalle perheelle.",
+      "confirmCta": "Kyllä, olen varma",
+      "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
+    }
+  },
+  "billing": {
+    "manage": {
+      "title": "Maksut ja laskutus",
+      "description": "Hallinnoi tallennettuja kortteja, laskuja ja tilauksia turvallisesti Stripessä.",
+      "cta": "Hallinnoi laskutusta",
+      "opening": "Avataan…",
+      "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen.",
+      "splitExplanation": "Perheesi tilaukset jakautuvat useammalle laskutustilille, koska kerhonne siirtyivät tälle sivustolle vanhasta järjestelmästä. Kukin painike avaa oman laskutustilinsä sivun Stripessä.",
+      "coversItem": "{name} · {product}",
+      "coversFallback": "Tallennetut kortit ja aiemmat laskut"
+    },
+    "alert": {
+      "tooltip": "Maksuongelma – päivitä korttitietosi, jotta kerho pysyy aktiivisena",
+      "gamerTooltip": "Jokin ei ole kunnossa – pyydä vanhempaasi tarkistamaan tämä"
+    }
+  },
+  "gamerDetail": {
+    "photoConsent": {
+      "title": "Kuvat ja videot",
+      "description": "Koskee kerhoja, leirejä ja tapahtumia, jotka toteutetaan kumppanuudessa Lynx Educaten kanssa ja yhteistyössä Robloxin kanssa.",
+      "sentence": {
+        "lynxEducate": "Kuvia ja videoita, joissa {name} esiintyy, saa käyttää kertojen raporteissa, jakaa Lynx Educaten ja Robloxin kanssa vaikuttavuusraportointia varten sekä julkaista School of Gamingin, Lynx Educaten ja Robloxin verkkosivuilla ja sosiaalisessa mediassa. Tarkemmat tiedot ovat <privacy>Luojien akatemian tietosuojaselosteessa</privacy>."
+      },
+      "sentenceTitle": {
+        "lynxEducate": "Valokuvat ja videot, joissa {name} esiintyy"
+      },
+      "hint": "Kysymme tämän uudelleen aina, kun {name} ilmoitetaan johonkin näistä; viimeisin vastauksesi on voimassa.",
+      "saveFailed": "Vastausta ei tallennettu. Tarkista yhteys ja yritä uudelleen."
+    },
+    "backToMySog": "Takaisin Omaan SOGiin",
+    "title": "Pelaajan asetukset",
+    "subtitle": "Hallitse pelaajan {name} asetuksia",
+    "profileDescription": "Päivitä pelaajasi tiedot.",
+    "profileUpdated": "Nimi päivitetty!",
+    "failedUpdateDisplayName": "Nimen päivittäminen epäonnistui",
+    "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
+    "gender": {
+      "boy": "Poika",
+      "girl": "Tyttö",
+      "non_binary": "Muunsukupuolinen"
+    },
+    "notFound": {
+      "title": "Pelaajaa ei löytynyt",
+      "description": "Tämä pelaajatili on ehkä poistettu tai sinulla ei ole pääsyä siihen."
+    },
+    "minecraft": {
+      "title": "Minecraft-tili",
+      "description": "Linkitä Minecraft Java Editionin käyttäjänimi pelinsisäisiä ominaisuuksia varten."
+    },
+    "roblox": {
+      "title": "Roblox-tili",
+      "description": "Linkitä Roblox-käyttäjänimi pelinsisäisiä ominaisuuksia varten."
+    },
+    "signIn": {
+      "title": "Kirjautuminen",
+      "current": {
+        "parent": "{name} kirjautuu sisään sinun tilisi kautta.",
+        "username": "{name} kirjautuu sisään käyttäjätunnuksella ja salasanalla.",
+        "email": "{name} kirjautuu sisään omalla sähköpostiosoitteellaan."
+      },
+      "currentUsername": "{name} kirjautuu sisään käyttäjätunnuksella {username}.",
+      "saved": "Kirjautumistapa päivitetty.",
+      "saveFailed": "Muutoksen tallentaminen epäonnistui. Yritä uudelleen.",
+      "newPasswordTitle": "Aseta uusi salasana",
+      "newPasswordDescription": "Valitse uusi salasana ja lue se ääneen pelaajalle {name}. Se korvaa vanhan heti.",
+      "newPasswordSubmit": "Aseta salasana",
+      "newPasswordSaved": "Uusi salasana asetettu.",
+      "verified": "Osoite on vahvistettu.",
+      "notVerified": "{name} ei ole vielä avannut vahvistuslinkkiä.",
+      "resend": "Lähetä vahvistusviesti uudelleen",
+      "resendSent": "Lähetetty. Pyydä pelaajaa {name} tarkistamaan postilaatikkonsa.",
+      "resendRateLimited": "Tämä on paljon viestejä yhdelle pelaajalle. Yritä hetken kuluttua uudelleen.",
+      "resendFailed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
+      "change": {
+        "username": {
+          "title": "Vaihda käyttäjätunnus",
+          "description": "Valitse pelaajalle {name} uusi käyttäjätunnus. Salasana pysyy samana, ja vanha käyttäjätunnus lakkaa toimimasta heti.",
+          "submit": "Tallenna käyttäjätunnus",
+          "saved": "Käyttäjätunnus päivitetty. Lue uusi tunnus ääneen pelaajallesi."
+        }
+      }
+    }
+  },
+  "switchToGamer": {
+    "title": "Vaihda käyttäjän {name} profiiliin ja liity ryhmään {productName}?",
+    "oneWayWarning": "Sinut kirjataan ulos vanhemman tililtä."
+  },
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "Miten pelaajani pääsee mukaan, kun kerta alkaa?",
+        "answer": "<p>Se riippuu siitä, missä kerta pidetään, ja Oma SOG -sivusi kortti kertoo sen: verkossa pidettävän kerran kortissa on painike, ja paikan päällä pidettävän kerran kortissa lukee paikan nimi.</p><p>Verkossa kerta pidetään selaimessa äänihuoneessa, eikä mitään tarvitse asentaa:</p><steps><step>Etsi Oma SOG -sivultasi kortti lapsesi nimen alta. Ennen kerran alkua kortin painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Huoneeseen pääsevät vain ryhmään kuuluvat, joten tililtäsi sinua pyydetään ensin vaihtamaan lapsesi profiiliin – samalla sinut kirjataan ulos vanhemman tililtä – ja huone avautuu lapsesi nimissä.</step><step>Salli mikrofonin käyttö, jos selain kysyy sitä.</step></steps><p>Omaan profiiliisi palaamiseen tarvitset jälkeenpäin vanhemman PIN-koodin. Jos lapsesi kirjautuu omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, hän voi myös avata Oma SOG -sivunsa ja napauttaa samaa painiketta siellä. Huone pysyy auki viisi minuuttia kerran päättymisen jälkeen.</p><p>Paikan päällä pidettävässä kerrassa painiketta ei ole. Kerhon, leirin tai tapahtuman sivulla näkyy paikka osoitteineen sekä perheille tarkoitettu huomautus paikasta, jos sellainen on – tuo siis lapsesi sinne kerran alkuun mennessä.</p><p>Jos kortissa lukee sen sijaan, että etsimme lapsellesi Gedua ja ryhmää, liityttävää ei vielä ole: se tapahtuu ennen ensimmäistä kertaa, ja sen jälkeen kortissa näkyy painike tai paikka.</p>"
+      },
+      "parentPin": {
+        "question": "Mikä vanhemman PIN on, ja mitä jos unohdan sen?",
+        "answer": "<p>Vanhemman PIN on nelinumeroinen koodi, jonka asetat, kun käytät vanhemman tiliäsi ensimmäisen kerran. Se suojaa Sogversen vanhemman puolta kokonaisuutena, ei jokaista yksittäistä toimintoa: avaat lukituksen kerran, ja istunto lukittuu uudelleen heti, kun vaihdat pelaajaprofiiliin tai kirjaudut ulos – niinpä selaimeen tallennettu salasana ei yksin riitä ostamiseen eikä lapsen tilin muuttamiseen. Sama PIN suojaa myös paluun: lapsi, joka tuli Sogverseen vaihtamalla sinun tililtäsi, tarvitsee sen vaihtaakseen sinun profiiliisi tai sisaruksen profiiliin.</p><p>Jos unohdat koodin, napauta PIN-näkymässä ”Unohditko PIN-koodin?”: lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle, joten jos lapsi painaa sitä, hän vain lähettää sinulle sähköpostia. Linkki on voimassa 24 tuntia ja toimii kerran.</p><p>Voit myös vaihtaa muistamasi PIN-koodin Asetuksissa.</p>"
+      },
+      "sessionReports": {
+        "question": "Kuulenko, miten kerrat sujuivat?",
+        "answer": "<p>Kuulet. Kerran jälkeen lapsesi pelikasvattaja kirjoittaa siitä raportin – mitä ryhmä teki, miten meni ja mitkä hetket kannattaa muistaa – usein kuvien kera.</p><p>Raportti näkyy kyseisen kerhon, leirin tai tapahtuman sivulla Oma SOG -osiossa kohdassa Kerrat, kaikkien aiempien raporttien ja vielä tulevien kertojen rinnalla, ja lapsesi näkee samat raportit Oma SOG -sivullaan. Kun Gedu lähettää raportin, se saapuu myös sähköpostitse ja on osoitettu vain sinulle – jokainen perhe saa oman erillisen viestinsä, eikä yksikään perhe näe toisen viestiä.</p><p>Näet samalla sivulla myös oman lapsesi läsnäolomerkinnän jokaiselta kerralta; lapsesi ei näe läsnäoloja, eikä yksikään perhe näe koskaan toisen lapsen merkintöjä.</p>"
+      },
+      "missedSessions": {
+        "question": "Mitä jos jäämme pois yhdeltä kerralta tai liitymme kerhoon kesken kauden?",
+        "answer": "<p>Kerho pysyy avoinna uusille pelaajille niin kauan kuin se on käynnissä, joten voit liittyä kesken kauden – kerhon sivu näyttää, minä viikonpäivänä ja mihin aikaan kerho kokoontuu, minkä kauden se kestää ja montako paikkaa on jäljellä. Kun lapsesi on ilmoittautunut, hänen oma kerhosivunsa kertoo seuraavan kerran päivämäärän.</p><p>Leirit ja tapahtumat ovat eri asia: leiri sulkeutuu uusilta ilmoittautumisilta alkamispäivää edeltävänä päivänä, koska ryhmä aloittaa yhdessä, ja tapahtuma sulkeutuu, kun sen kerta on ohi.</p><p>Kerho laskutetaan täytenä kuukautena ilmoittautumispäivästä alkaen, joten kesken kuukauden liittyminen ei pienennä sen kuukauden maksua; jos kerho ei ole vielä alkanut, ilmoittautumispäivänä ei veloiteta mitään ja sivu kertoo ensimmäisen maksun päivämäärän.</p><p>Jos lapsesi jää pois yhdeltä kerralta, mitään ei tarvitse tehdä – se ei vaikuta hänen paikkaansa. Gedu merkitsee läsnäolon jokaiselta kerralta, ja näet merkinnän kerhon sivulla. Väliin jäänyttä kertaa ei korvata eikä hyvitetä; kuntakerhossa toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikan jonotuslistan seuraavalle perheelle, minkä hyväksyt ilmoittautuessasi.</p>"
+      }
+    }
+  }
+}

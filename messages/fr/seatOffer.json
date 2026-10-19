@@ -1,0 +1,41 @@
+{
+  "offer": {
+    "title": "Une place s’est libérée",
+    "child": "Une place s’est libérée pour {participantName} — {productName}. La voulez-vous toujours ?",
+    "self": "Une place s’est libérée pour vous — {productName}. La voulez-vous toujours ?",
+    "deadline": "Merci de répondre avant le {deadline}. Passé ce délai, la place ira à la famille suivante sur la liste.",
+    "accept": "Accepter la place",
+    "decline": "Non, merci",
+    "confirmTitle": "Renoncer à la place ?",
+    "confirmBody": "Nous la proposerons à la famille suivante sur la liste d’attente, et cette proposition ne pourra pas être rouverte.",
+    "confirmAction": "Oui, j’en suis sûr",
+    "confirmCancel": "Retour",
+    "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
+  },
+  "accepted": {
+    "title": "La place est réservée",
+    "body": "Nous avons gardé la place pour vous. Vous la retrouverez dans Mon SOG, avec toutes les autres inscriptions de votre famille.",
+    "action": "Aller sur Mon SOG"
+  },
+  "declined": {
+    "title": "Merci de nous l’avoir dit",
+    "body": "Nous avons retiré la place de votre liste. Grâce à votre réponse, une autre famille pourra en profiter dès aujourd’hui au lieu de la laisser vide."
+  },
+  "expired": {
+    "title": "Cette proposition a expiré",
+    "body": "Une proposition de place reste ouverte {days} jours, et celle-ci s’est refermée avant que nous ayons de vos nouvelles.",
+    "declinePrompt": "Vous restez sur la liste d’attente. Si votre famille n’a plus besoin de place du tout, vous pouvez nous le dire maintenant et la libérer pour quelqu’un d’autre.",
+    "declineAction": "Renoncer à notre place",
+    "confirmTitle": "Renoncer à votre place ?",
+    "confirmBody": "Nous vous retirerons de la liste d’attente. Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+  },
+  "used": {
+    "title": "Ce lien a déjà été utilisé",
+    "body": "Cette invitation n’est plus ouverte. Toutes les inscriptions de votre famille, et chaque place que vous attendez, sont dans Mon SOG.",
+    "action": "Aller sur Mon SOG"
+  },
+  "invalid": {
+    "title": "Ce lien n’a pas fonctionné",
+    "body": "Il a peut-être été coupé par votre messagerie, ou copié seulement en partie. Essayez de l’ouvrir à nouveau depuis l’e-mail, ou écrivez-nous à {supportEmail} et nous vous aiderons."
+  }
+}

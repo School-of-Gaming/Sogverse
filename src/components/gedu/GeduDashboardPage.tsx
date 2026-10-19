@@ -19,12 +19,16 @@ import {
 import { useNow, useTimezone } from "@/providers";
 import {
   useMyAssignedProducts,
+} from "@/services/assignments/assignments.queries";
+import {
   type MyAssignedProductSessionRow,
-} from "@/services/assignments";
+} from "@/services/assignments/assignments.service";
 import {
   useGeduAssignmentSummaries,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
   type GeduAssignmentSummary,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   geduSeatHrefs,
   geduSubstitutionAttention,

@@ -1,8 +1,10 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
+import enRichText from "@/../messages/en/richText.json";
+import enTestimonial from "@/../messages/en/testimonial.json";
+import fiRichText from "@/../messages/fi/richText.json";
+import fiTestimonial from "@/../messages/fi/testimonial.json";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type {
   LandingSection,
@@ -11,11 +13,14 @@ import type {
 } from "@/lib/landing-pages/sections";
 import { LANDING_TESTIMONIAL_SLOTS } from "@/lib/landing-pages/sections";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
-import type { PublicTestimonial } from "@/services/testimonials";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
 afterAll(() => vi.unstubAllEnvs());
+
+const en = { richText: enRichText, testimonial: enTestimonial };
+const fi = { richText: fiRichText, testimonial: fiTestimonial };
 
 /**
  * **A landing page's testimonials section** draws the store's testimonials in

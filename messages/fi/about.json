@@ -1,0 +1,124 @@
+{
+  "pageTitle": "Tietoa meistä",
+  "sectionNav": "Tällä sivulla",
+  "hero": {
+    "title": "Tämä on School of Gaming",
+    "subtitle": "Ruutuajasta laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelit, joita lapset jo rakastavat — Minecraft, Roblox, Fortnite ja moni muu — ja luomme leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat oikeita taitoja ja pitävät hauskaa."
+  },
+  "quote": {
+    "text": "”Se mikä on totta nyt, oli kerran vain mielikuvitustasi.”",
+    "attribution": "— The Princi-Pal"
+  },
+  "mission": {
+    "heading": "Missiomme",
+    "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattitaitoisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa.",
+    "photoAlt": "Kaksi School of Gamingin tiimiläistä violetit School of Gaming -hupparit päällään tapahtuman esittelypisteellä",
+    "meetTeam": "Tutustu tiimiin"
+  },
+  "values": {
+    "heading": "Asiat, joista välitämme",
+    "playIsEssential": {
+      "title": "Leikki on lapselle välttämätöntä",
+      "description": "Leikki on lapsen työtä. Se on ratkaisevan tärkeää heidän hyvinvoinnilleen ja kehitykselleen. Kerhomme on suunniteltu edistämään vapaata leikkiä, joka ruokkii mielikuvitusta, uteliaisuutta ja luovuutta — voimakkaita työkaluja minkä tahansa tulevaisuuden kohtaamiseen."
+    },
+    "friendsCarry": {
+      "title": "Ystävät kantavat esteiden yli",
+      "description": "Ketään ei pidä jättää ilman ystävää. Leikin ja ystävyyden hetket kantavat lasta minkä tahansa esteen yli elämässä. Kerhoissamme lapset luovat aitoja yhteyksiä jaettujen seikkailujen kautta."
+    },
+    "keepChildrenSafe": {
+      "title": "Pidetään lapset turvassa verkossa",
+      "description": "Sogversessa keskustelu käydään yhteisissä ryhmätiloissa: kerran chatti menee koko huoneelle, jossa Gedu näkee sen. Jokaisen pelaajatilin luo vanhempi, tili on liitetty vanhemman tiliin, ja vanhempi valitsee, miten lapsi kirjautuu sisään: pelkästään vanhemman tilin kautta tai omalla käyttäjänimellä tai vahvistetulla sähköpostiosoitteella ja omalla salasanalla. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+    },
+    "familyInTheLoop": {
+      "title": "Perhe mukana",
+      "description": "Vanhemmat ovat kumppaneita. Sinä pidät langat käsissäsi lapsesi pelikokemuksen suhteen, samalla kun he nauttivat vapaudesta tutkia, luoda ja saada ystäviä turvallisessa ympäristössä."
+    }
+  },
+  "howClubsWork": {
+    "heading": "Miten kerhomme toimivat",
+    "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
+    "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
+    "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
+    "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai arki. Samat arvot pätevät kaikkialla.",
+    "photoAlt": "Rivi tietokoneita studiollamme piirto-ohjelmat auki, valmiina kerhoa varten",
+    "photoCaption": "Studiomme Lauttasaaressa Helsingissä, jossa osa lähikerhoistamme kokoontuu."
+  },
+  "forParents": {
+    "heading": "Vanhemmille",
+    "paragraph1": "Vanhempien pelikasvatus on yhtä tärkeä osa toimintaamme kuin itse kerhot. Haluamme auttaa vanhempia pysymään mukana jatkuvasti muuttuvassa pelimaailmassa, jotta he voivat tukea lapsiaan luottavaisin mielin.",
+    "paragraph2": "Sinä pidät langat käsissäsi — hallitset tilejä, ilmoittautumisia ja kulutusta — samalla kun lapsesi nauttii turvallisesta ympäristöstä, jota ohjaavat välittävät ammattilaiset."
+  },
+  "faq": {
+    "heading": "Usein kysytyt kysymykset",
+    "items": {
+      "whatIsSogverse": {
+        "question": "Mikä Sogverse on?",
+        "answer": "<p>Sogverse on School of Gamingin alusta kerhoille, leireille ja tapahtumille Minecraftissa, Robloxissa, Fortnitessa ja muissa peleissä. Niitä ohjaavat ammattitaitoiset pelikasvattajat – Gedut, kuten heitä täällä kutsutaan.</p>"
+      },
+      "productTypes": {
+        "question": "Mikä on kerhojen, leirien ja tapahtumien ero?",
+        "answer": "<p>Kerhot kokoontuvat säännöllisesti. Leirit järjestetään useamman päivän ajan koulujen lomilla. Tapahtumat ovat kertaluonteisia kokoontumisia.</p>"
+      },
+      "whoLeads": {
+        "question": "Kuka ohjaa kerrat, ja miten Gedut taustatarkistetaan?",
+        "answer": "<p>Jokaisen kerran vetää Gedu – pelikasvattaja, joka on itsekin pelaaja ja osaa tukea lapsia sekä pelissä että sen ulkopuolella.</p><p>Vaadimme jokaiselta Gedulta, että hän esittää meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen ennen hyväksyntää – hän tilaa otteen itse Oikeusrekisterikeskuksesta, ja sen on oltava alle kuusi kuukautta vanha, kun hän näyttää sen meille – sekä lukee ja hyväksyy sopimuksen, jonka mukaisesti työskentelee. Emme säilytä otteesta kopiota emmekä kirjaa siitä mitään, ainoastaan sen, että asianmukainen ote on näytetty ja milloin.</p><p>Pelkkä rekisteröityminen ei avaa yhtäkään ryhmää: ennen kuin ylläpitäjä on hyväksynyt tilin, Gedua ei voi liittää ryhmään eikä hän voi käyttää Gedun työkaluja.</p>"
+      },
+      "safety": {
+        "question": "Voivatko tuntemattomat puhua lapselleni, ja tallennetaanko mitään?",
+        "answer": "<p>Eivät – kerhon äänihuone ei ole julkinen huone, jonka kuka tahansa löytää. Se on olemassa vain kyseisen ryhmän kerran ajan: se avautuu viisi minuuttia ennen kerran alkua ja sulkeutuu viisi minuuttia sen päätyttyä, ja sisään pääsevät vain kyseisen ryhmän jäsenet, kyseisessä kerhossa työskentelevä pelikasvattaja ja School of Gamingin ylläpitäjät. Tarkistus tehdään palvelimellamme joka kerta, kun joku liittyy, joten lapsi, jolla ei ole paikkaa siinä ryhmässä, ei pääse sisään mitenkään.</p><p>Kerran chatti menee koko huoneelle, ei koskaan yhdelle lapselle kahden kesken, ja siinä kulkee sanojen lisäksi kuvia. Chatti on huoneessa, joka on auki saman ajan – siellä lapsesi sen lukee, eikä huoneen sulkeuduttua sitä pääse enää avaamaan. Säilytämme sen kuitenkin: kerhoa vetävät Gedut ja School of Gamingin ylläpitäjät voivat palata siihen, mitä on sanottu, ja juuri se tekee valvonnasta mahdollista. Viestin poistaminen jättää sen tilalle merkinnän eikä pyyhi sitä pois.</p><p>Itse kertaa ei tallenneta. Sovelluksessa mikään ei tallenna, litteroi tai säilytä kerran ääntä tai videokuvaa, eikä huoneessa ole tallennuksen hallintapainikkeita.</p><p>Moderaattorin hallintapainikkeet ovat vain Gedulla ja ylläpitäjillä, ja ne ulottuvat pitkälle: mikrofonin mykistäminen tai lukitseminen, kameran sulkeminen tai lukitseminen, chatissa mykistäminen, jonkun siirtäminen omaan tilaansa ja puhuminen kaikkiin tiloihin yhtä aikaa. Pelin sisäinen chatti on eri asia, ja siitä vastaavat pelit itse – School of Gamingin omalla Minecraft-palvelimella Gedumme voivat mykistää, potkia ja porttikieltää pelaajan.</p>"
+      },
+      "howToStart": {
+        "question": "Miten pääsen alkuun?",
+        "answer": "<p>Luo vanhemman tili, lisää lapsesi pelaajaksi Oma SOG -sivulla ja selaa sitten kauppaa ja ilmoita hänet mukaan – ilmoittautumispaneeli kysyy, kenelle paikka tulee, ja kehottaa lisäämään pelaajan, jos et ole vielä tehnyt sitä.</p><p>Ilmoittautumisen jälkeen sijoitamme lapsesi ryhmään Gedun kanssa ennen hänen ensimmäistä kertaansa, ja kerho ilmestyy sen jälkeen Oma SOG -sivulle teille molemmille.</p><p>Hän liittyy kerroille sinun tilisi kautta – vaihdat hänen profiiliinsa – ellet anna hänelle Oma SOG -sivulla omaa kirjautumista.</p>"
+      },
+      "isItASchool": {
+        "question": "Onko tämä koulua?",
+        "answer": "<p>Ei. Pelaaminen on harrastus siinä missä muutkin, ja niin me sitä myös järjestämme: pelikasvattaja on paikalla ohjaamassa ja auttamassa, ei arvioimassa. Sogversessa ei anneta lapselle arvosanoja, ei jaeta kotitehtäviä eikä pidetä kokeita.</p><p>Sen sijaan lapsesi saa oman ryhmän, Gedun, joka tuntee hänet, ja kirjallisen raportin jokaisen kerran jälkeen, joten näet, mitä ryhmässä tehtiin ja miten meni.</p>"
+      },
+      "ages": {
+        "question": "Minkä ikäisille tämä on tarkoitettu?",
+        "answer": "<p>Jokaisella kerholla, leirillä ja tapahtumalla on oma ikähaarukkansa, joka näkyy sen omalla sivulla ja sen kortissa kaupassa – ja kaupassa on ikäsuodatin, joka auttaa löytämään lapsesi ikään sopivat. Koko alustalla ikähaarukat kattavat 7–17-vuotiaat.</p><p>Peleillä itsellään on omat ikärajansa, ja jokaisen pelin ikäraja näkyy sen kerhon, leirin tai tapahtuman sivulla, joka on rakennettu sen ympärille. Emme järjestä koskaan peliä, jonka ikäraja on 18 vuotta. Suomessa noudatamme kansallista ikärajaohjeistusta, jonka mukaan lapsi saa pelata peliä, jonka ikäraja on enintään kolme vuotta hänen omaa ikäänsä korkeampi, kun vanhempi on paikalla ja hyväksyy sen.</p><p>Asuitpa missä tahansa, sekä pelin ikäraja että toiminnan oma ikähaarukka näkyvät sivulla ennen ilmoittautumista, ja kun ilmoitat lapsesi mukaan, vahvistat hyväksyväsi ne.</p>"
+      },
+      "games": {
+        "question": "Mitä pelejä pelaatte, ja pitääkö lapseni omistaa peli?",
+        "answer": "<p>Kerhomme, leirimme ja tapahtumamme pyörivät Minecraftissa (Java-, Bedrock- ja Education-versiot), Roblox Studiossa, Fortnitessa, Rocket Leaguessa ja Pokémon GO:ssa, ja niiden rinnalla järjestämme kertoja e-urheilusta, ohjelmoinnista, tekoälystä ja pelien tekemisestä. Jokaisen kerhon, leirin ja tapahtuman sivulla kerrotaan, minkä pelin ympärille se rakentuu ja mitä tarvitset.</p><p>Fortnite, Rocket League, Pokémon GO ja Roblox Studio ovat ilmaisia ladata, ja lapsesi tarvitsee niihin maksuttoman tilin.</p><p>Minecraft Java ja Minecraft Bedrock ovat maksullisia pelejä, jotka perheesi ostaa kerran julkaisijalta – hinta ei sisälly meidän hintaamme, ja versiolla on väliä, joten sivu kertoo, mikä versio tarvitaan ja mistä sen saa. Minecraft Educationia varten ei tarvitse ostaa mitään eikä hankkia koulun tunnusta: School of Gaming tarjoaa kerroilla käytettävät tunnukset, ja lapsesi lataa vain itse pelin maksutta.</p>"
+      },
+      "equipment": {
+        "question": "Mitä välineitä lapseni tarvitsee?",
+        "answer": "<p>Se riippuu pelistä, ja jokaisen kerhon, leirin ja tapahtuman sivulla kerrotaan asiasta erikseen.</p><p>Minecraft Java vaatii tietokoneen – Windowsin, Macin tai Linuxin – eikä konsoli-, puhelin- tai tablettiversio käy. Roblox Studio toimii vain Windows-tietokoneilla ja Maceilla: ei tabletilla, Chromebookilla, puhelimella eikä konsolilla. Minecraft Bedrock toimii konsoleilla, puhelimilla, tableteilla ja Windows-tietokoneilla, ja Rocket League Windows-tietokoneilla, PlayStationilla, Xboxilla ja Nintendo Switchillä. Pokémon GO vaatii puhelimen tai tabletin, jossa on GPS ja mobiiliyhteys, koska sitä pelataan ulkona.</p><p>Verkossa pidettävät kerrat itsessään toimivat selaimessa äänen välityksellä, joten lapsesi tarvitsee myös mikrofonin. Kerran näkymässä on mikrofonin valitsin ja äänen mukana elävä testipalkki, joten hän voi tarkistaa ennen puhumista, että valittuna on oikea mikrofoni.</p>"
+      },
+      "billing": {
+        "question": "Mitä tämä maksaa, ja miten laskutus toimii?",
+        "answer": "<p>Hinnat asetetaan kerho-, leiri- ja tapahtumakohtaisesti, ja jokainen näyttää oman hintansa sivullaan euroina ja arvonlisävero mukaan luettuna.</p><p>Maksutapa riippuu siitä, mihin ilmoittaudut: kerho on kuukausitilaus, joka laskutetaan joka kuukausi ilman määräaikaa; leiri tai tapahtuma maksetaan kerralla ilmoittautumisen yhteydessä, eikä muuta maksettavaa jää; ja kuntakerhon maksaa kunta, joten meille ei tule maksettavaa. Jokaisen lapsen paikka jokaisessa kerhossa on oma kuukausitilauksensa, joka on nimetty lapsen ja kerhon mukaan, joten kahden lapsen ja kahden kerhon perhe näkee neljä riviä. Jos ilmoittaudut ennen kerhon alkua, sinä päivänä ei veloiteta mitään: sivu kertoo ensimmäisen maksun päivämäärän, ennen kuin sitoudut.</p><p>Tallennetut korttisi, laskusi ja tilauksesi löytyvät Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen oman suojatun laskutussivun.</p>"
+      },
+      "cancellation": {
+        "question": "Voinko perua, ja millainen palautuskäytäntönne on?",
+        "answer": "<p>Kerho on kuukausitilaus ilman määräaikaa, ja voit perua sen milloin tahansa maksutta Oma SOG -sivun Maksut ja laskutus -kortista, joka avaa Stripen suojatun laskutussivun. Lapsesi säilyttää paikkansa jo maksetun laskutusjakson loppuun asti – kerhon sivu näyttää hänen viimeisen kertansa päivämäärän, kun jäsenyys on päättymässä.</p><p>Jokaiseen kerhoon kuuluu myös 30 päivän rahat takaisin -takuu: jos kerho ei osoittaudukaan lapsellesi sopivaksi, lähetä sähköpostia osoitteeseen {supportEmail} 30 päivän kuluessa hänen ensimmäisestä kerrastaan, niin palautamme kaiken, mitä olet siitä kerhosta maksanut – lomaketta ei ole eikä syytä tarvitse kertoa.</p><p>Leirit varataan ja maksetaan kertamaksuna, joten ne toimivat toisin: jos peruut vähintään 14 päivää ennen leirin alkua, saat täyden palautuksen; 7–14 päivää ennen palautamme maksun 50 euron käsittelykulun vähennettynä; alle 7 päivää ennen emme voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole äkillinen sairaustapaus tai muu aidosti sinusta riippumaton syy. Jos lapsesi ei pääse mukaan sairauden vuoksi, lähetä meille lääkärintodistus osoitteeseen {supportEmail}, niin palautamme maksun.</p>"
+      },
+      "severalChildren": {
+        "question": "Minulla on useita lapsia – miten tilit ja maksut toimivat?",
+        "answer": "<p>Sinulla on yksi vanhemman tili, ja luot jokaiselle lapselle pelaajatilin Oma SOG -sivulla: etunimi, syntymäkuukausi ja -vuosi sekä halutessasi sukupuoli. Lapsi ei koskaan luo omaa tiliä, ja tilillesi mahtuu enintään seitsemän pelaajaa.</p><p>Maksaminen on sinun asiasi: jokaisen lapsen paikka jokaisessa kerhossa on oma rivinsä, joten voit tarkastella ja perua niitä yksi kerrallaan, ja pääset niihin kaikkiin Oma SOG -sivun Maksut ja laskutus -kortista.</p><p>Erillistä perhepakettia ei tarvitse ostaa eikä jokaiselle lapselle tarvitse perustaa omaa tiliä.</p>"
+      },
+      "languages": {
+        "question": "Millä kielellä kerrat pidetään?",
+        "answer": "<p>Kyse on kahdesta eri asetuksesta, eikä niiden tarvitse olla samat.</p><p>Jokainen kerho, leiri ja tapahtuma pidetään yhdellä kielellä – suomeksi, ruotsiksi, englanniksi tai ranskaksi – ja kieli näkyy sen sivulla ja toimii kaupassa suodattimena.</p><p>Erikseen valitset itse, millä kielellä luet Sogversea: valitsin on sivuston yläpalkissa. Sen vaihtaminen vaihtaa sovelluksen kielen, ei sitä kieltä, jolla lapsesi kerrat pidetään, joten suomenkielinen vanhempi voi lukea sivustoa suomeksi ja ilmoittaa lapsensa englanninkieliseen kerhoon.</p>"
+      },
+      "municipalityClubs": {
+        "question": "Mikä kuntakerho on, ja miten siihen pääsee mukaan?",
+        "answer": "<p>Kuntakerho on kerho, jonka järjestämme yhdessä suomalaisen kunnan kanssa. Kunnasta riippuen se kokoontuu joko verkossa kotoa käsin tai paikan päällä lapsesi koululla, ja ammattitaitoinen pelikasvattaja ohjaa sitä kummassakin tapauksessa.</p><p>Kunta maksaa kerhon, joten meille ei tule ilmoittautuessa maksettavaa – jotkin kunnat perivät perheiltä oman pienen maksunsa, ja siitä ne kertovat itse. Koodia tai suositusta ei tarvita: hae omaa kuntaasi kuntakerhojen sivulta, ja jos olemme ehtineet sinne, sen kerhot näkyvät listalla ja ilmoitat lapsesi suoraan ilman maksuvaihetta.</p><p>Paikkoja on rajallisesti ja kerhoihin kertyy usein jonoa, joten jos lapsesi lopettaa käymisen, kerrothan siitä meille, jotta paikka voidaan tarjota seuraavalle pelaajalle. Järjestämme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta.</p>"
+      },
+      "gamerAccounts": {
+        "question": "Miten lapseni kirjautuu sisään, ja mikä vanhemman PIN on?",
+        "answer": "<p>Valitset Oma SOG -sivulla jokaiselle lapselle erikseen, miten hän kirjautuu sisään. Oletuksena pelaajatilillä ei ole omaa kirjautumista: sillä on sisäinen Sogverse-osoite eikä oikeaa sähköpostiosoitetta, se on liitetty vanhemman tiliisi, ja lapsesi tulee Sogverseen vaihtamalla sinun profiilistasi omaan profiiliinsa. Halutessasi voit antaa hänelle käyttäjätunnuksen ja salasanan tai hänen oman sähköpostiosoitteensa, jonka hän vahvistaa ennen kuin asettaa salasanan tavallisen palautuspolun kautta.</p><p>Valitsitpa minkä tavan tahansa, lapsen kirjautuminen avaa vain hänen oman tilinsä: lapsi, joka kirjautui sisään omalla käyttäjätunnuksellaan tai sähköpostiosoitteellaan, ei voi vaihtaa sinun tai sisaruksen tilille lainkaan — hän kirjautuu ulos ja kirjautuu takaisin sisään joko sinuna, sinun salasanallasi, tai sisaruksena, jolla on omat tunnukset; sisarus, joka kirjautuu sisään sinun tilisi kautta, tavoitetaan sen sijaan sinun tililtäsi — ja lapsi, joka tuli sisään vaihtamalla sinun tililtäsi, tarvitsee vanhemman PIN-koodisi vaihtaakseen mihinkään muualle.</p><p>Vanhemman puolelle pääsee nelinumeroisella PIN-koodilla, jonka vain sinä tiedät, joten selaimeen tallennettu salasana ei riitä ostamiseen eikä vanhemman tilin käyttämiseen, ja istunto lukittuu uudelleen heti, kun vaihdat lapsen profiiliin tai kirjaudut ulos.</p><p>Jos unohdat PIN-koodin, lähetämme palautuslinkin sähköpostitse tilisi osoitteeseen emmekä minnekään muualle – jos lapsi painaa ”Unohditko PIN-koodin?”, hän vain lähettää sinulle sähköpostia.</p>"
+      },
+      "childData": {
+        "question": "Mitä tietoja lapsestani säilytätte?",
+        "answer": "<p>Lapsestasi:</p><list><item>Etunimen, syntymäkuukauden ja -vuoden – päivää emme kysy – sekä halutessasi sukupuolen.</item><item>Perheenne sukunimen, koska lapsesi kuuluu perheeseesi. Sitä ei näytetä kenellekään perheenne ulkopuolella: Gedun ryhmälistalla ja äänihuoneessa näkyvät lapsesi etunimi, ikä ja mahdollinen lisäämäsi pelaajanimi.</item><item>Tilillä sisäisen Sogverse-osoitteen oikean sähköpostiosoitteen sijaan – paitsi jos olet antanut lapsellesi oman kirjautumisen hänen omalla osoitteellaan, jolloin säilytämme sen osoitteen. Kummassakaan tapauksessa lapsen sähköpostiosoite ei näy Gedun ryhmälistalla eikä äänihuoneessa.</item><item>Halutessasi käyttäjänimen niissä peleissä, joita hänen kerhonsa käyttävät – tällä hetkellä Minecraftissa ja Robloxissa – sekä tunnisteen, jonka peli hänelle antaa, jotta tunnistamme hänet kerralla. Pelihahmon kuva ladataan kyseisen pelin omilta palvelimilta, joten käyttäjänimi välittyy Minecraftille tai Robloxille aina, kun ryhmälista piirretään.</item><item>Profiilikuvan, joka ei ole valokuva: jos pelitiliä ei ole liitetty, nimen vieressä oleva kuva on tilitunnisteesta muodostettu kuvio.</item></list><p>Sen lisäksi säilytämme sen, mitä kerhon pyörittäminen vaatii: mihin kerhoihin, leireille ja tapahtumiin hän on ilmoittautunut, hänen läsnäolonsa, Gedujen kirjoittamat kertaraportit ja lyhyet henkilökunnan muistiinpanot, hänen kertojensa chatit ja niihin lähetetyt kuvat, hänen tekemänsä työt, jotka Gedu liittää ryhmään, hänen paikkaansa kirjatut suostumukset sekä kuvat, joita Gedu liittää raporttiin. Myös Gedun valvontatoimet jäävät talteen – jos lapsi siirretään omaan tilaansa tai mykistetään chatissa, siitä jää merkintä. Raportin kuvat ovat kerrasta eivätkä yhdestä lapsesta – ryhmän jokainen perhe näkee ne ryhmän sivulla ja saa ne raportin mukana sähköpostitse.</p><p>Jos haluat nähdä, korjata tai poistaa lapsestasi säilyttämiämme tietoja, lähetä sähköpostia osoitteeseen {supportEmail}. Säilytämme tietojasi niin kauan kuin sinulla on tili, ja poistamme tai anonymisoimme ne, jos suljet tilin – paitsi siltä osin kuin laki vaatii säilyttämään tiettyjä tietoja pidempään, kuten Suomen kirjanpitolaki vaatii maksutietojen osalta.</p>"
+      },
+      "becomeGedu": {
+        "question": "Miten minusta tulee pelikasvattaja?",
+        "answer": "<p>Rekisteröi Gedu-tili pelikasvattajien ilmoittautumissivullamme: siinä kysytään nimesi ja sähköpostiosoitteesi, salasana sekä halutessasi puhelinnumerosi, puhumasi kielet, alueet, joilla voit työskennellä paikan päällä, ja Minecraft- tai Roblox-käyttäjänimesi. Voit kirjautua sisään heti.</p><p>Ennen kuin ylläpitäjä hyväksyy tilisi, pyydämme sinulta kaksi asiaa: luet ja hyväksyt sopimuksen, jonka mukaisesti työskentelisit, ja esität meille lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen, jonka tilaat itse Oikeusrekisterikeskuksesta ja jonka on oltava alle kuusi kuukautta vanha – emme säilytä siitä kopiota.</p><p>Hyväksyntä avaa loput: sitä ennen sinua ei voi liittää ryhmään etkä voi käyttää Gedun työkaluja.</p>"
+      }
+    }
+  }
+}

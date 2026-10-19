@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import type {
   LocalizedLandingPage,
   PublishedLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 
 // The shared setup mocks the wrapped navigation, and its `getPathname` ignores
 // the locale. Addresses and canonicals are *about* which locale's path they

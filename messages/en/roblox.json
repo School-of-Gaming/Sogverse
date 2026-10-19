@@ -1,0 +1,147 @@
+{
+  "hero": {
+    "title": "Creator<br></br><act>Academy</act>",
+    "subtitle": "Build it. Play it. Own it.",
+    "blurb": "Free for teens. Publish your own Roblox game.",
+    "cta": "Jump in!"
+  },
+  "lockup": {
+    "heading": "A collaboration between",
+    "sogAlt": "School of Gaming",
+    "lynxAlt": "Lynx Educate",
+    "robloxAlt": "Roblox"
+  },
+  "what": {
+    "eyebrow": "What is this",
+    "heading": "Learn to build on Roblox.",
+    "paragraph1": "Creator Academy gives 13–17 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, in collaboration with Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
+    "paragraph2": "The programme builds towards publishing their own original creation on Roblox. No experience necessary — just curiosity."
+  },
+  "why": {
+    "eyebrow": "Why join",
+    "heading": "More than learning to code",
+    "skills": {
+      "title": "Human Skills",
+      "description": "Roblox Studio, AI-assisted design and the fundamentals of coding logic — learned alongside other people, not alone."
+    },
+    "people": {
+      "title": "Meet your people",
+      "description": "Connect with other creators who love building as much as you do."
+    },
+    "portfolio": {
+      "title": "Build your portfolio",
+      "description": "Walk away with a real, published creation to show off."
+    },
+    "recognised": {
+      "title": "Get recognised",
+      "description": "Top projects are showcased at our closing celebration event."
+    },
+    "fun": {
+      "title": "Genuine fun",
+      "description": "Creative, social, and made to be enjoyed."
+    },
+    "safe": {
+      "title": "Stay safe online",
+      "description": "Dedicated parent sessions on digital safety, civility, and parental controls."
+    }
+  },
+  "how": {
+    "eyebrow": "How it works",
+    "heading": "Get started in four simple steps",
+    "subheading": "Choose the format that suits: in person or online, ranging from one hour to nine weeks.",
+    "step1": {
+      "title": "Pick an event",
+      "description": "Pick from the options below — we add new events often, so keep checking back."
+    },
+    "step2": {
+      "title": "Create your account",
+      "description": "Right on the sign-up page. Quick and free for new parents."
+    },
+    "step3": {
+      "title": "Register your teen’s details",
+      "description": "A few details to complete enrolment."
+    },
+    "step4": {
+      "title": "Check your inbox",
+      "description": "You will get confirmation and everything you need before the first session."
+    }
+  },
+  "events": {
+    "heading": "What’s on",
+    "subheading": "We add new events often — check back to see what is coming up.",
+    "empty": "The first events are being scheduled now. Check back shortly to see what is coming up.",
+    "previous": "Previous events",
+    "next": "Next events",
+    "browseShop": "Browse the shop"
+  },
+  "parents": {
+    "eyebrow": "For parents",
+    "heading": "We know online safety matters",
+    "body": "Alongside the teen programme we run dedicated parent sessions on digital safety, parental controls, and how to support your teen’s creative journey.",
+    "cta": "See our parent sessions"
+  },
+  "faq": {
+    "heading": "Frequently asked questions",
+    "items": {
+      "programme": {
+        "question": "What is the Programme?",
+        "answer": "<p>A free game-design programme where young people learn to build on Roblox, run by Lynx Educate and School of Gaming, in collaboration with Roblox.</p><p>It runs both online and in person across France, and finishes with your child publishing their own game or item.</p>"
+      },
+      "eligibility": {
+        "question": "Who can take part?",
+        "answer": "<p>Young people in France aged 13–17, registered by a parent or legal guardian.</p>"
+      },
+      "cost": {
+        "question": "Does it cost anything?",
+        "answer": "<p>No, the Programme is 100% free for registered families!</p>"
+      },
+      "experience": {
+        "question": "Does my child need Roblox experience already?",
+        "answer": "<p>No prior experience needed — sessions are designed to teach game-building from the basics through to publishing.</p>"
+      },
+      "where": {
+        "question": "Where do sessions happen?",
+        "answer": "<p>In-person sessions run in Paris, Lille, Strasbourg and Bordeaux. Online sessions are open to families anywhere in France.</p><p>Sessions range from 60 minutes to 9 weeks.</p>",
+        "answer2": "See each specific event for details."
+      },
+      "language": {
+        "question": "What language are sessions delivered in?",
+        "answer": "<p>Sessions are delivered in French.</p>"
+      },
+      "equipment": {
+        "question": "What equipment does my child need?",
+        "answer": "<p>A computer (Windows or Mac) connected to the internet, plus access to Roblox Studio.</p>",
+        "answer2": "For online events, gamers should join with their own computer with Roblox Studio installed. For in-person events, computers and equipment will be available at the venue."
+      },
+      "dataSharing": {
+        "question": "Is my child’s information shared with Roblox?",
+        "answer": "<p>Some account information is shared with Lynx Educate and Roblox to deliver the Programme and to evaluate the Programme’s efficacy. Full detail is in our <linkPrivacy>Privacy Policy</linkPrivacy>.</p>"
+      },
+      "media": {
+        "question": "Will my child be photographed or filmed?",
+        "answer": "<p>Sessions may be photographed. Your child appears in a photograph only if you tick the optional media choice when you enrol them, and you can change that answer at any time on your child’s page in My SOG.</p>"
+      },
+      "facilitators": {
+        "question": "Who runs the sessions, and how are they vetted?",
+        "answer": "<p>Game Educators are trained and vetted by School of Gaming per our joint <linkSafeguarding>Child Safeguarding Policy</linkSafeguarding>.</p>"
+      },
+      "contact": {
+        "question": "Who do I contact with questions?",
+        "answer": "<p>Please write to <linkEmail>{email}</linkEmail> with any questions or concerns.</p>"
+      }
+    }
+  },
+  "cta": {
+    "heading": "Ready to get started?",
+    "body": "Spots are limited.",
+    "button": "Get started"
+  },
+  "legal": {
+    "roblox": "The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
+    "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission.",
+    "documents": "Creator Academy documents",
+    "privacy": "Privacy Policy",
+    "safeguarding": "Child Safeguarding Policy",
+    "terms": "Terms & Conditions"
+  }
+}

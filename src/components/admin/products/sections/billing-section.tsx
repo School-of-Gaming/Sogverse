@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { vatForProductType } from "@/lib/stripe/vat";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FormSection } from "../form-primitives";
 import { PricingBlock } from "../pricing-block";
 import {

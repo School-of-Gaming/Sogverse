@@ -1,5 +1,5 @@
 import { Testimonial } from "@/components/home/testimonial";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /*
  * **The arrangements testimonials are laid out in, wherever the site shows

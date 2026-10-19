@@ -4,7 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 interface RoomLinkChipProps {
   /** Uppercase 4-character room code. */

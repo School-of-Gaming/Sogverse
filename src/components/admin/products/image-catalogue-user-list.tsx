@@ -3,14 +3,14 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Circle, CircleDot } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type {
   LibraryArticleImageUser,
   CatalogueImageUser,
   LandingPageImageUser,
   SpotlightImageUser,
   ProductPictureUser,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.service";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { ROUTES } from "@/lib/constants";
 

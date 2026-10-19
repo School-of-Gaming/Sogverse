@@ -17,7 +17,9 @@ import {
   type AttachableGamerPhotoConsentType,
 } from "@/lib/constants/gamer-photo-consents";
 import { isGamerPhotoConsentGranted } from "@/lib/gamer-photo-consent-answer";
-import { useSetGamerPhotoConsent } from "@/services/gamer-photo-consents";
+import {
+  useSetGamerPhotoConsent,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import type { GamerPhotoConsent } from "@/types";
 
 /**

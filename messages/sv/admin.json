@@ -1,0 +1,1839 @@
+{
+  "dashboard": {
+    "title": "Instrumentpanel",
+    "description": "Vad som behöver en administratör i dag, vilka som finns på plattformen och vad som pågår.",
+    "loadError": "Det gick inte att läsa in instrumentpanelen. Uppdatera sidan och försök igen.",
+    "loadErrorWithReason": "Det gick inte att läsa in instrumentpanelen – {reason}. Uppdatera sidan och försök igen.",
+    "users": {
+      "label": "Användare",
+      "roles": {
+        "customer": "Föräldrar",
+        "gamer": "Spelare",
+        "gedu": "Geduer",
+        "admin": "Administratörer"
+      },
+      "verified": "{count} verifierade",
+      "certified": "{count} certifierade"
+    },
+    "attention": {
+      "title": "Behöver åtgärd",
+      "allClearTitle": "Allt är klart",
+      "allClearLine": "Det är lugnt i Sogverse. Du får vila nu, adminäventyrare.",
+      "productsLabel": "Produkter som behöver åtgärd",
+      "productsHeading": "Produkter",
+      "issues": {
+        "unassignedGamers": "{count, plural, one {# oplacerad spelare} other {# oplacerade spelare}}",
+        "groupWithoutGedu": "Gruppen {group} har ingen Gedu",
+        "emptyGroupWithoutGedu": "Den tomma gruppen {group} har ingen Gedu",
+        "waitlistOpenSeats": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga",
+        "missingGeduFee": "Gedu-arvode saknas",
+        "missingMunicipalityFee": "Kommunavgift saknas",
+        "missingInvoiceCustomer": "Faktureringskund saknas",
+        "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
+      }
+    },
+    "certification": {
+      "title": "Gedu-certifiering",
+      "justNow": "{count} certifierade nyss",
+      "empty": "Ingen Gedu väntar på certifiering.",
+      "unnamed": "Namnlös Gedu",
+      "registered": "registrerades {when}",
+      "certify": "Certifiera",
+      "certifying": "Certifierar…",
+      "failed": "Certifieringen misslyckades – försök igen."
+    },
+    "schedule": {
+      "title": "Schema",
+      "thisWeekLabel": "Den här veckan",
+      "previousWeek": "Föregående vecka",
+      "nextWeek": "Nästa vecka",
+      "today": "I dag",
+      "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
+      "timesIn": "tider i {zone}",
+      "nothingOn": "Inget inplanerat",
+      "needsAttention": "Behöver åtgärd – den här produkten finns i kön högst upp på sidan",
+      "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+      "holiday": "Lov",
+      "holidayTitle": "Lov – {name}. Inget tillfälle detta datum."
+    },
+    "cancellation": {
+      "allTitle": "Tillfället är inställt för alla grupper den här dagen",
+      "some": "{cancelled} av {groups, plural, one {# grupp} other {# grupper}} inställda",
+      "allComingUp": {
+        "starts": "första tillfället inställt",
+        "ends": "sista tillfället inställt",
+        "runs": "inställt"
+      }
+    },
+    "comingUp": {
+      "label": "På gång",
+      "heading": "På gång",
+      "empty": "Inget startar eller slutar under de kommande månaderna.",
+      "cohort": {
+        "starts": {
+          "consumerClub": "{count, plural, one {# konsumentklubb startar} other {# konsumentklubbar startar}}",
+          "municipalityClub": "{count, plural, one {# kommunklubb startar} other {# kommunklubbar startar}}",
+          "camp": "{count, plural, one {# läger startar} other {# läger startar}}",
+          "event": "{count, plural, one {# evenemang startar} other {# evenemang startar}}"
+        },
+        "runs": {
+          "consumerClub": "{count, plural, one {# konsumentklubb hålls} other {# konsumentklubbar hålls}}",
+          "municipalityClub": "{count, plural, one {# kommunklubb hålls} other {# kommunklubbar hålls}}",
+          "camp": "{count, plural, one {# läger hålls} other {# läger hålls}}",
+          "event": "{count, plural, one {# evenemang hålls} other {# evenemang hålls}}"
+        },
+        "ends": {
+          "consumerClub": "{count, plural, one {# konsumentklubb slutar} other {# konsumentklubbar slutar}}",
+          "municipalityClub": "{count, plural, one {# kommunklubb slutar} other {# kommunklubbar slutar}}",
+          "camp": "{count, plural, one {# läger slutar} other {# läger slutar}}",
+          "event": "{count, plural, one {# evenemang slutar} other {# evenemang slutar}}"
+        }
+      },
+      "itemVerb": {
+        "starts": "startar",
+        "runs": "hålls",
+        "ends": "slutar"
+      }
+    },
+    "productTypeKey": {
+      "label": "Förklaring av produkttyper",
+      "heading": "Produkttyper"
+    }
+  },
+  "municipalityInvoicing": {
+    "description": "En månad kommunklubbar: vad varje klubb genomförde och vad kommunen ska betala för det.",
+    "previousMonth": "Föregående månad",
+    "nextMonth": "Nästa månad",
+    "expandAll": "Öppna alla",
+    "collapseAll": "Stäng alla",
+    "monthTotal": "Totalt för månaden",
+    "municipalityCount": "{count, plural, one {# kommun} other {# kommuner}}",
+    "clubCount": "{count, plural, one {# klubb} other {# klubbar}}",
+    "sessionCount": "{count, plural, one {# tillfälle} other {# tillfällen}}",
+    "columnClub": "Klubb",
+    "columnSchedule": "Schema",
+    "columnFee": "Avgift/tillfälle",
+    "columnSessions": "Tillfällen",
+    "columnTotal": "Totalt",
+    "recorded": "Registrerat",
+    "emptyMonth": "Ingen kommunklubb har något registrerat eller inplanerat den här månaden.",
+    "excludedClubs": "{count, plural, one {Exklusive # klubb utan avgift} other {Exklusive # klubbar utan avgift}}",
+    "feeNotSet": "Avgift saknas",
+    "billedNotRecorded": "Fakturerat, inte registrerat",
+    "upcoming": "Kommande",
+    "cancelled": "Inställt",
+    "holiday": "Lov",
+    "holidayNamed": "Lov – {name}",
+    "unrecordedSessions": "{count, plural, one {# oregistrerat} other {# oregistrerade}}",
+    "sessionsFor": "Tillfällen för {club}",
+    "clubsIn": "Klubbar i {municipality}",
+    "clubsWithoutCustomer": "{count, plural, one {# klubb utan faktureringskund} other {# klubbar utan faktureringskund}}",
+    "customerNotSet": "Faktureringskund saknas",
+    "downloadInvoiceFor": "Ladda ner Finvoice-filen för {customer}",
+    "fileBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift} other {Ingen fil: # klubbar hölls utan avgift}}",
+    "fileBlockedByNothingToInvoice": "Ingen fil: inget att fakturera",
+    "downloadPeriodInvoiceFor": "Ladda ner Finvoice-filen för {period} {year} för {customer}",
+    "periodFile": "{period} · {total}",
+    "invoicedInMonth": "{cadence} · faktureras i {month}",
+    "periodNotRead": "Resten av perioden läses in",
+    "periodBlockedByFee": "{count, plural, one {Ingen fil: # klubb hölls utan avgift i {month}} other {Ingen fil: # klubbar hölls utan avgift i {month}}}",
+    "periodBlockedByNothingToInvoice": "Ingen fil: inget att fakturera för {period}",
+    "quarterName": "K{ordinal}",
+    "halfYearName": "H{ordinal}",
+    "periodFilesWithoutClub": "Perioder som slutar den här månaden, för kunder utan klubb den här månaden",
+    "loadError": "Det gick inte att läsa in faktureringsmånaden. Uppdatera sidan och försök igen.",
+    "loadErrorWithReason": "Det gick inte att läsa in faktureringsmånaden – {reason}. Uppdatera sidan och försök igen."
+  },
+  "invoiceCustomers": {
+    "subtitle": "Fennoa-kunderna som en kommunklubbs tillfällen faktureras till.",
+    "addCustomer": "Lägg till en kund",
+    "columns": {
+      "number": "Fennoa-nr",
+      "invoiceName": "Fakturanamn",
+      "city": "Ort",
+      "reference": "Referens",
+      "billingCadence": "Faktureras"
+    },
+    "hasReference": "Har en referens",
+    "noReference": "Ingen referens",
+    "empty": "Inga faktureringskunder ännu. Lägg till den första.",
+    "backToList": "Tillbaka till faktureringskunder",
+    "notFound": "Det finns ingen faktureringskund med det här id:t.",
+    "newPage": {
+      "title": "Ny faktureringskund",
+      "submit": "Skapa kund"
+    },
+    "editPage": {
+      "title": "Redigera faktureringskund"
+    },
+    "fields": {
+      "number": "Fennoas kundnummer",
+      "invoiceName": "Fakturanamn",
+      "street": "Gatuadress",
+      "postalCode": "Postnummer",
+      "city": "Ort",
+      "country": "Land",
+      "yourReference": "Er referens",
+      "invoiceText": "Fakturatext",
+      "billingCadence": "Faktureringsintervall"
+    },
+    "hints": {
+      "number": "Numret på kundens kort i Fennoa, till exempel F0037. Fennoa kopplar en importerad faktura till kunden med det här numret.",
+      "invoiceName": "Exakt som det står på kundkortet i Fennoa.",
+      "yourReference": "Ett inköpsordernummer eller en kontaktperson som kunden vill ha på varje faktura.",
+      "invoiceText": "Extra rader högst upp i fakturatexten, till exempel en hänvisning till ramavtalet. Ren text – den når fakturan precis som den skrivs.",
+      "billingCadence": "Hur ofta kunden faktureras. För en kund som faktureras kvartalsvis eller halvårsvis täcker fakturan hela kalenderperioden och laddas ner från faktureringssidan under periodens sista månad."
+    },
+    "cadence": {
+      "monthly": "Månadsvis",
+      "quarterly": "Kvartalsvis",
+      "halfYearly": "Halvårsvis"
+    },
+    "errors": {
+      "required": "{field} måste fyllas i.",
+      "countryShape": "Använd en tvåbokstavskod för landet, till exempel FI.",
+      "duplicateNumber": "Fennoas kundnummer {number} tillhör redan en annan kund.",
+      "saveFailed": "Kunden kunde inte sparas. Försök igen.",
+      "saveFailedWithReason": "Kunden kunde inte sparas – {reason}",
+      "listUnavailable": "Kundlistan kunde inte läsas in. Uppdatera sidan för att välja en kund."
+    },
+    "picker": {
+      "label": "Faktureras till",
+      "hint": "Kunden som den här klubbens tillfällen faktureras till. En klubb utan kund flaggas på faktureringssidan och ger ingen fakturafil.",
+      "manage": "Hantera faktureringskunder",
+      "option": "{name} ({number})"
+    }
+  },
+  "holidayCalendars": {
+    "subtitle": "Skollov och andra uppehåll som en klubb kan följa. En klubb har inga träffar under ett uppehålls dagar.",
+    "addCalendar": "Lägg till en kalender",
+    "columns": {
+      "name": "Namn",
+      "breaks": "Uppehåll",
+      "nextBreak": "Nästa uppehåll",
+      "clubs": "Klubbar"
+    },
+    "noUpcomingBreak": "Inga kommande",
+    "empty": "Inga lovkalendrar än. Lägg till den första.",
+    "backToList": "Tillbaka till lovkalendrar",
+    "notFound": "Det finns ingen lovkalender med detta id.",
+    "newPage": {
+      "title": "Ny lovkalender",
+      "submit": "Skapa kalender"
+    },
+    "editPage": {
+      "title": "Redigera lovkalender"
+    },
+    "sections": {
+      "calendar": "Kalender",
+      "breaks": "Uppehåll",
+      "breaksDescription": "Ett uppehåll varar från sin första till sin sista dag, båda inräknade, och har ett namn på vart och ett av kalenderns språk. Familjerna ser namnet i stället för de träffar det tar bort.",
+      "products": "Klubbar som följer kalendern",
+      "productsDescription": "En sparad ändring av uppehållen ändrar dessa klubbar direkt, även tidigare månader."
+    },
+    "fields": {
+      "name": "Namn",
+      "languages": "Språk",
+      "firstDay": "Första dag",
+      "lastDay": "Sista dag",
+      "breakName": "Namn på {language}"
+    },
+    "hints": {
+      "name": "Bara administratörer ser det här namnet, till exempel Helsingfors skolor. Familjerna ser bara uppehållens namn.",
+      "languages": "Språken hör till hela kalendern: lägger du till eller tar bort ett här gäller det varje uppehåll. Varje uppehåll behöver ett namn på varje språk. Familjerna läser namnet på sitt eget språk om det finns, annars på engelska eller det första språket som skrivits."
+    },
+    "noBreaks": "Inga uppehåll än.",
+    "checkLine": "{range} · {days, plural, one {# dag} other {# dagar}} · vecka {week}",
+    "checkLineWeeks": "{range} · {days, plural, one {# dag} other {# dagar}} · veckor {first}–{last}",
+    "addBreak": "Lägg till ett uppehåll",
+    "removeBreak": "Ta bort {name}",
+    "noProducts": "Ingen klubb följer den här kalendern än. En klubb väljer sina kalendrar på sin egen sida.",
+    "errors": {
+      "nameRequired": "Ge kalendern ett namn.",
+      "datesRequired": "{name} behöver en första och en sista dag.",
+      "endBeforeStart": "{name} slutar innan det börjar.",
+      "breakNameMissing": "{name} behöver ett namn på {language}.",
+      "overlap": "{first} och {second} överlappar. En dag kan bara höra till ett uppehåll.",
+      "saveFailed": "Kalendern kunde inte sparas. Försök igen.",
+      "saveFailedWithReason": "Kalendern kunde inte sparas – {reason}"
+    },
+    "impact": {
+      "title": "Spara ändringarna?",
+      "description": "{count, plural, one {Den här klubben ändras} other {De här # klubbarna ändras}} så fort du sparar.",
+      "futureRemoved": "Familjerna ser ingen träff på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+      "futureRestored": "Familjerna ser träffar igen på {count, plural, one {# dag} other {# dagar}}: {dates}.",
+      "pastRemoved": "{count, plural, one {En tidigare träff försvinner} other {Tidigare träffar på # dagar försvinner}} ur familjernas historik: {dates}.",
+      "pastRestored": "{count, plural, one {En tidigare träff kommer} other {Tidigare träffar på # dagar kommer}} tillbaka i familjernas historik: {dates}.",
+      "recordsHidden": "{count, plural, one {# dokumenterad träff döljs} other {# dokumenterade träffar döljs}} för familjerna.",
+      "recordsShown": "{count, plural, one {# dokumenterad träff visas} other {# dokumenterade träffar visas}} för familjerna igen.",
+      "requestsStopped": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} inte längre någon träff att täcka.",
+      "requestsReopened": "{count, plural, one {# vikarieförfrågan har} other {# vikarieförfrågningar har}} en träff att täcka igen."
+    },
+    "editBreak": "Redigera {name}",
+    "unnamedBreak": "Namnlöst uppehåll",
+    "dialog": {
+      "editTitle": "Redigera uppehåll",
+      "saveAndAddAnother": "Spara och lägg till ett till"
+    },
+    "breakErrors": {
+      "datesRequired": "Välj första och sista dagen.",
+      "endBeforeStart": "Sista dagen är före den första.",
+      "nameMissing": "Ge uppehållet ett namn på {language}."
+    }
+  },
+  "library": {
+    "title": "Bibliotekets innehåll",
+    "subtitle": "Artiklarna för föräldrar i det offentliga Biblioteket.",
+    "newArticle": "Ny artikel",
+    "lastSaved": "Senast sparad {date}",
+    "search": {
+      "label": "Sök",
+      "placeholder": "Sök på rubrik eller kategori…",
+      "showing": "Visar {count} av {total}",
+      "clear": "Rensa",
+      "noMatches": "Inga artiklar matchar sökningen."
+    },
+    "noCategory": "Ingen kategori",
+    "empty": "Inga artiklar än. Skriv den första.",
+    "backToList": "Tillbaka till Bibliotekets innehåll",
+    "notFound": "Det finns ingen artikel med det här id:t.",
+    "loadError": "Artikeln kunde inte läsas in. Uppdatera sidan för att försöka igen.",
+    "newPage": {
+      "title": "Ny artikel",
+      "submit": "Spara utkast"
+    },
+    "editPage": {
+      "title": "Redigera artikel"
+    },
+    "status": {
+      "draft": "Utkast",
+      "published": "Publicerad",
+      "changed": "Opublicerade ändringar"
+    },
+    "statusPanel": {
+      "label": "Publicering",
+      "publishedLine": "Publicerad {date}.",
+      "changedLine": "Läsarna ser versionen som publicerades {date}.",
+      "savedLine": "Senast sparad {date}.",
+      "savedByLine": "Senast sparad {date} av {name}.",
+      "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+      "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
+    },
+    "viewLive": "Visa i Biblioteket",
+    "preview": "Förhandsvisa",
+    "publish": "Publicera",
+    "publishChanges": "Publicera ändringar",
+    "unpublish": "Avpublicera",
+    "readiness": {
+      "missing": "Lägg till {fields} för att publicera.",
+      "leftOut": "{count, plural, one {{languages} är inte färdig, så den publiceras inte.} other {{languages} är inte färdiga, så de publiceras inte.}}"
+    },
+    "missing": {
+      "category": "en kategori",
+      "completeVersion": "ett språk med rubrik, sammanfattning och artikeltext"
+    },
+    "unpublishConfirm": {
+      "title": "Avpublicera artikeln?",
+      "description": "Läsarna hittar den inte längre i Biblioteket, och länkar till den slutar fungera. Artikeln finns kvar här, och du kan publicera den igen när som helst.",
+      "confirm": "Avpublicera"
+    },
+    "fields": {
+      "languages": "Språk",
+      "title": "Rubrik",
+      "summary": "Sammanfattning",
+      "category": "Kategori",
+      "cover": "Omslagsbild",
+      "body": "Artikeltext"
+    },
+    "hints": {
+      "languages": "Skriv varje språk för hand. Vid publicering blir varje färdigt språk synligt: ett med rubrik, sammanfattning och artikeltext.",
+      "summary": "Ren text, som visas under rubriken och på artikelns kort i Biblioteket.",
+      "cover": "Visas ovanför artikeln och på dess kort, beskuren till 16:9. Utan omslagsbild ser läsarna en platshållare.",
+      "body": "Läsarna ser texten under omslagsbilden, formaterad som den ser ut här."
+    },
+    "categoryPlaceholder": "Välj en kategori",
+    "bodyPlaceholder": "Skriv artikeln…",
+    "actions": {
+      "save": "Spara",
+      "cancel": "Avbryt"
+    },
+    "errors": {
+      "titleRequired": "En artikel måste ha en rubrik.",
+      "saveFailed": "Artikeln kunde inte sparas. Försök igen.",
+      "saveFailedWithReason": "Artikeln kunde inte sparas – {reason}",
+      "publishFailed": "Artikeln kunde inte publiceras. Försök igen.",
+      "publishFailedWithReason": "Artikeln kunde inte publiceras – {reason}",
+      "unpublishFailed": "Artikeln kunde inte avpubliceras. Försök igen.",
+      "unpublishFailedWithReason": "Artikeln kunde inte avpubliceras – {reason}",
+      "versionTitleRequired": "Versionen på {language} måste ha en rubrik."
+    },
+    "languagesLabel": "Språk"
+  },
+  "spotlights": {
+    "subtitle": "Föräldrar ser varje påslagen spotlight längst ner i varje sessionsrapports e-post de får, nyaste först. Varje läsare får den på sitt eget språk, eller på engelska när deras inte är skrivet, eller annars på ett språk som är det.",
+    "newSpotlight": "Ny spotlight",
+    "empty": "Inga spotlights än. Skriv den första.",
+    "backToList": "Tillbaka till spotlights",
+    "notFound": "Det finns ingen spotlight med det här id:t.",
+    "loadError": "Spotlighten kunde inte laddas. Uppdatera sidan för att försöka igen.",
+    "listLoadError": "Spotlightsen kunde inte laddas. Uppdatera sidan för att försöka igen.",
+    "newPage": {
+      "title": "Ny spotlight",
+      "submit": "Spara"
+    },
+    "editPage": {
+      "title": "Redigera spotlight"
+    },
+    "fields": {
+      "languages": "Språk",
+      "title": "Rubrik",
+      "body": "Text",
+      "picture": "Bild"
+    },
+    "hints": {
+      "languages": "Skriv varje språk för hand. Varje språk behöver en rubrik och texten.",
+      "body": "Visas under rubriken i e-posten, formaterad som här. Länkar är tillåtna.",
+      "picture": "Visas ovanför rubriken i e-posten, beskuren till 2:1. En spotlight kan sparas utan bild, men behöver en för att kunna slås på."
+    },
+    "bodyPlaceholder": "Skriv spotlighten…",
+    "actions": {
+      "save": "Spara",
+      "cancel": "Avbryt",
+      "delete": "Ta bort"
+    },
+    "errors": {
+      "noVersion": "En spotlight behöver en rubrik och text på minst ett språk.",
+      "versionIncomplete": "Versionen på {language} behöver både en rubrik och texten.",
+      "saveFailed": "Spotlighten kunde inte sparas. Försök igen.",
+      "saveFailedWithReason": "Spotlighten kunde inte sparas — {reason}",
+      "deleteFailed": "Spotlighten kunde inte tas bort. Försök igen.",
+      "deleteFailedWithReason": "Spotlighten kunde inte tas bort — {reason}"
+    },
+    "languagesLabel": "Språk",
+    "created": "Skapad {date}",
+    "status": {
+      "on": "I e-posten",
+      "off": "Inte i e-posten"
+    },
+    "switchLabel": "I sessionsrapporternas e-post",
+    "needsPicture": "Lägg till en bild för att kunna slå på den.",
+    "deleteConfirm": {
+      "title": "Ta bort den här spotlighten?",
+      "descriptionOn": "Den försvinner genast ur sessionsrapporternas e-post och kan inte återställas. Bilden blir kvar i biblioteket.",
+      "descriptionOff": "Den kan inte återställas. Bilden blir kvar i biblioteket.",
+      "confirm": "Ta bort"
+    }
+  },
+  "landingPages": {
+    "subtitle": "Sidor för en skola, en stad, ett företag eller ett evenemang, skrivna för att sökmotorer och AI-appar ska hitta dem.",
+    "empty": "Inga landningssidor än. Sidorna skrivs med en AI-app som är kopplad till Sogverse.",
+    "lastSaved": "Senast sparad {date}",
+    "languagesLabel": "Språk",
+    "versionComplete": "klar",
+    "versionIncomplete": "inte klar än",
+    "search": {
+      "label": "Sök",
+      "placeholder": "Sök på titel eller adress…",
+      "showing": "Visar {count} av {total}",
+      "clear": "Rensa",
+      "noMatches": "Inga landningssidor matchar din sökning."
+    },
+    "backToList": "Tillbaka till landningssidorna",
+    "notFound": "Det finns ingen landningssida med detta id.",
+    "loadError": "Landningssidan kunde inte laddas. Uppdatera för att försöka igen.",
+    "statusPage": {
+      "title": "Landningssida",
+      "authoring": "Be en AI-app som är kopplad till Sogverse om du vill ändra sidan.",
+      "languagesHeading": "Språk",
+      "readiness": {
+        "noCompleteLanguage": "Inget språk är klart än, så det finns inget att publicera.",
+        "upToDate": "Läsarna ser redan den senast sparade versionen."
+      },
+      "language": {
+        "complete": "Klar",
+        "incomplete": "Inte klar",
+        "live": "Publicerad på webbplatsen.",
+        "notLive": "Inte på webbplatsen.",
+        "stillNeeded": "Saknas fortfarande:",
+        "address": "Adress:",
+        "noAddress": "ingen än",
+        "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera."
+      },
+      "missing": {
+        "inSection": "Avsnitt {number} ({type}): {field}",
+        "inItem": "Avsnitt {number} ({type}), {item}: {field}",
+        "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
+      },
+      "testimonials": {
+        "heading": "Omdömen",
+        "hint": "Orden redigeras under Omdömen, och en ändring syns direkt på den publicerade sidan.",
+        "section": "Avsnitt {number} ({type}): {arrangement}",
+        "arrangements": {
+          "feature": "ett stort citat",
+          "pair": "två bredvid varandra",
+          "row": "tre i rad",
+          "showcase": "ett stort citat, två bredvid varandra och sedan tre i rad"
+        },
+        "missing": "Ett omdöme som inte längre finns kvar"
+      }
+    },
+    "status": {
+      "draft": "Utkast",
+      "live": "Publicerad",
+      "changed": "Opublicerade ändringar"
+    },
+    "statusPanel": {
+      "publishedLine": "Publicerad {date}.",
+      "changedLine": "Läsarna ser versionen som publicerades {date}.",
+      "savedLine": "Senast sparad {date}.",
+      "savedByLine": "Senast sparad {date} av {name}.",
+      "savedByViaLine": "Senast sparad {date} av {name} via {app}.",
+      "savedByViaUnnamedLine": "Senast sparad {date} av {name} via en AI-app."
+    },
+    "viewLive": "Visa på webbplatsen",
+    "preview": "Förhandsgranska",
+    "publish": "Publicera",
+    "publishChanges": "Publicera ändringar",
+    "unpublish": "Avpublicera",
+    "publishConfirm": {
+      "title": "Publicera landningssidan?",
+      "changesTitle": "Publicera ändringarna?",
+      "goesLive": "Publiceras: {languages}.",
+      "takenDown": "{count, plural, one {Tas bort från webbplatsen eftersom det inte längre är klart: {languages}.} other {Tas bort från webbplatsen eftersom de inte längre är klara: {languages}.}}",
+      "leftOut": "{count, plural, one {Utelämnas eftersom det inte är klart: {languages}.} other {Utelämnas eftersom de inte är klara: {languages}.}}",
+      "changing": "{count, plural, one {Den här publicerade adressen ändras, och länkar till den gamla slutar fungera:} other {De här publicerade adresserna ändras, och länkar till de gamla slutar fungera:}}",
+      "changingItem": "{language}: {from} blir {to}"
+    },
+    "unpublishConfirm": {
+      "title": "Avpublicera landningssidan?",
+      "description": "Läsare och sökmotorer hittar den inte längre, och länkar till den slutar fungera. Sidan finns kvar här, och du kan publicera den igen när som helst.",
+      "confirm": "Avpublicera"
+    },
+    "actions": {
+      "cancel": "Avbryt"
+    },
+    "errors": {
+      "publishFailed": "Landningssidan kunde inte publiceras. Försök igen.",
+      "publishFailedWithReason": "Landningssidan kunde inte publiceras – {reason}",
+      "unpublishFailed": "Landningssidan kunde inte avpubliceras. Försök igen.",
+      "unpublishFailedWithReason": "Landningssidan kunde inte avpubliceras – {reason}"
+    },
+    "sectionTypes": {
+      "hero": "Inledning",
+      "text": "Text",
+      "image": "Bilder",
+      "points": "Punkter",
+      "steps": "Steg",
+      "faq": "Frågor och svar",
+      "cta": "Uppmaning",
+      "testimonials": "Omdömen"
+    },
+    "items": {
+      "image": "Bild {number}",
+      "points": "Punkt {number}",
+      "steps": "Steg {number}",
+      "faq": "Fråga {number}"
+    },
+    "fields": {
+      "title": "Titel",
+      "summary": "Sammanfattning",
+      "slug": "Adress",
+      "headline": "Huvudrubrik",
+      "heading": "Rubrik",
+      "body": "Text",
+      "buttonLabel": "Knapptext",
+      "imageAlt": "Bildens alternativtext",
+      "alt": "Alternativtext",
+      "question": "Fråga",
+      "answer": "Svar"
+    },
+    "copyMarker": "(kopia)"
+  },
+  "geduRole": {
+    "primary": "Huvud-Gedu",
+    "assistant": "Assisterande Gedu",
+    "selectAria": "Roll för {name}"
+  },
+  "geduContract": {
+    "heading": "Gedu-avtal",
+    "accepted": "Avtalet godkänt",
+    "acceptedDetail": "Version {version}, godkänt {date}",
+    "notAccepted": "Har inte godkänt Gedu-avtalet",
+    "notCurrentVersion": "Har inte godkänt det gällande avtalet ({version})",
+    "previousVersion": "Godkände tidigare version {version} den {date}.",
+    "queueAccepted": "Avtalet godkänt {date}",
+    "queueNotAccepted": "Avtalet inte godkänt",
+    "rowNotAccepted": "Har inte godkänt det gällande avtalet"
+  },
+  "geduCriminalRecordCheck": {
+    "heading": "Kontroll av brottslig bakgrund",
+    "recorded": "Straffregisterutdrag noterat",
+    "recordedOn": "Straffregisterutdrag noterat {date}",
+    "recordedByOn": "Straffregisterutdrag noterat av {name} {date}",
+    "notRecorded": "Inget straffregisterutdrag har uppvisats",
+    "processDetail": "Gedun skaffar utdraget själv från Rättsregistercentralen och visar det för dig. Det får vara högst sex månader gammalt när det visas upp, och vi sparar ingen kopia av det — bara noteringen om att ett godtagbart utdrag har visats.",
+    "recordLabel": "Jag har sett ett godtagbart straffregisterutdrag för den här Gedun",
+    "error": "Det gick inte att uppdatera kontrollen av brottslig bakgrund. Försök igen.",
+    "queueRecorded": "Utdrag uppvisat {date}",
+    "queueNotRecorded": "Utdrag inte uppvisat",
+    "rowNotRecorded": "Har inte uppvisat något straffregisterutdrag"
+  },
+  "geduQualifications": {
+    "title": "Behörigheter",
+    "neuroinclusive": "Behörig att leda grupper i produkter märkta Neuroinkluderande.",
+    "consumer_products": "Får leda klubbar, läger och evenemang som familjer betalar själva, inte bara kommunklubbar.",
+    "grantedOn": "Beviljad {date}",
+    "grantedOnBy": "Beviljad av {name} {date}",
+    "notGranted": "Inte beviljad",
+    "error": "Det gick inte att uppdatera behörigheten. Försök igen."
+  },
+  "geduLanguages": {
+    "title": "Språk",
+    "note": "Hen erbjuds vikariat bara för tillfällen på ett språk som är valt här. Om inget språk är valt erbjuds inga vikariat.",
+    "error": "Det gick inte att spara språken. Försök igen."
+  },
+  "missingRequirements": {
+    "qualification": "Den här Gedun saknar behörigheten {qualification}, som den här produkten kräver.",
+    "language": "Den här produkten hålls på {language}, som den här Gedun inte har angett att hen talar.",
+    "coverage": "Den här produkten hålls på plats på {site}, utanför de områden den här Gedun täcker.",
+    "coverageUnnamed": "Den här produkten hålls på plats, utanför de områden den här Gedun täcker."
+  },
+  "geduCertifyWarnings": {
+    "title": "Certifiera ändå?",
+    "body": "Certifieringen kräver ingetdera av dessa, så du kan certifiera hen ändå.",
+    "action": "Certifiera ändå",
+    "contractWarning": "Den här Gedun har inte godkänt det gällande avtalet. Som certifierad kan hen tilldelas grupper innan hen har godkänt villkoren hen arbetar under.",
+    "checkWarning": "Den här Gedun har inte uppvisat något straffregisterutdrag. Som certifierad kan hen tilldelas grupper innan någon har sett det."
+  },
+  "products": {
+    "types": {
+      "consumerClub": {
+        "label": "Konsumentklubb",
+        "plural": "Konsumentklubbar"
+      },
+      "municipalityClub": {
+        "label": "Kommunklubb",
+        "plural": "Kommunklubbar"
+      },
+      "camp": {
+        "label": "Läger",
+        "plural": "Läger"
+      },
+      "event": {
+        "label": "Evenemang",
+        "plural": "Evenemang"
+      }
+    },
+    "list": {
+      "subtitle": "Hantera de klubbar, läger och evenemang som administratörer har skapat.",
+      "new": "{type, select, consumerClub {Ny konsumentklubb} municipalityClub {Ny kommunklubb} camp {Nytt läger} other {Nytt evenemang}}",
+      "empty": "{type, select, consumerClub {Inga konsumentklubbar än. Klicka på Ny konsumentklubb för att skapa en.} municipalityClub {Inga kommunklubbar än. Klicka på Ny kommunklubb för att skapa en.} camp {Inga läger än. Klicka på Nytt läger för att skapa ett.} other {Inga evenemang än. Klicka på Nytt evenemang för att skapa ett.}}",
+      "emptyAll": "Inga klubbar, läger eller evenemang än.",
+      "ageRange": "{min}–{max} år",
+      "seats": "{count} platser",
+      "online": "På distans",
+      "unlisted": "olistad",
+      "untitled": "(utan titel)",
+      "missingGeduFee": "Gedu-arvode saknas",
+      "missingMunicipalityFee": "Kommunavgift saknas",
+      "pendingHint": {
+        "registrationOpens": "Anmälan öppnar {date}",
+        "startDate": "Startar {date}"
+      },
+      "newAny": "Ny",
+      "newDialogTitle": "Skapa en klubb, ett läger eller ett evenemang"
+    },
+    "translations": {
+      "label": "Språk",
+      "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt."
+    },
+    "newPage": {
+      "back": "Tillbaka till {type, select, consumerClub {konsumentklubbarna} municipalityClub {kommunklubbarna} camp {lägren} other {evenemangen}}",
+      "title": "{type, select, consumerClub {Ny konsumentklubb} municipalityClub {Ny kommunklubb} camp {Nytt läger} other {Nytt evenemang}}"
+    },
+    "detailsPage": {
+      "title": "Produktuppgifter",
+      "notFound": "Produkten kunde inte hittas.",
+      "uncapped": "Ingen platsgräns",
+      "listed": "Listad publikt",
+      "unlisted": "Olistad — endast via direktlänk",
+      "waitlistOn": "väntelista på",
+      "minutes": "{count} min",
+      "perMonth": "{amount} / månad",
+      "billingMode": {
+        "paid": "Betald",
+        "free": "Gratis",
+        "external_contract": "Externt avtal (kommun)"
+      },
+      "requiresGamerCreations": {
+        "required": "Krävs",
+        "notRequired": "Krävs inte"
+      },
+      "fields": {
+        "topic": "Ämne",
+        "materialUrl": "Lektionsmaterial",
+        "voiceRoom": "Anslutning",
+        "startDate": "Startdatum",
+        "endDate": "Slutdatum",
+        "firstSession": "Första tillfället",
+        "lastSession": "Sista tillfället",
+        "termDates": "Period",
+        "billingMode": "Fakturering",
+        "seats": "Platser",
+        "waitlist": "Väntelista",
+        "prices": "Priser",
+        "primaryGeduFee": "Huvud-Gedu-arvode / tillfälle",
+        "assistantGeduFee": "Assisterande Gedu-arvode / tillfälle",
+        "municipalityFee": "Kommunavgift / tillfälle",
+        "timezone": "Tidszon",
+        "registrationOpensAt": "Anmälan öppnar",
+        "tag": "Utformad för",
+        "regionLock": "Landsbegränsning",
+        "requiredConsents": "Obligatoriska samtycken",
+        "requiresGamerCreations": "Spelarnas skapelser",
+        "visibility": "Synlighet",
+        "gamerPhotoConsents": "Fotofrågor",
+        "marketingConsents": "Marknadsföringsfrågor",
+        "format": "Format",
+        "ageRange": "Åldersintervall",
+        "publicLink": "Offentlig länk",
+        "createdBy": "Skapad av",
+        "createdOn": "Skapad den"
+      },
+      "copyLink": "Kopiera den publika länken",
+      "copied": "Kopierad",
+      "sections": {
+        "schedule": "Schema",
+        "placeAndAudience": "Plats och målgrupp",
+        "seatsAndRegistration": "Platser och anmälan",
+        "pricing": "Prissättning",
+        "requirements": "Krav och samtycken",
+        "record": "Historik"
+      },
+      "unknownCreator": "Okänd"
+    },
+    "holidayCalendars": {
+      "label": "Lovkalendrar",
+      "hint": "Klubben har inga träffar under något uppehåll i de kalendrar den följer. Familjerna ser uppehållet där träffarna annars skulle ha legat.",
+      "manage": "Hantera lovkalendrar",
+      "nextBreak": "Nästa: {name}, {dates}",
+      "noUpcomingBreak": "Inga kommande uppehåll",
+      "empty": "Det finns inga lovkalendrar än.",
+      "listUnavailable": "Lovkalendrarna kunde inte läsas in. De kalendrar klubben redan följer behålls när du sparar.",
+      "none": "Inga"
+    },
+    "editPage": {
+      "back": "Tillbaka till produkten",
+      "kicker": "Redigera {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}",
+      "title": "Redigera {name}"
+    },
+    "clonePage": {
+      "back": "Tillbaka till produkten",
+      "kicker": "Klona {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}",
+      "title": "Klonar {name}",
+      "copySuffix": " (kopia)"
+    },
+    "sections": {
+      "identity": "Identitet",
+      "identityDescription": "Vad det ska heta och vad det handlar om.",
+      "audience": "Målgrupp",
+      "audienceDescription": "Vem detta är till för.",
+      "where": "Var",
+      "whereDescription": {
+        "consumerClub": "Online eller på plats. Klubbar på plats körs i en specifik lokal.",
+        "municipalityClub": "Bekostas av en specifik kommun. Onlineklubbar väljer kommunen direkt; klubbar på plats väljer en lokal inom den.",
+        "camp": "Online eller på plats. Läger på plats körs i en specifik lokal.",
+        "event": "Online eller på plats. Evenemang på plats körs i en specifik lokal."
+      },
+      "when": "När",
+      "whenDescription": {
+        "consumerClub": "En dag i veckan, en tid. Lämna slutdatumet tomt för en pågående klubb.",
+        "municipalityClub": "En dag i veckan, en tid. Pågår mellan start- och slutdatum.",
+        "camp": "Flera dagar i veckan, var och en med egen starttid och längd.",
+        "event": "Ett enda datum och en starttid."
+      },
+      "billing": "Kapacitet och fakturering",
+      "billingDescription": {
+        "consumerClub": "Föräldrar betalar för varje tillfälle barnet deltar. Faktureringen sker automatiskt varje vecka.",
+        "municipalityClub": "School of Gaming fakturerar kommunen direkt. Föräldrar anmäler sitt barn gratis upp till platsgränsen.",
+        "camp": "Läger kan vara gratis (med eller utan platsgräns) eller förbetalda. Ett betalt läger betalas i sin helhet vid anmälan och återbetalas fram till en gräns.",
+        "event": "Evenemang kan vara gratis (med eller utan platsgräns) eller förbetalda."
+      },
+      "registration": "Registreringstid",
+      "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
+      "consents": "Samtycken",
+      "consentsDescription": "Vad en förälder godkänner, och vad hen tillfrågas om, på vägen genom anmälan. Obligatoriska dokument måste godkännas innan en plats kan tas; både fotofrågan och marknadsföringsfrågan kan avböjas.",
+      "visibility": "Listning",
+      "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
+    },
+    "labels": {
+      "name": "Namn",
+      "shortDescription": "Kort beskrivning",
+      "longDescription": "Lång beskrivning",
+      "voiceJoinInstructions": "Anslutningsinstruktioner",
+      "topic": "Ämne",
+      "materialUrl": "URL till lektionsmaterial",
+      "externalVoiceUrl": "Möteslänk",
+      "requiresGamerCreations": "Varje spelare behöver en länk till sin skapelse",
+      "seatAudience": "Vem kan ta en plats",
+      "tag": "Utformad för",
+      "regionLock": "Landsbegränsning",
+      "forGamers": "För spelare",
+      "forParents": "För föräldrar",
+      "minAge": "Min ålder",
+      "maxAge": "Max ålder",
+      "spokenLanguage": "Talat språk",
+      "online": "Online",
+      "inPerson": "På plats",
+      "municipality": "Vilken kommun detta är för",
+      "site": "Lokal",
+      "startDate": "Startdatum",
+      "date": "Datum",
+      "endDate": "Slutdatum",
+      "eventDate": "Evenemangsdatum",
+      "seasonEndDate": "Terminens slutdatum",
+      "schedule": "Schema",
+      "dayAndTime": "Dag & tid",
+      "daysAndTimes": "Dagar & tider",
+      "time": "Tid",
+      "timezone": "Tidszon",
+      "pricing": "Pris",
+      "free": "Gratis",
+      "paid": "Betalt",
+      "billing": "Fakturering",
+      "paidByMunicipality": "Betalas av kommunen",
+      "seatCount": "Antal platser",
+      "waitlistToggle": "Aktivera väntelista när platserna är fulla",
+      "makeVisible": "Lista produkten på sidorna Butik och Kommunklubbar",
+      "seatLimit": "Platsgräns"
+    },
+    "placeholders": {
+      "selectTopic": "Välj ett ämne…",
+      "materialUrl": "https://drive.sog.gg/...",
+      "externalVoiceUrl": "https://",
+      "name": {
+        "consumerClub": "t.ex. Minecraft Redstone-klubb",
+        "municipalityClub": "t.ex. Tapiola Minecraft-klubb · Vår 2026",
+        "camp": "t.ex. Speldesignläger · Höstlovet",
+        "event": "t.ex. Pokémon GO-promenad · Helsingfors"
+      },
+      "description": {
+        "consumerClub": "Vad som händer varje vecka, vem det är för, vad de lär sig.",
+        "municipalityClub": "På vilken skola, under vilken termin, på vilket språk.",
+        "camp": "Dagar, totalt antal timmar, veckans tema.",
+        "event": "En kort sammanfattning av evenemanget — vad, var, för vem."
+      }
+    },
+    "longDescription": {
+      "placeholder": "Skriv hela presentationen för produkten…"
+    },
+    "locationPicker": {
+      "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
+      "change": "Ändra",
+      "noSiteHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
+      "chooseMunicipality": "Välj en kommun",
+      "municipalityPickerTitle": "Välj en kommun",
+      "chooseSite": "Välj en lokal",
+      "sitePickerTitle": "Välj en lokal",
+      "sitePickerDescription": "Sök lokalen på namn så hittar du den direkt, eller bläddra ner till kommunen och se lokalerna där. Finns lokalen inte ännu kan du öppna en ny.",
+      "sitesIn": "Lokaler i {name}",
+      "sitesInDescription": "Välj en som redan finns, eller lägg till en ny.",
+      "sitesHereEmpty": "Inga lokaler här ännu.",
+      "addSite": "Lägg till en lokal",
+      "changeMunicipality": "Välj en annan kommun"
+    },
+    "pricing": {
+      "perMonthLabel": "Pris per månad",
+      "totalLabel": "Totalpris"
+    },
+    "fees": {
+      "sectionTitle": "Arvoden per tillfälle",
+      "sectionDescription": "Vad vi betalar Geduerna per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
+      "primaryGeduLabel": "Huvud-Gedu-arvode",
+      "primaryGeduHint": "Betalas till den ledande Gedun per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
+      "assistantGeduLabel": "Assisterande Gedu-arvode",
+      "assistantGeduHint": "Betalas till en assisterande Gedu per tillfälle. Välj Inget om det inte finns någon assistent.",
+      "municipalityLabel": "Kommunavgift",
+      "municipalityHint": "Vad kommunen betalar oss per tillfälle. Välj Okänt om du anger det senare.",
+      "amountLabel": "Belopp per tillfälle i euro",
+      "status": {
+        "unknown": "Okänt — anges senare",
+        "none": "Inget",
+        "volunteer": "Volontär (gratis)",
+        "fee": "Ange ett belopp"
+      }
+    },
+    "registrationModes": {
+      "label": "När öppnar anmälan?",
+      "immediately": "Direkt",
+      "immediatelyDescription": "Föräldrar kan anmäla sig så snart produkten blir synlig.",
+      "scheduled": "Vid en specifik tid",
+      "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
+    },
+    "voiceRoomModes": {
+      "label": "Hur ansluter familjerna?",
+      "sogverse": "Sogverse-röstrum",
+      "sogverseDescription": "Ett röstrum skapas automatiskt och öppnas inför varje träff.",
+      "external": "Länk till ett möte någon annanstans",
+      "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett Sogverse-röstrum rymmer (50 personer).",
+      "none": "Inget röstrum",
+      "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
+    },
+    "endDateModes": {
+      "ongoing": "Inget slutdatum",
+      "ongoingDescription": "Klubben pågår tills vidare tills du bestämmer dig för att avsluta den.",
+      "dated": "Ange ett slutdatum",
+      "datedDescription": "Klubben pågår fram till ett visst datum och avslutas sedan automatiskt."
+    },
+    "tagOptions": {
+      "none": "Ingen märkning"
+    },
+    "regionLock": {
+      "none": "Ingen landsbegränsning"
+    },
+    "consents": {
+      "version": "Version {version}",
+      "noVersion": "Ingen publicerad version",
+      "none": "Inga",
+      "gamerPhoto": {
+        "lynxEducate": {
+          "label": "Foton och videor (Lynx Educate)",
+          "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om foton och videor på deras barn får tas och användas av School of Gaming, Lynx Educate och Roblox. En förälder kan tacka nej, och platsen påverkas inte. Frågan ställs per barn och ställs på nytt vid varje anmälan."
+        }
+      },
+      "marketing": {
+        "lynxEducate": {
+          "label": "Lynx Educate",
+          "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sin e-postadress med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
+        }
+      }
+    },
+    "hints": {
+      "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
+      "longDescription": "Valfritt. Hela presentationen, som visas endast på produktens detaljsida. Rubriker, listor, betoning och länkar är tillgängliga.",
+      "voiceJoinInstructionsHint": "Hur familjerna ansluter till träffarna, skrivet för det här språket. Offentligt: vem som helst kan läsa det, även besökare som inte är inloggade.",
+      "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
+      "materialUrlHint": "Valfritt. Endast för Geduer — familjer ser aldrig detta.",
+      "requiresGamerCreationsHint": "För produkter där ett avtal kräver det. Det sista tillfället är markerat som att det behöver åtgärd tills varje spelare i gruppen har en skapelse registrerad. Familjer ser ingen skillnad.",
+      "seatAudienceHint": "Välj minst ett. Väljer du båda blir det en produkt som en förälder och hens spelare deltar i tillsammans – i butiken märks den ”För familjer”.",
+      "forGamersHint": "En förälder anmäler sin spelare och spelaren tar platsen. Kräver ett åldersintervall.",
+      "forParentsHint": "En förälder tar en plats åt sig själv och deltar. Inget åldersintervall – ålder beskriver barn, inte vuxna.",
+      "tagHint": "Valfritt. Familjer ser den som en märkning på butikskortet och produktsidan. Den säger vem tillfällena är utformade för, inte vem som får ta en plats.",
+      "regionLockHint": "Endast familjer i det valda landet kan anmäla sig. Platsen är den familjen själv har uppgett, så det här är en vägvisning i butiken snarare än ett hårt hinder – och den som redan är anmäld behåller sin plats även om hen flyttar.",
+      "spokenLanguageHint": "Det huvudsakliga språk som talas under tillfällena.",
+      "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
+      "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
+      "siteHint": "Var tillfällena fysiskt äger rum.",
+      "eventSingleDay": "Evenemang äger rum ett enda datum.",
+      "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
+      "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
+      "timezoneIs": "Tider är i {timezone}. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
+      "billingHint": "Gratisprodukter får som standard en platsgräns, betalda börjar utan gräns.",
+      "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
+      "paidDetailMonthly": "Debiteras varje månad som en prenumeration.",
+      "paidDetailUpfront": "Engångsavgift vid anmälan.",
+      "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
+      "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
+      "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
+      "seatHintWaitlist": "När fullt går nya anmälningar till väntelistan.",
+      "seatHintNoWaitlist": "När fullt nekas nya anmälningar.",
+      "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
+      "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
+      "startDateBillingAnchor": "Datumet då klubben börjar, och då familjerna debiteras första gången. Att ändra det i efterhand flyttar inte första betalningen för dem som redan har anmält sig — rätta de prenumerationerna i Stripe.",
+      "startNotSessionDay": "Inget tillfälle infaller detta datum. Första tillfället är {date}.",
+      "endNotSessionDay": "Inget tillfälle infaller detta datum. Sista tillfället är {date}."
+    },
+    "errors": {
+      "translationRequired": "Minst ett språk med namn och beskrivning krävs",
+      "translationIncomplete": "Fyll i både namn och beskrivning för fliken {locale}, eller ta bort den.",
+      "topicRequired": "Ämne krävs",
+      "spokenLanguageRequired": "Talat språk krävs",
+      "audienceRequired": "Välj minst en målgrupp – spelare, föräldrar eller båda",
+      "minAgeRequired": "Min ålder krävs",
+      "maxAgeRequired": "Max ålder krävs",
+      "minAgeInvalid": "Min ålder måste vara ett icke-negativt heltal",
+      "maxAgeInvalid": "Max ålder måste vara större än eller lika med min ålder",
+      "municipalityRequired": "Kommun krävs för online-kommunklubbar",
+      "siteRequired": "Lokal krävs för produkter på plats",
+      "externalVoiceUrlRequired": "Ange möteslänken",
+      "externalVoiceUrlInvalid": "Möteslänken måste vara en webbadress som börjar med http:// eller https://",
+      "voiceJoinInstructionsRequired": "Skriv anslutningsinstruktioner på minst ett språk",
+      "scheduleRequired": "Minst en schemarad krävs",
+      "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
+      "startDateRequired": "Startdatum krävs",
+      "endDateRequired": "Slutdatum krävs",
+      "seatCountRequired": "Antal platser krävs",
+      "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
+      "priceSessionMissing": "Ange ett pris per tillfälle i {currency}",
+      "priceSessionInvalid": "Priset per tillfälle måste vara minst {minimum}",
+      "priceMonthMissing": "Ange ett månadspris i {currency}",
+      "priceMonthInvalid": "Månadspriset måste vara minst {minimum}",
+      "primaryGeduFeeInvalid": "Ange ett huvud-Gedu-arvode större än 0, eller välj Okänt eller Volontär",
+      "assistantGeduFeeInvalid": "Ange ett assisterande Gedu-arvode större än 0, eller välj Inget eller Volontär",
+      "municipalityFeeInvalid": "Ange en kommunavgift större än 0, eller välj Okänt",
+      "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
+      "createFailed": "Det gick inte att skapa produkten"
+    },
+    "actions": {
+      "cancel": "Avbryt",
+      "createLabel": "Skapa {type, select, consumerClub {konsumentklubb} municipalityClub {kommunklubb} camp {läger} other {evenemang}}"
+    },
+    "status": {
+      "pending": "Väntar på start",
+      "running": "Pågår",
+      "completed": "Avslutat"
+    },
+    "schedule": {
+      "day": "Dag",
+      "hour": "Timme",
+      "minute": "Minut",
+      "startHour": "Starttimme",
+      "startMinute": "Startminut",
+      "endHour": "Sluttimme",
+      "endMinute": "Slutminut",
+      "to": "till",
+      "addDay": "Lägg till en dag till",
+      "removeSlot": "Ta bort",
+      "sameAsEventDate": "Samma som evenemangsdatum",
+      "oneSessionEvent": "Ett tillfälle på evenemangsdatumet.",
+      "oneSessionPerWeek": "Ett tillfälle per vecka."
+    },
+    "weekdays": {
+      "mon": "Mån",
+      "tue": "Tis",
+      "wed": "Ons",
+      "thu": "Tor",
+      "fri": "Fre",
+      "sat": "Lör",
+      "sun": "Sön",
+      "monLong": "Måndag",
+      "tueLong": "Tisdag",
+      "wedLong": "Onsdag",
+      "thuLong": "Torsdag",
+      "friLong": "Fredag",
+      "satLong": "Lördag",
+      "sunLong": "Söndag"
+    },
+    "imagePicker": {
+      "label": "Bild",
+      "formats": "JPEG, PNG eller WebP.",
+      "chooseFile": "Välj fil",
+      "uploading": "Lägger till…",
+      "hint": "Visas på produktkortet när föräldrar bläddrar, beskuren till en 3:2-ram. Bilderna delas mellan produkter, så ditt val här ändrar inget annat.",
+      "forPurpose": {
+        "product": {
+          "change": "Byt bild",
+          "remove": "Ta bort från den här produkten",
+          "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 3:2-ramen och den läggs till och används för den här produkten.",
+          "outcomeAdded": "Tillagd i biblioteket och vald för den här produkten.",
+          "outcomeExisting": "Finns redan i biblioteket – vald för den här produkten."
+        },
+        "libraryCover": {
+          "change": "Byt omslagsbild",
+          "remove": "Ta bort omslagsbild",
+          "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och blir omslagsbild för den här artikeln.",
+          "outcomeAdded": "Tillagd i biblioteket och vald som omslagsbild för den här artikeln.",
+          "outcomeExisting": "Finns redan i biblioteket – vald som omslagsbild för den här artikeln."
+        },
+        "landingImage": {
+          "change": "Byt bild",
+          "remove": "Ta bort bild",
+          "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
+          "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
+          "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
+        },
+        "spotlightImage": {
+          "change": "Byt bild",
+          "remove": "Ta bort bild",
+          "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 2:1-ramen och den läggs till och används på den här spotlighten.",
+          "outcomeAdded": "Tillagd i biblioteket och vald för den här spotlighten.",
+          "outcomeExisting": "Finns redan i biblioteket — vald för den här spotlighten."
+        }
+      }
+    },
+    "imageCatalogue": {
+      "upload": "Ladda upp",
+      "uploading": "Lägger till…",
+      "emptyCatalogue": "Inga bilder ännu. Ladda upp en för att börja.",
+      "columnEmpty": "Välj en bild",
+      "use": "Använd den här bilden",
+      "nameLabel": "Bildens namn",
+      "rename": "Byt namn",
+      "live": "Publicerad",
+      "hidden": "Dold",
+      "draft": "Utkast",
+      "switchedOff": "Avstängd",
+      "replace": "Ersätt bild",
+      "remove": "Ta bort ur biblioteket",
+      "replaceConfirm": {
+        "title": "Ersätt ”{label}”",
+        "choose": "Välj den nya bilden",
+        "confirmUnused": "Ersätt bild"
+      },
+      "removeConfirm": {
+        "title": "Ta bort ”{label}”",
+        "confirmUnused": "Ta bort ur biblioteket"
+      },
+      "errors": {
+        "tooLarge": "Filen är för stor. Bilder får vara högst 4 MB.",
+        "unsupportedType": "Filen är inte en JPEG. Beskär bilden här och försök igen.",
+        "wrongSize": "Bilden har inte exakt den storlek som ramen kräver. Beskär den här och försök igen.",
+        "nameRequired": "Ge bilden ett namn på 1–120 tecken."
+      },
+      "forPurpose": {
+        "product": {
+          "title": "Produktbilder",
+          "description": "En bild kan användas av många produkter. Ditt val gäller bara den här produkten, men att ersätta eller ta bort en bild påverkar alla produkter som använder den.",
+          "usedBadge": "{count, plural, one {# produkt} other {# produkter}}",
+          "usedBy": "Produkter som använder bilden",
+          "usedByNone": "Ingen produkt använder den här bilden.",
+          "replaceConsequence": "{count, plural, one {Produkten nedan kommer att visa den nya bilden.} other {Alla # produkter nedan kommer att visa den nya bilden.}}",
+          "replaceUnused": "Ingen produkt använder den här bilden. Den nya tar dess plats i biblioteket.",
+          "replaceConfirm": "Ersätt på {count, plural, one {# produkt} other {# produkter}}",
+          "removeConsequence": "{count, plural, one {Produkten nedan blir utan bild tills du väljer en annan.} other {Alla # produkter nedan blir utan bild tills du väljer en annan.}}",
+          "removeUnused": "Ingen produkt använder den här bilden. Den tas bort ur biblioteket för gott.",
+          "removeConfirm": "Ta bort från {count, plural, one {# produkt} other {# produkter}}"
+        },
+        "libraryCover": {
+          "title": "Bibliotekets omslagsbilder",
+          "description": "En bild kan vara omslag för flera artiklar. Ditt val gäller bara den här artikeln, men att ersätta eller ta bort en bild påverkar alla artiklar som använder den, även publicerade.",
+          "usedBadge": "{count, plural, one {# artikel} other {# artiklar}}",
+          "usedBy": "Artiklar som använder bilden",
+          "usedByNone": "Ingen artikel använder den här bilden.",
+          "replaceConsequence": "{count, plural, one {Artikeln nedan kommer att visa den nya bilden, direkt om den är publicerad.} other {Alla # artiklar nedan kommer att visa den nya bilden, de publicerade direkt.}}",
+          "replaceUnused": "Ingen artikel använder den här bilden. Den nya tar dess plats i biblioteket.",
+          "replaceConfirm": "Ersätt på {count, plural, one {# artikel} other {# artiklar}}",
+          "removeConsequence": "{count, plural, one {Artikeln nedan blir utan omslag tills du väljer ett annat, även om den är publicerad.} other {Alla # artiklar nedan blir utan omslag tills du väljer ett annat, även de publicerade.}}",
+          "removeUnused": "Ingen artikel använder den här bilden. Den tas bort ur biblioteket för gott.",
+          "removeConfirm": "Ta bort från {count, plural, one {# artikel} other {# artiklar}}"
+        },
+        "landingImage": {
+          "title": "Bilder för landningssidor",
+          "description": "En bild kan användas på flera landningssidor och på flera ställen på samma sida. Ditt val gäller bara det här stället, men att ersätta eller ta bort en bild påverkar alla landningssidor som använder den, även publicerade.",
+          "usedBadge": "{count, plural, one {# sida} other {# sidor}}",
+          "usedBy": "Landningssidor som använder bilden",
+          "usedByNone": "Ingen landningssida använder den här bilden.",
+          "replaceConsequence": "{count, plural, one {Landningssidan nedan kommer att visa den nya bilden, direkt om den är publicerad.} other {Alla # landningssidor nedan kommer att visa den nya bilden, de publicerade direkt.}}",
+          "replaceUnused": "Ingen landningssida använder den här bilden. Den nya tar dess plats i biblioteket.",
+          "replaceConfirm": "Ersätt på {count, plural, one {# sida} other {# sidor}}",
+          "removeConsequence": "{count, plural, one {Landningssidan nedan förlorar bilden, även om den är publicerad. En bildsektion som blir utan bilder tas bort.} other {Alla # landningssidor nedan förlorar bilden, även de publicerade. En bildsektion som blir utan bilder tas bort.}}",
+          "removeUnused": "Ingen landningssida använder den här bilden. Den tas bort ur biblioteket för gott.",
+          "removeConfirm": "Ta bort från {count, plural, one {# sida} other {# sidor}}"
+        },
+        "spotlightImage": {
+          "title": "Bilder för spotlights",
+          "description": "En bild kan användas av flera spotlights. Ditt val gäller bara den här spotlighten, men att ersätta eller ta bort en bild påverkar alla spotlights som använder den, även de som visas i sessionsrapporternas e-post.",
+          "usedBadge": "{count, plural, one {# spotlight} other {# spotlights}}",
+          "usedBy": "Spotlights som använder bilden",
+          "usedByNone": "Ingen spotlight använder den här bilden.",
+          "replaceConsequence": "{count, plural, one {Spotlighten nedan kommer att visa den nya bilden, i nästa e-post om den är påslagen.} other {Alla # spotlights nedan kommer att visa den nya bilden, de påslagna i nästa e-post.}}",
+          "replaceUnused": "Ingen spotlight använder den här bilden. Den nya tar dess plats i biblioteket.",
+          "replaceConfirm": "Ersätt på {count, plural, one {# spotlight} other {# spotlights}}",
+          "removeConsequence": "{count, plural, one {Spotlighten nedan förlorar bilden och stängs av, så den försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på den igen.} other {Alla # spotlights nedan förlorar bilden och stängs av, så de försvinner ur sessionsrapporternas e-post tills du väljer en ny bild och slår på var och en igen.}}",
+          "removeUnused": "Ingen spotlight använder den här bilden. Den tas bort ur biblioteket för gott.",
+          "removeConfirm": "Ta bort från {count, plural, one {# spotlight} other {# spotlights}}"
+        }
+      }
+    },
+    "filters": {
+      "day": "Veckodag",
+      "allDays": "Alla dagar",
+      "gedu": "Gedu",
+      "language": "Språk",
+      "allLanguages": "Alla språk",
+      "municipality": "Kommun",
+      "searchGedu": "Sök Geduer…",
+      "searchMunicipality": "Sök kommuner…",
+      "noResults": "Inga träffar.",
+      "type": "Typ",
+      "allTypes": "Alla",
+      "search": "Sök",
+      "searchPlaceholder": "Sök på namn…",
+      "showing": "Visar {count} av {total}",
+      "clear": "Rensa",
+      "noMatches": "Inga {type, select, consumerClub {konsumentklubbar} municipalityClub {kommunklubbar} camp {läger} other {evenemang}} matchar sökningen och de valda filtren.",
+      "noMatchesAll": "Inget matchar sökningen och de valda filtren."
+    },
+    "geduPicker": {
+      "searchPlaceholder": "Sök namn eller e-post…",
+      "speaks": "Talar",
+      "any": "Alla",
+      "countSummary": "Visar {filtered} av {total} Geduer",
+      "noResults": "Inga Geduer matchar din sökning.",
+      "current": "Nuvarande",
+      "alreadyAssigned": "Redan tilldelad",
+      "alreadyExpected": "Redan på tillfället",
+      "absentGedu": "Gedun som vikarieras",
+      "notCertified": "Inte certifierad",
+      "alreadyTrainee": "Redan praktikant",
+      "traineeInstead": "Kan läggas till som praktikant i stället.",
+      "notQualified": "Saknar behörighet: {qualification}",
+      "doesNotSpeak": "Talar inte {language}",
+      "outsideCoverage": "Täcker inte området"
+    },
+    "participantPicker": {
+      "title": "Lägg till en deltagare",
+      "description": "Lägg till ett barn eller en förälder direkt i denna produkt, förbi betalningen. En förälder kan bara ta en plats på en produkt som är öppen för föräldrar.",
+      "searchPlaceholder": "Sök en förälder eller spelare på namn, e-post, telefon eller spelanvändarnamn…",
+      "searchHint": "Skriv minst 2 tecken för att söka.",
+      "noParents": "Inga föräldrar ännu.",
+      "noSearchResults": "Inga föräldrar eller spelare matchar din sökning.",
+      "unnamedParent": "Namnlös förälder",
+      "unnamedGamer": "Namnlös spelare",
+      "add": "Lägg till",
+      "adding": "Lägger till…",
+      "added": "Tillagd",
+      "alreadyAdded": "Redan tillagd",
+      "addFailed": "Det gick inte att lägga till deltagaren."
+    },
+    "groupsPanel": {
+      "title": "Grupper",
+      "attendanceAndReports": "Närvaro och sammanfattningar",
+      "subtitle": "Dra varje deltagare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
+      "addGroup": "Lägg till grupp",
+      "loading": "Laddar…",
+      "genderBoy": "pojke",
+      "genderGirl": "flicka",
+      "genderNonBinary": "ickebinär",
+      "chip": {
+        "age": "{age}å",
+        "parent": "Förälder: {name}",
+        "participantEmail": "Kontakt: {email}"
+      },
+      "unassigned": {
+        "title": "Otilldelade",
+        "subtitle": "Personer som ännu inte är i en grupp. Dra dem in i en för att placera dem.",
+        "empty": "Alla har en grupp.",
+        "addParticipant": "Lägg till deltagare",
+        "removeParticipant": "Ta bort deltagare"
+      },
+      "empty": {
+        "title": "Inga grupper än",
+        "description": "Lägg till en grupp när du är redo att börja placera deltagare.",
+        "addFirst": "Lägg till din första grupp"
+      },
+      "group": {
+        "defaultName": "Grupp {letter}",
+        "nameLabel": "Gruppnamn",
+        "namePlaceholder": "Namnge gruppen",
+        "nameRequired": "Ge gruppen ett namn.",
+        "editAria": "Byt namn på {name}",
+        "saveNameAria": "Spara namn",
+        "cancelEditAria": "Avbryt",
+        "deleteAria": "Ta bort {name}",
+        "participantCount": "{count, plural, =0 {Inga deltagare} =1 {1 deltagare} other {# deltagare}}",
+        "assignedGedus": "Geduer",
+        "noGedus": "Inga Geduer än.",
+        "addGedu": "Lägg till Gedu",
+        "participantsLabel": "Deltagare",
+        "empty": "Ingen här än — dra in någon.",
+        "deleteConfirmTitle": "Ta bort {name}?",
+        "deleteConfirmEmpty": "Ingen är i den här gruppen, så att ta bort den rensar bara Gedu-tilldelningarna.",
+        "deleteConfirmWithParticipants": "{count, plural, =1 {1 deltagare finns i denna grupp} other {# deltagare finns i denna grupp}}. De flyttas till Otilldelade."
+      },
+      "gedu": {
+        "removeAria": "Ta bort {name}"
+      },
+      "picker": {
+        "addTitle": "Lägg till Gedu i {name}",
+        "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa.",
+        "addTraineeTitle": "Lägg till praktikant i {name}",
+        "addTraineeDescription": "En praktikant följer gruppen och behöver inte vara certifierad. De som redan finns på produkten, som Gedu eller praktikant, är gråa."
+      },
+      "trainee": {
+        "role": "Praktikant",
+        "add": "Lägg till praktikant",
+        "removeAria": "Ta bort praktikanten {name}"
+      },
+      "removeParticipant": {
+        "confirmTitle": "Ta bort {name} från den här produkten?",
+        "confirmDescription": "{name} avregistreras och förlorar åtkomsten omedelbart.",
+        "noRefundWarning": "Ingen återbetalning sker. Om den här kunden har betalat får de inte tillbaka pengarna.",
+        "confirmCta": "Ta bort deltagare"
+      },
+      "waitlist": {
+        "title": "Väntelista",
+        "subtitle": "Personer som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv deltagare här för att flytta hen sist i kön.",
+        "empty": "Ingen står på väntelistan.",
+        "seatOffer": {
+          "invite": "Bjud in",
+          "inviteAgain": "Bjud in igen",
+          "noAnswer": "Inget svar",
+          "leftDays": "{count, plural, one {# dag kvar} other {# dagar kvar}}",
+          "leftHours": "{count, plural, one {# timme kvar} other {# timmar kvar}}",
+          "leftLastHour": "Mindre än en timme kvar",
+          "liveTitle": "Inbjuden. Erbjudandet gäller till {deadline}.",
+          "expiredTitle": "Erbjudandet gick ut {deadline} utan svar.",
+          "needsOneGroup": "För att bjuda in måste produkten ha exakt en grupp, så att familjen som tackar ja har någonstans att placeras. Nu finns det {count, plural, =0 {inga grupper} one {# grupp} other {# grupper}}."
+        }
+      },
+      "seatsOverfilled": "{count} av {total} platser – {over} över",
+      "blockedMove": {
+        "acknowledge": "Okej",
+        "promoteUnpaid": {
+          "title": "Platsen kräver en prenumeration",
+          "description": "{name} står på väntelistan utan prenumeration, och en plats i den här klubben faktureras varje månad. Att ge platsen nu skulle skriva in hen gratis.",
+          "nextStep": "Be familjen ta platsen själv: så länge en plats är ledig visas klubben som öppen i butiken, så de kan lämna väntelistan från sitt kort på Min SOG och gå till kassan — det är där prenumerationen skapas."
+        },
+        "demoteSubscribed": {
+          "title": "Prenumerationen är fortfarande aktiv",
+          "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats den inte längre har.",
+          "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
+        },
+        "removeSubscribed": {
+          "title": "Prenumerationen är fortfarande aktiv",
+          "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
+          "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
+        }
+      },
+      "switchClub": {
+        "dropZone": "Byt klubb",
+        "title": "Byt klubb",
+        "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, och därefter betalar familjen den nya klubbens pris.",
+        "searchPlaceholder": "Sök klubbar på namn",
+        "picker": {
+          "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
+          "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
+          "alreadyHolds": "Har redan plats"
+        },
+        "facts": {
+          "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
+          "ageRangeWithGamer": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}} · {name} är {age}",
+          "seats": "{taken} av {capacity} platser tagna",
+          "regionLocked": "Endast familjer i {country}",
+          "notStarted": "Startar {date}. Familjen betalar från i dag, inte från startdatumet.",
+          "subscriptionEnding": "Familjen har sagt upp prenumerationen och den slutar {date}. Den här månadens prisskillnad faktureras inte."
+        },
+        "prices": {
+          "current": "Betalar nu",
+          "target": "Nytt pris",
+          "proration": "Nästa faktura lägger till eller återbetalar skillnaden för resten av månaden.",
+          "nothingPaid": "Inget mer debiteras före {date}. Därefter betalar familjen den nya klubbens pris, minus eventuell rabatt som de redan har.",
+          "unavailable": "Inget pris att visa",
+          "error": "Priskontrollen kom inte tillbaka. Välj klubben igen för att försöka på nytt."
+        },
+        "back": "Tillbaka",
+        "group": {
+          "label": "Grupp",
+          "unassigned": "Lämna utan grupp",
+          "members": "{count, plural, one {# spelare} other {# spelare}}"
+        },
+        "refusals": {
+          "latestInvoiceNotPaid": "Familjens senaste faktura är inte betald, så det finns ingen betald tid att flytta. Red ut det i Stripe först.",
+          "subscriptionNotSingleItem": "Prenumerationen har mer än en rad, så det finns inget enskilt pris att byta. Red ut det i Stripe först.",
+          "noTargetPriceInCurrency": "Den här klubben har inget pris i den valuta prenumerationen faktureras i. Klubbar prissätts i euro, så en prenumeration som Stripe skapade i en annan valuta kan inte bytas här — red ut det i Stripe först.",
+          "participationNotActive": "Den här platsen är inte aktiv, så det finns inget att flytta.",
+          "noLiveSubscription": "Ingen aktiv prenumeration står bakom den här platsen, så det här är fel verktyg: ta bort platsen och skriv in spelaren på den andra klubben i stället.",
+          "targetNotPaidSubscriptionClub": "Den produkten är ingen klubb som faktureras varje månad, så en prenumeration kan inte följa med platsen dit.",
+          "sameProduct": "Det är klubben spelaren redan går i.",
+          "alreadyOnTarget": "Spelaren har redan en plats i den klubben."
+        },
+        "commit": {
+          "stripeUpdated": "Prenumerationen ligger redan på den nya klubbens pris, men platsen flyttades inte. Tryck på Byt klubb igen för att slutföra — ett nytt tryck debiterar inte familjen två gånger.",
+          "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
+          "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
+        },
+        "confirm": "Byt klubb"
+      },
+      "requirementGaps": {
+        "title": "Tilldela ändå?",
+        "action": "Tilldela ändå"
+      }
+    },
+    "seatLimitModes": {
+      "limited": "Begränsat antal platser",
+      "limitedDescription": "Begränsa hur många spelare som kan delta. När det är fullt kan nya anmälningar gå till en väntelista.",
+      "unlimited": "Ingen platsgräns",
+      "unlimitedDescription": "Alla som anmäler sig får delta — ingen gräns."
+    },
+    "vat": {
+      "headline": {
+        "reduced": "Reducerad momssats – {rate}",
+        "standard": "Allmän momssats – {rate}"
+      },
+      "reason": {
+        "reduced": "Läger omfattas av Finlands reducerade momssats – ett beslut från ekonomiledningen som gäller alla läger. Satsen följer av produkttypen och kan inte ändras här.",
+        "standard": "Klubbar och avgiftsbelagda evenemang säljs med Finlands allmänna momssats. Satsen följer av produkttypen och kan inte ändras här."
+      },
+      "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
+    },
+    "staffing": {
+      "menuLabel": "Fler åtgärder för det här tillfället",
+      "setSubstitute": "Ange vikarie",
+      "changeSubstitute": "Byt vikarie",
+      "changeSubstituteFor": "Byt vikarie för {name}",
+      "clearSubstitute": "Ta bort vikarie",
+      "clearSubstituteFor": "Ta bort vikarie för {name}",
+      "withdrawRequest": "Dra tillbaka förfrågan",
+      "withdrawRequestFor": "Dra tillbaka förfrågan för {name}",
+      "withRole": "{name} · {role}",
+      "absentLabel": "Borta",
+      "subLabel": "Vikarie",
+      "changeChoice": "Byt",
+      "absentStepTitle": "Vem är borta?",
+      "absentStepBody": "Fler än en Gedu är inbokad på tillfället den {date}. Välj den som inte kan vara med.",
+      "pickerTitle": "Välj en vikarie",
+      "pickerDescription": "Välj vem som vikarierar för {name}. En Gedu som inte kan visas med orsaken.",
+      "confirmTitle": "Ange vikarie",
+      "confirmBody": "Registrera vem som håller tillfället den {date} i den frånvarande Gedu’ns ställe.",
+      "approvesOpenRequest": "Det här godkänner den öppna förfrågan i stället för att skapa en ny.",
+      "replacesCurrentSub": "Det här ersätter {name}, som vikarierar på tillfället just nu.",
+      "reasonKept": "Orsaken som redan angetts för frånvaron behålls.",
+      "reasonLabel": "Orsak",
+      "reasonSick": "Sjuk",
+      "reasonOther": "Något annat",
+      "noteLabel": "Kommentar till kontoret",
+      "notePlaceholder": "Vad kontoret behöver veta om det här vikariatet.",
+      "noteRemaining": "{count} tecken kvar",
+      "confirmAction": "Ange vikarien",
+      "setFailed": "Vikarien kunde inte anges. Försök igen.",
+      "clearTitle": "Ta bort vikarien?",
+      "clearBody": "{sub} vikarierar inte längre för {name} den {date}, och tillfället går tillbaka till kön och behöver en vikarie.",
+      "clearConfirm": "Ta bort vikarien",
+      "clearFailed": "Vikarien kunde inte tas bort. Försök igen.",
+      "withdrawTitle": "Dra tillbaka förfrågan?",
+      "withdrawBody": "{name} är med på tillfället den {date} ändå. Erbjudandena på förfrågan faller bort och ingen registreras som vikarie.",
+      "withdrawConfirm": "Dra tillbaka förfrågan",
+      "withdrawFailed": "Förfrågan kunde inte dras tillbaka. Försök igen."
+    },
+    "sessions": {
+      "loadFailed": "Dokumentationen av tillfällena kunde inte laddas. Ladda om sidan för att försöka igen.",
+      "loading": "Laddar dokumentationen av produktens tillfällen.",
+      "railGroupHeading": "Grupp"
+    },
+    "cancellation": {
+      "menuLabel": "Fler åtgärder för det här inställda tillfället",
+      "cancelSession": "Ställ in tillfället",
+      "addReason": "Lägg till en orsak",
+      "changeReason": "Ändra orsaken",
+      "restoreSession": "Återställ tillfället",
+      "cancelTitle": "Ställa in det här tillfället?",
+      "cancelBody": "{date}. Familjer och Geduer ser tillfället som inställt, och ingenting kan registreras på det. Ingen meddelas.",
+      "reasonTitle": "Ändra orsaken",
+      "reasonBody": "{date}. Tillfället förblir inställt.",
+      "reasonLabel": "Orsak",
+      "reasonHint": "Bara administratörer ser orsaken. {count} tecken kvar",
+      "reasonPlaceholder": "Varför ställs passet in?",
+      "keepSession": "Behåll tillfället",
+      "cancelConfirm": "Ställ in tillfället",
+      "reasonConfirm": "Spara orsaken",
+      "recordKept": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs.",
+      "recordKeptEmailed": "Anteckningar, foton och närvaro som redan registrerats för tillfället sparas. Familjerna ser dem inte medan tillfället är inställt, och de kommer tillbaka om tillfället återställs. Rapporten har redan mejlats till familjerna, och det mejlet kan inte återkallas.",
+      "cancelFailed": "Det gick inte att spara. Försök igen.",
+      "restoreTitle": "Återställa det här tillfället?",
+      "restoreBody": "{date}. Familjer och Geduer ser tillfället som schemalagt igen, och det kan registreras som vanligt. Ingen meddelas.",
+      "restoreConfirm": "Återställ tillfället",
+      "restoreFailed": "Tillfället kunde inte återställas. Försök igen."
+    }
+  },
+  "users": {
+    "title": "Användare",
+    "manageAccounts": "Hantera användarkonton och roller",
+    "searchPlaceholder": "Sök på namn, e-post, telefon eller spelanvändarnamn…",
+    "searchAriaLabel": "Sök användare",
+    "roleFilterLabel": "Roll",
+    "all": "Alla",
+    "noFilterResults": "Inga användare matchar dina filter.",
+    "noUsers": "Inga användare hittades.",
+    "backToUsers": "Tillbaka till användare",
+    "userNotFound": "Användaren hittades inte.",
+    "joined": "Gick med",
+    "unknown": "Okänd",
+    "linkedGamers": "Kopplade spelare",
+    "linkedParents": "Kopplade föräldrar",
+    "unnamedGamer": "Namnlös spelare",
+    "unnamedUser": "Namnlös användare",
+    "noConnectedGamers": "Inga kopplade spelare",
+    "assignedProducts": "Kopplade produkter",
+    "noAssignedProducts": "Inga kopplade produkter",
+    "unassignedGroup": "Ingen grupp tilldelad",
+    "needsGroup": "Behöver en grupp",
+    "untitledProduct": "Namnlös produkt",
+    "gamerDetails": {
+      "title": "Personuppgifter",
+      "edit": "Redigera personuppgifter",
+      "birthMonthLabel": "Födelsemånad",
+      "birthYearLabel": "Födelseår",
+      "genderLabel": "Kön",
+      "genderUnset": "Ej angivet",
+      "saveError": "Det gick inte att spara uppgifterna. Försök igen.",
+      "gender": {
+        "boy": "Pojke",
+        "girl": "Flicka",
+        "non_binary": "Icke-binär"
+      },
+      "ageYears": "{age, plural, one {# år} other {# år}}",
+      "usernameLabel": "Användarnamn",
+      "usernameHint": "Endast bokstäver och siffror, 3–20 tecken. Från och med nu loggar barnet in med det nya användarnamnet.",
+      "usernameInvalid": "Använd 3–20 bokstäver eller siffror, utan mellanslag.",
+      "usernameTaken": "Användarnamnet är redan upptaget. Prova ett annat.",
+      "usernameSaveError": "Det gick inte att byta användarnamnet, så inget sparades. Försök igen.",
+      "usernameSavedDetailsFailed": "Användarnamnet byttes, men födelsedatum och kön sparades inte. Försök igen.",
+      "emailHint": "Från och med nu loggar barnet in med den nya adressen. Den visas som overifierad tills den har bekräftats.",
+      "emailSaveError": "Det gick inte att byta e-postadressen, så inget sparades. Försök igen.",
+      "emailSavedDetailsFailed": "E-postadressen byttes, men födelsedatum och kön sparades inte. Försök igen."
+    },
+    "emailEdit": {
+      "edit": "Byt e-postadress",
+      "title": "Byt e-postadress",
+      "description": "Från och med nu loggar personen in med den nya adressen. Den visas som overifierad tills den har bekräftats.",
+      "label": "E-postadress",
+      "invalid": "Ange en giltig e-postadress.",
+      "taken": "Adressen tillhör redan ett annat konto. Att slå ihop eller ta bort det kontot går inte här – be en utvecklare att hantera det.",
+      "saveError": "Det gick inte att byta e-postadressen. Försök igen."
+    },
+    "gameAccounts": {
+      "title": "Spelkonton",
+      "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
+    },
+    "marketing": {
+      "title": "Marknadsföring",
+      "attribution": "Ursprung",
+      "preferences": "Inställningar",
+      "schoolOfGaming": "School of Gaming",
+      "lynxEducate": "Lynx Educate",
+      "granted": "Godkänt",
+      "notGranted": "Inte godkänt",
+      "since": "sedan {date}"
+    },
+    "photoConsent": {
+      "title": "Fotosamtycke",
+      "labels": {
+        "lynx_educate": "Lynx Educate"
+      },
+      "granted": "Godkänt",
+      "notGranted": "Inte godkänt",
+      "since": "sedan {date}"
+    },
+    "participationStatus": {
+      "active": "Aktiv",
+      "waitlisted": "På väntelista",
+      "reserving": "Inväntar betalning",
+      "completed": "Avslutad"
+    },
+    "emailVerified": "E-postadress verifierad",
+    "emailNotVerified": "E-postadressen är inte verifierad",
+    "certification": {
+      "title": "Certifiering",
+      "certified": "Certifierad",
+      "notCertified": "Inte certifierad",
+      "notCertifiedNote": "Den här Gedun har inte certifierats ännu. Hen kan inte tilldelas en grupp förrän du certifierar hen.",
+      "certifiedOn": "Certifierad {date}",
+      "certifiedByOn": "Certifierad av {name} {date}",
+      "certifyAction": "Certifiera",
+      "uncertifyAction": "Ta bort certifiering",
+      "saving": "Sparar…",
+      "error": "Det gick inte att uppdatera certifieringen. Försök igen."
+    },
+    "usernameLabel": "Användarnamn",
+    "discordNotLinked": "Inte kopplat",
+    "slackNotLinked": "Inte kopplat"
+  },
+  "locations": {
+    "editName": "Redigera {name}",
+    "addChildUnder": "Lägg till {type} under {parent}",
+    "location": "Plats",
+    "nameRequired": "Namn krävs",
+    "name": "Namn",
+    "enterTypeName": "Ange namn för {type}",
+    "enterName": "Ange namn",
+    "adding": "Lägger till...",
+    "addType": "Lägg till {type}"
+  },
+  "sites": {
+    "subtitle": "Alla lokaler på plattformen och produkterna som körs i var och en.",
+    "addSite": "Lägg till en lokal",
+    "searchPlaceholder": "Sök lokal på namn…",
+    "searchAriaLabel": "Sök lokaler",
+    "columnSite": "Lokal",
+    "columnPlace": "Plats",
+    "columnProducts": "Produkter",
+    "searchCapped": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+    "noResults": "Ingenting matchar ”{query}”.",
+    "empty": "Inga lokaler ännu. Lägg till den första.",
+    "backToSites": "Tillbaka till lokaler",
+    "notFound": "Det finns ingen lokal med det här id:t.",
+    "notASite": "Den här platsen är ingen lokal och har därför ingen sida här.",
+    "productsHeading": "Produkter i den här lokalen",
+    "noProducts": "Inget körs här ännu."
+  },
+  "testing": {
+    "title": "Testning",
+    "description": "Interna verktyg för testning och utveckling",
+    "emailTool": "Verktyg för e-posttestning",
+    "emailToolDescription": "Skicka testmeddelanden via Brevo (SMTP) för att verifiera leverans och mallar.",
+    "template": "Mall",
+    "language": "Språk",
+    "toEmail": "Mottagare",
+    "toEmailPlaceholder": "mottagare@example.com",
+    "templateParameters": "Mallparametrar",
+    "subject": "Ämne",
+    "sendTestEmail": "Skicka testmeddelande",
+    "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
+    "failedToSendRequest": "Kunde inte skicka förfrågan",
+    "preview": "Förhandsgranskning",
+    "previewError": "Kunde inte rendera mallen: {message}",
+    "previewWidth": {
+      "label": "Förhandsgranskningens bredd",
+      "desktop": "Dator",
+      "mobile": "Mobil"
+    },
+    "attachment": "Bilaga: {name}",
+    "sentAttachment": "Det som skickades: {name}",
+    "discord": {
+      "tool": "Testverktyg för Discord",
+      "toolDescription": "Skicka ett direktmeddelande från den här miljöns Discord-bot till ett länkat konto för att kontrollera att utskicket fungerar.",
+      "recipient": "Mottagare",
+      "recipientOption": "{name} ({discordUsername})",
+      "noLinkedAccounts": "Inget konto har ett länkat Discord-konto ännu. Länka ett med /link i Discord först.",
+      "message": "Meddelande",
+      "messagePlaceholder": "Ren text, högst 2 000 tecken",
+      "send": "Skicka testmeddelande",
+      "sent": "Meddelandet skickades.",
+      "templatePlain": "Ren text",
+      "templateSubFlow": "/sub och vikarie-DM:er: alla meddelanden",
+      "subPreviewSent": "Alla steg skickades."
+    },
+    "slack": {
+      "tool": "Testverktyg för Slack",
+      "toolDescription": "Skicka ett meddelande till en kanal från den här miljöns Slack-bot för att kontrollera att utskicket fungerar.",
+      "channel": "Kanal",
+      "channelPlaceholder": "Kanal-ID, t.ex. C0123456789",
+      "message": "Meddelande",
+      "messagePlaceholder": "Ren text, högst 4 000 tecken",
+      "send": "Skicka testmeddelande",
+      "sent": "Meddelandet skickades.",
+      "templatePlain": "Ren text",
+      "templateSubFlow": "Vikariemeddelanden: alla lägen",
+      "subPreviewSent": "Alla meddelanden skickades."
+    }
+  },
+  "tools": {
+    "title": "Verktyg"
+  },
+  "whatsapp": {
+    "title": "WhatsApp",
+    "description": "Visa och svara på WhatsApp-konversationer",
+    "searchContacts": "Sök kontakter...",
+    "noConversations": "Inga konversationer ännu.",
+    "selectConversation": "Välj en konversation för att börja skicka meddelanden",
+    "typeMessage": "Skriv ett meddelande...",
+    "notDelivered": "Ej levererat",
+    "today": "Idag",
+    "yesterday": "Igår"
+  },
+  "substitutions": {
+    "title": "Vikariat",
+    "description": "Tillfällen som någon inte kan ta, och vem som hoppade in.",
+    "descriptionWithZone": "Tillfällen som någon inte kan ta, och vem som hoppade in. Tiderna visas i {zone}.",
+    "listLabel": "Tillfällen som behöver en vikarie",
+    "allClear": "Inget tillfälle behöver en vikarie.",
+    "substitutedLabel": "Tillfällen med en vikarie",
+    "substitute": "Vikarie:",
+    "approvedBy": "Godkänd av {name} · {when}",
+    "substitutedEmpty": "Inga kommande tillfällen har en vikarie.",
+    "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
+    "offersLabel": "Geduer som erbjuder sig att vikariera",
+    "away": "Borta:",
+    "unnamed": "Namnlös Gedu",
+    "reason": {
+      "sick": "Sjuk",
+      "other": "Annat"
+    },
+    "noOffers": "Inga erbjudanden än.",
+    "declinedBy": "Tackade nej: {names}",
+    "openGroup": "Öppna gruppen",
+    "seatSomeoneElse": "Välj en annan vikarie",
+    "approve": "Godkänn",
+    "failed": "Godkännandet misslyckades – försök igen.",
+    "loadError": "Vikariaten kunde inte laddas.",
+    "loadErrorWithReason": "Vikariaten kunde inte laddas: {reason}",
+    "approveConfirmTitle": "Godkänn {name} som vikarie?",
+    "approveConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Om hens Discord-konto är kopplat får hen besked där också. Tillfället försvinner från de andra frivilligas lista, meddelandet i Slack visar vem som tog det, och på kortet står nu att {name} vikarierar för {absent}.",
+    "approveFailedOfferGone": "{name} har tagit tillbaka sitt erbjudande, så det finns inget att godkänna.",
+    "approveFailedAlreadySettled": "Någon annan har redan löst det här tillfället.",
+    "approveFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+    "approveFailedIneligible": "{name} kan inte längre ta det här tillfället.",
+    "seatConfirmTitle": "Sätt in {name} som vikarie?",
+    "seatConfirmBody": "{name} tar {product} — {group} den {when}, i stället för {absent}. Tillfället syns på hens Vikariat-sida och på Min SOG direkt, och gruppens arbetsyta öppnas för hen 48 timmar innan det börjar. Om hens Discord-konto är kopplat får hen besked där också. Tillfället försvinner från listan där Geduer erbjuder sig, meddelandet i Slack visar vem som tog det, och på kortet står nu att {name} vikarierar för {absent}.",
+    "seatConfirm": "Sätt in vikarien",
+    "seatReasonLabel": "Angiven orsak",
+    "seatFailed": "Vikarien kunde inte sättas in – försök igen.",
+    "seatFailedIneligible": "{name} kan inte ta det här tillfället – hen är redan med på det eller kan inte längre vikariera.",
+    "seatFailedSeatGone": "{absent} har inte längre det här tillfället, så det finns inget att vikariera för.",
+    "seatFailedRequestWithdrawn": "{absent} har dragit tillbaka sin begäran om vikarie, så det finns inget att vikariera för.",
+    "seatFailedNotScheduled": "Gruppen har inte längre något tillfälle det här datumet."
+  },
+  "feedback": {
+    "title": "Feedback",
+    "sources": {
+      "gamerOnline": "Från gamers efter onlinesessioner"
+    },
+    "empty": "Ingen feedback har getts än.",
+    "loadError": "Feedbacken kunde inte laddas. Ladda om sidan och försök igen.",
+    "loadErrorWithReason": "Feedbacken kunde inte laddas: {reason}",
+    "noAnswers": "Inga svar",
+    "answers": "{count, plural, one {# svar} other {# svar}}",
+    "skipped": "Hoppades över",
+    "belowAverage": "Under genomsnittet",
+    "belowAverageOn": "Under genomsnittet på: {statement}",
+    "statementLabels": {
+      "learned": "Lärde sig",
+      "fun": "Roligt",
+      "geduKnowledgeable": "Gedu kunnig",
+      "geduKind": "Gedu snäll",
+      "groupListens": "Blev hörd"
+    },
+    "timeline": {
+      "byWeek": "Positiva svar per vecka",
+      "byMonth": "Positiva svar per månad",
+      "platform": "Plattformen"
+    },
+    "back": {
+      "overview": "Tillbaka till feedback",
+      "list": {
+        "product": "Tillbaka till produkterna",
+        "gedu": "Tillbaka till Geduerna"
+      },
+      "responses": "Tillbaka till vad gamerna sa",
+      "detail": {
+        "product": "Tillbaka till produkten",
+        "group": "Tillbaka till gruppen",
+        "gedu": "Tillbaka till Gedun",
+        "gamer": "Tillbaka till gamern"
+      }
+    },
+    "hero": {
+      "positive": "positiva",
+      "definition": "Svarade Ja eller Absolut",
+      "responseRate": "{share} av de närvarande gamerna svarade"
+    },
+    "statements": {
+      "heading": "Per påstående",
+      "legend": "Negativt är Nej eller Inte riktigt; positivt är Ja eller Absolut.",
+      "positive": "{share} positiva",
+      "negative": "{share} negativa",
+      "saidPositive": "{positive} av {answers} svarade {yes} eller {definitely}"
+    },
+    "explore": {
+      "heading": "Utforska",
+      "titles": {
+        "product": "Produkter",
+        "gedu": "Geduer",
+        "responses": "Gamers"
+      },
+      "counts": {
+        "product": "{count, plural, one {# produkt} other {# produkter}}",
+        "gedu": "{count, plural, one {# Gedu} other {# Geduer}}",
+        "responses": "{count, plural, one {# svar} other {# svar}}"
+      }
+    },
+    "rows": {
+      "none": "Inget här än.",
+      "answers": "Svar",
+      "positive": "Positiva",
+      "positiveAgainst": "Positiva (plattformen {share})"
+    },
+    "lists": {
+      "titles": {
+        "product": "Produkter",
+        "gedu": "Geduer"
+      },
+      "subtitle": "Sämst först, jämfört med plattformens genomsnitt"
+    },
+    "detail": {
+      "kinds": {
+        "product": "Produkt",
+        "group": "Grupp",
+        "gedu": "Gedu",
+        "gamer": "Gamer"
+      },
+      "open": {
+        "product": "Öppna produkten",
+        "group": "Öppna gruppen",
+        "gedu": "Öppna Gedus konto",
+        "gamer": "Öppna gamerns konto"
+      },
+      "none": "Inget har besvarats om detta än.",
+      "platform": "Plattformen {share}",
+      "groupsHeading": "Grupper",
+      "productsHeading": "Produkter",
+      "gedusHeading": "Geduer",
+      "gamersHeading": "Gamers som svarade",
+      "responsesHeading": "Vad gamerna sa"
+    },
+    "responses": {
+      "title": "Vad gamerna sa",
+      "none": "Inga svar här.",
+      "noneWorthReading": "Inget värt att läsa: inga negativa svar och inga meddelanden.",
+      "noGedu": "Ingen Gedu registrerad",
+      "who": "Svar",
+      "filterLabel": "Vilka svar",
+      "worthReading": "Värda att läsa ({count})",
+      "all": "Alla ({count})"
+    }
+  },
+  "testimonials": {
+    "subtitle": "Föräldrars, gamers och geduers egna ord, samlade på ett ställe. Landningssidorna citerar dem som placerats där.",
+    "newTestimonial": "Nytt omdöme",
+    "backToList": "Tillbaka till omdömena",
+    "newPage": {
+      "title": "Nytt omdöme",
+      "submit": "Skapa omdöme"
+    },
+    "editPage": {
+      "title": "Redigera omdöme"
+    },
+    "listLoadError": "Omdömena kunde inte läsas in. Ladda om sidan och försök igen.",
+    "loadError": "Det här omdömet kunde inte läsas in. Ladda om sidan och försök igen.",
+    "notFound": "Inget omdöme har den här adressen.",
+    "empty": "Inga omdömen än.",
+    "allHeading": "Alla omdömen",
+    "languagesLabel": "Språk",
+    "saved": "Sparat {date}",
+    "quoteHasMarks": "Utelämna citattecknen: webbplatsen lägger till dem på varje språks eget sätt.",
+    "fields": {
+      "languages": "Språk",
+      "from": "Från",
+      "quote": "Citat"
+    },
+    "hints": {
+      "languages": "Skriv det på alla språk du har det på. Varje språk behöver citatet och vem det är från.",
+      "from": "Vem citatet är från, så som det ska visas — till exempel Mamma, Finland.",
+      "quote": "Personens ord som de gavs, utan citattecken: webbplatsen lägger till varje språks egna. Att översätta dem till ett annat språk går bra; att ändra dem gör det inte."
+    },
+    "usage": {
+      "heading": "Var det används",
+      "none": "Det visas inte någonstans än.",
+      "editNote": "När du sparar ändras orden överallt där det visas.",
+      "landingPage": "Landningssida: {title}",
+      "landingPageState": {
+        "both": "Läsarna ser det där nu.",
+        "liveOnly": "Läsarna ser det där fram till nästa publicering, som tar bort det.",
+        "workingOnly": "Visas inte för läsarna än: nästa publicering lägger dit det."
+      }
+    },
+    "record": {
+      "created": "Skapat {date}",
+      "createdBy": "Skapat {date} av {name}",
+      "createdByVia": "Skapat {date} av {name} via {app}",
+      "createdByViaUnnamed": "Skapat {date} av {name} via en AI-app",
+      "saved": "Senast sparat {date}",
+      "savedBy": "Senast sparat {date} av {name}",
+      "savedByVia": "Senast sparat {date} av {name} via {app}",
+      "savedByViaUnnamed": "Senast sparat {date} av {name} via en AI-app"
+    },
+    "actions": {
+      "save": "Spara",
+      "cancel": "Avbryt"
+    },
+    "errors": {
+      "noVersion": "Skriv omdömet på minst ett språk.",
+      "versionIncomplete": "Versionen på {language} behöver citatet och vem det är från.",
+      "quoted": "Citatet på {language} börjar eller slutar med ett citattecken. Utelämna tecknen: webbplatsen lägger till dem på varje språks eget sätt.",
+      "saveFailed": "Omdömet kunde inte sparas. Försök igen.",
+      "saveFailedWithReason": "Omdömet kunde inte sparas: {reason}"
+    },
+    "onLandingPages": "{count, plural, one {På # landningssida} other {På # landningssidor}}"
+  }
+}

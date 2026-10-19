@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Field } from "@/components/ui/field";
 import { TagGlyph } from "@/components/public/products/product-chips";
 import {

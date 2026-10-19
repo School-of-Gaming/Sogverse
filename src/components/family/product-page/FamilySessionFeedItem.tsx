@@ -13,7 +13,7 @@ import {
   type AttendanceMark,
   type SessionLabels,
 } from "@/components/session-feed";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { FamilyFutureSessionEntry, FamilyPastSessionEntry } from "./types";
 
 interface FamilySessionFeedItemProps {

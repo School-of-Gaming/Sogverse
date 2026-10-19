@@ -1,0 +1,24 @@
+{
+  "heading": "boQ DaneH’a’?",
+  "faqHeading": "qaSchuq SeghHommey",
+  "form": {
+    "messageLabel": "QIn",
+    "charactersNeeded": "{count} mu’mey Daj nIS",
+    "submit": "QIn yIngeH",
+    "adult": {
+      "description": "boQ yItlhob — QIn Hoch SIchbej noH Quj yejHaD ghom. jabbI’ID DangeHlaH je: <link>{email}</link>.",
+      "placeholder": "nuq DaneH’a’?",
+      "thankYou": "qatlho’ — QInlIj wISuqpu’. bIqonpu’ ’e’ wItIv!",
+      "failed": "QIn ngeH Dabe’lu’. yIboq.",
+      "tooManyRequests": "law’ QInmey DangeHpu’. yIloS ’ej yIboq."
+    },
+    "gamer": {
+      "description": "bIQamchoH’a’? naDev yIqon — maQaH.",
+      "replyNote": "majangchugh, SoSlI’ vavlI’ ghap jabbI’ID wIngeH.",
+      "placeholder": "nuq DaneH’a’?",
+      "thankYou": "QaH! QInlIj wISuqpu’.",
+      "failed": "QIn ngeH Dabe’lu’. yIboq.",
+      "tooManyRequests": "puS QInmey DangeHpu’. yIloS ’ej yIboq."
+    }
+  }
+}

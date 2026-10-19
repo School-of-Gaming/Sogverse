@@ -2,7 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
+import {
+  municipalityInvoicingKeys,
+} from "@/services/municipality-invoicing/municipality-invoicing.keys";
 import { productKeys } from "@/services/products/products.keys";
 import { InvoiceCustomersService } from "./invoice-customers.service";
 import type { InvoiceCustomerInput } from "./invoice-customers.contracts";

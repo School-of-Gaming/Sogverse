@@ -15,15 +15,21 @@ import { GTM_EVENTS } from "@/lib/gtm-events";
 import { isAdvertisedProduct } from "@/lib/marketing-events";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
-import { useSetMarketingConsent } from "@/services/marketing-consents";
-import { useSetGamerPhotoConsent } from "@/services/gamer-photo-consents";
+import {
+  useSetMarketingConsent,
+} from "@/services/marketing-consents/marketing-consents.queries";
+import {
+  useSetGamerPhotoConsent,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import {
   useCreateParticipation,
   useJoinWaitlist,
+} from "@/services/participations/participations.queries";
+import {
   type CreateParticipationInput,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import { isConsentRefusal } from "@/services/participations/consent-refusal";
-import { useUpdateProfile } from "@/services/users";
+import { useUpdateProfile } from "@/services/users/users.queries";
 import { purchaseShapeFor } from "./pricing-options";
 import type { RegionGate } from "./region-lock/region-gate";
 import { SetLocationDialog } from "./region-lock/set-location-dialog";

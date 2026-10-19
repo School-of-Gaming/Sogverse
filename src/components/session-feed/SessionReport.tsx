@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Markdown } from "@/components/ui/markdown";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { REPORT_CLAMP_REM, reportOverflows } from "./report-clamp";
 
 /**
