@@ -271,8 +271,11 @@ interface EnrollmentCardParentProps extends EnrollmentCardBillingProps {
    * The parent is signed in as themselves and the voice room is gated on the
    * *gamer's* enrollment, so a direct navigation would always be refused. The
    * shell opens the switch-profile dialog, which POSTs the account switch and
-   * then does a full-page navigation to the room — the house auth rule, since
-   * cookies a server route changed never reach the browser client's singleton.
+   * then does a full-page navigation — the house auth rule, since cookies a
+   * server route changed never reach the browser client's singleton. It wins
+   * in every voice room mode: a Sogverse room lands the child in it, and a
+   * meeting elsewhere or a product with no room lands them on their own My
+   * SOG, where they press the Join themselves.
    *
    * Optional so the prop can exist before the shell that fills it: with nothing
    * passed the button falls back to being a plain link, which is exactly what
@@ -386,6 +389,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     nextSessionEnd,
     hasVoiceRoom,
     voiceHref,
+    voiceRoom,
     siteName,
     openHref,
     waitlistPosition,
@@ -840,6 +844,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                       />
                     ) : (
                       <JoinVoiceButton
+                        voiceRoom={voiceRoom}
                         voiceIsOpen={voiceIsOpen}
                         voiceHref={voiceHref}
                         // Present only on a *child's* card seen by their

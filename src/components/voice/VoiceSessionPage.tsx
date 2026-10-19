@@ -30,7 +30,12 @@ import {
   useOwnSessionFeedback,
   useSaveSessionFeedback,
 } from "@/services/session-feedback";
-import { useVoiceToken, type VoiceRoomStanding } from "@/services/voice";
+import {
+  NOT_A_SOGVERSE_ROOM,
+  useVoiceToken,
+  type VoiceRoomStanding,
+} from "@/services/voice";
+import { ApiError } from "@/lib/api/api-error";
 import type { SessionFeedbackResult } from "@/components/voice/feedback/session-feedback-items";
 import type { GamerCreation } from "@/types";
 
@@ -180,6 +185,13 @@ function VoiceSessionInner({
       })
       .then(() => setWasJoined(true))
       .catch((err) => {
+        // A product joined elsewhere or by written instructions has no room
+        // here, and the reader is told so in their own language; every other
+        // refusal still shows the route's own words.
+        if (err instanceof ApiError && err.code === NOT_A_SOGVERSE_ROOM) {
+          setError(t('notASogverseRoom'));
+          return;
+        }
         setError(err instanceof Error ? err.message : t('failedToJoinRoom'));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once on mount

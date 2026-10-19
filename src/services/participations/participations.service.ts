@@ -34,6 +34,10 @@ import {
   type SeatOfferSweepResponse,
 } from "./seat-offer.contracts";
 import type { PlannedSession } from "@/lib/planned-sessions";
+import {
+  productVoiceRoom,
+  type ProductVoiceRoom,
+} from "@/lib/products/voice-room";
 
 /**
  * A site's name as it comes off the row — the canonical `name` plus the
@@ -120,6 +124,12 @@ export interface MyUpcomingSessionRow {
      * "not loaded".
      */
     site: ProductSiteName | null;
+    /**
+     * How the product's sessions are joined — the Sogverse room, a meeting
+     * elsewhere, or written instructions per locale. Always `sogverse` on an
+     * in-person product.
+     */
+    voiceRoom: ProductVoiceRoom;
     /**
      * Raw translation rows. The dashboard resolves to the viewer's UI locale
      * at render time so the cache key doesn't need to include locale (and a
@@ -251,6 +261,11 @@ export interface MyWaitlistRow {
      * waitlist place would be stating something untrue about the product.
      */
     isRemote: boolean;
+    /**
+     * How the product's sessions are joined. Nothing is joined from a
+     * waitlisted card; it is carried for the same reason `isRemote` is.
+     */
+    voiceRoom: ProductVoiceRoom;
     /**
      * Raw translation rows, resolved to the viewer's UI locale at render time —
      * same arrangement as the sessions read, so the cache key stays locale-free
@@ -1075,6 +1090,7 @@ function buildMyUpcomingSessionsQuery(
         group_joined_at,
         product:products!inner(
           id, product_type, topic, timezone, start_date, end_date, is_remote,
+          voice_room_mode, external_voice_url,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
@@ -1128,6 +1144,7 @@ function buildMyWaitlistQuery(
         seat_offer_sent_at,
         product:products!inner(
           product_type, topic, timezone, start_date, end_date, is_remote,
+          voice_room_mode, external_voice_url,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
         ),
@@ -1171,6 +1188,7 @@ function toMyUpcomingSessionRow(
       // cannot express it: a remote municipality club has a `location_id` and
       // no site. See `MyUpcomingSessionRow.product.site`.
       site: product.is_remote ? null : product.location,
+      voiceRoom: productVoiceRoom(product, product.product_translations),
       translations: product.product_translations,
     },
     groupId: row.group_id,
@@ -1211,6 +1229,7 @@ function toMyWaitlistRow(
       startDate: product.start_date,
       endDate: product.end_date,
       isRemote: product.is_remote,
+      voiceRoom: productVoiceRoom(product, product.product_translations),
       translations: product.product_translations,
     },
     slots: product.schedule_slots.map((s) => ({

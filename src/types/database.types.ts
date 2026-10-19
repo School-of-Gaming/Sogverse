@@ -2634,6 +2634,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at: string
+          voice_join_instructions: string | null
         }
         Insert: {
           created_at?: string
@@ -2643,6 +2644,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Update: {
           created_at?: string
@@ -2652,6 +2654,7 @@ export type Database = {
           product_id?: string
           short_description?: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Relationships: [
           {
@@ -2670,6 +2673,7 @@ export type Database = {
           created_at: string
           created_by: string
           end_date: string | null
+          external_voice_url: string | null
           for_gamers: boolean
           for_parents: boolean
           id: string
@@ -2694,6 +2698,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
+          voice_room_mode: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled: boolean
         }
         Insert: {
@@ -2702,6 +2707,7 @@ export type Database = {
           created_at?: string
           created_by: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2726,6 +2732,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Update: {
@@ -2734,6 +2741,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2758,6 +2766,7 @@ export type Database = {
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Relationships: [
@@ -4403,6 +4412,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -4429,6 +4439,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -5483,6 +5494,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -5509,6 +5521,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -5592,6 +5605,7 @@ export type Database = {
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
+      voice_room_mode: "sogverse" | "external" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5775,6 +5789,7 @@ export const Constants = {
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
+      voice_room_mode: ["sogverse", "external", "none"],
     },
   },
 } as const

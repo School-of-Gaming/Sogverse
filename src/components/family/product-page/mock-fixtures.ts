@@ -16,6 +16,7 @@ import type {
 } from "./types";
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
 import type { PlannedSession } from "@/lib/planned-sessions";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import { ROUTES } from "@/lib/constants";
 
 /**
@@ -79,6 +80,7 @@ export interface FamilyProductPageFixture {
   productName: string;
   schedule: FamilyProductSchedule;
   isRemote: boolean;
+  voiceRoom: ProductVoiceRoom;
   /** Whoever holds the seat — a child on every scenario but `my-own-club`. */
   participant: { id: string; firstName: string };
   /**
@@ -987,6 +989,7 @@ export function buildFamilyProductPageFixture(
       schedule_slots: slotsFor(config, slot),
     },
     isRemote: config.isRemote,
+    voiceRoom: { mode: "sogverse" },
     participant: config.participant ?? AINO,
     isSelfSeat: config.selfSeat === true,
     groupName: config.groupName,
