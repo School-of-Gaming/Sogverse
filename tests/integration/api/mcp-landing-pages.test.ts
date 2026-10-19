@@ -527,6 +527,7 @@ describe("saving", () => {
   it("writes one language's words checked against the structure", async () => {
     const sectionTexts = {
       [HERO]: { headline: "Pelikerhot", buttonLabel: "Kauppaan", imageAlt: "Linna" },
+      [TEXT]: { heading: "Kerhossa", body: "## Rakennamme\n\nYhdessä." },
       [FAQ]: { heading: "Kysymyksiä", items: { [QUESTION]: { question: "Mitä?", answer: "**Pelejä**." } } },
       [GALLERY]: { alts: { [PICTURE_ITEM]: "Linna" } },
     };
@@ -576,6 +577,11 @@ describe("saving", () => {
       "markdown outside the landing subset",
       { [TEXT]: { heading: "x", body: "![A castle](https://x.test/c.jpg)" } },
       "The words of section 2 (Text), body: uses markdown a landing page does not show — an image (![alt](url)) on line 1",
+    ],
+    [
+      "a heading in an FAQ answer, which its question already heads",
+      { [FAQ]: { items: { [QUESTION]: { question: "Why?", answer: "Because.\n\n## More" } } } },
+      "The words of section 3 (Questions and answers), question 1, answer: uses markdown a landing page does not show — a level-2 heading (##) on line 3",
     ],
   ])("refuses %s, naming it, and saves nothing", async (_, sectionTexts, named) => {
     const result = await tool("save_landing_page_text", {

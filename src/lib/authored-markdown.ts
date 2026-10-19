@@ -296,6 +296,7 @@ export type MarkdownUseCase =
   | "profile"
   | "article"
   | "landing"
+  | "landing-faq"
   | "spotlight";
 
 export interface MarkdownUseCaseDefinition {
@@ -341,11 +342,19 @@ export const MARKDOWN_USE_CASES: Record<MarkdownUseCase, MarkdownUseCaseDefiniti
   /** **A Library article's body**: admin-authored, on our own public pages. */
   article: defineUseCase({ headings: true, links: true }, "section"),
   /**
-   * **A landing page's prose** — a text section's body, an FAQ answer:
-   * admin-authored copy on our own public pages, read by a stranger arriving
-   * from a search, so links are part of its job.
+   * **A landing page's prose** — a text section's body: admin-authored copy
+   * on our own public pages, read by a stranger arriving from a search, so
+   * links are part of its job.
    */
   landing: defineUseCase({ headings: true, links: true }, "section"),
+  /**
+   * **A landing page's FAQ answer**: the same authors and readers as
+   * `landing`, so links stay. No headings, since the question is the heading
+   * the answer sits under, and an answer's own heading would rank level with
+   * or above it. No heading survives, so its outline is never reached;
+   * `section` is nominal.
+   */
+  "landing-faq": defineUseCase({ headings: false, links: true }, "section"),
   /**
    * **A spotlight's body**: admin-authored, appended to every family's
    * session report. Links are its point and an admin is trusted with them;

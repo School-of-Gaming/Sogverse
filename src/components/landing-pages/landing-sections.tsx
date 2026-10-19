@@ -487,7 +487,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
         question,
         answer:
           answer === null ? null : (
-            <Markdown variant="landing" emphasis="quiet">
+            <Markdown variant="landing-faq" emphasis="quiet">
               {answer}
             </Markdown>
           ),

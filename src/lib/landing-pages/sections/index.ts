@@ -6,7 +6,12 @@ import { imageSection } from "./image";
 import { pointsSection } from "./points";
 import { stepsSection } from "./steps";
 import { textSection } from "./text";
-import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
+import {
+  fieldOf,
+  type LandingMarkdownField,
+  type LandingMarkdownUseCase,
+  type TextReading,
+} from "./shared";
 
 /**
  * The landing page section registry: every section type, its schemas, its
@@ -214,18 +219,20 @@ export function isLandingMarkdownPath(type: LandingSectionType, path: string): b
 
 /**
  * Every authored-markdown value one section's words hold, with its path within
- * the section — whatever shape the words are, a value that is not a string
- * simply skipped.
+ * the section and the use case it renders under — whatever shape the words
+ * are, a value that is not a string simply skipped.
  */
 export function landingMarkdownValues(
   type: LandingSectionType,
   text: unknown,
-): { path: string; value: string }[] {
+): { path: string; value: string; useCase: LandingMarkdownUseCase }[] {
   const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
   return fields.flatMap((spec) => {
     if (!("items" in spec)) {
       const value = fieldOf(text, spec.field);
-      return typeof value === "string" ? [{ path: spec.field, value }] : [];
+      return typeof value === "string"
+        ? [{ path: spec.field, value, useCase: spec.useCase }]
+        : [];
     }
     const items = fieldOf(text, spec.items);
     const entries: [string, unknown][] =
@@ -235,7 +242,7 @@ export function landingMarkdownValues(
     return entries.flatMap(([id, item]) => {
       const value = fieldOf(item, spec.field);
       return typeof value === "string"
-        ? [{ path: `${spec.items}.${id}.${spec.field}`, value }]
+        ? [{ path: `${spec.items}.${id}.${spec.field}`, value, useCase: spec.useCase }]
         : [];
     });
   });
@@ -256,5 +263,6 @@ export {
   landingId,
   type ButtonTarget,
   type LandingMarkdownField,
+  type LandingMarkdownUseCase,
   type LandingSectionDefinition,
 } from "./shared";

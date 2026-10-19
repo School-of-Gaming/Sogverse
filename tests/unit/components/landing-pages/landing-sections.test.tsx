@@ -193,6 +193,26 @@ describe("the landing page renderers", () => {
     expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
   });
 
+  it("keeps a text section's headings, and unwraps an FAQ answer's to its words", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[1], SECTIONS[5]],
+      texts: {
+        [TEXT]: { heading: "What happens in a club", body: "## Building\n\nWe build things." },
+        [FAQ]: {
+          heading: "Questions",
+          items: { [ITEM(7)]: { question: "Who leads it?", answer: "## Our gedus\n\nA Game Educator." } },
+        },
+      },
+    });
+    // The text section's level-2 heading is drawn under its own H2.
+    expect(screen.getByRole("heading", { level: 3, name: "Building" })).toBeTruthy();
+    // The answer's never ranks beside its question: its words stay, as text.
+    expect(screen.queryByRole("heading", { name: "Our gedus" })).toBeNull();
+    const answer = screen.getByText("Our gedus");
+    expect(answer.closest("details")).not.toBeNull();
+    expect(answer.closest("h1, h2, h3, h4, h5, h6")).toBeNull();
+  });
+
   it("marks the words' language where it is not the page's", () => {
     const { container, unmount } = renderBody({ locale: "sv", textLocale: "en" });
     expect(container.firstElementChild?.getAttribute("lang")).toBe("en");
