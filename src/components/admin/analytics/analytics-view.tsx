@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Link, useRouter } from "@/i18n/navigation";
 import { LOCALE_CONFIG, formattingLocale, resolveLocale } from "@/lib/constants/locales";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { cn } from "@/lib/cn";
