@@ -82,11 +82,10 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 
 | Worktree | Item | Points for the review |
 |---|---|---|
-| `staging-invisible` | #1 staging hidden from search and AI crawlers | **Merge first** — Bing has been crawling the staging sitemap. Off production every response is noindex; robots lets Googlebot and Bingbot in to read it and refuses the rest; sitemap and `llms.txt` answer 404. Unverified: whether promoting a preview in Vercel rebuilds with production settings. |
 | `landing-email-capture` | #2 email sign-up section, Brevo double opt-in | Sogverse stores nothing about the lead except a one-hour hashed-IP rate-limit table — confirm that is acceptable. Account holders are not synced to Brevo (deferred). Brevo setup outstanding (below). |
 | `admin-analytics` | #4 admin Analytics page, and extra 3's two read-only MCP tools | All admins see the page. "Pages served" needs a Vercel token with observability access (below). The tools refuse page-level signups rather than guess, and refuse a range wholly before the data starts. Needs polish before it goes live. |
 | `faq-question-headings` | #5 FAQ questions as headings | Applies to every FAQ on the site. |
-| `discover-index` | #10 `/discover` index, breadcrumbs, IndexNow | Publish and Unpublish (landing pages and Library) now go through admin API routes so IndexNow can fire; the API route wrapper now returns the database error code where it discloses errors; the production check is duplicated byte for byte with `staging-invisible` on purpose; the index has no closing call to action though the site-quality rule asks every public page for one; the Finnish copy wants a native check. |
+| `discover-index` | #10 `/discover` index, breadcrumbs, IndexNow | Publish and Unpublish (landing pages and Library) now go through admin API routes so IndexNow can fire; the API route wrapper now returns the database error code where it discloses errors; the production check is duplicated byte for byte with the one already on `dev` (`src/lib/seo/deployment.ts`) on purpose; the index has no closing call to action though the site-quality rule asks every public page for one; the Finnish copy wants a native check. |
 | `landing-share-card` | #12 share title and picture per page | In the MCP tools, leaving a share field out of a save clears it — decide whether that is acceptable. |
 | `landing-picture-shapes` | #14 pictures in three shapes (wide 16:9, square, portrait 4:5), never cropped | Library covers uploaded through the AI app are now refused rather than cropped when not 16:9; a column was renamed to hold each picture's purpose; the uploader view has a new address. Not yet tried in a real AI app. |
 | `testimonials` | #15 part 1: the testimonials store, the Marketing admin hub, MCP tools | Home spots are written only by migrations; testimonials are never deleted by the app (the service role keeps DELETE so DB tests can clean up); a save with quotation marks in the text is refused; if the read fails, Home and About render without quotes. Check whether Home lost static rendering by reading testimonials per request. New fi/sv/fr admin copy wants a native check. |
@@ -98,7 +97,7 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 | `landing-mcp-seo-and-links` | extras 1 and 2: rendered SEO values in the page read tool; the link rule explained, and rewrites reported on save | The share-card branch's override belongs inside the one function that computes the rendered values. |
 | `landing-testimonials` | #15 part 2: a testimonials landing section (feature 1, pair 2, row 3, showcase 6) | Built on `testimonials`, which must land first. Still being built at the time of writing, in a sibling directory; it moves to `.claude/worktrees/` when its build finishes. |
 
-**Merge order.** `staging-invisible` first. Then any order within these constraints:
+**Merge order.** Any order within these constraints:
 `landing-email-capture` before `landing-sticky-section`; `testimonials` before
 `landing-testimonials`; `landing-picture-shapes` before `uploader-multi-file`. Expect small
 conflicts among `discover-index`, `landing-share-card` and `landing-mcp-seo-and-links`
