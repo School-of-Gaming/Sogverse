@@ -1,4 +1,4 @@
-import { type UserRole } from "@/lib/constants/roles";
+import type { UserRole } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants/routes";
 
 /**

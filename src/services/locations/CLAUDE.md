@@ -1134,8 +1134,8 @@ look at.
 
 `SUPPORTED_COUNTRIES`, `resolveLabels`, `getChildLevel`, and the `HierarchyLevel`/
 `nameI18n` types live in `src/lib/constants/location-hierarchies.ts`. This config table
-drives level labels and the naming of the level below a given row: it says what a country's levels are *called*, while the table says what
-its divisions *are*.
+drives level labels and the naming of the level below a given row: it says what a
+country's levels are *called*, while the table says what its divisions *are*.
 
 Localized labels apply **only** to the country whose language matches the user's UI locale
 (a Finnish admin sees "Maakunta"/"Kunta" for Finland but plain English "Local
