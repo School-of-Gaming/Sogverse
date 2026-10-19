@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import type { AdminLandingPageListItem } from "@/services/landing-pages";
+import type {
+  AdminLandingPageListItem,
+} from "@/services/landing-pages/landing-pages.contracts";
 
 /**
  * Where a page stands with readers, as one word: `draft` (not on the site),

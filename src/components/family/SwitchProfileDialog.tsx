@@ -11,12 +11,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { commitAccountSwitch } from "@/services/family/switch-account";
 import {
-  commitAccountSwitch,
   type FamilyMember,
   type SwitchAccountCredentials,
-  type SwitchGate,
-} from "@/services/family";
+} from "@/services/family/family.service";
+import { type SwitchGate } from "@/services/family/switch-gate";
 import { ProfileTile, ProfileTilesRow } from "./ProfileTiles";
 import { SwitchGateBody } from "./SwitchGateDialog";
 

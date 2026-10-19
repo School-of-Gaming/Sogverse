@@ -12,7 +12,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useRobloxRender } from "@/services/roblox";
+import { useRobloxRender } from "@/services/roblox/roblox.queries";
 import { GameUsernameEditableRow } from "./game-username-editable-row";
 import {
   GAME_PLATFORMS,

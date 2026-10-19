@@ -6,7 +6,9 @@ import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
 import type { PlannedSession } from "@/lib/planned-sessions";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 
 /**
  * ============================================================================
@@ -36,7 +38,7 @@ const reads = vi.hoisted(() => ({
 /** Every `voiceAvailable` the groups panel was rendered with, in order. */
 const voiceSeen = vi.hoisted(() => ({ value: [] as boolean[] }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: () => reads.product,
   usePlannedSessions: () => reads.plan,
 }));

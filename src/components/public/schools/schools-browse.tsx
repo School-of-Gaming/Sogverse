@@ -13,8 +13,8 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   LOCATION_SEARCH_MAX_QUERY,
   LOCATION_SEARCH_MIN_QUERY,
-  useLocationSearch,
-} from "@/services/locations";
+} from "@/services/locations/locations.contracts";
+import { useLocationSearch } from "@/services/locations/locations.queries";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   buildMunicipalityEntry,

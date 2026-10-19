@@ -9,7 +9,7 @@ import type {
   AdminLibraryArticle,
   AdminLibraryArticleListItem,
   PublishedLibraryArticleSummary,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 
 /**
  * **The Library tools, through the real endpoint.** The real gate, SDK and

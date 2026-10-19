@@ -10,7 +10,7 @@ import type {
   LandingPageImageUser,
   SpotlightImageUser,
   ProductPictureUser,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.service";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import { ROUTES } from "@/lib/constants";
 

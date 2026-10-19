@@ -53,7 +53,7 @@ import {
   type AdminLibraryArticle,
   type LibraryArticleDraft,
   type LibraryArticleInput,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 import {
   EMPTY_VERSION,
   emptyLibraryArticleForm,

@@ -30,7 +30,7 @@ import { useNow, useTimezone } from "@/providers";
 import {
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.refusals";
 import { cn, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
 
 /**

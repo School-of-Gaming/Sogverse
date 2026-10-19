@@ -5,7 +5,9 @@ import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useMarketingConsentsForCustomer } from "@/services/marketing-consents";
+import {
+  useMarketingConsentsForCustomer,
+} from "@/services/marketing-consents/marketing-consents.queries";
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/utils";
 import { UTM_FIELDS, UTM_QUERY_PARAMS, type UtmAttribution } from "@/lib/utm";

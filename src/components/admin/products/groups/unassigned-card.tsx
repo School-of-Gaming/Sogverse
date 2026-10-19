@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { chipGameIdentity } from "./panel-rules";
 
 interface UnassignedCardProps {

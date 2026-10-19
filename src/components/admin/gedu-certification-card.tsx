@@ -61,11 +61,15 @@ import {
 } from "@/components/gedu/contract/documents";
 import {
   useGeduContractAcceptances,
+} from "@/services/gedu/gedu-contract.queries";
+import {
   useGeduProfile,
   useSetGeduCertified,
   useSetGeduCriminalRecordCheck,
+} from "@/services/gedu/gedu-profiles.queries";
+import {
   type GeduCertificationDetail,
-} from "@/services/gedu";
+} from "@/services/gedu/gedu-profiles.service";
 import { personName } from "@/components/admin/person-name";
 import { useTimezone } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";

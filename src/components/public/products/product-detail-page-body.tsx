@@ -17,7 +17,7 @@ import { localizedLocationName } from "@/lib/locations/localized-name";
 import { topicHasInfoCard } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
-import type { ProductDetailRow } from "@/services/products";
+import type { ProductDetailRow } from "@/services/products/products.service";
 import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
 import { cameFromBrowse, listingHrefWithBrowseState } from "./browse-state";

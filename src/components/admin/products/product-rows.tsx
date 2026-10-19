@@ -28,7 +28,7 @@ import {
 } from "@/lib/products/format-product-schedule";
 import { productWhereLine } from "./product-where-line";
 import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
-import type { AdminProductListRow } from "@/services/products";
+import type { AdminProductListRow } from "@/services/products/products.service";
 import type { ProductType } from "@/types";
 import { ROUTES } from "@/lib/constants";
 

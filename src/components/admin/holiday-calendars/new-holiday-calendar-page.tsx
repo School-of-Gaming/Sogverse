@@ -4,7 +4,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { useCreateHolidayCalendar } from "@/services/holiday-calendars";
+import {
+  useCreateHolidayCalendar,
+} from "@/services/holiday-calendars/holiday-calendars.queries";
 import { emptyHolidayCalendarDraft } from "./holiday-calendar-draft";
 import { HolidayCalendarForm } from "./holiday-calendar-form";
 import { HolidayCalendarPageShell } from "./holiday-calendar-page-shell";

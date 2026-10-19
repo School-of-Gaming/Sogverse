@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { GroupsPanelView } from "@/components/admin/products/groups/groups-panel-view";
-import type { GroupPending } from "@/services/groups";
+import type { GroupPending } from "@/services/groups/groups.queries";
 import type { ProductGroupsSnapshot } from "@/types";
 
 /**

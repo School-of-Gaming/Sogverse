@@ -20,7 +20,7 @@ import { seatOfferRemaining, seatOfferState } from "@/lib/seat-offer-state";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { chipGameIdentity, type SeatOfferAvailability } from "./panel-rules";
 
 interface WaitlistCardProps {

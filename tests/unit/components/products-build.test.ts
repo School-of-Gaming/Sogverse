@@ -12,7 +12,9 @@ import {
   type FormState,
 } from "@/components/admin/products/product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 
 // Validation + payload-building moved out of ProductForm so it can be
 // tested without rendering. These tests cover the *complex, easily-broken*

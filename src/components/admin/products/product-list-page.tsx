@@ -18,7 +18,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { useProductListFacets } from "@/services/products";
+import { useProductListFacets } from "@/services/products/products.queries";
 import {
   parseAdminProductSlug,
   adminProductSlug,

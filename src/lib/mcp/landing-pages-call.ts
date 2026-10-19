@@ -23,7 +23,9 @@ import { refusal } from "@/lib/mcp/library-call";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { landingWriteFailure } from "@/services/landing-pages";
+import {
+  landingWriteFailure,
+} from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import type { AppSupabaseClient } from "@/types";
 

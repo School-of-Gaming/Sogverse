@@ -23,9 +23,11 @@ import { cn } from "@/lib/utils";
 import {
   CATALOGUE_IMAGE_LABEL_MAX_LENGTH,
   catalogueImageLabel,
+} from "@/services/catalogue-images/catalogue-images.contracts";
+import {
   type CatalogueImageUsage,
   type CatalogueImageUser,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.service";
 import type { CatalogueImage, CatalogueImagePurpose } from "@/types";
 import { CATALOGUE_COPY } from "./catalogue-copy";
 import { useCatalogueCrop } from "./catalogue-crop";

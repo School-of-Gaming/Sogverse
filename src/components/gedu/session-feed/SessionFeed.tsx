@@ -32,7 +32,9 @@ import {
   type StagedSessionPhotos,
 } from "./staged-photos";
 import type { SessionCreationsState } from "./SessionCreationsBlock";
-import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
+import type {
+  SessionPhotoErrorCode,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   sessionReportSendFailure,
   type SessionReportSendFailure,

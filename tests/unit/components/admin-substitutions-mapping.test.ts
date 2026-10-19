@@ -4,7 +4,7 @@ import type {
   AdminSubstitutionRequest,
   OpenAdminSubstitutionRequest,
   SubstitutedAdminSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**

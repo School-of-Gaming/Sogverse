@@ -49,8 +49,10 @@ import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents
 import {
   usePlannedSessions,
   useProductAdmin,
+} from "@/services/products/products.queries";
+import {
   type ProductAdminDetailRow,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import {
   effectiveStatus,

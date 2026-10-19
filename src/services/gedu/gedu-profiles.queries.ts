@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
-import { userKeys } from "@/services/users";
+import { userKeys } from "@/services/users/users.queries";
 import {
   GeduProfilesService,
   type GeduCertificationDetail,

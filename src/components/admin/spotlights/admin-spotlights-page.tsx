@@ -20,7 +20,7 @@ import { useTimezone } from "@/providers";
 import {
   spotlightWriteFailure,
   type AdminSpotlight,
-} from "@/services/spotlights";
+} from "@/services/spotlights/spotlights.contracts";
 
 /** The write the list makes. It resolves once the list has been read again, and throws on refusal. */
 export interface AdminSpotlightsActions {

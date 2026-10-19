@@ -21,7 +21,7 @@ import type {
   GeduInvoicingGroup,
   GeduInvoicingProduct,
   GeduInvoicingSnapshot,
-} from "@/services/gedu-invoicing";
+} from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 
 /**
  * Turn one month of gedu invoicing — `get_admin_gedu_invoicing` (every gedu) or

@@ -38,7 +38,7 @@ import type {
   CreateProductInput,
   ProductAdminDetailRow,
   UpdateProductInput,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import type { ProductType } from "@/types";
 import { formLocksFor } from "./form-locks";
 import {

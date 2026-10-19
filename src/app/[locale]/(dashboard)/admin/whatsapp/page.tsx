@@ -16,7 +16,7 @@ import {
   useWhatsAppMessages,
   useSendWhatsAppMessage,
   whatsappKeys,
-} from "@/services/whatsapp";
+} from "@/services/whatsapp/whatsapp.queries";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   WHATSAPP_DIRECTION,

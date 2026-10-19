@@ -30,7 +30,7 @@ vi.mock("@/services/users/users.service", () => ({
 }));
 
 import { GeduSpokenLanguagesCard } from "@/components/admin/gedu-spoken-languages-card";
-import { userKeys } from "@/services/users";
+import { userKeys } from "@/services/users/users.queries";
 
 function renderCard() {
   const queryClient = new QueryClient({

@@ -16,7 +16,9 @@ import {
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SUBSTITUTION_REASON_NOTE_MAX_LENGTH } from "@/services/session-substitution";
+import {
+  SUBSTITUTION_REASON_NOTE_MAX_LENGTH,
+} from "@/services/session-substitution/session-substitution.contracts";
 import { cn } from "@/lib/utils";
 import { Constants, type SubstitutionReason } from "@/types";
 

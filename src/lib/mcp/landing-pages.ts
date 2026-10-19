@@ -45,9 +45,11 @@ import {
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import {
   landingPublishForecast,
+} from "@/services/landing-pages/landing-pages.forecast";
+import {
   landingSlug,
   type AdminLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 import {
   LANDING_SLUG_MAX_LENGTH,
   LANDING_SUMMARY_MAX_LENGTH,

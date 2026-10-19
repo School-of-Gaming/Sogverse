@@ -33,15 +33,16 @@ import { trackDashboardNav } from "@/lib/analytics";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
 import { byFirstName } from "@/lib/family-order";
 import { cn } from "@/lib/utils";
+import { commitAccountSwitch } from "@/services/family/switch-account";
+import { switchGateFor, type SwitchGate } from "@/services/family/switch-gate";
 import {
-  commitAccountSwitch,
-  switchGateFor,
   useFamily,
   useSessionProvenance,
+} from "@/services/family/family.queries";
+import {
   type FamilyMember,
   type SwitchAccountCredentials,
-  type SwitchGate,
-} from "@/services/family";
+} from "@/services/family/family.service";
 // The module, not the family barrel: the header mounts on every page for every
 // role, and the barrel would drag the profile selector and the add-gamer form
 // into that bundle for the sake of one dialog most viewers never open.

@@ -5,7 +5,7 @@ import { useAuth } from "@/providers";
 import {
   useAcceptGeduContract,
   useGeduContractAcceptances,
-} from "@/services/gedu";
+} from "@/services/gedu/gedu-contract.queries";
 import type { GeduCriminalRecordCheck } from "@/services/gedu/gedu-profiles.service";
 import type { GeduContractAcceptance } from "@/types";
 import type { GeduContractDocument } from "./contract-document";

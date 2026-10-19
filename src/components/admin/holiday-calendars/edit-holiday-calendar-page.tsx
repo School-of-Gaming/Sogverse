@@ -16,8 +16,10 @@ import {
   useHolidayCalendar,
   usePreviewHolidayCalendarChange,
   useUpdateHolidayCalendar,
+} from "@/services/holiday-calendars/holiday-calendars.queries";
+import {
   type HolidayCalendarProduct,
-} from "@/services/holiday-calendars";
+} from "@/services/holiday-calendars/holiday-calendars.service";
 import { holidayCalendarDraft } from "./holiday-calendar-draft";
 import { HolidayCalendarForm } from "./holiday-calendar-form";
 import { summariseHolidayImpact } from "./holiday-calendar-impact";

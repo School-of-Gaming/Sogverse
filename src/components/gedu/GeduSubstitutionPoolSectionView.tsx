@@ -13,7 +13,9 @@ import {
   sessionFactsWhen,
 } from "@/components/session-substitution/SubstitutionSessionFacts";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
-import { substitutionAnswerFailureKey } from "@/services/session-substitution";
+import {
+  substitutionAnswerFailureKey,
+} from "@/services/session-substitution/session-substitution.refusals";
 import {
   isSubstitutionUrgent,
   type SubstitutionPoolRow,

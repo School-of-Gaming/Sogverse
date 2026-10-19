@@ -3,7 +3,7 @@ import { z } from "zod-v4";
 import { readMcpCaller } from "@/lib/mcp/auth";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
-import { libraryWriteFailure } from "@/services/library";
+import { libraryWriteFailure } from "@/services/library/library.contracts";
 import { LibraryService } from "@/services/library/library.service";
 import type { AppSupabaseClient } from "@/types";
 

@@ -20,7 +20,9 @@ import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn, formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type { AdminLandingPageListItem } from "@/services/landing-pages";
+import type {
+  AdminLandingPageListItem,
+} from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-chip";
 
 /**

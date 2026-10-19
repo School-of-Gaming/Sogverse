@@ -9,7 +9,9 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "@/lib/products/format-product-location";
 import { audienceLabelKey } from "@/lib/products/product-audience";

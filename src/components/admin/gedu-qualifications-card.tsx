@@ -36,10 +36,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   GEDU_QUALIFICATIONS,
+  type HeldGeduQualification,
+} from "@/services/gedu/gedu-qualifications.service";
+import {
   useGeduQualifications,
   useSetGeduQualification,
-  type HeldGeduQualification,
-} from "@/services/gedu";
+} from "@/services/gedu/gedu-qualifications.queries";
 import { personName } from "@/components/admin/person-name";
 import { useQualificationNames } from "@/components/admin/qualification-names";
 import { useTimezone } from "@/providers";

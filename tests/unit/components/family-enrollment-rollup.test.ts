@@ -9,11 +9,11 @@ import {
   type FamilyEnrollmentSummary,
 } from "@/components/family/enrollment-rollup";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductTranslation } from "@/types";
 import { INERT_HREF, type AppHref } from "@/lib/constants/routes";
 import { planSessions } from "../../mocks/planned-sessions";

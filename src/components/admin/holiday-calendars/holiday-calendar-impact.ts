@@ -1,6 +1,8 @@
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import type { HolidayCalendarChangePreview } from "@/services/holiday-calendars";
+import type {
+  HolidayCalendarChangePreview,
+} from "@/services/holiday-calendars/holiday-calendars.contracts";
 import type { ProductType } from "@/types";
 
 /**

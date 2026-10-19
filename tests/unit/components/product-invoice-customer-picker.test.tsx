@@ -32,7 +32,7 @@ vi.mock("next-intl", () => ({
 }));
 
 const mockUseInvoiceCustomers = vi.fn();
-vi.mock("@/services/invoice-customers", () => ({
+vi.mock("@/services/invoice-customers/invoice-customers.queries", () => ({
   useInvoiceCustomers: () => mockUseInvoiceCustomers(),
 }));
 

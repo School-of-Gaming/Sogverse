@@ -117,6 +117,25 @@ const noZodV4OutsideMcp = [
 ];
 
 /**
+ * A service domain imported as a directory.
+ *
+ * `src/services/<domain>/` has no index file: a module imports the file that
+ * defines the symbol — `@/services/locations/locations.queries`, not
+ * `@/services/locations`. A barrel makes every importer depend on every file it
+ * re-exports, which is what the gates' changed-file test selection reads, and a
+ * `vi.mock` aimed at a barrel stops mocking the moment the code under test
+ * imports the file instead. `tests/unit/services-no-barrels.test.ts` keeps the
+ * index files from coming back and checks every mocked service path names a file.
+ */
+const noServiceBarrelImports = [
+  {
+    regex: "^@/services/[^/]+(?:/index)?$",
+    message:
+      "Import the module that defines the symbol (e.g. @/services/locations/locations.queries). Service domains have no index barrel.",
+  },
+];
+
+/**
  * A family spelled out, banned wherever a face is set.
  *
  * @sog/ui names the faces and Sogverse references them; a family typed into
@@ -867,7 +886,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports],
       }],
     },
   },
@@ -880,7 +899,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports],
       }],
     },
   },
@@ -904,7 +923,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports],
       }],
     },
   },
@@ -944,6 +963,7 @@ const eslintConfig = defineConfig([
           ...noTsExtensionImports,
           ...noNextFontOutsideLayout,
           ...noZodV4OutsideMcp,
+          ...noServiceBarrelImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -983,7 +1003,7 @@ const eslintConfig = defineConfig([
               "Family surfaces must not import gedu document shapes — only the shared attendance vocabulary (attendanceStatus / AttendanceStatus / SUPPORTED_ATTENDANCE_STATUSES) crosses this line, because it mirrors a database CHECK constraint.",
           },
           {
-            // member-flair owns two different things behind one barrel: the
+            // member-flair owns two different things in one module: the
             // staff overlay document (`groupStaffOverlay` and its member
             // shape, keyed by participant and carrying a note and a join
             // stamp no family may see) and the creation entry vocabulary
@@ -1244,7 +1264,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports],
       }],
     },
   },

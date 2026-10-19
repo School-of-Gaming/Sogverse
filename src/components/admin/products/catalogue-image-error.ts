@@ -1,5 +1,7 @@
 import { ApiError } from "@/lib/api/api-error";
-import { CATALOGUE_IMAGE_ERROR_CODES } from "@/services/catalogue-images";
+import {
+  CATALOGUE_IMAGE_ERROR_CODES,
+} from "@/services/catalogue-images/catalogue-images.contracts";
 
 /** The refusals the catalogue translates; everything else is passed through. */
 export type CatalogueImageErrorKey = "tooLarge" | "unsupportedType" | "wrongSize";

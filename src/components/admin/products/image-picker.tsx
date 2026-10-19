@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { FramedImage } from "@/components/ui/framed-image";
 import {
   useUploadCatalogueImage,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.queries";
 import type { CatalogueImagePurpose } from "@/types";
 import { CATALOGUE_COPY } from "./catalogue-copy";
 import { useCatalogueCrop } from "./catalogue-crop";

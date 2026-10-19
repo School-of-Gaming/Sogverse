@@ -34,11 +34,13 @@ import {
 } from "@/lib/finvoice";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { cn, formatCurrencyFromCents, formatDateOnly } from "@/lib/utils";
-import type { MunicipalityInvoicingSnapshot } from "@/services/municipality-invoicing";
+import type {
+  MunicipalityInvoicingSnapshot,
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 import {
   useMunicipalityInvoicingMonth,
   useMunicipalityInvoicingMonths,
-} from "@/services/municipality-invoicing";
+} from "@/services/municipality-invoicing/municipality-invoicing.queries";
 import type { InvoiceBillingCadence } from "@/types";
 import { BILLING_CADENCE_LABEL } from "@/components/admin/invoice-customers/billing-cadence-label";
 import {

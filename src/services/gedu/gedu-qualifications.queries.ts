@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { userKeys } from "@/services/users";
+import { userKeys } from "@/services/users/users.queries";
 import type { GeduQualification } from "@/types";
 import {
   GeduQualificationsService,

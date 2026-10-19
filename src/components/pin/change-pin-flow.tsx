@@ -8,7 +8,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
-import { PinService } from "@/services/pin";
+import { PinService } from "@/services/pin/pin.service";
 import { PinSet } from "./pin-set";
 import { PinNotice } from "./pin-notice";
 

@@ -5,7 +5,7 @@ import { AlertTriangle, CreditCard, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { SessionAudience } from "@/types";
 import { cn } from "@/lib/utils";
-import { BillingService } from "@/services/billing";
+import { BillingService } from "@/services/billing/billing.service";
 import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 
 /**

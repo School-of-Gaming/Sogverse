@@ -37,7 +37,7 @@ import type {
   GameAccountStatus,
   GamePlatform,
 } from "@/components/game-account";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { platformForTopic } from "@/lib/products/topics";
 import {
   productVoiceRoom,

@@ -5,8 +5,12 @@ import {
   geduSubstitutionKey,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
-import type { MyAssignedProductSessionRow } from "@/services/assignments";
-import type { GeduAssignmentSummary } from "@/services/gedu-sessions";
+import type {
+  MyAssignedProductSessionRow,
+} from "@/services/assignments/assignments.service";
+import type {
+  GeduAssignmentSummary,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * The join every gedu page that draws seat cards has to make first: the

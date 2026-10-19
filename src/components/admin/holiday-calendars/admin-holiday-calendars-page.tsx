@@ -13,7 +13,7 @@ import { formatDateRange } from "@/lib/utils";
 import type {
   HolidayCalendarBreak,
   HolidayCalendarSummary,
-} from "@/services/holiday-calendars";
+} from "@/services/holiday-calendars/holiday-calendars.service";
 
 /**
  * The break a calendar's row names as its next: the first, soonest first,

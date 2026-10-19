@@ -11,7 +11,7 @@ import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
 import { Header } from "@/components/layout";
 import { SelectProfileView } from "@/components/select-profile";
 import { resolveFamilyWithAdmin } from "@/services/family/family.server";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("selectProfile");

@@ -38,10 +38,10 @@ import {
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
-import type { GroupPending } from "@/services/groups";
+import type { GroupPending } from "@/services/groups/groups.queries";
 import type {
   BillingMode,
   GeduAssignmentRole,

@@ -42,11 +42,13 @@ const sendVerification = vi.fn<
   ) => void
 >();
 
-vi.mock("@/services/gamers", () => ({
-  // The codes are constants the card compares an ApiError against, so the mock
-  // has to carry them rather than only the hooks.
+// The codes are constants the card compares an ApiError against, so they are
+// mocked beside the hooks rather than left out.
+vi.mock("@/services/gamers/gamers.contracts", () => ({
   GAMER_USERNAME_TAKEN: "USERNAME_TAKEN",
   GAMER_EMAIL_TAKEN: "EMAIL_TAKEN",
+}));
+vi.mock("@/services/gamers/gamers.queries", () => ({
   useUpdateGamer: () => ({ mutateAsync }),
   useSendGamerVerificationEmail: () => ({ mutate: sendVerification }),
 }));

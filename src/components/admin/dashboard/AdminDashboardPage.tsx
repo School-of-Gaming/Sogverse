@@ -8,11 +8,17 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import {
   adminDashboardKeys,
+} from "@/services/admin-dashboard/admin-dashboard.keys";
+import {
   useAdminDashboard,
+} from "@/services/admin-dashboard/admin-dashboard.queries";
+import {
   type AdminDashboardSnapshot,
-} from "@/services/admin-dashboard";
-import { useSetGeduCertified } from "@/services/gedu";
-import { useSeatOfferSweepOnMount } from "@/services/participations";
+} from "@/services/admin-dashboard/admin-dashboard.contracts";
+import { useSetGeduCertified } from "@/services/gedu/gedu-profiles.queries";
+import {
+  useSeatOfferSweepOnMount,
+} from "@/services/participations/participations.queries";
 import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,

@@ -24,7 +24,9 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
-import type { AdminLibraryArticleListItem } from "@/services/library";
+import type {
+  AdminLibraryArticleListItem,
+} from "@/services/library/library.contracts";
 import { libraryArticleStatus } from "./library-article-form";
 import { LibraryArticleStatusChip } from "./library-article-status-chip";
 

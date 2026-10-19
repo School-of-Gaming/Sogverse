@@ -7,8 +7,12 @@ import {
   type InvoiceCustomerSummary,
   type MunicipalityInvoicingView,
 } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
-import type { InvoiceCustomerRow } from "@/services/invoice-customers";
-import type { MunicipalityInvoicingSnapshot } from "@/services/municipality-invoicing";
+import type {
+  InvoiceCustomerRow,
+} from "@/services/invoice-customers/invoice-customers.contracts";
+import type {
+  MunicipalityInvoicingSnapshot,
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 import type { InvoiceBillingCadence } from "@/types";
 import { billingPeriodOf, type BillingPeriod } from "./billing-period";
 import {

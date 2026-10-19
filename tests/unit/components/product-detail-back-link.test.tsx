@@ -9,7 +9,7 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
-import type { ProductDetailRow } from "@/services/products";
+import type { ProductDetailRow } from "@/services/products/products.service";
 
 /**
  * **The back link on `/schools/<slug>/[id]` names its municipality, and nothing

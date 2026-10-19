@@ -24,8 +24,10 @@ import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useNow } from "@/providers";
 import {
   useMyGeduInvoicingMonth,
+} from "@/services/gedu-invoicing/gedu-invoicing.queries";
+import {
   type GeduInvoicingSnapshot,
-} from "@/services/gedu-invoicing";
+} from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 import { buildGeduInvoicing, type GeduInvoice } from "./build-gedu-invoicing";
 import {
   geduInvoiceExportHref,

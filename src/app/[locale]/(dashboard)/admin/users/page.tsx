@@ -11,8 +11,11 @@ import {
   findGeduContractAcceptance,
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
-import { useUserList, type UserListEntry } from "@/services/users";
-import { useGeduContractAcceptanceMap } from "@/services/gedu";
+import { useUserList } from "@/services/users/users.queries";
+import { type UserListEntry } from "@/services/users/users.contracts";
+import {
+  useGeduContractAcceptanceMap,
+} from "@/services/gedu/gedu-contract.queries";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";

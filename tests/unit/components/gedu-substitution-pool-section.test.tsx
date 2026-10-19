@@ -7,7 +7,9 @@ import { GeduSubstitutionPoolSection } from "@/components/gedu/GeduSubstitutionP
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  OpenSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * ============================================================================
@@ -50,8 +52,8 @@ function armWrite(): void {
  * the section awaits an invalidation on `sessionSubstitutionKeys.all` after every
  * write, and a stubbed key would let a rename through.
  */
-vi.mock("@/services/session-substitution", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+vi.mock("@/services/session-substitution/session-substitution.queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/session-substitution/session-substitution.queries")>()),
   useOfferSessionSubstitution: () => ({
     mutateAsync: () => {
       deferred.offerCalls += 1;

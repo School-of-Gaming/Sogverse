@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Identicon } from "@/components/ui/identicon";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import { cn } from "@/lib/utils";
 import type { AppHref } from "@/lib/constants/routes";
 

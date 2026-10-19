@@ -16,11 +16,13 @@ import {
 } from "@/lib/products/format-product-schedule";
 import { productLocalDate } from "@/lib/session-occurrence";
 import { sumCents } from "@/lib/utils";
-import type { InvoiceCustomerRow } from "@/services/invoice-customers";
+import type {
+  InvoiceCustomerRow,
+} from "@/services/invoice-customers/invoice-customers.contracts";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
-} from "@/services/municipality-invoicing";
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 
 /**
  * Turn one month of `get_admin_municipality_invoicing` into the invoice the

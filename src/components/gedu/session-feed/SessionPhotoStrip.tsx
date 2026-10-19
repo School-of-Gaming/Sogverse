@@ -24,7 +24,7 @@ import {
   SESSION_PHOTO_JPEG_QUALITY,
   SESSION_PHOTO_MAX_EDGE,
   type SessionPhotoErrorCode,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { cn } from "@/lib/utils";
 import { sessionPhotoErrorCode } from "./photo-failure";
 import {

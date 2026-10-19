@@ -82,7 +82,7 @@ vi.mock("@/components/voice/GroupSessionChat", () => ({
   GroupSessionChat: () => null,
 }));
 
-vi.mock("@/services/voice", () => ({
+vi.mock("@/services/voice/voice.queries", () => ({
   useVoiceToken: () => ({
     mutateAsync: vi.fn(async () => ({
       token: "t",
@@ -93,13 +93,15 @@ vi.mock("@/services/voice", () => ({
   }),
 }));
 
-vi.mock("@/services/session-feedback", () => ({
+vi.mock("@/services/session-feedback/session-feedback.contracts", () => ({
   isEmptySessionFeedback: () => true,
+}));
+vi.mock("@/services/session-feedback/session-feedback.queries", () => ({
   useOwnSessionFeedback: () => ({ data: undefined }),
   useSaveSessionFeedback: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@/services/member-flair", () => ({
+vi.mock("@/services/member-flair/member-flair.queries", () => ({
   useGroupStaffOverlay: (_groupId: string, enabled: boolean) => {
     state.staffEnabled.push(enabled);
     return {

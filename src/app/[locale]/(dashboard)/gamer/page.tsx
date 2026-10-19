@@ -8,7 +8,7 @@ import {
   ParticipationsService,
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
