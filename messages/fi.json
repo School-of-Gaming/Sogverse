@@ -647,9 +647,9 @@
         "publishedLine": "Julkaistu {date}.",
         "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
         "savedLine": "Tallennettu viimeksi {date}.",
-        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
-        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksen {app} kautta.",
-        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksen kautta."
+        "savedByLine": "Tallentanut viimeksi {name} {date}.",
+        "savedByViaLine": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta.",
+        "savedByViaUnnamedLine": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta."
       },
       "viewLive": "Näytä Kirjastossa",
       "preview": "Esikatselu",
@@ -806,9 +806,9 @@
         "publishedLine": "Julkaistu {date}.",
         "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
         "savedLine": "Tallennettu viimeksi {date}.",
-        "savedByLine": "Tallennettu viimeksi {date}, tallentaja {name}.",
-        "savedByViaLine": "Tallennettu viimeksi {date}, tallentaja {name} sovelluksella {app}.",
-        "savedByViaUnnamedLine": "Tallennettu viimeksi {date}, tallentaja {name} tekoälysovelluksella."
+        "savedByLine": "Tallentanut viimeksi {name} {date}.",
+        "savedByViaLine": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta.",
+        "savedByViaUnnamedLine": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta."
       },
       "viewLive": "Näytä sivustolla",
       "preview": "Esikatsele",
