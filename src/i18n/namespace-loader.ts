@@ -11,9 +11,9 @@ import type { Messages } from "./messages";
  * against it in full. **A table that carries `tlh` therefore assumes `tlh`
  * holds that namespace whole**: the English fallback lives only in the whole
  * catalog's loader, and nothing lays Klingon over English here. A namespace
- * `tlh` omits, or carries with holes (the legal ones, `footer`, `metadata`,
- * `roblox`), fails type-check in a table listing `tlh`; such a table is either
- * English-only, as its callers allow, or has to merge over English itself.
+ * `tlh` doesn't carry whole fails type-check in a table listing `tlh`; such a
+ * table is either English-only, as its callers allow, or has to merge over
+ * English itself.
  */
 export type NamespaceLoaders<
   N extends keyof Messages,

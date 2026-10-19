@@ -137,7 +137,7 @@ describe("imports of the message catalogs", () => {
     const importers = files("src")
       .filter(({ file, text }) => importsLoader(text, file))
       .map(({ file }) => file);
-    expect(importers).toEqual(Object.keys(WHOLE_CATALOG_APP_MODULES));
+    expect([...importers].sort()).toEqual(Object.keys(WHOLE_CATALOG_APP_MODULES).sort());
   });
 
   it("recognises each form of loader import, and not a type import or a mock", () => {
@@ -194,11 +194,6 @@ describe("imports of the message catalogs", () => {
         .map((path) => `${file}: ${path}`);
     });
     expect(offenders).toEqual([]);
-  });
-
-  it("names only app modules that exist as whole-catalog loaders", () => {
-    const app = new Set(files("src").map(({ file }) => file));
-    for (const file of Object.keys(WHOLE_CATALOG_APP_MODULES)) expect(app, file).toContain(file);
   });
 
   it("names only tests that exist as whole-catalog readers", () => {
