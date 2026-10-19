@@ -48,9 +48,11 @@ in the run, once `EnterWorktree` has legitimately moved the session into one.
    `.env.local` in. **Do not run `npm install`** — the worktree resolves
    `node_modules` upward from the parent checkout, so an install costs several
    minutes and a gigabyte for nothing. The script's header carries the reasoning
-   for all of it, including the one case it cannot cover: a branch that *will*
+   for all of it, including the two cases it cannot cover: a branch that *will*
    change dependencies needs `npm install` inside the worktree after that change
-   lands, and only then.
+   lands, and only then; and a branch that edits `packages/sog-ui` sees the main
+   checkout's SOG-UI until it points the app at its own copy, with uncommitted
+   edits the header lists.
 
    Picking up a branch that already exists: add `-Existing`, which checks it out
    without a base, then go straight to step 2.

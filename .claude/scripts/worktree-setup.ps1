@@ -28,10 +28,33 @@
   today, so this is insurance rather than a live fault; it runs anyway, because
   the day one appears is the day the failure is hardest to read.
 
-  The one case this script cannot cover: a branch that will change dependencies.
-  Upward resolution hands the worktree the main checkout's install, so a branch
-  editing package.json or package-lock.json runs against the wrong tree. Run
-  npm install inside the worktree after that change lands, and only then.
+  Two cases this script cannot cover. The first: a branch that will change
+  dependencies. Upward resolution hands the worktree the main checkout's install,
+  so a branch editing package.json or package-lock.json runs against the wrong
+  tree. Run npm install inside the worktree after that change lands, and only then.
+
+  The second: a branch that edits a workspace package, today packages/sog-ui.
+  The worktree resolves @sog/ui through the main checkout's node_modules, a
+  junction to the main checkout's packages/sog-ui, so lint, type-check, tests and
+  the dev server see whatever SOG-UI the main checkout has out, never the
+  worktree's edits. A branch that adds to SOG-UI and uses it fails its gates; one
+  that restyles SOG-UI previews the old styling, silently. To see the edits,
+  point the consumers at the worktree's own copy for the life of the branch:
+    - tsconfig.json: a compilerOptions.paths entry for each @sog/ui specifier
+      the branch needs ("@sog/ui", "@sog/ui/tokens/brand", ...), mapped to the
+      file SOG-UI's package.json exports for it (tsc, typed lint, next dev);
+    - vitest.config.mts: the same mappings as resolve aliases, exact-match;
+    - src/app/globals.css: the theme imported by its path inside
+      packages/sog-ui instead of as @sog/ui/theme.css, if the branch changes
+      the theme;
+    - packages/mcp-image-uploader (its tsconfig.json and vite.config.ts), if
+      the branch changes the tokens it imports, so its freshness check builds
+      against them.
+  Those edits are never committed: revert them before every commit, and check
+  git diff for them before landing. CI and Vercel have one checkout, so they
+  resolve the branch's own SOG-UI without help. Never junction node_modules/@sog/ui
+  into the worktree instead: git worktree remove follows a junction and deletes
+  what it points at.
 
 .PARAMETER Name
   Short name for the worktree directory under .claude/worktrees/.
