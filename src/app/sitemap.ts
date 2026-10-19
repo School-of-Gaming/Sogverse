@@ -262,8 +262,7 @@ async function productEntries(): Promise<MetadataRoute.Sitemap> {
  * is what it would do with a `lastmod` it distrusted anyway. An article and a
  * landing page are the exceptions because publishing is what changes them,
  * and the publish time is stored.
- */
-/**
+ *
  * Production only: a sitemap is a list whose purpose is pointing machines at
  * pages, and no other deployment may be found (`src/lib/seo/deployment.ts`).
  */
