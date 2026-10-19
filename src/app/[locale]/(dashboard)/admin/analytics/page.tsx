@@ -8,25 +8,17 @@ import {
   BreakdownsSkeleton,
   CampaignsSection,
   LandingPagesSection,
-  MeasureSkeleton,
-  ServedMeasure,
-  SignupsMeasure,
+  OverviewSkeleton,
+  OverviewSection,
   TableSkeleton,
   TimelineSection,
   TimelineSkeleton,
   TopPagesSection,
-  ViewsMeasure,
 } from "@/components/admin/analytics/analytics-sections";
 import { AnalyticsSection, AnalyticsShell } from "@/components/admin/analytics/analytics-view";
 import { requireRole } from "@/lib/auth";
 import { earliestTrafficDay } from "@/lib/vercel-analytics.server";
 import { resolveAnalyticsRange, utcToday } from "@/services/admin-analytics/admin-analytics.build";
-
-/**
- * The request log is read one day per call and Vercel takes up to half a
- * minute over an older day, so a range's first read in an hour can run long.
- */
-export const maxDuration = 120;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -34,8 +26,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * `/admin/analytics` — the site's traffic and the families it brings in, over
- * the UTC days the address names.
+ * `/admin/analytics` — the site's traffic, from Vercel Web Analytics, over the
+ * UTC days the address names.
  *
  * The proxy already admits only admins here; the role is checked again before
  * anything is read, because the Vercel token behind these figures reads every
@@ -61,19 +53,9 @@ export default async function AdminAnalyticsRoute({
 
   return (
     <AnalyticsShell range={range} earliest={earliest} today={utcToday(now)}>
-      <AnalyticsSection heading={t("measures.heading")} caption={t("measures.caption")}>
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Suspense key={`served-${key}`} fallback={<MeasureSkeleton />}>
-            <ServedMeasure {...props} />
-          </Suspense>
-          <Suspense key={`views-${key}`} fallback={<MeasureSkeleton />}>
-            <ViewsMeasure {...props} />
-          </Suspense>
-          <Suspense key={`signups-${key}`} fallback={<MeasureSkeleton />}>
-            <SignupsMeasure {...props} />
-          </Suspense>
-        </div>
-      </AnalyticsSection>
+      <Suspense key={`overview-${key}`} fallback={<OverviewSkeleton />}>
+        <OverviewSection {...props} />
+      </Suspense>
 
       <AnalyticsSection heading={t("timeline.heading")}>
         <Suspense key={`timeline-${key}`} fallback={<TimelineSkeleton />}>

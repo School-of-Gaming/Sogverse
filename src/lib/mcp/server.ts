@@ -35,7 +35,7 @@ export function createSogverseMcpHandler(): (request: Request) => Promise<Respon
         if (event.type === "REQUEST_RECEIVED") console.info(`[mcp] ${event.method}`);
       },
       instructions:
-        "Sogverse is School of Gaming's platform. This server acts as the signed-in School of Gaming admin. Call whoami first to confirm which environment you are connected to. The Library tools read, write and publish the parent-facing articles of the public Library, and choose, show and upload their covers. The landing page tools write, publish and unpublish the marketing landing pages on the public site, and choose, show and upload their pictures. The analytics tools read the site's traffic and signups, by page and by campaign, as the admin Analytics page counts them.",
+        "Sogverse is School of Gaming's platform. This server acts as the signed-in School of Gaming admin. Call whoami first to confirm which environment you are connected to. The Library tools read, write and publish the parent-facing articles of the public Library, and choose, show and upload their covers. The landing page tools write, publish and unpublish the marketing landing pages on the public site, and choose, show and upload their pictures. The analytics tools read the site's traffic, by page and by campaign, as the admin Analytics page counts them.",
     },
   );
 }

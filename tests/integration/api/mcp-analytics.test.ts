@@ -24,8 +24,6 @@ vi.mock("@/lib/supabase/bearer", () => ({
 
 const reads = vi.hoisted(() => ({
   readWebAnalyticsOverview: vi.fn(),
-  readServedPageLoads: vi.fn(),
-  readSignups: vi.fn(),
   readPathViews: vi.fn(),
   readTopPages: vi.fn(),
   readBreakdowns: vi.fn(),
@@ -60,22 +58,6 @@ const OVERVIEW = {
   },
 };
 
-const SIGNUPS = {
-  ok: true,
-  readAt: READ_AT,
-  data: {
-    total: 4,
-    days: [
-      { day: "2026-10-14", signups: 3 },
-      { day: "2026-10-15", signups: 1 },
-    ],
-    campaigns: [
-      { campaign: "lynx-a", source: "meta", medium: "paid_social", signups: 2 },
-      { campaign: null, source: null, medium: null, signups: 2 },
-    ],
-  },
-};
-
 const REFUSED = { ok: false, reason: "refused" };
 
 beforeEach(() => {
@@ -96,8 +78,6 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const read of Object.values(reads)) read.mockReset();
   reads.readWebAnalyticsOverview.mockResolvedValue(OVERVIEW);
-  reads.readServedPageLoads.mockResolvedValue(REFUSED);
-  reads.readSignups.mockResolvedValue(SIGNUPS);
 });
 
 afterEach(() => {
@@ -129,9 +109,6 @@ describe("the manual", () => {
     for (const listed of tools) {
       expect(listed.annotations).toEqual({ readOnlyHint: true, destructiveHint: false });
       expect(listed.description).toContain("count only visitors who accepted analytics cookies, so real traffic is higher");
-      expect(listed.description).toContain("observability access");
-      expect(listed.description).toContain('"Vercel refused"');
-      expect(listed.description).toContain("the last 30 days only");
       expect(listed.description).toContain("Every day is a UTC day");
       expect(listed.description).toContain("Button clicks are not recorded");
     }
@@ -147,45 +124,20 @@ describe("the manual", () => {
 });
 
 describe("get_analytics_summary", () => {
-  it("answers the whole site over the last 30 days by default, each measure on its own", async () => {
+  it("answers the whole site over the last 30 days by default", async () => {
     const result = await tool("get_analytics_summary");
 
     expect(result.isError).toBeUndefined();
     const range = { from: "2026-09-16", to: "2026-10-15" };
     expect(reads.readWebAnalyticsOverview).toHaveBeenCalledWith(range, NOW, undefined);
-    expect(reads.readServedPageLoads).toHaveBeenCalledWith(range, NOW);
-    // The signups are read on the admin's own token-bound client.
-    expect(reads.readSignups).toHaveBeenCalledWith(range.from, range.to, expect.objectContaining(bearerClient));
     expect(reads.readPathViews).not.toHaveBeenCalled();
     expect(result.structuredContent).toEqual({
       range: { ...range, days: 30, timeZone: "UTC", adjusted: null },
       filters: { paths: [], campaign: null, source: null, medium: null },
       webAnalytics: { available: true, pageviews: 15, visitors: 6, readAt: READ_AT },
-      pagesServed: {
-        available: false,
-        reason: "refused",
-        explanation: expect.stringContaining('Vercel refused: pages served needs a Vercel token with observability access'),
-      },
-      signups: { available: true, signups: 4, note: null, readAt: READ_AT },
     });
     // Repeated as text for clients that read only that.
     expect(JSON.parse(resultText(result))).toEqual(result.structuredContent);
-  });
-
-  it("reports pages served for the window the request log keeps", async () => {
-    reads.readServedPageLoads.mockResolvedValue({
-      ok: true,
-      readAt: READ_AT,
-      data: { window: { from: "2026-09-16", to: "2026-10-15" }, days: [], total: 120 },
-    });
-    const result = await tool("get_analytics_summary", { from: "2026-09-01", to: "2026-10-15" });
-    expect(result.structuredContent?.pagesServed).toEqual({
-      available: true,
-      pagesServed: 120,
-      window: { from: "2026-09-16", to: "2026-10-15" },
-      note: "Counted from 2026-09-16 only: the request log keeps the last 30 days.",
-      readAt: READ_AT,
-    });
   });
 
   it("matches a locale-less path in every language and a prefixed one as that address", async () => {
@@ -216,9 +168,6 @@ describe("get_analytics_summary", () => {
     };
     expect(reads.readWebAnalyticsOverview).toHaveBeenCalledWith(expect.anything(), NOW, filter);
     expect(reads.readPathViews).toHaveBeenCalledWith(expect.anything(), NOW, filter);
-    // Neither is counted by page, so neither is read.
-    expect(reads.readServedPageLoads).not.toHaveBeenCalled();
-    expect(reads.readSignups).not.toHaveBeenCalled();
 
     expect(result.structuredContent).toMatchObject({
       filters: {
@@ -227,17 +176,11 @@ describe("get_analytics_summary", () => {
           { given: `https://sog.gg/fi/tutustu/${PAGE}?utm_source=meta`, matching: "this address only" },
         ],
       },
-      pagesServed: { available: false, reason: "not_split" },
-      signups: {
-        available: false,
-        reason: "not_split",
-        explanation: expect.stringContaining("does not record which page a family signed up from"),
-      },
       byPath: [{ given: "/shop", pageviews: 3 }],
     });
   });
 
-  it("narrows signups to the campaign labels asked for, and says whose labels are stored", async () => {
+  it("narrows to the campaign labels asked for", async () => {
     const result = await tool("get_analytics_summary", { campaign: "lynx-a", source: "meta" });
 
     expect(reads.readWebAnalyticsOverview).toHaveBeenCalledWith(expect.anything(), NOW, {
@@ -245,34 +188,32 @@ describe("get_analytics_summary", () => {
       campaign: "lynx-a",
       source: "meta",
     });
-    expect(result.structuredContent?.signups).toEqual({
-      available: true,
-      signups: 2,
-      note: expect.stringContaining("consent granted marketing"),
-      readAt: READ_AT,
+    expect(reads.readPathViews).not.toHaveBeenCalled();
+    expect(result.structuredContent?.filters).toEqual({
+      paths: [],
+      campaign: "lynx-a",
+      source: "meta",
+      medium: null,
     });
-    expect(result.structuredContent?.pagesServed).toMatchObject({ reason: "not_split" });
   });
 
-  it("adds a row per day on request, a measure not read for a day a null", async () => {
+  it("adds a row per day on request", async () => {
     const result = await tool("get_analytics_summary", { from: "2026-10-14", to: "2026-10-15", includeDays: true });
     expect(result.structuredContent?.days).toEqual([
-      { day: "2026-10-14", pageviews: 10, visitors: 4, pagesServed: null, signups: 3 },
-      { day: "2026-10-15", pageviews: 5, visitors: 3, pagesServed: null, signups: 1 },
+      { day: "2026-10-14", pageviews: 10, visitors: 4 },
+      { day: "2026-10-15", pageviews: 5, visitors: 3 },
     ]);
   });
 
-  it("surfaces each refusal as unavailable with its explanation, leaving the rest standing", async () => {
+  it("surfaces a refusal as unavailable with its explanation, not as a tool error", async () => {
     reads.readWebAnalyticsOverview.mockResolvedValue(REFUSED);
-    reads.readSignups.mockResolvedValue({ ok: false, reason: "failed" });
 
-    const result = await tool("get_analytics_summary");
+    const result = await tool("get_analytics_summary", { includeDays: true });
 
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toMatchObject({
       webAnalytics: { available: false, reason: "refused", explanation: expect.stringContaining('"Vercel refused"') },
-      pagesServed: { available: false, reason: "refused" },
-      signups: { available: false, reason: "failed" },
+      days: null,
     });
   });
 
@@ -324,30 +265,26 @@ describe("get_analytics_summary", () => {
 });
 
 describe("get_analytics_breakdown", () => {
-  it("answers the campaigns table on the admin's client, cut to the limit", async () => {
+  it("answers the campaigns table, cut to the limit", async () => {
     reads.readCampaigns.mockResolvedValue({
       ok: true,
       readAt: READ_AT,
       data: [
-        { campaign: "lynx-a", pageviews: 30, signups: 2, sources: [], mediums: [] },
-        { campaign: "rblx-launch", pageviews: 10, signups: 1, sources: [], mediums: [] },
-        { campaign: null, pageviews: 500, signups: 2, sources: [], mediums: [] },
+        { campaign: "lynx-a", pageviews: 30, sources: [], mediums: [] },
+        { campaign: "rblx-launch", pageviews: 10, sources: [], mediums: [] },
+        { campaign: null, pageviews: 500, sources: [], mediums: [] },
       ],
     });
 
     const result = await tool("get_analytics_breakdown", { by: "campaigns", lastDays: 7, limit: 2 });
 
-    expect(reads.readCampaigns).toHaveBeenCalledWith(
-      { from: "2026-10-09", to: "2026-10-15" },
-      NOW,
-      expect.objectContaining(bearerClient),
-    );
+    expect(reads.readCampaigns).toHaveBeenCalledWith({ from: "2026-10-09", to: "2026-10-15" }, NOW);
     expect(result.structuredContent).toEqual({
       range: { from: "2026-10-09", to: "2026-10-15", days: 7, timeZone: "UTC", adjusted: null },
       by: "campaigns",
       rows: [
-        { campaign: "lynx-a", pageviews: 30, signups: 2, sources: [], mediums: [] },
-        { campaign: "rblx-launch", pageviews: 10, signups: 1, sources: [], mediums: [] },
+        { campaign: "lynx-a", pageviews: 30, sources: [], mediums: [] },
+        { campaign: "rblx-launch", pageviews: 10, sources: [], mediums: [] },
       ],
       totalRows: 3,
       truncated: true,
@@ -372,6 +309,12 @@ describe("get_analytics_breakdown", () => {
 
     const result = await tool("get_analytics_breakdown", { by: "landing_pages" });
 
+    // The landing page directory is read on the admin's own token-bound client.
+    expect(reads.readLandingPages).toHaveBeenCalledWith(
+      expect.anything(),
+      NOW,
+      expect.objectContaining(bearerClient),
+    );
     expect(result.structuredContent?.rows).toEqual([
       {
         landingPageId: PAGE,
@@ -407,9 +350,9 @@ describe("get_analytics_breakdown", () => {
     expect(resultText(result)).toContain('Vercel refused the analytics token for Web Analytics (the Analytics page shows "Vercel refused")');
   });
 
-  it("names both sources when a table joining the database fails", async () => {
-    reads.readCampaigns.mockResolvedValue({ ok: false, reason: "failed" });
-    const result = await tool("get_analytics_breakdown", { by: "campaigns" });
+  it("names both sources when the landing pages table fails", async () => {
+    reads.readLandingPages.mockResolvedValue({ ok: false, reason: "failed" });
+    const result = await tool("get_analytics_breakdown", { by: "landing_pages" });
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain("Vercel or Sogverse's own database did not answer");
   });

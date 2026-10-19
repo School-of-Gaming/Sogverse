@@ -2,9 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The admin analytics page's reads, over a mocked Vercel, Next's data cache in
- * memory and a stubbed database. What matters here: each read answers on its
- * own, a failure is a reason and never zeros, nothing failed is cached, and a
- * cached read is reused for the rest of its UTC hour and never past it.
+ * memory and a stubbed landing page directory. What matters here: each read
+ * answers on its own, a failure is a reason and never zeros, nothing failed is
+ * cached, and a cached read is reused for the rest of its UTC hour and never
+ * past it.
  */
 
 const cache = vi.hoisted(() => ({
@@ -25,31 +26,8 @@ vi.mock("next/cache", () => ({
     },
 }));
 
-const db = vi.hoisted(() => ({
-  profiles: [] as { created_at: string; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null }[],
-  calls: [] as [string, ...unknown[]][],
-  fail: false,
-}));
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: async () => ({
-    from: (table: string) => {
-      db.calls.push(["from", table]);
-      const chain = {
-        select: (...args: unknown[]) => (db.calls.push(["select", ...args]), chain),
-        eq: (...args: unknown[]) => (db.calls.push(["eq", ...args]), chain),
-        gte: (...args: unknown[]) => (db.calls.push(["gte", ...args]), chain),
-        lt: (...args: unknown[]) => (db.calls.push(["lt", ...args]), chain),
-        order: (...args: unknown[]) => (db.calls.push(["order", ...args]), chain),
-        range: async () =>
-          db.fail
-            ? { data: null, error: new Error("permission denied"), count: null }
-            : { data: db.profiles, error: null, count: db.profiles.length },
-      };
-      return chain;
-    },
-  }),
-}));
+// The landing page directory is stubbed below; the session client it is built on is inert.
+vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({}) }));
 
 const landing = vi.hoisted(() => ({
   drafts: [] as { id: string; versions: { locale: string; title: string; slug: string }[] }[],
@@ -67,14 +45,11 @@ vi.mock("@/services/landing-pages/landing-pages.service", () => ({
   },
 }));
 
-import { createFetchStubbedClient, postgrestPage } from "../../../mocks/postgrest-fetch";
 import { trafficPath } from "@/services/admin-analytics/admin-analytics.build";
 import {
   readCampaigns,
   readLandingPages,
   readPathViews,
-  readServedPageLoads,
-  readSignups,
   readTopPages,
   readWebAnalyticsOverview,
   trafficFilterExpression,
@@ -93,22 +68,13 @@ function urlOf(input: RequestInfo | URL): URL {
   return new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
 }
 
-/** Answers the Web Analytics endpoint by the grouping asked for, and the request log by day. */
-type Answer = (url: URL, body: unknown) => Response | Promise<Response>;
-
-/** The UTC day a request-log query starts on. */
-function startDayOf(body: unknown): string {
-  return typeof body === "object" && body !== null && "startTime" in body && typeof body.startTime === "string"
-    ? body.startTime.slice(0, 10)
-    : "";
-}
+/** Answers the Web Analytics endpoint by what was asked. */
+type Answer = (url: URL) => Response | Promise<Response>;
 
 let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
 
 function answer(handler: Answer) {
-  fetchMock.mockImplementation(async (input, init) =>
-    handler(urlOf(input), init?.body ? JSON.parse(String(init.body)) : null),
-  );
+  fetchMock.mockImplementation(async (input) => handler(urlOf(input)));
 }
 
 function webAnalyticsCalls(): URL[] {
@@ -118,9 +84,6 @@ function webAnalyticsCalls(): URL[] {
 beforeEach(() => {
   cache.entries.clear();
   cache.options.length = 0;
-  db.profiles = [];
-  db.calls = [];
-  db.fail = false;
   landing.drafts = [];
   landing.published = [];
   fetchMock = vi.fn<typeof fetch>();
@@ -141,7 +104,6 @@ describe("configuration", () => {
   it("answers unconfigured for every Vercel read, without calling anything", async () => {
     vi.stubEnv("VERCEL_ANALYTICS_TOKEN", "");
     expect(await readWebAnalyticsOverview(RANGE, NOW)).toEqual({ ok: false, reason: "unconfigured" });
-    expect(await readServedPageLoads(RANGE, NOW)).toEqual({ ok: false, reason: "unconfigured" });
     expect(await readTopPages(RANGE, NOW)).toEqual({ ok: false, reason: "unconfigured" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -241,81 +203,8 @@ describe("readTopPages", () => {
   });
 });
 
-describe("readServedPageLoads", () => {
-  it("reads one day per call for the days the log holds, and names that window", async () => {
-    answer((url, body) => {
-      expect(url.pathname).toBe("/v2/observability/query");
-      const day = startDayOf(body);
-      return json({ summary: [{ vercel_request_count_sum: Number(day.slice(8)) }] });
-    });
-    const result = await readServedPageLoads({ from: "2026-08-01", to: "2026-10-15" }, NOW);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.data.window).toEqual({ from: "2026-09-16", to: "2026-10-15" });
-    expect(result.data.days).toHaveLength(30);
-    expect(fetchMock).toHaveBeenCalledTimes(30);
-    // Days 16..30 of September and 1..15 of October.
-    expect(result.data.total).toBe(345 + 120);
-  });
-
-  it("reuses a day another range already read this hour", async () => {
-    answer(() => json({ summary: [{ vercel_request_count_sum: 1 }] }));
-    await readServedPageLoads({ from: "2026-10-14", to: "2026-10-15" }, NOW);
-    await readServedPageLoads({ from: "2026-10-13", to: "2026-10-15" }, NOW);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-  });
-
-  it("asks nothing for a range wholly before the log", async () => {
-    const result = await readServedPageLoads({ from: "2026-07-01", to: "2026-07-31" }, NOW);
-    expect(result).toEqual({
-      ok: true,
-      readAt: NOW.toISOString(),
-      data: { window: null, days: [], total: 0 },
-    });
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("fails the whole measure when one day fails, rather than leaving a quiet day", async () => {
-    answer((_, body) =>
-      startDayOf(body) === "2026-10-14"
-        ? json({ error: { code: "internal" } }, 500)
-        : json({ summary: [{ vercel_request_count_sum: 1 }] }),
-    );
-    expect(await readServedPageLoads(RANGE, NOW)).toEqual({ ok: false, reason: "failed" });
-  });
-
-  it("answers refused when the request log will not serve the token", async () => {
-    answer(() => json({ error: { code: "not_found", message: "Observability Data not found." } }, 404));
-    expect(await readServedPageLoads(RANGE, NOW)).toEqual({ ok: false, reason: "refused" });
-  });
-});
-
-describe("readSignups", () => {
-  it("counts parent accounts created in the range's UTC days, under the caller's session", async () => {
-    db.profiles = [
-      { created_at: "2026-10-13T08:00:00+00:00", utm_source: "meta", utm_medium: "paid_social", utm_campaign: "lynx-a" },
-      { created_at: "2026-10-15T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null },
-    ];
-    const result = await readSignups(RANGE.from, RANGE.to);
-    expect(result.ok && result.data.total).toBe(2);
-    expect(db.calls).toEqual(
-      expect.arrayContaining([
-        ["from", "profiles"],
-        ["eq", "role", "customer"],
-        ["gte", "created_at", "2026-10-13T00:00:00.000Z"],
-        ["lt", "created_at", "2026-10-16T00:00:00.000Z"],
-      ]),
-    );
-  });
-
-  it("answers failed when the database refuses", async () => {
-    db.fail = true;
-    expect(await readSignups(RANGE.from, RANGE.to)).toEqual({ ok: false, reason: "failed" });
-  });
-});
-
 describe("readCampaigns", () => {
-  it("joins Vercel's no-campaign to the database's NULL", async () => {
+  it("counts each campaign's views, Vercel's empty string as no campaign", async () => {
     answer((url) => {
       const by = url.searchParams.getAll("by");
       return json({
@@ -325,21 +214,21 @@ describe("readCampaigns", () => {
         ],
       });
     });
-    db.profiles = [
-      { created_at: "2026-10-13T08:00:00Z", utm_source: "meta", utm_medium: "paid_social", utm_campaign: "lynx-a" },
-      { created_at: "2026-10-14T08:00:00Z", utm_source: null, utm_medium: null, utm_campaign: null },
-    ];
     const result = await readCampaigns(RANGE, NOW);
-    expect(result.ok && result.data.map((row) => [row.campaign, row.pageviews, row.signups])).toEqual([
-      ["lynx-a", 7, 1],
-      [null, 50, 1],
+    expect(result.ok && result.data).toEqual([
+      {
+        campaign: "lynx-a",
+        pageviews: 7,
+        sources: [{ value: "meta", pageviews: 7 }],
+        mediums: [{ value: "paid_social", pageviews: 7 }],
+      },
+      {
+        campaign: null,
+        pageviews: 50,
+        sources: [{ value: null, pageviews: 50 }],
+        mediums: [{ value: null, pageviews: 50 }],
+      },
     ]);
-  });
-
-  it("fails as a whole when either side fails", async () => {
-    answer(() => json({ data: [] }));
-    db.fail = true;
-    expect(await readCampaigns(RANGE, NOW)).toEqual({ ok: false, reason: "failed" });
   });
 });
 
@@ -451,23 +340,5 @@ describe("a filtered read, as the MCP analytics tools ask", () => {
       ["/shop/", 4],
       ["/shop", 4],
     ]);
-  });
-
-  it("reads signups on the client handed in, never the page's session", async () => {
-    const handedFetch = vi.fn<typeof fetch>(async () =>
-      postgrestPage(
-        [{ created_at: "2026-10-14T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null }],
-        { from: 0, total: 1 },
-      ),
-    );
-    // The page-session stub would answer two signups; the handed client one.
-    db.profiles = [
-      { created_at: "2026-10-13T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null },
-      { created_at: "2026-10-14T08:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null },
-    ];
-    const result = await readSignups(RANGE.from, RANGE.to, createFetchStubbedClient(handedFetch));
-    expect(result.ok && result.data.total).toBe(1);
-    expect(handedFetch).toHaveBeenCalled();
-    expect(db.calls).toEqual([]);
   });
 });

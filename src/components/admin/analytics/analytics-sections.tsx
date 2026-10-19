@@ -1,16 +1,12 @@
 import "server-only";
 
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { Card } from "@/components/ui/card";
-import { REQUEST_LOG_DAYS } from "@/lib/vercel-analytics.server";
-import { formatDateOnly } from "@/lib/utils";
-import { buildTimeline, type AnalyticsRange } from "@/services/admin-analytics/admin-analytics.build";
+import type { AnalyticsRange } from "@/services/admin-analytics/admin-analytics.build";
 import {
   readBreakdowns,
   readCampaigns,
   readLandingPages,
-  readServedPageLoads,
-  readSignups,
   readTopPages,
   readWebAnalyticsOverview,
 } from "@/services/admin-analytics/admin-analytics.server";
@@ -28,11 +24,10 @@ import {
 
 /**
  * **The analytics page's sections, each its own read.** Every section awaits
- * only what it shows, inside its own `<Suspense>` on the route, so the fast
- * reads (the database, a cached hour) draw while the slow one — the request
- * log, read a day at a time — is still arriving, and one failing read leaves
- * every other section standing. Each fallback below is shaped like what it
- * stands in for, at its final height: these reads are known to be slow, so the
+ * only what it shows, inside its own `<Suspense>` on the route, so a section
+ * draws as soon as its own read lands and one failing read leaves every other
+ * section standing. Each fallback below is shaped like what it stands in for,
+ * at its final height: an uncached hour is a round trip to Vercel, so the
  * skeleton is drawn at once.
  */
 
@@ -44,12 +39,15 @@ function Ghost({ className }: { className: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// The three measures
+// The range's totals
 // ---------------------------------------------------------------------------
 
-export function MeasureSkeleton() {
+/** The totals card's width, shared by the card and its skeleton. */
+const OVERVIEW_WIDTH = "max-w-md";
+
+export function OverviewSkeleton() {
   return (
-    <Card className="flex h-full min-h-48 flex-col gap-3 p-5" aria-hidden>
+    <Card className={`flex min-h-48 flex-col gap-3 p-5 ${OVERVIEW_WIDTH}`} aria-hidden>
       <Ghost className="h-4 w-28" />
       <Ghost className="h-10 w-36" />
       <Ghost className="h-3 w-full" />
@@ -58,63 +56,24 @@ export function MeasureSkeleton() {
   );
 }
 
-export async function ServedMeasure({ range, now }: SectionProps) {
-  const t = await getTranslations("admin.analytics.measures.served");
-  const locale = await getLocale();
-  const result = await readServedPageLoads(range, now);
-  if (!result.ok) {
-    return <MeasureFailure title={t("title")} caption={t("caption")} reason={result.reason} />;
-  }
-  const { window, total } = result.data;
-  const covers =
-    window === null
-      ? t("outside", { days: REQUEST_LOG_DAYS })
-      : window.from === range.from
-        ? null
-        : t("window", {
-            from: formatDateOnly(window.from, locale),
-            to: formatDateOnly(window.to, locale),
-            days: REQUEST_LOG_DAYS,
-          });
-  return (
-    <MeasureCard
-      title={t("title")}
-      figure={window === null ? null : total}
-      caption={t("caption")}
-      footer={
-        <>
-          {covers && <p className="text-xs text-muted-foreground">{covers}</p>}
-          <ReadAt readAt={result.readAt} />
-        </>
-      }
-    />
-  );
-}
-
-export async function ViewsMeasure({ range, now }: SectionProps) {
-  const t = await getTranslations("admin.analytics.measures.views");
+export async function OverviewSection({ range, now }: SectionProps) {
+  const t = await getTranslations("admin.analytics.views");
   const result = await readWebAnalyticsOverview(range, now);
-  if (!result.ok) {
-    return <MeasureFailure title={t("title")} caption={t("caption")} reason={result.reason} />;
-  }
   return (
-    <MeasureCard
-      title={t("title")}
-      figure={result.data.pageviews}
-      detail={t("visitors", { count: result.data.visitors })}
-      caption={t("caption")}
-      footer={<ReadAt readAt={result.readAt} />}
-    />
+    <div className={OVERVIEW_WIDTH}>
+      {result.ok ? (
+        <MeasureCard
+          title={t("title")}
+          figure={result.data.pageviews}
+          detail={t("visitors", { count: result.data.visitors })}
+          caption={t("caption")}
+          footer={<ReadAt readAt={result.readAt} />}
+        />
+      ) : (
+        <MeasureFailure title={t("title")} caption={t("caption")} reason={result.reason} />
+      )}
+    </div>
   );
-}
-
-export async function SignupsMeasure({ range }: SectionProps) {
-  const t = await getTranslations("admin.analytics.measures.signups");
-  const result = await readSignups(range.from, range.to);
-  if (!result.ok) {
-    return <MeasureFailure title={t("title")} caption={t("caption")} reason={result.reason} />;
-  }
-  return <MeasureCard title={t("title")} figure={result.data.total} caption={t("caption")} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,34 +85,15 @@ export function TimelineSkeleton() {
     <Card className="space-y-6 p-5" aria-hidden>
       <Ghost className="h-4 w-32" />
       <Ghost className="h-60 w-full" />
-      <Ghost className="h-36 w-full" />
     </Card>
   );
 }
 
-/**
- * Every day of the range, all four measures. It waits on the request log as
- * well, because the chart is drawn once; a measure that failed is left off the
- * chart and named under it rather than drawn as zeros.
- */
+/** Every day of the range, its pageviews and visitors. */
 export async function TimelineSection({ range, now }: SectionProps) {
-  const t = await getTranslations("admin.analytics.timeline");
-  const [visits, served, signups] = await Promise.all([
-    readWebAnalyticsOverview(range, now),
-    readServedPageLoads(range, now),
-    readSignups(range.from, range.to),
-  ]);
-  const notes = [
-    ...(served.ok ? [] : [t("missing.served")]),
-    ...(visits.ok ? [] : [t("missing.visits")]),
-    ...(signups.ok ? [] : [t("missing.signups")]),
-  ];
-  const rows = buildTimeline(range, {
-    visits: visits.ok ? visits.data.days : null,
-    served: served.ok ? served.data : null,
-    signups: signups.ok ? signups.data.days : null,
-  });
-  return <AnalyticsTimeline rows={rows} notes={notes} />;
+  const result = await readWebAnalyticsOverview(range, now);
+  if (!result.ok) return <AnalyticsFailure reason={result.reason} />;
+  return <AnalyticsTimeline rows={result.data.days} />;
 }
 
 // ---------------------------------------------------------------------------

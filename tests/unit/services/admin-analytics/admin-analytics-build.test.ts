@@ -10,23 +10,19 @@ import {
   buildLandingPages,
   buildPathViews,
   buildRoutes,
-  buildTimeline,
   landingPagePaths,
   localePathFilter,
   normaliseUtm,
   pathLanguage,
-  requestLogWindow,
   resolveAnalyticsRange,
   resolveRequestedRange,
-  signupsMatching,
-  tallySignups,
   trafficPath,
   type LandingPageEntry,
 } from "@/services/admin-analytics/admin-analytics.build";
 
 /**
  * The pure half of the admin analytics page: the range, the cache key, and how
- * Vercel's groups and the database's rows are normalised and joined.
+ * Vercel's groups are normalised and joined.
  */
 
 const NOW = new Date("2026-10-15T09:30:00Z");
@@ -80,23 +76,6 @@ describe("resolveAnalyticsRange", () => {
   });
 });
 
-describe("requestLogWindow", () => {
-  it("is the part of the range inside the log's last N days", () => {
-    expect(requestLogWindow({ from: "2026-07-01", to: "2026-10-15" }, "2026-10-15", 30)).toEqual({
-      from: "2026-09-16",
-      to: "2026-10-15",
-    });
-    expect(requestLogWindow({ from: "2026-10-01", to: "2026-10-05" }, "2026-10-15", 30)).toEqual({
-      from: "2026-10-01",
-      to: "2026-10-05",
-    });
-  });
-
-  it("is null for a range wholly before the log", () => {
-    expect(requestLogWindow({ from: "2026-07-01", to: "2026-08-31" }, "2026-10-15", 30)).toBeNull();
-  });
-});
-
 describe("analyticsCacheKey", () => {
   it("is the read, its days and the current UTC hour", () => {
     expect(analyticsCacheKey("pages", { from: "2026-09-16", to: "2026-10-15" }, NOW)).toEqual({
@@ -117,7 +96,7 @@ describe("analyticsCacheKey", () => {
 });
 
 describe("normaliseUtm", () => {
-  it("reads Vercel's empty string and the database's NULL as the same none", () => {
+  it("reads Vercel's empty string, a null and a missing value as the same none", () => {
     expect(normaliseUtm("")).toBeNull();
     expect(normaliseUtm(null)).toBeNull();
     expect(normaliseUtm(undefined)).toBeNull();
@@ -125,7 +104,7 @@ describe("normaliseUtm", () => {
   });
 });
 
-describe("buildDayVisits and buildTimeline", () => {
+describe("buildDayVisits", () => {
   const range = { from: "2026-10-01", to: "2026-10-03" };
 
   it("fills every day of the range, a day Vercel did not answer for at zero", () => {
@@ -143,63 +122,10 @@ describe("buildDayVisits and buildTimeline", () => {
       buildDayVisits(range, [{ values: { day: "2026-10-04" }, pageviews: 1, visitors: 1 }]),
     ).toThrow(/outside/);
   });
-
-  it("leaves a measure that was not read as a gap, never a zero", () => {
-    const rows = buildTimeline(range, {
-      visits: null,
-      served: {
-        window: { from: "2026-10-02", to: "2026-10-03" },
-        days: [
-          { day: "2026-10-02", count: 40 },
-          { day: "2026-10-03", count: 50 },
-        ],
-        total: 90,
-      },
-      signups: [{ day: "2026-10-03", signups: 2 }],
-    });
-    expect(rows).toEqual([
-      { day: "2026-10-01", pageviews: null, visitors: null, served: null, signups: 0 },
-      { day: "2026-10-02", pageviews: null, visitors: null, served: 40, signups: 0 },
-      { day: "2026-10-03", pageviews: null, visitors: null, served: 50, signups: 2 },
-    ]);
-    expect(buildTimeline(range, { visits: null, served: null, signups: null })[0]?.signups).toBeNull();
-  });
-});
-
-describe("tallySignups", () => {
-  const range = { from: "2026-10-01", to: "2026-10-02" };
-
-  it("counts per UTC day and per campaign label, keeping no account", () => {
-    const tally = tallySignups(range, [
-      // 23:30 in Helsinki on the 1st is still the 1st in UTC; 00:30 Helsinki on the 2nd is the 1st too.
-      { created_at: "2026-10-01T20:30:00+00:00", utm_source: "meta", utm_medium: "paid_social", utm_campaign: "lynx-a" },
-      { created_at: "2026-10-02T00:30:00+03:00", utm_source: "meta", utm_medium: "paid_social", utm_campaign: "lynx-a" },
-      { created_at: "2026-10-02T12:00:00+00:00", utm_source: null, utm_medium: null, utm_campaign: null },
-    ]);
-    expect(tally).toEqual({
-      total: 3,
-      days: [
-        { day: "2026-10-01", signups: 2 },
-        { day: "2026-10-02", signups: 1 },
-      ],
-      campaigns: [
-        { campaign: "lynx-a", source: "meta", medium: "paid_social", signups: 2 },
-        { campaign: null, source: null, medium: null, signups: 1 },
-      ],
-    });
-  });
-
-  it("throws on an account created outside the range", () => {
-    expect(() =>
-      tallySignups(range, [
-        { created_at: "2026-10-03T00:00:00Z", utm_source: null, utm_medium: null, utm_campaign: null },
-      ]),
-    ).toThrow(/outside/);
-  });
 });
 
 describe("buildCampaigns", () => {
-  it("joins views to signups on the campaign, Vercel's empty string meeting the database's NULL", () => {
+  it("counts each campaign's views by its sources, naming its mediums, Vercel's empty string as no campaign", () => {
     const rows = buildCampaigns(
       [
         { values: { utmCampaign: "lynx-a", utmSource: "meta" }, pageviews: 60 },
@@ -212,30 +138,24 @@ describe("buildCampaigns", () => {
         { values: { utmCampaign: "", utmMedium: "" }, pageviews: 900 },
         { values: { utmCampaign: "Lynx-A", utmMedium: "paid_social" }, pageviews: 1 },
       ],
-      [
-        { campaign: "lynx-a", source: "meta", medium: "paid_social", signups: 3 },
-        { campaign: null, source: null, medium: null, signups: 20 },
-        { campaign: "newsletter", source: "brevo", medium: "email", signups: 1 },
-      ],
     );
 
-    expect(rows.map((row) => [row.campaign, row.pageviews, row.signups])).toEqual([
-      ["lynx-a", 75, 3],
-      ["Lynx-A", 1, 0],
-      ["newsletter", 0, 1],
+    expect(rows.map((row) => [row.campaign, row.pageviews])).toEqual([
+      ["lynx-a", 75],
+      ["Lynx-A", 1],
       // "No campaign" last, however large.
-      [null, 900, 20],
+      [null, 900],
     ]);
     expect(rows[0]?.sources).toEqual([
-      { value: "meta", pageviews: 60, signups: 3 },
-      { value: "instagram", pageviews: 15, signups: 0 },
+      { value: "meta", pageviews: 60 },
+      { value: "instagram", pageviews: 15 },
     ]);
-    expect(rows[0]?.mediums).toEqual([{ value: "paid_social", pageviews: 75, signups: 3 }]);
-    expect(rows[3]?.sources).toEqual([{ value: null, pageviews: 900, signups: 20 }]);
+    expect(rows[0]?.mediums).toEqual([{ value: "paid_social", pageviews: 75 }]);
+    expect(rows[2]?.sources).toEqual([{ value: null, pageviews: 900 }]);
   });
 
-  it("is empty with nothing on either side", () => {
-    expect(buildCampaigns([], [], [])).toEqual([]);
+  it("is empty with nothing read", () => {
+    expect(buildCampaigns([], [])).toEqual([]);
   });
 });
 
@@ -479,21 +399,5 @@ describe("buildPathViews", () => {
       },
       { given: "/fi/kauppa", pageviews: 8, addresses: [{ path: "/fi/kauppa", language: "fi", pageviews: 8 }] },
     ]);
-  });
-});
-
-describe("signupsMatching", () => {
-  const campaigns = [
-    { campaign: "lynx-a", source: "meta", medium: "paid_social", signups: 3 },
-    { campaign: "lynx-a", source: "google", medium: "cpc", signups: 2 },
-    { campaign: "Lynx-A", source: "meta", medium: "paid_social", signups: 1 },
-    { campaign: null, source: null, medium: null, signups: 9 },
-  ];
-
-  it("counts the signups carrying every label asked for, letter case included", () => {
-    expect(signupsMatching(campaigns, { campaign: "lynx-a" })).toBe(5);
-    expect(signupsMatching(campaigns, { campaign: "lynx-a", source: "meta" })).toBe(3);
-    expect(signupsMatching(campaigns, { source: "meta" })).toBe(4);
-    expect(signupsMatching(campaigns, { medium: "email" })).toBe(0);
   });
 });

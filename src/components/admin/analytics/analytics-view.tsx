@@ -226,7 +226,7 @@ export function AnalyticsFailure({
 }
 
 // ---------------------------------------------------------------------------
-// The three measures
+// The range's totals
 // ---------------------------------------------------------------------------
 
 /** One measure: its figure, what else it says, and what it counts. */
@@ -238,7 +238,7 @@ export function MeasureCard({
   footer,
 }: {
   title: string;
-  figure: number | null;
+  figure: number;
   detail?: string;
   caption: string;
   footer?: ReactNode;
@@ -248,9 +248,7 @@ export function MeasureCard({
     <Card className="flex h-full flex-col gap-2 p-5">
       <p className="text-sm font-semibold">{title}</p>
       <p className="flex min-h-10 items-end gap-2">
-        {figure !== null && (
-          <span className="text-4xl font-semibold leading-none tabular-nums">{count(figure)}</span>
-        )}
+        <span className="text-4xl font-semibold leading-none tabular-nums">{count(figure)}</span>
         {detail && <span className="text-sm text-muted-foreground">{detail}</span>}
       </p>
       <p className="text-xs text-muted-foreground">{caption}</p>
@@ -462,23 +460,13 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
             <th scope="col" className="w-28 px-4 py-2 text-right font-medium">
               {t("columns.pageviews")}
             </th>
-            <th scope="col" className="w-28 px-4 py-2 text-right font-medium">
-              {t("columns.signups")}
-            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {shown.map((row) => (
             <tr key={row.campaign ?? ""}>
               <td className="px-4 py-2.5">
-                {row.campaign === null ? (
-                  <span className="space-y-0.5">
-                    <span className="block font-medium">{t("none")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("noneHint")}</span>
-                  </span>
-                ) : (
-                  <span className="break-all font-medium">{row.campaign}</span>
-                )}
+                <span className="break-all font-medium">{row.campaign ?? t("none")}</span>
               </td>
               <td className="px-4 py-2.5">
                 <LabelList labels={row.sources} />
@@ -487,7 +475,6 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
                 <LabelList labels={row.mediums} />
               </td>
               <td className="px-4 py-2.5 text-right tabular-nums">{count(row.pageviews)}</td>
-              <td className="px-4 py-2.5 text-right tabular-nums">{count(row.signups)}</td>
             </tr>
           ))}
         </tbody>

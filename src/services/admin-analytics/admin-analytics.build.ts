@@ -11,13 +11,12 @@ import {
 
 /**
  * The pure half of the admin analytics page: which days a read covers, how
- * Vercel's groups and the database's rows are normalised and joined, and the
- * cache key. Nothing here reads anything; `admin-analytics.server.ts` does the
- * reading and hands the results through these.
+ * Vercel's groups are normalised and joined, and the cache key. Nothing here
+ * reads anything; `admin-analytics.server.ts` does the reading and hands the
+ * results through these.
  *
- * **Every day is a UTC day.** Vercel buckets its counts at UTC midnight, so the
- * signups are bucketed the same way and the page says so — one day boundary for
- * every figure on it, never Helsinki for one source and UTC for another.
+ * **Every day is a UTC day**, because Vercel buckets its counts at UTC
+ * midnight, and the page says so.
  */
 
 const DAY_MS = 86_400_000;
@@ -114,20 +113,6 @@ export function resolveAnalyticsRange(
   return { from: clamp(addDays(today, -(preset - 1))), to: today, preset };
 }
 
-/**
- * The part of the range the edge request log can answer: the days of it inside
- * the log's last `logDays` days, today included, or null when none are.
- */
-export function requestLogWindow(
-  range: { from: string; to: string },
-  today: string,
-  logDays: number,
-): { from: string; to: string } | null {
-  const oldest = addDays(today, -(logDays - 1));
-  const from = range.from < oldest ? oldest : range.from;
-  return from > range.to ? null : { from, to: range.to };
-}
-
 // ---------------------------------------------------------------------------
 // The cache key
 // ---------------------------------------------------------------------------
@@ -199,14 +184,7 @@ export interface WebAnalyticsOverview {
   visitors: number;
 }
 
-export interface ServedPageLoads {
-  /** The days the request log answered for; null when the range lies wholly before them. */
-  window: { from: string; to: string } | null;
-  days: { day: string; count: number }[];
-  total: number;
-}
-
-/** A UTM value as both sources mean it: Vercel's `""` and the database's NULL are both "none". */
+/** A dimension value with Vercel's `""` (and a missing one) read as "none". */
 export function normaliseUtm(value: string | null | undefined): string | null {
   return value === undefined || value === null || value === "" ? null : value;
 }
@@ -244,96 +222,6 @@ export function buildDayVisits(
   );
 }
 
-/** One row of the over-time chart. A null is a figure not read for that day — a gap, never a zero. */
-export interface TimelineRow {
-  day: string;
-  pageviews: number | null;
-  visitors: number | null;
-  served: number | null;
-  signups: number | null;
-}
-
-export function buildTimeline(
-  range: { from: string; to: string },
-  sources: {
-    visits: readonly DayVisits[] | null;
-    served: ServedPageLoads | null;
-    signups: readonly { day: string; signups: number }[] | null;
-  },
-): TimelineRow[] {
-  const visits = new Map(sources.visits?.map((row) => [row.day, row]));
-  const served = new Map(sources.served?.days.map((row) => [row.day, row.count]));
-  const signups = new Map(sources.signups?.map((row) => [row.day, row.signups]));
-  return daysOf(range.from, range.to).map((day) => ({
-    day,
-    pageviews: visits.get(day)?.pageviews ?? null,
-    visitors: visits.get(day)?.visitors ?? null,
-    served: served.get(day) ?? null,
-    signups: sources.signups === null ? null : (signups.get(day) ?? 0),
-  }));
-}
-
-// ---------------------------------------------------------------------------
-// Signups
-// ---------------------------------------------------------------------------
-
-/** A parent account as the signups read takes it: when it was created, and its campaign labels. */
-export interface SignupRow {
-  created_at: string;
-  utm_source: string | null;
-  utm_medium: string | null;
-  utm_campaign: string | null;
-}
-
-/** A campaign label triple and how many parent accounts it brought. */
-export interface SignupCampaignCount {
-  campaign: string | null;
-  source: string | null;
-  medium: string | null;
-  signups: number;
-}
-
-export interface SignupTally {
-  total: number;
-  days: { day: string; signups: number }[];
-  campaigns: SignupCampaignCount[];
-}
-
-/**
- * Counts, and nothing else, out of the parent accounts created in the range:
- * how many per UTC day, and how many per campaign label triple. No account
- * survives this function — only what leaves it is ever shown, because a
- * campaign tied to one person's account beside what they did on the site is
- * what `src/lib/utm.ts` forbids.
- */
-export function tallySignups(range: { from: string; to: string }, rows: readonly SignupRow[]): SignupTally {
-  const days = new Map(daysOf(range.from, range.to).map((day) => [day, 0]));
-  const campaigns = new Map<string, SignupCampaignCount>();
-  for (const row of rows) {
-    const day = formatInTimeZone(new Date(row.created_at), "UTC", "yyyy-MM-dd");
-    const count = days.get(day);
-    if (count === undefined) {
-      throw new Error(`analytics: an account created on ${day} lies outside ${range.from}..${range.to}`);
-    }
-    days.set(day, count + 1);
-
-    const label = {
-      campaign: normaliseUtm(row.utm_campaign),
-      source: normaliseUtm(row.utm_source),
-      medium: normaliseUtm(row.utm_medium),
-    };
-    const key = JSON.stringify([label.campaign, label.source, label.medium]);
-    const existing = campaigns.get(key);
-    if (existing) existing.signups += 1;
-    else campaigns.set(key, { ...label, signups: 1 });
-  }
-  return {
-    total: rows.length,
-    days: [...days].map(([day, signups]) => ({ day, signups })),
-    campaigns: [...campaigns.values()],
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Campaigns
 // ---------------------------------------------------------------------------
@@ -344,19 +232,17 @@ export interface CampaignViewGroup {
   pageviews: number;
 }
 
-/** One value of a campaign's source or medium, with what it counted on each side. */
+/** One value of a campaign's source or medium, with its pageviews. */
 export interface CampaignLabelCount {
   value: string | null;
   pageviews: number;
-  signups: number;
 }
 
-/** One campaign's row: views and signups side by side, with the sources and mediums behind them. */
+/** One campaign's row: its views, with the sources and mediums behind them. */
 export interface CampaignRow {
-  /** Null is "no campaign" — no UTM on the visit, or none stored on the account. */
+  /** Null is "no campaign": no UTM on the visit. */
   campaign: string | null;
   pageviews: number;
-  signups: number;
   sources: CampaignLabelCount[];
   mediums: CampaignLabelCount[];
 }
@@ -365,78 +251,56 @@ function compareText(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** Most first by views then signups, then by value; the empty label last. */
-function byWeight<T extends { pageviews: number; signups: number }>(
-  label: (entry: T) => string | null,
-) {
+/** Most viewed first, then by value; the empty label last. */
+function byWeight<T extends { pageviews: number }>(label: (entry: T) => string | null) {
   return (a: T, b: T) => {
     const aNone = label(a) === null;
     const bNone = label(b) === null;
     if (aNone !== bNone) return aNone ? 1 : -1;
-    return (
-      b.pageviews - a.pageviews ||
-      b.signups - a.signups ||
-      compareText(label(a) ?? "", label(b) ?? "")
-    );
+    return b.pageviews - a.pageviews || compareText(label(a) ?? "", label(b) ?? "");
   };
 }
 
 /**
- * The campaigns table: each campaign's pageviews beside the parent accounts it
- * brought, joined on the campaign value after normalising Vercel's `""` and the
- * database's NULL to one "no campaign".
+ * The campaigns table: each campaign's pageviews, with Vercel's `""` read as
+ * one "no campaign".
  *
  * Vercel takes two groupings a read, so a campaign's views arrive twice — by
  * campaign and source, and by campaign and medium — and each read sums to the
  * same views. The source read is the one counted; the medium read only names
- * the mediums. Values are matched exactly, letter case included, because both
- * sides store them as the link spelled them.
+ * the mediums. Values are kept exactly as the link spelled them, letter case
+ * included.
  */
 export function buildCampaigns(
   bySource: readonly CampaignViewGroup[],
   byMedium: readonly CampaignViewGroup[],
-  signups: readonly SignupCampaignCount[],
 ): CampaignRow[] {
   const rows = new Map<string, CampaignRow>();
   const rowFor = (campaign: string | null): CampaignRow => {
     const key = JSON.stringify(campaign);
     let row = rows.get(key);
     if (!row) {
-      row = { campaign, pageviews: 0, signups: 0, sources: [], mediums: [] };
+      row = { campaign, pageviews: 0, sources: [], mediums: [] };
       rows.set(key, row);
     }
     return row;
   };
-  const add = (
-    list: CampaignLabelCount[],
-    value: string | null,
-    counts: { pageviews: number; signups: number },
-  ) => {
+  const add = (list: CampaignLabelCount[], value: string | null, pageviews: number) => {
     const existing = list.find((entry) => entry.value === value);
-    if (existing) {
-      existing.pageviews += counts.pageviews;
-      existing.signups += counts.signups;
-    } else {
-      list.push({ value, ...counts });
-    }
+    if (existing) existing.pageviews += pageviews;
+    else list.push({ value, pageviews });
   };
 
   for (const group of bySource) {
     if (group.pageviews === 0) continue;
     const row = rowFor(normaliseUtm(group.values.utmCampaign));
     row.pageviews += group.pageviews;
-    add(row.sources, normaliseUtm(group.values.utmSource), { pageviews: group.pageviews, signups: 0 });
+    add(row.sources, normaliseUtm(group.values.utmSource), group.pageviews);
   }
   for (const group of byMedium) {
     if (group.pageviews === 0) continue;
     const row = rowFor(normaliseUtm(group.values.utmCampaign));
-    add(row.mediums, normaliseUtm(group.values.utmMedium), { pageviews: group.pageviews, signups: 0 });
-  }
-  for (const count of signups) {
-    const row = rowFor(count.campaign);
-    row.signups += count.signups;
-    add(row.sources, count.source, { pageviews: 0, signups: count.signups });
-    add(row.mediums, count.medium, { pageviews: 0, signups: count.signups });
+    add(row.mediums, normaliseUtm(group.values.utmMedium), group.pageviews);
   }
 
   const sortLabels = byWeight<CampaignLabelCount>((entry) => entry.value);
@@ -797,22 +661,4 @@ export interface CampaignLabels {
   campaign?: string;
   source?: string;
   medium?: string;
-}
-
-/**
- * The signups carrying every label asked for, matched exactly, letter case
- * included, as the campaigns table joins them.
- */
-export function signupsMatching(
-  campaigns: readonly SignupCampaignCount[],
-  labels: CampaignLabels,
-): number {
-  return campaigns
-    .filter(
-      (count) =>
-        (labels.campaign === undefined || count.campaign === labels.campaign) &&
-        (labels.source === undefined || count.source === labels.source) &&
-        (labels.medium === undefined || count.medium === labels.medium),
-    )
-    .reduce((sum, count) => sum + count.signups, 0);
 }

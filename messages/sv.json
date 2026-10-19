@@ -2093,7 +2093,7 @@
     },
     "analytics": {
       "title": "Analys",
-      "subtitle": "Hur många som når webbplatsen, vad de läser, vilka kampanjer som för dem hit och hur många familjer som registrerar sig. Varje dag på den här sidan är en UTC-dag.",
+      "subtitle": "Hur många som når webbplatsen, vad de läser och vilka kampanjer som för dem hit. Varje dag på den här sidan är en UTC-dag.",
       "range": {
         "label": "Datumintervall",
         "preset": "Senaste {days} dagarna",
@@ -2113,40 +2113,18 @@
         "refused": "Vercel vägrade lämna ut siffrorna till den här webbplatsens åtkomstnyckel. Nyckeln behöver åtkomst till dem innan de kan visas här.",
         "failed": "Siffrorna kunde inte läsas just nu. Försök igen om några minuter."
       },
-      "measures": {
-        "heading": "Tre sätt att räkna",
-        "caption": "Varje siffra räknar något annat, så de stämmer aldrig överens med varandra. Serverade sidor ligger närmast den verkliga trafiken, sidvisningar visar vad som lästes och registreringar vad det ledde till.",
-        "served": {
-          "title": "Serverade sidor",
-          "caption": "Varje gång en sida laddades från vår server, av vem som helst, oavsett svaret i cookiebannern. Kända botar och länkförhandsvisningar räknas inte, och inte heller förflyttningar mellan sidor efter ankomsten. Dessa kan inte delas upp per kampanj: serverns logg sparar inte kampanjen från adressen.",
-          "window": "Täcker bara {from} – {to}: serverns logg sparar de senaste {days} dagarna.",
-          "outside": "Serverns logg sparar bara de senaste {days} dagarna, så den har inget för det här intervallet."
-        },
-        "views": {
-          "title": "Sidvisningar",
-          "visitors": "{count, plural, one {cirka # besökare} other {cirka # besökare}}",
-          "caption": "Bara besökare som godkände analys i cookiebannern räknas, vilket ofta är en liten del av alla som kom, så de här siffrorna ligger långt under de serverade sidorna. Besökare räknas per enhet, så det antalet är ungefärligt."
-        },
-        "signups": {
-          "title": "Föräldraregistreringar",
-          "caption": "Skapade föräldrakonton, från våra egna uppgifter. Varje nytt föräldrakonto räknas, oavsett svaret i cookiebannern."
-        }
+      "views": {
+        "title": "Sidvisningar",
+        "visitors": "{count, plural, one {cirka # besökare} other {cirka # besökare}}",
+        "caption": "Bara besökare som godkände analys i cookiebannern räknas. Besökare räknas per enhet, så det antalet är ungefärligt."
       },
       "timeline": {
         "heading": "Över tid",
         "traffic": "Trafik per dag",
-        "signups": "Föräldraregistreringar per dag",
         "utcDays": "Dagarna är UTC-dagar, midnatt till midnatt.",
         "series": {
-          "served": "Serverade sidor",
           "pageviews": "Sidvisningar",
-          "visitors": "Besökare",
-          "signups": "Registreringar"
-        },
-        "missing": {
-          "served": "Serverade sidor saknas: serverns logg kunde inte läsas.",
-          "visits": "Sidvisningar och besökare saknas: Vercel kunde inte läsas.",
-          "signups": "Registreringar saknas: våra egna uppgifter kunde inte läsas."
+          "visitors": "Besökare"
         }
       },
       "landing": {
@@ -2161,18 +2139,16 @@
       },
       "campaigns": {
         "heading": "Kampanjer",
-        "caption": "Sidvisningar efter kampanjen i länken, bredvid föräldrakontona som varje kampanj gav. Sidvisningar räknar bara besökare som godkände analys. Registreringarna är fullständiga, men en förälders kampanj sparas bara när hen godkände marknadsföringscookies, så uppdelningen per kampanj gäller bara de familjerna.",
+        "caption": "Sidvisningar efter kampanjen i länken. Bara besökare som godkände analys räknas.",
         "columns": {
           "campaign": "Kampanj",
           "sources": "Källa",
           "mediums": "Medium",
-          "pageviews": "Sidvisningar",
-          "signups": "Registreringar"
+          "pageviews": "Sidvisningar"
         },
         "none": "Ingen kampanj",
-        "noneHint": "Ingen kampanj i länken, eller en som inte sparades",
         "noValue": "ingen",
-        "empty": "Inget visades och ingen registrerade sig under det här intervallet."
+        "empty": "Inget visades under det här intervallet."
       },
       "pages": {
         "heading": "Populäraste sidorna",
