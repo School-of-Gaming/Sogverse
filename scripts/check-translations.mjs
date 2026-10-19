@@ -157,6 +157,25 @@ function loadLocale(locale) {
     console.error(`\n[${locale}] ${unlisted.length} namespace file(s) not imported by index.ts:`);
     for (const f of unlisted) console.error(`  - ${f}.json`);
   }
+  // The exported `messages` object literal must carry every imported binding: a
+  // namespace imported but left out is copy nobody sees, and for `tlh` it is
+  // invisible, because the loader falls back to English.
+  const literal = index.match(/\bmessages\s*=\s*\{([^}]*)\}/);
+  if (!literal) {
+    hasErrors = true;
+    console.error(`\n[${locale}] index.ts has no \`messages\` object literal to check its namespaces against.`);
+  } else {
+    const listed = new Set(
+      literal[1]
+        .split(",")
+        .map((entry) => entry.trim().split(":")[0].trim())
+        .filter(Boolean),
+    );
+    for (const ns of imported.filter((f) => !listed.has(f))) {
+      hasErrors = true;
+      console.error(`\n[${locale}] namespace "${ns}" is imported by index.ts but missing from its exported messages object.`);
+    }
+  }
   const messages = {};
   for (const ns of imported.filter((f) => files.includes(f))) {
     messages[ns] = JSON.parse(readFileSync(join(dir, `${ns}.json`), "utf-8"));

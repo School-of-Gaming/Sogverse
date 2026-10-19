@@ -14,6 +14,9 @@ import { describe, expect, it } from "vitest";
  * - **A test importing a locale's whole catalog** — its index, the directory,
  *   or an old single-file bundle. It puts every namespace back in the test's
  *   closure. A test imports the namespace files its tree reads instead.
+ * - **A test reading the loader's whole catalogs** — a value import of
+ *   `@/i18n/messages`, static or dynamic, whose `loadMessages` assembles every
+ *   namespace. (`import type` is erased and fine.)
  * - **A computed path into `messages/`**, anywhere — a template literal or a
  *   concatenation. The graph cannot see it at all, so whatever it loads drops
  *   out of every namespace's test run.
@@ -37,6 +40,22 @@ const WHOLE_CATALOG_TESTS: Record<string, string> = {
   // Klingon half asserts which namespaces the catalog does not carry.
   "tests/unit/components/policy-cross-links.test.tsx": "a census over every catalog",
 };
+
+/**
+ * A value import of the catalog loader: `import … from`, a bare `import "…"`,
+ * `export … from`, or a dynamic `import(…)`, `require(…)` or `vi.importActual(…)`.
+ * `import type` / `export type` are erased at build time and do not count, and a
+ * `vi.mock("@/i18n/messages")` names the module without loading it.
+ */
+function importsLoader(text: string): boolean {
+  return [...text.matchAll(/["']@\/i18n\/messages(?:\.ts)?["']/g)].some((match) => {
+    // The statement up to the module name: from the previous `;` (or the file start).
+    const before = text.slice(text.lastIndexOf(";", match.index) + 1, match.index);
+    if (/\b(?:import|require|importActual)\s*\(\s*$/.test(before)) return true;
+    const keyword = Math.max(before.lastIndexOf("import"), before.lastIndexOf("export"));
+    return keyword >= 0 && !/^(?:import|export)\s+type\b/.test(before.slice(keyword));
+  });
+}
 
 const THIS_FILE = relative(repoRoot, fileURLToPath(import.meta.url)).split(sep).join("/");
 
@@ -80,6 +99,25 @@ describe("imports of the message catalogs", () => {
           .map((path) => `${file}: ${path}`),
       );
     expect(offenders).toEqual([]);
+  });
+
+  it("a test imports no value from the catalog loader", () => {
+    const offenders = files("tests")
+      .filter(({ file }) => file !== THIS_FILE && !(file in WHOLE_CATALOG_TESTS))
+      .filter(({ text }) => importsLoader(text))
+      .map(({ file }) => file);
+    expect(offenders).toEqual([]);
+  });
+
+  it("recognises each form of loader import, and not a type import or a mock", () => {
+    expect(importsLoader('import { loadMessages } from "@/i18n/messages";')).toBe(true);
+    expect(importsLoader('import {\n  loadMessages,\n} from "@/i18n/messages";')).toBe(true);
+    expect(importsLoader('import "@/i18n/messages";')).toBe(true);
+    expect(importsLoader('export { loadMessages } from "@/i18n/messages";')).toBe(true);
+    expect(importsLoader('const m = await import("@/i18n/messages");')).toBe(true);
+    expect(importsLoader('await vi.importActual("@/i18n/messages");')).toBe(true);
+    expect(importsLoader('import type { Messages } from "@/i18n/messages";')).toBe(false);
+    expect(importsLoader('vi.mock("@/i18n/messages", () => ({}));')).toBe(false);
   });
 
   it("names every path into messages/ as a literal, never a computed one", () => {
