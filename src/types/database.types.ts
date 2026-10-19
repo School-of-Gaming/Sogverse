@@ -4218,6 +4218,10 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: Json
       }
+      clone_landing_page: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
+      }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
