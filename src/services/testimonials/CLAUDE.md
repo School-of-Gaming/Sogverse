@@ -40,7 +40,7 @@ no signed-in caller (a migration) records no one.
 the whole version set, so a language left out is removed; the MCP tools write or remove
 one language alone, never touching another admin's.
 
-**The public reads the placed testimonials alone**, on an anon client per request; the
+**The public reads the placed testimonials alone**, per request on the same server client the page read uses; the
 store itself is admin-only. A live landing page reads its own through
 `list_landing_page_testimonials`, which answers only what that page's published copy
 places, never a placement only in a working copy. It reads the words as they are now, so

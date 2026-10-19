@@ -141,7 +141,6 @@ function editorLink(origin: string, id: string): string {
  */
 function usageView(origin: string, usage: TestimonialUsage) {
   return {
-    place: "landingPage",
     pageId: usage.pageId,
     title: resolveTranslation(usage.titles, "en")?.title ?? null,
     inLiveCopy: usage.inLiveCopy,

@@ -231,7 +231,6 @@ describe("landing pages", () => {
     expect(result.structuredContent).toMatchObject({
       usedIn: [
         {
-          place: "landingPage",
           pageId: PAGE,
           title: "Gaming clubs in Espoo",
           inLiveCopy: true,
@@ -262,7 +261,7 @@ describe("landing pages", () => {
 
     expect(result.structuredContent).toMatchObject({
       testimonials: [
-        { testimonialId: ID, usedIn: [{ place: "landingPage", pageId: PAGE, inLiveCopy: true, inWorkingCopy: true }] },
+        { testimonialId: ID, usedIn: [{ pageId: PAGE, inLiveCopy: true, inWorkingCopy: true }] },
         { testimonialId: OTHER, usedIn: [] },
       ],
     });
