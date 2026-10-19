@@ -469,12 +469,14 @@ const OBSERVABILITY_QUERY_ENDPOINT = "https://api.vercel.com/v2/observability/qu
 export const REQUEST_LOG_DAYS = 30;
 
 /**
- * Thirty seconds per call: the log is slow to read. Filtering on the response's
- * content type costs about three seconds a day of recent traffic and more for
- * older days, and Vercel's own query gives up at about thirty — which is why
- * the log is read one day per call.
+ * Thirty-five seconds per call: the log is slow to read. Filtering on the
+ * response's content type costs about three seconds a day of recent traffic and
+ * more for older days, and Vercel's own query gives up at about thirty — which
+ * is why the log is read one day per call. Our abort sits above Vercel's own
+ * query timeout so that its answer arrives first: a `query_timeout` is asked
+ * once more, and an abort of ours that beat it would never be.
  */
-const OBSERVABILITY_TIMEOUT_MS = 30_000;
+const OBSERVABILITY_TIMEOUT_MS = 35_000;
 
 /** Request-log calls in flight at once, separate from the Web Analytics calls. */
 const OBSERVABILITY_CONCURRENCY = 4;

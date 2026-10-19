@@ -434,6 +434,25 @@ describe("a filtered read, as the MCP analytics tools ask", () => {
     expect(webAnalyticsCalls()[0]?.searchParams.getAll("by")).toEqual(["requestPath"]);
   });
 
+  it("files a cached read under each caller's own paths when two lists share their addresses", async () => {
+    answer(() => json({ data: [{ requestPath: "/fi/kauppa", pageviews: 4 }] }));
+    const asked = (...given: string[]) =>
+      given.map((text) => {
+        const path = trafficPath(text);
+        if (path === null) throw new Error("unreachable");
+        return path;
+      });
+    // "/shop" and "/shop/" are one page, so both lists ask for the same addresses.
+    const first = await readPathViews(RANGE, NOW, { paths: asked("/shop") });
+    const second = await readPathViews(RANGE, NOW, { paths: asked("/shop/", "/shop") });
+    expect(webAnalyticsCalls()).toHaveLength(1);
+    expect(first.ok && first.data.map((row) => row.given)).toEqual(["/shop"]);
+    expect(second.ok && second.data.map((row) => [row.given, row.pageviews])).toEqual([
+      ["/shop/", 4],
+      ["/shop", 4],
+    ]);
+  });
+
   it("reads signups on the client handed in, never the page's session", async () => {
     const handedFetch = vi.fn<typeof fetch>(async () =>
       postgrestPage(

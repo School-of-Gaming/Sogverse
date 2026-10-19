@@ -62,7 +62,14 @@ export function AnalyticsShell({
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="max-w-3xl text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <RangePicker range={range} earliest={earliest} today={today} />
+        {/* Keyed by the range so its date inputs reseed from the address after a
+            preset link or the back button, rather than keeping the old dates. */}
+        <RangePicker
+          key={`${range.from}..${range.to}`}
+          range={range}
+          earliest={earliest}
+          today={today}
+        />
       </div>
       {children}
     </div>

@@ -168,8 +168,10 @@ export function trafficFilterExpression(filter: TrafficFilter): string {
 /**
  * Pageviews and visitors per UTC day, and across the whole range: the whole
  * site, or what `filter` narrows it to, cached under its own filter.
+ * Memoised per request as well, because the measure and the over-time chart
+ * both want it and a cold hour would otherwise read it twice.
  */
-export function readWebAnalyticsOverview(
+export const readWebAnalyticsOverview = cache(function readWebAnalyticsOverview(
   range: { from: string; to: string },
   now: Date,
   filter?: TrafficFilter,
@@ -193,26 +195,30 @@ export function readWebAnalyticsOverview(
       visitors: whole[0]?.visitors ?? 0,
     };
   });
-}
+});
 
-/** Each of `filter`'s paths' pageviews, address by address, under its campaign labels too. */
-export function readPathViews(
+/**
+ * Each of `filter`'s paths' pageviews, address by address, under its campaign
+ * labels too. Only Vercel's groups are cached, under the filter's addresses:
+ * two path lists sharing those addresses share the read, and each is then
+ * filed under its own paths.
+ */
+export async function readPathViews(
   range: { from: string; to: string },
   now: Date,
   filter: TrafficFilter,
 ): Promise<AnalyticsResult<PathViewsRow[]>> {
   const expression = trafficFilterExpression(filter);
-  return vercelRead(`paths ${expression}`, range, now, async (client, key) =>
-    buildPathViews(
-      await client.aggregatePageviews({
-        by: ["requestPath"],
-        filter: expression,
-        from: key.from,
-        to: key.to,
-      }),
-      filter.paths,
-    ),
+  const views = await vercelRead(`paths ${expression}`, range, now, (client, key) =>
+    client.aggregatePageviews({
+      by: ["requestPath"],
+      filter: expression,
+      from: key.from,
+      to: key.to,
+    }),
   );
+  if (!views.ok) return views;
+  return { ok: true, data: buildPathViews(views.data, filter.paths), readAt: views.readAt };
 }
 
 /** The top pages, one row per route across every language, each with its language split. */
@@ -275,9 +281,10 @@ export function readBreakdowns(
  * Read one day per call and cached per day for the hour, so a wider range
  * reuses the days a narrower one already read. The read goes through the
  * undocumented observability query, so a failure on any day fails the whole
- * measure rather than leaving a gap that looks like a quiet day.
+ * measure rather than leaving a gap that looks like a quiet day. Memoised per
+ * request, because the measure and the over-time chart both want it.
  */
-export async function readServedPageLoads(
+export const readServedPageLoads = cache(async function readServedPageLoads(
   range: { from: string; to: string },
   now: Date,
 ): Promise<AnalyticsResult<ServedPageLoads>> {
@@ -318,7 +325,7 @@ export async function readServedPageLoads(
     console.error("admin analytics: the request log read failed", error);
     return { ok: false, reason: failureReason(error) };
   }
-}
+});
 
 // ---------------------------------------------------------------------------
 // Signups: Sogverse's own parent accounts
