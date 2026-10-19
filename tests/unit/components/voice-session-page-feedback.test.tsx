@@ -125,7 +125,7 @@ const feedback = vi.hoisted(() => ({
   saveFails: false,
 }));
 
-vi.mock("@/services/voice", () => ({
+vi.mock("@/services/voice/voice.queries", () => ({
   useVoiceToken: () => ({
     mutateAsync: vi.fn(async () => {
       if (!feedback.tokenResolves) {
@@ -151,12 +151,8 @@ vi.mock("@/services/voice", () => ({
  * condition the hook applies to them. The emptiness rule is the real one, since
  * it is the thing the write-or-skip branch is built out of.
  */
-vi.mock("@/services/session-feedback", async () => {
-  const { isEmptySessionFeedback } = await import(
-    "@/services/session-feedback/session-feedback.contracts"
-  );
+vi.mock("@/services/session-feedback/session-feedback.queries", () => {
   return {
-    isEmptySessionFeedback,
     useOwnSessionFeedback: (
       _groupId: string,
       sessionOpensAt: string | null,
@@ -180,7 +176,7 @@ vi.mock("@/services/session-feedback", async () => {
   };
 });
 
-vi.mock("@/services/member-flair", () => ({
+vi.mock("@/services/member-flair/member-flair.queries", () => ({
   useGroupStaffOverlay: () => ({ data: undefined }),
   useTraineeGroupOverlay: () => ({ data: undefined }),
   useSetGamerGroupNote: () => ({ mutateAsync: vi.fn() }),

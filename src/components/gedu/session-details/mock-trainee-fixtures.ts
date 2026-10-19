@@ -1,13 +1,15 @@
 import { buildGroupWorkspaceFixture } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isRedactedMember } from "@/components/group-workspace/types";
 import { productLocalDate } from "@/lib/session-occurrence";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { gamerBirthOf } from "@/lib/gamer-birth";
-import type { TraineeAssignedProduct } from "@/services/assignments";
+import type {
+  TraineeAssignedProduct,
+} from "@/services/assignments/assignments.contracts";
 import type {
   TraineeFeedSession,
   TraineeGroupFeed,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * The trainee workspace's preview fixture: **the club scenario's own fixture,

@@ -9,7 +9,7 @@ import {
   Info,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The four statuses, which are the alert's variants beside its neutral default.

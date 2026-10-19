@@ -42,35 +42,50 @@ import {
   useAdminSetGroupNotes,
   useAdminSetSessionNotes,
   useAdminSetSiteNotes,
+} from "@/services/admin-sessions/admin-sessions.queries";
+import {
   adminSessionKeys,
+} from "@/services/admin-sessions/admin-sessions.keys";
+import {
   type AdminProductSessions,
   type AdminSessionGroup,
-} from "@/services/admin-sessions";
+} from "@/services/admin-sessions/admin-sessions.contracts";
 import {
   resolveGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
+import {
   useGamerPhotoConsentsForGamers,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
+import {
   useProductGamerPhotoConsentTypes,
-} from "@/services/gamer-photo-consents";
-import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
-import { useProductGroups } from "@/services/groups";
+} from "@/services/gamer-photo-consents/product-gamer-photo-consents.queries";
+import {
+  useGeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
+  type GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { useProductGroups } from "@/services/groups/groups.queries";
 import {
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
-} from "@/services/member-flair";
-import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
+} from "@/services/member-flair/member-flair.queries";
 import {
-  useProductAdmin,
+  useUpdateGroupMemberMinecraft,
+} from "@/services/minecraft/minecraft.queries";
+import { useProductAdmin } from "@/services/products/products.queries";
+import {
   type ProductAdminDetailRow,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
-} from "@/services/roblox";
+} from "@/services/roblox/roblox.queries";
 import {
   useClearSessionSubstitution,
   useSetSessionSubstitution,
   useWithdrawSessionSubstitutionRequestAsAdmin,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.queries";
 import type {
   GeduAssignedProduct,
   ProductGroupsSnapshot,

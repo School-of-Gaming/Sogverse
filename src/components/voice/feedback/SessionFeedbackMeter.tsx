@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   SESSION_FEEDBACK_RATINGS,
   SESSION_FEEDBACK_SEGMENT_PX,

@@ -5,7 +5,9 @@ import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { NormalizeImageError } from "@/lib/images/normalize-image";
 import type { SessionPhoto } from "@/components/session-feed";
-import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
+import type {
+  SessionPhotoErrorCode,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   NO_LANDED_PHOTOS,
   NO_STAGED_PHOTOS,

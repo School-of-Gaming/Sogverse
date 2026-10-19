@@ -101,7 +101,10 @@ import {
   withPicture,
 } from "@/components/admin/spotlights/spotlight-form";
 import type { AuthoredBodies } from "@/lib/authored-bodies";
-import type { AdminSpotlight, SpotlightInput } from "@/services/spotlights";
+import type {
+  AdminSpotlight,
+  SpotlightInput,
+} from "@/services/spotlights/spotlights.contracts";
 
 /** A body record holding no respellings: every body compared as typed. */
 const UNTOUCHED: AuthoredBodies = { serialised: new Map() };

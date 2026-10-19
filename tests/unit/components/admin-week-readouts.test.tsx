@@ -8,7 +8,7 @@ import {
   formatProductWeeks,
 } from "@/lib/products/format-product-term-dates";
 import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { SchedulePanel } from "@/components/admin/dashboard/schedule-panel";
 import { ComingUpFeed } from "@/components/admin/dashboard/coming-up-feed";
 import type {

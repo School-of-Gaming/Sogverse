@@ -69,13 +69,13 @@ import {
 } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { SwitchGateBody } from "@/components/family/SwitchGateDialog";
+import { SwitchAccountError } from "@/services/family/family.service";
 import {
-  SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
-} from "@/services/family";
+} from "@/services/family/family.contracts";
 import { UserRow } from "@/components/admin/user-row";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import {
@@ -139,7 +139,7 @@ import {
   type GameFigure,
   type GamePlatform,
 } from "@/components/game-account";
-import { useRobloxProfile } from "@/services/roblox";
+import { useRobloxProfile } from "@/services/roblox/roblox.queries";
 import { ImageCatalogueView } from "@/components/admin/products/image-catalogue-view";
 import { ImageActionConfirmDialog } from "@/components/admin/products/image-catalogue-confirm";
 import {
@@ -156,7 +156,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed

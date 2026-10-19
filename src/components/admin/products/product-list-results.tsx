@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AdminListShowingLine } from "@/components/admin/admin-list-narrowing";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
 import { ProductRows } from "./product-rows";
-import type { useAdminProductList } from "@/services/products";
+import type { useAdminProductList } from "@/services/products/products.queries";
 
 /**
  * How far below the last row counts as reached. A page is a screenful, so

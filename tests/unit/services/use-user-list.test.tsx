@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { useUserList } from "@/services/users";
+import { useUserList } from "@/services/users/users.queries";
 import {
   createFetchStubbedClient,
   postgrestPage,

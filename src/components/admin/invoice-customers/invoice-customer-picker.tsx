@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Field } from "@/components/ui/field";
 import { ROUTES } from "@/lib/constants";
-import { useInvoiceCustomers } from "@/services/invoice-customers";
+import {
+  useInvoiceCustomers,
+} from "@/services/invoice-customers/invoice-customers.queries";
 
 /**
  * Which Fennoa customer a municipality club's sessions are invoiced to.

@@ -33,7 +33,7 @@ import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
 import { DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   templateRegistry,
   type TemplateDefinition,

@@ -3,7 +3,7 @@ import {
   nextOccurrenceInstant,
   viewerWeekdayIndex,
 } from "@/lib/schedule-occurrence";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { formattingLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 

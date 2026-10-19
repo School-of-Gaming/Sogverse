@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";

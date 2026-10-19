@@ -6,7 +6,7 @@ import { TimezoneProvider } from "@/providers";
 import type {
   AdminLibraryArticle,
   PublishedLibraryArticleSummary,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 
 /**
  * **The Library article preview page: an article's saved working copy as a

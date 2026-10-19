@@ -7,7 +7,7 @@ import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   SESSION_FEEDBACK_NOTE_MAX_LENGTH,
   SESSION_FEEDBACK_RATINGS,

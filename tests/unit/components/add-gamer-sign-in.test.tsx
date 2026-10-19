@@ -4,7 +4,10 @@ import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
 import { AddGamerFormCard } from "@/components/family";
 import { ApiError } from "@/lib/api/api-error";
-import { GAMER_EMAIL_TAKEN, GAMER_USERNAME_TAKEN } from "@/services/gamers";
+import {
+  GAMER_EMAIL_TAKEN,
+  GAMER_USERNAME_TAKEN,
+} from "@/services/gamers/gamers.contracts";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 import type { CreateGamerInput } from "@/types";
 

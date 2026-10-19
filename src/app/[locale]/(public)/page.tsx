@@ -30,7 +30,7 @@ import {
 } from "@/components/home/testimonial-keys";
 import { ROUTES, resolveLocale } from "@/lib/constants";
 import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The home page states no title or description of its own — it inherits the

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useGamerBirths } from "@/services/gamers";
+import { useGamerBirths } from "@/services/gamers/gamers.queries";
 
 /**
  * **The read the enrolment picker's age band is built on, and the one thing it

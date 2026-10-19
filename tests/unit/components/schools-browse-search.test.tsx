@@ -74,7 +74,7 @@ function mockSearch(needle: string, options: Record<string, unknown>) {
 
 // Only the hook is replaced — the module's constants stay real, so nothing
 // here can drift from the route's own minimum needle length.
-vi.mock("@/services/locations", async (importOriginal) => ({
+vi.mock("@/services/locations/locations.queries", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useLocationSearch: mockSearch,
 }));

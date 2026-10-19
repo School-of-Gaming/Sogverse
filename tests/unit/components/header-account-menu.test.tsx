@@ -44,7 +44,7 @@ const mockUseProvenance = vi.hoisted(() => vi.fn());
 const mockSwitchAccount = vi.hoisted(() => vi.fn());
 
 /**
- * The two leaves of the family service are mocked, not the barrel — which
+ * The family service is mocked at its own modules, which
  * leaves the real `commitAccountSwitch` under test, so the destination it
  * picks per role is asserted rather than restated by a stub.
  */

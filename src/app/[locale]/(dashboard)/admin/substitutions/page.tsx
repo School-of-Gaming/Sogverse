@@ -7,9 +7,13 @@ import { AdminSubstitutionsPage } from "@/components/admin/substitutions/AdminSu
 import { createClient } from "@/lib/supabase/server";
 import {
   SessionSubstitutionService,
+} from "@/services/session-substitution/session-substitution.service";
+import {
   sessionSubstitutionKeys,
+} from "@/services/session-substitution/session-substitution.keys";
+import {
   type AdminSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");

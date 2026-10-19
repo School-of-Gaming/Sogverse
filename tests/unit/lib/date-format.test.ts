@@ -1,47 +1,5 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
-import {
-  cn,
-  computeAge,
-  formatCurrency,
-  formatCurrencyFromCents,
-  formatDate,
-  formatDateOnly,
-  formatTime,
-  formatTimeRange,
-  capitalize,
-  sumCents,
-} from "@/lib/utils";
-
-describe("cn (className merge utility)", () => {
-  it("merges class names", () => {
-    expect(cn("foo", "bar")).toBe("foo bar");
-  });
-
-  it("handles conditional classes", () => {
-    const includeBar = false as boolean;
-    expect(cn("foo", includeBar && "bar", "baz")).toBe("foo baz");
-  });
-
-  it("merges Tailwind classes correctly", () => {
-    expect(cn("px-2 py-1", "px-4")).toBe("py-1 px-4");
-  });
-});
-
-describe("formatCurrency", () => {
-  it("formats with the given locale and currency symbol", () => {
-    const result = formatCurrency(100, "eur", "en");
-    expect(result).toContain("€");
-    expect(result).toContain("100");
-  });
-});
-
-describe("formatCurrencyFromCents", () => {
-  it("divides cents by 100 before formatting", () => {
-    const result = formatCurrencyFromCents(1500, "eur", "en");
-    expect(result).toContain("€");
-    expect(result).toContain("15");
-  });
-});
+import { describe, it, expect } from "vitest";
+import { formatDate, formatDateOnly, formatTime, formatTimeRange } from "@/lib/date-format";
 
 describe("formatDate", () => {
   it("formats date strings", () => {
@@ -162,65 +120,5 @@ describe("formatDateOnly", () => {
         dateStyle: "long",
       }),
     ).toBe("19 June 2024");
-  });
-});
-
-describe("computeAge", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("counts a child a year older from the 1st of their birth month", () => {
-    // Fixed wall-clock instant: 2026-05-19 12:00 UTC.
-    vi.setSystemTime(new Date("2026-05-19T12:00:00Z"));
-    expect(computeAge({ year: 2010, month: 4 }, "Europe/Helsinki")).toBe(16);
-    expect(computeAge({ year: 2010, month: 5 }, "Europe/Helsinki")).toBe(16);
-    expect(computeAge({ year: 2010, month: 6 }, "Europe/Helsinki")).toBe(15);
-  });
-
-  it("turns the month in the supplied zone, not UTC", () => {
-    // 2026-01-01 02:00 UTC is still 2025-12-31 in America/Los_Angeles.
-    // A child born in January 2016 turns 10 on the UTC date, but in LA it is
-    // still December and they are 9. computeAge must follow the LA calendar.
-    vi.setSystemTime(new Date("2026-01-01T02:00:00Z"));
-    expect(computeAge({ year: 2016, month: 1 }, "UTC")).toBe(10);
-    expect(computeAge({ year: 2016, month: 1 }, "America/Los_Angeles")).toBe(9);
-  });
-});
-
-describe("capitalize", () => {
-  it("capitalizes first letter", () => {
-    expect(capitalize("hello")).toBe("Hello");
-  });
-
-  it("lowercases rest of string", () => {
-    expect(capitalize("HELLO")).toBe("Hello");
-  });
-
-  it("handles single character", () => {
-    expect(capitalize("a")).toBe("A");
-  });
-
-  it("handles empty string", () => {
-    expect(capitalize("")).toBe("");
-  });
-});
-
-describe("sumCents", () => {
-  it("adds an ordinary run of cents", () => {
-    expect(sumCents([1, 2, 3])).toBe(6);
-    expect(sumCents([])).toBe(0);
-  });
-
-  it("throws rather than hand back a total that is not an integer", () => {
-    // The guard is the point: money is integer cents, and a fractional value
-    // reaching a total means something upstream divided before it summed.
-    expect(() => sumCents([1.5, 1])).toThrow(/safe integer/);
-  });
-
-  it("throws rather than hand back a total past the safe range", () => {
-    expect(() =>
-      sumCents([Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]),
-    ).toThrow(/safe integer/);
   });
 });

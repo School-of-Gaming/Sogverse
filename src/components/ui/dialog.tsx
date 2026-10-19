@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Heading } from "@sog/ui";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * **A modal locks the document, the lock is counted, and the gutter it frees is

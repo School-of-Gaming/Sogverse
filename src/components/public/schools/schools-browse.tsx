@@ -7,14 +7,14 @@ import { ChevronDown, ChevronRight, Info, MapPin, Search } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   LOCATION_SEARCH_MAX_QUERY,
   LOCATION_SEARCH_MIN_QUERY,
-  useLocationSearch,
-} from "@/services/locations";
+} from "@/services/locations/locations.contracts";
+import { useLocationSearch } from "@/services/locations/locations.queries";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   buildMunicipalityEntry,

@@ -32,7 +32,7 @@ import {
   spotlightWriteFailure,
   type AdminSpotlight,
   type SpotlightInput,
-} from "@/services/spotlights";
+} from "@/services/spotlights/spotlights.contracts";
 import {
   EMPTY_VERSION,
   emptySpotlightForm,

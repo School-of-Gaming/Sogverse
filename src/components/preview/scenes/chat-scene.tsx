@@ -13,7 +13,7 @@ import { useTraineeRoomLocks } from "@/components/voice/VoiceModeratorLocks";
 import { FIXTURE_TIMEZONE } from "@/components/family/mock-enrollment-fixtures";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   useChatSceneStore,
   type ChatSceneLatency,

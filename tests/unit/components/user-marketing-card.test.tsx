@@ -59,7 +59,7 @@ const forCustomer: { data: MarketingConsent[] | undefined } = { data: [] };
 const setConsentAsync = vi.fn();
 const updateProfileAsync = vi.fn();
 
-vi.mock("@/services/marketing-consents", () => ({
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () => ({
   useMyMarketingConsents: () => ({ data: mine.data, isError: mine.isError }),
   useMarketingConsentsForCustomer: () => ({ data: forCustomer.data }),
   useSetMarketingConsent: () => ({ mutateAsync: setConsentAsync }),
@@ -67,7 +67,7 @@ vi.mock("@/services/marketing-consents", () => ({
 
 // Not the shared factory: this file asserts on the profile write itself, and
 // the factory hands out a fresh spy per render.
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUpdateProfile: () => ({ mutateAsync: updateProfileAsync }),
   useSendVerificationEmail: () => ({ mutate: vi.fn() }),
 }));
@@ -77,9 +77,9 @@ vi.mock("@/providers", () => providersModule(() => auth.profile));
 vi.mock("@/components/settings/notification-preferences-card", () =>
   notificationPreferencesCardModule(),
 );
-vi.mock("@/services/locations", () => locationsServiceModule());
-vi.mock("@/services/minecraft", () => minecraftServiceModule());
-vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/services/locations/locations.queries", () => locationsServiceModule());
+vi.mock("@/services/minecraft/minecraft.queries", () => minecraftServiceModule());
+vi.mock("@/services/roblox/roblox.queries", () => robloxServiceModule());
 vi.mock("@/components/game-account", () => gameAccountModule());
 vi.mock("@/components/gedu/gedu-coverage-editor", () =>
   geduCoverageEditorModule(),

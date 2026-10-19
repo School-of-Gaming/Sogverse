@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * One testimonial — a parent's, a gamer's or a gedu's own words — as the

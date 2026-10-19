@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { VOICE_ZONE_COLORS, VOICE_ZONE_COLOR_KEYS } from "@/lib/constants/voice-zones";
 import type { VoiceZoneColor } from "@/types";
 

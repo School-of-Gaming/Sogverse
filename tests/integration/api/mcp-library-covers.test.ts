@@ -12,7 +12,7 @@ import {
 import type {
   AdminLibraryArticle,
   AdminLibraryArticleListItem,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 import type { CatalogueImage } from "@/types";
 
 /**

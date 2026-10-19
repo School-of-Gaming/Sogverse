@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   gameFigureHeight,
   GAME_PLATFORMS,

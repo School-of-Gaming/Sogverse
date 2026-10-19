@@ -1,5 +1,5 @@
 import { isoWeekOf, isoWeeksBetween } from "@/lib/iso-week";
-import { formatDateRange } from "@/lib/utils";
+import { formatDateRange } from "@/lib/date-format";
 import type { ProductType } from "@/types";
 
 // Recurring clubs (consumer / municipality) run across a term whose start/end

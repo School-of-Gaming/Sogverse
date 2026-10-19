@@ -8,7 +8,7 @@ import {
   type SubstitutionRequestInput,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
-import type { UserListEntry } from "@/services/users";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import type { SessionRequirements } from "@/lib/products/session-requirements";
 
 /**
@@ -86,7 +86,7 @@ const CANDIDATES = [candidate(SANNA), candidate(PETRA), candidate(JOONAS)];
 // column of it — so this one mock is the whole of what it asks for. Nothing left
 // to page through, so no sentinel is mounted and jsdom needs no
 // `IntersectionObserver`.
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUserList: () => ({
     data: { rows: CANDIDATES, total: CANDIDATES.length },
     isPending: false,
@@ -101,7 +101,7 @@ vi.mock("@/services/users", () => ({
 // Who covers the session's site, as the database answers it for the picker.
 // Joonas alone; asked only of an in-person product.
 const COVERING = new Set([JOONAS]);
-vi.mock("@/services/gedu-locations", () => ({
+vi.mock("@/services/gedu-locations/gedu-locations.queries", () => ({
   useGedusCoveringProduct: (productId: string | null) => ({
     data: productId === null ? undefined : COVERING,
     isError: false,

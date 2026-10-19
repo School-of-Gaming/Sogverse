@@ -12,7 +12,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveTopicPrep } from "@/lib/products/topics";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";

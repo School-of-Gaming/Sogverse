@@ -7,7 +7,7 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 //
 // This module imports ONLY date-fns-tz so it stays a leaf. The trivial
 // "HH:MM[:SS]" split is inlined rather than importing `parseTime` from
-// `utils.ts`, to keep this module dependency-free.
+// `time-of-day.ts`, to keep this module dependency-free.
 //
 // Weekday convention: schema stores 0=Mon..6=Sun (per redesign §5.1); JS
 // `getDay()` is 0=Sun..6=Sat, so the two helpers below convert between them.

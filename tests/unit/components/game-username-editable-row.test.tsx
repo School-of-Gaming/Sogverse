@@ -54,10 +54,10 @@ const mutateAsync = vi.fn(
 
 // Both platform hooks are called unconditionally by `useVerifyGameAccount`, so
 // both have to exist whichever platform the case under test drives.
-vi.mock("@/services/minecraft", () => ({
+vi.mock("@/services/minecraft/minecraft.queries", () => ({
   useVerifyMinecraft: () => ({ mutateAsync }),
 }));
-vi.mock("@/services/roblox", () => ({
+vi.mock("@/services/roblox/roblox.queries", () => ({
   useVerifyRoblox: () => ({ mutateAsync }),
 }));
 

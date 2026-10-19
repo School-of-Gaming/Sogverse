@@ -102,7 +102,7 @@ import {
 } from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import { formattingLocale } from "@/lib/constants/locales";
-import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/utils";
+import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/date-format";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 import { Constants } from "@/types";

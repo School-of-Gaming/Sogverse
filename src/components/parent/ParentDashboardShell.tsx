@@ -9,13 +9,15 @@ import { AddGamerDialog } from "@/components/family/AddGamerDialog";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { useFamilyEnrollments } from "@/components/family/use-family-enrollments";
 import { HelpRequestCard } from "@/components/help/help-request-card";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import {
   useLeaveWaitlist,
   useRespondToSeatOffer,
+} from "@/services/participations/participations.queries";
+import {
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import {
   ParentDashboardPageBody,
   type ParentEnrollmentAction,

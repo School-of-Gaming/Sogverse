@@ -5,7 +5,7 @@ import messages from "@/../messages/en.json";
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
 import { buildScenarioFixture } from "@/components/public/products/mock-detail-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
-import type { ProductDetailRow } from "@/services/products";
+import type { ProductDetailRow } from "@/services/products/products.service";
 
 /**
  * **A product with no long description has to render as a product with no long

@@ -7,11 +7,15 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import {
   sessionSubstitutionKeys,
+} from "@/services/session-substitution/session-substitution.keys";
+import {
   useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
   useSetSessionSubstitution,
+} from "@/services/session-substitution/session-substitution.queries";
+import {
   type AdminSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 import type { SeatSubstituteDraft } from "./admin-substitutions-data";
 import { AdminSubstitutionsPageBody } from "./admin-substitutions-page-body";
 import { buildAdminSubstitutionsData } from "./build-admin-substitutions-data";

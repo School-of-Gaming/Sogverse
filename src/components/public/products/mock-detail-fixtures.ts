@@ -7,8 +7,10 @@ import type {
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { holidayBreakRows, type HolidayBreak } from "@/lib/holiday-breaks";
-import type { ProductDetailRow } from "@/services/products";
-import type { ParticipationCounts } from "@/services/participations";
+import type { ProductDetailRow } from "@/services/products/products.service";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { RegistrationState } from "./derive-registration-state";
 import type { ProductTag } from "./product-tag";
 import type {

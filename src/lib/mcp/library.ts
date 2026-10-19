@@ -44,7 +44,7 @@ import {
   type AdminLibraryArticle,
   type AdminLibraryArticleListItem,
   type PublishedLibraryArticleSummary,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 import { Constants } from "@/types";
 
 /*

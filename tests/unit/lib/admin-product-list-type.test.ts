@@ -11,7 +11,9 @@ import {
   productListParamsAfterTypeSwitch,
   type ProductListFilterParams,
 } from "@/components/admin/products/product-list-url-state";
-import type { ProductListFacetsRow } from "@/services/products";
+import type {
+  ProductListFacetsRow,
+} from "@/services/products/products.contracts";
 import { ROUTES } from "@/lib/constants/routes";
 import type { ProductType } from "@/types";
 

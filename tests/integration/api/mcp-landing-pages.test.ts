@@ -11,7 +11,7 @@ import {
 import type {
   AdminLandingPage,
   AdminLandingPageListItem,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 import type { CatalogueImage } from "@/types";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 

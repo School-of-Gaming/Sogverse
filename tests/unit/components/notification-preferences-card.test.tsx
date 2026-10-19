@@ -36,16 +36,18 @@ const read: { data: NotificationPreference[] | undefined; isError: boolean } = {
 const setPreference = vi.fn();
 
 vi.mock("@/providers", () => providersModule(() => auth.profile));
-vi.mock("@/services/users", () => usersServiceModule());
-vi.mock("@/services/locations", () => locationsServiceModule());
-vi.mock("@/services/minecraft", () => minecraftServiceModule());
-vi.mock("@/services/roblox", () => robloxServiceModule());
-vi.mock("@/services/notification-preferences", () => ({
+vi.mock("@/services/users/users.queries", () => usersServiceModule());
+vi.mock("@/services/locations/locations.queries", () => locationsServiceModule());
+vi.mock("@/services/minecraft/minecraft.queries", () => minecraftServiceModule());
+vi.mock("@/services/roblox/roblox.queries", () => robloxServiceModule());
+vi.mock("@/services/notification-preferences/notification-preferences.service", () => ({
   NOTIFICATION_TOGGLES: { email: ["session_report_copy"] },
+}));
+vi.mock("@/services/notification-preferences/notification-preferences.queries", () => ({
   useMyNotificationPreferences: () => read,
   useSetNotificationPreference: () => ({ mutateAsync: setPreference }),
 }));
-vi.mock("@/services/marketing-consents", () =>
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () =>
   marketingConsentsServiceModule(),
 );
 vi.mock("@/components/game-account", () => gameAccountModule());

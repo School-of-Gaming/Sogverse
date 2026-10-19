@@ -17,16 +17,21 @@ import {
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useTimezone } from "@/providers";
-import { useGamerProfile, useUpdateGamerProfile } from "@/services/gamers";
+import {
+  useGamerProfile,
+  useUpdateGamerProfile,
+} from "@/services/gamers/gamers.queries";
 import {
   adminUserEmailBody,
   adminUserUsernameBody,
-  useProfile,
-  useUpdateUserSignInAddress,
   USER_EMAIL_TAKEN,
   USER_USERNAME_TAKEN,
   type AdminUserSignInAddressBody,
-} from "@/services/users";
+} from "@/services/users/users.contracts";
+import {
+  useProfile,
+  useUpdateUserSignInAddress,
+} from "@/services/users/users.queries";
 import { ApiError } from "@/lib/api/api-error";
 import {
   gamerBirthMonthOptions,
@@ -36,7 +41,7 @@ import {
   GAMER_USERNAME_MAX_LENGTH,
   gamerUsernameFromEmail,
 } from "@/lib/gamer-sign-in";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import {
   Constants,
   type GamerProfile,

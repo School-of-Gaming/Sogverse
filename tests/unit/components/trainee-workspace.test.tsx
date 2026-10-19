@@ -23,7 +23,7 @@ import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { isWithheld, WITHHELD } from "@/lib/withheld";
 import { installFakeIntersectionObserver } from "../../mocks/intersection-observer";
 
-vi.mock("@/services/roblox", () => ({
+vi.mock("@/services/roblox/roblox.queries", () => ({
   useRobloxRenders: () => ({ data: undefined }),
 }));
 

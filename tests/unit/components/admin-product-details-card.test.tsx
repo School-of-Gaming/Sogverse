@@ -5,7 +5,9 @@ import messages from "@/../messages/en.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 import { syntheticConsumerProduct } from "../../mocks/product-admin-detail-row";
 
 /**
@@ -28,7 +30,7 @@ const reads = vi.hoisted(() => ({
   product: undefined as unknown,
 }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: () => ({ data: reads.product, isLoading: false }),
   usePlannedSessions: () => ({ data: [], isPending: false }),
 }));

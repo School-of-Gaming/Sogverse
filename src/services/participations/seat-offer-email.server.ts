@@ -28,7 +28,8 @@ import {
   type ClaimedSeatOfferExpiries,
 } from "@/services/participations/seat-offer.contracts";
 import { getOrigin } from "@/lib/url";
-import { DAYS_OF_WEEK, formatDate } from "@/lib/utils";
+import { DAYS_OF_WEEK } from "@/lib/constants/days-of-week";
+import { formatDate } from "@/lib/date-format";
 import type { AppSupabaseClient } from "@/types";
 
 /**

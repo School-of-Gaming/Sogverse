@@ -5,9 +5,13 @@ import { filterProducts } from "@/components/public/products/filter-products";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import {
   useParticipationCounts,
+} from "@/services/participations/participations.queries";
+import {
   type ParticipationCounts,
-} from "@/services/participations";
-import { useVisibleProductsByTypes } from "@/services/products";
+} from "@/services/participations/participations.service";
+import {
+  useVisibleProductsByTypes,
+} from "@/services/products/products.queries";
 import type { ProductBrowseRow } from "@/types";
 import { PROGRAMME_RAIL_FILTERS } from "./programme-filters";
 import { UpcomingEvents } from "./upcoming-events";

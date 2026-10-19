@@ -3,7 +3,7 @@
 import { NotebookPen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The way in to a member's per-gamer dialog, and the marker for what is already

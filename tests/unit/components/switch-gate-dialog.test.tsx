@@ -9,13 +9,15 @@ import {
 } from "@/components/family/SwitchGateDialog";
 import {
   SwitchAccountError,
+  type FamilyMember,
+  type SwitchAccountCredentials,
+} from "@/services/family/family.service";
+import {
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_SIGN_OUT_REQUIRED,
-  type FamilyMember,
-  type SwitchAccountCredentials,
   type SwitchAccountErrorCode,
-} from "@/services/family";
+} from "@/services/family/family.contracts";
 
 /**
  * What stands between a child and somebody else's account.

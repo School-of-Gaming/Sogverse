@@ -17,13 +17,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PinPad, usePinField } from "@/components/pin";
 import {
   SwitchAccountError,
+  type FamilyMember,
+  type SwitchAccountCredentials,
+} from "@/services/family/family.service";
+import {
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_PIN_REQUIRED,
   SWITCH_SIGN_OUT_REQUIRED,
-  type FamilyMember,
-  type SwitchAccountCredentials,
-} from "@/services/family";
+} from "@/services/family/family.contracts";
 
 /**
  * What this gate does about the switch behind it. Chosen by `switchGateFor`,

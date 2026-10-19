@@ -6,11 +6,11 @@ import { Inbox } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GroupParticipationDetail } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { chipGameIdentity } from "./panel-rules";
 
 interface UnassignedCardProps {
