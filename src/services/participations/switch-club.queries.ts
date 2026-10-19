@@ -2,7 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseJsonResponse } from "@/lib/api/json-response";
-import { groupsKeys, invalidateGroupChange } from "@/services/groups";
+import {
+  groupsKeys,
+  invalidateGroupChange,
+} from "@/services/groups/groups.queries";
 import {
   switchClubCheckResponse,
   switchClubCommitResponse,

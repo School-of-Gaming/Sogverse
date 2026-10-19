@@ -74,3 +74,12 @@ export function withMinute(time: string, minute: number): string {
   const minutes = parseTimeOfDay(time);
   return formatTimeOfDay(minutes - (minutes % MINUTES_PER_HOUR) + minute);
 }
+
+/**
+ * Parse a time string into hours and minutes.
+ * Accepts both "HH:MM" and Postgres TIME format "HH:MM:SS".
+ */
+export function parseTime(time: string): { hours: number; minutes: number } {
+  const [hours, minutes] = time.split(":").map(Number);
+  return { hours, minutes };
+}

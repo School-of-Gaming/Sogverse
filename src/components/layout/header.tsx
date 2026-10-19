@@ -10,7 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   ROLE_DASHBOARD_PATHS,
   ROUTES,

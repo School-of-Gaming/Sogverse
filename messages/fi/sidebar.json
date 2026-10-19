@@ -1,0 +1,17 @@
+{
+  "dashboard": "Hallintapaneeli",
+  "users": "Käyttäjät",
+  "libraryContent": "Kirjaston sisältö",
+  "marketing": "Markkinointi",
+  "platformVision": "Alustan visio",
+  "uiComponents": "UI-komponentit",
+  "uiPreviews": "UI-esikatselut",
+  "testing": "Testaus",
+  "tools": "Työkalut",
+  "expandSidebar": "Laajenna sivupalkki",
+  "collapseSidebar": "Pienennä sivupalkki",
+  "substitutions": "Tuuraukset",
+  "feedback": "Palaute",
+  "products": "Tuotteet",
+  "invoicing": "Laskutus"
+}

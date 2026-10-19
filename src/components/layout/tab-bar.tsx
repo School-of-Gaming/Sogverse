@@ -5,7 +5,7 @@ import { House } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   PublicDestinationLink,
   usePublicDestinations,

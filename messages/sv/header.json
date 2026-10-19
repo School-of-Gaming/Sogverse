@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "shop": "Butik",
+    "yty": "Yty",
+    "about": "Om oss",
+    "parents": "Föräldrar",
+    "faq": "FAQ",
+    "substitutions": "Vikariat",
+    "home": "Hem",
+    "library": "Biblioteket",
+    "libraryShort": "Biblioteket",
+    "team": "Team",
+    "tabBar": "Huvudmeny"
+  },
+  "accountMenu": "Kontomeny – {name}",
+  "continueToAccount": "Fortsätt till ditt konto",
+  "switchTo": "Byt profil",
+  "invoicing": "Fakturering",
+  "teamProfile": "Min profil"
+}

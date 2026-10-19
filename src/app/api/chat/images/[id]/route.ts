@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-// The contracts module directly rather than the feature barrel, for the upload
-// route's reason: the barrel carries browser-only React Query hooks.
 import { CHAT_IMAGES_BUCKET } from "@/services/chat/chat.contracts";
 
 /**

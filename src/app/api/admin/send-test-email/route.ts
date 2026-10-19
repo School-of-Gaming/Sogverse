@@ -9,7 +9,7 @@ import {
   getTopicPrepTranslator,
 } from "@/lib/email-templates/translator";
 import { getOrigin } from "@/lib/url";
-import { parseEmails } from "@/lib/utils";
+import { parseEmails } from "@/lib/strings";
 import { resolveLocale } from "@/lib/constants/locales";
 
 // --- Request schema ---

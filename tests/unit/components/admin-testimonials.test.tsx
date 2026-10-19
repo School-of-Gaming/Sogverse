@@ -3,7 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { AdminTestimonialsPage } from "@/components/admin/testimonials/admin-testimonials-page";
 import { TestimonialUsageCard } from "@/components/admin/testimonials/edit-testimonial-page";
 import { TestimonialEditor } from "@/components/admin/testimonials/testimonial-editor";
-import type { AdminTestimonial } from "@/services/testimonials";
+import type { AdminTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 /**
  * **The admin testimonial pages' rules.** The list's: no testimonial can be

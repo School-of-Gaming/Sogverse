@@ -6,7 +6,9 @@ import {
   sortSubstitutionPoolRows,
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  OpenSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**

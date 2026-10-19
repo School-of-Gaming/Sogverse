@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 // Rounded outline chip with an optional tinted icon + label. Quiet enough to
 // sit next to a busy thumbnail or a progress bar but legible at a glance.

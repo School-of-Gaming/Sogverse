@@ -12,7 +12,7 @@ import type {
   AdminSpotlight,
   SpotlightInput,
   SpotlightVersionInput,
-} from "@/services/spotlights";
+} from "@/services/spotlights/spotlights.contracts";
 
 /**
  * The picture the form points at: the catalogue entry's id, which is what a

@@ -22,14 +22,16 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   isTeamProfileNotReadyError,
-  useSetTeamProfileApproval,
-  useTeamProfile,
   type TeamProfile,
   type TeamProfileRecord,
-} from "@/services/team-profiles";
+} from "@/services/team-profiles/team-profiles.types";
+import {
+  useSetTeamProfileApproval,
+  useTeamProfile,
+} from "@/services/team-profiles/team-profiles.queries";
 
 /**
  * The team profile on an admin's or a Gedu's `/admin/users/[id]` page: where

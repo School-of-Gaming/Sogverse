@@ -1,4 +1,4 @@
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/date-format";
 import { formattingLocale } from "@/lib/constants/locales";
 
 /**

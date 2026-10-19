@@ -19,7 +19,7 @@ import {
   writtenLocales,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
-import { findOption } from "@/lib/utils";
+import { findOption } from "@/lib/type-guards";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";

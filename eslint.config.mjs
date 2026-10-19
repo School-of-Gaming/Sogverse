@@ -117,6 +117,55 @@ const noZodV4OutsideMcp = [
 ];
 
 /**
+ * A service domain imported as a directory.
+ *
+ * `src/services/<domain>/` has no index file: a module imports the file that
+ * defines the symbol — `@/services/locations/locations.queries`, not
+ * `@/services/locations`. A barrel makes every importer depend on every file it
+ * re-exports, which is what the gates' changed-file test selection reads, and a
+ * `vi.mock` aimed at a barrel stops mocking the moment the code under test
+ * imports the file instead. `tests/unit/services-no-barrels.test.ts` keeps the
+ * index files from coming back and checks every mocked service path names a file.
+ */
+const noServiceBarrelImports = [
+  {
+    regex: "^@/services/[^/]+(?:/index)?$",
+    message:
+      "Import the module that defines the symbol (e.g. @/services/locations/locations.queries). Service domains have no index barrel.",
+  },
+];
+
+/**
+ * A grab-bag `utils` module under `src/lib/`.
+ *
+ * Every helper lives in the module about its subject, so a change to one
+ * reaches only the files that use it — which is what the gates' changed-file
+ * test selection reads. A shared `@/lib/utils` made every importer of any
+ * helper depend on all of them.
+ */
+const noUtilsHubImports = [
+  {
+    regex: "^(?:@/|(?:\\.\\./)+(?:src/)?)lib/utils(?:\\.ts|/.+)?$",
+    message:
+      "There is no @/lib/utils. Import the module that defines the helper: cn from @/lib/cn; isKeyOf and findOption from @/lib/type-guards; formatCurrency*, decimalToCents and sumCents from @/lib/money; formatDate*, formatTime* and the date ranges from @/lib/date-format; parseTime from @/lib/time-of-day; escapeLikePattern and searchTerms from @/lib/search; capitalize and parseEmails from @/lib/strings; toE164Digits from @/lib/constants/phone; DAYS_OF_WEEK from @/lib/constants/days-of-week; computeAge from @/lib/gamer-age-eligibility.",
+  },
+];
+
+/**
+ * The same hub, reached as a sibling from a file directly under `src/lib/`.
+ *
+ * Applied only to those files: a `./utils` anywhere else is that directory's
+ * own module (the email templates have one), and the specifier alone cannot
+ * tell the two apart.
+ */
+const noLibSiblingUtilsImport = [
+  {
+    regex: "^\\./utils(?:\\.ts)?$",
+    message: noUtilsHubImports[0].message,
+  },
+];
+
+/**
  * A family spelled out, banned wherever a face is set.
  *
  * @sog/ui names the faces and Sogverse references them; a family typed into
@@ -914,7 +963,19 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
+      }],
+    },
+  },
+  {
+    // Files directly under src/lib/, which also name the hub as `./utils`. The
+    // src/** block's list above is restated because this block replaces that rule.
+    files: ["src/lib/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        paths: noMailFaceOutsideMail,
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports, ...noLibSiblingUtilsImport],
       }],
     },
   },
@@ -927,7 +988,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -951,7 +1012,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -991,6 +1052,8 @@ const eslintConfig = defineConfig([
           ...noTsExtensionImports,
           ...noNextFontOutsideLayout,
           ...noZodV4OutsideMcp,
+          ...noServiceBarrelImports,
+          ...noUtilsHubImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -1030,7 +1093,7 @@ const eslintConfig = defineConfig([
               "Family surfaces must not import gedu document shapes — only the shared attendance vocabulary (attendanceStatus / AttendanceStatus / SUPPORTED_ATTENDANCE_STATUSES) crosses this line, because it mirrors a database CHECK constraint.",
           },
           {
-            // member-flair owns two different things behind one barrel: the
+            // member-flair owns two different things in one module: the
             // staff overlay document (`groupStaffOverlay` and its member
             // shape, keyed by participant and carrying a note and a join
             // stamp no family may see) and the creation entry vocabulary
@@ -1272,7 +1335,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -1417,6 +1480,9 @@ const eslintConfig = defineConfig([
     // entries above.
     "packages/*/demo/.next/**",
     "packages/*/demo/next-env.d.ts",
+    // Other checkouts: a bare-path run from the main checkout (`lint:file`
+    // with no files lints `.`) would otherwise sweep every worktree.
+    ".claude/worktrees/**",
   ]),
 ]);
 

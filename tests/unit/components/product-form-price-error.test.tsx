@@ -37,7 +37,7 @@ vi.mock("next-intl", () => ({
   useFormatter: () => ({ number: (value: number) => String(value) }),
 }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/reference-data.queries", () => ({
   useConsentDocuments: () => ({ data: [] }),
 }));
 
@@ -56,7 +56,7 @@ import {
   type FormState,
 } from "@/components/admin/products/product-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { CURRENCY_CONFIG } from "@/lib/constants";
 
 const CONFIG = PRODUCT_TYPE_CONFIG.consumer_club;

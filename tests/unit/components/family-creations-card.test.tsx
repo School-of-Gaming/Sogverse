@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
-import sv from "@/../messages/sv.json";
-import fr from "@/../messages/fr.json";
-import tlh from "@/../messages/tlh.json";
+import enFamilyProduct from "@/../messages/en/familyProduct.json";
+import enProductType from "@/../messages/en/productType.json";
+import enCommon from "@/../messages/en/common.json";
+import fiFamilyProduct from "@/../messages/fi/familyProduct.json";
+import svFamilyProduct from "@/../messages/sv/familyProduct.json";
+import frFamilyProduct from "@/../messages/fr/familyProduct.json";
+import tlhFamilyProduct from "@/../messages/tlh/familyProduct.json";
 import { FamilyCreationsCard } from "@/components/family/product-page/FamilyCreationsCard";
 import {
   FamilyProductPageBody,
@@ -14,6 +16,16 @@ import {
 import type { FamilyCreation } from "@/components/family/product-page/types";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
+
+const messages = {
+  familyProduct: enFamilyProduct,
+  productType: enProductType,
+  common: enCommon,
+};
+const fi = { familyProduct: fiFamilyProduct };
+const sv = { familyProduct: svFamilyProduct };
+const fr = { familyProduct: frFamilyProduct };
+const tlh = { familyProduct: tlhFamilyProduct };
 
 /**
  * ============================================================================

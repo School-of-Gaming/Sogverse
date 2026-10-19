@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
   Set up a /worktree-flow worktree: verify the base, create the worktree and
-  branch, junction the nested installs, copy .env.local. With -Existing, check
-  out a branch that already exists instead of creating one.
+  branch, junction the nested installs, copy .env.local, seed the type-check
+  caches. With -Existing, check out a branch that already exists instead of
+  creating one.
 
 .DESCRIPTION
   This is the *how* for Phase 1; worktree-flow states the obligations and when to
@@ -55,6 +56,18 @@
   resolve the branch's own SOG-UI without help. Never junction node_modules/@sog/ui
   into the worktree instead: git worktree remove follows a junction and deletes
   what it points at.
+
+  Why the type-check caches come from a sibling worktree, never the main
+  checkout. A .tsbuildinfo records every file relative to itself, with a content
+  hash, so a copy is reused wherever those relative paths still hold. From the
+  main checkout they do not: node_modules is ./node_modules there and
+  ../../../node_modules here, so every package file reads as new, every import as
+  changed, and the first type-check runs as cold as with no cache at all. Every
+  worktree sits at the same depth, so the newest sibling's copy lines up exactly
+  and tsc rechecks only what differs between the two branches. With no sibling
+  holding one, the first type-check is cold. The lint cache is not seeded: ESLint
+  keys it by absolute path and hashes each entry with the config, whose
+  tsconfigRootDir is absolute, so a copy from any other checkout is ignored.
 
 .PARAMETER Name
   Short name for the worktree directory under .claude/worktrees/.
@@ -230,7 +243,37 @@ if (Test-Path -LiteralPath $envMain) {
 }
 else { Warn "no .env.local in the main checkout - the app will not reach Supabase" }
 
-# --- 5. Hand back what Phase 1 needs next ------------------------------------
+# --- 5. Seed the type-check caches -------------------------------------------
+# Gitignored, so a new worktree starts cold. Each tracked tsconfig.json keeps its
+# cache beside it as tsconfig.tsbuildinfo when it is incremental; the newest
+# sibling worktree's copy is the donor (the header says why not the main checkout).
+Write-Host "5. Type-check caches"
+$siblings = @(Get-ChildItem -LiteralPath (Join-Path $root '.claude\worktrees') -Directory |
+  Where-Object { $_.FullName -ne $target })
+$seeded = 0
+foreach ($config in (git -C $target ls-files -- '*tsconfig*.json')) {
+  $rel = ($config -replace '/', '\') -replace '\.json$', '.tsbuildinfo'
+  $donor = $siblings |
+    ForEach-Object { Join-Path $_.FullName $rel } |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    ForEach-Object { Get-Item -LiteralPath $_ } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+  if (-not $donor) { continue }
+  $from = $donor.FullName.Substring($root.Length + '\.claude\worktrees\'.Length).Split('\')[0]
+  # A cold cache costs one slow type-check; an aborted setup leaves a worktree
+  # a retry refuses to overwrite. So a copy that fails (the donor mid-rewrite
+  # by a sibling's tsc) warns and moves on.
+  try {
+    Copy-Item -LiteralPath $donor.FullName -Destination (Join-Path $target $rel)
+    Ok "seeded $rel from $from"
+    $seeded++
+  }
+  catch { Warn "could not seed $rel from $from ($($_.Exception.Message)) - it runs cold" }
+}
+if ($seeded -eq 0) { Step "none seeded (no sibling worktree has run a type-check) - the first type-check runs cold" }
+
+# --- 6. Hand back what Phase 1 needs next ------------------------------------
 Write-Host ""
 Write-Host "Next: EnterWorktree with path set to" -ForegroundColor Cyan
 Write-Host "  $target"

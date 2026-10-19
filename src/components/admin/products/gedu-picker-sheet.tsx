@@ -17,8 +17,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
-import { useUserList, type UserListEntry } from "@/services/users";
-import { useGedusCoveringProduct } from "@/services/gedu-locations";
+import { useUserList } from "@/services/users/users.queries";
+import type { UserListEntry } from "@/services/users/users.contracts";
+import {
+  useGedusCoveringProduct,
+} from "@/services/gedu-locations/gedu-locations.queries";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import {
   SPOKEN_LANGUAGES,
@@ -30,7 +33,7 @@ import {
   type MissingRequirement,
   type SessionRequirements,
 } from "@/lib/products/session-requirements";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useQualificationNames } from "@/components/admin/qualification-names";
 
 /**

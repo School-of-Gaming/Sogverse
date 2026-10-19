@@ -1,0 +1,21 @@
+{
+  "newcomer": "SuvwI’ chu’",
+  "newcomerTooltip": "ghomvamDaq SuvwI’ chu’ — {days, plural, =0 {DaHjaj muvpu’} one {# jaj ret muvpu’} other {# jaj ret muvpu’}}",
+  "openMember": "{name} qonta’ chenmoHta’ je",
+  "openMemberCreationOwed": "{name} qonta’ chenmoHta’ je — chenmoHta’ poQlu’taH",
+  "memberTitle": "{name} De’",
+  "noteAudience": "Gedupu’ che’wI’pu’ je",
+  "noteLabel": "pegh qonta’",
+  "noteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. ghomvamDaq reH ratlh.",
+  "notePlaceholder": "ghomvamDaq {name} qonta’.",
+  "noteLastEdited": "Qav choHwI’: {name}",
+  "creationAudience": "qorDu’pu’ lulaD",
+  "creationLabel": "chenmoHta’",
+  "creationHint": "ghomvamDaq wa’ chenmoHta’ {name}. qorDu’Daj legh.",
+  "creationTitleLabel": "chenmoHta’ pong",
+  "creationTitlePlaceholder": "nuq chenmoHta’",
+  "creationUrlLabel": "chenmoHta’ ghItlhHom",
+  "creationUrlPlaceholder": "ghItlhHom",
+  "creationIncomplete": "chenmoHta’ pong ghItlhHom je poQ.",
+  "saveFailed": "pollu’be’. yInID."
+}

@@ -1,0 +1,182 @@
+{
+  "jumpToSignup": "{verb} nyt!",
+  "back": {
+    "consumer_club": "Takaisin kerhoihin",
+    "municipality_club": "Takaisin kuntakerhoihin",
+    "camp": "Takaisin leireihin",
+    "event": "Takaisin tapahtumiin"
+  },
+  "typeLabel": {
+    "consumer_club": "Kerho",
+    "municipality_club": "Kuntakerho",
+    "camp": "Leiri",
+    "event": "Tapahtuma"
+  },
+  "sections": {
+    "overview": "Hyvä tietää"
+  },
+  "topicInfo": {
+    "heading": "Tietoa: {name}",
+    "pegi": "PEGI {age}",
+    "topics": {
+      "minecraft_java": {
+        "description": "Minecraft on luova rakennuspeli. Ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat, mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä. Se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Java” on alkuperäinen versio Windows-, Mac- ja Linux-tietokoneille. Sitä etäkerhomme käyttävät, koska se tukee pelikasvattajiemme tarvitsemia työkaluja.",
+        "note": "Etäkerhojamme varten lapsesi tarvitsee Minecraftin tietokoneelle. Minecraftin omilla sivuilla se myydään nimellä ”Minecraft: Java & Bedrock Edition for PC”. Se on kertaosto eikä tilaus, ja se sisältää käyttämämme version. Erillinen konsoli-, puhelin- ja tablettiversio ei toimi näissä kerhoissa.",
+        "linkLabel": "Hanki Minecraft tietokoneelle"
+      },
+      "minecraft_bedrock": {
+        "description": "Minecraft on luova rakennuspeli. Ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat, mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä. Se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Bedrock” on versio, joka toimii konsoleilla (Xbox, PlayStation, Switch), puhelimilla, tableteilla ja Windows-tietokoneilla.",
+        "note": "Minecraft Bedrock ei sisälly hintaan. Se on sama peli, mutta se myydään erikseen kullekin laitteelle, eikä yhdelle laitteelle ostettu kappale siirry toiselle. Ratkaiseva on se kappale, joka on hankittu sille laitteelle, jolla lapsesi pelaa. Pelikonsolilla verkkopelaaminen vaatii lisäksi kyseisen konsolin maksullisen verkkojäsenyyden.",
+        "linkLabel": "Mistä sen saa"
+      },
+      "minecraft_education": {
+        "description": "Minecraft on luova rakennuspeli. Ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat, mitä mielikuvitus keksii. Minecraft Education on ohjatuille ryhmille tehty versio. Rakentaminen on samaa mukavaa ja avointa, ja mukana on lisätyökaluja kertaa vetävälle aikuiselle.",
+        "note": "Mitään ei tarvitse ostaa eikä koulun tiliä järjestää. School of Gaming tarjoaa Minecraft Education -tilit, joita osallistujat käyttävät kerroilla. Etäkerhoissa itse pelin voi ladata maksutta Microsoft Storesta tai Minecraft Educationin omilta sivuilta. Se toimii Windows- ja Mac-tietokoneilla sekä iPadeilla ja Chromebookeilla.",
+        "linkLabel": "Tietoa Minecraft Educationista"
+      },
+      "fortnite": {
+        "description": "Fortnite on värikäs ja piirrosmainen verkkopeli, jossa pelaajat muodostavat joukkueita ja kilpailevat lyhyissä, eräpohjaisissa otteluissa. Se on erittäin suosittu ja hyvin sosiaalinen, ja lapset pelaavat sitä yhdessä kavereiden kanssa. Ulkoasu on kirkas ja epärealistinen, eikä siinä ole verta eikä raakuuksia. Ottelut ovat kilpailullisia, ja niitä pelataan verkossa muiden ihmisten kanssa.",
+        "note": "Fortnite on ilmainen ladata ja pelata, eli itse peliä ei osteta. Pelaaminen vaatii ilmaisen Epic Games -tilin. Jotkin valinnaiset lisät maksavat, esimerkiksi asut. Epicin lapsilukko on tilillä eikä laitteessa, ja sillä lisäostoksia voi rajoittaa.",
+        "linkLabel": "Hanki Fortnite"
+      },
+      "pokemon_go": {
+        "description": "Pokémon GO on ulkona pelattava puhelinpeli. Olennot ilmestyvät kartalle oikeisiin paikkoihin, ja lapset kävelevät puistoihin, kaduille ja nähtävyyksille etsimään ja keräämään niitä. Pelissä keräillään eikä taistella. Kiinnostavinta on tutkiminen, Pokédexin täydentäminen ja löytöjen vertailu kavereiden kanssa. Suurin osa pelaamisesta tapahtuu jalan, joten peli saa lapset liikkeelle.",
+        "note": "Pokémon GO on ilmainen ladata ja pelata, eli itse peliä ei osteta. Se vaatii puhelimen, jossa on GPS ja mobiilidatayhteys, sekä ilmaisen käyttäjätilin. Alle 13-vuotiaalle tilin luo vanhempi, ja se pysyy liitettynä vanhemman tiliin. Peli sisältää valinnaisia ostoksia, joita lapsilukolla voi rajoittaa. Sitä pelataan ulkona oikeissa paikoissa. Se pitää myös näytön, GPS:n ja datayhteyden päällä koko ajan, joten akku ei kestä kauaa.",
+        "linkLabel": "Mistä sen saa"
+      },
+      "roblox_studio": {
+        "description": "Roblox Studio on ilmainen työkalu, jolla Roblox-pelit tehdään. Lapset suunnittelevat maailmoja, rakentavat oikeilla 3D-työkaluilla ja kirjoittavat oikeaa koodia. Omat ideat muuttuvat peleiksi, joita muut voivat oikeasti pelata. Kerhoissamme lapset eivät pelaa vaan luovat, ja se on ensiaskel oikeaan pelinkehitykseen.",
+        "note": "Roblox Studio on ilmainen, eikä mitään tarvitse ostaa. Se toimii vain Windows- ja Mac-tietokoneilla, ei iPadilla tai muulla tabletilla eikä Chromebookilla, puhelimella tai pelikonsolilla. Lisäksi tarvitaan ilmainen Roblox-tili, jonka ikäasetus määrää keskustelu- ja yksityisyysasetukset. Valmiit luomukset voi julkaista muiden pelaajien löydettäväksi ja pelattavaksi.",
+        "linkLabel": "Hanki Roblox Studio"
+      },
+      "rocket_league": {
+        "description": "Rocket League on jalkapalloa rakettiautoilla. Kaksi joukkuetta ajaa areenalla ja yrittää työntää ylisuuren pallon vastustajan maaliin noin viiden minuutin otteluissa. Ulkoasu on kirkas ja piirrosmainen, eikä pelissä ole väkivaltaa. Kyse on urheilulajista eikä räiskintäpelistä, joten sitä on helppo seurata sivustakin, vaikka ei itse olisi koskaan pelannut. Lähes jokainen maali syntyy joukkueen yhteistyöstä, ja siksi peli sopii niin hyvin kerhotoimintaan.",
+        "note": "Rocket Leaguen lataaminen ja pelaaminen on ilmaista, eli itse peliä ei osteta. Pelaaminen vaatii ilmaisen Epic Games -tilin. Peli toimii Windows-tietokoneilla, PlayStationilla, Xboxilla ja Nintendo Switchillä. Eri laitteiden pelaajat voivat pelata yhdessä, joten lapsesi laitteen ei tarvitse olla sama kuin muilla. Peli sisältää valinnaisia ostoksia, kuten koristeita autoihin, ja niitä voi rajoittaa lapsilukolla.",
+        "linkLabel": "Hanki Rocket League"
+      }
+    }
+  },
+  "info": {
+    "schedule": "Aikataulu",
+    "where": "Missä",
+    "format": "Muoto",
+    "ages": "Ikä {min}–{max}",
+    "ageRange": "Ikähaarukka",
+    "audience": "Kohderyhmä",
+    "language": "Kieli",
+    "online": "Verkossa",
+    "tbd": "Vahvistetaan myöhemmin",
+    "holidayBreaks": "Loma-ajat"
+  },
+  "signupPanel": {
+    "verb": {
+      "consumer_club": "Ilmoittaudu",
+      "municipality_club": "Ilmoittaudu",
+      "camp": "Ilmoittaudu",
+      "event": "Liity"
+    },
+    "noun": {
+      "consumer_club": "Ilmoittautuminen",
+      "municipality_club": "Ilmoittautuminen",
+      "camp": "Ilmoittautuminen",
+      "event": "Liittyminen"
+    },
+    "ctaReadyWaiting": "Valmiina odottamassa",
+    "ctaActive": "{verb} nyt",
+    "ctaActiveWithPrice": "{verb} nyt {price}",
+    "ctaActiveWithPriceSub": "{verb} nyt · {price}/kk",
+    "ctaSubmitting": "Hetki…",
+    "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
+    "ctaAllSet": "Olet valmis",
+    "ctaAgreeConsent": "Anna vaadittu suostumus",
+    "ctaWaitlist": "Liity jonotuslistalle",
+    "ctaSignIn": "Kirjaudu sisään",
+    "ctaCreateAccount": "Luo tili",
+    "gamerAlreadySignedUp": {
+      "consumer_club": "Jo ilmoitettu",
+      "municipality_club": "Jo ilmoitettu",
+      "camp": "Jo ilmoitettu",
+      "event": "Jo liittynyt"
+    },
+    "gamerAlreadyWaitlisted": "Jonossa",
+    "gamerUnderAge": "Alle {min}-vuotias",
+    "gamerOverAge": "Yli {max}-vuotias",
+    "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
+    "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
+    "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
+    "rules": {
+      "title": "Sääntömme",
+      "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+      "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+      "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
+      "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan.",
+      "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, kuten <policy>kiusaamisen ehkäisyn ja kurinpidon ohjeessa</policy> kerrotaan."
+    },
+    "consents": {
+      "heading": "Suostumus",
+      "agree": "Olen lukenut nämä asiakirjat ja hyväksyn ne.",
+      "bundles": {
+        "robloxProgramme": "Olen lukenut ja hyväksyn Luojien akatemian <terms>käyttöehdot</terms> ja <privacy>tietosuojaselosteen</privacy>.",
+        "robloxProgrammeTitle": "Luojien akatemian käyttöehdot ja tietosuojaseloste"
+      },
+      "gamerPhoto": {
+        "lynxEducate": "Lapsestani otettuja valokuvia ja videoita saa liittää kertaraportteihin, jakaa Lynx Educaten ja Robloxin kanssa vaikuttavuusraportointia varten sekä käyttää School of Gamingin, Lynx Educaten ja Robloxin verkkosivuilla ja sosiaalisessa mediassa. Tarkemmat tiedot ovat <privacy>Luojien akatemian tietosuojaselosteessa</privacy>.",
+        "lynxEducateTitle": "Lapsesi valokuvat ja videot",
+        "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa lapsesi sivulla Oma SOG -näkymässä."
+      },
+      "marketing": {
+        "lynxEducate": "Sähköpostiosoitteeni saa jakaa <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia tulevista tapahtumista ja pelaamiseen liittyvistä aineistoista. Voin peruuttaa tilauksen milloin tahansa.",
+        "lynxEducateTitle": "Lynx Educaten uutiset",
+        "hint": "Vapaaehtoinen — voit muuttaa tätä milloin tahansa asetuksissasi."
+      }
+    },
+    "whoAreYouSigningUp": {
+      "consumer_club": "Kenet ilmoitat?",
+      "municipality_club": "Kenet ilmoitat?",
+      "camp": "Kenet ilmoitat?",
+      "event": "Kuka liittyy?"
+    },
+    "seatIsFor": "Kenelle paikka on",
+    "selected": "Valittu",
+    "agePill": "Ikä {age}",
+    "parentPill": "Vanhempi",
+    "regionLock": {
+      "heading": "Sijaintisi",
+      "note": "Tätä tuotetta tarjotaan vain joissakin maissa. Ilmoita perheesi sijainti.",
+      "setLocation": "Lisää sijaintisi",
+      "wrongCountry": "Tätä tuotetta tarjotaan vain yhdessä maassa: <name>{country}</name>.",
+      "eligible": "Vain oman maasi perheille: {country}",
+      "eligibleLocation": "Perheesi sijainti: {location}",
+      "dialogTitle": "Missä perheesi asuu?",
+      "dialogDescription": "Tämän perusteella näemme, mitkä kerhot, leirit ja tapahtumat ovat tarjolla asuinpaikassasi. Voit vaihtaa sijainnin myöhemmin asetuksissa.",
+      "dialogField": "Sijaintisi",
+      "dialogSave": "Tallenna sijainti"
+    }
+  },
+  "pricing": {
+    "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
+    "free": "Maksuton",
+    "freeHint": "Maksua ei tarvita.",
+    "external": "Kunnan kustantama",
+    "upfrontHint": "Kertamaksu.",
+    "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
+    "cadenceMonth": "/ kk",
+    "firstChargeOn": "Ensimmäinen maksu: {date} — tänään ei veloiteta mitään.",
+    "guarantee": {
+      "title": "30 päivän rahat takaisin -takuu",
+      "body": "Jos kerho ei ole oikea lapsellesi, palautamme rahat – kiusallista keskustelua ei tarvita. 30 päivää alkaa lapsesi ensimmäisestä kerhokerrasta.",
+      "contact": "Lähetä vain viesti osoitteeseen <link>{email}</link>, niin oikea ihminen hoitaa asian."
+    }
+  },
+  "countdown": {
+    "days": "pv",
+    "hours": "h",
+    "minutes": "min",
+    "seconds": "s"
+  },
+  "notFound": {
+    "title": "Sivua ei löytynyt",
+    "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
+    "cta": "Takaisin selaamaan"
+  }
+}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PersonChip } from "@/components/ui/person-chip";
 import { formattingLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type {
   SubstitutionOffer,
   SubstitutionRequest,

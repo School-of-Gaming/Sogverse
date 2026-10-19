@@ -8,7 +8,9 @@ import {
   type GeduPickerUnavailability,
 } from "@/components/admin/products/gedu-picker-sheet";
 import { MissingRequirementsWarning } from "@/components/admin/missing-requirements-warning";
-import { seatSubstituteFailureKey } from "@/services/session-substitution";
+import {
+  seatSubstituteFailureKey,
+} from "@/services/session-substitution/session-substitution.refusals";
 import type { MissingRequirement } from "@/lib/products/session-requirements";
 import type {
   SeatSubstituteDraft,

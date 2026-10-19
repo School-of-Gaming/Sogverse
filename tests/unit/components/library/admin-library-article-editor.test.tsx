@@ -52,7 +52,7 @@ import type {
   AdminLibraryArticle,
   LibraryArticleDraft,
   LibraryArticleDraftVersion,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 
 const EN: LibraryArticleDraftVersion = {
   locale: "en",

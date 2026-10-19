@@ -8,7 +8,9 @@ import {
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import { nextRunning } from "@/lib/planned-sessions";
-import type { MyAssignedProductSessionRow } from "@/services/assignments";
+import type {
+  MyAssignedProductSessionRow,
+} from "@/services/assignments/assignments.service";
 import type { ProductType } from "@/types";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type {

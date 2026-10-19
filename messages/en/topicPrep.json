@@ -1,0 +1,149 @@
+{
+  "heading": "Before the first session",
+  "dialogTitle": "Before the first session",
+  "triggerLabel": "Get ready",
+  "notYetLabel": "Not yet",
+  "readyLabel": "I’m ready",
+  "closing": "If everything works, you’re ready for the session!",
+  "topics": {
+    "minecraft_java": {
+      "intro": "The sessions play Minecraft on a computer, in the Java version. Each participant needs a Microsoft account with Minecraft on it, and the Minecraft Launcher installed on the computer they will use. Please complete the steps below before the first session."
+    },
+    "minecraft_education": {
+      "intro": "The sessions use Minecraft Education, and it is free. School of Gaming provides the logins at the first session, so there is only one step to complete beforehand."
+    },
+    "minecraft_bedrock": {
+      "intro": "The sessions play Minecraft Bedrock together online. Each participant needs a Microsoft account and Minecraft installed on the device they will play on. Please complete the steps below before the first session."
+    },
+    "fortnite": {
+      "intro": "Fortnite is free to play, and the sessions play it together. Each participant needs a free Epic Games account, and Fortnite installed on the device they will use. Please complete the steps below before the first session."
+    },
+    "rocket_league": {
+      "intro": "Rocket League is free to play, and every session is played together. Each participant needs a free Epic Games account, and Rocket League installed on the device they will use. Please complete the steps below before the first session."
+    },
+    "pokemon_go": {
+      "intro": "Pokémon GO is played outdoors, on a phone that someone carries to the session. Please complete the steps below before the first session."
+    },
+    "roblox_studio": {
+      "intro": "The session uses Roblox Studio, Roblox’s free game development software. Each participant needs their own Roblox account and Roblox Studio installed on their computer. Please complete the steps below before the session."
+    }
+  },
+  "accountsOnlyIntro": {
+    "fortnite": "We bring the machines to the session, with Fortnite already installed. Each participant still needs their own Epic Games account, with the parental controls set on it. Please complete the steps below before the session.",
+    "rocket_league": "We bring the machines to the session, with Rocket League already installed. Each participant still needs their own Epic Games account. Please complete the step below before the session.",
+    "roblox_studio": "We bring the computers to the session, with Roblox Studio already installed. Each participant still needs their own Roblox account. Please complete the step below before the session."
+  },
+  "remoteOnlyIntro": "The sessions happen online, in a voice room. Please complete the step below before the first session.",
+  "steps": {
+    "minecraftJavaAccount": {
+      "title": "Get a Microsoft account with Minecraft on it",
+      "body": "Minecraft logs in with a Microsoft account. If the participant does not have one, a parent creates it and buys “Minecraft: Java & Bedrock Edition for PC” on that account. That is <b>one purchase, not a subscription</b>, and it covers the Java version these sessions use. Setting it up asks for a Java profile name. That name is the username we need in order to add the participant to our Minecraft world, so write it down somewhere it can be found again.",
+      "linkLabel": "Get Minecraft for PC"
+    },
+    "minecraftJavaInstall": {
+      "title": "Install the Minecraft Launcher",
+      "body": "Install the Minecraft Launcher on the computer used for the session. The download is on the same Minecraft page the game was bought from. Log in with the same Microsoft account."
+    },
+    "minecraftJavaLaunch": {
+      "title": "Open Minecraft once before the first session",
+      "body": "Start the launcher and let it finish any updates. Open the game as far as the main menu, then close it again. The first update can take a while, and doing it now means the session does not start with a download."
+    },
+    "minecraftEducationInstall": {
+      "title": "Install Minecraft Education",
+      "body": "Minecraft Education is a free download from the Microsoft Store or from Minecraft Education’s own site. Install it on the computer used for the session. Open it once to check that it starts. There is no account to create. School of Gaming provides the logins at the first session, so the game itself is all the participant needs.",
+      "linkLabel": "Get Minecraft Education"
+    },
+    "minecraftBedrockAccount": {
+      "title": "Create a Microsoft account",
+      "body": "Minecraft Bedrock plays online through a Microsoft account. The gamertag on that account is how we find the participant and add them to our worlds. If the participant does not have an account yet, a parent creates one. Make sure to enter the participant’s correct date of birth, as Microsoft uses age information to determine which online features are switched on. Write the gamertag down. We will ask for it."
+    },
+    "minecraftBedrockInstall": {
+      "title": "Buy and install Minecraft on the right device",
+      "body": "Bedrock is the same game sold separately for each device, and a copy bought for one device does not work on another. <b>Buy it on the device the participant will actually play on</b>, whether that is a console, a phone, a tablet or a Windows PC.",
+      "linkLabel": "Choose the device"
+    },
+    "minecraftBedrockOnline": {
+      "title": "Check that online play works",
+      "body": "Open Minecraft on that device and log in with the Microsoft account. Check that the online play screen opens. On Xbox, PlayStation and Nintendo Switch, playing with other people also needs that console’s own paid online membership."
+    },
+    "fortniteAccount": {
+      "title": "Create an Epic Games account",
+      "body": "Fortnite is free to play and logs in with a free Epic Games account. If the participant does not have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth, as Epic uses age information to determine which chat and social features are available. Write the display name down. That is how we find the participant."
+    },
+    "fortniteControls": {
+      "title": "Set the parental controls",
+      "body": "Epic’s parental controls sit on the account rather than on a device, so they follow the participant to every device. A parent sets a six-digit PIN and chooses what is allowed: who can chat, and whether a purchase needs the PIN. The game itself costs nothing. The controls are there for the optional extras."
+    },
+    "fortniteInstall": {
+      "title": "Install Fortnite",
+      "body": "Install Fortnite on the device used for the session and log in with the Epic Games account. Open it once and let it update. The first download is a large one, so it is better done the day before than five minutes before.",
+      "linkLabel": "Get Fortnite"
+    },
+    "fortniteCrossplay": {
+      "title": "Leave cross-play switched on",
+      "body": "Cross-play is what lets everyone play together whatever device they are on. It is on by default. If it has been switched off in the game’s settings, switch it back on before the session."
+    },
+    "rocketLeagueAccount": {
+      "title": "Create an Epic Games account",
+      "body": "Rocket League is free to play and logs in with a free Epic Games account, the same kind Fortnite uses. If the participant already has one, it works here too. If they don’t have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth. Write the display name down. That is how we find the participant."
+    },
+    "rocketLeagueInstall": {
+      "title": "Install Rocket League",
+      "body": "Install Rocket League on the device used for the session. It is free on Windows PC, PlayStation, Xbox and Nintendo Switch. Open it once before the session and let it finish updating.",
+      "linkLabel": "Get Rocket League"
+    },
+    "rocketLeagueCrossplay": {
+      "title": "Leave cross-platform play switched on",
+      "body": "Cross-platform play means the participant’s device does not have to match anyone else’s. It is on by default. If it has been turned off in the settings, turn it back on so the whole group can be in the same match."
+    },
+    "pokemonGoInstall": {
+      "title": "Install Pokémon GO on the phone",
+      "body": "Pokémon GO is free, and it goes on the phone that will be carried to the session. Get it from the App Store on an iPhone, or from Google Play on an Android phone. It is a phone game only. There is no computer or console version."
+    },
+    "pokemonGoAccount": {
+      "title": "Create an account",
+      "body": "Playing needs an account, and the game offers to create one the first time it opens. For a participant under 13, a parent creates the account and links it to their own, which keeps the settings in a parent’s hands. Write the trainer name down. That is how we find the participant."
+    },
+    "pokemonGoPhone": {
+      "title": "Charge the phone and check its settings",
+      "body": "The game keeps the screen, GPS and mobile data running the whole time it is open, and the battery goes down fast. Charge the phone before the session. Check that location and mobile data are switched on. Bring a power bank if there is one in the house."
+    },
+    "pokemonGoAgree": {
+      "title": "Agree where the participant is going",
+      "body": "Pokémon GO is played outdoors in real places. Agree in advance which streets and parks are in bounds, whether an adult is coming along, and how to get in touch during the session. Remind the participant to keep their eyes on the road. The phone can wait."
+    },
+    "robloxStudioAccount": {
+      "title": "Create a Roblox account",
+      "body": "If the participant already has their own Roblox account, there is no need to create a new one. If they don’t have an account yet, <b>create one for them</b>. Make sure to enter the participant’s correct date of birth, as Roblox uses age information to determine which features and content are available. Make sure the participant knows their Roblox username, knows their password or has access to it when needed, and is able to log in to their account on the computer they will use during the session. Do not send the participant’s password to the Gedu, our word for a Game Educator."
+    },
+    "robloxStudioInstall": {
+      "title": "Install Roblox Studio",
+      "body": "During the session, we will use Roblox Studio, Roblox’s free game development software. Go to the Roblox Creator Hub and log in with the participant’s Roblox account. Follow the instructions on the page to download and install Roblox Studio. Once the installation is complete, open Roblox Studio and log in with the participant’s Roblox account. Once installed, Roblox Studio works like any other application on your computer.",
+      "linkLabel": "Go to the Roblox Creator Hub"
+    },
+    "robloxStudioTest": {
+      "title": "Test everything before the first session",
+      "body": "We recommend doing a quick test before the session:"
+    },
+    "remoteSession": {
+      "title": "Set up the microphone and camera",
+      "body": "The session happens in a voice room that runs in a web browser. The participant can join on any device: the computer the game is on, or a phone or tablet beside a console. A headset or earbuds with a microphone works best, so the game sound does not echo back to everyone else. The first time the participant joins, the browser asks for permission to use the microphone and camera. Allow it. The camera is optional. Turning it on helps the Gedu, our word for a Game Educator, check that everyone in the room is who they say they are. Find a quiet place, and join a few minutes early the first time."
+    }
+  },
+  "platformNotes": {
+    "robloxStudioWindows": {
+      "title": "On Windows",
+      "body": "Open the Start menu or Windows search and type Roblox Studio, then select Roblox Studio from the search results."
+    },
+    "robloxStudioMac": {
+      "title": "On Mac",
+      "body": "Open Spotlight Search or the Applications folder and search for Roblox Studio."
+    }
+  },
+  "checklist": {
+    "robloxStudioTestOpen": "Open Roblox Studio.",
+    "robloxStudioTestSignIn": "Log in with the participant’s Roblox account.",
+    "robloxStudioTestHome": "Make sure the Roblox Studio home screen opens normally.",
+    "robloxStudioTestClose": "Close Roblox Studio."
+  }
+}

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { AlertCircle, ChevronRight, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";

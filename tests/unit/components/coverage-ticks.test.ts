@@ -7,7 +7,7 @@ import {
   type CoverageTick,
 } from "@/components/gedu/coverage-ticks";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import type { LocationWithChain } from "@/services/locations";
+import type { LocationWithChain } from "@/services/locations/locations.service";
 
 /**
  * The coverage editor's pure half.

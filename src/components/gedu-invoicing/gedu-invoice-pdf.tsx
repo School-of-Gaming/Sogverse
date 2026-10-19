@@ -15,11 +15,8 @@ import {
   formattingLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import {
-  formatCurrencyFromCents,
-  formatDate,
-  formatDateOnly,
-} from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import {
   fullName,
   type GeduInvoice,

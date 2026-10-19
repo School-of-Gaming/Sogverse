@@ -12,7 +12,7 @@ import {
   hasQuotationMarks,
   type AdminTestimonial,
   type TestimonialInput,
-} from "@/services/testimonials";
+} from "@/services/testimonials/testimonials.contracts";
 
 /** One language's words as typed — untrimmed, so nothing moves under the cursor. */
 export interface TestimonialVersionDraft {

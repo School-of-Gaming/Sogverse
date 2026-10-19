@@ -9,16 +9,38 @@ import {
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { AdminGroupDetailsPage } from "@/components/admin/products/group-details/admin-group-details-page";
-import type { AdminProductSessions } from "@/services/admin-sessions";
+import type {
+  AdminProductSessions,
+} from "@/services/admin-sessions/admin-sessions.contracts";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
-import type { GeduGroupFeed } from "@/services/gedu-sessions";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
+
+const messages = {
+  admin: enAdmin,
+  common: enCommon,
+  gedu: enGedu,
+  productType: enProductType,
+  memberFlair: enMemberFlair,
+  voiceButton: enVoiceButton,
+  sessionBadge: enSessionBadge,
+};
 
 // The note fields are opaque here: nothing below opens one, types into one,
 // or asserts on the markdown one produces. Stubbing the editor keeps
@@ -120,15 +142,13 @@ const noopMutation = vi.hoisted(() => () => ({
   isPending: false,
 }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: () => ({ data: reads.product, isPending: false }),
 }));
 
-// The hooks are stubbed and the key factory is kept real: the shell awaits an
-// invalidation on it after every substitution write, and a stubbed key would let a
-// rename through.
-vi.mock("@/services/admin-sessions", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/admin-sessions")>()),
+// The key factory lives in the keys module, which nothing mocks, so it stays real
+// here; this mock only stubs the hooks the shell binds.
+vi.mock("@/services/admin-sessions/admin-sessions.queries", () => ({
   useAdminProductSessions: () => ({ data: reads.sessions, isPending: false }),
   useAdminSetSessionNotes: noopMutation,
   useAdminRecordAttendance: noopMutation,
@@ -147,12 +167,9 @@ vi.mock("@/services/admin-sessions", async (importOriginal) => ({
   }),
 }));
 
-// The hooks are stubbed; everything else — the SQLSTATEs the shared save module
-// reads at module scope, the photo cap and accept list the photo block reads —
-// is kept real, so a constant added to the contracts cannot silently become
-// `undefined` in here.
-vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/gedu-sessions")>()),
+// Only the feed read is stubbed; the constants and SQLSTATEs the shared save module
+// and the photo block read live in the contracts module, which nothing mocks.
+vi.mock("@/services/gedu-sessions/gedu-sessions.queries", () => ({
   useGeduGroupFeed: () => ({ data: reads.feed, isPending: false }),
 }));
 
@@ -160,21 +177,24 @@ vi.mock("@/services/gedu-sessions", async (importOriginal) => ({
 // resolver: this page asks a product what it wants asked and the roster what
 // their parents answered, and an ordinary product asks nothing — which is the
 // shape every fixture here has.
-vi.mock("@/services/gamer-photo-consents", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/gamer-photo-consents")>()),
+vi.mock("@/services/gamer-photo-consents/product-gamer-photo-consents.queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents/product-gamer-photo-consents.queries")>()),
   useProductGamerPhotoConsentTypes: () => ({ data: [] }),
+}));
+vi.mock("@/services/gamer-photo-consents/gamer-photo-consents.queries", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/services/gamer-photo-consents/gamer-photo-consents.queries")>()),
   useGamerPhotoConsentsForGamers: () => ({ data: [] }),
 }));
 
-vi.mock("@/services/groups", () => ({
+vi.mock("@/services/groups/groups.queries", () => ({
   useProductGroups: () => ({ data: reads.snapshot, isPending: false }),
 }));
 
-vi.mock("@/services/minecraft", () => ({
+vi.mock("@/services/minecraft/minecraft.queries", () => ({
   useUpdateGroupMemberMinecraft: noopMutation,
 }));
 
-vi.mock("@/services/roblox", () => ({
+vi.mock("@/services/roblox/roblox.queries", () => ({
   useUpdateGroupMemberRoblox: noopMutation,
   useRobloxRenders: () => ({ data: undefined }),
 }));
@@ -182,14 +202,13 @@ vi.mock("@/services/roblox", () => ({
 // The three admin substitution writes the staffing editor is bound to. Nothing here
 // opens that editor — the feed is empty below, so there is no card to draw one
 // on — but the shell binds all three on every render.
-vi.mock("@/services/session-substitution", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+vi.mock("@/services/session-substitution/session-substitution.queries", () => ({
   useSetSessionSubstitution: noopMutation,
   useClearSessionSubstitution: noopMutation,
   useWithdrawSessionSubstitutionRequestAsAdmin: noopMutation,
 }));
 
-vi.mock("@/services/member-flair", () => ({
+vi.mock("@/services/member-flair/member-flair.queries", () => ({
   useSetGamerGroupNote: () => ({ mutateAsync: setNote, isPending: false }),
   useSetGamerGroupCreations: () => ({
     mutateAsync: setCreations,

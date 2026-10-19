@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import type Stripe from "stripe";
 import { createClient, getUser } from "@/lib/supabase/server";
-import { ParticipationsService } from "@/services/participations";
-import { ProductsService } from "@/services/products";
-import { HolidayBreaksService } from "@/services/holiday-breaks";
+import {
+  ParticipationsService,
+} from "@/services/participations/participations.service";
+import { ProductsService } from "@/services/products/products.service";
+import {
+  HolidayBreaksService,
+} from "@/services/holiday-breaks/holiday-breaks.service";
 import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
 import {
   PurchaseConfirmationView,
@@ -13,7 +17,9 @@ import {
 } from "@/components/public/products/purchase-confirmation-view";
 import { PurchaseConfirmationFinalizing } from "@/components/public/products/purchase-confirmation-finalizing";
 import { stripe } from "@/lib/stripe/client";
-import type { ParticipationConfirmation } from "@/services/participations";
+import type {
+  ParticipationConfirmation,
+} from "@/services/participations/participations.service";
 import type { AppSupabaseClient, ProductBrowseRow } from "@/types";
 
 // Post-signup summary page, reached two ways.

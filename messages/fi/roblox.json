@@ -1,0 +1,147 @@
+{
+  "hero": {
+    "title": "Luojien<br></br><act>akatemia</act>",
+    "subtitle": "Rakenna. Pelaa. Omista.",
+    "blurb": "Maksuton nuorille. Julkaise oma Roblox-pelisi.",
+    "cta": "Hyppää mukaan!"
+  },
+  "lockup": {
+    "heading": "Yhteistyössä",
+    "sogAlt": "School of Gaming",
+    "lynxAlt": "Lynx Educate",
+    "robloxAlt": "Roblox"
+  },
+  "what": {
+    "eyebrow": "Mistä on kyse",
+    "heading": "Opi rakentamaan Robloxissa.",
+    "paragraph1": "Luojien akatemia antaa 13–17-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Ohjelman toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa, ja se on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+    "paragraph2": "Ohjelma tähtää siihen, että osallistujat julkaisevat oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
+  },
+  "why": {
+    "eyebrow": "Miksi mukaan",
+    "heading": "Enemmän kuin koodaamisen opettelua",
+    "skills": {
+      "title": "Ihmistaidot",
+      "description": "Roblox Studio, tekoälyn avustama suunnittelu ja koodauslogiikan perusteet – opitaan yhdessä muiden kanssa, ei yksin."
+    },
+    "people": {
+      "title": "Löydä oma porukkasi",
+      "description": "Tutustu muihin tekijöihin, jotka innostuvat rakentamisesta yhtä paljon kuin sinä."
+    },
+    "portfolio": {
+      "title": "Rakenna portfoliosi",
+      "description": "Saat mukaasi oikean, julkaistun teoksen, jota voit esitellä."
+    },
+    "recognised": {
+      "title": "Saa tunnustusta",
+      "description": "Parhaat projektit esitellään ohjelman päätösjuhlassa."
+    },
+    "fun": {
+      "title": "Aitoa hauskaa",
+      "description": "Luovaa, sosiaalista ja tehty nautittavaksi."
+    },
+    "safe": {
+      "title": "Pysy turvassa verkossa",
+      "description": "Vanhemmille omat tilaisuudet verkkoturvallisuudesta, hyvästä käytöksestä ja lapsilukoista."
+    }
+  },
+  "how": {
+    "eyebrow": "Näin se toimii",
+    "heading": "Aloita neljässä helpossa vaiheessa",
+    "subheading": "Valitse sopiva muoto: paikan päällä tai verkossa, yhdestä tunnista yhdeksään viikkoon.",
+    "step1": {
+      "title": "Valitse tapahtuma",
+      "description": "Poimi sopiva alta – lisäämme uusia tapahtumia usein, joten käy katsomassa uudelleen."
+    },
+    "step2": {
+      "title": "Luo tili",
+      "description": "Suoraan ilmoittautumissivulla. Uusille vanhemmille nopeaa ja ilmaista."
+    },
+    "step3": {
+      "title": "Täytä nuoren tiedot",
+      "description": "Muutama tieto, ja ilmoittautuminen on valmis."
+    },
+    "step4": {
+      "title": "Tarkista sähköpostisi",
+      "description": "Saat vahvistuksen ja kaikki tarvittavat tiedot ennen ensimmäistä kertaa."
+    }
+  },
+  "events": {
+    "heading": "Tulevat tapahtumat",
+    "subheading": "Lisäämme uusia tapahtumia usein – käy katsomassa, mitä on tulossa.",
+    "empty": "Ensimmäisiä tapahtumia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa.",
+    "previous": "Edelliset tapahtumat",
+    "next": "Seuraavat tapahtumat",
+    "browseShop": "Selaa kauppaa"
+  },
+  "parents": {
+    "eyebrow": "Vanhemmille",
+    "heading": "Tiedämme, että verkkoturvallisuus on tärkeää",
+    "body": "Nuorten ohjelman rinnalla järjestämme vanhemmille omia tilaisuuksia verkkoturvallisuudesta, lapsilukoista ja siitä, miten voit tukea nuoren luovaa työtä.",
+    "cta": "Katso vanhempien tilaisuudet"
+  },
+  "faq": {
+    "heading": "Usein kysytyt kysymykset",
+    "items": {
+      "programme": {
+        "question": "Mistä Ohjelmassa on kyse?",
+        "answer": "<p>Se on ilmainen pelisuunnitteluohjelma, jossa nuoret oppivat rakentamaan Robloxissa. Sen järjestävät Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.</p><p>Ohjelma toteutetaan sekä verkossa että paikan päällä eri puolilla Ranskaa, ja lopuksi lapsesi julkaisee oman pelinsä tai esineensä.</p>"
+      },
+      "eligibility": {
+        "question": "Kuka voi osallistua?",
+        "answer": "<p>Ranskassa asuvat 13–17-vuotiaat nuoret, jotka vanhempi tai huoltaja ilmoittaa mukaan.</p>"
+      },
+      "cost": {
+        "question": "Maksaako osallistuminen mitään?",
+        "answer": "<p>Ei, Ohjelma on ilmoittautuneille perheille 100 % ilmainen!</p>"
+      },
+      "experience": {
+        "question": "Tarvitseeko lapseni aiempaa kokemusta Robloxista?",
+        "answer": "<p>Aiempaa kokemusta ei tarvita – tapaamiset opettavat pelien rakentamisen perusteista aina julkaisuun asti.</p>"
+      },
+      "where": {
+        "question": "Missä tapaamiset järjestetään?",
+        "answer": "<p>Lähitapaamisia järjestetään Pariisissa, Lillessä, Strasbourgissa ja Bordeaux’ssa. Verkkotapaamisiin voi osallistua mistä päin Ranskaa tahansa.</p><p>Kesto vaihtelee 60 minuutista 9 viikkoon.</p>",
+        "answer2": "Tarkemmat tiedot löydät kunkin tapahtuman kohdalta."
+      },
+      "language": {
+        "question": "Millä kielellä tapaamiset pidetään?",
+        "answer": "<p>Tapaamiset pidetään ranskaksi.</p>"
+      },
+      "equipment": {
+        "question": "Millaiset välineet lapseni tarvitsee?",
+        "answer": "<p>Verkkoon yhdistetyn tietokoneen (Windows tai Mac) sekä pääsyn Roblox Studioon.</p>",
+        "answer2": "Verkkotapahtumiin osallistutaan omalla tietokoneella, johon Roblox Studio on asennettu. Lähitapahtumissa tietokoneet ja välineet ovat valmiina paikan päällä."
+      },
+      "dataSharing": {
+        "question": "Jaetaanko lapseni tietoja Robloxin kanssa?",
+        "answer": "<p>Osa tilin tiedoista jaetaan Lynx Educaten ja Robloxin kanssa Ohjelman toteuttamiseksi ja sen vaikuttavuuden arvioimiseksi. Tarkat tiedot löydät <linkPrivacy>tietosuojaselosteestamme</linkPrivacy>.</p>"
+      },
+      "media": {
+        "question": "Valokuvataanko tai videoidaanko lastani?",
+        "answer": "<p>Tapaamisissa voidaan ottaa valokuvia. Lapsesi näkyy valokuvassa vain, jos rastitat vapaaehtoisen mediavalinnan ilmoittaessasi hänet mukaan, ja voit muuttaa vastausta milloin tahansa lapsesi sivulla Oma SOG -näkymässä.</p>"
+      },
+      "facilitators": {
+        "question": "Ketkä tapaamiset ohjaavat, ja miten heidät on tarkistettu?",
+        "answer": "<p>Pelikasvattajat ovat School of Gamingin kouluttamia ja taustatarkistettuja yhteisen <linkSafeguarding>lasten turvallisuuden toimintaohjeemme</linkSafeguarding> mukaisesti.</p>"
+      },
+      "contact": {
+        "question": "Keneen otan yhteyttä, jos minulla on kysyttävää?",
+        "answer": "<p>Kirjoita meille osoitteeseen <linkEmail>{email}</linkEmail>, jos sinulla on kysyttävää tai jokin askarruttaa.</p>"
+      }
+    }
+  },
+  "cta": {
+    "heading": "Valmis aloittamaan?",
+    "body": "Paikkoja on rajoitetusti.",
+    "button": "Aloita"
+  },
+  "legal": {
+    "roblox": "Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
+    "lynx": "Lynx Educate ja Lynx Educate -logo ovat Lynx Educaten tavaramerkkejä. Käytetty luvalla.",
+    "documents": "Luojien akatemian asiakirjat",
+    "privacy": "Tietosuojaseloste",
+    "safeguarding": "Lasten turvallisuuden toimintaohje",
+    "terms": "Käyttöehdot"
+  }
+}

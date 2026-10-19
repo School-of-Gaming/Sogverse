@@ -6,7 +6,7 @@ import {
   SessionCancelledLine,
   type SessionLabels,
 } from "@/components/session-feed";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { CancelledSessionFeedEntry } from "./types";
 

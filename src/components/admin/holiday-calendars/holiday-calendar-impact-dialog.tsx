@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { formatCompactDateRange } from "@/lib/utils";
+import { formatCompactDateRange } from "@/lib/date-format";
 import type { HolidayImpactSummary } from "./holiday-calendar-impact";
 
 /**

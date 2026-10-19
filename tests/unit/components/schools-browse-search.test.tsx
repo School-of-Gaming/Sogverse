@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { z } from "zod";
-import messages from "@/../messages/en.json";
+import enSchools from "@/../messages/en/schools.json";
+import enCommon from "@/../messages/en/common.json";
 import { SEARCH_DEBOUNCE_MS } from "@/hooks/use-debounced-value";
 import {
   buildMunicipalityEntries,
@@ -13,6 +14,8 @@ import type {
   locationSearchResult,
 } from "@/services/locations/locations.contracts";
 import { SchoolsBrowse } from "@/components/public/schools/schools-browse";
+
+const messages = { schools: enSchools, common: enCommon };
 
 /**
  * `/schools` searches with **two arms in union**, and this file is about the
@@ -74,7 +77,7 @@ function mockSearch(needle: string, options: Record<string, unknown>) {
 
 // Only the hook is replaced — the module's constants stay real, so nothing
 // here can drift from the route's own minimum needle length.
-vi.mock("@/services/locations", async (importOriginal) => ({
+vi.mock("@/services/locations/locations.queries", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useLocationSearch: mockSearch,
 }));

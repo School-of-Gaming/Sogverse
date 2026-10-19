@@ -1,0 +1,83 @@
+{
+  "subtitle": "Gérez les préférences de votre compte",
+  "personalInformation": "Informations personnelles",
+  "roleAccount": "{role, select, customer {Compte parent} gamer {Compte joueur} gedu {Compte Gedu} admin {Compte administrateur} other {Compte}}",
+  "firstNamePlaceholder": "Saisissez votre prénom",
+  "lastNamePlaceholder": "Saisissez votre nom",
+  "invalidPhone": "Veuillez saisir un numéro de téléphone valide.",
+  "lastNameRequired": "Le nom doit contenir au moins {min} caractères.",
+  "profileUpdated": "Informations personnelles enregistrées.",
+  "failedToUpdateProfile": "Impossible d’enregistrer vos informations personnelles.",
+  "securityDescription": "Gérez votre mot de passe et vos paramètres de sécurité",
+  "resetPassword": "Réinitialiser le mot de passe",
+  "resetPasswordEmailSent": "Lien de réinitialisation envoyé à {email} — consultez votre boîte de réception.",
+  "resetPasswordEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de réinitialisation. Veuillez réessayer.",
+  "changePin": "Modifier le code PIN",
+  "minecraftAccount": "Compte Minecraft",
+  "minecraftDescription": "Associez votre compte Minecraft Java Edition",
+  "robloxAccount": "Compte Roblox",
+  "robloxDescription": "Associez votre compte Roblox",
+  "mcHeadsAttribution": "Skins rendus par <link>mc-heads.net</link>",
+  "spokenLanguages": "Langues parlées à la maison",
+  "location": "Localisation",
+  "emailVerified": "Adresse e-mail vérifiée",
+  "emailNotVerified": "Adresse e-mail non vérifiée",
+  "sendVerificationEmail": "Envoyer l’e-mail de vérification",
+  "verificationEmailSent": "E-mail de vérification envoyé — consultez votre boîte de réception.",
+  "verificationEmailRateLimited": "Vous avez demandé cet e-mail trop de fois. Veuillez patienter un moment avant de réessayer.",
+  "verificationEmailFailed": "Nous n’avons pas pu envoyer l’e-mail de vérification. Veuillez réessayer.",
+  "discord": {
+    "label": "Discord",
+    "notLinked": "Non associé",
+    "linkHint": "Pour associer votre compte Discord, tapez <code>/link</code> sur le serveur Discord de School of Gaming.",
+    "relinkHint": "Pour associer un autre compte Discord, tapez <code>/link</code> depuis ce compte sur le serveur Discord de School of Gaming."
+  },
+  "slack": {
+    "label": "Slack",
+    "notLinked": "Non associé",
+    "linkHint": "Pour associer votre compte Slack, tapez <code>/link</code> dans l’espace de travail Slack de School of Gaming.",
+    "relinkHint": "Pour associer un autre compte Slack, tapez <code>/link</code> depuis ce compte dans l’espace de travail Slack de School of Gaming."
+  },
+  "marketing": {
+    "title": "Préférences marketing",
+    "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+    "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment."
+  },
+  "notifications": {
+    "title": "Préférences de notification",
+    "channels": {
+      "email": "E-mail"
+    },
+    "kinds": {
+      "session_report_copy": {
+        "label": "Copies des comptes rendus de séance",
+        "hint": "Une copie de chaque compte rendu de séance envoyé par e-mail aux familles d’un groupe."
+      }
+    },
+    "saveFailed": "Impossible d’enregistrer vos préférences de notification. Veuillez réessayer."
+  },
+  "usernameLabel": "Identifiant",
+  "gamerPasswordFromParent": "Ton parent peut te définir un nouveau mot de passe depuis Mon SOG.",
+  "photoConsent": {
+    "title": "Photos et vidéos",
+    "granted": "Ton parent a autorisé l’utilisation des photos et vidéos où tu apparais dans les comptes rendus de séance, ainsi que par School of Gaming, Lynx Educate et Roblox. Un Gedu te demandera quand même ton accord avant de te prendre en photo.",
+    "notGranted": "Ton parent n’a pas autorisé l’utilisation des photos et vidéos où tu apparais. Un Gedu te gardera donc en dehors des photos de séance. Seul ton parent peut changer cela."
+  },
+  "teamProfile": {
+    "title": "Mon profil",
+    "description": "Votre profil public sur le site de School of Gaming : une photo de vous et quelques mots sur qui vous êtes.",
+    "edit": "Modifier le profil"
+  },
+  "mcp": {
+    "title": "Connecter une application d’IA",
+    "description": "Gérez Sogverse depuis votre propre application d’IA grâce au serveur MCP de Sogverse.",
+    "urlLabel": "URL du serveur MCP",
+    "copy": "Copier",
+    "copied": "Copié",
+    "steps": {
+      "add": "Dans les paramètres de votre application d’IA, ajoutez un connecteur personnalisé ou un serveur MCP distant avec cette URL.",
+      "signIn": "Connectez-vous avec votre compte administrateur et choisissez Autoriser.",
+      "unsure": "Vous ne savez pas où l’ajouter ? Demandez à votre application d’IA comment ajouter un serveur MCP distant à partir de son URL."
+    }
+  }
+}

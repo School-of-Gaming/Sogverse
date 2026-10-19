@@ -17,9 +17,12 @@ import {
 import { ROUTES } from "@/lib/constants";
 import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
-import type { AdminLandingPageListItem } from "@/services/landing-pages";
+import type {
+  AdminLandingPageListItem,
+} from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-chip";
 
 /**

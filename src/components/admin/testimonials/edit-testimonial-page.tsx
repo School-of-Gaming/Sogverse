@@ -8,16 +8,18 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
+import { formatDate } from "@/lib/date-format";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
 import { useTimezone } from "@/providers";
+import type {
+  AdminTestimonial,
+  TestimonialSaver,
+  TestimonialUsage,
+} from "@/services/testimonials/testimonials.contracts";
 import {
   useAdminTestimonial,
   useSaveTestimonial,
-  type AdminTestimonial,
-  type TestimonialSaver,
-  type TestimonialUsage,
-} from "@/services/testimonials";
+} from "@/services/testimonials/testimonials.queries";
 import { TestimonialEditor } from "./testimonial-editor";
 
 /**

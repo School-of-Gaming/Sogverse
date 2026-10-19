@@ -15,8 +15,8 @@ import type { PublicTeamProfileRow } from "@/services/team-profiles/team-profile
 // they do on the server.
 vi.mock("next-intl/server", async () => {
   const catalogs = {
-    en: (await import("../../messages/en.json")).default,
-    fi: (await import("../../messages/fi.json")).default,
+    en: { team: (await import("../../messages/en/team.json")).default },
+    fi: { team: (await import("../../messages/fi/team.json")).default },
   };
   return {
     getTranslations: ({

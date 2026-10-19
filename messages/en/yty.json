@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "What is Yty?",
+    "subtitle": "Yty is the force that keeps Sogverse in balance. By doing good things — learning new skills, making friends, behaving well, and taking part in the community — gamers earn Yty for themselves and for everyone."
+  },
+  "overview": {
+    "heading": "How Yty works",
+    "paragraph1": "Every gamer starts at zero. From every lesson attended, every Quest completed, and every act of kindness shown, gamers earn Yty-Points. These points build up across the four Yty-Elements, each reflecting a different part of growing up well.",
+    "paragraph2": "As gamers collect Yty for themselves, they also raise the total Yty of Sogverse — shaping the story and unlocking new possibilities for the whole community."
+  },
+  "elements": {
+    "heading": "The Four Yty-Elements",
+    "subheading": "Each Yty-Element is one relationship a gamer is growing: with themselves, with others, with society, and with technology",
+    "harmony": {
+      "name": "Harmony",
+      "description": "Your relationship with yourself",
+      "detail": "Who am I? Harmony is about accepting yourself as you are — strengths and weaknesses alike. It means learning to take care of your wellbeing, expressing your emotions, making good decisions, and understanding why rules and trust matter."
+    },
+    "glow": {
+      "name": "Glow",
+      "description": "Your relationship with others",
+      "detail": "How can I help others? Glow is about empathy, kindness, and building meaningful relationships. It means respecting differences, giving space to others, communicating well, and being the kind of person who lifts people up."
+    },
+    "valor": {
+      "name": "Valor",
+      "description": "Your relationship with society",
+      "detail": "How can I make a difference? Valor is about finding your place in society and having the courage to contribute to it. It means teamwork, expressing your ideas, using your imagination, and working towards a better future — locally and globally."
+    },
+    "wit": {
+      "name": "Wit",
+      "description": "Your relationship with technology",
+      "detail": "How do I handle technology well? Wit is about a healthy, critical relationship with games, media, and the tools around them. It means understanding online behaviour, thinking critically about information, and balancing screen time with the rest of life."
+    }
+  },
+  "earning": {
+    "heading": "How gamers earn Yty",
+    "paragraph1": "Yty-Points are earned through participation. Attending weekly club lessons, completing Quests, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer’s Yty.",
+    "paragraph2": "As points accumulate under specific Achievement Badges, gamers level those badges up — from bronze to silver, gold, platinum, and diamond. Every point also feeds into their overall Yty-Level and the Yty-Element it belongs to.",
+    "paragraph3": "And it’s not just gamers. Gedus, parents, and the entire community can take part in building the Yty of Sogverse through events and shared activities."
+  }
+}

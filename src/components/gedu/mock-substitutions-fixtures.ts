@@ -27,7 +27,7 @@ import {
 import type {
   LiveSubstitutionRequest,
   OpenSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 import { buildGeduDashboardFixture } from "./mock-dashboard-fixtures";
 
 /**

@@ -2,8 +2,6 @@ import { createAnonClient } from "@/lib/supabase/anon";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
-// The module directly rather than the feature barrel: the barrel carries
-// browser-only React Query hooks.
 import { readPublicTeamPhoto } from "@/services/team-profiles/public-team-photo";
 
 /**
