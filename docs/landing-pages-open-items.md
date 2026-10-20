@@ -103,8 +103,7 @@ renderer).
 
 - **Klaviyo:** a private API key with write access to Profiles, Lists and
   Subscriptions; a staging list and the real newsletter list, both single opt-in. The env
-  vars are named in `.env.local.example` on its branch and set on Vercel. Klaviyo is to
-  be added as a processor in the privacy policy. Needed before `landing-email-capture`
+  vars are named in `.env.local.example` on its branch and set on Vercel. Needed before `landing-email-capture`
   can go live.
 - **Vercel:** a real `INDEXNOW_KEY` on production for `discover-index`. Env vars go
   through the `env-vars` skill.
