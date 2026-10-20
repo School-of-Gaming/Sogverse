@@ -76,8 +76,9 @@ export function LandingPageBreadcrumb({
   locale: SupportedLocale;
 }) {
   return (
-    // The hero's own container and column, so the trail starts where the
-    // headline and the picture do.
+    // Left-aligned in the page's widest column on every page, whatever the
+    // first section is: the trail is the page's frame, not part of its
+    // opening, so it does not follow a centred headline.
     <nav aria-label={label} className="container mx-auto px-4 pt-6">
       <ol className="mx-auto flex max-w-6xl flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <li>
