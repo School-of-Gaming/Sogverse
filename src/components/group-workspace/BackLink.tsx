@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * "Back to My SOG" at the top of the group workspace — the gedu shell's back

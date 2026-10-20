@@ -1,0 +1,4 @@
+{
+  "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
+  "waitlistAvailable": "Liste d’attente"
+}

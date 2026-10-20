@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { parseCalendarDate } from "@/lib/calendar-date";
 import { resolveLocale } from "@/lib/constants/locales";
 import { isoWeekOf } from "@/lib/iso-week";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import type { HolidayBreakDraft } from "./holiday-calendar-draft";
 
 /**

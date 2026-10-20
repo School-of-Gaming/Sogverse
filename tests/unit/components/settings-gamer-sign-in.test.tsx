@@ -15,10 +15,13 @@ import {
 } from "../../mocks/settings-page";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockGamerProfile } from "../../mocks/supabase";
 import type { GamerSignIn, Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The settings page asks whether an address reaches a person, not whether its
@@ -45,14 +48,14 @@ import type { GamerSignIn, Profile } from "@/types";
 const auth: { profile: Profile } = { profile: createMockGamerProfile() };
 
 vi.mock("@/providers", () => providersModule(() => auth.profile));
-vi.mock("@/services/users", () => usersServiceModule());
-vi.mock("@/services/locations", () => locationsServiceModule());
-vi.mock("@/services/minecraft", () => minecraftServiceModule());
-vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/services/users/users.queries", () => usersServiceModule());
+vi.mock("@/services/locations/locations.queries", () => locationsServiceModule());
+vi.mock("@/services/minecraft/minecraft.queries", () => minecraftServiceModule());
+vi.mock("@/services/roblox/roblox.queries", () => robloxServiceModule());
 vi.mock("@/components/settings/notification-preferences-card", () =>
   notificationPreferencesCardModule(),
 );
-vi.mock("@/services/marketing-consents", () => marketingConsentsServiceModule());
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () => marketingConsentsServiceModule());
 vi.mock("@/components/game-account", () => gameAccountModule());
 vi.mock("@/components/gedu/gedu-coverage-editor", () => geduCoverageEditorModule());
 vi.mock("@/components/locations/home-location-field", () =>

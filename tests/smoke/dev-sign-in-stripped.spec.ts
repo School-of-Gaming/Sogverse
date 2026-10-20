@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test, expect } from "@playwright/test";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 
 // The login page's dev-only quick sign-in carries the rich seed's addresses and
 // password, and it is gated on build-time constants so that a production build

@@ -2,6 +2,10 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { plannedSessionRows } from "@/lib/planned-sessions";
+import {
+  voiceJoinInstructionsWireField,
+  voiceRoomWireFields,
+} from "@/lib/products/voice-room";
 import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 
@@ -102,6 +106,7 @@ const productTranslationSummary = z
     locale: z.string(),
     name: z.string(),
     description: z.string(),
+    ...voiceJoinInstructionsWireField,
   })
   .strict();
 
@@ -271,6 +276,8 @@ export const familyProductFeed = z
         start_date: z.string().nullable(),
         end_date: z.string().nullable(),
         is_remote: z.boolean(),
+        /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
+        ...voiceRoomWireFields,
         /** The product's names live here; `products` has no name column. */
         translations: z.array(productTranslationSummary),
         schedule_slots: z.array(scheduleSlotSummary),

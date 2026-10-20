@@ -2,7 +2,7 @@
 
 import { ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The line between what is still to come and what has already happened — and

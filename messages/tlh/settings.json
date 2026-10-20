@@ -1,0 +1,83 @@
+{
+  "subtitle": "account ngoQmey tI’ang",
+  "personalInformation": "SoH De’",
+  "roleAccount": "{role, select, customer {vav/SoS account} gamer {toy’wI’ account} gedu {Gedu account} admin {ra’wI’ account} other {account}}",
+  "firstNamePlaceholder": "wa’DIch pong yIchel",
+  "lastNamePlaceholder": "qorDu’ pong yIchel",
+  "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel.",
+  "lastNameRequired": "qorDu’ pong {min} mu’tlhegh puS ghobe’.",
+  "profileUpdated": "SoH De’ pollu’. Qapla’!",
+  "failedToUpdateProfile": "SoH De’ pollaHbe’lu’.",
+  "securityDescription": "mu’mey je QaQ ngoQmey tI’ang",
+  "resetPassword": "mu’mey yIchoH",
+  "resetPasswordEmailSent": "{email}vaD chovmoH QIn ngeHlu’. QIn tepqengwI’lIj yIbej!",
+  "resetPasswordEmailFailed": "QIn ngeHlu’be’pu’. yInID je.",
+  "changePin": "PIN yIchoH",
+  "minecraftAccount": "Minecraft account",
+  "minecraftDescription": "Minecraft Java Edition account jonmoH",
+  "robloxAccount": "Roblox account",
+  "robloxDescription": "Roblox account jonmoH",
+  "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
+  "spokenLanguages": "Holmey jatlhlu’",
+  "location": "Daq",
+  "emailVerified": "ngu’lu’pu’ QIn Daq",
+  "emailNotVerified": "ngu’be’lu’ QIn Daq",
+  "sendVerificationEmail": "ngu’meH QIn yIngeH",
+  "verificationEmailSent": "ngeHlu’pu’ QIn — QIn tepqengwI’lIj yIbej.",
+  "verificationEmailRateLimited": "law’qu’ Datlhobpu’! yIloS. tugh yInID je.",
+  "verificationEmailFailed": "QIn ngeHlu’be’pu’. yInID.",
+  "discord": {
+    "label": "Discord",
+    "notLinked": "rarlu'be'",
+    "linkHint": "Discord ghItlhlIj DararmeH, School of Gaming Discord Daq <code>/link</code> yIlo'.",
+    "relinkHint": "Discord ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Discord Daq <code>/link</code> yIlo'."
+  },
+  "slack": {
+    "label": "Slack",
+    "notLinked": "rarlu'be'",
+    "linkHint": "Slack ghItlhlIj DararmeH, School of Gaming Slack Daq <code>/link</code> yIlo'.",
+    "relinkHint": "Slack ghItlh latlh DararmeH, ghItlhvam vo' School of Gaming Slack Daq <code>/link</code> yIlo'."
+  },
+  "marketing": {
+    "title": "QIn chaw’mey",
+    "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+    "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
+  },
+  "notifications": {
+    "title": "ghuHmoHmey DuHmey",
+    "channels": {
+      "email": "QIn"
+    },
+    "kinds": {
+      "session_report_copy": {
+        "label": "ghom De’ lutHom",
+        "hint": "ghom qorDu’pu’vaD ghom De’ ngeHlu’DI’, wa’ lutHom Daghaj."
+      }
+    },
+    "saveFailed": "ghuHmoHmey DuHmey pollaHbe’lu’. yInIDqa’!"
+  },
+  "usernameLabel": "pong",
+  "gamerPasswordFromParent": "jIH SOGDaj lo’ ’ej mu’mey chu’ DulanlaH SoSlI’ vav joq.",
+  "photoConsent": {
+    "title": "mIloghmey HaSta je",
+    "granted": "chaw’ SoSlI’ vavlI’ joq: poH ja’ghItlhmeyDaq mIloghlIj HaSta je lo’lu’laH, ’ej School of Gaming, Lynx Educate, Roblox je lo’laH. ’ach mIloghlIj tlhapmeH, SoH Dughel Gedu.",
+    "notGranted": "chaw’be’ SoSlI’ vavlI’ joq. vaj poH mIloghmeyvo’ DuchoprupmoH Gedu. SoSlI’ vavlI’ joq neH choHlaH."
+  },
+  "teamProfile": {
+    "title": "Del’a’wIj",
+    "description": "School of Gaming Qu’mey Hoch legh: mInDu’lIj mIllogh, ’ej bIpong nuq ’e’ ghItlh.",
+    "edit": "Del’a’ yIchoH"
+  },
+  "mcp": {
+    "title": "QoQ jan yIrar",
+    "description": "QoQ jan Dun vo' Sogverse yIchu'. Sogverse MCP jan lo'.",
+    "urlLabel": "MCP jan Daq",
+    "copy": "yIlI'",
+    "copied": "lI'ta'",
+    "steps": {
+      "add": "QoQ jan Dun DuHmey Daq, Daqvam lo'bogh MCP jan yIchel.",
+      "signIn": "DIvI' HoS ghItlhlIj yIlo' 'ej yIchaw' yIwIv.",
+      "unsure": "nuqDaq DachellaH? QoQ jan Dun yIghel: chay' MCP jan chel Daq lo'taHvIS?"
+    }
+  }
+}

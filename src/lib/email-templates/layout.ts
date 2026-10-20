@@ -1,5 +1,5 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
-import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
+import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants/brand";
 import { RADIUS } from "@/lib/constants/radius";
 import {
   MAIL_FONT_STACK,

@@ -1,0 +1,4 @@
+{
+  "remaining": "{count, plural, one {# / {total} pa’ ratlh} other {# / {total} pa’ ratlh}}",
+  "waitlistAvailable": "loS tetlh"
+}

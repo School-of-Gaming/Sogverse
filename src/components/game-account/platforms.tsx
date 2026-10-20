@@ -3,8 +3,8 @@
 import type { ReactElement } from "react";
 import { minecraftSkinBodyUrl, minecraftSkinFaceUrl } from "@/lib/mojang";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
-import { useVerifyMinecraft } from "@/services/minecraft";
-import { useVerifyRoblox } from "@/services/roblox";
+import { useVerifyMinecraft } from "@/services/minecraft/minecraft.queries";
+import { useVerifyRoblox } from "@/services/roblox/roblox.queries";
 
 /**
  * One game identity, any platform.

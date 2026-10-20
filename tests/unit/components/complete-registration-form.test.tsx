@@ -79,7 +79,7 @@ vi.mock("@/components/game-account", () => ({
 }));
 
 import { CompleteRegistrationForm } from "@/components/auth/complete-registration-form";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 const mockFetch = vi.fn();
 

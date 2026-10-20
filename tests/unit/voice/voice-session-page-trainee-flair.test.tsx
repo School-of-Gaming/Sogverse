@@ -8,8 +8,18 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enVoice from "@/../messages/en/voice.json";
+import enCommon from "@/../messages/en/common.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
 import { useVoiceMemberFlair } from "@/components/voice/VoiceMemberFlairProvider";
+
+const messages = {
+  voice: enVoice,
+  common: enCommon,
+  gedu: enGedu,
+  memberFlair: enMemberFlair,
+};
 
 /**
  * ============================================================================
@@ -82,7 +92,7 @@ vi.mock("@/components/voice/GroupSessionChat", () => ({
   GroupSessionChat: () => null,
 }));
 
-vi.mock("@/services/voice", () => ({
+vi.mock("@/services/voice/voice.queries", () => ({
   useVoiceToken: () => ({
     mutateAsync: vi.fn(async () => ({
       token: "t",
@@ -93,13 +103,15 @@ vi.mock("@/services/voice", () => ({
   }),
 }));
 
-vi.mock("@/services/session-feedback", () => ({
+vi.mock("@/services/session-feedback/session-feedback.contracts", () => ({
   isEmptySessionFeedback: () => true,
+}));
+vi.mock("@/services/session-feedback/session-feedback.queries", () => ({
   useOwnSessionFeedback: () => ({ data: undefined }),
   useSaveSessionFeedback: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@/services/member-flair", () => ({
+vi.mock("@/services/member-flair/member-flair.queries", () => ({
   useGroupStaffOverlay: (_groupId: string, enabled: boolean) => {
     state.staffEnabled.push(enabled);
     return {

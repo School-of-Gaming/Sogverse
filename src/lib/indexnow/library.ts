@@ -5,7 +5,7 @@ import {
 } from "@/components/library/article-address";
 import { libraryArticleLocales } from "@/components/library/article/article-metadata";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import type { LibraryService } from "@/services/library/library.service";
 import { changeAndSubmit, changedUrls, type LiveAddress } from "./indexnow";

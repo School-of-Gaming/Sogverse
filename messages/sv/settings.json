@@ -1,0 +1,83 @@
+{
+  "subtitle": "Hantera dina kontoinställningar",
+  "personalInformation": "Personuppgifter",
+  "roleAccount": "{role, select, customer {Föräldrakonto} gamer {Spelarkonto} gedu {Gedu-konto} admin {Adminkonto} other {Konto}}",
+  "firstNamePlaceholder": "Ange ditt förnamn",
+  "lastNamePlaceholder": "Ange ditt efternamn",
+  "invalidPhone": "Ange ett giltigt telefonnummer.",
+  "lastNameRequired": "Efternamnet måste vara minst {min} tecken.",
+  "profileUpdated": "Personuppgifterna har sparats.",
+  "failedToUpdateProfile": "Det gick inte att spara personuppgifterna.",
+  "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
+  "resetPassword": "Återställ lösenord",
+  "resetPasswordEmailSent": "Återställningslänk skickad till {email} – kolla din inkorg.",
+  "resetPasswordEmailFailed": "Vi kunde inte skicka återställningsmejlet. Försök igen.",
+  "changePin": "Byt PIN",
+  "minecraftAccount": "Minecraft-konto",
+  "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",
+  "robloxAccount": "Roblox-konto",
+  "robloxDescription": "Koppla ditt Roblox-konto",
+  "mcHeadsAttribution": "Skins renderade av <link>mc-heads.net</link>",
+  "spokenLanguages": "Talade språk",
+  "location": "Plats",
+  "emailVerified": "E-postadress verifierad",
+  "emailNotVerified": "E-postadressen är inte verifierad",
+  "sendVerificationEmail": "Skicka verifieringsmejl",
+  "verificationEmailSent": "Verifieringsmejlet är skickat – kolla din inkorg.",
+  "verificationEmailRateLimited": "Du har begärt det här mejlet för många gånger. Vänta en liten stund innan du försöker igen.",
+  "verificationEmailFailed": "Vi kunde inte skicka verifieringsmejlet. Försök igen.",
+  "discord": {
+    "label": "Discord",
+    "notLinked": "Inte kopplat",
+    "linkHint": "Koppla ditt Discord-konto genom att skriva <code>/link</code> på School of Gamings Discord-server.",
+    "relinkHint": "Koppla ett annat Discord-konto genom att skriva <code>/link</code> från det kontot på School of Gamings Discord-server."
+  },
+  "slack": {
+    "label": "Slack",
+    "notLinked": "Inte kopplat",
+    "linkHint": "Koppla ditt Slack-konto genom att skriva <code>/link</code> i School of Gamings Slack-arbetsyta.",
+    "relinkHint": "Koppla ett annat Slack-konto genom att skriva <code>/link</code> från det kontot i School of Gamings Slack-arbetsyta."
+  },
+  "marketing": {
+    "title": "Marknadsföringsinställningar",
+    "schoolOfGaming": "School of Gaming får skicka mig nyheter och erbjudanden via e-post.",
+    "lynxEducate": "Dela min e-postadress med <link>Lynx Educate</link> så att de kan skicka mig nyheter om kommande evenemang och resurser om spelande. Jag kan avsluta prenumerationen när som helst."
+  },
+  "notifications": {
+    "title": "Aviseringsinställningar",
+    "channels": {
+      "email": "E-post"
+    },
+    "kinds": {
+      "session_report_copy": {
+        "label": "Kopior av rapporter om tillfällen",
+        "hint": "En kopia av varje rapport om ett tillfälle som mejlas till familjerna i en grupp."
+      }
+    },
+    "saveFailed": "Det gick inte att spara aviseringsinställningarna. Försök igen."
+  },
+  "usernameLabel": "Användarnamn",
+  "gamerPasswordFromParent": "Din förälder kan ange ett nytt lösenord åt dig från Min SOG.",
+  "photoConsent": {
+    "title": "Foton och videor",
+    "granted": "Din förälder har sagt att foton och videor på dig får användas i rapporter från tillfällena och av School of Gaming, Lynx Educate och Roblox. En Gedu frågar dig ändå innan de tar ett foto på dig.",
+    "notGranted": "Din förälder har sagt att foton och videor på dig inte får användas, så en Gedu håller dig utanför tillfällenas foton. Bara din förälder kan ändra det här."
+  },
+  "teamProfile": {
+    "title": "Min profil",
+    "description": "Din offentliga profil på School of Gamings webbplats: ett foto av dig och några ord om vem du är.",
+    "edit": "Redigera profil"
+  },
+  "mcp": {
+    "title": "Anslut en AI-app",
+    "description": "Hantera Sogverse från din egen AI-app via Sogverses MCP-server.",
+    "urlLabel": "MCP-serverns adress",
+    "copy": "Kopiera",
+    "copied": "Kopierad",
+    "steps": {
+      "add": "Lägg till en anpassad anslutning eller fjärr-MCP-server med den här adressen i din AI-apps inställningar.",
+      "signIn": "Logga in med ditt administratörskonto och välj Tillåt.",
+      "unsure": "Vet du inte var du lägger till den? Fråga din AI-app hur man lägger till en fjärr-MCP-server via dess adress."
+    }
+  }
+}

@@ -4,7 +4,8 @@ import { CircleCheck, CircleDashed, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { LOCALE_CONFIG, SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
-import { cn, findOption } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { findOption } from "@/lib/type-guards";
 
 interface LocaleTabsProps {
   /** The locales with a tab, in `SUPPORTED_LOCALES` order (`writtenLocales`). */

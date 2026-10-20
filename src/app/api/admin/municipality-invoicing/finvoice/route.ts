@@ -9,8 +9,12 @@ import {
   type BillingPeriod,
   type FinvoiceRefusal,
 } from "@/lib/finvoice";
-import { InvoiceCustomersService } from "@/services/invoice-customers";
-import { MunicipalityInvoicingService } from "@/services/municipality-invoicing";
+import {
+  InvoiceCustomersService,
+} from "@/services/invoice-customers/invoice-customers.service";
+import {
+  MunicipalityInvoicingService,
+} from "@/services/municipality-invoicing/municipality-invoicing.service";
 
 /**
  * GET /api/admin/municipality-invoicing/finvoice?month=YYYY-MM&customer=<uuid>

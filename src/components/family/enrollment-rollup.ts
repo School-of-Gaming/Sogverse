@@ -2,26 +2,26 @@ import {
   formatProductSchedule,
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
-import { ROUTES } from "@/lib/constants";
+import { INERT_HREF, ROUTES } from "@/lib/constants/routes";
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import { nextRunning } from "@/lib/planned-sessions";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductTopic, ProductType } from "@/types";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";
 import type {
   AppHref,
   MaybeInertHref,
   MaybeInertHrefObject,
 } from "@/lib/constants/routes";
-import { INERT_HREF } from "@/lib/constants/routes";
 
 /**
  * One **enrollment** — a family's participation in one product — rolled up to
@@ -112,6 +112,12 @@ export interface FamilyEnrollmentSummary {
    * room behind it that ever will.
    */
   hasVoiceRoom: boolean;
+  /**
+   * How the product's sessions are joined, with the join instructions still
+   * per locale. Meaningful only where `hasVoiceRoom` is true; an in-person
+   * product is always `sogverse`.
+   */
+  voiceRoom: ProductVoiceRoom;
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
   /**
@@ -812,6 +818,7 @@ function sessionSummary(
     nextSessionEnd: next === null ? null : next.endsAt,
     cancelledAhead: cancelledAhead.map((session) => session.startsAt),
     hasVoiceRoom,
+    voiceRoom: product.voiceRoom,
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
     // there is nothing to navigate to. The card renders no Join in either case.
@@ -894,6 +901,7 @@ function waitlistSummary(
     nextSessionEnd: null,
     cancelledAhead: [],
     hasVoiceRoom: product.isRemote,
+    voiceRoom: product.voiceRoom,
     voiceHref: INERT_HREF,
     siteName: null,
     openHref: INERT_HREF,

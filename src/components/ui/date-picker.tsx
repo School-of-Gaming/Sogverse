@@ -12,7 +12,8 @@ import {
 } from "@/lib/calendar-date";
 import { isoWeekOf, isoWeekStart, resolveNearestIsoWeek } from "@/lib/iso-week";
 import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 
 /**
  * **What a click on a week number means for this field.**

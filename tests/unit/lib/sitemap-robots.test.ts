@@ -1,4 +1,4 @@
-import { afterAll, describe, it, expect, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 
 // The real wrapped navigation, not the setup's link-rendering stub: what these
 // two files are for is the locale-prefixed, translated URLs `getPathname`
@@ -13,6 +13,9 @@ process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
 // The sitemap builds its anonymous client from these; the read itself is mocked.
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
+// Both files are production's: anywhere else, the sitemap is not served and
+// robots.txt turns the crawl away (the last block below).
+vi.stubEnv("VERCEL_ENV", "production");
 afterAll(() => vi.unstubAllEnvs());
 const BASE = "https://test.sogverse.local";
 
@@ -506,4 +509,67 @@ describe("robots", () => {
       expect(disallowOf(rule)).toEqual(disallowOf(wildcard));
     }
   });
+});
+
+describe("off production", () => {
+  // Staging, every feature-branch preview and every local build: reachable by
+  // a direct link, but never found. `VERCEL_ENV` is `preview` on every Vercel
+  // deployment that is not production, and unset off Vercel; both are cases.
+  for (const vercelEnv of ["preview", undefined]) {
+    describe(`with VERCEL_ENV ${vercelEnv ?? "unset"}`, () => {
+      beforeEach(() => vi.stubEnv("VERCEL_ENV", vercelEnv));
+      afterEach(() => vi.stubEnv("VERCEL_ENV", "production"));
+
+      it("serves no sitemap", async () => {
+        await expect(sitemap()).rejects.toMatchObject({
+          digest: "NEXT_HTTP_ERROR_FALLBACK;404",
+        });
+      });
+
+      it("points at no sitemap", () => {
+        expect(robots().sitemap).toBeUndefined();
+      });
+
+      it("lets Googlebot and Bingbot crawl everything", () => {
+        // They must fetch a page to read its `noindex` and drop it; a
+        // disallow would leave a URL they already know listed for good.
+        for (const agent of ["Googlebot", "Bingbot"]) {
+          const rule = rules().find((candidate) => agentsOf(candidate).includes(agent));
+          expect(rule?.allow).toBe("/");
+          expect(disallowOf(rule!)).toEqual([]);
+        }
+      });
+
+      it("turns every other agent away, every AI agent by name", () => {
+        // `noindex` does not stop a training crawler reading a page; only
+        // robots.txt does, so the refusal is stated per agent.
+        const refused = rules().filter((rule) => disallowOf(rule).includes("/"));
+        const named = refused.flatMap(agentsOf);
+
+        for (const agent of [
+          "*",
+          "GPTBot",
+          "ChatGPT-User",
+          "OAI-SearchBot",
+          "ClaudeBot",
+          "Claude-User",
+          "Claude-SearchBot",
+          "anthropic-ai",
+          "PerplexityBot",
+          "Perplexity-User",
+          "Google-Extended",
+          "Applebot-Extended",
+          "CCBot",
+          "meta-externalagent",
+          "Amazonbot",
+          "Bytespider",
+        ]) {
+          expect(named).toContain(agent);
+        }
+        for (const rule of refused) {
+          expect(rule.allow).toBeUndefined();
+        }
+      });
+    });
+  }
 });

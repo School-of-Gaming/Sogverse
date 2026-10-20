@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { BookOpen } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { AppHref } from "@/lib/constants/routes";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { LibraryClosingCta } from "../library-closing-cta";
 import {
   LIBRARY_CATEGORIES,

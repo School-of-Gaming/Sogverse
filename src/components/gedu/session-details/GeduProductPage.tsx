@@ -14,9 +14,11 @@ import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { platformForTopic } from "@/lib/products/topics";
 import { productLocalDate } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
-import { useGeduAssignedProduct } from "@/services/assignments";
 import {
-  geduSessionKeys,
+  useGeduAssignedProduct,
+} from "@/services/assignments/assignments.queries";
+import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
+import {
   useAddSessionImage,
   useDeleteSessionImage,
   useEmailSessionReport,
@@ -25,26 +27,34 @@ import {
   useSetGroupNotes,
   useSetSessionNotes,
   useSetSiteNotes,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
   type GeduGroupFeed,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   resolveGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
+import {
   useGamerPhotoConsentsForGamers,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
+import {
   useProductGamerPhotoConsentTypes,
-} from "@/services/gamer-photo-consents";
+} from "@/services/gamer-photo-consents/product-gamer-photo-consents.queries";
 import {
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
-} from "@/services/member-flair";
-import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
+} from "@/services/member-flair/member-flair.queries";
+import {
+  useUpdateGroupMemberMinecraft,
+} from "@/services/minecraft/minecraft.queries";
 import {
   useRequestSessionSubstitution,
   useWithdrawSessionSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.queries";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
-} from "@/services/roblox";
+} from "@/services/roblox/roblox.queries";
 import type { GeduAssignedProduct } from "@/types";
 import { deriveRosterFlairMaps } from "@/components/group-workspace/derive-roster-flair";
 import { createGameUsernameSave } from "@/components/group-workspace/game-username-save";

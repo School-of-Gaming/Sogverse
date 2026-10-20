@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/planned-sessions";
 import { productLocalDate, sessionEntryId } from "@/lib/session-occurrence";
-import type { FamilyFeedSession } from "@/services/family-product-feed";
+import type {
+  FamilyFeedSession,
+} from "@/services/family-product-feed/family-product-feed.contracts";
 import type { FamilySessionEntry } from "@/components/family/product-page";
 import { partitionFeedEntries } from "@/components/session-feed";
 import { planSessions } from "../../mocks/planned-sessions";

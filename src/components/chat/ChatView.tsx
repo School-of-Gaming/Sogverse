@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { deriveChatComposerCapabilities } from "./capabilities";
 import { ChatComposer } from "./ChatComposer";
 import { ChatMessageList, type ChatLogHandlers } from "./ChatMessageList";

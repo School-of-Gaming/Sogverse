@@ -7,7 +7,9 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { adminSessionKeys } from "@/services/admin-sessions";
+import {
+  adminSessionKeys,
+} from "@/services/admin-sessions/admin-sessions.keys";
 import { LocationsService } from "./locations.service";
 import {
   LOCATION_SEARCH_LIMIT,

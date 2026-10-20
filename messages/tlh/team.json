@@ -1,0 +1,192 @@
+{
+  "profile": {
+    "nameWithNickname": "{firstName} “{nickname}” {lastName}",
+    "firstNameWithNickname": "{firstName} “{nickname}”",
+    "geduTitle": "Gedu · Quj ghojmoHwI’",
+    "geduAltRole": "Quj ghojmoHwI’",
+    "speaks": "jatlh",
+    "whoIs": "’Iv ghaH {firstName}’e’?",
+    "funFact": "De’ Quch",
+    "draft": {
+      "shortDescription": "naDev wa’ tlhegh jIH DaghItlhbogh",
+      "longDescription": "naDev “ghaH” DaghItlhbogh"
+    }
+  },
+  "edit": {
+    "back": "SeHlaw’Daq yIchegh",
+    "pageTitle": "Del’a’wIj",
+    "status": {
+      "privateTitle": "So’lu’",
+      "privateBody": "Qu’mey Daq Del’a’lIj leghlaHbe’ vay’. bIQuchDI’, bIng “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIwIv ’ej yIpol.",
+      "waitingTitle": "ghuHmoHlu’, loHwI’ loS",
+      "waitingBody": "Hoch leghpa’, Del’a’ navlIj nuD loHwI’.",
+      "liveTitle": "Hoch leghDaq leghlu’",
+      "liveBody": "Del’a’lIj legh Hoch. choHmey DapolDI’ SIbI’ leghlu’. So’meH, “jIH ’oH: DaH leghlu’ ’e’ vIQap” yIteq ’ej yIpol. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
+      "viewPublicPage": "Hoch leghmeH ghItlh yIlegh"
+    },
+    "actions": {
+      "save": "choHmey yIpol",
+      "discard": "choHmey yIlon"
+    },
+    "switch": {
+      "heading": "Hoch legh",
+      "readyLabel": "jIH ’oH: DaH leghlu’ ’e’ vIQap",
+      "readyHint": "DawIvDI’ ’ej DapolDI’, Del’a’lIj DaghuHmoH; legh loHwI’ ’ej Hoch leghmoH. Dateq ’ej DapolDI’, SIbI’ So’lu’. DawIvqa’DI’, Hoch leghmoHqa’ loHwI’.",
+      "complete": "Hoch Daghaj. Qapla’!",
+      "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’lIj. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+      "missing": {
+        "photo": "mIllogh yIlab, vaj DawIvlaH.",
+        "title": "patlhlIj yIghItlh, vaj DawIvlaH.",
+        "text": "“wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+        "photoTitle": "mIllogh yIlab ’ej patlhlIj yIghItlh, vaj DawIvlaH.",
+        "photoText": "mIllogh yIlab ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+        "titleText": "patlhlIj yIghItlh ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+        "photoTitleText": "mIllogh yIlab, patlhlIj yIghItlh, ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+      }
+    },
+    "photo": {
+      "heading": "mIllogh",
+      "upload": "mIllogh yIlab",
+      "replace": "mIllogh yIchoH",
+      "remove": "mIllogh yIteq",
+      "guidance": {
+        "intro": "naDev wa’DIch Du ghom qorDu’pu’ QujwI’pu’ je.",
+        "doHeading": "yIruch",
+        "dontHeading": "yImev",
+        "do": {
+          "you": "SoH neH: nach ’ej volchaHmey, qab leghlu’",
+          "light": "wov QaQ: HaSta yIbej",
+          "natural": "yIjot: SoH yIDa",
+          "gear": "QoymeH jan pagh SeHwI’: lo’laH",
+          "background": "’em Say’ pagh Dab"
+        },
+        "dont": {
+          "others": "puqpu’ pagh latlhpu’ mIlloghDaq. puq Qan chut ’oH: puq ngaSchugh mIllogh, lo’lu’be’.",
+          "hidden": "Hov leghwI’ ’oy’, QaD mIn pagh qab So’wI’ Hoch",
+          "group": "ghom mIllogh pagh ghom mIlloghvo’ SoH pe’lu’bogh",
+          "avatar": "avatar, Dijlu’bogh ghot pagh mIllogh choHwI’ HoS",
+          "blurry": "mIllogh Hurgh pagh HeSlaw"
+        }
+      },
+      "crop": {
+        "title": "mIllogh yIpe’",
+        "confirm": "mIllogh yIlo’"
+      }
+    },
+    "about": {
+      "heading": "SoH",
+      "nickname": "QujwI’pu’ jIH ponglu’:",
+      "nicknamePlaceholder": "PixelPirate",
+      "title": "patlh",
+      "titleHint": "School of Gaming Daq Qu’lIj. mu’tlheghvam: Head of Clubs.",
+      "pick": "nguvlIj"
+    },
+    "writing": {
+      "heading": "mu’meylIj",
+      "guidance": {
+        "lead": "ghom ghItlhDaq Dagh. QujwI’pu’ qorDu’pu’ je laD. ’Iv Dev? chay’ ghot ’oH? nuq potlh? qorDu’pu’ yu’.",
+        "thirdPerson": "ghaH yIjatlh, jIH yIjatlhQo’. ’ach SoH yIDa; De’ tetlh yIDaQo’.",
+        "doHeading": "yIruch",
+        "dontHeading": "yImev",
+        "do": {
+          "tone": "yIjot",
+          "humour": "yItlhaQ",
+          "details": "De’ puS QaQ",
+          "sentences": "mu’tlhegh naQ"
+        },
+        "dont": {
+          "cv": "De’ tetlh tIq",
+          "slang": "mu’ ngaj law’",
+          "jokes": "Qum Hutlhbogh lut",
+          "typos": "ghItlh Qagh"
+        },
+        "ideas": {
+          "summary": "qechmey DaneH’a’?",
+          "intro": "wa’ mIw lugh tu’lu’be’. qechmeyvam yIlo’.",
+          "questions": {
+            "games": "Quj DaparHa’ nuq? qatlh?",
+            "memory": "Quj, qaw pagh ghom potlh’a’?",
+            "outside": "Qu’ Hutlhbogh poHDaq nuq DaruchHa’?",
+            "players": "QujwI’pu’ DaQaHtaHvIS nuq Dapoch?",
+            "atmosphere": "chay’ ’oH Dabmey?",
+            "why": "Quj ghojmoH potlh qatlh?",
+            "topics": "ghojmeH Dochmey DaparHa’ nuq?",
+            "background": "qaSpu’bogh wanI’ Qu’lIj choH’a’?"
+          }
+        }
+      },
+      "languages": "Holmey",
+      "languagesHint": "Hol mughlu’be’. Hoch Hol yIchel ’ej Hol tetlhDaq yIghItlh.",
+      "bioTooLong": "ghaH tIq law’; pollaHbe’. {max} ngutlh yIlaghmoH.",
+      "shortDescription": "wa’ tlhegh QIn",
+      "shortDescriptionPlaceholder": "redstone Qun ’ej chenmoHwI’",
+      "longDescription": "ghaH",
+      "longDescriptionHint": "ghaH yIjatlh, jIH yIjatlhQo’.",
+      "longDescriptionPlaceholder": "ghom DevtaH Anna. redstone ghojmoH.",
+      "funFact": "De’ Quch",
+      "funFactPlaceholder": "Minecraft Daq SIvwI’ chenmoH.",
+      "count": "{count}/{max}"
+    },
+    "preview": {
+      "heading": "wa’DIch legh"
+    },
+    "errors": {
+      "save": "Del’a’ polmoHlaHbe’. yInID.",
+      "incomplete": "ghuHmoHlu’ Del’a’, vaj naQnIS. chIlbogh yIteb ’ej yIpolmoH.",
+      "photoUpload": "mIllogh lIHlaHbe’. pagh polta’. yInIDqa’.",
+      "photoGone": "latlh Daq mIllogh choHlu’pu’. nav yIchu’qa’ ’ej DaH Del’a’ yIlegh."
+    }
+  },
+  "admin": {
+    "status": {
+      "privateTitle": "ghuHmoHbe’lu’ rIntaHbe’",
+      "privateBody": "{name} Del’a’ Qu’mey Daq Dalegh’be’. naQDI’, ghuHmoHlaH {name} pagh loHwI’ Hoch.",
+      "waitingTitle": "ghuHmoHlu’, leghmoH loS",
+      "waitingBody": "{name} Del’a’ ghuHmoHlu’. Hoch leghmoH loHwI’DI’, SIbI’ Hoch legh.",
+      "liveTitle": "Hoch legh",
+      "liveBody": "{name} Del’a’ legh Hoch. DapolmoHbogh choHmey DaH lInlu’.",
+      "viewPublicPage": "Hoch leghmeH ghItlh yIlegh"
+    },
+    "edit": {
+      "back": "{name} yIchegh",
+      "pageTitle": "{name} Del’a’",
+      "readyLabel": "Del’a’ ghuHmoHlu’: DaH leghlu’",
+      "readyHint": "DawIvDI’ ’ej DapolDI’, {name} Del’a’ DaghuHmoH. Hoch leghmoH loHwI’DI’, Hoch legh. Dateq ’ej DapolDI’, SIbI’ So’lu’ — ghuHmoHqa’lu’ ’ej leghmoHqa’lu’ neH chegh.",
+      "complete": "Hoch legh Del’a’ ’e’ laH. naQ.",
+      "mustStayComplete": "wIvlu’taHvIS, naQnIS Del’a’. naQbe’chugh, polbe’lu’. yIchu’ pagh yIteq.",
+      "missing": {
+        "photo": "mIllogh yIlab, vaj DawIvlaH.",
+        "title": "patlh yIghItlh, vaj DawIvlaH.",
+        "text": "“wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+        "photoTitle": "mIllogh yIlab ’ej patlh yIghItlh, vaj DawIvlaH.",
+        "photoText": "mIllogh yIlab ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+        "titleText": "patlh yIghItlh ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH.",
+        "photoTitleText": "mIllogh yIlab, patlh yIghItlh, ’ej “wa’ tlhegh QIn” ’ej “ghaH” yIghItlh Hol HochDaq, vaj DawIvlaH."
+      }
+    },
+    "userPage": {
+      "heading": "Del’a’",
+      "nothingSaved": "{name} Del’a’Daq pagh ghItlhlu’pu’.",
+      "writtenIn": "Hol",
+      "edit": "Del’a’ yIchoH",
+      "makePublic": "Hoch yIleghmoH",
+      "makePublicNeedsReady": "Del’a’ yIchoH ’ej yIghuHmoH; vaj Hoch DaleghmoHlaH.",
+      "makePublicNotReady": "{name} Del’a’ ghuHbe’choH; vaj Hoch leghmoHlu’be’.",
+      "hide": "yISo’",
+      "visibilityError": "leghmoH choHlaHbe’. yInID."
+    }
+  },
+  "public": {
+    "index": {
+      "title": "<act>ghom</act> yIghov",
+      "intro": "School of Gaming ghom: DevwI’pu’ ’ej Quj ghojmoHwI’pu’.",
+      "leadership": "DevwI’pu’",
+      "gameEducators": "Quj ghojmoHwI’pu’",
+      "empty": "tugh naDev ghom"
+    },
+    "back": "ghomDaq yIchegh",
+    "cta": {
+      "heading": "maH DIQujmeH puqlI’ DaneH’a’?"
+    }
+  }
+}

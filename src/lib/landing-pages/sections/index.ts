@@ -5,8 +5,14 @@ import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
 import { stepsSection } from "./steps";
+import { testimonialSlotProblem, testimonialsSection } from "./testimonials";
 import { textSection } from "./text";
-import { fieldOf, type LandingMarkdownField, type TextReading } from "./shared";
+import {
+  fieldOf,
+  type LandingMarkdownField,
+  type LandingMarkdownUseCase,
+  type TextReading,
+} from "./shared";
 
 /**
  * The landing page section registry: every section type, its schemas, its
@@ -31,6 +37,7 @@ export const LANDING_SECTION_TYPES = [
   "image",
   "points",
   "steps",
+  "testimonials",
   "faq",
   "cta",
 ] as const;
@@ -43,6 +50,7 @@ export const LANDING_SECTIONS = {
   image: imageSection,
   points: pointsSection,
   steps: stepsSection,
+  testimonials: testimonialsSection,
   faq: faqSection,
   cta: ctaSection,
 } as const satisfies { [Type in LandingSectionType]: { type: Type } };
@@ -54,6 +62,7 @@ export const landingSection = z.discriminatedUnion("type", [
   imageSection.section,
   pointsSection.section,
   stepsSection.section,
+  testimonialsSection.section,
   faqSection.section,
   ctaSection.section,
 ]);
@@ -91,13 +100,35 @@ export function landingStructureProblem(
   return null;
 }
 
-/** A page's whole structure, its arrangement rules included. */
+/**
+ * A page's whole structure, its arrangement rules included, and each section's
+ * rules that read two of its fields together — a testimonials section's count
+ * against its arrangement, reported at the section's ids.
+ */
 export const landingSections = z
   .array(landingSection)
   .superRefine((sections, context) => {
     const problem = landingStructureProblem(sections);
     if (problem !== null) context.addIssue({ code: "custom", message: problem });
+    sections.forEach((section, index) => {
+      if (section.type !== "testimonials") return;
+      const slots = testimonialSlotProblem(section);
+      if (slots !== null) {
+        context.addIssue({ code: "custom", path: [index, "testimonialIds"], message: slots });
+      }
+    });
   });
+
+/**
+ * Every testimonial the structure's testimonials sections place, each once,
+ * in page order.
+ */
+export function landingPlacedTestimonialIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) =>
+    section.type === "testimonials" ? section.testimonialIds : [],
+  );
+  return [...new Set(ids)];
+}
 
 /**
  * The schema of one language's section texts for a given structure: an
@@ -151,6 +182,8 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return pointsSection.missingText(section, text);
     case "steps":
       return stepsSection.missingText(section, text);
+    case "testimonials":
+      return testimonialsSection.missingText();
     case "faq":
       return faqSection.missingText(section, text);
     case "cta":
@@ -214,18 +247,20 @@ export function isLandingMarkdownPath(type: LandingSectionType, path: string): b
 
 /**
  * Every authored-markdown value one section's words hold, with its path within
- * the section — whatever shape the words are, a value that is not a string
- * simply skipped.
+ * the section and the use case it renders under — whatever shape the words
+ * are, a value that is not a string simply skipped.
  */
 export function landingMarkdownValues(
   type: LandingSectionType,
   text: unknown,
-): { path: string; value: string }[] {
+): { path: string; value: string; useCase: LandingMarkdownUseCase }[] {
   const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
   return fields.flatMap((spec) => {
     if (!("items" in spec)) {
       const value = fieldOf(text, spec.field);
-      return typeof value === "string" ? [{ path: spec.field, value }] : [];
+      return typeof value === "string"
+        ? [{ path: spec.field, value, useCase: spec.useCase }]
+        : [];
     }
     const items = fieldOf(text, spec.items);
     const entries: [string, unknown][] =
@@ -235,7 +270,7 @@ export function landingMarkdownValues(
     return entries.flatMap(([id, item]) => {
       const value = fieldOf(item, spec.field);
       return typeof value === "string"
-        ? [{ path: `${spec.items}.${id}.${spec.field}`, value }]
+        ? [{ path: `${spec.items}.${id}.${spec.field}`, value, useCase: spec.useCase }]
         : [];
     });
   });
@@ -247,6 +282,13 @@ export { heroSection } from "./hero";
 export { imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
 export { stepsSection } from "./steps";
+export {
+  LANDING_TESTIMONIAL_ARRANGEMENTS,
+  LANDING_TESTIMONIAL_SLOTS,
+  testimonialSlotProblem,
+  testimonialsSection,
+  type LandingTestimonialArrangement,
+} from "./testimonials";
 export { LANDING_IMAGE_SIDES, textSection } from "./text";
 export {
   buttonTarget,
@@ -256,5 +298,6 @@ export {
   landingId,
   type ButtonTarget,
   type LandingMarkdownField,
+  type LandingMarkdownUseCase,
   type LandingSectionDefinition,
 } from "./shared";

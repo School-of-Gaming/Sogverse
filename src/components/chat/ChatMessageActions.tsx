@@ -19,7 +19,7 @@ import {
   LockGlyph,
   type LockExplanation,
 } from "@/components/ui/locked-control";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { ChatMessageCapabilities } from "./capabilities";
 import { ChatPopover } from "./ChatPopover";
 import { ChatReactionPicker } from "./ChatReactionRow";

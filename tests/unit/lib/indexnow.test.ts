@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import type { PublishedLandingPageSummary } from "@/services/landing-pages";
-import type { PublishedLibraryArticleSummary } from "@/services/library";
+import type { PublishedLandingPageSummary } from "@/services/landing-pages/landing-pages.contracts";
+import type { PublishedLibraryArticleSummary } from "@/services/library/library.contracts";
 
 // The URL sets are *about* which locale's path each address names, so this
 // file takes the real path builder — and the module it is built on — rather

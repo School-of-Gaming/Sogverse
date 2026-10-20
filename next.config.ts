@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { CATALOGUE_IMAGE_PURPOSES } from "./src/lib/images/catalogue-image-purposes";
 import { IMAGE_PURPOSES } from "./src/lib/images/image-purposes";
+import { isProductionDeployment } from "./src/lib/seo/deployment";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -250,6 +251,21 @@ const nextConfig: NextConfig = {
           // (nonce-based script-src blocks injected inline scripts in production)
         ],
       },
+      // Off production, every response is kept out of search and out of AI
+      // use: pages, images, API answers, files — anything a crawler could
+      // reach by a link (`src/lib/seo/deployment.ts`). A config header is the
+      // one mechanism that covers all of it; the proxy's matcher skips static
+      // files, and a page's metadata reaches only pages. Production's headers
+      // are untouched. Decided when the config is loaded, which on Vercel is
+      // the build, where `VERCEL_ENV` is already set.
+      ...(isProductionDeployment()
+        ? []
+        : [
+            {
+              source: "/:path*",
+              headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+            },
+          ]),
       // The public folder's video. Every file there is named with a version
       // (`hero-calm-wide-v1.mp4`), and changed bytes always ship under a new
       // name, so a URL there never changes meaning and can be cached for a year

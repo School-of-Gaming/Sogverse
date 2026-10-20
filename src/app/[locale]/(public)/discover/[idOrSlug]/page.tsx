@@ -18,9 +18,12 @@ import { landingPageMetadata } from "@/components/landing-pages/landing-page-met
 import { JsonLd } from "@/components/seo/json-ld";
 import { LocaleSwitchPaths } from "@/i18n/locale-switch-paths";
 import { resolveLocale } from "@/lib/constants/locales";
+import { landingPlacedTestimonialIds } from "@/lib/landing-pages/sections";
 import { createClient } from "@/lib/supabase/server";
 import { localizeLandingPage } from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
+import { testimonialsById } from "@/services/landing-pages/landing-pages.testimonials";
+import { TestimonialsService } from "@/services/testimonials/testimonials.service";
 
 interface PageProps {
   params: Promise<{ idOrSlug: string }>;
@@ -68,6 +71,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * out. A read that fails is not swallowed into a not-found — a transient
  * database error is not "this page does not exist" — and surfaces to the error
  * boundary.
+ *
+ * The testimonials the page places are read from the store on every request,
+ * through the public read that answers only what the live copy places, so an
+ * admin's edit to one shows here at once, without a republish. A page placing
+ * none reads nothing more.
  */
 export default async function LandingPage({ params }: PageProps) {
   const { idOrSlug } = await params;
@@ -85,6 +93,12 @@ export default async function LandingPage({ params }: PageProps) {
     indexName: tDiscover("name"),
     title: shown.title,
   };
+  const testimonials =
+    landingPlacedTestimonialIds(page.sections).length === 0
+      ? {}
+      : testimonialsById(
+          await new TestimonialsService(await createClient()).listLandingPageTestimonials(page.id),
+        );
 
   return (
     <>
@@ -104,6 +118,7 @@ export default async function LandingPage({ params }: PageProps) {
       <LandingPageBody
         sections={shown.sections}
         imagePaths={shown.imagePaths}
+        testimonials={testimonials}
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}

@@ -5,7 +5,7 @@ import { Heading } from "@sog/ui";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FamilyProfileSelector } from "@/components/family";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import type { SessionProvenance } from "@/lib/session-provenance";
 
 /**

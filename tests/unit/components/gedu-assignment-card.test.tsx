@@ -1,12 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enProductType from "@/../messages/en/productType.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enActivityCard from "@/../messages/en/activityCard.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
 import { GeduAssignmentCard } from "@/components/gedu/GeduAssignmentCard";
 import { buildGeduDashboardFixture } from "@/components/gedu/mock-dashboard-fixtures";
 import { formatSessionDateTimeRange } from "@/lib/session-format";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSectionView";
+
+const messages = {
+  productType: enProductType,
+  gedu: enGedu,
+  activityCard: enActivityCard,
+  sessionBadge: enSessionBadge,
+  voiceButton: enVoiceButton,
+};
 
 /**
  * **The card states the product's schedule; the Join states the next session.**

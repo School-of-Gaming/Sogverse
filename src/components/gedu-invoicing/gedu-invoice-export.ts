@@ -1,6 +1,8 @@
 import { createTranslator } from "use-intl/core";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { loadMessages, type Messages } from "@/i18n/messages";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { geduInvoicingMessages } from "@/i18n/namespaces/geduInvoicing";
 import {
   fullName,
   type GeduInvoiceLine,
@@ -25,14 +27,18 @@ import {
 
 /** A translator over the page's namespace, built outside React for a route. */
 export type GeduInvoicingTranslator = ReturnType<
-  typeof createTranslator<Messages, "geduInvoicing">
+  typeof createTranslator<Pick<Messages, "geduInvoicing">, "geduInvoicing">
 >;
 
 export async function getGeduInvoicingTranslator(
   locale: SupportedLocale,
 ): Promise<GeduInvoicingTranslator> {
-  const messages = await loadMessages(locale);
-  return createTranslator({ locale, messages, namespace: "geduInvoicing" });
+  const geduInvoicing = await loadNamespace(geduInvoicingMessages, locale);
+  return createTranslator({
+    locale,
+    messages: { geduInvoicing },
+    namespace: "geduInvoicing",
+  });
 }
 
 /**

@@ -4,9 +4,11 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { ProductBrowseCard } from "@/components/public/products/product-browse-card";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 
 /**

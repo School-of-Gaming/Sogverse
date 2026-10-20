@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 
 /** Shorter than this and there is nothing for a human to act on. */
 export const HELP_MESSAGE_MIN_LENGTH = 10;

@@ -781,6 +781,13 @@ export const ROUTES = {
     /** One article's editor, where it is also published. */
     libraryArticle: (id: string) =>
       ({ pathname: "/admin/library/[id]", params: { id } }) as const,
+    /** Every testimonial — real words from parents, gamers and gedus. */
+    testimonials: "/admin/testimonials",
+    /** The form a new testimonial is written in. */
+    testimonialNew: "/admin/testimonials/new",
+    /** One testimonial's editor. */
+    testimonial: (id: string) =>
+      ({ pathname: "/admin/testimonials/[id]", params: { id } }) as const,
     /**
      * Every spotlight, switched on or not — the notes with a picture appended
      * to every parent's session report email — and where each is switched on and off.
@@ -799,6 +806,12 @@ export const ROUTES = {
      */
     landingPage: (id: string) =>
       ({ pathname: "/admin/landing-pages/[id]", params: { id } }) as const,
+    /**
+     * The site's traffic from Vercel Web Analytics — pageviews and visitors —
+     * over a range of UTC days the address names (`?range=30`, or
+     * `?from=…&to=…`).
+     */
+    analytics: "/admin/analytics",
     /**
      * The big picture of Sogverse: the vision board an admin is sent to when
      * they ask what the dream is. Static prose and artwork, English only.

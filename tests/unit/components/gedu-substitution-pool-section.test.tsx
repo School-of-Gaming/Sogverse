@@ -2,12 +2,24 @@ import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enSessionFacts from "@/../messages/en/sessionFacts.json";
+import enCommon from "@/../messages/en/common.json";
 import { GeduSubstitutionPoolSection } from "@/components/gedu/GeduSubstitutionPoolSection";
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  OpenSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
+
+const messages = {
+  gedu: enGedu,
+  productType: enProductType,
+  sessionFacts: enSessionFacts,
+  common: enCommon,
+};
 
 /**
  * ============================================================================
@@ -46,12 +58,11 @@ function armWrite(): void {
 }
 
 /**
- * The two writes, stubbed; the key factory and the contracts are kept real —
- * the section awaits an invalidation on `sessionSubstitutionKeys.all` after every
- * write, and a stubbed key would let a rename through.
+ * The two writes, stubbed. The key factory and the contracts live in their own
+ * modules, which nothing mocks, so the section's invalidation on
+ * `sessionSubstitutionKeys.all` after every write runs against the real key.
  */
-vi.mock("@/services/session-substitution", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/services/session-substitution")>()),
+vi.mock("@/services/session-substitution/session-substitution.queries", () => ({
   useOfferSessionSubstitution: () => ({
     mutateAsync: () => {
       deferred.offerCalls += 1;
@@ -83,10 +94,12 @@ function request(
       spoken_language_code: "fi",
       timezone: TIME_ZONE,
       is_remote: true,
+      voice_room_mode: "sogverse",
+      external_voice_url: null,
       start_date: "2026-01-06",
       end_date: null,
       site_name: null,
-      translations: [{ locale: "en", name, description: "" }],
+      translations: [{ locale: "en", name, description: "", voice_join_instructions: null }],
       schedule_slots: [
         { weekday: 2, start_time: "17:00", duration_minutes: 90 },
       ],

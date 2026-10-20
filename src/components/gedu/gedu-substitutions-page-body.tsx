@@ -6,7 +6,7 @@ import { Heading } from "@sog/ui";
 import { GeduAssignmentsSectionView } from "./GeduAssignmentsSectionView";
 import { GeduOwnSubstitutionRequestsSection } from "./GeduOwnSubstitutionRequestsSection";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import type { OwnSubstitutionRequestRow } from "@/lib/gedu-own-substitution-requests";
 

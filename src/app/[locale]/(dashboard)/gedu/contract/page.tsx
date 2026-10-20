@@ -8,7 +8,7 @@ import {
   geduContractLanguageForLocale,
   getGeduContractDocument,
 } from "@/components/gedu/contract/documents";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { createClient } from "@/lib/supabase/server";
 // Imported from the service module rather than the package index because that
 // index re-exports `"use client"` query hooks, which a server component would

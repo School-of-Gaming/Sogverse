@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import messages from "@/../messages/en.json";
+import enProductDetail from "@/../messages/en/productDetail.json";
+import enTopicPrep from "@/../messages/en/topicPrep.json";
 import { Constants } from "@/types/database.types";
 import {
   PRODUCT_TOPICS,
@@ -12,6 +13,8 @@ import {
   type TopicMeta,
 } from "@/lib/products/topics";
 import { SUPPORTED_GAME_PLATFORMS } from "@/lib/constants/game-platforms";
+
+const messages = { productDetail: enProductDetail, topicPrep: enTopicPrep };
 
 // The topic module is where the generated enum, hand-written display data and
 // the message catalog have to agree, and the compiler only checks some of
@@ -99,7 +102,7 @@ describe("product topics", () => {
 
   // Nothing else binds info-bearing topics to the message catalog. The card
   // resolves `topicInfo.topics.<topic>.<key>` through a template literal,
-  // which the compiler checks against the *shape* of en.json — but a topic
+  // which the compiler checks against the *shape* of the en catalog — but a topic
   // whose entry is absent from every locale alike is not a type error and is
   // not a translation parity error either, because check-translations.mjs
   // measures the other locales against en and a gap present in all of them is
@@ -118,18 +121,18 @@ describe("product topics", () => {
       const entry = prose[topic];
       expect(
         entry,
-        `messages/en.json has no productDetail.topicInfo.topics.${topic}`,
+        `the en catalog has no productDetail.topicInfo.topics.${topic}`,
       ).toBeDefined();
 
       for (const key of ["description", "note", "linkLabel"] as const) {
         const value = entry?.[key];
         expect(
           value,
-          `messages/en.json is missing topicInfo.topics.${topic}.${key}`,
+          `the en catalog is missing topicInfo.topics.${topic}.${key}`,
         ).toBeTypeOf("string");
         expect(
           value?.trim().length ?? 0,
-          `messages/en.json has a blank topicInfo.topics.${topic}.${key}`,
+          `the en catalog has a blank topicInfo.topics.${topic}.${key}`,
         ).toBeGreaterThan(0);
       }
     }
@@ -286,12 +289,12 @@ describe("product topics", () => {
       const checklist: Record<string, string | undefined> = prep.checklist;
 
       const nonEmpty = (value: unknown, what: string) => {
-        expect(value, `messages/en.json is missing ${what}`).toBeTypeOf(
+        expect(value, `the en catalog is missing ${what}`).toBeTypeOf(
           "string",
         );
         expect(
           typeof value === "string" ? value.trim().length : 0,
-          `messages/en.json has a blank ${what}`,
+          `the en catalog has a blank ${what}`,
         ).toBeGreaterThan(0);
       };
 

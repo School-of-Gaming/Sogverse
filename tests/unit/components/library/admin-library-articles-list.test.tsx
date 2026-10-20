@@ -20,7 +20,9 @@ vi.mock("@/providers", () => ({
 }));
 
 import { AdminLibraryArticlesPage } from "@/components/admin/library/admin-library-articles-page";
-import type { AdminLibraryArticleListItem } from "@/services/library";
+import type {
+  AdminLibraryArticleListItem,
+} from "@/services/library/library.contracts";
 
 /**
  * Every status, a row with no cover, a draft with no category yet, and more

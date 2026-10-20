@@ -9,7 +9,7 @@ import {
   type InvitationOverride,
   type InvitationRecurrence,
 } from "@/lib/calendar-invitations/invitation";
-import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import type { ProductType } from "@/types";

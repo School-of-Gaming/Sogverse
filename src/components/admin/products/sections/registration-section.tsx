@@ -5,7 +5,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Field } from "@/components/ui/field";
 import { formatTimezoneOptionLabel } from "@/lib/timezone";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useNow } from "@/providers";
 import { FormSection, InfoCallout } from "../form-primitives";
 import { formLocksFor } from "../form-locks";

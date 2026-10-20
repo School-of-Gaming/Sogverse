@@ -1,5 +1,5 @@
 import { fromZonedTime } from "date-fns-tz";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 
 /**
  * When a consumer club's first subscription invoice should fall.

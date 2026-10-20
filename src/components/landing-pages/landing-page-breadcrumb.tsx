@@ -1,9 +1,8 @@
 import { Fragment } from "react";
 import { ChevronRight } from "lucide-react";
 import { getPathname, Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, type StaticAppHref } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { StaticAppHref } from "@/lib/constants/routes";
 
 /**
  * **Where a landing page sits: Home › the landing pages' index › the page.**

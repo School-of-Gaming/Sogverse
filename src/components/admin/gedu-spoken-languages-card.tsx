@@ -19,7 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
-import { useProfile, useSetUserSpokenLanguages } from "@/services/users";
+import {
+  useProfile,
+  useSetUserSpokenLanguages,
+} from "@/services/users/users.queries";
 import type { Profile, SpokenLanguageCode } from "@/types";
 
 function sameLanguages(a: readonly SpokenLanguageCode[], b: readonly SpokenLanguageCode[]) {

@@ -29,7 +29,7 @@ import {
 } from "@/components/admin/products/session-cancellation";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { sessionEntryId } from "@/lib/session-occurrence";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { useNow } from "@/providers";
 import {
   useAdminAddSessionImage,
@@ -42,35 +42,50 @@ import {
   useAdminSetGroupNotes,
   useAdminSetSessionNotes,
   useAdminSetSiteNotes,
+} from "@/services/admin-sessions/admin-sessions.queries";
+import {
   adminSessionKeys,
+} from "@/services/admin-sessions/admin-sessions.keys";
+import {
   type AdminProductSessions,
   type AdminSessionGroup,
-} from "@/services/admin-sessions";
+} from "@/services/admin-sessions/admin-sessions.contracts";
 import {
   resolveGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
+import {
   useGamerPhotoConsentsForGamers,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
+import {
   useProductGamerPhotoConsentTypes,
-} from "@/services/gamer-photo-consents";
-import { useGeduGroupFeed, type GeduGroupFeed } from "@/services/gedu-sessions";
-import { useProductGroups } from "@/services/groups";
+} from "@/services/gamer-photo-consents/product-gamer-photo-consents.queries";
+import {
+  useGeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
+  type GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { useProductGroups } from "@/services/groups/groups.queries";
 import {
   useSetGamerGroupCreations,
   useSetGamerGroupNote,
-} from "@/services/member-flair";
-import { useUpdateGroupMemberMinecraft } from "@/services/minecraft";
+} from "@/services/member-flair/member-flair.queries";
 import {
-  useProductAdmin,
+  useUpdateGroupMemberMinecraft,
+} from "@/services/minecraft/minecraft.queries";
+import { useProductAdmin } from "@/services/products/products.queries";
+import {
   type ProductAdminDetailRow,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import {
   useRobloxRenders,
   useUpdateGroupMemberRoblox,
-} from "@/services/roblox";
+} from "@/services/roblox/roblox.queries";
 import {
   useClearSessionSubstitution,
   useSetSessionSubstitution,
   useWithdrawSessionSubstitutionRequestAsAdmin,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.queries";
 import type {
   GeduAssignedProduct,
   ProductGroupsSnapshot,
@@ -563,6 +578,10 @@ function Workspace({
         start_date: sessions.product.start_date,
         end_date: sessions.product.end_date,
         is_remote: sessions.product.is_remote,
+        // The feed's copy, beside the translations whose instructions go
+        // with it.
+        voice_room_mode: feed.product.voice_room_mode,
+        external_voice_url: feed.product.external_voice_url,
         // The feed's copy rather than the admin row's: the two shells are in
         // deliberate parity on the gedu side, and taking the flag from the same
         // document the roster's creations come from is what keeps the
@@ -598,6 +617,8 @@ function Workspace({
       sessions,
       group.final_session_date,
       feed.product.translations,
+      feed.product.voice_room_mode,
+      feed.product.external_voice_url,
       feed.product.requires_gamer_creations,
       feed.roster,
       groupId,

@@ -5,7 +5,7 @@ import { discoverIndexJsonLd } from "@/components/landing-pages/index-page/disco
 import { discoverIndexEntries } from "@/components/landing-pages/index-page/discover-index-props";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { createClient } from "@/lib/supabase/server";

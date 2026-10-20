@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Qu’est-ce que l’Yty ?",
+    "subtitle": "L’Yty est la force qui maintient l’équilibre de Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle de Sogverse tout entier."
+  },
+  "overview": {
+    "heading": "Comment fonctionne l’Yty",
+    "paragraph1": "Chaque joueur part de zéro. Séances suivies, quêtes accomplies, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur les quatre éléments de l’Yty, chacun reflétant une dimension de la croissance personnelle.",
+    "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle de Sogverse tout entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
+  },
+  "elements": {
+    "heading": "Les quatre éléments de l’Yty",
+    "subheading": "Chaque élément de l’Yty est une relation que le joueur fait grandir : à lui-même, aux autres, à la société et à la technologie",
+    "harmony": {
+      "name": "Harmonie",
+      "description": "Ta relation à toi-même",
+      "detail": "Qui suis-je vraiment ? L’Harmonie, c’est apprendre à se connaître : ses forces, ses limites, ses émotions. C’est savoir prendre soin de soi, faire de bons choix, et comprendre pourquoi la confiance et les règles ont du sens."
+    },
+    "glow": {
+      "name": "Éclat",
+      "description": "Ta relation aux autres",
+      "detail": "Comment est-ce que j’aide les autres ? L’Éclat, c’est l’empathie et la bienveillance. C’est écouter, respecter les différences, faire de la place aux autres et être le genre de personne qui tire les autres vers le haut."
+    },
+    "valor": {
+      "name": "Bravoure",
+      "description": "Ta relation à la société",
+      "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans la société et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
+    },
+    "wit": {
+      "name": "Discernement",
+      "description": "Ta relation à la technologie",
+      "detail": "Comment bien utiliser la technologie ? Le Discernement, c’est avoir un rapport sain et critique aux jeux, aux médias et aux outils qui les entourent. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
+    }
+  },
+  "earning": {
+    "heading": "Comment les joueurs gagnent de l’Yty",
+    "paragraph1": "L’Yty se gagne en participant. Séances hebdomadaires, quêtes accomplies, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
+    "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau d’Yty global et l’élément auquel il correspond.",
+    "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty de Sogverse à travers les événements et les activités partagées."
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "create": {
+    "enterTitle": "Create a parent PIN",
+    "confirmTitle": "Confirm your PIN",
+    "description": "Every purchase, every enrolment and every change to who your children play with asks for this PIN first. Only you know it, so nothing on this account can be bought or changed without you."
+  },
+  "unlock": {
+    "title": "Enter your parent PIN",
+    "description": "Purchases and changes to your children’s accounts are gated behind this PIN, so only you can make them.",
+    "forgot": "Forgot your PIN?"
+  },
+  "mismatch": "Those PINs didn’t match. Let’s try again.",
+  "deleteDigit": "Delete last digit",
+  "forgotSent": {
+    "title": "Check your email",
+    "description": "If your account has an email on file, we’ve sent a link to reset your PIN. The link expires in 24 hours.",
+    "back": "Back to PIN entry"
+  },
+  "reset": {
+    "description": "Set a new 4-digit PIN that only you know.",
+    "enterTitle": "Choose a new PIN",
+    "confirmTitle": "Confirm your new PIN",
+    "successTitle": "PIN reset",
+    "successDescription": "Your parent PIN has been updated. Sign in and enter it to continue.",
+    "invalidTitle": "Link expired",
+    "invalidDescription": "This PIN reset link is invalid or has expired. Sign in and request a new one.",
+    "backToLogin": "Back to sign in"
+  },
+  "change": {
+    "newTitle": "Choose a new PIN",
+    "confirmTitle": "Confirm your new PIN",
+    "cancel": "Cancel",
+    "successTitle": "PIN updated",
+    "successDescription": "Your parent PIN has been changed.",
+    "backToSettings": "Back to settings"
+  }
+}

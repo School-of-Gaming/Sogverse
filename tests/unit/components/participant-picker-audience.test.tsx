@@ -6,7 +6,10 @@ import {
   type ProductAudience,
 } from "@/lib/products/product-audience";
 import { Constants } from "@/types/database.types";
-import type { UserListEntry, UserListGamer } from "@/services/users";
+import type {
+  UserListEntry,
+  UserListGamer,
+} from "@/services/users/users.contracts";
 import type { UserRole } from "@/types";
 
 /**
@@ -97,7 +100,7 @@ const LONELY_PARENT = family(IDS.lonelyParent, "Petri", []);
 
 // The children ride inside their family's row now, so the picker nests nothing
 // and the fixture is one page of the shared read.
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUserList: () => ({
     data: { rows: [PARENT, LONELY_PARENT], total: 2 },
     isPending: false,

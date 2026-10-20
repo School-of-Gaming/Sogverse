@@ -17,7 +17,7 @@ import {
   describeMarkdownSubset,
   markdownOutsideSubset,
 } from "@/lib/authored-markdown-subset";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   DEFAULT_LOCALE,
   LOCALE_CONFIG,
@@ -48,7 +48,7 @@ import {
   type AdminLibraryArticle,
   type AdminLibraryArticleListItem,
   type PublishedLibraryArticleSummary,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 import { Constants } from "@/types";
 
 /*

@@ -24,7 +24,8 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -69,13 +70,13 @@ import {
 } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { SwitchGateBody } from "@/components/family/SwitchGateDialog";
+import { SwitchAccountError } from "@/services/family/family.service";
 import {
-  SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
-} from "@/services/family";
+} from "@/services/family/family.contracts";
 import { UserRow } from "@/components/admin/user-row";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import {
@@ -139,7 +140,7 @@ import {
   type GameFigure,
   type GamePlatform,
 } from "@/components/game-account";
-import { useRobloxProfile } from "@/services/roblox";
+import { useRobloxProfile } from "@/services/roblox/roblox.queries";
 import { ImageCatalogueView } from "@/components/admin/products/image-catalogue-view";
 import { ImageActionConfirmDialog } from "@/components/admin/products/image-catalogue-confirm";
 import {
@@ -156,7 +157,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -2812,6 +2813,12 @@ export default function AdminUIComponentsPage() {
           test instead of demoed here.
         </p>
         <p className="text-sm text-muted-foreground">
+          Each question is a heading inside the summary of its row, so search
+          engines and assistants can tie an answer to its question. The caller
+          states the level, one below its own heading over the list: H4 here,
+          under the H2 of this section and the H3 of each demo.
+        </p>
+        <p className="text-sm text-muted-foreground">
           The block shapes below are built by calling the shared answer tags
           rather than by hand-writing an <code>ol</code> or a <code>ul</code>:
           those tags are what the real FAQs render through, so a demo that
@@ -2820,6 +2827,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A list of questions">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "plain",
@@ -2916,6 +2924,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A single question">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "only",

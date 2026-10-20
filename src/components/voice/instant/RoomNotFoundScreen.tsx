@@ -6,7 +6,7 @@ import { Heading } from "@sog/ui";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/providers";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface RoomNotFoundScreenProps {
   /** The code the user actually entered, echoed back so they can spot typos. */

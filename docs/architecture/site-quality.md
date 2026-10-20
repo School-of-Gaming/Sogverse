@@ -118,6 +118,14 @@ work is to be found in AI answers as well as search results. The stance is writt
 explicit named rules in `robots.txt` rather than left to the `*` default, so a future
 edit cannot flip it without noticing.
 
+**All of the above is production's.** Every other deployment — staging, every preview, a
+local or CI build — is reachable by a direct link and found by nothing (owner decision,
+2026-10-15): every response carries `X-Robots-Tag: noindex, nofollow`, `robots.txt` lets
+only Googlebot and Bingbot crawl (so they read the tag and drop anything they knew) and
+refuses everyone else, the AI agents by name, and neither the sitemap nor `llms.txt` is
+served. Vercel's `VERCEL_ENV` is the switch, asked in `src/lib/seo/deployment.ts`. The
+header and `robots.txt` are fixed when the build runs, the other two per request.
+
 ### Mechanisms
 
 Each one exists to make the posture above hold by construction rather than by memory.

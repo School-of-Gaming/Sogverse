@@ -1,0 +1,79 @@
+{
+  "title": "Politique de protection de l’enfance de l’Académie des Créateurs",
+  "subtitle": "Ce document complète la <linkDiscipline>politique de lutte contre le harcèlement</linkDiscipline> de School of Gaming, qui continue de s’appliquer aux comportements du quotidien pendant les sessions. Il couvre les responsabilités plus larges de Lynx Educate et de School of Gaming en matière de protection de l’enfance dans le cadre du Programme.",
+  "lastUpdated": "Dernière révision : {date}",
+  "intro": {
+    "heading": "Notre engagement",
+    "blocks": [
+      "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Cela repose sur la manière dont le Programme est construit : le compte de chaque enfant est rattaché à celui d’un parent, la communication se fait en groupe, sans messagerie privée entre enfants, et seuls les participants inscrits et des animateurs vérifiés peuvent y prendre part."
+    ]
+  },
+  "sections": {
+    "covers": {
+      "heading": "Qui est concerné",
+      "blocks": [
+        "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux animateurs (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
+      ]
+    },
+    "vetting": {
+      "heading": "Avant qu’un animateur travaille auprès d’enfants",
+      "blocks": [
+        "Tous les animateurs (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :",
+        [
+          "Être majeur.",
+          "Une vérification des antécédents. Chaque Gedu nous présente un extrait de casier judiciaire du type délivré aux personnes qui travaillent auprès d’enfants, avant d’être affecté à un groupe — ainsi nous savons qui passe du temps avec votre enfant. Nous le vérifions nous-mêmes et nous n’avons pas le droit d’en conserver une copie, donc nous ne le faisons pas.",
+          "Le cours de base de School of Gaming pour les animateurs, que chaque Gedu doit réussir.",
+          "Notre guide de l’animateur, qui énonce le comportement que nous attendons d’un Gedu et lui confie la responsabilité de l’ambiance du groupe.",
+          "Un contrat signé avec School of Gaming, présenté et discuté avec un membre de notre équipe avant signature. Il définit la procédure écrite que nous suivons — d’abord un avertissement et une conversation — si un Gedu ne répond pas à ces attentes."
+        ]
+      ]
+    },
+    "online": {
+      "heading": "Pendant les sessions en ligne",
+      "blocks": [
+        [
+          "Le compte de chaque Joueur est rattaché à un compte parent ; les enfants ne peuvent pas s’inscrire eux-mêmes.",
+          "Il n’existe pas de messagerie directe entre enfants — tous les échanges se font en groupe et sont activement supervisés par un animateur formé.",
+          "Seuls les Joueurs inscrits et les animateurs vérifiés peuvent participer — aucune invitation externe ni aucun contact extérieur.",
+          "Les sessions ne sont pas enregistrées."
+        ]
+      ]
+    },
+    "inPerson": {
+      "heading": "Pendant les événements en présentiel",
+      "blocks": [
+        "Nos animateurs encadrent la session ; ils ne sont pas les organisateurs de l’événement. Lynx Educate est chargée de veiller à ce que les lieux avec lesquels elle travaille soient adaptés à la session et respectent les exigences du Programme en matière de protection de l’enfance. Les dispositions concrètes peuvent varier d’un lieu à l’autre."
+      ]
+    },
+    "behaviour": {
+      "heading": "Comportement et discipline",
+      "blocks": [
+        "Les questions de comportement au quotidien pendant les sessions animées par SOG relèvent de la <linkDiscipline>politique de lutte contre le harcèlement et de discipline</linkDiscipline> de School of Gaming, qui privilégie une approche bienveillante et progressive avant tout retrait d’un enfant d’une session ou de la communauté."
+      ]
+    },
+    "escalation": {
+      "heading": "Procédure de remontée",
+      "blocks": [
+        "Les signalements sont traités en première intention par School of Gaming, qui est en contact quotidien avec les participants. Tout signalement relatif à la protection de l’enfance — maltraitance, harcèlement, automutilation ou blessure grave — est transmis à Lynx Educate dans les 24 heures, et Lynx en informe Roblox sans délai lorsque cela est requis. Lorsqu’un enfant peut se trouver en danger immédiat, nous contactons d’abord les services d’urgence, avant toute remontée interne."
+      ]
+    },
+    "concern": {
+      "heading": "Si vous avez une inquiétude",
+      "blocks": [
+        "Si vous ou votre enfant avez une inquiétude relative à la protection de l’enfance, veuillez écrire à School of Gaming à l’adresse {supportEmail} ou à Lynx Educate à l’adresse support@lynxeducate.com."
+      ]
+    },
+    "data": {
+      "heading": "Données et photos",
+      "blocks": [
+        "Un enfant n’apparaît de manière identifiable sur une photographie que si son parent a coché le consentement média facultatif le concernant au moment de l’inscription. Le parent peut modifier cette réponse à tout moment sur la page de l’enfant dans Mon SOG, et un animateur demande à l’enfant avant de prendre une photographie, même lorsque le parent a consenti. La <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy> précise ce que ce consentement couvre. Des vues d’ensemble d’un événement ou d’un atelier peuvent être prises à distance, lorsqu’aucun enfant n’est identifiable."
+      ]
+    },
+    "review": {
+      "heading": "Révision de cette politique",
+      "blocks": [
+        "Nous révisons cette politique chaque année."
+      ]
+    }
+  }
+}

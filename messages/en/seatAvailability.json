@@ -1,0 +1,4 @@
+{
+  "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
+  "waitlistAvailable": "Waitlist"
+}

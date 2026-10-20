@@ -18,7 +18,7 @@ import {
   type SessionLabels,
   type SessionPhoto,
 } from "@/components/session-feed";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import {

@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
-import type { PublishedLandingPageSummary } from "@/services/landing-pages";
+import type { PublishedLandingPageSummary } from "@/services/landing-pages/landing-pages.contracts";
 
 // The index's links, its structured data and the landing page's breadcrumb
 // are all *about* which locale's address they name, so this file takes the

@@ -1,9 +1,6 @@
 import { track } from "@vercel/analytics";
-import type {
-  UserRole,
-  SupportedLocale,
-  DetectedLocale,
-} from "@/lib/constants";
+import type { SupportedLocale, DetectedLocale } from "@/lib/constants/locales";
+import type { UserRole } from "@/lib/constants/roles";
 
 /**
  * How a user reached their dashboard ("My SOG").

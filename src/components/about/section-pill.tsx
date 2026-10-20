@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The page's four sections, in the order they are laid out. Owned here rather

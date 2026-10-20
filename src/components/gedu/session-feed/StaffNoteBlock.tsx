@@ -2,7 +2,7 @@
 
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The staff-only half of a session write-up.

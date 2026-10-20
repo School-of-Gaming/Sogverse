@@ -7,10 +7,10 @@ import { Copyright } from "./copyright";
 import { PrivacyChoicesLink } from "@/components/consent";
 import {
   REGISTERED_TRADEMARK,
-  ROUTES,
   SENDER_NAME,
   SUPPORT_EMAIL,
-} from "@/lib/constants";
+} from "@/lib/constants/brand";
+import { ROUTES } from "@/lib/constants/routes";
 
 export function Footer() {
   const t = useTranslations('footer');

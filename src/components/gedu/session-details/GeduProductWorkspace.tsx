@@ -1,7 +1,11 @@
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/server";
-import { AssignmentsService, assignmentKeys } from "@/services/assignments";
-import { GeduSessionsService, geduSessionKeys } from "@/services/gedu-sessions";
+import { AssignmentsService } from "@/services/assignments/assignments.service";
+import { assignmentKeys } from "@/services/assignments/assignments.keys";
+import {
+  GeduSessionsService,
+} from "@/services/gedu-sessions/gedu-sessions.service";
+import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
 import { GeduProductPage } from "./GeduProductPage";
 
 /**

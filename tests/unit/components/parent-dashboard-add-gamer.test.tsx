@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enDashboardSections from "@/../messages/en/dashboardSections.json";
+import enFamily from "@/../messages/en/family.json";
+import enHelpSection from "@/../messages/en/helpSection.json";
+import enProductType from "@/../messages/en/productType.json";
+import enActivityCard from "@/../messages/en/activityCard.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enFamilyEnrollment from "@/../messages/en/familyEnrollment.json";
+import enParent from "@/../messages/en/parent.json";
+import enTopicPrep from "@/../messages/en/topicPrep.json";
 import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { ParentDashboardPageBody } from "@/components/parent/parent-dashboard-page-body";
 import { buildParentDashboardFixture } from "@/components/parent/mock-dashboard-fixtures";
-import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
 import {
   AuthProvider,
   NowProvider,
@@ -13,6 +21,18 @@ import {
   TimezoneProvider,
 } from "@/providers";
 import type { ParentDashboardParticipant } from "@/components/parent/parent-dashboard-page-body";
+
+const messages = {
+  dashboardSections: enDashboardSections,
+  family: enFamily,
+  helpSection: enHelpSection,
+  productType: enProductType,
+  activityCard: enActivityCard,
+  sessionBadge: enSessionBadge,
+  familyEnrollment: enFamilyEnrollment,
+  parent: enParent,
+  topicPrep: enTopicPrep,
+};
 
 /**
  * **The add-a-child affordance stops being offered at the cap.**

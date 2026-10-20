@@ -12,9 +12,11 @@ import {
 } from "@/lib/i18n/locale-tabs";
 import type {
   HolidayBreakInput,
-  HolidayCalendarDetail,
   HolidayCalendarInput,
-} from "@/services/holiday-calendars";
+} from "@/services/holiday-calendars/holiday-calendars.contracts";
+import type {
+  HolidayCalendarDetail,
+} from "@/services/holiday-calendars/holiday-calendars.service";
 
 /**
  * One break as the form holds it. `key` is the row's identity in the form —

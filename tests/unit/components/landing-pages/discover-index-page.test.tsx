@@ -1,7 +1,9 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enConsent from "@/../messages/en/consent.json";
+import enDiscover from "@/../messages/en/discover.json";
+import enFooter from "@/../messages/en/footer.json";
 import {
   createFetchStubbedClient,
   postgrestPage,
@@ -71,7 +73,7 @@ function database(live: typeof LIVE) {
 
 function draw(page: React.ReactNode) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="en" messages={{ consent: enConsent, discover: enDiscover, footer: enFooter }}>
       {page}
     </NextIntlClientProvider>,
   );

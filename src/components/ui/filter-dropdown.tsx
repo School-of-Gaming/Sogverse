@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useTranslations } from "next-intl";
 import { Check, ChevronDown, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * One row of a filter control.

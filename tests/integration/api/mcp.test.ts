@@ -164,6 +164,7 @@ describe("/api/mcp", () => {
       "get_landing_page",
       "get_landing_page_preview_link",
       "create_landing_page",
+      "clone_landing_page",
       "save_landing_page_structure",
       "save_landing_page_text",
       "remove_landing_page_language",
@@ -173,6 +174,13 @@ describe("/api/mcp", () => {
       "set_landing_section_image",
       "open_landing_image_uploader",
       "upload_landing_image",
+      "list_testimonials",
+      "get_testimonial",
+      "create_testimonial",
+      "save_testimonial_version",
+      "remove_testimonial_language",
+      "get_analytics_summary",
+      "get_analytics_breakdown",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

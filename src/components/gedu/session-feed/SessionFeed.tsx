@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTimezone } from "@/providers";
 import { lockOf, type Locked } from "@/components/ui/locked-control";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import {
   SessionFeedShell,
   SessionHolidayLine,
@@ -32,7 +33,9 @@ import {
   type StagedSessionPhotos,
 } from "./staged-photos";
 import type { SessionCreationsState } from "./SessionCreationsBlock";
-import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
+import type {
+  SessionPhotoErrorCode,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   sessionReportSendFailure,
   type SessionReportSendFailure,

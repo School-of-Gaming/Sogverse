@@ -2,16 +2,20 @@ import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
 import { NormalizeImageError } from "@/lib/images/normalize-image";
 import type { SessionPhoto } from "@/components/session-feed";
-import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
+import type {
+  SessionPhotoErrorCode,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   NO_LANDED_PHOTOS,
   NO_STAGED_PHOTOS,
   type StagedSessionPhoto,
   type StagedSessionPhotos,
 } from "@/components/gedu/session-feed/staged-photos";
+
+const messages = { gedu: enGedu };
 
 /**
  * ============================================================================

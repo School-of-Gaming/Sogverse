@@ -3,7 +3,7 @@
 import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { Sliders, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { useBrowseFilterRows, type BrowseFilterChip } from "./browse-filter-rows";
 import type { BrowseSurface } from "./browse-surface";

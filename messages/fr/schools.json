@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "title": "Des clubs de jeu dans votre commune",
+    "subtitle": "School of Gaming anime des clubs en partenariat avec les communes finlandaises. Trouvez votre commune et découvrez l’offre disponible.",
+    "howItWorks": "Selon la commune, le club se retrouve soit en ligne depuis la maison, soit sur place dans l’école de votre enfant. Un animateur professionnel est toujours présent pour encadrer l’activité."
+  },
+  "search": {
+    "label": "Recherchez votre commune",
+    "placeholder": "Rechercher des communes…",
+    "noMatches": "Aucune commune ne correspond à « {query} ». Vérifiez l’orthographe, ou essayez une commune voisine."
+  },
+  "available": {
+    "empty": "Nos premiers clubs municipaux arrivent. Recherchez votre commune pour voir si nous y sommes déjà."
+  },
+  "status": {
+    "available": "Clubs disponibles",
+    "noClubs": "Aucun club ici"
+  },
+  "waitlistNote": "Les places sont limitées et les clubs ont souvent une liste d’attente. Si votre enfant arrête de venir, pensez à annuler l’inscription pour que sa place puisse être proposée au joueur suivant.",
+  "notListed": {
+    "title": "Vous ne voyez pas votre commune ?",
+    "body": "Les clubs municipaux sont organisés en partenariat avec chaque commune, et nous en ajoutons régulièrement de nouveaux. Si la vôtre n’en fait pas encore partie, parlez-nous-en :",
+    "openClubs": "Nous proposons aussi des clubs ouverts à tous, qu’un joueur peut rejoindre où qu’il habite."
+  },
+  "municipality": {
+    "heading": "Clubs de {name}"
+  }
+}

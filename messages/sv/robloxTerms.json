@@ -1,0 +1,72 @@
+{
+  "title": "Användarvillkor för Skaparnas akademi",
+  "subtitle": "För familjer som anmäler sig till Programmet för digital utbildning i Frankrike, som drivs av Lynx Educate och School of Gaming i samarbete med Roblox.",
+  "lastUpdated": "Uppdaterad: {date}",
+  "intro": {
+    "heading": "Kort sammanfattning",
+    "blocks": [
+      "Här förklarar vi vad du anmäler ditt barn till när ni registrerar er för programmet Skaparnas akademi. Det är ett gemensamt program som drivs av Lynx Educate och School of Gaming i samarbete med Roblox. Om något är oklart, mejla <strong>support@lynxeducate.com</strong>."
+    ]
+  },
+  "sections": {
+    "involved": {
+      "heading": "Vilka som är med",
+      "blocks": [
+        [
+          "<strong>Lynx Educate SAS</strong> och <strong>School of Gaming Galactic Oy (”SOG”)</strong> utformar och genomför Programmet tillsammans – i det här dokumentet betyder ”vi” båda parterna gemensamt, om vi inte säger något annat.",
+          "<strong>Roblox Corporation</strong> (”Roblox”) sponsrar Programmet och tillhandahåller plattformen som ditt barn bygger på. Roblox är inte part i dessa villkor."
+        ],
+        "Anmälan och träffar sker på School of Gamings plattform (”Sogverse”). Genom att anmäla dig godkänner du dessa programspecifika villkor, som gäller vid sidan av <linkTerms>School of Gamings</linkTerms> och Lynx ordinarie användarvillkor och som har företräde om villkoren skulle stå i strid med varandra."
+      ]
+    },
+    "eligibility": {
+      "heading": "Vem kan delta",
+      "blocks": [
+        "Programmet riktar sig till unga i Frankrike i åldern 13–17 år, anmälda av en förälder eller vårdnadshavare. En förälder eller vårdnadshavare måste göra anmälan och lämna samtycke för barnets räkning."
+      ]
+    },
+    "whatsInvolved": {
+      "heading": "Vad som ingår",
+      "blocks": [
+        "Ditt barn deltar i träffar (online och/eller på plats, beroende på vad ni har anmält er till) som lär ut speldesign på Roblox-plattformen och avslutas med att barnet publicerar ett eget spel eller föremål. Föräldrar bjuds in till separata träffar om trygghet online och föräldrakontroller."
+      ]
+    },
+    "cost": {
+      "heading": "Kostnad",
+      "blocks": [
+        "Programmet är kostnadsfritt för anmälda familjer."
+      ]
+    },
+    "safety": {
+      "heading": "Trygghet och tillsyn",
+      "blocks": [
+        "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <strong><linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding></strong>, som finns tillgänglig på begäran."
+      ]
+    },
+    "information": {
+      "heading": "Dina uppgifter",
+      "blocks": [
+        "Hur vi använder dina och ditt barns uppgifter förklaras i vår <strong><linkRobloxPrivacy>Integritetspolicy för Skaparnas akademi</linkRobloxPrivacy></strong>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
+        "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter. Läs mer i <strong><linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy></strong>."
+      ]
+    },
+    "media": {
+      "heading": "Foto, video och marknadsföring",
+      "blocks": [
+        "Om ditt barn fotograferas eller filmas, och om materialet används i marknadsföring, avgörs helt av de val du gör vid anmälan. Valen är frivilliga och du kan ändra dig när som helst på barnets sida i Min SOG."
+      ]
+    },
+    "concern": {
+      "heading": "Om du är orolig",
+      "blocks": [
+        "Om du är orolig för ditt barns upplevelse i Programmet, kontakta antingen support@lynxeducate.com eller {supportEmail} – vi ser till att ärendet når rätt personer."
+      ]
+    },
+    "changes": {
+      "heading": "Ändringar av villkoren",
+      "blocks": [
+        "Vi kan komma att uppdatera villkoren. Vi uppdaterar alltid datumet ovan och berättar direkt för dig om något viktigt ändras."
+      ]
+    }
+  }
+}
