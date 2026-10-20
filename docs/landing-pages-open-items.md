@@ -104,8 +104,6 @@ renderer).
 - **Brevo:** a list, a double opt-in template and the contact attributes the email
   sign-up sends; the env vars are named in `.env.local.example` on its branch and are
   empty in `.env.local`. Needed before `landing-email-capture` can go live.
-- **Vercel:** a real `INDEXNOW_KEY` on production for `discover-index`. Env vars go
-  through the `vercel-env-vars` skill.
 - **Google Search Console:** the `sog.gg` Domain property is verified by a TXT record in
   the DNS — keep it. Three owners without an `@sog.gg` address are to be reviewed.
 
