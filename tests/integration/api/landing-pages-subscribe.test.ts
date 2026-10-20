@@ -12,7 +12,8 @@ import type { PublishedLandingPage } from "@/services/landing-pages/landing-page
  * learns nothing, a new and a known address get the same answer, the UTM
  * values reach Klaviyo only under marketing consent, the two calls are exactly
  * Klaviyo's profile-import and subscribe contracts carrying nothing beyond
- * what the owner ruled, any Klaviyo refusal is a generic 502, and a
+ * what the owner ruled, any Klaviyo refusal or timeout is a generic 502 whose
+ * logs never carry the address, and a
  * misconfigured deployment refuses rather than swallowing sign-ups.
  */
 
@@ -291,15 +292,27 @@ describe("POST /api/landing-pages/subscribe", () => {
       ["the profile import", [400], 1],
       ["the subscription", [201, 500], 2],
     ])(
-      "gives a generic 502 when Klaviyo refuses %s, and logs it without the address",
+      "gives a generic 502 when Klaviyo refuses %s, and logs only its codes, never the address",
       async (_, statuses, calls) => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
         mockFetch.mockReset();
         for (const status of statuses) {
           mockFetch.mockResolvedValueOnce(
             new Response(
               JSON.stringify(
                 status >= 400
-                  ? { errors: [{ status, code: "invalid", detail: "Invalid list id" }] }
+                  ? {
+                      errors: [
+                        {
+                          status,
+                          code: "invalid",
+                          title: "Invalid input.",
+                          detail: "aino@example.com is not a valid profile",
+                          source: { pointer: "/data/attributes/email" },
+                          meta: { email: "aino@example.com" },
+                        },
+                      ],
+                    }
                   : { data: {} },
               ),
               { status },
@@ -310,11 +323,32 @@ describe("POST /api/landing-pages/subscribe", () => {
         expect(response.status).toBe(502);
         expect(mockFetch).toHaveBeenCalledTimes(calls);
         const body = await response.json();
-        expect(JSON.stringify(body)).not.toContain("Invalid list id");
-        const logged = vi.mocked(console.error).mock.calls.map(String).join("\n");
-        expect(logged).toContain("Invalid list id");
-        expect(logged).not.toContain("aino@example.com");
+        expect(JSON.stringify(body)).not.toContain("aino@example.com");
+        expect(JSON.stringify(body)).not.toContain("invalid");
+
+        const logged = [...vi.mocked(console.error).mock.calls, ...warn.mock.calls]
+          .flat()
+          .map((arg) => (arg instanceof Error ? `${arg.message}\n${arg.stack}` : String(arg)))
+          .join("\n");
+        expect(logged).toContain(String(statuses[statuses.length - 1]));
+        expect(logged).toContain("invalid: Invalid input.");
+        expect(logged.toLowerCase()).not.toContain("aino@example.com");
       },
     );
+
+    it.each([
+      ["TimeoutError", "The operation was aborted due to timeout"],
+      ["AbortError", "This operation was aborted"],
+    ])("gives the generic 502 when a Klaviyo call is aborted (%s)", async (name, message) => {
+      mockFetch.mockReset();
+      mockFetch.mockRejectedValueOnce(new DOMException(message, name));
+      const response = await POST(request(VALID));
+      expect(response.status).toBe(502);
+      expect(await response.json()).toEqual({
+        error: "Could not sign you up. Please try again later.",
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
+    });
   });
 });

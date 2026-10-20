@@ -40,8 +40,8 @@ import {
  * covers any write of them. Nothing else.
  *
  * **Two calls, both upserts**: the profile first, since the subscribe call
- * carries no name or property, then the subscription. Either failing answers
- * 502, and a retry repeats both harmlessly. A filled honeypot gets the success
+ * carries no name or property, then the subscription. Either failing — refused,
+ * or unanswered within the client's timeout — answers 502, and a retry repeats both harmlessly. A filled honeypot gets the success
  * answer and nothing is sent. A misconfigured deployment (no key or list id)
  * refuses every sign-up rather than accepting it into nowhere.
  */
@@ -107,7 +107,10 @@ export const POST = defineRoute({
         customSource: SIGNUP_CUSTOM_SOURCE,
       });
     } catch (error) {
-      // The Klaviyo client has logged Klaviyo's own answer; the address is not logged.
+      // A refusal (logged by the Klaviyo client as its status and error codes,
+      // and thrown as a fixed message), a timeout or a network failure. None of
+      // them carries anything the visitor typed, and neither does this line:
+      // the page id is the live page's own.
       console.error("[landing-pages/subscribe] Klaviyo refused the sign-up for page", page.id, error);
       return NextResponse.json(
         { error: "Could not sign you up. Please try again later." },

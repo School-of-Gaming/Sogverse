@@ -19,6 +19,13 @@ export const KLAVIYO_REVISION = "2026-10-15";
 /** The JSON:API media type Klaviyo's endpoints take and answer in. */
 const JSON_API = "application/vnd.api+json";
 
+/**
+ * Five seconds per call, then give up: a visitor's pending button is waiting
+ * on the answer, and a hung Klaviyo would otherwise hold it until the
+ * platform's own limit.
+ */
+const REQUEST_TIMEOUT_MS = 5_000;
+
 function getApiKey(): string {
   const key = process.env.KLAVIYO_PRIVATE_API_KEY;
   if (!key) {
@@ -28,9 +35,31 @@ function getApiKey(): string {
 }
 
 /**
- * One call to Klaviyo's API, resolving on any 2xx. Any other answer is logged
- * with Klaviyo's own body and thrown; the bodies of the calls made here are
- * never read, since nothing is read back.
+ * Each error's `code` and `title` from a Klaviyo error body — stable labels,
+ * never the visitor's words. Its `detail`, `source` and `meta` are free text
+ * that can quote the address it refused, so they are never read.
+ */
+function errorLabels(answer: unknown): string[] {
+  const errors = isRecord(answer) ? answer.errors : undefined;
+  if (!Array.isArray(errors)) return [];
+  return errors.map((error: unknown) => `${label(error, "code")}: ${label(error, "title")}`);
+}
+
+function label(error: unknown, name: "code" | "title"): string {
+  const value = isRecord(error) ? error[name] : undefined;
+  return typeof value === "string" ? value : "?";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/**
+ * One call to Klaviyo's API, resolving on any 2xx, and aborted after
+ * `REQUEST_TIMEOUT_MS`. Any other answer is logged as its HTTP status and each
+ * error's code and title — nothing Klaviyo writes in free text — and thrown as
+ * a fixed message naming the call and the status. The bodies of the calls made
+ * here are never otherwise read, since nothing is read back.
  */
 async function klaviyoPost(path: string, body: unknown): Promise<void> {
   const response = await fetch(`${KLAVIYO_API_BASE}${path}`, {
@@ -42,22 +71,13 @@ async function klaviyoPost(path: string, body: unknown): Promise<void> {
       Accept: JSON_API,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!response.ok) {
-    const answer = await response.json().catch(() => ({}));
-    console.error(
-      "Klaviyo API error:",
-      response.status,
-      response.statusText,
-      JSON.stringify(answer),
-    );
-    const detail: unknown = answer?.errors?.[0]?.detail;
-    throw new Error(
-      typeof detail === "string" && detail !== ""
-        ? detail
-        : `Klaviyo API error: ${response.status} ${response.statusText}`,
-    );
+    const answer: unknown = await response.json().catch(() => null);
+    console.error("Klaviyo API error:", path, response.status, errorLabels(answer).join("; "));
+    throw new Error(`Klaviyo ${path} answered ${response.status}`);
   }
 }
 
