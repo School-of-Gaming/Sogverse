@@ -85,7 +85,8 @@ const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
  * picture travels as base64 inside one JSON-RPC request, which the MCP SDK
  * refuses over its own 4 MB (Vercel's limit, 4.5 MB, sits above that): base64
  * spends four characters on three bytes, and the envelope is left 64 KB. A
- * 1600 × 900 JPEG is a few hundred kilobytes, so neither limit is near.
+ * JPEG at any catalogue size is a few hundred kilobytes, so neither limit is
+ * near.
  */
 export const MAX_UPLOAD_BYTES = Math.min(
   CATALOGUE_IMAGE_MAX_BYTES,

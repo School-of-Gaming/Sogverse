@@ -199,8 +199,13 @@ fileInput.addEventListener("change", async () => {
       return;
     }
     const { frame } = verdict;
-    const scaled = scaleToFrame(bitmap, frame, current.maxBytes);
-    bitmap.close();
+    let scaled: ReturnType<typeof scaleToFrame>;
+    try {
+      scaled = scaleToFrame(bitmap, frame, current.maxBytes);
+    } finally {
+      // Closed even when the picture is too large to encode.
+      bitmap.close();
+    }
     const stem = file.name.replace(/\.[^.]+$/, "") || "picture";
     picked = { base64: scaled.base64, fileName: `${stem}.jpg`, frame };
     if (!labelInput.value.trim()) labelInput.value = stem;

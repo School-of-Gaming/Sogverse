@@ -979,13 +979,21 @@ describe("landing pages", () => {
 
     // The SQL half of which shapes a section takes, held equal to the section
     // registry's declaration: every type with a picture, with each shape.
-    const cases = (["hero", "text", "image"] as const).flatMap((type) =>
+    const PICTURED = ["hero", "text", "image"] as const;
+    const cases = PICTURED.flatMap((type) =>
       LANDING_PICTURE_SHAPES.map((shape) => ({
         type,
         shape,
         takes: (LANDING_SECTIONS[type].pictureShapes as readonly LandingPictureShape[]).includes(shape),
       })),
     );
+
+    it("covers every section type that takes a picture", () => {
+      // A new pictured type fails here until `withPicture` can build one.
+      expect(new Set(LANDING_SECTION_TYPES.filter((type) => LANDING_SECTIONS[type].pictureShapes.length > 0))).toEqual(
+        new Set(PICTURED),
+      );
+    });
 
     it.each(cases)("a $type section takes a $shape picture: $takes, as the registry declares", async ({ type, shape, takes }) => {
       await reseed();
