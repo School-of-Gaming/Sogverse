@@ -83,7 +83,6 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 | Worktree | Item | Points for the review |
 |---|---|---|
 | `landing-email-capture` | #2 email sign-up section, Brevo double opt-in | Sogverse stores nothing about the lead except a one-hour hashed-IP rate-limit table — confirm that is acceptable. Account holders are not synced to Brevo (deferred). Brevo setup outstanding (below). |
-| `discover-index` | #10 `/discover` index, breadcrumbs, IndexNow | Publish and Unpublish (landing pages and Library) now go through admin API routes so IndexNow can fire; the API route wrapper now returns the database error code where it discloses errors; the production check is duplicated byte for byte with the one already on `dev` (`src/lib/seo/deployment.ts`) on purpose; the index has no closing call to action though the site-quality rule asks every public page for one; the Finnish copy wants a native check. |
 | `landing-share-card` | #12 share title and picture per page | In the MCP tools, leaving a share field out of a save clears it — decide whether that is acceptable. |
 | `landing-picture-shapes` | #14 pictures in three shapes (wide 16:9, square, portrait 4:5), never cropped | Library covers uploaded through the AI app are now refused rather than cropped when not 16:9; a column was renamed to hold each picture's purpose; the uploader view has a new address. Not yet tried in a real AI app. |
 | `landing-products` | #16 Products section: hand-picked shop products in the shop's own card and carousel | The carousel is now shared with the Roblox page and centred when it is not full; a pick the shop no longer lists is not drawn and is reported on the status page; municipality clubs can be picked but never show — consider refusing them at save. Each products section ships the whole shop listing to the browser. |
@@ -94,8 +93,8 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 
 **Merge order.** Any order within these constraints:
 `landing-email-capture` before `landing-sticky-section`; `landing-picture-shapes` before `uploader-multi-file`. Expect small
-conflicts among `discover-index`, `landing-share-card` and `landing-mcp-seo-and-links`
-(sitemap, landing metadata, the production check), and among `landing-products`,
+conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
+`/discover` index work put on `dev` (sitemap, landing metadata, the production check), and among `landing-products`,
 `landing-section-backgrounds` and `landing-sticky-section` (the section registry and
 renderer).
 
