@@ -551,6 +551,7 @@ const ITEM_KEYS: {
   steps: "steps",
   testimonials: null,
   faq: "faq",
+  subscribe: null,
   cta: null,
 };
 

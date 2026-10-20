@@ -13,7 +13,7 @@ import {
   useVisibleProductsByTypes,
 } from "@/services/products/products.queries";
 import type { ProductBrowseRow } from "@/types";
-import { PROGRAMME_RAIL_FILTERS } from "./programme-filters";
+import { PROGRAMME_FILTERS } from "./programme-filters";
 import { UpcomingEvents } from "./upcoming-events";
 
 interface UpcomingEventsBrowseProps {
@@ -67,7 +67,7 @@ export function UpcomingEventsBrowse({
   });
 
   const products = useMemo(
-    () => filterProducts(allProducts ?? [], PROGRAMME_RAIL_FILTERS),
+    () => filterProducts(allProducts ?? [], PROGRAMME_FILTERS),
     [allProducts],
   );
 

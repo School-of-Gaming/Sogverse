@@ -120,6 +120,8 @@ export default async function LandingPage({ params }: PageProps) {
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}
+        pageId={page.id}
+        preview={false}
       />
     </>
   );
