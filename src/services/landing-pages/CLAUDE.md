@@ -164,9 +164,11 @@ the section has no shared field; its form copy, consent sentence included, is fi
 in `landingSubscribe`, and the page writes only the ask. The route refuses a body without
 the ticked consent and a page whose published copy no longer holds the section, and
 answers a new address, a known one and a filled honeypot identically. The admin's preview
-draws the form with its button disabled. **No flow the list triggers may print the first
-or last name**: anyone can submit any address, and a printed name would let a stranger put
-their own words in a mail we send. A later section offering something on sign-up (a
+draws the form with its button disabled. **The names are anyone's words, an accepted
+risk**: anyone can submit any address, and the import overwrites the names Klaviyo holds
+for it, so a mail that prints a subscriber's name may print a stranger's text. The owner
+accepted that over dropping the names; a flow or campaign that greets by name is the
+admins' call with that in mind. A later section offering something on sign-up (a
 download) would add a shared field to this type, not a second form.
 
 **The public page lives in `src/components/landing-pages/`, and every link to a landing

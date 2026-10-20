@@ -102,13 +102,12 @@ renderer).
 ## Operator steps outside the code
 
 - **Klaviyo:** a private API key with write access to Profiles, Lists and
-  Subscriptions; a staging list and the real newsletter list, both single opt-in; no
-  flow triggered by either may print the first or last name, since anyone can submit any
-  address. The env vars are named in `.env.local.example` on its branch. Klaviyo is to
+  Subscriptions; a staging list and the real newsletter list, both single opt-in. The env
+  vars are named in `.env.local.example` on its branch and set on Vercel. Klaviyo is to
   be added as a processor in the privacy policy. Needed before `landing-email-capture`
   can go live.
 - **Vercel:** a real `INDEXNOW_KEY` on production for `discover-index`. Env vars go
-  through the `vercel-env-vars` skill.
+  through the `env-vars` skill.
 - **Google Search Console:** the `sog.gg` Domain property is verified by a TXT record in
   the DNS — keep it. Three owners without an `@sog.gg` address are to be reviewed.
 
@@ -117,8 +116,6 @@ renderer).
 1. Does a free account, with no purchase, qualify for the soft opt-in under §200 of the
    Finnish Act on Electronic Communications Services?
 2. Is the registration form's marketing checkbox worded specifically enough?
-3. Does sending UTM values to Klaviyo with the source page breach point 6 of
-   `src/lib/utm.ts` ("never combined with journey data")?
 
 ## Small follow-ups noticed along the way
 
