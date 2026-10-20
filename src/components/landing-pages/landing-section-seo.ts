@@ -129,11 +129,22 @@ export function landingStructuredParts(
  * picture is the safe answer if it does.
  */
 export function landingLeadPicture(
-  page: LocalizedLandingPage,
+  page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "imagePaths">,
 ): { path: string; alt: string | null } | null {
   const part = landingStructuredParts(page.sections, page.sectionTexts).find(
     (candidate) => candidate.kind === "image",
   );
   if (part === undefined || !Object.hasOwn(page.imagePaths, part.imageId)) return null;
   return { path: page.imagePaths[part.imageId], alt: part.alt };
+}
+
+/**
+ * The path of the picture a live page leads with, read from its structure
+ * alone — for a list, which carries no words and so no alt text. The same
+ * picture `landingLeadPicture` names.
+ */
+export function landingLeadPicturePath(
+  page: Pick<LocalizedLandingPage, "sections" | "imagePaths">,
+): string | null {
+  return landingLeadPicture({ ...page, sectionTexts: {} })?.path ?? null;
 }

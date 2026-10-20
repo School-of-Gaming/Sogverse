@@ -231,6 +231,8 @@ const TESTS = {
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   oauthConsent: "tests/integration/api/oauth-consent.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
+  adminPublication: "tests/integration/api/admin-publication.test.ts",
+  indexNowKey: "tests/integration/api/indexnow-key.test.ts",
   catalogueImagesManage: "tests/integration/api/catalogue-images-manage.test.ts",
   catalogueImagesReplace: "tests/integration/api/catalogue-images-replace.test.ts",
   catalogueImagesUpload: "tests/integration/api/catalogue-images-upload.test.ts",
@@ -443,6 +445,36 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "inline: one `file`, its required `purpose` (parsed by the catalogueImagePurpose enum) and an optional `label`, read by readImageUpload — the file's size is measured against the purpose by refuseUnlessPurposeSize, and the label is capped rather than refused (catalogueImageLabel governs the rename route, where the label is the request)",
         },
         test: TESTS.catalogueImagesUpload,
+      },
+    },
+  },
+
+  "src/app/api/admin/landing-pages/[id]/publication/route.ts": {
+    handlers: {
+      PUT: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
+      },
+      DELETE: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
+      },
+    },
+  },
+
+  "src/app/api/admin/library/[id]/publication/route.ts": {
+    handlers: {
+      PUT: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
+      },
+      DELETE: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
       },
     },
   },
@@ -815,6 +847,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "none" },
         test: TESTS.chatImageRead,
+      },
+    },
+  },
+
+  // --- IndexNow --------------------------------------------------------------
+
+  "src/app/api/indexnow/key/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "the IndexNow key file, which search engines fetch with no session to check that a submission naming the key came from this site; the protocol publishes the key on the site it vouches for, so the answer — the key as plain text, or a 404 with none configured — discloses nothing that is not meant to be public, and the handler reads no cookie, no database and no input",
+        },
+        body: { kind: "none" },
+        test: TESTS.indexNowKey,
       },
     },
   },

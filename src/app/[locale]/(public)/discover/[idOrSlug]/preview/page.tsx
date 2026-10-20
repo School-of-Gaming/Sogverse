@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import {
+  LandingPageBreadcrumb,
+  type LandingBreadcrumb,
+} from "@/components/landing-pages/landing-page-breadcrumb";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
@@ -14,8 +18,9 @@ export const metadata: Metadata = {
 /**
  * **A landing page's saved working copy, exactly as a reader would meet it if
  * it were published now** — what the admin status page's and the MCP tools'
- * preview links open, in the public site's own chrome, through the same body
- * the live page renders.
+ * preview links open, in the public site's own chrome, through the same
+ * breadcrumb and body the live page renders, so the hero sits where it will.
+ * The breadcrumb's structured data is left out: the preview is noindex.
  *
  * Admin-only. The proxy gates the route on the admin role, and this page
  * answers not-found to anyone else as well, rather than rendering what an
@@ -51,16 +56,30 @@ export default async function LandingPagePreviewPage({
   const version = resolveTranslation(draft.versions, locale);
   if (version === null) notFound();
 
+  const tDiscover = await getTranslations("discover");
+  const trail: LandingBreadcrumb = {
+    indexName: tDiscover("name"),
+    title: version.title,
+  };
+
   return (
-    <LandingPageBody
-      sections={draft.sections}
-      imagePaths={draft.imagePaths}
-      testimonials={page.testimonials}
-      sectionTexts={version.sectionTexts}
-      textLocale={version.locale}
-      locale={locale}
-      pageId={id}
-      preview
-    />
+    <>
+      <LandingPageBreadcrumb
+        trail={trail}
+        label={tDiscover("breadcrumbLabel")}
+        textLocale={version.locale}
+        locale={locale}
+      />
+      <LandingPageBody
+        sections={draft.sections}
+        imagePaths={draft.imagePaths}
+        testimonials={page.testimonials}
+        sectionTexts={version.sectionTexts}
+        textLocale={version.locale}
+        locale={locale}
+        pageId={id}
+        preview
+      />
+    </>
   );
 }
