@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import enConsent from "@/../messages/en/consent.json";
 import enDiscover from "@/../messages/en/discover.json";
 import enFooter from "@/../messages/en/footer.json";
+import enLibrary from "@/../messages/en/library.json";
 import {
   createFetchStubbedClient,
   postgrestPage,
@@ -73,7 +74,10 @@ function database(live: typeof LIVE) {
 
 function draw(page: React.ReactNode) {
   return render(
-    <NextIntlClientProvider locale="en" messages={{ consent: enConsent, discover: enDiscover, footer: enFooter }}>
+    <NextIntlClientProvider
+      locale="en"
+      messages={{ consent: enConsent, discover: enDiscover, footer: enFooter, library: enLibrary }}
+    >
       {page}
     </NextIntlClientProvider>,
   );
@@ -86,7 +90,7 @@ describe("the landing pages' index", () => {
 
     expect(
       screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
-    ).toEqual(["Clubs in Espoo", "Klubbar i Esbo"]);
+    ).toEqual(["Clubs in Espoo", "Klubbar i Esbo", "Ready to get started?"]);
     expect(
       new Set(fetchMock.mock.calls.map(([input]) => requestedUrl(input).pathname)),
     ).toEqual(new Set(["/rest/v1/landing_page_publications"]));
@@ -102,6 +106,13 @@ describe("the landing pages' index", () => {
     // Not live in English, so its id address, whose page shows the same fallback.
     expect(esbo.getAttribute("href")).toBe(`/discover/${ESBO}`);
     expect(esbo.closest("[lang]")?.getAttribute("lang")).toBe("sv");
+  });
+
+  it("closes with the Library's card, leading on to the shop", async () => {
+    database(LIVE);
+    draw(await DiscoverIndexPage());
+
+    expect(screen.getByRole("link", { name: "Get started" }).getAttribute("href")).toBe("/shop");
   });
 
   it("emits its structured data listing the same pages", async () => {

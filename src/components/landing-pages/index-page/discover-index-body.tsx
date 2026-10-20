@@ -4,6 +4,7 @@ import {
   actPhrase,
   PublicIndexHeader,
 } from "@/components/public/public-index-header";
+import { LibraryClosingCta } from "@/components/library/library-closing-cta";
 import { DiscoverPageCard, type DiscoverPageCardProps } from "./discover-page-card";
 
 /**
@@ -14,7 +15,8 @@ import { DiscoverPageCard, type DiscoverPageCardProps } from "./discover-page-ca
  * are reached through search and advertising rather than browsed here: the
  * shared public index header, then the grid — one column on a phone, two from
  * `sm`, three from `lg` — or, with nothing live, a line saying so in its
- * place.
+ * place — and the Library's closing card, so a reader who lands here is still
+ * led on to the shop.
  */
 export function DiscoverIndexBody({
   pages,
@@ -44,6 +46,8 @@ export function DiscoverIndexBody({
           <p className="mt-4 font-medium">{t("empty")}</p>
         </div>
       )}
+
+      <LibraryClosingCta className="mt-16 sm:mt-24" />
     </div>
   );
 }
