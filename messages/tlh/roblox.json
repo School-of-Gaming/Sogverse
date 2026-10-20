@@ -1,0 +1,144 @@
+{
+  "hero": {
+    "title": "chenmoHwI’<br></br><act>DuSaQ</act>",
+    "subtitle": "yIchen. yItIv. yIghaj.",
+    "blurb": "Huch Hutlh! loDHompu’ be’Hompu’vaD. Robloxdaq qetlhlIj yIqIn.",
+    "cta": "may’Daq yIghoS!"
+  },
+  "lockup": {
+    "heading": "boqwI’pu’",
+    "sogAlt": "School of Gaming",
+    "lynxAlt": "Lynx Educate",
+    "robloxAlt": "Roblox"
+  },
+  "what": {
+    "eyebrow": "nuq ’oH",
+    "heading": "Robloxdaq chenmoH yIghoj.",
+    "paragraph1": "chenmoHwI’ DuSaQ. France Sepdaq 13–17 ben loDHompu’ be’Hompu’ je qetlhmey luchenmoH, chuvmey lulughmoH, ’ej Robloxdaq luqIn. LughojmoH Lynx Educate je School of Gaming; Roblox luboq. qetlh chenmoHghach, De’ laHmey, je jIrDaq QaQ boqghach ghojmoH.",
+    "paragraph2": "Robloxdaq qetlhDaj chu’ qIn ’e’ ghoS ghojmoHghach. laH tIn Hutlh — neH tu’lI’ neH."
+  },
+  "why": {
+    "eyebrow": "qatlh yIjeS",
+    "heading": "chuvmey ghojmoH law’qu’",
+    "skills": {
+      "title": "nugh laHmey",
+      "description": "Roblox Studio, jonwI’ yab boQbogh chenmoHghach, je chuvmey meq patlh — latlhpu’ tlhej ghojlu’, mob ghojbe’lu’."
+    },
+    "people": {
+      "title": "lIj tuq yISam",
+      "description": "latlh chenmoHwI’pu’ tISam — chenmoHghach lumuSHa’be’, SoH rap."
+    },
+    "portfolio": {
+      "title": "batlh qonta’ yIchenmoH",
+      "description": "qetlh teH qInpu’ Datlhap — Hoch Da’ang."
+    },
+    "recognised": {
+      "title": "yIquv",
+      "description": "qetlhmey pov lo’laH van Hoch legh."
+    },
+    "fun": {
+      "title": "tIv teH",
+      "description": "chenmoHghach, ghom, je tIvmeH chenta’."
+    },
+    "safe": {
+      "title": "jIrDaq yIQaD",
+      "description": "vav SoS ghojmoHmeH poHmey: jIr QaD, quv, je puq nISwI’ SeH."
+    }
+  },
+  "how": {
+    "eyebrow": "chay’ Qu’",
+    "heading": "loS Qu’mey ngeD — yIchu’",
+    "subheading": "Do’Ha’ yIwIv: pa’Daq pagh jIrDaq, wa’ rep ghap Hut Hogh.",
+    "step1": {
+      "title": "jaj yIwIv",
+      "description": "bIngDaq yIwIv — reH jajmey chu’ wImaH, vaj reH yIleghqa’."
+    },
+    "step2": {
+      "title": "Account yIchenmoH",
+      "description": "jeSmeH QIn Daq. nom je Huch Hutlh vavpu’ chu’vaD."
+    },
+    "step3": {
+      "title": "loDHom De’ yIqIn",
+      "description": "puS De’ neH, ’ej jeSmeH naQ."
+    },
+    "step4": {
+      "title": "QIn Daq yIlegh",
+      "description": "qay’be’ QIn je Hoch De’ Datlhap wa’DIch poH pa’."
+    }
+  },
+  "events": {
+    "heading": "ghoSbogh jajmey",
+    "subheading": "reH jajmey chu’ wImaH — nuq ghoS yIlegh.",
+    "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov.",
+    "previous": "jajmey ret yIcha’",
+    "next": "jajmey veb yIcha’",
+    "browseShop": "ngevwI’ yIlegh"
+  },
+  "parents": {
+    "eyebrow": "vavpu’ SoSpu’vaD",
+    "heading": "jIr QaD potlh wISov",
+    "body": "loDHom ghojmoH tlhej, vavpu’vaD ghojmoHmeH poHmey wImaH: jIr QaD, puq nISwI’ SeH, je chay’ loDHom chenmoHghach Daboq.",
+    "cta": "vavpu’ poHmey yIlegh"
+  },
+  "faq": {
+    "heading": "pIj lujatlhlu’bogh yu’mey",
+    "items": {
+      "programme": {
+        "question": "nuq ’oH ghojmoHghachvam’e’?",
+        "answer": "<p>Huch Hutlh ghojmoHghach ’oH: Robloxdaq chenmoHmeH loDHompu’ be’Hompu’ je ghojmoH. luqaSmoH Lynx Educate School of Gaming je; Roblox luboq.</p><p>France Sepdaq jIrDaq pa’Daq je qaS, ’ej puqlI’ qetlhDaj janDaj ghap qInDI’ rIn.</p>"
+      },
+      "eligibility": {
+        "question": "’Iv jeSlaH?",
+        "answer": "<p>France Sepdaq 13–17 ben loDHompu’ be’Hompu’ je. vav SoS ghap chaH qIn.</p>"
+      },
+      "cost": {
+        "question": "Huch poQ’a’?",
+        "answer": "<p>ghobe’! qInta’bogh qorDu’vaD ghojmoHghach Huch Hutlh — 100 %!</p>"
+      },
+      "experience": {
+        "question": "Roblox laH ghajnIS’a’ puqwI’?",
+        "answer": "<p>laH poQlu’be’. mung mo’vo’ qInmeH poH ghoS — Hoch ghojmoH poHmey.</p>"
+      },
+      "where": {
+        "question": "nuqDaq qaS poHmey?",
+        "answer": "<p>pa’ poHmey qaS Paris, Lille, Strasbourg, Bordeaux je. jIr poHmeyvaD poSlu’ France Sep Hoch qorDu’vaD.</p><p>poHmey ’ar? 60 tup ghap 9 Hogh.</p>",
+        "answer2": "Hoch qaSbogh De’ yIlegh."
+      },
+      "language": {
+        "question": "nuq Hol lo’lu’ poHmeyDaq?",
+        "answer": "<p>France Hol lo’lu’.</p>"
+      },
+      "equipment": {
+        "question": "nuq jan poQ puqwI’?",
+        "answer": "<p>De’wI’ (Windows pagh Mac) jIrDaq rarlu’bogh, ’ej Roblox Studio poS.</p>",
+        "answer2": "jIr qaSmoHghachvaD De’wI’Daj lo’nIS jeSwI’ — Roblox Studio chelta’. pa’ qaSmoHghachvaD De’wI’mey janmey je tu’lu’ pa’Daq."
+      },
+      "dataSharing": {
+        "question": "puqwI’ De’ lulo’chuq’a’ Roblox je?",
+        "answer": "<p>account De’ puS lulo’chuq Lynx Educate Roblox je — ghojmoHghach qaSmoHmeH, ’ej Qapla’Daj juvmeH. Hoch De’ tu’lu’ maj <linkPrivacy>Privacy Policy</linkPrivacy>Daq.</p>"
+      },
+      "media": {
+        "question": "puqwI’ mIllogh chenmoHlu’’a’?",
+        "answer": "<p>poHmeyDaq mIlloghmey chenmoHlu’laH. ’ach mIlloghDaq puqlI’ tu’lu’ SoH wIv DawIvchugh neH — puqlI’ DalanDI’ wIv DawIv. reH wIv DachoHlaH: jIH SOG, puqlI’ HaHDaq. wIv DawIvbe’chugh, mIlloghmeyvo’ puqlI’ jotlhlu’.</p>"
+      },
+      "facilitators": {
+        "question": "’Iv poHmey Sep, ’ej chay’ nuDlu’?",
+        "answer": "<p>ghojmoHwI’pu’ ghojmoH ’ej nuD School of Gaming, maj <linkSafeguarding>Child Safeguarding Policy</linkSafeguarding> tlhej.</p>"
+      },
+      "contact": {
+        "question": "yu’ vIghajchugh, ’Iv vIja’?",
+        "answer": "<p><linkEmail>{email}</linkEmail>-Daq yIghItlh — Hoch yu’, Hoch buSHa’ je.</p>"
+      }
+    }
+  },
+  "cta": {
+    "heading": "bIchu’meH bIQap’a’?",
+    "body": "Daqmey puS.",
+    "button": "yIchu’"
+  },
+  "legal": {
+    "roblox": "Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
+    "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’.",
+    "documents": "chenmoHwI’ DuSaQ ghItlhmey"
+  }
+}

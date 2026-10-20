@@ -1,0 +1,72 @@
+{
+  "title": "Creator Academy Terms & Conditions",
+  "subtitle": "For families registering for the France Digital Education Programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox.",
+  "lastUpdated": "Updated: {date}",
+  "intro": {
+    "heading": "The short version",
+    "blocks": [
+      "This explains what you’re signing your child up for when you register for the Creator Academy Programme. It’s a joint programme delivered by Lynx Educate and School of Gaming, in collaboration with Roblox. If anything’s unclear, email <strong>support@lynxeducate.com</strong>."
+    ]
+  },
+  "sections": {
+    "involved": {
+      "heading": "Who’s involved",
+      "blocks": [
+        [
+          "<strong>Lynx Educate SAS</strong> and <strong>School of Gaming Galactic Oy (“SOG”)</strong> design and deliver this Programme together — in this document, “we”/“us” means both of us jointly, unless we say otherwise.",
+          "<strong>Roblox Corporation</strong> (“Roblox”) sponsors the Programme and provides the platform your child will build on. Roblox is not a party to these Terms."
+        ],
+        "Registration and sessions happen on School of Gaming’s platform (“Sogverse”). By registering, you’re agreeing to these Programme-specific terms, which apply alongside (and take precedence over, where they conflict with) <linkTerms>School of Gaming</linkTerms> and Lynx’s standard Terms and Conditions."
+      ]
+    },
+    "eligibility": {
+      "heading": "Who can take part",
+      "blocks": [
+        "The Programme is for young people in France, aged 13–17, registered by a parent or legal guardian. A parent or guardian must complete registration and consent on the child’s behalf."
+      ]
+    },
+    "whatsInvolved": {
+      "heading": "What’s involved",
+      "blocks": [
+        "Your child will take part in sessions (online and/or in-person, depending on what you’ve registered for) designed to teach game-building skills on the Roblox platform, culminating in publishing their own game or item. Parents are invited to separate sessions on online safety and parental controls."
+      ]
+    },
+    "cost": {
+      "heading": "Cost",
+      "blocks": [
+        "The Programme is free to registered families."
+      ]
+    },
+    "safety": {
+      "heading": "Safety and supervision",
+      "blocks": [
+        "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint <strong><linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding></strong>, available upon request."
+      ]
+    },
+    "information": {
+      "heading": "Your information",
+      "blocks": [
+        "How we use your and your child’s information is explained in our <strong><linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy></strong>. By registering, you confirm you’ve read and understood it.",
+        "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research. See the <strong><linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy></strong> for more information."
+      ]
+    },
+    "media": {
+      "heading": "Photos, video, and marketing",
+      "blocks": [
+        "Whether your child is photographed or filmed, and whether that’s used for marketing, depends entirely on the choices you make at registration. These are optional and you can change your mind at any time on your child’s page in My SOG."
+      ]
+    },
+    "concern": {
+      "heading": "If you have a concern",
+      "blocks": [
+        "If you’re concerned about your child’s experience in the Programme, contact either support@lynxeducate.com or {supportEmail} — we’ll make sure it reaches the right people."
+      ]
+    },
+    "changes": {
+      "heading": "Changes to these terms",
+      "blocks": [
+        "We may update these terms; we’ll always update the date above and tell you directly if something important changes."
+      ]
+    }
+  }
+}

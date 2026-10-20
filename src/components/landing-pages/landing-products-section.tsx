@@ -8,7 +8,7 @@ import type {
   ProductRailSelection,
 } from "@/components/public/products/product-rail-selection";
 import { useProductRail } from "@/components/public/products/use-product-rail";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { LANDING_SECTION, SectionHeader, hasSectionHeader } from "./landing-section-header";
 
 interface LandingProductsSectionProps {

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Heading } from "@sog/ui";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { written } from "./landing-section-types";
 
 /*

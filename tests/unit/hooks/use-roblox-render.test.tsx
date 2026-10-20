@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useRobloxRender } from "@/services/roblox";
+import { useRobloxRender } from "@/services/roblox/roblox.queries";
 
 /**
  * The hook that draws a stored Roblox account's picture on page load.

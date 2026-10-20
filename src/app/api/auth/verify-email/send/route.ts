@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { buildVerifyEmailEmail } from "@/lib/email-templates/verify-email";

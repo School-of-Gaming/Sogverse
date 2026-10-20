@@ -1,0 +1,9 @@
+{
+  "title": "Rajaa kuva",
+  "description": "Vedä kuva paikalleen kehyksessä ja zoomaa sopivaksi.",
+  "zoom": "Zoomaus",
+  "confirm": "Käytä kuvaa",
+  "unreadable": "Tätä tiedostoa ei voi avata kuvana tässä. Valitse JPEG-, PNG- tai WebP-kuva. iPhonen HEIC-kuvat pitää muuntaa ensin.",
+  "chooseAnother": "Valitse toinen kuva",
+  "failed": "Kuvan rajaaminen epäonnistui. Yritä uudelleen tai valitse toinen kuva."
+}

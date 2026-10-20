@@ -4,7 +4,7 @@ import {
   publishedArticleCard,
   selectMoreFromLibrary,
 } from "@/components/library/more-from-library";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { PublishedLibraryArticleSummary } from "@/services/library/library.contracts";
 
 function article(id: string, category: LibraryCategory, publishedAt: string) {

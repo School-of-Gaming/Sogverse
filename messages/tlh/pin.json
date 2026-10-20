@@ -1,0 +1,37 @@
+{
+  "create": {
+    "enterTitle": "vav PIN yIchenmoH",
+    "confirmTitle": "PIN yI’ol",
+    "description": "Hoch je’ghach, Hoch muvghach, ’ej Hoch choHghach — puqpu’lI’ tlhej Quj ’Iv — wa’DIch PINvam poQ. SoH neH DaSov; vaj SoHHutlh accountvamDaq pagh je’lu’, pagh choHlu’."
+  },
+  "unlock": {
+    "title": "vav PIN yIghItlh",
+    "description": "PINvam ’oH puqpu’lI’ accountmey lojmIt’e’: je’ghachmey choHghachmey je. vaj SoH neH DaruchlaH.",
+    "forgot": "PIN DalIj’a’?"
+  },
+  "mismatch": "rapbe’ PINmey. wInIDqa’.",
+  "deleteDigit": "mI’ Qav yIteq",
+  "forgotSent": {
+    "title": "QIn yIlaD",
+    "description": "account QInDaq De’ tu’lu’chugh, PIN chu’qa’meH ngoq wIngeHpu’. cha’maH loS rep ret ngoq Het.",
+    "back": "PIN ghItlhmeH yIchegh"
+  },
+  "reset": {
+    "description": "PIN chu’ yIcher. SoH neH yISov.",
+    "enterTitle": "PIN chu’ yIwIv",
+    "confirmTitle": "PIN chu’ yI’ol",
+    "successTitle": "PIN chu’qa’lu’",
+    "successDescription": "vav PIN chu’moHlu’. yI’el ’ej yItaHmeH yIghItlh.",
+    "invalidTitle": "ngoq Het",
+    "invalidDescription": "PIN chu’qa’ ngoqvam lughbe’ pagh Hetpu’. yI’el ’ej chu’ yItlhob.",
+    "backToLogin": "’elmeH yIchegh"
+  },
+  "change": {
+    "newTitle": "PIN chu’ yIwIv",
+    "confirmTitle": "PIN chu’ yI’ol",
+    "cancel": "yIqIl",
+    "successTitle": "PIN choHlu’",
+    "successDescription": "vav PIN choHlu’.",
+    "backToSettings": "DuHmeyDaq yIchegh"
+  }
+}

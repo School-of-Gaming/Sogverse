@@ -132,7 +132,7 @@ describe("canonicaliseLandingLinks", () => {
     );
     await expect(attempt).rejects.toThrow(
       "The button in section 1 (Hero) leads to /no-such-page, which doesn't lead to a page on the site. " +
-        'The link "the guide" to /fi/kirjasto/ei-julkaistu, in the English words of section 6 (Questions and answers), doesn\'t lead to a page on the site.',
+        'The link "the guide" to /fi/kirjasto/ei-julkaistu, in the English words of section 7 (Questions and answers), doesn\'t lead to a page on the site.',
     );
   });
 

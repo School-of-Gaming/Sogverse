@@ -1,0 +1,26 @@
+{
+  "welcomeNamed": "nuqneH, {name}!",
+  "fallbackName": "toy’wI’",
+  "subtitle": "DaH yItoy’ je yIghoj?",
+  "emptyDashboard": "naDev pagh tu’lu’. SoSlI’ vavlI’ joq yIrI’, ’ej ghom’a’ qoj raQ yIwIv — batlh yIghoj!",
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "may’wIj taghDI’, chay’ vImuv?",
+        "answer": "<p>wa’DIch jIH SOG yIpoSmoH ’ej ghom’a’lIj yISam. nuqDaq ghom ghom’a’lIj? ghIq qaSbogh wanI’ wIv.</p><p>ghogh pa’Daq ghomchugh, ’etlh tu’lu’:</p><steps><step>may’lIj SumtaHvIS jonta’ ’etlh, ’ej jaj poH je ja’.</step><step>may’lIj taghpa’ vagh tup, choH ’etlh: ”ghogh pa’Daq yIghoS” moj.</step><step>yIqIp. bI’elpu’!</step></steps><p>chenmoHnISlu’bogh pagh, ghItlhnISlu’bogh ngoq pagh.</p><p>Daq’e’ ghomchugh, ’etlh tu’lu’be’. Daq pong cha’ ghom’a’lIj, ’ej Daq ngoq cha’ ghom’a’lIj Hal je. may’lIj taghDI’, pa’ yIghoS!</p><p>’ach bIchelpu’ ’e’ ja’chugh ghom’a’lIj, ’ej Gedu ghom je DISamlI’ ’e’ ja’chugh: ’etlh Daq ghap tu’lu’be’ DaH. bIchelpu’bej — ’ach ghomDaq wIlanbe’taH. may’ wa’DIchlIj taghpa’ qaS, ’ej pa’ ghaHtaH GedulIj’e’. yISuvqang!</p>"
+      },
+      "cannotBeHeard": {
+        "question": "ghogh pa’Daq jIHvaD Qoy pagh — nuq vInuD?",
+        "answer": "<p>Dochmey yInuD, mIw yIpab. motlh wa’DIch ’oH qay’bogh Doch’e’.</p><steps><step>Doq’a’ wab jan ’etlhlIj? bIjatlhHa’moHlu’pu’. yIqIp, ’ej bIjatlhlaHqa’.</step><step>’etlhDaq ngaQwI’ Dalegh’a’? ram GedulIj jonpu’ wab janlIj. poSmoHqa’ ghaH.</step><step>wab jan ’etlh retlhDaq naQjej mach yIqIp. wab jan SeHlaw poSmoH, ’ej tetlhvo’ wab jan lugh DawIvlaH.</step><step>DaH yIjatlh, ’ej tetlh bIngDaq nagh beQ yISam. nagh beQ tu’lu’be’chugh, chu’Ha’lu’ wab janlIj — tammoHlu’be’; wa’DIch mIwDaq yIcheghqa’. tu’lu’chugh nagh beQ ’ach vIHbe’chugh, latlh Doch ghaj wab janlIj.</step></steps><p>wab janlIj wISIchlaHbe’ ’e’ ja’bogh Doq QIn Dalegh’a’? lo’bogh latlh ngoqmey nav beQmey je yISoQmoH, HallIj SeHlawDaq wab jan yIchaw’, ’ej ”yItchu’qa’” yIqIp.</p><p>DaH je Qoy pagh’a’? may’Daq GedulIj yIja’ — QaH ghaH.</p>"
+      },
+      "cannotHearOthers": {
+        "question": "ghogh pa’Daq pagh vIQoy — nuq vInuD?",
+        "answer": "<p>Dochmey yInuD, mIw yIpab:</p><steps><step>janlIj wab yInIt, ’ej teSDeq yInuD: DIlyIqDaq bIH’a’?</step><step>Daqmey yIlegh. DaqlIjDaq tu’lu’bogh nuvpu’ neH Daqoy. latlh DaqDaq tu’lu’chugh Hoch, Daqchaj yIqIp ’ej pa’ yIghoS.</step><step>lI’mo’ DaqDaq Dulanpu’ GedulIj’e’chugh, pa’ yIratlh. qangeHqa’.</step></steps><p>DaqlIjDaq tu’lu’chugh latlh, ’ej wab nItpu’, ’ach tamtaHchugh Hoch: GedulIj yIja’ — yIjach, pagh pa’lIjDaq QInmey tu’lu’chugh, pa’ yIghItlh. pa’Daq tu’lu’bogh nuvpu’ legh ghaH, ’ej QaH.</p>"
+      },
+      "someoneIsMean": {
+        "question": "may’Daq jIHvaD qab vay’ — vaj nuq?",
+        "answer": "<p>GedulIj vav SoS ghap yIja’. qab Doch mob DaSeHnISbe’, ’ej nInpu’ Daja’chugh, bIghojmoHbe’ — bIval.</p><p>reH Doch potlh ’oH ’e’ Har GedulIj, ’ej qaS nuq ’e’ DaSovmeH QaH. latlh Do’Ha’moHghach, ghom’a’ chutmey rachHa’ghach je: reH qaS vay’. Hoch: ghom’a’Daq Qob Hutlh ’ej lajlu’ ’e’ DIl.</p>"
+      }
+    }
+  }
+}

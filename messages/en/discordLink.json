@@ -1,0 +1,30 @@
+{
+  "confirm": {
+    "title": "Link your Discord account",
+    "body": "Link the Discord account <b>@{username}</b> to your School of Gaming account? School of Gaming will be able to reach you on Discord, and that Discord account will be able to use the School of Gaming bot on your behalf. Only link an account that is yours.",
+    "action": "Link account",
+    "failed": "Something went wrong and your account wasn’t linked. Try again."
+  },
+  "linked": {
+    "title": "Linked to @{username}",
+    "body": "School of Gaming can now reach you on Discord, and you can use the School of Gaming bot there.",
+    "goToMySog": "Go to My SOG",
+    "goToDashboard": "Go to the dashboard"
+  },
+  "used": {
+    "title": "This link has already been used",
+    "body": "Each link works once. Run <code>/link</code> in Discord again to get a new one."
+  },
+  "expired": {
+    "title": "This link has expired",
+    "body": "Links expire after 10 minutes. Run <code>/link</code> in Discord again to get a new one."
+  },
+  "missingToken": {
+    "title": "This link is incomplete",
+    "body": "Run <code>/link</code> in Discord again to get a new one."
+  },
+  "refused": {
+    "title": "Only School of Gaming staff can link a Discord account",
+    "body": "This account can’t link one. If you’re on the staff, sign in with your staff account."
+  }
+}

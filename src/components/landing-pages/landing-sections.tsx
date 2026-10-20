@@ -9,9 +9,17 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import {
+  FeatureTestimonial,
+  TestimonialPair,
+  TestimonialRow,
+  TestimonialShowcase,
+  type ShownTestimonial,
+} from "@/components/home/testimonial-arrangements";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import type {
   ButtonTarget,
@@ -23,7 +31,8 @@ import {
   type ProductRailPrefetch,
 } from "@/components/public/products/product-rail-selection";
 import { buttonTargetHref } from "@/lib/links/button-target";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
 import { Eyebrow, LANDING_SECTION, SectionHeader } from "./landing-section-header";
@@ -60,11 +69,18 @@ import { Heading } from "@sog/ui";
 export interface LandingRenderContext {
   /** The page's locale: what an own-site button's address is localised to. */
   locale: SupportedLocale;
+  /** The language the shown version's words are in, which the body is marked with. */
+  textLocale: SupportedLocale;
   /**
    * A picture's servable URL by its catalogue entry id, or null when the copy
    * names no path for it (the picture has left the catalogue).
    */
   imageSrc: (imageId: string) => string | null;
+  /**
+   * A placed testimonial's current words by its id, or null when the read
+   * answered none for it.
+   */
+  testimonial: (testimonialId: string) => PublicTestimonial | null;
   /**
    * The shop's listing and seat counts, read on the server for every products
    * section of the page at once (`prefetchLandingProducts`), or null when the
@@ -442,6 +458,77 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
 }
 
 /**
+ * Testimonials from the store, in the arrangement the admin chose, laid out
+ * exactly as the home page and About lay theirs — through the same shared
+ * arrangements — under the section's optional header.
+ *
+ * Each quote is the store's current words, in the version the reader fallback
+ * picks for the page's locale. Those words are the testimonial's rather than
+ * the version's, so the arrangement is marked with the page's language
+ * wherever the version shown is in another, and a quote in another language
+ * than the page's is marked with its own. A testimonial the read did not
+ * answer leaves its slot out, and a section with none to show is not drawn at
+ * all.
+ */
+function TestimonialsSection({ section, text, context }: LandingSectionProps<"testimonials">) {
+  const pick = (ids: readonly string[]): ShownTestimonial[] =>
+    ids.flatMap((id) => {
+      const testimonial = context.testimonial(id);
+      const version =
+        testimonial === null ? null : resolveTranslation(testimonial.versions, context.locale);
+      if (version === null) return [];
+      return [
+        {
+          key: id,
+          quote: version.quote,
+          attribution: version.from,
+          // exact-locale: marking a quote shown in another language than the page's
+          lang: version.locale === context.locale ? undefined : version.locale,
+        },
+      ];
+    });
+  const shown = pick(section.testimonialIds);
+  if (shown.length === 0) return null;
+  const afterHeader =
+    written(text.eyebrow) !== null || written(text.heading) !== null || written(text.intro) !== null;
+  const placement = cn(afterHeader && "mt-12 lg:mt-16");
+
+  const arrangement = (() => {
+    switch (section.arrangement) {
+      case "feature":
+        return <FeatureTestimonial testimonial={shown[0]} className={placement} />;
+      case "pair":
+        return <TestimonialPair testimonials={shown} className={placement} />;
+      case "row":
+        return <TestimonialRow testimonials={shown} className={placement} />;
+      case "showcase":
+        // The slots by position, so a quote the read left out never moves
+        // another into its group.
+        return (
+          <TestimonialShowcase
+            afterHeading={afterHeader}
+            groups={{
+              feature: pick(section.testimonialIds.slice(0, 1)),
+              pair: pick(section.testimonialIds.slice(1, 3)),
+              row: pick(section.testimonialIds.slice(3, 6)),
+            }}
+          />
+        );
+    }
+  })();
+
+  return (
+    <section className={LANDING_SECTION}>
+      <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
+      {/* exact-locale: resets the body's language mark for the store's own words */}
+      <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+        {arrangement}
+      </div>
+    </section>
+  );
+}
+
+/**
  * The admin's picked products as the shop's own cards in the shared product
  * rail, drawn by a client component that keeps them live
  * (`landing-products-section.tsx`, which says what is drawn and when). The
@@ -479,7 +566,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
         question,
         answer:
           answer === null ? null : (
-            <Markdown variant="landing" emphasis="quiet">
+            <Markdown variant="landing-faq" emphasis="quiet">
               {answer}
             </Markdown>
           ),
@@ -491,7 +578,12 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
-          <FaqAccordion items={items} />
+          {/* The questions sit under the section's H2, or stand as H2s where
+              the section has no heading written yet. */}
+          <FaqAccordion
+            items={items}
+            questionLevel={written(text.heading) === null ? 2 : 3}
+          />
         </div>
       </div>
     </section>
@@ -547,6 +639,7 @@ export const LANDING_SECTION_RENDERERS: {
   image: ImageSection,
   points: PointsSection,
   steps: StepsSection,
+  testimonials: TestimonialsSection,
   products: ProductsSection,
   faq: FaqSection,
   cta: CtaSection,

@@ -1,13 +1,15 @@
 import { buildGroupWorkspaceFixture } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isRedactedMember } from "@/components/group-workspace/types";
 import { productLocalDate } from "@/lib/session-occurrence";
-import { computeAge } from "@/lib/utils";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { gamerBirthOf } from "@/lib/gamer-birth";
-import type { TraineeAssignedProduct } from "@/services/assignments";
+import type {
+  TraineeAssignedProduct,
+} from "@/services/assignments/assignments.contracts";
 import type {
   TraineeFeedSession,
   TraineeGroupFeed,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * The trainee workspace's preview fixture: **the club scenario's own fixture,
@@ -127,6 +129,8 @@ export function buildTraineeWorkspaceFixture(now: Date): {
       start_date: data.product.start_date,
       end_date: data.product.end_date,
       is_remote: data.product.is_remote,
+      voice_room_mode: data.product.voice_room_mode,
+      external_voice_url: data.product.external_voice_url,
       material_url: club.materialUrl,
       requires_gamer_creations: data.product.requires_gamer_creations,
       translations: data.product.translations,

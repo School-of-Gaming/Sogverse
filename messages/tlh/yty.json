@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Yty nuq?",
+    "subtitle": "Yty ’oH HoS’e’ Sogverse rojmoHbogh. QaQ Qu’mey lutaHvIS — laHmey chu’ lughoj, juppu’ luSuq, batlh luDa, ’ej ghomDaq lumuv — Yty luSuq toy’wI’pu’, chaHvaD HochvaD je."
+  },
+  "overview": {
+    "heading": "Yty nuq ghoS",
+    "paragraph1": "pagh lughoS Hoch toy’wI’pu’. Hoch qep lumuvbogh, Hoch Quest lurInmoHbogh, Hoch batlh luDabogh — Yty-Points luSuq. loS Yty-Elements luchenmoH Pointsvam; Hoch Element ’oH wa’ Duj pIm’e’ — nen QaQ.",
+    "paragraph2": "toy’wI’pu’ Yty Suqmo’, Sogverse Yty boq — Hoch wanI’ je Qu’ chen."
+  },
+  "elements": {
+    "heading": "loS Yty-Elements",
+    "subheading": "Hoch Yty-Element ’oH wa’ Duj’e’ chenmoHbogh toy’wI’: ghaH je, latlhpu’ je, nugh je, jonwI’mey je",
+    "harmony": {
+      "name": "batlh",
+      "description": "SoH Duj",
+      "detail": "jIH nuq? batlh ’oH SoH nob — HoS je tIq. DuH je QaQ, QaQ ngoQmey, je meq Sov."
+    },
+    "glow": {
+      "name": "wov",
+      "description": "latlhmey Duj",
+      "detail": "latlhmey DaQaHlaH nuq? wov ’oH tIqhom, batlh, je jonlu’ Daj chenmoH. bIH boq, jatlh, je SoH Duj."
+    },
+    "valor": {
+      "name": "HoS",
+      "description": "nugh Duj",
+      "detail": "chay’ vIchoHlaH? nughDaq DaqlIj DaSam ’ej DaboQmeH bIyoHnIS — ’oH Valor’e’. ghom vum, ngoQmey ngeH, najmeH laH lo’, ’ej wa’leS QaQ ghoS — naDev Dat je."
+    },
+    "wit": {
+      "name": "nI’",
+      "description": "jonwI’mey Duj",
+      "detail": "chay’ jonwI’mey vIlo’chu’? Qujmey, QInmey, je janmey Duj QaQ ’ej qelwI’ — ’oH Wit’e’. HablI’Daq Dochmey yaj, De’ yepqu’ qel, ’ej Quj poH yIn poH je juvchuq."
+    }
+  },
+  "earning": {
+    "heading": "toy’wI’pu’ Yty nuqDaq",
+    "paragraph1": "muvghach vo’ Yty-Points Suqlu’. Hoch Hogh ghom’a’ qep muv, Quests rInmoH, toy’wI’pu’vaD batlh Da, ghom wanI’mey raghmey je muv — Hoch toy’wI’ Yty boq.",
+    "paragraph2": "Achievement Badge bIngDaq Points chenDI’, badgevetlh nIvmoH toy’wI’ — bronze, silver, gold, platinum, diamond. Hoch Point Yty-Level naQ Yty-Element Daj je boq.",
+    "paragraph3": "toy’wI’pu’ neH Dabe’. Gedu’pu’, vav/SoSmey, je Hoch DIvI’ Sogverse Yty boq — wanI’ je Qu’ Hoch."
+  }
+}

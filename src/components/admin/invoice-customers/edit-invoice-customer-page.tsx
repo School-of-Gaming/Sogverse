@@ -3,11 +3,11 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   useInvoiceCustomer,
   useUpdateInvoiceCustomer,
-} from "@/services/invoice-customers";
+} from "@/services/invoice-customers/invoice-customers.queries";
 import { InvoiceCustomerForm } from "./invoice-customer-form";
 import { InvoiceCustomerPageShell } from "./invoice-customer-page-shell";
 import { invoiceCustomerDraft } from "./invoice-customer-draft";

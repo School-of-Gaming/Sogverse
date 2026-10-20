@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { PersonChip } from "@/components/ui/person-chip";
 import type { AppHref } from "@/lib/constants/routes";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import { SubstitutionSessionFacts } from "@/components/session-substitution/SubstitutionSessionFacts";
 import type { SubstitutionSession } from "./admin-substitutions-data";

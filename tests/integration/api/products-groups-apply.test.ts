@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/[id]/groups/apply/route";
-import type { GroupChangeSet } from "@/services/groups";
+import type { GroupChangeSet } from "@/services/groups/groups.service";
 
 // The apply route is a thin wrapper around apply_group_changes — it
 // validates auth, parses the JSON body, and forwards the change set to the RPC.

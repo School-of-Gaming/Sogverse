@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enVerifyEmail from "@/../messages/en/verifyEmail.json";
+import enCommon from "@/../messages/en/common.json";
 import type { EmailVerificationRedemption } from "@/lib/email-verification.server";
 
 /**
@@ -49,12 +50,16 @@ vi.mock("next-intl/server", () => ({
   getTranslations: (namespace: "verifyEmail" | "common") =>
     Promise.resolve((key: string) => {
       const value: unknown = (messages[namespace] as Record<string, unknown>)[key];
-      if (typeof value !== "string") throw new Error(`no ${namespace}.${key}`);
+      if (typeof value !== "string") {
+        throw new Error(`MISSING_MESSAGE: Could not resolve \`${namespace}.${key}\` in messages for locale \`en\`.`);
+      }
       return value;
     }),
 }));
 
 import VerifyEmailPage from "@/app/[locale]/(auth)/verify-email/page";
+
+const messages = { verifyEmail: enVerifyEmail, common: enCommon };
 
 const CHILD_ADDRESS = "lily@example.test";
 

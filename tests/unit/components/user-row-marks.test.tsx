@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
 import { UserRow } from "@/components/admin/user-row";
 import type { UserRole } from "@/types";
+
+const messages = { admin: enAdmin, common: enCommon };
 
 /**
  * **A mark on an admin row is a claim, and only a positive answer prints one.**

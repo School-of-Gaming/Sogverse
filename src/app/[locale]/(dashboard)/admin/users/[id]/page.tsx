@@ -5,7 +5,8 @@ import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -23,15 +24,20 @@ import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-c
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
-import { UsersService } from "@/services/users";
-import { GamerService } from "@/services/gamers";
-import { MinecraftService } from "@/services/minecraft";
-import { RobloxService } from "@/services/roblox";
-import { ParticipationsService } from "@/services/participations";
-import type { AdminGamerParticipationRow } from "@/services/participations";
+import { UsersService } from "@/services/users/users.service";
+import { GamerService } from "@/services/gamers/gamers.service";
+import { MinecraftService } from "@/services/minecraft/minecraft.service";
+import { RobloxService } from "@/services/roblox/roblox.service";
+import {
+  ParticipationsService,
+} from "@/services/participations/participations.service";
+import type {
+  AdminGamerParticipationRow,
+} from "@/services/participations/participations.service";
 // From the service module, for the reason given for the contract service below.
 import {
   AssignmentsService,

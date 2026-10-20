@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { ParticipationCounts } from "@/services/participations";
+import { cn } from "@/lib/cn";
+import type { ParticipationCounts } from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { ProductBrowseCard } from "./product-browse-card";
 

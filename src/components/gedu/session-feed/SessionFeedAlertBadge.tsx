@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { MaybeInertHref } from "@/lib/constants/routes";
 
 /**

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Link as LinkIcon, Mail, Share2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { buildShareLinks } from "./share-links";
 import { LinkedInMark, RedditMark, WhatsAppMark, XMark } from "./share-marks";
 import { Heading } from "@sog/ui";

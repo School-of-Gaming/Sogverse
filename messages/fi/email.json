@@ -1,0 +1,243 @@
+{
+  "footer": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
+  "roleAdmin": "Ylläpitäjä",
+  "roleParent": "Vanhempi",
+  "roleGamer": "Pelaaja",
+  "roleGedu": "Gedu",
+  "passwordReset": {
+    "subject": "Nollaa School of Gaming -salasanasi",
+    "heading": "Nollaa salasanasi",
+    "body": "Saimme pyynnön nollata School of Gaming -salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
+    "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+    "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
+    "button": "Nollaa salasana"
+  },
+  "pinReset": {
+    "subject": "Nollaa School of Gaming -vanhempaintilin PIN-koodi",
+    "heading": "Nollaa vanhempaintilin PIN-koodi",
+    "body": "Saimme pyynnön nollata School of Gaming -vanhempaintilisi PIN-koodi. Napsauta alla olevaa painiketta valitaksesi uuden nelinumeroisen PIN-koodin.",
+    "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
+    "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
+    "button": "Nollaa PIN-koodi"
+  },
+  "helpRequest": {
+    "subject": "Avunpyyntö käyttäjältä {displayName} ({role})",
+    "heading": "Uusi avunpyyntö",
+    "intro": "Joku on pyytänyt apua. Vastaa tähän viestiin, niin vastaus menee alla olevaan osoitteeseen.",
+    "from": "Lähettäjä",
+    "role": "Rooli",
+    "replyToLabel": "Vastausosoite",
+    "sent": "Lähetetty",
+    "message": "Viesti",
+    "gamerNoteNoMailbox": "Viesti on lähetetty pelaajatililtä ({firstName}), jolla ei ole omaa sähköpostiosoitetta.",
+    "gamerNoteOwnMailbox": "Viesti on lähetetty pelaajatililtä ({firstName}) – hän lukee myös omaa sähköpostiaan {gamerEmail}."
+  },
+  "welcomeParent": {
+    "subject": "Tervetuloa School of Gamingiin",
+    "heading": "Tervetuloa School of Gamingiin",
+    "greeting": "Hei {firstName}, ja tervetuloa mukaan.",
+    "platform": "Sogverse on School of Gamingin palvelu, jossa hoidat helposti perheesi kerhoihin, leireihin ja tapahtumiin liittyvät asiat.",
+    "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut perheesi kerhoja koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin {settingsLink}.",
+    "settingsLinkLabel": "asetuksissa",
+    "verifyButton": "Vahvista sähköpostiosoitteesi",
+    "shopButton": "Selaa kauppaa",
+    "dashboardButton": "Siirry Oma SOG -sivulle"
+  },
+  "welcomeGedu": {
+    "subject": "Tervetuloa School of Gamingiin – Gedu-tilisi",
+    "heading": "Tervetuloa School of Gamingiin",
+    "greeting": "Hei {firstName}, ja kiitos, että rekisteröidyit Geduksi.",
+    "certification": "Ylläpitäjä tarkistaa ja hyväksyy tilisi. Voit sillä välin tutustua Oma SOG -sivuun, mutta osa toiminnoista avautuu vasta, kun tilisi on hyväksytty.",
+    "verifyBody": "Kun vahvistat sähköpostiosoitteesi, tavoitamme sinut ryhmiäsi ja tapaamisia koskevissa asioissa. Voit tehdä sen nyt tai myöhemmin {settingsLink}.",
+    "settingsLinkLabel": "asetuksissa",
+    "verifyButton": "Vahvista sähköpostiosoitteesi",
+    "dashboardButton": "Siirry Oma SOG -sivulle"
+  },
+  "productConfirmation": {
+    "subject": {
+      "consumer_club": "{participantName} on ilmoitettu kerhoon {productName}",
+      "municipality_club": "{participantName} on ilmoitettu kerhoon {productName}",
+      "camp": "{participantName} on ilmoitettu leirille {productName}",
+      "event": "{participantName} osallistuu tapahtumaan {productName}"
+    },
+    "heading": "Valmista tuli!",
+    "subheading": {
+      "consumer_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+      "municipality_club": "{participantName} on ilmoitettu toimintaan {productName}.",
+      "camp": "{participantName} on ilmoitettu toimintaan {productName}.",
+      "event": "{participantName} on liittynyt toimintaan {productName}."
+    },
+    "self": {
+      "subject": {
+        "consumer_club": "Sinut on ilmoitettu kerhoon {productName}",
+        "municipality_club": "Sinut on ilmoitettu kerhoon {productName}",
+        "camp": "Sinut on ilmoitettu leirille {productName}",
+        "event": "Osallistut tapahtumaan {productName}"
+      },
+      "subheading": {
+        "consumer_club": "Sinut on ilmoitettu toimintaan {productName}.",
+        "municipality_club": "Sinut on ilmoitettu toimintaan {productName}.",
+        "camp": "Sinut on ilmoitettu toimintaan {productName}.",
+        "event": "Olet liittynyt toimintaan {productName}."
+      },
+      "waitlist": {
+        "subheading": "Olet jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
+        "next2": {
+          "consumer_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+          "municipality_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+          "camp": "Säilytät paikkasi jonossa koko leirin ajan.",
+          "event": "Säilytät paikkasi jonossa koko tapahtuman ajan."
+        }
+      }
+    },
+    "typeLabel": {
+      "consumer_club": "Kerho",
+      "municipality_club": "Kuntakerho",
+      "camp": "Leiri",
+      "event": "Tapahtuma"
+    },
+    "priceLabel": "Hinta",
+    "price": {
+      "subscription": "{amount} / kk",
+      "upfront": "{amount} (kertamaksu)",
+      "free": "Ilmainen",
+      "external": "Kunnan kustantama"
+    },
+    "nextTitle": "Mitä seuraavaksi tapahtuu",
+    "next": {
+      "placement": "{participantName} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+      "placementSelf": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+      "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
+      "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
+      "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
+    },
+    "waitlist": {
+      "subject": "{participantName} on jonotuslistalla – {productName}",
+      "subjectSelf": "Olet jonotuslistalla – {productName}",
+      "heading": "Olet jonotuslistalla",
+      "subheading": "{participantName} on jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
+      "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+      "summaryTitle": "Jonotuspaikkasi",
+      "forLabel": "Jonotuslistalla",
+      "next2": {
+        "consumer_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
+        "municipality_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
+        "camp": "{participantName} säilyttää paikkansa jonossa koko leirin ajan.",
+        "event": "{participantName} säilyttää paikkansa jonossa koko tapahtuman ajan."
+      },
+      "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
+    },
+    "gamer": {
+      "greeting": "Hei {participantName}!",
+      "summaryTitle": "Ilmoittautumisesi"
+    },
+    "invite": {
+      "summary": "{productName} – {participantName}",
+      "locationOnline": "Verkossa – Oma SOG",
+      "locationInPerson": "{site}, {address}",
+      "whereOnline": "Tapaamiset ovat verkossa Oma SOG -sivulla, ja äänihuone avautuu {minutes} minuuttia ennen tapaamisen alkua.",
+      "whereInPerson": "Tapaamispaikka on {site}.",
+      "whereAddress": "Osoite: {address}",
+      "link": "Kaikki tiedot ilmoittautumisesta löytyvät Oma SOG -sivulta: {url}",
+      "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
+    },
+    "dashboardButton": "Siirry Oma SOG -sivulle",
+    "closing": "Kysyttävää? Vastaa vain tähän viestiin.",
+    "summaryTitle": "Tilauksesi",
+    "forLabel": {
+      "consumer_club": "Ilmoitettu",
+      "municipality_club": "Ilmoitettu",
+      "camp": "Ilmoitettu",
+      "event": "Liittynyt"
+    },
+    "overview": {
+      "schedule": "Aikataulu",
+      "where": "Missä",
+      "format": "Muoto",
+      "online": "Verkossa",
+      "tbd": "Vahvistetaan myöhemmin",
+      "ageRange": "Ikähaarukka",
+      "audience": "Kohderyhmä",
+      "language": "Kieli",
+      "ages": "Ikä {min}–{max}",
+      "audienceParents": "Vanhemmille",
+      "audienceFamilies": "Perheille",
+      "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}",
+      "holidayBreaks": "Loma-ajat",
+      "holidayBreak": "{name}, {range}"
+    }
+  },
+  "verifyEmail": {
+    "subject": "Vahvista sähköpostiosoitteesi",
+    "heading": "Vahvista sähköpostiosoitteesi",
+    "body": "Hei {firstName}, vahvista School of Gaming -tilisi sähköpostiosoite alla olevalla painikkeella.",
+    "button": "Vahvista sähköpostiosoitteesi",
+    "ignore": "Jos et pyytänyt tätä viestiä, voit jättää sen huomiotta. Tiliisi ei tehdä muutoksia."
+  },
+  "gamerWelcome": {
+    "subject": "School of Gaming -tilisi on valmis",
+    "heading": "Tilisi on valmis",
+    "body": "Hei {gamerName}, vanhempasi loi sinulle School of Gaming -tilin. Jotta voit kirjautua sisään, tarvitset salasanan – vahvista ensin painikkeella, että tämä on sinun sähköpostiosoitteesi, niin pääset valitsemaan salasanan.",
+    "button": "Tämä on sähköpostiosoitteeni",
+    "ignore": "Jos et odottanut tätä viestiä, voit jättää sen huomiotta. Mitään ei tapahdu."
+  },
+  "sessionReport": {
+    "subject": "Raportti kerrasta – {productName}, {sessionDate}",
+    "title": "Raportti kerrasta",
+    "intro": "Hei! {productName} kokoontui jälleen, ja {geduName} kirjoitti kerrasta raportin. Mukana oli {gamerName}.",
+    "gamerIntro": "Hei {gamerName}! {productName} kokoontui jälleen, ja {geduName} kirjoitti kerrasta raportin. Tässä se on.",
+    "groupLabel": "Ryhmä",
+    "dateLabel": "Päivä",
+    "timeLabel": "Aika",
+    "photosHeading": "Kuvia tästä kerrasta",
+    "productButton": "Avaa Oma SOG",
+    "closing": "Tämä raportti, aiemmat raportit ja tulevat kerrat löytyvät kaikki Oma SOG -sivulta kohdasta {productName}.",
+    "staffCopyLabel": "Kopio Geduille ja ylläpitäjille",
+    "staffCopyBody": "Tämä on kopio raportista, joka lähetettiin ryhmän perheille. Saat sen lähettäjänä tai ylläpitäjänä, et vanhempana.",
+    "staffCopyPrivacy": "Jokainen perhe sai oman erillisen viestinsä, joka oli osoitettu vain sen omalle perheelle. Gedujen ja ylläpitäjien osoitteet näkyvät vain tämän viestin vastaanottaja- ja kopiokentissä: yksikään vanhempi ei näe niitä eikä muiden perheiden osoitteita."
+  },
+  "seatOffer": {
+    "heading": "Paikka vapautui",
+    "question": "Haluatko paikan edelleen? Kerro meille kummin päin tahansa – kieltävä vastaus auttaa yhtä paljon, sillä silloin voimme tarjota paikkaa heti seuraavalle perheelle.",
+    "deadlineLabel": "Vastaa viimeistään",
+    "deadlineBody": "{deadline}. Jos emme kuule sinusta siihen mennessä, paikka siirtyy jonossa seuraavalle perheelle.",
+    "accept": "Otan paikan",
+    "decline": "Ei kiitos",
+    "alsoInMySog": "Sama kysymys odottaa Oma SOG -sivulla, jos vastaat mieluummin siellä.",
+    "dashboardButton": "Vastaa Oma SOG -sivulla",
+    "child": {
+      "subject": "{participantName}: paikka vapautui – {productName}",
+      "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: {participantName} pääsee mukaan – {productName}."
+    },
+    "self": {
+      "subject": "Paikka vapautui – {productName}",
+      "opening": "Lupasimme ilmoittaa heti, kun paikka vapautuu. Nyt niin kävi: pääset mukaan – {productName}."
+    },
+    "gamer": {
+      "subject": "Sinulle vapautui paikka – {productName}",
+      "opening": "Hei {gamerName}, sinulle vapautui paikka – {productName}. Hyvä uutinen!",
+      "parentDecides": "Vanhemmallesi lähti sähköposti, jossa kysytään, otetaanko paikka vastaan. Hän voi vastata viimeistään {deadline}. Kun hän on vastannut, näet paikan Oma SOG -näkymässä.",
+      "dashboardButton": "Avaa Oma SOG"
+    }
+  },
+  "seatOfferStaff": {
+    "participant": "Kenelle paikka",
+    "contact": "Yhteyshenkilö",
+    "contactEmail": "Sähköposti",
+    "product": "Tuote",
+    "schedule": "Aikataulu",
+    "offeredAt": "Tarjottu",
+    "nextStep": "Tarjous on päättynyt ja paikka on jälleen vapaana. Avaa tuote, katso jonotuslista ja lähetä seuraava kutsu.",
+    "button": "Avaa tuote",
+    "declined": {
+      "subject": "{participantName} kieltäytyi paikasta – {productName}",
+      "heading": "Paikkatarjouksesta kieltäydyttiin",
+      "body": "Perhe ei voi ottaa paikkaa vastaan ja kertoi siitä meille sen sijaan, että olisi jättänyt asian auki. Heidät on poistettu jonotuslistalta."
+    },
+    "no_response": {
+      "subject": "Paikkatarjoukseen ei vastattu: {participantName} – {productName}",
+      "heading": "Paikkatarjous vanheni",
+      "body": "Vastausaika päättyi ilman vastausta. Perhe on edelleen jonotuslistalla ja paikkaa voi tarjota heille uudelleen, mutta paikka itsessään on nyt vapaa."
+    }
+  }
+}

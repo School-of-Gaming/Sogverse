@@ -1,7 +1,9 @@
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
-import type { PublishedLibraryArticleSummary } from "@/services/library";
+import type {
+  PublishedLibraryArticleSummary,
+} from "@/services/library/library.contracts";
 import { isLibraryCategory, type LibraryCategory } from "../categories";
 import { publishedArticleCards } from "../more-from-library";
 import type { LibraryIndexBodyProps } from "./library-index-body";

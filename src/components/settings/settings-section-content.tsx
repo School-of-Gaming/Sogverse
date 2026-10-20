@@ -36,18 +36,29 @@ import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-conse
 import { McpServerCard } from "@/components/settings/mcp-server-card";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import { useUpdateProfile, useSendVerificationEmail } from "@/services/users";
-import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
-import { toE164Digits } from "@/lib/utils";
-import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
-import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
+import {
+  useUpdateProfile,
+  useSendVerificationEmail,
+} from "@/services/users/users.queries";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import type { LocationWithChain } from "@/services/locations/locations.service";
+import { toE164Digits } from "@/lib/constants/phone";
+import {
+  useMyMinecraftAccount,
+  useUpdateMyMinecraft,
+} from "@/services/minecraft/minecraft.queries";
+import {
+  useMyRobloxAccount,
+  useUpdateMyRoblox,
+} from "@/services/roblox/roblox.queries";
 import {
   useMyMarketingConsents,
   useSetMarketingConsent,
-} from "@/services/marketing-consents";
+} from "@/services/marketing-consents/marketing-consents.queries";
 import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   isGamerProfile,

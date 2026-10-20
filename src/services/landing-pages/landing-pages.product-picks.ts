@@ -3,7 +3,7 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import type { LandingSection } from "@/lib/landing-pages/sections";
 import { effectiveStatus } from "@/lib/products/effective-status";
-import type { ProductListingFactsRow } from "@/services/products";
+import type { ProductListingFactsRow } from "@/services/products/products.service";
 
 /*
  * **Which of a page's picked products readers are shown, and why the others

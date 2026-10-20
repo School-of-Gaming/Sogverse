@@ -7,7 +7,7 @@ import {
   type FaqAccordionItem,
 } from "@/components/ui/faq-accordion";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 
 /**
  * The role FAQs, one exported component per dashboard.
@@ -163,7 +163,7 @@ function HelpFaqBlock({ items }: { items: readonly FaqAccordionItem[] }) {
       <Heading level={3} step="card-title">
         {t("faqHeading")}
       </Heading>
-      <FaqAccordion items={items} />
+      <FaqAccordion items={items} questionLevel={4} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { ParticipationsService } from "@/services/participations";
-import { ProductsService } from "@/services/products";
+import { ParticipationsService } from "@/services/participations/participations.service";
+import { ProductsService } from "@/services/products/products.service";
 import {
   selectRailProducts,
   type ProductRailPrefetch,

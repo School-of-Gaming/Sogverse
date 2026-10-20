@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LandingSection } from "@/lib/landing-pages/sections";
-import { landingProductPicks } from "@/services/landing-pages";
-import type { ProductListingFactsRow } from "@/services/products";
+import { landingProductPicks } from "@/services/landing-pages/landing-pages.product-picks";
+import type { ProductListingFactsRow } from "@/services/products/products.service";
 
 /**
  * **Which of a page's picks readers are shown, and why the others are not** —

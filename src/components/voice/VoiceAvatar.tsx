@@ -3,7 +3,7 @@
 import { forwardRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { MicOff } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { AVATAR_SIZE } from "@/lib/constants/voice-zones";

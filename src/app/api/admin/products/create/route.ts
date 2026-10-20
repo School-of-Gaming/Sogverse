@@ -126,6 +126,13 @@ export const POST = defineRoute({
       p_requires_gamer_creations: body.requires_gamer_creations,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
+      // How the sessions are joined. The mode travels unconditionally, the
+      // shape `p_requires_gamer_creations` has (its parameter defaults to
+      // 'sogverse' rather than NULL); the link is an omission when null, like
+      // the tag. The join instructions ride on the translations, and the RPC
+      // refuses them on any mode but `none`.
+      p_voice_room_mode: body.voice_room_mode,
+      p_external_voice_url: body.external_voice_url ?? undefined,
       p_timezone: body.timezone,
       p_is_visible: body.is_visible,
       p_waitlist_enabled: body.waitlist_enabled,

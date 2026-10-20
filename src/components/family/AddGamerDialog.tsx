@@ -21,15 +21,16 @@ import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-accou
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
-  useCreateGamer,
-} from "@/services/gamers";
-import { usePinStatus, pinKeys } from "@/services/pin";
+} from "@/services/gamers/gamers.contracts";
+import { useCreateGamer } from "@/services/gamers/gamers.queries";
+import { usePinStatus, pinKeys } from "@/services/pin/pin.queries";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
-import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { CreateGamerInput, GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {

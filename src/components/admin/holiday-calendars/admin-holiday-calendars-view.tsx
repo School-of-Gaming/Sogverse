@@ -1,6 +1,8 @@
 "use client";
 
-import { useHolidayCalendars } from "@/services/holiday-calendars";
+import {
+  useHolidayCalendars,
+} from "@/services/holiday-calendars/holiday-calendars.queries";
 import { AdminHolidayCalendarsPage } from "./admin-holiday-calendars-page";
 import { useViewerToday } from "./use-viewer-today";
 

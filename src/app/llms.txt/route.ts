@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { FAQ_ITEM_KEYS } from "@/components/about/about-faq";
 import {
   landingPageCanonicalPath,
@@ -7,13 +8,18 @@ import {
   libraryArticleCanonicalPath,
   libraryArticleLocales,
 } from "@/components/library/article/article-metadata";
-import { loadMessages } from "@/i18n/messages";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { aboutMessages } from "@/i18n/namespaces/about";
+import { homeMessages } from "@/i18n/namespaces/home";
+import { metadataMessages } from "@/i18n/namespaces/metadata";
 import { getPathname } from "@/i18n/navigation";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { LOCALE_CONFIG } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
+import { isProductionDeployment } from "@/lib/seo/deployment";
 import { BUSINESS_ID, LEGAL_NAME, VAT_ID } from "@/lib/seo/organization";
 import { createAnonClient } from "@/lib/supabase/anon";
 import {
@@ -188,7 +194,7 @@ function landingPageLines(
 }
 
 function buildLlmsTxt(
-  messages: Awaited<ReturnType<typeof loadMessages>>,
+  messages: Pick<Messages, "about" | "home" | "metadata">,
   baseUrl: string,
   published: readonly PublishedLibraryArticleSummary[] | null,
   landingPages: readonly PublishedLandingPageSummary[] | null,
@@ -290,8 +296,18 @@ async function readLiveLandingPages() {
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * Production only, like the sitemap: the file exists to point AI assistants at
+ * the site, and no other deployment may be found (`src/lib/seo/deployment.ts`).
+ */
 export async function GET() {
-  const messages = await loadMessages("en");
+  if (!isProductionDeployment()) notFound();
+  const [about, home, metadata] = await Promise.all([
+    loadNamespace(aboutMessages, "en"),
+    loadNamespace(homeMessages, "en"),
+    loadNamespace(metadataMessages, "en"),
+  ]);
+  const messages = { about, home, metadata };
   const [published, landingPages] = await Promise.all([
     readLiveArticles().catch((error: unknown) => {
       console.error("[llms.txt] the live Library articles were not read:", error);

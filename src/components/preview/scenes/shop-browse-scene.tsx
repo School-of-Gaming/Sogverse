@@ -21,7 +21,7 @@ import {
 import { useShopCategories } from "@/components/public/products/use-shop-categories";
 import { previewSceneHref } from "../href";
 import type { AppHrefObject } from "@/lib/constants/routes";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * Which category a product type belongs under. Read from `CATEGORY_TYPE`

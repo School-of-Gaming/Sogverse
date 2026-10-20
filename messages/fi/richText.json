@@ -1,0 +1,16 @@
+{
+  "bold": "Lihavointi",
+  "italic": "Kursivointi",
+  "title": "Pääotsikko",
+  "heading": "Otsikko",
+  "subheading": "Väliotsikko",
+  "bulletList": "Luettelo",
+  "orderedList": "Numeroitu luettelo",
+  "link": "Linkki",
+  "linkUrl": "Linkin osoite",
+  "linkApply": "Lisää linkki",
+  "linkRemove": "Poista linkki",
+  "linkCancel": "Peruuta",
+  "linkInvalid": "Tätä osoitetta ei voi linkittää. Käytä verkko-osoitetta, sähköpostiosoitetta tai tämän sivuston sisäistä polkua.",
+  "opensInNewTab": "(avautuu uuteen välilehteen)"
+}

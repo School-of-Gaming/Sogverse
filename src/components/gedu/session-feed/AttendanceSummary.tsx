@@ -6,7 +6,7 @@ import {
   ATTENDANCE_TONE,
   attendanceMarkState,
 } from "@/components/session-feed";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { isExpectedOnEntry } from "./entry-state";
 import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./types";
 

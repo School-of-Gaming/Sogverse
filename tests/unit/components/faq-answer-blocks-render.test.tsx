@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
+import enGamer from "@/../messages/en/gamer.json";
+import enHelpSection from "@/../messages/en/helpSection.json";
+import enAbout from "@/../messages/en/about.json";
 import { GamerHelpFaq } from "@/components/help/help-faq";
 import { AboutFaq } from "@/components/about/about-faq";
+
+const en = { gamer: enGamer, helpSection: enHelpSection, about: enAbout };
 
 /**
  * The other half of the block-structure guarantee: that a tagged answer reaches

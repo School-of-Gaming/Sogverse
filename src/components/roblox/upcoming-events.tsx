@@ -3,8 +3,10 @@ import { useTranslations } from "next-intl";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
-import type { ParticipationCounts } from "@/services/participations";
+import { ROUTES } from "@/lib/constants/routes";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { ProductRail } from "@/components/public/products/product-rail";
 import { Heading } from "@sog/ui";

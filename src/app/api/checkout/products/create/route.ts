@@ -17,7 +17,7 @@ import {
   createParticipationRpcResult,
 } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   computeSinglePaymentAmount,
   ensureStripeProductForProduct,

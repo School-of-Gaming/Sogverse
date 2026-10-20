@@ -3,7 +3,8 @@ import { render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
-import messages from "@/../messages/en.json";
+import productBrowse from "@/../messages/en/productBrowse.json";
+import roblox from "@/../messages/en/roblox.json";
 import type { ProductBrowseRow } from "@/types";
 
 /**
@@ -39,7 +40,7 @@ function Providers({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
   return (
     <QueryClientProvider client={client}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="en" messages={{ productBrowse, roblox }}>
         {children}
       </NextIntlClientProvider>
     </QueryClientProvider>
@@ -74,10 +75,10 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
         <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />
       </Providers>,
     );
-    expect(screen.getByRole("heading", { level: 2, name: messages.roblox.events.heading })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: roblox.events.heading })).toBeTruthy();
     expect(shownProducts()).toEqual([id(1), id(4)]);
-    expect(screen.getByRole("link", { name: messages.roblox.events.browseShop })).toBeTruthy();
-    expect(screen.queryByText(messages.roblox.events.empty)).toBeNull();
+    expect(screen.getByRole("link", { name: roblox.events.browseShop })).toBeTruthy();
+    expect(screen.queryByText(roblox.events.empty)).toBeNull();
   });
 
   it("keeps its own empty state, and no shop link, when the slice is empty", () => {
@@ -87,9 +88,9 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
         <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />
       </Providers>,
     );
-    expect(screen.getByText(messages.roblox.events.empty)).toBeTruthy();
+    expect(screen.getByText(roblox.events.empty)).toBeTruthy();
     expect(shownProducts()).toEqual([]);
-    expect(screen.queryByRole("link", { name: messages.roblox.events.browseShop })).toBeNull();
+    expect(screen.queryByRole("link", { name: roblox.events.browseShop })).toBeNull();
   });
 
   it("names its arrows in its own words when there are more events than a row holds", () => {
@@ -101,8 +102,8 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
         />
       </Providers>,
     );
-    expect(screen.getByRole("button", { name: messages.roblox.events.previous })).toBeTruthy();
-    expect(screen.getByRole("button", { name: messages.roblox.events.next })).toBeTruthy();
+    expect(screen.getByRole("button", { name: roblox.events.previous })).toBeTruthy();
+    expect(screen.getByRole("button", { name: roblox.events.next })).toBeTruthy();
   });
 });
 

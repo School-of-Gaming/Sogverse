@@ -1,11 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enSessionFacts from "@/../messages/en/sessionFacts.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
 import { GeduSubstitutionCard } from "@/components/gedu/GeduSubstitutionCard";
 import { buildGeduDashboardFixture } from "@/components/gedu/mock-dashboard-fixtures";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
+
+const messages = {
+  gedu: enGedu,
+  productType: enProductType,
+  sessionBadge: enSessionBadge,
+  sessionFacts: enSessionFacts,
+  voiceButton: enVoiceButton,
+};
 
 /**
  * **A substitution card is not an assignment card with a date on it.**

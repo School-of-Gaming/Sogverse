@@ -5,7 +5,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { FormSection } from "@/components/admin/products/form-primitives";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   formattingLocale,
   resolveLocale,
@@ -16,8 +16,10 @@ import {
   useHolidayCalendar,
   usePreviewHolidayCalendarChange,
   useUpdateHolidayCalendar,
+} from "@/services/holiday-calendars/holiday-calendars.queries";
+import {
   type HolidayCalendarProduct,
-} from "@/services/holiday-calendars";
+} from "@/services/holiday-calendars/holiday-calendars.service";
 import { holidayCalendarDraft } from "./holiday-calendar-draft";
 import { HolidayCalendarForm } from "./holiday-calendar-form";
 import { summariseHolidayImpact } from "./holiday-calendar-impact";

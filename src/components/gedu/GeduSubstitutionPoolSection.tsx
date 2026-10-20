@@ -7,11 +7,17 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { buildSubstitutionPoolRows } from "@/lib/gedu-substitution-pool";
 import {
   sessionSubstitutionKeys,
+} from "@/services/session-substitution/session-substitution.keys";
+import {
   substitutionAnswerFailureKey,
+} from "@/services/session-substitution/session-substitution.refusals";
+import {
   useDeclineSessionSubstitution,
   useOfferSessionSubstitution,
+} from "@/services/session-substitution/session-substitution.queries";
+import {
   type OpenSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 import { GeduSubstitutionPoolSectionView } from "./GeduSubstitutionPoolSectionView";
 
 /**

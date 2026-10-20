@@ -1,4 +1,4 @@
-import type { ParticipationCounts } from "@/services/participations";
+import type { ParticipationCounts } from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 
 /**

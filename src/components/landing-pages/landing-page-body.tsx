@@ -6,6 +6,7 @@ import type {
   LandingSection,
   LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
 
@@ -14,6 +15,12 @@ export interface LandingPageBodyProps {
   sections: readonly LandingSection[];
   /** Each picture's path in the `landing-images` bucket, by catalogue entry id. */
   imagePaths: Readonly<Record<string, string>>;
+  /**
+   * The current words of each testimonial the structure places, by id — read
+   * from the store per request, never from the copy, so an edit shows
+   * without a republish.
+   */
+  testimonials: Readonly<Record<string, PublicTestimonial>>;
   /** The shown version's words, by section id. */
   sectionTexts: LandingSectionTexts;
   /** The language the shown version is written in. */
@@ -41,6 +48,7 @@ export interface LandingPageBodyProps {
 export function LandingPageBody({
   sections,
   imagePaths,
+  testimonials,
   sectionTexts,
   textLocale,
   locale,
@@ -48,7 +56,9 @@ export function LandingPageBody({
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
+    textLocale,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
+    testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,
   };
   return (

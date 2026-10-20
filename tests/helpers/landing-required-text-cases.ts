@@ -28,7 +28,8 @@ export const CASE_IDS = {
   steps: id(0x1005),
   faq: id(0x1006),
   cta: id(0x1007),
-  products: id(0x1008),
+  testimonials: id(0x1008),
+  products: id(0x1009),
   picture: id(0x2001),
   pictureTwo: id(0x2002),
   imageItemA: id(0x3001),
@@ -38,8 +39,10 @@ export const CASE_IDS = {
   stepA: id(0x3005),
   stepB: id(0x3006),
   faqA: id(0x3007),
-  productA: id(0x4001),
-  productB: id(0x4002),
+  testimonialA: id(0x4001),
+  testimonialB: id(0x4002),
+  productA: id(0x4003),
+  productB: id(0x4004),
 } as const;
 
 const I = CASE_IDS;
@@ -71,6 +74,12 @@ export function everySection(): LandingSection[] {
       ],
     },
     { id: I.steps, type: "steps", items: [{ id: I.stepA }, { id: I.stepB }] },
+    {
+      id: I.testimonials,
+      type: "testimonials",
+      arrangement: "pair",
+      testimonialIds: [I.testimonialA, I.testimonialB],
+    },
     { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
     {
       id: I.cta,
@@ -128,6 +137,11 @@ export function everyText(): Texts {
         [I.stepA]: { title: "Sign up", body: "Pick a club." },
         [I.stepB]: { title: "Play", body: "Join the session." },
       },
+    },
+    [I.testimonials]: {
+      eyebrow: "Parents",
+      heading: "What parents tell us",
+      intro: "In their own words.",
     },
     [I.products]: {
       eyebrow: "This term",

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
-import { LocationsService } from "@/services/locations";
-import { ProductsService } from "@/services/products";
+import { LocationsService } from "@/services/locations/locations.service";
+import { ProductsService } from "@/services/products/products.service";
 import {
   buildMunicipalityEntries,
   municipalitiesOfClubs,

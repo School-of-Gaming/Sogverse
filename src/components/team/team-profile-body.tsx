@@ -7,7 +7,7 @@ import { Markdown } from "@/components/ui/markdown";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   teamMemberHeadline,
   teamMemberSubline,

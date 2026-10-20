@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import productBrowse from "@/../messages/en/productBrowse.json";
+import richText from "@/../messages/en/richText.json";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
 import type { ProductBrowseRow } from "@/types";
 
@@ -41,10 +42,11 @@ function renderPage(
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
   return render(
     <QueryClientProvider client={client}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="en" messages={{ productBrowse, richText }}>
         <LandingPageBody
           sections={sections}
           imagePaths={{}}
+          testimonials={{}}
           sectionTexts={texts}
           textLocale="en"
           locale="en"

@@ -2,11 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import {
   AssignmentsService,
   type MyAssignedProductSessionRow,
-} from "@/services/assignments";
+} from "@/services/assignments/assignments.service";
 import {
   GeduSessionsService,
+} from "@/services/gedu-sessions/gedu-sessions.service";
+import {
   type GeduAssignmentSummary,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 // The service class rather than the package index, for the same reason the
 // two above are imported by name: that index re-exports `"use client"` query
 // hooks, which a server component would pull in as client references.

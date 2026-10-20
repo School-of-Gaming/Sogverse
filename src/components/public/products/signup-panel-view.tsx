@@ -9,8 +9,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Identicon } from "@/components/ui/identicon";
-import { cn, formatCurrencyFromCents } from "@/lib/utils";
-import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   consentDocumentMeta,
   describeRequiredConsents,

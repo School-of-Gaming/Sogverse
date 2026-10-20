@@ -64,7 +64,9 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import { ImagePicker } from "@/components/admin/products/image-picker";
-import { CATALOGUE_IMAGE_MAX_BYTES } from "@/services/catalogue-images";
+import {
+  CATALOGUE_IMAGE_MAX_BYTES,
+} from "@/services/catalogue-images/catalogue-images.contracts";
 import type { CatalogueImagePurpose } from "@/types";
 
 const ENTRY = {

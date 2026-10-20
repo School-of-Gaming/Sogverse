@@ -1,11 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  useParticipationCounts,
-  type ParticipationCounts,
-} from "@/services/participations";
-import { useVisibleProductsByTypes } from "@/services/products";
+import { useParticipationCounts } from "@/services/participations/participations.queries";
+import type { ParticipationCounts } from "@/services/participations/participations.service";
+import { useVisibleProductsByTypes } from "@/services/products/products.queries";
 import type { ProductBrowseRow } from "@/types";
 import {
   selectRailProducts,

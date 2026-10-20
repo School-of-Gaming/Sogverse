@@ -745,13 +745,14 @@ function assignmentRow(opts: {
       startDate,
       endDate,
       isRemote: opts.isRemote,
+      voiceRoom: { mode: "sogverse" },
       // Remote products have no building, whatever a fixture passes — the
       // read applies the same test.
       siteName: opts.isRemote ? null : (opts.siteName ?? null),
       topic: "minecraft_java",
       spokenLanguageCode: "fi",
       productType: opts.productType,
-      translations: [{ locale: "en", name: opts.name, description: "" }],
+      translations: [{ locale: "en", name: opts.name, description: "", voice_join_instructions: null }],
     },
     groupId: `${opts.id}-group-a`,
     // A standing assignment unless a fixture says otherwise — the recurring

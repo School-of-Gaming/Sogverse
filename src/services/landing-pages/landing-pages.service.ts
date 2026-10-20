@@ -1,8 +1,10 @@
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
   landingPickedProductIds,
+  landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
@@ -13,10 +15,13 @@ import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
 import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import { TestimonialsService } from "@/services/testimonials/testimonials.service";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import type { AppSupabaseClient } from "@/types";
 import {
   defaultLandingSlug,
   hasUnpublishedChanges,
+  landingCopyTitle,
   landingImagePaths,
   landingPageInput,
   landingVersionInput,
@@ -38,6 +43,7 @@ import {
   landingProductPicks,
   type LandingProductsSectionPicks,
 } from "./landing-pages.product-picks";
+import { testimonialsById } from "./landing-pages.testimonials";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
 const UUID =
@@ -227,9 +233,10 @@ export class LandingPageService {
    * One page's working copy and its published copy, or `null` when no page
    * has that id. An id that is not a UUID is answered as not found without a
    * query. Each draft version carries what it still needs before publishing
-   * takes it, by the TypeScript half of the required-text rule; each products
-   * section of the working copy, which of its picks readers are shown now and
-   * why the others are not.
+   * takes it, by the TypeScript half of the required-text rule; the page
+   * carries the current words of every testimonial its working copy places;
+   * and each products section of the working copy, which of its picks readers
+   * are shown now and why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -285,8 +292,21 @@ export class LandingPageService {
         publishable(data),
         data.publication,
       ),
+      testimonials: await this.testimonialWords(sections),
       productPicks: await this.productPicksOf(sections),
     };
+  }
+
+  /**
+   * The words of the testimonials a structure places, read from the store
+   * under the admin's own policy; a structure placing none reads nothing.
+   */
+  private async testimonialWords(
+    sections: readonly LandingSection[],
+  ): Promise<Record<string, PublicTestimonial>> {
+    const ids = landingPlacedTestimonialIds(sections);
+    if (ids.length === 0) return {};
+    return testimonialsById(await new TestimonialsService(this.supabase).listTestimonialWords(ids));
   }
 
   /**
@@ -431,6 +451,44 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("remove_landing_page_version returned no id");
+    return data;
+  }
+
+  /**
+   * Clone a page's working copy into a new, unpublished page, in one database
+   * call. Returns the new page's id.
+   *
+   * Everything is copied verbatim — the structure with its pictures, and each
+   * language's summary and words — except that every section and item takes
+   * a new id (the words re-keyed with them, by the database) and each
+   * language's title is marked as a copy in that language's own word, from
+   * `copyMarker`. Its slug is derived from the new title as any version
+   * without one takes its title's, and numbered by the database (`-2`, `-3`,
+   * …) when another page already holds it in that locale. Only `source`'s
+   * versions are named, and each must still be on the page; the database
+   * refuses an id no page has with `no_data_found`.
+   *
+   * No words are sent, so the link hook has nothing to see: the copied words'
+   * links were made canonical when they were saved.
+   */
+  async clonePage(
+    source: Pick<LandingPageDraft, "id" | "versions">,
+    copyMarker: (locale: SupportedLocale) => Promise<string>,
+  ): Promise<string> {
+    const versions = await Promise.all(
+      source.versions.map(async (version) => {
+        const title = landingCopyTitle(version.title, await copyMarker(version.locale));
+        return { locale: version.locale, title, default_slug: defaultLandingSlug(title) };
+      }),
+    );
+
+    const { data, error } = await this.supabase.rpc("clone_landing_page", {
+      p_id: source.id,
+      p_versions: versions,
+    });
+
+    if (error) throw error;
+    if (!data) throw new Error("clone_landing_page returned no id");
     return data;
   }
 

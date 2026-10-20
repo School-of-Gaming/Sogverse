@@ -1,0 +1,436 @@
+/**
+ * The decisions `export.mjs` makes before a browser starts — which origins a
+ * signed-in run may point at, what backend the server at `--base` runs
+ * against, who views each entry, and which account that viewer signs in as.
+ *
+ * Kept apart from the runner, and pure, so the guards that stand between a
+ * password and the wrong server are proven by unit tests rather than by a run
+ * that happened to go the right way. Each one throws an `Error` whose message is
+ * the sentence the runner prints; nothing here reads the environment, the disk
+ * or the network on its own.
+ */
+
+/**
+ * The hosts a **signed-in** run may point a browser at — **loopback only, and
+ * there is no override flag.**
+ *
+ * A signed-in run types a real password into the login form at whatever
+ * `--base` names, so that one flag decides who receives a working credential. A
+ * typo, a URL pasted out of a chat message or a copied command line is all it
+ * would take to hand it to a stranger's server, and the person running it would
+ * see nothing but an ordinary sign-in failure afterwards. A deployed origin, if
+ * one is ever wanted for a signed-in run, is added here as a literal — never as
+ * a flag, an environment variable, or a suffix pattern, since anyone can
+ * register a hostname that ends the right way.
+ *
+ * **A signed-out run is not held to it, because the reason does not reach it**:
+ * it reads no credential and types nothing, so the worst a wrong `--base` can do
+ * is photograph the wrong site.
+ */
+export const ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
+/** The URL's hostname as `URL` reports it — `[::1]` keeps its brackets. */
+export const isLoopbackHost = (hostname) => ALLOWED_HOSTS.includes(hostname);
+
+/** `--base` as an origin, or the reason it cannot be one for this run. */
+export function resolveBase(raw, signedOut) {
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(
+      `--base is not a URL: ${raw}\n  Expected something like http://localhost:3005`,
+    );
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error(
+      `--base must be http or https, not "${parsed.protocol}" (${raw}).`,
+    );
+  }
+  if (!signedOut && !isLoopbackHost(parsed.hostname)) {
+    throw new Error(
+      `--base points at "${parsed.hostname}", which is not a local dev server\n` +
+        `  (allowed: ${ALLOWED_HOSTS.join(", ")}, on any port).\n` +
+        `  This preset signs in with a real password, so it only ever types it\n` +
+        `  into a server on this machine. There is no override flag.`,
+    );
+  }
+  return parsed.origin;
+}
+
+// ---------------------------------------------------------------------------
+// Which backend the server runs against
+// ---------------------------------------------------------------------------
+
+/**
+ * The Supabase origin a server is configured with, read off the
+ * `Content-Security-Policy` header it sends with every page.
+ *
+ * **Asking the server, not a checkout.** The tool may run from one checkout
+ * while `--base` is served by another, so the only file that knows which
+ * database the server talks to is one the tool may not be able to see. The CSP
+ * says it out loud: its `connect-src` names the configured Supabase origin in
+ * the slot straight after `'self'` — `http://127.0.0.1:<port>` on a local
+ * stack, `https://<ref>.supabase.co` on a hosted project. Only that slot is
+ * read: the third-party hosts further along are concrete URLs too, and a
+ * server without the variable set puts the wildcard `https://*.supabase.co`
+ * in the slot instead, which is reported as "cannot tell" rather than guessed
+ * at.
+ */
+export function supabaseOriginFromCsp(csp) {
+  if (!csp) return null;
+  const directive = csp
+    .split(";")
+    .map((d) => d.trim().split(/\s+/))
+    .find((tokens) => tokens[0] === "connect-src");
+  if (!directive || directive[1] !== "'self'") return null;
+  const token = directive[2];
+  if (!token || !/^https?:\/\//.test(token) || token.includes("*")) return null;
+  try {
+    return new URL(token).origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * `"local"` — a stack on this machine, which carries the rich seed's accounts;
+ * `"staging"` — the staging project, whose accounts `.env.local` holds; `null`
+ * — the header named no origin, and the run needs `--stack`. Any other origin
+ * is refused.
+ *
+ * **Staging is a verified match, never a guess from the domain.** Every hosted
+ * project lives under `supabase.co`, production included, so the domain alone
+ * would hand the staging admin's password to a server pointed at production.
+ * `SUPABASE_PROJECT_REF` is staging by this repo's convention (production has
+ * its own variable), so only `https://<that ref>.supabase.co` is staging; any
+ * other project, or no ref to compare with, is refused.
+ *
+ * **An origin the header names but no rule recognises is refused, not left
+ * open.** `--stack` answers only a server that said nothing; one that names a
+ * backend this tool has no accounts for has said where its login form posts,
+ * and no flag should send a password there.
+ */
+export function stackFromSupabaseOrigin(origin, stagingRef) {
+  if (!origin) return null;
+  const { protocol, hostname } = new URL(origin);
+  if (isLoopbackHost(hostname)) return "local";
+  if (protocol === "https:" && hostname.endsWith(".supabase.co")) {
+    if (!stagingRef) {
+      throw new Error(
+        `The server runs against ${origin}, and SUPABASE_PROJECT_REF is not set\n` +
+          "  (.env.local or the environment), so there is no staging project to\n" +
+          "  check it against. Refusing to type a staging password into it.",
+      );
+    }
+    if (hostname === `${stagingRef}.supabase.co`) return "staging";
+    throw new Error(
+      `The server runs against ${origin}, which is not the staging project\n` +
+        `  (SUPABASE_PROJECT_REF, ${stagingRef}.supabase.co). Refusing to sign in:\n` +
+        "  this tool only has accounts for a local stack and staging.",
+    );
+  }
+  throw new Error(
+    `The server runs against ${origin}, which is neither a local stack nor a\n` +
+      "  hosted Supabase project. Refusing to sign in; --stack cannot override it.",
+  );
+}
+
+export const STACKS = ["local", "staging"];
+
+/**
+ * What the run signs in against: the detected stack, or `--stack` when the
+ * server's header could not say.
+ *
+ * **The flag never overrides a detection.** Its job is to answer a question the
+ * server left open; a flag that disagrees with what the server says would type
+ * one backend's password into the other's login form, so the disagreement is
+ * the error.
+ *
+ * **The flag can only say `local`.** Staging is the server's verified answer —
+ * its origin matched against `SUPABASE_PROJECT_REF` — and a server that names
+ * no origin leaves nothing to verify, so `--stack staging` would be a guess
+ * with the staging password riding on it. The seed's password is throwaway,
+ * so `--stack local` costs nothing if it is wrong.
+ */
+export function resolveStack(detected, flag) {
+  if (flag !== undefined && !STACKS.includes(flag)) {
+    throw new Error(`--stack must be one of ${STACKS.join(", ")}, not "${flag}".`);
+  }
+  if (!detected && flag === "staging") {
+    throw new Error(
+      "--stack staging cannot stand in for the server: staging is only signed in\n" +
+        "  to once the server's Supabase origin is checked against\n" +
+        "  SUPABASE_PROJECT_REF, and its Content-Security-Policy names none.\n" +
+        "  Set NEXT_PUBLIC_SUPABASE_URL for that server, or pass --stack local.",
+    );
+  }
+  if (detected && flag && detected !== flag) {
+    throw new Error(
+      `--stack ${flag} disagrees with the server, which runs against ${
+        detected === "local" ? "a local Supabase stack" : "hosted Supabase (staging)"
+      }.\n  Drop the flag; it only answers when the server cannot say.`,
+    );
+  }
+  const stack = detected ?? flag;
+  if (!stack) {
+    throw new Error(
+      "Could not tell whether the server at --base runs against a local stack or\n" +
+        "  staging: its Content-Security-Policy names no Supabase origin.\n" +
+        "  Pass --stack local, or set NEXT_PUBLIC_SUPABASE_URL for that server\n" +
+        "  so staging can be verified.",
+    );
+  }
+  return stack;
+}
+
+// ---------------------------------------------------------------------------
+// Who views an entry
+// ---------------------------------------------------------------------------
+
+export const ROLES = ["admin", "parent", "gamer", "gedu"];
+
+/**
+ * An entry's viewer: `entry.viewer`, else the preset's `viewer`, else `admin`.
+ *
+ * Written `"admin"`, `"parent"`, `"gedu"`, `"gamer"` (the parent's first gamer)
+ * or `"gamer:<first name>"`. A signed-out preset has no viewer — every shot is a
+ * first visit — so naming one there is refused rather than ignored.
+ */
+export function viewerOf(entry, preset) {
+  const raw = entry.viewer ?? preset.viewer;
+  if (preset.signedOut === true) {
+    if (raw !== undefined) {
+      throw new Error(
+        `Entry "${entry.slug}" names viewer "${raw}" in a signed-out preset, ` +
+          `where every shot is a first visit by nobody.`,
+      );
+    }
+    return null;
+  }
+  const value = raw ?? "admin";
+  const [role, ...rest] = String(value).split(":");
+  const gamer = rest.join(":").trim() || null;
+  if (!ROLES.includes(role) || (gamer && role !== "gamer")) {
+    throw new Error(
+      `Entry "${entry.slug}" names viewer "${value}"; expected one of ` +
+        `${ROLES.join(", ")}, or gamer:<first name>.`,
+    );
+  }
+  return { role, gamer, key: gamer ? `${role}:${gamer}` : role };
+}
+
+/**
+ * Each viewer's sign-in on a local stack — the rich seed's accounts, all on the
+ * password `password`. A gamer is reached through the parent, the way a family
+ * hands a child the device, so it signs in as the parent.
+ */
+const SEED_PASSWORD = "password";
+const SEED_ACCOUNTS = {
+  admin: { email: "admin@example.com" },
+  parent: { email: "parent@example.com", pin: "1111" },
+  gamer: { email: "parent@example.com", pin: "1111" },
+  gedu: { email: "gedu@example.com" },
+};
+
+/**
+ * Staging's sign-ins, by the `.env.local` variables that hold them. There is no
+ * staging educator account, so a gedu viewer against staging has none.
+ */
+const STAGING_VARS = {
+  admin: { email: "STAGING_ADMIN_EMAIL", password: "STAGING_ADMIN_PASSWORD" },
+  parent: {
+    email: "STAGING_PARENT_EMAIL",
+    password: "STAGING_PARENT_PASSWORD",
+    pin: "STAGING_PARENT_PIN",
+  },
+  gedu: null,
+};
+STAGING_VARS.gamer = STAGING_VARS.parent;
+
+/**
+ * The account a viewer signs in with, or why there is none.
+ *
+ * **The base is checked again here, against the credential it is about to
+ * receive.** A signed-in run only ever reaches this with a loopback base, but
+ * the check costs one line and is the last thing between a password and a
+ * stranger's server — so the function that hands a password out refuses to hand
+ * it out for any other host, rather than trusting its caller did.
+ *
+ * Which password is chosen follows from `stack` and nothing else: the seed's
+ * password goes only to a server running against a local stack, and the
+ * staging password only to one running against staging.
+ *
+ * `source` is how an error names the account without printing a value.
+ */
+export function credentialsFor(role, stack, baseHostname, env) {
+  if (!isLoopbackHost(baseHostname)) {
+    throw new Error(
+      `Refusing to sign in at "${baseHostname}": a signed-in run only types a ` +
+        `password into a server on this machine.`,
+    );
+  }
+  if (stack === "local") {
+    const seed = SEED_ACCOUNTS[role];
+    return {
+      email: seed.email,
+      password: SEED_PASSWORD,
+      pin: seed.pin ?? null,
+      source: `the rich seed's ${seed.email}`,
+    };
+  }
+  if (stack !== "staging") throw new Error(`Unknown stack "${stack}".`);
+  const vars = STAGING_VARS[role];
+  if (!vars) {
+    throw new Error(
+      `The ${role} viewer has no staging account: there are no staging ` +
+        `credentials for that role. Shoot it against a server running on a ` +
+        `local stack (npm run db -- up), whose rich seed has one.`,
+    );
+  }
+  const missing = Object.values(vars).filter((name) => !env[name]);
+  if (missing.length > 0) {
+    throw new Error(
+      `The ${role} viewer against staging needs ${missing.join(", ")} in ` +
+        `.env.local (or the environment).`,
+    );
+  }
+  return {
+    email: env[vars.email],
+    password: env[vars.password],
+    pin: vars.pin ? env[vars.pin] : null,
+    source: Object.values(vars).join(" / "),
+  };
+}
+
+/**
+ * The gamer a `gamer` viewer switches into, from `GET /api/family/list`'s
+ * `family`: the one with that first name, or the first gamer listed.
+ */
+export function pickGamer(family, name) {
+  const gamers = family.filter((m) => m.role === "gamer");
+  const found = name
+    ? gamers.find((m) => m.first_name.toLowerCase() === name.toLowerCase())
+    : gamers[0];
+  if (!found) {
+    throw new Error(
+      name
+        ? `The parent has no gamer named "${name}" (has: ${
+            gamers.map((m) => m.first_name).join(", ") || "none"
+          }).`
+        : "The parent has no gamers to switch into.",
+    );
+  }
+  return found;
+}
+
+/**
+ * The page a viewer's sign-in is proven on: a page only that role is let into,
+ * so landing anywhere else — the login form, the PIN gate, another role's
+ * dashboard — means the sign-in did not produce the viewer the run asked for.
+ */
+export const VIEWER_PROBE = {
+  admin: "/preview/products/consumer-club",
+  parent: "/parent",
+  gamer: "/gamer",
+  gedu: "/gedu",
+};
+
+/**
+ * The order the run's viewers sign in: **every gamer before any parent**, the
+ * rest as they come.
+ *
+ * **The order is load-bearing.** A gamer viewer signs in as the parent and then
+ * switches into the child, and the switch signs the parent out with Supabase's
+ * default, global scope — every session that parent account holds ends there,
+ * not only the one being switched. A parent viewer signed in earlier in the run
+ * would be holding one of them, and every one of its shots would land on the
+ * login page. Signed in after the last gamer, the parent's own session is
+ * created after the last revoke. (A gamer's session is the child's own account,
+ * which a later switch out of the parent does not touch.)
+ */
+export function signInOrder(viewers) {
+  return [
+    ...viewers.filter((v) => v.role === "gamer"),
+    ...viewers.filter((v) => v.role !== "gamer"),
+  ];
+}
+
+/**
+ * Refuses a `POST /api/auth/pin/verify` answer that did not unlock the session.
+ * A wrong PIN is not an HTTP error there — the route answers it `200
+ * { verified: false }` — so only `verified === true` counts.
+ */
+export function assertPinVerified(viewerKey, status, json, source) {
+  if (status === 200 && json?.verified === true) return;
+  throw new Error(
+    status === 200
+      ? `The PIN unlock for ${viewerKey} was refused: the server says the PIN ` +
+          `is wrong. Check ${source}.`
+      : `The PIN unlock for ${viewerKey} failed (HTTP ${status}). Check ${source}.`,
+  );
+}
+
+/**
+ * The pages the proxy bounces a viewer it will not let through to — the login
+ * form, and a PIN-locked parent's unlock gate. Neither slug is translated, so
+ * in every locale they are these paths under the request's own `/{locale}`.
+ */
+export const GATES = {
+  "/login": "the login page",
+  "/parent/unlock": "the PIN unlock gate",
+};
+
+/** Which gate a pathname is, with or without its locale prefix, or `null`. */
+export function gateOf(pathname) {
+  const path = pathname.replace(/\/$/, "");
+  return (
+    Object.keys(GATES).find(
+      (gate) => path === gate || path.replace(/^\/[a-z]{2,3}\//, "/") === gate,
+    ) ?? null
+  );
+}
+
+/**
+ * Refuses the landing of a viewer's sign-in probe unless it is the probe page
+ * itself. A parent probed at `/parent` and sent to `/parent/unlock` lands
+ * *under* the probe path, so a prefix match takes the PIN gate for success.
+ */
+export function assertProbeLanding(viewerKey, probe, landed) {
+  const gate = gateOf(landed);
+  if (gate || landed.replace(/\/$/, "") !== probe) {
+    throw new Error(
+      `Sign-in as ${viewerKey} did not hold — ${probe} sent it to ` +
+        (gate ? `${GATES[gate]} (${landed}).` : `${landed}.`),
+    );
+  }
+}
+
+/**
+ * Why a shot landed somewhere it did not ask for, or `null`. A shot bounced to
+ * a gate photographed the gate, so it fails by name; a shot whose own URL is
+ * that gate is the gate on purpose.
+ */
+export function shotLandingError(requested, landed) {
+  const gate = gateOf(landed);
+  if (!gate || gateOf(requested) === gate) return null;
+  return `landed on ${GATES[gate]} (${landed}) instead of ${requested}`;
+}
+
+/**
+ * The viewport names an entry narrows the run to, or `null` when it names none.
+ * A misspelt name matches nothing and would drop the entry from the run without
+ * a word, so an unknown one is refused.
+ */
+export function viewportsOf(entry, known) {
+  if (entry.viewports === undefined) return null;
+  const names = Array.isArray(entry.viewports) ? entry.viewports : [];
+  const unknown = names.filter((n) => !known.includes(n));
+  if (names.length === 0 || unknown.length > 0) {
+    throw new Error(
+      `Entry "${entry.slug}" names viewports ${JSON.stringify(entry.viewports)}; ` +
+        `expected a list of ${known.join(", ")}.`,
+    );
+  }
+  return names;
+}

@@ -19,7 +19,8 @@ import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
 } from "@/lib/products/format-product-schedule";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
@@ -34,6 +35,7 @@ import type {
   FamilySessionEntry,
 } from "./types";
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 
 /**
  * The **family product page**: one enrollment, one child, everything that has
@@ -132,6 +134,11 @@ export interface FamilyProductPageBodyProps {
    * testing for one would print an address for a club that meets online.
    */
   isRemote: boolean;
+  /**
+   * How the product's sessions are joined — the Sogverse room, a meeting
+   * elsewhere, or instructions per locale. Always `sogverse` in person.
+   */
+  voiceRoom: ProductVoiceRoom;
   /**
    * Whoever holds the seat this page is about — the child on a parent's or a
    * child's copy, the reader themselves on a self seat. The id seeds the
@@ -287,6 +294,7 @@ export function FamilyProductPageBody({
   creations,
   site,
   voiceHref,
+  voiceRoom,
   onJoinClick,
   entries,
   sourceTimeZone,
@@ -442,6 +450,7 @@ export function FamilyProductPageBody({
         {showJoin && (
           <div className="mt-4 flex">
             <JoinVoiceButton
+              voiceRoom={voiceRoom}
               voiceIsOpen={voiceState.voiceIsOpen}
               voiceHref={voiceHref}
               opensDate={voiceState.opensDate}

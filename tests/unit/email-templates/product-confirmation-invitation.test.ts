@@ -7,7 +7,7 @@ import {
 import { planSessions } from "../../mocks/planned-sessions";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**
@@ -852,7 +852,7 @@ describe("what the entry's notes say", () => {
 describe("every locale composes a whole document", () => {
   const PINNED: Record<string, string> = {
     en: "the voice room opens",
-    fi: "puhehuone avautuu",
+    fi: "äänihuone avautuu",
     sv: "röstrummet öppnar",
     fr: "le salon vocal ouvre",
     tlh: "ghogh pa’",

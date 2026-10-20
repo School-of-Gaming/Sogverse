@@ -71,7 +71,13 @@ function mockAuthenticatedNonAdmin() {
 const validBody = {
   billing_mode: "paid",
   translations: [
-    { locale: "en", name: "X", short_description: "Y", long_description: null },
+    {
+      locale: "en",
+      name: "X",
+      short_description: "Y",
+      long_description: null,
+      voice_join_instructions: null,
+    },
   ],
   topic: "minecraft_java",
   for_gamers: true,
@@ -86,6 +92,8 @@ const validBody = {
   material_url: null,
   location_id: null,
   is_remote: true,
+  voice_room_mode: "sogverse",
+  external_voice_url: null,
   start_date: "2026-09-01",
   end_date: null,
   timezone: "Europe/Helsinki",
@@ -389,6 +397,44 @@ describe("POST /api/admin/products/[id]/update", () => {
     // unflag the product on any edit made for some other reason.
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_requires_gamer_creations).toBe(false);
+  });
+
+  it("sends the voice room mode on every save and the link as an omission when null", async () => {
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: {
+          ...validBody,
+          voice_room_mode: "external",
+          external_voice_url: "https://meet.example.com/webinar",
+        },
+      }),
+      { params },
+    );
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({
+        p_voice_room_mode: "external",
+        p_external_voice_url: "https://meet.example.com/webinar",
+      }),
+    );
+
+    mockUserRpc.mockClear();
+    await POST(updateRequest({ data: validBody }), { params });
+    // Back on a Sogverse room the mode is explicit, never an omission, and the
+    // link is the omission whose DEFAULT NULL clears it.
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_voice_room_mode).toBe("sogverse");
+    expect(args.p_external_voice_url).toBeUndefined();
+  });
+
+  it("returns 400 when the voice room mode is missing", async () => {
+    mockAuthenticatedAdmin();
+    const { voice_room_mode: _mode, ...noMode } = validBody;
+    const response = await POST(updateRequest({ data: noMode }), { params });
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the creation-requirement flag is missing", async () => {

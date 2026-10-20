@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getClient } from "@/lib/supabase/client";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
-import { groupsKeys } from "@/services/groups";
+import { groupsKeys } from "@/services/groups/groups.queries";
 import { CONFIRMATION_POLL_INTERVAL_MS } from "@/lib/constants/participations";
 import type { SessionAudience } from "@/types";
 import {
@@ -17,7 +17,7 @@ import {
   type MyWaitlistRow,
   type ParticipationCounts,
 } from "./participations.service";
-import { productKeys } from "../products";
+import { productKeys } from "../products/products.queries";
 import { isConsentRefusal } from "./consent-refusal";
 import { participationKeys } from "./participations.keys";
 

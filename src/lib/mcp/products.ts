@@ -1,13 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { readMcpCaller } from "@/lib/mcp/auth";
 import { READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
-import { ProductsService } from "@/services/products";
+import { ProductsService } from "@/services/products/products.service";
 
 /*
  * The product tools: what an AI app needs to find shop products to promote —

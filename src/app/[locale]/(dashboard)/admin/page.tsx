@@ -7,9 +7,13 @@ import { AdminDashboardPage } from "@/components/admin/dashboard/AdminDashboardP
 import { createClient } from "@/lib/supabase/server";
 import {
   AdminDashboardService,
+} from "@/services/admin-dashboard/admin-dashboard.service";
+import {
   adminDashboardKeys,
+} from "@/services/admin-dashboard/admin-dashboard.keys";
+import {
   type AdminDashboardSnapshot,
-} from "@/services/admin-dashboard";
+} from "@/services/admin-dashboard/admin-dashboard.contracts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");

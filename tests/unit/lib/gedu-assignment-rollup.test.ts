@@ -62,11 +62,12 @@ function row(over: {
       startDate,
       endDate,
       isRemote: over.isRemote ?? true,
+      voiceRoom: { mode: "sogverse" },
       siteName: over.siteName ?? null,
       topic: "minecraft_java",
       spokenLanguageCode: "fi",
       productType: "consumer_club",
-      translations: [{ locale: "en", name: over.name, description: "" }],
+      translations: [{ locale: "en", name: over.name, description: "", voice_join_instructions: null }],
     },
     groupId: `${over.id}-group`,
     // A standing assignment: the rollup this suite is about is the recurring

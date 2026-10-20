@@ -6,7 +6,9 @@ import { useKeysetInfiniteQuery } from "@/hooks/use-keyset-infinite-query";
 import { adminDashboardKeys } from "@/services/admin-dashboard/admin-dashboard.keys";
 import { catalogueImageUsageKey } from "@/services/catalogue-images/catalogue-images.keys";
 import { holidayCalendarKeys } from "@/services/holiday-calendars/holiday-calendars.keys";
-import { municipalityInvoicingKeys } from "@/services/municipality-invoicing";
+import {
+  municipalityInvoicingKeys,
+} from "@/services/municipality-invoicing/municipality-invoicing.keys";
 import type { ProductType, ProductBrowseRow } from "@/types";
 import { invalidatePlanReaders } from "./plan-readers";
 import { productKeys } from "./products.keys";

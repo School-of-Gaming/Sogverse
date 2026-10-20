@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
-import type { UserListEntry } from "@/services/users";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import type { MissingRequirement } from "@/lib/products/session-requirements";
 
 /**
@@ -100,7 +100,7 @@ const GEDUS = [
 // on the row, so there is no second lookup to stand in for. `hasNextPage: false`
 // keeps the sentinel unmounted, which is what leaves jsdom's missing
 // `IntersectionObserver` out of these cases — paging has its own suite.
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUserList: () => ({
     data: { rows: GEDUS, total: GEDUS.length },
     isPending: false,
@@ -119,7 +119,7 @@ const covering = vi.hoisted(() => ({
   calls: [] as (string | null)[],
   settled: true,
 }));
-vi.mock("@/services/gedu-locations", () => ({
+vi.mock("@/services/gedu-locations/gedu-locations.queries", () => ({
   useGedusCoveringProduct: (productId: string | null) => {
     covering.calls.push(productId);
     return {

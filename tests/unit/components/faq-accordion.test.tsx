@@ -19,7 +19,7 @@ describe("FaqAccordion", () => {
   afterEach(cleanup);
 
   it("renders nothing at all when given no items", () => {
-    const { container } = render(<FaqAccordion items={[]} />);
+    const { container } = render(<FaqAccordion items={[]} questionLevel={3} />);
 
     expect(container.innerHTML).toBe("");
   });
@@ -27,6 +27,7 @@ describe("FaqAccordion", () => {
   it("renders one collapsed disclosure row per item, in the order given", () => {
     const { container } = render(
       <FaqAccordion
+        questionLevel={3}
         items={[
           { key: "first", question: "First question", answer: <p>First answer</p> },
           { key: "second", question: "Second question", answer: <p>Second answer</p> },
@@ -43,5 +44,24 @@ describe("FaqAccordion", () => {
     // Collapsed on arrival: the reader chooses what to open, and an accordion
     // that opens itself pushes everything below it down on nobody's request.
     expect([...rows].every((r) => !r.open)).toBe(true);
+  });
+
+  it("draws each question as a heading of the caller's level inside its summary", () => {
+    // The heading is what ties an answer to its question for a crawler or an
+    // assistant reading the outline; it has to sit inside the summary so the
+    // row stays the one native control that opens it.
+    const { container } = render(
+      <FaqAccordion
+        questionLevel={4}
+        items={[{ key: "only", question: "Only question", answer: <p>Only answer</p> }]}
+      />,
+    );
+
+    const heading = container.querySelector("summary > h4");
+    expect(heading?.textContent).toBe("Only question");
+    // The question takes SOG-UI's item-title step: the body size of its
+    // answer, set apart by weight.
+    expect(heading?.classList).toContain("text-item-title");
+    expect(container.querySelectorAll("h1, h2, h3, h5, h6")).toHaveLength(0);
   });
 });

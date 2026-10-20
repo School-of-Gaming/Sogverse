@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { robloxCardMetadata } from "../card-metadata";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { rawString } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { rawPolicyBlocks } from "@/components/legal/policy-content";
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // The date the policy *text* last changed — bump it whenever the copy below
-// (in messages/*.json) is edited. A date-only value, rendered through the
+// (in messages/*/robloxPrivacy.json) is edited. A date-only value, rendered through the
 // locale-aware, UTC-pinned `formatDateOnly` helper rather than hardcoded per
 // language (a plain calendar date carries no zone).
 const LAST_UPDATED = "2026-09-14";
