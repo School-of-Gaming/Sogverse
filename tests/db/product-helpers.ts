@@ -392,6 +392,8 @@ import { TEST_IDS } from "./constants";
  *                  uses
  *   913            landing-pages.test.ts — not a product: the testimonial its
  *                  clone fixture places, inserted and removed by that file
+ *   914            landing-pages.test.ts — the product its required-text
+ *                  fixture picks, created and deleted by that file
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

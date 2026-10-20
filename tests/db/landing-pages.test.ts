@@ -45,7 +45,7 @@ import { requiredTextCases } from "../helpers/landing-required-text-cases";
  * is asserted here once per table. Each wrong role is tried on every RPC with
  * a payload an admin would succeed with.
  *
- * Fixture UUIDs 834-83f (see the allocation registry in product-helpers.ts).
+ * Fixture UUIDs 834-83f and 913-914 (see the allocation registry in product-helpers.ts).
  * Every assertion is scoped to this file's own rows.
  */
 

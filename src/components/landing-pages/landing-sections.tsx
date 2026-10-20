@@ -35,7 +35,7 @@ import { cn } from "@/lib/cn";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
-import { Eyebrow, LANDING_SECTION, SectionHeader } from "./landing-section-header";
+import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
 import {
   written,
   type LandingSectionByType,
@@ -340,7 +340,7 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
   if (pictures.length === 0) return null;
   const grid = pictureGrid(pictures.length);
   const caption = written(text.caption);
-  const hasHeader = written(text.eyebrow) !== null || written(text.heading) !== null;
+  const hasHeader = hasSectionHeader({ eyebrow: text.eyebrow, heading: text.heading });
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
