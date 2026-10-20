@@ -197,9 +197,11 @@ export function LandingSubscribeForm({
           {t(refusal)}
         </StatusLine>
       )}
-      <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={committing || preview}>
-        {buttonLabel}
-      </Button>
+      <div className="flex justify-center">
+        <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={committing || preview}>
+          {buttonLabel}
+        </Button>
+      </div>
     </form>
   );
 }
