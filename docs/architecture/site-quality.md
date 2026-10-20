@@ -220,9 +220,10 @@ Each one exists to make the posture above hold by construction rather than by me
   derived address moved with it) and the index that lists it. **Production only**,
   gated by `isProductionDeployment()`; the key is `INDEXNOW_KEY`, served as
   `/indexnow-key.txt` at the root so it vouches for every URL on the host, and with no
-  key set submissions are skipped with a log line and the file is a 404. **A failed
-  submission never fails the change**: it is logged and dropped, as is a failed read of
-  what was live.
+  key set submissions are skipped with a log line and the file is a 404. The reads of
+  what is live run inside the request, but the POST itself is sent after the response
+  (`after()`), so a slow engine never holds up a publish. **A failed submission never
+  fails the change**: it is logged and dropped, as is a failed read of what was live.
 - **Open Graph cards** are route handlers taking a locale parameter; the reasoning is in
   `src/lib/og/`. A team card's address carries a version so link previews refetch when
   the card would look different; the server does not check that version, by the owner's

@@ -14,6 +14,12 @@ vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
 }));
 
+// The submission is sent after the response; here it runs at once.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("../../mocks/next-after")).nextServerWithImmediateAfter(importOriginal),
+);
+const { settleAfter } = await import("../../mocks/next-after");
+
 const {
   INDEXNOW_ENDPOINT,
   changeAndSubmit,
@@ -172,6 +178,10 @@ describe("a change and its submission", () => {
       }),
     ).resolves.toBeUndefined();
     expect(change).toHaveBeenCalledTimes(1);
+
+    await settleAfter();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith("[indexnow] the submission failed:", expect.any(TypeError));
   });
 
   it("does not fail the change when what is live cannot be read, before or after", async () => {

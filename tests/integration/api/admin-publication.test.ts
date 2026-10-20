@@ -16,6 +16,12 @@ vi.mock("next-intl/server", () => ({
   getTranslations: async () => (key: string) => key,
 }));
 
+// The submission is sent after the response; here it runs at once.
+vi.mock("next/server", async (importOriginal) =>
+  (await import("../../mocks/next-after")).nextServerWithImmediateAfter(importOriginal),
+);
+const { settleAfter } = await import("../../mocks/next-after");
+
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
@@ -220,6 +226,9 @@ describe.each(ROUTES)("the $name publication route", ({ path, route, publish, un
 
     expect(response.status).toBe(204);
     expect(publish).toHaveBeenCalledWith(ID);
+
+    await settleAfter();
+    expect(console.error).toHaveBeenCalledWith("[indexnow] the submission failed:", expect.any(TypeError));
   });
 
   it("off production, submits nothing", async () => {

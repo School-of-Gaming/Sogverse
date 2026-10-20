@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { isProductionDeployment } from "@/lib/seo/deployment";
 
 /*
@@ -142,9 +143,12 @@ export function changedUrls({
  *
  * `snapshot` reads what is live — once before the change, once after — and
  * returns the URLs to compare; it is called only when a submission will be
- * made. **The change is the only thing here that may fail the call**: a
- * refusal from the change propagates exactly as the change raised it, and
- * every failure after it is logged and swallowed. A failed read before the
+ * made. Both reads run inside the request, on its own client; the submission
+ * itself is sent **after the response**, through `after()`, so the third-party
+ * round trip never holds up the admin's publish. **The change is the only
+ * thing here that may fail the call**: a refusal from the change propagates
+ * exactly as the change raised it, and every failure after it is logged and
+ * swallowed — the deferred submission's included. A failed read before the
  * change is logged and read as nothing live, so the submission still carries
  * every address live after it.
  */
@@ -171,10 +175,12 @@ export async function changeAndSubmit<Snapshot>({
   await change();
   if (target === null) return;
 
+  let urlList: string[];
   try {
-    const after = await snapshot();
-    await submitToIndexNow(target, urls(before, after, target.siteUrl));
+    urlList = urls(before, await snapshot(), target.siteUrl);
   } catch (error) {
     console.error(`[indexnow] ${label}: nothing was submitted:`, error);
+    return;
   }
+  after(() => submitToIndexNow(target, urlList));
 }
