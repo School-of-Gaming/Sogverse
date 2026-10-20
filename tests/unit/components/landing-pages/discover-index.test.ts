@@ -171,9 +171,9 @@ describe("the index's metadata", () => {
 });
 
 describe("a landing page's breadcrumb", () => {
-  const trail = { homeName: "Etusivu", indexName: "Tutustu", title: "Kerhot Espoossa" };
+  const trail = { indexName: "Tutustu", title: "Kerhot Espoossa" };
 
-  it("is Home, the index and the page, absolute, in the page's locale, ending at the canonical", () => {
+  it("is the index and the page, absolute, in the page's locale, ending at the canonical", () => {
     expect(
       landingBreadcrumbJsonLd({
         siteUrl: SITE,
@@ -185,11 +185,10 @@ describe("a landing page's breadcrumb", () => {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Etusivu", item: `${SITE}/fi` },
-        { "@type": "ListItem", position: 2, name: "Tutustu", item: `${SITE}/fi/tutustu` },
+        { "@type": "ListItem", position: 1, name: "Tutustu", item: `${SITE}/fi/tutustu` },
         {
           "@type": "ListItem",
-          position: 3,
+          position: 2,
           name: "Kerhot Espoossa",
           item: `${SITE}/fi/tutustu/kerhot-espoo`,
         },
@@ -202,11 +201,10 @@ describe("a landing page's breadcrumb", () => {
       siteUrl: SITE,
       locale: "fr",
       canonicalPath: "/en/discover/clubs-espoo",
-      trail: { homeName: "Accueil", indexName: "Découvrir", title: "Clubs in Espoo" },
+      trail: { indexName: "Découvrir", title: "Clubs in Espoo" },
     });
 
     expect(data.itemListElement.map((step) => step.item)).toEqual([
-      `${SITE}/fr`,
       `${SITE}/fr/decouvrir`,
       `${SITE}/en/discover/clubs-espoo`,
     ]);

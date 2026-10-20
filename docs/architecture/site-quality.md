@@ -177,7 +177,7 @@ Each one exists to make the posture above hold by construction rather than by me
   way, a `WebPage` on each landing page, publisher the same, that becomes a `FAQPage`
   when a section asks questions — each section type declares its contribution in one
   exhaustive map, so a new type has to say what it adds, if only nothing — beside a
-  `BreadcrumbList` (Home, the index, the page) drawn from the same names as the trail
+  `BreadcrumbList` (the index, then the page) drawn from the same names as the trail
   shown above the page, its last step the page's canonical — and on each
   promoted product page a `Course` for a club — one `CourseInstance`
   whose weekly `courseSchedule` is the club's slots in its own timezone — or an `Event`

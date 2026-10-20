@@ -62,7 +62,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * `<discover>/<id>` in every locale, and `<discover>/<slug>` in a locale it is
  * live in. Both name the slug address of the version shown as canonical.
  *
- * A quiet breadcrumb trail leads it — Home, the landing pages' index, the
+ * A quiet breadcrumb trail leads it — the landing pages' index, then the
  * page — the trail its `BreadcrumbList` states, so every landing page links
  * up to the index that lists it.
  *
@@ -86,10 +86,8 @@ export default async function LandingPage({ params }: PageProps) {
   if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-  const tNav = await getTranslations("header.nav");
   const tDiscover = await getTranslations("discover");
   const trail: LandingBreadcrumb = {
-    homeName: tNav("home"),
     indexName: tDiscover("name"),
     title: shown.title,
   };

@@ -56,10 +56,8 @@ export default async function LandingPagePreviewPage({
   const version = resolveTranslation(draft.versions, locale);
   if (version === null) notFound();
 
-  const tNav = await getTranslations("header.nav");
   const tDiscover = await getTranslations("discover");
   const trail: LandingBreadcrumb = {
-    homeName: tNav("home"),
     indexName: tDiscover("name"),
     title: version.title,
   };

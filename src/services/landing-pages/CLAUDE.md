@@ -168,6 +168,6 @@ the index's own locale, with the picture its hero leads with where it has one; t
 no opting out, because the index is what keeps the pages from being orphans to a crawler.
 The footer links it from every page, and the header and the tab bar deliberately do not:
 people reach landing pages from advertising, not by browsing. **Each page carries a
-breadcrumb trail — Home, the index, the page — drawn on the page and stated as its
+breadcrumb trail — the index, then the page — drawn on the page and stated as its
 `BreadcrumbList` from the same names**, so the structured data names nothing the reader
 cannot see.
