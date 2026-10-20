@@ -117,6 +117,8 @@ function renderBody(
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}
+        pageId={id(500)}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );

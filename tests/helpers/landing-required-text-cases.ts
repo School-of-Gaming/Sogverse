@@ -29,6 +29,7 @@ export const CASE_IDS = {
   faq: id(0x1006),
   cta: id(0x1007),
   testimonials: id(0x1008),
+  subscribe: id(0x1009),
   picture: id(0x2001),
   pictureTwo: id(0x2002),
   imageItemA: id(0x3001),
@@ -78,6 +79,7 @@ export function everySection(): LandingSection[] {
       testimonialIds: [I.testimonialA, I.testimonialB],
     },
     { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
+    { id: I.subscribe, type: "subscribe" },
     {
       id: I.cta,
       type: "cta",
@@ -143,6 +145,12 @@ export function everyText(): Texts {
       heading: "Questions",
       items: { [I.faqA]: { question: "Is it safe?", answer: "Yes — *always*." } },
     },
+    [I.subscribe]: {
+      eyebrow: "News",
+      heading: "Stay in touch",
+      intro: "A short email once a month.",
+      buttonLabel: "Sign up",
+    },
     [I.cta]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
   };
 }
@@ -170,6 +178,8 @@ export const EVERY_REQUIRED_PATH: readonly string[] = [
   `sections.${I.faq}.heading`,
   `sections.${I.faq}.items.${I.faqA}.question`,
   `sections.${I.faq}.items.${I.faqA}.answer`,
+  `sections.${I.subscribe}.heading`,
+  `sections.${I.subscribe}.buttonLabel`,
   `sections.${I.cta}.heading`,
   `sections.${I.cta}.buttonLabel`,
 ];

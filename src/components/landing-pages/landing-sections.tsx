@@ -36,6 +36,7 @@ import {
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
+import { LandingSubscribeForm } from "./landing-subscribe-form";
 import { Heading } from "@sog/ui";
 
 /*
@@ -54,8 +55,9 @@ import { Heading } from "@sog/ui";
  * **Every word is the admin's**, so the renderers paint what is written and
  * leave out what is not: a published version has every required word, and the
  * preview of one still being written shows its blanks as gaps rather than as
- * placeholder copy. The one string of our own is the screen reader's "opens in
- * a new tab" beside a button that leaves the site.
+ * placeholder copy. The strings of our own are the screen reader's "opens in
+ * a new tab" beside a button that leaves the site, and the email sign-up
+ * form's fields, consent and answers, which are the same promise on every page.
  */
 
 /** What every renderer is handed besides its own section and words. */
@@ -64,6 +66,14 @@ export interface LandingRenderContext {
   locale: SupportedLocale;
   /** The language the shown version's words are in, which the body is marked with. */
   textLocale: SupportedLocale;
+  /** The page's id: what an email sign-up names as where it came from. */
+  pageId: string;
+  /**
+   * The admin's preview of a working copy, not the live page: an email
+   * sign-up form is drawn but cannot be sent, since the page it would name
+   * may not be live and a live one would sign a real address up.
+   */
+  preview: boolean;
   /**
    * A picture's servable URL by its catalogue entry id, or null when the copy
    * names no path for it (the picture has left the catalogue).
@@ -635,6 +645,29 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   );
 }
 
+/**
+ * An email sign-up: the heading and intro the page wrote over the site's own
+ * form, in the reading column.
+ */
+function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  return (
+    <section className={SECTION}>
+      <div className="mx-auto max-w-xl">
+        <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
+        <div className="mt-10">
+          <LandingSubscribeForm
+            pageId={context.pageId}
+            sectionId={section.id}
+            locale={context.locale}
+            buttonLabel={written(text.buttonLabel) ?? ""}
+            preview={context.preview}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // The map
 // ---------------------------------------------------------------------------
@@ -649,6 +682,7 @@ export const LANDING_SECTION_RENDERERS: {
   steps: StepsSection,
   testimonials: TestimonialsSection,
   faq: FaqSection,
+  subscribe: SubscribeSection,
   cta: CtaSection,
 };
 

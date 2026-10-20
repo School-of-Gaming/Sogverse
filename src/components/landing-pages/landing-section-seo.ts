@@ -94,6 +94,9 @@ export const LANDING_SECTION_SEO: {
           : [{ kind: "question" as const, question, answer }];
       }),
   },
+  subscribe: {
+    structuredData: none,
+  },
   cta: {
     structuredData: none,
   },

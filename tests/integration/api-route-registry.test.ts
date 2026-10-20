@@ -206,6 +206,7 @@ const TESTS = {
   geduSessionImageRemove:
     "tests/integration/api/gedu-session-image-remove.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
+  landingSubscribe: "tests/integration/api/landing-pages-subscribe.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
@@ -1100,6 +1101,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         // The photo id is the whole request, and it arrives in the path.
         body: { kind: "none" },
         test: TESTS.geduSessionImageRemove,
+      },
+    },
+  },
+
+  // --- Landing pages -------------------------------------------------------
+
+  "src/app/api/landing-pages/subscribe/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "a landing page's reader signs up for email with no account and no session. It stores nothing about them and writes the address to Klaviyo's single opt-in newsletter list, behind a honeypot, answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
+        },
+        body: { kind: "json", schema: "landingSubscribeBody" },
+        test: TESTS.landingSubscribe,
       },
     },
   },

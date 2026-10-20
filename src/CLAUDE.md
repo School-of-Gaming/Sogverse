@@ -18,6 +18,7 @@ auto-load here.
 - **Tailwind CSS 4** with class-variance-authority for component variants
 - **Stripe** for payments
 - **Brevo** (formerly Sendinblue) for transactional email — every mail is composed in-repo and sent through Brevo's REST API (`src/lib/email-templates/`, sent via the single `sendTransactionalEmail()` wrapper). **Supabase Auth sends no email**: confirmations are off, and reset/verification links are minted with `generateLink` and sent by our own templates — so GoTrue's SMTP/mailer dashboard config (and its email rate limits) is unused and gates nothing. See `src/lib/email-templates/CLAUDE.md`.
+- **Klaviyo** holds the newsletter list a landing page's email sign-up joins, written one way only (`src/services/landing-pages/`)
 - **Daily.co** for real-time voice/video chat
 - **Vitest** + **Playwright** for testing
 

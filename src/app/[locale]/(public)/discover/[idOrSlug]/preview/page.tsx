@@ -59,6 +59,8 @@ export default async function LandingPagePreviewPage({
       sectionTexts={version.sectionTexts}
       textLocale={version.locale}
       locale={locale}
+      pageId={id}
+      preview
     />
   );
 }
