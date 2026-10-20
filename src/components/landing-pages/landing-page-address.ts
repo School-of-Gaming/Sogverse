@@ -77,14 +77,17 @@ export function landingSubscribeAnchor(sectionId: string): string {
 /**
  * Where a reader lands after confirming an email sign-up made on this page:
  * the page in `locale`, saying they confirmed, scrolled to the section they
- * signed up from. A path — the caller puts it on a trusted origin.
+ * signed up from. A path — the caller puts it on a trusted origin. It is the
+ * id address, never the slug: the link is mailed and followed later, and a
+ * slug renamed in between would leave it pointing at nothing.
  */
 export function landingPageSubscribedPath(
-  page: AddressableLandingPage,
+  pageId: string,
   locale: SupportedLocale,
   sectionId: string,
 ): string {
-  return `${landingPagePath(page, locale)}?${LANDING_SUBSCRIBED_PARAM}=1#${landingSubscribeAnchor(sectionId)}`;
+  const path = getPathname({ href: ROUTES.landingPage(pageId), locale });
+  return `${path}?${LANDING_SUBSCRIBED_PARAM}=1#${landingSubscribeAnchor(sectionId)}`;
 }
 
 /**

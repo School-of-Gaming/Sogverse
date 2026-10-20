@@ -75,6 +75,12 @@ export interface LandingRenderContext {
    */
   subscribed: boolean;
   /**
+   * The admin's preview of a working copy, not the live page: an email
+   * sign-up form is drawn but cannot be sent, since the page it would name
+   * may not be live and a live one would mail a real confirmation.
+   */
+  preview: boolean;
+  /**
    * A picture's servable URL by its catalogue entry id, or null when the copy
    * names no path for it (the picture has left the catalogue).
    */
@@ -662,6 +668,7 @@ function SubscribeSection({ section, text, context }: LandingSectionProps<"subsc
             locale={context.locale}
             buttonLabel={written(text.buttonLabel) ?? ""}
             confirmed={context.subscribed}
+            preview={context.preview}
           />
         </div>
       </div>

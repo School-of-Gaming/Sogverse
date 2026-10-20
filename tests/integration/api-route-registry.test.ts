@@ -1105,7 +1105,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // --- Locations -----------------------------------------------------------
+  // --- Landing pages -------------------------------------------------------
 
   "src/app/api/landing-pages/subscribe/route.ts": {
     adminClient:
@@ -1122,6 +1122,8 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       },
     },
   },
+
+  // --- Locations -----------------------------------------------------------
 
   "src/app/api/locations/search/route.ts": {
     handlers: {

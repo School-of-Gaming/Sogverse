@@ -119,6 +119,7 @@ function renderBody(
         locale={locale}
         pageId={id(500)}
         subscribed={false}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );

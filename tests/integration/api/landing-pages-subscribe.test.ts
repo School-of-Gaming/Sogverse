@@ -144,9 +144,10 @@ describe("POST /api/landing-pages/subscribe", () => {
     expect(sent.email).toBe("aino@example.com");
     expect(sent.listIds).toEqual([12]);
     expect(sent.templateId).toBe(34);
-    // The page in its locale, on the trusted origin, at the form it came from.
+    // The page in its locale, on the trusted origin, at the form it came from
+    // — by its id, which a slug rename before the click cannot break.
     expect(sent.redirectionUrl).toBe(
-      `https://sog.test/fi/tutustu/espoon-kerhot?subscribed=1#signup-${FORM}`,
+      `https://sog.test/fi/tutustu/${PAGE}?subscribed=1#signup-${FORM}`,
     );
     expect(sent.attributes).toEqual({
       FIRSTNAME: "Aino",
@@ -223,6 +224,17 @@ describe("POST /api/landing-pages/subscribe", () => {
 
       await POST(request(VALID, { "x-forwarded-for": "198.51.100.1" }));
       expect(mockAllowance.mock.calls[1][0].p_client_key).not.toBe(key);
+    });
+
+    it("charges an IPv6 address's /64, so a fresh address in it is the same client", async () => {
+      await POST(request(VALID, { "x-forwarded-for": "2001:db8:1:2::a" }));
+      await POST(request(VALID, { "x-forwarded-for": "2001:db8:1:2:ffff::b" }));
+      await POST(request(VALID, { "x-forwarded-for": "2001:db8:1:3::a" }));
+      const [first, sameNetwork, otherNetwork] = mockAllowance.mock.calls.map(
+        ([args]) => args.p_client_key,
+      );
+      expect(sameNetwork).toBe(first);
+      expect(otherNetwork).not.toBe(first);
     });
 
     it("refuses with 429 once spent, and Brevo is not called", async () => {

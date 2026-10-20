@@ -9,7 +9,7 @@ import {
   SIGNUP_ATTRIBUTES,
   utmAttributeName,
 } from "@/lib/landing-pages/subscribe-config.server";
-import { clientIpFrom } from "@/lib/request-ip";
+import { clientIpFrom, clientNetwork } from "@/lib/request-ip";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { getOrigin } from "@/lib/url";
@@ -23,10 +23,14 @@ import {
   landingSubscribeResponse,
 } from "@/services/landing-pages/landing-subscribe.contracts";
 
-/** The rate limit's key: the request's address, hashed, so no address is stored. */
+/**
+ * The rate limit's key: the request's network — the address itself for IPv4,
+ * its /64 for IPv6 — hashed, so no address is stored.
+ */
 function clientKey(request: Request): string {
-  const ip = clientIpFrom(request.headers) ?? "unknown";
-  return createHash("sha256").update(`landing-signup:${ip}`).digest("hex");
+  const ip = clientIpFrom(request.headers);
+  const network = ip === undefined ? "unknown" : clientNetwork(ip);
+  return createHash("sha256").update(`landing-signup:${network}`).digest("hex");
 }
 
 /**
@@ -134,7 +138,7 @@ export const POST = defineRoute({
         listIds: [configured.config.listId],
         templateId: configured.config.templateId,
         // The trusted origin, never the request's own: this link is mailed.
-        redirectionUrl: `${getOrigin(request)}${landingPageSubscribedPath(page, body.locale, body.sectionId)}`,
+        redirectionUrl: `${getOrigin(request)}${landingPageSubscribedPath(page.id, body.locale, body.sectionId)}`,
       });
     } catch (error) {
       // The Brevo client has logged Brevo's own answer; the address is not logged.

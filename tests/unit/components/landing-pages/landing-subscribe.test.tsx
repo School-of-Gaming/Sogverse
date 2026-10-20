@@ -53,7 +53,8 @@ afterEach(() => {
 function renderPage({
   subscribed = false,
   utm = NO_UTM_ATTRIBUTION,
-}: { subscribed?: boolean; utm?: UtmAttribution } = {}) {
+  preview = false,
+}: { subscribed?: boolean; utm?: UtmAttribution; preview?: boolean } = {}) {
   return render(
     <NextIntlClientProvider locale="fi" messages={messages}>
       <UtmProvider initialUtm={utm}>
@@ -66,6 +67,7 @@ function renderPage({
           locale="fi"
           pageId={PAGE}
           subscribed={subscribed}
+          preview={preview}
         />
       </UtmProvider>
     </NextIntlClientProvider>,
@@ -152,6 +154,18 @@ describe("the email sign-up section", () => {
     expect(screen.queryByRole("button", { name: "Keep me posted" })).toBeNull();
     // The page's own heading stays: the thanks answers its ask.
     expect(screen.getByRole("heading", { name: "Hear about new clubs first" })).toBeTruthy();
+  });
+
+  it("draws the form in the admin's preview with its button disabled, posting nothing", async () => {
+    renderPage({ preview: true });
+    const button = screen.getByRole("button", { name: "Keep me posted" });
+    expect(button.hasAttribute("disabled")).toBe(true);
+
+    fillIn("aino@example.com");
+    fireEvent.click(screen.getByRole("checkbox"));
+    await submit();
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(screen.queryByText(t.sentTitle)).toBeNull();
   });
 
   it("links the privacy policy from the consent sentence, in a new tab", () => {

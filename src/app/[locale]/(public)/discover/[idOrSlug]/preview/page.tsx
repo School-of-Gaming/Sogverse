@@ -61,6 +61,7 @@ export default async function LandingPagePreviewPage({
       locale={locale}
       pageId={id}
       subscribed={false}
+      preview
     />
   );
 }

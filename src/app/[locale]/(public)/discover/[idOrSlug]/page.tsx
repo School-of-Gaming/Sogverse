@@ -108,6 +108,7 @@ export default async function LandingPage({ params, searchParams }: PageProps) {
         locale={locale}
         pageId={page.id}
         subscribed={subscribed}
+        preview={false}
       />
     </>
   );

@@ -48,6 +48,7 @@ export function LandingSubscribeForm({
   locale,
   buttonLabel,
   confirmed,
+  preview,
 }: {
   pageId: string;
   sectionId: string;
@@ -56,6 +57,8 @@ export function LandingSubscribeForm({
   buttonLabel: string;
   /** The reader has just come back from confirming. */
   confirmed: boolean;
+  /** The admin's preview: the form is drawn, but its button is disabled and nothing is posted. */
+  preview: boolean;
 }) {
   const t = useTranslations("landingSubscribe");
   const utm = useUtm();
@@ -93,6 +96,7 @@ export function LandingSubscribeForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (preview) return;
     // Refused before the busy flag, so a refused submit leaves the form as
     // usable as it was.
     if (!consent) {
@@ -193,7 +197,7 @@ export function LandingSubscribeForm({
           {t(refusal)}
         </StatusLine>
       )}
-      <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={committing}>
+      <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={committing || preview}>
         {buttonLabel}
       </Button>
     </form>

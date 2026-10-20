@@ -159,9 +159,13 @@ attributes a sign-up writes — each has to exist in the Brevo account first), s
 section has no shared field; its form copy, consent sentence included, is fixed copy in
 `landingSubscribe`, and the page writes only the ask. The route answers a new address,
 a known one and a filled honeypot identically, and the only thing it writes is a hashed
-request address for the hour its rate limit counts over. The confirmation link returns
-the reader to the page in its locale, at the section, with a parameter that swaps the
-form for a thanks. A later section offering something on confirmation (a download)
+request address (an IPv6 one counted by its /64) for the hour its rate limit counts over.
+The confirmation link returns the reader to the page's id address in its locale — a slug
+can be renamed before the link is followed — at the section, with a parameter that swaps
+the form for a thanks. The admin's preview draws the form with its button disabled.
+**The confirmation template must not print the first name or any other attribute the
+visitor typed**: the form mails any address it is handed, and a printed name would let a
+stranger put their own words in a mail we send. A later section offering something on confirmation (a download)
 would add a shared field to this type, not a second form.
 
 **The public page lives in `src/components/landing-pages/`, and every link to a landing

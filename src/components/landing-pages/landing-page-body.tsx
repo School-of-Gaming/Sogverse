@@ -30,6 +30,8 @@ export interface LandingPageBodyProps {
   pageId: string;
   /** The reader has just confirmed an email sign-up made on this page. */
   subscribed: boolean;
+  /** The admin's preview of a working copy: an email sign-up form cannot be sent. */
+  preview: boolean;
 }
 
 /**
@@ -51,12 +53,14 @@ export function LandingPageBody({
   locale,
   pageId,
   subscribed,
+  preview,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
     textLocale,
     pageId,
     subscribed,
+    preview,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
   };
