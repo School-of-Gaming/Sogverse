@@ -30,7 +30,6 @@ import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/cn";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
-import { landingSubscribeAnchor } from "./landing-page-address";
 import {
   written,
   type LandingSectionByType,
@@ -70,14 +69,9 @@ export interface LandingRenderContext {
   /** The page's id: what an email sign-up names as where it came from. */
   pageId: string;
   /**
-   * The reader has just come back from confirming an email sign-up made on
-   * this page, so a sign-up section thanks them in place of its form.
-   */
-  subscribed: boolean;
-  /**
    * The admin's preview of a working copy, not the live page: an email
    * sign-up form is drawn but cannot be sent, since the page it would name
-   * may not be live and a live one would mail a real confirmation.
+   * may not be live and a live one would sign a real address up.
    */
   preview: boolean;
   /**
@@ -653,12 +647,11 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
 
 /**
  * An email sign-up: the heading and intro the page wrote over the site's own
- * form, in the reading column. The section carries the anchor the
- * confirmation link returns to, so a reader coming back lands on the thanks.
+ * form, in the reading column.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
   return (
-    <section id={landingSubscribeAnchor(section.id)} className={SECTION}>
+    <section className={SECTION}>
       <div className="mx-auto max-w-xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
         <div className="mt-10">
@@ -667,7 +660,6 @@ function SubscribeSection({ section, text, context }: LandingSectionProps<"subsc
             sectionId={section.id}
             locale={context.locale}
             buttonLabel={written(text.buttonLabel) ?? ""}
-            confirmed={context.subscribed}
             preview={context.preview}
           />
         </div>

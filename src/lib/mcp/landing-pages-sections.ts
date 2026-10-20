@@ -363,7 +363,7 @@ export const MCP_LANDING_SECTIONS: {
   },
   subscribe: {
     about:
-      "An email sign-up form: a reader leaves their email address, and their first name if they like, to join School of Gaming's mailing list. The form's field labels, its consent sentence and what it says after a sign-up are the site's own, in the reader's language; the page writes only the heading, an optional intro line and the button's words, which should say why a reader would sign up from this page. Signing up sends the reader a confirmation email, and they are on the list only once they confirm; the confirmation link brings them back to this page. The list and the confirmation email are the same for every page, so the section has no other field.",
+      "An email sign-up form: a reader leaves their email address, and their first and last name if they like, to join School of Gaming's newsletter. The form's field labels, its consent sentence and what it says after a sign-up are the site's own, in the reader's language; the page writes only the heading, an optional intro line and the button's words, which should say why a reader would sign up from this page. The reader is on the list as soon as they sign up, with no confirmation email. The list is the same for every page, so the section has no other field.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("subscribe"),

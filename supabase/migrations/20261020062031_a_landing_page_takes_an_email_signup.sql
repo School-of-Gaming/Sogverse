@@ -3,10 +3,9 @@
 -- WHAT THIS CHANGES
 --
 -- A new section type, subscribe: a form where a reader leaves their email
--- address (and, optionally, their first name) to join the mailing list, with
--- Brevo's double opt-in confirming it. Its structure is its id and type alone
--- — the list it signs up to and the confirmation mail are the deployment's
--- configuration, not the page's — and its words in each language are an
+-- address (and, optionally, their first and last name) to join the newsletter
+-- list in Klaviyo. Its structure is its id and type alone — the list it signs
+-- up to is the deployment's configuration, not the page's — and its words in each language are an
 -- optional eyebrow, a heading, an optional intro line and the button's label.
 -- The form's own field labels, its consent sentence and its answers are fixed
 -- copy in the app, not words a page writes.
@@ -134,8 +133,8 @@ BEGIN
                         v_count);
         END IF;
       WHEN 'subscribe' THEN
-        -- No shared field: the list it signs up to and the confirmation mail
-        -- are the deployment's configuration, not the page's.
+        -- No shared field: the list it signs up to is the deployment's
+        -- configuration, not the page's.
         NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));

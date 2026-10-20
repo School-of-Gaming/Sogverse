@@ -7,7 +7,6 @@ import {
   type MetaEnrolmentOutcome,
   type MetaProductDetails,
 } from "@/lib/marketing-events";
-import { clientIpFrom } from "@/lib/request-ip";
 import { getOrigin } from "@/lib/url";
 
 /**
@@ -186,6 +185,21 @@ function customDataFor(
   const { outcome, product } = conversion;
   if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
   return { outcome, ...product };
+}
+
+/**
+ * The address the request came from, as Meta's `client_ip_address`.
+ *
+ * `x-forwarded-for` is a list appended to by each hop, so the first entry is the
+ * client; `x-real-ip` is the single-value form some proxies send instead.
+ * Absent on a request that has no proxy in front of it at all, and then the
+ * field is simply omitted — a fabricated address would be worse than none.
+ */
+function clientIpFrom(headers: Headers): string | undefined {
+  const forwarded = headers.get("x-forwarded-for");
+  const first = forwarded?.split(",")[0]?.trim();
+  if (first) return first;
+  return headers.get("x-real-ip")?.trim() || undefined;
 }
 
 export async function reportMetaConversion(

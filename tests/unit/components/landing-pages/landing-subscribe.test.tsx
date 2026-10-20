@@ -10,11 +10,9 @@ import { UtmProvider } from "@/providers";
 
 /**
  * **The email sign-up section as a reader meets it**: the page's own heading
- * and button over the site's form, the anchor the confirmation link returns
- * to, the button held disabled until every field is given and the consent box
- * ticked, what is posted, and the three
- * states the section can be in — the form, "check your inbox", and the thanks
- * a reader coming back from the confirmation link sees instead of the form.
+ * and button over the site's form, the button held disabled until an address
+ * is typed and the consent box ticked (the names are optional), what is
+ * posted, and the form giving way to "you are signed up" once it is accepted.
  */
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -52,10 +50,9 @@ afterEach(() => {
 });
 
 function renderPage({
-  subscribed = false,
   utm = NO_UTM_ATTRIBUTION,
   preview = false,
-}: { subscribed?: boolean; utm?: UtmAttribution; preview?: boolean } = {}) {
+}: { utm?: UtmAttribution; preview?: boolean } = {}) {
   return render(
     <NextIntlClientProvider locale="fi" messages={messages}>
       <UtmProvider initialUtm={utm}>
@@ -67,7 +64,6 @@ function renderPage({
           textLocale="fi"
           locale="fi"
           pageId={PAGE}
-          subscribed={subscribed}
           preview={preview}
         />
       </UtmProvider>
@@ -75,11 +71,14 @@ function renderPage({
   );
 }
 
-function fillIn(email: string, firstName: string) {
+function nameInput(label: string): HTMLElement {
+  return screen.getByLabelText(label, { exact: false });
+}
+
+function fillIn(email: string, firstName = "", lastName = "") {
   fireEvent.change(screen.getByLabelText(t.email), { target: { value: email } });
-  fireEvent.change(screen.getByLabelText(t.firstName, { exact: false }), {
-    target: { value: firstName },
-  });
+  fireEvent.change(nameInput(t.firstName), { target: { value: firstName } });
+  fireEvent.change(nameInput(t.lastName), { target: { value: lastName } });
 }
 
 function isDisabled(): boolean {
@@ -93,31 +92,44 @@ async function submit() {
 }
 
 describe("the email sign-up section", () => {
-  it("draws the page's words over the form, at the anchor the confirmation returns to", () => {
+  it("draws the page's words over the form", () => {
     renderPage();
-    const heading = screen.getByRole("heading", { level: 2, name: "Hear about new clubs first" });
-    expect(heading.closest("section")?.id).toBe(`signup-${FORM}`);
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Hear about new clubs first" }),
+    ).toBeTruthy();
     expect(screen.getByText("One email a month.")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Keep me posted" })).toBeTruthy();
     expect(screen.getByRole("checkbox").getAttribute("aria-checked") ?? "false").toBe("false");
   });
 
-  it("keeps the button disabled until the address, the first name and the consent are all given", () => {
+  it("marks both names optional, on one row of the form", () => {
+    renderPage();
+    const first = nameInput(t.firstName);
+    const last = nameInput(t.lastName);
+    for (const input of [first, last]) {
+      expect(input.hasAttribute("required")).toBe(false);
+      const label = document.querySelector(`label[for="${input.id}"]`);
+      expect(label?.textContent).toContain(common.optional);
+    }
+    expect(first.getAttribute("autocomplete")).toBe("given-name");
+    expect(last.getAttribute("autocomplete")).toBe("family-name");
+  });
+
+  it("enables the button with just the address and the consent, no names", () => {
     renderPage();
     expect(isDisabled()).toBe(true);
 
-    fillIn("aino@example.com", "Aino");
+    fillIn("aino@example.com");
     fireEvent.click(screen.getByRole("checkbox"));
     expect(isDisabled()).toBe(false);
   });
 
   it.each([
-    ["the address", "  ", "Aino", true],
-    ["the first name", "aino@example.com", "  ", true],
-    ["the consent", "aino@example.com", "Aino", false],
-  ])("keeps the button disabled, posting nothing, without %s", async (_, email, name, tick) => {
+    ["the address", "  ", true],
+    ["the consent", "aino@example.com", false],
+  ])("keeps the button disabled, posting nothing, without %s", async (_, email, tick) => {
     renderPage();
-    fillIn(email, name);
+    fillIn(email, "Aino", "Virtanen");
     if (tick) fireEvent.click(screen.getByRole("checkbox"));
     expect(isDisabled()).toBe(true);
 
@@ -127,7 +139,7 @@ describe("the email sign-up section", () => {
 
   it("posts the page, the form, the locale, the reader's words and the visit's UTM values", async () => {
     renderPage({ utm: { ...NO_UTM_ATTRIBUTION, source: "newsletter" } });
-    fillIn("aino@example.com", "Aino");
+    fillIn("aino@example.com", "Aino", "Virtanen");
     fireEvent.click(screen.getByRole("checkbox"));
     await submit();
 
@@ -140,17 +152,40 @@ describe("the email sign-up section", () => {
       locale: "fi",
       email: "aino@example.com",
       firstName: "Aino",
+      lastName: "Virtanen",
       consent: true,
       website: "",
       utm: { source: "newsletter" },
     });
-    await waitFor(() => expect(screen.getByText(t.sentTitle)).toBeTruthy());
-    expect(screen.getByText(t.sentBody.replace("{email}", "aino@example.com"))).toBeTruthy();
+  });
+
+  it("posts with no names typed, leaving them blank for the route to drop", async () => {
+    renderPage();
+    fillIn("aino@example.com");
+    fireEvent.click(screen.getByRole("checkbox"));
+    await submit();
+
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toMatchObject({
+      email: "aino@example.com",
+      firstName: "",
+      lastName: "",
+    });
+  });
+
+  it("says the reader is signed up in place of the form once it is accepted", async () => {
+    renderPage();
+    fillIn("aino@example.com");
+    fireEvent.click(screen.getByRole("checkbox"));
+    await submit();
+
+    await waitFor(() => expect(screen.getByText(t.successTitle)).toBeTruthy());
+    expect(screen.getByText(t.successBody)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Keep me posted" })).toBeNull();
+    // The page's own heading stays: the success answers its ask.
+    expect(screen.getByRole("heading", { name: "Hear about new clubs first" })).toBeTruthy();
   });
 
   it.each([
-    [429, t.rateLimited],
     [400, t.invalid],
     [502, t.error],
   ])("says why a %i refused it and lets the reader try again", async (status, sentence) => {
@@ -164,14 +199,6 @@ describe("the email sign-up section", () => {
     expect(isDisabled()).toBe(false);
   });
 
-  it("thanks a reader back from the confirmation link in place of the form", () => {
-    renderPage({ subscribed: true });
-    expect(screen.getByText(t.confirmedTitle)).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Keep me posted" })).toBeNull();
-    // The page's own heading stays: the thanks answers its ask.
-    expect(screen.getByRole("heading", { name: "Hear about new clubs first" })).toBeTruthy();
-  });
-
   it("draws the form in the admin's preview with its button disabled, posting nothing", async () => {
     renderPage({ preview: true });
     fillIn("aino@example.com", "Aino");
@@ -179,7 +206,7 @@ describe("the email sign-up section", () => {
     expect(isDisabled()).toBe(true);
     await submit();
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(screen.queryByText(t.sentTitle)).toBeNull();
+    expect(screen.queryByText(t.successTitle)).toBeNull();
   });
 
   it("links the privacy policy from the consent sentence, in a new tab", () => {

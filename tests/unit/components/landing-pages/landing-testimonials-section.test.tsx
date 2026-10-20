@@ -82,7 +82,6 @@ function renderSection({
         textLocale={textLocale}
         locale={locale}
         pageId={id(500)}
-        subscribed={false}
         preview={false}
       />
     </NextIntlClientProvider>,

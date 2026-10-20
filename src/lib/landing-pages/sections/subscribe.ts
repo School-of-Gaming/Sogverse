@@ -7,14 +7,13 @@ import {
 } from "./shared";
 
 /**
- * An email sign-up form: a reader leaves their address and their first name to
- * join the mailing list, which Brevo confirms by double opt-in.
+ * An email sign-up form: a reader leaves their address, and optionally their
+ * first and last name, to join the newsletter list in Klaviyo, single opt-in.
  *
- * **No shared field.** The list a reader joins and the confirmation mail they
- * are sent are the deployment's configuration, the same for every page, so
- * nothing about them is the page's to choose. A later field naming what the
- * reader receives once they confirm (a download, say) would be structure and
- * would join here.
+ * **No shared field.** The list a reader joins is the deployment's
+ * configuration, the same for every page, so nothing about it is the page's to
+ * choose. A later field naming what the reader receives once signed up (a
+ * download, say) would be structure and would join here.
  *
  * **The page writes the ask; the form's own words are ours.** The heading, the
  * intro and the button say why a reader would want to sign up from this page,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createDoubleOptInContact, sendTransactionalEmail } from "@/lib/brevo";
+import { sendTransactionalEmail } from "@/lib/brevo";
 
 // --- Mocks ---
 
@@ -183,58 +183,5 @@ describe("sendTransactionalEmail", () => {
     await expect(sendTransactionalEmail(baseOptions)).rejects.toThrow(
       "Missing BREVO_API_KEY environment variable"
     );
-  });
-});
-
-describe("createDoubleOptInContact", () => {
-  const options = {
-    email: "aino@example.com",
-    attributes: { FIRSTNAME: "Aino", SIGNUP_PAGE: "espoo-clubs" },
-    listIds: [12],
-    templateId: 34,
-    redirectionUrl: "https://sog.test/fi/tutustu/espoo?subscribed=1",
-  };
-
-  it("posts Brevo's double opt-in contract", async () => {
-    mockFetch.mockResolvedValue({ ok: true, status: 201 });
-
-    await createDoubleOptInContact(options);
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.brevo.com/v3/contacts/doubleOptinConfirmation",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ "api-key": "test-brevo-key" }),
-      }),
-    );
-    expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toEqual({
-      email: "aino@example.com",
-      attributes: { FIRSTNAME: "Aino", SIGNUP_PAGE: "espoo-clubs" },
-      includeListIds: [12],
-      templateId: 34,
-      redirectionUrl: "https://sog.test/fi/tutustu/espoo?subscribed=1",
-    });
-  });
-
-  it("resolves alike for a new contact (201) and a known one (204, no body)", async () => {
-    const json = vi.fn(() => Promise.reject(new Error("no body")));
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 201, json });
-    await expect(createDoubleOptInContact(options)).resolves.toBeUndefined();
-    mockFetch.mockResolvedValueOnce({ ok: true, status: 204, json });
-    await expect(createDoubleOptInContact(options)).resolves.toBeUndefined();
-    // The body is never read, so an empty 204 cannot fail the call.
-    expect(json).not.toHaveBeenCalled();
-  });
-
-  it("throws Brevo's message on a refusal", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    mockFetch.mockResolvedValue({
-      ok: false,
-      status: 400,
-      statusText: "Bad Request",
-      json: async () => ({ code: "invalid_parameter", message: "Attribute not found" }),
-    });
-
-    await expect(createDoubleOptInContact(options)).rejects.toThrow("Attribute not found");
   });
 });

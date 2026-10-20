@@ -1,12 +1,10 @@
 {
   "firstName": "Etunimi",
+  "lastName": "Sukunimi",
   "email": "Sähköpostiosoite",
   "consent": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse. Jokaisessa viestissä on linkki tilauksen perumiseen. Olen lukenut <privacy>tietosuojaselosteen</privacy>.",
   "error": "Jokin meni vikaan, eikä tilaus vielä onnistunut. Yritä hetken päästä uudelleen.",
   "invalid": "Tarkista sähköpostiosoitteesi ja yritä uudelleen.",
-  "rateLimited": "Täältä on tullut liian monta tilausta. Yritä uudelleen tunnin kuluttua.",
-  "sentTitle": "Tarkista sähköpostisi",
-  "sentBody": "Lähetimme linkin osoitteeseen {email}. Tilaus on voimassa, kun olet avannut linkin.",
-  "confirmedTitle": "Tilaus on voimassa",
-  "confirmedBody": "Kiitos, että vahvistit sähköpostiosoitteesi."
+  "successTitle": "Tilaus onnistui",
+  "successBody": "Kiitos! Uutiskirjeemme saapuu pian sähköpostiisi."
 }

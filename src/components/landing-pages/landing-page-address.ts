@@ -62,35 +62,6 @@ export function landingPagePaths(page: AddressableLandingPage): TranslatedPagePa
 }
 
 /**
- * The query parameter on a landing page's address that says the reader has
- * just confirmed an email sign-up: the double opt-in's confirmation link
- * brings them back with it, and the sign-up section then thanks them in
- * place of its form.
- */
-export const LANDING_SUBSCRIBED_PARAM = "subscribed";
-
-/** The id a sign-up section's element carries, so an address can scroll to it. */
-export function landingSubscribeAnchor(sectionId: string): string {
-  return `signup-${sectionId}`;
-}
-
-/**
- * Where a reader lands after confirming an email sign-up made on this page:
- * the page in `locale`, saying they confirmed, scrolled to the section they
- * signed up from. A path — the caller puts it on a trusted origin. It is the
- * id address, never the slug: the link is mailed and followed later, and a
- * slug renamed in between would leave it pointing at nothing.
- */
-export function landingPageSubscribedPath(
-  pageId: string,
-  locale: SupportedLocale,
-  sectionId: string,
-): string {
-  const path = getPathname({ href: ROUTES.landingPage(pageId), locale });
-  return `${path}?${LANDING_SUBSCRIBED_PARAM}=1#${landingSubscribeAnchor(sectionId)}`;
-}
-
-/**
  * The page's path in every locale, for the locale picker: its slug address
  * where it is written, its id address elsewhere — so a switch to any locale
  * lands on this page rather than on a slug that locale does not know.

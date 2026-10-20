@@ -1707,24 +1707,6 @@ export type Database = {
           },
         ]
       }
-      landing_signup_attempts: {
-        Row: {
-          attempted_at: string
-          client_key: string
-          id: string
-        }
-        Insert: {
-          attempted_at?: string
-          client_key: string
-          id?: string
-        }
-        Update: {
-          attempted_at?: string
-          client_key?: string
-          id?: string
-        }
-        Relationships: []
-      }
       library_article_publication_translations: {
         Row: {
           article_id: string
@@ -5457,10 +5439,6 @@ export type Database = {
           p_viewer_id: string
         }
         Returns: Json
-      }
-      take_landing_signup_allowance: {
-        Args: { p_client_key: string }
-        Returns: boolean
       }
       toggle_chat_reaction: {
         Args: { p_code: string; p_message_id: string }

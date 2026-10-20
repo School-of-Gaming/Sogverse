@@ -82,7 +82,7 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 
 | Worktree | Item | Points for the review |
 |---|---|---|
-| `landing-email-capture` | #2 email sign-up section, Brevo double opt-in | Sogverse stores nothing about the lead except a one-hour hashed-IP rate-limit table — confirm that is acceptable. Account holders are not synced to Brevo (deferred). Brevo setup outstanding (below). |
+| `landing-email-capture` | #2 email sign-up section, a one-way send to Klaviyo | Single opt-in, like the blog's newsletter form; Sogverse stores nothing about the lead and reads nothing back; an address that had unsubscribed is subscribed again. Account holders are not synced to Klaviyo (deferred). Klaviyo setup outstanding (below). |
 | `discover-index` | #10 `/discover` index, breadcrumbs, IndexNow | Publish and Unpublish (landing pages and Library) now go through admin API routes so IndexNow can fire; the API route wrapper now returns the database error code where it discloses errors; the production check is duplicated byte for byte with the one already on `dev` (`src/lib/seo/deployment.ts`) on purpose; the index has no closing call to action though the site-quality rule asks every public page for one; the Finnish copy wants a native check. |
 | `landing-share-card` | #12 share title and picture per page | In the MCP tools, leaving a share field out of a save clears it — decide whether that is acceptable. |
 | `landing-picture-shapes` | #14 pictures in three shapes (wide 16:9, square, portrait 4:5), never cropped | Library covers uploaded through the AI app are now refused rather than cropped when not 16:9; a column was renamed to hold each picture's purpose; the uploader view has a new address. Not yet tried in a real AI app. |
@@ -101,9 +101,12 @@ renderer).
 
 ## Operator steps outside the code
 
-- **Brevo:** a list, a double opt-in template and the contact attributes the email
-  sign-up sends; the env vars are named in `.env.local.example` on its branch and are
-  empty in `.env.local`. Needed before `landing-email-capture` can go live.
+- **Klaviyo:** a private API key with write access to Profiles, Lists and
+  Subscriptions; a staging list and the real newsletter list, both single opt-in; no
+  flow triggered by either may print the first or last name, since anyone can submit any
+  address. The env vars are named in `.env.local.example` on its branch. Klaviyo is to
+  be added as a processor in the privacy policy. Needed before `landing-email-capture`
+  can go live.
 - **Vercel:** a real `INDEXNOW_KEY` on production for `discover-index`. Env vars go
   through the `vercel-env-vars` skill.
 - **Google Search Console:** the `sog.gg` Domain property is verified by a TXT record in
@@ -114,7 +117,7 @@ renderer).
 1. Does a free account, with no purchase, qualify for the soft opt-in under §200 of the
    Finnish Act on Electronic Communications Services?
 2. Is the registration form's marketing checkbox worded specifically enough?
-3. Does sending UTM values to Brevo with the source page breach point 6 of
+3. Does sending UTM values to Klaviyo with the source page breach point 6 of
    `src/lib/utm.ts` ("never combined with journey data")?
 
 ## Small follow-ups noticed along the way

@@ -115,8 +115,8 @@ BEGIN
                         v_count);
         END IF;
       WHEN 'subscribe' THEN
-        -- No shared field: the list it signs up to and the confirmation mail
-        -- are the deployment's configuration, not the page's.
+        -- No shared field: the list it signs up to is the deployment's
+        -- configuration, not the page's.
         NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
