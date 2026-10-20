@@ -117,6 +117,7 @@ export const STEP_CLASS: TokenClasses = {
   "page-title": "text-page-title",
   section: "text-section",
   "card-title": "text-card-title",
+  "item-title": "text-item-title",
   label: "text-label",
   "body-l": "text-body-l",
   "body-s": "text-body-s",

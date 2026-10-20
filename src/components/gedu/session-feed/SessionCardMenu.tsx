@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { LockGlyph } from "@/components/ui/locked-control";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /** One row of a session card's overflow menu. */
 export interface SessionCardMenuItem {

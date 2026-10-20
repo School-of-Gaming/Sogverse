@@ -20,6 +20,14 @@ run a single file, use `npx vitest run <file>` — never `npm run test -- --run 
 the npm script already carries `--run`, so the doubled flag is a vitest error ("Expected
 a single value for option --run").
 
+`npm run gates` runs only the `unit/` + `integration/` files whose import closure the
+change touches, plus every file whose closure imports `fs`, `child_process`, a glob
+library or one of the libraries the selector lists as opening the paths they are handed
+— the sweeps that read the repo from disk always run. So code that hands a file path to
+a library not on that list (`sharp(path)`, a TypeScript program) adds the library to the
+selector's list in the same change: otherwise the selector sees an ordinary test and
+skips it when the files it reads change.
+
 ## Node is the default environment; the DOM is opted into
 
 Booting a jsdom realm is the single largest cost in this suite, and it was being paid by
@@ -244,6 +252,12 @@ drift silently. Two things it does with the locale segment, both load-bearing:
 own wrapped navigation module (`@/i18n/navigation`) and the browser Supabase client
 (`@/lib/supabase/client`), exposing `mockSupabaseClient` for assertions. Components and
 hooks under test get a working router and Supabase client without per-test wiring.
+
+**It also wraps next-intl's `NextIntlClientProvider` so a missing message throws.** A
+component test hands the provider only the namespace files its tree reads
+(`src/i18n/CLAUDE.md`), and a namespace left out then fails the test by name instead of
+rendering a key the assertions may never look at. A test that mocks `next-intl` itself
+replaces the wrapper along with the rest.
 
 **The wrapped navigation mock is not optional decoration.** Components name routes
 through that module now, and its hooks read a routing context that a rendered component

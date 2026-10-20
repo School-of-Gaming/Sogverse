@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createClient } from "@supabase/supabase-js";
-import { GroupsService, type GroupChangeSet } from "@/services/groups";
+import {
+  GroupsService,
+  type GroupChangeSet,
+} from "@/services/groups/groups.service";
 import { groupChangeSet } from "@/services/groups/groups.contracts";
 import type { Database } from "@/types/database.types";
 

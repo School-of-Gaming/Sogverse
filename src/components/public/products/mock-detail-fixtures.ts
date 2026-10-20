@@ -7,8 +7,10 @@ import type {
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { holidayBreakRows, type HolidayBreak } from "@/lib/holiday-breaks";
-import type { ProductDetailRow } from "@/services/products";
-import type { ParticipationCounts } from "@/services/participations";
+import type { ProductDetailRow } from "@/services/products/products.service";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { RegistrationState } from "./derive-registration-state";
 import type { ProductTag } from "./product-tag";
 import type {
@@ -1391,6 +1393,8 @@ function buildBaseProduct(
     // Staff-facing only: no public or family surface draws this flag, and the
     // fixture holds it purely because the row type does.
     requires_gamer_creations: false,
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
@@ -1435,6 +1439,7 @@ function buildBaseProduct(
         name: copy.name,
         short_description: copy.description,
         long_description: copy.long ?? null,
+        voice_join_instructions: null,
         product_id: id,
         created_at: refTimestamp,
         updated_at: refTimestamp,

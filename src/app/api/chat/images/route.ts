@@ -7,9 +7,6 @@ import {
   type ImageIngestRefusal,
 } from "@/lib/images/ingest-image.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-// The contracts module directly rather than the feature barrel: the barrel also
-// carries the React Query hooks, which are a browser module this route has no
-// use for and no business pulling into a serverless function.
 import {
   CHAT_IMAGES_BUCKET,
   CHAT_LOCKED_SQLSTATE,

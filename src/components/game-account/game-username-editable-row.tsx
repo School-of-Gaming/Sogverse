@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { GameAvatarBox, GameUsernameRow } from "./game-username-row";
 import {
   GAME_PLATFORMS,

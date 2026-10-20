@@ -6,7 +6,7 @@ import {
 import { REGION_LOCK_SCENARIOS } from "@/components/public/products/region-lock/region-lock-scenarios";
 import { CONSENT_SCENARIOS } from "@/components/public/products/required-consents-scenario";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
-import type { UserRole } from "@/lib/constants";
+import type { UserRole } from "@/lib/constants/roles";
 import type { ProductTopic } from "@/types";
 
 /**

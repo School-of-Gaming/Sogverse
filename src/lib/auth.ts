@@ -11,8 +11,6 @@ import {
   sessionProvenance,
   type SessionProvenance,
 } from "@/lib/session-provenance";
-// Imported from the service file (not the @/services/gedu barrel) so this
-// server module doesn't pull in the barrel's React Query hooks.
 import { isGeduCertified } from "@/services/gedu/gedu-profiles.service";
 import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 

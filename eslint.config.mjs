@@ -117,6 +117,68 @@ const noZodV4OutsideMcp = [
 ];
 
 /**
+ * A service domain imported as a directory.
+ *
+ * `src/services/<domain>/` has no index file: a module imports the file that
+ * defines the symbol — `@/services/locations/locations.queries`, not
+ * `@/services/locations`. A barrel makes every importer depend on every file it
+ * re-exports, which is what the gates' changed-file test selection reads, and a
+ * `vi.mock` aimed at a barrel stops mocking the moment the code under test
+ * imports the file instead. `tests/unit/services-no-barrels.test.ts` keeps the
+ * index files from coming back and checks every mocked service path names a file.
+ */
+const noServiceBarrelImports = [
+  {
+    regex: "^@/services/[^/]+(?:/index)?$",
+    message:
+      "Import the module that defines the symbol (e.g. @/services/locations/locations.queries). Service domains have no index barrel.",
+  },
+];
+
+/**
+ * The constants directory imported as a directory, for the same reason:
+ * `@/lib/constants` re-exported every constants module, so editing any one of
+ * them selected every test that read any constant.
+ */
+const noConstantsBarrelImports = [
+  {
+    regex: "^@/lib/constants(?:/index)?$",
+    message:
+      "Import the module that defines the constant (e.g. @/lib/constants/roles, @/lib/constants/brand). src/lib/constants has no index barrel.",
+  },
+];
+
+/**
+ * A grab-bag `utils` module under `src/lib/`.
+ *
+ * Every helper lives in the module about its subject, so a change to one
+ * reaches only the files that use it — which is what the gates' changed-file
+ * test selection reads. A shared `@/lib/utils` made every importer of any
+ * helper depend on all of them.
+ */
+const noUtilsHubImports = [
+  {
+    regex: "^(?:@/|(?:\\.\\./)+(?:src/)?)lib/utils(?:\\.ts|/.+)?$",
+    message:
+      "There is no @/lib/utils. Import the module that defines the helper: cn from @/lib/cn; isKeyOf and findOption from @/lib/type-guards; formatCurrency*, decimalToCents and sumCents from @/lib/money; formatDate*, formatTime* and the date ranges from @/lib/date-format; escapeLikePattern and searchTerms from @/lib/search; capitalize and parseEmails from @/lib/strings; toE164Digits from @/lib/constants/phone; DAYS_OF_WEEK from @/lib/constants/days-of-week; computeAge from @/lib/gamer-age-eligibility.",
+  },
+];
+
+/**
+ * The same hub, reached as a sibling from a file directly under `src/lib/`.
+ *
+ * Applied only to those files: a `./utils` anywhere else is that directory's
+ * own module (the email templates have one), and the specifier alone cannot
+ * tell the two apart.
+ */
+const noLibSiblingUtilsImport = [
+  {
+    regex: "^\\./utils(?:\\.ts)?$",
+    message: noUtilsHubImports[0].message,
+  },
+];
+
+/**
  * A family spelled out, banned wherever a face is set.
  *
  * @sog/ui names the faces and Sogverse references them; a family typed into
@@ -765,10 +827,14 @@ const noHeadingTagStrings = [
   "ConditionalExpression > ",
   "Property > ",
   "TSLiteralType > ",
+  // `as const` wraps the string, so it no longer sits directly in its variable.
+  "TSAsExpression > ",
 ].flatMap((position) =>
   [
     `Literal[value=${HEADING_TAG}]`,
     `TemplateLiteral[expressions.length=0][quasis.0.value.cooked=${HEADING_TAG}]`,
+    // `h${level}`: the tag built from a level, the most natural spelling of all.
+    `TemplateLiteral[expressions.length=1][quasis.0.value.cooked="h"][quasis.1.value.cooked=""]`,
   ].map((node) => ({
     // A property's key is its name, not a tag it holds: only its value counts.
     selector: `${position}${node}${position === "Property > " ? ".value" : ""}`,
@@ -778,6 +844,49 @@ const noHeadingTagStrings = [
 );
 
 const noRawHeadingElements = [...noRawHeadingJsx, ...noHeadingTagStrings];
+
+/**
+ * Every ban a mail is held to apart from the heading ban, shared by the email
+ * block and the mail markdown renderer's exemption from the heading ban's
+ * string half.
+ */
+const emailBans = [
+  ...noHexColourLiterals(
+    "No colour literals in an email. Import BRAND / DARK_THEME from @/lib/constants/colors, which derives the palette from @sog/ui.",
+  ),
+  ...noPaletteColourClasses,
+  ...noGreyAsHover,
+  ...noColourFunctions,
+  {
+    selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
+    message:
+      "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
+  },
+  // A family typed into a mail, on the same terms as the radius above and
+  // for the same reason: a mail has no class to write, so naming Arial in
+  // the markup is the easy path, and it is how the mail's face and the
+  // app's stopped being one decision. The two selectors are the two
+  // spellings — a template literal (what every template here writes) and a
+  // plain string.
+  //
+  // The pattern requires a family *name* after the colon, so the only form
+  // that survives is `font-family:${…}` — an interpolation, whose template
+  // chunk ends at the colon with nothing after it. That is the derived
+  // stack and nothing else can reach the mail.
+  ...["TemplateElement[value.raw", "Literal[value"].map((node) => ({
+    selector: String.raw`${node}=/font-family\s*:\s*['"a-zA-Z-]/]`,
+    message:
+      "No font-family literals in an email. Import MAIL_FONT_STACK from @/lib/constants/typography, which derives the mail face from @sog/ui — and a mail never loads a webfont.",
+  })),
+  // The rest of the face seam, restated because the email block replaces the
+  // `src/**` one. The `font-family:` half of `sogverseFaceBans` is
+  // deliberately left out and only the narrower ban directly above stands
+  // here: a mail is the one surface that writes that declaration at all,
+  // and the app-wide form would report the interpolated stack the mail is
+  // required to write.
+  ...noSpelledFamily,
+  ...noUnknownFaceClass,
+];
 
 const sogverseColourBans = [
   ...noHexColourLiterals(
@@ -867,7 +976,19 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
+      }],
+    },
+  },
+  {
+    // Files directly under src/lib/, which also name the hub as `./utils`. The
+    // src/** block's list above is restated because this block replaces that rule.
+    files: ["src/lib/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": "off",
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        paths: noMailFaceOutsideMail,
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports, ...noLibSiblingUtilsImport],
       }],
     },
   },
@@ -880,7 +1001,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -904,7 +1025,7 @@ const eslintConfig = defineConfig([
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
         paths: noMailFaceOutsideMail,
-        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -944,6 +1065,9 @@ const eslintConfig = defineConfig([
           ...noTsExtensionImports,
           ...noNextFontOutsideLayout,
           ...noZodV4OutsideMcp,
+          ...noServiceBarrelImports,
+          ...noConstantsBarrelImports,
+          ...noUtilsHubImports,
           {
             // Both halves of the staff workspace: the gedu tree, and the
             // role-agnostic group workspace the gedu and admin shells both
@@ -983,7 +1107,7 @@ const eslintConfig = defineConfig([
               "Family surfaces must not import gedu document shapes — only the shared attendance vocabulary (attendanceStatus / AttendanceStatus / SUPPORTED_ATTENDANCE_STATUSES) crosses this line, because it mirrors a database CHECK constraint.",
           },
           {
-            // member-flair owns two different things behind one barrel: the
+            // member-flair owns two different things in one module: the
             // staff overlay document (`groupStaffOverlay` and its member
             // shape, keyed by participant and carrying a note and a join
             // stamp no family may see) and the creation entry vocabulary
@@ -1186,42 +1310,23 @@ const eslintConfig = defineConfig([
       // class, so a number typed into markup is the easy path and is how two
       // radii and a footer grey drifted away from the app in the first place.
       "no-restricted-syntax": ["error",
-        ...noHexColourLiterals(
-          "No colour literals in an email. Import BRAND / DARK_THEME from @/lib/constants/colors, which derives the palette from @sog/ui.",
-        ),
-        ...noPaletteColourClasses,
-        ...noGreyAsHover,
-        ...noColourFunctions,
-        {
-          selector: String.raw`TemplateElement[value.raw=/border-radius\s*:\s*[0-9]/]`,
-          message:
-            "No radius literals in an email. Import RADIUS from @/lib/constants/radius, which mirrors the app's --radius scale.",
-        },
-        // A family typed into a mail, on the same terms as the radius above and
-        // for the same reason: a mail has no class to write, so naming Arial in
-        // the markup is the easy path, and it is how the mail's face and the
-        // app's stopped being one decision. The two selectors are the two
-        // spellings — a template literal (what every template here writes) and a
-        // plain string.
-        //
-        // The pattern requires a family *name* after the colon, so the only form
-        // that survives is `font-family:${…}` — an interpolation, whose template
-        // chunk ends at the colon with nothing after it. That is the derived
-        // stack and nothing else can reach the mail.
-        ...["TemplateElement[value.raw", "Literal[value"].map((node) => ({
-          selector: String.raw`${node}=/font-family\s*:\s*['"a-zA-Z-]/]`,
-          message:
-            "No font-family literals in an email. Import MAIL_FONT_STACK from @/lib/constants/typography, which derives the mail face from @sog/ui — and a mail never loads a webfont.",
-        })),
-        // The rest of the face seam, restated because this block replaces the
-        // one above. The `font-family:` half of `sogverseFaceBans` is
-        // deliberately left out and only the narrower ban directly above stands
-        // here: a mail is the one surface that writes that declaration at all,
-        // and the app-wide form would report the interpolated stack the mail is
-        // required to write.
-        ...noSpelledFamily,
-        ...noUnknownFaceClass,
+        ...emailBans,
         ...noRawHeadingElements,
+      ],
+    },
+  },
+  {
+    // The mail's markdown renderer maps a markdown heading level to the tag it
+    // writes into the mail's HTML, the same table by design as the two app
+    // markdown files exempted above, so it is exempt from the ban on a tag
+    // chosen at runtime and still from writing a raw heading as JSX. The
+    // email block's other bans are restated, since this block replaces that
+    // one's options rather than merging with them.
+    files: ["src/lib/email-templates/markdown.ts"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        ...emailBans,
+        ...noRawHeadingJsx,
       ],
     },
   },
@@ -1244,7 +1349,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": "off",
       "@typescript-eslint/no-restricted-imports": ["error", {
-        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp],
+        patterns: [...noTsExtensionImports, ...noNextFontOutsideLayout, ...noZodV4OutsideMcp, ...noServiceBarrelImports, ...noConstantsBarrelImports, ...noUtilsHubImports],
       }],
     },
   },
@@ -1389,6 +1494,9 @@ const eslintConfig = defineConfig([
     // entries above.
     "packages/*/demo/.next/**",
     "packages/*/demo/next-env.d.ts",
+    // Other checkouts: a bare-path run from the main checkout (`lint:file`
+    // with no files lints `.`) would otherwise sweep every worktree.
+    ".claude/worktrees/**",
   ]),
 ]);
 

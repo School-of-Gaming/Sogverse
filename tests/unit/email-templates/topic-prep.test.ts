@@ -9,7 +9,9 @@ import {
 } from "@/lib/email-templates/translator";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import type { ProductTopic } from "@/types";
-import messages from "@/../messages/en.json";
+import enTopicPrep from "@/../messages/en/topicPrep.json";
+
+const messages = { topicPrep: enTopicPrep };
 
 // The mail's half of the "Before the first session" guide. What is worth
 // asserting here is the two answers a caller cannot recover for itself: that

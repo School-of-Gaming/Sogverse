@@ -12,7 +12,8 @@ import { INERT_HREF } from "@/lib/constants/routes";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import { useNow, useTimezone } from "@/providers";
 import { runLiveness } from "@/lib/product-run";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 
 /**
  * One card per **live substitution** — a single afternoon this gedu is standing in
@@ -81,6 +82,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
     cancelled,
     hasVoiceRoom,
     voiceHref,
+    voiceRoom,
     openHref,
     attentionCount,
   } = substitution;
@@ -203,6 +205,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
             {!cancelled && !locked && hasVoiceRoom && startsAt !== null && (
               <span className="relative z-10">
                 <JoinVoiceButton
+                  voiceRoom={voiceRoom}
                   voiceIsOpen={voiceIsOpen}
                   voiceHref={voiceHref}
                   opensDate={formatDate(startsAt, locale, {

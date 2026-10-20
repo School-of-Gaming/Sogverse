@@ -1,6 +1,8 @@
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { organizationId } from "@/lib/seo/organization";
-import type { LocalizedLibraryArticle } from "@/services/library";
+import type {
+  LocalizedLibraryArticle,
+} from "@/services/library/library.contracts";
 
 export interface LibraryArticleJsonLdInput {
   /** The canonical site origin — `NEXT_PUBLIC_SITE_URL`. */

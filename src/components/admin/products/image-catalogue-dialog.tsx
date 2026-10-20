@@ -9,7 +9,7 @@ import {
   useRenameCatalogueImage,
   useReplaceCatalogueImage,
   useUploadCatalogueImage,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.queries";
 import type { CatalogueImage, CatalogueImagePurpose } from "@/types";
 import { ImageCatalogueView } from "./image-catalogue-view";
 import type { CatalogueImageEntry } from "./product-image-selection";

@@ -1,0 +1,21 @@
+{
+  "newcomer": "Nouveau",
+  "newcomerTooltip": "Nouveau dans ce groupe — {days, plural, =0 {aujourd’hui} one {il y a # jour} other {il y a # jours}}",
+  "openMember": "Note et création au sujet de {name}",
+  "openMemberCreationOwed": "Note et création au sujet de {name} — une création manque encore",
+  "memberTitle": "À propos de {name}",
+  "noteAudience": "Gedus et admins",
+  "noteLabel": "Note privée",
+  "noteHint": "Visible uniquement par les Gedus et les admins. Elle reste attachée à ce groupe, d’une séance à l’autre.",
+  "notePlaceholder": "Notes au sujet de {name} dans ce groupe.",
+  "noteLastEdited": "Dernière modification par {name}",
+  "creationAudience": "Visible par les familles",
+  "creationLabel": "Création",
+  "creationHint": "Quelque chose que {name} a réalisé dans ce groupe. Sa famille le voit sur sa propre page.",
+  "creationTitleLabel": "Titre de la création",
+  "creationTitlePlaceholder": "Ce qui a été réalisé",
+  "creationUrlLabel": "Lien de la création",
+  "creationUrlPlaceholder": "Lien vers la création",
+  "creationIncomplete": "Une création a besoin d’un titre et d’un lien.",
+  "saveFailed": "L’enregistrement a échoué. Réessayez."
+}

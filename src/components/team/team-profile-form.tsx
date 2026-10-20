@@ -30,7 +30,7 @@ import {
   writtenLocales,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import {
   type TeamProfile,

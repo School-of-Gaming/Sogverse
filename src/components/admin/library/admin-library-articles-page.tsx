@@ -19,12 +19,14 @@ import {
 import { LIBRARY_CATEGORY_MESSAGE_KEY } from "@/components/library/categories";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
-import type { AdminLibraryArticleListItem } from "@/services/library";
+import type {
+  AdminLibraryArticleListItem,
+} from "@/services/library/library.contracts";
 import { libraryArticleStatus } from "./library-article-form";
 import { LibraryArticleStatusChip } from "./library-article-status-chip";
 

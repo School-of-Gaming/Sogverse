@@ -41,7 +41,7 @@ import type {
   AdminLandingPage,
   LandingPageDraftVersion,
   PublishedLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 
 const PAGE_ID = "746388a7-2edd-456b-b7d1-4e9828f85af9";
 const HERO_ID = "9d1f06bf-9895-4f04-9ec5-3d86382afb8e";
@@ -103,6 +103,7 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
     },
     publication: null,
     hasUnpublishedChanges: false,
+    testimonials: {},
   };
 }
 
@@ -287,5 +288,48 @@ describe("the landing page status page", () => {
   it("offers no Unpublish while the page is not live", () => {
     renderStatus(draftPage([EN]));
     expect(screen.queryByRole("button", { name: "unpublish" })).toBeNull();
+  });
+});
+
+describe("the landing page status page's testimonials", () => {
+  const QUOTES_ID = "c4a7e2f1-5b3d-4e8a-9c6f-2d1b0a9e8f7c";
+  const ONE = "0e6b9a52-31d4-4c7e-8f20-6a5d4c3b2a19";
+  const TWO = "7c2d1e0f-9a8b-4c6d-8e5f-4a3b2c1d0e9f";
+
+  it("shows each testimonials section's arrangement and its quotes, each opening its editor", () => {
+    const page = draftPage([EN]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [
+          ...SECTIONS,
+          { id: QUOTES_ID, type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO] },
+        ],
+      },
+      testimonials: {
+        [ONE]: { id: ONE, versions: [{ locale: "en", from: "Mum, Finland", quote: "Gaming is fun." }] },
+        [TWO]: { id: TWO, versions: [{ locale: "fi", from: "Äiti", quote: "Hauskaa." }] },
+      },
+    });
+
+    const block = screen.getByRole("region", { name: "statusPage.testimonials.heading" });
+    expect(
+      within(block).getByText(
+        "statusPage.testimonials.section number=4 type=sectionTypes.testimonials arrangement=statusPage.testimonials.arrangements.pair",
+      ),
+    ).toBeTruthy();
+    const links = within(block).getAllByRole("link");
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Gaming is fun.Mum, Finland",
+      // No English version: the admin reads the first one written.
+      "Hauskaa.Äiti",
+    ]);
+    expect(links[0].getAttribute("href")).toContain(`/admin/testimonials/${ONE}`);
+  });
+
+  it("is not shown for a page with no testimonials section", () => {
+    renderStatus(draftPage([EN]));
+    expect(screen.queryByRole("region", { name: "statusPage.testimonials.heading" })).toBeNull();
   });
 });

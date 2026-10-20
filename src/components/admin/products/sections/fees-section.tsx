@@ -3,8 +3,8 @@
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
-import { findOption } from "@/lib/utils";
-import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants";
+import { findOption } from "@/lib/type-guards";
+import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { InvoiceCustomerPicker } from "@/components/admin/invoice-customers/invoice-customer-picker";
 import { FormSection } from "../form-primitives";
 import {

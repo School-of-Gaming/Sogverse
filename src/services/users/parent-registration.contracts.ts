@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 

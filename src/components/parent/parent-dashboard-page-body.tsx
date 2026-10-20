@@ -16,7 +16,8 @@ import type {
 } from "@/components/family/enrollment-rollup";
 import { ParentHelpFaq } from "@/components/help/help-faq";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
-import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * One person's section, with everything they are signed up for. Enrollments

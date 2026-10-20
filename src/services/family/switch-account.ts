@@ -1,6 +1,6 @@
 "use client";
 
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { FamilyService } from "./family.service";
 import type { FamilyMember } from "./family.contracts";
 

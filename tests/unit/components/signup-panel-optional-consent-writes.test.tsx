@@ -74,12 +74,12 @@ vi.mock(
 const createMutate = vi.fn();
 const waitlistMutate = vi.fn();
 
-vi.mock("@/services/participations", () => ({
+vi.mock("@/services/participations/participations.queries", () => ({
   useCreateParticipation: () => ({ mutate: createMutate }),
   useJoinWaitlist: () => ({ mutate: waitlistMutate }),
 }));
 
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
 }));
 
@@ -91,11 +91,11 @@ const setPhotoMutate = vi.fn();
 // that no longer exports it would fail loudly if that call came back, because
 // the hook is a real React Query call and there is no QueryClientProvider
 // around these renders.
-vi.mock("@/services/marketing-consents", () => ({
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () => ({
   useSetMarketingConsent: () => ({ mutate: setMarketingMutate }),
 }));
 
-vi.mock("@/services/gamer-photo-consents", () => ({
+vi.mock("@/services/gamer-photo-consents/gamer-photo-consents.queries", () => ({
   useSetGamerPhotoConsent: () => ({ mutate: setPhotoMutate }),
 }));
 

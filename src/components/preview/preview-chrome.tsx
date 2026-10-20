@@ -1,5 +1,5 @@
 import { DashboardLayout, Footer, Header } from "@/components/layout";
-import type { UserRole } from "@/lib/constants";
+import type { UserRole } from "@/lib/constants/roles";
 import type { PreviewChromeKind } from "./scenes";
 
 /**

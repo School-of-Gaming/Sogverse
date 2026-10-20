@@ -2,7 +2,20 @@ import { describe, expect, it } from "vitest";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
-import { loadMessages } from "@/i18n/messages";
+import aboutEn from "../../../messages/en/about.json";
+import aboutFi from "../../../messages/fi/about.json";
+import aboutFr from "../../../messages/fr/about.json";
+import aboutSv from "../../../messages/sv/about.json";
+import aboutTlh from "../../../messages/tlh/about.json";
+
+/** Each locale's `about` namespace, the only one the FAQ answers live in. */
+const ABOUT: Record<(typeof SUPPORTED_LOCALES)[number], typeof aboutEn> = {
+  en: aboutEn,
+  fi: aboutFi,
+  fr: aboutFr,
+  sv: aboutSv,
+  tlh: aboutTlh,
+};
 
 /**
  * The flattener behind both machine-readable views of an FAQ answer — the
@@ -49,16 +62,14 @@ describe("messageToPlainText", () => {
     expect(messageToPlainText("  <p>One.</p>\n  <p>Two.</p>  ")).toBe("One. Two.");
   });
 
-  it("leaves every real FAQ answer free of markup and placeholders, in every locale", async () => {
+  it("leaves every real FAQ answer free of markup and placeholders, in every locale", () => {
     // The catalog is the real input, so it is the real test: a tag added to
     // the answer vocabulary, or a new `{value}` a component supplies, shows up
     // here rather than in a crawler's copy of the page. All five locales,
     // because the `FAQPage` block renders on every language's About page —
     // only `llms.txt` is English-only.
     for (const locale of SUPPORTED_LOCALES) {
-      const messages = await loadMessages(locale);
-
-      for (const item of Object.values(messages.about.faq.items)) {
+      for (const item of Object.values(ABOUT[locale].faq.items)) {
         const text = messageToPlainText(item.answer, { supportEmail: "help@sog.gg" });
 
         for (const tag of Object.keys(FAQ_ANSWER_TAGS)) {

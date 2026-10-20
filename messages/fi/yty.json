@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Mikä on Yty?",
+    "subtitle": "Yty on voima, joka pitää Sogversen tasapainossa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Ytyä itselleen ja kaikille."
+  },
+  "overview": {
+    "heading": "Miten Yty toimii",
+    "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta kerrasta, jokaisesta suoritetusta tehtävästä ja jokaisesta ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Pisteet kertyvät neljään Yty-elementtiin, joista jokainen kuvastaa eri puolta hyvästä kasvusta.",
+    "paragraph2": "Kun pelaajat keräävät Ytyä itselleen, he kasvattavat samalla koko Sogversen Ytyä — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
+  },
+  "elements": {
+    "heading": "Neljä Yty-elementtiä",
+    "subheading": "Jokainen Yty-elementti on yksi suhde, jota pelaaja kasvattaa: suhde itseensä, muihin, yhteiskuntaan ja teknologiaan",
+    "harmony": {
+      "name": "Harmonia",
+      "description": "Suhteesi itseesi",
+      "detail": "Kuka minä olen? Harmonia on itsensä hyväksymistä sellaisena kuin on — vahvuuksineen ja heikkouksineen. Se tarkoittaa hyvinvoinnista huolehtimista, tunteiden ilmaisemista, hyvien päätösten tekemistä ja sen ymmärtämistä, miksi säännöt ja luottamus ovat tärkeitä."
+    },
+    "glow": {
+      "name": "Hehku",
+      "description": "Suhteesi muihin",
+      "detail": "Miten voin auttaa muita? Hehku on empatiaa, ystävällisyyttä ja merkityksellisten ihmissuhteiden rakentamista. Se tarkoittaa erilaisuuden kunnioittamista, tilan antamista muille, hyvää viestintää ja sellaisen ihmisen olemista, joka nostaa muita ylös."
+    },
+    "valor": {
+      "name": "Kantti",
+      "description": "Suhteesi yhteiskuntaan",
+      "detail": "Miten minä voin vaikuttaa? Kantti on oman paikkansa löytämistä yhteiskunnassa ja rohkeutta osallistua siihen. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
+    },
+    "wit": {
+      "name": "Arkijärki",
+      "description": "Suhteesi teknologiaan",
+      "detail": "Miten käytän teknologiaa hyvin? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja niiden ympärillä oleviin välineisiin. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, tiedon kriittistä arviointia ja ruutuajan tasapainottamista muun elämän kanssa."
+    }
+  },
+  "earning": {
+    "heading": "Miten pelaajat ansaitsevat Ytyä",
+    "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, suoritetut tehtävät, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Ytyä.",
+    "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat nostavat niiden tasoa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste kasvattaa myös pelaajan yleistä Yty-tasoa ja sitä Yty-elementtiä, johon se kuuluu.",
+    "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Ytyn rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
+  }
+}

@@ -7,7 +7,7 @@ import {
   useAdminLandingPage,
   usePublishLandingPage,
   useUnpublishLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.queries";
 import { LandingPagePageShell } from "./landing-page-page-shell";
 import { LandingPageStatusPage } from "./landing-page-status-page";
 

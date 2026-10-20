@@ -1,5 +1,7 @@
 import type { SessionPhoto } from "@/components/session-feed";
-import type { SessionPhotoErrorCode } from "@/services/gedu-sessions";
+import type {
+  SessionPhotoErrorCode,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * The photo half of a session card's **draft** — what the gedu has picked and

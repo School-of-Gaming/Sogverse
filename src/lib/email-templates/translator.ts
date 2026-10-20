@@ -3,10 +3,16 @@ import {
   DEFAULT_LOCALE,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { loadMessages, type Messages } from "@/i18n/messages";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { emailMessages } from "@/i18n/namespaces/email";
+import { topicPrepMessages } from "@/i18n/namespaces/topicPrep";
 
 // Re-export the translator type so template builders can type their `t` parameter.
-export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "email">>;
+// Typed over the one namespace it is handed, so it cannot name another.
+export type EmailTranslator = ReturnType<
+  typeof createTranslator<Pick<Messages, "email">, "email">
+>;
 
 /**
  * Creates a translator scoped to the `email` namespace for the given locale.
@@ -15,8 +21,8 @@ export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "emai
 export async function getEmailTranslator(
   locale: SupportedLocale = DEFAULT_LOCALE,
 ): Promise<EmailTranslator> {
-  const messages = await loadMessages(locale);
-  return createTranslator({ locale, messages, namespace: "email" });
+  const email = await loadNamespace(emailMessages, locale);
+  return createTranslator({ locale, messages: { email }, namespace: "email" });
 }
 
 /**
@@ -35,16 +41,15 @@ export async function getEmailTranslator(
  * document.
  *
  * So the mail takes a second translator rather than a second copy of the prose.
- * A builder that needs both takes both; the two are loaded from the same
- * catalog, so they cannot disagree about the locale.
+ * A builder that needs both takes both, each loaded in the same locale.
  */
 export type TopicPrepTranslator = ReturnType<
-  typeof createTranslator<Messages, "topicPrep">
+  typeof createTranslator<Pick<Messages, "topicPrep">, "topicPrep">
 >;
 
 export async function getTopicPrepTranslator(
   locale: SupportedLocale = DEFAULT_LOCALE,
 ): Promise<TopicPrepTranslator> {
-  const messages = await loadMessages(locale);
-  return createTranslator({ locale, messages, namespace: "topicPrep" });
+  const topicPrep = await loadNamespace(topicPrepMessages, locale);
+  return createTranslator({ locale, messages: { topicPrep }, namespace: "topicPrep" });
 }

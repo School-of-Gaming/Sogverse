@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 export function ForgotPasswordForm() {
   const t = useTranslations('auth');

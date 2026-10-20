@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { searchTerms } from "@/lib/utils";
+import { searchTerms } from "@/lib/search";
 
 /**
  * The tokenizer that decides what "matches what I typed" is *made of*.

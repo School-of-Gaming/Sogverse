@@ -24,21 +24,21 @@ import {
   formatProductSchedule,
   joinScheduleGroups,
 } from "@/lib/products/format-product-schedule";
-import {
-  cn,
-  formatCurrencyFromCents,
-  formatDate,
-  formatDateOnly,
-} from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { useNow, useTimezone } from "@/providers";
-import { useProductGroups } from "@/services/groups";
-import { useProductsByType, type ProductWithDetails } from "@/services/products";
+import { useProductGroups } from "@/services/groups/groups.queries";
+import { useProductsByType } from "@/services/products/products.queries";
+import type { ProductWithDetails } from "@/services/products/products.service";
 import {
   SwitchClubCommitError,
-  useParticipationsForGamers,
   useSwitchClub,
   useSwitchClubCheck,
-} from "@/services/participations";
+} from "@/services/participations/switch-club.queries";
+import {
+  useParticipationsForGamers,
+} from "@/services/participations/participations.queries";
 import type { SwitchClubRefusal } from "@/services/participations/switch-club.contracts";
 import { filterProductsBySearch } from "../product-name-search";
 import { ProductStatusChip } from "../product-status-chip";

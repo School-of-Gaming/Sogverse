@@ -15,7 +15,7 @@ import {
 } from "./gamers.service";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { robloxKeys } from "@/services/roblox/roblox.queries";
-import { familyKeys } from "@/services/family";
+import { familyKeys } from "@/services/family/family.queries";
 import type { CreateGamerInput, GamerProfile } from "@/types";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 

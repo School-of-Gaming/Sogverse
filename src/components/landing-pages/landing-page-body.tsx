@@ -7,6 +7,7 @@ import type {
   LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
 import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
 
@@ -15,6 +16,12 @@ export interface LandingPageBodyProps {
   sections: readonly LandingSection[];
   /** Each picture's path and purpose, by catalogue entry id. */
   pictures: Readonly<LandingPictures>;
+  /**
+   * The current words of each testimonial the structure places, by id — read
+   * from the store per request, never from the copy, so an edit shows
+   * without a republish.
+   */
+  testimonials: Readonly<Record<string, PublicTestimonial>>;
   /** The shown version's words, by section id. */
   sectionTexts: LandingSectionTexts;
   /** The language the shown version is written in. */
@@ -36,18 +43,21 @@ export interface LandingPageBodyProps {
 export function LandingPageBody({
   sections,
   pictures,
+  testimonials,
   sectionTexts,
   textLocale,
   locale,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
+    textLocale,
     picture: (imageId) => {
       if (!Object.hasOwn(pictures, imageId)) return null;
       const { path, purpose } = pictures[imageId];
       const src = catalogueImageSrc(purpose, path);
       return src === null ? null : { src, shape: landingPictureShapeOf(purpose) };
     },
+    testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
   };
   return (
     // exact-locale: marks text written in another language than the page with lang

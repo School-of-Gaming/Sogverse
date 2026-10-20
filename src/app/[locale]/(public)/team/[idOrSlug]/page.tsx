@@ -17,7 +17,7 @@ import {
   teamMemberMetadata,
 } from "@/components/team/public/team-member-metadata";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveIdOrSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";

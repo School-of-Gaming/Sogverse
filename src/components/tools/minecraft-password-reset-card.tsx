@@ -1,7 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useResetMinecraftPasswords } from "@/services/minecraft-education";
+import {
+  useResetMinecraftPasswords,
+} from "@/services/minecraft-education/minecraft-education.queries";
 import { MinecraftPasswordResetCardView } from "./minecraft-password-reset-card-view";
 
 /**

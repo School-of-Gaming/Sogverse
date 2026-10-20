@@ -20,10 +20,12 @@ import { ApiError } from "@/lib/api/api-error";
 import { gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   adminUserEmailBody,
+  USER_EMAIL_TAKEN,
+} from "@/services/users/users.contracts";
+import {
   useProfile,
   useUpdateUserSignInAddress,
-  USER_EMAIL_TAKEN,
-} from "@/services/users";
+} from "@/services/users/users.queries";
 import type { Profile } from "@/types";
 
 /**

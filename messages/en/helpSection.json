@@ -1,0 +1,24 @@
+{
+  "heading": "Need help?",
+  "faqHeading": "Frequently asked questions",
+  "form": {
+    "messageLabel": "Message",
+    "charactersNeeded": "{count} more characters needed",
+    "submit": "Send message",
+    "adult": {
+      "description": "Ask us for help — every message reaches the School of Gaming team. You can also email us at <link>{email}</link>.",
+      "placeholder": "What can we help with?",
+      "thankYou": "Thank you — your message is with us, and we’re glad you wrote.",
+      "failed": "We could not send your message. Please try again.",
+      "tooManyRequests": "You have sent us several messages already. Please try again a little later."
+    },
+    "gamer": {
+      "description": "Stuck on something? Write to us here and we will help.",
+      "replyNote": "If we write back, we will email your parent.",
+      "placeholder": "What do you need help with?",
+      "thankYou": "Thank you — we got your message.",
+      "failed": "We could not send your message. Try again.",
+      "tooManyRequests": "You have sent a few messages already. Try again a little later."
+    }
+  }
+}

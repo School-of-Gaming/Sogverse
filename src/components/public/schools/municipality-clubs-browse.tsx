@@ -2,13 +2,17 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { selectClubsInMunicipality } from "@/lib/schools/municipalities";
-import { useVisibleProductsByTypes } from "@/services/products";
+import {
+  useVisibleProductsByTypes,
+} from "@/services/products/products.queries";
 import {
   useParticipationCounts,
+} from "@/services/participations/participations.queries";
+import {
   type ParticipationCounts,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { ProductBrowseResults } from "@/components/public/products/product-browse-results";
 import { Heading } from "@sog/ui";

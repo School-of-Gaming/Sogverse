@@ -11,7 +11,7 @@ import {
 } from "@/lib/constants/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { ChatComposerCapabilities } from "./capabilities";
 import {
   CHAT_IMAGE_THUMB_HEIGHT,

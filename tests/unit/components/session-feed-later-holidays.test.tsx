@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { SessionFeedShell } from "@/components/session-feed";
+
+const messages = { sessionFeed: enSessionFeed };
 
 /**
  * ============================================================================

@@ -451,6 +451,156 @@ describe("create_product", () => {
     expect(error?.message).toMatch(/region_lock_country/i);
   });
 
+  describe("the voice room", () => {
+    /**
+     * A complete create of an online club, plus whatever voice arguments and
+     * translation the case is about. Returns the raw result so refusals can be
+     * asserted; a successful id is queued for cleanup.
+     */
+    async function createWithVoice(
+      voice: {
+        p_voice_room_mode?: "sogverse" | "external" | "none";
+        p_external_voice_url?: string;
+        p_is_remote?: boolean;
+        p_location_id?: string;
+      },
+      instructions: Record<string, string | null> = {},
+    ) {
+      const locales = Object.keys(instructions).length
+        ? Object.keys(instructions)
+        : ["en"];
+      const result = await adminAuth.rpc("create_product", {
+        p_product_type: "consumer_club",
+        p_billing_mode: "free",
+        p_translations: locales.map((locale) => ({
+          locale,
+          name: `Voice ${locale}`,
+          short_description: "",
+          voice_join_instructions: instructions[locale] ?? null,
+        })),
+        p_topic: "minecraft_java",
+        p_spoken_language_code: "en",
+        p_is_remote: true,
+        p_timezone: "Europe/Helsinki",
+        p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        p_start_date: "2099-01-01",
+        p_for_gamers: true,
+        p_for_parents: false,
+        p_min_age: 7,
+        p_max_age: 12,
+        ...voice,
+      });
+      if (result.data) created.push(result.data);
+      return result;
+    }
+
+    it("creates a Sogverse room with no link when the voice arguments are omitted", async () => {
+      const { data: id, error } = await createWithVoice({});
+      expect(error).toBeNull();
+      const { data: row } = await admin
+        .from("products")
+        .select("voice_room_mode, external_voice_url")
+        .eq("id", id!)
+        .single();
+      expect(row).toEqual({ voice_room_mode: "sogverse", external_voice_url: null });
+    });
+
+    it("stores a meeting link on the external mode", async () => {
+      const { data: id, error } = await createWithVoice({
+        p_voice_room_mode: "external",
+        p_external_voice_url: "https://meet.example.com/webinar?pwd=1",
+      });
+      expect(error).toBeNull();
+      const { data: row } = await admin
+        .from("products")
+        .select("voice_room_mode, external_voice_url")
+        .eq("id", id!)
+        .single();
+      expect(row).toEqual({
+        voice_room_mode: "external",
+        external_voice_url: "https://meet.example.com/webinar?pwd=1",
+      });
+    });
+
+    it("refuses the external mode without a link, a link on another mode, and a link that is not http(s)", async () => {
+      for (const voice of [
+        { p_voice_room_mode: "external" as const },
+        {
+          p_voice_room_mode: "sogverse" as const,
+          p_external_voice_url: "https://meet.example.com/x",
+        },
+        {
+          p_voice_room_mode: "external" as const,
+          p_external_voice_url: "javascript:alert(1)",
+        },
+        {
+          p_voice_room_mode: "external" as const,
+          p_external_voice_url: "meet.example.com/x",
+        },
+      ]) {
+        const { data, error } = await createWithVoice(voice);
+        expect(data).toBeNull();
+        expect(error?.code).toBe("23514");
+        expect(error?.message).toMatch(/external_voice_url/);
+      }
+    });
+
+    it("refuses anything but a Sogverse room on an in-person product", async () => {
+      const { data, error } = await createWithVoice({
+        p_is_remote: false,
+        p_location_id: TEST_IDS.LOCATION_SITE,
+        p_voice_room_mode: "none",
+      });
+      expect(data).toBeNull();
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/in_person_voice_room/);
+    });
+
+    it("stores join instructions per locale on the no-room mode", async () => {
+      const { data: id, error } = await createWithVoice(
+        { p_voice_room_mode: "none" },
+        { en: "Call 0800 123 456.", fi: null },
+      );
+      expect(error).toBeNull();
+      const { data: rows } = await admin
+        .from("product_translations")
+        .select("locale, voice_join_instructions")
+        .eq("product_id", id!)
+        .order("locale");
+      expect(rows).toEqual([
+        { locale: "en", voice_join_instructions: "Call 0800 123 456." },
+        { locale: "fi", voice_join_instructions: null },
+      ]);
+    });
+
+    it("refuses the no-room mode with instructions in no locale", async () => {
+      const { data, error } = await createWithVoice({ p_voice_room_mode: "none" });
+      expect(data).toBeNull();
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/needs join instructions/);
+    });
+
+    it("refuses instructions on any other mode", async () => {
+      const { data, error } = await createWithVoice(
+        { p_voice_room_mode: "sogverse" },
+        { en: "Call 0800 123 456." },
+      );
+      expect(data).toBeNull();
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/belong only to a product with no voice room/);
+    });
+
+    it("refuses blank instructions through the column's CHECK", async () => {
+      const { data, error } = await createWithVoice(
+        { p_voice_room_mode: "none" },
+        { en: " \n\t " },
+      );
+      expect(data).toBeNull();
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toMatch(/voice_join_instructions/);
+    });
+  });
+
   it("non-admin (customer) is rejected with 42501", async () => {
     const customer = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER.email,

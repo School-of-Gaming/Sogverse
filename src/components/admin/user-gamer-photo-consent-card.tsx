@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
 import { findGamerPhotoConsentRow } from "@/lib/gamer-photo-consent-answer";
-import { useGamerPhotoConsents } from "@/services/gamer-photo-consents";
+import {
+  useGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import { useTimezone } from "@/providers";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 /**
  * What a gamer's parent has said about photographs of them.

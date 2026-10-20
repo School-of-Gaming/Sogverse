@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
 import { SessionReport } from "@/components/session-feed/SessionReport";
 import { reportOverflows } from "@/components/session-feed/report-clamp";
+
+const messages = { sessionFeed: enSessionFeed };
 
 /**
  * **A report has to be complete in the frame the server paints, and it has to

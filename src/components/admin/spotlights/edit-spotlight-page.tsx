@@ -4,8 +4,11 @@ import { useTranslations } from "next-intl";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
-import { useAdminSpotlight, useSaveSpotlight } from "@/services/spotlights";
+import { ROUTES } from "@/lib/constants/routes";
+import {
+  useAdminSpotlight,
+  useSaveSpotlight,
+} from "@/services/spotlights/spotlights.queries";
 import { SpotlightEditor } from "./spotlight-editor";
 
 /**

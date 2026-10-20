@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { SESSION_RECORDING_EPOCH } from "@/lib/constants";
+import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
 import { discordLinkedGedu } from "@/lib/discord-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { geduAssignmentSummaries } from "@/services/gedu-sessions/gedu-sessions.contracts";

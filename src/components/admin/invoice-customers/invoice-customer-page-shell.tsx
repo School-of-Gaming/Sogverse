@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * The chrome both customer forms sit in: the way back to the list, the page's

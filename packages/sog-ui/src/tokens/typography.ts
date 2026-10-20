@@ -303,7 +303,7 @@ export type TypeStep = {
 /**
  * The working type scale.
  *
- * Nine steps and no more: six heading steps, two body sizes and the button
+ * Ten steps and no more: seven heading steps, two body sizes and the button
  * label. A surface that wants a size the scale does not have is asking for a
  * step, which is a decision made here, not an arbitrary value written into a
  * page.
@@ -318,15 +318,17 @@ export type TypeStep = {
  * tracked tight, none is bold, none is set at body weight. A reader tells two
  * ranks apart by size alone, so each step sits clearly below the one above it
  * and no two steps share a style. Each carries its own line height, tighter as
- * the size grows, so no call site sets a leading.
+ * the size grows — except `item-title`, whose 1.5 is looser than `label`'s
+ * because it keeps the line height an FAQ question had before it became a
+ * heading — so no call site sets a leading.
  *
  * **Two registers, one scale.** `hero` and `display` are the story register —
  * a public page telling the brand's story to a mixed audience, at the sizes a
  * headline needs. `page-title` is the work register's top — the opt-in
  * spotlight on an app page, where a person has come to get something done and
  * a 36px heading would shout over the work; an app page's title is `section`
- * unless the page chooses the spotlight. `section`, `card-title` and `label`
- * serve both. Same face, same
+ * unless the page chooses the spotlight. `section`, `card-title`,
+ * `item-title` and `label` serve both. Same face, same
  * weight, same rules: the registers differ in where the scale tops out, never
  * in how a heading is drawn.
  *
@@ -458,6 +460,25 @@ export const TYPE_SCALE = [
     mobilePx: null,
     weight: 600,
     lineHeight: 1.4,
+  },
+  /**
+   * The title of one item among a run of like items — a question in an FAQ,
+   * for example — sitting under the region's own heading.
+   *
+   * 16px, the size of the text it titles, and told apart from that text by
+   * weight alone: under an 18px `card-title` it could not take 18
+   * without matching the heading it sits under, and at `label`'s 14 it would
+   * be smaller than the answer it titles.
+   */
+  {
+    id: "item-title",
+    cssName: "--text-item-title",
+    label: "Item title",
+    face: "sans",
+    px: 16,
+    mobilePx: null,
+    weight: 600,
+    lineHeight: 1.5,
   },
   /**
    * A small heading over a compact region — a list, a row of chips, a set of

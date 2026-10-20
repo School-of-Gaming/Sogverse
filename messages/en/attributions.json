@@ -1,0 +1,12 @@
+{
+  "title": "Attributions",
+  "intro": "Parts of Sogverse are built on data and services that other people share openly. This page lists them, says what each one does, and links to the terms we use it under.",
+  "sourceLabel": "Source:",
+  "licenceLabel": "Licence:",
+  "dataVersion": "Data published {date}",
+  "entries": {
+    "geonames": "The list of countries, regions and towns you pick from when you tell us where your family lives — the same list we use to find clubs near you. Ours is based on GeoNames rather than being a copy of it: we leave out places we do not serve, group some of them differently, and rename others to the form people use locally.",
+    "laPoste": "The French postal codes in that same list, so a family in France can type their code instead of hunting for their commune.",
+    "mcHeads": "Draws the Minecraft character shown beside a linked Minecraft account. They ask for nothing in return, so this credit is a thank-you rather than a requirement."
+  }
+}
