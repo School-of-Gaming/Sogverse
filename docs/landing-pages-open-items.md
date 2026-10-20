@@ -82,18 +82,17 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 
 | Worktree | Item | Points for the review |
 |---|---|---|
-| `landing-email-capture` | #2 email sign-up section, a one-way send to Klaviyo | Single opt-in, like the blog's newsletter form; Sogverse stores nothing about the lead and reads nothing back; an address that had unsubscribed is subscribed again. Account holders are not synced to Klaviyo (deferred). Klaviyo setup outstanding (below). |
 | `discover-index` | #10 `/discover` index, breadcrumbs, IndexNow | Publish and Unpublish (landing pages and Library) now go through admin API routes so IndexNow can fire; the API route wrapper now returns the database error code where it discloses errors; the production check is duplicated byte for byte with the one already on `dev` (`src/lib/seo/deployment.ts`) on purpose; the index has no closing call to action though the site-quality rule asks every public page for one; the Finnish copy wants a native check. |
 | `landing-share-card` | #12 share title and picture per page | In the MCP tools, leaving a share field out of a save clears it — decide whether that is acceptable. |
 | `landing-picture-shapes` | #14 pictures in three shapes (wide 16:9, square, portrait 4:5), never cropped | Library covers uploaded through the AI app are now refused rather than cropped when not 16:9; a column was renamed to hold each picture's purpose; the uploader view has a new address. Not yet tried in a real AI app. |
 | `landing-products` | #16 Products section: hand-picked shop products in the shop's own card and carousel | The carousel is now shared with the Roblox page and centred when it is not full; a pick the shop no longer lists is not drawn and is reported on the status page; municipality clubs can be picked but never show — consider refusing them at save. Each products section ships the whole shop listing to the browser. |
 | `landing-section-backgrounds` | #17 a default or card background per section | The default is written into the structure, so an existing page shows "unpublished changes" once after its first structure save. The Products section needs the field when the two branches meet. Final full test run outstanding. |
-| `landing-sticky-section` | #17 one sticky section (email sign-up only) in a side column from 1280px, at the page's end with a jump button below that | Built on `landing-email-capture`, which must land first. Merging with `landing-section-backgrounds` conflicts in the section renderer: the column inset belongs on each section's inner container, not its band. Image size hints still assume no column. |
+| `landing-sticky-section` | #17 one sticky section (email sign-up only) in a side column from 1280px, at the page's end with a jump button below that | Built on an earlier version of the email sign-up (Brevo, double opt-in), which landed as a one-way send to Klaviyo: merging `dev` in rewrites its sign-up side. Merging with `landing-section-backgrounds` conflicts in the section renderer: the column inset belongs on each section's inner container, not its band. Image size hints still assume no column. |
 | `uploader-multi-file` | #18 several pictures at once in the uploader | Built on `landing-picture-shapes`, which must land first. Files past the room are refused before any upload; one batch per opening. Final full test run outstanding; not yet tried in a real AI app. |
 | `landing-mcp-seo-and-links` | extras 1 and 2: rendered SEO values in the page read tool; the link rule explained, and rewrites reported on save | The share-card branch's override belongs inside the one function that computes the rendered values. |
 
 **Merge order.** Any order within these constraints:
-`landing-email-capture` before `landing-sticky-section`; `landing-picture-shapes` before `uploader-multi-file`. Expect small
+`landing-picture-shapes` before `uploader-multi-file`. Expect small
 conflicts among `discover-index`, `landing-share-card` and `landing-mcp-seo-and-links`
 (sitemap, landing metadata, the production check), and among `landing-products`,
 `landing-section-backgrounds` and `landing-sticky-section` (the section registry and
@@ -101,10 +100,6 @@ renderer).
 
 ## Operator steps outside the code
 
-- **Klaviyo:** a private API key with write access to Profiles, Lists and
-  Subscriptions; a staging list and the real newsletter list, both single opt-in. The env
-  vars are named in `.env.local.example` on its branch and set on Vercel. Needed before `landing-email-capture`
-  can go live.
 - **Vercel:** a real `INDEXNOW_KEY` on production for `discover-index`. Env vars go
   through the `env-vars` skill.
 - **Google Search Console:** the `sog.gg` Domain property is verified by a TXT record in
