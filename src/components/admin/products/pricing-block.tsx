@@ -7,7 +7,7 @@ import {
   CURRENCY_CONFIG,
   DEFAULT_CURRENCY,
   type SupportedCurrency,
-} from "@/lib/constants";
+} from "@/lib/constants/currency";
 
 export type PricingShapeUI = "monthly" | "upfront_total";
 

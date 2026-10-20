@@ -2,15 +2,18 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { AlertCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   NOTIFICATION_TOGGLES,
+} from "@/services/notification-preferences/notification-preferences.service";
+import {
   useMyNotificationPreferences,
   useSetNotificationPreference,
-} from "@/services/notification-preferences";
+} from "@/services/notification-preferences/notification-preferences.queries";
 import {
   Constants,
   type NotificationChannel,
@@ -129,7 +132,7 @@ export function NotificationPreferencesCard() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">

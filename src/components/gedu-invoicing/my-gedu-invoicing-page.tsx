@@ -2,6 +2,7 @@
 
 import { useMemo, type MouseEventHandler } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,17 +15,20 @@ import {
   MonthStepper,
   type MonthHref,
 } from "@/components/invoicing-ledger/month-stepper";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { cn, formatCurrencyFromCents } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { useNow } from "@/providers";
 import {
   useMyGeduInvoicingMonth,
+} from "@/services/gedu-invoicing/gedu-invoicing.queries";
+import {
   type GeduInvoicingSnapshot,
-} from "@/services/gedu-invoicing";
+} from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 import { buildGeduInvoicing, type GeduInvoice } from "./build-gedu-invoicing";
 import {
   geduInvoiceExportHref,
@@ -182,7 +186,9 @@ export function MyGeduInvoicingHeading() {
         {t("backToDashboard")}
       </Link>
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{t("myTitle")}</h1>
+        <Heading level={1} step="section">
+          {t("myTitle")}
+        </Heading>
         <p className="text-muted-foreground">{t("myDescription")}</p>
       </div>
     </div>

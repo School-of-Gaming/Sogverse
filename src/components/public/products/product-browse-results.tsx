@@ -4,16 +4,19 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
 import type { BrowseSurface } from "./browse-surface";
 import { useOfferedBrowseFilters } from "./use-browse-filters";
 import { withBrowseState } from "./browse-state";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilterPanel } from "./product-browse-filter-panel";
 import type { AppHrefObject } from "@/lib/constants/routes";
+import { Heading } from "@sog/ui";
 
 /** One headed block of cards. The shop passes one per visible category (Clubs →
  *  Camps → Events, in that fixed order); the municipality page passes a single
@@ -203,9 +206,9 @@ export function ProductBrowseResults({
           {visibleSections.map((section) => (
             <section key={section.id} className="space-y-3">
               {section.heading && (
-                <h2 className="text-lg font-semibold tracking-tight sm:text-xl">
+                <Heading level={2} step="section">
                   {section.heading}
-                </h2>
+                </Heading>
               )}
               {/* Three columns only from `xl` up: at `lg` the rail and the
                   gutters leave the cards track ~688–944px, and a third column

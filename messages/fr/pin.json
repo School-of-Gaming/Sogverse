@@ -1,0 +1,37 @@
+{
+  "create": {
+    "enterTitle": "Créer un code PIN parent",
+    "confirmTitle": "Confirmez votre code PIN",
+    "description": "Chaque achat, chaque inscription et chaque changement dans les personnes avec qui vos enfants jouent demande d’abord ce code PIN. Vous seul le connaissez : rien ne peut être acheté ni modifié sur ce compte sans vous."
+  },
+  "unlock": {
+    "title": "Saisissez votre code PIN parent",
+    "description": "Les achats et les modifications des comptes de vos enfants passent par ce code PIN : vous seul pouvez les effectuer.",
+    "forgot": "Vous avez oublié votre code PIN ?"
+  },
+  "mismatch": "Ces codes PIN ne correspondent pas. Réessayons.",
+  "deleteDigit": "Effacer le dernier chiffre",
+  "forgotSent": {
+    "title": "Consultez votre boîte mail",
+    "description": "Si une adresse e-mail est associée à votre compte, nous avons envoyé un lien pour réinitialiser votre code PIN. Le lien expire dans 24 heures.",
+    "back": "Retour à la saisie du code PIN"
+  },
+  "reset": {
+    "description": "Choisissez un nouveau code PIN à 4 chiffres connu de vous seul.",
+    "enterTitle": "Choisissez un nouveau code PIN",
+    "confirmTitle": "Confirmez votre nouveau code PIN",
+    "successTitle": "Code PIN réinitialisé",
+    "successDescription": "Votre code PIN parent a été mis à jour. Connectez-vous et saisissez-le pour continuer.",
+    "invalidTitle": "Lien expiré",
+    "invalidDescription": "Ce lien de réinitialisation du code PIN est invalide ou a expiré. Connectez-vous et demandez-en un nouveau.",
+    "backToLogin": "Retour à la connexion"
+  },
+  "change": {
+    "newTitle": "Choisissez un nouveau code PIN",
+    "confirmTitle": "Confirmez votre nouveau code PIN",
+    "cancel": "Annuler",
+    "successTitle": "Code PIN mis à jour",
+    "successDescription": "Votre code PIN parent a bien été modifié.",
+    "backToSettings": "Retour aux paramètres"
+  }
+}

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { gamerAgeBlock } from "@/lib/gamer-age-eligibility";
+import { describe, it, expect, afterEach, vi } from "vitest";
+import { computeAge, gamerAgeBlock } from "@/lib/gamer-age-eligibility";
 
 /**
  * **Which children a product's age band refuses, and — the part worth the
@@ -234,5 +234,28 @@ describe("a null bound never blocks", () => {
         startDate: null,
       }),
     ).toBeNull();
+  });
+});
+
+describe("computeAge", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("counts a child a year older from the 1st of their birth month", () => {
+    // Fixed wall-clock instant: 2026-05-19 12:00 UTC.
+    vi.setSystemTime(new Date("2026-05-19T12:00:00Z"));
+    expect(computeAge({ year: 2010, month: 4 }, "Europe/Helsinki")).toBe(16);
+    expect(computeAge({ year: 2010, month: 5 }, "Europe/Helsinki")).toBe(16);
+    expect(computeAge({ year: 2010, month: 6 }, "Europe/Helsinki")).toBe(15);
+  });
+
+  it("turns the month in the supplied zone, not UTC", () => {
+    // 2026-01-01 02:00 UTC is still 2025-12-31 in America/Los_Angeles.
+    // A child born in January 2016 turns 10 on the UTC date, but in LA it is
+    // still December and they are 9. computeAge must follow the LA calendar.
+    vi.setSystemTime(new Date("2026-01-01T02:00:00Z"));
+    expect(computeAge({ year: 2016, month: 1 }, "UTC")).toBe(10);
+    expect(computeAge({ year: 2016, month: 1 }, "America/Los_Angeles")).toBe(9);
   });
 });

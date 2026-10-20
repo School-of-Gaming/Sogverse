@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enVoice from "@/../messages/en/voice.json";
 import type { FeedbackRead } from "@/components/admin/feedback/aggregate-feedback";
 import type { AdminFeedbackDataset } from "@/services/session-feedback/admin-feedback.contracts";
 import { FeedbackDetailPage } from "@/components/admin/feedback/feedback-detail-page";
@@ -23,6 +24,8 @@ import {
   feedbackResponses,
   feedbackSession,
 } from "../../mocks/admin-feedback";
+
+const messages = { admin: enAdmin, voice: enVoice };
 
 /**
  * The feedback pages' promises that a refactor could break without any type

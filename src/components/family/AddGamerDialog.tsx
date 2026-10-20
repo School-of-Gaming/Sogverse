@@ -21,15 +21,16 @@ import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-accou
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
-  useCreateGamer,
-} from "@/services/gamers";
-import { usePinStatus, pinKeys } from "@/services/pin";
+} from "@/services/gamers/gamers.contracts";
+import { useCreateGamer } from "@/services/gamers/gamers.queries";
+import { usePinStatus, pinKeys } from "@/services/pin/pin.queries";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
-import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { CreateGamerInput, GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {
@@ -526,10 +527,7 @@ export function AddGamerFormCard({
           centred two-line question above left-aligned radios reads as a page
           title rather than as the thing labelling them. */}
       <DialogHeader className="text-left">
-        {/* `leading-snug` over the primitive's `leading-none`: a one-word title
-            never wraps, and a question naming a child does — at 360px its
-            wrapped lines collide on the tighter leading. */}
-        <DialogTitle id={titleId} className="leading-snug">
+        <DialogTitle id={titleId} align="start">
           {step === "signIn"
             ? s("question", { name: trimmedName })
             : step === "accounts"

@@ -5,7 +5,7 @@ import {
   readApiError,
   readErrorMessage,
 } from "@/lib/api/json-response";
-import { SESSION_RECORDING_EPOCH } from "@/lib/constants";
+import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
 import type { AppSupabaseClient } from "@/types";
 import {
   addSessionImageResponse,

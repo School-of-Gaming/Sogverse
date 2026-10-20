@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 export interface DashboardSection {
   id: string;

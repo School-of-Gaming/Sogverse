@@ -8,7 +8,7 @@ import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { utmRegistrationBody } from "@/lib/utm";
 import { useUtm } from "@/providers";

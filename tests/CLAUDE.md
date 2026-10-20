@@ -20,6 +20,14 @@ run a single file, use `npx vitest run <file>` — never `npm run test -- --run 
 the npm script already carries `--run`, so the doubled flag is a vitest error ("Expected
 a single value for option --run").
 
+`npm run gates` runs only the `unit/` + `integration/` files whose import closure the
+change touches, plus every file whose closure imports `fs`, `child_process`, a glob
+library or one of the libraries the selector lists as opening the paths they are handed
+— the sweeps that read the repo from disk always run. So code that hands a file path to
+a library not on that list (`sharp(path)`, a TypeScript program) adds the library to the
+selector's list in the same change: otherwise the selector sees an ordinary test and
+skips it when the files it reads change.
+
 ## Node is the default environment; the DOM is opted into
 
 Booting a jsdom realm is the single largest cost in this suite, and it was being paid by
@@ -48,10 +56,9 @@ the inert `ResizeObserver` are there either way.
 Isolated because un-isolated measured no faster once there is no jsdom realm to rebuild
 per file (that is what it saves; the imports are re-run either way), and it would let a
 shared module keep whatever mocks were live when an earlier file first loaded it, so a
-later file's own mock could quietly fail to apply. Forks because suites that pin a
-timezone assign `process.env.TZ` at runtime, which a child process honours and a worker
-thread ignores — the failure shows only on a UTC runner, and a developer's box already
-in Helsinki never sees it, so a green local run under threads proves nothing. One pool
+later file's own mock could quietly fail to apply. Forks because a test's timezone pin
+and the config's UTC default are both runtime assignments to `TZ`, which a child process
+honours and a worker thread ignores — under threads neither takes effect. One pool
 because Vitest sizes a pool per pool *type* and runs projects concurrently: two pool
 types put two full-sized pools on the machine at once, which on a 4-vCPU runner doubled
 the summed collect and test time and, with coverage on, timed out a component test that
@@ -59,6 +66,13 @@ passes on its own. A test that stubs env still hands it back (`vi.stubEnv` with
 `vi.unstubAllEnvs()` in teardown, never a bare `process.env` assignment) — isolation
 makes that hygiene rather than a load-bearing rule, and hygiene is cheaper to keep than
 to restore.
+
+**Every run's default zone is UTC, on every machine** — both Vitest configs, the DB
+suite's included, set it, because UTC is what CI and the production servers run, so a
+test leaning on its author's own zone fails locally rather than after a push. A test
+about a viewer's zone pins one itself, stubbing `TZ` like any other env var: seeding
+`TimezoneProvider` is not enough, since after mount the provider replaces its seed with
+the runtime's zone.
 
 ## The rich-text editor stub
 
@@ -238,6 +252,12 @@ drift silently. Two things it does with the locale segment, both load-bearing:
 own wrapped navigation module (`@/i18n/navigation`) and the browser Supabase client
 (`@/lib/supabase/client`), exposing `mockSupabaseClient` for assertions. Components and
 hooks under test get a working router and Supabase client without per-test wiring.
+
+**It also wraps next-intl's `NextIntlClientProvider` so a missing message throws.** A
+component test hands the provider only the namespace files its tree reads
+(`src/i18n/CLAUDE.md`), and a namespace left out then fails the test by name instead of
+rendering a key the assertions may never look at. A test that mocks `next-intl` itself
+replaces the wrapper along with the rest.
 
 **The wrapped navigation mock is not optional decoration.** Components name routes
 through that module now, and its hooks read a routing context that a rendered component

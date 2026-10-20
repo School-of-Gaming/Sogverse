@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import {
   dateTimeInstant,
   nextOccurrenceInstant,
@@ -15,7 +15,7 @@ import {
  * midday times. These cases pin the near-midnight band.
  *
  * Why a dedicated file: Vitest spawns a fresh worker per file by default,
- * and we set `process.env.TZ` in `beforeAll` so subsequent date math in
+ * and we stub `TZ` in `beforeAll` so subsequent date math in
  * this worker reads the new zone. (Sydney: far from UTC and from
  * Helsinki.) The fixed implementation is
  * runtime-zone independent, so these assertions hold even where the TZ
@@ -23,18 +23,12 @@ import {
  */
 
 describe("schedule-occurrence — non-UTC runtime regression (TZ = Australia/Sydney)", () => {
-  let originalTZ: string | undefined;
-
   beforeAll(() => {
-    originalTZ = process.env.TZ;
-    process.env.TZ = "Australia/Sydney";
+    vi.stubEnv("TZ", "Australia/Sydney");
   });
 
   afterAll(() => {
-    // Assigning `undefined` to a process.env key writes the literal string
-    // "undefined" (resolved zone: Etc/Unknown) — delete instead.
-    if (originalTZ === undefined) delete process.env.TZ;
-    else process.env.TZ = originalTZ;
+    vi.unstubAllEnvs();
   });
 
   it("viewerWeekdayIndex re-groups a Helsinki evening slot to the viewer's next day", () => {

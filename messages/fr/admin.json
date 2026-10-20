@@ -1,0 +1,1921 @@
+{
+  "dashboard": {
+    "title": "Tableau de bord",
+    "description": "Ce qui demande l’intervention d’un administrateur aujourd’hui, qui est sur la plateforme et ce qui tourne.",
+    "loadError": "Impossible de charger le tableau de bord. Actualisez la page pour réessayer.",
+    "loadErrorWithReason": "Impossible de charger le tableau de bord – {reason}. Actualisez la page pour réessayer.",
+    "users": {
+      "label": "Utilisateurs",
+      "roles": {
+        "customer": "Parents",
+        "gamer": "Joueurs",
+        "gedu": "Gedus",
+        "admin": "Administrateurs"
+      },
+      "verified": "{count} vérifiés",
+      "certified": "{count} certifiés"
+    },
+    "attention": {
+      "title": "À traiter",
+      "allClearTitle": "Tout est en ordre",
+      "allClearLine": "Sogverse est en paix. Reposez-vous, âme aventurière.",
+      "productsLabel": "Produits à traiter",
+      "productsHeading": "Produits",
+      "issues": {
+        "unassignedGamers": "{count, plural, one {# joueur non placé} other {# joueurs non placés}}",
+        "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
+        "emptyGroupWithoutGedu": "Le groupe vide {group} n’a pas de Gedu",
+        "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
+        "missingGeduFee": "Rémunération Gedu manquante",
+        "missingMunicipalityFee": "Montant commune manquant",
+        "missingInvoiceCustomer": "Client de facturation manquant",
+        "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
+      }
+    },
+    "certification": {
+      "title": "Certification des Gedus",
+      "justNow": "{count} certifiés à l’instant",
+      "empty": "Aucun Gedu n’est en attente de certification.",
+      "unnamed": "Gedu sans nom",
+      "registered": "inscrit {when}",
+      "certify": "Certifier",
+      "certifying": "Certification…",
+      "failed": "La certification a échoué – réessayez."
+    },
+    "schedule": {
+      "title": "Planning",
+      "thisWeekLabel": "Cette semaine",
+      "previousWeek": "Semaine précédente",
+      "nextWeek": "Semaine suivante",
+      "today": "Aujourd’hui",
+      "sessionCount": "{count, plural, one {# session} other {# sessions}}",
+      "timesIn": "horaires en {zone}",
+      "nothingOn": "Rien de prévu",
+      "needsAttention": "À traiter – ce produit figure dans la file en haut de la page",
+      "chipTitle": "{type} · {name} · {time}, {minutes} min · {counts}",
+      "holiday": "Vacances",
+      "holidayTitle": "Vacances – {name}. Pas de séance à cette date."
+    },
+    "cancellation": {
+      "allTitle": "La séance de ce jour est annulée pour tous les groupes",
+      "some": "{cancelled, plural, one {# groupe annulé} other {# groupes annulés}} sur {groups}",
+      "allComingUp": {
+        "starts": "première séance annulée",
+        "ends": "dernière séance annulée",
+        "runs": "séance annulée"
+      }
+    },
+    "comingUp": {
+      "label": "À venir",
+      "heading": "À venir",
+      "empty": "Rien ne commence ni ne se termine dans les mois qui viennent.",
+      "cohort": {
+        "starts": {
+          "consumerClub": "{count, plural, one {# club grand public commence} other {# clubs grand public commencent}}",
+          "municipalityClub": "{count, plural, one {# club municipal commence} other {# clubs municipaux commencent}}",
+          "camp": "{count, plural, one {# stage commence} other {# stages commencent}}",
+          "event": "{count, plural, one {# événement commence} other {# événements commencent}}"
+        },
+        "runs": {
+          "consumerClub": "{count, plural, one {# club grand public a lieu} other {# clubs grand public ont lieu}}",
+          "municipalityClub": "{count, plural, one {# club municipal a lieu} other {# clubs municipaux ont lieu}}",
+          "camp": "{count, plural, one {# stage a lieu} other {# stages ont lieu}}",
+          "event": "{count, plural, one {# événement a lieu} other {# événements ont lieu}}"
+        },
+        "ends": {
+          "consumerClub": "{count, plural, one {# club grand public se termine} other {# clubs grand public se terminent}}",
+          "municipalityClub": "{count, plural, one {# club municipal se termine} other {# clubs municipaux se terminent}}",
+          "camp": "{count, plural, one {# stage se termine} other {# stages se terminent}}",
+          "event": "{count, plural, one {# événement se termine} other {# événements se terminent}}"
+        }
+      },
+      "itemVerb": {
+        "starts": "commence",
+        "runs": "a lieu",
+        "ends": "se termine"
+      }
+    },
+    "productTypeKey": {
+      "label": "Légende des types de produit",
+      "heading": "Types de produit"
+    }
+  },
+  "municipalityInvoicing": {
+    "description": "Un mois de clubs municipaux : ce que chacun a assuré, et ce que la commune doit pour cela.",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "expandAll": "Tout déplier",
+    "collapseAll": "Tout replier",
+    "monthTotal": "Total du mois",
+    "municipalityCount": "{count, plural, one {# commune} other {# communes}}",
+    "clubCount": "{count, plural, one {# club} other {# clubs}}",
+    "sessionCount": "{count, plural, one {# séance} other {# séances}}",
+    "columnClub": "Club",
+    "columnSchedule": "Horaire",
+    "columnFee": "Tarif/séance",
+    "columnSessions": "Séances",
+    "columnTotal": "Total",
+    "recorded": "Enregistrée",
+    "emptyMonth": "Aucun club municipal n’a de séance enregistrée ou prévue sur ce mois.",
+    "excludedClubs": "{count, plural, one {Hors total : # club sans tarif défini} other {Hors total : # clubs sans tarif défini}}",
+    "feeNotSet": "Tarif non défini",
+    "billedNotRecorded": "Facturée, non enregistrée",
+    "upcoming": "À venir",
+    "cancelled": "Annulée",
+    "holiday": "Vacances",
+    "holidayNamed": "Vacances – {name}",
+    "unrecordedSessions": "{count, plural, one {# non enregistrée} other {# non enregistrées}}",
+    "sessionsFor": "Séances de {club}",
+    "clubsIn": "Clubs de {municipality}",
+    "clubsWithoutCustomer": "{count, plural, one {# club sans client de facturation} other {# clubs sans client de facturation}}",
+    "customerNotSet": "Client de facturation non défini",
+    "downloadInvoiceFor": "Télécharger le fichier Finvoice pour {customer}",
+    "fileBlockedByFee": "{count, plural, one {Pas de fichier : # club a eu lieu sans tarif} other {Pas de fichier : # clubs ont eu lieu sans tarif}}",
+    "fileBlockedByNothingToInvoice": "Pas de fichier : rien à facturer",
+    "downloadPeriodInvoiceFor": "Télécharger le fichier Finvoice du {period} {year} pour {customer}",
+    "periodFile": "{period} · {total}",
+    "invoicedInMonth": "{cadence} · facturé en {month}",
+    "periodNotRead": "Lecture du reste de la période",
+    "periodBlockedByFee": "{count, plural, one {Pas de fichier : # club a eu lieu sans tarif en {month}} other {Pas de fichier : # clubs ont eu lieu sans tarif en {month}}}",
+    "periodBlockedByNothingToInvoice": "Pas de fichier : rien à facturer pour {period}",
+    "quarterName": "T{ordinal}",
+    "halfYearName": "S{ordinal}",
+    "periodFilesWithoutClub": "Périodes se terminant ce mois-ci, pour les clients sans club ce mois-ci",
+    "loadError": "Impossible de charger le mois de facturation. Actualisez la page pour réessayer.",
+    "loadErrorWithReason": "Impossible de charger le mois de facturation – {reason}. Actualisez la page pour réessayer."
+  },
+  "invoiceCustomers": {
+    "subtitle": "Les clients Fennoa à qui les séances d’un club municipal sont facturées.",
+    "addCustomer": "Ajouter un client",
+    "columns": {
+      "number": "N° Fennoa",
+      "invoiceName": "Nom de facturation",
+      "city": "Ville",
+      "reference": "Référence",
+      "billingCadence": "Facturation"
+    },
+    "hasReference": "Possède une référence",
+    "noReference": "Aucune référence",
+    "empty": "Aucun client de facturation pour l’instant. Ajoutez le premier.",
+    "backToList": "Retour aux clients de facturation",
+    "notFound": "Aucun client de facturation ne correspond à cet identifiant.",
+    "newPage": {
+      "title": "Nouveau client de facturation",
+      "submit": "Créer le client"
+    },
+    "editPage": {
+      "title": "Modifier le client de facturation"
+    },
+    "fields": {
+      "number": "Numéro client Fennoa",
+      "invoiceName": "Nom de facturation",
+      "street": "Adresse",
+      "postalCode": "Code postal",
+      "city": "Ville",
+      "country": "Pays",
+      "yourReference": "Votre référence",
+      "invoiceText": "Texte de la facture",
+      "billingCadence": "Fréquence de facturation"
+    },
+    "hints": {
+      "number": "Le numéro figurant sur la fiche client dans Fennoa, par exemple F0037. C’est par ce numéro que Fennoa rattache une facture importée au client.",
+      "invoiceName": "Exactement tel qu’il figure sur la fiche client Fennoa.",
+      "yourReference": "Un numéro de bon de commande ou un contact que le client veut voir sur chaque facture.",
+      "invoiceText": "Des lignes supplémentaires en haut du texte de la facture, par exemple une référence d’accord-cadre. Texte brut – il arrive sur la facture tel qu’il est saisi.",
+      "billingCadence": "La fréquence à laquelle ce client est facturé. La facture d'un client trimestriel ou semestriel couvre toute la période civile et se télécharge depuis la page de facturation le dernier mois de la période."
+    },
+    "cadence": {
+      "monthly": "Mensuelle",
+      "quarterly": "Trimestrielle",
+      "halfYearly": "Semestrielle"
+    },
+    "errors": {
+      "required": "Le champ {field} est obligatoire.",
+      "countryShape": "Utilisez un code pays à deux lettres, par exemple FI.",
+      "duplicateNumber": "Le numéro client Fennoa {number} appartient déjà à un autre client.",
+      "saveFailed": "Le client n’a pas pu être enregistré. Réessayez.",
+      "saveFailedWithReason": "Le client n’a pas pu être enregistré – {reason}",
+      "listUnavailable": "La liste des clients n’a pas pu être chargée. Actualisez la page pour en choisir un."
+    },
+    "picker": {
+      "label": "Facturé à",
+      "hint": "Le client à qui les séances de ce club sont facturées. Un club sans client est signalé sur la page de facturation et ne produit aucun fichier de facture.",
+      "manage": "Gérer les clients de facturation",
+      "option": "{name} ({number})"
+    }
+  },
+  "holidayCalendars": {
+    "subtitle": "Les vacances scolaires et autres pauses qu’un club peut suivre. Un club n’a aucune séance pendant les jours d’une pause.",
+    "addCalendar": "Ajouter un calendrier",
+    "columns": {
+      "name": "Nom",
+      "breaks": "Pauses",
+      "nextBreak": "Prochaine pause",
+      "clubs": "Clubs"
+    },
+    "noUpcomingBreak": "Aucune à venir",
+    "empty": "Aucun calendrier de vacances pour l’instant. Ajoutez le premier.",
+    "backToList": "Retour aux calendriers de vacances",
+    "notFound": "Aucun calendrier de vacances ne correspond à cet identifiant.",
+    "newPage": {
+      "title": "Nouveau calendrier de vacances",
+      "submit": "Créer le calendrier"
+    },
+    "editPage": {
+      "title": "Modifier le calendrier de vacances"
+    },
+    "sections": {
+      "calendar": "Calendrier",
+      "breaks": "Pauses",
+      "breaksDescription": "Une pause va de son premier à son dernier jour, inclus, et porte un nom dans chacune des langues du calendrier. Les familles voient le nom à la place des séances qu’elle supprime.",
+      "products": "Clubs qui suivent ce calendrier",
+      "productsDescription": "Une modification enregistrée des pauses change ces clubs immédiatement, y compris les mois passés."
+    },
+    "fields": {
+      "name": "Nom",
+      "languages": "Langues",
+      "firstDay": "Premier jour",
+      "lastDay": "Dernier jour",
+      "breakName": "Nom en {language}"
+    },
+    "hints": {
+      "name": "Seuls les administrateurs voient ce nom, par exemple Écoles d’Helsinki. Les familles ne voient que les noms des pauses.",
+      "languages": "Les langues sont celles du calendrier : en ajouter ou en retirer une ici vaut pour chaque pause. Chaque pause doit avoir un nom dans chacune. Les familles lisent le nom dans leur langue s’il existe, sinon en anglais ou dans la première langue rédigée."
+    },
+    "noBreaks": "Aucune pause pour l’instant.",
+    "checkLine": "{range} · {days, plural, one {# jour} other {# jours}} · semaine {week}",
+    "checkLineWeeks": "{range} · {days, plural, one {# jour} other {# jours}} · semaines {first}–{last}",
+    "addBreak": "Ajouter une pause",
+    "removeBreak": "Retirer {name}",
+    "noProducts": "Aucun club ne suit encore ce calendrier. Un club choisit ses calendriers sur sa propre page.",
+    "errors": {
+      "nameRequired": "Donnez un nom au calendrier.",
+      "datesRequired": "{name} doit avoir un premier et un dernier jour.",
+      "endBeforeStart": "{name} se termine avant de commencer.",
+      "breakNameMissing": "{name} doit avoir un nom en {language}.",
+      "overlap": "{first} et {second} se chevauchent. Un jour ne peut appartenir qu’à une seule pause.",
+      "saveFailed": "Le calendrier n’a pas pu être enregistré. Réessayez.",
+      "saveFailedWithReason": "Le calendrier n’a pas pu être enregistré — {reason}"
+    },
+    "impact": {
+      "title": "Enregistrer ces modifications ?",
+      "description": "{count, plural, one {Ce club change} other {Ces # clubs changent}} dès l’enregistrement.",
+      "futureRemoved": "Les familles ne verront aucune séance {count, plural, one {pendant # jour} other {pendant # jours}} : {dates}.",
+      "futureRestored": "Les familles reverront des séances {count, plural, one {pendant # jour} other {pendant # jours}} : {dates}.",
+      "pastRemoved": "{count, plural, one {Une séance passée disparaît} other {Des séances passées sur # jours disparaissent}} de l’historique des familles : {dates}.",
+      "pastRestored": "{count, plural, one {Une séance passée réapparaît} other {Des séances passées sur # jours réapparaissent}} dans l’historique des familles : {dates}.",
+      "recordsHidden": "{count, plural, one {# séance documentée est masquée} other {# séances documentées sont masquées}} aux familles.",
+      "recordsShown": "{count, plural, one {# séance documentée est de nouveau visible} other {# séances documentées sont de nouveau visibles}} pour les familles.",
+      "requestsStopped": "{count, plural, one {# demande de remplacement n’a plus} other {# demandes de remplacement n’ont plus}} de séance à couvrir.",
+      "requestsReopened": "{count, plural, one {# demande de remplacement a} other {# demandes de remplacement ont}} de nouveau une séance à couvrir."
+    },
+    "editBreak": "Modifier {name}",
+    "unnamedBreak": "Pause sans nom",
+    "dialog": {
+      "editTitle": "Modifier la pause",
+      "saveAndAddAnother": "Enregistrer et en ajouter une autre"
+    },
+    "breakErrors": {
+      "datesRequired": "Choisissez le premier et le dernier jour.",
+      "endBeforeStart": "Le dernier jour précède le premier.",
+      "nameMissing": "Donnez un nom à la pause en {language}."
+    }
+  },
+  "library": {
+    "title": "Contenu de la Bibliothèque",
+    "subtitle": "Les articles pour les parents de la Bibliothèque publique.",
+    "newArticle": "Nouvel article",
+    "lastSaved": "Enregistré le {date}",
+    "search": {
+      "label": "Recherche",
+      "placeholder": "Rechercher par titre ou catégorie…",
+      "showing": "Affichage de {count} sur {total}",
+      "clear": "Effacer",
+      "noMatches": "Aucun article ne correspond à votre recherche."
+    },
+    "noCategory": "Aucune catégorie",
+    "empty": "Aucun article pour l’instant. Rédigez le premier.",
+    "backToList": "Retour au contenu de la Bibliothèque",
+    "notFound": "Aucun article ne correspond à cet identifiant.",
+    "loadError": "Impossible de charger cet article. Actualisez la page pour réessayer.",
+    "newPage": {
+      "title": "Nouvel article",
+      "submit": "Enregistrer le brouillon"
+    },
+    "editPage": {
+      "title": "Modifier l’article"
+    },
+    "status": {
+      "draft": "Brouillon",
+      "published": "Publié",
+      "changed": "Modifications non publiées"
+    },
+    "statusPanel": {
+      "label": "Publication",
+      "publishedLine": "Publié le {date}.",
+      "changedLine": "Les lecteurs voient la version publiée le {date}.",
+      "savedLine": "Dernier enregistrement le {date}.",
+      "savedByLine": "Dernier enregistrement le {date} par {name}.",
+      "savedByViaLine": "Dernier enregistrement le {date} par {name} via {app}.",
+      "savedByViaUnnamedLine": "Dernier enregistrement le {date} par {name} via une application d’IA."
+    },
+    "viewLive": "Voir dans la Bibliothèque",
+    "preview": "Aperçu",
+    "publish": "Publier",
+    "publishChanges": "Publier les modifications",
+    "unpublish": "Dépublier",
+    "readiness": {
+      "missing": "Pour publier, ajoutez {fields}.",
+      "leftOut": "{count, plural, one {La version en {languages} n’est pas complète : elle ne sera pas publiée.} other {Les versions en {languages} ne sont pas complètes : elles ne seront pas publiées.}}"
+    },
+    "missing": {
+      "category": "une catégorie",
+      "completeVersion": "une langue avec un titre, un résumé et le texte de l’article"
+    },
+    "unpublishConfirm": {
+      "title": "Dépublier cet article ?",
+      "description": "Les lecteurs ne le trouveront plus dans la Bibliothèque, et les liens vers lui ne fonctionneront plus. L’article reste ici, et vous pouvez le republier à tout moment.",
+      "confirm": "Dépublier"
+    },
+    "fields": {
+      "languages": "Langues",
+      "title": "Titre",
+      "summary": "Résumé",
+      "category": "Catégorie",
+      "cover": "Image de couverture",
+      "body": "Texte de l’article"
+    },
+    "hints": {
+      "languages": "Rédigez chaque langue à la main. La publication met en ligne chaque langue complète : celle qui a un titre, un résumé et le texte de l’article.",
+      "summary": "Texte simple, affiché sous le titre et sur la carte de l’article dans la Bibliothèque.",
+      "cover": "Affichée au-dessus de l’article et sur sa carte, recadrée en 16:9. Sans image, les lecteurs voient un espace réservé.",
+      "body": "Les lecteurs le voient sous l’image de couverture, mis en forme comme ici."
+    },
+    "categoryPlaceholder": "Choisissez une catégorie",
+    "bodyPlaceholder": "Rédigez l’article…",
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "errors": {
+      "titleRequired": "Un article doit avoir un titre.",
+      "saveFailed": "L’article n’a pas pu être enregistré. Réessayez.",
+      "saveFailedWithReason": "L’article n’a pas pu être enregistré — {reason}",
+      "publishFailed": "L’article n’a pas pu être publié. Réessayez.",
+      "publishFailedWithReason": "L’article n’a pas pu être publié — {reason}",
+      "unpublishFailed": "L’article n’a pas pu être dépublié. Réessayez.",
+      "unpublishFailedWithReason": "L’article n’a pas pu être dépublié — {reason}",
+      "versionTitleRequired": "La version en {language} doit avoir un titre."
+    },
+    "languagesLabel": "Langues"
+  },
+  "spotlights": {
+    "subtitle": "Les parents voient chaque mise en avant activée en bas de chaque e-mail de compte rendu de session qu’ils reçoivent, de la plus récente à la plus ancienne. Chaque lecteur la reçoit dans sa langue, ou en anglais si la sienne n’est pas rédigée, ou sinon dans une langue qui l’est.",
+    "newSpotlight": "Nouvelle mise en avant",
+    "empty": "Aucune mise en avant pour l’instant. Rédigez la première.",
+    "backToList": "Retour aux mises en avant",
+    "notFound": "Aucune mise en avant ne correspond à cet identifiant.",
+    "loadError": "Impossible de charger cette mise en avant. Actualisez la page pour réessayer.",
+    "listLoadError": "Impossible de charger les mises en avant. Actualisez la page pour réessayer.",
+    "newPage": {
+      "title": "Nouvelle mise en avant",
+      "submit": "Enregistrer"
+    },
+    "editPage": {
+      "title": "Modifier la mise en avant"
+    },
+    "fields": {
+      "languages": "Langues",
+      "title": "Titre",
+      "body": "Texte",
+      "picture": "Image"
+    },
+    "hints": {
+      "languages": "Rédigez chaque langue à la main. Chaque langue a besoin d’un titre et du texte.",
+      "body": "Affiché sous le titre dans l’e-mail, mis en forme comme ici. Les liens sont autorisés.",
+      "picture": "Affichée au-dessus du titre dans l’e-mail, recadrée en 2:1. Une mise en avant peut être enregistrée sans image, mais il en faut une pour l’activer."
+    },
+    "bodyPlaceholder": "Rédigez la mise en avant…",
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "errors": {
+      "noVersion": "Une mise en avant a besoin d’un titre et d’un texte dans au moins une langue.",
+      "versionIncomplete": "La version {language} a besoin d’un titre et du texte.",
+      "saveFailed": "La mise en avant n’a pas pu être enregistrée. Réessayez.",
+      "saveFailedWithReason": "La mise en avant n’a pas pu être enregistrée — {reason}",
+      "deleteFailed": "La mise en avant n’a pas pu être supprimée. Réessayez.",
+      "deleteFailedWithReason": "La mise en avant n’a pas pu être supprimée — {reason}"
+    },
+    "languagesLabel": "Langues",
+    "created": "Créée le {date}",
+    "status": {
+      "on": "Dans les e-mails",
+      "off": "Hors des e-mails"
+    },
+    "switchLabel": "Dans les e-mails de compte rendu de session",
+    "needsPicture": "Ajoutez une image pour pouvoir l’activer.",
+    "deleteConfirm": {
+      "title": "Supprimer cette mise en avant ?",
+      "descriptionOn": "Elle quitte immédiatement les e-mails de compte rendu de session et ne pourra pas être récupérée. Son image reste dans le catalogue.",
+      "descriptionOff": "Elle ne pourra pas être récupérée. Son image reste dans le catalogue.",
+      "confirm": "Supprimer"
+    }
+  },
+  "landingPages": {
+    "subtitle": "Des pages pour une école, une ville, une entreprise ou un événement, écrites pour être trouvées par les moteurs de recherche et les applications d’IA.",
+    "empty": "Aucune page d’atterrissage pour l’instant. Les pages s’écrivent avec une application d’IA connectée à Sogverse.",
+    "lastSaved": "Dernier enregistrement {date}",
+    "languagesLabel": "Langues",
+    "versionComplete": "complète",
+    "versionIncomplete": "pas encore complète",
+    "search": {
+      "label": "Rechercher",
+      "placeholder": "Rechercher par titre ou adresse…",
+      "showing": "{count} sur {total}",
+      "clear": "Effacer",
+      "noMatches": "Aucune page d’atterrissage ne correspond à votre recherche."
+    },
+    "backToList": "Retour aux pages d’atterrissage",
+    "notFound": "Aucune page d’atterrissage ne porte cet identifiant.",
+    "loadError": "Impossible de charger cette page d’atterrissage. Actualisez pour réessayer.",
+    "statusPage": {
+      "title": "Page d’atterrissage",
+      "authoring": "Pour modifier cette page, demandez-le à une application d’IA connectée à Sogverse.",
+      "languagesHeading": "Langues",
+      "readiness": {
+        "noCompleteLanguage": "Aucune langue n’est encore complète : il n’y a donc rien à publier.",
+        "upToDate": "Les lecteurs voient déjà la dernière version enregistrée."
+      },
+      "language": {
+        "complete": "Complète",
+        "incomplete": "Incomplète",
+        "live": "En ligne sur le site.",
+        "notLive": "Pas sur le site.",
+        "stillNeeded": "Il manque encore :",
+        "address": "Adresse :",
+        "noAddress": "pas encore d’adresse",
+        "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner."
+      },
+      "missing": {
+        "inSection": "Section {number} ({type}) : {field}",
+        "inItem": "Section {number} ({type}), {item} : {field}",
+        "goneSection": "Une section qui n’est plus sur la page : {field}"
+      },
+      "testimonials": {
+        "heading": "Témoignages",
+        "hint": "Leurs mots se modifient dans Témoignages, et une modification apparaît aussitôt sur la page en ligne.",
+        "section": "Section {number} ({type}) : {arrangement}",
+        "arrangements": {
+          "feature": "une grande citation",
+          "pair": "deux côte à côte",
+          "row": "trois en ligne",
+          "showcase": "une grande citation, deux côte à côte, puis trois en ligne"
+        },
+        "missing": "Un témoignage qui n’est plus conservé"
+      }
+    },
+    "status": {
+      "draft": "Brouillon",
+      "live": "En ligne",
+      "changed": "Modifications non publiées"
+    },
+    "statusPanel": {
+      "publishedLine": "Publiée le {date}.",
+      "changedLine": "Les lecteurs voient la version publiée le {date}.",
+      "savedLine": "Dernier enregistrement le {date}.",
+      "savedByLine": "Dernier enregistrement le {date} par {name}.",
+      "savedByViaLine": "Dernier enregistrement le {date} par {name} via {app}.",
+      "savedByViaUnnamedLine": "Dernier enregistrement le {date} par {name} via une application d’IA."
+    },
+    "viewLive": "Voir sur le site",
+    "preview": "Aperçu",
+    "publish": "Publier",
+    "publishChanges": "Publier les modifications",
+    "unpublish": "Dépublier",
+    "publishConfirm": {
+      "title": "Publier cette page d’atterrissage ?",
+      "changesTitle": "Publier les modifications ?",
+      "goesLive": "Mise en ligne : {languages}.",
+      "takenDown": "{count, plural, one {Retirée du site, car elle n’est plus complète : {languages}.} other {Retirées du site, car elles ne sont plus complètes : {languages}.}}",
+      "leftOut": "{count, plural, one {Laissée de côté, car elle n’est pas complète : {languages}.} other {Laissées de côté, car elles ne sont pas complètes : {languages}.}}",
+      "changing": "{count, plural, one {Cette adresse en ligne change, et les liens vers l’ancienne cesseront de fonctionner :} other {Ces adresses en ligne changent, et les liens vers les anciennes cesseront de fonctionner :}}",
+      "changingItem": "{language} : {from} devient {to}"
+    },
+    "unpublishConfirm": {
+      "title": "Dépublier cette page d’atterrissage ?",
+      "description": "Les lecteurs et les moteurs de recherche ne la trouveront plus, et les liens qui y mènent cesseront de fonctionner. La page reste ici, et vous pouvez la republier à tout moment.",
+      "confirm": "Dépublier"
+    },
+    "actions": {
+      "cancel": "Annuler"
+    },
+    "errors": {
+      "publishFailed": "La page d’atterrissage n’a pas pu être publiée. Réessayez.",
+      "publishFailedWithReason": "La page d’atterrissage n’a pas pu être publiée — {reason}",
+      "unpublishFailed": "La page d’atterrissage n’a pas pu être dépubliée. Réessayez.",
+      "unpublishFailedWithReason": "La page d’atterrissage n’a pas pu être dépubliée — {reason}"
+    },
+    "sectionTypes": {
+      "hero": "Ouverture",
+      "text": "Texte",
+      "image": "Images",
+      "points": "Points",
+      "steps": "Étapes",
+      "faq": "Questions et réponses",
+      "subscribe": "Inscription par e-mail",
+      "cta": "Appel à l’action",
+      "testimonials": "Témoignages"
+    },
+    "items": {
+      "image": "Image {number}",
+      "points": "Point {number}",
+      "steps": "Étape {number}",
+      "faq": "Question {number}"
+    },
+    "fields": {
+      "title": "Titre",
+      "summary": "Résumé",
+      "slug": "Adresse",
+      "headline": "Titre principal",
+      "heading": "Titre",
+      "body": "Texte",
+      "buttonLabel": "Texte du bouton",
+      "imageAlt": "Texte alternatif de l’image",
+      "alt": "Texte alternatif",
+      "question": "Question",
+      "answer": "Réponse"
+    },
+    "copyMarker": "(copie)"
+  },
+  "geduRole": {
+    "primary": "Gedu principal",
+    "assistant": "Gedu assistant",
+    "selectAria": "Rôle de {name}"
+  },
+  "geduContract": {
+    "heading": "Contrat Gedu",
+    "accepted": "Contrat accepté",
+    "acceptedDetail": "Version {version}, acceptée le {date}",
+    "notAccepted": "N’a pas accepté le contrat Gedu",
+    "notCurrentVersion": "N’a pas accepté le contrat en vigueur ({version})",
+    "previousVersion": "A accepté auparavant la version {version} le {date}.",
+    "queueAccepted": "Contrat accepté le {date}",
+    "queueNotAccepted": "Contrat non accepté",
+    "rowNotAccepted": "N’a pas accepté le contrat en vigueur"
+  },
+  "geduCriminalRecordCheck": {
+    "heading": "Vérification du casier judiciaire",
+    "recorded": "Extrait de casier judiciaire enregistré",
+    "recordedOn": "Extrait de casier judiciaire enregistré le {date}",
+    "recordedByOn": "Extrait de casier judiciaire enregistré par {name} le {date}",
+    "notRecorded": "Aucun extrait de casier judiciaire enregistré",
+    "processDetail": "Le Gedu obtient lui-même l’extrait auprès du Centre finlandais des registres judiciaires et vous le présente. Il doit dater de moins de six mois au moment de la présentation, et nous n’en conservons aucune copie — seulement la trace indiquant qu’un extrait acceptable a été présenté.",
+    "recordLabel": "J’ai vu un extrait de casier judiciaire acceptable pour ce Gedu",
+    "error": "Impossible de mettre à jour la vérification du casier judiciaire. Veuillez réessayer.",
+    "queueRecorded": "Extrait enregistré le {date}",
+    "queueNotRecorded": "Extrait non enregistré",
+    "rowNotRecorded": "N’a pas présenté d’extrait de casier judiciaire"
+  },
+  "geduQualifications": {
+    "title": "Qualifications",
+    "neuroinclusive": "Peut animer des groupes dans les produits marqués Neuro-inclusif.",
+    "consumer_products": "Peut animer les clubs, stages et événements que les familles paient elles-mêmes, et pas seulement les clubs municipaux.",
+    "grantedOn": "Accordée le {date}",
+    "grantedOnBy": "Accordée le {date} par {name}",
+    "notGranted": "Non accordée",
+    "error": "Impossible de mettre à jour la qualification. Veuillez réessayer."
+  },
+  "geduLanguages": {
+    "title": "Langues",
+    "note": "Les remplacements ne lui sont proposés que pour les séances dans une langue cochée ici. Si aucune n’est cochée, aucun remplacement ne lui est proposé.",
+    "error": "Impossible d’enregistrer les langues. Veuillez réessayer."
+  },
+  "missingRequirements": {
+    "qualification": "Ce Gedu n’a pas la qualification « {qualification} » qu’exige ce produit.",
+    "language": "Ce produit se déroule en {language}, une langue que ce Gedu n’a pas indiquée parmi celles qu’il parle.",
+    "coverage": "Ce produit se déroule sur place à {site}, en dehors des zones de ce Gedu.",
+    "coverageUnnamed": "Ce produit se déroule sur place, en dehors des zones de ce Gedu."
+  },
+  "geduCertifyWarnings": {
+    "title": "Certifier quand même ?",
+    "body": "La certification n’exige ni l’un ni l’autre : vous pouvez donc le certifier quand même.",
+    "action": "Certifier quand même",
+    "contractWarning": "Ce Gedu n’a pas accepté le contrat en vigueur. Une fois certifié, il pourra être affecté à des groupes avant d’avoir accepté les conditions qui encadrent son travail.",
+    "checkWarning": "Ce Gedu n’a pas présenté d’extrait de casier judiciaire. Une fois certifié, il pourra être affecté à des groupes avant que quiconque l’ait vu."
+  },
+  "products": {
+    "types": {
+      "consumerClub": {
+        "label": "Club grand public",
+        "plural": "Clubs grand public"
+      },
+      "municipalityClub": {
+        "label": "Club municipal",
+        "plural": "Clubs municipaux"
+      },
+      "camp": {
+        "label": "Stage",
+        "plural": "Stages"
+      },
+      "event": {
+        "label": "Événement",
+        "plural": "Événements"
+      }
+    },
+    "list": {
+      "subtitle": "Gérez les clubs, stages et événements créés par les administrateurs.",
+      "new": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}",
+      "empty": "{type, select, consumerClub {Pas encore de clubs grand public. Cliquez sur « Ajouter un club grand public » pour en créer un.} municipalityClub {Pas encore de clubs municipaux. Cliquez sur « Ajouter un club municipal » pour en créer un.} camp {Pas encore de stages. Cliquez sur « Ajouter un stage » pour en créer un.} other {Pas encore d’événements. Cliquez sur « Ajouter un événement » pour en créer un.}}",
+      "emptyAll": "Pas encore de clubs, de stages ni d’événements.",
+      "ageRange": "{min}–{max} ans",
+      "seats": "{count} places",
+      "online": "En ligne",
+      "unlisted": "hors catalogue",
+      "untitled": "(sans titre)",
+      "missingGeduFee": "Rémunération Gedu manquante",
+      "missingMunicipalityFee": "Montant commune manquant",
+      "pendingHint": {
+        "registrationOpens": "Ouverture des inscriptions le {date}",
+        "startDate": "Début le {date}"
+      },
+      "newAny": "Ajouter",
+      "newDialogTitle": "Créer un club, un stage ou un événement"
+    },
+    "translations": {
+      "label": "Langues",
+      "hint": "Ajoutez les langues dans lesquelles vous voulez que les parents puissent lire ce contenu. Au moins une est requise. Les parents voient ce produit dans la langue de leur interface si elle est disponible, sinon en anglais, puis dans la langue qui est renseignée."
+    },
+    "newPage": {
+      "back": "Retour aux {type, select, consumerClub {clubs grand public} municipalityClub {clubs municipaux} camp {stages} other {événements}}",
+      "title": "Ajouter un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
+    },
+    "detailsPage": {
+      "title": "Détails du produit",
+      "notFound": "Produit introuvable.",
+      "uncapped": "Aucune limite de places",
+      "listed": "Répertorié publiquement",
+      "unlisted": "Hors catalogue — lien direct uniquement",
+      "waitlistOn": "liste d’attente activée",
+      "minutes": "{count} min",
+      "perMonth": "{amount} / mois",
+      "billingMode": {
+        "paid": "Payant",
+        "free": "Gratuit",
+        "external_contract": "Contrat externe (commune)"
+      },
+      "requiresGamerCreations": {
+        "required": "Obligatoire",
+        "notRequired": "Non obligatoire"
+      },
+      "fields": {
+        "topic": "Thème",
+        "materialUrl": "Matériel pédagogique",
+        "voiceRoom": "Connexion",
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "firstSession": "Première séance",
+        "lastSession": "Dernière séance",
+        "termDates": "Dates de la période scolaire",
+        "billingMode": "Facturation",
+        "seats": "Places",
+        "waitlist": "Liste d’attente",
+        "prices": "Tarifs",
+        "primaryGeduFee": "Rémunération Gedu principal / session",
+        "assistantGeduFee": "Rémunération Gedu assistant / session",
+        "municipalityFee": "Montant commune / session",
+        "timezone": "Fuseau horaire",
+        "registrationOpensAt": "Ouverture des inscriptions",
+        "tag": "Conçu pour",
+        "regionLock": "Restriction par pays",
+        "requiredConsents": "Consentements obligatoires",
+        "requiresGamerCreations": "Créations des joueurs",
+        "visibility": "Visibilité",
+        "gamerPhotoConsents": "Questions photo",
+        "marketingConsents": "Questions marketing",
+        "format": "Format",
+        "ageRange": "Tranche d’âge",
+        "publicLink": "Lien public",
+        "createdBy": "Créé par",
+        "createdOn": "Créé le"
+      },
+      "copyLink": "Copier le lien public",
+      "copied": "Copié",
+      "sections": {
+        "schedule": "Planning",
+        "placeAndAudience": "Lieu et public",
+        "seatsAndRegistration": "Places et inscriptions",
+        "pricing": "Tarifs",
+        "requirements": "Conditions et consentements",
+        "record": "Historique"
+      },
+      "unknownCreator": "Inconnu"
+    },
+    "holidayCalendars": {
+      "label": "Calendriers de vacances",
+      "hint": "Le club n’a aucune séance pendant les jours d’une pause des calendriers qu’il suit. Les familles voient chaque pause à la place des séances concernées.",
+      "manage": "Gérer les calendriers de vacances",
+      "nextBreak": "Prochaine : {name}, {dates}",
+      "noUpcomingBreak": "Aucune pause à venir",
+      "empty": "Aucun calendrier de vacances pour l’instant.",
+      "listUnavailable": "Impossible de charger les calendriers de vacances. Les calendriers que ce club suit déjà sont conservés à l’enregistrement.",
+      "none": "Aucun"
+    },
+    "editPage": {
+      "back": "Retour au produit",
+      "kicker": "Modifier {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
+      "title": "Modifier {name}"
+    },
+    "clonePage": {
+      "back": "Retour au produit",
+      "kicker": "Dupliquer {type, select, consumerClub {le club grand public} municipalityClub {le club municipal} camp {le stage} other {l’événement}}",
+      "title": "Duplication de {name}",
+      "copySuffix": " (copie)"
+    },
+    "sections": {
+      "identity": "Identité",
+      "identityDescription": "Comment cela s’appelle et de quoi il s’agit.",
+      "audience": "Public",
+      "audienceDescription": "À qui cela s’adresse.",
+      "where": "Où",
+      "whereDescription": {
+        "consumerClub": "En ligne ou en présentiel. Les clubs en présentiel se déroulent sur un site précis.",
+        "municipalityClub": "Financé par une commune précise. Les clubs en ligne choisissent directement la commune ; les clubs en présentiel choisissent un site situé sur son territoire.",
+        "camp": "En ligne ou en présentiel. Les stages en présentiel se déroulent sur un site précis.",
+        "event": "En ligne ou en présentiel. Les événements en présentiel se déroulent sur un site précis."
+      },
+      "when": "Quand",
+      "whenDescription": {
+        "consumerClub": "Un jour par semaine, à une heure fixe. Laissez la date de fin vide pour un club sans terme.",
+        "municipalityClub": "Un jour par semaine, à une heure fixe. Se déroule entre la date de début et la date de fin.",
+        "camp": "Plusieurs jours par semaine, chacun avec son heure de début et sa durée.",
+        "event": "Une seule date et une heure de début."
+      },
+      "billing": "Capacité et facturation",
+      "billingDescription": {
+        "consumerClub": "Les parents paient pour chaque session à laquelle leur enfant participe. La facturation est automatique chaque semaine.",
+        "municipalityClub": "School of Gaming facture directement la commune. Les parents inscrivent leur enfant gratuitement, dans la limite des places disponibles.",
+        "camp": "Les stages peuvent être gratuits (avec ou sans limite de places) ou payés à l’avance. Un stage payant est réglé en totalité à l’inscription, remboursable jusqu’à une date limite.",
+        "event": "Les événements peuvent être gratuits (avec ou sans limite de places) ou payés à l’avance."
+      },
+      "registration": "Ouverture des inscriptions",
+      "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
+      "consents": "Consentements",
+      "consentsDescription": "Ce qu’un parent accepte, et ce qui lui est demandé, au moment de l’inscription. Les documents obligatoires doivent être acceptés avant de réserver une place ; la question sur les photos et la question marketing peuvent toutes deux être refusées.",
+      "visibility": "Catalogue",
+      "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
+    },
+    "labels": {
+      "name": "Nom",
+      "shortDescription": "Description courte",
+      "longDescription": "Description longue",
+      "voiceJoinInstructions": "Instructions de connexion",
+      "topic": "Thème",
+      "materialUrl": "URL du matériel pédagogique",
+      "externalVoiceUrl": "Lien de la réunion",
+      "requiresGamerCreations": "Chaque joueur doit avoir un lien vers sa création",
+      "seatAudience": "Qui peut occuper une place",
+      "tag": "Conçu pour",
+      "regionLock": "Restriction par pays",
+      "forGamers": "Pour les joueurs",
+      "forParents": "Pour les parents",
+      "minAge": "Âge min.",
+      "maxAge": "Âge max.",
+      "spokenLanguage": "Langue parlée",
+      "online": "En ligne",
+      "inPerson": "En présentiel",
+      "municipality": "Commune concernée",
+      "site": "Site",
+      "startDate": "Date de début",
+      "date": "Date",
+      "endDate": "Date de fin",
+      "eventDate": "Date de l’événement",
+      "seasonEndDate": "Date de fin de saison",
+      "schedule": "Planning",
+      "dayAndTime": "Jour et heure",
+      "daysAndTimes": "Jours et heures",
+      "time": "Heure",
+      "timezone": "Fuseau horaire",
+      "pricing": "Prix",
+      "free": "Gratuit",
+      "paid": "Payant",
+      "billing": "Facturation",
+      "paidByMunicipality": "Payé par la commune",
+      "seatCount": "Nombre de places",
+      "waitlistToggle": "Activer la liste d’attente quand les places sont complètes",
+      "makeVisible": "Répertorier ce produit sur les pages Boutique et Clubs municipaux",
+      "seatLimit": "Limite de places"
+    },
+    "placeholders": {
+      "selectTopic": "Choisir un thème…",
+      "materialUrl": "https://drive.sog.gg/...",
+      "externalVoiceUrl": "https://",
+      "name": {
+        "consumerClub": "ex. Club Minecraft Redstone",
+        "municipalityClub": "ex. Club Minecraft de Montreuil · Printemps 2026",
+        "camp": "ex. Stage de game design · Vacances d’automne",
+        "event": "ex. Balade communautaire Pokémon GO · Paris"
+      },
+      "description": {
+        "consumerClub": "Ce qui se passe chaque semaine, à qui cela s’adresse, ce qu’ils vont apprendre.",
+        "municipalityClub": "Dans quelle école, pendant quelle période, dans quelle langue.",
+        "camp": "Jours, nombre total d’heures, thème de la semaine.",
+        "event": "Une phrase d’accroche pour l’événement — quoi, où, pour qui."
+      }
+    },
+    "longDescription": {
+      "placeholder": "Rédigez la présentation complète de ce produit…"
+    },
+    "locationPicker": {
+      "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
+      "change": "Changer",
+      "noSiteHint": "Aucun site physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
+      "chooseMunicipality": "Choisir une commune",
+      "municipalityPickerTitle": "Choisir une commune",
+      "chooseSite": "Choisir un site",
+      "sitePickerTitle": "Choisir un site",
+      "sitePickerDescription": "Recherchez le site par son nom pour le trouver directement, ou descendez jusqu’à sa commune pour voir les sites qui s’y trouvent. S’il n’existe pas encore, ouvrez-en un nouveau.",
+      "sitesIn": "Sites à {name}",
+      "sitesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
+      "sitesHereEmpty": "Aucun site ici pour l’instant.",
+      "addSite": "Ajouter un site",
+      "changeMunicipality": "Choisir une autre commune"
+    },
+    "pricing": {
+      "perMonthLabel": "Prix par mois",
+      "totalLabel": "Prix total"
+    },
+    "fees": {
+      "sectionTitle": "Montants par session",
+      "sectionDescription": "Ce que nous versons aux Gedus à chaque session et — pour les clubs municipaux — ce que la commune nous verse. Ce sont des chiffres internes, distincts de ce que paient les parents ci-dessus.",
+      "primaryGeduLabel": "Rémunération du Gedu principal",
+      "primaryGeduHint": "Versée au Gedu principal pour chaque session. Choisissez Inconnu si vous la définirez plus tard, ou Bénévole s’il anime gratuitement.",
+      "assistantGeduLabel": "Rémunération du Gedu assistant",
+      "assistantGeduHint": "Versée à un Gedu assistant pour chaque session. Choisissez Aucune s’il n’y a pas d’assistant.",
+      "municipalityLabel": "Montant facturé à la commune",
+      "municipalityHint": "Ce que la commune nous verse par session. Choisissez Inconnu si vous le définirez plus tard.",
+      "amountLabel": "Montant par session en euros",
+      "status": {
+        "unknown": "Inconnu — à définir plus tard",
+        "none": "Aucune",
+        "volunteer": "Bénévole (gratuit)",
+        "fee": "Définir un montant"
+      }
+    },
+    "registrationModes": {
+      "label": "Quand les inscriptions ouvrent-elles ?",
+      "immediately": "Tout de suite",
+      "immediatelyDescription": "Les parents peuvent s’inscrire dès que ce produit devient visible.",
+      "scheduled": "À un moment précis",
+      "scheduledDescription": "Les parents voient un compte à rebours jusque-là. Pratique pour les lancements en mode billetterie."
+    },
+    "voiceRoomModes": {
+      "label": "Comment les familles rejoignent-elles les séances ?",
+      "sogverse": "Salle vocale Sogverse",
+      "sogverseDescription": "Une salle vocale est créée automatiquement et s’ouvre pour chaque séance.",
+      "external": "Lien vers une réunion ailleurs",
+      "externalDescription": "Les familles rejoignent une réunion que vous organisez sur un autre service. Pour les publics plus nombreux qu’une salle vocale Sogverse ne peut accueillir (50 personnes).",
+      "none": "Pas de salle vocale",
+      "noneDescription": "Les familles voient à la place les instructions de connexion que vous rédigez pour chaque langue."
+    },
+    "endDateModes": {
+      "ongoing": "Aucune date de fin",
+      "ongoingDescription": "Le club se poursuit indéfiniment jusqu’à ce que vous décidiez d’y mettre fin.",
+      "dated": "Définir une date de fin",
+      "datedDescription": "Le club se déroule jusqu’à une date précise, puis se termine automatiquement."
+    },
+    "tagOptions": {
+      "none": "Aucune étiquette"
+    },
+    "regionLock": {
+      "none": "Aucune restriction par pays"
+    },
+    "consents": {
+      "version": "Version {version}",
+      "noVersion": "Aucune version publiée",
+      "none": "Aucun",
+      "gamerPhoto": {
+        "lynxEducate": {
+          "label": "Photos et vidéos (Lynx Educate)",
+          "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents si des photos et vidéos de leur enfant peuvent être prises et utilisées par School of Gaming, Lynx Educate et Roblox. Un parent peut refuser, et la place n’est pas affectée. La question est posée pour chaque enfant et reposée à chaque inscription."
+        }
+      },
+      "marketing": {
+        "lynxEducate": {
+          "label": "Lynx Educate",
+          "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leur adresse e-mail avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
+        }
+      }
+    },
+    "hints": {
+      "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
+      "longDescription": "Facultatif. La présentation complète, affichée uniquement sur la page de détail du produit. Titres, listes, mises en valeur et liens sont disponibles.",
+      "voiceJoinInstructionsHint": "Comment les familles rejoignent les séances, rédigé pour cette langue. Public : n’importe qui peut le lire, y compris les visiteurs non connectés.",
+      "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
+      "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
+      "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque joueur du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
+      "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
+      "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
+      "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
+      "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
+      "regionLockHint": "Seules les familles du pays choisi peuvent s’inscrire. Le lieu est celui que la famille a elle-même déclaré : c’est donc une indication dans la boutique plutôt qu’un blocage strict, et toute personne déjà inscrite conserve sa place même si elle déménage.",
+      "spokenLanguageHint": "La langue principale parlée pendant les sessions.",
+      "externalVoiceUrlHint": "Public : n’importe qui peut lire ce lien, y compris les visiteurs non connectés.",
+      "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
+      "siteHint": "Où les sessions se déroulent physiquement.",
+      "eventSingleDay": "Les événements ont lieu à une seule date.",
+      "timezoneEntry": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. Les parents les voient automatiquement convertis dans le leur.",
+      "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance à venir au même horaire dans le nouveau fuseau, tandis que les séances dont un compte rendu ou une présence est déjà enregistré conservent les horaires auxquels elles se sont tenues.",
+      "timezoneIs": "Les horaires sont exprimés en {timezone}. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
+      "billingHint": "Les produits gratuits ont une limite de places par défaut ; les produits payants démarrent sans limite.",
+      "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
+      "paidDetailMonthly": "Facturé chaque mois sous forme d’abonnement.",
+      "paidDetailUpfront": "Paiement unique à l’inscription.",
+      "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
+      "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
+      "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
+      "seatHintWaitlist": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
+      "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
+      "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
+      "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
+      "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe.",
+      "startNotSessionDay": "Aucune séance ne tombe à cette date. La première séance est le {date}.",
+      "endNotSessionDay": "Aucune séance ne tombe à cette date. La dernière séance est le {date}."
+    },
+    "errors": {
+      "translationRequired": "Au moins une langue avec un nom et une description est requise",
+      "translationIncomplete": "Renseignez le nom et la description de l’onglet {locale}, ou retirez-le.",
+      "topicRequired": "Le thème est obligatoire",
+      "spokenLanguageRequired": "La langue parlée est obligatoire",
+      "audienceRequired": "Choisissez au moins un public — joueurs, parents ou les deux",
+      "minAgeRequired": "L’âge minimum est obligatoire",
+      "maxAgeRequired": "L’âge maximum est obligatoire",
+      "minAgeInvalid": "L’âge minimum doit être un entier positif ou nul",
+      "maxAgeInvalid": "L’âge maximum doit être supérieur ou égal à l’âge minimum",
+      "municipalityRequired": "La commune est obligatoire pour les clubs municipaux en ligne",
+      "siteRequired": "Le site est obligatoire pour les produits en présentiel",
+      "externalVoiceUrlRequired": "Saisissez le lien de la réunion",
+      "externalVoiceUrlInvalid": "Le lien de la réunion doit être une adresse web commençant par http:// ou https://",
+      "voiceJoinInstructionsRequired": "Rédigez des instructions de connexion dans au moins une langue",
+      "scheduleRequired": "Au moins un créneau est requis",
+      "materialUrlInvalid": "L’URL du matériel pédagogique doit être une URL valide",
+      "startDateRequired": "La date de début est obligatoire",
+      "endDateRequired": "La date de fin est obligatoire",
+      "seatCountRequired": "Le nombre de places est obligatoire",
+      "seatCountInvalid": "Le nombre de places doit être un entier positif",
+      "priceSessionMissing": "Saisissez un prix par session en {currency}",
+      "priceSessionInvalid": "Le prix par session doit être d’au moins {minimum}",
+      "priceMonthMissing": "Saisissez un prix mensuel en {currency}",
+      "priceMonthInvalid": "Le prix mensuel doit être d’au moins {minimum}",
+      "primaryGeduFeeInvalid": "Saisissez une rémunération de Gedu principal supérieure à 0, ou choisissez Inconnu ou Bénévole",
+      "assistantGeduFeeInvalid": "Saisissez une rémunération de Gedu assistant supérieure à 0, ou choisissez Aucune ou Bénévole",
+      "municipalityFeeInvalid": "Saisissez un montant commune supérieur à 0, ou choisissez Inconnu",
+      "registrationOpensDateRequired": "Choisissez une date d’ouverture des inscriptions",
+      "createFailed": "Échec de la création du produit"
+    },
+    "actions": {
+      "cancel": "Annuler",
+      "createLabel": "Créer un {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}}"
+    },
+    "status": {
+      "pending": "En attente de démarrage",
+      "running": "En cours",
+      "completed": "Terminé"
+    },
+    "schedule": {
+      "day": "Jour",
+      "hour": "Heure",
+      "minute": "Minute",
+      "startHour": "Heure de début",
+      "startMinute": "Minute de début",
+      "endHour": "Heure de fin",
+      "endMinute": "Minute de fin",
+      "to": "à",
+      "addDay": "Ajouter un autre jour",
+      "removeSlot": "Retirer",
+      "sameAsEventDate": "Identique à la date de l’événement",
+      "oneSessionEvent": "Une session à la date de l’événement.",
+      "oneSessionPerWeek": "Une session par semaine."
+    },
+    "weekdays": {
+      "mon": "lun.",
+      "tue": "mar.",
+      "wed": "mer.",
+      "thu": "jeu.",
+      "fri": "ven.",
+      "sat": "sam.",
+      "sun": "dim.",
+      "monLong": "lundi",
+      "tueLong": "mardi",
+      "wedLong": "mercredi",
+      "thuLong": "jeudi",
+      "friLong": "vendredi",
+      "satLong": "samedi",
+      "sunLong": "dimanche"
+    },
+    "imagePicker": {
+      "label": "Image",
+      "formats": "JPEG, PNG ou WebP.",
+      "chooseFile": "Choisir un fichier",
+      "uploading": "Ajout en cours…",
+      "hint": "Affichée sur la carte du produit lorsque les parents parcourent le catalogue, recadrée au format 3:2. Les images sont partagées entre les produits, donc votre choix ici ne modifie rien d’autre.",
+      "forPurpose": {
+        "product": {
+          "change": "Changer d’image",
+          "remove": "Retirer de ce produit",
+          "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 3:2, l’ajouter et l’utiliser pour ce produit.",
+          "outcomeAdded": "Ajoutée au catalogue et sélectionnée pour ce produit.",
+          "outcomeExisting": "Déjà dans le catalogue — sélectionnée pour ce produit."
+        },
+        "libraryCover": {
+          "change": "Changer l’image",
+          "remove": "Retirer l’image",
+          "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et en faire l’image de cet article.",
+          "outcomeAdded": "Ajoutée au catalogue et choisie comme image de cet article.",
+          "outcomeExisting": "Déjà dans le catalogue — choisie comme image de cet article."
+        },
+        "landingImage": {
+          "change": "Changer l’image",
+          "remove": "Retirer l’image",
+          "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 16:9, l’ajouter et l’utiliser sur cette page d’atterrissage.",
+          "outcomeAdded": "Ajoutée au catalogue et choisie pour cette page d’atterrissage.",
+          "outcomeExisting": "Déjà dans le catalogue — choisie pour cette page d’atterrissage."
+        },
+        "spotlightImage": {
+          "change": "Changer l’image",
+          "remove": "Retirer l’image",
+          "dropPrompt": "Déposez un fichier ici, ou choisissez-en un, pour le recadrer au format 2:1, l’ajouter et l’utiliser sur cette mise en avant.",
+          "outcomeAdded": "Ajoutée au catalogue et choisie pour cette mise en avant.",
+          "outcomeExisting": "Déjà dans le catalogue — choisie pour cette mise en avant."
+        }
+      }
+    },
+    "imageCatalogue": {
+      "upload": "Ajouter une image",
+      "uploading": "Ajout en cours…",
+      "emptyCatalogue": "Aucune image pour l’instant. Ajoutez-en une pour commencer.",
+      "columnEmpty": "Sélectionnez une image",
+      "use": "Utiliser cette image",
+      "nameLabel": "Nom de l’image",
+      "rename": "Renommer",
+      "live": "En ligne",
+      "hidden": "Masqué",
+      "draft": "Brouillon",
+      "switchedOff": "Désactivée",
+      "replace": "Remplacer l’image",
+      "remove": "Retirer du catalogue",
+      "replaceConfirm": {
+        "title": "Remplacer « {label} »",
+        "choose": "Choisir la nouvelle image",
+        "confirmUnused": "Remplacer l’image"
+      },
+      "removeConfirm": {
+        "title": "Retirer « {label} »",
+        "confirmUnused": "Retirer du catalogue"
+      },
+      "errors": {
+        "tooLarge": "Ce fichier est trop volumineux. Les images ne doivent pas dépasser 4 Mo.",
+        "unsupportedType": "Ce fichier n’est pas un JPEG. Recadrez l’image ici et réessayez.",
+        "wrongSize": "Cette image n’a pas exactement la taille que son cadre exige. Recadrez-la ici et réessayez.",
+        "nameRequired": "Donnez à l’image un nom de 1 à 120 caractères."
+      },
+      "forPurpose": {
+        "product": {
+          "title": "Images des produits",
+          "description": "Une même image peut servir à plusieurs produits. Votre choix ne concerne que ce produit, mais remplacer ou retirer une image touche tous les produits qui l’utilisent.",
+          "usedBadge": "{count, plural, one {# produit} other {# produits}}",
+          "usedBy": "Produits utilisant cette image",
+          "usedByNone": "Aucun produit n’utilise cette image.",
+          "replaceConsequence": "{count, plural, one {Le produit ci-dessous affichera la nouvelle image.} other {Les # produits ci-dessous afficheront tous la nouvelle image.}}",
+          "replaceUnused": "Aucun produit n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+          "replaceConfirm": "Remplacer sur {count, plural, one {# produit} other {# produits}}",
+          "removeConsequence": "{count, plural, one {Le produit ci-dessous restera sans image jusqu’à ce que vous en choisissiez une autre.} other {Les # produits ci-dessous resteront sans image jusqu’à ce que vous en choisissiez une autre.}}",
+          "removeUnused": "Aucun produit n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+          "removeConfirm": "Retirer de {count, plural, one {# produit} other {# produits}}"
+        },
+        "libraryCover": {
+          "title": "Couvertures de la Bibliothèque",
+          "description": "Une même image peut servir de couverture à plusieurs articles. Votre choix ne concerne que cet article, mais remplacer ou retirer une image touche tous les articles qui l’utilisent, y compris ceux en ligne.",
+          "usedBadge": "{count, plural, one {# article} other {# articles}}",
+          "usedBy": "Articles utilisant cette image",
+          "usedByNone": "Aucun article n’utilise cette image.",
+          "replaceConsequence": "{count, plural, one {L’article ci-dessous affichera la nouvelle image, aussitôt s’il est en ligne.} other {Les # articles ci-dessous afficheront tous la nouvelle image, aussitôt pour ceux qui sont en ligne.}}",
+          "replaceUnused": "Aucun article n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+          "replaceConfirm": "Remplacer sur {count, plural, one {# article} other {# articles}}",
+          "removeConsequence": "{count, plural, one {L’article ci-dessous restera sans couverture jusqu’à ce que vous en choisissiez une autre, même en ligne.} other {Les # articles ci-dessous resteront sans couverture jusqu’à ce que vous en choisissiez une autre, y compris ceux en ligne.}}",
+          "removeUnused": "Aucun article n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+          "removeConfirm": "Retirer de {count, plural, one {# article} other {# articles}}"
+        },
+        "landingImage": {
+          "title": "Images des pages d’atterrissage",
+          "description": "Une même image peut servir sur plusieurs pages d’atterrissage, et à plusieurs endroits d’une même page. Votre choix ne concerne que cet endroit, mais remplacer ou retirer une image touche toutes les pages qui l’utilisent, y compris celles en ligne.",
+          "usedBadge": "{count, plural, one {# page} other {# pages}}",
+          "usedBy": "Pages d’atterrissage utilisant cette image",
+          "usedByNone": "Aucune page d’atterrissage n’utilise cette image.",
+          "replaceConsequence": "{count, plural, one {La page ci-dessous affichera la nouvelle image, aussitôt si elle est en ligne.} other {Les # pages ci-dessous afficheront toutes la nouvelle image, aussitôt pour celles qui sont en ligne.}}",
+          "replaceUnused": "Aucune page d’atterrissage n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+          "replaceConfirm": "Remplacer sur {count, plural, one {# page} other {# pages}}",
+          "removeConsequence": "{count, plural, one {La page ci-dessous perdra cette image, même en ligne. Une section d’images laissée sans image est supprimée.} other {Les # pages ci-dessous perdront cette image, y compris celles en ligne. Une section d’images laissée sans image est supprimée.}}",
+          "removeUnused": "Aucune page d’atterrissage n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+          "removeConfirm": "Retirer de {count, plural, one {# page} other {# pages}}"
+        },
+        "spotlightImage": {
+          "title": "Images des mises en avant",
+          "description": "Une même image peut servir à plusieurs mises en avant. Votre choix ne concerne que celle-ci, mais remplacer ou retirer une image touche toutes les mises en avant qui l’utilisent, y compris celles des e-mails de compte rendu de session.",
+          "usedBadge": "{count, plural, one {# mise en avant} other {# mises en avant}}",
+          "usedBy": "Mises en avant utilisant cette image",
+          "usedByNone": "Aucune mise en avant n’utilise cette image.",
+          "replaceConsequence": "{count, plural, one {La mise en avant ci-dessous affichera la nouvelle image, dès le prochain e-mail si elle est activée.} other {Les # mises en avant ci-dessous afficheront toutes la nouvelle image, dès le prochain e-mail pour celles qui sont activées.}}",
+          "replaceUnused": "Aucune mise en avant n’utilise cette image. La nouvelle prend sa place dans le catalogue.",
+          "replaceConfirm": "Remplacer sur {count, plural, one {# mise en avant} other {# mises en avant}}",
+          "removeConsequence": "{count, plural, one {La mise en avant ci-dessous perdra cette image et sera désactivée : elle quitte les e-mails de compte rendu de session jusqu’à ce que vous choisissiez une autre image et la réactiviez.} other {Les # mises en avant ci-dessous perdront cette image et seront désactivées : elles quittent les e-mails de compte rendu de session jusqu’à ce que vous choisissiez une autre image et réactiviez chacune.}}",
+          "removeUnused": "Aucune mise en avant n’utilise cette image. Elle sera définitivement retirée du catalogue.",
+          "removeConfirm": "Retirer de {count, plural, one {# mise en avant} other {# mises en avant}}"
+        }
+      }
+    },
+    "filters": {
+      "day": "Jour",
+      "allDays": "Tous les jours",
+      "gedu": "Gedu",
+      "language": "Langue",
+      "allLanguages": "Toutes les langues",
+      "municipality": "Commune",
+      "searchGedu": "Rechercher des Gedus…",
+      "searchMunicipality": "Rechercher des communes…",
+      "noResults": "Aucun résultat.",
+      "type": "Type",
+      "allTypes": "Tous",
+      "search": "Recherche",
+      "searchPlaceholder": "Rechercher par nom…",
+      "showing": "Affichage de {count} sur {total}",
+      "clear": "Effacer",
+      "noMatches": "Aucun {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}} ne correspond à la recherche et aux filtres sélectionnés.",
+      "noMatchesAll": "Rien ne correspond à la recherche et aux filtres sélectionnés."
+    },
+    "geduPicker": {
+      "searchPlaceholder": "Rechercher un nom ou un e-mail…",
+      "speaks": "Parle",
+      "any": "Toutes",
+      "countSummary": "Affichage de {filtered} Gedus sur {total}",
+      "noResults": "Aucun Gedu ne correspond à votre recherche.",
+      "current": "Actuel",
+      "alreadyAssigned": "Déjà affecté",
+      "alreadyExpected": "Déjà sur cette séance",
+      "absentGedu": "Le Gedu remplacé",
+      "notCertified": "Non certifié",
+      "alreadyTrainee": "Déjà stagiaire",
+      "traineeInstead": "Peut être ajouté comme stagiaire.",
+      "notQualified": "Qualification manquante : {qualification}",
+      "doesNotSpeak": "Ne parle pas {language}",
+      "outsideCoverage": "Hors de ses zones"
+    },
+    "participantPicker": {
+      "title": "Ajouter un participant",
+      "description": "Ajoutez un enfant ou un parent directement à ce produit, sans passer par le paiement. Un parent ne peut prendre une place que sur un produit ouvert aux parents.",
+      "searchPlaceholder": "Rechercher un parent ou un joueur par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
+      "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
+      "noParents": "Aucun parent pour l’instant.",
+      "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
+      "unnamedParent": "Parent sans nom",
+      "unnamedGamer": "Joueur sans nom",
+      "add": "Ajouter",
+      "adding": "Ajout…",
+      "added": "Ajouté",
+      "alreadyAdded": "Déjà ajouté",
+      "addFailed": "Échec de l’ajout du participant."
+    },
+    "groupsPanel": {
+      "title": "Groupes",
+      "attendanceAndReports": "Présences et comptes rendus",
+      "subtitle": "Faites glisser chaque participant dans le groupe avec lequel il jouera. Ajoutez des Gedus pour animer chaque groupe.",
+      "addGroup": "Ajouter un groupe",
+      "loading": "Chargement…",
+      "genderBoy": "garçon",
+      "genderGirl": "fille",
+      "genderNonBinary": "non binaire",
+      "chip": {
+        "age": "{age} ans",
+        "parent": "Parent : {name}",
+        "participantEmail": "Contact : {email}"
+      },
+      "unassigned": {
+        "title": "Sans groupe",
+        "subtitle": "Personnes qui ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
+        "empty": "Tout le monde a un groupe.",
+        "addParticipant": "Ajouter un participant",
+        "removeParticipant": "Retirer le participant"
+      },
+      "empty": {
+        "title": "Pas encore de groupe",
+        "description": "Ajoutez un groupe quand vous êtes prêt à commencer à placer les participants.",
+        "addFirst": "Ajouter votre premier groupe"
+      },
+      "group": {
+        "defaultName": "Groupe {letter}",
+        "nameLabel": "Nom du groupe",
+        "namePlaceholder": "Nommez ce groupe",
+        "nameRequired": "Donnez un nom à ce groupe.",
+        "editAria": "Renommer {name}",
+        "saveNameAria": "Enregistrer le nom",
+        "cancelEditAria": "Annuler",
+        "deleteAria": "Supprimer {name}",
+        "participantCount": "{count, plural, =0 {Aucun participant} =1 {1 participant} other {# participants}}",
+        "assignedGedus": "Gedus",
+        "noGedus": "Pas encore de Gedu.",
+        "addGedu": "Ajouter un Gedu",
+        "participantsLabel": "Participants",
+        "empty": "Personne ici pour l’instant — faites-en glisser un.",
+        "deleteConfirmTitle": "Supprimer {name} ?",
+        "deleteConfirmEmpty": "Personne n’est dans ce groupe : le supprimer efface simplement les affectations de Gedus.",
+        "deleteConfirmWithParticipants": "{count, plural, =1 {1 participant est dans ce groupe} other {# participants sont dans ce groupe}}. Ils passeront dans Non attribués."
+      },
+      "gedu": {
+        "removeAria": "Retirer {name}"
+      },
+      "picker": {
+        "addTitle": "Ajouter un Gedu à {name}",
+        "addDescription": "Un Gedu ne peut animer qu’un seul groupe par produit. Les personnes déjà affectées apparaissent en grisé.",
+        "addTraineeTitle": "Ajouter un stagiaire à {name}",
+        "addTraineeDescription": "Un stagiaire suit le groupe en observation et n’a pas besoin d’être certifié. Les personnes déjà présentes sur ce produit, comme Gedu ou stagiaire, apparaissent en grisé."
+      },
+      "trainee": {
+        "role": "Stagiaire",
+        "add": "Ajouter un stagiaire",
+        "removeAria": "Retirer le stagiaire {name}"
+      },
+      "removeParticipant": {
+        "confirmTitle": "Retirer {name} de ce produit ?",
+        "confirmDescription": "{name} sera désinscrit et perdra immédiatement l’accès.",
+        "noRefundWarning": "Aucun remboursement n’est effectué. Si ce client a payé, il ne récupérera pas son argent.",
+        "confirmCta": "Retirer le participant"
+      },
+      "waitlist": {
+        "title": "Liste d’attente",
+        "subtitle": "Personnes en attente d’une place, numérotées dans leur ordre d’arrivée. Faites-en glisser une dans un groupe pour lui donner une place, ou déposez ici un participant actif pour l’envoyer en fin de liste.",
+        "empty": "Personne n’est sur la liste d’attente.",
+        "seatOffer": {
+          "invite": "Inviter",
+          "inviteAgain": "Inviter à nouveau",
+          "noAnswer": "Sans réponse",
+          "leftDays": "{count, plural, one {# jour restant} other {# jours restants}}",
+          "leftHours": "{count, plural, one {# heure restante} other {# heures restantes}}",
+          "leftLastHour": "Moins d’une heure",
+          "liveTitle": "Invitée. L’offre est valable jusqu’au {deadline}.",
+          "expiredTitle": "L’offre a expiré le {deadline} sans réponse.",
+          "needsOneGroup": "Pour inviter, le produit doit compter exactement un groupe, afin que la famille qui accepte ait une place où aller. Il en compte actuellement {count, plural, =0 {aucun} one {#} other {#}}."
+        }
+      },
+      "seatsOverfilled": "{count} places sur {total} – {over} en trop",
+      "blockedMove": {
+        "acknowledge": "Compris",
+        "promoteUnpaid": {
+          "title": "Cette place nécessite un abonnement",
+          "description": "{name} est sur la liste d’attente sans abonnement, et une place dans ce club est facturée chaque mois. Lui donner une place maintenant l’inscrirait gratuitement.",
+          "nextStep": "Demandez plutôt à la famille de prendre la place elle-même : tant qu’une place est libre, le club s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte sur Mon SOG et passer en caisse — c’est là que l’abonnement est créé."
+        },
+        "demoteSubscribed": {
+          "title": "L’abonnement est toujours actif",
+          "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
+          "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+        },
+        "removeSubscribed": {
+          "title": "L’abonnement est toujours actif",
+          "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
+          "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+        }
+      },
+      "switchClub": {
+        "dropZone": "Changer de club",
+        "title": "Changer de club",
+        "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, puis la famille paie le prix du nouveau club.",
+        "searchPlaceholder": "Rechercher un club par son nom",
+        "picker": {
+          "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
+          "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
+          "alreadyHolds": "A déjà une place"
+        },
+        "facts": {
+          "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",
+          "ageRangeWithGamer": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}} · {name} a {age} ans",
+          "seats": "{taken} places prises sur {capacity}",
+          "regionLocked": "Familles en {country} uniquement",
+          "notStarted": "Commence le {date}. La famille paie à partir d’aujourd’hui, pas de la date de début.",
+          "subscriptionEnding": "La famille a résilié cet abonnement ; il prend fin le {date}. La différence de prix de ce mois ne sera pas facturée."
+        },
+        "prices": {
+          "current": "Paie actuellement",
+          "target": "Nouveau prix",
+          "proration": "La prochaine facture ajoute ou rembourse la différence pour le reste du mois.",
+          "nothingPaid": "Rien de plus n’est facturé avant le {date}. Ensuite, la famille paie le prix du nouveau club, moins toute remise dont elle bénéficie déjà.",
+          "unavailable": "Aucun prix à afficher",
+          "error": "La vérification du prix n’a pas abouti. Choisissez à nouveau le club pour réessayer."
+        },
+        "back": "Retour",
+        "group": {
+          "label": "Groupe",
+          "unassigned": "Laisser sans groupe",
+          "members": "{count, plural, one {# joueur} other {# joueurs}}"
+        },
+        "refusals": {
+          "latestInvoiceNotPaid": "La dernière facture de la famille n’est pas payée, il n’y a donc pas de temps payé à déplacer. Réglez cela dans Stripe d’abord.",
+          "subscriptionNotSingleItem": "L’abonnement comporte plus d’une ligne, il n’y a donc pas de prix unique à échanger. Réglez cela dans Stripe d’abord.",
+          "noTargetPriceInCurrency": "Ce club n’a pas de prix dans la devise de facturation de l’abonnement. Les clubs sont tarifés en euros, donc un abonnement créé par Stripe dans une autre devise ne peut pas être basculé ici — réglez cela dans Stripe d’abord.",
+          "participationNotActive": "Cette place n’est pas active, il n’y a donc rien à déplacer.",
+          "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le joueur sur l’autre club.",
+          "targetNotPaidSubscriptionClub": "Ce produit n’est pas un club facturé chaque mois, un abonnement ne peut donc pas suivre la place jusque-là.",
+          "sameProduct": "C’est le club où le joueur se trouve déjà.",
+          "alreadyOnTarget": "Ce joueur a déjà une place dans ce club."
+        },
+        "commit": {
+          "stripeUpdated": "L’abonnement est déjà au prix du nouveau club, mais la place n’a pas bougé. Appuyez de nouveau sur Changer de club pour terminer — appuyer une seconde fois ne facture pas la famille deux fois.",
+          "stripeUpdatedStuck": "L’abonnement est déjà au prix du nouveau club alors que la place n’a pas pu être déplacée : la famille est donc facturée pour un club où le joueur n’a aucune place. Réglez cela dans Stripe d’abord.",
+          "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
+        },
+        "confirm": "Changer de club"
+      },
+      "requirementGaps": {
+        "title": "Affecter quand même ?",
+        "action": "Affecter quand même"
+      }
+    },
+    "seatLimitModes": {
+      "limited": "Places limitées",
+      "limitedDescription": "Limitez le nombre de joueurs pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
+      "unlimited": "Aucune limite de places",
+      "unlimitedDescription": "Toute personne qui s’inscrit peut participer — il n’y a pas de plafond."
+    },
+    "vat": {
+      "headline": {
+        "reduced": "TVA à taux réduit — {rate}",
+        "standard": "TVA à taux normal — {rate}"
+      },
+      "reason": {
+        "reduced": "Les stages relèvent du taux réduit finlandais — une décision de la direction financière qui vaut pour tous les stages. Le taux découle du type de produit et ne se modifie pas ici.",
+        "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
+      },
+      "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
+    },
+    "staffing": {
+      "menuLabel": "Plus d’actions pour cette séance",
+      "setSubstitute": "Définir un remplacement",
+      "changeSubstitute": "Changer le remplacement",
+      "changeSubstituteFor": "Changer le remplacement de {name}",
+      "clearSubstitute": "Retirer le remplacement",
+      "clearSubstituteFor": "Retirer le remplacement de {name}",
+      "withdrawRequest": "Retirer la demande",
+      "withdrawRequestFor": "Retirer la demande de {name}",
+      "withRole": "{name} · {role}",
+      "absentLabel": "Absent",
+      "subLabel": "Remplacement",
+      "changeChoice": "Changer",
+      "absentStepTitle": "Qui est absent ?",
+      "absentStepBody": "Plusieurs Gedus sont prévus à la séance du {date}. Choisissez celui qui ne sera pas là.",
+      "pickerTitle": "Choisir un remplacement",
+      "pickerDescription": "Choisissez qui remplace {name}. Un Gedu qui ne peut pas apparaît avec le motif.",
+      "confirmTitle": "Définir un remplacement",
+      "confirmBody": "Enregistrez qui assure la séance du {date} à la place du Gedu absent.",
+      "approvesOpenRequest": "Ceci approuve la demande ouverte au lieu d’en créer une seconde.",
+      "replacesCurrentSub": "Ceci remplace {name}, qui assure actuellement la séance.",
+      "reasonKept": "Le motif déjà indiqué pour l’absence est conservé.",
+      "reasonLabel": "Motif",
+      "reasonSick": "Maladie",
+      "reasonOther": "Autre chose",
+      "noteLabel": "Note pour le bureau",
+      "notePlaceholder": "Ce que le bureau doit savoir sur ce remplacement.",
+      "noteRemaining": "{count} caractères restants",
+      "confirmAction": "Définir le remplacement",
+      "setFailed": "Le remplacement n’a pas pu être défini. Réessayez.",
+      "clearTitle": "Retirer le remplacement ?",
+      "clearBody": "{sub} ne remplace plus {name} le {date}, et la séance retourne dans la file en attente d’un remplacement.",
+      "clearConfirm": "Retirer le remplacement",
+      "clearFailed": "Le remplacement n’a pas pu être retiré. Réessayez.",
+      "withdrawTitle": "Retirer la demande ?",
+      "withdrawBody": "{name} assure finalement la séance du {date}. Les propositions sur la demande sont abandonnées et personne n’est enregistré comme remplacement.",
+      "withdrawConfirm": "Retirer la demande",
+      "withdrawFailed": "La demande n’a pas pu être retirée. Réessayez."
+    },
+    "sessions": {
+      "loadFailed": "Impossible de charger le suivi des séances. Rechargez la page pour réessayer.",
+      "loading": "Chargement du suivi des séances de ce produit.",
+      "railGroupHeading": "Groupe"
+    },
+    "cancellation": {
+      "menuLabel": "Plus d’actions pour cette séance annulée",
+      "cancelSession": "Annuler la séance",
+      "addReason": "Ajouter un motif",
+      "changeReason": "Modifier le motif",
+      "restoreSession": "Rétablir la séance",
+      "cancelTitle": "Annuler cette séance ?",
+      "cancelBody": "{date}. Les familles et les Gedus verront cette séance comme annulée, et rien ne pourra y être enregistré. Personne n’est prévenu.",
+      "reasonTitle": "Modifier le motif",
+      "reasonBody": "{date}. La séance reste annulée.",
+      "reasonLabel": "Motif",
+      "reasonHint": "Seuls les administrateurs voient le motif. {count} caractères restants",
+      "reasonPlaceholder": "Pourquoi cette séance est-elle annulée ?",
+      "keepSession": "Garder la séance",
+      "cancelConfirm": "Annuler la séance",
+      "reasonConfirm": "Enregistrer le motif",
+      "recordKept": "Les notes, photos et présences déjà enregistrées pour cette séance sont conservées. Les familles ne les voient pas tant que la séance est annulée, et elles réapparaissent si la séance est rétablie.",
+      "recordKeptEmailed": "Les notes, photos et présences déjà enregistrées pour cette séance sont conservées. Les familles ne les voient pas tant que la séance est annulée, et elles réapparaissent si la séance est rétablie. Le compte rendu a déjà été envoyé aux familles par e-mail, et cet e-mail ne peut pas être rappelé.",
+      "cancelFailed": "L’enregistrement n’a pas abouti. Réessayez.",
+      "restoreTitle": "Rétablir cette séance ?",
+      "restoreBody": "{date}. Les familles et les Gedus verront à nouveau cette séance au programme, et elle pourra être enregistrée comme d’habitude. Personne n’est prévenu.",
+      "restoreConfirm": "Rétablir la séance",
+      "restoreFailed": "La séance n’a pas pu être rétablie. Réessayez."
+    }
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "manageAccounts": "Gérer les comptes utilisateurs et les rôles",
+    "searchPlaceholder": "Rechercher par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
+    "searchAriaLabel": "Rechercher des utilisateurs",
+    "roleFilterLabel": "Rôle",
+    "all": "Tous",
+    "noFilterResults": "Aucun utilisateur ne correspond à vos filtres.",
+    "noUsers": "Aucun utilisateur trouvé.",
+    "backToUsers": "Retour aux utilisateurs",
+    "userNotFound": "Utilisateur introuvable.",
+    "joined": "Inscrit le",
+    "unknown": "Inconnu",
+    "linkedGamers": "Joueurs associés",
+    "linkedParents": "Parents associés",
+    "unnamedGamer": "Joueur sans nom",
+    "unnamedUser": "Utilisateur sans nom",
+    "noConnectedGamers": "Aucun joueur associé",
+    "assignedProducts": "Produits affectés",
+    "noAssignedProducts": "Aucun produit affecté",
+    "unassignedGroup": "Aucun groupe attribué",
+    "needsGroup": "Doit être affecté à un groupe",
+    "untitledProduct": "Produit sans titre",
+    "gamerDetails": {
+      "title": "Informations personnelles",
+      "edit": "Modifier les informations personnelles",
+      "birthMonthLabel": "Mois de naissance",
+      "birthYearLabel": "Année de naissance",
+      "genderLabel": "Genre",
+      "genderUnset": "Non précisé",
+      "saveError": "Impossible d’enregistrer ces informations. Veuillez réessayer.",
+      "gender": {
+        "boy": "Garçon",
+        "girl": "Fille",
+        "non_binary": "Non binaire"
+      },
+      "ageYears": "{age, plural, one {# an} other {# ans}}",
+      "usernameLabel": "Nom d’utilisateur",
+      "usernameHint": "Lettres et chiffres uniquement, de 3 à 20 caractères. Désormais, l’enfant se connecte avec le nouveau nom d’utilisateur.",
+      "usernameInvalid": "Utilisez de 3 à 20 lettres ou chiffres, sans espaces.",
+      "usernameTaken": "Ce nom d’utilisateur est déjà pris. Essayez-en un autre.",
+      "usernameSaveError": "Impossible de modifier le nom d’utilisateur : rien n’a été enregistré. Veuillez réessayer.",
+      "usernameSavedDetailsFailed": "Le nom d’utilisateur a été modifié, mais la date de naissance et le genre n’ont pas été enregistrés. Veuillez réessayer.",
+      "emailHint": "Désormais, l’enfant se connecte avec la nouvelle adresse. Elle apparaît comme non vérifiée jusqu’à ce qu’elle soit confirmée.",
+      "emailSaveError": "Impossible de modifier l’adresse e-mail : rien n’a été enregistré. Veuillez réessayer.",
+      "emailSavedDetailsFailed": "L’adresse e-mail a été modifiée, mais la date de naissance et le genre n’ont pas été enregistrés. Veuillez réessayer."
+    },
+    "emailEdit": {
+      "edit": "Modifier l’adresse e-mail",
+      "title": "Modifier l’adresse e-mail",
+      "description": "Désormais, la connexion se fait avec la nouvelle adresse. Elle apparaît comme non vérifiée jusqu’à ce qu’elle soit confirmée.",
+      "label": "Adresse e-mail",
+      "invalid": "Saisissez une adresse e-mail valide.",
+      "taken": "Cette adresse appartient déjà à un autre compte. Fusionner ou supprimer ce compte n’est pas possible ici : demandez à un développeur de s’en charger.",
+      "saveError": "Impossible de modifier l’adresse e-mail. Veuillez réessayer."
+    },
+    "gameAccounts": {
+      "title": "Comptes de jeu",
+      "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
+    },
+    "marketing": {
+      "title": "Marketing",
+      "attribution": "Attribution",
+      "preferences": "Préférences",
+      "schoolOfGaming": "School of Gaming",
+      "lynxEducate": "Lynx Educate",
+      "granted": "Accordé",
+      "notGranted": "Non accordé",
+      "since": "depuis le {date}"
+    },
+    "photoConsent": {
+      "title": "Consentement photo",
+      "labels": {
+        "lynx_educate": "Lynx Educate"
+      },
+      "granted": "Accordé",
+      "notGranted": "Non accordé",
+      "since": "depuis le {date}"
+    },
+    "participationStatus": {
+      "active": "Actif",
+      "waitlisted": "En liste d’attente",
+      "reserving": "En attente de paiement",
+      "completed": "Terminé"
+    },
+    "emailVerified": "Adresse e-mail vérifiée",
+    "emailNotVerified": "Adresse e-mail non vérifiée",
+    "certification": {
+      "title": "Certification",
+      "certified": "Certifié",
+      "notCertified": "Non certifié",
+      "notCertifiedNote": "Ce Gedu n’a pas encore été certifié. Il ne peut pas être affecté à un groupe tant que vous ne l’avez pas certifié.",
+      "certifiedOn": "Certifié le {date}",
+      "certifiedByOn": "Certifié par {name} le {date}",
+      "certifyAction": "Certifier",
+      "uncertifyAction": "Retirer la certification",
+      "saving": "Enregistrement…",
+      "error": "Impossible de mettre à jour la certification. Veuillez réessayer."
+    },
+    "usernameLabel": "Identifiant",
+    "discordNotLinked": "Non associé",
+    "slackNotLinked": "Non associé"
+  },
+  "locations": {
+    "editName": "Modifier {name}",
+    "addChildUnder": "Ajouter {type} sous {parent}",
+    "location": "Lieu",
+    "nameRequired": "Le nom est obligatoire",
+    "name": "Nom",
+    "enterTypeName": "Saisissez le nom du {type}",
+    "enterName": "Saisissez un nom",
+    "adding": "Ajout...",
+    "addType": "Ajouter {type}"
+  },
+  "sites": {
+    "subtitle": "Tous les sites de la plateforme et les produits qui s’y déroulent.",
+    "addSite": "Ajouter un site",
+    "searchPlaceholder": "Rechercher un site par son nom…",
+    "searchAriaLabel": "Rechercher des sites",
+    "columnSite": "Site",
+    "columnPlace": "Localisation",
+    "columnProducts": "Produits",
+    "searchCapped": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+    "noResults": "Aucun résultat pour « {query} ».",
+    "empty": "Aucun site pour l’instant. Ajoutez le premier.",
+    "backToSites": "Retour aux sites",
+    "notFound": "Aucun site ne correspond à cet identifiant.",
+    "notASite": "Cet emplacement n’est pas un site : il n’a donc pas de page ici.",
+    "productsHeading": "Produits sur ce site",
+    "noProducts": "Rien ne s’y déroule pour l’instant."
+  },
+  "testing": {
+    "title": "Tests",
+    "description": "Outils internes de test et de développement",
+    "emailTool": "Outil de test e-mail",
+    "emailToolDescription": "Envoyez des e-mails de test via Brevo (SMTP) pour vérifier la délivrabilité et les modèles.",
+    "template": "Modèle",
+    "language": "Langue",
+    "toEmail": "Destinataire",
+    "toEmailPlaceholder": "destinataire@exemple.com",
+    "templateParameters": "Paramètres du modèle",
+    "subject": "Objet",
+    "sendTestEmail": "Envoyer l’e-mail de test",
+    "emailSentSuccess": "E-mail envoyé ! ID du message : {messageId}",
+    "failedToSendRequest": "Échec de l’envoi de la requête",
+    "preview": "Aperçu",
+    "previewError": "Impossible de faire le rendu de ce modèle : {message}",
+    "previewWidth": {
+      "label": "Largeur de l’aperçu",
+      "desktop": "Ordinateur",
+      "mobile": "Mobile"
+    },
+    "attachment": "Pièce jointe : {name}",
+    "sentAttachment": "Ce qui a été envoyé : {name}",
+    "discord": {
+      "tool": "Outil de test Discord",
+      "toolDescription": "Envoyez un message privé depuis le bot Discord de cet environnement à un compte associé, pour vérifier que l’envoi fonctionne.",
+      "recipient": "Destinataire",
+      "recipientOption": "{name} ({discordUsername})",
+      "noLinkedAccounts": "Aucun compte n’a encore de compte Discord associé. Associez-en un d’abord avec /link dans Discord.",
+      "message": "Message",
+      "messagePlaceholder": "Texte brut, 2 000 caractères maximum",
+      "send": "Envoyer le message de test",
+      "sent": "Message envoyé.",
+      "templatePlain": "Texte brut",
+      "templateSubFlow": "/sub et messages de remplacement : tous les messages",
+      "subPreviewSent": "Toutes les étapes ont été envoyées."
+    },
+    "slack": {
+      "tool": "Outil de test Slack",
+      "toolDescription": "Publiez un message dans un canal depuis le bot Slack de cet environnement, pour vérifier que l’envoi fonctionne.",
+      "channel": "Canal",
+      "channelPlaceholder": "ID du canal, p. ex. C0123456789",
+      "message": "Message",
+      "messagePlaceholder": "Texte brut, 4 000 caractères maximum",
+      "send": "Envoyer le message de test",
+      "sent": "Message envoyé.",
+      "templatePlain": "Texte brut",
+      "templateSubFlow": "Messages de remplacement : tous les états",
+      "subPreviewSent": "Tous les messages ont été envoyés."
+    }
+  },
+  "tools": {
+    "title": "Outils"
+  },
+  "whatsapp": {
+    "title": "WhatsApp",
+    "description": "Consulter les conversations WhatsApp et y répondre",
+    "searchContacts": "Rechercher des contacts...",
+    "noConversations": "Aucune conversation pour l’instant.",
+    "selectConversation": "Sélectionnez une conversation pour commencer à écrire",
+    "typeMessage": "Écrivez un message...",
+    "notDelivered": "Non remis",
+    "today": "Aujourd’hui",
+    "yesterday": "Hier"
+  },
+  "substitutions": {
+    "title": "Remplacements",
+    "description": "Séances qu’une personne ne peut pas assurer, et qui l’a remplacée.",
+    "descriptionWithZone": "Séances qu’une personne ne peut pas assurer, et qui l’a remplacée. Les horaires sont affichés en {zone}.",
+    "listLabel": "Séances ayant besoin d’un remplacement",
+    "allClear": "Aucune séance n’a besoin d’un remplacement.",
+    "substitutedLabel": "Séances dont le remplacement est assuré",
+    "substitute": "Remplacement :",
+    "approvedBy": "Validé par {name} · {when}",
+    "substitutedEmpty": "Aucun remplacement prévu pour les séances à venir.",
+    "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
+    "offersLabel": "Gedus proposant de remplacer",
+    "away": "Absence :",
+    "unnamed": "Gedu sans nom",
+    "reason": {
+      "sick": "Maladie",
+      "other": "Autre"
+    },
+    "noOffers": "Aucune proposition pour l’instant.",
+    "declinedBy": "Ont décliné : {names}",
+    "openGroup": "Ouvrir le groupe",
+    "seatSomeoneElse": "Choisir un autre remplacement",
+    "approve": "Valider",
+    "failed": "La validation a échoué – réessayez.",
+    "loadError": "Impossible de charger les remplacements.",
+    "loadErrorWithReason": "Impossible de charger les remplacements : {reason}",
+    "approveConfirmTitle": "Valider {name} pour ce remplacement ?",
+    "approveConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur Mon SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Si son compte Discord est associé, un message l’en informe aussi sur Discord. La séance disparaît de la liste des autres volontaires, son message dans Slack indique qui l’a prise, et sa fiche indique désormais que {name} remplace {absent}.",
+    "approveFailedOfferGone": "{name} a retiré sa proposition, il n’y a donc rien à valider.",
+    "approveFailedAlreadySettled": "Quelqu’un d’autre a déjà réglé cette séance.",
+    "approveFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
+    "approveFailedIneligible": "{name} ne peut plus prendre cette séance.",
+    "seatConfirmTitle": "Désigner {name} pour ce remplacement ?",
+    "seatConfirmBody": "{name} prend {product} — {group} le {when}, à la place de {absent}. La séance apparaît aussitôt sur sa page Remplacements et sur Mon SOG, et l’espace de travail du groupe lui est ouvert 48 heures avant le début. Si son compte Discord est associé, un message l’en informe aussi sur Discord. La séance disparaît de la liste où les Gedus proposent un remplacement, son message dans Slack indique qui l’a prise, et sa fiche indique désormais que {name} remplace {absent}.",
+    "seatConfirm": "Confirmer le remplacement",
+    "seatReasonLabel": "Motif indiqué",
+    "seatFailed": "Le remplacement n’a pas pu être enregistré – réessayez.",
+    "seatFailedIneligible": "{name} ne peut pas prendre cette séance : cette personne y est déjà prévue ou ne peut plus assurer de remplacement.",
+    "seatFailedSeatGone": "{absent} n’a plus cette séance, il n’y a donc personne à remplacer.",
+    "seatFailedRequestWithdrawn": "{absent} a retiré sa demande de remplacement, il n’y a donc personne à remplacer.",
+    "seatFailedNotScheduled": "Le groupe n’a plus de séance à cette date."
+  },
+  "feedback": {
+    "title": "Avis",
+    "sources": {
+      "gamerOnline": "Des gamers après les séances en ligne"
+    },
+    "empty": "Aucun avis n’a encore été donné.",
+    "loadError": "Les avis n’ont pas pu être chargés. Rechargez la page pour réessayer.",
+    "loadErrorWithReason": "Les avis n’ont pas pu être chargés : {reason}",
+    "noAnswers": "Aucune réponse",
+    "answers": "{count, plural, one {# réponse} other {# réponses}}",
+    "skipped": "Passée",
+    "belowAverage": "Sous la moyenne",
+    "belowAverageOn": "Sous la moyenne sur : {statement}",
+    "statementLabels": {
+      "learned": "Apprentissage",
+      "fun": "Plaisir",
+      "geduKnowledgeable": "Gedu compétent",
+      "geduKind": "Gedu gentil",
+      "groupListens": "Écoute"
+    },
+    "timeline": {
+      "byWeek": "Réponses positives par semaine",
+      "byMonth": "Réponses positives par mois",
+      "platform": "Plateforme"
+    },
+    "back": {
+      "overview": "Retour aux avis",
+      "list": {
+        "product": "Retour aux produits",
+        "gedu": "Retour aux Gedus"
+      },
+      "responses": "Retour à ce que les gamers ont dit",
+      "detail": {
+        "product": "Retour au produit",
+        "group": "Retour au groupe",
+        "gedu": "Retour au Gedu",
+        "gamer": "Retour au gamer"
+      }
+    },
+    "hero": {
+      "positive": "positives",
+      "definition": "Réponse Oui ou Tout à fait",
+      "responseRate": "{share} des gamers présents ont répondu"
+    },
+    "statements": {
+      "heading": "Par affirmation",
+      "legend": "Négative : Non ou Pas vraiment ; positive : Oui ou Tout à fait.",
+      "positive": "{share} positives",
+      "negative": "{share} négatives",
+      "saidPositive": "{positive} sur {answers} ont répondu {yes} ou {definitely}"
+    },
+    "explore": {
+      "heading": "Explorer",
+      "titles": {
+        "product": "Produits",
+        "gedu": "Gedus",
+        "responses": "Gamers"
+      },
+      "counts": {
+        "product": "{count, plural, one {# produit} other {# produits}}",
+        "gedu": "{count, plural, one {# Gedu} other {# Gedus}}",
+        "responses": "{count, plural, one {# réponse} other {# réponses}}"
+      }
+    },
+    "rows": {
+      "none": "Rien pour l’instant.",
+      "answers": "Réponses",
+      "positive": "Positives",
+      "positiveAgainst": "Positives (plateforme {share})"
+    },
+    "lists": {
+      "titles": {
+        "product": "Produits",
+        "gedu": "Gedus"
+      },
+      "subtitle": "Les plus faibles d’abord, par rapport à la moyenne de la plateforme"
+    },
+    "detail": {
+      "kinds": {
+        "product": "Produit",
+        "group": "Groupe",
+        "gedu": "Gedu",
+        "gamer": "Gamer"
+      },
+      "open": {
+        "product": "Ouvrir le produit",
+        "group": "Ouvrir le groupe",
+        "gedu": "Ouvrir le compte du Gedu",
+        "gamer": "Ouvrir le compte du gamer"
+      },
+      "none": "Aucune réponse à ce sujet pour l’instant.",
+      "platform": "Plateforme {share}",
+      "groupsHeading": "Groupes",
+      "productsHeading": "Produits",
+      "gedusHeading": "Gedus",
+      "gamersHeading": "Gamers ayant répondu",
+      "responsesHeading": "Ce que les gamers ont dit"
+    },
+    "responses": {
+      "title": "Ce que les gamers ont dit",
+      "none": "Aucune réponse ici.",
+      "noneWorthReading": "Rien à lire en priorité : aucune réponse négative et aucun message.",
+      "noGedu": "Aucun Gedu enregistré",
+      "who": "Réponse",
+      "filterLabel": "Quelles réponses",
+      "worthReading": "À lire en priorité ({count})",
+      "all": "Toutes ({count})"
+    }
+  },
+  "analytics": {
+    "title": "Statistiques",
+    "subtitle": "Combien de personnes arrivent sur le site, ce qu'elles lisent et quelles campagnes les amènent. Chaque jour de cette page est un jour UTC.",
+    "range": {
+      "label": "Période",
+      "preset": "{days} derniers jours",
+      "from": "Du",
+      "to": "Au",
+      "apply": "Afficher",
+      "showing": "Du {from} au {to}.",
+      "dataStarts": "Les chiffres de Vercel commencent le {date}."
+    },
+    "readAt": "Lu depuis Vercel à {time}. Conservé jusqu'à une heure.",
+    "noLanguage": "Pas de langue dans l'adresse",
+    "languageCount": "{language} {count}",
+    "showAll": "Tout afficher ({count})",
+    "showFewer": "Afficher moins",
+    "errors": {
+      "unconfigured": "Vercel n'est pas connecté sur ce déploiement, ces chiffres ne peuvent donc pas être lus.",
+      "refused": "Vercel a refusé ces chiffres au jeton d'accès de ce site. Le jeton doit y avoir accès pour qu'ils s'affichent ici.",
+      "failed": "Ces chiffres n'ont pas pu être lus pour l'instant. Réessayez dans quelques minutes."
+    },
+    "traffic": {
+      "heading": "Trafic",
+      "chart": "Trafic par jour",
+      "visitors": "Visiteurs (approx.)",
+      "caption": "Seuls les visiteurs qui ont accepté les statistiques dans le bandeau des cookies sont comptés. Les visiteurs sont comptés par appareil, ce nombre est donc approximatif.",
+      "series": {
+        "pageviews": "Pages vues",
+        "visitors": "Visiteurs"
+      }
+    },
+    "landing": {
+      "heading": "Pages d'atterrissage",
+      "caption": "Pages vues de chaque page d'atterrissage, toutes les langues d'une page comptées ensemble. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+      "columns": {
+        "page": "Page",
+        "pageviews": "Pages vues"
+      },
+      "unmatched": "Aucune page d'atterrissage n'utilise plus cette adresse",
+      "empty": "Aucune page d'atterrissage n'a été vue sur cette période."
+    },
+    "campaigns": {
+      "heading": "Campagnes",
+      "caption": "Pages vues selon la campagne du lien. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+      "columns": {
+        "campaign": "Campagne",
+        "sources": "Source",
+        "mediums": "Support",
+        "pageviews": "Pages vues"
+      },
+      "none": "Aucune campagne",
+      "noValue": "aucune",
+      "empty": "Rien n'a été vu sur cette période."
+    },
+    "pages": {
+      "heading": "Pages les plus vues",
+      "caption": "Pages vues par page, toutes les langues d'une page sur une ligne. Ouvrez une ligne pour voir dans quelles langues elle a été lue. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+      "columns": {
+        "page": "Page",
+        "pageviews": "Pages vues"
+      },
+      "noSplit": "La répartition par langue n'est pas disponible pour cette lecture.",
+      "empty": "Aucune page n'a été vue sur cette période."
+    },
+    "breakdowns": {
+      "heading": "D'où viennent les visiteurs",
+      "caption": "Pages vues selon le site d'où vient le visiteur, son pays et son appareil. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",
+      "referrers": "Sites référents",
+      "countries": "Pays",
+      "devices": "Appareils",
+      "noReferrer": "Accès direct, ou non transmis",
+      "unknown": "Inconnu",
+      "empty": "Rien à afficher pour cette période.",
+      "deviceTypes": {
+        "desktop": "Ordinateur",
+        "mobile": "Mobile",
+        "tablet": "Tablette"
+      }
+    }
+  },
+  "testimonials": {
+    "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit. Les pages d’atterrissage citent ceux qui y sont placés.",
+    "newTestimonial": "Nouveau témoignage",
+    "backToList": "Retour aux témoignages",
+    "newPage": {
+      "title": "Nouveau témoignage",
+      "submit": "Créer le témoignage"
+    },
+    "editPage": {
+      "title": "Modifier le témoignage"
+    },
+    "listLoadError": "Les témoignages n’ont pas pu être chargés. Rechargez la page pour réessayer.",
+    "loadError": "Ce témoignage n’a pas pu être chargé. Rechargez la page pour réessayer.",
+    "notFound": "Aucun témoignage n’a cette adresse.",
+    "empty": "Aucun témoignage pour l’instant.",
+    "allHeading": "Tous les témoignages",
+    "languagesLabel": "Langues",
+    "saved": "Enregistré le {date}",
+    "quoteHasMarks": "Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
+    "fields": {
+      "languages": "Langues",
+      "from": "De la part de",
+      "quote": "Citation"
+    },
+    "hints": {
+      "languages": "Écrivez-le dans toutes les langues dont vous disposez. Chaque langue a besoin de la citation et de son auteur.",
+      "from": "De qui vient la citation, telle qu’elle doit s’afficher — par exemple Maman, Finlande.",
+      "quote": "Ses mots tels qu’ils ont été donnés, sans guillemets : le site ajoute ceux de chaque langue. Les traduire dans une autre langue est permis ; les modifier ne l’est pas."
+    },
+    "usage": {
+      "heading": "Où il est utilisé",
+      "none": "Il n’est encore affiché nulle part.",
+      "editNote": "L’enregistrement modifie ses mots partout où il est affiché.",
+      "landingPage": "Page d’atterrissage : {title}",
+      "landingPageState": {
+        "both": "Les lecteurs le voient là maintenant.",
+        "liveOnly": "Les lecteurs le voient là jusqu’à la prochaine publication, qui le retire.",
+        "workingOnly": "Pas encore montré aux lecteurs : la prochaine publication l’y place."
+      }
+    },
+    "record": {
+      "created": "Créé le {date}",
+      "createdBy": "Créé le {date} par {name}",
+      "createdByVia": "Créé le {date} par {name} via {app}",
+      "createdByViaUnnamed": "Créé le {date} par {name} via une application d’IA",
+      "saved": "Dernier enregistrement le {date}",
+      "savedBy": "Dernier enregistrement le {date} par {name}",
+      "savedByVia": "Dernier enregistrement le {date} par {name} via {app}",
+      "savedByViaUnnamed": "Dernier enregistrement le {date} par {name} via une application d’IA"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "errors": {
+      "noVersion": "Écrivez le témoignage dans au moins une langue.",
+      "versionIncomplete": "La version en {language} a besoin de la citation et de son auteur.",
+      "quoted": "La citation en {language} commence ou se termine par un guillemet. Omettez les guillemets : le site les ajoute selon l’usage de chaque langue.",
+      "saveFailed": "Le témoignage n’a pas pu être enregistré. Réessayez.",
+      "saveFailedWithReason": "Le témoignage n’a pas pu être enregistré : {reason}"
+    },
+    "onLandingPages": "{count, plural, one {Sur # page d’atterrissage} other {Sur # pages d’atterrissage}}"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "successTitle": "E-postadress verifierad",
+  "successDescription": "Tack – nu vet vi att den här adressen når dig, så inget viktigt går förlorat.",
+  "goToDashboard": "Gå till Min SOG",
+  "invalidTitle": "Den här länken fungerar inte längre",
+  "invalidDescription": "En verifieringslänk slutar fungera så snart kontots e-postadress ändras. Öppna dina inställningar och skicka en ny till dig själv.",
+  "goToSettings": "Gå till inställningar",
+  "gamerVerifiedTitle": "Din e-postadress är bekräftad",
+  "gamerChoosePasswordDescription": "Nu väljer du ditt lösenord – vi mejlar dig en länk.",
+  "gamerSendPasswordLink": "Skicka mig en lösenordslänk",
+  "gamerPasswordLinkSent": "Skickat. Titta i din e-post.",
+  "gamerPasswordLinkFailed": "Det gick inte. Försök igen."
+}

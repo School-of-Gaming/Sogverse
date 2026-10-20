@@ -38,7 +38,7 @@ export function providersModule(currentProfile: () => Profile) {
   };
 }
 
-/** `@/services/users` — the profile form's write and the verification send. */
+/** `@/services/users/users.queries` — the profile form's write and the verification send. */
 export function usersServiceModule() {
   return {
     useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
@@ -46,14 +46,14 @@ export function usersServiceModule() {
   };
 }
 
-/** `@/services/locations` — the parent's home-location lookup, unresolved. */
+/** `@/services/locations/locations.queries` — the parent's home-location lookup, unresolved. */
 export function locationsServiceModule() {
   return {
     useLocationsByIds: () => ({ data: undefined }),
   };
 }
 
-/** `@/services/minecraft` — the game-account card's read and write. */
+/** `@/services/minecraft/minecraft.queries` — the game-account card's read and write. */
 export function minecraftServiceModule() {
   return {
     useMyMinecraftAccount: () => ({ data: null }),
@@ -61,7 +61,7 @@ export function minecraftServiceModule() {
   };
 }
 
-/** `@/services/roblox` — the other game account's read and write. */
+/** `@/services/roblox/roblox.queries` — the other game account's read and write. */
 export function robloxServiceModule() {
   return {
     useMyRobloxAccount: () => ({ data: null }),
@@ -70,7 +70,7 @@ export function robloxServiceModule() {
 }
 
 /**
- * `@/services/marketing-consents` — the parent-only marketing group's read and
+ * `@/services/marketing-consents/marketing-consents.queries` — the parent-only marketing group's read and
  * write, answered with an empty (but *resolved*) list.
  *
  * `[]` rather than `undefined`: a resolved read with no rows is the ordinary

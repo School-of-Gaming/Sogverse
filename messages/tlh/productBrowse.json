@@ -1,0 +1,50 @@
+{
+  "pageTitle": "ngevwI’",
+  "sections": {
+    "clubs": "ghom’a’mey",
+    "camps": "raghmey",
+    "events": "wanI’mey"
+  },
+  "filters": {
+    "type": "mIw",
+    "audience": "ghotpu’",
+    "designedFor": "’IvvaD",
+    "typeClubs": "ghom’a’mey",
+    "typeCamps": "raghmey",
+    "typeEvents": "wanI’mey",
+    "topic": "qech",
+    "format": "rurmeH",
+    "formatOnline": "QumDaq",
+    "formatInPerson": "Daqvam",
+    "price": "DIlmeH",
+    "priceFree": "DIlbe’",
+    "pricePaid": "DIl",
+    "language": "Hol",
+    "age": "qan",
+    "days": "jajmey",
+    "clearAll": "yISay’moH",
+    "filterBy": "yIH’lu’",
+    "title": "yIHmey",
+    "activeCount": "{count, plural, one {# yIH vum} other {# yIHmey vum}}",
+    "removeFilter": "{label} yIteq"
+  },
+  "card": {
+    "ages": "ben {min}–{max}",
+    "perMonth": "{price} / jar",
+    "upfrontTotal": "{price}",
+    "free": "Huch Hutlh",
+    "notAvailableInCurrency": "{currency} ghajbe’",
+    "endedNote": "rInpu’ – veb yIloS.",
+    "viewDetails": "yIlegh",
+    "cardLink": "{action} — {name}",
+    "manage": "yIche’",
+    "fullDisabled": "buy’",
+    "alreadyStarted": "taghpu’",
+    "alreadyEnded": "rIntaH",
+    "online": "QumDaq"
+  },
+  "empty": {
+    "noProducts": "DaH pagh tu’lu’ — chu’ chenmoH.",
+    "noMatches": "pagh Sam. tetlh yISay’moH."
+  }
+}

@@ -2,10 +2,11 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { GeduAssignmentsSectionView } from "./GeduAssignmentsSectionView";
 import { GeduOwnSubstitutionRequestsSection } from "./GeduOwnSubstitutionRequestsSection";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { GeduSubstitutionSummary } from "@/lib/gedu-assignment-rollup";
 import type { OwnSubstitutionRequestRow } from "@/lib/gedu-own-substitution-requests";
 
@@ -106,7 +107,9 @@ export function GeduSubstitutionsPageBody({
       </Link>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">{t("pageTitle")}</h1>
+        <Heading level={1} step="section">
+          {t("pageTitle")}
+        </Heading>
         {fileAbsence}
       </div>
 
@@ -117,12 +120,13 @@ export function GeduSubstitutionsPageBody({
           aria-labelledby="substitution-own-requests-heading"
           className="space-y-4"
         >
-          <h2
+          <Heading
+            level={2}
+            step="card-title"
             id="substitution-own-requests-heading"
-            className="text-xl font-semibold"
           >
             {t("ownRequestsHeading")}
-          </h2>
+          </Heading>
           <GeduOwnSubstitutionRequestsSection
             rows={ownRequests}
             onWithdraw={onWithdrawOwnRequest}
@@ -143,9 +147,9 @@ export function GeduSubstitutionsPageBody({
               whether or not the queue has anything in it, and is what makes
               an empty queue legible to a gedu whose settings are thin. */}
           <div className="space-y-1">
-            <h2 id="substitution-pool-heading" className="text-xl font-semibold">
+            <Heading level={2} step="card-title" id="substitution-pool-heading">
               {t("poolHeading")}
-            </h2>
+            </Heading>
             <p className="text-sm text-muted-foreground">
               {t.rich("poolRequirementsNote", {
                 link: (chunks) => (
@@ -161,9 +165,9 @@ export function GeduSubstitutionsPageBody({
       )}
 
       <section aria-labelledby="substitutions-mine-heading" className="space-y-4">
-        <h2 id="substitutions-mine-heading" className="text-xl font-semibold">
+        <Heading level={2} step="card-title" id="substitutions-mine-heading">
           {t("mineHeading")}
-        </h2>
+        </Heading>
         {/* Nothing at all while the read is out — a small indexed read of a
             bounded set lands in a frame or two, and the ordinary visit has it
             server-prefetched before this page paints. An empty list is a

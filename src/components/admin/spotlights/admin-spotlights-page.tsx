@@ -10,20 +10,33 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FramedImage } from "@/components/ui/framed-image";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import {
   spotlightWriteFailure,
   type AdminSpotlight,
-} from "@/services/spotlights";
+} from "@/services/spotlights/spotlights.contracts";
 
 /** The write the list makes. It resolves once the list has been read again, and throws on refusal. */
 export interface AdminSpotlightsActions {
   remove: (id: string) => Promise<void>;
+}
+
+/** The tab's create control, beside its description in the Marketing hub. */
+export function NewSpotlightAction() {
+  const t = useTranslations("admin.spotlights");
+
+  return (
+    <Link href={ROUTES.admin.spotlightNew} className={buttonVariants({ className: "gap-1.5" })}>
+      <Plus className="h-4 w-4" />
+      {t("newSpotlight")}
+    </Link>
+  );
 }
 
 /**
@@ -40,7 +53,7 @@ export interface AdminSpotlightsActions {
  *
  * **No loading affordance.** The read is one walk over a handful of rows an
  * office writes by hand, and lands in a frame or two. Until it does, nothing
- * renders under the heading.
+ * renders under the hub's description.
  *
  * **Whether it is in the emails is read here and changed in the editor**,
  * where it is saved with the picture it depends on.
@@ -61,16 +74,6 @@ export function AdminSpotlightsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <p className="max-w-3xl text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <Link href={ROUTES.admin.spotlightNew} className={buttonVariants()}>
-          <Plus className="mr-1 h-4 w-4" />
-          {t("newSpotlight")}
-        </Link>
-      </div>
 
       {/* A failed refetch under a painted list keeps the rows it had, so the
           line is only for a page that has nothing to show. */}

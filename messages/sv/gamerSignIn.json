@@ -1,0 +1,26 @@
+{
+  "question": "Hur ska {name} logga in?",
+  "option": {
+    "parent": "Via förälderns konto",
+    "username": "Via ett barnkonto med användarnamn",
+    "email": "Via ett barnkonto med barnets e-postadress"
+  },
+  "optionHint": {
+    "parent": "Föräldern loggar in på enheten och lämnar över den till barnet. Barnet har inget eget användarnamn och inget eget lösenord.",
+    "username": "Föräldern skapar användarnamnet och lösenordet åt barnet.",
+    "email": "Föräldern skapar kontot; barnet bekräftar sin e-postadress och skapar ett eget lösenord."
+  },
+  "parentModeNote": "Inget att fylla i – {name} loggar in när du växlar till dem från ditt eget konto.",
+  "usernameLabel": "Användarnamn",
+  "usernamePlaceholder": "saga2015",
+  "usernameHint": "Endast bokstäver och siffror, 3 till 20 tecken.",
+  "usernameRequired": "Välj ett användarnamn.",
+  "usernameInvalid": "Använd 3 till 20 bokstäver eller siffror, utan mellanslag.",
+  "usernameTaken": "Användarnamnet är upptaget. Prova ett annat.",
+  "passwordHint": "Minst {count} tecken. Läs upp det för din gamer – du kan ändra det här senare.",
+  "passwordTooShort": "Lösenordet måste vara minst {count} tecken.",
+  "emailPlaceholder": "saga@example.com",
+  "emailRequired": "Ange en e-postadress.",
+  "emailInvalid": "Det ser inte ut som en e-postadress.",
+  "emailTaken": "Den e-postadressen har redan ett konto."
+}

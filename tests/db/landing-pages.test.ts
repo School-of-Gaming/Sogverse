@@ -17,6 +17,7 @@ import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contr
 import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
   buttonTarget,
+  LANDING_SECTION_TYPES,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
@@ -29,7 +30,7 @@ import { everySection, requiredTextCases } from "../helpers/landing-required-tex
  * the section structure), `landing_page_publications` (its public published
  * copy, whose row existing IS the page being live), each with its
  * per-language versions; the admin-guarded writers — whole, structure-only
- * and one-language, and a language's removal — publish and unpublish; the stored, per-language slugs
+ * and one-language, a language's removal and the clone — publish and unpublish; the stored, per-language slugs
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
  * removal (a trigger) reaching both copies; the record of who last saved
@@ -950,6 +951,264 @@ describe("landing pages", () => {
         [PIC_B]: pathOf(PIC_B),
       });
     });
+  });
+
+  // -------------------------------------------------------------------------
+  // Cloning
+  // -------------------------------------------------------------------------
+
+  describe("cloning", () => {
+    const S_HERO = "00000000-0000-4000-8000-0000000008b1";
+    const S_TEXT = "00000000-0000-4000-8000-0000000008b2";
+    const S_GALLERY = "00000000-0000-4000-8000-0000000008b3";
+    const S_POINTS = "00000000-0000-4000-8000-0000000008b4";
+    const S_STEPS = "00000000-0000-4000-8000-0000000008b5";
+    const S_FAQ = "00000000-0000-4000-8000-0000000008b6";
+    const S_CTA = "00000000-0000-4000-8000-0000000008b7";
+    const S_QUOTE = "00000000-0000-4000-8000-0000000008b8";
+    const S_SUBSCRIBE = "00000000-0000-4000-8000-0000000008b9";
+    const item = (n: number) => `00000000-0000-4000-8000-0000000008c${n}`;
+    /** The testimonial the fixture places, which a save refuses unless it exists. */
+    const TESTIMONIAL = "00000000-0000-0000-0000-000000000913";
+
+    beforeAll(async () => {
+      const { error } = await admin.from("testimonials").insert({ id: TESTIMONIAL });
+      expect(error).toBeNull();
+      const words = await admin
+        .from("testimonial_translations")
+        .insert({ testimonial_id: TESTIMONIAL, locale: "en", attribution: "Mum, fixture", quote: "Clone fixture quote" });
+      expect(words.error).toBeNull();
+    });
+
+    afterAll(async () => {
+      await admin.from("testimonials").delete().eq("id", TESTIMONIAL);
+    });
+
+    /** One section of every type, every item-bearing one with its items. */
+    const RICH: LandingSection[] = [
+      { id: S_HERO, type: "hero", imageId: PIC_A, button: { kind: "internal", path: "/shop" } },
+      { id: S_TEXT, type: "text", imageId: PIC_B, imageSide: "end" },
+      { id: S_GALLERY, type: "image", images: [{ id: item(1), imageId: PIC_A }, { id: item(2), imageId: PIC_B }] },
+      { id: S_POINTS, type: "points", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },
+      { id: S_STEPS, type: "steps", items: [{ id: item(5) }, { id: item(6) }] },
+      { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
+      { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
+      { id: S_SUBSCRIBE, type: "subscribe" },
+      { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+    ];
+
+    /** Every word of `RICH` in one language, each naming where it belongs. */
+    function richWords(lang: string) {
+      const w = (where: string) => `${where} ${lang}`;
+      const pair = (n: number, kind: string) => ({ title: w(`${kind} ${n}`), body: w(`${kind} ${n} body`) });
+      return {
+        [S_HERO]: { headline: w("hero"), buttonLabel: w("hero button"), imageAlt: w("hero alt") },
+        [S_TEXT]: { heading: w("text"), body: w("text body"), imageAlt: w("text alt") },
+        [S_GALLERY]: { heading: w("gallery"), alts: { [item(1)]: w("shot 1"), [item(2)]: w("shot 2") } },
+        [S_POINTS]: { heading: w("points"), items: { [item(3)]: pair(3, "point"), [item(4)]: pair(4, "point") } },
+        [S_STEPS]: { heading: w("steps"), items: { [item(5)]: pair(5, "step"), [item(6)]: pair(6, "step") } },
+        [S_FAQ]: { heading: w("faq"), items: { [item(7)]: { question: w("question 7"), answer: w("answer 7") } } },
+        [S_QUOTE]: { heading: w("testimonials") },
+        [S_SUBSCRIBE]: { heading: w("subscribe"), buttonLabel: w("subscribe button") },
+        [S_CTA]: { heading: w("cta"), buttonLabel: w("cta button") },
+      };
+    }
+
+    const MARKERS: Record<string, string> = { en: "(Copy)", fi: "(kopio)" };
+    const marker = async (locale: string) => MARKERS[locale] ?? "(?)";
+
+    /** No row this file did not mean to make carries this title. */
+    const REFUSED_TITLE = "Fixture refused (Copy)";
+
+    /** PAGE_A as a page of every section type, complete in English and Finnish. */
+    async function richSource() {
+      await reseed();
+      await service.saveStructure(PAGE_A, RICH);
+      await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), sectionTexts: richWords("en") });
+      await service.saveVersion(PAGE_A, { ...version("fi", "fixture-landing-a-fi"), sectionTexts: richWords("fi") });
+      const page = await service.getAdminPage(PAGE_A);
+      if (page === null) throw new Error("the source is missing");
+      return page;
+    }
+
+    async function cloneOf(source: Parameters<LandingPageService["clonePage"]>[0]) {
+      const id = await service.clonePage(source, marker);
+      minted.push(id);
+      const page = await service.getAdminPage(id);
+      if (page === null) throw new Error("the clone is missing");
+      return page;
+    }
+
+    async function refusedClones() {
+      const { data } = await admin.from("landing_page_translations").select("page_id").eq("title", REFUSED_TITLE);
+      return data ?? [];
+    }
+
+    /**
+     * Every section and item id of a structure, in order. An item is what the
+     * clone takes one to be: an object with a string `id` in any list a section
+     * holds, whatever the list is called.
+     */
+    function idsOf(sections: readonly LandingSection[]): string[] {
+      const itemId = (entry: unknown) =>
+        typeof entry === "object" && entry !== null && "id" in entry && typeof entry.id === "string" ? [entry.id] : [];
+      return sections.flatMap((section) => [
+        section.id,
+        ...Object.values(section).flatMap((field: unknown) => (Array.isArray(field) ? field.flatMap(itemId) : [])),
+      ]);
+    }
+
+    it("copies the structure and every language's words with new ids, the words still on their sections and items", async () => {
+      // A new section type fails here until `RICH` carries one of it.
+      expect(new Set(RICH.map((section) => section.type))).toEqual(new Set(LANDING_SECTION_TYPES));
+      const source = await richSource();
+      expect(source.draft.versions.map((v) => v.missing)).toEqual([[], []]);
+      const clone = await cloneOf(source.draft);
+
+      const from = idsOf(source.draft.sections);
+      const to = idsOf(clone.draft.sections);
+      expect(to).toHaveLength(from.length);
+      expect(new Set(to).size).toBe(to.length);
+      for (const id of to) expect(from).not.toContain(id);
+
+      // Re-keying the source by position gives exactly the clone.
+      const rekey = (value: unknown): unknown =>
+        JSON.parse(from.reduce((json, id, n) => json.replaceAll(id, to[n]), JSON.stringify(value)));
+      expect(clone.draft.sections).toEqual(rekey(source.draft.sections));
+      expect(clone.draft.versions.map((v) => v.locale)).toEqual(["en", "fi"]);
+      for (const [n, copy] of clone.draft.versions.entries()) {
+        const original = source.draft.versions[n];
+        expect(copy.sectionTexts).toEqual(rekey(original.sectionTexts));
+        expect(copy.summary).toBe(original.summary);
+        expect(copy.missing).toEqual([]);
+      }
+
+      // The source is untouched.
+      expect((await service.getAdminPage(PAGE_A))?.draft.sections).toEqual(RICH);
+    });
+
+    it("carries the pictures, their paths derived by the database", async () => {
+      const source = await richSource();
+      const clone = await cloneOf(source.draft);
+      expect(clone.draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
+    });
+
+    it("marks each title in its own language and derives its slug from the new title", async () => {
+      const source = await richSource();
+      const clone = await cloneOf(source.draft);
+      expect(clone.draft.versions.map(({ locale, title, slug }) => ({ locale, title, slug }))).toEqual([
+        { locale: "en", title: "Fixture landing en (Copy)", slug: "fixture-landing-en-copy" },
+        { locale: "fi", title: "Fixture landing fi (kopio)", slug: "fixture-landing-fi-kopio" },
+      ]);
+    });
+
+    it("numbers a slug another page holds, working or only live, until it is free", async () => {
+      const source = await richSource();
+      // PAGE_B holds the English slug live only, and the Finnish one in its working copy.
+      await service.saveStructure(PAGE_B, structure());
+      await service.saveVersion(PAGE_B, { ...version("en", "fixture-landing-en-copy"), sectionTexts: words("en") });
+      await service.publishPage(PAGE_B);
+      await service.saveVersion(PAGE_B, version("en", "fixture-landing-b-moved"));
+      await service.saveVersion(PAGE_B, version("fi", "fixture-landing-fi-kopio"));
+
+      try {
+        const first = await cloneOf(source.draft);
+        const second = await cloneOf(source.draft);
+        expect(first.draft.versions.map((v) => v.slug)).toEqual([
+          "fixture-landing-en-copy-2",
+          "fixture-landing-fi-kopio-2",
+        ]);
+        expect(second.draft.versions.map((v) => v.slug)).toEqual([
+          "fixture-landing-en-copy-3",
+          "fixture-landing-fi-kopio-3",
+        ]);
+      } finally {
+        await service.unpublishPage(PAGE_B);
+      }
+    });
+
+    it("cuts a numbered slug to the length cap", async () => {
+      await reseed();
+      const long = `fixture-${"a".repeat(72)}`;
+      await service.saveVersion(PAGE_B, { ...version("en", long), sectionTexts: {} });
+      const { data: id, error } = await adminAuth.rpc("clone_landing_page", {
+        p_id: PAGE_A,
+        p_versions: [{ locale: "en", title: "Fixture long (Copy)", default_slug: long }],
+      });
+      expect(error).toBeNull();
+      if (id) minted.push(id);
+      const [en] = await draftVersions(id ?? PAGE_MISSING);
+      expect(en.slug).toBe(`fixture-${"a".repeat(70)}-2`);
+      expect(en.slug).toHaveLength(80);
+    });
+
+    it("is unpublished, and records the admin and the AI app it came through as its saver", async () => {
+      const source = await richSource();
+      await service.publishPage(PAGE_A);
+      const grant = await oauthGrantFor(
+        TEST_CREDENTIALS.ADMIN.email,
+        TEST_CREDENTIALS.ADMIN.password,
+        "Fixture clone AI app",
+      );
+      try {
+        const viaApp = new LandingPageService(createBearerTestClient(grant.accessToken));
+        const id = await viaApp.clonePage(source.draft, marker);
+        minted.push(id);
+        const { data: row } = await admin
+          .from("landing_pages")
+          .select("author_id, last_saved_by, last_saved_via")
+          .eq("id", id)
+          .single();
+        expect(row).toEqual({
+          author_id: TEST_IDS.ADMIN,
+          last_saved_by: TEST_IDS.ADMIN,
+          last_saved_via: grant.clientId,
+        });
+        expect((await service.getAdminPage(id))?.publication).toBeNull();
+      } finally {
+        await revokeOAuthGrant(grant);
+        await service.unpublishPage(PAGE_A);
+      }
+    });
+
+    it("copies only the languages named, and refuses one the page does not have", async () => {
+      const source = await richSource();
+      const english = await cloneOf({
+        ...source.draft,
+        versions: source.draft.versions.filter((v) => v.locale === "en"),
+      });
+      expect(english.draft.versions.map((v) => v.locale)).toEqual(["en"]);
+
+      const { error } = await adminAuth.rpc("clone_landing_page", {
+        p_id: PAGE_A,
+        p_versions: [{ locale: "sv", title: REFUSED_TITLE, default_slug: "fixture-refused-copy" }],
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toBe("The page has no sv version to copy");
+      expect(await refusedClones()).toEqual([]);
+    });
+
+    it("refuses an id no page has, creating nothing", async () => {
+      await reseed();
+      const { error } = await adminAuth.rpc("clone_landing_page", {
+        p_id: PAGE_MISSING,
+        p_versions: [{ locale: "en", title: REFUSED_TITLE, default_slug: "fixture-refused-copy" }],
+      });
+      expect(error?.code).toBe("P0002");
+      expect(await refusedClones()).toEqual([]);
+    });
+
+    for (const role of WRONG_ROLES) {
+      it(`refuses a ${role}, creating nothing`, async () => {
+        await reseed();
+        const { error } = await clientFor(role).rpc("clone_landing_page", {
+          p_id: PAGE_A,
+          p_versions: [{ locale: "en", title: REFUSED_TITLE, default_slug: "fixture-refused-copy" }],
+        });
+        expect(error?.code).toBe("42501");
+        expect(await refusedClones()).toEqual([]);
+      });
+    }
   });
 
   // -------------------------------------------------------------------------

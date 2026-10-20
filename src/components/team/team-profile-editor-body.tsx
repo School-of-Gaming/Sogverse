@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { AppHref } from "@/lib/constants/routes";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   FormSection,
   TeamProfileAboutSection,
@@ -36,6 +36,7 @@ import {
   type TeamProfileStatus,
 } from "@/components/team/team-profile-status";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { Heading } from "@sog/ui";
 
 /**
  * The writes the page makes. Each is a backend action, so each is the
@@ -163,11 +164,11 @@ export function TeamProfileEditorBody(props: TeamProfileEditorProps) {
           : t("back")}
       </Link>
 
-      <h1 className="text-3xl font-bold tracking-tight">
+      <Heading level={1} step="section">
         {byAdmin
           ? ta("edit.pageTitle", { name: props.profile.firstName })
           : t("pageTitle")}
-      </h1>
+      </Heading>
 
       <div
         className={cn(
@@ -412,9 +413,9 @@ function TeamProfilePreview({
           : "xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:flex xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:flex-col",
       )}
     >
-      <h2 id="team-profile-preview-heading" className="text-lg font-semibold">
+      <Heading level={2} step="card-title" id="team-profile-preview-heading">
         {t("heading")}
-      </h2>
+      </Heading>
       <TeamProfilePreviewFrame
         profile={profile}
         readerLocale={readerLocale}

@@ -5,7 +5,7 @@ import type {
   AdminSubstitutionsData,
   SubstitutedSession,
 } from "@/components/admin/substitutions/admin-substitutions-data";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { sessionFacts } from "../../mocks/session-facts";
 
 /**
@@ -119,8 +119,12 @@ describe("the admin Substitutions page's sessions with a substitute", () => {
     const headings = screen.getAllByRole("heading", { level: 2 });
     expect(headings.map((heading) => heading.textContent)).toEqual([
       "admin.substitutions.listLabel",
-      "admin.substitutions.substitutedLabel2",
+      "admin.substitutions.substitutedLabel",
     ]);
+    // The count sits beside the heading rather than inside it.
+    expect(headings[1].parentElement?.textContent).toBe(
+      "admin.substitutions.substitutedLabel2",
+    );
 
     const list = within(section()).getByRole("list", {
       name: "admin.substitutions.substitutedLabel",

@@ -4,7 +4,7 @@ import { useId } from "react";
 import Image from "next/image";
 import { Check, ChevronDown, Lightbulb, Trash2, Upload, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { PICKS, type PickId } from "@sog/ui";
+import { Heading, PICKS, type PickId } from "@sog/ui";
 import {
   AuthoredBodyEditor,
   type AuthoredBodiesHandle,
@@ -30,7 +30,7 @@ import {
   writtenLocales,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import {
   type TeamProfile,
@@ -290,9 +290,9 @@ export function FormSection({
     <Card>
       <section aria-labelledby={headingId}>
         <CardContent className="space-y-5 p-5 sm:p-6">
-          <h2 id={headingId} className="text-lg font-semibold">
+          <Heading level={2} step="card-title" id={headingId}>
             {heading}
-          </h2>
+          </Heading>
           {children}
         </CardContent>
       </section>
@@ -465,13 +465,12 @@ function GuidanceList({
           ))}
         </div>
       )}
-      <h3
-        id={headingId}
-        className="flex items-center gap-1.5 text-sm font-semibold"
-      >
+      <div className="flex items-center gap-1.5">
         <Glyph className={cn("h-4 w-4", ink)} aria-hidden />
-        {heading}
-      </h3>
+        <Heading level={3} step="label" id={headingId}>
+          {heading}
+        </Heading>
+      </div>
       <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
         {items.map((item) => (
           <li key={item.key} className="flex items-start gap-2">

@@ -24,13 +24,15 @@ vi.mock("next-intl", () => ({
 }));
 
 const mockUseHolidayCalendars = vi.fn();
-vi.mock("@/services/holiday-calendars", () => ({
+vi.mock("@/services/holiday-calendars/holiday-calendars.queries", () => ({
   useHolidayCalendars: () => mockUseHolidayCalendars(),
 }));
 
 import { HolidayCalendarPicker } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
-import { formatDateRange } from "@/lib/utils";
-import type { HolidayCalendarSummary } from "@/services/holiday-calendars";
+import { formatDateRange } from "@/lib/date-format";
+import type {
+  HolidayCalendarSummary,
+} from "@/services/holiday-calendars/holiday-calendars.service";
 
 const HELSINKI = "0b6c7d2e-4f1a-4c3b-9e8d-2a1b3c4d5e6f";
 const ESPOO = "8e2f1a3b-5c4d-4e6f-a7b8-c9d0e1f2a3b4";

@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";

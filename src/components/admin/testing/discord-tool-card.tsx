@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription, StatusLine } from "@/components/ui/alert";
@@ -10,7 +11,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,7 +101,7 @@ export function DiscordToolCard() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5" />
-          <CardTitle>{t("discord.tool")}</CardTitle>
+          <Heading level={2} step="card-title">{t("discord.tool")}</Heading>
         </div>
         <CardDescription>{t("discord.toolDescription")}</CardDescription>
       </CardHeader>
@@ -164,9 +164,9 @@ export function DiscordToolCard() {
 
           {template === "text" && (
             <div className="space-y-3 rounded-md border border-border p-4">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <Heading level={3} step="label">
                 {t("templateParameters")}
-              </p>
+              </Heading>
               <Field label={t("discord.message")} htmlFor="discordContent">
                 <Textarea
                   id="discordContent"

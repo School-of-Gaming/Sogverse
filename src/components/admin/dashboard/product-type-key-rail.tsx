@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { Heading } from "@sog/ui";
+import { cn } from "@/lib/cn";
 import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
@@ -49,10 +50,10 @@ export function ProductTypeKeyRail() {
       aria-label={t("label")}
       className="mt-6 xl:mt-0 xl:sticky xl:top-[calc(var(--header-height)+1.5rem)] xl:max-h-[calc(100vh-var(--header-height)-3rem)] xl:self-start xl:overflow-y-auto"
     >
-      <div className="rounded-lg border border-border bg-card p-3">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+        <Heading level={2} step="label">
           {t("heading")}
-        </h2>
+        </Heading>
 
         <ul className="flex flex-wrap gap-x-4 gap-y-2 xl:flex-col xl:gap-2">
           {PRODUCT_TYPE_ORDER.map((productType) => {

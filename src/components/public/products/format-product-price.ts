@@ -2,7 +2,7 @@ import {
   CURRENCY_CONFIG,
   type SupportedCurrency,
 } from "@/lib/constants/currency";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import type { BillingMode, ProductPrice, ProductType } from "@/types";
 
 // Browse-card price preview. Centralising the math here keeps the card

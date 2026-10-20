@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import AdminUsersPage from "@/app/[locale]/(dashboard)/admin/users/page";
 import { ADMIN_PEOPLE_LIST_PAGE_SIZE } from "@/lib/constants/admin-people-lists";
-import type { UserListEntry } from "@/services/users";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import {
   installFakeIntersectionObserver,
   latestIntersectionObserver,
@@ -36,11 +36,11 @@ vi.mock("next-intl", () => ({
 const fetchNextPage = vi.fn(() => Promise.resolve());
 let listState: Record<string, unknown>;
 
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUserList: () => listState,
 }));
 
-vi.mock("@/services/gedu", () => ({
+vi.mock("@/services/gedu/gedu-contract.queries", () => ({
   useGeduContractAcceptanceMap: () => ({
     map: new Map(),
     isError: false,

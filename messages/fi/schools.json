@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "title": "Pelikerhot omassa kunnassasi",
+    "subtitle": "School of Gaming järjestää harrastuskerhoja yhdessä suomalaisten kuntien kanssa. Etsi kuntasi ja tutustu tarjontaan.",
+    "howItWorks": "Kunnasta riippuen kerho kokoontuu joko verkossa kotoa käsin tai paikan päällä lapsesi koulussa. Ammattitaitoinen pelikasvattaja on aina mukana ohjaamassa toimintaa."
+  },
+  "search": {
+    "label": "Etsi kuntaasi",
+    "placeholder": "Hae kuntia…",
+    "noMatches": "Mikään kunta ei vastaa hakua ”{query}”. Tarkista kirjoitusasu tai kokeile naapurikuntaa."
+  },
+  "available": {
+    "empty": "Ensimmäiset kuntakerhomme ovat tulossa. Hae kuntaasi ja katso, olemmeko jo ehtineet sinne."
+  },
+  "status": {
+    "available": "Kerhoja tarjolla",
+    "noClubs": "Ei kerhoja"
+  },
+  "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista. Jos lapsesi lopettaa kerhon, muistathan perua ilmoittautumisen, jotta paikkaa voidaan tarjota seuraavalle pelaajalle.",
+  "notListed": {
+    "title": "Etkö löydä kuntaasi?",
+    "body": "Kuntakerhot järjestetään yhteistyössä kunnan kanssa, ja lisäämme uusia kuntia jatkuvasti. Jos kuntasi ei ole vielä mukana, kerro siitä meille:",
+    "openClubs": "Tarjoamme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta."
+  },
+  "municipality": {
+    "heading": "{name} – kerhot"
+  }
+}

@@ -7,12 +7,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
-import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveTopicPrep } from "@/lib/products/topics";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -20,6 +21,7 @@ import type { HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import { ProductOverviewCard } from "./product-overview-card";
+import { Heading } from "@sog/ui";
 
 // Signup summary — data-only presentational view (no fetching). A
 // non-tech-savvy parent has just paid, signed up for a free event, or joined a
@@ -132,9 +134,11 @@ export function PurchaseConfirmationView({
               <CheckCircle2 className="h-8 w-8 text-act" />
             )}
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {isWaitlist ? t("waitlist.heading") : t("heading")}
-          </h1>
+          <div className="mt-4">
+            <Heading level={1} step="section" align="center">
+              {isWaitlist ? t("waitlist.heading") : t("heading")}
+            </Heading>
+          </div>
           <p className="mt-2 text-muted-foreground">
             {isWaitlist
               ? isSelfSeat
@@ -156,9 +160,9 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-8">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground">
+            <Heading level={2} step="card-title">
               {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
-            </h2>
+            </Heading>
             {/* The picture, at the 3:2 crop the card and the detail hero paint
                 — the parent is looking at the same photograph they clicked and
                 then read a page of, so it must be the same crop of it.
@@ -219,9 +223,9 @@ export function PurchaseConfirmationView({
 
         <Card className="mt-6">
           <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold text-muted-foreground">
+            <Heading level={2} step="card-title">
               {t("nextTitle")}
-            </h2>
+            </Heading>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
               {isWaitlist ? (
                 <>
@@ -462,9 +466,11 @@ export function PurchaseConfirmationNotice({
               <Info className="h-7 w-7 text-act" />
             )}
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {copy.heading}
-          </h1>
+          <div className="mt-4">
+            <Heading level={1} step="section" align="center">
+              {copy.heading}
+            </Heading>
+          </div>
           <p className="mt-2 text-muted-foreground">{copy.subheading}</p>
         </div>
 
@@ -473,7 +479,7 @@ export function PurchaseConfirmationNotice({
             {/* Ghosts shaped like the summary card that replaces them. */}
             <Card className="mt-8">
               <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-4 w-32 animate-pulse rounded bg-lifted" />
+                <div className="h-6 w-32 animate-pulse rounded bg-lifted" />
                 <div className="h-16 animate-pulse rounded-lg bg-lifted" />
                 <div className="h-4 animate-pulse rounded bg-lifted" />
                 <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
@@ -537,7 +543,9 @@ export function PurchaseConfirmationFallback() {
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-lg font-semibold">{t("notFound.title")}</h2>
+          <Heading level={2} step="card-title" align="center">
+            {t("notFound.title")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>

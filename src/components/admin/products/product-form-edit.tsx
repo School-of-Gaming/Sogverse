@@ -4,15 +4,15 @@ import { useMemo } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
+import { useUpdateProduct } from "@/services/products/products.queries";
 import {
-  useUpdateProduct,
   type ProductAdminDetailRow,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import { buildUpdateInput, existingFormState } from "./product-build";
 import { ProductFormShell } from "./product-form";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface ProductFormEditProps {
   productType: ProductType;

@@ -8,11 +8,18 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import {
+  FeatureTestimonial,
+  TestimonialPair,
+  TestimonialRow,
+  TestimonialShowcase,
+  type ShownTestimonial,
+} from "@/components/home/testimonial-arrangements";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import type {
   ButtonTarget,
@@ -20,7 +27,8 @@ import type {
   LandingSectionType,
 } from "@/lib/landing-pages/sections";
 import { buttonTargetHref } from "@/lib/links/button-target";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { landingSubscribeAnchor } from "./landing-page-address";
 import {
@@ -30,6 +38,7 @@ import {
   type LandingTextOf,
 } from "./landing-section-types";
 import { LandingSubscribeForm } from "./landing-subscribe-form";
+import { Heading } from "@sog/ui";
 
 /*
  * **One renderer per section type**, in an exhaustive map, so a type added to
@@ -56,6 +65,8 @@ import { LandingSubscribeForm } from "./landing-subscribe-form";
 export interface LandingRenderContext {
   /** The page's locale: what an own-site button's address is localised to. */
   locale: SupportedLocale;
+  /** The language the shown version's words are in, which the body is marked with. */
+  textLocale: SupportedLocale;
   /** The page's id: what an email sign-up names as where it came from. */
   pageId: string;
   /**
@@ -68,6 +79,11 @@ export interface LandingRenderContext {
    * names no path for it (the picture has left the catalogue).
    */
   imageSrc: (imageId: string) => string | null;
+  /**
+   * A placed testimonial's current words by its id, or null when the read
+   * answered none for it.
+   */
+  testimonial: (testimonialId: string) => PublicTestimonial | null;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -81,9 +97,6 @@ const PICTURE = CATALOGUE_IMAGE_PURPOSES.landing_image;
 
 /** Vertical rhythm shared by every section after the hero. */
 const SECTION = "container mx-auto px-4 py-16 sm:py-24";
-
-/** The section heading every section but the hero takes. */
-const HEADING = "text-3xl font-bold tracking-tight sm:text-4xl";
 
 /** Small uppercase section label — furniture, so caps; act, as the Roblox page's. */
 function Eyebrow({ children }: { children: ReactNode }) {
@@ -114,7 +127,11 @@ function SectionHeader({
     <div className={cn(centred && "mx-auto max-w-2xl text-center")}>
       {label !== null && <Eyebrow>{label}</Eyebrow>}
       {title !== null && (
-        <h2 className={cn(HEADING, label !== null && "mt-4")}>{title}</h2>
+        <div className={cn(label !== null && "mt-4")}>
+          <Heading level={2} step="display" align={centred ? "center" : "start"}>
+            {title}
+          </Heading>
+        </div>
       )}
       {lead !== null && <p className="mt-4 text-muted-foreground">{lead}</p>}
     </div>
@@ -235,9 +252,17 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           )}
           {/* Shrink-to-fit, so the rule runs the headline's own measure. */}
           <div className="inline-block">
-            <h1 className="text-balance text-h1-mobile font-bold tracking-tight md:text-5xl">
+            {/* The heading changes alignment at `md`, but this hero's columns
+                split at `lg`, so between 768 and 1023px the headline sits
+                start-aligned over centred words. Accepted until the
+                landing-page design is settled. */}
+            <Heading
+              level={1}
+              step="hero"
+              align={src === null ? "center" : "center-narrow"}
+            >
               {text.headline}
-            </h1>
+            </Heading>
             <span className="mt-5 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
           </div>
           {subline !== null && (
@@ -405,7 +430,7 @@ function PointsSection({ section, text }: LandingSectionProps<"points">) {
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-act bg-lifted">
                     <Icon aria-hidden="true" className="h-5 w-5 text-act" />
                   </div>
-                  <CardTitle className="text-lg leading-snug">{words?.title}</CardTitle>
+                  <Heading level={3} step="card-title">{words?.title}</Heading>
                 </div>
               </CardHeader>
               <CardContent>
@@ -457,12 +482,87 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
               >
                 {index + 1}
               </div>
-              <h3 className="mt-4 text-lg font-semibold">{words?.title}</h3>
+              <div className="mt-4">
+                <Heading level={3} step="card-title" align="center">
+                  {words?.title}
+                </Heading>
+              </div>
               <p className="mt-2 text-sm text-muted-foreground">{words?.body}</p>
             </li>
           );
         })}
       </ol>
+    </section>
+  );
+}
+
+/**
+ * Testimonials from the store, in the arrangement the admin chose, laid out
+ * exactly as the home page and About lay theirs — through the same shared
+ * arrangements — under the section's optional header.
+ *
+ * Each quote is the store's current words, in the version the reader fallback
+ * picks for the page's locale. Those words are the testimonial's rather than
+ * the version's, so the arrangement is marked with the page's language
+ * wherever the version shown is in another, and a quote in another language
+ * than the page's is marked with its own. A testimonial the read did not
+ * answer leaves its slot out, and a section with none to show is not drawn at
+ * all.
+ */
+function TestimonialsSection({ section, text, context }: LandingSectionProps<"testimonials">) {
+  const pick = (ids: readonly string[]): ShownTestimonial[] =>
+    ids.flatMap((id) => {
+      const testimonial = context.testimonial(id);
+      const version =
+        testimonial === null ? null : resolveTranslation(testimonial.versions, context.locale);
+      if (version === null) return [];
+      return [
+        {
+          key: id,
+          quote: version.quote,
+          attribution: version.from,
+          // exact-locale: marking a quote shown in another language than the page's
+          lang: version.locale === context.locale ? undefined : version.locale,
+        },
+      ];
+    });
+  const shown = pick(section.testimonialIds);
+  if (shown.length === 0) return null;
+  const afterHeader =
+    written(text.eyebrow) !== null || written(text.heading) !== null || written(text.intro) !== null;
+  const placement = cn(afterHeader && "mt-12 lg:mt-16");
+
+  const arrangement = (() => {
+    switch (section.arrangement) {
+      case "feature":
+        return <FeatureTestimonial testimonial={shown[0]} className={placement} />;
+      case "pair":
+        return <TestimonialPair testimonials={shown} className={placement} />;
+      case "row":
+        return <TestimonialRow testimonials={shown} className={placement} />;
+      case "showcase":
+        // The slots by position, so a quote the read left out never moves
+        // another into its group.
+        return (
+          <TestimonialShowcase
+            afterHeading={afterHeader}
+            groups={{
+              feature: pick(section.testimonialIds.slice(0, 1)),
+              pair: pick(section.testimonialIds.slice(1, 3)),
+              row: pick(section.testimonialIds.slice(3, 6)),
+            }}
+          />
+        );
+    }
+  })();
+
+  return (
+    <section className={SECTION}>
+      <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
+      {/* exact-locale: resets the body's language mark for the store's own words */}
+      <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+        {arrangement}
+      </div>
     </section>
   );
 }
@@ -484,7 +584,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
         question,
         answer:
           answer === null ? null : (
-            <Markdown variant="landing" emphasis="quiet">
+            <Markdown variant="landing-faq" emphasis="quiet">
               {answer}
             </Markdown>
           ),
@@ -496,7 +596,12 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
-          <FaqAccordion items={items} />
+          {/* The questions sit under the section's H2, or stand as H2s where
+              the section has no heading written yet. */}
+          <FaqAccordion
+            items={items}
+            questionLevel={written(text.heading) === null ? 2 : 3}
+          />
         </div>
       </div>
     </section>
@@ -521,7 +626,9 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
               <Eyebrow>{eyebrow}</Eyebrow>
             </div>
           )}
-          <h2 className="text-2xl font-bold sm:text-3xl">{text.heading}</h2>
+          <Heading level={2} step="display" align="center">
+            {text.heading}
+          </Heading>
           {body !== null && <p className="mt-4 max-w-xl text-muted-foreground">{body}</p>}
           {buttonLabel !== null && (
             <LandingButton
@@ -574,6 +681,7 @@ export const LANDING_SECTION_RENDERERS: {
   image: ImageSection,
   points: PointsSection,
   steps: StepsSection,
+  testimonials: TestimonialsSection,
   faq: FaqSection,
   subscribe: SubscribeSection,
   cta: CtaSection,

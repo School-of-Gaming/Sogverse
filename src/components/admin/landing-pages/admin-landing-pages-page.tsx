@@ -14,17 +14,21 @@ import {
   ADMIN_LIST_SEARCH_PARAM,
   useDebouncedUrlParamState,
 } from "@/components/admin/admin-list-url-state";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
-import type { AdminLandingPageListItem } from "@/services/landing-pages";
+import type {
+  AdminLandingPageListItem,
+} from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-chip";
 
 /**
- * Every landing page, live or not, one row each — the Library list's layout:
- * the heading, a search row, the count line, and a clickable row per page,
+ * Every landing page, live or not, one row each, under the Marketing hub's
+ * strip and the tab's description: a search row, the count line, and a
+ * clickable row per page,
  * into its status page, with its title, its status and its languages, each
  * marked complete or not. There is no way to start a page here: pages are
  * written through the MCP server, by an AI app acting as the admin.
@@ -48,11 +52,7 @@ export function AdminLandingPagesPage({
   const t = useTranslations("admin.landingPages");
 
   return (
-    <div className="space-y-6" data-reserve-scroll-gutter>
-      <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("subtitle")}</p>
-      </div>
+    <div className="space-y-6">
 
       {settled && pages.length === 0 && (
         <Card>

@@ -1,0 +1,243 @@
+{
+  "footer": "© {year} noH Quj yejHaD. Hoch batlh.",
+  "roleAdmin": "Admin",
+  "roleParent": "vav/SoS",
+  "roleGamer": "toy’wI’",
+  "roleGedu": "Gedu",
+  "passwordReset": {
+    "subject": "noH Quj yejHaD mu’mey yIchoH",
+    "heading": "mu’mey yIchoH",
+    "body": "noH Quj yejHaD mu’mey chovmoH tlhob Suqlu’. mu’mey chu’ yIwIv.",
+    "expiry": "ngeH wa’ rep Qav.",
+    "ignore": "mu’mey chovmoH DatlhobHa’chugh, QIn yIleghQo’. mu’mey choHbe’lu’.",
+    "button": "mu’mey yIchoH"
+  },
+  "pinReset": {
+    "subject": "noH Quj yejHaD vavpu’ PIN yIchoH",
+    "heading": "vavpu’ PIN yIchoH",
+    "body": "noH Quj yejHaD vavpu’ PIN chovmoH tlhob Suqlu’. PIN chu’ (loS mI’) yIwIv.",
+    "expiry": "ngeH cha’maH loS rep Qav.",
+    "ignore": "PIN chovmoH DatlhobHa’chugh, QIn yIleghQo’. PIN choHbe’lu’.",
+    "button": "PIN yIchoH"
+  },
+  "helpRequest": {
+    "subject": "QaH poQ {displayName} ({role})",
+    "heading": "QaH poQ chu’",
+    "intro": "QaH poQ vay’. QIn’vam yIjang — bIngDaq QIn ghoS jangmeylIj.",
+    "from": "vo’",
+    "role": "Qu’",
+    "replyToLabel": "jangmeH QIn",
+    "sent": "ngeHlu’",
+    "message": "QIn",
+    "gamerNoteNoMailbox": "toy’wI’ account vo’ QInvam ({firstName}) — jabbI’ID Daq ghajbe’.",
+    "gamerNoteOwnMailbox": "toy’wI’ account vo’ QInvam ({firstName}) — jabbI’ID DaqDaj je laD: {gamerEmail}."
+  },
+  "welcomeParent": {
+    "subject": "School of Gamingvo’ nuqneH!",
+    "heading": "School of Gamingvo’ nuqneH!",
+    "greeting": "nuqneH {firstName}! juHmajDaq yIjeS.",
+    "platform": "Sogverse ’oH School of Gaming pat’e’. naDev qorDu’lIj ghom’a’mey, raghmey, wanI’mey je DaSeH.",
+    "verifyBody": "QIn DaqlIj yIchel: vaj qorDu’lIj ghom’a’mey wIja’laH. DaH ghap tugh {settingsLink}.",
+    "settingsLinkLabel": "Seh’a’Daq",
+    "verifyButton": "QIn DaqlIj yIchel",
+    "shopButton": "malja’ yIbej",
+    "dashboardButton": "jIH SOG yIghoS"
+  },
+  "welcomeGedu": {
+    "subject": "School of Gamingvo’ nuqneH – Gedu patlhlIj",
+    "heading": "School of Gamingvo’ nuqneH!",
+    "greeting": "nuqneH {firstName}! Gedu SoH — Qapla’.",
+    "certification": "patlhlIj bej ra’wI’ ’ej chel. DaH jIH SOG yIghoS — ’ach chellu’pa’, ngaQ vay’.",
+    "verifyBody": "QIn DaqlIj yIchel: vaj ghom’a’lIj Qu’mey je wIja’laH. DaH ghap tugh {settingsLink}.",
+    "settingsLinkLabel": "Seh’a’Daq",
+    "verifyButton": "QIn DaqlIj yIchel",
+    "dashboardButton": "jIH SOG yIghoS"
+  },
+  "productConfirmation": {
+    "subject": {
+      "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ {participantName}",
+      "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ {participantName}",
+      "camp": "{productName} raghDaq ghItlhlu’pu’ {participantName}",
+      "event": "{productName}Daq jeSpu’ {participantName}"
+    },
+    "heading": "Qapla’! Doch Dalajpu’!",
+    "subheading": {
+      "consumer_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+      "municipality_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+      "camp": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
+      "event": "{productName}Daq jeSpu’ {participantName}."
+    },
+    "self": {
+      "subject": {
+        "consumer_club": "{productName} ghom’a’Daq ghItlhlu’pu’ SoH",
+        "municipality_club": "{productName} veng ghom’a’Daq ghItlhlu’pu’ SoH",
+        "camp": "{productName} raghDaq ghItlhlu’pu’ SoH",
+        "event": "{productName}Daq bIjeSpu’"
+      },
+      "subheading": {
+        "consumer_club": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+        "municipality_club": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+        "camp": "{productName} QujmeH ghItlhlu’pu’ SoH.",
+        "event": "{productName}Daq bIjeSpu’."
+      },
+      "waitlist": {
+        "subheading": "bIloS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
+        "next2": {
+          "consumer_club": "DIS naQ tetlhDaq Daq DaqaD.",
+          "municipality_club": "DIS naQ tetlhDaq Daq DaqaD.",
+          "camp": "ragh naQ tetlhDaq Daq DaqaD.",
+          "event": "wanI’ tetlhDaq Daq DaqaD."
+        }
+      }
+    },
+    "typeLabel": {
+      "consumer_club": "ghom’a’",
+      "municipality_club": "veng ghom’a’",
+      "camp": "ragh",
+      "event": "wanI’"
+    },
+    "priceLabel": "wagh",
+    "price": {
+      "subscription": "{amount} / jar",
+      "upfront": "{amount} (wa’logh DIl)",
+      "free": "wagh Hutlh",
+      "external": "veng Huch nob"
+    },
+    "nextTitle": "qaStaHvIS",
+    "next": {
+      "placement": "Gedu tlhej ghomDaq {participantName} wIlanpu’. jIH SOGDaq Qu’mey legh.",
+      "placementSelf": "Gedu tlhej ghomDaq qalanpu’. jIH SOGDaq Qu’mey Dalegh.",
+      "subscription": "Hoch jar DaDIlnIS. jIH SOGDaq Dajondaq ghap Damevmeh laH.",
+      "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
+      "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."
+    },
+    "waitlist": {
+      "subject": "{participantName} loS tetlhDaq: {productName}",
+      "subjectSelf": "bIloS tetlhDaq: {productName}",
+      "heading": "loS tetlhDaq SoH",
+      "subheading": "{participantName} loS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
+      "next1": "quS poSDI’, QInHom wIngeH.",
+      "summaryTitle": "loS DaqlIj",
+      "forLabel": "loStaH",
+      "next2": {
+        "consumer_club": "DIS naQ tetlhDaq {participantName} Daq qaD.",
+        "municipality_club": "DIS naQ tetlhDaq {participantName} Daq qaD.",
+        "camp": "ragh naQ tetlhDaq {participantName} Daq qaD.",
+        "event": "wanI’ tetlhDaq {participantName} Daq qaD."
+      },
+      "next3": "reH jIH SOGDaq loS DaqlIj DaleghlaH."
+    },
+    "gamer": {
+      "greeting": "nuqneH {participantName}!",
+      "summaryTitle": "ghItlhlIj"
+    },
+    "invite": {
+      "summary": "{productName} – {participantName}",
+      "locationOnline": "De’wI’Daq – jIH SOG",
+      "locationInPerson": "{site}, {address}",
+      "whereOnline": "De’wI’Daq ghom, jIH SOGDaq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
+      "whereInPerson": "{site}Daq ghom.",
+      "whereAddress": "Daq: {address}",
+      "link": "jIH SOGDaq Hoch De’: {url}",
+      "questions": "yIghel: {supportEmail}."
+    },
+    "dashboardButton": "jIH SOG yIghoS",
+    "closing": "yIghel’a’? QInvam yIjang neH.",
+    "summaryTitle": "ralHa’ghachlIj",
+    "forLabel": {
+      "consumer_club": "ghItlhlu’pu’",
+      "municipality_club": "ghItlhlu’pu’",
+      "camp": "ghItlhlu’pu’",
+      "event": "jeSwI’"
+    },
+    "overview": {
+      "schedule": "jaj tetlh",
+      "where": "Daq",
+      "format": "rurmeH",
+      "online": "QumDaq",
+      "tbd": "Sov pagh",
+      "ageRange": "qan SaH",
+      "audience": "ghotpu’",
+      "language": "Hol",
+      "ages": "qan {min}–{max}",
+      "audienceParents": "vavpu’vaD",
+      "audienceFamilies": "qorDu’pu’vaD",
+      "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}",
+      "holidayBreaks": "SuvwI’pu’ leSbogh poHmey",
+      "holidayBreak": "{name}, {range}"
+    }
+  },
+  "verifyEmail": {
+    "subject": "QIn DaqlIj yIchel",
+    "heading": "QIn DaqlIj yIchel",
+    "body": "nuqneH {firstName}! School of Gaming patlhlIjDaq QIn Daq chelmeH Datlhobpu’. ’uSDaq yIqIp.",
+    "button": "QIn DaqlIj yIchel",
+    "ignore": "Datlhobbe’chugh, QIn yIleghQo’. pagh choHlu’."
+  },
+  "gamerWelcome": {
+    "subject": "School of Gaming patlhlIj DaSuqpu’",
+    "heading": "patlhlIj DaSuqpu’",
+    "body": "nuqneH {gamerName}! School of Gaming patlhlIj chenmoHpu’ vavlI’. bI’elmeH mu’ pegh DaHutlh — QIn Daqvam Daghaj ’e’ toblu’meH bIngDaq leQ yIqIp, ghIq mu’ pegh DawIvlaH.",
+    "button": "QIn Daqwij ’oH",
+    "ignore": "QInvam DapIHbe’chugh, yIleghQo’. pagh qaS."
+  },
+  "sessionReport": {
+    "subject": "poH ja’ghItlh – {productName}, {sessionDate}",
+    "title": "poH ja’ghItlh",
+    "intro": "nuqneH! {productName} poH {gamerName} ghompu’. {geduName} ja’ghItlh ghItlhpu’.",
+    "gamerIntro": "nuqneH {gamerName}! {productName} poHlIj ghompu’. {geduName} ja’ghItlh ghItlhpu’ — SoHvaD.",
+    "groupLabel": "ghom",
+    "dateLabel": "jaj",
+    "timeLabel": "poH",
+    "photosHeading": "poHvam mIlloghmey",
+    "productButton": "jIH SOGDaq yIlegh",
+    "closing": "ja’ghItlhvam, ja’ghItlhmey ngo’ je, poHmey veb je: Hoch {productName} DaqDaq jIH SOGDaq.",
+    "staffCopyLabel": "Gedupu’vaD che’wI’pu’vaD je ja’ghItlh",
+    "staffCopyBody": "ja’ghItlhvam luHevpu’ ghom qorDu’pu’. ngeHwI’ SoH pagh che’wI’ SoH; vav SoHbe’.",
+    "staffCopyPrivacy": "QIn nIteb Hevpu’ qorDu’ Hoch, ghaHvaD neH. QInvamDaq neH tu’lu’ Gedupu’ che’wI’pu’ je Daqmey: legh pagh vav, legh pagh qorDu’ latlh qorDu’ Daq je."
+  },
+  "seatOffer": {
+    "heading": "quS poSchoHpu’",
+    "question": "DaSuqtaH’a’? HIja’ ghap Qo’ ghap, maH yIja’. Qo’ Daja’chugh, batlh bIvang: latlh qorDu’vaD quS wInoblaH.",
+    "deadlineLabel": "yIjang poH",
+    "deadlineBody": "{deadline}. jangbe’lu’chugh, latlh qorDu’vaD jaH quS.",
+    "accept": "quS vISuq",
+    "decline": "Qo’, qatlho’",
+    "alsoInMySog": "jIH SOGDaq je ratlh yu’vam. pa’ DajanglaH.",
+    "dashboardButton": "jIH SOGDaq yIjang",
+    "child": {
+      "subject": "{participantName}: quS poSchoHpu’ – {productName}",
+      "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD ghoSlaH {participantName} – {productName}."
+    },
+    "self": {
+      "subject": "quS poSchoHpu’ – {productName}",
+      "opening": "quS poSDI’ SoH wIja’ ’e’ wIper. DaH poSchoHpu’: maHvaD bIghoSlaH – {productName}."
+    },
+    "gamer": {
+      "subject": "SoHvaD quS poSchoHpu’ – {productName}",
+      "opening": "nuqneH {gamerName}! SoHvaD quS poSchoHpu’ – {productName}. QaQ De’vam!",
+      "parentDecides": "HIja’ pagh ghobe’ jang ’e’ luQoy vavlI’, ’ej {deadline} jangnIS. jangDI’, jIH SOGDaq Dalegh.",
+      "dashboardButton": "jIH SOG yIpoSmoH"
+    }
+  },
+  "seatOfferStaff": {
+    "participant": "quSvaD ghot",
+    "contact": "rI’wI’",
+    "contactEmail": "QIn Daq",
+    "product": "Doch",
+    "schedule": "poH",
+    "offeredAt": "nobpu’",
+    "nextStep": "rInpu’ nob ’ej poStaH quS. Doch yIpoSmoH, loS tetlh yIlegh ’ej nob veb yIngeH.",
+    "button": "Doch yIpoSmoH",
+    "declined": {
+      "subject": "{participantName} lajQo’ quS – {productName}",
+      "heading": "quS nob lajQo’lu’pu’",
+      "body": "quS laj laHbe’ qorDu’, ’ej pegh rurbe’: maHvaD ja’pu’. loS tetlhvo’ teqlu’pu’."
+    },
+    "no_response": {
+      "subject": "pagh jang: {participantName} – {productName}",
+      "heading": "quS nob poH rInpu’",
+      "body": "jangbe’lu’ ’ej rInpu’ poH. loS tetlhDaq ratlh qorDu’ ’ej latlh nob wIngeHlaH, ’ach DaH poStaH quS."
+    }
+  }
+}

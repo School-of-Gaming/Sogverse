@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildOwnSubstitutionRequestRows } from "@/lib/gedu-own-substitution-requests";
-import type { LiveSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  LiveSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
 import { wireSessionWindow } from "../../mocks/planned-sessions";
 
 /**
@@ -41,11 +43,13 @@ function request(
       spoken_language_code: "fi",
       timezone: "Europe/Helsinki",
       is_remote: true,
+      voice_room_mode: "sogverse",
+      external_voice_url: null,
       start_date: "2026-09-01",
       end_date: null,
       site_name: null,
       translations: [
-        { locale: "en", name: "Minecraft Java Club", description: "" },
+        { locale: "en", name: "Minecraft Java Club", description: "", voice_join_instructions: null },
       ],
       schedule_slots: [
         { weekday: 0, start_time: "16:00:00", duration_minutes: 90 },

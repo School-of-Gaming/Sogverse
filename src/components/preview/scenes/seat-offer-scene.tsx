@@ -13,7 +13,7 @@ import {
   SeatOfferResponse,
 } from "@/components/seat-offer/seat-offer-response";
 import { resolveLocale } from "@/lib/constants/locales";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useNow } from "@/providers";
 
 /**

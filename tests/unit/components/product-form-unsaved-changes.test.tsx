@@ -27,7 +27,7 @@ vi.mock("next-intl", () => ({
   useFormatter: () => ({ number: (value: number) => String(value) }),
 }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/reference-data.queries", () => ({
   useConsentDocuments: () => ({ data: [] }),
 }));
 

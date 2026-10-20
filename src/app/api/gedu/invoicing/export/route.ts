@@ -13,7 +13,9 @@ import {
   geduInvoiceFileName,
 } from "@/components/gedu-invoicing/gedu-invoice-file";
 import { renderGeduInvoicePdf } from "@/components/gedu-invoicing/gedu-invoice-pdf";
-import { GeduInvoicingService } from "@/services/gedu-invoicing";
+import {
+  GeduInvoicingService,
+} from "@/services/gedu-invoicing/gedu-invoicing.service";
 
 /**
  * GET /api/gedu/invoicing/export?month=YYYY-MM&format=csv|pdf&locale=<locale>

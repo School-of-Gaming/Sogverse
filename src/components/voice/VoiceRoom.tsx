@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Mic, Loader2, PhoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { Heading } from "@sog/ui";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
@@ -184,10 +185,13 @@ export function VoiceRoom({
             fixed per surface). */}
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <h2 className="flex items-center gap-2 text-sm font-medium">
-              <Mic className="h-4 w-4" />
-              {title ?? t('voiceRoom')}
-            </h2>
+            {/* The room's title is the page's: the call screen has no other. */}
+            <div className="flex items-center gap-2">
+              <Mic className="h-4 w-4" aria-hidden />
+              <Heading level={1} step="card-title">
+                {title ?? t('voiceRoom')}
+              </Heading>
+            </div>
             <p className="text-xs text-muted-foreground">{t('zonesDescription')}</p>
           </div>
           {titleAccessory}

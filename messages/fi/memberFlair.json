@@ -1,0 +1,21 @@
+{
+  "newcomer": "Uusi",
+  "newcomerTooltip": "Uusi tässä ryhmässä — liittyi {days, plural, =0 {tänään} one {# päivä sitten} other {# päivää sitten}}",
+  "openMember": "Muistiinpano ja teos pelaajasta {name}",
+  "openMemberCreationOwed": "Muistiinpano ja teos pelaajasta {name} — teos puuttuu vielä",
+  "memberTitle": "Tietoja pelaajasta {name}",
+  "noteAudience": "Gedut ja ylläpitäjät",
+  "noteLabel": "Yksityinen muistiinpano",
+  "noteHint": "Vain Gedut ja ylläpitäjät näkevät tämän. Se pysyy tässä ryhmässä kerrasta toiseen.",
+  "notePlaceholder": "Muistiinpanoja pelaajasta {name} tässä ryhmässä.",
+  "noteLastEdited": "Viimeksi muokannut {name}",
+  "creationAudience": "Perheet näkevät tämän",
+  "creationLabel": "Teos",
+  "creationHint": "Jokin, jonka {name} on tehnyt tässä ryhmässä. Hänen oma perheensä näkee sen omalla sivullaan.",
+  "creationTitleLabel": "Teoksen nimi",
+  "creationTitlePlaceholder": "Mitä hän teki",
+  "creationUrlLabel": "Teoksen linkki",
+  "creationUrlPlaceholder": "Linkki teokseen",
+  "creationIncomplete": "Teos tarvitsee sekä nimen että linkin.",
+  "saveFailed": "Tallennus ei onnistunut. Yritä uudelleen."
+}

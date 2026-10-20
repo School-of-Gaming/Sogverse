@@ -78,7 +78,9 @@ export const LANDING_SECTION_SEO: {
   steps: {
     structuredData: none,
   },
-  subscribe: {
+  // Testimonials contribute nothing: review markup a site writes about itself
+  // earns no rich result, and the quotes are the page's own words to a reader.
+  testimonials: {
     structuredData: none,
   },
   faq: {
@@ -91,6 +93,9 @@ export const LANDING_SECTION_SEO: {
           ? []
           : [{ kind: "question" as const, question, answer }];
       }),
+  },
+  subscribe: {
+    structuredData: none,
   },
   cta: {
     structuredData: none,

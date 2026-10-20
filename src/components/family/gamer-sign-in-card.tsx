@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { KeyRound, MailCheck, MailX } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { ApiError } from "@/lib/api/api-error";
 import {
@@ -24,9 +24,11 @@ import {
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
+} from "@/services/gamers/gamers.contracts";
+import {
   useSendGamerVerificationEmail,
   useUpdateGamer,
-} from "@/services/gamers";
+} from "@/services/gamers/gamers.queries";
 import type { GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {
@@ -233,7 +235,7 @@ export function GamerSignInCard({
       <CardHeader>
         <div className="flex items-center gap-2">
           <KeyRound className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
         {/* The heading line states what is true today, in the same words the
             options below use, so a parent can tell at a glance which row they
@@ -335,11 +337,12 @@ export function GamerSignInCard({
             be replaced — the child has no mailbox to send a reset link to. */}
         {signIn === "username" && !modeChanged && (
           <form onSubmit={handleSetPassword} className="space-y-4 border-t border-border pt-6">
-            {/* `h4`, not `h2`: the card's own title is the `h3` a `CardTitle`
-                renders, and this sits under it. Sentence case, no tracking —
-                it is the brand speaking rather than a furniture label. */}
+            {/* An `h3` under the card's own `h2` title, at the label step: a
+                compact region of the card, not a section of the page. */}
             <div className="space-y-1">
-              <h4 className="font-medium">{t("newPasswordTitle")}</h4>
+              <Heading level={3} step="label">
+                {t("newPasswordTitle")}
+              </Heading>
               <p className="text-sm text-muted-foreground">
                 {t("newPasswordDescription", { name: firstName })}
               </p>
@@ -555,10 +558,11 @@ function ChangeUsernameForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 border-t border-border pt-6">
-      {/* `h4`, not `h2`: the card's own title is the `h3` a `CardTitle` renders,
-          and this sits under it. */}
+      {/* An `h3` under the card's own `h2` title, at the label step. */}
       <div className="space-y-1">
-        <h4 className="font-medium">{t("change.username.title")}</h4>
+        <Heading level={3} step="label">
+          {t("change.username.title")}
+        </Heading>
         <p className="text-sm text-muted-foreground">
           {t("change.username.description", { name: firstName })}
         </p>

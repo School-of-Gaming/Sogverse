@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { BookOpen } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { AppHref } from "@/lib/constants/routes";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { LibraryClosingCta } from "../library-closing-cta";
 import {
   LIBRARY_CATEGORIES,
@@ -14,6 +14,7 @@ import {
   LibraryArticleCard,
   type LibraryArticleCardProps,
 } from "./library-article-card";
+import { Heading } from "@sog/ui";
 
 export interface LibraryIndexBodyProps {
   /** The published articles in the selected category — all of them under "All" — newest first. */
@@ -59,11 +60,11 @@ export function LibraryIndexBody({
         {/* The headline and its rule are centred; the wrapper shrinks to the
             headline's longest line, so the rule runs exactly its measure. */}
         <div className="mx-auto w-fit text-center">
-          <h1 className="text-h1-mobile font-bold tracking-tight md:text-5xl">
+          <Heading level={1} step="hero" align="center">
             {t.rich("index.title", {
               act: (chunks) => <span className="text-act">{chunks}</span>,
             })}
-          </h1>
+          </Heading>
           <span className="mt-4 block h-1.5 w-full rounded-full bg-world" />
         </div>
         <p className="mt-5 text-base text-muted-foreground sm:text-lg">

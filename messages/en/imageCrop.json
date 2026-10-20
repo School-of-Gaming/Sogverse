@@ -1,0 +1,9 @@
+{
+  "title": "Crop the image",
+  "description": "Drag the image to place it in the frame, and zoom to fit.",
+  "zoom": "Zoom",
+  "confirm": "Use image",
+  "unreadable": "This file can’t be opened as an image here. Choose a JPEG, PNG or WebP image. iPhone photos in HEIC format need converting first.",
+  "chooseAnother": "Choose another image",
+  "failed": "The image could not be cropped. Try again, or choose another image."
+}

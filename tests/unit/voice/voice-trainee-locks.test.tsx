@@ -2,7 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enVoice from "@/../messages/en/voice.json";
+import enCommon from "@/../messages/en/common.json";
+import enChat from "@/../messages/en/chat.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
 import { VoiceControls } from "@/components/voice/VoiceControls";
 import { ParticipantList } from "@/components/voice/ParticipantList";
@@ -17,6 +21,14 @@ import type {
   VoiceParticipant,
   VoiceRoomContextValue,
 } from "@/components/voice/hooks/types";
+
+const messages = {
+  gedu: enGedu,
+  voice: enVoice,
+  common: enCommon,
+  chat: enChat,
+  memberFlair: enMemberFlair,
+};
 
 /**
  * ============================================================================

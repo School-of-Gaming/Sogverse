@@ -35,7 +35,7 @@ import {
   MARKDOWN_USE_CASES,
   type MarkdownUseCase,
 } from "@/lib/authored-markdown";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * A small rich-text editor over a **markdown** value: markdown goes in, the
@@ -587,9 +587,9 @@ const NOTHING_ACTIVE: Record<ToolbarToolKey, boolean> = {
  */
 export const EDITOR_PROSE = cn(
   "text-base leading-relaxed text-foreground [&>*:first-child]:mt-0",
-  "[&_h1]:mt-8 [&_h1]:text-h3",
+  "[&_h1]:mt-8 [&_h1]:text-section",
   "[&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:leading-snug",
-  "[&_h3]:mt-6 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:leading-snug",
+  "[&_h3]:mt-6 [&_h3]:text-card-title",
   "[&>p]:mt-4",
   "[&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5 [&_ul]:[&_ul]:mt-1 [&_ul]:[&_ol]:mt-1",
   "[&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5 [&_ol]:[&_ul]:mt-1 [&_ol]:[&_ol]:mt-1",

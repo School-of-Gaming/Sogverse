@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import type { SessionAudience } from "@/types";
 import { FamilyProductBackLink } from "./BackLink";
@@ -41,7 +42,9 @@ export function FamilyProductNotFound({
       <FamilyProductBackLink audience={audience} />
       <Card className="mt-6">
         <CardContent className="p-8 text-center">
-          <h2 className="text-base font-semibold">{t("notFoundTitle")}</h2>
+          <Heading level={1} step="card-title" align="center">
+            {t("notFoundTitle")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFoundBody")}
           </p>

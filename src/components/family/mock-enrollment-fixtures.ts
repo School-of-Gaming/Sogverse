@@ -217,6 +217,7 @@ export function buildEnrollmentFixture(
     // in a demo takes no other card's guide away with it.
     topic: spec.topic ?? "esports",
     isRemote: spec.isRemote,
+    voiceRoom: { mode: "sogverse" },
     nextSessionStart: next?.start ?? null,
     nextSessionEnd: next?.end ?? null,
     cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),

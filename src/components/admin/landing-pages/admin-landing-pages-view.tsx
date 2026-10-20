@@ -1,6 +1,8 @@
 "use client";
 
-import { useAdminLandingPages } from "@/services/landing-pages";
+import {
+  useAdminLandingPages,
+} from "@/services/landing-pages/landing-pages.queries";
 import { AdminLandingPagesPage } from "./admin-landing-pages-page";
 
 /** The live data shell for `/admin/landing-pages`: one read, into the body beside it. */

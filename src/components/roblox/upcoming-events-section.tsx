@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
   ParticipationsService,
   type ParticipationCounts,
-} from "@/services/participations";
-import { ProductsService } from "@/services/products";
+} from "@/services/participations/participations.service";
+import { ProductsService } from "@/services/products/products.service";
 import type { ProductBrowseRow } from "@/types";
 import { PROGRAMME_RAIL_FILTERS } from "./programme-filters";
 import { UpcomingEventsBrowse } from "./upcoming-events-browse";

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
+import { Heading } from "@sog/ui";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
@@ -32,7 +33,7 @@ export function AdminEditorPageShell({
         {backLabel}
       </Link>
 
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+      <Heading level={1} step="section">{title}</Heading>
 
       {children}
     </div>

@@ -3,6 +3,8 @@ import {
   LANDING_ICONS,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
+  LANDING_TESTIMONIAL_ARRANGEMENTS,
+  LANDING_TESTIMONIAL_SLOTS,
   landingSections,
   type LandingSectionType,
 } from "@/lib/landing-pages/sections";
@@ -83,6 +85,18 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "steps", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "steps", items: [{ id: ID2 }, { id: ID2 }] },
   ],
+  testimonials: [
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: [ID2] },
+    { id: ID, type: "testimonials", arrangement: "pair", testimonialIds: [ID2, ID3] },
+    { id: ID, type: "testimonials", arrangement: "row", testimonialIds: ids(3) },
+    { id: ID, type: "testimonials", arrangement: "showcase", testimonialIds: ids(6) },
+    { id: ID, type: "testimonials", arrangement: "showcase", testimonialIds: [` ${ID2.toUpperCase()} `] },
+    { id: ID, type: "testimonials", arrangement: "pair", testimonialIds: [ID2, ID2] },
+    { id: ID, type: "testimonials", arrangement: "grid", testimonialIds: [ID2] },
+    { id: ID, type: "testimonials", testimonialIds: [ID2] },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: ["nope"] },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonials: [ID2] },
+  ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "faq", items: ids(20).map((id) => ({ id })) },
@@ -135,6 +149,12 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
   steps: [
     { heading: "H", items: { [ID2]: { title: "T" } } },
     { items: { [ID2]: { icon: "star" } } },
+  ],
+  testimonials: [
+    {},
+    { eyebrow: "Parents", heading: "What parents tell us", intro: "In their words." },
+    { heading: 3 },
+    { quote: "Words live in the store, never here" },
   ],
   faq: [
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },
@@ -236,6 +256,16 @@ describe("the manual", () => {
     );
     expect(describeRequiredWords("subscribe")).toBe("heading; buttonLabel");
     expect(describeRequiredWords("cta")).toBe("heading; buttonLabel");
+    expect(describeRequiredWords("testimonials")).toBe("none");
+  });
+
+  it("states each testimonials arrangement with its slot count, from the registry", () => {
+    for (const arrangement of LANDING_TESTIMONIAL_ARRANGEMENTS) {
+      expect(SECTIONS_MANUAL).toContain(
+        `${arrangement} (exactly ${LANDING_TESTIMONIAL_SLOTS[arrangement]}:`,
+      );
+    }
+    expect(SECTIONS_MANUAL).toContain("list_testimonials");
   });
 
   it("names every type, the arrangement rule and the icons", () => {

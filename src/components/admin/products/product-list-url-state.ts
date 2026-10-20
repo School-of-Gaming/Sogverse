@@ -1,7 +1,9 @@
 import { ADMIN_LIST_SEARCH_PARAM } from "@/components/admin/admin-list-url-state";
 import { PRODUCT_LIST_TYPE_PARAM } from "@/lib/products/admin-product-list-type";
 import type { EmbeddedLocationNode } from "@/lib/locations/embedded-chain";
-import type { ProductListFacetsRow } from "@/services/products";
+import type {
+  ProductListFacetsRow,
+} from "@/services/products/products.contracts";
 import type { ProductType } from "@/types";
 
 /**

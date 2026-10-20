@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,7 +9,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
@@ -20,22 +20,24 @@ import {
   type SiteNotesDraft,
 } from "@/components/group-workspace/SitePanel";
 import { createSiteDetailsSave } from "@/components/group-workspace/site-details-save";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   useLocationsByIds,
   useUpdateLocation,
-  type LocationWithChain,
-} from "@/services/locations";
-import { useUpdateSiteNotes } from "@/services/products";
+} from "@/services/locations/locations.queries";
+import type { LocationWithChain } from "@/services/locations/locations.service";
+import { useUpdateSiteNotes } from "@/services/products/reference-data.queries";
 import {
   useProductsAtSite,
   useSiteNotes,
+} from "@/services/sites/sites.queries";
+import {
   type SiteNotes,
   type SiteProductRow,
-} from "@/services/sites";
+} from "@/services/sites/sites.service";
 import { sitePlacePath } from "./site-place-path";
 
 /**
@@ -125,7 +127,9 @@ export function AdminSiteDetailPage({ siteId }: { siteId: string }) {
           than a guess, and nothing below them moves when the row lands. */}
       <div className="space-y-1">
         <p className="min-h-5 truncate text-sm text-muted-foreground">{path}</p>
-        <h1 className="min-h-9 text-3xl font-bold">{name}</h1>
+        <div className="min-h-7.75">
+          <Heading level={1} step="section">{name}</Heading>
+        </div>
       </div>
 
       <SiteBody
@@ -217,7 +221,7 @@ function SiteBody({
 
       <Card className="min-w-0">
         <CardHeader>
-          <CardTitle className="text-base">{t("productsHeading")}</CardTitle>
+          <Heading level={2} step="card-title">{t("productsHeading")}</Heading>
         </CardHeader>
         <CardContent>
           {products === undefined ? (

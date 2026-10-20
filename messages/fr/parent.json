@@ -1,0 +1,136 @@
+{
+  "waitlist": {
+    "footerReassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
+    "footerReassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
+    "leave": {
+      "trigger": "Quitter la liste d’attente",
+      "confirmTitle": "Quitter la liste d’attente ?",
+      "confirmDescription": "{name} perdra sa place dans la file pour {product}.",
+      "confirmDescriptionSelf": "Vous perdrez votre place dans la file pour {product}.",
+      "confirmCta": "Quitter la liste d’attente",
+      "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
+    },
+    "seatOffer": {
+      "title": "Une place s’est libérée",
+      "bodyChild": "{name} peut avoir la place, si vous la voulez toujours.",
+      "bodySelf": "La place est à vous, si vous la voulez toujours.",
+      "bodyGamer": "Nous avons demandé à un parent si tu la veux toujours.",
+      "deadline": "Répondez avant le {deadline}, sinon la place ira à la famille suivante sur la liste.",
+      "lapsed": "Cette proposition a expiré, la place ne peut donc plus être acceptée. Si vous n’avez plus besoin de place, nous le dire nous aide toujours.",
+      "accept": "Accepter la place",
+      "decline": "Non, merci",
+      "confirmTitle": "Renoncer à la place ?",
+      "confirmBodyChild": "{name} perdra sa place dans la file, et nous la proposerons à la famille suivante.",
+      "confirmBodySelf": "Vous perdrez votre place dans la file, et nous la proposerons à la famille suivante.",
+      "confirmCta": "Oui, j’en suis sûr",
+      "error": "Une erreur est survenue et votre réponse n’a pas été enregistrée. Réessayez ou écrivez-nous à {supportEmail}."
+    }
+  },
+  "billing": {
+    "manage": {
+      "title": "Paiement et facturation",
+      "description": "Gérez vos cartes enregistrées, vos factures et vos abonnements en toute sécurité sur Stripe.",
+      "cta": "Gérer la facturation",
+      "opening": "Ouverture…",
+      "error": "Impossible d’ouvrir le portail de facturation. Veuillez réessayer.",
+      "splitExplanation": "Les abonnements de votre famille sont répartis sur plusieurs comptes de facturation — un héritage du transfert de vos clubs vers ce site. Chaque bouton ouvre la page Stripe correspondant à ce compte.",
+      "coversItem": "{name} · {product}",
+      "coversFallback": "Cartes enregistrées et factures passées"
+    },
+    "alert": {
+      "tooltip": "Problème de paiement — mettez votre carte à jour pour garder ce club actif",
+      "gamerTooltip": "Quelque chose ne va pas — demande à un parent de vérifier"
+    }
+  },
+  "gamerDetail": {
+    "photoConsent": {
+      "title": "Photos et vidéos",
+      "description": "Pour les clubs, camps et événements organisés en partenariat avec Lynx Educate, en collaboration avec Roblox.",
+      "sentence": {
+        "lynxEducate": "Les photos et vidéos où apparaît {name} peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>."
+      },
+      "sentenceTitle": {
+        "lynxEducate": "Photos et vidéos de {name}"
+      },
+      "hint": "Nous vous reposons la question à chaque inscription de {name} à l’une de ces activités. Votre dernière réponse est celle qui compte.",
+      "saveFailed": "Cette réponse n’a pas été enregistrée. Vérifiez votre connexion et réessayez."
+    },
+    "backToMySog": "Retour à Mon SOG",
+    "title": "Paramètres du joueur",
+    "subtitle": "Gérer les paramètres de {name}",
+    "profileDescription": "Mettez à jour les informations de votre joueur.",
+    "profileUpdated": "Nom mis à jour !",
+    "failedUpdateDisplayName": "Échec de la mise à jour du nom",
+    "ageYears": "{age, plural, one {# an} other {# ans}}",
+    "gender": {
+      "boy": "Garçon",
+      "girl": "Fille",
+      "non_binary": "Non binaire"
+    },
+    "notFound": {
+      "title": "Joueur introuvable",
+      "description": "Ce compte joueur a peut-être été supprimé, ou vous n’y avez pas accès."
+    },
+    "minecraft": {
+      "title": "Compte Minecraft",
+      "description": "Associez un nom d’utilisateur Minecraft Java Edition pour les fonctionnalités en jeu."
+    },
+    "roblox": {
+      "title": "Compte Roblox",
+      "description": "Associez un nom d’utilisateur Roblox pour les fonctionnalités en jeu."
+    },
+    "signIn": {
+      "title": "Connexion",
+      "current": {
+        "parent": "{name} se connecte via votre compte.",
+        "username": "{name} se connecte avec un identifiant et un mot de passe.",
+        "email": "{name} se connecte avec sa propre adresse e-mail."
+      },
+      "currentUsername": "{name} se connecte avec l’identifiant {username}.",
+      "saved": "Mode de connexion mis à jour.",
+      "saveFailed": "Impossible d’enregistrer ce changement. Veuillez réessayer.",
+      "newPasswordTitle": "Définir un nouveau mot de passe",
+      "newPasswordDescription": "Choisissez un nouveau mot de passe et lisez-le à {name}. Il remplace l’ancien immédiatement.",
+      "newPasswordSubmit": "Définir le mot de passe",
+      "newPasswordSaved": "Nouveau mot de passe enregistré.",
+      "verified": "Cette adresse a été vérifiée.",
+      "notVerified": "{name} n’a pas encore ouvert le lien de vérification.",
+      "resend": "Renvoyer l’e-mail de vérification",
+      "resendSent": "Envoyé. Demandez à {name} de regarder dans sa boîte de réception.",
+      "resendRateLimited": "Cela fait beaucoup d’e-mails pour un seul joueur. Veuillez réessayer plus tard.",
+      "resendFailed": "Impossible d’envoyer l’e-mail. Veuillez réessayer.",
+      "change": {
+        "username": {
+          "title": "Changer l’identifiant",
+          "description": "Choisissez un nouvel identifiant pour {name}. Le mot de passe reste le même, et l’ancien identifiant cesse de fonctionner immédiatement.",
+          "submit": "Enregistrer l’identifiant",
+          "saved": "Identifiant mis à jour. Lisez le nouveau à votre joueur."
+        }
+      }
+    }
+  },
+  "switchToGamer": {
+    "title": "Passer au profil de {name} pour rejoindre {productName} ?",
+    "oneWayWarning": "Vous serez déconnecté de votre compte parent."
+  },
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "Comment mon joueur rejoint-il une séance quand elle commence ?",
+        "answer": "<p>Cela dépend de l’endroit où elle se tient, et la carte dans Mon SOG vous l’indique : une séance en ligne porte un bouton, une séance en présentiel indique le nom du lieu.</p><p>En ligne, la séance se déroule dans une salle vocale, dans le navigateur, sans rien à installer :</p><steps><step>Dans Mon SOG, retrouvez la carte sous le prénom de votre enfant. Jusqu’à peu avant la séance, son bouton reste verrouillé et indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de la séance, le bouton devient « Rejoindre la salle vocale ».</step><step>Appuyez dessus. La salle n’accepte que les membres du groupe : depuis votre compte, il vous est donc d’abord proposé de passer au profil de votre enfant — ce qui vous déconnecte de votre compte parent — puis la salle s’ouvre au nom de votre enfant.</step><step>Autorisez le micro si le navigateur le demande.</step></steps><p>Pour revenir ensuite à votre propre profil, il faut votre code PIN parent. Si votre enfant se connecte avec son propre identifiant ou sa propre adresse e-mail, il peut aussi ouvrir Mon SOG et appuyer sur le même bouton. La salle reste ouverte jusqu’à cinq minutes après la fin de la séance.</p><p>En présentiel, il n’y a pas de bouton. La page du club, du stage ou de l’événement indique le lieu où il se tient, avec son adresse, ainsi qu’une note sur le lieu destinée aux familles lorsqu’il y en a une : amenez donc votre enfant sur place pour l’heure de début.</p><p>Si la carte indique plutôt que nous cherchons un Gedu et un groupe pour votre enfant, il n’y a encore rien à rejoindre : cela se fait avant la première séance, et la carte affiche ensuite le bouton ou le lieu.</p>"
+      },
+      "parentPin": {
+        "question": "Qu’est-ce que le code PIN parent, et que faire si je l’oublie ?",
+        "answer": "<p>Votre code PIN parent est un code à quatre chiffres que vous définissez la première fois que vous utilisez votre compte parent. Il protège l’ensemble du côté parent de Sogverse plutôt que chaque action prise séparément : vous déverrouillez une fois, et la session se reverrouille dès que vous basculez vers un profil joueur ou que vous vous déconnectez — un mot de passe enregistré dans le navigateur ne suffit donc pas à lui seul pour acheter quoi que ce soit ou modifier le compte d’un enfant. Le même code PIN protège le chemin du retour : un enfant entré dans Sogverse en basculant depuis votre compte en a besoin pour basculer vers votre profil ou celui d’un frère ou d’une sœur.</p><p>Si vous l’oubliez, appuyez sur « Vous avez oublié votre code PIN ? » sur l’écran du code PIN : nous envoyons un lien de réinitialisation à l’adresse de votre compte et nulle part ailleurs, si bien qu’un enfant qui appuie dessus vous envoie simplement un e-mail. Le lien reste valable 24 heures et ne fonctionne qu’une fois.</p><p>Vous pouvez aussi changer un code PIN dont vous vous souvenez encore depuis les Paramètres.</p>"
+      },
+      "sessionReports": {
+        "question": "Saurai-je comment se sont passées les séances ?",
+        "answer": "<p>Oui. Après une séance, l’animateur de votre enfant en rédige un compte rendu — ce sur quoi le groupe a travaillé, comment cela s’est passé, et les moments qui méritent d’être retenus — souvent avec des photos.</p><p>Il apparaît sur la page de ce club, de ce stage ou de cet événement dans Mon SOG, sous Séances, aux côtés de tous les comptes rendus précédents et des séances encore à venir, et votre enfant voit les mêmes comptes rendus dans Mon SOG. Quand le Gedu envoie le compte rendu, il arrive aussi par e-mail, adressé à vous seul — chaque famille reçoit son propre e-mail et aucune famille ne voit celui d’une autre.</p><p>Vous verrez également sur cette page la présence relevée pour votre enfant à chaque séance ; votre enfant ne voit pas les présences, et aucune famille ne voit jamais celles d’un autre enfant.</p>"
+      },
+      "missedSessions": {
+        "question": "Que se passe-t-il si nous manquons une séance, ou si nous rejoignons un club en cours de route ?",
+        "answer": "<p>Un club reste ouvert aux nouveaux joueurs tant qu’il tourne : vous pouvez donc le rejoindre en cours de trimestre — la page du club indique quel jour et à quelle heure il se réunit chaque semaine, sur quelle période il court et combien de places restent. Une fois votre enfant inscrit, sa propre page de club donne la date de la prochaine séance.</p><p>Les stages et les événements, c’est différent : un stage ferme aux nouvelles inscriptions la veille de son début, parce que le groupe démarre ensemble, et un événement ferme une fois sa séance terminée.</p><p>Un club est facturé comme un mois complet à partir du jour de l’inscription : rejoindre en milieu de mois ne réduit donc pas le paiement de ce mois-là ; si un club n’a pas encore commencé, rien n’est prélevé le jour de l’inscription et la page vous indique la date de votre premier paiement.</p><p>Si votre enfant manque une séance isolée, il n’y a rien à faire — sa place n’est pas affectée. Son Gedu relève la présence à chaque séance et vous verrez ce relevé sur la page du club. Une séance manquée n’est ni rattrapée ni remboursée ; dans un club municipal, des absences répétées et non signalées peuvent libérer la place pour la famille suivante sur la liste d’attente, ce que vous acceptez au moment de l’inscription.</p>"
+      }
+    }
+  }
+}

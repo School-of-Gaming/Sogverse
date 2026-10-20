@@ -12,11 +12,13 @@ import {
   type FinvoiceInvoice,
 } from "@/lib/finvoice";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
-import type { InvoiceCustomerRow } from "@/services/invoice-customers";
+import type {
+  InvoiceCustomerRow,
+} from "@/services/invoice-customers/invoice-customers.contracts";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
-} from "@/services/municipality-invoicing";
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 
 /**
  * The Finvoice export: one customer's month, and the document it becomes.

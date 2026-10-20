@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
 import { PRODUCT_STATUS } from "@/services/partner/partner.contracts";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -104,15 +105,21 @@ function RowTable({
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-2xl font-semibold">{children}</h2>;
+  return (
+    <Heading level={2} step="card-title">
+      {children}
+    </Heading>
+  );
 }
 
 /** A heading a reader scans for structure rather than reads as prose. */
 function SubHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mt-8 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-      {children}
-    </h3>
+    <div className="mt-8">
+      <Heading level={3} step="label">
+        {children}
+      </Heading>
+    </div>
   );
 }
 
@@ -168,7 +175,9 @@ function Resource({
     <Section id={id}>
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="outline" className="font-mono">GET</Badge>
-        <h2 className="break-all font-mono text-xl font-semibold">{path}</h2>
+        <Heading level={2} step="card-title">
+          <span className="break-all font-mono">{path}</span>
+        </Heading>
       </div>
       <p className="mt-2 text-muted-foreground">{title}</p>
       <p className="mt-4 text-muted-foreground">{intro}</p>
@@ -953,7 +962,9 @@ export default function LynxApiDocsPage() {
       {/* The header spans the same width as the reference below it: a narrower
           measure here read as a page that had been left-aligned by accident. */}
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <Heading level={1} step="section">
+          {t("title")}
+        </Heading>
         <p className="mt-4 text-lg text-muted-foreground">{t("lead")}</p>
       </header>
 
@@ -964,9 +975,9 @@ export default function LynxApiDocsPage() {
           aria-label={t("contents.heading")}
           className="lg:sticky lg:top-[calc(var(--header-height)+1.5rem)] lg:max-h-[calc(100vh-var(--header-height)-3rem)] lg:self-start lg:overflow-y-auto"
         >
-          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <Heading level={2} step="label">
             {t("contents.heading")}
-          </h2>
+          </Heading>
           <ul className="mt-3 space-y-1.5 text-sm leading-relaxed">
             {contents.map(({ id, label }) => (
               <li key={id}>

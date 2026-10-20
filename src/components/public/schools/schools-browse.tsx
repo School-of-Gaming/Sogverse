@@ -7,14 +7,15 @@ import { ChevronDown, ChevronRight, Info, MapPin, Search } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { cn } from "@/lib/cn";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { ROUTES } from "@/lib/constants/routes";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   LOCATION_SEARCH_MAX_QUERY,
   LOCATION_SEARCH_MIN_QUERY,
-  useLocationSearch,
-} from "@/services/locations";
+} from "@/services/locations/locations.contracts";
+import { useLocationSearch } from "@/services/locations/locations.queries";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   buildMunicipalityEntry,
@@ -24,6 +25,7 @@ import {
   type RegionGroup,
 } from "@/lib/schools/municipalities";
 import type { LocationType } from "@/types";
+import { Heading } from "@sog/ui";
 
 /** The long-tail arm asks the index for municipalities, in Finland, and nothing else. */
 const FALLBACK_TYPES: readonly LocationType[] = ["municipality"];
@@ -263,9 +265,9 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
             library lets carry a coloured phrase is a hero headline with its
             rule beneath (`brand.ts`, beside the label rule). This page has
             neither. */}
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <Heading level={1} step="section">
           {t("hero.title")}
-        </h1>
+        </Heading>
         <p className="text-lg text-muted-foreground">{t("hero.subtitle")}</p>
         <p className="text-base text-muted-foreground">{t("hero.howItWorks")}</p>
       </div>

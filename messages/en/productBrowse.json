@@ -1,0 +1,50 @@
+{
+  "pageTitle": "Shop",
+  "sections": {
+    "clubs": "Clubs",
+    "camps": "Camps",
+    "events": "Events"
+  },
+  "filters": {
+    "type": "Type",
+    "audience": "Audience",
+    "designedFor": "Designed for",
+    "typeClubs": "Clubs",
+    "typeCamps": "Camps",
+    "typeEvents": "Events",
+    "topic": "Topic",
+    "format": "Format",
+    "formatOnline": "Online",
+    "formatInPerson": "In person",
+    "price": "Price",
+    "priceFree": "Free",
+    "pricePaid": "Paid",
+    "language": "Language",
+    "age": "Age",
+    "days": "Days",
+    "clearAll": "Clear",
+    "filterBy": "Filter by",
+    "title": "Filters",
+    "activeCount": "{count, plural, one {# filter active} other {# filters active}}",
+    "removeFilter": "Remove {label}"
+  },
+  "card": {
+    "ages": "Ages {min}–{max}",
+    "perMonth": "{price} / month",
+    "upfrontTotal": "{price}",
+    "free": "Free",
+    "notAvailableInCurrency": "Not in {currency}",
+    "endedNote": "This one’s wrapped — keep an eye out for the next one.",
+    "viewDetails": "View",
+    "cardLink": "{action} — {name}",
+    "manage": "Manage",
+    "fullDisabled": "Full",
+    "alreadyStarted": "Already started",
+    "alreadyEnded": "Already over",
+    "online": "Online"
+  },
+  "empty": {
+    "noProducts": "Nothing here yet — new ones are on the way.",
+    "noMatches": "No matches. Try clearing your filters."
+  }
+}

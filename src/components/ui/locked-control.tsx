@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Everything a locked control says when it is pressed. Every word is a prop.
@@ -150,10 +150,10 @@ export function LockExplanationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent role="dialog" aria-modal>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-muted-foreground" aria-hidden />
-            {explanation.title}
-          </DialogTitle>
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <DialogTitle align="start">{explanation.title}</DialogTitle>
+          </div>
           <DialogDescription>{explanation.what}</DialogDescription>
           <DialogDescription>{explanation.why}</DialogDescription>
         </DialogHeader>

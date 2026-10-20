@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { MapPin, Radio } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,8 +30,9 @@ import { useNow, useTimezone } from "@/providers";
 import {
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
-} from "@/services/session-substitution";
-import { cn, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
+} from "@/services/session-substitution/session-substitution.refusals";
+import { cn } from "@/lib/cn";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 
 /**
  * **"Can't make a session?"** — the Substitutions page's way into filing an
@@ -447,9 +449,9 @@ function SessionPicker({
       >
         {shown.map((week) => (
           <section key={week.weekStart} className="space-y-2">
-            <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <Heading level={3} step="label">
               {weekHeading(week.weekStart)}
-            </h3>
+            </Heading>
             {week.sessions.map((session) => (
               <SessionPickerRow
                 key={session.key}

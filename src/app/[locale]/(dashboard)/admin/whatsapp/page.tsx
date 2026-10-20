@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Heading } from "@sog/ui";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn, formatTime, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatTime, formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import { getClient } from "@/lib/supabase/client";
 import {
@@ -15,7 +17,7 @@ import {
   useWhatsAppMessages,
   useSendWhatsAppMessage,
   whatsappKeys,
-} from "@/services/whatsapp";
+} from "@/services/whatsapp/whatsapp.queries";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   WHATSAPP_DIRECTION,
@@ -389,7 +391,7 @@ export default function WhatsAppInboxPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <Heading level={1} step="section">{t('title')}</Heading>
         <p className="text-muted-foreground">
           {t('description')}
         </p>

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   LocalizedLibraryArticle,
   PublishedLibraryArticle,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 
 // The shared setup mocks the wrapped navigation, and its `getPathname` ignores
 // the locale. The canonical is *about* which locale's address it names, so

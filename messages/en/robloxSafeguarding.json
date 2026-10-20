@@ -1,0 +1,79 @@
+{
+  "title": "Creator Academy Child Safeguarding Policy",
+  "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme.",
+  "lastUpdated": "Last reviewed: {date}",
+  "intro": {
+    "heading": "Our commitment",
+    "blocks": [
+      "Every child taking part in this Programme has the right to feel safe, respected and protected — whether they’re joining online or attending an in-person event. That is carried by how the Programme is built: every child’s account is linked to a parent’s, communication is group-based with no private messaging between children, and only registered participants and vetted Game Educators can take part."
+    ]
+  },
+  "sections": {
+    "covers": {
+      "heading": "Who this covers",
+      "blocks": [
+        "This policy applies to all Lynx Educate and School of Gaming staff, Game Educators (or “Gedus”), volunteers, and any contractor who interacts with children through this Programme."
+      ]
+    },
+    "vetting": {
+      "heading": "Before a Game Educator works with children",
+      "blocks": [
+        "All Game Educators (Gedus) are required to complete School of Gaming’s own vetting and training process before working with children on Sogverse. This includes:",
+        [
+          "Being over 18. Every Game Educator is an adult.",
+          "A background check. Every Gedu shows us a criminal record extract of the kind issued for people who work with children, before they’re assigned to any group — so we know who is spending time with your child. We check it ourselves, and we’re not allowed to keep a copy, so we don’t.",
+          "School of Gaming’s Basic Course for game educators, which every Gedu has to complete successfully.",
+          "Our Game Educator handbook, which sets out how we expect a Gedu to behave and makes the atmosphere of the group their responsibility.",
+          "A signed agreement with School of Gaming, talked through with a member of our staff before it’s signed. It sets out the written procedure we follow — starting with a warning and a conversation — if a Gedu doesn’t meet those expectations."
+        ]
+      ]
+    },
+    "online": {
+      "heading": "During online sessions",
+      "blocks": [
+        [
+          "Every Gamer’s account is linked to a parent account; children cannot register themselves.",
+          "There is no direct messaging between children — all communication is group-based and actively supervised by a trained Game Educator.",
+          "Only registered Gamers and vetted Game Educators can take part — no external invites or outside contacts.",
+          "Sessions are not recorded."
+        ]
+      ]
+    },
+    "inPerson": {
+      "heading": "During in-person events",
+      "blocks": [
+        "Our Game Educators run the session; they are not the organisers of the event. Lynx Educate is responsible for making sure the venues it works with are suitable for the session and meet the Programme’s safeguarding requirements. The specific arrangements may vary by venue."
+      ]
+    },
+    "behaviour": {
+      "heading": "Behaviour and discipline",
+      "blocks": [
+        "Day-to-day behavioural issues during SOG-delivered sessions follow School of Gaming’s <linkDiscipline>Anti-Bullying and Discipline policy</linkDiscipline>, which uses a supportive, step-by-step approach before any child is removed from a session or the community."
+      ]
+    },
+    "escalation": {
+      "heading": "Escalation protocol",
+      "blocks": [
+        "Concerns are handled by School of Gaming in the first instance, given day-to-day contact with participants. Any safeguarding concern — abuse, harassment, self-harm, or serious injury — is escalated to Lynx Educate within 24 hours, and Lynx will inform Roblox promptly where required. Where a child may be at immediate risk, we contact emergency services first, before any internal escalation."
+      ]
+    },
+    "concern": {
+      "heading": "If you have a concern",
+      "blocks": [
+        "If you or your child have a safeguarding concern, please contact School of Gaming at {supportEmail} or Lynx Educate at support@lynxeducate.com."
+      ]
+    },
+    "data": {
+      "heading": "Data and photos",
+      "blocks": [
+        "A child appears identifiably in a photograph only where their parent has ticked the optional media consent for that child when enrolling them. The parent can change that answer at any time on the child’s page in My SOG, and a Game Educator asks the child before taking a photograph even where the parent has consented. The <linkRobloxPrivacy>Creator Academy Privacy Policy</linkRobloxPrivacy> sets out what the consent covers. Wide shots of an event or workshop may be taken from a distance, where no child is identifiable."
+      ]
+    },
+    "review": {
+      "heading": "Reviewing this policy",
+      "blocks": [
+        "We review this policy annually."
+      ]
+    }
+  }
+}

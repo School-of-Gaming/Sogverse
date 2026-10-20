@@ -149,7 +149,7 @@ describe("a class naming a token the theme does not define", () => {
   it("passes the sided, offset and typography spellings, and a CSS property inside an arbitrary value", () => {
     expect(
       violations(
-        'const a = <div className="border-b border-border ring-offset-background text-h1 transition-[box-shadow,border-color]" />;',
+        'const a = <div className="border-b border-border ring-offset-background text-hero transition-[box-shadow,border-color]" />;',
         noUnregisteredColourToken,
       ),
     ).toBe(0);

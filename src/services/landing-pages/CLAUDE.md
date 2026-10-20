@@ -6,7 +6,7 @@ Library's (`src/services/library/CLAUDE.md`) wherever this file says nothing dif
 the sections are the registry's, in `src/lib/landing-pages/sections/`.
 
 **Pages are written only through the MCP server** (`src/lib/mcp/`), by an AI app acting as
-the admin. In Sogverse an admin has the list of pages and, for each, a status page that is
+the admin. In Sogverse an admin has the list of pages, a tab of the Marketing hub, and, for each, a status page that is
 read-only apart from publishing: per language, complete or what is still missing, its
 preview and live links, and its address; for the page, whether it has unpublished
 changes, who last saved it and through which AI app, and Publish and Unpublish.
@@ -36,6 +36,23 @@ that moment, and refused if it carries words for a section the page does not hav
 **A language leaves by a writer of its own**, which removes that version from the working
 copy alone and refuses the page's last one: a live language stays live until the next
 publish, which takes it down.
+
+**A clone is a create whose content the database copies in one call**, so no word passes
+through the application or the AI app. Everything in the source's working copy is copied
+verbatim — the structure, the pictures (catalogue entries are shared, so the clone names
+the same ones) and each language's summary and words — with two departures. Every section
+and every item gets a new id, and each language's words are re-keyed by the same map, so
+they stay on what they were written for and the clone shares no id with its source. And
+each language's title is the source's followed by a copy marker in that language's own
+word, from the message files rather than the admin's locale, because each title derives
+that language's slug: the slug is the new title's, derived in the application as for a
+version without one, and the database numbers it (`-2`, `-3`, …, cut to the length cap)
+while any page holds it in that locale, live or working. The clone is unpublished and
+stamped with its saver like any create. The application names the languages to copy, and
+one the source does not have is refused. The tool's description carries the rule that
+matters most: a clone is a starting structure, and every word is rewritten for the new
+page before it is published, since near-identical pages that only swap a city or an
+audience are what search engines penalise as doorway pages.
 
 **A version is complete when its title, summary and slug are written and every section
 has every required word in that language.** Which words a type requires is declared in
@@ -90,6 +107,26 @@ loses that picture, and an image section left with none is dropped with its word
 done by a trigger on the catalogue's own delete, so it needs nothing from the remover.
 Either moves the working copy's "last saved" time and saver, as a cover removal does.
 
+**Testimonials are placed by id from the structure and read live from the store**
+(`src/services/testimonials/`). A testimonials section names an arrangement and exactly as
+many distinct testimonial ids as it shows — `feature` 1, `pair` 2, `row` 3, `showcase` 6,
+the layouts the home page and About use, drawn through the one set of arrangements the
+three pages share — and a save with another count is refused with a sentence naming both.
+The count is checked in the registry and again in the SQL structure check, and a DB test
+holds the two to one answer over every arrangement and count. An id no testimonial has is
+refused loudly by a trigger on the working copy, which checks only the ids a save adds, so
+a write that moves only the structure's other contents is never refused by a placement it
+did not make. **Neither copy carries a testimonial's words**: the live page reads them per
+request through the public read that answers only what the published copy places, so an
+edit to a testimonial shows on every live page at once, without a republish, while a
+testimonial placed only in a working copy stays admin-only; the preview and the status
+page read the working copy's from the store under the admin policy. Each reader gets the
+testimonial's own version by the reader fallback, independent of the page version shown.
+The section's only words are an optional header, so it never makes a version incomplete,
+and it contributes no structured data — review markup a site writes about itself earns
+nothing. Its words are never written through a landing page tool, and a quote comes off a
+page by saving the structure without it.
+
 **A page's link preview is its hero's picture**, the one its structured data names as the
 picture the page leads with, with the shown version's alt text; a hero without one shares
 the site-wide card. So placing a hero picture places it in every chat and feed the page is
@@ -103,10 +140,12 @@ writer is held to the same links: own-site links in the markdown and in
 button targets are stored canonical there, a slug address at the id of the live page it
 names. A link leading to no page — or to a slug no live page has — refuses the write as a
 `check_violation` naming the link, so it reaches the admin like the database's own
-refusals. Nothing else in the save path touches a link.
+refusals. Nothing else in the save path touches a link. A clone sends no words, so it has
+none to check: the words it copies were made canonical when they were saved.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
-detail included, and the image catalogue's usage map.
+detail included, the image catalogue's usage map, and the `testimonials` tree, whose
+"where it is used" names each page's copies.
 
 **The email sign-up section (`subscribe`) is one-way to Brevo, and Sogverse stores
 nothing about the person.** The form posts to `/api/landing-pages/subscribe`, which hands

@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useId, useState } from "react";
+import { Heading } from "@sog/ui";
 import { TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
@@ -12,7 +13,8 @@ import {
 import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
 import { Link } from "@/i18n/navigation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 import type {
   AdminFeedbackResponse,
   FeedbackSource,
@@ -219,7 +221,7 @@ function ResponseTable({
  * One heading for every place a statement is named: a column of the responses
  * table, or, with `heading`, a statement's card on a detail page.
  *
- * The sentence opens from the whole heading and sits inside it, flush against
+ * The sentence opens from the whole heading and sits inside its box, flush against
  * the name with its spacing drawn as padding, so the pointer can move onto the
  * sentence without leaving what opened it. Escape hides it while the heading
  * is hovered or focused, without moving either; leaving the heading, or focus
@@ -256,9 +258,13 @@ export function StatementHeader({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [engaged]);
 
-  const Wrapper = heading ? "h3" : "div";
+  const name = shortLabels[statementKey] ?? statementKey;
+  // The focus ring and the dotted underline are the affordance either way; the
+  // type is the column header's own, or the heading's.
+  const affordance =
+    "cursor-help rounded-xs underline decoration-dotted underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-act";
   return (
-    <Wrapper
+    <div
       role={heading ? undefined : "columnheader"}
       className="group relative"
       onMouseEnter={() => setHovered(true)}
@@ -273,13 +279,21 @@ export function StatementHeader({
         setDismissed(false);
       }}
     >
-      <span
-        tabIndex={0}
-        aria-describedby={sentenceId}
-        className="cursor-help rounded-xs text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-act"
-      >
-        {shortLabels[statementKey] ?? statementKey}
-      </span>
+      {heading ? (
+        <Heading level={3} step="label">
+          <span tabIndex={0} aria-describedby={sentenceId} className={affordance}>
+            {name}
+          </span>
+        </Heading>
+      ) : (
+        <span
+          tabIndex={0}
+          aria-describedby={sentenceId}
+          className={cn(affordance, "text-xs font-medium text-muted-foreground")}
+        >
+          {name}
+        </span>
+      )}
       <span
         className={cn(
           "invisible absolute top-full z-20 w-56 pt-1.5",
@@ -295,7 +309,7 @@ export function StatementHeader({
           {labels[statementKey] ?? statementKey}
         </span>
       </span>
-    </Wrapper>
+    </div>
   );
 }
 

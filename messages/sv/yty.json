@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Vad är Yty?",
+    "subtitle": "Yty är kraften som håller Sogverse i balans. Genom att göra bra saker — lära sig nya färdigheter, skaffa vänner, uppföra sig väl och delta i gemenskapen — tjänar spelare Yty åt sig själva och åt alla."
+  },
+  "overview": {
+    "heading": "Så fungerar Yty",
+    "paragraph1": "Varje spelare börjar på noll. Från varje tillfälle de deltar i, varje uppdrag de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över de fyra Yty-elementen, som var och ett speglar en del av att växa upp väl.",
+    "paragraph2": "När spelare samlar Yty åt sig själva ökar de också det totala Yty i Sogverse — formar berättelsen och låser upp nya möjligheter för hela gemenskapen."
+  },
+  "elements": {
+    "heading": "De fyra Yty-elementen",
+    "subheading": "Varje Yty-element är en relation som spelaren utvecklar: till sig själv, till andra, till samhället och till tekniken",
+    "harmony": {
+      "name": "Harmoni",
+      "description": "Din relation till dig själv",
+      "detail": "Vem är jag? Harmoni handlar om att acceptera dig själv som du är — styrkor och svagheter. Det innebär att lära sig ta hand om sitt välmående, uttrycka sina känslor, fatta bra beslut och förstå varför regler och tillit är viktiga."
+    },
+    "glow": {
+      "name": "Glöd",
+      "description": "Din relation till andra",
+      "detail": "Hur kan jag hjälpa andra? Glöd handlar om empati, vänlighet och att bygga meningsfulla relationer. Det innebär att respektera olikheter, ge utrymme åt andra, kommunicera väl och vara den typen av person som lyfter andra."
+    },
+    "valor": {
+      "name": "Mod",
+      "description": "Din relation till samhället",
+      "detail": "Hur kan jag göra skillnad? Mod handlar om att hitta sin plats i samhället och ha modet att bidra till det. Det innebär lagarbete, att uttrycka sina idéer, använda sin fantasi och arbeta mot en bättre framtid — lokalt och globalt."
+    },
+    "wit": {
+      "name": "Vett",
+      "description": "Din relation till tekniken",
+      "detail": "Hur hanterar jag tekniken väl? Vett handlar om en hälsosam, kritisk relation till spel, media och verktygen omkring dem. Det innebär att förstå onlinebeteende, tänka kritiskt om information och balansera skärmtid med resten av livet."
+    }
+  },
+  "earning": {
+    "heading": "Hur spelare tjänar Yty",
+    "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i klubbens tillfällen varje vecka, klara uppdrag, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
+    "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och det Yty-element det tillhör.",
+    "paragraph3": "Och det är inte bara spelare. Geduer, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
+  }
+}

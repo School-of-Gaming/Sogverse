@@ -26,7 +26,12 @@ import { z } from "zod";
  * after the money has moved can fail only on a genuine outage.
  */
 export const SWITCH_CLUB_REFUSALS = [
-  /** The subscription's latest invoice is not `paid` with a positive amount. */
+  /**
+   * The family is in neither a paid period nor one paid nothing for: the latest
+   * invoice is open, past due, void or uncollectible, or it is a €0
+   * mid-period invoice that proves nothing about whether the period itself was
+   * paid.
+   */
   "latest_invoice_not_paid",
   /** The subscription does not carry exactly one item, so there is no single price to swap. */
   "subscription_not_single_item",
@@ -49,6 +54,22 @@ export const SWITCH_CLUB_REFUSALS = [
 
 export const switchClubRefusal = z.enum(SWITCH_CLUB_REFUSALS);
 export type SwitchClubRefusal = z.infer<typeof switchClubRefusal>;
+
+/**
+ * How the rest of the current period is settled by a switch.
+ *
+ * - `prorate` — the family paid for this period, so the next invoice adds or
+ *   refunds the price difference for what is left of it.
+ * - `nothing_paid` — the family paid nothing for this period (a trial, or a
+ *   period-opening invoice discounted to zero: a 100%-off coupon, or a club
+ *   bought before it starts), so nothing is settled: nothing more is charged
+ *   before the next billing date, and that charge is at the new price, less
+ *   any discount the subscription carries.
+ */
+export const SWITCH_CLUB_SETTLEMENTS = ["prorate", "nothing_paid"] as const;
+
+export const switchClubSettlement = z.enum(SWITCH_CLUB_SETTLEMENTS);
+export type SwitchClubSettlement = z.infer<typeof switchClubSettlement>;
 
 /** Query of the check handler: `?target=<product id>`. */
 export const switchClubCheckQuery = z.object({
@@ -85,6 +106,18 @@ export const switchClubCheckResponse = z.object({
    * parent. The commit does not gate on it.
    */
   subscriptionEndsAt: z.string().datetime().nullable(),
+  /**
+   * How the rest of the current period is settled; null when the check found
+   * no subscription to read, or the latest invoice refused the switch.
+   */
+  settlement: switchClubSettlement.nullable(),
+  /**
+   * The end of the current billing period (a trial's end while one runs) —
+   * the date of the next charge, which is at the new club's price less any
+   * discount the subscription carries. Non-null exactly when `settlement` is
+   * `nothing_paid`.
+   */
+  nextChargeAt: z.string().datetime().nullable(),
   /**
    * The live Stripe subscription's currency disagrees with the
    * `family_subscriptions` row's. Present only when true, and never a refusal:

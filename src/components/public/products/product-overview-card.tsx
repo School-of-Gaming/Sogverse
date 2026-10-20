@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
 import {
   holidayBreakLines,
@@ -32,6 +32,7 @@ import {
   productWhoItsFor,
 } from "@/lib/products/product-overview-facts";
 import { ScheduleLine } from "./schedule-line";
+import { Heading } from "@sog/ui";
 
 // Shared "Good to know" overview card. Renders schedule (day/time),
 // location/format, who the product is for (its audience, its age range, or
@@ -129,9 +130,9 @@ export function ProductOverviewCard({
           railFrom2xl && "2xl:p-4",
         )}
       >
-        <h2 className="text-sm font-semibold text-muted-foreground">
+        <Heading level={2} step="card-title">
           {t("sections.overview")}
-        </h2>
+        </Heading>
         {/* Two-up on wider widths and a single stacked column on mobile, where
             there isn't room. Exactly four facts on every audience — Schedule |
             Format, then who-it's-for | Language — so the grid is a filled 2×2

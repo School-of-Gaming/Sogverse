@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { createTranslator } from "use-intl/core";
-import en from "../../../messages/en.json";
-import fi from "../../../messages/fi.json";
-import fr from "../../../messages/fr.json";
 import {
   buildGeduInvoicing,
   type GeduInvoice,
@@ -27,8 +24,15 @@ import {
 } from "@/components/gedu-invoicing/mock-gedu-invoicing-fixtures";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { Messages } from "@/i18n/messages";
+import enGeduInvoicing from "../../../messages/en/geduInvoicing.json";
+import fiGeduInvoicing from "../../../messages/fi/geduInvoicing.json";
+import frGeduInvoicing from "../../../messages/fr/geduInvoicing.json";
 
-const CATALOGS: Partial<Record<SupportedLocale, Messages>> = { en, fi, fr };
+const CATALOGS: Partial<Record<SupportedLocale, Pick<Messages, "geduInvoicing">>> = {
+  en: { geduInvoicing: enGeduInvoicing },
+  fi: { geduInvoicing: fiGeduInvoicing },
+  fr: { geduInvoicing: frGeduInvoicing },
+};
 
 function translator(locale: SupportedLocale): GeduInvoicingTranslator {
   const messages = CATALOGS[locale];

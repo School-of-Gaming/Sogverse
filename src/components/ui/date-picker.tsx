@@ -12,7 +12,8 @@ import {
 } from "@/lib/calendar-date";
 import { isoWeekOf, isoWeekStart, resolveNearestIsoWeek } from "@/lib/iso-week";
 import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 
 /**
  * **What a click on a week number means for this field.**
@@ -668,15 +669,12 @@ function WeekCalendar({
                       isTarget && !selected && "ring-2 ring-inset ring-act",
                       selected &&
                         "rounded-sm bg-act font-medium text-act-foreground focus-visible:ring-act-foreground",
-                    ) +
                       // The row's hover layer, drawn on the cells rather than
                       // behind them: it is a background *image*, so it composes
                       // over the band's ground, where on the row element it sat
-                      // underneath it and the banded cells stayed dark. Joined
-                      // on outside `cn` because tailwind-merge reads every
-                      // `bg-*` as a background colour and would drop whichever
-                      // ground it was passed beside.
-                      (previewing ? " bg-hover" : "")}
+                      // underneath it and the banded cells stayed dark.
+                      previewing && "bg-hover",
+                    )}
                   >
                     {Number(date.slice(8, 10))}
                   </button>

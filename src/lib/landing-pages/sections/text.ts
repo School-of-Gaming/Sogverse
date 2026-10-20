@@ -24,7 +24,7 @@ const text = z
   .object({
     eyebrow: plainText,
     heading: plainText,
-    /** Authored markdown, the `landing` use case. */
+    /** Authored markdown, rendered under its `markdownFields` entry's use case. */
     body: markdownText,
     imageAlt: plainText,
   })
@@ -42,5 +42,5 @@ export const textSection = {
       ? ["imageAlt"]
       : []),
   ],
-  markdownFields: [{ field: "body" }],
+  markdownFields: [{ field: "body", useCase: "landing" }],
 } as const satisfies LandingSectionDefinition<"text", typeof section, typeof text>;

@@ -23,8 +23,13 @@ import {
   sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
-import { formatCurrencyFromCents, formatDate, formatDateOnly, formatTimeRange } from "@/lib/utils";
-import { loadMessages, type Messages } from "@/i18n/messages";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { discordSubOfferMessages } from "@/i18n/namespaces/discordSubOffer";
+import { geduMessages } from "@/i18n/namespaces/gedu";
+import { sessionFactsMessages } from "@/i18n/namespaces/sessionFacts";
 import type { GeduAssignmentRole, SubstitutionOfferResponse } from "@/types";
 import type { SubstitutionNotificationSnapshot } from "./snapshot.contracts";
 import type { NotificationStateKind } from "./state";
@@ -100,15 +105,23 @@ function declineId(prefix: SubReqPrefix, requestId: string): string {
  */
 export interface DiscordSubOfferCopy {
   locale: SupportedLocale;
-  offer: ReturnType<typeof createTranslator<Messages, "discordSubOffer">>;
-  pool: ReturnType<typeof createTranslator<Messages, "gedu.substitution">>;
-  facts: ReturnType<typeof createTranslator<Messages, "sessionFacts">>;
+  offer: ReturnType<typeof createTranslator<DiscordSubOfferMessages, "discordSubOffer">>;
+  pool: ReturnType<typeof createTranslator<DiscordSubOfferMessages, "gedu.substitution">>;
+  facts: ReturnType<typeof createTranslator<DiscordSubOfferMessages, "sessionFacts">>;
 }
+
+/** The namespaces the DMs read, and no others. */
+type DiscordSubOfferMessages = Pick<Messages, "discordSubOffer" | "gedu" | "sessionFacts">;
 
 export async function loadDiscordSubOfferCopy(
   locale: SupportedLocale,
 ): Promise<DiscordSubOfferCopy> {
-  const messages = await loadMessages(locale);
+  const [discordSubOffer, gedu, sessionFacts] = await Promise.all([
+    loadNamespace(discordSubOfferMessages, locale),
+    loadNamespace(geduMessages, locale),
+    loadNamespace(sessionFactsMessages, locale),
+  ]);
+  const messages: DiscordSubOfferMessages = { discordSubOffer, gedu, sessionFacts };
   return {
     locale,
     offer: createTranslator({ locale, messages, namespace: "discordSubOffer" }),

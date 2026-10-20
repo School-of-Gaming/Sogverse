@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import common from "@/../messages/en/common.json";
+import landingSubscribe from "@/../messages/en/landingSubscribe.json";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
 import { NO_UTM_ATTRIBUTION, type UtmAttribution } from "@/lib/utm";
@@ -35,6 +36,7 @@ const TEXTS: LandingSectionTexts = {
   },
 };
 
+const messages = { common, landingSubscribe };
 const t = messages.landingSubscribe;
 
 const mockFetch = vi.fn();
@@ -58,6 +60,7 @@ function renderPage({
         <LandingPageBody
           sections={SECTIONS}
           imagePaths={{}}
+          testimonials={{}}
           sectionTexts={TEXTS}
           textLocale="fi"
           locale="fi"
@@ -72,7 +75,7 @@ function renderPage({
 function fillIn(email: string, firstName = "") {
   fireEvent.change(screen.getByLabelText(t.email), { target: { value: email } });
   if (firstName !== "") {
-    fireEvent.change(screen.getByLabelText(new RegExp(t.firstName)), {
+    fireEvent.change(screen.getByLabelText(t.firstName, { exact: false }), {
       target: { value: firstName },
     });
   }

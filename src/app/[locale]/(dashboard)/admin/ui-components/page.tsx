@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Heading, type HeadingPair } from "@sog/ui";
 import {
   Plus,
   Pencil,
@@ -23,8 +24,9 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,13 +70,13 @@ import {
 } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { SwitchGateBody } from "@/components/family/SwitchGateDialog";
+import { SwitchAccountError } from "@/services/family/family.service";
 import {
-  SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
-} from "@/services/family";
+} from "@/services/family/family.contracts";
 import { UserRow } from "@/components/admin/user-row";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import {
@@ -138,7 +140,7 @@ import {
   type GameFigure,
   type GamePlatform,
 } from "@/components/game-account";
-import { useRobloxProfile } from "@/services/roblox";
+import { useRobloxProfile } from "@/services/roblox/roblox.queries";
 import { ImageCatalogueView } from "@/components/admin/products/image-catalogue-view";
 import { ImageActionConfirmDialog } from "@/components/admin/products/image-catalogue-confirm";
 import {
@@ -155,7 +157,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -200,36 +202,37 @@ function slugify(s: string): string {
 // don't collide.
 const SectionSlugContext = createContext<string | null>(null);
 
+// The anchor target is the wrapper rather than the heading: the scroll margin
+// that clears the sticky header has to sit on the element the fragment names,
+// and the heading takes no class.
 function AnchorHeading({
-  as,
   id,
-  className,
   children,
-}: {
-  as: "h2" | "h3";
+  ...pair
+}: HeadingPair & {
   id: string;
-  className: string;
   children: React.ReactNode;
 }) {
-  const Tag = as;
   return (
-    <Tag
+    <div
       id={id}
-      className={`group scroll-mt-[calc(var(--header-height)+1rem)] ${className}`}
+      className="group scroll-mt-[calc(var(--header-height)+1rem)]"
     >
-      <a
-        href={`#${id}`}
-        className="inline-flex items-center gap-2 hover:underline"
-      >
-        {children}
-        <span
-          aria-hidden
-          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+      <Heading {...pair}>
+        <a
+          href={`#${id}`}
+          className="inline-flex items-center gap-2 hover:underline"
         >
-          #
-        </span>
-      </a>
-    </Tag>
+          {children}
+          <span
+            aria-hidden
+            className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            #
+          </span>
+        </a>
+      </Heading>
+    </div>
   );
 }
 
@@ -244,7 +247,7 @@ function Section({
   return (
     <SectionSlugContext.Provider value={slug}>
       <section className="space-y-4">
-        <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
+        <AnchorHeading level={2} step="card-title" id={slug}>
           {title}
         </AnchorHeading>
         <div className="rounded-lg border border-border p-6 space-y-6">{children}</div>
@@ -264,11 +267,7 @@ function SubSection({
   const slug = parentSlug ? `${parentSlug}-${slugify(title)}` : slugify(title);
   return (
     <div className="space-y-3">
-      <AnchorHeading
-        as="h3"
-        id={slug}
-        className="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
-      >
+      <AnchorHeading level={3} step="label" id={slug}>
         {title}
       </AnchorHeading>
       {children}
@@ -680,10 +679,10 @@ function DialogDemo() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Delete Product
-            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+              <DialogTitle align="start">Delete product</DialogTitle>
+            </div>
             <DialogDescription>
               Are you sure you want to delete &ldquo;Starter Pack&rdquo;? This
               action cannot be undone.
@@ -1365,9 +1364,9 @@ function ParticipantCardDemo() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">
+        <Heading level={4} step="label">
           Participants ({DEMO_PARTICIPANTS.length})
-        </CardTitle>
+        </Heading>
       </CardHeader>
       <CardContent className="space-y-2">
         {DEMO_PARTICIPANTS.map((p, i) => {
@@ -2430,7 +2429,7 @@ export default function AdminUIComponentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">UI Components</h1>
+        <Heading level={1} step="section">UI Components</Heading>
         <p className="text-muted-foreground">
           Living style guide &mdash; every component variant and composite
           pattern used across the app.
@@ -2484,7 +2483,7 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
 
-        <SubSection title="With Icons">
+        <SubSection title="With icons">
           <div className="flex flex-wrap items-center gap-3">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -2814,6 +2813,12 @@ export default function AdminUIComponentsPage() {
           test instead of demoed here.
         </p>
         <p className="text-sm text-muted-foreground">
+          Each question is a heading inside the summary of its row, so search
+          engines and assistants can tie an answer to its question. The caller
+          states the level, one below its own heading over the list: H4 here,
+          under the H2 of this section and the H3 of each demo.
+        </p>
+        <p className="text-sm text-muted-foreground">
           The block shapes below are built by calling the shared answer tags
           rather than by hand-writing an <code>ol</code> or a <code>ul</code>:
           those tags are what the real FAQs render through, so a demo that
@@ -2822,6 +2827,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A list of questions">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "plain",
@@ -2918,6 +2924,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A single question">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "only",
@@ -3545,6 +3552,7 @@ function MinecraftPasswordResetDemo() {
       submitting={false}
       error={null}
       onSubmit={noopSubmit}
+      level={3}
     />
   );
 }

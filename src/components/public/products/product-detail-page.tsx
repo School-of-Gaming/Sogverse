@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatInTimeZone } from "date-fns-tz";
@@ -18,16 +18,18 @@ import {
   type GamerAgeBlock,
 } from "@/lib/gamer-age-eligibility";
 import { useAuth } from "@/providers/auth-provider";
-import { useLocationsByIds } from "@/services/locations";
-import { useProductDetail } from "@/services/products";
-import { useHolidayBreaks } from "@/services/holiday-breaks";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import { useProductDetail } from "@/services/products/products.queries";
+import {
+  useHolidayBreaks,
+} from "@/services/holiday-breaks/holiday-breaks.queries";
 import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
-import { useGamerBirths, useMyGamers } from "@/services/gamers";
+import { useGamerBirths, useMyGamers } from "@/services/gamers/gamers.queries";
 import {
   useParticipationCounts,
   useProductSeatCountsRealtime,
-} from "@/services/participations";
+} from "@/services/participations/participations.queries";
 import {
   deriveRegistrationState,
   registrationCtaKind,
@@ -43,6 +45,7 @@ import type {
   ConfirmedHomeLocation,
   SignupAgeBlock,
 } from "./signup-panel-view";
+import { Heading } from "@sog/ui";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -703,7 +706,9 @@ function DetailNotFound() {
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-lg font-semibold">{t("notFound.title")}</h2>
+          <Heading level={2} step="card-title" align="center">
+            {t("notFound.title")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>

@@ -20,14 +20,14 @@ import {
   audienceAdmitsRole,
   type ProductAudience,
 } from "@/lib/products/product-audience";
-import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { cn } from "@/lib/cn";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
+import { useUserList } from "@/services/users/users.queries";
 import {
-  useUserList,
   type UserListEntry,
   type UserListGamer,
-} from "@/services/users";
+} from "@/services/users/users.contracts";
 import type { UserRole } from "@/types";
 
 /**

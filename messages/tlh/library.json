@@ -1,0 +1,35 @@
+{
+  "name": "paq qach",
+  "readingTime": "{minutes, plural, one {# tup laD} other {# tup laD}}",
+  "article": {
+    "breadcrumbLabel": "He",
+    "more": "paq qach latlh",
+    "share": {
+      "heading": "ghItlh yImuv",
+      "copyLink": "rar yIqon",
+      "copied": "rar qon",
+      "on": "{platform} Daq yIjatlh (chu’ DaqDaq poSmoH)",
+      "email": "QIn",
+      "byEmail": "QIn yIngeH",
+      "native": "yIjatlh…"
+    }
+  },
+  "index": {
+    "title": "School of Gaming <act>paq qach</act>",
+    "intro": "vavpu’ SoSpu’ je DevmeH: Qan, juHDaq Quj, ’ej nuq ghoj puqpu’.",
+    "empty": "pagh naDev",
+    "all": "Hoch",
+    "filterLabel": "Seghmey"
+  },
+  "categories": {
+    "onlineSafety": "De’wI’ Qan",
+    "screenTime": "jIH poH, qorDu’ yIn",
+    "learning": "Quj ghoj",
+    "gamesExplained": "Qujmey QIj",
+    "forSchools": "DuSaQmey"
+  },
+  "cta": {
+    "heading": "bIchu’meH bIQap’a’?",
+    "button": "yIchu’"
+  }
+}

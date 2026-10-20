@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { HubTabs } from "@/components/ui/hub-tabs";
 import { ADMIN_HUBS, type AdminHubId } from "./admin-hubs";
 
@@ -41,7 +42,9 @@ export function AdminHub({
   return (
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div className="space-y-4">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <Heading level={1} step="section">
+          {title}
+        </Heading>
         <HubTabs
           label={title}
           tabs={ADMIN_HUBS[hub].tabs.map((tab) => ({

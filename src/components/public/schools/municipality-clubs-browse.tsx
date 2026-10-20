@@ -2,15 +2,20 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { selectClubsInMunicipality } from "@/lib/schools/municipalities";
-import { useVisibleProductsByTypes } from "@/services/products";
+import {
+  useVisibleProductsByTypes,
+} from "@/services/products/products.queries";
 import {
   useParticipationCounts,
+} from "@/services/participations/participations.queries";
+import {
   type ParticipationCounts,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { ProductBrowseResults } from "@/components/public/products/product-browse-results";
+import { Heading } from "@sog/ui";
 
 // The per-municipality clubs page (`/schools/<slug>`). A shop browse page
 // narrowed to one municipality: same filters + card grid (via
@@ -85,9 +90,9 @@ export function MunicipalityClubsBrowse({
           equalise (~1616px), and up to ~128px left of the cards' centre below
           that, the same tolerance the results grid accepts and documents. */}
       <header className="mx-auto max-w-3xl px-4 text-center">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <Heading level={1} step="section" align="center">
           {t("heading", { name: municipalityName })}
-        </h1>
+        </Heading>
       </header>
 
       <div className="mt-8">

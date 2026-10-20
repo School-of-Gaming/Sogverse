@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
@@ -10,11 +11,14 @@ import {
   findGeduContractAcceptance,
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
-import { useUserList, type UserListEntry } from "@/services/users";
-import { useGeduContractAcceptanceMap } from "@/services/gedu";
+import { useUserList } from "@/services/users/users.queries";
+import type { UserListEntry } from "@/services/users/users.contracts";
+import {
+  useGeduContractAcceptanceMap,
+} from "@/services/gedu/gedu-contract.queries";
 import { useKeysetSentinel } from "@/hooks/use-keyset-infinite-query";
-import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { cn } from "@/lib/cn";
 import type { UserRole } from "@/types";
 
 /**
@@ -97,7 +101,7 @@ export default function AdminUsersPage() {
     // globals.css.
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <Heading level={1} step="section">{t('title')}</Heading>
         <p className="text-muted-foreground">
           {t('manageAccounts')}
         </p>

@@ -2,7 +2,8 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { ComponentProps } from "react";
 import { render } from "@testing-library/react";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
-import { loadMessages } from "@/i18n/messages";
+import productAudience from "../../../messages/en/productAudience.json";
+import productDetail from "../../../messages/en/productDetail.json";
 
 /**
  * **The "Good to know" card, as a family reads it.**
@@ -56,8 +57,8 @@ vi.mock("@/providers", () => ({
   useNow: () => new Date("2027-01-04T08:00:00Z"),
 }));
 
-beforeAll(async () => {
-  messages.current = await loadMessages("en");
+beforeAll(() => {
+  messages.current = { productAudience, productDetail };
 });
 
 type CardProduct = ComponentProps<typeof ProductOverviewCard>["product"];
