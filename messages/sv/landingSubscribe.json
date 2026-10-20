@@ -2,7 +2,6 @@
   "firstName": "Förnamn",
   "email": "E-postadress",
   "consent": "School of Gaming får skicka mig nyheter och erbjudanden via e-post. Varje e-postmeddelande har en länk för att avsluta prenumerationen. Jag har läst <privacy>integritetspolicyn</privacy>.",
-  "consentRequired": "Kryssa i rutan för att prenumerera.",
   "error": "Något gick fel och du prenumererar inte ännu. Försök igen om en stund.",
   "invalid": "Kontrollera din e-postadress och försök igen.",
   "rateLimited": "För många anmälningar har kommit härifrån. Försök igen om en timme.",

@@ -11,7 +11,8 @@ import { UtmProvider } from "@/providers";
 /**
  * **The email sign-up section as a reader meets it**: the page's own heading
  * and button over the site's form, the anchor the confirmation link returns
- * to, the consent box that has to be ticked, what is posted, and the three
+ * to, the button held disabled until every field is given and the consent box
+ * ticked, what is posted, and the three
  * states the section can be in — the form, "check your inbox", and the thanks
  * a reader coming back from the confirmation link sees instead of the form.
  */
@@ -74,13 +75,15 @@ function renderPage({
   );
 }
 
-function fillIn(email: string, firstName = "") {
+function fillIn(email: string, firstName: string) {
   fireEvent.change(screen.getByLabelText(t.email), { target: { value: email } });
-  if (firstName !== "") {
-    fireEvent.change(screen.getByLabelText(t.firstName, { exact: false }), {
-      target: { value: firstName },
-    });
-  }
+  fireEvent.change(screen.getByLabelText(t.firstName, { exact: false }), {
+    target: { value: firstName },
+  });
+}
+
+function isDisabled(): boolean {
+  return screen.getByRole("button", { name: "Keep me posted" }).hasAttribute("disabled");
 }
 
 async function submit() {
@@ -99,12 +102,27 @@ describe("the email sign-up section", () => {
     expect(screen.getByRole("checkbox").getAttribute("aria-checked") ?? "false").toBe("false");
   });
 
-  it("refuses to post until the consent box is ticked", async () => {
+  it("keeps the button disabled until the address, the first name and the consent are all given", () => {
     renderPage();
-    fillIn("aino@example.com");
+    expect(isDisabled()).toBe(true);
+
+    fillIn("aino@example.com", "Aino");
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(isDisabled()).toBe(false);
+  });
+
+  it.each([
+    ["the address", "  ", "Aino", true],
+    ["the first name", "aino@example.com", "  ", true],
+    ["the consent", "aino@example.com", "Aino", false],
+  ])("keeps the button disabled, posting nothing, without %s", async (_, email, name, tick) => {
+    renderPage();
+    fillIn(email, name);
+    if (tick) fireEvent.click(screen.getByRole("checkbox"));
+    expect(isDisabled()).toBe(true);
+
     await submit();
     expect(mockFetch).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert").textContent).toContain(t.consentRequired);
   });
 
   it("posts the page, the form, the locale, the reader's words and the visit's UTM values", async () => {
@@ -138,14 +156,12 @@ describe("the email sign-up section", () => {
   ])("says why a %i refused it and lets the reader try again", async (status, sentence) => {
     mockFetch.mockResolvedValue(new Response(JSON.stringify({ error: "x" }), { status }));
     renderPage();
-    fillIn("aino@example.com");
+    fillIn("aino@example.com", "Aino");
     fireEvent.click(screen.getByRole("checkbox"));
     await submit();
 
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain(sentence));
-    expect(
-      screen.getByRole("button", { name: "Keep me posted" }).hasAttribute("disabled"),
-    ).toBe(false);
+    expect(isDisabled()).toBe(false);
   });
 
   it("thanks a reader back from the confirmation link in place of the form", () => {
@@ -158,11 +174,9 @@ describe("the email sign-up section", () => {
 
   it("draws the form in the admin's preview with its button disabled, posting nothing", async () => {
     renderPage({ preview: true });
-    const button = screen.getByRole("button", { name: "Keep me posted" });
-    expect(button.hasAttribute("disabled")).toBe(true);
-
-    fillIn("aino@example.com");
+    fillIn("aino@example.com", "Aino");
     fireEvent.click(screen.getByRole("checkbox"));
+    expect(isDisabled()).toBe(true);
     await submit();
     expect(mockFetch).not.toHaveBeenCalled();
     expect(screen.queryByText(t.sentTitle)).toBeNull();

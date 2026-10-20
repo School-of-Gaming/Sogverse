@@ -29,14 +29,9 @@ export const landingSubscribeBody = z.object({
   /** The page's locale: what the confirmation mail and the way back are in. */
   locale: z.enum(SUPPORTED_LOCALES),
   email: realEmailValue,
-  /** Optional; blank is the same as absent. */
-  firstName: z
-    .string()
-    .trim()
-    .max(LANDING_SUBSCRIBE_FIRST_NAME_MAX)
-    .optional()
-    .transform((name) => (name === "" ? undefined : name)),
-  /** The consent box. The form refuses to post unticked, and so does the route. */
+  /** Required; a blank one is refused like any invalid body. */
+  firstName: z.string().trim().min(1).max(LANDING_SUBSCRIBE_FIRST_NAME_MAX),
+  /** The consent box. The form will not post unticked, and the route refuses it. */
   consent: z.literal(true),
   /**
    * The honeypot. Taken as any string, so a filled one reaches the handler

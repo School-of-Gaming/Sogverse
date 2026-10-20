@@ -164,11 +164,6 @@ describe("POST /api/landing-pages/subscribe", () => {
     expect(sentToBrevo().redirectionUrl.startsWith("https://sog.test/")).toBe(true);
   });
 
-  it("leaves the first name out when none was given", async () => {
-    await POST(request({ ...VALID, firstName: "  " }));
-    expect(sentToBrevo().attributes).not.toHaveProperty("FIRSTNAME");
-  });
-
   it.each([
     ["no consent cookie", {}],
     ["marketing refused", { cookie: consentCookie(false) }],
@@ -249,6 +244,9 @@ describe("POST /api/landing-pages/subscribe", () => {
   describe("refusals", () => {
     it.each([
       ["no consent", { ...VALID, consent: false }],
+      ["no first name", { ...VALID, firstName: undefined }],
+      ["an empty first name", { ...VALID, firstName: "" }],
+      ["a whitespace-only first name", { ...VALID, firstName: "   " }],
       ["not an address", { ...VALID, email: "aino" }],
       ["our internal domain", { ...VALID, email: "aino@gamer.sogverse.internal" }],
       ["a locale we do not ship", { ...VALID, locale: "de" }],

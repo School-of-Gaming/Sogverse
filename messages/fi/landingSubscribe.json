@@ -2,7 +2,6 @@
   "firstName": "Etunimi",
   "email": "Sähköpostiosoite",
   "consent": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse. Jokaisessa viestissä on linkki tilauksen perumiseen. Olen lukenut <privacy>tietosuojaselosteen</privacy>.",
-  "consentRequired": "Tilaa rastittamalla ruutu.",
   "error": "Jokin meni vikaan, eikä tilaus vielä onnistunut. Yritä hetken päästä uudelleen.",
   "invalid": "Tarkista sähköpostiosoitteesi ja yritä uudelleen.",
   "rateLimited": "Täältä on tullut liian monta tilausta. Yritä uudelleen tunnin kuluttua.",

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
+import { Send } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle, StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
@@ -19,7 +20,7 @@ import {
 } from "@/services/landing-pages/landing-subscribe.contracts";
 
 /** Which refusal sentence a failed post reads. */
-type Refusal = "consentRequired" | "invalid" | "rateLimited" | "error";
+type Refusal = "invalid" | "rateLimited" | "error";
 
 function refusalFor(status: number): Refusal {
   if (status === 429) return "rateLimited";
@@ -28,9 +29,11 @@ function refusalFor(status: number): Refusal {
 }
 
 /**
- * **A landing page's email sign-up form**: an email address, an optional first
- * name, and the consent box, posted to the sign-up route, which asks Brevo to
- * confirm the address by double opt-in.
+ * **A landing page's email sign-up form**: an email address, a first name and
+ * the consent box, posted to the sign-up route, which asks Brevo to confirm the
+ * address by double opt-in. The button stays disabled until all three are
+ * given; whether the address is well-formed is left to the browser's email
+ * field and the route's 400.
  *
  * Three states, each replacing the last in place: the form; "check your inbox"
  * once the route has accepted it, which says the same for a new address and a
@@ -94,15 +97,13 @@ export function LandingSubscribeForm({
     );
   }
 
+  const complete = email.trim() !== "" && firstName.trim() !== "" && consent;
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (preview) return;
-    // Refused before the busy flag, so a refused submit leaves the form as
-    // usable as it was.
-    if (!consent) {
-      setRefusal("consentRequired");
-      return;
-    }
+    // The button is disabled in both cases; this only stops a submit that
+    // reaches the form some other way.
+    if (preview || !complete) return;
     setRefusal(null);
     setCommitting(true);
 
@@ -147,12 +148,13 @@ export function LandingSubscribeForm({
           autoComplete="email"
         />
       </Field>
-      <Field label={t("firstName")} htmlFor={`${sectionId}-first-name`} optional>
+      <Field label={t("firstName")} htmlFor={`${sectionId}-first-name`}>
         <Input
           id={`${sectionId}-first-name`}
           value={firstName}
           onChange={(event) => setFirstName(event.target.value)}
           disabled={committing}
+          required
           maxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
           autoComplete="given-name"
         />
@@ -172,10 +174,7 @@ export function LandingSubscribeForm({
       </div>
       <CheckboxRow
         checked={consent}
-        onCheckedChange={(next) => {
-          setConsent(next);
-          if (next && refusal === "consentRequired") setRefusal(null);
-        }}
+        onCheckedChange={setConsent}
         disabled={committing}
         label={t.rich("consent", {
           // A new tab: the reader is part-way through the form, and in this
@@ -198,8 +197,14 @@ export function LandingSubscribeForm({
         </StatusLine>
       )}
       <div className="flex justify-center">
-        <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={committing || preview}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full sm:w-auto"
+          disabled={committing || preview || !complete}
+        >
           {buttonLabel}
+          <Send aria-hidden="true" />
         </Button>
       </div>
     </form>

@@ -7,8 +7,8 @@ import {
 } from "./shared";
 
 /**
- * An email sign-up form: a reader leaves their address, and their first name if
- * they like, to join the mailing list, which Brevo confirms by double opt-in.
+ * An email sign-up form: a reader leaves their address and their first name to
+ * join the mailing list, which Brevo confirms by double opt-in.
  *
  * **No shared field.** The list a reader joins and the confirmation mail they
  * are sent are the deployment's configuration, the same for every page, so

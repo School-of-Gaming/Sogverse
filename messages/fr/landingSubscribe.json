@@ -2,7 +2,6 @@
   "firstName": "Prénom",
   "email": "Adresse e-mail",
   "consent": "School of Gaming peut m’envoyer des actualités et des offres par e-mail. Chaque e-mail contient un lien de désinscription. J’ai lu la <privacy>politique de confidentialité</privacy>.",
-  "consentRequired": "Cochez la case pour vous inscrire.",
   "error": "Une erreur est survenue et votre inscription n’est pas encore faite. Veuillez réessayer dans un instant.",
   "invalid": "Vérifiez votre adresse e-mail et réessayez.",
   "rateLimited": "Trop d’inscriptions sont venues d’ici. Veuillez réessayer dans une heure.",

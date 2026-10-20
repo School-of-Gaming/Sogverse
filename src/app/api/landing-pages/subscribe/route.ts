@@ -37,7 +37,7 @@ function clientKey(request: Request): string {
  * POST /api/landing-pages/subscribe
  *
  * **A landing page's email sign-up, passed one way to Brevo.** The reader
- * leaves an address (and a first name if they like) and ticks the consent box;
+ * leaves an address and a first name and ticks the consent box;
  * this asks Brevo to confirm the address by double opt-in, and Brevo sends the
  * confirmation mail, records the consent when the link is followed, adds the
  * contact to the list and handles every unsubscribe from then on. **Nothing
@@ -124,7 +124,7 @@ export const POST = defineRoute({
       [SIGNUP_ATTRIBUTES.page]: shown.slug,
       [SIGNUP_ATTRIBUTES.pageId]: page.id,
       [SIGNUP_ATTRIBUTES.locale]: body.locale,
-      ...(body.firstName === undefined ? {} : { [SIGNUP_ATTRIBUTES.firstName]: body.firstName }),
+      [SIGNUP_ATTRIBUTES.firstName]: body.firstName,
     };
     for (const field of UTM_FIELDS) {
       const param = UTM_QUERY_PARAMS[field];
