@@ -4499,7 +4499,7 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
  * until the mode's fields are filled.
  *
  * **Each card carries its own page's title**, so the row reads as four headings
- * rather than five copies of "Add a gamer" — and the three sign-in cards show
+ * rather than four copies of "Add a gamer" — and the three sign-in cards show
  * the question the radios under them answer, which is the label they are
  * pointed at.
  *

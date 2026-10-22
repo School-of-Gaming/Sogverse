@@ -50,10 +50,10 @@ const QUESTION = messages.gamerSignIn.question.replace("{name}", "Lily");
 
 const onCreate = vi.fn<(input: CreateGamerInput) => Promise<{ gamerId: string }>>();
 
-function renderCard() {
+function renderCard(onOpenChange: (open: boolean) => void = vi.fn()) {
   const view = render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <AddGamerFormCard onOpenChange={vi.fn()} onCreate={onCreate} />
+      <AddGamerFormCard onOpenChange={onOpenChange} onCreate={onCreate} />
     </NextIntlClientProvider>,
   );
 
@@ -760,7 +760,8 @@ describe("while the create is in flight", () => {
       }),
     );
 
-    const view = renderCard();
+    const onOpenChange = vi.fn();
+    const view = renderCard(onOpenChange);
     view.fillDetails();
     await view.goToSignIn();
     await view.press();
@@ -776,6 +777,10 @@ describe("while the create is in flight", () => {
     });
 
     expect(onCreate).toHaveBeenCalledTimes(1);
+    // Success closes the dialog with the button still latched: nothing clears
+    // `committing`, because the card unmounts.
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(view.affirmative().disabled).toBe(true);
   });
 });
 

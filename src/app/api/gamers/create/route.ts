@@ -198,8 +198,8 @@ export const POST = defineRoute({
       // Step 2: Promote + link atomically. handle_new_user already seeded a
       // 'customer' profile + customer_profiles row for the new auth user; this
       // RPC swaps it to a gamer, inserts the gamer row and the guardian
-      // declaration, and links the parent — all in one transaction, so a failure can't leave a
-      // half-promoted orphan. The address the trigger copied from auth.users is
+      // declaration, and links the parent — all in one transaction, so a
+      // failure can't leave a half-promoted orphan. The address the trigger copied from auth.users is
       // left untouched (gamers are email-first, whichever mode they are in).
       const { error: rpcError } = await admin.rpc("create_gamer", {
         p_gamer_id: gamerId,
