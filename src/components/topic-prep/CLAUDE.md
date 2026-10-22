@@ -260,9 +260,7 @@ The card has one footer, and what the guide does there depends on what else is i
   the card exists; the guide steps down into the same subordinate treatment the
   leave-waitlist affordance uses and sits underneath.
 - **Under the footer sentence, on the cards with no Join at all** — the in-person one
-  naming its site, and the seat nobody has been placed in yet. The unplaced card is inert
-  *as a link* because there is no page behind it; a dialog is not a page, and the wait for
-  a placement is exactly the window this guide is written for.
+  naming its site.
 - **And on a card whose footer would otherwise not be drawn**, which is the same placement
   with nothing above it. The footer is populated rather than reserved, so a card where
   every sentence branch comes up empty — an in-person seat whose location has no name yet,

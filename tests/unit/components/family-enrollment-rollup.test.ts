@@ -573,9 +573,16 @@ describe("toFamilyEnrollments — an unplaced seat", () => {
 describe("toFamilyEnrollments — an unplaced seat's next session", () => {
   const SECOND_FRIDAY = "2026-02-20T17:00:00.000Z";
 
-  function nextAt(at: string, groupId: string | null, cancelledDates?: string[]) {
+  function nextAt(
+    at: string,
+    groupId: string | null,
+    cancelledDates?: string[],
+    isRemote = true,
+  ) {
     const [entry] = toFamilyEnrollments({
-      sessionRows: [sessionRow({ groupId, cancelledDates })],
+      sessionRows: [
+        sessionRow({ groupId, cancelledDates, product: { isRemote, site: null } }),
+      ],
       waitlistRows: [],
       now: new Date(at),
       locale: "en",
@@ -602,6 +609,12 @@ describe("toFamilyEnrollments — an unplaced seat's next session", () => {
   it("leaves a placed seat on the session in progress", () => {
     expect(
       nextAt("2026-02-13T17:30:00Z", GROUP).nextSessionStart?.toISOString(),
+    ).toBe(FIRST_FRIDAY);
+  });
+
+  it("leaves an unplaced in-person seat on the session in progress, having no Join to lock", () => {
+    expect(
+      nextAt("2026-02-13T17:30:00Z", null, undefined, false).nextSessionStart?.toISOString(),
     ).toBe(FIRST_FRIDAY);
   });
 

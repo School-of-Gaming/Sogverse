@@ -754,25 +754,38 @@ function cancellationFor(
  * session that runs, and names the cancelled ones before it on a line of their
  * own.
  *
- * **An unplaced seat skips every session whose window has opened.** It cannot
- * open a room, so its locked Join must always name a session still to come —
- * on the exact boundary the Join opens on, so the time it names is never one
- * whose window is already open. If placement is late, the time rolls on to the
- * next session.
+ * **A Join that stays locked skips every session whose window has opened.**
+ * That is an unplaced online seat: it cannot open a room, so its locked Join
+ * must always name a session still to come — on the exact boundary the Join
+ * opens on, so the time it names is never one whose window is already open. If
+ * placement is late, the time rolls on to the next session, and on the last
+ * one the Join is simply gone; both were accepted for a state that placement
+ * before the first session keeps from arising.
  */
 export function nextSessionFor<T extends PlannedSession>(
   plan: readonly T[],
   now: Date,
-  awaiting: boolean,
+  lockedJoin: boolean,
 ): { next: T | null; cancelledAhead: T[] } {
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  return nextRunning(sessionsAhead(plan, now, lockedJoin), now, closeMarginMs);
+}
+
+/**
+ * The sessions a card can still name: all of them, or for a Join that stays
+ * locked only those whose window has not opened. One set, so the Join and the
+ * winding-down line count the same sessions.
+ */
+function sessionsAhead<T extends PlannedSession>(
+  plan: readonly T[],
+  now: Date,
+  lockedJoin: boolean,
+): readonly T[] {
+  if (!lockedJoin) return plan;
   const opensBeforeMs = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES * 60_000;
-  const candidates = awaiting
-    ? plan.filter(
-        (session) => session.startsAt.getTime() - opensBeforeMs > now.getTime(),
-      )
-    : plan;
-  return nextRunning(candidates, now, closeMarginMs);
+  return plan.filter(
+    (session) => session.startsAt.getTime() - opensBeforeMs > now.getTime(),
+  );
 }
 
 /**
@@ -802,10 +815,11 @@ function sessionSummary(
       : row.plan.filter(
           (session) => session.startsAt.getTime() <= subEnd.getTime(),
         );
-  const { next, cancelledAhead } = nextSessionFor(covered, now, awaiting);
+  const lockedJoin = awaiting && hasVoiceRoom;
+  const { next, cancelledAhead } = nextSessionFor(covered, now, lockedJoin);
   // What the paid window still covers, for the winding-down line: the family
   // does not attend a cancelled session, so it cannot be their last one.
-  const running = covered.filter(
+  const running = sessionsAhead(covered, now, lockedJoin).filter(
     (session) =>
       !session.cancelled &&
       session.endsAt.getTime() + closeMarginMs > now.getTime(),
@@ -839,7 +853,8 @@ function sessionSummary(
     voiceRoom: product.voiceRoom,
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
-    // there is nothing to navigate to. The card renders no Join in either case.
+    // there is nothing to navigate to. An unplaced seat's Join is never lit,
+    // so the href is never followed.
     voiceHref:
       hasVoiceRoom && row.groupId !== null
         ? ROUTES.voice.groupSession(row.groupId)
