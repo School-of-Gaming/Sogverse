@@ -153,19 +153,6 @@ describe("GET /api/guides/[id]/download", () => {
     expect(mockAdminDownload).toHaveBeenCalledWith(fileRow("en").storage_path);
   });
 
-  it("keeps a name that would break the header out of its plain filename", async () => {
-    mockRpc.mockResolvedValue({
-      data: [fileRow("fi", 'Vanhempien "opas"; 2026.pdf'), fileRow("en")],
-      error: null,
-    });
-
-    const response = await GET(...request(GUIDE_ID, "?locale=fi"));
-
-    expect(response.headers.get("Content-Disposition")).toBe(
-      `attachment; filename="Vanhempien _opas__ 2026.pdf"; filename*=UTF-8''Vanhempien%20%22opas%22%3B%202026.pdf`,
-    );
-  });
-
   it("answers an object the bucket cannot read as a fault, not a refusal", async () => {
     mockAdminDownload.mockResolvedValue({ data: null, error: { message: "Object not found" } });
 

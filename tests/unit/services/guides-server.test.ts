@@ -10,6 +10,7 @@ import {
   GUIDE_UPLOAD_MAX_BYTES,
 } from "@/services/guides/guides.contracts";
 import {
+  guideContentDisposition,
   guideFileName,
   guideFileRefusal,
   storeGuideFile,
@@ -123,6 +124,36 @@ describe("guideFileName", () => {
     expect(guideFileName("a/b/opas.pdf")).toBe("opas.pdf");
     expect(guideFileName("   ")).toBe("guide.pdf");
     expect(guideFileName(`${"x".repeat(300)}.pdf`)).toHaveLength(255);
+  });
+});
+
+describe("guideContentDisposition", () => {
+  it("names a plain file the same in both forms", () => {
+    expect(guideContentDisposition("attachment", "guide-fi.pdf")).toBe(
+      `attachment; filename="guide-fi.pdf"; filename*=UTF-8''guide-fi.pdf`,
+    );
+  });
+
+  it("keeps a name that would break the header out of its plain filename", () => {
+    expect(guideContentDisposition("attachment", 'Vanhempien "opas"; 2026.pdf')).toBe(
+      `attachment; filename="Vanhempien _opas__ 2026.pdf"; filename*=UTF-8''Vanhempien%20%22opas%22%3B%202026.pdf`,
+    );
+  });
+
+  it("encodes every character RFC 5987 reserves, an apostrophe included, for an inline file", () => {
+    expect(guideContentDisposition("inline", "Föräldrarnas guide (Kyle's)!*.pdf")).toBe(
+      `inline; filename="F_r_ldrarnas guide _Kyle_s___.pdf"; ` +
+        `filename*=UTF-8''F%C3%B6r%C3%A4ldrarnas%20guide%20%28Kyle%27s%29%21%2A.pdf`,
+    );
+  });
+
+  it("ends both forms in .pdf whatever the stored name", () => {
+    expect(guideContentDisposition("inline", "opas")).toBe(
+      `inline; filename="opas.pdf"; filename*=UTF-8''opas.pdf`,
+    );
+    expect(guideContentDisposition("attachment", "OPAS.PDF")).toBe(
+      `attachment; filename="OPAS.PDF"; filename*=UTF-8''OPAS.PDF`,
+    );
   });
 });
 

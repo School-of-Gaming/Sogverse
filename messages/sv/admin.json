@@ -1947,7 +1947,7 @@
       "label": "Vad administratörerna kallar den i sina listor. Läsarna ser det aldrig: landningssidans avsnitt säger vad guiden är.",
       "language": "Språket PDF:en är skriven på. Filer på andra språk läggs till på guidens sida.",
       "file": "En PDF på högst {limit}.",
-      "files": "En PDF per språk. En läsare laddar ner filen på sitt språk, annars den engelska, annars den som laddades upp först."
+      "files": "En PDF per språk. En läsare laddar ner filen på sitt språk, annars den engelska, annars den på det språk som kommer först i webbplatsens språkordning och har en fil."
     },
     "file": {
       "uploaded": "Uppladdad {date}",

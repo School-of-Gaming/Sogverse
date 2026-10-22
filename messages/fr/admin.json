@@ -1947,7 +1947,7 @@
       "label": "Le nom que les administrateurs lui donnent dans leurs listes. Les lecteurs ne le voient jamais : la section de la page d’atterrissage dit ce qu’est le guide.",
       "language": "La langue dans laquelle le PDF est écrit. Les fichiers dans d’autres langues s’ajoutent sur la page du guide.",
       "file": "Un PDF de {limit} au plus.",
-      "files": "Un PDF par langue. Un lecteur télécharge le fichier dans sa langue, sinon l’anglais, sinon le premier envoyé."
+      "files": "Un PDF par langue. Un lecteur télécharge le fichier dans sa langue, sinon l’anglais, sinon celui de la première langue qui en a un, dans l’ordre des langues du site."
     },
     "file": {
       "uploaded": "Envoyé le {date}",

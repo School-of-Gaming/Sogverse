@@ -321,7 +321,7 @@ describe("landing page guides", () => {
       expect((await reader.getGuideDownload(g[0], "sv"))?.locale).toBe("en");
       // A draft's guide is nobody's but an admin's.
       expect(await reader.getGuideDownload(g[1], "fi")).toBeNull();
-      // Only Finnish: the first uploaded, whatever the reader's language.
+      // Only Finnish: the only language with a file, whatever the reader's language.
       expect((await new GuidesService(adminAuth).getGuideDownload(g[1], "sv"))?.locale).toBe("fi");
     });
   });

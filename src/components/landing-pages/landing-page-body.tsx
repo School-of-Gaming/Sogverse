@@ -41,7 +41,7 @@ export function guidesById(guides: readonly PublicGuide[]): Record<string, Publi
 }
 
 /**
- * **A landing page's body:its sections in order, each through its type's
+ * **A landing page's body: its sections in order, each through its type's
  * renderer.** The one body both the live page and the admin's preview render,
  * so the preview is the page as a reader would meet it.
  *

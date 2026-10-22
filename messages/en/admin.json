@@ -1947,7 +1947,7 @@
       "label": "What admins call it in their lists. Readers never see it: the landing page section says what the guide is.",
       "language": "The language the PDF is written in. Files in other languages are added on the guide’s page.",
       "file": "A PDF of {limit} at most.",
-      "files": "One PDF per language. A reader downloads the file in their language, else the English one, else the first uploaded."
+      "files": "One PDF per language. A reader downloads the file in their language, else the English one, else the one in the earliest language that has a file, in the site's language order."
     },
     "file": {
       "uploaded": "Uploaded {date}",

@@ -1947,7 +1947,7 @@
       "label": "Nimi, jolla ylläpitäjät tuntevat sen listoissaan. Lukijat eivät näe sitä: laskeutumissivun osio kertoo, mikä opas on.",
       "language": "Kieli, jolla PDF on kirjoitettu. Muunkieliset tiedostot lisätään oppaan sivulla.",
       "file": "PDF, enintään {limit}.",
-      "files": "Yksi PDF kieltä kohden. Lukija lataa oman kielensä tiedoston, muuten englanninkielisen, muuten ensimmäisenä ladatun."
+      "files": "Yksi PDF kieltä kohden. Lukija lataa oman kielensä tiedoston, muuten englanninkielisen, muuten sen, joka on sivuston kielijärjestyksessä ensimmäisellä kielellä, jolla tiedosto on."
     },
     "file": {
       "uploaded": "Ladattu {date}",

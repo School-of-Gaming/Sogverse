@@ -48,7 +48,7 @@ function megabytes(bytes: number): string {
 }
 
 const GUIDE =
-  "A guide is a PDF School of Gaming hands out from its landing pages — a parents' guide, a school's information pack — kept in Sogverse's guide store as one file per language plus a label. The label names it in admin lists only and is never shown to readers: the landing page's guide section carries the heading and words readers see. A signed-in reader downloads the file in their own language, else English, else the first uploaded; a signed-out reader is asked to create an account first.";
+  "A guide is a PDF School of Gaming hands out from its landing pages — a parents' guide, a school's information pack — kept in Sogverse's guide store as one file per language plus a label. The label names it in admin lists only and is never shown to readers: the landing page's guide section carries the heading and words readers see. A signed-in reader downloads the file in their own language, else English, else the earliest language that has one, in Sogverse's language order; a signed-out reader is asked to create an account first.";
 
 const FLOW =
   "To offer a guide on a landing page: find it with list_guides, or upload it with open_guide_uploader; then add a guide section naming its guideId to the page with save_landing_page_structure, and write the section's words with save_landing_page_text. Readers see the section after the next publish.";
@@ -221,7 +221,7 @@ export function registerGuideTools(server: McpServer): void {
     {
       title: "Remove a guide's language file",
       description:
-        "Remove one language's file of a guide; the others stay. A guide keeps at least one file, so its last one cannot be removed. Readers of that language then download the English file, else the first uploaded, wherever the guide is offered — live landing pages included, at once. Read get_guide first and tell the admin where it is offered.",
+        "Remove one language's file of a guide; the others stay. A guide keeps at least one file, so its last one cannot be removed. Readers of that language then download the English file, else the earliest language that has one, in Sogverse's language order, wherever the guide is offered — live landing pages included, at once. Read get_guide first and tell the admin where it is offered.",
       inputSchema: z.object({ guideId, locale }),
       annotations: {
         readOnlyHint: false,

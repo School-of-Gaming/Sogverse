@@ -2,23 +2,15 @@ import { z } from "zod";
 import { ApiError } from "@/lib/api/api-error";
 import { defineRoute } from "@/lib/api/define-route";
 import { GUIDES_BUCKET, guideLocale } from "@/services/guides/guides.contracts";
-
-/**
- * A `Content-Disposition` for the file's own name: an ASCII fallback with
- * anything that could end the quoted value replaced, beside the exact name
- * percent-encoded for every browser that reads `filename*`.
- */
-function inlineDisposition(fileName: string): string {
-  const ascii = fileName.replace(/[^\x20-\x7e]|["\\;]/g, "_");
-  return `inline; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(fileName)}`;
-}
+import { guideContentDisposition } from "@/services/guides/guides.server";
 
 /**
  * GET /api/admin/guides/[id]/file?locale=<locale> — one guide's file in
  * exactly that language, for an admin checking what they uploaded.
  *
  * **Exact, never the reader's fallback.** The download readers use picks the
- * reader's language, else English, else the first uploaded; an admin opening
+ * reader's language, else English, else the earliest language with a file in
+ * `SUPPORTED_LOCALES` order; an admin opening
  * the Swedish tab wants the Swedish file, and a missing one is a 404 rather
  * than another language's bytes.
  *
@@ -64,7 +56,7 @@ export const GET = defineRoute({
     return new Response(data, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": inlineDisposition(file.file_name),
+        "Content-Disposition": guideContentDisposition("inline", file.file_name),
         "Cache-Control": "private, no-store",
       },
     });

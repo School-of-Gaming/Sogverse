@@ -5,6 +5,7 @@ import { defineRoute } from "@/lib/api/define-route";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { GUIDES_BUCKET } from "@/services/guides/guides.contracts";
+import { guideContentDisposition } from "@/services/guides/guides.server";
 import { GuidesService } from "@/services/guides/guides.service";
 
 /**
@@ -57,7 +58,7 @@ export const GET = defineRoute({
       headers: {
         // The store admits only bytes that start as a PDF.
         "Content-Type": "application/pdf",
-        "Content-Disposition": guideContentDisposition(file.fileName),
+        "Content-Disposition": guideContentDisposition("attachment", file.fileName),
         // Who may have it is decided per request, and a browser cache is keyed
         // to the browser profile, which a family shares across an account
         // switch — so nothing is kept anywhere.
@@ -66,24 +67,3 @@ export const GET = defineRoute({
     });
   },
 });
-
-/**
- * The download's `Content-Disposition`: an ASCII `filename` any browser reads,
- * and the name as uploaded in `filename*` for the browsers that read that.
- *
- * The stored name is whatever the admin's file was called, so it may carry a
- * quote, a semicolon or a non-ASCII byte, any of which in a plain `filename`
- * is a header a browser may read as two parameters. The fallback turns every
- * such character into an underscore, and both forms always end in `.pdf`.
- */
-function guideContentDisposition(fileName: string): string {
-  const name = /\.pdf$/i.test(fileName) ? fileName : `${fileName}.pdf`;
-  const ascii = name.replace(/[^A-Za-z0-9._ -]/g, "_");
-  // RFC 5987: encodeURIComponent leaves `'()*!` bare, and `'` delimits the
-  // extended value's parts.
-  const encoded = encodeURIComponent(name).replace(
-    /['()*!]/g,
-    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
-  );
-  return `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
-}

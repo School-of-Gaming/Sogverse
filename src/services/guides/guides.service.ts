@@ -118,7 +118,7 @@ export class GuidesService {
   /**
    * The file of one guide this caller downloads in `locale`, or null when
    * they may download none of it: the reader's language, else English, else
-   * the first uploaded, picked by the app's one picker from every file the
+   * the earliest language with a file in `SUPPORTED_LOCALES` order, picked by the app's one picker from every file the
    * database lets the caller have. The database decides who may: any signed-in
    * account for a guide a live page places, an admin for any guide. Run it on
    * the reader's own session — never the service role, which the database

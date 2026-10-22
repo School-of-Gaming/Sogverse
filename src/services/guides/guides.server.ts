@@ -100,6 +100,29 @@ export function guideFileName(provided: string): string {
 }
 
 /**
+ * The `Content-Disposition` a guide's file is served with — `attachment` for a
+ * reader's download, `inline` for an admin opening it in a tab: an ASCII
+ * `filename` any browser reads, and the name as uploaded in `filename*` for
+ * the browsers that read that.
+ *
+ * The stored name is whatever the admin's file was called, so it may carry a
+ * quote, a semicolon or a non-ASCII byte, any of which in a plain `filename`
+ * is a header a browser may read as two parameters. The fallback turns every
+ * such character into an underscore, and both forms always end in `.pdf`.
+ */
+export function guideContentDisposition(type: "attachment" | "inline", fileName: string): string {
+  const name = /\.pdf$/i.test(fileName) ? fileName : `${fileName}.pdf`;
+  const ascii = name.replace(/[^A-Za-z0-9._ -]/g, "_");
+  // RFC 5987: encodeURIComponent leaves `'()*!` bare, and `'` delimits the
+  // extended value's parts.
+  const encoded = encodeURIComponent(name).replace(
+    /['()*!]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+  return `${type}; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+}
+
+/**
  * Store one language's file of a guide, creating the guide when the target
  * is a new one. Every upload is a fresh object at
  * `<guide id>/<locale>/<random uuid>.pdf`, so a replaced file never serves its
