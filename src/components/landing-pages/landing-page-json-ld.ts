@@ -50,7 +50,7 @@ export function landingPageJsonLd({
   const parts = landingStructuredParts(page.sections, page.sectionTexts);
 
   const picture = landingLeadPicture(page);
-  const image = picture === null ? null : catalogueImageSrc("landing_image", picture.path);
+  const image = picture === null ? null : catalogueImageSrc(picture.purpose, picture.path);
   const questions = parts.flatMap((part) =>
     part.kind === "question"
       ? [

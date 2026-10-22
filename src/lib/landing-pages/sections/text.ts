@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LANDING_PICTURE_SHAPES } from "../picture-shapes";
 import {
   isWritten,
   landingId,
@@ -43,4 +44,5 @@ export const textSection = {
       : []),
   ],
   markdownFields: [{ field: "body", useCase: "landing" }],
+  pictureShapes: LANDING_PICTURE_SHAPES,
 } as const satisfies LandingSectionDefinition<"text", typeof section, typeof text>;

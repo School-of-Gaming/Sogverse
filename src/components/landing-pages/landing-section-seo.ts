@@ -11,7 +11,10 @@ import {
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
-import type { LocalizedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
+import type {
+  LandingPicture,
+  LocalizedLandingPage,
+} from "@/services/landing-pages/landing-pages.contracts";
 import { markdownToPlainText } from "./markdown-plain-text";
 
 /**
@@ -137,20 +140,21 @@ export function landingStructuredParts(
 
 /**
  * The picture a live page leads with — the hero's — as its stored path and
- * alt text, or null when the hero has none. The page's structured data and
+ * purpose and its alt text, or null when the hero has none. A hero's picture
+ * is wide, which the database keeps true. The page's structured data and
  * its link preview both name this one picture, so they cannot disagree. A
  * picture with no path is treated as none: the database derives the paths
  * and unlinks a removed picture, so it should not arise, and naming no
  * picture is the safe answer if it does.
  */
 export function landingLeadPicture(
-  page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "imagePaths">,
-): { path: string; alt: string | null } | null {
+  page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "pictures">,
+): (LandingPicture & { alt: string | null }) | null {
   const part = landingStructuredParts(page.sections, page.sectionTexts).find(
     (candidate) => candidate.kind === "image",
   );
-  if (part === undefined || !Object.hasOwn(page.imagePaths, part.imageId)) return null;
-  return { path: page.imagePaths[part.imageId], alt: part.alt };
+  if (part === undefined || !Object.hasOwn(page.pictures, part.imageId)) return null;
+  return { ...page.pictures[part.imageId], alt: part.alt };
 }
 
 /**
@@ -159,7 +163,7 @@ export function landingLeadPicture(
  * picture `landingLeadPicture` names.
  */
 export function landingLeadPicturePath(
-  page: Pick<LocalizedLandingPage, "sections" | "imagePaths">,
+  page: Pick<LocalizedLandingPage, "sections" | "pictures">,
 ): string | null {
   return landingLeadPicture({ ...page, sectionTexts: {} })?.path ?? null;
 }

@@ -91,7 +91,7 @@ export default async function LandingPagePreviewPage({
       />
       <LandingPageBody
         sections={draft.sections}
-        imagePaths={draft.imagePaths}
+        pictures={draft.pictures}
         testimonials={page.testimonials}
         guideIds={guideIds}
         sectionTexts={version.sectionTexts}

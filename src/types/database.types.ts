@@ -1686,24 +1686,24 @@ export type Database = {
       landing_page_publications: {
         Row: {
           first_published_at: string
-          image_paths: Json
           page_id: string
+          pictures: Json
           published_at: string
           sections: Json
           sections_md5: string | null
         }
         Insert: {
           first_published_at: string
-          image_paths?: Json
           page_id: string
+          pictures?: Json
           published_at: string
           sections: Json
           sections_md5?: string | null
         }
         Update: {
           first_published_at?: string
-          image_paths?: Json
           page_id?: string
+          pictures?: Json
           published_at?: string
           sections?: Json
           sections_md5?: string | null
@@ -1764,9 +1764,9 @@ export type Database = {
           author_id: string | null
           created_at: string
           id: string
-          image_paths: Json
           last_saved_by: string | null
           last_saved_via: string | null
+          pictures: Json
           sections: Json
           sections_md5: string | null
           updated_at: string
@@ -1775,9 +1775,9 @@ export type Database = {
           author_id?: string | null
           created_at?: string
           id?: string
-          image_paths?: Json
           last_saved_by?: string | null
           last_saved_via?: string | null
+          pictures?: Json
           sections: Json
           sections_md5?: string | null
           updated_at?: string
@@ -1786,9 +1786,9 @@ export type Database = {
           author_id?: string | null
           created_at?: string
           id?: string
-          image_paths?: Json
           last_saved_by?: string | null
           last_saved_via?: string | null
+          pictures?: Json
           sections?: Json
           sections_md5?: string | null
           updated_at?: string
@@ -5696,6 +5696,8 @@ export type Database = {
         | "product"
         | "library_cover"
         | "landing_image"
+        | "landing_square_image"
+        | "landing_portrait_image"
         | "spotlight_image"
       chat_channel_type: "group_session"
       effective_product_status: "pending" | "running" | "completed"
@@ -5875,6 +5877,8 @@ export const Constants = {
         "product",
         "library_cover",
         "landing_image",
+        "landing_square_image",
+        "landing_portrait_image",
         "spotlight_image",
       ],
       chat_channel_type: ["group_session"],

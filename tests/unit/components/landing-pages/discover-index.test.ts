@@ -38,7 +38,7 @@ const ESPOO_PAGE: PublishedLandingPageSummary = {
   firstPublishedAt: "2026-09-02T08:00:00Z",
   publishedAt: "2026-10-01T08:00:00Z",
   sections: [{ id: HERO, type: "hero", imageId: PICTURE }],
-  imagePaths: { [PICTURE]: "pictures/espoo.jpg" },
+  pictures: { [PICTURE]: { path: "pictures/espoo.jpg", purpose: "landing_image" } },
   versions: [
     { locale: "en", title: "Clubs in Espoo", summary: "For Espoo families.", slug: "clubs-espoo" },
     { locale: "fi", title: "Kerhot Espoossa", summary: "Espoon perheille.", slug: "kerhot-espoo" },
@@ -51,7 +51,7 @@ const ESBO_PAGE: PublishedLandingPageSummary = {
   firstPublishedAt: "2026-09-01T08:00:00Z",
   publishedAt: "2026-09-01T08:00:00Z",
   sections: [{ id: HERO, type: "hero" }],
-  imagePaths: {},
+  pictures: {},
   versions: [
     { locale: "sv", title: "Klubbar i Esbo", summary: "För familjer i Esbo.", slug: "klubbar-esbo" },
   ],

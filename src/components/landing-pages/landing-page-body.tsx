@@ -2,10 +2,12 @@ import { Fragment } from "react";
 import type { ProductRailPrefetch } from "@/components/public/products/product-rail-selection";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
+import { landingPictureShapeOf } from "@/lib/landing-pages/picture-shapes";
 import type {
   LandingSection,
   LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
+import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
@@ -13,8 +15,8 @@ import { renderLandingSection, type LandingRenderContext } from "./landing-secti
 export interface LandingPageBodyProps {
   /** The structure, in page order: the hero first. */
   sections: readonly LandingSection[];
-  /** Each picture's path in the `landing-images` bucket, by catalogue entry id. */
-  imagePaths: Readonly<Record<string, string>>;
+  /** Each picture's path and purpose, by catalogue entry id. */
+  pictures: Readonly<LandingPictures>;
   /**
    * The current words of each testimonial the structure places, by id — read
    * from the store per request, never from the copy, so an edit shows
@@ -57,7 +59,7 @@ export interface LandingPageBodyProps {
  */
 export function LandingPageBody({
   sections,
-  imagePaths,
+  pictures,
   testimonials,
   guideIds,
   sectionTexts,
@@ -73,7 +75,12 @@ export function LandingPageBody({
     textLocale,
     pageId,
     preview,
-    imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
+    picture: (imageId) => {
+      if (!Object.hasOwn(pictures, imageId)) return null;
+      const { path, purpose } = pictures[imageId];
+      const src = catalogueImageSrc(purpose, path);
+      return src === null ? null : { src, shape: landingPictureShapeOf(purpose) };
+    },
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,
     hasGuide: (id) => guides.has(id),

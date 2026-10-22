@@ -17,11 +17,16 @@ import { LandingPageService } from "@/services/landing-pages/landing-pages.servi
 import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contracts";
 import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
+  LANDING_SECTIONS,
   buttonTarget,
   LANDING_SECTION_TYPES,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
+import {
+  LANDING_PICTURE_SHAPES,
+  type LandingPictureShape,
+} from "@/lib/landing-pages/picture-shapes";
 import { asObject } from "../helpers/json";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
 import { everySection, requiredTextCases } from "../helpers/landing-required-text-cases";
@@ -34,18 +39,19 @@ import { everySection, requiredTextCases } from "../helpers/landing-required-tex
  * and one-language, a language's removal and the clone — publish and unpublish; the stored, per-language slugs
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
- * removal (a trigger) reaching both copies; the record of who last saved
- * and through which AI app; the SQL half of the required-text rule held
- * equal to the TypeScript half; and the products a products section picks —
- * an id no product has refused at save, and the admin read saying which picks
- * the listing shows, a municipality club included.
+ * removal (a trigger) reaching both copies; the shapes each section's
+ * pictures may be, held equal to the section registry's; the record of who
+ * last saved and through which AI app; the SQL half of the required-text rule
+ * held equal to the TypeScript half; and the products a products section
+ * picks — an id no product has refused at save, and the admin read saying
+ * which picks the listing shows, a municipality club included.
  *
  * No landing page table carries a write grant for any Data API role, so there
  * is no write-IDOR case to make: a direct write is refused at the grant, which
  * is asserted here once per table. Each wrong role is tried on every RPC with
  * a payload an admin would succeed with.
  *
- * Fixture UUIDs 834-83f and 913-914 (see the allocation registry in product-helpers.ts).
+ * Fixture UUIDs 834-83f and 913-917 (see the allocation registry in product-helpers.ts).
  * Every assertion is scoped to this file's own rows.
  */
 
@@ -64,7 +70,11 @@ const PRODUCT_PICTURE = "00000000-0000-0000-0000-000000000839";
 /** Two pictures removed during the run. */
 const PIC_DOOMED = "00000000-0000-0000-0000-00000000083a";
 const PIC_DOOMED_TOO = "00000000-0000-0000-0000-00000000083b";
-const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO];
+/** Two square landing pictures and a portrait one; the second square is removed during the run. */
+const SQUARE = "00000000-0000-0000-0000-000000000916";
+const SQUARE_TOO = "00000000-0000-0000-0000-000000000917";
+const PORTRAIT = "00000000-0000-0000-0000-000000000918";
+const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO, SQUARE, SQUARE_TOO, PORTRAIT];
 
 /** Products a products section picks: one the shop lists, one unlisted, one ended. */
 const LISTED = "00000000-0000-0000-0000-00000000083c";
@@ -91,10 +101,16 @@ const ENTRY_ROWS: CatalogueImageInsert[] = [
   { id: PRODUCT_PICTURE, label: "Landing fixture product", sha256: hex("1a2c0839"), path: `${hex("1a2c0839")}.jpg`, purpose: "product" },
   { id: PIC_DOOMED, label: "Landing fixture doomed", sha256: hex("1a2c083a"), path: `${hex("1a2c083a")}.jpg`, purpose: "landing_image" },
   { id: PIC_DOOMED_TOO, label: "Landing fixture doomed too", sha256: hex("1a2c083b"), path: `${hex("1a2c083b")}.jpg`, purpose: "landing_image" },
+  { id: SQUARE, label: "Landing fixture square", sha256: hex("1a2c0916"), path: `${hex("1a2c0916")}.jpg`, purpose: "landing_square_image" },
+  { id: SQUARE_TOO, label: "Landing fixture square too", sha256: hex("1a2c0917"), path: `${hex("1a2c0917")}.jpg`, purpose: "landing_square_image" },
+  { id: PORTRAIT, label: "Landing fixture portrait", sha256: hex("1a2c0918"), path: `${hex("1a2c0918")}.jpg`, purpose: "landing_portrait_image" },
 ];
 
-const pathOf = (entry: string): string | undefined =>
-  ENTRY_ROWS.find((row) => row.id === entry)?.path;
+/** An entry as a copy's derived `pictures` holds it. */
+const pictured = (entry: string) => {
+  const row = ENTRY_ROWS.find((each) => each.id === entry);
+  return { path: row?.path, purpose: row?.purpose };
+};
 
 /** The fixture structure: a hero with a picture, and a call to action. */
 function structure(heroImage: string | null = PIC_A): LandingSection[] {
@@ -322,12 +338,12 @@ describe("landing pages", () => {
 
       const { data: row } = await admin
         .from("landing_pages")
-        .select("author_id, sections, image_paths")
+        .select("author_id, sections, pictures")
         .eq("id", id)
         .single();
       expect(row?.author_id).toBe(TEST_IDS.ADMIN);
       expect(row?.sections).toEqual(structure(null));
-      expect(row?.image_paths).toEqual({});
+      expect(row?.pictures).toEqual({});
       const [fi] = await draftVersions(id);
       expect(fi.slug).toBe("fixture-pelikerhot-aanekoskella");
       expect(fi.is_complete).toBe(false);
@@ -736,7 +752,7 @@ describe("landing pages", () => {
       const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
       expect(live?.versions.map((v) => v.locale)).toEqual(["en"]);
       expect(live?.sections).toEqual(structure());
-      expect(live?.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
+      expect(live?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
       expect(live?.versions[0].sectionTexts).toEqual(words("en"));
 
       const bySlug = await new LandingPageService(anon).getPublishedPageBySlug("en", SLUG_A);
@@ -1032,8 +1048,8 @@ describe("landing pages", () => {
 
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections[0]).toEqual({ id: HERO, type: "hero", imageId: PIC_B });
-      expect(view?.draft.imagePaths).toEqual({ [PIC_B]: pathOf(PIC_B) });
-      expect(view?.publication?.imagePaths).toEqual({ [PIC_B]: pathOf(PIC_B) });
+      expect(view?.draft.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
+      expect(view?.publication?.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
       expect(view?.hasUnpublishedChanges).toBe(false);
     });
 
@@ -1044,8 +1060,8 @@ describe("landing pages", () => {
         p_to: PRODUCT_PICTURE,
       });
       expect(error?.code).toBe("23514");
-      const { data } = await admin.from("landing_pages").select("image_paths").eq("id", PAGE_A).single();
-      expect(data?.image_paths).toEqual({ [PIC_A]: pathOf(PIC_A) });
+      const { data } = await admin.from("landing_pages").select("pictures").eq("id", PAGE_A).single();
+      expect(data?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
     });
 
     it("a removal unlinks the picture from both copies, dropping an image section it leaves empty", async () => {
@@ -1074,9 +1090,9 @@ describe("landing pages", () => {
 
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections).toEqual(structure(null));
-      expect(view?.draft.imagePaths).toEqual({});
+      expect(view?.draft.pictures).toEqual({});
       expect(view?.publication?.sections).toEqual(structure(null));
-      expect(view?.publication?.imagePaths).toEqual({});
+      expect(view?.publication?.pictures).toEqual({});
       expect(Object.keys(view?.publication?.versions[0].sectionTexts ?? {})).toEqual(
         expect.arrayContaining([HERO, CTA]),
       );
@@ -1104,10 +1120,179 @@ describe("landing pages", () => {
         type: "image",
         images: [{ id: SHOT_2, imageId: PIC_B }],
       });
-      expect(view?.draft.imagePaths).toEqual({
-        [PIC_A]: pathOf(PIC_A),
-        [PIC_B]: pathOf(PIC_B),
+      expect(view?.draft.pictures).toEqual({
+        [PIC_A]: pictured(PIC_A),
+        [PIC_B]: pictured(PIC_B),
       });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Picture shapes
+  // -------------------------------------------------------------------------
+
+  describe("picture shapes", () => {
+    /** One landing picture of each shape. */
+    const OF_SHAPE: Record<LandingPictureShape, string> = { wide: PIC_A, square: SQUARE, portrait: PORTRAIT };
+    /** The guide a guide section places, which a save refuses unless it exists. */
+    const SHAPES_GUIDE = "00000000-0000-0000-0000-000000000919";
+
+    beforeAll(async () => {
+      const guide = await admin.from("guides").insert({ id: SHAPES_GUIDE, label: "Picture shapes fixture guide" });
+      expect(guide.error).toBeNull();
+      const file = await admin.from("guide_files").insert({
+        guide_id: SHAPES_GUIDE,
+        locale: "en",
+        storage_path: `${SHAPES_GUIDE}/en/00000000-0000-4000-8000-000000000919.pdf`,
+        file_name: "shapes-fixture.pdf",
+        byte_size: 100,
+      });
+      expect(file.error).toBeNull();
+    });
+
+    afterAll(async () => {
+      await admin.from("guides").delete().eq("id", SHAPES_GUIDE);
+    });
+
+    /** The fixture structure with one more section, whose picture is `imageId`. */
+    function withPicture(type: "hero" | "text" | "image" | "guide", imageId: string): LandingSection[] {
+      const [hero, cta] = structure(null);
+      if (type === "hero") return [{ id: HERO, type: "hero", imageId }, cta];
+      if (type === "text") return [hero, { id: GALLERY, type: "text", imageSide: "start", imageId }, cta];
+      if (type === "guide") return [hero, { id: GALLERY, type: "guide", guideId: SHAPES_GUIDE, imageId }, cta];
+      return [hero, { id: GALLERY, type: "image", images: [{ id: SHOT_1, imageId }] }, cta];
+    }
+
+    // The SQL half of which shapes a section takes, held equal to the section
+    // registry's declaration: every type with a picture, with each shape.
+    const PICTURED = ["hero", "text", "image", "guide"] as const;
+    const cases = PICTURED.flatMap((type) =>
+      LANDING_PICTURE_SHAPES.map((shape) => ({
+        type,
+        shape,
+        takes: (LANDING_SECTIONS[type].pictureShapes as readonly LandingPictureShape[]).includes(shape),
+      })),
+    );
+
+    it("covers every section type that takes a picture", () => {
+      // A new pictured type fails here until `withPicture` can build one.
+      expect(new Set(LANDING_SECTION_TYPES.filter((type) => LANDING_SECTIONS[type].pictureShapes.length > 0))).toEqual(
+        new Set(PICTURED),
+      );
+    });
+
+    it.each(cases)("a $type section takes a $shape picture: $takes, as the registry declares", async ({ type, shape, takes }) => {
+      await reseed();
+      const { error } = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: withPicture(type, OF_SHAPE[shape]),
+      });
+      if (takes) {
+        expect(error).toBeNull();
+      } else {
+        expect(error?.code).toBe("23514");
+        expect(error?.message).toContain("must be wide 16:9");
+      }
+    });
+
+    it("derives each picture's purpose beside its path into both copies", async () => {
+      await reseed();
+      await saveWhole(PAGE_A, {
+        sections: [
+          ...structure(),
+          { id: GALLERY, type: "image", images: [{ id: SHOT_1, imageId: PORTRAIT }] },
+        ],
+        versions: [
+          {
+            ...version("en", SLUG_A),
+            sectionTexts: { ...words("en"), [GALLERY]: { alts: { [SHOT_1]: "Portrait" } } },
+          },
+        ],
+      });
+      await service.publishPage(PAGE_A);
+      const view = await service.getAdminPage(PAGE_A);
+      const expected = { [PIC_A]: pictured(PIC_A), [PORTRAIT]: pictured(PORTRAIT) };
+      expect(view?.draft.pictures).toEqual(expected);
+      expect(view?.publication?.pictures).toEqual(expected);
+      expect(view?.publication?.pictures[PORTRAIT].purpose).toBe("landing_portrait_image");
+    });
+
+    it("refuses an image section mixing shapes, naming both, and saves nothing", async () => {
+      await reseed();
+      const { error } = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: [
+          ...structure(),
+          {
+            id: GALLERY,
+            type: "image",
+            images: [
+              { id: SHOT_1, imageId: SQUARE },
+              { id: SHOT_2, imageId: PIC_B },
+            ],
+          },
+        ],
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toContain("must all be one shape");
+      expect(error?.message).toContain("a square 1:1 picture beside a wide 16:9 one");
+      const view = await service.getAdminPage(PAGE_A);
+      expect(view?.draft.sections).toEqual(structure());
+    });
+
+    it("takes an image section of one shape that is not wide", async () => {
+      await reseed();
+      const gallery: LandingSection = {
+        id: GALLERY,
+        type: "image",
+        images: [
+          { id: SHOT_1, imageId: SQUARE },
+          { id: SHOT_2, imageId: SQUARE_TOO },
+        ],
+      };
+      await service.saveStructure(PAGE_A, [...structure(), gallery]);
+      const view = await service.getAdminPage(PAGE_A);
+      expect(view?.draft.sections[2]).toEqual(gallery);
+    });
+
+    it("refuses a replace that would change a picture's shape under its section, moving nothing", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, [
+        ...structure(),
+        {
+          id: GALLERY,
+          type: "image",
+          images: [
+            { id: SHOT_1, imageId: SQUARE },
+            { id: SHOT_2, imageId: SQUARE_TOO },
+          ],
+        },
+      ]);
+      // The catalogue's replace hands the repoint an entry of the old one's
+      // own purpose; another shape is refused by the section it would land in.
+      const mixed = await adminAuth.rpc("repoint_landing_images", { p_from: SQUARE, p_to: PIC_B });
+      expect(mixed.error?.code).toBe("23514");
+      const hero = await adminAuth.rpc("repoint_landing_images", { p_from: PIC_A, p_to: SQUARE });
+      expect(hero.error?.code).toBe("23514");
+
+      const same = await adminAuth.rpc("repoint_landing_images", { p_from: SQUARE, p_to: SQUARE_TOO });
+      expect(same.error).toBeNull();
+      const view = await service.getAdminPage(PAGE_A);
+      expect(view?.draft.sections[0]).toEqual({ id: HERO, type: "hero", imageId: PIC_A });
+      expect(view?.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [SQUARE_TOO]: pictured(SQUARE_TOO) });
+    });
+
+    it("a removal unlinks a picture of any landing shape", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, [
+        ...structure(),
+        { id: GALLERY, type: "text", imageSide: "end", imageId: SQUARE_TOO },
+      ]);
+      const removed = await adminAuth.from("catalogue_images").delete().eq("id", SQUARE_TOO);
+      expect(removed.error).toBeNull();
+      const view = await service.getAdminPage(PAGE_A);
+      expect(view?.draft.sections[2]).toEqual({ id: GALLERY, type: "text", imageSide: "end" });
+      expect(view?.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
     });
   });
 
@@ -1272,7 +1457,7 @@ describe("landing pages", () => {
     it("carries the pictures, their paths derived by the database", async () => {
       const source = await richSource();
       const clone = await cloneOf(source.draft);
-      expect(clone.draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
+      expect(clone.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
     });
 
     it("marks each title in its own language and derives its slug from the new title", async () => {

@@ -76,7 +76,7 @@ function renderSection({
     <NextIntlClientProvider locale={locale} messages={locale === "fi" ? fi : en}>
       <LandingPageBody
         sections={sections(arrangement, ids)}
-        imagePaths={{}}
+        pictures={{}}
         testimonials={store}
         guideIds={[]}
         sectionTexts={{ [HERO]: { headline: "Quotes" }, ...texts }}

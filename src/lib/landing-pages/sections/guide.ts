@@ -9,8 +9,8 @@ import { isWritten, landingId, plainText, type LandingSectionDefinition } from "
  * the same guide in every language, and each reader downloads its file in
  * their own language by the reader fallback, independent of the page version
  * shown. Whether the id is a guide at all is the database's to check when the
- * structure is saved. The picture is a catalogue entry like a hero's, and the
- * catalogue's replace and removal reach it the same way.
+ * structure is saved. The picture is a catalogue entry like a hero's, wide
+ * only, and the catalogue's replace and removal reach it the same way.
  *
  * **Its words are a required heading**, with an optional eyebrow and
  * description, and the picture's alt text, required when it has one. The SQL
@@ -45,4 +45,5 @@ export const guideSection = {
     ...(block.imageId !== undefined && !isWritten(words.imageAlt) ? ["imageAlt"] : []),
   ],
   markdownFields: [],
+  pictureShapes: ["wide"],
 } as const satisfies LandingSectionDefinition<"guide", typeof section, typeof text>;

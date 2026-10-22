@@ -1055,7 +1055,7 @@
         "landingImage": {
           "change": "Byt bild",
           "remove": "Ta bort bild",
-          "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till 16:9-ramen och den läggs till och används på den här landningssidan.",
+          "dropPrompt": "Släpp en fil här, eller välj en, så beskär du den till sin ram och den läggs till och används på den här landningssidan.",
           "outcomeAdded": "Tillagd i biblioteket och vald för den här landningssidan.",
           "outcomeExisting": "Finns redan i biblioteket — vald för den här landningssidan."
         },

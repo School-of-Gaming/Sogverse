@@ -293,7 +293,6 @@ export function registerGuideTools(server: McpServer): void {
                 : `A new ${language} file for “${name}”, replacing ${replaces.fileName}`,
             maxBytes: GUIDE_MCP_UPLOAD_MAX_BYTES,
             tooLarge: `The uploader here takes a PDF of at most ${megabytes(GUIDE_MCP_UPLOAD_MAX_BYTES)}. Upload this one on ${GUIDES_TAB}, which takes up to ${megabytes(GUIDE_UPLOAD_MAX_BYTES)}, or export it smaller with Canva's "Compress file" or Acrobat's "Reduce file size".`,
-            uploadTool: "upload_guide",
             arguments: {
               locale: input.locale,
               ...(guide === null ? { label: name } : { guideId: guide.id }),

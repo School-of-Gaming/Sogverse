@@ -52,7 +52,7 @@ function renderPage(
       <NextIntlClientProvider locale="en" messages={{ productBrowse, richText }}>
         <LandingPageBody
           sections={sections}
-          imagePaths={{}}
+          pictures={{}}
           testimonials={{}}
           guideIds={[]}
           sectionTexts={texts}

@@ -62,7 +62,7 @@ const PAGE: PublishedLandingPage = {
     { id: STEPS, type: "steps", items: [{ id: S1 }, { id: S2 }] },
     { id: FAQ, type: "faq", items: [{ id: Q1 }, { id: Q2 }] },
   ],
-  imagePaths: { [PICTURE]: "pictures/club.jpg" },
+  pictures: { [PICTURE]: { path: "pictures/club.jpg", purpose: "landing_image" } },
   versions: [
     {
       locale: "en",
@@ -189,7 +189,7 @@ describe("landingPageMetadata", () => {
 
   it("takes the site card at the request locale when the hero has no picture", async () => {
     const metadata = await landingPageMetadata(
-      { ...PAGE, sections: [{ id: HERO, type: "hero" }], imagePaths: {} },
+      { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
       "fr",
     );
 
@@ -199,7 +199,7 @@ describe("landingPageMetadata", () => {
   });
 
   it("takes the site card when the hero's picture has no path", async () => {
-    const metadata = await landingPageMetadata({ ...PAGE, imagePaths: {} }, "en");
+    const metadata = await landingPageMetadata({ ...PAGE, pictures: {} }, "en");
 
     expect(metadata.openGraph).toMatchObject({
       images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],

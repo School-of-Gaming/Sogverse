@@ -37,4 +37,5 @@ export const ctaSection = {
     ...(isWritten(words.buttonLabel) ? [] : ["buttonLabel"]),
   ],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"cta", typeof section, typeof text>;

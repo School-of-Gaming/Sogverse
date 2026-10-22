@@ -150,7 +150,7 @@ export default async function LandingPage({ params }: PageProps) {
       />
       <LandingPageBody
         sections={shown.sections}
-        imagePaths={shown.imagePaths}
+        pictures={shown.pictures}
         testimonials={testimonials}
         guideIds={guideIds}
         sectionTexts={shown.sectionTexts}

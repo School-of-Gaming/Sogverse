@@ -91,4 +91,5 @@ export const testimonialsSection = {
   text,
   missingText: () => [],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"testimonials", typeof section, typeof text>;

@@ -322,7 +322,7 @@ import { TEST_IDS } from "./constants";
  *   834-83f        landing-pages.test.ts — 834-83b are `landing_pages` and
  *                  `catalogue_images` rows rather than products: 834 a page
  *                  seeded complete, 835 a draft, 836 an id that must NEVER
- *                  exist, and 837-83b catalogue entries — four landing
+ *                  exist, and 837-83b catalogue entries — four wide landing
  *                  pictures (two removed during the run) and one product
  *                  picture a landing page may not show. 83c-83f are the
  *                  products a products section picks: 83c listed, 83e
@@ -396,6 +396,11 @@ import { TEST_IDS } from "./constants";
  *                  fixture picks, created and deleted by that file
  *   915            landing-pages.test.ts — not a product: the guide its clone
  *                  fixture places, inserted and removed by that file
+ *   916-918        landing-pages.test.ts — not products: `catalogue_images`
+ *                  entries in the other two landing shapes, two square
+ *                  pictures (one removed during the run) and a portrait one
+ *   919            landing-pages.test.ts — not a product: the guide its picture
+ *                  shapes cases place, inserted and removed by that file
  *   920            guides.test.ts — not a product: a guide id that must NEVER
  *                  exist. Its guides are minted by the RPC under test and
  *                  found by a label prefix only that file uses

@@ -21,13 +21,13 @@ BEGIN
   WITH drafts AS (
     UPDATE public.landing_pages
        SET sections = public.landing_sections_repointed(sections, p_from, p_to)
-     WHERE image_paths ? p_from::text
+     WHERE pictures ? p_from::text
     RETURNING id
   ),
   live AS (
     UPDATE public.landing_page_publications
        SET sections = public.landing_sections_repointed(sections, p_from, p_to)
-     WHERE image_paths ? p_from::text
+     WHERE pictures ? p_from::text
     RETURNING page_id
   )
   SELECT count(*) INTO v_moved
@@ -42,7 +42,7 @@ $$;
 -- Name: FUNCTION repoint_landing_images(p_from uuid, p_to uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The image-path trigger re-derives each copy''s paths and refuses a p_to that is gone or not a landing_image. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The catalogue''s replace hands it an entry of p_from''s own purpose, so a picture keeps its shape; the picture trigger re-derives each copy''s pictures and refuses a p_to that is gone, not a landing picture, or of a shape its section does not take. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --

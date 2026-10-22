@@ -205,7 +205,6 @@ describe("the uploader", () => {
         kind: "pdf",
         heading: "New guide",
         maxBytes: 2_900_000,
-        uploadTool: "upload_guide",
         arguments: { locale: "fi", label: "School pack" },
         language: "Finnish",
       },
@@ -327,7 +326,7 @@ describe("the uploader", () => {
           .result,
       );
 
-    const uri = "ui://sogverse/picture-uploader.html";
+    const uri = "ui://sogverse/picture-uploader-2.html";
     expect(tools.find((t) => t.name === "open_guide_uploader")?._meta).toEqual({
       ui: { resourceUri: uri },
       "ui/resourceUri": uri,

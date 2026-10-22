@@ -58,7 +58,7 @@ function renderPage({
       <UtmProvider initialUtm={utm}>
         <LandingPageBody
           sections={SECTIONS}
-          imagePaths={{}}
+          pictures={{}}
           testimonials={{}}
           guideIds={[]}
           sectionTexts={TEXTS}

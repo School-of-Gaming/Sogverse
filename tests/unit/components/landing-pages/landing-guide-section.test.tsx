@@ -64,7 +64,7 @@ function renderGuide({
     <NextIntlClientProvider locale={locale} messages={locale === "fi" ? fi : en}>
       <LandingPageBody
         sections={SECTIONS}
-        imagePaths={{}}
+        pictures={{}}
         testimonials={{}}
         guideIds={guideIds}
         sectionTexts={TEXTS}

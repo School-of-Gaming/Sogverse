@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LANDING_PICTURE_SHAPES } from "../picture-shapes";
 import {
   distinctIds,
   fieldOf,
@@ -9,10 +10,10 @@ import {
 } from "./shared";
 
 /**
- * One to four pictures, with an optional heading and caption. Each picture is
- * an item with an id of its own, so its alt text — one per picture, per
- * language — stays attached to it however the pictures are reordered,
- * replaced or removed.
+ * One to four pictures of one shape, with an optional heading and caption.
+ * Each picture is an item with an id of its own, so its alt text — one per
+ * picture, per language — stays attached to it however the pictures are
+ * reordered, replaced or removed.
  */
 const section = z
   .object({
@@ -46,4 +47,5 @@ export const imageSection = {
       .filter((image) => !isWritten(fieldOf(words.alts, image.id)))
       .map((image) => `alts.${image.id}`),
   markdownFields: [],
+  pictureShapes: LANDING_PICTURE_SHAPES,
 } as const satisfies LandingSectionDefinition<"image", typeof section, typeof text>;

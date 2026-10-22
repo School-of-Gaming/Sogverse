@@ -15,6 +15,11 @@ import {
   type LandingSectionOf,
   type LandingSectionType,
 } from "@/lib/landing-pages/sections";
+import {
+  LANDING_PICTURE_SHAPES,
+  describeLandingPictureShapes,
+  type LandingPictureShape,
+} from "@/lib/landing-pages/picture-shapes";
 
 /*
  * The landing page sections as an AI app writes them. The section registry
@@ -52,7 +57,7 @@ const itemId = landingId
   .describe("The item's id. Keep it on every existing item; leave it out for a new one.");
 
 const pictureId = landingId.describe(
-  "A picture's catalogue id: a landing page picture entry, as list_landing_images returns it.",
+  "A picture's catalogue id: a landing page picture entry of a shape the section takes, as list_landing_images returns it.",
 );
 
 const buttonTarget = z
@@ -557,12 +562,23 @@ const STRUCTURE_RULES = [
   .filter((rule) => rule !== null)
   .join("; ");
 
+/** The shapes a type's pictures may be, in words, from the registry; nothing for a type without pictures. */
+function describePictureShapes(type: LandingSectionType): string {
+  const shapes: readonly LandingPictureShape[] = LANDING_SECTIONS[type].pictureShapes;
+  if (shapes.length === 0) return "";
+  const which = describeLandingPictureShapes(shapes);
+  if (type === "image") return ` Its pictures may be ${which}, all one shape.`;
+  return shapes.length === LANDING_PICTURE_SHAPES.length
+    ? ` Its picture may be ${which}.`
+    : ` Its picture must be ${which}.`;
+}
+
 /** Every section type, what it is, and which of its words are required. */
 export const SECTIONS_MANUAL = [
   `${STRUCTURE_RULES}; the other sections follow in any order and number.`,
   ...LANDING_SECTION_TYPES.map(
     (type) =>
-      `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about} Required words in every language: ${describeRequiredWords(type)}.`,
+      `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about}${describePictureShapes(type)} Required words in every language: ${describeRequiredWords(type)}.`,
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
 ].join("\n");

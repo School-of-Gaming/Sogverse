@@ -247,6 +247,7 @@ function coversOnce(articles: readonly AdminLibraryArticleListItem[]): CoverToSh
       .join(", ");
     return {
       path,
+      purpose: "library_cover",
       caption: `${users.length === 1 ? "Cover of" : "Cover shared by"} ${named}: ${coverUrl(path)}`,
     };
   });
@@ -334,6 +335,7 @@ export function registerLibraryTools(server: McpServer): void {
             : [
                 {
                   path: coverPath,
+                  purpose: "library_cover",
                   caption: `The article's cover, catalogue entry ${view.cover.catalogueId} ("${view.cover.label ?? ""}"): ${coverUrl(coverPath)}`,
                 },
               ],
