@@ -8,7 +8,7 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
-import { nextRunning } from "@/lib/planned-sessions";
+import { nextRunning, type PlannedSession } from "@/lib/planned-sessions";
 import type { FamilyMember } from "@/services/family/family.service";
 import type {
   MyUpcomingSessionRow,
@@ -746,6 +746,36 @@ function cancellationFor(
 }
 
 /**
+ * The session a seat's card names next, and the cancelled ones before it.
+ *
+ * A session stays the next one until it closes, the voice window after its end
+ * — the same margin the Join keeps the room open for. A cancelled session is
+ * never the next one: the card names, joins and lights up for the first
+ * session that runs, and names the cancelled ones before it on a line of their
+ * own.
+ *
+ * **An unplaced seat skips every session whose window has opened.** It cannot
+ * open a room, so its locked Join must always name a session still to come —
+ * on the exact boundary the Join opens on, so the time it names is never one
+ * whose window is already open. If placement is late, the time rolls on to the
+ * next session.
+ */
+export function nextSessionFor<T extends PlannedSession>(
+  plan: readonly T[],
+  now: Date,
+  awaiting: boolean,
+): { next: T | null; cancelledAhead: T[] } {
+  const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  const opensBeforeMs = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES * 60_000;
+  const candidates = awaiting
+    ? plan.filter(
+        (session) => session.startsAt.getTime() - opensBeforeMs > now.getTime(),
+      )
+    : plan;
+  return nextRunning(candidates, now, closeMarginMs);
+}
+
+/**
  * An `status='active'` row — a seat the family holds, placed or not.
  *
  * **Everything the card shows stops at the paid window.** When a parent has
@@ -765,8 +795,6 @@ function sessionSummary(
   const hasVoiceRoom = product.isRemote;
   const subEnd = row.subscriptionEndsAt;
 
-  // A session stays the next one until it closes, the voice window after its
-  // end — the same margin the Join keeps the room open for.
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
   const covered =
     subEnd === null
@@ -774,10 +802,7 @@ function sessionSummary(
       : row.plan.filter(
           (session) => session.startsAt.getTime() <= subEnd.getTime(),
         );
-  // A cancelled session is never the next one: the card names, joins and
-  // lights up for the first session that runs, and names the cancelled ones
-  // before it on a line of their own.
-  const { next, cancelledAhead } = nextRunning(covered, now, closeMarginMs);
+  const { next, cancelledAhead } = nextSessionFor(covered, now, awaiting);
   // What the paid window still covers, for the winding-down line: the family
   // does not attend a cancelled session, so it cannot be their last one.
   const running = covered.filter(

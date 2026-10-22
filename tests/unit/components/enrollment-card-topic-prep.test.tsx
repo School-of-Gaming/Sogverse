@@ -24,9 +24,9 @@ import { INERT_HREF } from "@/lib/constants/routes";
  *     nothing.
  *  2. **A lit Join is never touched.** The room being open is the whole point of
  *     the card, so the guide steps down to a quiet link beside it.
- *  3. **The cards with no Join take the button under their footer sentence** —
- *     the in-person one and the unplaced seat, the latter being inert as a link
- *     while still opening a dialog, because a dialog is not a page.
+ *  3. **The card with no Join takes the button under its footer sentence** —
+ *     the in-person one. A remote seat not yet in a group has a locked Join
+ *     like any seat, so the guide takes its slot.
  *  4. **Three cards never offer it**: a queue place (no seat to get ready for),
  *     a finished run, and an in-person card whose topic brings no steps. The
  *     third is in-person alone — remotely there is always the voice room.
@@ -240,6 +240,44 @@ describe("the prep guide in the Join's slot", () => {
   });
 });
 
+/**
+ * A seat not yet in a group is drawn as a plain seat: the locked Join any seat
+ * shows, the guide in its slot, and not a word about placement. There is no
+ * room behind it, so the Join never lights and the card never goes Live.
+ */
+describe("a remote seat not yet in a group", () => {
+  it("puts the guide in the locked Join's slot and says nothing about placement", () => {
+    renderCard({ awaiting: true, prepWindowEnd: null });
+
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(lockedJoin()).toBeNull();
+    expect(screen.queryByText(/^familyEnrollment\./)).toBeNull();
+
+    sayReady();
+
+    expect(lockedJoin()).toBeTruthy();
+  });
+
+  it("keeps the Join locked and the Live badge off inside the opening window", () => {
+    // Two minutes before the start: a placed seat's room would be open. The
+    // roll-up never hands an unplaced seat such a session, so this is the card
+    // holding its own line should the clock overtake the roll-up.
+    renderCard(
+      {
+        awaiting: true,
+        prepWindowEnd: null,
+        nextSessionStart: new Date(NOW.getTime() + 120_000),
+        nextSessionEnd: new Date(NOW.getTime() + 5_520_000),
+      },
+      new Set([PARTICIPATION_ID]),
+    );
+
+    expect(lockedJoin()).toBeTruthy();
+    expect(screen.queryByText(JOIN)).toBeNull();
+    expect(screen.queryByText("sessionBadge.live")).toBeNull();
+  });
+});
+
 describe("the prep guide beside a lit Join", () => {
   it("leaves the Join exactly as it was and stands beside it", () => {
     // Mid-session: the room is open, which is the one thing on this card that
@@ -265,22 +303,6 @@ describe("the prep guide on the cards with no Join", () => {
 
     expect(screen.getByText("Kirjasto Oodi, Helsinki")).toBeTruthy();
     expect(screen.getByText(TRIGGER)).toBeTruthy();
-  });
-
-  /**
-   * The unplaced seat draws no link, no chevron and no Join because there is no
-   * page or room behind it — and it still offers the guide, because a dialog is
-   * not a page and the days before the first session are precisely the window
-   * the guide is written for. It also carries no window *end*: there are no
-   * sessions of theirs to count yet. Placement is School of Gaming's job, so
-   * the card says nothing about it.
-   */
-  it("is the footer's button on an unplaced seat, which says nothing about placement", () => {
-    renderCard({ awaiting: true, prepWindowEnd: null });
-
-    expect(screen.getByText(TRIGGER)).toBeTruthy();
-    expect(lockedJoin()).toBeNull();
-    expect(screen.queryByText(/^familyEnrollment\./)).toBeNull();
   });
 
   /** The site is the product's, so a seat not yet in a group names it too. */
@@ -440,9 +462,18 @@ describe("the window the offer lives in", () => {
     expect(lockedJoin()).toBeTruthy();
     cleanup();
 
-    // And the same answer on the placement that has no Join to give back.
-    renderCard({ awaiting: true, prepWindowEnd: reopened }, dismissed);
-    expect(screen.getByText("Roblox Studio Club")).toBeTruthy();
+    // And the same answer under the footer sentence, where there is no Join
+    // to give back.
+    renderCard(
+      {
+        prepWindowEnd: reopened,
+        isRemote: false,
+        hasVoiceRoom: false,
+        siteName: "Kirjasto Oodi, Helsinki",
+      },
+      dismissed,
+    );
+    expect(screen.getByText("Kirjasto Oodi, Helsinki")).toBeTruthy();
     expect(screen.queryByText(TRIGGER)).toBeNull();
   });
 
@@ -452,8 +483,13 @@ describe("the window the offer lives in", () => {
    * space back, so a button vanishing on time's own schedule would shrink the
    * card and pull the column up under whoever was reading it.
    */
-  it("leaves the button on an unplaced seat alone when the window closes mid-read", () => {
-    const spec = { awaiting: true, prepWindowEnd: WINDOW_ENDS_SOON };
+  it("leaves the button under an in-person card's site alone when the window closes mid-read", () => {
+    const spec = {
+      prepWindowEnd: WINDOW_ENDS_SOON,
+      isRemote: false,
+      hasVoiceRoom: false,
+      siteName: "Kirjasto Oodi, Helsinki",
+    };
     const { rerender } = renderCard(spec);
     expect(screen.getByText(TRIGGER)).toBeTruthy();
 

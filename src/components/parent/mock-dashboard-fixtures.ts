@@ -45,7 +45,8 @@ import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
  * rather than three children. That is one cap over both kinds of chip, not two
  * (see `MAX_NAMED_PILL_ENTRIES`), and this is the page it is judged on. Across
  * the three sections: a remote club live right now with a failing card beside a
- * waitlist place with no session to join and a seat nobody has been placed in;
+ * waitlist place with no session to join and a seat nobody has been placed in
+ * (and, under the second child, one still unplaced when its session has started);
  * an in-person camp naming its site where the Join would be — with the prep
  * guide's button under that sentence, and the guide's quiet-link form beside
  * Aino's lit Join above — beside a club
@@ -128,6 +129,12 @@ export interface ParentDashboardFixture {
    */
   self: ParentDashboardParticipant | null;
   accounts: FixtureBillingAccount[];
+  /**
+   * Seats whose family has already said they are ready for the first session,
+   * so their card draws the Join rather than the guide in its slot. Absent is
+   * nobody.
+   */
+  prepReady?: ReadonlySet<string>;
 }
 
 /**
@@ -249,8 +256,8 @@ export function buildParentDashboardFixture(
             },
             {
               // Bought yesterday, not yet in a group. It sits on the same child
-              // as the waitlist place on purpose: the two are the only inert
-              // cards on the page, and they must not read as the same news.
+              // as the waitlist place on purpose: both link nowhere, and they
+              // must not read as the same news.
               // The waitlist card says there is no seat; this one is a plain
               // seat that says nothing about placement at all.
               participationId: "mock-enrollment-roblox-studio-awaiting",
@@ -259,8 +266,8 @@ export function buildParentDashboardFixture(
               isRemote: true,
               // The unplaced seat is exactly the prep window — the purchase has
               // landed and there is a week of evenings in which to install
-              // something. With no Join to share a slot with, the guide is the
-              // footer's button, on a card that is otherwise inert.
+              // something. The guide takes the locked Join's slot, exactly as
+              // on a placed seat.
               topic: "roblox_studio",
               slots: [futureSlot(now, 5, "16:00", 90, FIXTURE_TIMEZONE)],
               startedDaysAgo: 1,
@@ -290,6 +297,19 @@ export function buildParentDashboardFixture(
               startedDaysAgo: 2,
               endsInDays: 5,
               siteName: CAMP_SITE_NAME,
+            },
+            {
+              // The edge case of a seat still unplaced when its session has
+              // started: the Join stays locked and already names next week.
+              // Marked ready (see `prepReady`) so the locked Join is what shows.
+              participationId: "mock-enrollment-game-studio-awaiting-live",
+              productName: "Game Studio Club",
+              productType: "consumer_club",
+              isRemote: true,
+              slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
+              startedDaysAgo: 3,
+              endsInDays: null,
+              awaiting: true,
             },
             {
               participationId: "mock-enrollment-rocket-league-club",
@@ -342,6 +362,7 @@ export function buildParentDashboardFixture(
         // The reader's own section — two children and one of these is exactly
         // the pill's named limit, which is why this scenario stops at two.
         self: parentsOwnSection(clock),
+        prepReady: new Set(["mock-enrollment-game-studio-awaiting-live"]),
         // Three Stripe customers — the shape a family migrated from the old
         // platform ends up with, and the only one where the billing card grows
         // a button per account with an explanation above them.

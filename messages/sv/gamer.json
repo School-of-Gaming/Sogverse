@@ -7,7 +7,7 @@
     "items": {
       "joiningSession": {
         "question": "Hur går jag med i mitt tillfälle när det börjar?",
-        "answer": "<p>Öppna först Min SOG och leta upp din klubb. Vad som händer sedan beror på var din klubb träffas.</p><p>Om den träffas online finns det en knapp på den:</p><steps><step>Fram till strax före ditt tillfälle är knappen låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan ditt tillfälle börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Nu är du inne.</step></steps><p>Det finns ingenting att installera och ingen kod att skriva.</p><p>Om den träffas på plats finns det ingen knapp. Din klubb visar i stället namnet på platsen, och din klubbs sida visar adressen också. Var där när ditt tillfälle börjar.</p><p>Om din klubb träffas online och det inte finns någon knapp på den än, finns det ingenting att gå med i än. Knappen dyker upp före ditt första tillfälle.</p>"
+        "answer": "<p>Öppna först Min SOG och leta upp din klubb. Vad som händer sedan beror på var din klubb träffas.</p><p>Om den träffas online finns det en knapp på den:</p><steps><step>Fram till strax före ditt tillfälle är knappen låst, och den talar om vilken dag och vilken tid den öppnar.</step><step>Fem minuter innan ditt tillfälle börjar ändras knappen till ”Gå med i röstrum”.</step><step>Tryck på den. Nu är du inne.</step></steps><p>Det finns ingenting att installera och ingen kod att skriva.</p><p>Om den träffas på plats finns det ingen knapp. Din klubb visar i stället namnet på platsen, och din klubbs sida visar adressen också. Var där när ditt tillfälle börjar.</p>"
       },
       "cannotBeHeard": {
         "question": "Ingen hör mig i röstrummet — vad kollar jag?",

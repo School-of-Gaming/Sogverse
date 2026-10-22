@@ -94,7 +94,8 @@ import {
  * job, not something the family is told about or waits on, so nothing on the
  * card may make the seat look pending or incomplete. The card only leaves out
  * what does not exist yet: with no group there is no room, no feed and no
- * page, so it has no Join, no link, no chevron and no Live badge.
+ * page, so it has no link, no chevron and no Live badge, and its Join stays
+ * locked, naming the next session whose room has yet to open.
  *
  * **The corner means exactly one thing: an alarm the parent can act on.**
  * Across the product the corner badge means "this needs attention" — the
@@ -143,10 +144,7 @@ import {
  *   guide steps aside into the same muted link treatment the leave-waitlist
  *   affordance uses.
  * - **Under the footer sentence, on the cards with no Join at all** — the
- *   in-person card naming its site, and a remote seat not yet in a group. The
- *   unplaced card is inert *as a link* because there is no page behind it; a
- *   dialog is not a page, and the days before the first session are exactly
- *   the window this guide is written for.
+ *   in-person card naming its site.
  * - **Nowhere on a queue place or a finished run.** There is no seat to get
  *   ready for in the first, and the second is history.
  *
@@ -427,10 +425,15 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * Holding a seat **in a group**, with the run still going.
    *
    * An unplaced seat is excluded because with no group there is no room, no
-   * feed and no page, so the Join and the Live badge `running` gates would be
-   * describing something that does not exist yet.
+   * feed and no page, so a lit Join or a Live badge would be describing
+   * something that does not exist yet.
    */
   const running = seated && !awaiting;
+  /**
+   * Whether the Join is lit. Only a seat in a group has a room to open, so an
+   * unplaced seat's Join stays locked whatever the clock says.
+   */
+  const joinOpen = running && voiceIsOpen;
   /**
    * Whether there is a page behind this card. Two cards have none — a queue
    * position and an unplaced seat — and both drop the anchor, the chevron and
@@ -501,21 +504,22 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   /**
    * Whether this card draws a Join at all — the question the prep affordance's
    * placement turns on, and the same three conditions the footer's Join branch
-   * has always used, named once so the two cannot drift apart.
+   * uses, named once so the two cannot drift apart. A seat not yet in a group
+   * draws one too, locked: the family sees the same button any seat shows.
    */
-  const hasJoin = running && hasVoiceRoom && hasNext;
+  const hasJoin = seated && hasVoiceRoom && hasNext;
   /**
    * The locked Join's slot, taken over while there is a guide to read — and
    * given back the moment the window closes, on the live clock, because a
    * button-for-button swap in one slot moves nothing.
    */
-  const prepInJoinSlot = prepUnanswered && prepWindowOpen && hasJoin && !voiceIsOpen;
+  const prepInJoinSlot = prepUnanswered && prepWindowOpen && hasJoin && !joinOpen;
   /** A lit Join keeps its slot; the guide steps down to a quiet link below it. */
   const prepBesideJoin =
-    prepUnanswered && prepWindowOpenAtFirstPaint && hasJoin && voiceIsOpen;
+    prepUnanswered && prepWindowOpenAtFirstPaint && hasJoin && joinOpen;
   /**
-   * No Join to sit in or beside — the in-person card naming its site, and a
-   * remote seat not yet in a group. The button goes under the sentence.
+   * No Join to sit in or beside — the in-person card naming its site. The
+   * button goes under the sentence.
    */
   const prepUnderSentence =
     prepUnanswered && prepWindowOpenAtFirstPaint && !hasJoin;
@@ -545,9 +549,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   const showsWaitlistPosition = waitlisted && seatOffer === null;
   // Whether the footer has anything to say, asked before it is drawn. The four
   // branches below are exclusive by construction, and on a card where none of
-  // them lands — a running enrollment whose product has no slots yet, or a
-  // remote seat not yet in a group — the row is left out rather than rendered
-  // empty. A waitlisted card with an
+  // them lands — a seat whose product has no slots yet — the row is left out
+  // rather than rendered empty. A waitlisted card with an
   // offer standing on it is now a second such card: its position line is
   // superseded and its leave link has stood down, so the row would be a band of
   // nothing between the schedule and the block.
@@ -803,7 +806,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     ) : (
                       <JoinVoiceButton
                         voiceRoom={voiceRoom}
-                        voiceIsOpen={voiceIsOpen}
+                        voiceIsOpen={joinOpen}
                         voiceHref={voiceHref}
                         // Present only on a *child's* card seen by their
                         // parent, where joining means switching account first.
@@ -848,8 +851,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
 
                   **On a card with no Join it is the button**, because there is
                   nothing else on the card to be quieter than: an in-person card
-                  names its building, which is not something to do, and a
-                  remote seat not yet in a group has nothing else on it.
+                  names its building, which is not something to do.
 
                   It arrives after mount rather than being reserved, and the
                   cost is named rather than hidden: the button appears one tick

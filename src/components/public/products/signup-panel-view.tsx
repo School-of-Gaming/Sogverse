@@ -738,8 +738,7 @@ function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
  * stakes: this refusal replaces the form and is the one thing on the panel, so
  * it alone fills its surface with the tint; the two in-form sections sit
  * inside a form the parent is actively using, so they carry the hue on the
- * border alone (the same quiet-info tier the enrollment card's "awaiting"
- * state established) and leave the form the loudest thing on its own panel.
+ * border alone and leave the form the loudest thing on its own panel.
  *
  * The country is named, in the reader's own language and in the sentence's only
  * weighted words: it is the one fact the reader needs and the one they will

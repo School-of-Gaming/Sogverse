@@ -112,7 +112,7 @@ export function buildGamerDashboardFixture(
       // The unplaced seat, on the child's own page. Worth having here as well
       // as on the parent's: it is the card most likely to be met by a *new*
       // gamer — the account is a day old, the purchase has landed, and nothing
-      // has a group yet — and it must read as a plain seat with no Join yet.
+      // has a group yet — and it must read as a plain seat, its Join locked.
       participationId: "mock-gamer-terraria-awaiting",
       productName: "Terraria Builders Club",
       productType: "consumer_club",
