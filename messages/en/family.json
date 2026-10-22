@@ -20,7 +20,6 @@
   },
   "addGamerForm": {
     "title": "Add a gamer",
-    "accountsTitle": "{name}’s game accounts",
     "firstNameLabel": "First name",
     "firstNamePlaceholder": "e.g. Lily",
     "birthMonthLabel": "Birth month",
