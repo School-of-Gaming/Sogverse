@@ -1,23 +1,8 @@
-import { DARK_THEME } from "@/lib/constants/colors";
-import { RADIUS } from "@/lib/constants/radius";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
-import { factList } from "./blocks";
-import { MAIL_SPACE, mailText } from "./type-scale";
-import { BODY_TEXT_STYLE, defuseAutolinks, escapeHtml, groundFill, heading, paragraph } from "./utils";
-
-/**
- * The quoted message's box: a tone off whatever the shell has put it on.
- *
- * What it is for is separating the reader's own words from ours, which is a
- * tonal step and not a colour. It used to name the darker ground, which was
- * that step while the card was the only thing a mail's content sat on; on the
- * card-less phone shell that same value is the ground itself and the box would
- * lose its step entirely. So it takes the shared tone and the shell restates it
- * against the card, exactly as a photo's well does.
- */
-const QUOTE_GROUND = groundFill("step");
+import { factList, quotedMessage, sectionLabel, smallNote } from "./blocks";
+import { defuseAutolinks, escapeHtml, heading, paragraph } from "./utils";
 import type { EmailTranslator } from "./translator";
 
 export interface HelpRequestEmailOptions {
@@ -99,20 +84,18 @@ export function buildHelpRequestEmail(t: EmailTranslator, locale: string, opts: 
   // reply address, the note is the account it came from.
   const gamerNote = opts.isGamer
     ? `<tr>
-        <td style="padding:${MAIL_SPACE.block}px 0 0;${mailText("small", DARK_THEME.mutedFg)}">
-          ${
-            opts.gamerOwnMailbox
-              ? t("helpRequest.gamerNoteOwnMailbox", {
-                  firstName: escapedName,
-                  // Defused like the reply-to address above: a displayed address
-                  // a client turns into its own link is a link we did not write,
-                  // in a colour we did not choose. This one is a child's, which
-                  // makes it the worse of the two to get wrong.
-                  gamerEmail: defuseAutolinks(escapeHtml(opts.userEmail)),
-                })
-              : t("helpRequest.gamerNoteNoMailbox", { firstName: escapedName })
-          }
-        </td>
+        <td>${smallNote(
+          opts.gamerOwnMailbox
+            ? t("helpRequest.gamerNoteOwnMailbox", {
+                firstName: escapedName,
+                // Defused like the reply-to address above: a displayed address
+                // a client turns into its own link is a link we did not write,
+                // in a colour we did not choose. This one is a child's, which
+                // makes it the worse of the two to get wrong.
+                gamerEmail: defuseAutolinks(escapeHtml(opts.userEmail)),
+              })
+            : t("helpRequest.gamerNoteNoMailbox", { firstName: escapedName }),
+        )}</td>
       </tr>`
     : "";
 
@@ -135,14 +118,10 @@ export function buildHelpRequestEmail(t: EmailTranslator, locale: string, opts: 
         <td>${heading(t("helpRequest.heading"))}${paragraph(t("helpRequest.intro"))}${facts}</td>
       </tr>
       <tr>
-        <td style="padding-bottom:${MAIL_SPACE.tight}px;${mailText("leadIn", DARK_THEME.foreground)}">
-          ${t("helpRequest.message")}
-        </td>
+        <td>${sectionLabel(t("helpRequest.message"))}</td>
       </tr>
       <tr>
-        <td class="${QUOTE_GROUND.className}" style="padding:${MAIL_SPACE.block}px;${QUOTE_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.lg};${BODY_TEXT_STYLE}">
-          ${escapedMessage}
-        </td>
+        <td>${quotedMessage(escapedMessage)}</td>
       </tr>
       ${gamerNote}
     </table>`;

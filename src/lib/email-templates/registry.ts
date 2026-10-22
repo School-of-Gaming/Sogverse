@@ -1549,7 +1549,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Email components (reference)",
     fields: [],
     schema: z.object({}),
-    build: (_p, _t, locale) => buildComponentsReferenceEmail(locale),
+    // Three photos: the three shapes the box arithmetic answers for.
+    build: (_p, _t, locale, context) =>
+      buildComponentsReferenceEmail(locale, sessionReportPhotoFixtures(3, context)),
     subject: () => "Email components",
   }),
   passwordReset: defineTemplate({

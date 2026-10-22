@@ -19,7 +19,7 @@ import {
 } from "@/lib/authored-markdown";
 import { mailOwnSiteHref } from "@/lib/links/own-site";
 import { mailWeight } from "./type-scale";
-import { defuseAutolinks, escapeHtml } from "./utils";
+import { TEXT_PINS, defuseAutolinks, escapeHtml, holdBlock, holdRuns } from "./utils";
 
 /**
  * Renders stored markdown — a gedu's session report, or any other authored
@@ -67,12 +67,28 @@ export function renderMarkdownForEmail(
     links: features.links,
     tags: OUTLINE_TAGS[outline],
     definitions: collectDefinitions(tree),
+    holdEach: false,
+    holdRuns: false,
   };
-  return `<div style="${css(textDeclarations(MARKDOWN_CONTAINER))}">${renderTopLevel(tree.children, context)}</div>`;
+  const container = (inner: string) =>
+    `<div style="${css(textDeclarations(MARKDOWN_CONTAINER))}">${inner}</div>`;
+  const plain = renderTopLevel(tree.children, context);
+  return plain.includes("<a ")
+    ? container(renderTopLevel(tree.children, { ...context, holdEach: true }))
+    : holdBlock(container(plain));
 }
 
 const parser = unified().use(remarkParse);
 
+/**
+ * **How the rendered text is held** (`HOLD_CLASS` in `utils.ts`). Gmail iOS
+ * inverts every plain colour, and a hold inverts it back — but a link is
+ * pinned amber, which that client leaves alone, so a hold around a link would
+ * turn it blue. A fragment with no kept link is held whole. One with links is
+ * held a top-level block at a time, and a block that carries a link is held
+ * run by run around it, with the link outside every hold. Holds never nest:
+ * the text inside two of them vanishes on Gmail iOS.
+ */
 interface Context {
   allowed: ReadonlySet<string>;
   /** The use case's `links` flag. */
@@ -80,6 +96,10 @@ interface Context {
   tags: (typeof OUTLINE_TAGS)[keyof typeof OUTLINE_TAGS];
   /** Link reference definitions, by identifier, so `[label][ref]` resolves as it does in the app. */
   definitions: ReadonlyMap<string, Definition>;
+  /** Hold each top-level block on its own, rather than the fragment whole. */
+  holdEach: boolean;
+  /** Hold the text runs at this level, around the links among them. */
+  holdRuns: boolean;
 }
 
 function collectDefinitions(node: Nodes, found = new Map<string, Definition>()) {
@@ -147,10 +167,21 @@ function blockStyle(look: MarkdownLook, top: number): string {
 function renderTopLevel(nodes: RootContent[], context: Context): string {
   let html = "";
   for (const node of nodes) {
-    const block = renderBlock(node, context, !html.includes("<"));
+    const flush = !html.includes("<");
+    let block = renderBlock(node, context, flush);
+    if (context.holdEach && block !== "") {
+      block = block.includes("<a ")
+        ? renderBlock(node, { ...context, holdEach: false, holdRuns: true }, flush)
+        : holdBlock(block);
+    }
     if (block !== "") html += html === "" ? block : `\n${block}`;
   }
   return html;
+}
+
+/** Bare text standing as a block: held where its block is being held by run. */
+function bareText(html: string, context: Context): string {
+  return context.holdRuns ? holdRuns(html) : html;
 }
 
 /** Blocks inside an unwrapped quote: none of them is flush. */
@@ -189,16 +220,16 @@ function renderBlock(
       return renderBlocks(node.children, context, inItem);
     case "code":
       // `pre` and `code` are kept by no use case: the bare text is what is left.
-      return text(node.value);
+      return bareText(text(node.value), context);
     case "html":
       // The app shows raw HTML as its own literal text rather than as markup.
-      return text(node.value);
+      return bareText(text(node.value), context);
     case "thematicBreak":
     case "definition":
       return "";
     default:
       // Anything else — a GFM construct neither end enables — keeps its words.
-      return textOf(node);
+      return bareText(textOf(node), context);
   }
 }
 
@@ -282,8 +313,28 @@ function listItem(item: ListItem, loose: boolean, context: Context): string {
 
 // ------------------------------------------------------------------- inline
 
+/**
+ * A run of phrasing. Where the block is held by run, consecutive nodes without
+ * a link share one hold; a link stands outside, and an element with a link
+ * somewhere inside it (bold around a link) holds its own runs instead, so no
+ * hold ever sits inside another.
+ */
 function renderInline(nodes: PhrasingContent[], context: Context): string {
-  return nodes.map((node) => renderPhrasing(node, context)).join("");
+  if (!context.holdRuns) return nodes.map((node) => renderPhrasing(node, context)).join("");
+  const plainContext = { ...context, holdRuns: false };
+  let out = "";
+  let group = "";
+  for (const node of nodes) {
+    const plain = renderPhrasing(node, plainContext);
+    if (!plain.includes("<a ")) {
+      group += plain;
+      continue;
+    }
+    out += holdRuns(group);
+    group = "";
+    out += node.type === "link" || node.type === "linkReference" ? plain : renderPhrasing(node, context);
+  }
+  return out + holdRuns(group);
 }
 
 function renderPhrasing(node: PhrasingContent, context: Context): string {
@@ -343,7 +394,10 @@ function link(url: string, label: string, context: Context): string {
   const kept = defaultUrlTransform(url);
   if (kept === "") return label;
   const href = mailOwnSiteHref(kept);
-  return `<a href="${escapeHtml(href)}" rel="noreferrer" style="${css(textDeclarations(MARKDOWN_LOOK.a))}">${label}</a>`;
+  // Pinned like every inline link in a mail, with the underline's colour
+  // stated because the pin paints the glyphs transparent (see `inlineLink`).
+  const look = MARKDOWN_LOOK.a;
+  return `<a href="${escapeHtml(href)}" rel="noreferrer" class="${TEXT_PINS.act.className}" style="${css(textDeclarations(look))}text-decoration-color:${look.color};">${label}</a>`;
 }
 
 /** A run of text as it reaches the mail: escaped, and safe from linkifiers. */

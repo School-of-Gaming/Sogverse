@@ -1,6 +1,12 @@
+// @vitest-environment jsdom
+//
+// jsdom because the hold checks read the rendered fragment with the DOM's own
+// parser, to say which element each glyph and link sits inside.
 import { describe, it, expect, vi } from "vitest";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { mailWeight } from "@/lib/email-templates/type-scale";
+import { HOLD_CLASS, TEXT_PINS } from "@/lib/email-templates/utils";
+import { holdViolations } from "../../helpers/email-holds";
 import {
   MARKDOWN_CONTAINER,
   MARKDOWN_LOOK,
@@ -76,6 +82,11 @@ function readStyle(style: string) {
         break;
       case "text-underline-offset":
         out.underlineOffset = parseFloat(value);
+        break;
+      case "text-decoration-color":
+        // A pinned link states its underline's colour, which is its ink: the
+        // pin paints the glyphs transparent and the underline would follow.
+        expect(value.toLowerCase()).toBe(declarations.get("color")?.toLowerCase());
         break;
       default:
         throw new Error(`a declaration the definition does not state: ${property}`);
@@ -292,5 +303,38 @@ describe("renderMarkdownForEmail", () => {
     const inline = renderMarkdownForEmail('hello <b onclick="x()">there</b>', "feed");
     expect(inline).not.toContain("<b");
     expect(inline).toContain("&lt;b onclick=&quot;x()&quot;&gt;there&lt;/b&gt;");
+  });
+});
+
+/**
+ * Gmail iOS inverts every plain colour, and a hold inverts it back — but a
+ * kept link is pinned amber, which that client leaves alone, so a hold around
+ * one would turn it blue. So the renderer holds a link-free fragment whole and
+ * holds a fragment with links around them, run by run, never nesting a hold.
+ */
+describe("how a rendered fragment is held", () => {
+  const HOLD_OPEN = `<div class="${HOLD_CLASS.screen}"><div class="${HOLD_CLASS.difference}">`;
+
+  it("holds a fragment with no kept link whole", () => {
+    const html = renderMarkdownForEmail("# Title\n\nBody with [a link](https://example.com).", "feed");
+    expect(html.startsWith(HOLD_OPEN)).toBe(true);
+    expect(html.split(`class="${HOLD_CLASS.screen}"`)).toHaveLength(2);
+  });
+
+  it("holds a fragment with links around them, and pins each link", () => {
+    const html = renderMarkdownForEmail(
+      [
+        "Plain paragraph.",
+        "",
+        "Read **the [camp page](https://example.com/camp)** first.",
+        "",
+        "- one",
+        "- see [support](https://example.com/help)",
+      ].join("\n"),
+      "spotlight",
+    );
+    expect(html.startsWith("<div style=")).toBe(true);
+    expect(html).toContain(`class="${TEXT_PINS.act.className}"`);
+    expect(holdViolations(`<body>${html}</body>`)).toEqual([]);
   });
 });

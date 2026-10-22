@@ -25,6 +25,7 @@ import {
   type StyledMarkdownElement,
 } from "@/lib/authored-markdown";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { HOLD_CLASS } from "@/lib/email-templates/utils";
 import { canonicalizeHref } from "@/lib/links/own-site";
 
 const messages = { richText: enRichText };
@@ -589,6 +590,12 @@ describe("the mail and the page", () => {
   function renderMail(variant: MarkdownUseCase) {
     const mail = document.createElement("div");
     mail.innerHTML = renderMarkdownForEmail(KITCHEN_SINK, variant);
+    // The mail's holds are its affordance for one client (Gmail iOS), as the
+    // new-tab marker is the page's: bare elements around the authored content
+    // rather than part of it, so they are unwrapped to what they hold.
+    for (const hold of mail.querySelectorAll(`.${HOLD_CLASS.screen}, .${HOLD_CLASS.difference}`)) {
+      hold.replaceWith(...hold.childNodes);
+    }
     const container = mail.firstElementChild;
     if (container === null) throw new Error("the mail renderer drew nothing");
     return container;

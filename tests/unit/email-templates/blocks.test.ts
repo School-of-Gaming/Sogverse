@@ -8,9 +8,102 @@ import {
   numberedList,
   MARKUP_TAGS,
 } from "@/lib/email-templates/blocks";
+import {
+  ctaButton,
+  ctaButtonRow,
+  inlineLink,
+} from "@/lib/email-templates/blocks";
 import { MAIL_SPACE, mailText } from "@/lib/email-templates/type-scale";
+import { HOLD_CLASS, TEXT_PINS, holdRuns, paragraph } from "@/lib/email-templates/utils";
 import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
-import { DARK_THEME } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
+import { unhold } from "../../helpers/email-holds";
+
+const HOLD_OPEN = `<div class="${HOLD_CLASS.screen}"><div class="${HOLD_CLASS.difference}">`;
+
+describe("holding plain neutrals for Gmail iOS", () => {
+  it("holds a plain paragraph whole", () => {
+    expect(paragraph("Plain words.").startsWith(HOLD_OPEN)).toBe(true);
+  });
+
+  /**
+   * A link is pinned amber, which Gmail iOS leaves alone — so a hold around it
+   * would invert it to blue. The sentence is held run by run instead.
+   */
+  it("holds a sentence around its link, never the link itself", () => {
+    const link = inlineLink("https://sogverse.sog.gg/settings", "your settings");
+    const html = paragraph(`Change it later in ${link}.`);
+    expect(html.startsWith("<p")).toBe(true);
+    expect(html).toContain(`<span class="${HOLD_CLASS.screen}"><span class="${HOLD_CLASS.difference}">Change it later in </span></span>${link}`);
+    expect(html).toContain(`${link}<span class="${HOLD_CLASS.screen}"><span class="${HOLD_CLASS.difference}">.</span></span>`);
+  });
+
+  it("pins every inline link, underline included", () => {
+    const link = inlineLink("https://sogverse.sog.gg/settings", "your settings");
+    expect(link).toContain(`class="${TEXT_PINS.act.className}"`);
+    expect(link).toContain(`text-decoration-color:${BRAND.act};`);
+  });
+
+  it("leaves an already-held block alone when it holds the runs around it", () => {
+    const nested = bulletList(["A mouse."]);
+    const item = holdRuns(`Check the device${nested}`);
+    expect(item.split(HOLD_OPEN)).toHaveLength(2);
+    expect(item).toContain(nested);
+  });
+
+  it("holds a list whose items carry a link item by item, with the list itself bare", () => {
+    const link = inlineLink("https://sogverse.sog.gg/settings", "Open your settings");
+    const html = numberedList([`Make an account. ${link}`, "Then sign in."]);
+    expect(html.startsWith("<ol")).toBe(true);
+    expect(html).not.toContain(HOLD_OPEN);
+    expect(html).toContain(link);
+  });
+});
+
+describe("buttons", () => {
+  /**
+   * A fill inside a hold is screened lighter on every Gmail, so the outlined
+   * button draws none: it is held whole, border and label.
+   */
+  it("draws the outlined button with no fill, held whole", () => {
+    const html = ctaButton({ href: "https://sogverse.sog.gg/parent", label: "Go to My SOG", variant: "outline" });
+    expect(html).not.toContain("background-color");
+    expect(html).not.toContain("ground-match");
+    expect(html).toContain(HOLD_OPEN);
+  });
+
+  it("holds the violet button's white label and leaves its fill outside", () => {
+    const html = ctaButton({ href: "https://sogverse.sog.gg/shop", label: "Browse", variant: "secondary" });
+    expect(html).not.toContain(HOLD_OPEN);
+    expect(html).toMatch(/<a [^>]*><span class="bs" style="display:inline-block;"><span class="bd" style="display:inline-block;">Browse<\/span><\/span><\/a>/);
+  });
+
+  it("pins the primary label and holds nothing on it", () => {
+    const html = ctaButton({ href: "https://sogverse.sog.gg/verify", label: "Verify" });
+    expect(html).toContain(`class="${TEXT_PINS.dark.className}"`);
+    expect(html).not.toContain(`class="${HOLD_CLASS.screen}"`);
+  });
+
+  it("keeps a violet half's fill out of the hold around its outlined neighbour", () => {
+    const html = ctaButtonRow(
+      { href: "https://sogverse.sog.gg/a", label: "No", variant: "outline" },
+      { href: "https://sogverse.sog.gg/b", label: "Yes", variant: "secondary" },
+    );
+    const held = html.slice(html.indexOf(HOLD_OPEN), html.indexOf("</td>", html.indexOf(HOLD_OPEN)));
+    expect(held).not.toContain(BRAND.world);
+    expect(html).toContain(`background-color:${BRAND.world}`);
+  });
+});
+
+describe("a framed box draws its edge as a fill", () => {
+  it("paints the callout's status edge as a pinned fill, and pins its label", () => {
+    const html = calloutPanel({ label: "Note", paragraphs: ["One sentence."] });
+    expect(html).not.toMatch(/border:1px solid/);
+    expect(html).toContain(`background-color:${STATUS.info};background-image:linear-gradient(${STATUS.info},${STATUS.info});`);
+    expect(html).toContain(`class="${TEXT_PINS.info.className}"`);
+    expect(html).toContain(HOLD_OPEN);
+  });
+});
 
 // The house-style sweep asserts on *mails*, so a block nothing sends yet has
 // nowhere else to be checked. These are the properties a caller relies on and
@@ -100,7 +193,7 @@ describe("factList", () => {
    */
   it("takes a lead-in inside the furniture step, the tight step above the rows", () => {
     const html = factList([["Group", "Kettukallio"]], { leadIn: "Your booking" });
-    expect(html.trimStart().startsWith(`<div style="margin:${MAIL_SPACE.furniture}px 0;">`)).toBe(
+    expect(unhold(html).trimStart().startsWith(`<div style="margin:${MAIL_SPACE.furniture}px 0;">`)).toBe(
       true,
     );
     expect(html).toContain(`margin:0 0 ${MAIL_SPACE.tight}px;`);
@@ -113,12 +206,12 @@ describe("calloutPanel", () => {
   const options = { label: "Note", paragraphs: ["One sentence."] };
 
   it("states the furniture step on both sides of itself", () => {
-    expect(calloutPanel(options)).toContain(`style="margin:${MAIL_SPACE.furniture}px 0;"`);
+    expect(calloutPanel(options)).toContain(`style="margin:${MAIL_SPACE.furniture}px 0;background-color:`);
   });
 
   it("sits flush when it opens the mail", () => {
     expect(calloutPanel({ ...options, opening: true })).toContain(
-      `style="margin:0 0 ${MAIL_SPACE.furniture}px;"`,
+      `style="margin:0 0 ${MAIL_SPACE.furniture}px;background-color:`,
     );
   });
 });
