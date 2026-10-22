@@ -10,6 +10,9 @@
 -- optional eyebrow, description and, with a picture, its alt text, required
 -- then.
 --
+-- Both functions' bodies are the current ones — the email sign-up's subscribe
+-- section included — with the guide branches added.
+--
 -- - landing_sections_problem learns the type and its shape: a guide's
 --   lowercase uuid, and an optional picture like a hero's or a text
 --   section's.
@@ -157,6 +160,10 @@ BEGIN
            OR v_section->>'guideId' !~ c_uuid THEN
           RETURN format('Section %s needs its guide, as a guide''s lowercase uuid', v_id);
         END IF;
+      WHEN 'subscribe' THEN
+        -- No shared field: the list it signs up to is the deployment's
+        -- configuration, not the page's.
+        NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
@@ -199,7 +206,7 @@ BEGIN
 END;
 $_$;
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial exists is check_landing_testimonial_picks'', and a placed guide check_landing_guide_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial exists is check_landing_testimonial_picks'', and a placed guide check_landing_guide_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
 
 -- ---------------------------------------------------------------------------
 -- 2. The required-text rule
@@ -295,13 +302,6 @@ BEGIN
             END IF;
           END IF;
         END LOOP;
-      WHEN 'cta' THEN
-        IF NOT public.landing_text_is_written(v_texts->'heading') THEN
-          v_missing := array_append(v_missing, v_prefix || 'heading');
-        END IF;
-        IF NOT public.landing_text_is_written(v_texts->'buttonLabel') THEN
-          v_missing := array_append(v_missing, v_prefix || 'buttonLabel');
-        END IF;
       WHEN 'testimonials' THEN
         -- Its eyebrow, heading and intro are all optional: a testimonials
         -- section never makes a version incomplete.
@@ -313,6 +313,13 @@ BEGIN
         IF v_section ? 'imageId' AND NOT public.landing_text_is_written(v_texts->'imageAlt') THEN
           v_missing := array_append(v_missing, v_prefix || 'imageAlt');
         END IF;
+      WHEN 'cta', 'subscribe' THEN
+        IF NOT public.landing_text_is_written(v_texts->'heading') THEN
+          v_missing := array_append(v_missing, v_prefix || 'heading');
+        END IF;
+        IF NOT public.landing_text_is_written(v_texts->'buttonLabel') THEN
+          v_missing := array_append(v_missing, v_prefix || 'buttonLabel');
+        END IF;
       ELSE
         NULL;
     END CASE;
@@ -322,7 +329,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) IS 'The SQL half of the landing pages'' required-text rule: what one language version still needs before publishing takes it, given the page''s structure, as a list of paths — title, summary, slug, then per section in order sections.<id>.<field>, sections.<id>.items.<item id>.<field> or sections.<id>.alts.<picture item id>. Empty means complete. Required: hero headline, its buttonLabel when it has a button and its imageAlt when it has a picture; text heading, body and imageAlt with a picture; image an alt per picture; points and steps heading and each item''s title and body; testimonials nothing; guide heading and imageAlt with a picture; faq heading and each item''s question and answer; cta heading and buttonLabel. Written means landing_text_is_written. The TypeScript rule in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) IS 'The SQL half of the landing pages'' required-text rule: what one language version still needs before publishing takes it, given the page''s structure, as a list of paths — title, summary, slug, then per section in order sections.<id>.<field>, sections.<id>.items.<item id>.<field> or sections.<id>.alts.<picture item id>. Empty means complete. Required: hero headline, its buttonLabel when it has a button and its imageAlt when it has a picture; text heading, body and imageAlt with a picture; image an alt per picture; points and steps heading and each item''s title and body; testimonials nothing; guide heading and imageAlt with a picture; faq heading and each item''s question and answer; cta and subscribe heading and buttonLabel. Written means landing_text_is_written. The TypeScript rule in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
 
 -- ---------------------------------------------------------------------------
 -- 3. A placed guide exists

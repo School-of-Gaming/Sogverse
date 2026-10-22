@@ -1,3 +1,4 @@
+import { readApiError } from "@/lib/api/json-response";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
@@ -52,8 +53,8 @@ const DRAFT_VERSION_LIST_COLUMNS =
 
 const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5)`;
 
-/** The published copy's columns for a list: no structure and no words. */
-const PUBLICATION_SUMMARY_COLUMNS = `page_id, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
+/** The published copy's columns for a list: the structure, and no words. */
+const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
 
 /** The published copy's columns for comparing, without its words. */
 const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5)`;
@@ -94,14 +95,14 @@ function publishable(row: {
 
 interface PublicationSummaryRow {
   page_id: string;
+  sections: unknown;
+  image_paths: unknown;
   published_at: string;
   first_published_at: string;
   versions: readonly { locale: string; title: string; summary: string; slug: string }[];
 }
 
 interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
-  sections: unknown;
-  image_paths: unknown;
   versions: readonly {
     locale: string;
     title: string;
@@ -116,6 +117,8 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
     id: row.page_id,
     firstPublishedAt: row.first_published_at,
     publishedAt: row.published_at,
+    sections: readSections(row.sections),
+    imagePaths: landingImagePaths.parse(row.image_paths),
     versions: inLocaleOrder(row.versions).map(({ locale, title, summary, slug }) => ({
       locale,
       title,
@@ -126,11 +129,10 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
 }
 
 function toPublished(row: PublicationRow): PublishedLandingPage {
-  const sections = readSections(row.sections);
+  const summary = toPublishedSummary(row);
+  const { sections } = summary;
   return {
-    ...toPublishedSummary(row),
-    sections,
-    imagePaths: landingImagePaths.parse(row.image_paths),
+    ...summary,
     versions: inLocaleOrder(row.versions).map(
       ({ locale, title, summary, slug, section_texts }) => ({
         locale,
@@ -500,14 +502,44 @@ export class LandingPageService {
     if (error) throw error;
   }
 
+  /**
+   * Publish from the browser — the admin's status page. The publish runs on
+   * the server, through the admin's publication route, which then tells search
+   * engines what changed (`src/lib/indexnow/`); the server side calls
+   * `publishPage` there. A refusal arrives as an `ApiError` carrying the
+   * database's sentence and code, so `landingWriteFailure` reads it as it
+   * would the database's own.
+   */
+  async publishPageViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "PUT", "Failed to publish the page");
+  }
+
+  /** Unpublish from the browser, through the same route as `publishPageViaRoute`. */
+  async unpublishPageViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "DELETE", "Failed to unpublish the page");
+  }
+
+  private async changePublicationViaRoute(
+    id: string,
+    method: "PUT" | "DELETE",
+    fallback: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/landing-pages/${encodeURIComponent(id)}/publication`,
+      { method },
+    );
+    if (!response.ok) throw await readApiError(response, fallback);
+  }
+
   // -------------------------------------------------------------------------
   // Public reads
   // -------------------------------------------------------------------------
 
   /**
    * Every published page, newest first by the date it first went live, with
-   * every live version's short fields and no structure or words — what the
-   * sitemap and `llms.txt` read. Walked, because pages only grow.
+   * its live structure and every live version's short fields, and no words —
+   * what the `/discover` index, the sitemap and `llms.txt` read. Walked,
+   * because pages only grow.
    */
   async listPublishedPages(): Promise<PublishedLandingPageSummary[]> {
     const rows = await walkPages("listPublishedLandingPages", (from, to) =>

@@ -63,7 +63,7 @@ export function usePublishLandingPage() {
   const invalidate = useLandingPageInvalidation();
 
   return useMutation({
-    mutationFn: (id: string) => service.publishPage(id),
+    mutationFn: (id: string) => service.publishPageViaRoute(id),
     onSuccess: () => invalidate(),
   });
 }
@@ -73,7 +73,7 @@ export function useUnpublishLandingPage() {
   const invalidate = useLandingPageInvalidation();
 
   return useMutation({
-    mutationFn: (id: string) => service.unpublishPage(id),
+    mutationFn: (id: string) => service.unpublishPageViaRoute(id),
     onSuccess: () => invalidate(),
   });
 }

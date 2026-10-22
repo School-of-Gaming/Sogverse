@@ -499,6 +499,11 @@ export const ROUTES = {
   libraryArticlePreview: (id: string) =>
     ({ pathname: "/library/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
   /**
+   * The landing pages' index — every live landing page, listed. Public and
+   * promoted (`docs/architecture/site-quality.md`).
+   */
+  discover: "/discover",
+  /**
    * A live landing page, at either of its two addresses: its id, which
    * resolves in every locale, or the slug its version in the locale stores,
    * which is the one to share and the canonical. Public and promoted

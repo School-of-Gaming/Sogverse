@@ -154,6 +154,38 @@ none to check: the words it copies were made canonical when they were saved.
 detail included, the image catalogue's usage map, and the `testimonials` and `guides`
 trees, whose "where it is used" names each page's copies.
 
+**Every publish and unpublish goes through one helper per action in `src/lib/indexnow/`**,
+which runs the service's own publish on the caller's client and then submits every
+address the change touched to IndexNow — each live language's slug address before and
+after, so an old slug and an unpublished page are submitted too, and the `/discover`
+index. The admin's status page reaches it through its publication route, since the
+browser cannot submit; the MCP tools call it directly. A submission is made from the
+production deployment alone and never fails the publish (`docs/architecture/site-quality.md`).
+
+**The email sign-up section (`subscribe`) is a one-way send to Klaviyo, and Sogverse
+stores nothing about the person.** The form takes an address, an optional first and last
+name and the consent box, and posts to `/api/landing-pages/subscribe`, which writes the
+profile to Klaviyo and subscribes it to the newsletter list; nothing is ever read back. The
+list is single opt-in, like the blog's newsletter form, so the reader is on it as soon as
+the route answers and the form gives way to "you are signed up". An address that had
+unsubscribed is simply subscribed again. Klaviyo records the consent and handles every
+unsubscribe. A sign-up is not an account and never touches an account's marketing
+consent; accounts are not synced to Klaviyo either. What the profile carries is the
+address, the names given, the page's locale, the landing page's id, and the visit's UTM
+values only under marketing consent — nothing else. The list is the deployment's
+(`KLAVIYO_*` in the environment, read by `src/lib/landing-pages/subscribe-config.server.ts`):
+the local server and Vercel Preview use a staging list, and production the real one. So
+the section has no shared field; its form copy, consent sentence included, is fixed copy
+in `landingSubscribe`, and the page writes only the ask. The route refuses a body without
+the ticked consent and a page whose published copy no longer holds the section, and
+answers a new address, a known one and a filled honeypot identically. The admin's preview
+draws the form with its button disabled. **The names are anyone's words, an accepted
+risk**: anyone can submit any address, and the import overwrites the names Klaviyo holds
+for it, so a mail that prints a subscriber's name may print a stranger's text. The owner
+accepted that over dropping the names; a flow or campaign that greets by name is the
+admins' call with that in mind. A later section offering something on sign-up (a
+download) would add a shared field to this type, not a second form.
+
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the
 id — never by handing a segment to the route builder, because a slug resolves in its own
@@ -161,3 +193,12 @@ locale only and a hand-picked one is a 404 in every other. The renderer and the 
 contribution (structured data) are each an exhaustive map over the section
 types. Every section sits on the plain page ground: an admin chooses the order, so a
 tinted band could land beside another and read as one section.
+
+**`/discover` lists every live page, newest first**, each card in the reader's version at
+the index's own locale, with the picture its hero leads with where it has one; there is
+no opting out, because the index is what keeps the pages from being orphans to a crawler.
+The footer links it from every page, and the header and the tab bar deliberately do not:
+people reach landing pages from advertising, not by browsing. **Each page carries a
+breadcrumb trail — the index, then the page — drawn on the page and stated as its
+`BreadcrumbList` from the same names**, so the structured data names nothing the reader
+cannot see.

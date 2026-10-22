@@ -1028,8 +1028,6 @@ export interface CreateGamerInput {
   firstName: string;
   birth: GamerBirthMonthYear;
   gender?: "boy" | "girl" | "non_binary" | null;
-  minecraftUsername?: string;
-  robloxUsername?: string;
   /**
    * How this child will reach their own account. Optional, and absent means
    * `parent` — the switch-only shape every gamer had before the modes existed,

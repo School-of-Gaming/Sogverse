@@ -77,6 +77,8 @@ import consent from "./consent.json";
 import team from "./team.json";
 import library from "./library.json";
 import landingPage from "./landingPage.json";
+import discover from "./discover.json";
+import landingSubscribe from "./landingSubscribe.json";
 
 const messages = {
   metadata,
@@ -154,6 +156,8 @@ const messages = {
   team,
   library,
   landingPage,
+  discover,
+  landingSubscribe,
 };
 
 export default messages;

@@ -25,6 +25,7 @@ import {
   type StyledMarkdownElement,
 } from "@/lib/authored-markdown";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
+import { HOLD_CLASS } from "@/lib/email-templates/utils";
 import { canonicalizeHref } from "@/lib/links/own-site";
 
 const messages = { richText: enRichText };
@@ -589,6 +590,12 @@ describe("the mail and the page", () => {
   function renderMail(variant: MarkdownUseCase) {
     const mail = document.createElement("div");
     mail.innerHTML = renderMarkdownForEmail(KITCHEN_SINK, variant);
+    // The mail's holds are its affordance for one client (Gmail iOS), as the
+    // new-tab marker is the page's: bare elements around the authored content
+    // rather than part of it, so they are unwrapped to what they hold.
+    for (const hold of mail.querySelectorAll(`.${HOLD_CLASS.screen}, .${HOLD_CLASS.difference}`)) {
+      hold.replaceWith(...hold.childNodes);
+    }
     const container = mail.firstElementChild;
     if (container === null) throw new Error("the mail renderer drew nothing");
     return container;
@@ -597,6 +604,35 @@ describe("the mail and the page", () => {
   it.each(VARIANTS)("renders %s identically in both", (variant) => {
     expect(shape(renderMail(variant))).toEqual(
       shape(renderRoot(variant, KITCHEN_SINK)),
+    );
+  });
+
+  /**
+   * A list carrying a link is the one place the two part on elements: the mail
+   * draws it as a table with its markers written out and held in a column of
+   * their own, since the list element's markers vanish on Gmail iOS. With the
+   * marker column lifted out, the words and links still have to agree.
+   */
+  it("keeps a linked list's words and links in the mail's marker-column table", () => {
+    const source = "1. see [support](https://a.example/help)\n2. then **this**\n   - nested";
+    const mail = document.createElement("div");
+    mail.innerHTML = renderMarkdownForEmail(source, "spotlight");
+    for (const hold of mail.querySelectorAll(`.${HOLD_CLASS.screen}, .${HOLD_CLASS.difference}`)) {
+      hold.replaceWith(...hold.childNodes);
+    }
+    const markers = [...mail.querySelectorAll("tr")].map((row) => {
+      const cell = row.firstElementChild;
+      cell?.remove();
+      return cell?.textContent;
+    });
+    expect(markers).toEqual(["1.", "2.", "•"]);
+    const container = mail.firstElementChild;
+    if (container === null) throw new Error("the mail renderer drew nothing");
+    const { tags: mailTags, ...mailContent } = shape(container);
+    const { tags: pageTags, ...pageContent } = shape(renderRoot("spotlight", source));
+    expect(mailContent).toEqual(pageContent);
+    expect(mailTags.filter((tag) => tag === "a" || tag === "strong")).toEqual(
+      pageTags.filter((tag) => tag === "a" || tag === "strong"),
     );
   });
 

@@ -97,7 +97,8 @@
     "adminTestimonialEdit": "Edit testimonial",
     "adminGuides": "Guides",
     "adminGuideNew": "New guide",
-    "adminGuideEdit": "Guide"
+    "adminGuideEdit": "Guide",
+    "discover": "Discover"
   },
   "descriptions": {
     "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",
@@ -113,6 +114,7 @@
     "terms": "The terms you agree to when you use School of Gaming: how enrolments, payments and cancellations work, and what we and you are each responsible for.",
     "antiBullying": "How School of Gaming prevents bullying in its clubs, camps and events, what happens when it occurs, and the discipline steps a Game Educator follows.",
     "attributions": "The sources and licences behind the data School of Gaming uses: place names, postcodes and player heads, each credited the way its licence requires.",
-    "team": "Meet the people behind School of Gaming: the team who run it and the Game Educators who lead its clubs, camps and events, each introduced in their own words."
+    "team": "Meet the people behind School of Gaming: the team who run it and the Game Educators who lead its clubs, camps and events, each introduced in their own words.",
+    "discover": "Pages on what School of Gaming offers particular schools, towns, organisations and events, each written for the people it is about."
   }
 }

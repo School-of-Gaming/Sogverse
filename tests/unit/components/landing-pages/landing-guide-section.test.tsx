@@ -70,6 +70,8 @@ function renderGuide({
         sectionTexts={TEXTS}
         textLocale={locale}
         locale={locale}
+        pageId={id(4)}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );

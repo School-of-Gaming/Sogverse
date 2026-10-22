@@ -209,6 +209,7 @@ const TESTS = {
     "tests/integration/api/gedu-session-image-remove.test.ts",
   guideDownload: "tests/integration/api/guide-download.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
+  landingSubscribe: "tests/integration/api/landing-pages-subscribe.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftPasswordReset:
@@ -233,6 +234,8 @@ const TESTS = {
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   oauthConsent: "tests/integration/api/oauth-consent.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
+  adminPublication: "tests/integration/api/admin-publication.test.ts",
+  indexNowKey: "tests/integration/api/indexnow-key.test.ts",
   catalogueImagesManage: "tests/integration/api/catalogue-images-manage.test.ts",
   catalogueImagesReplace: "tests/integration/api/catalogue-images-replace.test.ts",
   catalogueImagesUpload: "tests/integration/api/catalogue-images-upload.test.ts",
@@ -472,6 +475,36 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         // The language is a query parameter, parsed by the guideLocale enum.
         body: { kind: "none" },
         test: TESTS.adminGuidesFile,
+      },
+    },
+  },
+
+  "src/app/api/admin/landing-pages/[id]/publication/route.ts": {
+    handlers: {
+      PUT: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
+      },
+      DELETE: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
+      },
+    },
+  },
+
+  "src/app/api/admin/library/[id]/publication/route.ts": {
+    handlers: {
+      PUT: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
+      },
+      DELETE: {
+        posture: ADMIN_ONLY,
+        body: { kind: "none" },
+        test: TESTS.adminPublication,
       },
     },
   },
@@ -848,6 +881,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- IndexNow --------------------------------------------------------------
+
+  "src/app/api/indexnow/key/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "the IndexNow key file, which search engines fetch with no session to check that a submission naming the key came from this site; the protocol publishes the key on the site it vouches for, so the answer — the key as plain text, or a 404 with none configured — discloses nothing that is not meant to be public, and the handler reads no cookie, no database and no input",
+        },
+        body: { kind: "none" },
+        test: TESTS.indexNowKey,
+      },
+    },
+  },
+
   // --- Discord -------------------------------------------------------------
 
   "src/app/api/discord/interactions/route.ts": {
@@ -1148,6 +1197,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["admin", "customer", "gamer", "gedu"] },
         body: { kind: "none" },
         test: TESTS.guideDownload,
+      },
+    },
+  },
+
+  // --- Landing pages -------------------------------------------------------
+
+  "src/app/api/landing-pages/subscribe/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "a landing page's reader signs up for email with no account and no session. It stores nothing about them and writes the address to Klaviyo's single opt-in newsletter list, behind a honeypot, answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
+        },
+        body: { kind: "json", schema: "landingSubscribeBody" },
+        test: TESTS.landingSubscribe,
       },
     },
   },

@@ -92,7 +92,7 @@ import { VoiceRoomScene } from "./scenes/voice-room-scene";
  * What a scene needs from the URL beyond its slug.
  *
  * One field so far, and it is deliberately handed to *every* renderer rather
- * than to the two that read it: the alternative is a per-surface options type,
+ * than to the one that reads it: the alternative is a per-surface options type,
  * which is a second registry keyed by surface to keep in step with this one. A
  * renderer that has nothing to do with the topic axis simply declares one
  * parameter and never sees it.
@@ -154,14 +154,14 @@ const SCENE_RENDERERS: Record<
     if (!isPreviewScenario(scenario)) notFound();
     return <ProductDetailScene scenario={scenario} topic={topic} />;
   },
-  confirmation: (scenario, { topic }) => {
+  confirmation: (scenario) => {
     // The paid no-order states need no fixture — the notice component takes
     // only which state it is — so they mount directly rather than through the
     // fixture-building scene.
     const notice = findConfirmationNotice(scenario);
     if (notice) return <PurchaseConfirmationNotice kind={notice.kind} />;
     if (!isPreviewScenario(scenario)) notFound();
-    return <PurchaseConfirmationScene scenario={scenario} topic={topic} />;
+    return <PurchaseConfirmationScene scenario={scenario} />;
   },
   "team-profile": (scenario) => {
     if (!isTeamProfileScenario(scenario)) notFound();

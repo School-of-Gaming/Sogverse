@@ -31,28 +31,19 @@ import type { EmailTranslator, TopicPrepTranslator } from "./translator";
 import type { ProductTopic, ProductType } from "@/types";
 
 /**
- * The mail that follows a signup: **the emailed twin of the purchase
- * confirmation page, plus the calendar invitation the page cannot carry.**
+ * The mail that follows a signup: **the full record of what was joined, plus
+ * the calendar invitation.** The confirmation page the parent lands on is a few
+ * seconds of reassurance that points here; this mail is what they keep — who
+ * holds the seat, when and where it runs, who it is for, its language, what it
+ * costs and what happens next. It lays them out as one list of rows, because a
+ * boxed card spends side padding a phone's column does not have to give.
  *
- * **What the two surfaces owe each other is their *facts*, not their layout.** A
- * parent must be able to learn everything about what they have just joined from
- * either one: what it is, who holds the seat, when and where it runs, who it is
- * for, what language it is in, what it costs and what happens next. Neither may
- * state a fact the other lacks. How those facts are *laid out* is each medium's
- * own business — the page has two cards, a picture and a pair of buttons in a
- * shop the reader is still standing in; the mail has one list of rows, because
- * a boxed card spends side padding a phone's column does not have to give.
+ * Where a fact has a composition rule, that rule is one function under
+ * `src/lib/products/` that every surface stating the fact calls.
  *
- * Sentences the two share should still read the same, and where a fact has a
- * composition rule that rule is one function under `src/lib/products/` that
- * both call. But equality of wording is kept by care rather than by a test:
- * the parity table that used to hold every shared key pair equal, locale by
- * locale, was retired as overkill for what it caught.
- *
- * **The foot is where the two deliberately differ, and it is one button here.**
- * The page offers My SOG beside a "keep browsing", because a reader who has
- * just checked out is still standing in the shop and the second button is the
- * way back into it. A reader in their inbox is not standing anywhere, so the
+ * **The foot is one button.** The page offers a way back into the shop under
+ * its My SOG button, because a reader who has just checked out is still
+ * standing in the shop. A reader in their inbox is not standing anywhere, so the
  * mail carries the one action it is asking for — and, being alone, it takes the
  * primary brand fill that a two-button row forbids. Under it the mail says one
  * more thing the page has no use for: that a reply to it reaches a person,
@@ -62,37 +53,31 @@ import type { ProductTopic, ProductType } from "@/types";
  * page's `purchaseConfirmation` keys, so a sentence both surfaces state is two
  * strings in the message files. Editing one is editing half of it.)
  *
- * **The one thing both surfaces state from the same words is the "Before the
- * first session" guide**, which is why this builder takes a second translator:
+ * **The one thing this mail states in the same words as the app is the "Before
+ * the first session" guide** (the My SOG enrolment cards carry it too), which
+ * is why this builder takes a second translator:
  * the guide is a document rather than a line, and copying it under `email`
  * would put the same paragraphs in five catalogs twice with nothing holding
  * them equal. It renders on the enrolled outcome only — a waitlist join has no
  * seat and therefore no first session — and on both copies, because the guide
  * is one text written to read the same to a parent and to a gamer.
  *
- * **The four places the mail deliberately differs from the page**, each because
- * the medium differs rather than because the copy drifted:
+ * **What the mail does because it is a mail:**
  *
- *   - It closes by inviting a reply, which is an affordance rather than a fact:
- *     a mail can be answered and a page cannot. The line is true because this
- *     send's Reply-To is the support inbox, so it goes wherever that does.
- *   - It carries an `invite.ics`, and says nothing about it. The page has
- *     nothing to attach; the mail has nothing to announce, because a client
- *     that can act on the file renders the invitation itself and a sentence
- *     underneath would be narrating the attachment list to somebody already
- *     looking at it.
+ *   - It closes by inviting a reply: a mail can be answered and a page cannot.
+ *     The line is true because this send's Reply-To is the support inbox, so
+ *     it goes wherever that does.
+ *   - It carries an `invite.ics`, and says nothing about it: a client that can
+ *     act on the file renders the invitation itself, and a sentence underneath
+ *     would be narrating the attachment list to somebody already looking at it.
  *   - It states the schedule in the *product's* own zone and always appends
  *     that zone's short abbrev to the time-bearing line, because a mail has no
- *     viewer zone: the page reads one from the signed-in profile, renders the
- *     clock faces in it, and appends the same abbrev only where the two zones
- *     differ. Same lines, same formatter, one option.
- *   - It drops the waitlist position, and it prints no product picture. A queue
- *     number frozen into an inbox goes stale the moment somebody ahead drops
- *     out and a parent cannot tell a stale one from a live one; the picture is
- *     the image rule's doing and is explained where the summary is built.
- *
- * The language fact is the small one: the page shows a flag chip and a code,
- * which a mail has no component for, so the mail names the language instead.
+ *     viewer zone — parents store none, so the reader could not otherwise tell
+ *     which zone the times are in. Same formatter as every other surface, one
+ *     option.
+ *   - It states no waitlist position: a queue number frozen into an inbox goes
+ *     stale the moment somebody ahead drops out, and a parent cannot tell a
+ *     stale one from a live one.
  *
  * **The child's own copy is the same mail with the parent's half taken out.**
  * When a child holds a mailbox of their own they receive their own render
@@ -227,7 +212,7 @@ export interface ProductConfirmationEmailOptions {
   overview: ProductConfirmationOverviewInput | null;
   /**
    * The club's holiday breaks, chosen and worded by the shared rule the
-   * confirmation page lists them with — each break's name in the reader's
+   * product page lists them with — each break's name in the reader's
    * locale and its compact date range, already formatted. Empty for anything
    * that is not a club and for a club no break touches, and the row is then
    * simply absent.
@@ -550,23 +535,15 @@ export function buildProductConfirmationEmail(
     ? paragraph(t("productConfirmation.gamer.greeting", { participantName: name }))
     : "";
 
-  // **One facts list, and it is the whole middle of the mail.** What the page
-  // lays out as two cards — the order summary, then "Good to know" — is one run
-  // of rows here, in the order a parent needs them: what they joined, who it is
-  // for, when and where it happens, and what it costs. Two boxed cards was the
-  // page's arrangement rather than the mail's, and on a phone each one spent
-  // its own border and padding out of a column that had none to give.
+  // **One facts list, and it is the whole middle of the mail**, in the order a
+  // parent needs them: what they joined, who it is for, when and where it
+  // happens, and what it costs. One run of rows rather than boxed cards,
+  // because on a phone each box would spend its own border and padding out of
+  // a column that has none to give.
   //
-  // **No picture, and that is the image rule rather than an omission.** The
-  // page paints the product's photograph at a 96×64 crop; a mail cannot,
-  // because an image's box here has to be arithmetic from dimensions the sender
-  // already holds, and there are none: `catalogue_images` stores no size, and
-  // entries uploaded before sizes were enforced may be any size and `webp` or
-  // `avif`, neither of which Outlook's desktop engine renders. A fixed 96×64
-  // box would stretch a portrait and a width-only `<img>`
-  // would reserve nothing and reflow the mail when it loaded. So the row is the
-  // type and the name alone, which leaves no hole — the picture was never
-  // carrying a fact the two lines beside it do not.
+  // **No picture yet** — not ruled out, simply not built
+  // (`src/lib/email-templates/CLAUDE.md`). So the row is the type and the name
+  // alone, which leaves no hole.
   const factRows: [string, string][] = [
     [t(`productConfirmation.typeLabel.${productType}`), product],
     [
@@ -603,8 +580,7 @@ export function buildProductConfirmationEmail(
     ${
       // The guide comes after "what happens next" and before the button,
       // because that list is where the mail says *when* the first session is
-      // and this is what to do before it — the same reason it sits under that
-      // card on the confirmation page. Both readers get it: the steps are one
+      // and this is what to do before it. Both readers get it: the steps are one
       // text written to read the same to a parent and to a gamer, so the
       // child's copy carries the guide the parent's does.
       //
@@ -725,12 +701,12 @@ function holidayBreaksText(
 }
 
 /**
- * What happens next, in the page's order and with the page's omissions.
+ * What happens next.
  *
- * Placement first; then the deferred first charge, on the one signup that has
+ * Where the sessions are first; then the deferred first charge, on the one signup that has
  * one — the parent has just seen €0 at checkout and is owed the real date in
  * the same breath; then the price-shape line. `free` and `external` state no
- * third bullet at all, exactly as the page states none: the price row above has
+ * third bullet at all: the price row above has
  * already said what there is to say about the cost, and every honest expansion
  * of it was some version of who we invoice, which is our arrangement with a
  * municipality rather than a thing a parent has any use for.
@@ -762,8 +738,8 @@ function nextItems(
 
   const items = [
     secondPerson
-      ? t("productConfirmation.next.placementSelf")
-      : t("productConfirmation.next.placement", {
+      ? t("productConfirmation.next.sessionsSelf")
+      : t("productConfirmation.next.sessions", {
           participantName: values.participantName,
         }),
   ];

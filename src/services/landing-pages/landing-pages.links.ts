@@ -143,6 +143,7 @@ function buttonOf(section: LandingSection): ButtonTarget | undefined {
     case "testimonials":
     case "guide":
     case "faq":
+    case "subscribe":
       return undefined;
   }
 }
@@ -159,6 +160,7 @@ function withButton(section: LandingSection, button: ButtonTarget): LandingSecti
     case "testimonials":
     case "guide":
     case "faq":
+    case "subscribe":
       return section;
   }
 }

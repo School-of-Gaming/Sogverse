@@ -90,7 +90,8 @@
     "adminTestimonialEdit": "jatlh choH",
     "adminGuides": "ghojmoHwI’ paqmey",
     "adminGuideNew": "ghojmoHwI’ paq chu’",
-    "adminGuideEdit": "ghojmoHwI’ paq"
+    "adminGuideEdit": "ghojmoHwI’ paq",
+    "discover": "tu’"
   },
   "descriptions": {
     "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",
@@ -102,6 +103,7 @@
     "library": "School of Gaming paq qach: vavpu’ SoSpu’ je DevmeH ghItlhmey. Qan, jIHmey poH, ’ej nuq ghoj puqpu’ Quj.",
     "shop": "School of Gaming ghom’a’mey, raghmey, wanI’mey je yIlegh: Minecraft, Roblox, Fortnite latlh je. puqlI’vaD lI’bogh wa’ yItu’!",
     "resetPin": "chu’bogh vav PIN yIwIv — QInDaq tlhegh yIlo’. vav paqmey SoQmoH PIN, ’ej puq luSovbe’.",
-    "team": "School of Gaming ghom yIghov: DevwI’pu’ ’ej Quj ghojmoHwI’pu’."
+    "team": "School of Gaming ghom yIghov: DevwI’pu’ ’ej Quj ghojmoHwI’pu’.",
+    "discover": "School of Gaming Doch: DuSaQmey, vengmey, ghommey, wanI’mey je."
   }
 }

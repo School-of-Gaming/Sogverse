@@ -384,6 +384,25 @@ export const MCP_LANDING_SECTIONS: {
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
   },
+  subscribe: {
+    about:
+      "An email sign-up form: a reader leaves their email address, and their first and last name if they like, to join School of Gaming's newsletter. The form's field labels, its consent sentence and what it says after a sign-up are the site's own, in the reader's language; the page writes only the heading, an optional intro line and the button's words, which should say why a reader would sign up from this page. The reader is on the list as soon as they sign up, with no confirmation email. The list is the same for every page, so the section has no other field.",
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("subscribe"),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading."),
+      intro: plainText.describe("A line under the heading, plain text. Optional."),
+      buttonLabel: plainText.describe("The submit button's words."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "subscribe" },
+      withOptional: {},
+    },
+    itemIds: () => null,
+  },
   cta: {
     about: "A closing ask: a heading, an optional line and a button.",
     structure: z.strictObject({

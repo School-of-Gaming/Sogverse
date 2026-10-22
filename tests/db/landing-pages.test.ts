@@ -23,7 +23,7 @@ import {
 } from "@/lib/landing-pages/sections";
 import { asObject } from "../helpers/json";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
-import { requiredTextCases } from "../helpers/landing-required-text-cases";
+import { everySection, requiredTextCases } from "../helpers/landing-required-text-cases";
 
 /**
  * Landing pages: `landing_pages` (a page's admin-only working copy, holding
@@ -345,6 +345,14 @@ describe("landing pages", () => {
         p_sections: [{ id: HERO, type: "hero", imageId: "not-an-id" }],
       });
       expect(badPicture.error?.code).toBe("23514");
+    });
+
+    it("knows every section type the registry does", async () => {
+      const { data, error } = await admin.rpc("landing_sections_problem", {
+        p_sections: everySection(),
+      });
+      expect(error).toBeNull();
+      expect(data).toBeNull();
     });
 
     it("refuses words for a section the page does not have", async () => {
@@ -959,6 +967,7 @@ describe("landing pages", () => {
     const S_CTA = "00000000-0000-4000-8000-0000000008b7";
     const S_QUOTE = "00000000-0000-4000-8000-0000000008b8";
     const S_GUIDE = "00000000-0000-4000-8000-0000000008b9";
+    const S_SUBSCRIBE = "00000000-0000-4000-8000-0000000008ba";
     const item = (n: number) => `00000000-0000-4000-8000-0000000008c${n}`;
     /** The testimonial the fixture places, which a save refuses unless it exists. */
     const TESTIMONIAL = "00000000-0000-0000-0000-000000000913";
@@ -999,6 +1008,7 @@ describe("landing pages", () => {
       { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
       { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
       { id: S_GUIDE, type: "guide", guideId: GUIDE, imageId: PIC_B },
+      { id: S_SUBSCRIBE, type: "subscribe" },
       { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
     ];
 
@@ -1015,6 +1025,7 @@ describe("landing pages", () => {
         [S_FAQ]: { heading: w("faq"), items: { [item(7)]: { question: w("question 7"), answer: w("answer 7") } } },
         [S_QUOTE]: { heading: w("testimonials") },
         [S_GUIDE]: { heading: w("guide"), imageAlt: w("guide alt") },
+        [S_SUBSCRIBE]: { heading: w("subscribe"), buttonLabel: w("subscribe button") },
         [S_CTA]: { heading: w("cta"), buttonLabel: w("cta button") },
       };
     }

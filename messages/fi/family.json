@@ -20,7 +20,6 @@
   },
   "addGamerForm": {
     "title": "Lisää pelaaja",
-    "accountsTitle": "Pelaajan {name} pelitilit",
     "firstNameLabel": "Etunimi",
     "firstNamePlaceholder": "esim. Lilja",
     "birthMonthLabel": "Syntymäkuukausi",

@@ -1,3 +1,8 @@
+// @vitest-environment jsdom
+//
+// jsdom because the hold sweep reads each mail with the DOM's own parser: what
+// it checks is which element a glyph, a fill or a border sits inside, which a
+// regex over the markup cannot say.
 /// <reference types="vite/client" />
 // Declared here rather than in tsconfig's `types`: `import.meta.glob` is Vite's,
 // and this is the only file in the repo that uses it. A project-wide types entry
@@ -25,6 +30,8 @@ import {
   type MarkdownLook,
 } from "@/lib/authored-markdown";
 import { MAIL_TYPE, MAIL_WEIGHT } from "@/lib/email-templates/type-scale";
+import { HOLD_GROUND, TEXT_PINS, framedInnerRadius } from "@/lib/email-templates/utils";
+import { holdViolations } from "../../helpers/email-holds";
 
 /**
  * The house style, enforced mechanically over the rendered output of every mail
@@ -56,7 +63,14 @@ const PALETTE = new Set(
   ].map((hex) => hex.toLowerCase()),
 );
 
-const RADII = new Set(Object.values(RADIUS));
+/**
+ * The app's corners, and each one a pixel tighter: the inside of a box whose
+ * edge is drawn as a one-pixel fill, which keeps the edge even round the
+ * corner.
+ */
+const RADII = new Set(
+  Object.values(RADIUS).flatMap((radius) => [radius, framedInnerRadius(radius)]),
+);
 
 /**
  * Every size a mail may set: the mail's own levels, plus the authored-markdown
@@ -499,7 +513,8 @@ describe("house style, over every mail we can send", () => {
           style,
         );
         const isButton = label !== null && label[2] === ACTION_TYPE;
-        const isInlineLink = style === `color:${BRAND.act};text-decoration:underline;`;
+        const isInlineLink =
+          style === `color:${BRAND.act};text-decoration:underline;text-decoration-color:${BRAND.act};`;
         const isMarkdownLink = style === markdownLinkStyle;
         expect(
           isButton || isInlineLink || isMarkdownLink,
@@ -507,6 +522,59 @@ describe("house style, over every mail we can send", () => {
         ).toBe(true);
       }
     }
+  });
+
+  /**
+   * Every link that sits in a sentence is pinned amber, underline included.
+   * Unpinned, the amber drifts darker on Gmail iOS; and a link is a colour no
+   * hold may contain, so the pin is the only protection it can have.
+   */
+  it("pins every inline link", () => {
+    for (const [name, html] of allMails()) {
+      for (const [anchor] of html.matchAll(/<a\b[^>]*text-decoration:underline[^>]*>/g)) {
+        expect(anchor, `${name}: an inline link with no pin`).toContain(
+          `class="${TEXT_PINS.act.className}"`,
+        );
+        expect(anchor, `${name}: a pinned link that will lose its underline`).toContain(
+          `text-decoration-color:${BRAND.act};`,
+        );
+      }
+    }
+  });
+
+  /**
+   * The hold's rules, over the rendered output: every plain neutral — the two
+   * inks, the border grey, the violet button's white — is inside a hold, and
+   * nothing Gmail iOS leaves alone is: no fill, no picture, no pinned or
+   * coloured text, and no hold inside another. See `tests/helpers/email-holds.ts`
+   * for each check and `HOLD_CLASS` for why each one is a rule.
+   */
+  it("has a hold checker that sees each kind of fault", () => {
+    const ink = `color:${DARK_THEME.foreground};`;
+    const hold = (inner: string) => `<div class="bs"><div class="bd">${inner}</div></div>`;
+    const cases: [string, string][] = [
+      ["outside any hold", `<p style="${ink}">Plain</p>`],
+      ["outside any hold", `<table><tr><td style="border-top:1px solid ${DARK_THEME.border};">&nbsp;</td></tr></table>`],
+      ["a hold inside a hold", hold(hold(`<p style="${ink}">Twice</p>`))],
+      ["a fill inside a hold", hold(`<div style="background-color:${DARK_THEME.card};${ink}">Filled</div>`)],
+      ["a picture inside a hold", hold(`<img src="https://sogverse.sog.gg/a.jpg" alt="" />`)],
+      ["pinned text inside a hold", hold(`<a class="${TEXT_PINS.act.className}" style="color:${BRAND.act};">Link</a>`)],
+      ["leaves alone, inside a hold", hold(`<span style="color:${STATUS.info};">Blue</span>`)],
+      ["a fill inside a hold", hold(`<div style="background:${DARK_THEME.card};${ink}">Shorthand</div>`)],
+      ["leaves alone, inside a hold", `<div style="color:${STATUS.info};">${hold("Inherited")}</div>`],
+      ["leaves alone, inside a hold", `<a href="https://sogverse.sog.gg/" style="color:${BRAND.act};">${hold("Unpinned link")}</a>`],
+    ];
+    for (const [expected, html] of cases) {
+      expect(holdViolations(`<body>${html}</body>`).join("\n"), html).toContain(expected);
+    }
+    expect(holdViolations(`<body>${hold(`<p style="${ink}">Held</p>`)}</body>`)).toEqual([]);
+  });
+
+  it("holds every plain neutral, and nothing else", () => {
+    const violations = allMails().flatMap(([name, html]) =>
+      holdViolations(html).map((line) => `${name}: ${line}`),
+    );
+    expect([...new Set(violations)]).toEqual([]);
   });
 
   /**
@@ -598,7 +666,10 @@ describe("house style, over every mail we can send", () => {
 
   it("emits no colour outside the palette", () => {
     for (const [name, html] of allMails()) {
-      for (const hex of html.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
+      // The holds' black is a blend operand rather than a colour anything
+      // shows, and it is stated in exactly the two rules that blend with it.
+      const shown = html.split(`background: ${HOLD_GROUND} !important; mix-blend-mode`).join("");
+      for (const hex of shown.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
         expect(PALETTE, `${name}: ${hex[0]} is not in the shared palette`).toContain(
           hex[0].toLowerCase(),
         );
@@ -682,11 +753,23 @@ describe("every pinned colour has been verified, not reasoned about", () => {
   const VERIFIED_PINS: Record<string, { hex: string; evidence: string }> = {
     "brand-act": {
       hex: BRAND.act,
-      evidence: "Gmail Android, dark system theme, 2026-08-22 — components reference, header lockup and V7.",
+      evidence:
+        "Gmail Android, dark system theme, 2026-08-22 — components reference, header lockup and V7. " +
+        "Gmail iOS dark and light (Litmus), Gmail Android dark, Gmail web, 2026-10-22 — probe 4: " +
+        "the lockup and a pinned inline link exact on every one; the unpinned link drifted darker on iOS.",
     },
-    "cta-on-brand": {
+    "pin-dark": {
       hex: BRAND.actForeground,
-      evidence: "Gmail Android, dark system theme, 2026-08-22 — C1. Fixed a real white/black flip.",
+      evidence:
+        "Gmail Android, dark system theme, 2026-08-22 — C1, the primary button's label. Fixed a real white/black flip. " +
+        "Gmail iOS dark and light (Litmus), Gmail Android dark, Gmail web, 2026-10-22 — probe 4: " +
+        "the primary label and the dark labels on the light palette swatches.",
+    },
+    "pin-info": {
+      hex: STATUS.info,
+      evidence:
+        "Gmail iOS dark and light (Litmus), Gmail Android dark, Gmail web, 2026-10-22 — probe 4: " +
+        "the callout's label, exact on both apps.",
     },
   };
 
@@ -737,6 +820,17 @@ describe("every pinned colour has been verified, not reasoned about", () => {
         `.${className} pins ${hex}, lighter than anything anyone has watched survive`,
       ).toBeLessThanOrEqual(VERIFIED_CEILING);
       }
+    }
+  });
+
+  /**
+   * One dark pin serves every dark label on a light fill — the primary
+   * button's and the light swatches' — so each of those labels has to be the
+   * colour that pin paints, or the pinned label and the inline one disagree.
+   */
+  it("pins the one dark ink every light fill carries", () => {
+    for (const label of [BRAND.actForeground, STATUS.infoForeground, DARK_THEME.bg]) {
+      expect(label.toLowerCase()).toBe(TEXT_PINS.dark.color.toLowerCase());
     }
   });
 
