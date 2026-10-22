@@ -54,6 +54,7 @@ function renderPage(
           sections={sections}
           pictures={{}}
           testimonials={{}}
+          guideIds={[]}
           sectionTexts={texts}
           textLocale="en"
           locale="en"

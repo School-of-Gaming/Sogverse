@@ -17,12 +17,16 @@ DECLARE
   v_section bigint;
   v_id      text;
 BEGIN
+  -- The key holds a list of ids, or a single id; a single one is read as a
+  -- list of one.
   IF TG_OP = 'UPDATE' AND jsonb_typeof(OLD.sections) = 'array' THEN
     SELECT COALESCE(array_agg(p.e #>> '{}'), ARRAY[]::text[]) INTO v_before
       FROM jsonb_array_elements(OLD.sections) AS s(e),
            jsonb_array_elements(
-             CASE WHEN s.e->>'type' = v_type AND jsonb_typeof(s.e->v_key) = 'array'
-                  THEN s.e->v_key ELSE '[]'::jsonb END
+             CASE WHEN s.e->>'type' IS DISTINCT FROM v_type THEN '[]'::jsonb
+                  WHEN jsonb_typeof(s.e->v_key) = 'array'  THEN s.e->v_key
+                  WHEN jsonb_typeof(s.e->v_key) = 'string' THEN jsonb_build_array(s.e->v_key)
+                  ELSE '[]'::jsonb END
            ) AS p(e);
   END IF;
 
@@ -36,8 +40,10 @@ BEGIN
         SELECT s.n, p.e #>> '{}' AS id
           FROM jsonb_array_elements($1) WITH ORDINALITY AS s(e, n),
                jsonb_array_elements(
-                 CASE WHEN s.e->>'type' = $2 AND jsonb_typeof(s.e->$3) = 'array'
-                      THEN s.e->$3 ELSE '[]'::jsonb END
+                 CASE WHEN s.e->>'type' IS DISTINCT FROM $2 THEN '[]'::jsonb
+                      WHEN jsonb_typeof(s.e->$3) = 'array'  THEN s.e->$3
+                      WHEN jsonb_typeof(s.e->$3) = 'string' THEN jsonb_build_array(s.e->$3)
+                      ELSE '[]'::jsonb END
                ) AS p(e)
          WHERE jsonb_typeof(p.e) = 'string'
       ) AS pick
@@ -66,7 +72,7 @@ $_$;
 -- Name: FUNCTION check_landing_section_picks(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.check_landing_section_picks() IS 'BEFORE INSERT OR UPDATE OF sections on landing_pages (the working copy alone), attached once per section type that names rows of another table by id. Its trigger arguments are the section type, the key holding the ids, the public table they name, and the noun and verb of the refusal. It refuses a save whose sections of that type name an id no row of that table has, with foreign_key_violation naming the section by its number from one and the id ("Section 2 picks the product <id>, and no product has that id"). Only ids the save adds are checked — on an update, an id the stored structure already held is left alone — so a write that moves only the structure''s other contents (a catalogue picture''s replace or removal) is never refused by an id it did not add. No foreign key can reach into the structure, which is why this is a trigger. The published copy has no such check: a testimonial is never deleted by the app, and a product pick that has ended or been unlisted is not an error, since the public page leaves out whatever the listing does not hold.';
+COMMENT ON FUNCTION public.check_landing_section_picks() IS 'BEFORE INSERT OR UPDATE OF sections on landing_pages (the working copy alone), attached once per section type that names rows of another table by id. Its trigger arguments are the section type, the key holding the ids — a list of ids, or a single id — the public table they name, and the noun and verb of the refusal. It refuses a save whose sections of that type name an id no row of that table has, with foreign_key_violation naming the section by its number from one and the id ("Section 2 picks the product <id>, and no product has that id"). Only ids the save adds are checked — on an update, an id the stored structure already held is left alone — so a write that moves only the structure''s other contents (a catalogue picture''s replace or removal) is never refused by an id it did not add. No foreign key can reach into the structure, which is why this is a trigger. The published copy has no such check: a testimonial or a guide is never deleted by the app, and a product pick that has ended or been unlisted is not an error, since the public page leaves out whatever the listing does not hold.';
 
 
 --

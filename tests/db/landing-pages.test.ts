@@ -71,9 +71,9 @@ const PRODUCT_PICTURE = "00000000-0000-0000-0000-000000000839";
 const PIC_DOOMED = "00000000-0000-0000-0000-00000000083a";
 const PIC_DOOMED_TOO = "00000000-0000-0000-0000-00000000083b";
 /** Two square landing pictures and a portrait one; the second square is removed during the run. */
-const SQUARE = "00000000-0000-0000-0000-000000000915";
-const SQUARE_TOO = "00000000-0000-0000-0000-000000000916";
-const PORTRAIT = "00000000-0000-0000-0000-000000000917";
+const SQUARE = "00000000-0000-0000-0000-000000000916";
+const SQUARE_TOO = "00000000-0000-0000-0000-000000000917";
+const PORTRAIT = "00000000-0000-0000-0000-000000000918";
 const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO, SQUARE, SQUARE_TOO, PORTRAIT];
 
 /** Products a products section picks: one the shop lists, one unlisted, one ended. */
@@ -101,9 +101,9 @@ const ENTRY_ROWS: CatalogueImageInsert[] = [
   { id: PRODUCT_PICTURE, label: "Landing fixture product", sha256: hex("1a2c0839"), path: `${hex("1a2c0839")}.jpg`, purpose: "product" },
   { id: PIC_DOOMED, label: "Landing fixture doomed", sha256: hex("1a2c083a"), path: `${hex("1a2c083a")}.jpg`, purpose: "landing_image" },
   { id: PIC_DOOMED_TOO, label: "Landing fixture doomed too", sha256: hex("1a2c083b"), path: `${hex("1a2c083b")}.jpg`, purpose: "landing_image" },
-  { id: SQUARE, label: "Landing fixture square", sha256: hex("1a2c0915"), path: `${hex("1a2c0915")}.jpg`, purpose: "landing_square_image" },
-  { id: SQUARE_TOO, label: "Landing fixture square too", sha256: hex("1a2c0916"), path: `${hex("1a2c0916")}.jpg`, purpose: "landing_square_image" },
-  { id: PORTRAIT, label: "Landing fixture portrait", sha256: hex("1a2c0917"), path: `${hex("1a2c0917")}.jpg`, purpose: "landing_portrait_image" },
+  { id: SQUARE, label: "Landing fixture square", sha256: hex("1a2c0916"), path: `${hex("1a2c0916")}.jpg`, purpose: "landing_square_image" },
+  { id: SQUARE_TOO, label: "Landing fixture square too", sha256: hex("1a2c0917"), path: `${hex("1a2c0917")}.jpg`, purpose: "landing_square_image" },
+  { id: PORTRAIT, label: "Landing fixture portrait", sha256: hex("1a2c0918"), path: `${hex("1a2c0918")}.jpg`, purpose: "landing_portrait_image" },
 ];
 
 /** An entry as a copy's derived `pictures` holds it. */
@@ -1134,18 +1134,38 @@ describe("landing pages", () => {
   describe("picture shapes", () => {
     /** One landing picture of each shape. */
     const OF_SHAPE: Record<LandingPictureShape, string> = { wide: PIC_A, square: SQUARE, portrait: PORTRAIT };
+    /** The guide a guide section places, which a save refuses unless it exists. */
+    const SHAPES_GUIDE = "00000000-0000-0000-0000-000000000919";
+
+    beforeAll(async () => {
+      const guide = await admin.from("guides").insert({ id: SHAPES_GUIDE, label: "Picture shapes fixture guide" });
+      expect(guide.error).toBeNull();
+      const file = await admin.from("guide_files").insert({
+        guide_id: SHAPES_GUIDE,
+        locale: "en",
+        storage_path: `${SHAPES_GUIDE}/en/00000000-0000-4000-8000-000000000919.pdf`,
+        file_name: "shapes-fixture.pdf",
+        byte_size: 100,
+      });
+      expect(file.error).toBeNull();
+    });
+
+    afterAll(async () => {
+      await admin.from("guides").delete().eq("id", SHAPES_GUIDE);
+    });
 
     /** The fixture structure with one more section, whose picture is `imageId`. */
-    function withPicture(type: "hero" | "text" | "image", imageId: string): LandingSection[] {
+    function withPicture(type: "hero" | "text" | "image" | "guide", imageId: string): LandingSection[] {
       const [hero, cta] = structure(null);
       if (type === "hero") return [{ id: HERO, type: "hero", imageId }, cta];
       if (type === "text") return [hero, { id: GALLERY, type: "text", imageSide: "start", imageId }, cta];
+      if (type === "guide") return [hero, { id: GALLERY, type: "guide", guideId: SHAPES_GUIDE, imageId }, cta];
       return [hero, { id: GALLERY, type: "image", images: [{ id: SHOT_1, imageId }] }, cta];
     }
 
     // The SQL half of which shapes a section takes, held equal to the section
     // registry's declaration: every type with a picture, with each shape.
-    const PICTURED = ["hero", "text", "image"] as const;
+    const PICTURED = ["hero", "text", "image", "guide"] as const;
     const cases = PICTURED.flatMap((type) =>
       LANDING_PICTURE_SHAPES.map((shape) => ({
         type,
@@ -1290,12 +1310,15 @@ describe("landing pages", () => {
     const S_CTA = "00000000-0000-4000-8000-0000000008b7";
     const S_QUOTE = "00000000-0000-4000-8000-0000000008b8";
     const S_PICKS = "00000000-0000-4000-8000-0000000008b9";
+    const S_GUIDE = "00000000-0000-4000-8000-0000000008bb";
     const S_SUBSCRIBE = "00000000-0000-4000-8000-0000000008ba";
     const item = (n: number) => `00000000-0000-4000-8000-0000000008c${n}`;
     /** The testimonial the fixture places, which a save refuses unless it exists. */
     const TESTIMONIAL = "00000000-0000-0000-0000-000000000913";
     /** The product the fixture picks, which a save refuses unless it exists. */
     const PICKED = "00000000-0000-0000-0000-000000000914";
+    /** The guide the fixture places, likewise. */
+    const GUIDE = "00000000-0000-0000-0000-000000000915";
 
     beforeAll(async () => {
       await deleteTestProducts(admin, [PICKED]);
@@ -1306,11 +1329,22 @@ describe("landing pages", () => {
         .from("testimonial_translations")
         .insert({ testimonial_id: TESTIMONIAL, locale: "en", attribution: "Mum, fixture", quote: "Clone fixture quote" });
       expect(words.error).toBeNull();
+      const guide = await admin.from("guides").insert({ id: GUIDE, label: "Clone fixture guide" });
+      expect(guide.error).toBeNull();
+      const file = await admin.from("guide_files").insert({
+        guide_id: GUIDE,
+        locale: "en",
+        storage_path: `${GUIDE}/en/00000000-0000-4000-8000-000000000915.pdf`,
+        file_name: "clone-fixture.pdf",
+        byte_size: 100,
+      });
+      expect(file.error).toBeNull();
     });
 
     afterAll(async () => {
       await admin.from("testimonials").delete().eq("id", TESTIMONIAL);
       await deleteTestProducts(admin, [PICKED]);
+      await admin.from("guides").delete().eq("id", GUIDE);
     });
 
     /** One section of every type, every item-bearing one with its items. */
@@ -1323,6 +1357,7 @@ describe("landing pages", () => {
       { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
       { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
       { id: S_PICKS, type: "products", productIds: [PICKED] },
+      { id: S_GUIDE, type: "guide", guideId: GUIDE, imageId: PIC_B },
       { id: S_SUBSCRIBE, type: "subscribe" },
       { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
     ];
@@ -1340,6 +1375,7 @@ describe("landing pages", () => {
         [S_FAQ]: { heading: w("faq"), items: { [item(7)]: { question: w("question 7"), answer: w("answer 7") } } },
         [S_QUOTE]: { heading: w("testimonials") },
         [S_PICKS]: { heading: w("products") },
+        [S_GUIDE]: { heading: w("guide"), imageAlt: w("guide alt") },
         [S_SUBSCRIBE]: { heading: w("subscribe"), buttonLabel: w("subscribe button") },
         [S_CTA]: { heading: w("cta"), buttonLabel: w("cta button") },
       };

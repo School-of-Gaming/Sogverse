@@ -17,6 +17,7 @@
 --
 --   * a hero's picture is wide only: it is the page's link preview and the
 --     picture its structured data leads with, both drawn at 16:9;
+--   * a guide section's picture is wide only, the one shape it has shown so far;
 --   * a text section's picture, and an image section's pictures, may be any
 --     of the three;
 --   * the pictures of one section all share one shape, so an image
@@ -58,6 +59,7 @@ BEGIN
       -- registry's declaration by a DB test.
       v_takes := CASE v_section->>'type'
         WHEN 'hero' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
+        WHEN 'guide' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
         ELSE ARRAY['landing_image', 'landing_square_image', 'landing_portrait_image']::public.catalogue_image_purpose[]
       END;
       v_first := NULL;
@@ -98,7 +100,9 @@ BEGIN
         END IF;
 
         IF NOT v_purpose = ANY (v_takes) THEN
-          RAISE EXCEPTION 'A hero section''s picture must be wide 16:9, because it is the page''s link preview, and that picture is % (catalogue_images row %)',
+          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and that picture is % (catalogue_images row %)',
+            v_section->>'type',
+            CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
             CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_ref
             USING ERRCODE = 'check_violation';
         END IF;
@@ -125,7 +129,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the sections name (a section''s imageId, an image section''s images[].imageId), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture that is not wide (landing_image), since it is the page''s link preview; and a section whose pictures are not all one purpose (each 23514).';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the sections name (a hero, text or guide section''s imageId, an image section''s images[].imageId), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture that is not wide (landing_image), since it is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose (each 23514).';
 
 REVOKE ALL ON FUNCTION public.apply_landing_pictures() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.apply_landing_pictures() TO service_role;
@@ -225,7 +229,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.unlink_removed_landing_image() IS 'BEFORE DELETE on catalogue_images: the landing pages'' half of a removal, standing in for the foreign key a picture inside sections JSON cannot have. Takes a removed landing picture entry, of any of the three landing purposes, out of every landing page, working and published copies alike, as a cover''s SET NULL does: a hero or text section loses its picture, an image section loses that picture, and an image section left with none is dropped with its text. A live page changes without a republish; the working copy''s updated_at and saver move, as a cover removal''s do. SECURITY DEFINER because the remover is an admin''s own session and no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.unlink_removed_landing_image() IS 'BEFORE DELETE on catalogue_images: the landing pages'' half of a removal, standing in for the foreign key a picture inside sections JSON cannot have. Takes a removed landing picture entry, of any of the three landing purposes, out of every landing page, working and published copies alike, as a cover''s SET NULL does: a hero, text or guide section loses its picture, an image section loses that picture, and an image section left with none is dropped with its text. A live page changes without a republish; the working copy''s updated_at and saver move, as a cover removal''s do. SECURITY DEFINER because the remover is an admin''s own session and no landing page table carries a write grant.';
 
 REVOKE ALL ON FUNCTION public.unlink_removed_landing_image() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.unlink_removed_landing_image() TO service_role;
@@ -239,7 +243,7 @@ ALTER TABLE public.landing_page_publications DROP COLUMN image_paths;
 
 COMMENT ON COLUMN public.catalogue_images.purpose IS 'What this picture is for, which decides the bucket its object lives in and the exact size — and so the shape — it was stored at. Set once, when the entry is created, and never changed: a replace creates an entry of the same purpose. A product may link only a ''product'' entry (apply_product_image_path refuses anything else), a Library cover only a ''library_cover'' one (apply_library_cover_path), a landing page only landing pictures, each section only the shapes it takes (apply_landing_pictures), and a spotlight only a ''spotlight_image'' one (apply_spotlight_image_path). An UPDATE changing it is refused by trg_catalogue_images_purpose_is_fixed.';
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial or a picked product exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
 
 -- ---------------------------------------------------------------------------
 -- What this migration promises

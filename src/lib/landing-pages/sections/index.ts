@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ctaSection } from "./cta";
 import { faqSection } from "./faq";
+import { guideSection } from "./guide";
 import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
@@ -41,6 +42,7 @@ export const LANDING_SECTION_TYPES = [
   "steps",
   "testimonials",
   "products",
+  "guide",
   "faq",
   "subscribe",
   "cta",
@@ -56,6 +58,7 @@ export const LANDING_SECTIONS = {
   steps: stepsSection,
   testimonials: testimonialsSection,
   products: productsSection,
+  guide: guideSection,
   faq: faqSection,
   subscribe: subscribeSection,
   cta: ctaSection,
@@ -70,6 +73,7 @@ export const landingSection = z.discriminatedUnion("type", [
   stepsSection.section,
   testimonialsSection.section,
   productsSection.section,
+  guideSection.section,
   faqSection.section,
   subscribeSection.section,
   ctaSection.section,
@@ -149,6 +153,12 @@ export function landingPlacedTestimonialIds(sections: readonly LandingSection[])
   return [...new Set(ids)];
 }
 
+/** Every guide the structure's guide sections place, each once, in page order. */
+export function landingPlacedGuideIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) => (section.type === "guide" ? [section.guideId] : []));
+  return [...new Set(ids)];
+}
+
 /**
  * The schema of one language's section texts for a given structure: an
  * object keyed by the structure's section ids, each entry its type's text
@@ -205,6 +215,8 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return testimonialsSection.missingText();
     case "products":
       return productsSection.missingText();
+    case "guide":
+      return guideSection.missingText(section, text);
     case "faq":
       return faqSection.missingText(section, text);
     case "subscribe":
@@ -301,6 +313,7 @@ export function landingMarkdownValues(
 
 export { ctaSection } from "./cta";
 export { faqSection } from "./faq";
+export { guideSection } from "./guide";
 export { heroSection } from "./hero";
 export { imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";

@@ -473,6 +473,7 @@ describe("the uploader", () => {
       // be, what a picture of another shape is told, and the store-then-set
       // calls it makes.
       uploader: {
+        kind: "picture",
         heading: "Library cover",
         subject: "For “Screen time is not the enemy”",
         frames: [

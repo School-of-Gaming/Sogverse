@@ -124,6 +124,7 @@ function renderBody(
         sections={overrides.sections ?? SECTIONS}
         pictures={PICTURES}
         testimonials={{}}
+        guideIds={[]}
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}

@@ -94,7 +94,7 @@ function placed(
   imageId: string | null,
   pictureId: string | undefined,
 ): { section: LandingSection; pictureId: string | null } | { refusal: string } {
-  if (section.type === "hero" || section.type === "text") {
+  if (section.type === "hero" || section.type === "text" || section.type === "guide") {
     if (pictureId !== undefined) {
       return { refusal: `A ${section.type} section has one picture and no picture items: leave pictureId out.` };
     }

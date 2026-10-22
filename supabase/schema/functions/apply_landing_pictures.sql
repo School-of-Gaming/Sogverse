@@ -24,6 +24,7 @@ BEGIN
       -- registry's declaration by a DB test.
       v_takes := CASE v_section->>'type'
         WHEN 'hero' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
+        WHEN 'guide' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
         ELSE ARRAY['landing_image', 'landing_square_image', 'landing_portrait_image']::public.catalogue_image_purpose[]
       END;
       v_first := NULL;
@@ -64,7 +65,9 @@ BEGIN
         END IF;
 
         IF NOT v_purpose = ANY (v_takes) THEN
-          RAISE EXCEPTION 'A hero section''s picture must be wide 16:9, because it is the page''s link preview, and that picture is % (catalogue_images row %)',
+          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and that picture is % (catalogue_images row %)',
+            v_section->>'type',
+            CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
             CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_ref
             USING ERRCODE = 'check_violation';
         END IF;
@@ -96,7 +99,7 @@ $_$;
 -- Name: FUNCTION apply_landing_pictures(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the sections name (a section''s imageId, an image section''s images[].imageId), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture that is not wide (landing_image), since it is the page''s link preview; and a section whose pictures are not all one purpose (each 23514).';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the sections name (a hero, text or guide section''s imageId, an image section''s images[].imageId), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture that is not wide (landing_image), since it is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose (each 23514).';
 
 
 --

@@ -1120,6 +1120,7 @@ describe("pictures", () => {
       sectionId: HERO,
       accepts: "wide 16:9",
       uploader: {
+        kind: "picture",
         heading: "Landing page picture",
         subject: "For “Gaming clubs in Espoo”",
         frames: frames({ wide: null, square: heroRule, portrait: heroRule }),

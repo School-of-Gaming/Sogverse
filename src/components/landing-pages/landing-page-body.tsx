@@ -23,6 +23,12 @@ export interface LandingPageBodyProps {
    * without a republish.
    */
   testimonials: Readonly<Record<string, PublicTestimonial>>;
+  /**
+   * The ids of the guides the structure places that the read answered — read
+   * from the store per request like the testimonials, so a guide's section
+   * shows exactly while it has something to offer.
+   */
+  guideIds: readonly string[];
   /** The shown version's words, by section id. */
   sectionTexts: LandingSectionTexts;
   /** The language the shown version is written in. */
@@ -55,6 +61,7 @@ export function LandingPageBody({
   sections,
   pictures,
   testimonials,
+  guideIds,
   sectionTexts,
   textLocale,
   locale,
@@ -62,6 +69,7 @@ export function LandingPageBody({
   pageId,
   preview,
 }: LandingPageBodyProps) {
+  const guides = new Set(guideIds);
   const context: LandingRenderContext = {
     locale,
     textLocale,
@@ -75,6 +83,7 @@ export function LandingPageBody({
     },
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,
+    hasGuide: (id) => guides.has(id),
   };
   return (
     // exact-locale: marks text written in another language than the page with lang

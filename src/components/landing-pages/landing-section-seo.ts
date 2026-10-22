@@ -95,6 +95,12 @@ export const LANDING_SECTION_SEO: {
       { kind: "products", sectionId: section.id, productIds: section.productIds },
     ],
   },
+  // A guide contributes nothing. Describing it as a document would name a file
+  // a crawler cannot fetch — it downloads only for a signed-in reader — and
+  // earns no rich result; its heading and line are already the page's words.
+  guide: {
+    structuredData: none,
+  },
   faq: {
     structuredData: (section, text) =>
       section.items.flatMap((item) => {

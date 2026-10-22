@@ -95,6 +95,9 @@
     "adminTestimonials": "Asiakaskokemukset",
     "adminTestimonialNew": "Uusi asiakaskokemus",
     "adminTestimonialEdit": "Muokkaa asiakaskokemusta",
+    "adminGuides": "Oppaat",
+    "adminGuideNew": "Uusi opas",
+    "adminGuideEdit": "Opas",
     "discover": "Tutustu"
   },
   "descriptions": {
