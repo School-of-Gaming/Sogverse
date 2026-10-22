@@ -17,7 +17,7 @@
 --
 --   * a hero's picture is wide only: it is the page's link preview and the
 --     picture its structured data leads with, both drawn at 16:9;
---   * a guide section's picture is wide only, the one shape it has shown so far;
+--   * a guide section's picture is wide only;
 --   * a text section's picture, and an image section's pictures, may be any
 --     of the three;
 --   * the pictures of one section all share one shape, so an image

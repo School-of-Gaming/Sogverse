@@ -106,8 +106,8 @@ never changes and a replace keeps it, so a picture's shape cannot drift under a 
 **Which shapes a section takes is its type's declaration in the section registry, and the
 database refuses anything else.** A hero's picture is wide only, since it is the page's
 link preview and the picture its structured data leads with; a guide section's picture is
-wide only too; a text section's picture and
-an image section's pictures may be any shape; and a section's pictures are all one shape,
+wide only too; a text section's picture and an image section's pictures may be any shape;
+and a section's pictures are all one shape,
 so an image section's grid lines up — a mixed one is refused, naming both shapes. The
 same rule is written once more in the SQL that derives the pictures, and a DB test runs
 every type with a picture against every shape and requires the two halves to agree. The

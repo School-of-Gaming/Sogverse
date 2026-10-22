@@ -249,10 +249,16 @@ app.ontoolresult = (result) => {
   heading.textContent = opening.heading;
   document.title = opening.heading;
   subject.textContent = opening.subject;
+  // A file picked under an earlier opening belongs to that opening's frames
+  // and placement, so a new opening starts from nothing picked.
+  picked = null;
+  preview.hidden = true;
+  fileNote.hidden = true;
+  fileInput.value = "";
+  labelField.hidden = opening.kind !== "picture";
   if (opening.kind === "picture") {
     fileCaption.textContent = "Picture";
     fileInput.accept = "image/*";
-    labelField.hidden = false;
     uploadButton.textContent = opening.place?.actionLabel ?? "Upload";
   } else {
     fileCaption.textContent = "PDF";

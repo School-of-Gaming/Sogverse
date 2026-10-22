@@ -140,8 +140,8 @@ soft, and the server's exact-size check stays the last gate. After a picture is 
 view calls the placing tool through the AI app's own connection, and then puts the new
 entry's id in the model's context. A guide's opening has `uploader.kind` `pdf` instead:
 the view checks the file is a PDF within the call's cap and sends it untouched to
-`upload_guide`, and the store checks it again. The view holds no token and opens no connection of its own, so the gate in front of those
-calls is the endpoint's.
+`upload_guide`, and the store checks it again. The view holds no token and opens no
+connection of its own, so the gate in front of those calls is the endpoint's.
 
 **An app-only tool is a tool all the same.** The upload tools, `upload_catalogue_picture`
 and `upload_guide`, carry `_meta.ui.visibility: ["app"]`, which tells a host to keep them
@@ -153,7 +153,8 @@ exactly that purpose's size. A host that cannot show views gets the opening tool
 instead, which says so and sends the admin elsewhere — to the Library's editor for a
 cover, to an AI app that shows views for a landing page picture, since landing pages have
 no editor, to the admin Guides tab for a guide; there is no other way to upload from an AI
-app, by the owner's ruling. The server cannot ask the client first — it is stateless, so the initialize capabilities are gone by the next request.
+app, by the owner's ruling. The server cannot ask the client first — it is stateless, so
+the initialize capabilities are gone by the next request.
 
 **The picture travels as base64 inside one JSON-RPC request.** The catalogue's cap is 4 MB,
 but the SDK refuses a request body over 4 MB (Vercel's own limit, 4.5 MB, sits above it), so
