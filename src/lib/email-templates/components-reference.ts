@@ -311,17 +311,18 @@ export function buildComponentsReferenceEmail(
    * the builder slicing one out of the sentence.
    *
    * `bulletList` takes composed HTML, so anything from a user is escaped before
-   * it goes in. `numberedList` is the same list with the client's own `<ol>`
-   * numbering, for a run whose order is part of what it says; the two are
-   * styled identically, so a mail carrying both spaces them alike.
+   * it goes in. `numberedList` is the same list with numbers, for a run whose
+   * order is part of what it says; the two are styled identically, so a mail
+   * carrying both spaces them alike.
    *
    * `inlineBold` is the emphasis a sentence carries inside itself, and the
    * shape a message's own `<b>` renders to through `t.markup`. Weight, never
    * colour — a dark theme rewrites a colour and leaves a weight alone.
    *
-   * A list whose items carry a link is its own specimen, because it is held
-   * differently: run by run around the link, where a plain list is held whole
-   * (the topic-prep guide's steps are the case). `subheading` is the title of
+   * A list whose items carry a link is its own specimen, because it is drawn
+   * differently: a table with its markers held in a column of their own and
+   * each item held run by run around the link, where a plain list is a real
+   * list held whole (the topic-prep guide's steps are the case). `subheading` is the title of
    * one item in a run of them, a spotlight's; `smallNote` is the staff-facing
    * small print under a block; `quotedMessage` is a person's own words in a
    * staff mail.

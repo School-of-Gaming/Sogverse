@@ -72,12 +72,47 @@ describe("holding plain neutrals for Gmail iOS", () => {
     expect(() => holdRuns(`<b>Change it in ${link}</b>`)).toThrow(/unbalanced/);
   });
 
-  it("holds a list whose items carry a link item by item, with the list itself bare", () => {
+  /**
+   * A list element's own markers cannot be held without holding the link, and
+   * in plain ink Gmail iOS turns them to the ground — so a list carrying a link
+   * writes its markers out, each held in a cell of its own.
+   */
+  it("draws a link-bearing list's numbers held in their own cells, the link outside every hold", () => {
     const link = inlineLink("https://sogverse.sog.gg/settings", "Open your settings");
     const html = numberedList([`Make an account. ${link}`, "Then sign in."]);
-    expect(html.startsWith("<ol")).toBe(true);
-    expect(html).not.toContain(HOLD_OPEN);
-    expect(html).toContain(link);
+    expect(html.startsWith("<table")).toBe(true);
+    expect(html).not.toContain("<ol");
+    // The marker column is the list's indent, so the text lines up with a plain list's.
+    const markerCell = `<td valign="top" width="${MARKDOWN_LOOK.ol.indent}" style="width:${MARKDOWN_LOOK.ol.indent}px;`;
+    expect(html.split(markerCell)).toHaveLength(3);
+    for (const marker of ["1.", "2."]) {
+      expect(html).toContain(`">${HOLD_OPEN}${marker}</div></div></td>`);
+    }
+    // The link ends its cell straight after the run hold before it closes.
+    expect(html).toContain(`${holdInline("Make an account. ")}${link}</td>`);
+    expect(html).toContain(`">${holdInline("Then sign in.")}</td>`);
+  });
+
+  it("writes a bullet for a link-bearing bulleted list", () => {
+    const link = inlineLink("https://sogverse.sog.gg/settings", "settings");
+    const html = bulletList([`See ${link}.`, "Plain."]);
+    expect(html.split(`${HOLD_OPEN}&bull;</div></div>`)).toHaveLength(3);
+  });
+
+  it("keeps a list of plain items a real list, held whole", () => {
+    const html = numberedList(["First.", "Second."]);
+    expect(html.startsWith(`${HOLD_OPEN}<ol`)).toBe(true);
+    expect(html).not.toContain("<table");
+  });
+
+  it("spaces a marker-column list's rows by the item gap and sets it at the block margin", () => {
+    const link = inlineLink("https://sogverse.sog.gg/settings", "settings");
+    const html = numberedList([`One ${link}`, "Two", "Three"]);
+    expect(html).toContain(`style="margin:0 0 ${MAIL_SPACE.block}px;"`);
+    const gaps = [...html.matchAll(/<td valign="top" style="padding:0 0 (\d+)px;/g)].map((m) =>
+      Number(m[1]),
+    );
+    expect(gaps).toEqual([MAIL_SPACE.item, MAIL_SPACE.item, 0]);
   });
 });
 

@@ -337,4 +337,28 @@ describe("how a rendered fragment is held", () => {
     expect(html).toContain(`class="${TEXT_PINS.act.className}"`);
     expect(holdViolations(`<body>${html}</body>`)).toEqual([]);
   });
+
+  /**
+   * A list carrying a link cannot be held whole, and its own markers in plain
+   * ink vanish on Gmail iOS — so it writes them out, each held in a cell.
+   */
+  it("draws a linked list's markers held in a column of their own", () => {
+    const numbered = renderMarkdownForEmail(
+      "Intro.\n\n3. see [support](https://example.com/help)\n4. plain\n   - nested",
+      "spotlight",
+    );
+    expect(numbered).not.toContain("<ol");
+    expect(numbered).not.toContain("<ul");
+    for (const marker of ["3.", "4.", "&bull;"]) {
+      expect(numbered).toContain(`${HOLD_OPEN}${marker}</div></div></td>`);
+    }
+    expect(numbered).toContain(
+      `<td valign="top" width="${MARKDOWN_LOOK.ol.indent}" style="width:${MARKDOWN_LOOK.ol.indent}px;padding:0 0 ${MARKDOWN_LOOK.ol.itemGap}px;`,
+    );
+    expect(holdViolations(`<body>${numbered}</body>`)).toEqual([]);
+
+    // A list with no link in a fragment that has one stays a real list, held whole.
+    const plain = renderMarkdownForEmail("See [support](https://example.com/help).\n\n- one\n- two", "spotlight");
+    expect(plain).toContain(`${HOLD_OPEN}<ul `);
+  });
 });

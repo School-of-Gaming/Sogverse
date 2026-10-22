@@ -217,6 +217,62 @@ export function holdText(element: (inner: string) => string, inner: string): str
   return needsRunHolds(inner) ? element(holdRuns(inner)) : holdBlock(element(inner));
 }
 
+/** The markers a marker-column list draws: `1.`, `2.`, … from `start`, or a bullet. */
+export function listMarkers(tag: "ul" | "ol", count: number, start = 1): string[] {
+  return Array.from({ length: count }, (_, i) => (tag === "ol" ? `${start + i}.` : "&bull;"));
+}
+
+interface MarkerColumnListOptions {
+  /** One per item, as `listMarkers` writes them. */
+  markers: string[];
+  /** The items, already held run by run around their links. */
+  items: string[];
+  /** The marker column's width: the indent a real list sets its text in by. */
+  indent: number;
+  /** The gap below every item but the last. */
+  itemGap: number;
+  /** The table's whole `margin` value. */
+  margin: string;
+  /** The text declarations both columns are set in. */
+  textStyle: string;
+}
+
+/**
+ * A list whose items have to be held run by run, drawn as a table with each
+ * marker held as text in a column of its own.
+ *
+ * **A list's own markers belong to the list element**, and a list carrying a
+ * link cannot be held whole without holding the link — which a hold turns blue
+ * on Gmail iOS. Left in plain ink, the markers are inverted by that client to
+ * roughly the ground colour, and a numbered guide loses its numbers. So the
+ * markers become text a hold can reach on its own, in a cell beside the item's,
+ * and the item's runs are held around its links as before. Measured on Gmail
+ * iOS dark and Gmail Android dark.
+ *
+ * The column is the indent a real list sets its text in by, so the text lines
+ * up with a plain list's. The cost is the list's semantics: a screen reader
+ * meets a layout table rather than a list of so many items — accepted, since a
+ * list whose numbers cannot be seen is the worse failure. A list of plain items
+ * is a real list, held whole; this is only for the ones that cannot be.
+ */
+export function markerColumnList({
+  markers,
+  items,
+  indent,
+  itemGap,
+  margin,
+  textStyle,
+}: MarkerColumnListOptions): string {
+  const last = items.length - 1;
+  const rows = items
+    .map((item, i) => {
+      const padding = `padding:0 0 ${i === last ? 0 : itemGap}px;`;
+      return `<tr><td valign="top" width="${indent}" style="width:${indent}px;${padding}${textStyle}">${holdBlock(markers[i])}</td><td valign="top" style="${padding}${textStyle}">${item}</td></tr>`;
+    })
+    .join("");
+  return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:${margin};">${rows}</table>`;
+}
+
 export function paragraph(text: string): string {
   return holdText(
     (inner) => `<p style="margin:0 0 ${MAIL_SPACE.block}px;${BODY_TEXT_STYLE}">${inner}</p>`,

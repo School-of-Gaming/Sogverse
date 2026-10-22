@@ -19,7 +19,15 @@ import {
 } from "@/lib/authored-markdown";
 import { mailOwnSiteHref } from "@/lib/links/own-site";
 import { mailWeight } from "./type-scale";
-import { TEXT_PINS, defuseAutolinks, escapeHtml, holdBlock, holdRuns } from "./utils";
+import {
+  TEXT_PINS,
+  defuseAutolinks,
+  escapeHtml,
+  holdBlock,
+  holdRuns,
+  listMarkers,
+  markerColumnList,
+} from "./utils";
 
 /**
  * Renders stored markdown — a gedu's session report, or any other authored
@@ -152,9 +160,14 @@ function blockStyle(look: MarkdownLook, top: number): string {
           ["padding", "0"],
         ];
   if (look.listStyle !== undefined) box.push(["list-style-type", look.listStyle]);
+  return css([...box, ...blockText(look)]);
+}
+
+/** A block's text values: the container's, overridden by the element's own. */
+function blockText(look: MarkdownLook): Declarations {
   const text = new Map(textDeclarations(MARKDOWN_CONTAINER));
   for (const [property, value] of textDeclarations(look)) text.set(property, value);
-  return css([...box, ...text]);
+  return [...text];
 }
 
 // ------------------------------------------------------------------- blocks
@@ -268,6 +281,13 @@ function element(
  *
  * `nested` is a list inside a list item, which takes the look's nested top
  * margin — the app paints the same value from the parent list's classes.
+ *
+ * **A list held run by run draws its markers itself** (`markerColumnList`): it
+ * carries a link, or sits in a list that does, so the list element cannot be
+ * held, and its own markers in plain ink would vanish on Gmail iOS. The table
+ * keeps the list's look — the indent as the marker column, the item gap, the
+ * top margin — and its starting number; it is the one place the mail's
+ * elements part from the app's.
  */
 function list(
   node: List,
@@ -278,6 +298,18 @@ function list(
   const name = node.ordered === true ? "ol" : "ul";
   const look = MARKDOWN_LOOK[name];
   const loose = node.spread === true || node.children.some(itemIsLoose);
+  const top = flush ? 0 : nested ? look.nestedMarginTop : look.marginTop;
+  const start = node.ordered === true && typeof node.start === "number" ? node.start : 1;
+  if (context.holdRuns && context.allowed.has(name) && context.allowed.has("li")) {
+    return markerColumnList({
+      markers: listMarkers(name, node.children.length, start),
+      items: node.children.map((item) => listItem(item, loose, context)),
+      indent: look.indent,
+      itemGap: look.itemGap,
+      margin: `${top}px 0 0`,
+      textStyle: css(blockText(look)),
+    });
+  }
   const items = node.children
     .map((item, i) => {
       const last = i === node.children.length - 1;
@@ -288,12 +320,8 @@ function list(
     })
     .join("\n");
   if (!context.allowed.has(name)) return items;
-  const start =
-    node.ordered === true && typeof node.start === "number" && node.start !== 1
-      ? ` start="${node.start}"`
-      : "";
-  const top = flush ? 0 : nested ? look.nestedMarginTop : look.marginTop;
-  return `<${name}${start} style="${blockStyle(look, top)}">${items}</${name}>`;
+  const startAttribute = start !== 1 ? ` start="${start}"` : "";
+  return `<${name}${startAttribute} style="${blockStyle(look, top)}">${items}</${name}>`;
 }
 
 function itemIsLoose(item: ListItem): boolean {

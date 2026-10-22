@@ -10,6 +10,8 @@ import {
   holdInline,
   holdRuns,
   holdText,
+  listMarkers,
+  markerColumnList,
   needsRunHolds,
   pinnedFill,
 } from "./utils";
@@ -208,9 +210,10 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
  *   and the labels sit centred in it. An outlined half cannot be: its border has
  *   to be held, and a hold around the row's cell would take the neighbour's
  *   fill in with it, so its border is drawn on a table of its own inside the
- *   cell, held there. Two outlined halves whose labels wrap differently are
- *   therefore two heights — the price of the border arriving at all on Gmail
- *   iOS.
+ *   cell, held there. Beside any half whose label wraps to more lines, filled
+ *   or outlined, the outlined one is therefore shorter — `height:100%` on its
+ *   table was tried on Gmail iOS and did not stretch it. Accepted, because the
+ *   labels the mails carry fit on one line at phone widths.
  * - `cellspacing` is the gutter, because it is the one gap Outlook has never
  *   argued with.
  */
@@ -276,24 +279,35 @@ export function inlineLink(href: string, label: string): string {
  * flush against the column's edge, which is why the markdown definition's mail
  * half writes it as a margin too.
  *
- * A list of plain items is held whole, markers and all. A list whose items
- * carry a link — or a list of their own, already held — cannot be, so each
- * item's runs are held instead and the link stays outside. Its markers are
- * then the one part left in a plain colour, and Gmail iOS draws them dark: a
- * hold has no way to reach a marker without reaching the link beside it.
+ * **Two paths, by what the items carry.** A list of plain items is a real
+ * `<ol>`/`<ul>`, held whole, markers and all. A list whose items carry a link —
+ * or a list of their own, already held — cannot be held whole, since the hold
+ * would turn the link blue on Gmail iOS; and a list element left in plain ink
+ * has its markers inverted there to roughly the ground, so the step numbers
+ * vanish. That list is drawn as a table instead (`markerColumnList`): each
+ * marker held as text in a column as wide as the list's indent, each item's
+ * runs held around its link beside it. The table is no list to a screen reader
+ * — the accepted cost, since a list whose numbers cannot be seen is worse.
  */
 function list(tag: "ul" | "ol", items: string[]): string {
   const look = MARKDOWN_LOOK[tag];
+  if (items.some(needsRunHolds)) {
+    return markerColumnList({
+      markers: listMarkers(tag, items.length),
+      items: items.map(holdRuns),
+      indent: look.indent,
+      itemGap: MAIL_SPACE.item,
+      margin: `0 0 ${MAIL_SPACE.block}px`,
+      textStyle: BODY_TEXT_STYLE,
+    });
+  }
   const last = items.length - 1;
-  const byRun = items.some(needsRunHolds);
   const rendered = items
-    .map(
-      (item, i) =>
-        `<li style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.item}px;">${byRun ? holdRuns(item) : item}</li>`,
-    )
+    .map((item, i) => `<li style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.item}px;">${item}</li>`)
     .join("");
-  const html = `<${tag} style="margin:0 0 ${MAIL_SPACE.block}px ${look.indent}px;padding:0;${BODY_TEXT_STYLE}">${rendered}</${tag}>`;
-  return byRun ? html : holdBlock(html);
+  return holdBlock(
+    `<${tag} style="margin:0 0 ${MAIL_SPACE.block}px ${look.indent}px;padding:0;${BODY_TEXT_STYLE}">${rendered}</${tag}>`,
+  );
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */
@@ -307,10 +321,10 @@ export function bulletList(items: string[]): string {
  *
  * Styled identically to `bulletList` down to the margins, because the two are
  * one construct with two markers: a mail carrying both would otherwise space
- * them differently for no reason a reader could name. The marker itself is the
- * client's own `<ol>` numbering rather than a number written into each item,
- * so it stays a list to a screen reader and the numbers cannot fall out of step
- * with the items after an edit.
+ * them differently for no reason a reader could name. The numbers are counted
+ * from the items either way — the client's own `<ol>` numbering for plain
+ * items, written out by `list` for items carrying a link — so they cannot fall
+ * out of step with the items after an edit.
  */
 export function numberedList(items: string[]): string {
   return list("ol", items);
