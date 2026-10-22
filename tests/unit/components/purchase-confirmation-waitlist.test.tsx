@@ -5,13 +5,10 @@ import { buildScenarioFixture } from "@/components/public/products/mock-detail-f
 import type { ProductBrowseRow, ProductType } from "@/types";
 
 /**
- * Waitlists exist on every product type now, so the waitlist confirmation's
- * copy has to survive being read by a camp parent and an event parent as well
- * as a club one. Exactly one of its lines is term-shaped — "keeps their place
- * in line for the whole term" — and this pins that it is the only one that
- * varies: the heading, the email promise and the My SOG pointer are true of all
- * four types and must stay type-neutral, because a second type-keyed key is a
- * second place for a locale to fall out of step.
+ * Waitlists exist on every product type, so the waitlist confirmation's copy
+ * has to survive being read by a camp parent and an event parent as well as a
+ * club one: every one of its strings is type-neutral, and the queue states no
+ * price because nothing has been bought.
  *
  * The translations are stubbed to echo the key, so these assertions are about
  * which key the component reaches for, not about the wording in `messages/`.
@@ -25,8 +22,8 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
-// The overview card inside the summary reads the viewer's clock and zone from
-// the providers the real page mounts it under.
+// The summary card reads the viewer's clock and zone from the providers the
+// real page mounts it under.
 vi.mock("@/providers", () => ({
   useNow: () => new Date("2026-01-05T12:00:00Z"),
   useTimezone: () => "Europe/Helsinki",
@@ -52,19 +49,7 @@ function renderWaitlisted(productType: ProductType) {
 }
 
 describe("waitlist confirmation copy", () => {
-  it.each<[ProductType, string]>([
-    ["consumer_club", "waitlist.next2.consumer_club"],
-    ["municipality_club", "waitlist.next2.municipality_club"],
-    ["camp", "waitlist.next2.camp"],
-    ["event", "waitlist.next2.event"],
-  ])("keys the term-shaped next-step line by type (%s)", (type, key) => {
-    const { getByText } = renderWaitlisted(type);
-    getByText(key);
-  });
-
-  it("leaves every other waitlist string type-neutral", () => {
-    // The same three keys on all four types. A type suffix creeping onto any of
-    // them would show up here as a missing node.
+  it("states the same type-neutral strings on every product type", () => {
     for (const type of [
       "consumer_club",
       "municipality_club",
@@ -73,27 +58,44 @@ describe("waitlist confirmation copy", () => {
     ] as const) {
       const { getByText, unmount } = renderWaitlisted(type);
       getByText("waitlist.heading");
-      getByText("waitlist.next1");
-      getByText("waitlist.next3");
+      getByText("waitlist.subheading");
+      getByText("waitlist.position");
+      getByText("waitlist.next");
+      getByText("email.sent");
       unmount();
     }
+  });
+
+  it("states no price on a place in a queue", () => {
+    const { container } = renderWaitlisted("consumer_club");
+    expect(container.textContent).not.toContain("price.");
+  });
+
+  it("drops the position line when the position could not be read", () => {
+    const { queryByText } = render(
+      <PurchaseConfirmationView
+        product={productOfType("camp")}
+        participantName="Aino"
+        outcome="waitlisted"
+        waitlistPosition={null}
+      />,
+    );
+    expect(queryByText("waitlist.position")).toBeNull();
   });
 
   it("shows none of the waitlist copy on an ordinary enrolled signup", () => {
     // The free-club path lands here too — a free enrollment is confirmed on the
     // spot, so it renders the enrolled summary, not the queue one.
-    const { queryByText, getByRole } = render(
+    const { queryByText, getByRole, getByText } = render(
       <PurchaseConfirmationView
         product={productOfType("consumer_club")}
         participantName="Aino"
         outcome="enrolled"
       />,
     );
-    // By role rather than by text: with the translations echoing keys, the
-    // page's own `heading` reads the same as the prep guide's `topicPrep`
-    // heading, and only one of the two is this page's title.
     getByRole("heading", { level: 1, name: "heading" });
+    getByText("next.placement");
     expect(queryByText("waitlist.heading")).toBeNull();
-    expect(queryByText("waitlist.next2.consumer_club")).toBeNull();
+    expect(queryByText("waitlist.next")).toBeNull();
   });
 });

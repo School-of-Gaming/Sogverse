@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import type Stripe from "stripe";
-import { createClient, getUser } from "@/lib/supabase/server";
+import {
+  createClient,
+  getUser,
+  getUserWithProfile,
+} from "@/lib/supabase/server";
 import {
   ParticipationsService,
 } from "@/services/participations/participations.service";
 import { ProductsService } from "@/services/products/products.service";
-import {
-  HolidayBreaksService,
-} from "@/services/holiday-breaks/holiday-breaks.service";
-import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
 import {
   PurchaseConfirmationView,
   PurchaseConfirmationFallback,
@@ -233,18 +233,17 @@ async function renderConfirmation(
 
   if (!product) return <PurchaseConfirmationFallback />;
 
-  // The club's holiday breaks, for the "Good to know" card — read here, with
-  // the rest of the page's data, so the list is on the first paint rather than
-  // arriving above the cards under it. After the product read rather than
-  // beside it, because the span follows the club's own term and zone. Every other product
-  // type reads nothing; a failed read costs the list, never the summary.
-  const breaksSpan = holidayBreaksSpan(product, new Date());
-  const holidayBreaks =
-    breaksSpan === null
-      ? []
-      : await new HolidayBreaksService(supabase)
-          .getHolidayBreaks(product.id, breaksSpan.from, breaksSpan.to)
-          .catch(() => []);
+  // Where the confirmation email went: the payer's own address, which is the
+  // recipient the mail is always sent to. Only the payer can read it — RLS
+  // lets a profile read itself — so it is the signed-in profile's address when
+  // that profile is the payer, and nothing otherwise. The profile read is the
+  // one the root layout already made this render (`cache()`), so it costs no
+  // round trip.
+  const viewer = await getUserWithProfile();
+  const recipientEmail =
+    viewer?.profile?.id === confirmation.customerId
+      ? viewer.profile.email
+      : null;
 
   return (
     <PurchaseConfirmationView
@@ -257,7 +256,7 @@ async function renderConfirmation(
       outcome={outcome}
       waitlistPosition={waitlistPosition}
       firstChargeAt={firstChargeAt}
-      holidayBreaks={holidayBreaks}
+      recipientEmail={recipientEmail}
     />
   );
 }

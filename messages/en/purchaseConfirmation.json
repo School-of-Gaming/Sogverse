@@ -17,35 +17,25 @@
     "fallbackName": "You",
     "nextPlacement": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
     "waitlist": {
-      "subheading": "You’re on the waitlist for {product}. We’ll let you know if a seat opens.",
-      "next2": {
-        "consumer_club": "You keep your place in line for the whole term.",
-        "municipality_club": "You keep your place in line for the whole term.",
-        "camp": "You keep your place in line for the camp.",
-        "event": "You keep your place in line for the event."
-      }
+      "subheading": "You’re on the waitlist for {product}."
     }
   },
-  "summaryTitle": "Your order",
-  "forLabel": {
-    "consumer_club": "Enrolled",
-    "municipality_club": "Registered",
-    "camp": "Signed up",
-    "event": "Joined"
-  },
-  "priceLabel": "Price",
   "price": {
     "subscription": "{amount} / month",
     "upfront": "{amount} (one-time)",
     "free": "Free",
     "external": "Paid for by your municipality"
   },
-  "nextTitle": "What happens next",
+  "card": {
+    "starts": "Starts {date}",
+    "firstCharge": "{price}, first payment on {date}"
+  },
+  "email": {
+    "sentTo": "A confirmation email with all the details is on its way to <strong>{email}</strong>.",
+    "sent": "A confirmation email with all the details is on its way."
+  },
   "next": {
-    "placement": "We’ll place {gamer} in a group with a Gedu. The sessions will then appear under My SOG.",
-    "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
-    "oneTime": "This was a one-time payment — there’s nothing more to pay.",
-    "firstCharge": "Nothing was charged today. Your first payment is on {date}."
+    "placement": "We’ll place {gamer} in a group with a Gedu. The sessions will then appear under My SOG."
   },
   "goToDashboard": "Go to My SOG",
   "keepBrowsing": "Keep browsing",
@@ -57,7 +47,7 @@
   "finalizing": {
     "heading": "Payment received",
     "subheading": "We’re finalizing the signup — this only takes a moment.",
-    "reassurance": "You can safely stay on this page. Your signup will also appear in My SOG."
+    "reassurance": "You can safely stay on this page. We’ll also email you a confirmation."
   },
   "timedOut": {
     "heading": "This is taking longer than expected",
@@ -72,18 +62,8 @@
   "supportLine": "Need a hand? Email us at <link>{email}</link>.",
   "waitlist": {
     "heading": "You’re on the waitlist",
-    "subheading": "{gamer} is on the waitlist for {product}. We’ll let you know if a seat opens.",
-    "summaryTitle": "Your waitlist spot",
-    "forLabel": "Waitlisted",
-    "positionLabel": "Your position",
-    "positionValue": "#{position}",
-    "next1": "We’ll email you the moment a seat opens.",
-    "next2": {
-      "consumer_club": "{gamer} keeps their place in line for the whole term.",
-      "municipality_club": "{gamer} keeps their place in line for the whole term.",
-      "camp": "{gamer} keeps their place in line for the camp.",
-      "event": "{gamer} keeps their place in line for the event."
-    },
-    "next3": "You can keep track of your waitlist spot anytime in My SOG."
+    "subheading": "{gamer} is on the waitlist for {product}.",
+    "position": "Place in line: #{position}",
+    "next": "We’ll email you the moment a seat opens."
   }
 }

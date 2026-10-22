@@ -6,11 +6,11 @@ import type { TopicPrepPlan } from "@/lib/products/topics";
 import { Heading } from "@sog/ui";
 
 // The "Before the first session" guide, rendered from the topic's prep block
-// and the `topicPrep` catalog. One component, three surfaces — the confirmation
-// page, the parent's enrolment card and the gamer's — because the guide is one
-// document and a second arrangement of it would be a second thing to keep
-// correct. The mail is the fourth surface and cannot share React, so it shares
-// the registry and the catalog instead (`src/lib/email-templates/topic-prep.ts`).
+// and the `topicPrep` catalog. One component, two surfaces — the parent's
+// enrolment card and the gamer's — because the guide is one document and a
+// second arrangement of it would be a second thing to keep correct. The mail is
+// the third surface and cannot share React, so it shares the registry and the
+// catalog instead (`src/lib/email-templates/topic-prep.ts`).
 //
 // It renders the body and nothing around it: no card, no dialog, no wrapper of
 // its own. A card and a dialog title the same guide differently, so the heading

@@ -643,8 +643,8 @@ function resolveProductConfirmationOptions(
   const slots = parseInvitationSlots(params.slots);
   const isRemote = params.isRemote === "yes";
   const siteName = params.siteName.trim() || null;
-  // The location as the page's own rule resolves it — the mail states "Where"
-  // in exactly the words the confirmation page does, so the shape it renders is
+  // The location as the pages' own rule resolves it — the mail states "Where"
+  // in exactly the words the product pages do, so the shape it renders is
   // that rule's output rather than a second reading of the same fields. The
   // form has no parent-location field, so a test send shows a bare site.
   const location = formatProductLocation(

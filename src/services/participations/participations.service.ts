@@ -405,6 +405,11 @@ export interface ParticipationConfirmation {
   status: ParticipationStatus;
   productId: string;
   /**
+   * The payer — the profile the confirmation email is always sent to. The page
+   * names that address only when the payer is the one reading.
+   */
+  customerId: string;
+  /**
    * The participant's first name — a child's, or the buyer's own on a self
    * seat. Null → the page falls back to "Your child" / "You" depending on
    * `isSelfSeat`.
@@ -748,6 +753,7 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
+      customerId: data.customer_id,
       participantName: data.participant.first_name || null,
       isSelfSeat: data.participant_id === data.customer_id,
     };
@@ -790,6 +796,7 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
+      customerId: data.customer_id,
       participantName: data.participant.first_name || null,
       isSelfSeat: data.participant_id === data.customer_id,
     };

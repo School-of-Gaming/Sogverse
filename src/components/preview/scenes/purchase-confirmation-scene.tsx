@@ -3,10 +3,8 @@
 import { PurchaseConfirmationView } from "@/components/public/products/purchase-confirmation-view";
 import {
   buildConfirmationFixture,
-  buildHolidayBreaksFixture,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import type { ProductTopic } from "@/types";
 
 /**
  * The post-signup summary for a scenario — what a parent sees straight after
@@ -19,16 +17,8 @@ import type { ProductTopic } from "@/types";
  */
 export function PurchaseConfirmationScene({
   scenario,
-  topic = null,
 }: {
   scenario: PreviewScenario;
-  /**
-   * The `?topic=` axis. The prep card on this page is decided by the product's
-   * topic, and the fixtures name one topic per scenario — so this is how all
-   * seven guides are read in their real placement without a scenario apiece.
-   * `null` leaves the fixture's own topic alone.
-   */
-  topic?: ProductTopic | null;
 }) {
   const {
     product,
@@ -37,7 +27,8 @@ export function PurchaseConfirmationScene({
     outcome,
     waitlistPosition,
     firstChargeAt,
-  } = buildConfirmationFixture(scenario, { topic: topic ?? undefined });
+    recipientEmail,
+  } = buildConfirmationFixture(scenario);
   return (
     <PurchaseConfirmationView
       product={product}
@@ -46,7 +37,7 @@ export function PurchaseConfirmationScene({
       outcome={outcome}
       waitlistPosition={waitlistPosition}
       firstChargeAt={firstChargeAt}
-      holidayBreaks={buildHolidayBreaksFixture(product)}
+      recipientEmail={recipientEmail}
     />
   );
 }

@@ -1132,13 +1132,12 @@ export function buildScenarioFixture(
     /**
      * A topic other than the one this scenario's row carries.
      *
-     * The topic decides two cards a reader has to be able to read for *every*
-     * topic — the product page's "About {label}" card and the confirmation
-     * page's "Before the first session" guide — and the fixtures name one
-     * topic per scenario. Rather than a scenario per topic on both surfaces,
-     * the two scenes take the topic as an axis over the scenarios they already
-     * have, and this is where it lands on the row, so both cards follow one
-     * value exactly as they do in production.
+     * The topic decides the product page's "About {label}" card, which a
+     * reader has to be able to read for *every* topic, and the fixtures name
+     * one topic per scenario. Rather than a scenario per topic, the product
+     * scene takes the topic as an axis over the scenarios it already has, and
+     * this is where it lands on the row, so the card follows one value exactly
+     * as it does in production.
      */
     topic?: ProductTopic;
   } = {},
@@ -1212,6 +1211,8 @@ export interface ConfirmationFixtureResult {
    * promised.
    */
   firstChargeAt: string | null;
+  /** The address the page says the confirmation email went to. */
+  recipientEmail: string;
 }
 
 // Post-signup summary fixture for /preview/confirmation/<scenario>. Reuses the
@@ -1221,14 +1222,8 @@ export interface ConfirmationFixtureResult {
 // the real detail → CTA → summary flow.
 export function buildConfirmationFixture(
   slug: PreviewScenario,
-  overrides: {
-    /** The topic axis, as `buildScenarioFixture` takes it. */
-    topic?: ProductTopic;
-  } = {},
 ): ConfirmationFixtureResult {
-  const { product, state } = buildScenarioFixture(slug, {
-    topic: overrides.topic,
-  });
+  const { product, state } = buildScenarioFixture(slug);
   const isWaitlist = state.kind === "full_waitlist";
   // A parents-only scenario can only have been bought for the reader, so its
   // summary is the self-worded one — which is the only place that copy is
@@ -1255,6 +1250,8 @@ export function buildConfirmationFixture(
     waitlistPosition: isWaitlist ? 3 : null,
     // A waitlist join has bought nothing, so it has no first charge either.
     firstChargeAt: isWaitlist ? null : (anchor?.toISOString() ?? null),
+    // A reserved example domain, so a preview can never name a real inbox.
+    recipientEmail: "parent@example.com",
   };
 }
 

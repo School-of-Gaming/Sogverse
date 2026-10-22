@@ -17,35 +17,25 @@
     "fallbackName": "Sinä",
     "nextPlacement": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
     "waitlist": {
-      "subheading": "Olet jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
-      "next2": {
-        "consumer_club": "Säilytät paikkasi jonossa koko kauden ajan.",
-        "municipality_club": "Säilytät paikkasi jonossa koko kauden ajan.",
-        "camp": "Säilytät paikkasi jonossa koko leirin ajan.",
-        "event": "Säilytät paikkasi jonossa koko tapahtuman ajan."
-      }
+      "subheading": "Olet jonotuslistalla – {product}."
     }
   },
-  "summaryTitle": "Tilauksesi",
-  "forLabel": {
-    "consumer_club": "Ilmoitettu",
-    "municipality_club": "Ilmoitettu",
-    "camp": "Ilmoitettu",
-    "event": "Liittynyt"
-  },
-  "priceLabel": "Hinta",
   "price": {
     "subscription": "{amount} / kk",
     "upfront": "{amount} (kertamaksu)",
     "free": "Ilmainen",
     "external": "Kunnan kustantama"
   },
-  "nextTitle": "Mitä seuraavaksi tapahtuu",
+  "card": {
+    "starts": "Alkaa {date}",
+    "firstCharge": "{price}, ensimmäinen maksu {date}"
+  },
+  "email": {
+    "sentTo": "Lähetämme vahvistuksen ja kaikki tiedot osoitteeseen <strong>{email}</strong>.",
+    "sent": "Lähetämme vahvistuksen ja kaikki tiedot sähköpostitse."
+  },
   "next": {
-    "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
-    "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
-    "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-    "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
+    "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla."
   },
   "goToDashboard": "Siirry Oma SOG -sivulle",
   "keepBrowsing": "Jatka selailua",
@@ -57,7 +47,7 @@
   "finalizing": {
     "heading": "Maksu vastaanotettu",
     "subheading": "Viimeistelemme ilmoittautumista — tämä kestää vain hetken.",
-    "reassurance": "Voit huoletta jäädä tälle sivulle. Ilmoittautuminen näkyy myös Oma SOG -sivulla."
+    "reassurance": "Voit huoletta jäädä tälle sivulle. Lähetämme vahvistuksen myös sähköpostitse."
   },
   "timedOut": {
     "heading": "Tämä kestää odotettua kauemmin",
@@ -72,18 +62,8 @@
   "supportLine": "Tarvitsetko apua? Lähetä meille sähköpostia osoitteeseen <link>{email}</link>.",
   "waitlist": {
     "heading": "Olet jonotuslistalla",
-    "subheading": "{gamer} on jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
-    "summaryTitle": "Jonotuspaikkasi",
-    "forLabel": "Jonotuslistalla",
-    "positionLabel": "Sijasi jonossa",
-    "positionValue": "{position}.",
-    "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-    "next2": {
-      "consumer_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
-      "municipality_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
-      "camp": "{gamer} säilyttää paikkansa jonossa koko leirin ajan.",
-      "event": "{gamer} säilyttää paikkansa jonossa koko tapahtuman ajan."
-    },
-    "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
+    "subheading": "{gamer} on jonotuslistalla – {product}.",
+    "position": "Sija jonossa: {position}.",
+    "next": "Lähetämme sähköpostia heti, kun paikka vapautuu."
   }
 }

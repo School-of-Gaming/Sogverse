@@ -17,35 +17,25 @@
     "fallbackName": "Vous",
     "nextPlacement": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
     "waitlist": {
-      "subheading": "Vous êtes sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",
-      "next2": {
-        "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
-        "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
-        "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
-        "event": "Vous conservez votre place dans la file jusqu’à l’événement."
-      }
+      "subheading": "Vous êtes sur la liste d’attente pour {product}."
     }
   },
-  "summaryTitle": "Votre commande",
-  "forLabel": {
-    "consumer_club": "Inscription",
-    "municipality_club": "Inscription",
-    "camp": "Inscription",
-    "event": "Participation"
-  },
-  "priceLabel": "Prix",
   "price": {
     "subscription": "{amount} / mois",
     "upfront": "{amount} (paiement unique)",
     "free": "Gratuit",
     "external": "Pris en charge par votre commune"
   },
-  "nextTitle": "La suite",
+  "card": {
+    "starts": "Début le {date}",
+    "firstCharge": "{price}, premier paiement le {date}"
+  },
+  "email": {
+    "sentTo": "Un e-mail de confirmation avec tous les détails est en route vers <strong>{email}</strong>.",
+    "sent": "Un e-mail de confirmation avec tous les détails est en route."
+  },
   "next": {
-    "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
-    "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
-    "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-    "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
+    "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG."
   },
   "goToDashboard": "Aller à Mon SOG",
   "keepBrowsing": "Continuer à explorer",
@@ -57,7 +47,7 @@
   "finalizing": {
     "heading": "Paiement reçu",
     "subheading": "Nous finalisons l’inscription — cela ne prend qu’un instant.",
-    "reassurance": "Vous pouvez rester sur cette page en toute tranquillité. Votre inscription apparaîtra aussi dans Mon SOG."
+    "reassurance": "Vous pouvez rester sur cette page en toute tranquillité. Nous vous enverrons aussi une confirmation par e-mail."
   },
   "timedOut": {
     "heading": "Cela prend plus de temps que prévu",
@@ -72,18 +62,8 @@
   "supportLine": "Besoin d’aide ? Écrivez-nous à <link>{email}</link>.",
   "waitlist": {
     "heading": "Vous êtes sur la liste d’attente",
-    "subheading": "{gamer} est sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",
-    "summaryTitle": "Votre place en liste d’attente",
-    "forLabel": "En liste d’attente",
-    "positionLabel": "Votre position",
-    "positionValue": "n° {position}",
-    "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-    "next2": {
-      "consumer_club": "{gamer} conserve sa place dans la file pendant toute la période.",
-      "municipality_club": "{gamer} conserve sa place dans la file pendant toute la période.",
-      "camp": "{gamer} conserve sa place dans la file pendant toute la durée du stage.",
-      "event": "{gamer} conserve sa place dans la file jusqu’à l’événement."
-    },
-    "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+    "subheading": "{gamer} est sur la liste d’attente pour {product}.",
+    "position": "Position dans la file : n° {position}",
+    "next": "Nous vous enverrons un e-mail dès qu’une place se libère."
   }
 }

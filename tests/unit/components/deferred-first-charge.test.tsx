@@ -111,6 +111,24 @@ describe("the confirmation's first-charge line", () => {
     );
   }
 
+  /**
+   * The date handed to the money line's first-charge message, or null when the
+   * card states no such line. The echo puts the values after the key as JSON,
+   * and the money line is the last part of the card's last line.
+   */
+  function firstChargeDate(container: HTMLElement): string | null {
+    const marker = "card.firstCharge|";
+    const text = container.textContent;
+    const at = text.indexOf(marker);
+    if (at === -1) return null;
+    const json = text.slice(at + marker.length).match(/^\{.*?"date":"[^"]*"\}/);
+    if (json === null) return null;
+    const values: unknown = JSON.parse(json[0]);
+    return typeof values === "object" && values !== null && "date" in values
+      ? String(values.date)
+      : null;
+  }
+
   it("renders the club's bare start date when the stored anchor is not clamped", () => {
     // The stored instant is product-local midnight of the start date — an
     // unclamped anchor, i.e. the club's own start — so it must print as that
@@ -123,9 +141,7 @@ describe("the confirmation's first-charge line", () => {
       "2027-02-23T22:00:00.000Z",
       "2027-02-24",
     );
-    expect(container.textContent).toContain(
-      'next.firstCharge|{"date":"24 Feb 2027"}',
-    );
+    expect(firstChargeDate(container)).toBe("24 Feb 2027");
   });
 
   it("states a clamped anchor in the viewer's zone", () => {
@@ -135,19 +151,16 @@ describe("the confirmation's first-charge line", () => {
     // next day in Helsinki, and the parent's statement will say so.
     viewerZone.value = "Europe/Helsinki";
     const { container } = renderConfirmation("2027-03-03T22:30:00.000Z");
-    expect(container.textContent).toContain(
-      'next.firstCharge|{"date":"4 Mar 2027"}',
-    );
+    expect(firstChargeDate(container)).toBe("4 Mar 2027");
   });
 
-  it("renders no billing line at all when nothing was deferred", () => {
+  it("states the price alone when nothing was deferred", () => {
     // Which is also what a gamer reading their own confirmation gets: the
     // payments policy is customer-only, so the page resolves null for them and
-    // the line simply is not there.
+    // the money line is the monthly price with no date beside it.
     viewerZone.value = "Europe/Helsinki";
     const { container } = renderConfirmation(null);
-    expect(container.textContent).not.toContain("next.firstCharge");
-    // The standing monthly-billing line is unaffected — it is not the deferral.
-    expect(container.textContent).toContain("next.subscription");
+    expect(container.textContent).not.toContain("card.firstCharge");
+    expect(container.textContent).toContain("price.subscription");
   });
 });
