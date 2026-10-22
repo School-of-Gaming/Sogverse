@@ -165,7 +165,7 @@
         "upTo": "{max}-åringar och yngre"
       },
       "children": "{count, plural, one {{names} hör inte till den åldersgruppen.} other {{names} hör inte till den åldersgruppen.}}",
-      "nameWithAge": "{name} ({age} år)",
+      "nameWithAge": "{name}\u00a0({age}\u00a0år)",
       "findProduct": {
         "consumer_club": "{count, plural, other {Hitta en klubb för rätt ålder}}",
         "municipality_club": "{count, plural, other {Hitta en klubb för rätt ålder}}",

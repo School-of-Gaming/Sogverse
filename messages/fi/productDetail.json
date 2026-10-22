@@ -165,7 +165,7 @@
         "upTo": "enintään {max}"
       },
       "children": "{count, plural, one {{names} ei kuulu tähän ikäryhmään.} other {{names} eivät kuulu tähän ikäryhmään.}}",
-      "nameWithAge": "{name} ({age})",
+      "nameWithAge": "{name}\u00a0({age})",
       "findProduct": {
         "consumer_club": "{count, plural, other {Etsi ikään sopiva kerho}}",
         "municipality_club": "{count, plural, other {Etsi ikään sopiva kerho}}",

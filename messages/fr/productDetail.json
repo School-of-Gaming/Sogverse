@@ -165,7 +165,7 @@
         "upTo": "{max} ans et moins"
       },
       "children": "{count, plural, one {{names} n’est pas dans cette tranche d’âge.} other {{names} ne sont pas dans cette tranche d’âge.}}",
-      "nameWithAge": "{name} ({age} ans)",
+      "nameWithAge": "{name}\u00a0({age}\u00a0ans)",
       "findProduct": {
         "consumer_club": "{count, plural, one {Trouver un club adapté à son âge} other {Trouver un club adapté à leur âge}}",
         "municipality_club": "{count, plural, one {Trouver un club adapté à son âge} other {Trouver un club adapté à leur âge}}",

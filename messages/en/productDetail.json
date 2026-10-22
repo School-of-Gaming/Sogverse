@@ -165,7 +165,7 @@
         "upTo": "{max} and under"
       },
       "children": "{count, plural, one {{names} isn’t in that age range.} other {{names} aren’t in that age range.}}",
-      "nameWithAge": "{name} ({age})",
+      "nameWithAge": "{name}\u00a0({age})",
       "findProduct": {
         "consumer_club": "{count, plural, other {Find a club for their age}}",
         "municipality_club": "{count, plural, other {Find a club for their age}}",

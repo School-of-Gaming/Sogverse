@@ -165,7 +165,7 @@
         "upTo": "{max} bIng"
       },
       "children": "{count, plural, one {{names} DIS mIw ghajbe’.} other {{names} DIS mIw ghajbe’.}}",
-      "nameWithAge": "{name} ({age})",
+      "nameWithAge": "{name}\u00a0({age})",
       "findProduct": {
         "consumer_club": "{count, plural, other {DISchaj ghom yInej!}}",
         "municipality_club": "{count, plural, other {DISchaj ghom yInej!}}",
