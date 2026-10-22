@@ -28,7 +28,9 @@ import type {
 } from "@/lib/landing-pages/sections";
 import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/cn";
+import type { PublicGuide } from "@/services/guides/guides.contracts";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import { GuideDownload } from "./guide-download";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import {
   written,
@@ -54,8 +56,9 @@ import { Heading } from "@sog/ui";
  * **Every word is the admin's**, so the renderers paint what is written and
  * leave out what is not: a published version has every required word, and the
  * preview of one still being written shows its blanks as gaps rather than as
- * placeholder copy. The one string of our own is the screen reader's "opens in
- * a new tab" beside a button that leaves the site.
+ * placeholder copy. The strings of our own are the screen reader's "opens in
+ * a new tab" beside a button that leaves the site, and a guide's download —
+ * its button, its file's facts and the account a signed-out reader needs.
  */
 
 /** What every renderer is handed besides its own section and words. */
@@ -74,6 +77,11 @@ export interface LandingRenderContext {
    * answered none for it.
    */
   testimonial: (testimonialId: string) => PublicTestimonial | null;
+  /**
+   * A placed guide's files — each language's and its size — by its id, or
+   * null when the read answered none for it.
+   */
+  guide: (guideId: string) => PublicGuide | null;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -636,12 +644,58 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
 }
 
 /**
- * PLACEHOLDER: the guide section draws nothing yet. Its renderer — the
- * heading, the download for a signed-in reader and the call to create an
- * account for a signed-out one — replaces this.
+ * A guide to download: the section's header and line over the download, and
+ * the cover picture beside them from `lg` when one is placed, after them on a
+ * phone — the text section's arrangement, so a guide reads as one more
+ * section of the page.
+ *
+ * The file is the one the reader would get: the page's language by the reader
+ * fallback, chosen from the files the store holds now, so a file uploaded or
+ * replaced shows without a republish. A guide the read did not answer — it has
+ * no file in a language the app ships — leaves the section out, since there is
+ * nothing to offer. Whether the reader may download is decided in the browser
+ * (`guide-download.tsx`); everything here is the same for every reader.
  */
-function GuideSection(): ReactNode {
-  return null;
+function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
+  const guide = context.guide(section.guideId);
+  const file = guide === null ? null : resolveTranslation(guide.files, context.locale);
+  if (file === null) return null;
+  const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
+  const description = written(text.description);
+  return (
+    <section className={SECTION}>
+      <div
+        className={cn(
+          "mx-auto",
+          src === null
+            ? "max-w-3xl"
+            : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
+        )}
+      >
+        <div>
+          <SectionHeader eyebrow={text.eyebrow} heading={text.heading} centred={false} />
+          {description !== null && (
+            <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
+          )}
+          {/* exact-locale: resets the body's language mark for our own words */}
+          <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+            <GuideDownload
+              guideId={section.guideId}
+              file={{ locale: file.locale, byteSize: file.byteSize }}
+              locale={context.locale}
+            />
+          </div>
+        </div>
+        {src !== null && (
+          <LandingPicture
+            src={src}
+            alt={text.imageAlt}
+            sizes="(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)"
+          />
+        )}
+      </div>
+    </section>
+  );
 }
 
 // ---------------------------------------------------------------------------

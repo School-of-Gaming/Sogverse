@@ -1917,5 +1917,99 @@
       "saveFailedWithReason": "jatlh pollaHbe’lu’: {reason}"
     },
     "onLandingPages": "{count, plural, one {# Daq ghItlhDaq} other {# Daq ghItlhDaq}}"
+  },
+  "guides": {
+    "subtitle": "PDF paqmey nob Daq ghItlhmey — wa’ Hol, wa’ De’ teywI’. laHwI’ ’el’ta’bogh, HolDajDaq De’ teywI’ luSuq.",
+    "newGuide": "ghojmoHwI’ paq chu’",
+    "backToList": "ghojmoHwI’ paqmeyDaq yIchegh",
+    "meta": {
+      "list": "ghojmoHwI’ paqmey",
+      "new": "ghojmoHwI’ paq chu’",
+      "edit": "ghojmoHwI’ paq"
+    },
+    "newPage": {
+      "title": "ghojmoHwI’ paq chu’",
+      "submit": "ghojmoHwI’ paq yIchenmoH"
+    },
+    "editPage": {
+      "title": "ghojmoHwI’ paq"
+    },
+    "listLoadError": "ghojmoHwI’ paqmey laD Qagh. ghItlh yIchu’qa’.",
+    "loadError": "ghojmoHwI’ paqvam laD Qagh. ghItlh yIchu’qa’.",
+    "notFound": "Daqvam ghojmoHwI’ paq ghajbe’.",
+    "empty": "ghojmoHwI’ paq tu’lu’be’.",
+    "allHeading": "Hoch ghojmoHwI’ paqmey",
+    "languagesLabel": "Holmey",
+    "saved": "{date} pol",
+    "onLandingPages": "{count, plural, one {# Daq ghItlhDaq} other {# Daq ghItlhDaq}}",
+    "fields": {
+      "label": "per",
+      "language": "Hol",
+      "file": "PDF De’ teywI’",
+      "files": "De’ teywI’mey"
+    },
+    "hints": {
+      "label": "qum yaSpu’ tetlhDaq pongvam. laHwI’pu’ leghbe’: Daq ghItlh ’ay’ ja’ nuq ghojmoHwI’ paq’e’.",
+      "language": "PDF Hol. latlh Holmey De’ teywI’mey chel ghojmoHwI’ paq ghItlhDaq.",
+      "file": "PDF, {limit} tlhoy tInbe’.",
+      "files": "wa’ Hol, wa’ PDF. HolDaj De’ teywI’ Suq laHwI’; pagh DIvI’ Hol; pagh wa’DIch."
+    },
+    "file": {
+      "uploaded": "{date} lan",
+      "uploadedBy": "{date} lan {name}",
+      "uploadedByVia": "{date} lan {name}, {app} lo’",
+      "uploadedByViaUnnamed": "{date} lan {name}, De’wI’ yab lo’",
+      "open": "PDF yIpoSmoH",
+      "none": "{language} De’ teywI’ tu’lu’be’. {language} ghojmoHwI’ paq DanobmeH, wa’ yIlan.",
+      "upload": "PDF yIlan",
+      "replace": "PDF yIchoH",
+      "replaceNote": "DaH De’ teywI’vam choH De’ teywI’ chu’, Hoch DaqDaq.",
+      "remove": "Holvam yIteq",
+      "lastFile": "wa’ Hol ghaj reH ghojmoHwI’ paq; wa’ De’ teywI’Daj teqlaHbe’lu’."
+    },
+    "removeDialog": {
+      "title": "{language} De’ teywI’ DateqneS’a’?",
+      "description": "{language} laHwI’pu’vaD latlh Hol ghojmoHwI’ paq nob, Hoch DaqDaq. ghIq {language} De’ teywI’ DalanlaH.",
+      "confirm": "yIteq"
+    },
+    "usage": {
+      "heading": "nuqDaq lo’lu’",
+      "none": "pa’ nobbe’lu’ wa’logh.",
+      "editNote": "De’ teywI’ chu’ pagh Hol teqlu’bogh: Hoch DaqDaq DaH choH.",
+      "landingPage": "Daq ghItlh: {title}",
+      "landingPageState": {
+        "both": "DaH Suq laHwI’pu’.",
+        "liveOnly": "veb ghItlh cha’lu’pa’ Suq laHwI’pu’; vaj teqlu’.",
+        "workingOnly": "wa’logh Suqbe’ laHwI’pu’: veb ghItlh cha’lu’DI’ lanlu’."
+      }
+    },
+    "record": {
+      "created": "{date} chenmoHlu’",
+      "createdBy": "{date} chenmoH {name}",
+      "createdByVia": "{date} chenmoH {name}, {app} lo’",
+      "createdByViaUnnamed": "{date} chenmoH {name}, De’wI’ yab lo’",
+      "saved": "poltaHvIS: {date}",
+      "savedBy": "poltaHvIS: {date}. polta’pu’ {name}",
+      "savedByVia": "poltaHvIS: {date}. {app} lo’taHvIS polta’pu’ {name}",
+      "savedByViaUnnamed": "poltaHvIS: {date}. De’wI’ yab lo’taHvIS polta’pu’ {name}"
+    },
+    "actions": {
+      "save": "yIpol",
+      "cancel": "yImev"
+    },
+    "errors": {
+      "labelMissing": "ghojmoHwI’ paq yIpong.",
+      "labelTooLong": "{max} ngutlh tlhoy law’be’ per.",
+      "noFile": "PDF De’ teywI’ yIwIv.",
+      "tooLarge": "{size} PDFvam; {limit} tlhoy tInbe’ ghojmoHwI’ paq De’ teywI’. yImachmoH — Canva “Compress file” pagh Acrobat “Reduce file size” — ’ej yIlanqa’.",
+      "notPdf": "PDF ghajbe’ De’ teywI’vam. PDF ’oH ghojmoHwI’ paq’e’.",
+      "empty": "chIm De’ teywI’vam.",
+      "uploadFailed": "De’ teywI’ lanlaHbe’lu’. yInIDqa’.",
+      "uploadFailedWithReason": "De’ teywI’ lanlaHbe’lu’: {reason}",
+      "saveFailed": "per pollaHbe’lu’. yInIDqa’.",
+      "saveFailedWithReason": "per pollaHbe’lu’: {reason}",
+      "removeFailed": "De’ teywI’ teqlaHbe’lu’. yInIDqa’.",
+      "removeFailedWithReason": "De’ teywI’ teqlaHbe’lu’: {reason}"
+    }
   }
 }

@@ -436,6 +436,7 @@ describe("the uploader", () => {
       // What the shared picture uploader reads: the purpose's size, and the
       // store-then-set calls it makes.
       uploader: {
+        kind: "picture",
         purpose: "library_cover",
         heading: "Library cover",
         subject: "For “Screen time is not the enemy”",

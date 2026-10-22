@@ -110,6 +110,23 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("/en/link-slack/extra")).toBe(null);
   });
 
+  it("admits a landing page at either address, in any locale's slug", () => {
+    // A guide section sends a signed-out reader to register or sign in and
+    // back to the page they were reading, in the language they read it in.
+    expect(resolveSafeRedirect("/en/discover/parents-guide")).toBe("/en/discover/parents-guide");
+    expect(resolveSafeRedirect("/fi/tutustu/vanhempien-opas")).toBe("/fi/tutustu/vanhempien-opas");
+    expect(resolveSafeRedirect("/sv/upptack/abc-123")).toBe("/sv/upptack/abc-123");
+    expect(resolveSafeRedirect("/fr/decouvrir/abc-123")).toBe("/fr/decouvrir/abc-123");
+  });
+
+  it("admits the landing page exactly, never its preview or the bare segment", () => {
+    expect(resolveSafeRedirect("/en/discover/abc-123/preview")).toBe(null);
+    expect(resolveSafeRedirect("/fi/tutustu/abc-123/esikatselu")).toBe(null);
+    expect(resolveSafeRedirect("/en/discover")).toBe(null);
+    expect(resolveSafeRedirect("/en/discoverx/abc-123")).toBe(null);
+    expect(resolveSafeRedirect("/en/discover/../admin")).toBe(null);
+  });
+
   it("normalizes in-allowlist traversal to the real path", () => {
     // A `..` that stays within /shop/ is harmless; it collapses and is
     // returned as the normalized path the browser would actually visit.

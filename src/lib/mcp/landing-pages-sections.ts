@@ -331,11 +331,11 @@ export const MCP_LANDING_SECTIONS: {
   },
   guide: {
     about:
-      "A guide from School of Gaming's store — a PDF with one file per language — offered for download, with a heading, an optional description and an optional cover picture. Readers who are signed in download the file in their own language, else English, else the first uploaded; a signed-out reader sees the section and is asked to create an account first. The guide's files live in the store, never in the page, and an id no guide has is refused when the structure is saved. To take a guide off this page, save the structure without this section; guides themselves are never deleted.",
+      "A guide from School of Gaming's store — a PDF with one file per language — offered for download, with a heading, an optional description and an optional cover picture. Readers who are signed in download the file in their own language, else English, else the first uploaded; a signed-out reader sees the section and is asked to create an account first. The guide's files live in the store, never in the page: choose one by its id from list_guides, or upload a new guide or another language's file with open_guide_uploader, then place it here. An id no guide has is refused when the structure is saved. To take a guide off this page, save the structure without this section; guides themselves are never deleted.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("guide"),
-      guideId: landingId.describe("The guide's id, from the guide store."),
+      guideId: landingId.describe("The guide's id, as list_guides returns it."),
       imageId: pictureId.optional(),
     }),
     text: z.strictObject({

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { guidesById, LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { landingPlacedGuideIds } from "@/lib/landing-pages/sections";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { GuidesService } from "@/services/guides/guides.service";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 
 export const metadata: Metadata = {
@@ -28,7 +30,9 @@ export const metadata: Metadata = {
  * reader gets (English, then the first written). A version still being written
  * is shown as it stands, its unwritten words left out, since it is the one
  * being worked on. Its testimonials are the working copy's, with their
- * current words from the store, which the admin read carries.
+ * current words from the store, which the admin read carries. Its guides are
+ * the working copy's too, and an admin may download any guide, so the
+ * preview's download works as the live page's will.
  */
 export default async function LandingPagePreviewPage({
   params,
@@ -43,7 +47,8 @@ export default async function LandingPagePreviewPage({
   if (viewer?.profile?.role !== "admin") notFound();
 
   // An id that is not a UUID answers null without a query.
-  const page = await new LandingPageService(await createClient()).getAdminPage(id);
+  const supabase = await createClient();
+  const page = await new LandingPageService(supabase).getAdminPage(id);
   if (page === null) notFound();
 
   const locale = resolveLocale(await getLocale());
@@ -51,11 +56,20 @@ export default async function LandingPagePreviewPage({
   const version = resolveTranslation(draft.versions, locale);
   if (version === null) notFound();
 
+  // The working copy's guides, through the admin read the public one would
+  // not answer for a guide placed only here.
+  const guideIds = landingPlacedGuideIds(draft.sections);
+  const guides =
+    guideIds.length === 0
+      ? {}
+      : guidesById(await new GuidesService(supabase).listGuideSummaries(guideIds));
+
   return (
     <LandingPageBody
       sections={draft.sections}
       imagePaths={draft.imagePaths}
       testimonials={page.testimonials}
+      guides={guides}
       sectionTexts={version.sectionTexts}
       textLocale={version.locale}
       locale={locale}

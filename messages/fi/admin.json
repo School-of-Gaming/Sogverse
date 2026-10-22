@@ -1917,5 +1917,99 @@
       "saveFailedWithReason": "Asiakaskokemusta ei voitu tallentaa: {reason}"
     },
     "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}"
+  },
+  "guides": {
+    "subtitle": "PDF-tiedostot, joita laskeutumissivut jakavat, yksi tiedosto kieltä kohden. Kirjautunut lukija lataa tiedoston omalla kielellään.",
+    "newGuide": "Uusi opas",
+    "backToList": "Takaisin oppaisiin",
+    "meta": {
+      "list": "Oppaat",
+      "new": "Uusi opas",
+      "edit": "Opas"
+    },
+    "newPage": {
+      "title": "Uusi opas",
+      "submit": "Luo opas"
+    },
+    "editPage": {
+      "title": "Opas"
+    },
+    "listLoadError": "Oppaita ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "loadError": "Tätä opasta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "notFound": "Tällä osoitteella ei ole opasta.",
+    "empty": "Oppaita ei ole vielä.",
+    "allHeading": "Kaikki oppaat",
+    "languagesLabel": "Kielet",
+    "saved": "Tallennettu {date}",
+    "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}",
+    "fields": {
+      "label": "Nimi",
+      "language": "Kieli",
+      "file": "PDF-tiedosto",
+      "files": "Tiedostot"
+    },
+    "hints": {
+      "label": "Nimi, jolla ylläpitäjät tuntevat sen listoissaan. Lukijat eivät näe sitä: laskeutumissivun osio kertoo, mikä opas on.",
+      "language": "Kieli, jolla PDF on kirjoitettu. Muunkieliset tiedostot lisätään oppaan sivulla.",
+      "file": "PDF, enintään {limit}.",
+      "files": "Yksi PDF kieltä kohden. Lukija lataa oman kielensä tiedoston, muuten englanninkielisen, muuten ensimmäisenä ladatun."
+    },
+    "file": {
+      "uploaded": "Ladattu {date}",
+      "uploadedBy": "Ladannut {name} {date}",
+      "uploadedByVia": "Ladannut {name} {date} sovelluksen {app} kautta",
+      "uploadedByViaUnnamed": "Ladannut {name} {date} tekoälysovelluksen kautta",
+      "open": "Avaa PDF",
+      "none": "Kielellä {language} ei ole vielä tiedostoa. Lataa sellainen, niin opas on tarjolla kielellä {language}.",
+      "upload": "Lataa PDF",
+      "replace": "Korvaa PDF",
+      "replaceNote": "Uusi tiedosto korvaa tämän heti kaikkialla, missä opas on tarjolla.",
+      "remove": "Poista tämä kieli",
+      "lastFile": "Oppaalla on aina vähintään yksi kieli, joten sen ainoaa tiedostoa ei voi poistaa."
+    },
+    "removeDialog": {
+      "title": "Poistetaanko kielen {language} tiedosto?",
+      "description": "Kielen {language} lukijat saavat oppaan sen sijaan toisella kielellä kaikkialla, missä se on tarjolla. Voit ladata kielen {language} tiedoston uudelleen milloin tahansa.",
+      "confirm": "Poista"
+    },
+    "usage": {
+      "heading": "Missä sitä käytetään",
+      "none": "Sitä ei ole vielä tarjolla millään laskeutumissivulla.",
+      "editNote": "Uusi tiedosto tai poistettu kieli muuttaa sen heti kaikkialla, missä se on tarjolla.",
+      "landingPage": "Laskeutumissivu: {title}",
+      "landingPageState": {
+        "both": "Lukijat voivat ladata sen sieltä nyt.",
+        "liveOnly": "Lukijat voivat ladata sen sieltä seuraavaan julkaisuun asti, joka poistaa sen.",
+        "workingOnly": "Ei vielä lukijoiden saatavilla: seuraava julkaisu tuo sen sinne."
+      }
+    },
+    "record": {
+      "created": "Luotu {date}",
+      "createdBy": "Luonut {name} {date}",
+      "createdByVia": "Luonut {name} {date} sovelluksen {app} kautta",
+      "createdByViaUnnamed": "Luonut {name} {date} tekoälysovelluksen kautta",
+      "saved": "Tallennettu viimeksi {date}",
+      "savedBy": "Tallentanut viimeksi {name} {date}",
+      "savedByVia": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta",
+      "savedByViaUnnamed": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta"
+    },
+    "actions": {
+      "save": "Tallenna",
+      "cancel": "Peruuta"
+    },
+    "errors": {
+      "labelMissing": "Anna oppaalle nimi.",
+      "labelTooLong": "Nimessä voi olla enintään {max} merkkiä.",
+      "noFile": "Valitse PDF-tiedosto.",
+      "tooLarge": "Tämä PDF on {size}, ja oppaan tiedosto voi olla enintään {limit}. Vie se pienempänä — Canvan ”Compress file” tai Acrobatin ”Reduce file size” — ja lataa se uudelleen.",
+      "notPdf": "Tiedosto ei ole PDF. Opas on PDF-tiedosto.",
+      "empty": "Tiedosto on tyhjä.",
+      "uploadFailed": "Tiedostoa ei voitu ladata. Yritä uudelleen.",
+      "uploadFailedWithReason": "Tiedostoa ei voitu ladata: {reason}",
+      "saveFailed": "Nimeä ei voitu tallentaa. Yritä uudelleen.",
+      "saveFailedWithReason": "Nimeä ei voitu tallentaa: {reason}",
+      "removeFailed": "Tiedostoa ei voitu poistaa. Yritä uudelleen.",
+      "removeFailedWithReason": "Tiedostoa ei voitu poistaa: {reason}"
+    }
   }
 }

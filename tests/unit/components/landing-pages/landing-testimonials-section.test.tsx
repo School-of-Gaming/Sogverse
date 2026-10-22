@@ -78,6 +78,7 @@ function renderSection({
         sections={sections(arrangement, ids)}
         imagePaths={{}}
         testimonials={store}
+        guides={{}}
         sectionTexts={{ [HERO]: { headline: "Quotes" }, ...texts }}
         textLocale={textLocale}
         locale={locale}

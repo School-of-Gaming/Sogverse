@@ -1,0 +1,17 @@
+{
+  "guide": {
+    "download": "Lataa opas",
+    "file": "PDF · {size}",
+    "fileInLanguage": "PDF · {size} · {language}",
+    "inLanguage": {
+      "en": "englanniksi",
+      "fi": "suomeksi",
+      "sv": "ruotsiksi",
+      "fr": "ranskaksi",
+      "tlh": "klingoniksi"
+    },
+    "accountNeeded": "Oppaan lataamiseen tarvitset maksuttoman School of Gaming -tilin.",
+    "createAccount": "Luo tili",
+    "signIn": "Kirjaudu sisään"
+  }
+}

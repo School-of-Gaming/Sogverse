@@ -76,6 +76,7 @@ import gamerSignIn from "./gamerSignIn.json";
 import consent from "./consent.json";
 import team from "./team.json";
 import library from "./library.json";
+import landingPage from "./landingPage.json";
 
 const messages = {
   metadata,
@@ -152,6 +153,7 @@ const messages = {
   consent,
   team,
   library,
+  landingPage,
 };
 
 export default messages;

@@ -66,6 +66,7 @@ import chat from "./chat.json";
 import gamerSignIn from "./gamerSignIn.json";
 import team from "./team.json";
 import library from "./library.json";
+import landingPage from "./landingPage.json";
 
 const messages = {
   metadata,
@@ -132,6 +133,7 @@ const messages = {
   gamerSignIn,
   team,
   library,
+  landingPage,
 };
 
 export default messages;

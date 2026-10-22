@@ -205,6 +205,7 @@ const TESTS = {
   geduSessionImageAdd: "tests/integration/api/gedu-session-image-add.test.ts",
   geduSessionImageRemove:
     "tests/integration/api/gedu-session-image-remove.test.ts",
+  guideDownload: "tests/integration/api/guide-download.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
@@ -1100,6 +1101,24 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         // The photo id is the whole request, and it arrives in the path.
         body: { kind: "none" },
         test: TESTS.geduSessionImageRemove,
+      },
+    },
+  },
+
+  // --- Guides --------------------------------------------------------------
+
+  // A landing page's guide, downloaded by a signed-in reader. Every role passes
+  // the gate, which is there for the session and its two extra refusals (a
+  // locked parent, a registration still owed); which guides the caller may
+  // have is the database's answer on the caller's own session.
+  "src/app/api/guides/[id]/download/route.ts": {
+    adminClient:
+      "the private guides bucket alone, to read the one object the database named after it answered on the caller's own session that they may have the guide — the bucket admits no reader but an admin's session, and no URL to an object is ever handed out",
+    handlers: {
+      GET: {
+        posture: { kind: "role-gated", roles: ["admin", "customer", "gamer", "gedu"] },
+        body: { kind: "none" },
+        test: TESTS.guideDownload,
       },
     },
   },

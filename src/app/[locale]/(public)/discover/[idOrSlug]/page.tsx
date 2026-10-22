@@ -7,14 +7,18 @@ import {
   landingPageLocalePaths,
   resolveLandingPage,
 } from "@/components/landing-pages/landing-page-address";
-import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { guidesById, LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import { landingPageJsonLd } from "@/components/landing-pages/landing-page-json-ld";
 import { landingPageMetadata } from "@/components/landing-pages/landing-page-metadata";
 import { JsonLd } from "@/components/seo/json-ld";
 import { LocaleSwitchPaths } from "@/i18n/locale-switch-paths";
 import { resolveLocale } from "@/lib/constants/locales";
-import { landingPlacedTestimonialIds } from "@/lib/landing-pages/sections";
+import {
+  landingPlacedGuideIds,
+  landingPlacedTestimonialIds,
+} from "@/lib/landing-pages/sections";
 import { createClient } from "@/lib/supabase/server";
+import { GuidesService } from "@/services/guides/guides.service";
 import { localizeLandingPage } from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import { testimonialsById } from "@/services/landing-pages/landing-pages.testimonials";
@@ -66,7 +70,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * The testimonials the page places are read from the store on every request,
  * through the public read that answers only what the live copy places, so an
  * admin's edit to one shows here at once, without a republish. A page placing
- * none reads nothing more.
+ * none reads nothing more. The guides it places are read the same way, beside
+ * them: which languages have a file and how large each is. Who may download
+ * one is the only thing on the page that depends on the reader, and it is
+ * decided in the browser from the session the app already holds, so the page
+ * is the same render for everyone.
  */
 export default async function LandingPage({ params }: PageProps) {
   const { idOrSlug } = await params;
@@ -76,12 +84,17 @@ export default async function LandingPage({ params }: PageProps) {
   const shown = localizeLandingPage(page, locale);
   if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
-  const testimonials =
+  const supabase = await createClient();
+  const [testimonials, guides] = await Promise.all([
     landingPlacedTestimonialIds(page.sections).length === 0
       ? {}
-      : testimonialsById(
-          await new TestimonialsService(await createClient()).listLandingPageTestimonials(page.id),
-        );
+      : new TestimonialsService(supabase)
+          .listLandingPageTestimonials(page.id)
+          .then(testimonialsById),
+    landingPlacedGuideIds(page.sections).length === 0
+      ? {}
+      : new GuidesService(supabase).listLandingPageGuides(page.id).then(guidesById),
+  ]);
 
   return (
     <>
@@ -99,6 +112,7 @@ export default async function LandingPage({ params }: PageProps) {
         sections={shown.sections}
         imagePaths={shown.imagePaths}
         testimonials={testimonials}
+        guides={guides}
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}

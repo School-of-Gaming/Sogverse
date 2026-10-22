@@ -1,0 +1,17 @@
+{
+  "guide": {
+    "download": "Télécharger le guide",
+    "file": "PDF · {size}",
+    "fileInLanguage": "PDF · {size} · {language}",
+    "inLanguage": {
+      "en": "en anglais",
+      "fi": "en finnois",
+      "sv": "en suédois",
+      "fr": "en français",
+      "tlh": "en klingon"
+    },
+    "accountNeeded": "Il vous faut un compte School of Gaming gratuit pour télécharger le guide.",
+    "createAccount": "Créer un compte",
+    "signIn": "Se connecter"
+  }
+}

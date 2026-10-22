@@ -83,8 +83,9 @@ export const LANDING_SECTION_SEO: {
   testimonials: {
     structuredData: none,
   },
-  // PLACEHOLDER until the guide section's renderer lands, which decides what a
-  // guide contributes to the page's structured data.
+  // A guide contributes nothing. Describing it as a document would name a file
+  // a crawler cannot fetch — it downloads only for a signed-in reader — and
+  // earns no rich result; its heading and line are already the page's words.
   guide: {
     structuredData: none,
   },
