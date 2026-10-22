@@ -50,7 +50,12 @@ export function GuideDownload({
   const t = useTranslations("landingPage.guide");
   const { user } = useAuth();
   const pathname = usePathname();
-  const buttonClass = buttonVariants({ size: "lg", className: "gap-2" });
+  // The label may wrap: at 360px the French call to action is wider than the
+  // column, and an unwrapped button runs past the page's gutters.
+  const buttonClass = buttonVariants({
+    size: "lg",
+    className: "h-auto min-h-11 max-w-full gap-2 whitespace-normal py-2.5 text-center",
+  });
   const redirectQuery = { redirect: pathname };
 
   return (
