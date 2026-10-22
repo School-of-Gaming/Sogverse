@@ -128,9 +128,9 @@ A change to that protocol names a new view address, since hosts may cache a view
 it is already the shape of, within 1% of the frame's ratio, scaling it to that frame's
 exact size (the sliver under 1% is trimmed, which nobody can see); the admin never chooses
 a shape. A picture of no frame's shape, or of one the destination does not take, is
-refused: nothing uploads, the view says why on screen, and it puts the same sentence —
-the picture's measured ratio and size, and the rule — into the model's context, so the AI
-app can explain it and the admin can re-crop the picture themselves. A crop the admin
+refused: it is not uploaded, the view says why on screen, and the same sentence — the
+picture's measured ratio and size, and the rule — reaches the model in the batch's report,
+so the AI app can explain it and the admin can re-crop the picture themselves. A crop the admin
 cannot see would silently cut away what they meant to show, which is what this rule
 exists against; the in-app crop dialog, where the admin drags the frame, is the place for
 cropping. A picture smaller than its frame still uploads, with a warning that it will look

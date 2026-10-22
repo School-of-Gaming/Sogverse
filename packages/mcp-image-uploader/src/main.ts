@@ -349,7 +349,11 @@ function outcomesOf(of: readonly Row[]): FileOutcome[] {
 }
 
 fileInput.addEventListener("change", () => {
-  void pick(Array.from(fileInput.files ?? []));
+  const files = Array.from(fileInput.files ?? []);
+  // Cleared, so picking the same files again (a retry after every upload
+  // failed, or a picture re-cropped under its old name) fires a change too.
+  fileInput.value = "";
+  void pick(files);
 });
 
 // A file dropped anywhere on the view is taken, never opened by the frame in
@@ -369,7 +373,7 @@ drop.addEventListener("drop", (event) => {
   void pick(Array.from(event.dataTransfer?.files ?? []));
 });
 
-/** Store one checked picture through its frame's upload tool: its own request. */
+/** Store one checked picture through the upload tool, with its frame's purpose: a request of its own. */
 async function store(row: Row, picked: NonNullable<Row["picked"]>): Promise<FileOutcome> {
   const fileName = row.file.name;
   try {
