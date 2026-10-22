@@ -333,6 +333,24 @@ describe("landingProductListsJsonLd", () => {
     ]);
   });
 
+  it("lists a drawn municipality club nowhere, since its schools page is never promoted", () => {
+    const MUNI = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c04";
+    const sections = [
+      { id: PICKS, type: "products" as const, productIds: [MUNI, P1] },
+      { id: MORE, type: "products" as const, productIds: [MUNI] },
+    ];
+    const lists = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "en",
+      page: page(sections),
+      listing: [...LISTING, browseRow(MUNI, { product_type: "municipality_club", name: "Espoo club" })],
+    });
+    expect(lists.map((entry) => entry.sectionId)).toEqual([PICKS]);
+    expect(lists[0].list.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Roblox club", url: `https://sog.test/en/shop/${P1}` },
+    ]);
+  });
+
   it("repeats none of a product's own markup", () => {
     const [{ list }] = landingProductListsJsonLd({
       siteUrl: "https://sog.test",

@@ -1,8 +1,8 @@
-import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
+  LANDING_PRODUCT_TYPES,
   landingPickedProductIds,
   landingPlacedTestimonialIds,
   landingSections,
@@ -310,10 +310,10 @@ export class LandingPageService {
   }
 
   /**
-   * Each products section's picks, shown or not and why: the shop's listing
-   * asked about the picks — the answer the public page draws by — and the
-   * picks' own rows for the reasons. A structure with no products section
-   * reads nothing.
+   * Each products section's picks, shown or not and why: the listing of every
+   * product type asked about the picks — the answer the public page draws by —
+   * and the picks' own rows for the reasons. A structure with no products
+   * section reads nothing.
    */
   private async productPicksOf(
     sections: readonly LandingSection[],
@@ -322,7 +322,7 @@ export class LandingPageService {
     if (ids.length === 0) return [];
     const products = new ProductsService(this.supabase);
     const [listed, facts] = await Promise.all([
-      products.listVisibleListingAmong(SHOP_PRODUCT_TYPES, ids),
+      products.listVisibleListingAmong(LANDING_PRODUCT_TYPES, ids),
       products.getListingFacts(ids),
     ]);
     return landingProductPicks(

@@ -80,7 +80,7 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
 
 /**
  * Every product the structure's products sections pick, each once, in page
- * order — what one read of the shop's listing has to cover for the page.
+ * order — what one read of the listing has to cover for the page.
  */
 export function landingPickedProductIds(sections: readonly LandingSection[]): string[] {
   const ids = sections.flatMap((section) =>
@@ -298,7 +298,7 @@ export { faqSection } from "./faq";
 export { heroSection } from "./hero";
 export { imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
-export { productsSection } from "./products";
+export { LANDING_PRODUCT_TYPES, productsSection } from "./products";
 export { stepsSection } from "./steps";
 export {
   LANDING_TESTIMONIAL_ARRANGEMENTS,

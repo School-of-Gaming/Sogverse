@@ -73,9 +73,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * none reads nothing more.
  *
  * **A page with products sections waits on one more read before its HTML**:
- * the shop's listing and seat counts for every pick at once, the read the shop
- * and the Roblox page make, so the cards — or a section's absence when none of
- * its picks is listed — are in the first byte and nothing below them moves.
+ * the listing of every product type and seat counts for every pick at once,
+ * the read the shop and the Roblox page make over their own types, so the
+ * cards — or a section's absence when none of its picks is listed — are in the
+ * first byte and nothing below them moves.
  * It runs after the page read, since the picks are the page's, and a failure
  * of it costs the cards their first frame and never the page.
  */

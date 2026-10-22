@@ -180,9 +180,10 @@ Each one exists to make the posture above hold by construction rather than by me
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
   only the shop's listing can reach an `ItemList` because only that is ever prefetched
-  for the grid, or for a landing page's products section, whose list names exactly the
-  cards it draws: the admin's picks the listing holds, in their order, and none of a
-  product's own markup. Each item carries its position, its name and its page's canonical
+  for the grid, or for a landing page's products section, whose list names the cards it
+  draws whose page is promoted: the admin's picks the shop's listing holds, in their
+  order, and none of a product's own markup. The section also draws a listed municipality
+  club the admin picks, and that card stays out of the list, since its page is tier 2. Each item carries its position, its name and its page's canonical
   URL — the address of the locale whose words that page shows at the shop's locale, so
   an item never points at a page that canonicalises elsewhere, while the card's own link
   stays at the shop's locale for the reader. Every one of those pages is promoted,

@@ -474,8 +474,7 @@
         "hiddenItem": "{name}: {reasons}",
         "reasons": {
           "gone": "Doch tu’lu’be’",
-          "notInShop": "ngevwI’ Doch ghaHbe’",
-          "notListed": "ngevwI’Daq So’lu’",
+          "notListed": "tetlhDaq pagh",
           "ended": "rIn"
         }
       },

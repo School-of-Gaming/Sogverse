@@ -352,21 +352,26 @@ describe("the landing page status page", () => {
             sectionNumber: 2,
             shownCount: 0,
             picks: [
-              { productId: MUNI, names: [{ locale: "en", name: "Espoo club" }], shown: false, reasons: ["notInShop"] },
+              { productId: ENDED, names: [{ locale: "en", name: "Summer camp" }], shown: false, reasons: ["ended"] },
             ],
           },
           {
             sectionId: "s2",
             sectionNumber: 4,
-            shownCount: 1,
-            picks: [{ productId: SHOWN, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] }],
+            shownCount: 2,
+            picks: [
+              { productId: SHOWN, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+              // A listed municipality club is shown like any other pick.
+              { productId: MUNI, names: [{ locale: "en", name: "Espoo club" }], shown: true, reasons: [] },
+            ],
           },
         ]),
       );
       const section = screen.getByRole("region", { name: "statusPage.products.heading" });
       expect(within(section).getByText("statusPage.products.noneShown")).toBeTruthy();
-      expect(within(section).getByText("hiddenItem name=Espoo club reasons=reasons.notInShop")).toBeTruthy();
-      expect(within(section).getByText("statusPage.products.allShown count=1")).toBeTruthy();
+      expect(within(section).getByText("hiddenItem name=Summer camp reasons=reasons.ended")).toBeTruthy();
+      expect(within(section).getByText("statusPage.products.allShown count=2")).toBeTruthy();
+      expect(within(section).queryByText(/Espoo club/)).toBeNull();
     });
   });
 });

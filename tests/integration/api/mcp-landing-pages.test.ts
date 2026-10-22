@@ -360,7 +360,7 @@ describe("reading", () => {
             productId: CAMP,
             names: [{ locale: "en", name: "Summer camp" }],
             shown: false,
-            notShownBecause: ["it is not listed in the shop", "its term has ended"],
+            notShownBecause: ["it is unlisted", "its term has ended"],
           },
         ],
       },
@@ -439,7 +439,7 @@ describe("reading", () => {
     );
     expect(publish).toContain("slugsChanging");
     // The products section says how its picks go stale, and where that is read.
-    expect(structure).toContain("list_shop_products");
+    expect(structure).toContain("list_products");
     expect(structure).toContain("Picks go stale every term");
     expect(structure).toContain("productPicks");
     const read = tools.find((t) => t.name === "get_landing_page")?.description;

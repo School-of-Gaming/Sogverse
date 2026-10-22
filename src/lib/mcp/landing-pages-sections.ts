@@ -331,12 +331,12 @@ export const MCP_LANDING_SECTIONS: {
   },
   products: {
     about:
-      "Products from the shop, each drawn as the shop's own card — name, schedule, ages, price, seats and whether registration is open, all live — in a carousel, in the order picked, each card linking to the product's shop page. Pick at least one, each once; there is no maximum, but a handful reads best. Find them with list_shop_products. Picks go stale every term: a product that has ended, or is taken off the shop's listing, or is not one the shop sells (a municipality club), is simply not drawn, and a section with none of its picks listed is not drawn at all, so readers never see a stale card. get_landing_page reports each products section's picks under productPicks — shown or not, and why not — so check it and swap in next term's products when a term ends. A pick no product has is refused when the structure is saved. The heading, eyebrow and intro are optional words, never required.",
+      "Products of any type — clubs, municipality clubs, camps and events — each drawn as the shop's own card — name, schedule, ages, price, seats and whether registration is open, all live — in a carousel, in the order picked, each card linking to the product's page (a municipality club's is under its town's schools page). Pick at least one, each once; there is no maximum, but a handful reads best. Find them with list_products: a product it reports as listed is drawn. Picks go stale every term: a product that has ended or is unlisted is simply not drawn, and a section with none of its picks listed is not drawn at all, so readers never see a stale card. get_landing_page reports each products section's picks under productPicks — shown or not, and why not — so check it and swap in next term's products when a term ends. A pick no product has is refused when the structure is saved. The heading, eyebrow and intro are optional words, never required.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("products"),
       productIds: z
-        .array(landingId.describe("A product's id, as list_shop_products returns it."))
+        .array(landingId.describe("A product's id, as list_products returns it."))
         .min(1, "A products section picks at least one product")
         .refine(
           (ids) => new Set(ids).size === ids.length,

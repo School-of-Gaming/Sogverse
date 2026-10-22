@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { LandingSection } from "@/lib/landing-pages/sections";
-import { landingProductPicks } from "@/services/landing-pages/landing-pages.product-picks";
+import {
+  landingProductPicks,
+  listingAbsenceReasons,
+} from "@/services/landing-pages/landing-pages.product-picks";
 import type { ProductListingFactsRow } from "@/services/products/products.service";
 
 /**
  * **Which of a page's picks readers are shown, and why the others are not** —
  * what the status page and the MCP read tools report per products section.
- * Shown is the shop listing's answer, the one the public page draws by; the
+ * Shown is the listing's answer, the one the public page draws by; the
  * reasons only explain an absence, every one that holds, in the product's own
  * timezone for whether its term has ended.
  */
@@ -17,7 +20,6 @@ const NOW = new Date("2026-10-16T12:00:00Z");
 function facts(n: number, overrides: Partial<ProductListingFactsRow> = {}): ProductListingFactsRow {
   return {
     id: id(n),
-    product_type: "consumer_club",
     is_visible: true,
     start_date: "2026-09-01",
     end_date: null,
@@ -40,7 +42,7 @@ const SECTIONS: LandingSection[] = [
 const FACTS = [
   facts(10),
   facts(11, { end_date: "2026-10-15" }),
-  facts(12, { product_type: "municipality_club", is_visible: false }),
+  facts(12, { is_visible: false }),
   // 13 has no row: no product has the id.
   facts(14, { is_visible: false, end_date: "2026-06-30" }),
   facts(15, { end_date: "2026-10-16" }),
@@ -63,7 +65,7 @@ describe("landingProductPicks", () => {
     expect(report[0].picks.map((pick) => [pick.shown, pick.reasons])).toEqual([
       [true, []],
       [false, ["ended"]],
-      [false, ["notInShop", "notListed"]],
+      [false, ["notListed"]],
       [false, ["gone"]],
       [false, ["notListed", "ended"]],
     ]);
@@ -91,6 +93,13 @@ describe("landingProductPicks", () => {
     );
     expect(section.picks[0]).toMatchObject({ shown: false, reasons: ["notListed"] });
     expect(section.shownCount).toBe(0);
+  });
+
+  it("explains an absence from a product's own row, as the MCP product list does", () => {
+    expect(listingAbsenceReasons(facts(10), NOW)).toEqual([]);
+    expect(
+      listingAbsenceReasons(facts(14, { is_visible: false, end_date: "2026-06-30" }), NOW),
+    ).toEqual(["notListed", "ended"]);
   });
 
   it("reports nothing for a page with no products section", () => {

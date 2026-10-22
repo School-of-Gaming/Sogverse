@@ -4,24 +4,25 @@ import { useMemo } from "react";
 import { useParticipationCounts } from "@/services/participations/participations.queries";
 import type { ParticipationCounts } from "@/services/participations/participations.service";
 import { useVisibleProductsByTypes } from "@/services/products/products.queries";
-import type { ProductBrowseRow } from "@/types";
+import type { ProductBrowseRow, ProductType } from "@/types";
 import {
   selectRailProducts,
   type ProductRailSeed,
   type ProductRailSelection,
 } from "./product-rail-selection";
-import { SHOP_PRODUCT_TYPES } from "./shop-categories";
 
 /**
  * Keeps one product rail live, on the storefront's own terms.
  *
- * Same shape as the shop's browse client: one fetch of every shop-surfaced
- * type, narrowed client-side by the rail's selection. That is not just
- * symmetry — it is what lets every rail and `/shop` share one *products* cache
- * entry, so a reader moving between them inside the provider's staleTime reads
- * the list once. (The counts query is keyed on the id set it covers — the
- * rail's own ids here, all ids on `/shop` — so counts are re-fetched per
- * surface; only the product list is shared.)
+ * Same shape as the shop's browse client: one fetch of every product of the
+ * surface's `types` — the set its server prefetch read, since the seed lands
+ * on the entry keyed on it — narrowed client-side by the rail's selection. A
+ * rail over the shop's three types shares `/shop`'s own *products* cache
+ * entry, so a reader moving between them inside the provider's staleTime
+ * reads the list once; a rail over another set keeps an entry of its own.
+ * (The counts query is keyed on the id set it covers — the rail's own ids
+ * here, all ids on `/shop` — so counts are re-fetched per surface; only the
+ * product list is shared.)
  *
  * The seed is the server prefetch, so the rail is fully painted on the first
  * frame — no spinner and no skeleton, because there is no moment when the data
@@ -37,10 +38,11 @@ import { SHOP_PRODUCT_TYPES } from "./shop-categories";
  * land on the key they were built for.
  */
 export function useProductRail(
+  types: ProductType[],
   selection: ProductRailSelection,
   seed: ProductRailSeed,
 ): { products: ProductBrowseRow[]; counts: readonly ParticipationCounts[] } {
-  const { data: listing } = useVisibleProductsByTypes(SHOP_PRODUCT_TYPES, {
+  const { data: listing } = useVisibleProductsByTypes(types, {
     initialData: seed.initialListing,
   });
 

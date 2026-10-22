@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProductRailSeed } from "@/components/public/products/product-rail-selection";
+import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { useProductRail } from "@/components/public/products/use-product-rail";
 import { PROGRAMME_RAIL_SELECTION } from "./programme-filters";
 import { UpcomingEvents } from "./upcoming-events";
@@ -18,6 +19,6 @@ import { UpcomingEvents } from "./upcoming-events";
  * pipeline accepts on that path alone.
  */
 export function UpcomingEventsBrowse({ seed }: { seed: ProductRailSeed }) {
-  const { products, counts } = useProductRail(PROGRAMME_RAIL_SELECTION, seed);
+  const { products, counts } = useProductRail(SHOP_PRODUCT_TYPES, PROGRAMME_RAIL_SELECTION, seed);
   return <UpcomingEvents products={products} counts={counts} />;
 }

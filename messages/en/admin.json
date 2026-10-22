@@ -468,14 +468,13 @@
         "heading": "Picked products",
         "section": "Section {number} ({type})",
         "allShown": "{count, plural, one {Its product is shown.} other {All # of its products are shown.}}",
-        "noneShown": "None of its products is shown, so readers don’t see this section. Swap in products the shop lists.",
+        "noneShown": "None of its products is shown, so readers don’t see this section. Swap in listed products.",
         "someHidden": "{shown} of {total} shown. Not shown:",
         "unnamed": "A product with no name",
         "hiddenItem": "{name}: {reasons}",
         "reasons": {
           "gone": "no product has this id any more",
-          "notInShop": "not a product the shop sells",
-          "notListed": "not listed in the shop",
+          "notListed": "unlisted",
           "ended": "ended"
         }
       },

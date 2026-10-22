@@ -82,7 +82,7 @@ export interface LandingRenderContext {
    */
   testimonial: (testimonialId: string) => PublicTestimonial | null;
   /**
-   * The shop's listing and seat counts, read on the server for every products
+   * The listing and seat counts, read on the server for every products
    * section of the page at once (`prefetchLandingProducts`), or null when the
    * page has none or the read failed — in which case a products section's
    * live query fetches for itself.

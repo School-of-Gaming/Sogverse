@@ -416,7 +416,7 @@ function PlacedTestimonials({ sections }: { sections: readonly LandingTestimonia
  * asking an AI app, as for every other change to the page.
  *
  * Read from the working copy's structure, which is what the next publish puts
- * live; the shown/not-shown answer is the shop's listing's, the one the
+ * live; the shown/not-shown answer is the listing's, the one the
  * public page draws by.
  */
 function ProductPicks({ sections }: { sections: readonly LandingProductsSectionPicks[] }) {

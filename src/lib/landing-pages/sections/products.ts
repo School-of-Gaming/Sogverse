@@ -1,9 +1,20 @@
 import { z } from "zod";
+import { Constants, type ProductType } from "@/types";
 import { landingId, plainText, type LandingSectionDefinition } from "./shared";
 
 /**
- * Hand-picked shop products, each drawn as the shop's own card in a carousel,
- * in the order the admin picked them.
+ * **The product types a products section draws from: every one.** A pick is
+ * drawn while the listing holds it — listed and not ended — whatever its type,
+ * so a municipality club is drawn like a camp, linking to its page under its
+ * town's `/schools` address. Every reader of "is this pick shown" — the public
+ * page, its preview, the status read and the MCP product list — asks the
+ * listing with these types, so none of them can disagree with another.
+ */
+export const LANDING_PRODUCT_TYPES: ProductType[] = [...Constants.public.Enums.product_type];
+
+/**
+ * Hand-picked products, each drawn as the shop's own card in a carousel, in
+ * the order the admin picked them.
  *
  * **The picks are structure, never words**: a product is the same product in
  * every language, so its id sits in the page's structure beside the other
@@ -22,9 +33,8 @@ import { landingId, plainText, type LandingSectionDefinition } from "./shared";
  * **A pick goes stale; the section does not break.** Whether a picked product
  * still exists is checked when a structure naming it is saved — the database
  * refuses an id no product has. Whether the shop still lists it is asked on
- * every render: a pick that has ended, been unlisted, or is not a product the
- * shop sells is simply not drawn, and a section with none listed is not drawn
- * at all. The admin's status page and the MCP read tools say which picks are
+ * every render: a pick that has ended or been unlisted is simply not drawn, and
+ * a section with none listed is not drawn at all. The admin's status page and the MCP read tools say which picks are
  * hidden and why, so next term's product can be swapped in.
  */
 const section = z

@@ -468,14 +468,13 @@
         "heading": "Produits choisis",
         "section": "Section {number} ({type})",
         "allShown": "{count, plural, one {Son produit est affiché.} other {Ses # produits sont tous affichés.}}",
-        "noneShown": "Aucun de ses produits n’est affiché, les lecteurs ne voient donc pas cette section. Remplacez-les par des produits proposés dans la boutique.",
+        "noneShown": "Aucun de ses produits n’est affiché, les lecteurs ne voient donc pas cette section. Remplacez-les par des produits au catalogue.",
         "someHidden": "{shown} sur {total} affichés. Non affichés :",
         "unnamed": "Un produit sans nom",
         "hiddenItem": "{name} : {reasons}",
         "reasons": {
           "gone": "plus aucun produit n’a cet identifiant",
-          "notInShop": "pas un produit vendu dans la boutique",
-          "notListed": "non listé dans la boutique",
+          "notListed": "hors catalogue",
           "ended": "terminé"
         }
       },

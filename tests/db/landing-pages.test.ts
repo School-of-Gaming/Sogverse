@@ -38,7 +38,7 @@ import { requiredTextCases } from "../helpers/landing-required-text-cases";
  * and through which AI app; the SQL half of the required-text rule held
  * equal to the TypeScript half; and the products a products section picks —
  * an id no product has refused at save, and the admin read saying which picks
- * the shop's listing shows.
+ * the listing shows, a municipality club included.
  *
  * No landing page table carries a write grant for any Data API role, so there
  * is no write-IDOR case to make: a direct write is refused at the grant, which
@@ -950,6 +950,41 @@ describe("landing pages", () => {
           ],
         },
       ]);
+    });
+
+    it("shows a listed municipality club like any other pick, and reports an unlisted one as unlisted", async () => {
+      await reseed();
+      // Minted ids, so no fixture range is spent on them.
+      const club = await createTestProduct(admin, {
+        seatCount: null,
+        productType: "municipality_club",
+        billingMode: "external_contract",
+        locationId: TEST_IDS.LOCATION_MUNICIPALITY,
+        endDate: "2099-05-31",
+      });
+      const hidden = await createTestProduct(admin, {
+        seatCount: null,
+        productType: "municipality_club",
+        billingMode: "external_contract",
+        locationId: TEST_IDS.LOCATION_MUNICIPALITY,
+        endDate: "2099-05-31",
+        isVisible: false,
+      });
+      try {
+        await service.saveStructure(PAGE_A, withPicks([club, hidden, LISTED]));
+        const page = await service.getAdminPage(PAGE_A);
+        expect(page?.productPicks[0]).toMatchObject({
+          shownCount: 2,
+          picks: [
+            { productId: club, shown: true, reasons: [] },
+            { productId: hidden, shown: false, reasons: ["notListed"] },
+            { productId: LISTED, shown: true, reasons: [] },
+          ],
+        });
+      } finally {
+        await reseed();
+        await deleteTestProducts(admin, [club, hidden]);
+      }
     });
 
     it("publishes a stale pick as it is: the published copy carries no product check", async () => {

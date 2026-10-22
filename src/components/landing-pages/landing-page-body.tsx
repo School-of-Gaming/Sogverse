@@ -28,7 +28,7 @@ export interface LandingPageBodyProps {
   /** The page's locale — the URL's. */
   locale: SupportedLocale;
   /**
-   * The shop's listing and seat counts for the page's products sections, read
+   * The listing and seat counts for the page's products sections, read
    * on the server (`prefetchLandingProducts`); null when the page has none or
    * the read failed.
    */

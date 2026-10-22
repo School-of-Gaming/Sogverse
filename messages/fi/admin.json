@@ -468,14 +468,13 @@
         "heading": "Valitut tuotteet",
         "section": "Osio {number} ({type})",
         "allShown": "{count, plural, one {Sen tuote näkyy.} other {Kaikki sen # tuotetta näkyvät.}}",
-        "noneShown": "Mikään sen tuotteista ei näy, joten lukijat eivät näe tätä osiota. Vaihda tilalle tuotteita, jotka ovat kaupassa.",
+        "noneShown": "Mikään sen tuotteista ei näy, joten lukijat eivät näe tätä osiota. Vaihda tilalle listattuja tuotteita.",
         "someHidden": "{shown}/{total} näkyy. Ei näy:",
         "unnamed": "Nimetön tuote",
         "hiddenItem": "{name}: {reasons}",
         "reasons": {
           "gone": "tällä tunnisteella ei ole enää tuotetta",
-          "notInShop": "ei ole kaupassa myytävä tuote",
-          "notListed": "ei ole esillä kaupassa",
+          "notListed": "ei listattu",
           "ended": "päättynyt"
         }
       },

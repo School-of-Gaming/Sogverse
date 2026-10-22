@@ -30,9 +30,9 @@ export const metadata: Metadata = {
  * is shown as it stands, its unwritten words left out, since it is the one
  * being worked on. Its testimonials are the working copy's, with their
  * current words from the store, which the admin read carries. Its products
- * sections show what the live page would show now: the picks the shop lists,
- * read with the admin's own session — which reads the same listing a reader's
- * does.
+ * sections show what the live page would show now: the picks the listing
+ * holds, read with the admin's own session — which reads the same listing a
+ * reader's does.
  */
 export default async function LandingPagePreviewPage({
   params,

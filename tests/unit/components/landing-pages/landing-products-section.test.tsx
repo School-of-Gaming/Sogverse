@@ -10,9 +10,10 @@ import type { ProductBrowseRow } from "@/types";
 /**
  * **A landing page's products section, through the one body the live page and
  * the preview render.** The admin's picks are drawn as the shop's own cards,
- * in the admin's order, while the shop lists them: a pick the listing no
- * longer holds is simply not drawn, and a section none of whose picks is
- * listed draws nothing at all — no heading, no empty state.
+ * in the admin's order, while the listing of every product type holds them —
+ * a municipality club included: a pick the listing no longer holds is simply
+ * not drawn, and a section none of whose picks is listed draws nothing at
+ * all — no heading, no empty state.
  *
  * The card is a stub naming its product, so what is pinned is which rows
  * reach the shop's card; the card's own rendering is its own tests'.
@@ -26,6 +27,9 @@ vi.mock("@/components/public/products/product-browse-card", () => ({
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
+import { LANDING_PRODUCT_TYPES } from "@/lib/landing-pages/sections";
+import { productKeys } from "@/services/products/products.keys";
 import { browseRow, emptyCounts } from "../../../mocks/product-browse-row";
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -34,12 +38,15 @@ const PICKS = id(2);
 const MORE = id(3);
 const P = (n: number) => id(100 + n);
 
+let renderedClient: QueryClient | undefined;
+
 function renderPage(
   sections: LandingSection[],
   texts: LandingSectionTexts,
   listing: ProductBrowseRow[],
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
+  renderedClient = client;
   return render(
     <QueryClientProvider client={client}>
       <NextIntlClientProvider locale="en" messages={{ productBrowse, richText }}>
@@ -99,6 +106,23 @@ describe("a landing page's products section", () => {
     renderPage([hero, picks([P(1)])], { [HERO]: { headline: "Clubs" } }, [browseRow(P(1))]);
     expect(shown()).toEqual([P(1)]);
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull();
+  });
+
+  it("draws a listed municipality club like any other pick", () => {
+    renderPage(
+      [hero, picks([P(1), P(2)])],
+      TEXTS,
+      [browseRow(P(1)), browseRow(P(2), { product_type: "municipality_club" })],
+    );
+    expect(shown()).toEqual([P(1), P(2)]);
+  });
+
+  it("seeds the listing of every product type under its own key, never the shop's", () => {
+    renderPage([hero, picks([P(1)])], TEXTS, [browseRow(P(1))]);
+    expect(renderedClient?.getQueryData(productKeys.visibleByTypes(LANDING_PRODUCT_TYPES))).toEqual([
+      browseRow(P(1)),
+    ]);
+    expect(renderedClient?.getQueryData(productKeys.visibleByTypes(SHOP_PRODUCT_TYPES))).toBeUndefined();
   });
 
   it("draws each products section from the one page listing, by its own picks", () => {

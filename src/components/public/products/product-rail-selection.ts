@@ -6,14 +6,16 @@ import { filterProducts, type BrowseFilters } from "./filter-products";
  * **Which of the shop's products a product rail shows** — the one part of the
  * rail pipeline that differs between the surfaces running it.
  *
- * The pipeline is the same everywhere: the server reads the shop's whole
- * listing with the viewer's client and counts seats for the products the rail
- * shows (`product-rail-prefetch.ts`), the client keeps that listing live in
- * the storefront's own cache entry and narrows it again (`use-product-rail.ts`),
- * and the cards are the shop's own, in the rail (`product-rail.tsx`). What a
- * surface brings is a selection, applied to the listing on both sides of that
- * boundary by the one function below, so the server's count and the client's
- * cards are always about the same products.
+ * The pipeline is the same everywhere: the server reads the whole listing of
+ * the surface's product types with the viewer's client and counts seats for
+ * the products the rail shows (`product-rail-prefetch.ts`), the client keeps
+ * that listing live in the cache entry keyed on those types and narrows it
+ * again (`use-product-rail.ts`), and the cards are the shop's own, in the rail
+ * (`product-rail.tsx`). What a surface brings is its types — the shop's three
+ * for a slice of the shop, every type for a landing page — and a selection,
+ * applied to the listing on both sides of that boundary by the one function
+ * below, so the server's count and the client's cards are always about the
+ * same products.
  *
  * Deliberately NOT a "use client" module: the server prefetch imports these
  * values, and a runtime value imported from a "use client" file into a Server
@@ -21,14 +23,14 @@ import { filterProducts, type BrowseFilters } from "./filter-products";
  */
 
 /**
- * A rail's products, as a narrowing of the shop's listing — never a wider set.
+ * A rail's products, as a narrowing of the listing — never a wider set.
  *
  * - `filters` — the shop's own browse filters, matched exactly as the shop
  *   grid matches them; the Roblox page's programme slice.
  * - `picks` — products named by id, shown in the order given: a landing page's
  *   products section. A pick the listing does not hold is not shown, which is
- *   what keeps an ended, unlisted or non-shop product off the page — the
- *   listing is the only visibility rule, and nothing here adds a second one.
+ *   what keeps an ended or unlisted product off the page — the listing is the
+ *   only visibility rule, and nothing here adds a second one.
  */
 export type ProductRailSelection =
   | { kind: "filters"; filters: BrowseFilters }
@@ -53,8 +55,8 @@ export function selectRailProducts(
 }
 
 /**
- * What the server prefetch hands a surface: the shop's whole listing, and
- * seat counts covering the products of every selection it was asked about.
+ * What the server prefetch hands a surface: the whole listing of its types,
+ * and seat counts covering the products of every selection it was asked about.
  */
 export interface ProductRailPrefetch {
   listing: ProductBrowseRow[];
@@ -63,8 +65,8 @@ export interface ProductRailPrefetch {
 
 /**
  * What one rail's live query is seeded with, or nothing when the prefetch
- * failed. The listing goes over whole, because it seeds the storefront's own
- * cache entry and must hold the set that entry's key promises; the counts are
+ * failed. The listing goes over whole, because it seeds the cache entry keyed
+ * on the surface's types and must hold the set that key promises; the counts are
  * narrowed to the rail's own products, because the counts entry is keyed on
  * exactly those ids.
  */

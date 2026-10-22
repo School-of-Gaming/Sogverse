@@ -1,8 +1,7 @@
-import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import type { LandingSection } from "@/lib/landing-pages/sections";
-import { effectiveStatus } from "@/lib/products/effective-status";
+import { effectiveStatus, type LifecycleInputs } from "@/lib/products/effective-status";
 import type { ProductListingFactsRow } from "@/services/products/products.service";
 
 /*
@@ -11,24 +10,23 @@ import type { ProductListingFactsRow } from "@/services/products/products.servic
  * products section, so a pick that has gone stale over a term is found and
  * swapped rather than silently missing from the page.
  *
- * Pure: the service reads the shop's listing and the picks' facts, and this
- * decides. Whether a pick is shown is the listing's answer, the same one the
- * public page draws by; the reasons are read off the facts only to explain an
- * absence, never to decide one.
+ * Pure: the service reads the listing of every product type
+ * (`LANDING_PRODUCT_TYPES`) and the picks' facts, and this decides. Whether a
+ * pick is shown is the listing's answer, the same one the public page draws
+ * by; the reasons are read off the facts only to explain an absence, never to
+ * decide one.
  */
 
 /**
- * Why a pick is not on the shop's listing, in the order they are checked.
+ * Why a pick is not on the listing, in the order they are checked.
  *
  * - `gone` — no product has the id. Saving a structure refuses an id no
  *   product has, and Sogverse has no way to delete a product, so this is
  *   reached only if one is removed by hand.
- * - `notInShop` — a type the shop does not sell: a municipality club, which
- *   families find from its municipality's page instead.
- * - `notListed` — the admin has taken it off the shop's listing.
+ * - `notListed` — the admin has unlisted it.
  * - `ended` — its term is over, in its own timezone.
  */
-export const LANDING_PICK_REASONS = ["gone", "notInShop", "notListed", "ended"] as const;
+export const LANDING_PICK_REASONS = ["gone", "notListed", "ended"] as const;
 export type LandingPickReason = (typeof LANDING_PICK_REASONS)[number];
 
 /** One picked product as the status read reports it. */
@@ -56,14 +54,19 @@ export interface LandingProductsSectionPicks {
   shownCount: number;
 }
 
-const SHOP_TYPES: ReadonlySet<string> = new Set(SHOP_PRODUCT_TYPES);
-
-function reasonsFor(facts: ProductListingFactsRow | undefined, now: Date): LandingPickReason[] {
-  if (facts === undefined) return ["gone"];
-  const reasons: LandingPickReason[] = [];
-  if (!SHOP_TYPES.has(facts.product_type)) reasons.push("notInShop");
-  if (!facts.is_visible) reasons.push("notListed");
-  if (effectiveStatus(facts, now) === "completed") reasons.push("ended");
+/**
+ * Why a product the listing does not hold is left out of it, every reason
+ * that holds — for an existing product, read off its row; the listing's own
+ * answer decides whether it is left out at all. Shared by the status read and
+ * the MCP product list, so the two explain an absence alike.
+ */
+export function listingAbsenceReasons(
+  product: LifecycleInputs & { is_visible: boolean },
+  now: Date,
+): Exclude<LandingPickReason, "gone">[] {
+  const reasons: Exclude<LandingPickReason, "gone">[] = [];
+  if (!product.is_visible) reasons.push("notListed");
+  if (effectiveStatus(product, now) === "completed") reasons.push("ended");
   return reasons;
 }
 
@@ -84,7 +87,8 @@ export function landingProductPicks(
     const picks = section.productIds.map((productId): LandingProductPick => {
       const row = byId.get(productId);
       const shown = listedIds.has(productId);
-      const reasons = shown ? [] : reasonsFor(row, now);
+      const reasons: LandingPickReason[] =
+        shown ? [] : row === undefined ? ["gone"] : listingAbsenceReasons(row, now);
       return {
         productId,
         names: row === undefined ? [] : inLocaleOrder(row.product_translations),

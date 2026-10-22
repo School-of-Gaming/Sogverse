@@ -468,14 +468,13 @@
         "heading": "Utvalda produkter",
         "section": "Avsnitt {number} ({type})",
         "allShown": "{count, plural, one {Dess produkt visas.} other {Alla # produkter visas.}}",
-        "noneShown": "Ingen av dess produkter visas, så läsarna ser inte det här avsnittet. Byt till produkter som finns i butiken.",
+        "noneShown": "Ingen av dess produkter visas, så läsarna ser inte det här avsnittet. Byt till listade produkter.",
         "someHidden": "{shown} av {total} visas. Visas inte:",
         "unnamed": "En produkt utan namn",
         "hiddenItem": "{name}: {reasons}",
         "reasons": {
           "gone": "ingen produkt har längre detta id",
-          "notInShop": "inte en produkt som butiken säljer",
-          "notListed": "inte listad i butiken",
+          "notListed": "olistad",
           "ended": "har avslutats"
         }
       },

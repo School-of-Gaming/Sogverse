@@ -181,7 +181,7 @@ describe("/api/mcp", () => {
       "remove_testimonial_language",
       "get_analytics_summary",
       "get_analytics_breakdown",
-      "list_shop_products",
+      "list_products",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });
