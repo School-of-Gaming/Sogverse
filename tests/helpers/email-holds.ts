@@ -64,7 +64,7 @@ export function holdViolations(html: string): string[] {
     for (const element of outer.querySelectorAll("*")) {
       const style = element.getAttribute("style") ?? "";
       if (element.tagName === "IMG") found.push(`a picture inside a hold: ${describe(element)}`);
-      if (/background-(?:color|image)\s*:/.test(style)) {
+      if (/background(?:-color|-image)?\s*:/.test(style)) {
         found.push(`a fill inside a hold: ${describe(element)}`);
       }
       if (PIN_CLASSES.some((name) => element.classList.contains(name))) {
@@ -107,6 +107,11 @@ export function holdViolations(html: string): string[] {
       inker = inker.parentElement;
     }
     if (pinned && held(node)) found.push(`pinned text inside a hold: "${text.slice(0, 40)}"`);
+    // The ink may be inherited from outside the hold — an amber anchor or a
+    // status-coloured paragraph around it — which the sweep above never sees.
+    if (!pinned && colour !== null && !PLAIN_NEUTRALS.has(colour) && held(node)) {
+      found.push(`"${text.slice(0, 40)}" in ${colour}, a colour Gmail iOS leaves alone, inside a hold`);
+    }
     if (!pinned && colour !== null && PLAIN_NEUTRALS.has(colour) && !held(node)) {
       found.push(`"${text.slice(0, 40)}" in ${colour} outside any hold`);
     }

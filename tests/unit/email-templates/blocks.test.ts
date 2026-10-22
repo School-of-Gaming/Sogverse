@@ -14,7 +14,14 @@ import {
   inlineLink,
 } from "@/lib/email-templates/blocks";
 import { MAIL_SPACE, mailText } from "@/lib/email-templates/type-scale";
-import { HOLD_CLASS, TEXT_PINS, holdRuns, paragraph } from "@/lib/email-templates/utils";
+import {
+  HOLD_CLASS,
+  TEXT_PINS,
+  holdInline,
+  holdRuns,
+  holdText,
+  paragraph,
+} from "@/lib/email-templates/utils";
 import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { unhold } from "../../helpers/email-holds";
@@ -49,6 +56,20 @@ describe("holding plain neutrals for Gmail iOS", () => {
     const item = holdRuns(`Check the device${nested}`);
     expect(item.split(HOLD_OPEN)).toHaveLength(2);
     expect(item).toContain(nested);
+  });
+
+  it("leaves an already-held inline run alone rather than holding it twice", () => {
+    const held = holdInline("already held");
+    const html = paragraph(`Before ${held} after.`);
+    expect(html.startsWith("<p")).toBe(true);
+    expect(html.split(`class="${HOLD_CLASS.screen}"`)).toHaveLength(4);
+    expect(html).toContain(`</span></span>${held}<span class="${HOLD_CLASS.screen}">`);
+    expect(holdText((inner) => `<p>${inner}</p>`, held)).toBe(`<p>${held}</p>`);
+  });
+
+  it("refuses to hold a run that opens an element it does not close", () => {
+    const link = inlineLink("https://sogverse.sog.gg/settings", "your settings");
+    expect(() => holdRuns(`<b>Change it in ${link}</b>`)).toThrow(/unbalanced/);
   });
 
   it("holds a list whose items carry a link item by item, with the list itself bare", () => {

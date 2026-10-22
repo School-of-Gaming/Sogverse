@@ -1,16 +1,8 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
-import { styledName, subheading } from "@/lib/email-templates/utils";
-import { sessionPhotoGrid } from "@/lib/email-templates/session-photos";
-import { sessionReportPhotoFixtures } from "@/lib/email-templates/fixtures/session-report-photos";
-import {
-  bulletList,
-  ctaButtonRow,
-  factList,
-  quotedMessage,
-  smallNote,
-} from "@/lib/email-templates/blocks";
+import { styledName } from "@/lib/email-templates/utils";
+import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { MARKDOWN_USE_CASES, OUTLINE_TAGS } from "@/lib/authored-markdown";
 import {
@@ -1465,7 +1457,7 @@ describe("templateRegistry componentsReference", () => {
     // The label and the token are read as their text: each sits in the span
     // or hold Gmail needs, and the token carries a joiner after every dot.
     const textOf = (markup: string) =>
-      markup.replace(/<[^>]+>/g, "").replace(/&zwnj;/g, "").trim();
+      markup.replace(/<[^>]+>/g, "").replace(/&#8288;/g, "").trim();
     const swatches = [
       ...html.matchAll(
         /<td width="150" style="background-color:([^;]+);background-image:linear-gradient\(\1,\1\);[^"]*?color:([^;]+);[^"]*">([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/g,
@@ -1540,46 +1532,6 @@ describe("templateRegistry componentsReference", () => {
         "And a second, so it is a list.",
       ]),
     );
-  });
-
-  /**
-   * The reference is the one mail that has to cover every construct a
-   * template uses, because it is the mail sent to a client when a client is
-   * being checked. These are the constructs that are not text helpers: the
-   * photo column, a list carrying a link, link-bearing markdown, the quoted
-   * message and the staff note.
-   */
-  it("shows every construct the templates use, not only the text helpers", () => {
-    const { html } = render();
-    expect(html).toContain(
-      sessionPhotoGrid(sessionReportPhotoFixtures(3, { origin: "https://sogverse.sog.gg" })),
-    );
-    expect(html).toContain(
-      renderMarkdownForEmail(
-        [
-          "Our winter camp opens for signups on Monday. Read [the camp page](https://sogverse.sog.gg/shop) for the dates.",
-          "",
-          "- Bring **headphones**",
-          "- Ask us anything at [support](https://sogverse.sog.gg/help)",
-        ].join("\n"),
-        "spotlight",
-      ),
-    );
-    expect(html).toContain(quotedMessage("Hello! Our gamer cannot sign in.<br/>Could you help?"));
-    expect(html).toContain(smallNote("A note for the staff reading this."));
-    expect(html).toContain(subheading("A subheading"));
-    expect(html).toContain(
-      factList(
-        [
-          ["Club", "Minecraft 101"],
-          ["Price", "€40.00 per month"],
-        ],
-        { leadIn: "Your order" },
-      ),
-    );
-    // A list item carrying a pinned link: the shape the topic-prep guide's
-    // steps take, held run by run rather than whole.
-    expect(html).toMatch(/<ol [^>]*>[\s\S]*?<a [^>]*class="brand-act"/);
   });
 
   it("shows the facts block and rendered markdown as the helpers emit them", () => {

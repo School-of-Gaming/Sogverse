@@ -153,7 +153,9 @@ function buttonTable(
   width: CtaWidth,
 ): string {
   const { surface, labelClass, label: labelStyle } = buttonStyles(variant, width);
-  const table = `<table role="presentation" cellpadding="0" cellspacing="0"${width === "half" ? ' width="100%"' : ""}>
+  // An auto-width table centres itself: the outlined one's hold sits between
+  // it and the centring cell around it, so that cell's alignment cannot reach it.
+  const table = `<table role="presentation" cellpadding="0" cellspacing="0"${width === "half" ? ' width="100%"' : ' align="center"'}>
             <tr>
               <td align="center" style="${surface}">
                 ${buttonAnchor(href, label, variant, labelStyle, labelClass)}

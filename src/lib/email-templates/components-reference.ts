@@ -20,6 +20,7 @@ import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
 import { MAIL_SPACE, MAIL_WEIGHT, mailText } from "./type-scale";
 import {
   TEXT_PINS,
+  defuseAutolinks,
   heading,
   holdBlock,
   holdInline,
@@ -136,7 +137,7 @@ function swatch(token: string, hex: string, on: string): string {
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.tight}px;">
       <tr>
         <td width="150" style="${pinnedFill(hex)}border-radius:${RADIUS.sm};padding:14px 10px;${mailText("small", on, MAIL_WEIGHT.bold)}text-align:center;">${label}</td>
-        <td style="padding-left:12px;${mailText("small", DARK_THEME.foreground)}">${holdBlock(token.replace(/\./g, ".&zwnj;"))}</td>
+        <td style="padding-left:12px;${mailText("small", DARK_THEME.foreground)}">${holdBlock(defuseAutolinks(token))}</td>
       </tr>
     </table>`;
 }

@@ -42,8 +42,9 @@ export const BODY_TEXT_STYLE = mailText("body", DARK_THEME.foreground);
  * negatives: amber comes out blue, violet green, a photograph a negative. A
  * dark plain colour inside a hold also comes out a few shades lighter in every
  * Gmail, from the screen, which is why no fill goes inside one even where its
- * colour is neutral. And a hold never goes inside another hold: the outer
- * screen meets the inner one's white and the text inside both vanishes.
+ * colour is neutral. And a hold never goes inside another hold: the inner
+ * hold's screen lands on the outer's white, screen over white is white, and
+ * the text inside both vanishes.
  *
  * The rules that apply the blends are the shell's (`layout.ts`), behind the
  * Gmail-only selector, so a client that drops the stylesheet sees two bare
@@ -125,54 +126,77 @@ function pinnedLinkSpans(html: string): [start: number, end: number][] {
   return spans;
 }
 
-const HOLD_OPEN = `<div class="${HOLD_CLASS.screen}">`;
+/** Elements that never take a closing tag. */
+const VOID_TAGS = new Set(["br", "hr", "img", "wbr"]);
 
 /** Markup that shows a glyph, as opposed to only tags and whitespace. */
 function hasText(html: string): boolean {
   return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, "").trim() !== "";
 }
 
+/** Whether every element opened in `html` is closed in it, in order. */
+function balanced(html: string): boolean {
+  const open: string[] = [];
+  for (const match of html.matchAll(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>/g)) {
+    const name = match[2].toLowerCase();
+    if (VOID_TAGS.has(name) || match[3] === "/") continue;
+    if (match[1] === "") open.push(name);
+    else if (open.pop() !== name) return false;
+  }
+  return open.length === 0;
+}
+
 /**
- * Where each already-held block in `html` starts and ends, found by counting
- * `<div` against `</div>` from each opener, so a held block's own divs do not
- * end it early.
+ * Where each already-held span in `html` starts and ends — a block hold or an
+ * inline one — found by counting its own tag against its closer from each
+ * opener, so a held span's own elements do not end it early.
  */
-function heldBlockSpans(html: string): [start: number, end: number][] {
+function heldSpans(html: string): [start: number, end: number][] {
   const spans: [number, number][] = [];
-  let from = 0;
-  for (;;) {
-    const start = html.indexOf(HOLD_OPEN, from);
-    if (start === -1) return spans;
-    const tags = /<div\b|<\/div>/g;
+  const openers = /<(div|span) class="([^"]*)"/g;
+  for (let opener = openers.exec(html); opener !== null; opener = openers.exec(html)) {
+    if (opener[2] !== HOLD_CLASS.screen) continue;
+    const start = opener.index;
+    const tags = /<(\/?)(div|span)\b/g;
     tags.lastIndex = start;
     let depth = 0;
     let end = html.length;
     for (let match = tags.exec(html); match !== null; match = tags.exec(html)) {
-      depth += match[0] === "</div>" ? -1 : 1;
+      if (match[2] !== opener[1]) continue;
+      depth += match[1] === "/" ? -1 : 1;
       if (depth === 0) {
-        end = match.index + match[0].length;
+        end = html.indexOf(">", match.index) + 1;
         break;
       }
     }
     spans.push([start, end]);
-    from = end;
+    openers.lastIndex = end;
   }
+  return spans;
 }
 
 /**
  * The inline content of one element, with every run of plain text held and
- * every pinned link and already-held block left as it is — for a sentence that
+ * every pinned link and already-held span left as it is — for a sentence that
  * carries a link, which a hold around the whole sentence would invert.
  *
  * It splits only at the top level of the content it is given, so a link is
  * never nested inside another element of the sentence; the directory's helpers
- * put every inline link directly in the sentence that carries it.
+ * put every inline link directly in the sentence that carries it. A run that
+ * opens an element it does not close is a composition this cannot hold, so it
+ * throws rather than write a hold that ends inside an element.
  */
 export function holdRuns(html: string): string {
-  const keep = [...pinnedLinkSpans(html), ...heldBlockSpans(html)].sort((a, b) => a[0] - b[0]);
+  const keep = [...pinnedLinkSpans(html), ...heldSpans(html)].sort((a, b) => a[0] - b[0]);
   let out = "";
   let at = 0;
-  const run = (text: string) => (hasText(text) ? holdInline(text) : text);
+  const run = (text: string) => {
+    if (!hasText(text)) return text;
+    if (!balanced(text)) {
+      throw new Error(`a run with unbalanced tags cannot be held: ${text.slice(0, 120)}`);
+    }
+    return holdInline(text);
+  };
   for (const [start, end] of keep) {
     out += run(html.slice(at, start)) + html.slice(start, end);
     at = end;
@@ -182,12 +206,12 @@ export function holdRuns(html: string): string {
 
 /** Whether composed markup has to be held run by run rather than whole. */
 export function needsRunHolds(html: string): boolean {
-  return pinnedLinkSpans(html).length > 0 || html.includes(HOLD_OPEN);
+  return pinnedLinkSpans(html).length > 0 || heldSpans(html).length > 0;
 }
 
 /**
  * One text element, held: whole where its content is plain, and run by run
- * where it carries a pinned link or an already-held block.
+ * where it carries a pinned link or an already-held span.
  */
 export function holdText(element: (inner: string) => string, inner: string): string {
   return needsRunHolds(inner) ? element(holdRuns(inner)) : holdBlock(element(inner));

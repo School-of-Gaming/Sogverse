@@ -560,6 +560,9 @@ describe("house style, over every mail we can send", () => {
       ["a picture inside a hold", hold(`<img src="https://sogverse.sog.gg/a.jpg" alt="" />`)],
       ["pinned text inside a hold", hold(`<a class="${TEXT_PINS.act.className}" style="color:${BRAND.act};">Link</a>`)],
       ["leaves alone, inside a hold", hold(`<span style="color:${STATUS.info};">Blue</span>`)],
+      ["a fill inside a hold", hold(`<div style="background:${DARK_THEME.card};${ink}">Shorthand</div>`)],
+      ["leaves alone, inside a hold", `<div style="color:${STATUS.info};">${hold("Inherited")}</div>`],
+      ["leaves alone, inside a hold", `<a href="https://sogverse.sog.gg/" style="color:${BRAND.act};">${hold("Unpinned link")}</a>`],
     ];
     for (const [expected, html] of cases) {
       expect(holdViolations(`<body>${html}</body>`).join("\n"), html).toContain(expected);
