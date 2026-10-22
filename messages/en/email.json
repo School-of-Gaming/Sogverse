@@ -108,6 +108,7 @@
       "firstCharge": "Nothing was charged today. Your first payment is on {date}.",
       "firstSession": "{participantName}’s first session is on {date} at {time}.",
       "firstSessionSelf": "Your first session is on {date} at {time}.",
+      "eventDate": "The event is on {date} at {time}.",
       "guarantee": "If the club isn’t right for {participantName}, write to us within 30 days of their first session and we’ll refund everything you’ve paid towards it.",
       "guaranteeSelf": "If the club isn’t right for you, write to us within 30 days of your first session and we’ll refund everything you’ve paid towards it."
     },

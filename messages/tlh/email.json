@@ -108,6 +108,7 @@
       "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}.",
       "firstSession": "{participantName} wa’DIch Qu’: {date}, {time}.",
       "firstSessionSelf": "wa’DIch Qu’lIj: {date}, {time}.",
+      "eventDate": "wanI’ poH: {date}, {time}.",
       "guarantee": "{participantName}vaD ghom QaQbe’chugh, wa’DIch Qu’ pa’ wejmaH jaj qaStaHvIS maHvaD QIn yIngeH. Hoch DIlmeylIj DIchegh.",
       "guaranteeSelf": "SoHvaD ghom QaQbe’chugh, wa’DIch Qu’lIj pa’ wejmaH jaj qaStaHvIS maHvaD QIn yIngeH. Hoch DIlmeylIj DIchegh."
     },

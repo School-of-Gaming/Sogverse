@@ -212,16 +212,25 @@ the first session" guide and the calendar invite.
 the heading, and nowhere else.** The facts list opens on the schedule, with no rows naming
 the product or the participant and no label over it: a third statement of the same fact
 would be the first thing the list says, and the sentence directly above is what
-introduces the list. That sentence is also the mail's inbox preview, so a parent scanning
-the inbox reads it before the lockup.
+introduces the list.
+
+**The inbox preview is the first "what happens next" line, as plain text.** The subject
+already says who joined what, and an inbox shows the preview beside it, so the preview
+line adds the next most useful fact instead of restating the subject: the first session's
+day and time, or on a waitlist join that we write the moment a seat opens. It is composed
+from the same plain-text values as the text twin's list, so it cannot disagree with the
+body.
 
 **"What happens next" opens on the seat's first session** — its weekday, full date and
-time — so a parent never has to work it out from the schedule row. It is the first planned
+time — so a parent never has to work it out from the schedule row. On an event the line
+says when the event is, in one form for every reader, since it names nobody. It is the first planned
 session that has not yet begun, which is the product's start only for a seat taken before
 the run begins; a seat taken mid-term starts at the next session. It is read from the
 calendar invitation's own input by the same rule that picks the entry's first occurrence,
 so the mail and the file cannot name two days, and it is written in the product's zone
-with the short zone name always beside the time, like the schedule row. A waitlist join,
+with the short zone name always beside the time, like the schedule row. The time is the
+schedule row's own fixed 24-hour clock face, not the locale's, so one mail states one clock
+style; the date is the locale's. A waitlist join,
 a send with no plan to read and a product with nothing ahead state no such bullet. Next,
 on a remote product, comes how the sessions are joined — online in My SOG, through a
 voice room that opens a stated number of minutes before each one, the number read from

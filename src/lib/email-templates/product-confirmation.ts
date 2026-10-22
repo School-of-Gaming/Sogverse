@@ -21,8 +21,8 @@ import {
   type ProductConfirmationInvitationInput,
 } from "./product-confirmation-invitation";
 import { languageNameIn } from "@/lib/i18n/language-name";
-import { formatDate, formatTime } from "@/lib/date-format";
-import { zoneAbbrev } from "@/lib/products/format-product-schedule";
+import { formatDate } from "@/lib/date-format";
+import { clockFace, zoneAbbrev } from "@/lib/products/format-product-schedule";
 import {
   productLocationLabelIsFormat,
   renderProductLocationLine,
@@ -324,7 +324,7 @@ export interface ProductConfirmationContent {
 interface FirstSessionWords {
   /** The weekday and the full date, in the reader's locale. */
   date: string;
-  /** The clock face with the zone's short name after it. */
+  /** The schedule row's clock face, with the zone's short name after it. */
   time: string;
 }
 
@@ -392,7 +392,10 @@ export function resolveProductConfirmation(
  * A planned session always carries a clock face, so there is no date-only form.
  *
  * In the product's own zone with its short name always beside the time, as the
- * schedule row above it is: a mail has no viewer zone.
+ * schedule row above it is: a mail has no viewer zone. The time is that row's
+ * own fixed 24-hour clock face rather than the locale's, so the mail states
+ * one clock style (a Finnish locale clock would print "16.00" under a row
+ * reading "16:00"); the date is the locale's, since the row prints none.
  */
 function resolveFirstSession(
   locale: string,
@@ -410,7 +413,7 @@ function resolveFirstSession(
       year: "numeric",
       timeZone: timezone,
     }),
-    time: `${formatTime(session.startsAt, locale, timezone)} (${zoneAbbrev(
+    time: `${clockFace(session.startsAt, timezone)} (${zoneAbbrev(
       session.startsAt,
       locale,
       timezone,
@@ -693,18 +696,22 @@ export function buildProductConfirmationEmail(
       )
     }
   `;
-  // The inbox preview is the sentence under the heading, as plain text: left to
-  // itself a client previews the header lockup, which every mail from us opens
-  // with and which says nothing about this one.
-  const preheader = subheadingSentence(t, content.options, { participantName, productName });
+  // The inbox preview is the first "what happens next" item, as plain text.
+  // Left to itself a client previews the header lockup, which every mail from
+  // us opens with and which says nothing about this one; and the sentence under
+  // the heading would only restate the subject the inbox shows beside it. The
+  // subject has already said who joined what, so the preview line spends itself
+  // on the next most useful fact — when the first session is, or on a waitlist
+  // join that we write the moment a seat opens. Taken from the text twin's own
+  // list, so the preview cannot disagree with the body.
+  const [preheader] = plainNextItems(t, content);
   return wrapInLayout({ title, content: body, locale, t, preheader });
 }
 
 /**
  * The sentence under the heading — who is signed up for what, or waiting for
- * it — which is also the inbox preview. One composition, handed its values
- * already prepared for where it is going: marked up for the body, bare for the
- * preview and the text twin.
+ * it. One composition, handed its values already prepared for where it is
+ * going: marked up for the body, bare for the text twin.
  */
 function subheadingSentence(
   t: EmailTranslator,
@@ -792,7 +799,8 @@ function holidayBreaksText(
  * What happens next.
  *
  * When the first session is, first — its weekday, date and time, so nobody has
- * to work it out from the schedule row — on a mail that has one to name; then
+ * to work it out from the schedule row — on a mail that has one to name (on an
+ * event, when the event is); then
  * where the sessions are (on a remote product, how they are joined); then the
  * deferred first charge, on the one signup that has one — the parent has just
  * seen €0 at checkout and is owed the real date in the same breath; then the
@@ -835,12 +843,16 @@ function nextItems(
   const items: string[] = [];
   if (values.firstSession !== null) {
     items.push(
-      secondPerson
-        ? t("productConfirmation.next.firstSessionSelf", { ...values.firstSession })
-        : t("productConfirmation.next.firstSession", {
-            participantName: values.participantName,
-            ...values.firstSession,
-          }),
+      // An event is one occasion rather than a run of sessions, so it is told
+      // when the event is, in one form for every reader: it names nobody.
+      productType === "event"
+        ? t("productConfirmation.next.eventDate", { ...values.firstSession })
+        : secondPerson
+          ? t("productConfirmation.next.firstSessionSelf", { ...values.firstSession })
+          : t("productConfirmation.next.firstSession", {
+              participantName: values.participantName,
+              ...values.firstSession,
+            }),
     );
   }
   items.push(sessionsItem(t, options, values.participantName));
@@ -870,6 +882,19 @@ function nextItems(
     );
   }
   return items;
+}
+
+/**
+ * What happens next with every value bare: the text twin's list, and its first
+ * item the inbox preview. One composition for both, so the preview line is
+ * always the list's own first line.
+ */
+function plainNextItems(t: EmailTranslator, content: ProductConfirmationContent): string[] {
+  return nextItems(t, content.options, {
+    participantName: content.options.participantName,
+    firstChargeDate: content.options.firstChargeDate ?? "",
+    firstSession: content.firstSession,
+  });
 }
 
 /**
@@ -949,11 +974,7 @@ export function productConfirmationText(
   lines.push(
     "",
     t("productConfirmation.nextTitle"),
-    ...nextItems(t, content.options, {
-      participantName,
-      firstChargeDate: content.options.firstChargeDate ?? "",
-      firstSession: content.firstSession,
-    }).map((item) => `- ${item}`),
+    ...plainNextItems(t, content).map((item) => `- ${item}`),
     "",
     `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
     // The same guide the HTML states, at the same place in the document and

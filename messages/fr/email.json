@@ -108,6 +108,7 @@
       "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}.",
       "firstSession": "La première session de {participantName} aura lieu le {date} à {time}.",
       "firstSessionSelf": "Votre première session aura lieu le {date} à {time}.",
+      "eventDate": "L’événement aura lieu le {date} à {time}.",
       "guarantee": "Si le club ne convient pas à {participantName}, écrivez-nous dans les 30 jours suivant sa première session et nous vous rembourserons tout ce que vous avez versé pour ce club.",
       "guaranteeSelf": "Si le club ne vous convient pas, écrivez-nous dans les 30 jours suivant votre première session et nous vous rembourserons tout ce que vous avez versé pour ce club."
     },

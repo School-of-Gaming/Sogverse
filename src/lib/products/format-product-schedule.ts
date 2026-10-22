@@ -109,16 +109,20 @@ export function formatWeekday(
   );
 }
 
-// A 24h "HH:MM" clock face for an instant as it falls in `timeZone`. en-GB +
-// hourCycle h23 gives a stable 00–23 "HH:MM" regardless of the UI locale,
-// matching the schedule's existing 24h look.
-//
-// That string is both the key slots are grouped and sorted by and the text the
-// schedule shows. It is fixed rather than the reader's because every formatting
-// locale sets a 24-hour clock today; the day a 12-hour locale (such as `en-us`)
-// is added, the key and the display split, and the display renders through
-// `formattingLocale()`.
-function viewerClock(instant: Date, timeZone: string): string {
+/**
+ * The 24-hour `HH:MM` clock face of an instant as it falls in `timeZone`, as
+ * the schedule lines print it. en-GB with hourCycle h23 gives a stable 00–23
+ * `HH:MM` whatever the UI locale. Exported for a sentence that states one
+ * session's time beside those lines and has to print the same clock face, so
+ * one document never states two clock styles.
+ *
+ * That string is both the key slots are grouped and sorted by and the text the
+ * schedule shows. It is fixed rather than the reader's because every formatting
+ * locale sets a 24-hour clock today; the day a 12-hour locale (such as `en-us`)
+ * is added, the key and the display split, and the display renders through
+ * `formattingLocale()`.
+ */
+export function clockFace(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     hour: "2-digit",
@@ -166,9 +170,9 @@ function buildViewerGroups(
 ): { groups: ScheduleTimeGroup[]; sample: Date | null } {
   const buckets = new Map<string, { weekdays: Set<number>; start: string; end: string }>();
   for (const { instant, durationMinutes } of entries) {
-    const start = viewerClock(instant, timeZone);
+    const start = clockFace(instant, timeZone);
     const endInstant = new Date(instant.getTime() + durationMinutes * 60_000);
-    const end = viewerClock(endInstant, timeZone);
+    const end = clockFace(endInstant, timeZone);
     const weekday = viewerWeekdayIndex(instant, timeZone);
     const key = `${start}|${end}`;
     const bucket = buckets.get(key);
@@ -404,7 +408,7 @@ export function formatProductSchedule({
         tzAdjusted,
         date: formatDate(instant, locale, { dateStyle: "medium", timeZone }),
         weekday: formatDate(instant, locale, { weekday: "long", timeZone }),
-        time: { start: viewerClock(instant, timeZone), end: viewerClock(endInstant, timeZone) },
+        time: { start: clockFace(instant, timeZone), end: clockFace(endInstant, timeZone) },
       };
     }
   }

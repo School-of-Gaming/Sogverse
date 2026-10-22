@@ -156,8 +156,8 @@ describe("buildProductConfirmationEmail", () => {
   /**
    * The inbox preview. Left alone, a client previews the first words of the
    * document, which in every mail is the header lockup; this one hands it the
-   * sentence under the heading instead, hidden, as the very first thing in the
-   * body.
+   * first "what happens next" line instead, hidden, as the very first thing in
+   * the body — the subject beside it has already said who joined what.
    */
   describe("the inbox preview", () => {
     function preheader(html: string): string {
@@ -167,9 +167,19 @@ describe("buildProductConfirmationEmail", () => {
       return opened.slice(0, opened.indexOf("</div>"));
     }
 
-    it("is the subheading as plain text, hidden, before anything else in the body", () => {
-      const block = preheader(render(base));
-      expect(block).toContain("Aino is enrolled in Minecraft 101.");
+    /** The text inside the block, before its padding. */
+    function previewText(html: string): string {
+      const block = preheader(html);
+      const text = block.slice(block.indexOf(">") + 1);
+      return text.slice(0, text.indexOf("&#847;")).trim();
+    }
+
+    it("is the first-session line as plain text, hidden, before anything else in the body", () => {
+      const html = render({ invitation: SCHEDULE });
+      const block = preheader(html);
+      expect(previewText(html)).toBe(
+        "Aino’s first session is on Monday, 4 January 2027 at 16:00 (EET).",
+      );
       expect(block).not.toContain("<strong");
       for (const hidden of ["max-height:0", "overflow:hidden", "opacity:0", "mso-hide:all"]) {
         expect(block).toContain(hidden);
@@ -178,18 +188,47 @@ describe("buildProductConfirmationEmail", () => {
       expect(block).toContain("&#847;&zwnj;&nbsp;");
     });
 
-    it("follows the reader and the outcome, as the subheading does", () => {
-      expect(preheader(render({ participantName: "Marja", isSelfSeat: true }))).toContain(
-        "You’re enrolled in Minecraft 101.",
-      );
-      expect(preheader(render({ mode: "waitlist", priceAmount: null }))).toContain(
-        "Aino is on the waitlist for Minecraft 101.",
+    it("is the text twin's first item, word for word", () => {
+      const content = resolve({ invitation: SCHEDULE });
+      const html = buildProductConfirmationEmail(t, "en", content);
+      const text = productConfirmationText(t, content)!;
+      const firstItem = text.split("\n").find((line) => line.startsWith("- "))!;
+      expect(firstItem).toBe(`- ${previewText(html)}`);
+    });
+
+    it("says when the event is, on an event", () => {
+      expect(
+        previewText(
+          render({
+            productType: "event",
+            mode: "upfront",
+            invitation: { ...SCHEDULE, productType: "event" },
+          }),
+        ),
+      ).toBe("The event is on Monday, 4 January 2027 at 16:00 (EET).");
+    });
+
+    it("falls back to the sessions line where no first session is named", () => {
+      expect(previewText(render(base))).toBe(
+        `Aino joins the sessions online in My SOG. The voice room opens ${VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES} minutes before each session starts.`,
       );
     });
 
+    it("is the first waitlist line on a waitlist join", () => {
+      expect(previewText(render({ mode: "waitlist", priceAmount: null }))).toBe(
+        "We’ll email you the moment a seat opens.",
+      );
+    });
+
+    it("follows the reader", () => {
+      expect(
+        previewText(render({ invitation: SCHEDULE, participantName: "Marja", isSelfSeat: true })),
+      ).toBe("Your first session is on Monday, 4 January 2027 at 16:00 (EET).");
+    });
+
     it("escapes the values in it", () => {
-      const block = preheader(render({ productName: "<b>Club</b>" }));
-      expect(block).toContain("&lt;b&gt;Club&lt;/b&gt;");
+      const block = preheader(render({ participantName: "<b>Aino</b>" }));
+      expect(block).toContain("&lt;b&gt;Aino&lt;/b&gt;");
       expect(block).not.toContain("<b>");
     });
   });
@@ -652,17 +691,67 @@ describe("buildProductConfirmationEmail", () => {
       expect(text.indexOf(bullet)).toBeLessThan(text.indexOf("- Aino joins the sessions"));
     });
 
-    it("writes the date the way the reader's locale does", async () => {
+    /** The Finnish render of `overrides` over the future-start club. */
+    async function renderFi(overrides: Partial<ProductConfirmationEmailOptions> = {}) {
       const [tFi, tPrepFi] = await Promise.all([
         getEmailTranslator("fi"),
         getTopicPrepTranslator("fi"),
       ]);
-      const html = buildProductConfirmationEmail(
+      return buildProductConfirmationEmail(
         tFi,
         "fi",
-        resolveProductConfirmation(tFi, tPrepFi, "fi", { ...base, invitation: FUTURE_START }),
+        resolveProductConfirmation(tFi, tPrepFi, "fi", {
+          ...base,
+          invitation: FUTURE_START,
+          ...overrides,
+        }),
       );
-      expect(html).toContain("maanantaina 11. tammikuuta 2027 klo 16.00");
+    }
+
+    it("writes the date the way the reader's locale does, and the time as the schedule row does", async () => {
+      const html = await renderFi();
+      expect(html).toContain(
+        `Ensimmäinen tapaaminen, johon ${styledName("Aino")} osallistuu, on maanantaina 11. tammikuuta 2027 klo 16:00 (UTC+2).`,
+      );
+      // One clock style in one mail: the schedule row's, not the locale's "16.00".
+      expect(html).toContain("16:00–17:00 (UTC+2)");
+      expect(html).not.toContain("16.00");
+    });
+
+    /** An event is one occasion, so it is told when the event is. */
+    describe("on an event", () => {
+      const EVENT = {
+        productType: "event",
+        mode: "upfront",
+        invitation: { ...FUTURE_START, productType: "event" },
+      } as const satisfies Partial<ProductConfirmationEmailOptions>;
+      const LINE = "The event is on Monday, 11 January 2027 at 16:00 (EET).";
+
+      it("says when the event is, first in the list, in place of the first-session line", () => {
+        const html = render(EVENT);
+        // Searched from the list's label on, past the inbox preview that
+        // states the same line at the top of the body.
+        const list = html.slice(html.indexOf("What happens next"));
+        expect(list.indexOf(LINE)).toBeGreaterThan(-1);
+        expect(list.indexOf(LINE)).toBeLessThan(list.indexOf("joins the sessions online"));
+        expect(html).not.toContain("first session is on");
+      });
+
+      it("is one form for every reader, since it names nobody", () => {
+        expect(render({ ...EVENT, isSelfSeat: true, participantName: "Marja" })).toContain(LINE);
+        expect(render({ ...EVENT, gamerCopy: true, priceAmount: null })).toContain(LINE);
+      });
+
+      it("states the same line in the text twin", () => {
+        const text = productConfirmationText(t, resolve(EVENT))!;
+        expect(text).toContain(`- ${LINE}`);
+      });
+
+      it("reads in Finnish", async () => {
+        expect(await renderFi(EVENT)).toContain(
+          "Tapahtuma järjestetään maanantaina 11. tammikuuta 2027 klo 16:00 (UTC+2).",
+        );
+      });
     });
   });
 
