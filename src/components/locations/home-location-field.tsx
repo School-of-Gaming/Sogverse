@@ -52,7 +52,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { LocationPickerDialog } from "@/components/locations/location-browser";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { localizedLocationName } from "@/lib/locations/localized-name";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { LocationType } from "@/types";
 
 /** Punctuation between the levels of a path — not copy, so not translated. */

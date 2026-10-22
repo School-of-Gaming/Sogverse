@@ -24,7 +24,8 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -69,13 +70,13 @@ import {
 } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { SwitchGateBody } from "@/components/family/SwitchGateDialog";
+import { SwitchAccountError } from "@/services/family/family.service";
 import {
-  SwitchAccountError,
   SWITCH_PIN_INVALID,
   SWITCH_PIN_NOT_SET,
   SWITCH_SIGN_OUT_REQUIRED,
   type SwitchAccountErrorCode,
-} from "@/services/family";
+} from "@/services/family/family.contracts";
 import { UserRow } from "@/components/admin/user-row";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
 import {
@@ -139,7 +140,7 @@ import {
   type GameFigure,
   type GamePlatform,
 } from "@/components/game-account";
-import { useRobloxProfile } from "@/services/roblox";
+import { useRobloxProfile } from "@/services/roblox/roblox.queries";
 import { ImageCatalogueView } from "@/components/admin/products/image-catalogue-view";
 import { ImageActionConfirmDialog } from "@/components/admin/products/image-catalogue-confirm";
 import {
@@ -156,7 +157,7 @@ import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -1765,7 +1766,7 @@ function EnrollmentCardDemo() {
     label: string;
     enrollment: (typeof cards)[keyof typeof cards];
   }[] = [
-    { label: "Awaiting placement", enrollment: cards.awaiting },
+    { label: "Unplaced seat", enrollment: cards.awaiting },
     { label: "Waitlisted", enrollment: cards.waitlisted },
     // Directly under the plain queue place, because the pair is the comparison
     // worth having: the leave link stands down when the offer arrives, and
@@ -2812,6 +2813,12 @@ export default function AdminUIComponentsPage() {
           test instead of demoed here.
         </p>
         <p className="text-sm text-muted-foreground">
+          Each question is a heading inside the summary of its row, so search
+          engines and assistants can tie an answer to its question. The caller
+          states the level, one below its own heading over the list: H4 here,
+          under the H2 of this section and the H3 of each demo.
+        </p>
+        <p className="text-sm text-muted-foreground">
           The block shapes below are built by calling the shared answer tags
           rather than by hand-writing an <code>ol</code> or a <code>ul</code>:
           those tags are what the real FAQs render through, so a demo that
@@ -2820,6 +2827,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A list of questions">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "plain",
@@ -2916,6 +2924,7 @@ export default function AdminUIComponentsPage() {
         <SubSection title="A single question">
           <div className="max-w-3xl">
             <FaqAccordion
+              questionLevel={4}
               items={[
                 {
                   key: "only",
@@ -3291,6 +3300,16 @@ export default function AdminUIComponentsPage() {
           body rather than a corner badge.
         </p>
         <EnrollmentCardDemo />
+      </Section>
+
+      <Section title="Add-gamer dialog">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The real card, inert: the submit resolves after a beat and writes
+          nothing. The PIN gate in front of it is skipped &mdash; it is a
+          conditional on one query with nothing of its own to look at. Every
+          field validates.
+        </p>
+        <AddGamerDialogDemo />
       </Section>
 
       <SessionPhotosDemo />
@@ -4463,49 +4482,48 @@ function inertCreateGamer(): Promise<{ gamerId: string }> {
 }
 
 /**
- * All three pages side by side, with page two drawn once per answer.
+ * Both pages side by side, with page two drawn once per answer.
  *
- * The form is three pages for every parent, and the questions about them are
+ * The form is two pages for every parent, and the questions about them are
  * comparative: do the pages look like they belong to one another, does the
  * declaration read as the last row of page one rather than as a section of its
  * own, and do the three sign-in answers sit in a box that does not resize as the
  * radio moves between them. States reached by driving one card through the flow
- * would have to be compared from memory, so all five are rendered at once and
+ * would have to be compared from memory, so all four are rendered at once and
  * each is seeded straight into its page through the card's `initial` prop.
  *
  * Page one is drawn with its box unticked, which is also the state that disables
  * its Next — the gate is the thing worth seeing, and a ticked box is one click
  * away in the demo itself. The two credential cards are drawn with their fields
- * empty, which is the same shape one page later: page two's Next is disabled
+ * empty, which is the same shape one page later: page two's create is disabled
  * until the mode's fields are filled.
  *
- * **Each card carries its own page's title**, so the row reads as five headings
- * rather than five copies of "Add a gamer" — and the three sign-in cards show
+ * **Each card carries its own page's title**, so the row reads as four headings
+ * rather than four copies of "Add a gamer" — and the three sign-in cards show
  * the question the radios under them answer, which is the label they are
  * pointed at.
  *
- * **No `Dialog` around them.** A dialog is a portal, so all five of them would
+ * **No `Dialog` around them.** A dialog is a portal, so all four of them would
  * stack in `document.body` on top of one another rather than sitting in a row —
  * and `DialogContent` needs no portal to render, which is the whole reason the
  * card is separable from it. The height cap goes with the dialog: `90vh` is
  * about a viewport, and these are columns on a page.
  *
- * **Each card gets its own `idPrefix`.** Five cards on one page is the case the
+ * **Each card gets its own `idPrefix`.** Four cards on one page is the case the
  * seam exists for: without it every label would point at the first card's input,
  * and the radio groups would all share a `name`, so the browser would treat the
  * nine radios the three sign-in cards paint as one group and let a click in one
  * card clear another's answer.
  *
- * **The grid is two then three across, so the fifth card sits in a row rather
- * than trailing one.** Five does not divide into four columns, and a lone card
- * on a second row reads as a card that did not fit rather than as the last page
- * of the flow.
+ * **The grid is two then four across, never three**, because a lone fourth
+ * card on a second row reads as a card that did not fit rather than as the last
+ * answer of the flow.
  */
 function AddGamerDialogDemo() {
   const dismiss = () => {};
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+    <div className="grid items-start gap-4 lg:grid-cols-2 2xl:grid-cols-4">
       <AddGamerFormCard
         onOpenChange={dismiss}
         onCreate={inertCreateGamer}
@@ -4532,13 +4550,6 @@ function AddGamerDialogDemo() {
         className="max-h-none"
         idPrefix="add-gamer-demo-email"
         initial={{ firstName: "Lily", signIn: "email", step: "signIn" }}
-      />
-      <AddGamerFormCard
-        onOpenChange={dismiss}
-        onCreate={inertCreateGamer}
-        className="max-h-none"
-        idPrefix="add-gamer-demo-accounts"
-        initial={{ firstName: "Lily", signIn: "parent", step: "accounts" }}
       />
     </div>
   );
@@ -4587,22 +4598,6 @@ function GameAccountDemo() {
           figure&rsquo;s box differ simply does not exist.
         </p>
         <GameViewOnlyDemo />
-      </SubSection>
-
-      <SubSection title="In the add-gamer dialog">
-        {/* The game rows sit closed rather than opened, unlike the register
-            rows above — the same row costs the same height either way, so the
-            choice is about how much the dialog appears to be asking for. The
-            gender buttons are three across at every width, which is what pays
-            for the two rows fitting on a phone. */}
-        <p className="text-sm text-muted-foreground">
-          The real card, inert: the submit resolves after a beat and writes
-          nothing. The PIN gate in front of it is skipped &mdash; it is a
-          conditional on one query with nothing of its own to look at. Both game
-          rows are the real thing and both commits run the real lookup, and every
-          field validates.
-        </p>
-        <AddGamerDialogDemo />
       </SubSection>
 
       <SubSection title="In the admin participant chip">

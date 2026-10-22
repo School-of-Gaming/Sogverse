@@ -1,0 +1,8 @@
+{
+  "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
+  "wontRenew": "Non renouvelé — dernière session le {date}",
+  "wontRenewLastSession": "Non renouvelé — c’est la dernière session, le {date}",
+  "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
+  "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un stage.",
+  "emptyStateCta": "Voir les clubs et les stages"
+}

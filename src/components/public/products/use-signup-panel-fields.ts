@@ -277,15 +277,16 @@ export function useSignupPanelFields(
   // Drift between this render and the actual checkout is immaterial (minutes),
   // with one honest edge: a *clamped* date is measured from "now", so a tab left
   // open overnight states a date a day earlier than the session would set. The
-  // authoritative figures are on Stripe's own page and on the confirmation.
+  // authoritative figures are on Stripe's own page and in the confirmation mail.
   const startDate = product.start_date;
   const firstChargeDate = useMemo(() => {
     if (pricingOption.kind !== "subscription") return null;
     const anchor = firstChargeAnchor(startDate, product.timezone, now);
     if (anchor === null) return null;
     // Clamped-vs-not, and what that means for the rendered date, is decided in
-    // the anchor helper — the same call the confirmation page makes, so the two
-    // surfaces cannot state different days for the same charge.
+    // the anchor helper; the confirmation mail renders the date Stripe set
+    // through the same formatter, so the two cannot state different days for
+    // the same charge.
     return formatFirstChargeDate(
       anchor,
       startDate,

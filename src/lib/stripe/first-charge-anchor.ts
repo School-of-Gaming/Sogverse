@@ -1,5 +1,5 @@
 import { fromZonedTime } from "date-fns-tz";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 
 /**
  * When a consumer club's first subscription invoice should fall.
@@ -14,7 +14,7 @@ import { formatDate, formatDateOnly } from "@/lib/utils";
  * **This module is deliberately pure and client-safe**: no Stripe SDK, no
  * secrets, no I/O. The checkout route uses it to set the anchor; the public
  * signup panel uses it to tell the parent, before they click, when the first
- * charge lands; the confirmation restates it afterwards. One computation, so
+ * charge lands; the confirmation mail restates it afterwards. One computation, so
  * none of them can disagree — which is why the *rendering* rule
  * (`formatFirstChargeDate`) lives here too rather than at each surface.
  *

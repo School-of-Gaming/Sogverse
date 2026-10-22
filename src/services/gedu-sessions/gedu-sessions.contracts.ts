@@ -4,6 +4,10 @@ import { MAX_IMAGE_EDGE } from "@/lib/images/image-purposes";
 import { NORMALIZE_IMAGE_ERROR_CODES } from "@/lib/images/normalize-image";
 import { holidayBreakRows } from "@/lib/holiday-breaks";
 import { plannedSessionRows } from "@/lib/planned-sessions";
+import {
+  voiceJoinInstructionsWireField,
+  voiceRoomWireFields,
+} from "@/lib/products/voice-room";
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   substitutionRequestDocument,
@@ -46,6 +50,7 @@ const productTranslationSummary = z.object({
   locale: z.string(),
   name: z.string(),
   description: z.string(),
+  ...voiceJoinInstructionsWireField,
 });
 
 /**
@@ -315,6 +320,8 @@ export const geduGroupFeed = z.object({
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     is_remote: z.boolean(),
+    /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
+    ...voiceRoomWireFields,
     /** Gedu/admin-only lesson material. Never rendered to a family. */
     material_url: z.string().nullable(),
     /**

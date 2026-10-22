@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { RequestPasswordLinkButton } from "@/components/auth";
 import { buttonVariants } from "@/components/ui/button";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { redeemEmailVerificationToken } from "@/lib/email-verification.server";
 import { Heading } from "@sog/ui";
 

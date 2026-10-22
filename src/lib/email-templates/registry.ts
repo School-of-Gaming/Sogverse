@@ -102,9 +102,9 @@ import {
 } from "@/lib/products/topics";
 import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import { formattingLocale } from "@/lib/constants/locales";
-import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/utils";
+import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/date-format";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { Constants } from "@/types";
 
 // --- Field types for the testing UI ---
@@ -643,8 +643,8 @@ function resolveProductConfirmationOptions(
   const slots = parseInvitationSlots(params.slots);
   const isRemote = params.isRemote === "yes";
   const siteName = params.siteName.trim() || null;
-  // The location as the page's own rule resolves it — the mail states "Where"
-  // in exactly the words the confirmation page does, so the shape it renders is
+  // The location as the pages' own rule resolves it — the mail states "Where"
+  // in exactly the words the product pages do, so the shape it renders is
   // that rule's output rather than a second reading of the same fields. The
   // form has no parent-location field, so a test send shows a bare site.
   const location = formatProductLocation(
@@ -1549,7 +1549,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Email components (reference)",
     fields: [],
     schema: z.object({}),
-    build: (_p, _t, locale) => buildComponentsReferenceEmail(locale),
+    // Three photos: the three shapes the box arithmetic answers for.
+    build: (_p, _t, locale, context) =>
+      buildComponentsReferenceEmail(locale, sessionReportPhotoFixtures(3, context)),
     subject: () => "Email components",
   }),
   passwordReset: defineTemplate({

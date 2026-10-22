@@ -5,7 +5,7 @@ import { BookOpen, School, ShoppingBag, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 type PublicDestinationKey = "shop" | "library" | "team" | "about";
 

@@ -51,7 +51,13 @@ const CALENDAR = "4b8e2f6a-1c3d-4e5f-8a7b-9c0d1e2f3a4b";
 const PRODUCT_EDIT: UpdateProductInput = {
   billing_mode: "paid",
   translations: [
-    { locale: "en", name: "X", short_description: "Y", long_description: null },
+    {
+      locale: "en",
+      name: "X",
+      short_description: "Y",
+      long_description: null,
+      voice_join_instructions: null,
+    },
   ],
   topic: "minecraft_java",
   for_gamers: true,
@@ -66,6 +72,8 @@ const PRODUCT_EDIT: UpdateProductInput = {
   material_url: null,
   location_id: null,
   is_remote: true,
+  voice_room_mode: "sogverse",
+  external_voice_url: null,
   start_date: "2026-09-01",
   end_date: null,
   timezone: "Europe/Helsinki",

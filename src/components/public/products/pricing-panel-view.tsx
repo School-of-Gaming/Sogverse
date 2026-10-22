@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { ShieldCheck } from "lucide-react";
-import { formatCurrencyFromCents } from "@/lib/utils";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { PricingOption } from "./pricing-options";
 

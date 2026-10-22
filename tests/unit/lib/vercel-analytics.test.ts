@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   VercelAnalyticsClient,
   VercelAnalyticsError,
+  earliestTrafficDay,
   odataString,
   splitDays,
   vercelAnalyticsConfig,
@@ -335,5 +336,65 @@ describe("VercelAnalyticsClient", () => {
     );
     expect(fetchMock).toHaveBeenCalledTimes(10);
     expect(peak).toBe(3);
+  });
+});
+
+describe("earliestTrafficDay", () => {
+  it("is the day analytics was switched on until two years of retention pass it", () => {
+    expect(earliestTrafficDay(new Date("2026-09-17T23:30:00Z"))).toBe("2026-05-31");
+    expect(earliestTrafficDay(new Date("2028-05-31T12:00:00Z"))).toBe("2026-05-31");
+    expect(earliestTrafficDay(new Date("2028-09-17T00:00:00Z"))).toBe("2026-09-17");
+  });
+});
+
+describe("aggregateVisits", () => {
+  let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns visitors beside pageviews, one window per 62 days of a day read", async () => {
+    fetchMock.mockImplementation(async (input) => {
+      const day = dayOfMs(urlOf(input).searchParams.get("since"));
+      return json({ data: [{ timestamp: `${day}T00:00:00.000Z`, pageviews: 5, visitors: 2 }] });
+    });
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    const groups = await client.aggregateVisits({
+      by: ["day"],
+      filter: "",
+      from: "2026-06-01",
+      to: "2026-08-31",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(groups.sort((a, b) => ((a.values.day ?? "") < (b.values.day ?? "") ? -1 : 1))).toEqual([
+      { values: { day: "2026-06-01" }, pageviews: 5, visitors: 2 },
+      { values: { day: "2026-08-02" }, pageviews: 5, visitors: 2 },
+    ]);
+  });
+
+  it("throws on a folded response rather than halving, since visitors do not add", async () => {
+    fetchMock.mockResolvedValue(json(foldedResponse([{ utmCampaign: "a", pageviews: 1 }], 50)));
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    await expect(
+      client.aggregateVisits({ by: ["utmCampaign"], filter: "", from: "2026-09-01", to: "2026-09-30" }),
+    ).rejects.toThrow(/visitors cannot be summed/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws on a row without visitors", async () => {
+    fetchMock.mockResolvedValue(json({ data: [{ environment: "production", pageviews: 3 }] }));
+    const client = new VercelAnalyticsClient(CONFIG);
+
+    await expect(
+      client.aggregateVisits({ by: ["environment"], filter: "", from: "2026-09-01", to: "2026-09-30" }),
+    ).rejects.toThrow(/without its visitors/);
   });
 });

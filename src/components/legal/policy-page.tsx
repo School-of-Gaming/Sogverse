@@ -161,7 +161,7 @@ function PolicyBlocks({
  * Conditions, Anti-Bullying & Discipline, and the three Roblox Programme
  * documents — its privacy policy, safeguarding policy and terms).
  * Pure presentation: the caller owns the copy and pulls it from
- * `messages/*.json` with a literal next-intl namespace, so each page keeps full
+ * `messages/` with a literal next-intl namespace, so each page keeps full
  * message-key type safety while the markup lives in one place. A section
  * renders its own copy and then any second-level subsections beneath it.
  *

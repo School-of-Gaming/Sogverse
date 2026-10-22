@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { VISION_LOOP } from "./vision-content";
 import { VISION_TONES, type VisionTone } from "./vision-tones";
 

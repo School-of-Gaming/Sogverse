@@ -10,7 +10,7 @@ import type {
   GamerPhotoConsentType,
   MarketingConsentType,
 } from "@/types";
-import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
 
 /**
  * The three shapes the signup panel takes once a product can be sold to

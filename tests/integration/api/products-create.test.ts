@@ -88,7 +88,13 @@ const validBody = {
   product_type: "consumer_club",
   billing_mode: "paid",
   translations: [
-    { locale: "en", name: "X", short_description: "Y", long_description: null },
+    {
+      locale: "en",
+      name: "X",
+      short_description: "Y",
+      long_description: null,
+      voice_join_instructions: null,
+    },
   ],
   topic: "minecraft_java",
   for_gamers: true,
@@ -103,6 +109,8 @@ const validBody = {
   material_url: null,
   location_id: null,
   is_remote: true,
+  voice_room_mode: "sogverse",
+  external_voice_url: null,
   start_date: "2026-09-01",
   end_date: null,
   timezone: "Europe/Helsinki",
@@ -424,6 +432,31 @@ describe("POST /api/admin/products/create", () => {
     // dropped key would mean "unflagged" rather than "no answer".
     const args = mockUserRpc.mock.calls[0][1];
     expect(args.p_requires_gamer_creations).toBe(false);
+  });
+
+  it("passes the voice room mode, the link and per-locale join instructions through", async () => {
+    mockAuthenticatedAdmin();
+    await POST(
+      createRequest({
+        data: {
+          ...validBody,
+          voice_room_mode: "none",
+          translations: [
+            {
+              ...validBody.translations[0],
+              voice_join_instructions: "Dial in on the number in your email.",
+            },
+          ],
+        },
+      }),
+    );
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_voice_room_mode).toBe("none");
+    // No link on a product with no room: the omission is what writes NULL.
+    expect(args.p_external_voice_url).toBeUndefined();
+    expect(args.p_translations[0].voice_join_instructions).toBe(
+      "Dial in on the number in your email.",
+    );
   });
 
   it("passes the required consent slugs through as an array, always", async () => {

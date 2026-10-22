@@ -2,7 +2,10 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
+import enCommon from "@/../messages/en/common.json";
 import { NO_SESSION_STAFFING } from "@/lib/session-staffing";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
@@ -13,6 +16,13 @@ import type {
   SessionFeedGamer,
   SessionRecordDraft,
 } from "@/components/gedu/session-feed/types";
+
+const messages = {
+  gedu: enGedu,
+  sessionBadge: enSessionBadge,
+  sessionFeed: enSessionFeed,
+  common: enCommon,
+};
 
 // The note fields are opaque here: nothing below opens one, types into one,
 // or asserts on the markdown one produces. Stubbing the editor keeps

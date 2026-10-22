@@ -9,7 +9,7 @@ import {
   type InvitationOverride,
   type InvitationRecurrence,
 } from "@/lib/calendar-invitations/invitation";
-import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import type { ProductType } from "@/types";
@@ -19,13 +19,11 @@ import type { EmailTranslator } from "./translator";
  * The signup confirmation's calendar invitation — a product's schedule as one
  * iCalendar object, and the sentences the document itself states.
  *
- * **The mail's own schedule section is no longer composed here**, and that is
- * the boundary worth knowing. The mail is the confirmation page's twin, so it
- * states the schedule in the page's words, through the page's formatter
- * (`@/lib/products/product-overview-facts`). This module used to write a second
- * set of sentences for it, which meant one product's schedule had two
- * renderings that could disagree the first time either was corrected. What is
- * left here is the document: its properties, and the notes a parent reads
+ * **The mail's own schedule section is not composed here**, and that is the
+ * boundary worth knowing. The mail states the schedule in the words every
+ * product surface prints, through the shared formatter
+ * (`@/lib/products/product-overview-facts`), so one product's schedule has one
+ * rendering. What is here is the document: its properties, and the notes a parent reads
  * inside the entry weeks later.
  *
  * **It lives here rather than beside the builder because it knows what a club
@@ -192,6 +190,41 @@ function faceOf(
   };
 }
 
+/**
+ * The seat's first session: the session the invitation's `DTSTART` lands on,
+ * and the one the mail's "what happens next" names — one rule, so the mail and
+ * the file beside it cannot name two different days.
+ *
+ * It is the first planned session that has not yet begun, which is the
+ * product's start only for a seat taken before the run begins: a family joining
+ * a club mid-term starts at the next session. An event is one session on one
+ * day, so it is that session — the earliest, should its day carry two — and an
+ * event whose session has begun has none. No slots, or nothing planned ahead,
+ * is `null` too.
+ */
+export function firstSessionAhead({
+  slots,
+  productType,
+  plannedSessions,
+  now,
+}: {
+  slots: readonly InvitationSlot[];
+  productType: ProductType;
+  plannedSessions: readonly InvitationPlannedSession[];
+  now: Date;
+}): InvitationPlannedSession | null {
+  if (slots.length === 0) return null;
+  if (productType === "event") {
+    const session = plannedSessions.at(0);
+    return session === undefined || session.startsAt.getTime() < now.getTime()
+      ? null
+      : session;
+  }
+  return (
+    plannedSessions.find((session) => session.startsAt.getTime() >= now.getTime()) ?? null
+  );
+}
+
 interface ResolvedSchedule {
   start: { date: string; time: string };
   durationMinutes: number;
@@ -247,18 +280,13 @@ function resolveSchedule({
   plannedSessions: readonly InvitationPlannedSession[];
   now: Date;
 }): ResolvedSchedule | null {
-  if (slots.length === 0) return null;
+  const first = firstSessionAhead({ slots, productType, plannedSessions, now });
+  if (first === null) return null;
 
-  // An event is one session on one day: the rule that would state it has
-  // nothing to repeat, so the occurrence is its planned session — the earliest,
-  // should its day carry two. One that has already begun describes nothing a
-  // calendar should be handed.
   if (productType === "event") {
-    const session = plannedSessions.at(0);
-    if (session === undefined || session.startsAt.getTime() < now.getTime()) return null;
-    const face = faceOf(session, timezone);
+    const face = faceOf(first, timezone);
     return {
-      start: { date: session.date, time: face.time },
+      start: { date: first.date, time: face.time },
       durationMinutes: face.durationMinutes,
       recurrence: { kind: "none" },
       excludedDates: [],
@@ -266,12 +294,10 @@ function resolveSchedule({
     };
   }
 
-  // The plan is soonest first, so the first one not yet begun is the next.
+  // The plan is soonest first, so the sessions not yet begun open on `first`.
   const ahead = plannedSessions.filter(
     (session) => session.startsAt.getTime() >= now.getTime(),
   );
-  const first = ahead.at(0);
-  if (first === undefined) return null;
 
   if (new Set(slots.map(shapeOf)).size > 1) {
     // Two slots on one weekday at different times cannot both be stated: the
@@ -455,11 +481,9 @@ function locationOf(
  * its schedule section: nothing renders an email's recurrence for a reader, so
  * there the words are the only statement there is.
  *
- * **The placement sentence is out for the neighbouring reason**: it is news
- * about what happens next, and news goes stale where the mail it arrived in
- * does not. A parent opening this entry in week six does not need to be told a
- * group is coming; the mail's own "what happens next" bullet said it once, at
- * the moment it was true.
+ * **The sentence saying where the sessions are is out for the neighbouring
+ * reason**: it is the mail's "what happens next" bullet, and the entry already
+ * carries the My SOG link that sentence points at.
  *
  * What is absent for a third reason is money and the age range: an entry in a
  * calendar is read by whoever the calendar is shared with, and neither is

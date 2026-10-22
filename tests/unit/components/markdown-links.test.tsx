@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRichText from "@/../messages/en/richText.json";
 import { Markdown } from "@/components/ui/markdown";
 import { authoredLinkKind, type MarkdownUseCase } from "@/lib/authored-markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
+
+const messages = { richText: enRichText };
 
 /**
  * **Where a link in authored markdown opens.** A link to our own site opens in

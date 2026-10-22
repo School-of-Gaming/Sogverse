@@ -6,7 +6,7 @@ import {
   type FaqAccordionItem,
 } from "@/components/ui/faq-accordion";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { Heading } from "@sog/ui";
 
@@ -129,7 +129,7 @@ export function ProgrammeFaq() {
             {t("heading")}
           </Heading>
           <div className="mt-12">
-            <FaqAccordion items={items} />
+            <FaqAccordion items={items} questionLevel={3} />
           </div>
         </div>
       </div>

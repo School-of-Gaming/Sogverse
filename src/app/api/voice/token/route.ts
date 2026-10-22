@@ -16,6 +16,7 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GameExternalId } from "@/lib/voice/user-name";
 import { tokenCanReceiveFor } from "@/lib/voice/receive-permissions";
 import {
+  NOT_A_SOGVERSE_ROOM,
   voiceTokenResponse,
   type VoiceRoomStanding,
 } from "@/services/voice/voice.contracts";
@@ -38,17 +39,21 @@ import {
  *      assignment arm is not: a sub joins the room on the session they are
  *      substituting and on none of the group's other sessions. The trainee arm is
  *      group-scoped, and it is the one gedu arm that does not moderate.
- *   2. Session window — a planned session's window must be open right now (the
+ *   2. A Sogverse room — the product's `voice_room_mode` must be `sogverse`.
+ *      A product joined through a meeting elsewhere or by written
+ *      instructions is refused with the `NOT_A_SOGVERSE_ROOM` code, which the
+ *      voice page turns into its own message.
+ *   3. Session window — a planned session's window must be open right now (the
  *      database's `group_open_session_windows`, the same window the group's
  *      chat opens on), and that session must not have been cancelled by an
  *      admin.
  *
- * The two gates answer in that order and the order is the contract — a
+ * The gates answer in that order and the order is the contract — a
  * non-member is refused whether or not a session is running, so this route
  * cannot be used to probe which groups are in session. The open window is
  * *read* before gate 1 all the same, because gate 1 needs the date of the
  * session being joined to look a substitution up under; nothing is decided by it until
- * gate 2.
+ * gate 3.
  *
  * Notably absent: there is no "did you enroll before this session started?"
  * gate. Active membership is the binary access predicate. (Credit-based
@@ -80,7 +85,9 @@ export const POST = defineRoute({
     // defends against partially deleted rows).
     const { data: group, error: groupErr } = await admin
       .from("product_groups")
-      .select("id, product_id, product:products!inner(id, timezone, is_remote, topic)")
+      .select(
+        "id, product_id, product:products!inner(id, timezone, is_remote, topic, voice_room_mode)",
+      )
       .eq("id", groupId)
       .maybeSingle();
 
@@ -159,6 +166,22 @@ export const POST = defineRoute({
     } else {
       // admin passes through.
       admission = "admin";
+    }
+
+    // ---- Sogverse room gate ----
+    // A product joined through a meeting elsewhere, or by written instructions,
+    // has no Sogverse room to mint for. Asked after the membership gate, so a
+    // non-member still learns nothing about the group, and before the window
+    // gate, so a member is told the true reason at any hour rather than that
+    // the room is not open yet. The code is what the voice page translates.
+    if (group.product.voice_room_mode !== "sogverse") {
+      return NextResponse.json(
+        {
+          error: "This product's sessions are not held in a Sogverse room",
+          code: NOT_A_SOGVERSE_ROOM,
+        },
+        { status: 403 },
+      );
     }
 
     // ---- Session window gate ----

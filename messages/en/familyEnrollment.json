@@ -1,0 +1,8 @@
+{
+  "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
+  "wontRenew": "Won’t renew — last session {date}",
+  "wontRenewLastSession": "Won’t renew — this is the last session, {date}",
+  "wontRenewAccessEnds": "Won’t renew — access ends {date}",
+  "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
+  "emptyStateCta": "Browse clubs and camps"
+}

@@ -12,6 +12,8 @@ import {
   type LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
 import { slugify } from "@/lib/slug";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import type { LandingProductsSectionPicks } from "./landing-pages.product-picks";
 
 /**
  * Contracts for landing pages.
@@ -88,6 +90,18 @@ export function defaultLandingSlug(title: string): string {
 /** The longest title and summary the database stores. */
 export const LANDING_TITLE_MAX_LENGTH = 120;
 export const LANDING_SUMMARY_MAX_LENGTH = 160;
+
+/**
+ * A clone's title in one language: the source's, followed by that language's
+ * copy marker ("(Copy)", "(kopio)", …), so the clone is told apart and the
+ * admin is nudged to rename it. The source title is cut, never the marker,
+ * when the two together would pass the length cap.
+ */
+export function landingCopyTitle(title: string, copyMarker: string): string {
+  const marker = copyMarker.trim();
+  const room = LANDING_TITLE_MAX_LENGTH - marker.length - 1;
+  return `${title.trim().slice(0, room).trimEnd()} ${marker}`;
+}
 
 /**
  * One language version as an admin saves it.
@@ -242,7 +256,11 @@ export interface PublishedLandingVersion extends PublishedLandingVersionSummary 
   sectionTexts: LandingSectionTexts;
 }
 
-/** A published page as a list reads it — the sitemap, `llms.txt`. */
+/**
+ * A published page as a list reads it — the `/discover` index, the sitemap,
+ * `llms.txt`: its live structure, so a card can show the picture the page
+ * leads with, and every live version's short fields, but no words.
+ */
 export interface PublishedLandingPageSummary {
   /** The page's id — its id address. */
   id: string;
@@ -250,6 +268,9 @@ export interface PublishedLandingPageSummary {
   firstPublishedAt: string;
   /** When the live versions were published: the sitemap's `lastmod`. */
   publishedAt: string;
+  sections: LandingSection[];
+  /** As on the working copy, for the live sections. */
+  imagePaths: Record<string, string>;
   /** Every live version, in `SUPPORTED_LOCALES` order; never empty. */
   versions: PublishedLandingVersionSummary[];
 }
@@ -257,9 +278,6 @@ export interface PublishedLandingPageSummary {
 /** A published page whole: its live structure and every live version. */
 export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
-  sections: LandingSection[];
-  /** As on the working copy, for the live sections. */
-  imagePaths: Record<string, string>;
   versions: PublishedLandingVersion[];
 }
 
@@ -301,6 +319,17 @@ export interface AdminLandingPage {
   /** Null while the page is not live. */
   publication: PublishedLandingPage | null;
   hasUnpublishedChanges: boolean;
+  /**
+   * The current words of every testimonial the working copy places, by id —
+   * what its preview paints and its status shows. Empty when it places none.
+   */
+  testimonials: Readonly<Record<string, PublicTestimonial>>;
+  /**
+   * Each products section of the working copy, in page order, with which of
+   * its picks readers are shown now and why each other one is not; empty when
+   * the working copy has no products section.
+   */
+  productPicks: LandingProductsSectionPicks[];
 }
 
 /** A copy's `image_paths` column, as the database derives it. */

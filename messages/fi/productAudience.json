@@ -1,0 +1,5 @@
+{
+  "parents": "Vanhemmille",
+  "families": "Perheille",
+  "familiesWithAges": "Perheille, ikä {min}–{max}"
+}

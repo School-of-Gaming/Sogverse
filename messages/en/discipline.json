@@ -1,0 +1,74 @@
+{
+  "title": "Anti-Bullying and Discipline",
+  "lastUpdated": "Last updated: {date}",
+  "intro": {
+    "heading": "The short version",
+    "paragraphs": [
+      "Every child should feel safe, respected, and welcome in our clubs. Bullying and unkindness have no place here — and the Sogverse platform has no direct-message feature: conversation happens in shared group spaces, and chat during a call goes to the whole room and is never stored.",
+      "When something goes wrong, we don’t just punish — we help. We use a calm, step-by-step approach that focuses on helping a child understand what happened, make it right, and do better next time. We only move to a firmer step if the behaviour keeps happening, and we keep you informed the whole way through."
+    ]
+  },
+  "sections": {
+    "commitment": {
+      "heading": "Children first. Always.",
+      "paragraphs": [
+        "Our clubs are a place to learn, make friends, and have fun — and that only works if everyone feels safe. We’re committed to a community free of bullying, harassment, and cruelty, where every child is treated with respect by our Game Educators and by each other."
+      ]
+    },
+    "approach": {
+      "heading": "How we handle problems",
+      "paragraphs": [
+        "When a child behaves in a way that hurts or disrupts others, our Game Educators (we call them Gedus) respond in a way that’s calm, kind, and right for the child’s age. The goal is always to help the child understand the effect of what they did and to put it right — not simply to punish.",
+        "We deal with most situations gently, with a quiet word. If the behaviour continues, we take firmer steps, one at a time. The steps below are the ladder we follow, and you’ll always be kept in the loop as we go."
+      ]
+    },
+    "step1": {
+      "heading": "Step 1 — A reminder and putting things right",
+      "paragraphs": [
+        "The Gedu talks with your child about what happened and how it affected others, and helps them find a better way to handle it. It’s gentle and matter-of-fact — for example: \"Remember not to take things from someone else’s chest without asking. You could ask them if they’d like to trade instead.\""
+      ]
+    },
+    "step2": {
+      "heading": "Step 2 — A quiet word",
+      "paragraphs": [
+        "If it happens again, the Gedu has a one-on-one chat with your child to think through what they did and how it affects others. We’ll also let you know at home that we’ve talked with your child about their behaviour in the club."
+      ]
+    },
+    "step3": {
+      "heading": "Step 3 — Stepping in during the session",
+      "paragraphs": [
+        "If the disruptive behaviour carries on, the Gedu steps in to stop it during the session — for example by muting your child for a moment or limiting what they can do in the game. The Gedu speaks with your child privately, and we message you at home."
+      ]
+    },
+    "step4": {
+      "heading": "Step 4 — A time-out from a session",
+      "paragraphs": [
+        "If things still don’t settle, the Gedu may ask your child to sit out the rest of that session. If a longer break is needed, we’ll tell you in advance. The Gedu talks it through privately with your child, we message you at home, and our office ({supportEmail}) joins the conversation."
+      ]
+    },
+    "step5": {
+      "heading": "Step 5 — Time away from the community",
+      "paragraphs": [
+        "If the behaviour continues despite everything above, a child may be removed from the School of Gaming community for a while — that means their clubs, and Sogverse itself, including our game servers. Our office gets in touch with you to explain the decision, and we talk it through with your child too."
+      ]
+    },
+    "step6": {
+      "heading": "Step 6 — A fresh start later",
+      "paragraphs": [
+        "Time away isn’t necessarily the end. Your child can come back when you and they both feel ready for it. If they return and the behaviour hasn’t changed, we’ll step them out of the activity for good rather than starting the ladder over — but our hope, always, is a fresh start that works."
+      ]
+    },
+    "partnership": {
+      "heading": "We’re in this together",
+      "paragraphs": [
+        "You know your child best, and we get the best results when we work together. If you have any worries about how your child is getting on — or if you think they’re being treated unkindly by someone else — please tell us. Sharing the same expectations at home and in the club makes a real difference."
+      ]
+    },
+    "contact": {
+      "heading": "Getting in touch",
+      "paragraphs": [
+        "If you have any questions about this policy, or you’d like to talk about something that’s happened, email our office at {supportEmail}. There’s a real person at the other end, and we’re here to help."
+      ]
+    }
+  }
+}

@@ -2,7 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import enSettings from "@/../messages/en/settings.json";
 import { createMockProfile } from "../../mocks/supabase";
 import type { Profile, ProfileUpdate } from "@/types";
 
@@ -30,7 +32,9 @@ vi.mock("@/services/users/users.service", () => ({
 }));
 
 import { GeduSpokenLanguagesCard } from "@/components/admin/gedu-spoken-languages-card";
-import { userKeys } from "@/services/users";
+import { userKeys } from "@/services/users/users.queries";
+
+const messages = { admin: enAdmin, common: enCommon, settings: enSettings };
 
 function renderCard() {
   const queryClient = new QueryClient({

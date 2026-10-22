@@ -5,9 +5,9 @@ import { Heading } from "@sog/ui";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { GAME_PLATFORMS, GameAccountField } from "@/components/game-account";
-import { useMinecraftAccount } from "@/services/minecraft";
-import { useRobloxAccount } from "@/services/roblox";
-import { useUpdateUserGameAccount } from "@/services/users";
+import { useMinecraftAccount } from "@/services/minecraft/minecraft.queries";
+import { useRobloxAccount } from "@/services/roblox/roblox.queries";
+import { useUpdateUserGameAccount } from "@/services/users/users.queries";
 import type { MinecraftAccount, RobloxAccount } from "@/types";
 
 /**

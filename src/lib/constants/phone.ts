@@ -29,3 +29,8 @@ export const PHONE_COUNTRIES = [
   "SE",
   "US",
 ] as const satisfies readonly PhoneCountry[];
+
+/** Strip the leading '+' from an E.164 phone number for DB storage, or return null if empty. */
+export function toE164Digits(phone: string): string | null {
+  return phone ? phone.replace(/^\+/, "") : null;
+}

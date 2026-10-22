@@ -3,10 +3,16 @@ import {
   DEFAULT_LOCALE,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { loadMessages, type Messages } from "@/i18n/messages";
+import type { Messages } from "@/i18n/messages";
+import { loadNamespace } from "@/i18n/namespace-loader";
+import { emailMessages } from "@/i18n/namespaces/email";
+import { topicPrepMessages } from "@/i18n/namespaces/topicPrep";
 
 // Re-export the translator type so template builders can type their `t` parameter.
-export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "email">>;
+// Typed over the one namespace it is handed, so it cannot name another.
+export type EmailTranslator = ReturnType<
+  typeof createTranslator<Pick<Messages, "email">, "email">
+>;
 
 /**
  * Creates a translator scoped to the `email` namespace for the given locale.
@@ -15,8 +21,8 @@ export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "emai
 export async function getEmailTranslator(
   locale: SupportedLocale = DEFAULT_LOCALE,
 ): Promise<EmailTranslator> {
-  const messages = await loadMessages(locale);
-  return createTranslator({ locale, messages, namespace: "email" });
+  const email = await loadNamespace(emailMessages, locale);
+  return createTranslator({ locale, messages: { email }, namespace: "email" });
 }
 
 /**
@@ -26,25 +32,22 @@ export async function getEmailTranslator(
  * **It exists because a namespace is a translator's whole world, and the prose
  * has to have exactly one home.** `EmailTranslator` is scoped to `email`, so it
  * cannot reach a key outside it; the "Before the first session" guide is
- * rendered by the confirmation page, both enrolment cards *and* the
- * confirmation mail, and every one of them must say the same words. Copying the
- * guide into `email.topicPrep` would put the same paragraphs in the catalog
- * twice, in five locales, with nothing asserting they still agree — the failure
- * this directory already documents for the confirmation page's own sentences,
- * accepted there because those sentences are one line each and this is a
- * document.
+ * rendered by both enrolment cards *and* the confirmation mail, and every one
+ * of them must say the same words. Copying the guide into `email.topicPrep`
+ * would put the same paragraphs in the catalog twice, in five locales, with
+ * nothing asserting they still agree — a cost a one-line sentence can bear and
+ * a document cannot.
  *
  * So the mail takes a second translator rather than a second copy of the prose.
- * A builder that needs both takes both; the two are loaded from the same
- * catalog, so they cannot disagree about the locale.
+ * A builder that needs both takes both, each loaded in the same locale.
  */
 export type TopicPrepTranslator = ReturnType<
-  typeof createTranslator<Messages, "topicPrep">
+  typeof createTranslator<Pick<Messages, "topicPrep">, "topicPrep">
 >;
 
 export async function getTopicPrepTranslator(
   locale: SupportedLocale = DEFAULT_LOCALE,
 ): Promise<TopicPrepTranslator> {
-  const messages = await loadMessages(locale);
-  return createTranslator({ locale, messages, namespace: "topicPrep" });
+  const topicPrep = await loadNamespace(topicPrepMessages, locale);
+  return createTranslator({ locale, messages: { topicPrep }, namespace: "topicPrep" });
 }

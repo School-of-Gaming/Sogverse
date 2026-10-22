@@ -1,0 +1,35 @@
+{
+  "name": "Kirjasto",
+  "readingTime": "{minutes, plural, one {Lukuaika # min} other {Lukuaika # min}}",
+  "article": {
+    "breadcrumbLabel": "Murupolku",
+    "more": "Lisää kirjastosta",
+    "share": {
+      "heading": "Jaa artikkeli",
+      "copyLink": "Kopioi linkki",
+      "copied": "Linkki kopioitu",
+      "on": "Jaa palvelussa {platform} (avautuu uuteen välilehteen)",
+      "email": "Sähköposti",
+      "byEmail": "Jaa sähköpostilla",
+      "native": "Jaa…"
+    }
+  },
+  "index": {
+    "title": "School of Gamingin <act>kirjasto</act>",
+    "intro": "Käytännön tietoa vanhemmille verkkoturvallisuudesta, pelaamisesta osana perheen arkea ja siitä, mitä lapset oppivat pelatessaan.",
+    "empty": "Täällä ei ole vielä mitään",
+    "all": "Kaikki",
+    "filterLabel": "Aiheet"
+  },
+  "categories": {
+    "onlineSafety": "Verkkoturvallisuus",
+    "screenTime": "Ruutuaika ja perhe-elämä",
+    "learning": "Oppiminen pelaamalla",
+    "gamesExplained": "Pelit tutuiksi",
+    "forSchools": "Kouluille"
+  },
+  "cta": {
+    "heading": "Valmis aloittamaan?",
+    "button": "Aloita"
+  }
+}

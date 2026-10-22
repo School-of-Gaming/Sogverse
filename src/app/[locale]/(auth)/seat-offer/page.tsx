@@ -7,7 +7,7 @@ import {
 } from "@/components/seat-offer/seat-offer-response";
 import { DEFAULT_LOCALE, isSupportedLocale } from "@/lib/constants/locales";
 import { resolveSeatOfferLink } from "@/lib/seat-offer.server";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");

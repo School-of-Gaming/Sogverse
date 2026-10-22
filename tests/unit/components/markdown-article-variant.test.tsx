@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRichText from "@/../messages/en/richText.json";
 import { Markdown } from "@/components/ui/markdown";
+
+const messages = { richText: enRichText };
 
 /**
  * **The article variant is text only: the marketing subset.**

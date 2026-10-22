@@ -1,0 +1,83 @@
+{
+  "subtitle": "Manage your account preferences",
+  "personalInformation": "Personal information",
+  "roleAccount": "{role, select, customer {Parent account} gamer {Gamer account} gedu {Gedu account} admin {Admin account} other {Account}}",
+  "firstNamePlaceholder": "Enter your first name",
+  "lastNamePlaceholder": "Enter your last name",
+  "invalidPhone": "Please enter a valid phone number.",
+  "lastNameRequired": "Last name must be at least {min} characters.",
+  "profileUpdated": "Personal information saved.",
+  "failedToUpdateProfile": "Your personal information could not be saved.",
+  "securityDescription": "Manage your password and security settings",
+  "resetPassword": "Reset password",
+  "resetPasswordEmailSent": "Password reset link sent to {email} — check your inbox.",
+  "resetPasswordEmailFailed": "We couldn’t send the password reset email. Please try again.",
+  "changePin": "Change PIN",
+  "minecraftAccount": "Minecraft account",
+  "minecraftDescription": "Link your Minecraft Java Edition account",
+  "robloxAccount": "Roblox account",
+  "robloxDescription": "Link your Roblox account",
+  "mcHeadsAttribution": "Skins rendered by <link>mc-heads.net</link>",
+  "spokenLanguages": "Languages spoken",
+  "location": "Location",
+  "emailVerified": "Email verified",
+  "emailNotVerified": "Email not verified",
+  "sendVerificationEmail": "Send verification email",
+  "verificationEmailSent": "Verification email sent — check your inbox.",
+  "verificationEmailRateLimited": "You’ve asked for this too many times. Please wait a little while before trying again.",
+  "verificationEmailFailed": "We couldn’t send the verification email. Please try again.",
+  "discord": {
+    "label": "Discord",
+    "notLinked": "Not linked",
+    "linkHint": "To link your Discord account, type <code>/link</code> in the School of Gaming Discord server.",
+    "relinkHint": "To link a different Discord account, type <code>/link</code> from that account in the School of Gaming Discord server."
+  },
+  "slack": {
+    "label": "Slack",
+    "notLinked": "Not linked",
+    "linkHint": "To link your Slack account, type <code>/link</code> in the School of Gaming Slack workspace.",
+    "relinkHint": "To link a different Slack account, type <code>/link</code> from that account in the School of Gaming Slack workspace."
+  },
+  "marketing": {
+    "title": "Marketing preferences",
+    "schoolOfGaming": "School of Gaming may send me news and offers by email.",
+    "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time."
+  },
+  "notifications": {
+    "title": "Notification preferences",
+    "channels": {
+      "email": "Email"
+    },
+    "kinds": {
+      "session_report_copy": {
+        "label": "Copies of session reports",
+        "hint": "A copy of each session report emailed to the families in a group."
+      }
+    },
+    "saveFailed": "Your notification preferences could not be saved. Please try again."
+  },
+  "usernameLabel": "Username",
+  "gamerPasswordFromParent": "Your parent can set a new password for you from their My SOG.",
+  "photoConsent": {
+    "title": "Photos and videos",
+    "granted": "Your parent has said photos and videos of you may be included in session reports and used by School of Gaming, Lynx Educate and Roblox. A Gedu will still ask you before taking your photo.",
+    "notGranted": "Your parent has said photos and videos of you are not to be used, so a Gedu will keep you out of session photos. Only your parent can change this."
+  },
+  "teamProfile": {
+    "title": "My profile",
+    "description": "Your public profile on School of Gaming’s website: a photo of you and a few words about who you are.",
+    "edit": "Edit profile"
+  },
+  "mcp": {
+    "title": "Connect an AI app",
+    "description": "Manage Sogverse from your own AI app through Sogverse’s MCP server.",
+    "urlLabel": "MCP server URL",
+    "copy": "Copy",
+    "copied": "Copied",
+    "steps": {
+      "add": "In your AI app’s settings, add a custom connector or remote MCP server with this URL.",
+      "signIn": "Sign in with your admin account and choose Allow.",
+      "unsure": "Not sure where to add it? Ask your AI app how to add a remote MCP server by its URL."
+    }
+  }
+}

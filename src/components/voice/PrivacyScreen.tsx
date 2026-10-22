@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The "privacy screen" — a *subtle* frosting over a locked zone's

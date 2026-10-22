@@ -22,7 +22,7 @@ import {
   MonthStepper,
   type MonthHref,
 } from "@/components/invoicing-ledger/month-stepper";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow } from "@/providers";
 import {
@@ -33,12 +33,16 @@ import {
   type CustomerFile,
 } from "@/lib/finvoice";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { cn, formatCurrencyFromCents, formatDateOnly } from "@/lib/utils";
-import type { MunicipalityInvoicingSnapshot } from "@/services/municipality-invoicing";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDateOnly } from "@/lib/date-format";
+import type {
+  MunicipalityInvoicingSnapshot,
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 import {
   useMunicipalityInvoicingMonth,
   useMunicipalityInvoicingMonths,
-} from "@/services/municipality-invoicing";
+} from "@/services/municipality-invoicing/municipality-invoicing.queries";
 import type { InvoiceBillingCadence } from "@/types";
 import { BILLING_CADENCE_LABEL } from "@/components/admin/invoice-customers/billing-cadence-label";
 import {

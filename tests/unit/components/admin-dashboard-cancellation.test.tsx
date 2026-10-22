@@ -1,13 +1,17 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, render, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
 import { SchedulePanel } from "@/components/admin/dashboard/schedule-panel";
 import type {
   ComingUpDay,
   DateCancellation,
   ScheduleChip,
 } from "@/components/admin/dashboard/admin-dashboard-data";
+
+const en = { admin: enAdmin, common: enCommon, sessionBadge: enSessionBadge };
 
 /**
  * How the admin dashboard draws a date its groups cancelled: every group — the

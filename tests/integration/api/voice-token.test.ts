@@ -5,7 +5,7 @@ import { POST } from "@/app/api/voice/token/route";
 import { DailyApiError } from "@/lib/daily";
 import { mockSupabaseSuccess } from "../../mocks/supabase";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import type { ProductTopic } from "@/types";
+import type { ProductTopic, VoiceRoomMode } from "@/types";
 
 // --- Mocks ---
 
@@ -164,6 +164,8 @@ function mockTables(opts: {
     /** Drives which game identity (if any) the token carries. Defaults to the
      *  Minecraft Java topic, which is what most remote clubs are. */
     topic?: ProductTopic;
+    /** How the product is joined. Defaults to the Sogverse room. */
+    voice_room_mode?: VoiceRoomMode;
   } | null;
   participation?: { id: string } | null;
   geduAssignment?: { group_id: string } | null;
@@ -204,6 +206,7 @@ function mockTables(opts: {
               timezone: opts.group.timezone ?? "Europe/Helsinki",
               is_remote: opts.group.is_remote ?? true,
               topic: opts.group.topic ?? "minecraft_java",
+              voice_room_mode: opts.group.voice_room_mode ?? "sogverse",
             },
           }
         : null;
@@ -653,6 +656,57 @@ describe("POST /api/voice/token", () => {
       });
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(200);
+    });
+  });
+
+  describe("Sogverse room gate", () => {
+    it.each(["external", "none"] as const)(
+      "refuses a member of a product joined %s, with its own code, and never touches Daily",
+      async (mode) => {
+        authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+        mockTables({
+          group: { voice_room_mode: mode },
+          participation: { id: "participation-1" },
+        });
+        const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+        const data = await res.json();
+        expect(res.status).toBe(403);
+        expect(data.code).toBe("NOT_A_SOGVERSE_ROOM");
+        expect(mockGetOrCreateDailyRoom).not.toHaveBeenCalled();
+        expect(mockCreateMeetingToken).not.toHaveBeenCalled();
+      },
+    );
+
+    it("refuses an admin too: there is no Sogverse room for anyone", async () => {
+      authAs("admin-id", { role: "admin", first_name: "Boss" });
+      mockTables({ group: { voice_room_mode: "external" } });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.code).toBe("NOT_A_SOGVERSE_ROOM");
+    });
+
+    it("tells a member the real reason even when no window is open", async () => {
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: { voice_room_mode: "none" },
+        participation: { id: "participation-1" },
+      });
+      openWindows = [];
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.code).toBe("NOT_A_SOGVERSE_ROOM");
+    });
+
+    it("refuses a non-member as a non-member, without revealing how the product is joined", async () => {
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({ group: { voice_room_mode: "external" }, participation: null });
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      const data = await res.json();
+      expect(res.status).toBe(403);
+      expect(data.error).toBe("You are not enrolled in this group");
+      expect(data.code).toBeUndefined();
     });
   });
 

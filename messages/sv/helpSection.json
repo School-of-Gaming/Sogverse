@@ -1,0 +1,24 @@
+{
+  "heading": "Behöver du hjälp?",
+  "faqHeading": "Vanliga frågor",
+  "form": {
+    "messageLabel": "Meddelande",
+    "charactersNeeded": "{count} tecken till behövs",
+    "submit": "Skicka meddelande",
+    "adult": {
+      "description": "Be oss om hjälp — varje meddelande når teamet på School of Gaming. Du kan också mejla oss på <link>{email}</link>.",
+      "placeholder": "Vad kan vi hjälpa till med?",
+      "thankYou": "Tack — ditt meddelande är hos oss, och vi är glada att du hörde av dig.",
+      "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
+      "tooManyRequests": "Du har redan skickat flera meddelanden. Försök igen om en stund."
+    },
+    "gamer": {
+      "description": "Har du fastnat på något? Skriv till oss här så hjälper vi dig.",
+      "replyNote": "Om vi svarar skickar vi ett mejl till din förälder.",
+      "placeholder": "Vad behöver du hjälp med?",
+      "thankYou": "Tack — vi har fått ditt meddelande.",
+      "failed": "Vi kunde inte skicka ditt meddelande. Försök igen.",
+      "tooManyRequests": "Du har redan skickat några meddelanden. Försök igen om en stund."
+    }
+  }
+}

@@ -6,7 +6,7 @@ import {
   CHAT_REACTION_GLYPHS,
   type ChatReactionCode,
 } from "@/lib/constants/chat";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { tallyChatReactions } from "./chat-reactions";
 import type { ChatReactionEntry } from "./types";
 

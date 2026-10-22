@@ -1,0 +1,12 @@
+{
+  "title": "Källor och licenser",
+  "intro": "Delar av Sogverse bygger på data och tjänster som andra delar öppet. Här listar vi dem, berättar vad var och en gör och länkar till villkoren vi använder dem under.",
+  "sourceLabel": "Källa:",
+  "licenceLabel": "Licens:",
+  "dataVersion": "Data publicerad {date}",
+  "entries": {
+    "geonames": "Listan över länder, regioner och orter som du väljer från när du berättar var din familj bor — samma lista som vi använder för att hitta klubbar nära dig. Vår version bygger på GeoNames men är ingen kopia: vi utelämnar platser där vi inte är verksamma, grupperar en del annorlunda och byter namn på andra till den form som används lokalt.",
+    "laPoste": "De franska postnumren i samma lista, så att en familj i Frankrike kan skriva in sitt postnummer i stället för att leta upp sin kommun.",
+    "mcHeads": "Ritar den Minecraft-figur som visas bredvid ett länkat Minecraft-konto. De begär ingenting i gengäld, så det här är ett tack snarare än ett krav."
+  }
+}

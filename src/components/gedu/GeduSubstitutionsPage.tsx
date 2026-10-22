@@ -22,21 +22,29 @@ import {
 } from "./gedu-seat-rows";
 import {
   useMyAssignedProducts,
+} from "@/services/assignments/assignments.queries";
+import {
   type MyAssignedProductSessionRow,
-} from "@/services/assignments";
+} from "@/services/assignments/assignments.service";
 import {
   useGeduAssignmentSummaries,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
   type GeduAssignmentSummary,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   sessionSubstitutionKeys,
+} from "@/services/session-substitution/session-substitution.keys";
+import {
   useMyLiveSubstitutionRequests,
   useOpenSubstitutionRequests,
   useRequestSessionSubstitution,
   useWithdrawSessionSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.queries";
+import {
   type LiveSubstitutionRequest,
   type OpenSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 import { GeduFileAbsenceEntry } from "./GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSection } from "./GeduSubstitutionPoolSection";
 import { GeduSubstitutionsPageBody } from "./gedu-substitutions-page-body";

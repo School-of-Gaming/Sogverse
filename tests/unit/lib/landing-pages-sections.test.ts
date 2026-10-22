@@ -5,11 +5,13 @@ import {
   LANDING_SECTIONS,
   isLandingMarkdownPath,
   landingMarkdownValues,
+  landingPlacedTestimonialIds,
   landingSection,
   landingSectionBackground,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
+  landingPickedProductIds,
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
 import { markdownText } from "@/lib/landing-pages/sections/shared";
@@ -24,6 +26,7 @@ import {
   everyText,
   requiredTextCases,
 } from "../../helpers/landing-required-text-cases";
+import { testimonialSlotCases } from "../../helpers/landing-testimonial-slot-cases";
 
 describe("the section registry", () => {
   it("declares every type once, under its own name", () => {
@@ -200,6 +203,50 @@ describe("a section's background", () => {
   });
 });
 
+describe("a products section", () => {
+  const product = (n: number) => `00000000-0000-4000-8000-${(0x5000 + n).toString(16).padStart(12, "0")}`;
+  const products = (productIds: unknown) =>
+    landingSection.safeParse({ id: I.products, type: "products", productIds });
+
+  it("picks at least one product, with no upper bound, keeping the admin's order", () => {
+    expect(products([]).success).toBe(false);
+    expect(products(undefined).success).toBe(false);
+    expect(products([product(1)]).success).toBe(true);
+    const many = Array.from({ length: 60 }, (_, n) => product(60 - n));
+    const parsed = products(many);
+    expect(parsed.success && parsed.data.type === "products" && parsed.data.productIds).toEqual(many);
+  });
+
+  it("names each product once, by a product's id, lowercased", () => {
+    expect(products([product(1), product(1)]).success).toBe(false);
+    expect(products(["a-club"]).success).toBe(false);
+    const parsed = products([` ${product(2).toUpperCase()} `]);
+    expect(parsed.success && parsed.data.type === "products" && parsed.data.productIds).toEqual([
+      product(2),
+    ]);
+  });
+
+  it("requires no words: its eyebrow, heading and intro are all optional", () => {
+    expect(LANDING_SECTIONS.products.missingText()).toEqual([]);
+    expect(LANDING_SECTIONS.products.text.safeParse({}).success).toBe(true);
+    expect(
+      LANDING_SECTIONS.products.text.safeParse({ eyebrow: "E", heading: "H", intro: "I" }).success,
+    ).toBe(true);
+    expect(LANDING_SECTIONS.products.text.safeParse({ body: "B" }).success).toBe(false);
+  });
+
+  it("lists every pick of a page once, in page order", () => {
+    const [hero] = everySection();
+    expect(
+      landingPickedProductIds([
+        hero,
+        { id: product(10), type: "products", background: "default", productIds: [product(3), product(1)] },
+        { id: product(11), type: "products", background: "card", productIds: [product(1), product(2)] },
+      ]),
+    ).toEqual([product(3), product(1), product(2)]);
+  });
+});
+
 describe("one language's section texts", () => {
   it("takes each section's words against its own type, trimmed", () => {
     const texts = landingSectionTextsSchema(everySection()).parse({
@@ -236,10 +283,17 @@ describe("the required-text rule (its TypeScript half)", () => {
 });
 
 describe("the markdown fields", () => {
-  /** The fields a type's text schema declares with the `landing` markdown schema. */
-  function declaredMarkdown(schema: z.ZodTypeAny): LandingMarkdownField[] {
+  /** Where a markdown field sits, without the use case it renders under. */
+  type FieldPlace = { field: string } | { items: string; field: string };
+
+  function placeOf(spec: LandingMarkdownField): FieldPlace {
+    return "items" in spec ? { items: spec.items, field: spec.field } : { field: spec.field };
+  }
+
+  /** The fields a type's text schema declares with the markdown schema. */
+  function declaredMarkdown(schema: z.ZodTypeAny): FieldPlace[] {
     if (!(schema instanceof z.ZodObject)) return [];
-    const fields: LandingMarkdownField[] = [];
+    const fields: FieldPlace[] = [];
     for (const [name, field] of Object.entries<z.ZodTypeAny>(schema.shape)) {
       if (field === markdownText) fields.push({ field: name });
       const inner = field instanceof z.ZodOptional ? field.unwrap() : field;
@@ -253,7 +307,7 @@ describe("the markdown fields", () => {
   }
 
   it.each(LANDING_SECTION_TYPES)("are exactly the %s text schema's markdown fields", (type) => {
-    expect(LANDING_SECTIONS[type].markdownFields).toEqual(
+    expect(LANDING_SECTIONS[type].markdownFields.map(placeOf)).toEqual(
       declaredMarkdown(LANDING_SECTIONS[type].text),
     );
   });
@@ -264,13 +318,70 @@ describe("the markdown fields", () => {
         heading: "Questions",
         items: { [I.faqA]: { question: "Why?", answer: "Because." }, [I.stepA]: { question: "How?" } },
       }),
-    ).toEqual([{ path: `items.${I.faqA}.answer`, value: "Because." }]);
+    ).toEqual([{ path: `items.${I.faqA}.answer`, value: "Because.", useCase: "landing-faq" }]);
     expect(landingMarkdownValues("text", { heading: "Hi", body: "**Hello**" })).toEqual([
-      { path: "body", value: "**Hello**" },
+      { path: "body", value: "**Hello**", useCase: "landing" },
     ]);
     expect(isLandingMarkdownPath("faq", `items.${I.faqA}.answer`)).toBe(true);
     expect(isLandingMarkdownPath("faq", `items.${I.faqA}.question`)).toBe(false);
     expect(isLandingMarkdownPath("text", "body")).toBe(true);
     expect(isLandingMarkdownPath("cta", "body")).toBe(false);
+  });
+});
+
+describe("a testimonials section", () => {
+  it.each(testimonialSlotCases().map((c) => [c.name, c] as const))(
+    "holds %s to its arrangement's count, by the verdict SQL is held to",
+    (_, testCase) => {
+      const parsed = landingSections.safeParse(testCase.sections);
+      expect(parsed.success).toBe(testCase.problem === null);
+      if (!parsed.success) {
+        expect(parsed.error.issues).toEqual([
+          expect.objectContaining({ path: [1, "testimonialIds"], message: testCase.problem }),
+        ]);
+      }
+    },
+  );
+
+  it("refuses the same testimonial twice in one section", () => {
+    const parsed = landingSection.safeParse({
+      id: I.testimonials,
+      type: "testimonials",
+      arrangement: "pair",
+      testimonialIds: [I.testimonialA, I.testimonialA],
+    });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
+      "A testimonials section names each testimonial once",
+    ]);
+  });
+
+  it("refuses an arrangement it does not know", () => {
+    expect(
+      landingSection.safeParse({
+        id: I.testimonials,
+        type: "testimonials",
+        arrangement: "grid",
+        testimonialIds: [I.testimonialA],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("requires no words, so it never makes a version incomplete", () => {
+    expect(
+      missingInLandingVersion(
+        [{ id: I.hero, type: "hero" }, ...everySection().filter((section) => section.type === "testimonials")],
+        { title: "t", summary: "s", slug: "s", sectionTexts: { [I.hero]: { headline: "H" } } },
+      ),
+    ).toEqual([]);
+  });
+
+  it("lists every placed testimonial once, in page order", () => {
+    const sections = landingSections.parse([
+      { id: I.hero, type: "hero" },
+      { id: I.testimonials, type: "testimonials", arrangement: "pair", testimonialIds: [I.testimonialB, I.testimonialA] },
+      { id: I.text, type: "testimonials", arrangement: "feature", testimonialIds: [I.testimonialA] },
+    ]);
+    expect(landingPlacedTestimonialIds(sections)).toEqual([I.testimonialB, I.testimonialA]);
   });
 });

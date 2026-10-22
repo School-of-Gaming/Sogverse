@@ -2,17 +2,20 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
-import { useFamily, type FamilyMember } from "@/services/family";
+import { useFamily } from "@/services/family/family.queries";
+import type { FamilyMember } from "@/services/family/family.service";
 import {
   seedAge,
   useMyUpcomingSessionRows,
   useMyWaitlistRows,
+} from "@/services/participations/participations.queries";
+import {
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductType } from "@/types";
 import {
   prepWindowEndsForRows,

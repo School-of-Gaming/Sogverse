@@ -1,0 +1,6 @@
+{
+  "endedOn": "Terminé le {date}",
+  "noSchedule": "Horaires à venir",
+  "cancelledAhead": "{count, plural, one {Séance annulée : <b>{dates}</b>.} other {Séances annulées : <b>{dates}</b>.}}",
+  "cancelledAheadMore": "Séances annulées : <b>{first}</b> et {more, plural, one {# autre} other {# autres}}."
+}

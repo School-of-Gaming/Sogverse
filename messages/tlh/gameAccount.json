@@ -1,0 +1,15 @@
+{
+  "label": "{platform} lo’wI’ pong",
+  "usernameLabel": "{platform} lo’wI’ pong",
+  "placeholder": "e.g. {example}",
+  "verifying": "vIchel...",
+  "notFound": "{platform} account tu’be’lu’. pong yIchel je yIboq.",
+  "verifiedUser": "{username} (chellu’)",
+  "unverified": "{username} (chelbe’lu’)",
+  "none": "(Sovbe’lu’)",
+  "edit": "{platform} pong yIchoH",
+  "editFor": "{name} {platform} pong yIchoH",
+  "save": "yIpol",
+  "cancel": "yIqIl",
+  "saveFailed": "{platform} lo’wI’ pong choH Dabe’lu’."
+}

@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, render, screen, fireEvent } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAuth from "@/../messages/en/auth.json";
+import enCommon from "@/../messages/en/common.json";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { mockSupabaseClient } from "../../setup";
+
+const messages = { auth: enAuth, common: enCommon };
 
 /**
  * **The update-failure copy tells the user what to do next.**

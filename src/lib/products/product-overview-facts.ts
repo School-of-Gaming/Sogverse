@@ -12,8 +12,8 @@ import {
  * lookup — the schedule's lines and who a product is for.
  *
  * They live here because two surfaces state them and must state them
- * identically: the purchase confirmation page, and the mail that is a second
- * copy of that page. Where a fact is a single formatted value the surfaces can
+ * identically: the product page's "Good to know" card, and the signup
+ * confirmation mail. Where a fact is a single formatted value the surfaces can
  * share the formatter directly (`formatProductLocation`,
  * `formatProductSchedule`); these two are compositions *over* those formatters,
  * and a composition duplicated at two call sites is the thing that drifts.

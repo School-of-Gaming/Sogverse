@@ -44,8 +44,8 @@ import {
 import {
   LocationsService,
   type LocationWithChain,
-} from "@/services/locations";
-import { SitesService } from "@/services/sites";
+} from "@/services/locations/locations.service";
+import { SitesService } from "@/services/sites/sites.service";
 import type { Location, LocationType } from "@/types";
 
 /** Real generated UUIDs — nothing here feeds an identicon, but ids stay ids. */

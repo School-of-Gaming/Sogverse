@@ -26,7 +26,9 @@ import {
   type SubstitutionRequestInput,
 } from "@/lib/session-staffing";
 import { useNow } from "@/providers";
-import { resolveGamerPhotoConsents } from "@/services/gamer-photo-consents";
+import {
+  resolveGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/resolve-gamer-photo-consents";
 import type {
   GamerCreation,
   GeduAssignedProductRosterEntry,

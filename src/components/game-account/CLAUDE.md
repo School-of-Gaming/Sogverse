@@ -1,9 +1,9 @@
 # Game accounts (Minecraft, Roblox)
 
 A child's identity on a game platform, wherever it is shown. **Two components and
-one row shape** cover every surface: `/settings`, the parent's gamer detail, the
-add-gamer dialog, gedu registration, the admin user page, the admin gamer chip,
-the voice participant row, and the gedu session roster.
+one row shape** cover every surface: `/settings`, the parent's gamer detail,
+gedu registration, the admin user page, the admin gamer chip, the voice
+participant row, and the gedu session roster.
 
 **Four surfaces can write one**: a person's own settings, a parent editing their
 child, a gedu editing a child on their own roster, and an admin editing anyone.
@@ -69,8 +69,8 @@ exactly what a casual third value grows back into.
 
 **`head` is for the two dense lists and nothing else: the voice participant row
 and the admin gamer chip.** Everything else takes the whole figure — settings,
-the parent's gamer detail, the add-gamer dialog, gedu registration, the admin
-user detail page, the gedu session roster. A profile header or a form has the room; a list of eight
+the parent's gamer detail, gedu registration, the admin user detail page, the
+gedu session roster. A profile header or a form has the room; a list of eight
 people in a rail does not. When a surface feels tight, check whether it is
 actually a dense list before reaching for `head`.
 
@@ -101,15 +101,9 @@ node, so opening a row costs nothing and closing one saves nothing — which mea
 the choice is only ever about how much the surface appears to be asking for. A
 registration page opens its rows because typing a name is most of what that page
 is: nothing is competing for the attention. A form whose subject is something
-else — the add-gamer dialog, whose job is a name and a birthday — leaves them
-closed, because two open text inputs among four fields read as two more things
-being demanded rather than two things on offer. The pencil is the invitation.
-That dialog now gives the two rows a final page of their own, after the child has
-been named and the sign-in chosen: the page the child is named on is the only
-page the guardian declaration can be a sentence about, and it could not hold a
-required consent row *and* two optional identity rows inside the dialog's height
-cap on a phone. The rows kept their closed mode and their order; only the page
-they sit on changed.
+else leaves them closed, because two open text inputs among other fields read as
+two more things being demanded rather than two things on offer. The pencil is
+the invitation.
 
 **Rule: the status square is reserved wherever a check can run, and collapsed wherever one cannot.** On an editable surface the square is held open in every state so the spinner and then the tick land in a slot that already exists — that is the geometry rule the row is built around, and a roster of eight must not twitch mid-session. But a surface that only *reads* an account — a voice room, whose identity arrives on the Daily token and cannot change while the room is open — is holding that square for something that can never arrive, and an empty box between the username and whatever follows it reads as a rendering fault. Such a caller passes `statusSlot="collapsed"` and the square is drawn only when it has a tick or a spinner in it. A verified row and an unverified one then end at different widths, which is a true statement about two different accounts rather than a layout that moved.
 

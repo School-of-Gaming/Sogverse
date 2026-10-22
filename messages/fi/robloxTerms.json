@@ -1,0 +1,72 @@
+{
+  "title": "Luojien akatemian käyttöehdot",
+  "subtitle": "Perheille, jotka ilmoittautuvat Ranskan digitaalisen koulutuksen Ohjelmaan, jonka toteuttavat Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
+  "lastUpdated": "Päivitetty: {date}",
+  "intro": {
+    "heading": "Lyhyesti",
+    "blocks": [
+      "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Luojien akatemian Ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhdessä toteuttama ohjelma, joka tehdään yhteistyössä Robloxin kanssa. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen <strong>support@lynxeducate.com</strong>."
+    ]
+  },
+  "sections": {
+    "involved": {
+      "heading": "Keitä tässä on mukana",
+      "blocks": [
+        [
+          "<strong>Lynx Educate SAS</strong> ja <strong>School of Gaming Galactic Oy (”SOG”)</strong> suunnittelevat ja toteuttavat tämän Ohjelman yhdessä. Tässä asiakirjassa ”me” tarkoittaa molempia yhdessä, ellei toisin mainita.",
+          "<strong>Roblox Corporation</strong> (”Roblox”) tukee Ohjelmaa ja tarjoaa alustan, jolla lapsesi rakentaa. Roblox ei ole näiden ehtojen osapuoli."
+        ],
+        "Ilmoittautuminen ja tapaamiset tapahtuvat School of Gamingin alustalla (”Sogverse”). Ilmoittautumalla hyväksyt nämä Ohjelmaa koskevat ehdot, joita sovelletaan <linkTerms>School of Gamingin</linkTerms> ja Lynxin yleisten käyttöehtojen rinnalla. Jos ehdot ovat keskenään ristiriidassa, nämä Ohjelman ehdot menevät edelle."
+      ]
+    },
+    "eligibility": {
+      "heading": "Kuka voi osallistua",
+      "blocks": [
+        "Ohjelma on tarkoitettu 13–17-vuotiaille nuorille Ranskassa, ja ilmoittautumisen tekee vanhempi tai laillinen huoltaja. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja annettava suostumus lapsen puolesta."
+      ]
+    },
+    "whatsInvolved": {
+      "heading": "Mitä Ohjelmaan kuuluu",
+      "blocks": [
+        "Lapsesi osallistuu tapaamisiin (verkossa ja/tai paikan päällä sen mukaan, mihin olet ilmoittautunut), joissa opetellaan pelien rakentamista Roblox-alustalla. Lopuksi lapsi julkaisee oman pelinsä tai esineensä. Vanhemmat kutsutaan erillisiin tapaamisiin, joissa käsitellään verkkoturvallisuutta ja lapsilukkoja."
+      ]
+    },
+    "cost": {
+      "heading": "Hinta",
+      "blocks": [
+        "Ohjelma on maksuton ilmoittautuneille perheille."
+      ]
+    },
+    "safety": {
+      "heading": "Turvallisuus ja valvonta",
+      "blocks": [
+        "Jokaista tapaamista valvoo koulutettu ohjaaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <strong><linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding></strong>, joka on saatavilla pyynnöstä."
+      ]
+    },
+    "information": {
+      "heading": "Sinun tietosi",
+      "blocks": [
+        "<strong><linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy></strong> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
+        "Kun ilmoittaudut Roblox-ohjelmaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten. Lisätietoja on <strong><linkRobloxPrivacy>Luojien akatemian tietosuojaselosteessa</linkRobloxPrivacy></strong>."
+      ]
+    },
+    "media": {
+      "heading": "Valokuvat, video ja markkinointi",
+      "blocks": [
+        "Se, valokuvataanko tai videokuvataanko lastasi ja käytetäänkö kuvia markkinointiin, riippuu kokonaan niistä valinnoista, jotka teet ilmoittautumisen yhteydessä. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa lapsesi sivulla Oma SOG -näkymässä."
+      ]
+    },
+    "concern": {
+      "heading": "Jos sinulla on huoli",
+      "blocks": [
+        "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä joko osoitteeseen support@lynxeducate.com tai {supportEmail} – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+      ]
+    },
+    "changes": {
+      "heading": "Ehtojen muutokset",
+      "blocks": [
+        "Voimme päivittää näitä ehtoja. Päivitämme aina yllä olevan päivämäärän ja kerromme sinulle suoraan, jos jokin olennainen asia muuttuu."
+      ]
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "addGamer": "Lägg till gamer",
+  "manageGamer": "Hantera",
+  "manageGamerAria": "Hantera {name}",
+  "switchFailed": "Det gick inte att byta konto",
+  "loadFailed": "Det gick inte att läsa in familjen",
+  "switchToParentToAddGamer": {
+    "title": "Byt till {name}s profil för att lägga till en gamer?",
+    "oneWayWarning": "Du loggas ut från ditt gamer-konto."
+  },
+  "switchGate": {
+    "pinTitle": "Be en förälder att ange sin PIN-kod",
+    "pinDescription": "En förälders PIN-kod behövs för att byta till {name}.",
+    "pinNotSetTitle": "Ingen föräldra-PIN ännu",
+    "pinNotSetDescription": "En förälder måste först skapa en PIN-kod från Min SOG. Sedan kan du byta konto.",
+    "signOutTitle": "Logga ut först",
+    "signOutOwnSession": "{name} är inloggad med sin egen inloggning, så det här kontot kan inte byta till ett annat. Så förblir allas konton privata.",
+    "signOutHow": "Logga ut och logga sedan in som {name}.",
+    "signOutHowViaParent": "Logga ut, logga sedan in med din förälders inloggning och växla till {name} därifrån."
+  },
+  "addGamerForm": {
+    "title": "Lägg till en gamer",
+    "firstNameLabel": "Förnamn",
+    "firstNamePlaceholder": "t.ex. Saga",
+    "birthMonthLabel": "Födelsemånad",
+    "birthMonthPlaceholder": "Månad",
+    "birthYearLabel": "Födelseår",
+    "birthYearPlaceholder": "År",
+    "genderLabel": "Kön",
+    "genderBoy": "Pojke",
+    "genderGirl": "Flicka",
+    "genderNonBinary": "Icke-binär",
+    "submit": "Lägg till gamer",
+    "submitting": "Lägger till…",
+    "firstNameTooShort": "Förnamnet måste vara minst 2 tecken.",
+    "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
+    "birthMonthRequired": "Välj en födelsemånad.",
+    "birthYearRequired": "Välj ett födelseår.",
+    "genericError": "Det gick inte att lägga till gamern. Försök igen.",
+    "guardianAttestation": "{name} är mitt barn, eller så är jag barnets vårdnadshavare. Jag har läst <privacy>integritetspolicyn</privacy>.",
+    "guardianAttestationUnnamed": "Den här gamern är mitt barn, eller så är jag barnets vårdnadshavare. Jag har läst <privacy>integritetspolicyn</privacy>."
+  }
+}

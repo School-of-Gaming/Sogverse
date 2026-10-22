@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useCheckoutConfirmation } from "@/services/participations";
+import {
+  useCheckoutConfirmation,
+} from "@/services/participations/participations.queries";
 import { CONFIRMATION_POLL_TIMEOUT_MS } from "@/lib/constants/participations";
 import { PurchaseConfirmationNotice } from "./purchase-confirmation-view";
 

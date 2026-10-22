@@ -7,6 +7,7 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import {
   MAX_FILTER_LENGTH,
   VercelAnalyticsClient,
+  earliestTrafficDay,
   odataString,
   type PageviewsGroup,
   type VercelAnalyticsConfig,
@@ -63,37 +64,11 @@ const PRODUCTION = `environment eq ${odataString("production")}`;
 /** The documented default window: the last thirty UTC days, today included. */
 const DEFAULT_RANGE_DAYS = 30;
 
-/**
- * The first UTC day Vercel Web Analytics holds for this project: analytics was
- * switched on at the end of May 2026, as the documentation page says.
- */
-export const TRAFFIC_DATA_START = "2026-05-31";
-
-/** How far back Vercel keeps the counts on the team's plan: two years, as the page says. */
-const TRAFFIC_RETENTION_YEARS = 2;
-
 const DAY_MS = 86_400_000;
 
 // ---------------------------------------------------------------------------
 // Pure pieces
 // ---------------------------------------------------------------------------
-
-/**
- * The earliest UTC day any count reaches back to at `now`: the later of the day
- * analytics was switched on and the day the two-year retention reaches.
- */
-export function earliestTrafficDay(now: Date): string {
-  const retained = new Date(
-    Date.UTC(
-      now.getUTCFullYear() - TRAFFIC_RETENTION_YEARS,
-      now.getUTCMonth(),
-      now.getUTCDate(),
-    ),
-  )
-    .toISOString()
-    .slice(0, 10);
-  return retained > TRAFFIC_DATA_START ? retained : TRAFFIC_DATA_START;
-}
 
 /**
  * The range the answer covers: what the caller asked for, else the thirty UTC

@@ -4,7 +4,7 @@ import {
   substitutionAnswerFailureKey,
   substitutionRequestFailureKey,
   substitutionRequestRefusalMeansAlreadyFiled,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.refusals";
 
 /**
  * **The picker's only way of learning about a request filed in an earlier

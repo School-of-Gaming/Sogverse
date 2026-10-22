@@ -10,7 +10,7 @@ import {
 import type { SessionReportPhoto } from "@/lib/email-templates/session-photos";
 import { sessionImageUrl } from "@/lib/images/session-image-url";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import {
   DEFAULT_LOCALE,
@@ -22,7 +22,7 @@ import {
   type FamilyRecipient,
 } from "@/lib/email/family-recipients.server";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate, formatTimeRange } from "@/lib/utils";
+import { formatDate, formatTimeRange } from "@/lib/date-format";
 import { getOrigin } from "@/lib/url";
 import { ApiError } from "@/lib/api/api-error";
 import {

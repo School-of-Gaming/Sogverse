@@ -1,0 +1,10 @@
+{
+  "requestTitle": "Demander un remplacement",
+  "pickPlaceholder": "Choisissez une séance",
+  "empty": "Vous n’avez aucune séance à venir pour laquelle demander un remplacement.",
+  "filed": "Remplacement demandé pour {product} le {when}.",
+  "failed": "Un problème est survenu. Relancez /sub dans un instant.",
+  "notLinked": "Pour utiliser /sub, associez d’abord votre compte Discord à votre compte Gedu School of Gaming.",
+  "notLinkedRunLink": "Votre compte Discord n’est associé à aucun compte Gedu School of Gaming. Lancez /link pour l’associer, puis relancez /sub.",
+  "previewNotice": "Ceci est un aperçu — rien n’a été envoyé."
+}

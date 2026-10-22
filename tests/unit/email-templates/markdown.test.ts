@@ -1,6 +1,12 @@
+// @vitest-environment jsdom
+//
+// jsdom because the hold checks read the rendered fragment with the DOM's own
+// parser, to say which element each glyph and link sits inside.
 import { describe, it, expect, vi } from "vitest";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { mailWeight } from "@/lib/email-templates/type-scale";
+import { HOLD_CLASS, TEXT_PINS } from "@/lib/email-templates/utils";
+import { holdViolations } from "../../helpers/email-holds";
 import {
   MARKDOWN_CONTAINER,
   MARKDOWN_LOOK,
@@ -76,6 +82,11 @@ function readStyle(style: string) {
         break;
       case "text-underline-offset":
         out.underlineOffset = parseFloat(value);
+        break;
+      case "text-decoration-color":
+        // A pinned link states its underline's colour, which is its ink: the
+        // pin paints the glyphs transparent and the underline would follow.
+        expect(value.toLowerCase()).toBe(declarations.get("color")?.toLowerCase());
         break;
       default:
         throw new Error(`a declaration the definition does not state: ${property}`);
@@ -292,5 +303,62 @@ describe("renderMarkdownForEmail", () => {
     const inline = renderMarkdownForEmail('hello <b onclick="x()">there</b>', "feed");
     expect(inline).not.toContain("<b");
     expect(inline).toContain("&lt;b onclick=&quot;x()&quot;&gt;there&lt;/b&gt;");
+  });
+});
+
+/**
+ * Gmail iOS inverts every plain colour, and a hold inverts it back — but a
+ * kept link is pinned amber, which that client leaves alone, so a hold around
+ * one would turn it blue. So the renderer holds a link-free fragment whole and
+ * holds a fragment with links around them, run by run, never nesting a hold.
+ */
+describe("how a rendered fragment is held", () => {
+  const HOLD_OPEN = `<div class="${HOLD_CLASS.screen}"><div class="${HOLD_CLASS.difference}">`;
+
+  it("holds a fragment with no kept link whole", () => {
+    const html = renderMarkdownForEmail("# Title\n\nBody with [a link](https://example.com).", "feed");
+    expect(html.startsWith(HOLD_OPEN)).toBe(true);
+    expect(html.split(`class="${HOLD_CLASS.screen}"`)).toHaveLength(2);
+  });
+
+  it("holds a fragment with links around them, and pins each link", () => {
+    const html = renderMarkdownForEmail(
+      [
+        "Plain paragraph.",
+        "",
+        "Read **the [camp page](https://example.com/camp)** first.",
+        "",
+        "- one",
+        "- see [support](https://example.com/help)",
+      ].join("\n"),
+      "spotlight",
+    );
+    expect(html.startsWith("<div style=")).toBe(true);
+    expect(html).toContain(`class="${TEXT_PINS.act.className}"`);
+    expect(holdViolations(`<body>${html}</body>`)).toEqual([]);
+  });
+
+  /**
+   * A list carrying a link cannot be held whole, and its own markers in plain
+   * ink vanish on Gmail iOS — so it writes them out, each held in a cell.
+   */
+  it("draws a linked list's markers held in a column of their own", () => {
+    const numbered = renderMarkdownForEmail(
+      "Intro.\n\n3. see [support](https://example.com/help)\n4. plain\n   - nested",
+      "spotlight",
+    );
+    expect(numbered).not.toContain("<ol");
+    expect(numbered).not.toContain("<ul");
+    for (const marker of ["3.", "4.", "&bull;"]) {
+      expect(numbered).toContain(`${HOLD_OPEN}${marker}</div></div></td>`);
+    }
+    expect(numbered).toContain(
+      `<td valign="top" width="${MARKDOWN_LOOK.ol.indent}" style="width:${MARKDOWN_LOOK.ol.indent}px;padding:0 0 ${MARKDOWN_LOOK.ol.itemGap}px;`,
+    );
+    expect(holdViolations(`<body>${numbered}</body>`)).toEqual([]);
+
+    // A list with no link in a fragment that has one stays a real list, held whole.
+    const plain = renderMarkdownForEmail("See [support](https://example.com/help).\n\n- one\n- two", "spotlight");
+    expect(plain).toContain(`${HOLD_OPEN}<ul `);
   });
 });

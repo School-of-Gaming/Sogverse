@@ -4,11 +4,15 @@ import { faqSection } from "./faq";
 import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
+import { productsSection } from "./products";
 import { stepsSection } from "./steps";
+import { subscribeSection } from "./subscribe";
+import { testimonialSlotProblem, testimonialsSection } from "./testimonials";
 import { textSection } from "./text";
 import {
   fieldOf,
   type LandingMarkdownField,
+  type LandingMarkdownUseCase,
   type LandingSectionBackground,
   type TextReading,
 } from "./shared";
@@ -36,7 +40,10 @@ export const LANDING_SECTION_TYPES = [
   "image",
   "points",
   "steps",
+  "testimonials",
+  "products",
   "faq",
+  "subscribe",
   "cta",
 ] as const;
 
@@ -48,7 +55,10 @@ export const LANDING_SECTIONS = {
   image: imageSection,
   points: pointsSection,
   steps: stepsSection,
+  testimonials: testimonialsSection,
+  products: productsSection,
   faq: faqSection,
+  subscribe: subscribeSection,
   cta: ctaSection,
 } as const satisfies { [Type in LandingSectionType]: { type: Type } };
 
@@ -59,7 +69,10 @@ export const landingSection = z.discriminatedUnion("type", [
   imageSection.section,
   pointsSection.section,
   stepsSection.section,
+  testimonialsSection.section,
+  productsSection.section,
   faqSection.section,
+  subscribeSection.section,
   ctaSection.section,
 ]);
 
@@ -77,6 +90,17 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
  */
 export function landingSectionBackground(section: LandingSection): LandingSectionBackground {
   return section.type === "hero" ? "default" : section.background;
+}
+
+/**
+ * Every product the structure's products sections pick, each once, in page
+ * order — what one read of the listing has to cover for the page.
+ */
+export function landingPickedProductIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) =>
+    section.type === "products" ? section.productIds : [],
+  );
+  return [...new Set(ids)];
 }
 
 /** One section's words in one language, whichever type it is. */
@@ -105,13 +129,35 @@ export function landingStructureProblem(
   return null;
 }
 
-/** A page's whole structure, its arrangement rules included. */
+/**
+ * A page's whole structure, its arrangement rules included, and each section's
+ * rules that read two of its fields together — a testimonials section's count
+ * against its arrangement, reported at the section's ids.
+ */
 export const landingSections = z
   .array(landingSection)
   .superRefine((sections, context) => {
     const problem = landingStructureProblem(sections);
     if (problem !== null) context.addIssue({ code: "custom", message: problem });
+    sections.forEach((section, index) => {
+      if (section.type !== "testimonials") return;
+      const slots = testimonialSlotProblem(section);
+      if (slots !== null) {
+        context.addIssue({ code: "custom", path: [index, "testimonialIds"], message: slots });
+      }
+    });
   });
+
+/**
+ * Every testimonial the structure's testimonials sections place, each once,
+ * in page order.
+ */
+export function landingPlacedTestimonialIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) =>
+    section.type === "testimonials" ? section.testimonialIds : [],
+  );
+  return [...new Set(ids)];
+}
 
 /**
  * The schema of one language's section texts for a given structure: an
@@ -165,8 +211,14 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return pointsSection.missingText(section, text);
     case "steps":
       return stepsSection.missingText(section, text);
+    case "testimonials":
+      return testimonialsSection.missingText();
+    case "products":
+      return productsSection.missingText();
     case "faq":
       return faqSection.missingText(section, text);
+    case "subscribe":
+      return subscribeSection.missingText(section, text);
     case "cta":
       return ctaSection.missingText(section, text);
   }
@@ -228,18 +280,20 @@ export function isLandingMarkdownPath(type: LandingSectionType, path: string): b
 
 /**
  * Every authored-markdown value one section's words hold, with its path within
- * the section — whatever shape the words are, a value that is not a string
- * simply skipped.
+ * the section and the use case it renders under — whatever shape the words
+ * are, a value that is not a string simply skipped.
  */
 export function landingMarkdownValues(
   type: LandingSectionType,
   text: unknown,
-): { path: string; value: string }[] {
+): { path: string; value: string; useCase: LandingMarkdownUseCase }[] {
   const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
   return fields.flatMap((spec) => {
     if (!("items" in spec)) {
       const value = fieldOf(text, spec.field);
-      return typeof value === "string" ? [{ path: spec.field, value }] : [];
+      return typeof value === "string"
+        ? [{ path: spec.field, value, useCase: spec.useCase }]
+        : [];
     }
     const items = fieldOf(text, spec.items);
     const entries: [string, unknown][] =
@@ -249,7 +303,7 @@ export function landingMarkdownValues(
     return entries.flatMap(([id, item]) => {
       const value = fieldOf(item, spec.field);
       return typeof value === "string"
-        ? [{ path: `${spec.items}.${id}.${spec.field}`, value }]
+        ? [{ path: `${spec.items}.${id}.${spec.field}`, value, useCase: spec.useCase }]
         : [];
     });
   });
@@ -260,7 +314,16 @@ export { faqSection } from "./faq";
 export { heroSection } from "./hero";
 export { imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
+export { LANDING_PRODUCT_TYPES, productsSection } from "./products";
 export { stepsSection } from "./steps";
+export { subscribeSection } from "./subscribe";
+export {
+  LANDING_TESTIMONIAL_ARRANGEMENTS,
+  LANDING_TESTIMONIAL_SLOTS,
+  testimonialSlotProblem,
+  testimonialsSection,
+  type LandingTestimonialArrangement,
+} from "./testimonials";
 export { LANDING_IMAGE_SIDES, textSection } from "./text";
 export {
   buttonTarget,
@@ -271,6 +334,7 @@ export {
   landingId,
   type ButtonTarget,
   type LandingMarkdownField,
+  type LandingMarkdownUseCase,
   type LandingSectionBackground,
   type LandingSectionDefinition,
 } from "./shared";

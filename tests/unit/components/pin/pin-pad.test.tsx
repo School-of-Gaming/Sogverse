@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enPin from "@/../messages/en/pin.json";
 import { PinPad } from "@/components/pin/pin-pad";
+
+const messages = { pin: enPin };
 
 /**
  * **The pad's keyboard listener is on `window`, so it hears every key on the

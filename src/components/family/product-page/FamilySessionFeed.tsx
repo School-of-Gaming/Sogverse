@@ -9,7 +9,7 @@ import {
   hasReport,
   type SessionFeedRowContext,
 } from "@/components/session-feed";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { FamilySessionFeedItem } from "./FamilySessionFeedItem";

@@ -1,0 +1,10 @@
+{
+  "requestTitle": "Be om en vikarie",
+  "pickPlaceholder": "Välj ett tillfälle",
+  "empty": "Du har inga kommande tillfällen att be om en vikarie för.",
+  "filed": "Vikarie efterfrågad för {product} den {when}.",
+  "failed": "Något gick fel. Kör /sub igen om en stund.",
+  "notLinked": "För att använda /sub måste du först koppla ditt Discord-konto till ditt Gedu-konto hos School of Gaming.",
+  "notLinkedRunLink": "Ditt Discord-konto är inte kopplat till ett Gedu-konto hos School of Gaming. Kör /link för att koppla det och sedan /sub igen.",
+  "previewNotice": "Det här är en förhandsvisning – inget skickades in."
+}

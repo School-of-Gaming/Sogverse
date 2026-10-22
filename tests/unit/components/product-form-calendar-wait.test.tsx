@@ -20,13 +20,13 @@ vi.mock("next-intl", () => ({
 }));
 
 const mockUseHolidayCalendars = vi.fn();
-vi.mock("@/services/holiday-calendars", () => ({
+vi.mock("@/services/holiday-calendars/holiday-calendars.queries", () => ({
   useHolidayCalendars: (options?: { enabled?: boolean }) =>
     mockUseHolidayCalendars(options),
 }));
 
 const mockUseProductAdmin = vi.fn();
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: (id?: string) => mockUseProductAdmin(id),
 }));
 

@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
-import { ProductsService } from "@/services/products";
+import { ProductsService } from "@/services/products/products.service";
 import {
   ParticipationsService,
   type ParticipationCounts,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,

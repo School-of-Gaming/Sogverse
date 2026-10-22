@@ -12,7 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 const MIN_PASSWORD_LENGTH = 8;
 

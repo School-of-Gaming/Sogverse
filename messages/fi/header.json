@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "shop": "Kauppa",
+    "yty": "Yty",
+    "about": "Tietoa",
+    "parents": "Vanhemmat",
+    "faq": "UKK",
+    "substitutions": "Tuuraukset",
+    "home": "Etusivu",
+    "library": "Kirjasto",
+    "libraryShort": "Kirjasto",
+    "team": "Tiimi",
+    "tabBar": "Päävalikko"
+  },
+  "accountMenu": "Tilivalikko – {name}",
+  "continueToAccount": "Jatka tilillesi",
+  "switchTo": "Vaihda profiiliin",
+  "invoicing": "Laskutus",
+  "teamProfile": "Oma profiili"
+}

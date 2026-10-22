@@ -1,0 +1,83 @@
+{
+  "subtitle": "Hallitse tilisi asetuksia",
+  "personalInformation": "Henkilötiedot",
+  "roleAccount": "{role, select, customer {Vanhemman tili} gamer {Pelaajan tili} gedu {Gedun tili} admin {Ylläpitäjän tili} other {Tili}}",
+  "firstNamePlaceholder": "Syötä etunimesi",
+  "lastNamePlaceholder": "Syötä sukunimesi",
+  "invalidPhone": "Syötä kelvollinen puhelinnumero.",
+  "lastNameRequired": "Sukunimessä on oltava vähintään {min} merkkiä.",
+  "profileUpdated": "Henkilötiedot tallennettu.",
+  "failedToUpdateProfile": "Henkilötietojen tallentaminen epäonnistui.",
+  "securityDescription": "Hallitse salasanaasi ja turvallisuusasetuksiasi",
+  "resetPassword": "Nollaa salasana",
+  "resetPasswordEmailSent": "Salasanan nollauslinkki lähetetty osoitteeseen {email} – tarkista sähköpostisi.",
+  "resetPasswordEmailFailed": "Nollausviestin lähetys epäonnistui. Yritä uudelleen.",
+  "changePin": "Vaihda PIN",
+  "minecraftAccount": "Minecraft-tili",
+  "minecraftDescription": "Linkitä Minecraft Java Edition -tilisi",
+  "robloxAccount": "Roblox-tili",
+  "robloxDescription": "Linkitä Roblox-tilisi",
+  "mcHeadsAttribution": "Ulkoasut renderöi <link>mc-heads.net</link>",
+  "spokenLanguages": "Puhutut kielet",
+  "location": "Sijainti",
+  "emailVerified": "Sähköposti vahvistettu",
+  "emailNotVerified": "Sähköpostia ei ole vahvistettu",
+  "sendVerificationEmail": "Lähetä vahvistusviesti",
+  "verificationEmailSent": "Vahvistusviesti lähetetty – tarkista sähköpostisi.",
+  "verificationEmailRateLimited": "Olet pyytänyt vahvistusviestiä liian monta kertaa. Odota hetki, ennen kuin yrität uudelleen.",
+  "verificationEmailFailed": "Vahvistusviestin lähetys epäonnistui. Yritä uudelleen.",
+  "discord": {
+    "label": "Discord",
+    "notLinked": "Ei yhdistetty",
+    "linkHint": "Yhdistä Discord-tilisi kirjoittamalla <code>/link</code> School of Gamingin Discord-palvelimella.",
+    "relinkHint": "Voit yhdistää toisen Discord-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Discord-palvelimella."
+  },
+  "slack": {
+    "label": "Slack",
+    "notLinked": "Ei yhdistetty",
+    "linkHint": "Yhdistä Slack-tilisi kirjoittamalla <code>/link</code> School of Gamingin Slack-työtilassa.",
+    "relinkHint": "Voit yhdistää toisen Slack-tilin kirjoittamalla <code>/link</code> sillä tilillä School of Gamingin Slack-työtilassa."
+  },
+  "marketing": {
+    "title": "Markkinointiasetukset",
+    "schoolOfGaming": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse.",
+    "lynxEducate": "Sähköpostiosoitteeni saa jakaa <link>Lynx Educaten</link> kanssa, jotta se voi lähettää minulle uutisia tulevista tapahtumista ja pelaamiseen liittyvistä aineistoista. Voin peruuttaa tilauksen milloin tahansa."
+  },
+  "notifications": {
+    "title": "Ilmoitusasetukset",
+    "channels": {
+      "email": "Sähköposti"
+    },
+    "kinds": {
+      "session_report_copy": {
+        "label": "Kopiot kertojen raporteista",
+        "hint": "Kopio jokaisesta kerran raportista, joka lähetetään sähköpostitse ryhmän perheille."
+      }
+    },
+    "saveFailed": "Ilmoitusasetusten tallentaminen epäonnistui. Yritä uudelleen."
+  },
+  "usernameLabel": "Käyttäjätunnus",
+  "gamerPasswordFromParent": "Vanhempasi voi asettaa sinulle uuden salasanan Oma SOG -näkymästään.",
+  "photoConsent": {
+    "title": "Kuvat ja videot",
+    "granted": "Vanhempasi on sallinut, että sinusta otettuja kuvia ja videoita saa käyttää kertojen raporteissa ja että School of Gaming, Lynx Educate ja Roblox saavat käyttää niitä. Gedu kysyy silti sinulta ennen kuin ottaa sinusta kuvan.",
+    "notGranted": "Vanhempasi ei ole sallinut sinusta otettujen kuvien ja videoiden käyttöä, joten Gedu jättää sinut pois kertojen kuvista. Vain vanhempasi voi muuttaa tämän."
+  },
+  "teamProfile": {
+    "title": "Oma profiili",
+    "description": "Julkinen profiilisi School of Gamingin verkkosivuilla: kuva sinusta ja muutama sana siitä, kuka olet.",
+    "edit": "Muokkaa profiilia"
+  },
+  "mcp": {
+    "title": "Yhdistä tekoälysovellus",
+    "description": "Hallitse Sogversea omasta tekoälysovelluksestasi Sogversen MCP-palvelimen kautta.",
+    "urlLabel": "MCP-palvelimen osoite",
+    "copy": "Kopioi",
+    "copied": "Kopioitu",
+    "steps": {
+      "add": "Lisää tekoälysovelluksesi asetuksissa mukautettu liitin tai etä-MCP-palvelin tällä osoitteella.",
+      "signIn": "Kirjaudu ylläpitäjän tililläsi ja valitse Salli.",
+      "unsure": "Etkö tiedä, mistä asetus löytyy? Kysy tekoälysovellukseltasi, miten etä-MCP-palvelin lisätään osoitteen perusteella."
+    }
+  }
+}

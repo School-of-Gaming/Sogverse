@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "@/i18n/navigation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FEEDBACK_SOURCES } from "@/services/session-feedback/admin-feedback.contracts";
 import { feedbackHref, type FeedbackPlace } from "./feedback-place";
 import { FEEDBACK_SOURCE_MESSAGE_KEYS } from "./feedback-sources";

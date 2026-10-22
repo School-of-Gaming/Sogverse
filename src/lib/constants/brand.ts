@@ -1,0 +1,87 @@
+/**
+ * Verified sender for transactional emails via Brevo.
+ *
+ * Deliberately *not* `SUPPORT_EMAIL`, and the one place the two diverge. This
+ * address is a sending identity Brevo has verified (DKIM/SPF signed for it), so
+ * changing it is a deliverability change rather than a copy one — mail from an
+ * unverified From lands in spam or is rejected outright. `SUPPORT_EMAIL` is the
+ * address a human is invited to write to, and it is already the Reply-To on
+ * every template, so a parent who hits reply reaches the inbox we answer.
+ */
+export const SENDER_EMAIL = "sogverse@sog.gg";
+
+/**
+ * Sender display name on every transactional email, whatever the template.
+ *
+ * Deliberately one literal rather than a per-locale translation: this is the
+ * company's mark, and a recipient who has seen it once should recognise it in
+ * the inbox list next time regardless of which language the body is in. Same
+ * reasoning as "My SOG" — locales translate the copy around a brand name, not
+ * the name.
+ *
+ * The brand alone, not the `School of Gaming – Sogverse` lockup: an inbox list
+ * truncates the sender column hard, and a lockup cut mid-word is worse than the
+ * short name that always fits. The full lockup lives in the email's own header,
+ * where there is room for it — see the brand-vs-platform rule in
+ * `src/CLAUDE.md`.
+ */
+export const SENDER_NAME = "School of Gaming";
+
+/**
+ * The REGISTERED SIGN, U+00AE — never the letter-in-parens spelling `(R)`, and
+ * never the trademark sign `™`, which claims something different.
+ *
+ * It lives here for the same reason the lockup's en dash does: it is a
+ * character of the mark, not copy, so it is spelled once in the module that owns
+ * the brand's strings rather than typed into whatever markup happens to need it.
+ * Nothing about it is translated — a locale localises the words around a mark,
+ * not the mark's own symbol.
+ *
+ * The brand guidelines ask for it on the website footer, at the mark's most
+ * prominent appearance, and say once per page is enough — so there is exactly
+ * one placement (the site footer's logo) and a second one is a decision, not a
+ * tidy-up.
+ */
+export const REGISTERED_TRADEMARK = "®";
+
+/**
+ * The half of the lockup that follows the brand: a SPACED EN DASH (U+2013 —
+ * never a hyphen `-`, never an em dash `—`) and then the platform name.
+ *
+ * It is split out for exactly one caller. The email layout's header sets the two
+ * names in different colours, so it cannot emit `BRAND_LOCKUP` as a single
+ * string — it composes the header from `SENDER_NAME` and this tail instead,
+ * which is what keeps every character of the lockup, the dash above all, in this
+ * module rather than in whatever markup happens to need it. A unit test asserts
+ * the composed header still equals `BRAND_LOCKUP` exactly.
+ */
+export const BRAND_LOCKUP_TAIL = " – Sogverse";
+
+/**
+ * Both names in one string, brand first and platform second — the form every
+ * string that has to carry both should use.
+ *
+ * Leading with the brand puts the name a stranger already recognises in the
+ * position that survives truncation, and leaves the word that needs explaining
+ * second. See the brand-vs-platform rule in `src/CLAUDE.md` for which of the
+ * two names a given string should reach for in the first place; this constant
+ * exists for the cases where the answer is "both".
+ *
+ * Naming the separator's codepoint (see `BRAND_LOCKUP_TAIL`) is half the point
+ * of having a constant at all: the character used to be left to whoever typed
+ * the string, which is how the codebase ended up with three different dashes in
+ * one lockup.
+ */
+export const BRAND_LOCKUP = `${SENDER_NAME}${BRAND_LOCKUP_TAIL}`;
+
+/**
+ * The one customer-facing address, and the source of truth for it.
+ *
+ * Shown in the footer and on the auth screens, used as the Reply-To on every
+ * transactional email, and named by the legal pages through their
+ * `{supportEmail}` placeholder rather than spelled out per document — a literal
+ * in `messages/` is how we ended up with three different addresses across four
+ * legal documents, in five languages, with no way to notice from English.
+ * Anything customer-facing points here; nothing introduces a second address.
+ */
+export const SUPPORT_EMAIL = "help@sog.gg";

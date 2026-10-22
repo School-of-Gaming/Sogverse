@@ -1,7 +1,7 @@
 "use client";
 
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { TeamProfileBody } from "@/components/team/team-profile-body";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 

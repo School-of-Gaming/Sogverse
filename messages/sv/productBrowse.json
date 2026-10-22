@@ -1,0 +1,54 @@
+{
+  "pageTitle": "Butik",
+  "sections": {
+    "clubs": "Klubbar",
+    "camps": "Läger",
+    "events": "Evenemang"
+  },
+  "filters": {
+    "type": "Typ",
+    "audience": "Målgrupp",
+    "designedFor": "Utformad för",
+    "typeClubs": "Klubbar",
+    "typeCamps": "Läger",
+    "typeEvents": "Evenemang",
+    "topic": "Ämne",
+    "format": "Format",
+    "formatOnline": "Online",
+    "formatInPerson": "På plats",
+    "price": "Pris",
+    "priceFree": "Gratis",
+    "pricePaid": "Avgiftsbelagd",
+    "language": "Språk",
+    "age": "Ålder",
+    "days": "Dagar",
+    "clearAll": "Rensa",
+    "filterBy": "Filtrera",
+    "title": "Filter",
+    "activeCount": "{count, plural, one {# filter aktivt} other {# filter aktiva}}",
+    "removeFilter": "Ta bort {label}"
+  },
+  "card": {
+    "ages": "Ålder {min}–{max}",
+    "perMonth": "{price} / mån",
+    "upfrontTotal": "{price}",
+    "free": "Gratis",
+    "notAvailableInCurrency": "Inte i {currency}",
+    "endedNote": "Den här är slut — håll utkik efter nästa.",
+    "viewDetails": "Visa",
+    "cardLink": "{action} — {name}",
+    "manage": "Hantera",
+    "fullDisabled": "Fullt",
+    "alreadyStarted": "Pågår",
+    "alreadyEnded": "Avslutat",
+    "online": "Online"
+  },
+  "empty": {
+    "noProducts": "Inget här ännu – nya är på väg.",
+    "noMatches": "Inga träffar. Prova att rensa filtren."
+  },
+  "rail": {
+    "previous": "Föregående",
+    "next": "Nästa"
+  }
+}
