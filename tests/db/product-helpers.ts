@@ -319,12 +319,15 @@ import { TEST_IDS } from "./constants";
  *                  taught by the file's minted gedu, and its sister group 832
  *                  that nobody teaches, so a filing there is refused for the
  *                  derivation alone)
- *   834-83b        landing-pages.test.ts — `landing_pages` and
+ *   834-83f        landing-pages.test.ts — 834-83b are `landing_pages` and
  *                  `catalogue_images` rows rather than products: 834 a page
  *                  seeded complete, 835 a draft, 836 an id that must NEVER
  *                  exist, and 837-83b catalogue entries — four landing
  *                  pictures (two removed during the run) and one product
- *                  picture a landing page may not show
+ *                  picture a landing page may not show. 83c-83f are the
+ *                  products a products section picks: 83c listed, 83e
+ *                  unlisted, 83f ended, and 83d a product id that must NEVER
+ *                  exist, backing the refusal of a pick no product has
  *   840-842        substitution-notifications.test.ts (the club 840 with group
  *                  841, whose minted gedu files every request the file
  *                  enqueues; 842 is a substitution request id that must NEVER
@@ -389,6 +392,8 @@ import { TEST_IDS } from "./constants";
  *                  uses
  *   913            landing-pages.test.ts — not a product: the testimonial its
  *                  clone fixture places, inserted and removed by that file
+ *   914            landing-pages.test.ts — the product its required-text
+ *                  fixture picks, created and deleted by that file
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

@@ -13,6 +13,7 @@ import {
 } from "@/lib/landing-pages/sections";
 import { slugify } from "@/lib/slug";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import type { LandingProductsSectionPicks } from "./landing-pages.product-picks";
 
 /**
  * Contracts for landing pages.
@@ -323,6 +324,12 @@ export interface AdminLandingPage {
    * what its preview paints and its status shows. Empty when it places none.
    */
   testimonials: Readonly<Record<string, PublicTestimonial>>;
+  /**
+   * Each products section of the working copy, in page order, with which of
+   * its picks readers are shown now and why each other one is not; empty when
+   * the working copy has no products section.
+   */
+  productPicks: LandingProductsSectionPicks[];
 }
 
 /** A copy's `image_paths` column, as the database derives it. */

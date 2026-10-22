@@ -3,6 +3,8 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
+  LANDING_PRODUCT_TYPES,
+  landingPickedProductIds,
   landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
@@ -12,6 +14,7 @@ import {
 } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
+import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 import { TestimonialsService } from "@/services/testimonials/testimonials.service";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
@@ -37,6 +40,10 @@ import {
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
 import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import {
+  landingProductPicks,
+  type LandingProductsSectionPicks,
+} from "./landing-pages.product-picks";
 import { testimonialsById } from "./landing-pages.testimonials";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
@@ -229,7 +236,9 @@ export class LandingPageService {
    * has that id. An id that is not a UUID is answered as not found without a
    * query. Each draft version carries what it still needs before publishing
    * takes it, by the TypeScript half of the required-text rule; the page
-   * carries the current words of every testimonial its working copy places.
+   * carries the current words of every testimonial its working copy places;
+   * and each products section of the working copy, which of its picks readers
+   * are shown now and why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -286,6 +295,7 @@ export class LandingPageService {
         data.publication,
       ),
       testimonials: await this.testimonialWords(sections),
+      productPicks: await this.productPicksOf(sections),
     };
   }
 
@@ -299,6 +309,30 @@ export class LandingPageService {
     const ids = landingPlacedTestimonialIds(sections);
     if (ids.length === 0) return {};
     return testimonialsById(await new TestimonialsService(this.supabase).listTestimonialWords(ids));
+  }
+
+  /**
+   * Each products section's picks, shown or not and why: the listing of every
+   * product type asked about the picks — the answer the public page draws by —
+   * and the picks' own rows for the reasons. A structure with no products
+   * section reads nothing.
+   */
+  private async productPicksOf(
+    sections: readonly LandingSection[],
+  ): Promise<LandingProductsSectionPicks[]> {
+    const ids = landingPickedProductIds(sections);
+    if (ids.length === 0) return [];
+    const products = new ProductsService(this.supabase);
+    const [listed, facts] = await Promise.all([
+      products.listVisibleListingAmong(LANDING_PRODUCT_TYPES, ids),
+      products.getListingFacts(ids),
+    ]);
+    return landingProductPicks(
+      sections,
+      new Set(listed.map((row) => row.id)),
+      facts,
+      new Date(),
+    );
   }
 
   private async oauthClientNames(

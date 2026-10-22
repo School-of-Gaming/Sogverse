@@ -63,6 +63,7 @@ function renderPage({
           sectionTexts={TEXTS}
           textLocale="fi"
           locale="fi"
+          products={null}
           pageId={PAGE}
           preview={preview}
         />

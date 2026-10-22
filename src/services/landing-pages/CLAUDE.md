@@ -116,8 +116,11 @@ The count is checked in the registry and again in the SQL structure check, and a
 holds the two to one answer over every arrangement and count. An id no testimonial has is
 refused loudly by a trigger on the working copy, which checks only the ids a save adds, so
 a write that moves only the structure's other contents is never refused by a placement it
-did not make. **Neither copy carries a testimonial's words**: the live page reads them per
-request through the public read that answers only what the published copy places, so an
+did not make. **One trigger function serves every section type that names another table's
+rows by id**, attached once per type with its arguments — the type, the key holding the
+ids, the table and the words of its refusal — so a new such type is a new trigger on it,
+never a copy of its body. **Neither copy carries a testimonial's words**: the live page
+reads them per request through the public read that answers only what the published copy places, so an
 edit to a testimonial shows on every live page at once, without a republish, while a
 testimonial placed only in a working copy stays admin-only; the preview and the status
 page read the working copy's from the store under the admin policy. Each reader gets the
@@ -131,6 +134,26 @@ page by saving the structure without it.
 picture the page leads with, with the shown version's alt text; a hero without one shares
 the site-wide card. So placing a hero picture places it in every chat and feed the page is
 shared to, and a partner's mark in one needs that partner's sign-off (`src/CLAUDE.md`).
+
+**A products section promotes products an admin picks, of every type, and its picks go
+stale by design.** Its structure names products by id — at least one, each once, in the
+admin's order, with no maximum, since the carousel scrolls — and its words, an eyebrow, a
+heading and an intro, are all optional, so it never makes a version incomplete. Each pick
+is drawn as the shop's own card in the product rail the Roblox page draws, so everything on
+a card is the shop's, live; a pick is drawn only while the listing holds it — listed and
+not ended, over every product type, so a municipality club is drawn like a camp, its card
+linking to its page under its town's `/schools` address as its card on that town's page
+does — and a section whose picks are none of them listed is not drawn at all — no heading,
+no empty state. **A pick no product has is refused when a structure naming it is saved**,
+by the database and not by the link hook: the shared trigger refuses it as a
+`foreign_key_violation` naming the section and the id, the same code a picture gone from
+the catalogue is refused with. The published copy has no such check: an ended or unlisted
+pick is not an error anywhere, only something the admin should swap. So **the admin read
+says, per products section of the working copy, which picks readers are not shown and
+why** — ended, unlisted, or no product at all any more — and the status page and the MCP
+tools both show it. Whether a pick is shown is the listing's own answer, asked over the
+same types the public page draws by; the reasons only explain it. The MCP product list
+answers the same question per product, from the same read.
 
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
@@ -185,7 +208,16 @@ id — never by handing a segment to the route builder, because a slug resolves 
 locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
 contribution (structured data) are each an exhaustive map over the section
 types. Every section sits on the plain page ground: an admin chooses the order, so a
-tinted band could land beside another and read as one section.
+tinted band could land beside another and read as one section. **A page with products
+sections reads the listing of every product type and seat counts on the server, once for
+all of them, before its HTML** — the live page and the preview alike, with no Suspense
+boundary — so the cards, or a section's absence, are in the first byte and nothing below
+them moves; a failed read seeds nothing, and the cards then arrive with the client's own
+fetch. That listing seeds a cache entry of its own, keyed on its types, and never the
+shop's, whose key promises the shop's three types alone. Its structured data gains one
+shop-style `ItemList` per products section, naming the cards it draws whose page is
+promoted — never a municipality club, whose `/schools` page is reachable and not promoted
+— and never repeats a product's own markup, which stays on the product's page.
 
 **`/discover` lists every live page, newest first**, each card in the reader's version at
 the index's own locale, with the picture its hero leads with where it has one; there is

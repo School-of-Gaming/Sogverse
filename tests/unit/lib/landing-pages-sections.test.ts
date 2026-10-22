@@ -10,6 +10,7 @@ import {
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
+  landingPickedProductIds,
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
 import { markdownText } from "@/lib/landing-pages/sections/shared";
@@ -158,6 +159,50 @@ describe("the structure", () => {
     ).toBe(false);
     expect(landingSections.safeParse([hero, { ...rest[0], id: hero.id }]).success).toBe(false);
     expect(landingSections.safeParse([]).success).toBe(false);
+  });
+});
+
+describe("a products section", () => {
+  const product = (n: number) => `00000000-0000-4000-8000-${(0x5000 + n).toString(16).padStart(12, "0")}`;
+  const products = (productIds: unknown) =>
+    landingSection.safeParse({ id: I.products, type: "products", productIds });
+
+  it("picks at least one product, with no upper bound, keeping the admin's order", () => {
+    expect(products([]).success).toBe(false);
+    expect(products(undefined).success).toBe(false);
+    expect(products([product(1)]).success).toBe(true);
+    const many = Array.from({ length: 60 }, (_, n) => product(60 - n));
+    const parsed = products(many);
+    expect(parsed.success && parsed.data.type === "products" && parsed.data.productIds).toEqual(many);
+  });
+
+  it("names each product once, by a product's id, lowercased", () => {
+    expect(products([product(1), product(1)]).success).toBe(false);
+    expect(products(["a-club"]).success).toBe(false);
+    const parsed = products([` ${product(2).toUpperCase()} `]);
+    expect(parsed.success && parsed.data.type === "products" && parsed.data.productIds).toEqual([
+      product(2),
+    ]);
+  });
+
+  it("requires no words: its eyebrow, heading and intro are all optional", () => {
+    expect(LANDING_SECTIONS.products.missingText()).toEqual([]);
+    expect(LANDING_SECTIONS.products.text.safeParse({}).success).toBe(true);
+    expect(
+      LANDING_SECTIONS.products.text.safeParse({ eyebrow: "E", heading: "H", intro: "I" }).success,
+    ).toBe(true);
+    expect(LANDING_SECTIONS.products.text.safeParse({ body: "B" }).success).toBe(false);
+  });
+
+  it("lists every pick of a page once, in page order", () => {
+    const [hero] = everySection();
+    expect(
+      landingPickedProductIds([
+        hero,
+        { id: product(10), type: "products", productIds: [product(3), product(1)] },
+        { id: product(11), type: "products", productIds: [product(1), product(2)] },
+      ]),
+    ).toEqual([product(3), product(1), product(2)]);
   });
 });
 

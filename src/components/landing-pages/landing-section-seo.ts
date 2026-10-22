@@ -32,10 +32,14 @@ import { markdownToPlainText } from "./markdown-plain-text";
  *   in the version's language.
  * - `question` — one question and its answer, as plain text; any question
  *   makes the page a `FAQPage`.
+ * - `products` — the products a section promotes, by id in its order; the
+ *   page lists those the shop lists, each pointing at its page, and repeats
+ *   none of a product's own markup, which stays on the product's page.
  */
 export type LandingStructuredPart =
   | { kind: "image"; imageId: string; alt: string | null }
-  | { kind: "question"; question: string; answer: string };
+  | { kind: "question"; question: string; answer: string }
+  | { kind: "products"; sectionId: string; productIds: readonly string[] };
 
 interface LandingSectionSeo<Type extends LandingSectionType> {
   structuredData: (
@@ -82,6 +86,11 @@ export const LANDING_SECTION_SEO: {
   // earns no rich result, and the quotes are the page's own words to a reader.
   testimonials: {
     structuredData: none,
+  },
+  products: {
+    structuredData: (section) => [
+      { kind: "products", sectionId: section.id, productIds: section.productIds },
+    ],
   },
   faq: {
     structuredData: (section, text) =>

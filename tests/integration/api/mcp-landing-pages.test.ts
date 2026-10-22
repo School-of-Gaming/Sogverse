@@ -171,6 +171,7 @@ const PAGE: AdminLandingPage = {
   },
   hasUnpublishedChanges: true,
   testimonials: {},
+  productPicks: [],
 };
 
 const LIST_ITEM: AdminLandingPageListItem = {
@@ -316,6 +317,56 @@ describe("reading", () => {
     expect(resultText(result)).toContain(`Picture ${CASTLE}: ${BUCKET}/castle.jpg`);
   });
 
+  it("reports each products section's picks, shown or not and why", async () => {
+    const PICKS = "a1000000-0000-4000-8000-000000000005";
+    const CLUB = "c3000000-0000-4000-8000-000000000001";
+    const CAMP = "c3000000-0000-4000-8000-000000000002";
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [...PAGE.draft.sections, { id: PICKS, type: "products", productIds: [CLUB, CAMP] }],
+      },
+      productPicks: [
+        {
+          sectionId: PICKS,
+          sectionNumber: 5,
+          shownCount: 1,
+          picks: [
+            { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+            {
+              productId: CAMP,
+              names: [{ locale: "en", name: "Summer camp" }],
+              shown: false,
+              reasons: ["notListed", "ended"],
+            },
+          ],
+        },
+      ],
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.structuredContent?.productPicks).toEqual([
+      {
+        section: "section 5 (Products)",
+        sectionId: PICKS,
+        shown: 1,
+        picked: 2,
+        drawn: true,
+        picks: [
+          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, notShownBecause: [] },
+          {
+            productId: CAMP,
+            names: [{ locale: "en", name: "Summer camp" }],
+            shown: false,
+            notShownBecause: ["it is unlisted", "its term has ended"],
+          },
+        ],
+      },
+    ]);
+  });
+
   it("lists the live addresses a publish would change, with both links, and none for a language going live first", async () => {
     const [en, fi] = PAGE.draft.versions;
     landing.getAdminPage.mockResolvedValue({
@@ -387,6 +438,12 @@ describe("reading", () => {
       "Before a publish that changes a live language's address, confirm it with the admin, because links shared outside the site to the old address stop working",
     );
     expect(publish).toContain("slugsChanging");
+    // The products section says how its picks go stale, and where that is read.
+    expect(structure).toContain("list_products");
+    expect(structure).toContain("Picks go stale every term");
+    expect(structure).toContain("productPicks");
+    const read = tools.find((t) => t.name === "get_landing_page")?.description;
+    expect(read).toContain("productPicks");
     for (const { name, description } of tools) {
       if (name.includes("landing")) expect(description, name).not.toMatch(/fixed for good|permanent/i);
     }
@@ -540,6 +597,7 @@ describe("cloning", () => {
     publication: null,
     hasUnpublishedChanges: true,
     testimonials: {},
+    productPicks: [],
   };
 
   it("clones in one call with each language's own copy marker, and answers the clone's titles, slugs and links", async () => {
@@ -738,6 +796,40 @@ describe("saving", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain(named);
     expect(landing.saveVersion).not.toHaveBeenCalled();
+  });
+
+  it("saves a products section's picks as structure, and quotes the refusal of an id no product has", async () => {
+    const PICKS = "a1000000-0000-4000-8000-000000000005";
+    const GONE = "c3000000-0000-4000-8000-0000000000ff";
+    const sentence = `Section 2 picks the product ${GONE}, and no product has that id`;
+    landing.saveStructure.mockRejectedValue(dbError("23503", sentence));
+
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { id: PICKS, type: "products", productIds: [GONE.toUpperCase()] },
+      ],
+    });
+
+    expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
+      PAGE.draft.sections[0],
+      { id: PICKS, type: "products", productIds: [GONE] },
+    ]);
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(sentence);
+  });
+
+  it("refuses a products section with no picks before anything is sent", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [PAGE.draft.sections[0], { type: "products", productIds: [] }],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("Section 2 (Products)");
+    expect(resultText(result)).toContain("A products section picks at least one product");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
   it("quotes the database's refusal of a slug another page holds", async () => {

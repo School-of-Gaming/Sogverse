@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { prefetchLandingProducts } from "@/components/landing-pages/landing-page-products";
 import {
   LandingPageBreadcrumb,
   type LandingBreadcrumb,
@@ -33,7 +34,10 @@ export const metadata: Metadata = {
  * reader gets (English, then the first written). A version still being written
  * is shown as it stands, its unwritten words left out, since it is the one
  * being worked on. Its testimonials are the working copy's, with their
- * current words from the store, which the admin read carries.
+ * current words from the store, which the admin read carries. Its products
+ * sections show what the live page would show now: the picks the listing
+ * holds, read with the admin's own session — which reads the same listing a
+ * reader's does.
  */
 export default async function LandingPagePreviewPage({
   params,
@@ -61,6 +65,7 @@ export default async function LandingPagePreviewPage({
     indexName: tDiscover("name"),
     title: version.title,
   };
+  const products = await prefetchLandingProducts(draft.sections);
 
   return (
     <>
@@ -77,6 +82,7 @@ export default async function LandingPagePreviewPage({
         sectionTexts={version.sectionTexts}
         textLocale={version.locale}
         locale={locale}
+        products={products}
         pageId={id}
         preview
       />
