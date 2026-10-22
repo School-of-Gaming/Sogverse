@@ -1,6 +1,6 @@
 ---
 name: ux-walkthrough
-description: Work a page that confuses people as a UX problem — reproduce the confusing state with real data, screenshot it, walk through it as the actual reader on a first visit, name what trapped them, and propose subtle fixes within the current UX before any redesign. Use when feedback says parents (or gamers, gedus) are confused by a page, users don't understand why they can't do something, support keeps getting the same question about a screen, or the owner asks to look at something as a UX problem or to walk through it as a user.
+description: Work a page that confuses people as a UX problem — reproduce the confusing state with real data, screenshot it, walk through it as the actual reader on a first visit, name what trapped them, and propose a subtle fix when the current UI works, or a redesign when exploring shows it doesn't. Use when feedback says parents (or gamers, gedus) are confused by a page, users don't understand why they can't do something, support keeps getting the same question about a screen, or the owner asks to look at something as a UX problem or to walk through it as a user.
 ---
 
 # UX walkthrough of a confusing page
@@ -52,30 +52,37 @@ the reader acts on it in good faith. Other typical traps:
   reader everything is fine;
 - the page never plainly saying no.
 
-## 4. Propose subtle fixes within the current UX
+## 4. Propose the fix: a tweak when the UI works, a redesign when it doesn't
 
-Before any redesign, change what the existing elements **say** or how they **behave** in
-that one state: the label, the disabled state, an inline reason. Keep layout, placement
-and affordances where the reader already knows them. Rank the fixes by how early in the
-walkthrough each would have stopped the reader, and get the owner's pick before building.
+**When the current UI works and only misleads in this state, tweak it.** Change what the
+existing elements **say** or how they **behave** in that one state: the label, the
+disabled state, an inline reason. Keep layout, placement and affordances where the
+reader already knows them. Rank the fixes by how early in the walkthrough each would have
+stopped the reader, and get the owner's pick before building.
+
+**When the exploration shows the UI itself is the problem, speak up and propose a
+redesign.** That is when no change of wording or state would have saved the reader: the
+step they need is missing from the page, the flow asks for things in the wrong order, or
+the page is built for a case the reader isn't in. Say so plainly, point to the steps of
+the walkthrough that show it, and say why a tweak falls short. Where a tweak would still
+help in the meantime, offer it too; which to build is the owner's call.
 
 Worked example (shop product page, every child under the club's age band): the disabled
 button said "Add a gamer to continue", so parents added the same child again. Approved
 fixes: the button names the real problem ("None of your gamers are 13–17"), the row label
 reads as a refusal carrying the range ("Too young · 13–17") instead of a description
-("Under 13"), and the consent checkboxes are disabled while nobody can be picked.
+("Under 13"), and the consent checkboxes are disabled while nobody can be picked. The
+form itself worked; only what it said in that state was wrong, so a redesign was the wrong
+size of answer.
 
-**Don't, even when a redesign looks cleaner** — both sank a rejected first attempt on
-that page, which swapped the form for a message block:
+**Whichever is proposed, don't do these** — both sank a rejected first attempt on that
+page, a redesign that swapped the form for a message block:
 
 - **Don't repurpose a primary button as navigation away.** A primary button where the
   reader expects "continue" must continue on this page; one that leaves for another page
   breaks the reader's model of the form.
 - **Don't move a control the reader already knows.** Moving "Add gamer" into the new
   block meant returning readers could not find it.
-
-A redesign is for when no subtle change can carry the message, and that is the owner's
-call, made after seeing the subtle option.
 
 ## 5. Build, then show the result
 
