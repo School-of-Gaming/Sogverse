@@ -127,6 +127,18 @@ describe("a page's sticky section", () => {
     }
   });
 
+  it("stacks the form's name fields in the column, which is narrower than the viewport says", () => {
+    /** The grid holding the first and last name, as the form draws it. */
+    const nameRow = () =>
+      document.querySelector('input[autocomplete="given-name"]')?.closest(".grid")?.className;
+    const { unmount } = renderBody();
+    expect(nameRow()).toBeDefined();
+    expect(nameRow()).not.toContain("grid-cols-2");
+    unmount();
+    renderBody({ side: null });
+    expect(nameRow()).toContain("sm:grid-cols-2");
+  });
+
   it("draws the jump under the hero's content, hidden from xl, in the section's button's words", () => {
     renderBody();
     const button = jump();

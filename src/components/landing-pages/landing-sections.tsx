@@ -672,6 +672,7 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * from `xl`, the page's end below that — and the card is the same in both.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  const sticky = section.sticky !== undefined;
   const form = (
     <LandingSubscribeForm
       pageId={context.pageId}
@@ -679,9 +680,10 @@ function SubscribeSection({ section, text, context }: LandingSectionProps<"subsc
       locale={context.locale}
       buttonLabel={written(text.buttonLabel) ?? ""}
       preview={context.preview}
+      stacked={sticky}
     />
   );
-  if (section.sticky !== undefined) {
+  if (sticky) {
     return (
       <section>
         <Card className="relative mx-auto max-w-xl overflow-hidden">
@@ -760,10 +762,7 @@ export function renderLandingSection<Type extends LandingSectionType>(
  * asked.
  */
 export const LANDING_STICKY_OFFERS: {
-  [Type in LandingSectionType]: (
-    text: LandingTextOf<Type>,
-    context: LandingRenderContext,
-  ) => string | null;
+  [Type in LandingSectionType]: (text: LandingTextOf<Type>) => string | null;
 } = {
   hero: () => null,
   text: () => null,
@@ -774,16 +773,14 @@ export const LANDING_STICKY_OFFERS: {
   products: () => null,
   faq: () => null,
   subscribe: (text) => written(text.buttonLabel),
-  cta: (text) => written(text.buttonLabel),
+  cta: () => null,
 };
 
 /** The jump button's words for one sticky section, as `LANDING_STICKY_OFFERS` answers. */
 export function landingStickyOffer<Type extends LandingSectionType>(
   type: Type,
   text: LandingTextByType[Type],
-  context: LandingRenderContext,
 ): string | null {
-  const offer: (text: LandingTextOf<Type>, context: LandingRenderContext) => string | null =
-    LANDING_STICKY_OFFERS[type];
-  return offer(text, context);
+  const offer: (text: LandingTextOf<Type>) => string | null = LANDING_STICKY_OFFERS[type];
+  return offer(text);
 }

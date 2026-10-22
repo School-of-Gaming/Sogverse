@@ -211,8 +211,9 @@ and a DB test running every type through both halves fails until the two agree. 
 structure rule refuses a second sticky section and a type not allowed one, naming the types
 that are. From `xl` the sticky section leaves the flow and stands in a sticky column on its
 side, pinned under the header, beside every other section; the sections keep their full
-width and clear the column with their own padding, so a section's band still spans the
-page under it, and the column is a card standing on top. Below `xl` it is drawn at the
+width and clear the column with their content padding (`LANDING_CONTENT`), so a section's
+own box runs under the column, which is a card standing on top; a full-width band would wrap
+`LANDING_CONTENT` as an inner box rather than carry it. Below `xl` it is drawn at the
 page's end, after the last section, and the page — not the admin — puts a jump button to
 it under the hero, in the section's own button's words, and only while the section has
 something to offer (each type's renderer says what). It is drawn once, last in the

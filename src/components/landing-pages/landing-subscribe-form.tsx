@@ -26,7 +26,8 @@ type Refusal = "invalid" | "error";
 
 /**
  * **A landing page's email sign-up form**: an optional first and last name,
- * side by side as the registration forms set them, an email address and the
+ * side by side as the registration forms set them (stacked in the sticky
+ * card, whose column is too narrow for a pair), an email address and the
  * consent box, posted to the sign-up route, which puts the address on the
  * newsletter list at once (single opt-in). The button stays disabled until an
  * address is typed and the box is ticked — the names never hold it back;
@@ -47,6 +48,7 @@ export function LandingSubscribeForm({
   locale,
   buttonLabel,
   preview,
+  stacked = false,
 }: {
   pageId: string;
   sectionId: string;
@@ -55,6 +57,8 @@ export function LandingSubscribeForm({
   buttonLabel: string;
   /** The admin's preview: the form is drawn, but its button is disabled and nothing is posted. */
   preview: boolean;
+  /** The sticky card's narrow column: the name fields one above the other at every width. */
+  stacked?: boolean;
 }) {
   const t = useTranslations("landingSubscribe");
   const utm = useUtm();
@@ -130,6 +134,7 @@ export function LandingSubscribeForm({
         setLastName={setLastName}
         disabled={committing}
         optional
+        stacked={stacked}
         idPrefix={`${sectionId}-`}
         firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
         lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}

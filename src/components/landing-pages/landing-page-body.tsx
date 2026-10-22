@@ -57,8 +57,8 @@ export const LANDING_STICKY_ANCHOR = "landing-sticky";
 // From `xl` (1280px) a page with a sticky section draws it in a column 20rem
 // (320px) wide on the side the admin chose, 2rem from the sections' content,
 // both declared in `globals.css`. The column is not a grid track the sections
-// are squeezed into: the sections keep the container's whole width — so a
-// section's band can still run under the column — and pay for it out of
+// are squeezed into: the sections keep the container's whole width — their
+// own box runs under the column — and pay for it out of
 // their own inline padding, which the `--landing-rail-space-*` property set
 // here grows on the column's side. The column is laid over the sections in
 // the same grid cell, inside the same container, so its outer edge is the
@@ -72,9 +72,12 @@ export const LANDING_STICKY_ANCHOR = "landing-sticky";
 // At 896 every type still works — the hero's two columns at 416px each (a
 // long headline takes four lines where it took three), a row of three
 // pictures at 288, three points or steps across at about 280, the questions
-// at their 768 cap — with nothing overflowing, and the email form inside the
-// card has 270px inputs, close to the 278 a 360px phone gives it. So the
-// column starts at `xl` rather than `2xl`.
+// at their 768 cap — with nothing overflowing. The column itself is what the
+// email form inside the card is fitted to: its inputs are 270px, close to the
+// 278 a 360px phone gives them, and that holds for the name fields only
+// because the card stacks them — side by side, as the viewport's width would
+// otherwise set them, each would get about 128px. So the column starts at
+// `xl` rather than `2xl`.
 //
 // Below `xl` none of this exists: the sticky section is drawn at the page's
 // end, after the last section and before the footer, and the jump button
@@ -146,7 +149,11 @@ export function LandingPageBody({
   preview,
 }: LandingPageBodyProps) {
   const sticky = landingStickySection(sections);
-  const base: LandingRenderContext = {
+  const offer =
+    sticky === null
+      ? null
+      : landingStickyOffer(sticky.type, landingSectionText(sectionTexts, sticky.id));
+  const context: LandingRenderContext = {
     locale,
     textLocale,
     pageId,
@@ -154,25 +161,15 @@ export function LandingPageBody({
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,
-    underHero: null,
+    underHero:
+      offer === null ? null : (
+        <LandingStickyJump
+          target={LANDING_STICKY_ANCHOR}
+          label={offer}
+          className="mt-8 xl:hidden"
+        />
+      ),
   };
-  const offer =
-    sticky === null
-      ? null
-      : landingStickyOffer(sticky.type, landingSectionText(sectionTexts, sticky.id), base);
-  const context: LandingRenderContext =
-    offer === null
-      ? base
-      : {
-          ...base,
-          underHero: (
-            <LandingStickyJump
-              target={LANDING_STICKY_ANCHOR}
-              label={offer}
-              className="mt-8 xl:hidden"
-            />
-          ),
-        };
   const draw = (section: LandingSection) => (
     <Fragment key={section.id}>
       {renderLandingSection(
