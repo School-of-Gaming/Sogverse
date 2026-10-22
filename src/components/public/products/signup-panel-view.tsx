@@ -1143,7 +1143,10 @@ function SignupForm(
                     <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
                       <Identicon id={g.id} />
                     </span>
-                    <span className="min-w-0">
+                    {/* Left-aligned against the button's centred default: a
+                        long name that wraps at 360px would otherwise centre
+                        its second line under the first. */}
+                    <span className="min-w-0 text-left">
                       <span
                         className={cn(
                           "font-medium",

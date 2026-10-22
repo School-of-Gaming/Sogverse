@@ -148,7 +148,7 @@
     },
     "seatIsFor": "Kenelle paikka on",
     "selected": "Valittu",
-    "agePill": "Ikä {age}",
+    "agePill": "Ikä\u00a0{age}",
     "parentPill": "Vanhempi",
     "regionLock": {
       "heading": "Sijaintisi",

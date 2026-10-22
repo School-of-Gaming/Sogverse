@@ -148,7 +148,7 @@
     },
     "seatIsFor": "Who this seat is for",
     "selected": "Selected",
-    "agePill": "Age {age}",
+    "agePill": "Age\u00a0{age}",
     "parentPill": "Parent",
     "regionLock": {
       "heading": "Your location",

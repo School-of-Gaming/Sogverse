@@ -148,7 +148,7 @@
     },
     "seatIsFor": "À qui revient cette place",
     "selected": "Sélectionné",
-    "agePill": "{age} ans",
+    "agePill": "{age}\u00a0ans",
     "parentPill": "Parent",
     "regionLock": {
       "heading": "Votre localisation",

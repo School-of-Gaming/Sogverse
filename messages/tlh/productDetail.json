@@ -148,7 +148,7 @@
     },
     "seatIsFor": "’Iv quSvam ghaj",
     "selected": "wIvlu’",
-    "agePill": "qan {age}",
+    "agePill": "qan\u00a0{age}",
     "parentPill": "vav/SoS",
     "regionLock": {
       "heading": "DaqlIj",

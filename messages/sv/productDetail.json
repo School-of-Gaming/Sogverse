@@ -148,7 +148,7 @@
     },
     "seatIsFor": "Vem platsen är för",
     "selected": "Vald",
-    "agePill": "Ålder {age}",
+    "agePill": "Ålder\u00a0{age}",
     "parentPill": "Förälder",
     "regionLock": {
       "heading": "Din plats",
