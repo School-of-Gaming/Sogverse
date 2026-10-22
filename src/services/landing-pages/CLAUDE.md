@@ -133,8 +133,11 @@ The count is checked in the registry and again in the SQL structure check, and a
 holds the two to one answer over every arrangement and count. An id no testimonial has is
 refused loudly by a trigger on the working copy, which checks only the ids a save adds, so
 a write that moves only the structure's other contents is never refused by a placement it
-did not make. **Neither copy carries a testimonial's words**: the live page reads them per
-request through the public read that answers only what the published copy places, so an
+did not make. **One trigger function serves every section type that names another table's
+rows by id**, attached once per type with its arguments — the type, the key holding the
+ids, the table and the words of its refusal — so a new such type is a new trigger on it,
+never a copy of its body. **Neither copy carries a testimonial's words**: the live page
+reads them per request through the public read that answers only what the published copy places, so an
 edit to a testimonial shows on every live page at once, without a republish, while a
 testimonial placed only in a working copy stays admin-only; the preview and the status
 page read the working copy's from the store under the admin policy. Each reader gets the
@@ -148,6 +151,26 @@ page by saving the structure without it.
 picture the page leads with, with the shown version's alt text; a hero without one shares
 the site-wide card. So placing a hero picture places it in every chat and feed the page is
 shared to, and a partner's mark in one needs that partner's sign-off (`src/CLAUDE.md`).
+
+**A products section promotes products an admin picks, of every type, and its picks go
+stale by design.** Its structure names products by id — at least one, each once, in the
+admin's order, with no maximum, since the carousel scrolls — and its words, an eyebrow, a
+heading and an intro, are all optional, so it never makes a version incomplete. Each pick
+is drawn as the shop's own card in the product rail the Roblox page draws, so everything on
+a card is the shop's, live; a pick is drawn only while the listing holds it — listed and
+not ended, over every product type, so a municipality club is drawn like a camp, its card
+linking to its page under its town's `/schools` address as its card on that town's page
+does — and a section whose picks are none of them listed is not drawn at all — no heading,
+no empty state. **A pick no product has is refused when a structure naming it is saved**,
+by the database and not by the link hook: the shared trigger refuses it as a
+`foreign_key_violation` naming the section and the id, the same code a picture gone from
+the catalogue is refused with. The published copy has no such check: an ended or unlisted
+pick is not an error anywhere, only something the admin should swap. So **the admin read
+says, per products section of the working copy, which picks readers are not shown and
+why** — ended, unlisted, or no product at all any more — and the status page and the MCP
+tools both show it. Whether a pick is shown is the listing's own answer, asked over the
+same types the public page draws by; the reasons only explain it. The MCP product list
+answers the same question per product, from the same read.
 
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
@@ -164,10 +187,60 @@ none to check: the words it copies were made canonical when they were saved.
 detail included, the image catalogue's usage map, and the `testimonials` tree, whose
 "where it is used" names each page's copies.
 
+**Every publish and unpublish goes through one helper per action in `src/lib/indexnow/`**,
+which runs the service's own publish on the caller's client and then submits every
+address the change touched to IndexNow — each live language's slug address before and
+after, so an old slug and an unpublished page are submitted too, and the `/discover`
+index. The admin's status page reaches it through its publication route, since the
+browser cannot submit; the MCP tools call it directly. A submission is made from the
+production deployment alone and never fails the publish (`docs/architecture/site-quality.md`).
+
+**The email sign-up section (`subscribe`) is a one-way send to Klaviyo, and Sogverse
+stores nothing about the person.** The form takes an address, an optional first and last
+name and the consent box, and posts to `/api/landing-pages/subscribe`, which writes the
+profile to Klaviyo and subscribes it to the newsletter list; nothing is ever read back. The
+list is single opt-in, like the blog's newsletter form, so the reader is on it as soon as
+the route answers and the form gives way to "you are signed up". An address that had
+unsubscribed is simply subscribed again. Klaviyo records the consent and handles every
+unsubscribe. A sign-up is not an account and never touches an account's marketing
+consent; accounts are not synced to Klaviyo either. What the profile carries is the
+address, the names given, the page's locale, the landing page's id, and the visit's UTM
+values only under marketing consent — nothing else. The list is the deployment's
+(`KLAVIYO_*` in the environment, read by `src/lib/landing-pages/subscribe-config.server.ts`):
+the local server and Vercel Preview use a staging list, and production the real one. So
+the section has no shared field; its form copy, consent sentence included, is fixed copy
+in `landingSubscribe`, and the page writes only the ask. The route refuses a body without
+the ticked consent and a page whose published copy no longer holds the section, and
+answers a new address, a known one and a filled honeypot identically. The admin's preview
+draws the form with its button disabled. **The names are anyone's words, an accepted
+risk**: anyone can submit any address, and the import overwrites the names Klaviyo holds
+for it, so a mail that prints a subscriber's name may print a stranger's text. The owner
+accepted that over dropping the names; a flow or campaign that greets by name is the
+admins' call with that in mind. A later section offering something on sign-up (a
+download) would add a shared field to this type, not a second form.
+
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the
 id — never by handing a segment to the route builder, because a slug resolves in its own
 locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
 contribution (structured data) are each an exhaustive map over the section
 types. Every section sits on the plain page ground: an admin chooses the order, so a
-tinted band could land beside another and read as one section.
+tinted band could land beside another and read as one section. **A page with products
+sections reads the listing of every product type and seat counts on the server, once for
+all of them, before its HTML** — the live page and the preview alike, with no Suspense
+boundary — so the cards, or a section's absence, are in the first byte and nothing below
+them moves; a failed read seeds nothing, and the cards then arrive with the client's own
+fetch. That listing seeds a cache entry of its own, keyed on its types, and never the
+shop's, whose key promises the shop's three types alone. Its structured data gains one
+shop-style `ItemList` per products section, naming the cards it draws whose page is
+promoted — never a municipality club, whose `/schools` page is reachable and not promoted
+— and never repeats a product's own markup, which stays on the product's page.
+
+**`/discover` lists every live page, newest first**, each card in the reader's version at
+the index's own locale, with the picture its hero leads with where it has one; there is
+no opting out, because the index is what keeps the pages from being orphans to a crawler.
+The footer links it from every page, and the header and the tab bar deliberately do not:
+people reach landing pages from advertising, not by browsing. **Each page carries a
+breadcrumb trail — the index, then the page — drawn on the page and stated as its
+`BreadcrumbList` from the same names**, so the structured data names nothing the reader
+cannot see.

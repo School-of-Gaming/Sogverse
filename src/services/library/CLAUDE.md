@@ -90,6 +90,14 @@ page's is marked with `lang`, on the article and on a card. The Library is promo
 (`docs/architecture/site-quality.md`): indexed, in the sitemap with each article's
 publish date, and each article listed in `llms.txt`. The admin preview stays `noindex`.
 
+**Every publish and unpublish goes through one helper per action in `src/lib/indexnow/`**,
+which runs the service's own publish on the caller's client and then submits to IndexNow
+every address the change touched — across the whole live Library, because a derived slug
+another article also derives can pass to it when this one leaves or is retitled — and
+the Library index. The editor reaches it through its publication route, since the browser
+cannot submit; the MCP tools call it directly. A submission is made from the production
+deployment alone and never fails the publish (`docs/architecture/site-quality.md`).
+
 **There is no delete.** An article leaves the public Library by unpublishing.
 
 **Every Library write invalidates the whole `library` key tree, the admin detail

@@ -464,6 +464,20 @@
         "inItem": "Section {number} ({type}), {item} : {field}",
         "goneSection": "Une section qui n’est plus sur la page : {field}"
       },
+      "products": {
+        "heading": "Produits choisis",
+        "section": "Section {number} ({type})",
+        "allShown": "{count, plural, one {Son produit est affiché.} other {Ses # produits sont tous affichés.}}",
+        "noneShown": "Aucun de ses produits n’est affiché, les lecteurs ne voient donc pas cette section. Remplacez-les par des produits au catalogue.",
+        "someHidden": "{shown} sur {total} affichés. Non affichés :",
+        "unnamed": "Un produit sans nom",
+        "hiddenItem": "{name} : {reasons}",
+        "reasons": {
+          "gone": "plus aucun produit n’a cet identifiant",
+          "notListed": "hors catalogue",
+          "ended": "terminé"
+        }
+      },
       "testimonials": {
         "heading": "Témoignages",
         "hint": "Leurs mots se modifient dans Témoignages, et une modification apparaît aussitôt sur la page en ligne.",
@@ -525,7 +539,9 @@
       "points": "Points",
       "steps": "Étapes",
       "faq": "Questions et réponses",
+      "subscribe": "Inscription par e-mail",
       "cta": "Appel à l’action",
+      "products": "Produits",
       "testimonials": "Témoignages"
     },
     "items": {

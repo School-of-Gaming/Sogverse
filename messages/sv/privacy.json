@@ -37,7 +37,8 @@
         "Meddelanden som ditt barn skickar i chatten under en träff – så att spelfostraren och gruppen kan läsa dem under träffen och så att vi kan utreda en oro i efterhand. Ett meddelande som ditt barn tar bort döljs för gruppen, men sparas tills kontot avslutas.",
         "Återkoppling som ditt barn ger oss om sina träffar – de omdömen och det eventuella meddelande barnet självt väljer att ge när vi frågar hur en träff gick – så att vi ser hur våra träffar går och kan göra dem bättre.",
         "Den tekniska information som varje webbplats behöver för att fungera – inloggningssessioner, förfrågningsloggar och, bara om du väljer det, anonym användningsstatistik. Se \"Teknisk information\" och \"Cookies, analys och annonsering\" nedan.",
-        "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, och bara om du har tillåtit cookies för marknadsföring, så att vi och våra partner vet vilken information som faktiskt når familjer. Att senare tacka nej till marknadsföring tar inte bort en kod som redan har sparats."
+        "Kampanjkoden – källa, medium och kampanj – som fanns i länken ditt besök kom från. Vi sparar den en gång, när kontot skapas, och bara om du har tillåtit cookies för marknadsföring, så att vi och våra partner vet vilken information som faktiskt når familjer. Att senare tacka nej till marknadsföring tar inte bort en kod som redan har sparats.",
+        "Om du anmäler dig till vårt nyhetsbrev på någon av våra sidor: din e-postadress, och ditt förnamn och efternamn om du anger dem. Med dem följer sidans språk och vilken sida det var, och kampanjkoden från länken du kom från om du har tillåtit cookies för marknadsföring. Allt går direkt till Klaviyo, som skickar vårt nyhetsbrev, och Sogverse sparar ingen kopia. Att anmäla sig kräver inget konto, och det ändrar inte marknadsföringsvalet på ett konto du har."
       ]
     },
     "technical": {
@@ -72,6 +73,7 @@
         "För att placera ditt barn i rätt klubb-, läger- eller evenemangsgrupp och koppla ihop barnet med en spelfostrare.",
         "För att hålla de direktsända röst- och videoträffarna.",
         "För att ta betalt och skicka kvitton, påminnelser och viktig information om dina klubbar.",
+        "För att skicka vårt nyhetsbrev till dem som har anmält sig till det.",
         "För att svara på dina frågor när du kontaktar oss.",
         "För att hålla Sogverse säkert, åtgärda problem och göra tjänsten bättre med tiden."
       ]
@@ -86,6 +88,7 @@
         "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
         "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
         "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet.",
+        "Ditt samtycke, för nyhetsbrevet – som du kan återkalla när som helst via avregistreringslänken i varje nyhetsbrev.",
         "Ditt samtycke, för cookies för analys och marknadsföring och för kampanjkoden – som du kan återkalla när som helst via Integritetsval längst ner på varje sida."
       ]
     },
@@ -98,6 +101,7 @@
         "Supabase – lagrar dina konto-, familje- och klubbuppgifter säkert.",
         "Stripe – hanterar betalningar. Dina kortuppgifter går direkt till Stripe, och vi ser dem aldrig.",
         "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
+        "Klaviyo – lagrar vår lista för nyhetsbrevet och skickar nyhetsbrevet till dem som har anmält sig till det.",
         "Daily.co – möjliggör de direktsända röst- och videoträffarna; ditt barns enhet ansluter direkt till tjänsten under en träff.",
         "Vercel – är värd för webbplatsen, så varje förfrågan passerar genom Vercel (se \"Teknisk information\"), och tillhandahåller anonym användningsstatistik om du tillåter analys.",
         "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",

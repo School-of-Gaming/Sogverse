@@ -81,6 +81,9 @@ function renderSection({
         sectionTexts={{ [HERO]: { headline: "Quotes" }, ...texts }}
         textLocale={textLocale}
         locale={locale}
+        products={null}
+        pageId={id(500)}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );

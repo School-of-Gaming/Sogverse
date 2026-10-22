@@ -17,6 +17,7 @@ import {
 } from "@/lib/landing-pages/picture-shapes";
 import { slugify } from "@/lib/slug";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import type { LandingProductsSectionPicks } from "./landing-pages.product-picks";
 
 /**
  * Contracts for landing pages.
@@ -255,7 +256,11 @@ export interface PublishedLandingVersion extends PublishedLandingVersionSummary 
   sectionTexts: LandingSectionTexts;
 }
 
-/** A published page as a list reads it — the sitemap, `llms.txt`. */
+/**
+ * A published page as a list reads it — the `/discover` index, the sitemap,
+ * `llms.txt`: its live structure, so a card can show the picture the page
+ * leads with, and every live version's short fields, but no words.
+ */
 export interface PublishedLandingPageSummary {
   /** The page's id — its id address. */
   id: string;
@@ -263,6 +268,9 @@ export interface PublishedLandingPageSummary {
   firstPublishedAt: string;
   /** When the live versions were published: the sitemap's `lastmod`. */
   publishedAt: string;
+  sections: LandingSection[];
+  /** As on the working copy, for the live sections. */
+  pictures: LandingPictures;
   /** Every live version, in `SUPPORTED_LOCALES` order; never empty. */
   versions: PublishedLandingVersionSummary[];
 }
@@ -270,9 +278,6 @@ export interface PublishedLandingPageSummary {
 /** A published page whole: its live structure and every live version. */
 export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
-  sections: LandingSection[];
-  /** As on the working copy, for the live sections. */
-  pictures: LandingPictures;
   versions: PublishedLandingVersion[];
 }
 
@@ -319,6 +324,12 @@ export interface AdminLandingPage {
    * what its preview paints and its status shows. Empty when it places none.
    */
   testimonials: Readonly<Record<string, PublicTestimonial>>;
+  /**
+   * Each products section of the working copy, in page order, with which of
+   * its picks readers are shown now and why each other one is not; empty when
+   * the working copy has no products section.
+   */
+  productPicks: LandingProductsSectionPicks[];
 }
 
 /**

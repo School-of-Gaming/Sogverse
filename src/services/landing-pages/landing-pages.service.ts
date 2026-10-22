@@ -1,7 +1,10 @@
+import { readApiError } from "@/lib/api/json-response";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
+  LANDING_PRODUCT_TYPES,
+  landingPickedProductIds,
   landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
@@ -11,6 +14,7 @@ import {
 } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
+import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 import { TestimonialsService } from "@/services/testimonials/testimonials.service";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
@@ -36,6 +40,10 @@ import {
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
 import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import {
+  landingProductPicks,
+  type LandingProductsSectionPicks,
+} from "./landing-pages.product-picks";
 import { testimonialsById } from "./landing-pages.testimonials";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
@@ -52,8 +60,8 @@ const DRAFT_VERSION_LIST_COLUMNS =
 
 const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5)`;
 
-/** The published copy's columns for a list: no structure and no words. */
-const PUBLICATION_SUMMARY_COLUMNS = `page_id, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
+/** The published copy's columns for a list: the structure, and no words. */
+const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
 
 /** The published copy's columns for comparing, without its words. */
 const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5)`;
@@ -94,14 +102,14 @@ function publishable(row: {
 
 interface PublicationSummaryRow {
   page_id: string;
+  sections: unknown;
+  pictures: unknown;
   published_at: string;
   first_published_at: string;
   versions: readonly { locale: string; title: string; summary: string; slug: string }[];
 }
 
 interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
-  sections: unknown;
-  pictures: unknown;
   versions: readonly {
     locale: string;
     title: string;
@@ -116,6 +124,8 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
     id: row.page_id,
     firstPublishedAt: row.first_published_at,
     publishedAt: row.published_at,
+    sections: readSections(row.sections),
+    pictures: landingPictures.parse(row.pictures),
     versions: inLocaleOrder(row.versions).map(({ locale, title, summary, slug }) => ({
       locale,
       title,
@@ -126,11 +136,10 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
 }
 
 function toPublished(row: PublicationRow): PublishedLandingPage {
-  const sections = readSections(row.sections);
+  const summary = toPublishedSummary(row);
+  const { sections } = summary;
   return {
-    ...toPublishedSummary(row),
-    sections,
-    pictures: landingPictures.parse(row.pictures),
+    ...summary,
     versions: inLocaleOrder(row.versions).map(
       ({ locale, title, summary, slug, section_texts }) => ({
         locale,
@@ -227,7 +236,9 @@ export class LandingPageService {
    * has that id. An id that is not a UUID is answered as not found without a
    * query. Each draft version carries what it still needs before publishing
    * takes it, by the TypeScript half of the required-text rule; the page
-   * carries the current words of every testimonial its working copy places.
+   * carries the current words of every testimonial its working copy places;
+   * and each products section of the working copy, which of its picks readers
+   * are shown now and why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -284,6 +295,7 @@ export class LandingPageService {
         data.publication,
       ),
       testimonials: await this.testimonialWords(sections),
+      productPicks: await this.productPicksOf(sections),
     };
   }
 
@@ -297,6 +309,30 @@ export class LandingPageService {
     const ids = landingPlacedTestimonialIds(sections);
     if (ids.length === 0) return {};
     return testimonialsById(await new TestimonialsService(this.supabase).listTestimonialWords(ids));
+  }
+
+  /**
+   * Each products section's picks, shown or not and why: the listing of every
+   * product type asked about the picks — the answer the public page draws by —
+   * and the picks' own rows for the reasons. A structure with no products
+   * section reads nothing.
+   */
+  private async productPicksOf(
+    sections: readonly LandingSection[],
+  ): Promise<LandingProductsSectionPicks[]> {
+    const ids = landingPickedProductIds(sections);
+    if (ids.length === 0) return [];
+    const products = new ProductsService(this.supabase);
+    const [listed, facts] = await Promise.all([
+      products.listVisibleListingAmong(LANDING_PRODUCT_TYPES, ids),
+      products.getListingFacts(ids),
+    ]);
+    return landingProductPicks(
+      sections,
+      new Set(listed.map((row) => row.id)),
+      facts,
+      new Date(),
+    );
   }
 
   private async oauthClientNames(
@@ -500,14 +536,44 @@ export class LandingPageService {
     if (error) throw error;
   }
 
+  /**
+   * Publish from the browser — the admin's status page. The publish runs on
+   * the server, through the admin's publication route, which then tells search
+   * engines what changed (`src/lib/indexnow/`); the server side calls
+   * `publishPage` there. A refusal arrives as an `ApiError` carrying the
+   * database's sentence and code, so `landingWriteFailure` reads it as it
+   * would the database's own.
+   */
+  async publishPageViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "PUT", "Failed to publish the page");
+  }
+
+  /** Unpublish from the browser, through the same route as `publishPageViaRoute`. */
+  async unpublishPageViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "DELETE", "Failed to unpublish the page");
+  }
+
+  private async changePublicationViaRoute(
+    id: string,
+    method: "PUT" | "DELETE",
+    fallback: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/landing-pages/${encodeURIComponent(id)}/publication`,
+      { method },
+    );
+    if (!response.ok) throw await readApiError(response, fallback);
+  }
+
   // -------------------------------------------------------------------------
   // Public reads
   // -------------------------------------------------------------------------
 
   /**
    * Every published page, newest first by the date it first went live, with
-   * every live version's short fields and no structure or words — what the
-   * sitemap and `llms.txt` read. Walked, because pages only grow.
+   * its live structure and every live version's short fields, and no words —
+   * what the `/discover` index, the sitemap and `llms.txt` read. Walked,
+   * because pages only grow.
    */
   async listPublishedPages(): Promise<PublishedLandingPageSummary[]> {
     const rows = await walkPages("listPublishedLandingPages", (from, to) =>

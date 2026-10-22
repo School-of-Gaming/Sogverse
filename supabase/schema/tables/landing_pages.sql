@@ -101,10 +101,17 @@ CREATE TRIGGER trg_landing_pages_cascade_structure AFTER UPDATE OF sections ON p
 
 
 --
+-- Name: landing_pages trg_landing_pages_check_product_picks; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_landing_pages_check_product_picks BEFORE INSERT OR UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks('products', 'productIds', 'products', 'product', 'picks');
+
+
+--
 -- Name: landing_pages trg_landing_pages_check_testimonial_picks; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_landing_pages_check_testimonial_picks BEFORE INSERT OR UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.check_landing_testimonial_picks();
+CREATE TRIGGER trg_landing_pages_check_testimonial_picks BEFORE INSERT OR UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks('testimonials', 'testimonialIds', 'testimonials', 'testimonial', 'places');
 
 
 --

@@ -21,8 +21,8 @@ import type { TopicPrepTranslator } from "./translator";
  * **It is the same document the app renders**, from the same registry and the
  * same message catalog: the steps come from the topic's `prep` block and the
  * prose from the top-level `topicPrep` namespace, so a family reading the guide
- * on the confirmation page, in this mail and on their My SOG enrolment card
- * reads one guide three times rather than three guides. Which steps apply is
+ * in this mail and on their My SOG enrolment card reads one guide twice rather
+ * than two guides. Which steps apply is
  * `resolveTopicPrep`'s answer and not this file's — an in-person product
  * renders only the account steps, because School of Gaming brings the machines,
  * and a remote one gains the shared step about the voice room's mic and camera

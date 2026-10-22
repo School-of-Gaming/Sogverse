@@ -4335,11 +4335,7 @@ export type Database = {
           p_gender?: Database["public"]["Enums"]["gender_type"]
           p_guardian_attested?: boolean
           p_last_name: string
-          p_minecraft_username?: string
-          p_minecraft_uuid?: string
           p_parent_id: string
-          p_roblox_user_id?: number
-          p_roblox_username?: string
           p_sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
         }
         Returns: undefined

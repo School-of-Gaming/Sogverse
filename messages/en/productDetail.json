@@ -88,6 +88,7 @@
     "ctaSubmitting": "One moment…",
     "ctaAddGamer": "Add a gamer to continue",
     "ctaAllSet": "You’re all set",
+    "ctaOutOfBand": "{count, plural, one {Your gamer isn’t {min}–{max}} other {None of your gamers are {min}–{max}}}",
     "ctaAgreeConsent": "Give the required consent",
     "ctaWaitlist": "Join the waitlist",
     "ctaSignIn": "Sign in",
@@ -99,8 +100,9 @@
       "event": "Already joined"
     },
     "gamerAlreadyWaitlisted": "On waitlist",
-    "gamerUnderAge": "Under {min}",
-    "gamerOverAge": "Over {max}",
+    "gamerTooYoung": "Too young",
+    "gamerTooOld": "Too old",
+    "gamerBand": "Ages {min}–{max}",
     "nonCustomerNote": "Only parents can register a gamer here.",
     "nonCustomerNoteParents": "Only parents can sign up here.",
     "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
@@ -138,7 +140,7 @@
     },
     "seatIsFor": "Who this seat is for",
     "selected": "Selected",
-    "agePill": "Age {age}",
+    "agePill": "Age\u00a0{age}",
     "parentPill": "Parent",
     "regionLock": {
       "heading": "Your location",

@@ -1,3 +1,7 @@
+import {
+  publishLibraryArticle,
+  unpublishLibraryArticle,
+} from "@/lib/indexnow/library";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod-v4";
@@ -498,7 +502,7 @@ export function registerLibraryTools(server: McpServer): void {
         const before = await service.getAdminArticle(id);
         if (before === null) return refusal(NOT_FOUND);
         const wasLive = before.publication?.versions.map((v) => v.locale) ?? [];
-        await service.publishArticle(id);
+        await publishLibraryArticle(service, id);
         // The answer is read back from what the publish did, never forecast
         // from the read before it: a save landing in between changes what
         // goes live.
@@ -535,7 +539,7 @@ export function registerLibraryTools(server: McpServer): void {
       asAdmin(ctx, async ({ service }) => {
         const before = await service.getAdminArticle(id);
         if (before === null) return refusal(NOT_FOUND);
-        await service.unpublishArticle(id);
+        await unpublishLibraryArticle(service, id);
         return answer({ articleId: id, wasLive: before.publication !== null, live: false });
       }),
   );

@@ -10,7 +10,6 @@ import {
   MapPin,
   Radio,
   RefreshCwOff,
-  UserRoundSearch,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -69,8 +68,7 @@ import {
  *   no answer.** A remote product answers with the Join button (lit inside its
  *   window, locked and naming the next session outside it); an in-person one
  *   with its site and a pin; a waitlisted one with the family's place in line
- *   and what happens when a seat opens; an unplaced one with the fact that a
- *   Gedu is being matched; a finished one with the day it ended.
+ *   and what happens when a seat opens; a finished one with the day it ended.
  *   Those are exclusive by construction, so the row is populated rather than
  *   reserved — and on the one card where every branch comes up empty (a running
  *   enrollment whose product has no schedule slots yet, so there is no session
@@ -89,19 +87,15 @@ import {
  *   anything with no session to start — because holding space for something
  *   that cannot come is its own defect.
  *
- * **Three states, one grammar: a seat, a queue place, and a seat with nowhere
- * to sit yet.** The third is the purchased-but-unplaced enrollment
- * (`group_id IS NULL`), the day or so between a payment landing and an admin
- * matching the child with a Gedu. It is a first-class state rather than a
- * variation on running, because *nothing* behind it exists yet: no group means
- * no room, no feed and no page, so it carries no Join of any kind, no link and
- * no chevron — the same inertness a waitlist place has, arrived at for the same
- * reason. This is what closes the old bug where an unplaced enrollment drew a
- * Join that looked joinable and did nothing. What it does not share with a
- * waitlist place is its tone: it wears `info` rather than muted quiet, because
- * the seat *is* theirs and the schedule on the card is one they will be
- * attending. Nothing is pending on the family's side, which is exactly what the
- * footer sentence says.
+ * **Two states, one grammar: a seat and a queue place.** A seat not yet placed
+ * in a group (`group_id IS NULL`) is still a seat, and is drawn as one — its
+ * schedule, its site, its prep guide, and not one word about placement.
+ * Putting a seat in a group before its first session is School of Gaming's
+ * job, not something the family is told about or waits on, so nothing on the
+ * card may make the seat look pending or incomplete. The card only leaves out
+ * what does not exist yet: with no group there is no room, no feed and no
+ * page, so it has no link, no chevron and no Live badge, and its Join stays
+ * locked, naming the next session whose room has yet to open.
  *
  * **The corner means exactly one thing: an alarm the parent can act on.**
  * Across the product the corner badge means "this needs attention" — the
@@ -116,9 +110,9 @@ import {
  * Card, not a child — a card that clips its own overflow would otherwise cut it
  * in half.
  *
- * **The whole card is one link — except the two states with nothing behind
- * them, which are no link at all.** A family in the queue and a family whose
- * seat has not been placed both reach no product page, so those cards drop the
+ * **The whole card is one link — except the two cards with nothing behind
+ * them, which are no link at all.** A queue place and a seat not yet in a
+ * group both reach no product page, so those cards drop the
  * stretched anchor, the chevron and the hover lift together: nothing about a
  * card may promise "there is more inside" when there is not. On the cards that
  * do link, an invisible stretched anchor covers the card, the chevron marks
@@ -150,10 +144,7 @@ import {
  *   guide steps aside into the same muted link treatment the leave-waitlist
  *   affordance uses.
  * - **Under the footer sentence, on the cards with no Join at all** — the
- *   in-person card naming its site, and the unplaced seat waiting on a Gedu.
- *   The unplaced card is inert *as a link* because there is no page behind it;
- *   a dialog is not a page, and the wait for placement is exactly the window
- *   this guide is written for.
+ *   in-person card naming its site.
  * - **Nowhere on a queue place or a finished run.** There is no seat to get
  *   ready for in the first, and the second is history.
  *
@@ -332,20 +323,6 @@ export type EnrollmentCardProps = EnrollmentCardCommonProps &
   );
 
 /**
- * The "a Gedu is being matched" sentence, per audience — third person about a
- * child, second person to the child themselves, second person to a parent about
- * their own seat.
- *
- * A lookup rather than a nested ternary because there are three of them now and
- * a chain of `? :` reads as a hierarchy the audiences do not have.
- */
-const AWAITING_KEY = {
-  customer: "awaitingCustomer",
-  self: "awaitingSelf",
-  gamer: "awaitingGamer",
-} as const;
-
-/**
  * The place-in-line sentence, per audience. **The parent's own seat reuses the
  * parent's string deliberately**: it already reads "we'll email you the moment
  * a seat opens", which is true of a seat they hold themselves and names nobody.
@@ -439,26 +416,34 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   const { inProgress, voiceIsOpen } = enrollmentLiveness(enrollment, now);
   const hasNext = nextSessionStart !== null && nextSessionEnd !== null;
   /**
+   * Holding a seat, placed in a group or not, with the run still going — what
+   * the site line asks, because the site belongs to the product rather than to
+   * a group.
+   */
+  const seated = endedOn === null && !waitlisted;
+  /**
    * Holding a seat **in a group**, with the run still going.
    *
-   * Awaiting placement is excluded alongside a waitlist place, and for the same
-   * reason rather than a similar one: with no group there is no room, no feed
-   * and no page, so every affordance `running` gates — the Join, the Live
-   * badge, the site line — would be describing something that does not exist
-   * yet. The difference between the two is what the footer *says*, not what the
-   * card is allowed to do.
+   * An unplaced seat is excluded because with no group there is no room, no
+   * feed and no page, so a lit Join or a Live badge would be describing
+   * something that does not exist yet.
    */
-  const running = endedOn === null && !waitlisted && !awaiting;
+  const running = seated && !awaiting;
   /**
-   * Whether there is a page behind this card. Two states have none — a queue
+   * Whether the Join is lit. Only a seat in a group has a room to open, so an
+   * unplaced seat's Join stays locked whatever the clock says.
+   */
+  const joinOpen = running && voiceIsOpen;
+  /**
+   * Whether there is a page behind this card. Two cards have none — a queue
    * position and an unplaced seat — and both drop the anchor, the chevron and
    * the hover lift together: nothing about the card may promise "there is more
    * inside" when there is not.
    */
   const opensAPage = !waitlisted && !awaiting;
   // Derived per tick from the shared clock, then gated on the seat: an unplaced
-  // enrollment's product may well be mid-session, but not for this family, and
-  // a lit card would be inviting a child into a room that has not been created.
+  // seat's product may well be mid-session, but not for this family, and a lit
+  // card would be inviting a child into a room that has not been created.
   const live = running && (voiceIsOpen || inProgress);
   // The cards a Live badge can never land on. Reserving its width there would
   // be a hole held open for something that is not coming — which includes a
@@ -469,8 +454,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * The "Before the first session" guide, if this card has one to offer.
    *
    * Two questions, asked in the order that makes the second cheap. **Does the
-   * enrollment want one at all**: a seat that is theirs (running or waiting on
-   * a placement) on a run that has not finished. A queue place is excluded
+   * enrollment want one at all**: a seat that is theirs, placed in a group or
+   * not, on a run that has not finished. A queue place is excluded
    * because there is nothing to get ready for until a seat exists, and a
    * finished run because the first session it names is behind them.
    *
@@ -483,8 +468,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * The dismissal comes in as a prop, so all three questions are answerable on
    * the server and this card paints its final footer on the first frame.
    */
-  const prepPlan =
-    endedOn === null && !waitlisted ? resolveTopicPrep(topic, isRemote) : null;
+  const prepPlan = seated ? resolveTopicPrep(topic, isRemote) : null;
   const prepDismissal = useTopicPrepDismissal(
     participationId,
     prepDismissed.has(participationId),
@@ -520,21 +504,22 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   /**
    * Whether this card draws a Join at all — the question the prep affordance's
    * placement turns on, and the same three conditions the footer's Join branch
-   * has always used, named once so the two cannot drift apart.
+   * uses, named once so the two cannot drift apart. A seat not yet in a group
+   * draws one too, locked: the family sees the same button any seat shows.
    */
-  const hasJoin = running && hasVoiceRoom && hasNext;
+  const hasJoin = seated && hasVoiceRoom && hasNext;
   /**
    * The locked Join's slot, taken over while there is a guide to read — and
    * given back the moment the window closes, on the live clock, because a
    * button-for-button swap in one slot moves nothing.
    */
-  const prepInJoinSlot = prepUnanswered && prepWindowOpen && hasJoin && !voiceIsOpen;
+  const prepInJoinSlot = prepUnanswered && prepWindowOpen && hasJoin && !joinOpen;
   /** A lit Join keeps its slot; the guide steps down to a quiet link below it. */
   const prepBesideJoin =
-    prepUnanswered && prepWindowOpenAtFirstPaint && hasJoin && voiceIsOpen;
+    prepUnanswered && prepWindowOpenAtFirstPaint && hasJoin && joinOpen;
   /**
-   * No Join to sit in or beside — the in-person card naming its site, and the
-   * unplaced seat waiting on a Gedu. The button goes under the sentence.
+   * No Join to sit in or beside — the in-person card naming its site. The
+   * button goes under the sentence.
    */
   const prepUnderSentence =
     prepUnanswered && prepWindowOpenAtFirstPaint && !hasJoin;
@@ -562,16 +547,16 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * aside on the same trigger, a few lines down, for a different reason.
    */
   const showsWaitlistPosition = waitlisted && seatOffer === null;
-  // Whether the footer has anything to say, asked before it is drawn. The five
-  // branches below are exclusive by construction, and on the one card where
-  // none of them lands — a running enrollment whose product has no slots yet —
-  // the row is left out rather than rendered empty. A waitlisted card with an
+  // Whether the footer has anything to say, asked before it is drawn. The four
+  // branches below are exclusive by construction, and on a card where none of
+  // them lands — a seat whose product has no slots yet — the row is left out
+  // rather than rendered empty. A waitlisted card with an
   // offer standing on it is now a second such card: its position line is
   // superseded and its leave link has stood down, so the row would be a band of
   // nothing between the schedule and the block.
   //
   // **The prep offer counts as something to say, and it has to.** It is not one
-  // of those five branches — it lives in the footer's second row — so a card
+  // of those four branches — it lives in the footer's second row — so a card
   // where every sentence branch comes up empty and the guide is on offer would
   // drop the whole footer and take the affordance down with it. Two real cards
   // are in exactly that state: an in-person seat whose site has no name yet,
@@ -581,9 +566,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   const hasFooter =
     endedOn !== null ||
     showsWaitlistPosition ||
-    awaiting ||
     hasJoin ||
-    (running && !hasVoiceRoom && siteName !== null) ||
+    (seated && !hasVoiceRoom && siteName !== null) ||
     prepUnderSentence;
 
   return (
@@ -600,13 +584,6 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           "group relative overflow-hidden border-l-2 transition-[box-shadow,opacity,border-color]",
           opensAPage && "hover:shadow-lg focus-within:shadow-lg",
           live && "border-l-act",
-          // The awaiting tone: the same lit edge in `info` rather than `act`,
-          // because this *is* a card with something happening on it — a
-          // purchase has landed and placement is under way — and it must read
-          // as that rather than as a fault or as a waitlist place. Blue is
-          // already this product's colour for "we are telling you something",
-          // and the two rules are mutually exclusive by `running`.
-          awaiting && "border-l-info",
           // Dimmed in place while the leave is in flight, so the card that is
           // about to disappear says so without moving. Matches the treatment
           // the badge-era waitlist card used, for continuity.
@@ -665,7 +642,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               the Join names, as a warning panel read before anything else in
               the body — the schedule line below still claims those dates, and
               a family who misses the notice turns up for nothing. Present only
-              while there are some, and only on a seat in a group on a run still
+              while there are some, and only on a seat on a run still
               going, which is the only card with sessions to pass over.
 
               **First in the body is safe only because the dates arrive with
@@ -674,7 +651,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               it would land above rows already painted and push them down —
               such a source would have to be joined to this one, not moved
               lower. */}
-          {running && <CancelledAheadNotice starts={enrollment.cancelledAhead} />}
+          {seated && <CancelledAheadNotice starts={enrollment.cancelledAhead} />}
 
           {/* The product's schedule in words, from the same formatter the public
               product page and the gedu dashboard use, in the viewer's zone
@@ -727,7 +704,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               page shows. So the third branch states when access ends, which the
               subscription row knows outright. Strictly less information, all of
               it true. */}
-          {billing !== null && cancellation !== null && running && (
+          {billing !== null && cancellation !== null && seated && (
             <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
               <RefreshCwOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0">
@@ -808,23 +785,6 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     </span>
                   </span>
                 )}
-                {endedOn === null && awaiting && (
-                  // The seat is bought; nobody has been placed yet. This wins
-                  // over the site line an in-person product would otherwise get,
-                  // because the footer's question is "where is this happening"
-                  // and the honest answer here is "nowhere yet" — a building
-                  // named beside a group that does not exist would read as an
-                  // invitation to turn up. Static, with no spinner or pulse:
-                  // placement is a person's decision that can take a day, and a
-                  // loading cue would promise seconds.
-                  <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
-                    <UserRoundSearch
-                      className="mt-0.5 h-4 w-4 shrink-0 text-info"
-                      aria-hidden
-                    />
-                    <span className="min-w-0">{f(AWAITING_KEY[audience])}</span>
-                  </span>
-                )}
                 {hasJoin && (
                   // A control owns its clicks, so it is lifted above the
                   // stretched link covering the card — whichever of the two
@@ -846,7 +806,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     ) : (
                       <JoinVoiceButton
                         voiceRoom={voiceRoom}
-                        voiceIsOpen={voiceIsOpen}
+                        voiceIsOpen={joinOpen}
                         voiceHref={voiceHref}
                         // Present only on a *child's* card seen by their
                         // parent, where joining means switching account first.
@@ -870,7 +830,9 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                     )}
                   </span>
                 )}
-                {running && !hasVoiceRoom && siteName !== null && (
+                {/* The site is the product's, so a seat not yet in a group
+                    names it like any other. */}
+                {seated && !hasVoiceRoom && siteName !== null && (
                   <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0" aria-hidden />
                     <span className="truncate">{siteName}</span>
@@ -889,8 +851,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
 
                   **On a card with no Join it is the button**, because there is
                   nothing else on the card to be quieter than: an in-person card
-                  names its building, an unplaced one says a Gedu is being
-                  matched, and neither sentence is something to do.
+                  names its building, which is not something to do.
 
                   It arrives after mount rather than being reserved, and the
                   cost is named rather than hidden: the button appears one tick

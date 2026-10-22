@@ -250,6 +250,26 @@ describe("sitemap", () => {
     );
   });
 
+  it("lists the landing pages' index in every indexed locale, each carrying the whole language set", () => {
+    const index = entries.filter((entry) => /\/(discover|tutustu|upptack|decouvrir)$/.test(entry.url));
+
+    expect(index.map((entry) => entry.url)).toEqual([
+      `${BASE}/en/discover`,
+      `${BASE}/fi/tutustu`,
+      `${BASE}/sv/upptack`,
+      `${BASE}/fr/decouvrir`,
+    ]);
+    for (const entry of index) {
+      expect(entry.alternates?.languages).toEqual({
+        en: `${BASE}/en/discover`,
+        fi: `${BASE}/fi/tutustu`,
+        sv: `${BASE}/sv/upptack`,
+        fr: `${BASE}/fr/decouvrir`,
+      });
+      expect(entry.lastModified).toBeUndefined();
+    }
+  });
+
   it("lists each article at its slug address, in the indexed locales it was written in", () => {
     const article = entries.filter(
       (entry) =>

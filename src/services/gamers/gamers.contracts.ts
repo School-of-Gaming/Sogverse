@@ -161,11 +161,6 @@ export const createGamerBody = z
     gender: z
       .union([z.enum(Constants.public.Enums.gender_type), z.literal(""), z.null()])
       .optional(),
-    // Both game identities are optional and independent: a parent may give one,
-    // both, or neither. Neither is judged for shape here — the platform is asked
-    // and its answer decides whether a key is stored beside the name.
-    minecraftUsername: minecraftUsernameValue.optional(),
-    robloxUsername: robloxUsernameValue.optional(),
     /**
      * Defaulted rather than required, so a client that predates the modes — a
      * cached bundle, a page open across a deploy — creates the switch-only

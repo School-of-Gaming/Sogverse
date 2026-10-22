@@ -141,7 +141,9 @@ function buttonOf(section: LandingSection): ButtonTarget | undefined {
     case "points":
     case "steps":
     case "testimonials":
+    case "products":
     case "faq":
+    case "subscribe":
       return undefined;
   }
 }
@@ -156,7 +158,9 @@ function withButton(section: LandingSection, button: ButtonTarget): LandingSecti
     case "points":
     case "steps":
     case "testimonials":
+    case "products":
     case "faq":
+    case "subscribe":
       return section;
   }
 }

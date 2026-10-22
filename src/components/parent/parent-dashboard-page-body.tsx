@@ -233,8 +233,12 @@ export function ParentDashboardPageBody({
    * carrying it, and it is required so a surface cannot forget to answer.
    */
   prepDismissed: ReadonlySet<string>;
-  /** The Stripe portal card. A node, so the shell owns its actions. */
-  billingCard: React.ReactNode;
+  /**
+   * The Stripe portal card. A node, so the shell owns its actions. `null`
+   * means no billing section at all — heading, pill entry and card — which is
+   * what a parent with no billing account yet meets.
+   */
+  billingCard: React.ReactElement | null;
   /**
    * The help form. A node for the same reason the billing card is one: it is a
    * self-contained panel with a backend action behind it, and nothing about this
@@ -329,7 +333,7 @@ export function ParentDashboardPageBody({
 
   // With no children yet, the empty state is still a *section* — "Gamers",
   // with its own pill entry — rather than a card floating unattached while the
-  // scroll-spy highlights Billing beneath it. The moment the first child is
+  // scroll-spy highlights the section beneath it. The moment the first child is
   // added, the heading becomes their name and the pill follows; a one-time
   // renaming the parent themselves just caused.
   const gamerSections: DashboardSection[] =
@@ -361,7 +365,7 @@ export function ParentDashboardPageBody({
             truncateLabel: true,
           },
         ]),
-    { id: "billing", label: t("billing") },
+    ...(billingCard === null ? [] : [{ id: "billing", label: t("billing") }]),
     { id: "help", label: t("help") },
   ];
 
@@ -616,18 +620,20 @@ export function ParentDashboardPageBody({
           </section>
         )}
 
-        <section
-          id="billing"
-          aria-labelledby="billing-heading"
-          className="scroll-mt-32"
-        >
-          <div className="mx-auto max-w-3xl space-y-6">
-            <Heading level={2} step="section" id="billing-heading">
-              {t("billing")}
-            </Heading>
-            {billingCard}
-          </div>
-        </section>
+        {billingCard !== null && (
+          <section
+            id="billing"
+            aria-labelledby="billing-heading"
+            className="scroll-mt-32"
+          >
+            <div className="mx-auto max-w-3xl space-y-6">
+              <Heading level={2} step="section" id="billing-heading">
+                {t("billing")}
+              </Heading>
+              {billingCard}
+            </div>
+          </section>
+        )}
 
         {/* Help — the same two pieces every role's section is made
             of, in the same order: the message form, and the role's own FAQ

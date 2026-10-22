@@ -48,8 +48,8 @@ key off.
 
 1. **Promoted.** The marketing pages (home, about, the legal documents, attributions), the
    auth entry points, the `/shop` browse grid, the Team pages (the index and every
-   public profile), the Library (the index and every live article), and every live
-   landing page. In the sitemap, self-canonical with the full `hreflang` set, a
+   public profile), the Library (the index and every live article), and the landing
+   pages (the `/discover` index and every live page). In the sitemap, self-canonical with the full `hreflang` set, a
    page-specific localized description, structured data, and linked from `llms.txt` where
    a reader would want the link. **A team profile's language versions are the locales the
    person wrote** (owner, 2026-10-01): its `hreflang` names only those, a locale they did
@@ -71,7 +71,12 @@ key off.
    2026-10-05), with two differences: its slug is stored per language rather than derived
    from the title, so no two pages contest one, and its link card is the site-wide one —
    the admin writes a title, a summary and a slug, and every other affordance is the
-   system's. **A product's page is promoted while the product is
+   system's. **Every live landing page is listed on the `/discover` index and linked from
+   it** (owner, 2026-10-15): the pages are for promotion reached through advertising, and
+   what matters is that crawlers find and trust them, so none may be an orphan only the
+   sitemap names. The footer links the index from every page; the header and the tab bar
+   do not, since people are not expected to browse there. Every link is visible to every
+   reader: a link shown only to crawlers is cloaking. **A product's page is promoted while the product is
    on the shop's listing** (owner, 2026-10-01) — listed, a shop type, not ended: exactly
    what the shop grid shows — and only at its shop address. Its language versions follow
    the same rule as an article's, the locales its text was written in, and its structured
@@ -133,6 +138,10 @@ Each one exists to make the posture above hold by construction rather than by me
 - **`noindex` is always a tag, never a `robots.txt` disallow.** A disallowed URL is never
   fetched, so the tag is never read, and the bare URL can still be indexed off an
   external link. Allowing the crawl and serving the tag is what deindexes.
+- **Links.** Every promoted page is reached by following links from the home page, not
+  through the sitemap alone: the navigation reaches the index pages, each index links
+  every page it lists, and the footer links the landing pages' index, which nothing in
+  the navigation names. A landing page links back up through its breadcrumb trail.
 - **The sitemap** lists the promoted routes, one URL per indexed locale, every entry
   carrying the whole language set as alternates, plus each public team profile in the
   locales its person wrote, each live Library article and each live landing page in the
@@ -160,13 +169,17 @@ Each one exists to make the posture above hold by construction rather than by me
 - **Structured data** is JSON-LD, emitted through one server component that escapes the
   serialized JSON so an admin-authored product name containing `</script>` cannot break
   out of the data block. A data block is never executed, so the CSP's script nonce does
-  not apply to it. Seven blocks exist: `Organization` + `WebSite` on every page from the
-  locale layout, `FAQPage` on About, an `ItemList` on the shop, a `ProfilePage` about
+  not apply to it. The blocks: `Organization` + `WebSite` on every page from the
+  locale layout, `FAQPage` on About, an `ItemList` on the shop, a `CollectionPage` on
+  the landing pages' index whose `mainEntity` is an `ItemList` of the pages it lists, a `ProfilePage` about
   a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
   `@id`, an `Article` on each Library article, whose `publisher` names it the same
   way, a `WebPage` on each landing page, publisher the same, that becomes a `FAQPage`
-  when a section asks questions — each section type declares its contribution in one
-  exhaustive map, so a new type has to say what it adds, if only nothing — and on each
+  when a section asks questions, with an `ItemList` beside it for each section promoting
+  shop products — each section type declares its contribution in one
+  exhaustive map, so a new type has to say what it adds, if only nothing — beside a
+  `BreadcrumbList` (the index, then the page) drawn from the same names as the trail
+  shown above the page, its last step the page's canonical — and on each
   promoted product page a `Course` for a club — one `CourseInstance`
   whose weekly `courseSchedule` is the club's slots in its own timezone — or an `Event`
   for a camp or an event, naming the `Organization` as provider or organizer. A product
@@ -178,14 +191,19 @@ Each one exists to make the posture above hold by construction rather than by me
   a site's street address is staff data and the page never shows it. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
-  only the shop's listing can reach the `ItemList` because only that is ever prefetched
-  for the grid. Each item carries its position, its name and its page's canonical
+  only the shop's listing can reach an `ItemList` because only that is ever prefetched
+  for the grid, or for a landing page's products section, whose list names the cards it
+  draws whose page is promoted: the admin's picks the shop's listing holds, in their
+  order, and none of a product's own markup. The section also draws a listed municipality
+  club the admin picks, and that card stays out of the list, since its page is tier 2. Each item carries its position, its name and its page's canonical
   URL — the address of the locale whose words that page shows at the shop's locale, so
   an item never points at a page that canonicalises elsewhere, while the card's own link
   stays at the shop's locale for the reader. Every one of those pages is promoted,
   because the items are exactly the listed products. It is omitted entirely when the
   grid has nothing to list, rather than emitted empty over a page the client is still
-  filling.
+  filling. The landing pages' index follows the same rule: its items are exactly the
+  cards it renders, each at the canonical of the version the card shows, and with
+  nothing live the `CollectionPage` carries no list at all.
 - **`llms.txt`** is one English file at the site root, generated at request time from the
   English catalog (the site description, the About prose, every FAQ question and answer
   flattened to plain text) so it cannot drift from the site, with absolute links to the
@@ -195,6 +213,21 @@ Each one exists to make the posture above hold by construction rather than by me
   locale's home URL. It is
   publicly cacheable, which is why it is excluded from the proxy: a response the proxy
   handles may carry a refreshed session cookie, and a shared cache must never hold one.
+- **IndexNow** tells Bing, Yandex, Seznam, Naver and the protocol's other engines about a
+  change the moment it happens — Bing's index is what ChatGPT's and Copilot's search
+  read; Google does not take part and reads the sitemap's `lastmod`. Every publish and
+  unpublish of a landing page or a Library article goes through one helper per action
+  in `src/lib/indexnow/`, called by the admin's publication routes and the MCP tools
+  alike, which runs the change and then posts every address it touched: each indexed
+  language's canonical before and after (so a changed slug, a language taken down and an
+  unpublished page are submitted too, and for the Library any other article whose
+  derived address moved with it) and the index that lists it. **Production only**,
+  gated by `isProductionDeployment()`; the key is `INDEXNOW_KEY`, served as
+  `/indexnow-key.txt` at the root so it vouches for every URL on the host, and with no
+  key set submissions are skipped with a log line and the file is a 404. The reads of
+  what is live run inside the request, but the POST itself is sent after the response
+  (`after()`), so a slow engine never holds up a publish. **A failed submission never
+  fails the change**: it is logged and dropped, as is a failed read of what was live.
 - **Open Graph cards** are route handlers taking a locale parameter; the reasoning is in
   `src/lib/og/`. A team card's address carries a version so link previews refetch when
   the card would look different; the server does not check that version, by the owner's
@@ -232,7 +265,8 @@ lands is deleted here and its mechanism is described above.
   may lead to a stable page — the Library index or a category, the Team, the shop — never to
   one article, which can be retitled or removed and leave a dead link. The navigation
   already reaches every public page on every page, so the footer does not repeat it
-  (owner, 2026-10-01).
+  (owner, 2026-10-01); the one link the footer carries beyond the legal pages is the
+  landing pages' index, which the navigation leaves out.
 - **Per-route Open Graph images** for the promoted pages that still share the site card
   (team profiles and articles have their own).
 - **Option: list the listed products in `llms.txt`**, each at its shop address with its
@@ -301,8 +335,9 @@ and safety-copy rules in `src/CLAUDE.md` bind them too.
   certification does not wait on the check, and older Gedus were certified before it was
   recorded. Likewise "nothing is recorded" is never claimed: no voice or video of a lesson
   is recorded, but session chat is kept for moderation.
-- **The Library and Team index headers are written by hand and match** (headline centred,
-  intro left-aligned). A shared header component waits for a third page of that shape.
+- **The public index pages share one header** — the Library, the Team and the landing
+  pages' index: the headline centred with its act phrase and world rule, the intro
+  left-aligned (`src/components/public/`).
 
 ### Media
 

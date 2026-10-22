@@ -99,7 +99,7 @@ export function usePublishLibraryArticle() {
   const invalidate = useLibraryInvalidation();
 
   return useMutation({
-    mutationFn: (id: string) => service.publishArticle(id),
+    mutationFn: (id: string) => service.publishArticleViaRoute(id),
     onSuccess: () => invalidate(),
   });
 }
@@ -109,7 +109,7 @@ export function useUnpublishLibraryArticle() {
   const invalidate = useLibraryInvalidation();
 
   return useMutation({
-    mutationFn: (id: string) => service.unpublishArticle(id),
+    mutationFn: (id: string) => service.unpublishArticleViaRoute(id),
     onSuccess: () => invalidate(),
   });
 }

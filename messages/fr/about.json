@@ -69,7 +69,7 @@
       },
       "howToStart": {
         "question": "Comment commencer ?",
-        "answer": "<p>Créez un compte parent, ajoutez votre enfant comme joueur depuis Mon SOG, puis parcourez la boutique et inscrivez-le — le panneau d’inscription demande à qui la place est destinée, et vous invite à ajouter un joueur si vous ne l’avez pas encore fait.</p><p>Une fois l’inscription faite, nous plaçons votre enfant dans un groupe avec un Gedu avant sa première séance, et le club apparaît ensuite sur Mon SOG pour vous deux.</p><p>Il rejoint les séances via votre compte — vous basculez vers son profil — sauf si vous choisissez de lui donner ses propres identifiants depuis Mon SOG.</p>"
+        "answer": "<p>Créez un compte parent, ajoutez votre enfant comme joueur depuis Mon SOG, puis parcourez la boutique et inscrivez-le — le panneau d’inscription demande à qui la place est destinée, et vous invite à ajouter un joueur si vous ne l’avez pas encore fait.</p><p>Une fois l’inscription faite, le club apparaît sur Mon SOG pour vous deux.</p><p>Il rejoint les séances via votre compte — vous basculez vers son profil — sauf si vous choisissez de lui donner ses propres identifiants depuis Mon SOG.</p>"
       },
       "isItASchool": {
         "question": "Est-ce que c’est de l’école ?",

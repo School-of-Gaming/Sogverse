@@ -1,3 +1,7 @@
+import {
+  publishLandingPage,
+  unpublishLandingPage,
+} from "@/lib/indexnow/landing-pages";
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod-v4";
@@ -59,6 +63,7 @@ import {
   landingSlug,
   type AdminLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
+import type { LandingPickReason } from "@/services/landing-pages/landing-pages.product-picks";
 import { landingTestimonialsSections } from "@/services/landing-pages/landing-pages.testimonials";
 
 /*
@@ -85,6 +90,9 @@ const LANGUAGES = SUPPORTED_LOCALES.map(
 
 const MODEL =
   "A landing page is a marketing page on the public site — for a school, a city, a business, an event — written to be found by search engines and AI apps. Its structure (the ordered sections with their pictures, buttons, icons and items) is shared by every language; each language version holds the page's title, summary, slug and every section's words, keyed by section id.";
+
+const DISTINCT =
+  "Each page must carry genuinely distinct, substantive content for its own audience — what is true and specific about that school, place, organisation or event — and never be another page with the place or audience name swapped. Search engines treat many near-identical pages aimed at different places or audiences, all leading to the same destination, as doorway pages, which can hurt the whole site's ranking; if a new page would differ from an existing one only in its names, improve the existing page instead.";
 
 const COMPLETE =
   "A language version is complete when its title, summary and slug are written and every section has every required word in that language.";
@@ -347,6 +355,33 @@ function placedTestimonials(page: AdminLandingPage) {
   }));
 }
 
+/** Why a picked product is not shown, as the AI app reads it. */
+const PICK_REASON_WORDS: { readonly [Reason in LandingPickReason]: string } = {
+  gone: "no product has this id any more",
+  notListed: "it is unlisted",
+  ended: "its term has ended",
+};
+
+/**
+ * Each products section's picks: shown now or not, and every reason a hidden
+ * one is not — read from the working copy, which the next publish puts live.
+ */
+function productPicks(page: AdminLandingPage) {
+  return page.productPicks.map((section) => ({
+    section: landingSectionName(section.sectionNumber, "products"),
+    sectionId: section.sectionId,
+    shown: section.shownCount,
+    picked: section.picks.length,
+    drawn: section.shownCount > 0,
+    picks: section.picks.map((pick) => ({
+      productId: pick.productId,
+      names: pick.names,
+      shown: pick.shown,
+      notShownBecause: pick.reasons.map((reason) => PICK_REASON_WORDS[reason]),
+    })),
+  }));
+}
+
 function lastSaved(draft: AdminLandingPage["draft"]) {
   return { at: draft.updatedAt, by: draft.lastSavedBy, via: draft.lastSavedVia };
 }
@@ -379,6 +414,7 @@ function pageView(page: AdminLandingPage, origin: string) {
     })),
     hasUnpublishedChanges: page.hasUnpublishedChanges,
     testimonials: placedTestimonials(page),
+    productPicks: productPicks(page),
     publish: publishForecast(page, origin),
     live:
       publication === null
@@ -456,7 +492,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it is unlisted) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -504,7 +540,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "create_landing_page",
     {
       title: "Create a landing page",
-      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
+      description: `Start a new landing page with its structure and one language version; add the other languages one at a time with save_landing_page_text. It is created unpublished. Sections and items sent without ids are given them, and the answer lists the structure with every id. To write the sections' words in this same call, give the sections and items ids of your own (any lowercase uuid) and key sectionTexts by them; otherwise write the words afterwards with save_landing_page_text. The answer says the address the page will have once published, what the language still needs, a preview link in that language (previewLink), and the page's status page in Sogverse admin (adminLink). ${OFFER_PREVIEW} ${MODEL} ${DISTINCT} ${COMPLETE} ${SLUGS} ${MARKDOWN}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({
           locale,
@@ -560,6 +596,7 @@ export function registerLandingPageTools(server: McpServer): void {
           address: slugLink(origin, version?.slug ?? "", input.locale),
           complete: version !== undefined && version.missing.length === 0,
           missing: version === undefined ? [] : missingWords(page, version),
+          productPicks: productPicks(page),
           previewLink: previewLink(origin, id, input.locale),
           adminLink: adminLink(origin, id),
         });
@@ -608,7 +645,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials). Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials), and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({ pageId, sections: mcpLandingStructure }),
         z.object({ pageId, sections: mcpLandingStructure }),
@@ -633,6 +670,7 @@ export function registerLandingPageTools(server: McpServer): void {
             .map((section) => ({ id: section.id, type: section.type })),
           languages: languages(after),
           testimonials: placedTestimonials(after),
+          productPicks: productPicks(after),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
           publish: publishForecast(after, origin),
         });
@@ -643,7 +681,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "save_landing_page_text",
     {
       title: "Save a landing page's language version",
-      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${SLUGS} ${MARKDOWN}`,
+      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${DISTINCT} ${SLUGS} ${MARKDOWN}`,
       inputSchema: readableInput(
         z.object({
           pageId,
@@ -742,7 +780,7 @@ export function registerLandingPageTools(server: McpServer): void {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
         const wasLive = before.publication?.versions.map((v) => v.locale) ?? [];
-        await service.publishPage(id);
+        await publishLandingPage(service, id);
         // Read back from what the publish did, never forecast from the read
         // before it: a save landing in between changes what goes live.
         const after = await service.getAdminPage(id);
@@ -783,7 +821,7 @@ export function registerLandingPageTools(server: McpServer): void {
       asLandingAdmin(ctx, async ({ service }) => {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
-        await service.unpublishPage(id);
+        await unpublishLandingPage(service, id);
         return answer({ pageId: id, wasLive: before.publication !== null, live: false });
       }),
   );

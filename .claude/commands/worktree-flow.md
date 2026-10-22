@@ -432,6 +432,14 @@ belong in one call — and prefer the script wherever one exists.
    empties the packages behind them. If the script refuses, read what it
    refused about — that is the guard working.
 
+   **Teardown is finished only when the worktree folder is gone; an empty one
+   left behind is an incomplete teardown, not a leftover to report.** A refusal
+   because a process is holding the worktree is not a stopping point: stop the
+   process the script names if this session started it (a dev server, a shell),
+   ask before stopping anyone else's, and rerun until the folder is gone. Its
+   other refusals — uncommitted changes, `.env.local` keys the main checkout
+   lacks — stay real stops, because they protect work.
+
 7. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not
    watch the CI run the push triggers** — the user watches `dev` CI themselves

@@ -2,33 +2,59 @@
 
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Hourglass,
+  Info,
+  Loader2,
+  Mail,
+} from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductBanner } from "@/components/ui/product-banner";
-import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
+import { formatDateOnly } from "@/lib/date-format";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { resolveTopicPrep } from "@/lib/products/topics";
+import {
+  formatProductLocation,
+  renderProductLocationLine,
+} from "@/lib/products/format-product-location";
+import {
+  formatProductSchedule,
+  renderScheduleLinesForDetail,
+} from "@/lib/products/format-product-schedule";
+import { productToday } from "@/lib/products/holiday-breaks-shown";
 import { formatCurrencyFromCents } from "@/lib/money";
-import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
-import { useTimezone } from "@/providers";
+import { useNow, useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
-import type { HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
-import { ProductOverviewCard } from "./product-overview-card";
+import { ScheduleLine } from "./schedule-line";
 import { Heading } from "@sog/ui";
 
-// Signup summary — data-only presentational view (no fetching). A
-// non-tech-savvy parent has just paid, signed up for a free event, or joined a
-// waitlist, and lands here. We reassure them it worked and lay out exactly what
-// happened, who for, and what's next. The page server-fetches the participation
-// + product and hands them here, so it paints complete on first load: no client
-// loading state, no skeleton, no layout shift.
+// Signup summary — data-only presentational view (no fetching). A parent has
+// just paid, signed up for a free event, or joined a waitlist, and lands here
+// wanting two answers: did it go through, and is there anything left to do.
+// So the page is a few seconds of reassurance — the outcome, the key facts of
+// what they bought, where the confirmation email went, the one next step — and
+// it fits on one screen at a phone's 360px. Everything else (the full
+// schedule, holiday breaks, billing detail, the "Before the first session"
+// guide, the calendar invite) is the email's job, which is the full record.
+//
+// The page server-fetches the participation + product and hands them here, so
+// it paints complete on first load: no client loading state, no layout shift.
+
+// "Keep browsing" under the one primary button: a quiet escape hatch in the
+// muted ink the footer's links use, so the page keeps a single act-coloured
+// action. The height and padding give it a full tap target.
+const QUIET_LINK =
+  "inline-flex h-10 items-center rounded-md px-3 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act";
 
 /** Which signup outcome the summary reassures the parent about. */
 export type SignupOutcome = "enrolled" | "waitlisted";
@@ -55,26 +81,12 @@ interface PurchaseConfirmationViewProps {
    */
   waitlistPosition?: number | null;
   /**
-   * When the first subscription charge falls, as a true instant (ISO), for a
-   * club bought before it started — the parent paid €0 at checkout and is owed
-   * the real date. Null on every other signup, and whenever the reader is not
-   * the payer (the `payments` policy is customer-only), in which case no billing
-   * line renders at all.
-   *
-   * An instant rather than a calendar date on purpose: it is the subscription's
-   * stored period end, and whether that instant is the club's own start or a
-   * clamped one is exactly the question that decides how it renders. The answer
-   * comes from the shared anchor helper, which the shop's signup panel asks the
-   * same way — a bare start date when unclamped, the viewer's own day when not.
+   * The address the confirmation email went to — the payer's own, so only
+   * known when the payer is the one reading. Null for anyone else (a gamer
+   * reading their own seat) and whenever it could not be read; the email line
+   * then says a mail is on its way without naming where.
    */
-  firstChargeAt?: string | null;
-  /**
-   * The club's holiday breaks, read by the page over the span the shared rule
-   * names, for the "Good to know" card — where the confirmation mail states
-   * the same list. Empty for anything that is not a club, and on a read that
-   * failed: the list is optional and the summary is not.
-   */
-  holidayBreaks?: readonly HolidayBreak[];
+  recipientEmail?: string | null;
 }
 
 export function PurchaseConfirmationView({
@@ -83,26 +95,49 @@ export function PurchaseConfirmationView({
   isSelfSeat = false,
   outcome = "enrolled",
   waitlistPosition = null,
-  firstChargeAt = null,
-  holidayBreaks = [],
+  recipientEmail = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
   const tSelf = useTranslations("purchaseConfirmation.self");
   const tProduct = useTranslations("productDetail");
   const locale = resolveLocale(useLocale());
   const viewerTimezone = useTimezone();
+  const now = useNow();
 
   const isWaitlist = outcome === "waitlisted";
   const tr = resolveTranslation(product.product_translations, locale);
   const productName = tr?.name ?? "";
-  // The summary row keeps naming the person even on a self seat — the reader's
-  // own first name is what they recognise beside "Enrolled", and it is the one
-  // place a name is a value rather than a subject. Only the *sentences* move
-  // into the second person, and each of those is a separate key rather than an
-  // interpolated pronoun, because a possessive that agrees with a name in
-  // English does not in Finnish or Swedish.
-  const participant =
-    participantName ?? (isSelfSeat ? tSelf("fallbackName") : t("fallbackGamer"));
+  const participant = participantName ?? t("fallbackGamer");
+
+  // The schedule as the detail surfaces print it, minus the club's term range:
+  // the start date below covers what a parent needs from it on this page, and
+  // the email states the full term. A schedule not yet set states nothing
+  // here rather than a placeholder dash.
+  const schedule = formatProductSchedule({
+    product,
+    locale,
+    timeZone: viewerTimezone,
+    now,
+  });
+  const scheduleLines =
+    schedule.kind === "tbd" ? [] : renderScheduleLinesForDetail(schedule);
+  const where = renderProductLocationLine({
+    location: formatProductLocation(product, locale),
+    isRemote: product.is_remote,
+    online: tProduct("info.online"),
+    tbd: tProduct("info.tbd"),
+  });
+
+  // A club's start, while it is still ahead. Camps and events carry their
+  // dates in the schedule line already, and a club already running has no
+  // start worth announcing to someone who joined mid-term.
+  const isClub =
+    product.product_type === "consumer_club" ||
+    product.product_type === "municipality_club";
+  const startsLine =
+    isClub && product.start_date > productToday(product.timezone, now)
+      ? t("card.starts", { date: formatDateOnly(product.start_date, locale) })
+      : null;
 
   // Price is recomputed from the product's *current* prices, not stored as a
   // receipt of what was charged. For the fresh post-checkout view that's
@@ -118,217 +153,133 @@ export function PurchaseConfirmationView({
     currency: DEFAULT_CURRENCY,
     currencyLabel: CURRENCY_CONFIG[DEFAULT_CURRENCY].label,
   });
-  const price = priceText(pricingOption, locale, t);
-  // The "Before the first session" guide, resolved once: the same answer says
-  // whether a card is drawn at all and what goes inside it.
-  const prepPlan = resolveTopicPrep(product.topic, product.is_remote);
+  const price = isWaitlist ? null : priceText(pricingOption, locale, t);
+
+  // Each fact on a line of its own, so a long one wraps on a 360px phone
+  // without dragging its neighbour along.
+  const closingLines = (
+    isWaitlist
+      ? [
+          waitlistPosition !== null
+            ? t("waitlist.position", { position: waitlistPosition })
+            : null,
+        ]
+      : [startsLine, price]
+  ).filter((line): line is string => line !== null);
+
+  const subheading = isWaitlist
+    ? isSelfSeat
+      ? tSelf("waitlist.subheading", { product: productName })
+      : t("waitlist.subheading", { gamer: participant, product: productName })
+    : isSelfSeat
+      ? tSelf(`subheading.${product.product_type}`, { product: productName })
+      : t(`subheading.${product.product_type}`, {
+          gamer: participant,
+          product: productName,
+        });
+
+  const pictureSrc = catalogueImageSrc("product", product.image_path);
+  const factLines = (
+    <>
+      {scheduleLines.map((line, idx) => (
+        <p key={idx}>
+          <ScheduleLine line={line} />
+        </p>
+      ))}
+      <p>{where}</p>
+      {closingLines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </>
+  );
+
+  const nextLine = isWaitlist
+    ? t("waitlist.next")
+    : isSelfSeat
+      ? tSelf("nextSessions")
+      : t("next.sessions", { gamer: participant });
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mx-auto max-w-2xl">
+    <div className="container mx-auto px-4 py-6 sm:py-12">
+      <div className="mx-auto max-w-lg">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-act bg-lifted">
             {isWaitlist ? (
-              <Hourglass className="h-7 w-7 text-act" />
+              <Hourglass className="h-6 w-6 text-act" />
             ) : (
-              <CheckCircle2 className="h-8 w-8 text-act" />
+              <CheckCircle2 className="h-7 w-7 text-act" />
             )}
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <Heading level={1} step="section" align="center">
               {isWaitlist ? t("waitlist.heading") : t("heading")}
             </Heading>
           </div>
-          <p className="mt-2 text-muted-foreground">
-            {isWaitlist
-              ? isSelfSeat
-                ? tSelf("waitlist.subheading", { product: productName })
-                : t("waitlist.subheading", {
-                    gamer: participant,
-                    product: productName,
-                  })
-              : isSelfSeat
-                ? tSelf(`subheading.${product.product_type}`, {
-                    product: productName,
-                  })
-                : t(`subheading.${product.product_type}`, {
-                    gamer: participant,
-                    product: productName,
-                  })}
-          </p>
-        </div>
-
-        <Card className="mt-8">
-          <CardContent className="p-5 sm:p-6">
-            <Heading level={2} step="card-title">
-              {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
-            </Heading>
-            {/* The picture, at the 3:2 crop the card and the detail hero paint
-                — the parent is looking at the same photograph they clicked and
-                then read a page of, so it must be the same crop of it.
-                Deliberately *not* a full-width banner on top of this card: at
-                this column's width that stands over 400px tall, and it would
-                push the facts this card exists to state — who the seat is for,
-                what it costs — off a phone screen. So the picture stays inline
-                and identifying, and keeps the row's existing 64px height (96px
-                wide at 3:2) rather than growing the summary. Centred against
-                the two text lines, which a wide short frame wants where a
-                square did not. */}
-            <div className="mt-4 flex items-center gap-4">
-              <ProductBanner
-                src={catalogueImageSrc("product", product.image_path)}
-                className="w-24 shrink-0 rounded-lg"
-                // `w-24` at every breakpoint — a fixed inline thumb, so one
-                // length with no media conditions.
-                sizes="96px"
-              />
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {tProduct(`typeLabel.${product.product_type}`)}
-                </p>
-                <p className="mt-0.5 font-semibold">{productName}</p>
-              </div>
-            </div>
-            <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
-              <SummaryRow
-                label={
-                  isWaitlist
-                    ? t("waitlist.forLabel")
-                    : t(`forLabel.${product.product_type}`)
-                }
-                value={participant}
-              />
-              {/* "You're #N in line" — the reassuring number. Omitted if the
-                  position couldn't be read (e.g. a stale revisit). */}
-              {isWaitlist && waitlistPosition != null && (
-                <SummaryRow
-                  label={t("waitlist.positionLabel")}
-                  value={t("waitlist.positionValue", {
-                    position: waitlistPosition,
-                  })}
-                />
-              )}
-              {/* No charge yet on a waitlist join — the "what's next" list
-                  explains billing only happens if a seat opens and is accepted. */}
-              {!isWaitlist && price && (
-                <SummaryRow label={t("priceLabel")} value={price} />
-              )}
-            </dl>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6">
-          <ProductOverviewCard product={product} holidayBreaks={holidayBreaks} />
+          <p className="mt-1 text-muted-foreground">{subheading}</p>
         </div>
 
         <Card className="mt-6">
-          <CardContent className="p-5 sm:p-6">
-            <Heading level={2} step="card-title">
-              {t("nextTitle")}
-            </Heading>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-              {isWaitlist ? (
-                <>
-                  <li>{t("waitlist.next1")}</li>
-                  {/* The one term-shaped line in the waitlist copy, so the one
-                      keyed by product type. A club (consumer or municipality)
-                      runs a term and keeps that wording; a camp and an event
-                      are each a single run and say so. Everything else in this
-                      block — the heading, the email promise, the My SOG
-                      pointer — is true of all four types and stays neutral.
-                      The type comes off the product row the page already
-                      passes in, so nothing extra had to be threaded here. */}
-                  <li>
-                    {isSelfSeat
-                      ? tSelf(`waitlist.next2.${product.product_type}`)
-                      : t(`waitlist.next2.${product.product_type}`, {
-                          gamer: participant,
-                        })}
-                  </li>
-                  <li>{t("waitlist.next3")}</li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    {isSelfSeat
-                      ? tSelf("nextPlacement")
-                      : t("next.placement", { gamer: participant })}
-                  </li>
-                  {/* Before the general "you'll be billed monthly" line, and
-                      only when the first charge has genuinely been deferred:
-                      the parent has just seen €0 due on Stripe's page and is
-                      owed the real date in the same breath. Which date that is
-                      is the shared rule's call, not this component's — a charge
-                      landing on the club's own start renders as that bare
-                      calendar date (the same one shown further up this page), a
-                      clamped one as the day it hits the reader's statement. */}
-                  {firstChargeAt !== null && (
-                    <li>
-                      {t("next.firstCharge", {
-                        date: formatFirstChargeDate(
-                          firstChargeAt,
-                          product.start_date,
-                          product.timezone,
-                          locale,
-                          viewerTimezone,
-                        ),
-                      })}
-                    </li>
-                  )}
-                  {pricingOption.kind === "subscription" && (
-                    <li>{t("next.subscription")}</li>
-                  )}
-                  {pricingOption.kind === "upfront" && (
-                    <li>{t("next.oneTime")}</li>
-                  )}
-                </>
-              )}
-            </ul>
+          {/* The picture is always whole at 3:2, so it sits beside text
+              rather than over it. On a wide card it is centred beside the
+              whole text block; on a phone a text column beside it would be
+              too narrow for the facts, so it sits beside the name alone and
+              the facts run the full width under a divider. One DOM: the
+              text wrapper dissolves (`contents`) into the phone grid. */}
+          <CardContent className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-3 p-4 text-sm sm:flex sm:gap-4 sm:p-5">
+            <ProductBanner
+              src={pictureSrc}
+              className="w-28 rounded-md sm:w-[40%] sm:max-w-48 sm:shrink-0"
+              sizes="(min-width: 640px) 192px, 112px"
+              eager
+            />
+            <div className="contents sm:block sm:min-w-0 sm:flex-1">
+              <p className="font-semibold">{productName}</p>
+              <div className="col-span-2 mt-3 space-y-0.5 border-t border-border pt-3 text-muted-foreground sm:mt-1 sm:border-t-0 sm:pt-0">
+                {factLines}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* The "Before the first session" guide, after "what happens next"
-            because that card says *when* the first session is and this one says
-            what to do before it — the order a parent reads them in, and the
-            same order the mail states them in.
+        <ul className="mt-5 space-y-3 text-sm">
+          <li className="flex gap-3">
+            <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 break-words">
+              {recipientEmail !== null
+                ? t.rich("email.sentTo", {
+                    email: recipientEmail,
+                    strong: (chunks) => (
+                      <strong className="font-semibold">{chunks}</strong>
+                    ),
+                  })
+                : t("email.sent")}
+            </span>
+          </li>
+          <li className="flex gap-3">
+            {isWaitlist ? (
+              <Bell className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            )}
+            <span className="min-w-0">{nextLine}</span>
+          </li>
+        </ul>
 
-            Enrolled only: a waitlist join is a place in a queue rather than a
-            seat, so there is no first session to be ready for and a guide
-            telling a family to buy the game would be the wrong instruction.
-
-            Asked through the shared resolver, exactly as the product page asks
-            before drawing the About card's grid wrapper: a card around nothing
-            is still a card, and an empty one is a hole in the reading column.
-            The resolver answers both halves at once — the topic has a guide,
-            and at least one of its steps applies to a product of this form —
-            and its answer is then what the body renders, so the question and
-            the content cannot disagree. */}
-        {!isWaitlist && prepPlan !== null && (
-          <Card className="mt-6">
-            <CardContent className="p-5 sm:p-6">
-              <TopicPrepContent plan={prepPlan} showHeading />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* The app-wide button order shape — `src/CLAUDE.md`, "Button Order".
-            My SOG is the affirmative (last in the DOM, so right in a row and
-            top in a stack); Keep browsing is the negative, on the left. */}
-        <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
-          <Link
-            href={ROUTES.shop}
-            className={buttonVariants({
-              variant: "outline",
-              className: "sm:min-w-[180px]",
-            })}
-          >
-            {t("keepBrowsing")}
-          </Link>
+        {/* One button and a quiet link under it — a primary action plus an
+            escape hatch, not a pair, so plain column order with the link
+            below (`src/CLAUDE.md`, "Button Order"). */}
+        <div className="mt-6 flex flex-col items-center gap-2">
           <Link
             href={ROUTES.customer.dashboard}
-            className={buttonVariants({ className: "sm:min-w-[180px]" })}
+            className={buttonVariants({ className: "w-full sm:w-auto sm:min-w-[220px]" })}
           >
             {t("goToDashboard")}
+          </Link>
+          <Link
+            href={ROUTES.shop}
+            className={QUIET_LINK}
+          >
+            {t("keepBrowsing")}
           </Link>
         </div>
       </div>
@@ -336,28 +287,10 @@ export function PurchaseConfirmationView({
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right font-medium">{value}</dd>
-    </div>
-  );
-}
-
-// The price line for the summary. Subscriptions read "€X / month", one-time
-// camps/events read "€X (one-time)", free reads "Free", and a municipality
-// registration names who bears the cost.
-//
-// **That last one is here because the page may not know less than the mail
-// does.** The two surfaces owe each other their facts, and a parent must be
-// able to learn everything about what they just joined from either one — so a
-// cost the mail states and the page did not was a fact missing from half the
-// pair. Saying nothing was defensible on its own terms and stopped being so the
-// moment the other half spoke. It says who pays and nothing either side of
-// that: what a municipality then asks of a family is not ours to answer, and
-// how we settle up with the municipality is not theirs to read. Unavailable
-// never reaches a paid confirmation at all.
+// The price for the card's money line. Subscriptions read "€X / month",
+// one-time camps/events read "€X (one-time)", free reads "Free", and a
+// municipality registration names who bears the cost. Unavailable never
+// reaches a paid confirmation at all.
 function priceText(
   option: PricingOption,
   locale: string,
@@ -403,7 +336,8 @@ function priceText(
  *   page stops and says where to look instead.
  * - `duplicatePayment` — the seat was already taken, so the payment was refused
  *   as a duplicate and no row will ever carry this session. Waiting is a dead
- *   end here by construction, not by bad luck.
+ *   end here by construction, not by bad luck — and no confirmation email is
+ *   sent either, so this state's copy promises none.
  *
  * This component takes only which state it is — there is no row and therefore
  * no participant to name — so its copy says "the person this was for" rather
@@ -454,45 +388,51 @@ export function PurchaseConfirmationNotice({
           };
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
-      <div className="mx-auto max-w-2xl">
+    <div className="container mx-auto px-4 py-6 sm:py-12">
+      <div className="mx-auto max-w-lg">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-act bg-lifted">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-act bg-lifted">
             {isFinalizing ? (
-              <Loader2 className="h-7 w-7 animate-spin text-act" />
+              <Loader2 className="h-6 w-6 animate-spin text-act" />
             ) : kind === "timedOut" ? (
-              <Clock className="h-7 w-7 text-act" />
+              <Clock className="h-6 w-6 text-act" />
             ) : (
-              <Info className="h-7 w-7 text-act" />
+              <Info className="h-6 w-6 text-act" />
             )}
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <Heading level={1} step="section" align="center">
               {copy.heading}
             </Heading>
           </div>
-          <p className="mt-2 text-muted-foreground">{copy.subheading}</p>
+          <p className="mt-1 text-muted-foreground">{copy.subheading}</p>
         </div>
 
         {isFinalizing ? (
           <>
-            {/* Ghosts shaped like the summary card that replaces them. */}
-            <Card className="mt-8">
-              <CardContent className="space-y-3 p-5 sm:p-6">
-                <div className="h-6 w-32 animate-pulse rounded bg-lifted" />
-                <div className="h-16 animate-pulse rounded-lg bg-lifted" />
-                <div className="h-4 animate-pulse rounded bg-lifted" />
-                <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
+            {/* Ghosts shaped like the summary card that replaces them: the
+                picture and the name beside it, the fact lines under the name
+                on a wide card and under both on a phone. */}
+            <Card className="mt-6">
+              <CardContent className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3 p-4 sm:flex sm:gap-4 sm:p-5">
+                <div className="aspect-[3/2] w-28 animate-pulse rounded-md bg-lifted sm:w-[40%] sm:max-w-48 sm:shrink-0" />
+                <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:space-y-2">
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
+                  <div className="col-span-2 space-y-2">
+                    <div className="h-3 animate-pulse rounded bg-lifted" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-5 text-center text-sm text-muted-foreground">
               {copy.body}
             </p>
           </>
         ) : (
           <>
-            <Card className="mt-8">
-              <CardContent className="space-y-3 p-5 sm:p-6 text-sm">
+            <Card className="mt-6">
+              <CardContent className="space-y-3 p-4 text-sm sm:p-5">
                 <p>{copy.body}</p>
                 <p className="text-muted-foreground">
                   {t.rich("supportLine", {
@@ -510,21 +450,20 @@ export function PurchaseConfirmationNotice({
               </CardContent>
             </Card>
 
-            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
-              <Link
-                href={ROUTES.shop}
-                className={buttonVariants({
-                  variant: "outline",
-                  className: "sm:min-w-[180px]",
-                })}
-              >
-                {t("keepBrowsing")}
-              </Link>
+            <div className="mt-6 flex flex-col items-center gap-2">
               <Link
                 href={ROUTES.customer.dashboard}
-                className={buttonVariants({ className: "sm:min-w-[180px]" })}
+                className={buttonVariants({
+                  className: "w-full sm:w-auto sm:min-w-[220px]",
+                })}
               >
                 {t("goToDashboard")}
+              </Link>
+              <Link
+                href={ROUTES.shop}
+                className={QUIET_LINK}
+              >
+                {t("keepBrowsing")}
               </Link>
             </div>
           </>
@@ -549,15 +488,15 @@ export function PurchaseConfirmationFallback() {
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>
-          <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row">
-            <Link
-              href={ROUTES.shop}
-              className={buttonVariants({ variant: "outline" })}
-            >
-              {t("keepBrowsing")}
-            </Link>
+          <div className="mt-4 flex flex-col items-center gap-2">
             <Link href={ROUTES.customer.dashboard} className={buttonVariants()}>
               {t("notFound.cta")}
+            </Link>
+            <Link
+              href={ROUTES.shop}
+              className={QUIET_LINK}
+            >
+              {t("keepBrowsing")}
             </Link>
           </div>
         </CardContent>

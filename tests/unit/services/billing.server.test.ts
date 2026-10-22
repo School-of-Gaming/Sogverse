@@ -194,14 +194,41 @@ describe("resolveBillingAccountsViaRls", () => {
     expect(subsUrl?.searchParams.get("customer_id")).toBe(`eq.${USER_ID}`);
   });
 
-  it("degrades to [] (and does not throw) when the subscription read errors", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
+  // `[]` hides the dashboard's billing section, so a failure must never look
+  // like it: each one throws, and the page shows the card instead.
+  it("throws when the subscription read errors", async () => {
     mockBackend({ stripe_customer_id: "cus_native" }, { errorMessage: "boom" });
 
-    expect(await resolveBillingAccountsViaRls(supabase)).toEqual([]);
-    consoleError.mockRestore();
+    await expect(resolveBillingAccountsViaRls(supabase)).rejects.toMatchObject({
+      message: "boom",
+    });
+  });
+
+  it("throws when the customer profile read errors", async () => {
+    fetchMock.mockImplementation((input) => {
+      const url = requestedUrl(input);
+      return Promise.resolve(
+        url.pathname === PROFILES_PATH
+          ? postgrestError("profile boom")
+          : postgrestJson([]),
+      );
+    });
+
+    await expect(resolveBillingAccountsViaRls(supabase)).rejects.toMatchObject({
+      message: "profile boom",
+    });
+  });
+
+  it("throws when there is no signed-in user", async () => {
+    vi.spyOn(supabase.auth, "getClaims").mockResolvedValue({
+      data: null,
+      error: null,
+    });
+
+    await expect(resolveBillingAccountsViaRls(supabase)).rejects.toThrow(
+      "no signed-in user",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

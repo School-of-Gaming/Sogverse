@@ -29,16 +29,23 @@ import type {
   LandingSectionOf,
   LandingSectionType,
 } from "@/lib/landing-pages/sections";
+import {
+  productRailSeed,
+  type ProductRailPrefetch,
+} from "@/components/public/products/product-rail-selection";
 import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/cn";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
+import { LandingProductsSection } from "./landing-products-section";
+import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
 import {
   written,
   type LandingSectionByType,
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
+import { LandingSubscribeForm } from "./landing-subscribe-form";
 import { Heading } from "@sog/ui";
 
 /*
@@ -48,7 +55,8 @@ import { Heading } from "@sog/ui";
  * The sections are built from the app's own components in the treatments the
  * home and Roblox pages already use — the act eyebrow over a section heading,
  * the centred heading over a card grid, the act-filled step numbers, the FAQ
- * rows, the closing card with the world rule along its top — so a landing page
+ * rows, the closing card with the world rule along its top, the shop's own
+ * product cards in the Roblox page's carousel — so a landing page
  * reads as part of the same site whatever order an admin puts them in. Every
  * section sits on the plain page ground: an admin chooses the order, and a
  * tinted band beside another tinted band reads as one section with a stray
@@ -57,8 +65,9 @@ import { Heading } from "@sog/ui";
  * **Every word is the admin's**, so the renderers paint what is written and
  * leave out what is not: a published version has every required word, and the
  * preview of one still being written shows its blanks as gaps rather than as
- * placeholder copy. The one string of our own is the screen reader's "opens in
- * a new tab" beside a button that leaves the site.
+ * placeholder copy. The strings of our own are the screen reader's "opens in
+ * a new tab" beside a button that leaves the site, and the email sign-up
+ * form's fields, consent and answers, which are the same promise on every page.
  */
 
 /** What every renderer is handed besides its own section and words. */
@@ -67,6 +76,14 @@ export interface LandingRenderContext {
   locale: SupportedLocale;
   /** The language the shown version's words are in, which the body is marked with. */
   textLocale: SupportedLocale;
+  /** The page's id: what an email sign-up names as where it came from. */
+  pageId: string;
+  /**
+   * The admin's preview of a working copy, not the live page: an email
+   * sign-up form is drawn but cannot be sent, since the page it would name
+   * may not be live and a live one would sign a real address up.
+   */
+  preview: boolean;
   /**
    * A picture's servable URL and its shape by its catalogue entry id, or null
    * when the copy names no path for it (the picture has left the catalogue).
@@ -77,6 +94,13 @@ export interface LandingRenderContext {
    * answered none for it.
    */
   testimonial: (testimonialId: string) => PublicTestimonial | null;
+  /**
+   * The listing and seat counts, read on the server for every products
+   * section of the page at once (`prefetchLandingProducts`), or null when the
+   * page has none or the read failed — in which case a products section's
+   * live query fetches for itself.
+   */
+  products: ProductRailPrefetch | null;
 }
 
 /** A picture as a renderer draws it: where it is, and the shape its box is reserved at. */
@@ -89,49 +113,6 @@ interface LandingSectionProps<Type extends LandingSectionType> {
   section: LandingSectionOf<Type>;
   text: LandingTextOf<Type>;
   context: LandingRenderContext;
-}
-
-/** Vertical rhythm shared by every section after the hero. */
-const SECTION = "container mx-auto px-4 py-16 sm:py-24";
-
-/** Small uppercase section label — furniture, so caps; act, as the Roblox page's. */
-function Eyebrow({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-xs font-semibold uppercase tracking-widest text-act">
-      {children}
-    </p>
-  );
-}
-
-/** A section's eyebrow, heading and intro, each drawn only when written. */
-function SectionHeader({
-  eyebrow,
-  heading,
-  intro,
-  centred = true,
-}: {
-  eyebrow?: string;
-  heading?: string;
-  intro?: string;
-  centred?: boolean;
-}) {
-  const label = written(eyebrow);
-  const title = written(heading);
-  const lead = written(intro);
-  if (label === null && title === null && lead === null) return null;
-  return (
-    <div className={cn(centred && "mx-auto max-w-2xl text-center")}>
-      {label !== null && <Eyebrow>{label}</Eyebrow>}
-      {title !== null && (
-        <div className={cn(label !== null && "mt-4")}>
-          <Heading level={2} step="display" align={centred ? "center" : "start"}>
-            {title}
-          </Heading>
-        </div>
-      )}
-      {lead !== null && <p className="mt-4 text-muted-foreground">{lead}</p>}
-    </div>
-  );
 }
 
 /**
@@ -327,7 +308,7 @@ function TextSection({ section, text, context }: LandingSectionProps<"text">) {
   const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const body = written(text.body);
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <div
         className={cn(
           "mx-auto",
@@ -465,9 +446,9 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
   const grid = pictureGrid(pictures[0].picture.shape, pictures.length);
   const sizes = pictureGridSizes(grid);
   const caption = written(text.caption);
-  const hasHeader = written(text.eyebrow) !== null || written(text.heading) !== null;
+  const hasHeader = hasSectionHeader({ eyebrow: text.eyebrow, heading: text.heading });
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
       <figure className={cn("mx-auto", grid.width, hasHeader && "mt-12")}>
         <div className={cn("grid gap-4", grid.columns)}>
@@ -493,7 +474,7 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
 function PointsSection({ section, text }: LandingSectionProps<"points">) {
   const threeAcross = section.items.length % 3 === 0 || section.items.length === 5;
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
       <div
         className={cn(
@@ -545,7 +526,7 @@ function stepWidth(count: number): string {
 function StepsSection({ section, text }: LandingSectionProps<"steps">) {
   const width = stepWidth(section.items.length);
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
       <ol
         className={cn(
@@ -638,13 +619,34 @@ function TestimonialsSection({ section, text, context }: LandingSectionProps<"te
   })();
 
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
       {/* exact-locale: resets the body's language mark for the store's own words */}
       <div lang={context.textLocale === context.locale ? undefined : context.locale}>
         {arrangement}
       </div>
     </section>
+  );
+}
+
+/**
+ * The admin's picked products as the shop's own cards in the shared product
+ * rail, drawn by a client component that keeps them live
+ * (`landing-products-section.tsx`, which says what is drawn and when). The
+ * page's prefetch is narrowed here to this section's picks.
+ */
+function ProductsSection({ section, text, context }: LandingSectionProps<"products">) {
+  return (
+    <LandingProductsSection
+      productIds={section.productIds}
+      eyebrow={text.eyebrow}
+      heading={text.heading}
+      intro={text.intro}
+      seed={productRailSeed(context.products, {
+        kind: "picks",
+        productIds: section.productIds,
+      })}
+    />
   );
 }
 
@@ -673,7 +675,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
     ];
   });
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
@@ -698,7 +700,7 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   const body = written(text.body);
   const buttonLabel = written(text.buttonLabel);
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <Card className="relative mx-auto max-w-3xl overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
         <CardContent className="flex flex-col items-center py-12 text-center">
@@ -726,6 +728,29 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   );
 }
 
+/**
+ * An email sign-up: the heading and intro the page wrote over the site's own
+ * form, in the reading column.
+ */
+function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  return (
+    <section className={LANDING_SECTION}>
+      <div className="mx-auto max-w-xl">
+        <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
+        <div className="mt-10">
+          <LandingSubscribeForm
+            pageId={context.pageId}
+            sectionId={section.id}
+            locale={context.locale}
+            buttonLabel={written(text.buttonLabel) ?? ""}
+            preview={context.preview}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // The map
 // ---------------------------------------------------------------------------
@@ -739,7 +764,9 @@ export const LANDING_SECTION_RENDERERS: {
   points: PointsSection,
   steps: StepsSection,
   testimonials: TestimonialsSection,
+  products: ProductsSection,
   faq: FaqSection,
+  subscribe: SubscribeSection,
   cta: CtaSection,
 };
 

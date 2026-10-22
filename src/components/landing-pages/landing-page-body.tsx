@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import type { ProductRailPrefetch } from "@/components/public/products/product-rail-selection";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { landingPictureShapeOf } from "@/lib/landing-pages/picture-shapes";
@@ -28,6 +29,16 @@ export interface LandingPageBodyProps {
   textLocale: SupportedLocale;
   /** The page's locale — the URL's. */
   locale: SupportedLocale;
+  /**
+   * The listing and seat counts for the page's products sections, read
+   * on the server (`prefetchLandingProducts`); null when the page has none or
+   * the read failed.
+   */
+  products: ProductRailPrefetch | null;
+  /** The page's id. */
+  pageId: string;
+  /** The admin's preview of a working copy: an email sign-up form cannot be sent. */
+  preview: boolean;
 }
 
 /**
@@ -47,10 +58,15 @@ export function LandingPageBody({
   sectionTexts,
   textLocale,
   locale,
+  products,
+  pageId,
+  preview,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
     textLocale,
+    pageId,
+    preview,
     picture: (imageId) => {
       if (!Object.hasOwn(pictures, imageId)) return null;
       const { path, purpose } = pictures[imageId];
@@ -58,6 +74,7 @@ export function LandingPageBody({
       return src === null ? null : { src, shape: landingPictureShapeOf(purpose) };
     },
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
+    products,
   };
   return (
     // exact-locale: marks text written in another language than the page with lang
