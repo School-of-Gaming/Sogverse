@@ -81,6 +81,7 @@ export type PreviewScenario =
   | "consumer-club-future-start"
   | "consumer-club-future-start-clamped"
   | "consumer-club-parents-only"
+  | "consumer-club-age-band-refused"
   | "muni-empty"
   | "muni-filling"
   | "muni-almost-full"
@@ -164,6 +165,12 @@ interface ScenarioBase {
    * previews.
    */
   startsInDays?: number;
+  /**
+   * The roster is only the children the product's age band refuses, for the
+   * one scenario that exists to show the panel when nobody on it can be
+   * signed up for age. Only meaningful with `signed-in-with-gamers`.
+   */
+  outOfBandRosterOnly?: boolean;
 }
 
 // A scenario either authors a static registration state, or is a live
@@ -343,6 +350,26 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     audience: "parents",
     selfSignupState: "active",
     state: { kind: "open", seatCount: 20, seatsLeft: 6, waitlistEnabled: false },
+  },
+  "consumer-club-age-band-refused": {
+    // Every child on the account is outside the club's band, and nobody holds
+    // a seat — so the form gives way to the refusal message. Its own scenario
+    // because it cannot share a render with the picker: the default roster has
+    // in-band children, and the message exists only where it has none.
+    label: "€45/mo — every child outside the age band",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    outOfBandRosterOnly: true,
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
   },
   "muni-empty": {
     label: "15 / 15 seats",
@@ -621,6 +648,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club-future-start",
   "consumer-club-future-start-clamped",
   "consumer-club-parents-only",
+  "consumer-club-age-band-refused",
   "muni-empty",
   "muni-filling",
   "muni-almost-full",
@@ -1286,19 +1314,22 @@ function buildAuthState(
   // they hold a waitlist spot; otherwise they hold a seat.
   const childState: MyParticipationState =
     state.kind === "full_waitlist" ? "waitlisted" : "active";
+  const outOfBandOnly = config.outOfBandRosterOnly === true;
   const gamerRows: SignupParticipantChoice[] =
-    hasGamers && audience !== "parents"
-      ? [
-          { ...DEMO_GAMERS[0] },
-          { ...DEMO_GAMERS[1], signupState: childState },
-          { ...DEMO_GAMERS[2] },
-          // Last, where the picker's refused rows sit in the live page too: the
-          // adapter builds the roster in the order the account holds it, and
-          // these two are simply the siblings the band excludes.
-          { ...DEMO_GAMERS_OUT_OF_BAND[0] },
-          { ...DEMO_GAMERS_OUT_OF_BAND[1] },
-        ]
-      : [];
+    !hasGamers || audience === "parents"
+      ? []
+      : outOfBandOnly
+        ? DEMO_GAMERS_OUT_OF_BAND.map((g) => ({ ...g }))
+        : [
+            { ...DEMO_GAMERS[0] },
+            { ...DEMO_GAMERS[1], signupState: childState },
+            { ...DEMO_GAMERS[2] },
+            // Last, where the picker's refused rows sit in the live page too:
+            // the adapter builds the roster in the order the account holds it,
+            // and these two are simply the siblings the band excludes.
+            { ...DEMO_GAMERS_OUT_OF_BAND[0] },
+            { ...DEMO_GAMERS_OUT_OF_BAND[1] },
+          ];
   const selfRow: SignupParticipantChoice[] =
     audience === "gamers"
       ? []
@@ -1317,9 +1348,15 @@ function buildAuthState(
     // Every child on the account, the two the age band refuses included: the
     // cap is about how many children a parent may hold, not about how many of
     // them this particular product would take.
-    gamerCount: hasGamers
-      ? DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length
-      : 0,
+    gamerCount: !hasGamers
+      ? 0
+      : outOfBandOnly
+        ? DEMO_GAMERS_OUT_OF_BAND.length
+        : DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length,
+    // The band `buildBaseProduct` gives every product with a gamer audience,
+    // named in full by the message that replaces the form when every child is
+    // outside it.
+    ...(audience === "parents" ? {} : { ageRange: { min: 8, max: 12 } }),
   };
 }
 

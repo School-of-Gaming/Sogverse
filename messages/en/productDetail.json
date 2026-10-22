@@ -151,6 +151,28 @@
       "dialogDescription": "We use this to work out which clubs, camps and events are offered where you live. You can change it later in your settings.",
       "dialogField": "Your location",
       "dialogSave": "Save location"
+    },
+    "ageRefusal": {
+      "heading": {
+        "consumer_club": "This club is for ages {range}",
+        "municipality_club": "This club is for ages {range}",
+        "camp": "This camp is for ages {range}",
+        "event": "This event is for ages {range}"
+      },
+      "range": {
+        "between": "{min}–{max}",
+        "from": "{min} and over",
+        "upTo": "{max} and under"
+      },
+      "children": "{count, plural, one {{names} isn’t in that age range.} other {{names} aren’t in that age range.}}",
+      "nameWithAge": "{name} ({age})",
+      "findProduct": {
+        "consumer_club": "{count, plural, other {Find a club for their age}}",
+        "municipality_club": "{count, plural, other {Find a club for their age}}",
+        "camp": "{count, plural, other {Find a camp for their age}}",
+        "event": "{count, plural, other {Find an event for their age}}"
+      },
+      "addGamer": "Add another gamer"
     }
   },
   "pricing": {

@@ -151,6 +151,28 @@
       "dialogDescription": "Tämän perusteella näemme, mitkä kerhot, leirit ja tapahtumat ovat tarjolla asuinpaikassasi. Voit vaihtaa sijainnin myöhemmin asetuksissa.",
       "dialogField": "Sijaintisi",
       "dialogSave": "Tallenna sijainti"
+    },
+    "ageRefusal": {
+      "heading": {
+        "consumer_club": "Tämä kerho on {range}-vuotiaille",
+        "municipality_club": "Tämä kerho on {range}-vuotiaille",
+        "camp": "Tämä leiri on {range}-vuotiaille",
+        "event": "Tämä tapahtuma on {range}-vuotiaille"
+      },
+      "range": {
+        "between": "{min}–{max}",
+        "from": "vähintään {min}",
+        "upTo": "enintään {max}"
+      },
+      "children": "{count, plural, one {{names} ei kuulu tähän ikäryhmään.} other {{names} eivät kuulu tähän ikäryhmään.}}",
+      "nameWithAge": "{name} ({age})",
+      "findProduct": {
+        "consumer_club": "{count, plural, other {Etsi ikään sopiva kerho}}",
+        "municipality_club": "{count, plural, other {Etsi ikään sopiva kerho}}",
+        "camp": "{count, plural, other {Etsi ikään sopiva leiri}}",
+        "event": "{count, plural, other {Etsi ikään sopiva tapahtuma}}"
+      },
+      "addGamer": "Lisää toinen pelaaja"
     }
   },
   "pricing": {

@@ -44,6 +44,7 @@ import type {
   AuthState,
   ConfirmedHomeLocation,
   SignupAgeBlock,
+  SignupAgeRange,
 } from "./signup-panel-view";
 import { Heading } from "@sog/ui";
 
@@ -471,6 +472,7 @@ export function ProductDetailPage({
       // also the full roster including children already on this product, which
       // is the number the Steven Brown cap is about.
       gamerCount: (gamers ?? []).length,
+      ageRange: describeAgeRange(product) ?? undefined,
     };
   })();
 
@@ -585,6 +587,21 @@ function describeAgeBlock(
       ? null
       : { kind: "over", bound: product.max_age };
   }
+  return null;
+}
+
+/**
+ * The product's band as the panel names it when every child is outside it, or
+ * null on a product declaring neither end — which refuses nobody for age.
+ */
+function describeAgeRange(product: {
+  min_age: number | null;
+  max_age: number | null;
+}): SignupAgeRange | null {
+  if (product.min_age !== null) {
+    return { min: product.min_age, max: product.max_age };
+  }
+  if (product.max_age !== null) return { min: null, max: product.max_age };
   return null;
 }
 

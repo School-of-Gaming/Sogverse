@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Globe, MapPin, MapPinCheck, Plus } from "lucide-react";
+import { Globe, MapPin, MapPinCheck, Plus, UsersRound } from "lucide-react";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/cn";
 import { formatCurrencyFromCents } from "@/lib/money";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
+import { PRODUCT_AGE_BANDS } from "@/lib/constants/gamer-age";
+import { formattingLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
 import {
   consentDocumentMeta,
@@ -33,6 +35,7 @@ import type {
   ProductType,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import { AGE_PARAM } from "./browse-state";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
 import { PricingPanelView } from "./pricing-panel-view";
@@ -42,7 +45,7 @@ import {
   SeatAvailabilityBar,
   type SeatAvailabilityBarProps,
 } from "./seat-availability-bar";
-import type { AppHref } from "@/lib/constants/routes";
+import type { AppHref, AppHrefObject } from "@/lib/constants/routes";
 import { Heading } from "@sog/ui";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
@@ -146,7 +149,24 @@ export type AuthState =
        * at the cap minus one would be told they were full.
        */
       gamerCount: number;
+      /**
+       * The product's age band, read only by the message that replaces the form
+       * when every child is outside it — the one place the panel names the
+       * whole band rather than the one bound a row fell outside of. Absent
+       * where no band applies; that message then names the bounds the refused
+       * rows carry.
+       */
+      ageRange?: SignupAgeRange;
     };
+
+/**
+ * A product's age band, as the refusal names it: both ends, or the one end the
+ * product declares. A product declaring neither refuses nobody for age, so it
+ * has no range to name and is not one of these.
+ */
+export type SignupAgeRange =
+  | { min: number; max: number | null }
+  | { min: null; max: number };
 
 /**
  * Per-gamer signup state on a product: the child already holds a seat
@@ -615,7 +635,7 @@ function FormOrAuth(props: FormOrAuthProps) {
       );
     case "non_customer":
       return <NonCustomerOverlay forGamers={props.forGamers} />;
-    case "ready":
+    case "ready": {
       // A family in the wrong country is ineligible, so the form goes — the
       // same swap the wrong-role note above makes, with picker, consent and CTA
       // ceasing to exist rather than being disabled in place. Nothing on screen
@@ -638,6 +658,25 @@ function FormOrAuth(props: FormOrAuthProps) {
           />
         );
       }
+      // Every child refused for age is the same kind of answer: nobody on this
+      // panel can be signed up, so the form goes rather than standing there
+      // inert. Decided after the country, which outranks it — a family the
+      // product is not sold to is not helped by hearing about its ages.
+      const refusal = ageRefusalOf(props.authState);
+      if (refusal !== null) {
+        return (
+          <AgeRefusalOverlay
+            productType={props.productType}
+            refusal={refusal}
+            locale={props.locale}
+            canAddGamer={addGamerAllowed(
+              props.forGamers,
+              props.authState.gamerCount,
+            )}
+            onAddGamer={props.onAddGamer}
+          />
+        );
+      }
       // selectedParticipantId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
       return (
@@ -647,6 +686,7 @@ function FormOrAuth(props: FormOrAuthProps) {
           gamerCount={props.authState.gamerCount}
         />
       );
+    }
   }
 }
 
@@ -770,6 +810,192 @@ function WrongCountryOverlay({
           name: (chunks) => <span className="font-semibold">{chunks}</span>,
         })}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Why the form gave way to the age refusal: the children it refused, and the
+ * band it names.
+ */
+interface AgeRefusal {
+  /** Every child on the roster, each carrying an `ageBlock`. Never empty. */
+  children: readonly SignupParticipantChoice[];
+  range: SignupAgeRange;
+}
+
+/**
+ * **Whether nobody on this panel can be signed up, and only because of age.**
+ *
+ * Three conditions, each load-bearing:
+ *
+ * - **at least one child** — an empty roster is the add-a-gamer form, not a
+ *   refusal of anybody;
+ * - **every row is a child outside the band** — the parent's own selectable
+ *   row on a both-audiences product keeps the form, because there is still a
+ *   seat on it this reader can buy;
+ * - **no row holds a seat or a waitlist spot** — a family already on the
+ *   product keeps the form, because the picker row saying so is the
+ *   acknowledgement they came to see, and a message about ages would read as
+ *   a refusal of the seat they hold. That covers the parent's own row too.
+ *
+ * The range is the product's band where the caller passes it, and otherwise the
+ * bounds the refused rows carry — every one of them carries one, so there is
+ * always at least one end to name.
+ */
+function ageRefusalOf(authState: {
+  participants: readonly SignupParticipantChoice[];
+  ageRange?: SignupAgeRange;
+}): AgeRefusal | null {
+  const rows = authState.participants;
+  const refusedForAgeAlone = (p: SignupParticipantChoice) =>
+    p.isSelf !== true && (p.signupState ?? null) === null && p.ageBlock != null;
+  if (rows.length === 0 || !rows.every(refusedForAgeAlone)) return null;
+
+  if (authState.ageRange !== undefined) {
+    return { children: rows, range: authState.ageRange };
+  }
+  const boundOf = (kind: SignupAgeBlock["kind"]) =>
+    rows.find((p) => p.ageBlock?.kind === kind)?.ageBlock?.bound ?? null;
+  const min = boundOf("under");
+  const max = boundOf("over");
+  if (min !== null) return { children: rows, range: { min, max } };
+  if (max !== null) return { children: rows, range: { min: null, max } };
+  return null;
+}
+
+/**
+ * The shop, filtered to the refused children's age where one filter fits them
+ * all.
+ *
+ * Starts from the type's own listing, so "find a club" lands among clubs, and
+ * adds the shop's age band only when every child falls inside the *same* one:
+ * a filter that fitted one child and hid the others' products would be a
+ * narrower answer than the parent asked for. Children spanning bands, or a
+ * child the bands do not cover, get the type's listing unfiltered — which is
+ * why the button's label promises a place to look rather than a filtered list.
+ */
+function shopHrefForAges(
+  productType: ProductType,
+  ages: readonly (number | null)[],
+): AppHrefObject {
+  const base = ROUTES.shopBrowse(productType);
+  const band = PRODUCT_AGE_BANDS.find((b) =>
+    ages.every((age) => age !== null && age >= b.min && age <= b.max),
+  );
+  if (band === undefined) return base;
+  return {
+    ...base,
+    query: {
+      ...("query" in base ? base.query : {}),
+      [AGE_PARAM]: `${band.min}-${band.max}`,
+    },
+  };
+}
+
+/**
+ * Every child on the account is outside this product's age band.
+ *
+ * **It replaces the form, by the grammar above `FormOrAuth`.** Nobody on the
+ * panel can be selected, so a picker of disabled rows, tickable consent boxes
+ * and a dashed add row under a disabled button was a form promising a purchase
+ * it could not reach — and parents read it as one, looking for the step they
+ * had missed. A message is the honest shape: there is no decision here for this
+ * reader, so none is presented.
+ *
+ * **It speaks in the wrong-country refusal's voice**, because it is the same
+ * kind of statement — a fact about who the product is for, nothing anyone did
+ * wrong. So: the neutral border, an `info`-coloured lucide anchor one scale up
+ * because the block is the panel's whole answer, and body text at full
+ * foreground weight. The heading names the band, the one fact the parent will
+ * scan for; the sentence beneath names each child with their age, so the
+ * refusal explains itself without the parent doing the arithmetic. What it
+ * pointedly does not say is when a child will be old enough: the block is about
+ * who the product is for today, not a countdown.
+ *
+ * **Unlike that refusal, it has somewhere to send the reader**, because an age
+ * mismatch has an answer in the shop and a country mismatch does not. The
+ * primary action is the way out that fits most families; adding another child
+ * is the rarer one — the parent of a child not yet on the account — so it sits
+ * beneath as a quiet escape hatch rather than as the other half of a pair, and
+ * per `src/CLAUDE.md`'s Button Order it stays below in plain `flex-col`. It is
+ * the picker's own add affordance, opening the same dialog and withheld at the
+ * same cap; a child added in range turns the panel back into the form, which is
+ * the direct result of the dialog they just confirmed.
+ */
+function AgeRefusalOverlay({
+  productType,
+  refusal,
+  locale,
+  canAddGamer,
+  onAddGamer,
+}: {
+  productType: ProductType;
+  refusal: AgeRefusal;
+  locale: string;
+  canAddGamer: boolean;
+  onAddGamer: () => void;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  const { children, range } = refusal;
+  const names = new Intl.ListFormat(formattingLocale(locale), {
+    style: "long",
+    type: "conjunction",
+  }).format(
+    children.map((c) =>
+      c.age === null
+        ? c.name
+        : t("ageRefusal.nameWithAge", { name: c.name, age: c.age }),
+    ),
+  );
+  const rangeLabel =
+    range.min === null
+      ? t("ageRefusal.range.upTo", { max: range.max })
+      : range.max === null
+        ? t("ageRefusal.range.from", { min: range.min })
+        : t("ageRefusal.range.between", { min: range.min, max: range.max });
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3 rounded-md border border-border p-4">
+        <UsersRound className="mt-0.5 h-5 w-5 shrink-0 text-info" />
+        <div className="min-w-0">
+          <Heading level={2} step="label">
+            {t(`ageRefusal.heading.${productType}`, { range: rangeLabel })}
+          </Heading>
+          <p className="mt-1 text-sm text-foreground">
+            {t("ageRefusal.children", { names, count: children.length })}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1">
+        <Link
+          href={shopHrefForAges(
+            productType,
+            children.map((c) => c.age),
+          )}
+          // The label is longer than the panel's other CTAs in some locales,
+          // so it may wrap rather than run past the rail.
+          className={buttonVariants({
+            size: "lg",
+            className: "h-auto min-h-11 w-full whitespace-normal py-2 text-base",
+          })}
+        >
+          {t(`ageRefusal.findProduct.${productType}`, {
+            count: children.length,
+          })}
+        </Link>
+        {canAddGamer && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onAddGamer}
+            className="w-full text-muted-foreground"
+          >
+            <Plus className="h-4 w-4" />
+            {t("ageRefusal.addGamer")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -923,15 +1149,7 @@ function SignupForm(
   // The "Add Gamer" row reuses the family namespace's label so the wording
   // stays in lockstep with the family selector / My Gamers tile.
   const tFamily = useTranslations("family");
-  // Two independent reasons to withhold the add affordance. Steven Brown Rule —
-  // hidden at the cap, same as the family selector / My Gamers grid; the count
-  // is the parent's full roster (enrolled children included) and comes in
-  // separately precisely because `participants` may carry the parent's own row,
-  // which is not a child and must not count against the cap. And a
-  // parents-only product has no gamer audience at all, so adding a child here
-  // would create an account that cannot be signed up on this page.
-  const canAddGamer =
-    props.forGamers && props.gamerCount < MAX_GAMERS_PER_PARENT;
+  const canAddGamer = addGamerAllowed(props.forGamers, props.gamerCount);
   // Whether that row is the parent's required next step, which is what decides
   // its weight — the reasoning is at the row itself, further down.
   const solidAddGamer =
@@ -971,12 +1189,13 @@ function SignupForm(
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
   // then. selectedParticipantId is null only when nobody is selectable, which
-  // has four causes: there is still room to add a child (canAddGamer → prompt
-  // to add a gamer), every child is already on the product at the gamer cap,
-  // every child the account has is outside the product's age band, or — on a
-  // parents-only product — the reader already holds the one seat there is. The
-  // last three all land on ctaAllSet; the picker rows show each person's exact
-  // reason — seat, waitlist or bound — in place.
+  // has three causes that reach this form: there is still room to add a child
+  // (canAddGamer → prompt to add a gamer), the gamer cap is reached with every
+  // child either on the product or out of its age band, or, on a parents-only
+  // product, the reader already holds the one seat there is. The last two land
+  // on ctaAllSet; the picker rows show each person's exact reason — seat,
+  // waitlist or bound — in place. A roster refused for age alone, with no seat
+  // among it, never gets here: `FormOrAuth` swaps the form for a message.
   //
   // The location step is an instruction and nothing more — the button stays
   // disabled and the section above it carries the action, per the grammar note
@@ -1770,6 +1989,18 @@ function ConsentRow({
 }
 
 // ---------- Helpers ----------
+
+// Two independent reasons to withhold the add affordance. Steven Brown Rule —
+// hidden at the cap, same as the family selector / My Gamers grid; the count is
+// the parent's full roster (enrolled children included) and comes in separately
+// precisely because the picker's rows may carry the parent's own row, which is
+// not a child and must not count against the cap. And a parents-only product
+// has no gamer audience at all, so adding a child here would create an account
+// that cannot be signed up on this page. One function for the picker's add row
+// and the age refusal's, so the two cannot disagree about when it exists.
+function addGamerAllowed(forGamers: boolean, gamerCount: number): boolean {
+  return forGamers && gamerCount < MAX_GAMERS_PER_PARENT;
+}
 
 function useVerb(productType: ProductType): string {
   const t = useTranslations("productDetail.signupPanel.verb");

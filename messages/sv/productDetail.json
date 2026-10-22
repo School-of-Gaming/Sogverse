@@ -151,6 +151,28 @@
       "dialogDescription": "Vi använder det för att se vilka klubbar, läger och evenemang som erbjuds där du bor. Du kan ändra det senare i dina inställningar.",
       "dialogField": "Din plats",
       "dialogSave": "Spara plats"
+    },
+    "ageRefusal": {
+      "heading": {
+        "consumer_club": "Den här klubben är för {range}",
+        "municipality_club": "Den här klubben är för {range}",
+        "camp": "Det här lägret är för {range}",
+        "event": "Det här evenemanget är för {range}"
+      },
+      "range": {
+        "between": "{min}–{max}-åringar",
+        "from": "{min}-åringar och äldre",
+        "upTo": "{max}-åringar och yngre"
+      },
+      "children": "{count, plural, one {{names} hör inte till den åldersgruppen.} other {{names} hör inte till den åldersgruppen.}}",
+      "nameWithAge": "{name} ({age} år)",
+      "findProduct": {
+        "consumer_club": "{count, plural, other {Hitta en klubb för rätt ålder}}",
+        "municipality_club": "{count, plural, other {Hitta en klubb för rätt ålder}}",
+        "camp": "{count, plural, other {Hitta ett läger för rätt ålder}}",
+        "event": "{count, plural, other {Hitta ett evenemang för rätt ålder}}"
+      },
+      "addGamer": "Lägg till ännu en gamer"
     }
   },
   "pricing": {

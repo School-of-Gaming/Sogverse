@@ -7,6 +7,7 @@ import {
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
 import { useSignupPanelFields } from "@/components/public/products/use-signup-panel-fields";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
 import type {
   GamerPhotoConsentType,
   MarketingConsentType,
@@ -215,8 +216,8 @@ describe("preselection skips a refused row", () => {
   });
 
   it("selects nobody when every child is outside it", () => {
-    // The panel still renders — the picker shows each row's reason and the CTA
-    // stays disabled, exactly as it does when everyone is already enrolled.
+    // The panel then shows no picker at all — the form gives way to the age
+    // refusal (below) — but the hook must not have picked anyone behind it.
     expect(fieldsFor([ELIAS, SOFIA]).selectedParticipantId).toBeNull();
   });
 
@@ -256,5 +257,135 @@ describe("preselection skips a refused row", () => {
     expect(fieldsFor([ELIAS, SOFIA, SELF]).selectedParticipantId).toBe(
       PARENT_ID,
     );
+  });
+});
+
+/**
+ * **A roster refused for age alone replaces the form with a message**, because
+ * a form nobody on it can complete reads as a step the parent has missed. The
+ * form survives wherever there is still something on it for this reader: a
+ * seat a child already holds, or the reader's own selectable row.
+ */
+describe("a roster refused for age alone gives way to a message", () => {
+  // A 13–17 club, and three children under it: two in the shop's 10–12 band
+  // and one in its 7–9 band.
+  const DAVID: SignupParticipantChoice = {
+    id: "3f7d2a91-6c4e-4b85-a0d2-8e1f5b7c9a34",
+    name: "David",
+    age: 9,
+    ageBlock: { kind: "under", bound: 13 },
+  };
+  const JONI: SignupParticipantChoice = {
+    id: "b8e4c1f2-9a3d-4e67-8b05-2c6f1d9e4a73",
+    name: "Joni",
+    age: 11,
+    ageBlock: { kind: "under", bound: 13 },
+  };
+  const JUHA: SignupParticipantChoice = {
+    id: "e2a95d7c-4b18-4f3e-9c61-7d0b8a2f5e96",
+    name: "Juha",
+    age: 10,
+    ageBlock: { kind: "under", bound: 13 },
+  };
+
+  function refusedPanel(
+    participants: readonly SignupParticipantChoice[],
+    gamerCount = participants.filter((p) => p.isSelf !== true).length,
+  ): SignupPanelViewProps {
+    return {
+      ...panel(participants, null),
+      productType: "consumer_club",
+      authState: {
+        kind: "ready",
+        participants,
+        gamerCount,
+        ageRange: { min: 13, max: 17 },
+      },
+    };
+  }
+
+  const shopHref = (c: HTMLElement) =>
+    c.querySelector<HTMLAnchorElement>('a[href^="/shop"]')?.getAttribute("href");
+  const addGamer = (c: HTMLElement) =>
+    [...c.querySelectorAll("button")].find((b) =>
+      b.textContent.includes("ageRefusal.addGamer"),
+    );
+
+  it("replaces the picker, the consent and the CTA", () => {
+    const { container } = render(
+      <SignupPanelView {...refusedPanel([JONI, JUHA])} />,
+    );
+    expect(rows(container)).toHaveLength(0);
+    expect(container.querySelector('[role="checkbox"]')).toBeNull();
+    expect(container.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(container.textContent).not.toContain("ctaAddGamer");
+    expect(container.textContent).not.toContain("ctaAllSet");
+  });
+
+  it("names the whole band, and each child with their age", () => {
+    const { container } = render(
+      <SignupPanelView {...refusedPanel([JONI, JUHA])} />,
+    );
+    const text = container.textContent;
+    expect(text).toContain("ageRefusal.heading.consumer_club");
+    expect(text).toContain("ageRefusal.range.between");
+    expect(text).toContain('\\"min\\":13,\\"max\\":17');
+    expect(text).toContain('\\"name\\":\\"Joni\\",\\"age\\":11');
+    expect(text).toContain('\\"name\\":\\"Juha\\",\\"age\\":10');
+    expect(text).toContain('"count":2');
+  });
+
+  it("links to the shop filtered to the one band every child is in", () => {
+    const { container } = render(
+      <SignupPanelView {...refusedPanel([JONI, JUHA])} />,
+    );
+    expect(shopHref(container)).toBe("/shop?category=clubs&age=10-12");
+  });
+
+  it("links to the unfiltered listing when the children span bands", () => {
+    const { container } = render(
+      <SignupPanelView {...refusedPanel([DAVID, JONI, JUHA])} />,
+    );
+    expect(shopHref(container)).toBe("/shop?category=clubs");
+  });
+
+  it("keeps the form when a child already holds a seat", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...refusedPanel([{ ...JONI, signupState: "active" }, JUHA])}
+      />,
+    );
+    expect(rows(container)).toHaveLength(2);
+    expect(container.textContent).not.toContain("ageRefusal.heading");
+  });
+
+  it("keeps the form when the reader's own seat is selectable", () => {
+    const { container } = render(
+      <SignupPanelView {...refusedPanel([JONI, JUHA, SELF])} />,
+    );
+    expect(rows(container)).toHaveLength(3);
+    expect(container.textContent).not.toContain("ageRefusal.heading");
+  });
+
+  it("offers to add another gamer through the picker's own callback", () => {
+    const onAddGamer = vi.fn();
+    const { container } = render(
+      <SignupPanelView
+        {...refusedPanel([JONI, JUHA])}
+        onAddGamer={onAddGamer}
+      />,
+    );
+    addGamer(container)?.click();
+    expect(onAddGamer).toHaveBeenCalledOnce();
+  });
+
+  it("withholds that offer at the gamer cap", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...refusedPanel([JONI, JUHA], MAX_GAMERS_PER_PARENT)}
+      />,
+    );
+    expect(container.textContent).toContain("ageRefusal.heading");
+    expect(addGamer(container)).toBeUndefined();
   });
 });

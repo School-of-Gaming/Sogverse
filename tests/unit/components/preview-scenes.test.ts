@@ -486,6 +486,21 @@ describe("the audience scenarios cover all three cases", () => {
     expect(participants[0].signupState).toBe("active");
   });
 
+  it("keeps one roster the band refuses whole, for the age refusal", () => {
+    // The message replacing the form is reachable from this scenario alone:
+    // every row a child outside the band, none holding a seat.
+    const { participants, ageRange } = pickerRows(
+      "consumer-club-age-band-refused",
+    );
+    expect(participants.length).toBeGreaterThan(1);
+    for (const p of participants) {
+      expect(p.isSelf, p.name).not.toBe(true);
+      expect(p.ageBlock, p.name).toBeTruthy();
+      expect(p.signupState ?? null, p.name).toBeNull();
+    }
+    expect(ageRange).toEqual({ min: 8, max: 12 });
+  });
+
   it("keeps the reader out of every gamers-only picker", () => {
     for (const { slug, product, authState } of fixtures) {
       if (product.for_parents || authState.kind !== "ready") continue;

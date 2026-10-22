@@ -151,6 +151,28 @@
       "dialogDescription": "DaqlIj wISov ’ej naDev qach’a’mey, wanI’mey je wISam. Qapla’ — DaH yIchoH ’e’ DalaH.",
       "dialogField": "DaqlIj",
       "dialogSave": "Daq yISaH"
+    },
+    "ageRefusal": {
+      "heading": {
+        "consumer_club": "{range} DIS ghaHbogh ghotpu’ ghom",
+        "municipality_club": "{range} DIS ghaHbogh ghotpu’ ghom",
+        "camp": "{range} DIS ghaHbogh ghotpu’ raQ",
+        "event": "{range} DIS ghaHbogh ghotpu’ wanI’"
+      },
+      "range": {
+        "between": "{min}–{max}",
+        "from": "{min} pIm",
+        "upTo": "{max} bIng"
+      },
+      "children": "{count, plural, one {{names} DIS mIw ghajbe’.} other {{names} DIS mIw ghajbe’.}}",
+      "nameWithAge": "{name} ({age})",
+      "findProduct": {
+        "consumer_club": "{count, plural, other {DISchaj ghom yInej!}}",
+        "municipality_club": "{count, plural, other {DISchaj ghom yInej!}}",
+        "camp": "{count, plural, other {DISchaj raQ yInej!}}",
+        "event": "{count, plural, other {DISchaj wanI’ yInej!}}"
+      },
+      "addGamer": "latlh QujwI’ chel"
     }
   },
   "pricing": {

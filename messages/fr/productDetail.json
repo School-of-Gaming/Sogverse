@@ -151,6 +151,28 @@
       "dialogDescription": "Nous l’utilisons pour déterminer quels clubs, stages et événements sont proposés là où vous vivez. Vous pourrez la modifier plus tard dans vos paramètres.",
       "dialogField": "Votre localisation",
       "dialogSave": "Enregistrer la localisation"
+    },
+    "ageRefusal": {
+      "heading": {
+        "consumer_club": "Ce club s’adresse aux {range}",
+        "municipality_club": "Ce club s’adresse aux {range}",
+        "camp": "Ce stage s’adresse aux {range}",
+        "event": "Cet événement s’adresse aux {range}"
+      },
+      "range": {
+        "between": "{min}–{max} ans",
+        "from": "{min} ans et plus",
+        "upTo": "{max} ans et moins"
+      },
+      "children": "{count, plural, one {{names} n’est pas dans cette tranche d’âge.} other {{names} ne sont pas dans cette tranche d’âge.}}",
+      "nameWithAge": "{name} ({age} ans)",
+      "findProduct": {
+        "consumer_club": "{count, plural, one {Trouver un club adapté à son âge} other {Trouver un club adapté à leur âge}}",
+        "municipality_club": "{count, plural, one {Trouver un club adapté à son âge} other {Trouver un club adapté à leur âge}}",
+        "camp": "{count, plural, one {Trouver un stage adapté à son âge} other {Trouver un stage adapté à leur âge}}",
+        "event": "{count, plural, one {Trouver un événement adapté à son âge} other {Trouver un événement adapté à leur âge}}"
+      },
+      "addGamer": "Ajouter un autre joueur"
     }
   },
   "pricing": {
