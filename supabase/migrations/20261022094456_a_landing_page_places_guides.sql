@@ -20,9 +20,9 @@
 --   that places an id no guide has (foreign_key_violation), naming the section
 --   by its number and the id. Only an id the save adds is checked, exactly as
 --   check_landing_testimonial_picks does.
--- - list_landing_page_guides, the public read: the guides one live landing
---   page's published copy places, with which locales have a file and each
---   file's size — never where a file is stored, its name or who uploaded it.
+-- - list_landing_page_guides, the public read: the ids of the guides one live
+--   landing page's published copy places — nothing about their files, their
+--   label or who uploaded them.
 -- - get_guide_download_files, the download route's read: on the reader's own
 --   session, every file of one guide the reader may download — any signed-in
 --   account for a guide a live page places, and an admin for any guide, so a
@@ -32,9 +32,8 @@
 -- ACCESS
 --
 -- The store stays admin-only. list_landing_page_guides crosses that boundary
--- for anon and authenticated alike and hands back only what a live page's
--- published copy places, and of that only the locales and sizes the page
--- shows. get_guide_download_files is granted to authenticated alone: a
+-- for anon and authenticated alike and hands back only the ids of the guides a
+-- live page's published copy places. get_guide_download_files is granted to authenticated alone: a
 -- signed-out visitor sees the section but has no file, which is the gate.
 
 -- ---------------------------------------------------------------------------
@@ -389,18 +388,11 @@ CREATE TRIGGER trg_landing_pages_check_guide_picks
 -- ---------------------------------------------------------------------------
 
 CREATE FUNCTION public.list_landing_page_guides(p_page_id uuid)
-RETURNS TABLE(guide_id uuid, files jsonb)
+RETURNS TABLE(guide_id uuid)
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path TO ''
 AS $$
-  SELECT g.id,
-         COALESCE(
-           (SELECT jsonb_agg(jsonb_build_object(
-                     'locale', f.locale,
-                     'byte_size', f.byte_size))
-              FROM public.guide_files f
-             WHERE f.guide_id = g.id),
-           '[]'::jsonb)
+  SELECT g.id
     FROM public.guides g
    WHERE g.id IN (
      SELECT CASE
@@ -417,7 +409,7 @@ AS $$
    );
 $$;
 
-COMMENT ON FUNCTION public.list_landing_page_guides(p_page_id uuid) IS 'A live landing page''s guides: every guide the guide sections of the page''s PUBLISHED copy place, each once, with its files as a JSON array of {locale, byte_size} (in no particular order: the reader''s pick is made in the app). The files are the store''s current ones, so a replaced or added file shows on the live page at once, without a republish. Crosses the boundary that the guide store is admin-only and anon holds no grant on it, and hands back only what a live page places, and of it only which locales have a file and how large each is — never where a file is stored, its name, the guide''s label, or who uploaded it, and never a guide placed only in an unpublished working copy. An unpublished or unknown page answers no rows.';
+COMMENT ON FUNCTION public.list_landing_page_guides(p_page_id uuid) IS 'A live landing page''s guides: the id of every guide the guide sections of the page''s PUBLISHED copy place and the store holds, each once. A guide always has at least one file, so an answered id is one the page can offer. Crosses the boundary that the guide store is admin-only and anon holds no grant on it, and hands back only that a guide a live page places exists — never its files, their languages or sizes, its label or who uploaded it, and never a guide placed only in an unpublished working copy. An unpublished or unknown page answers no rows.';
 
 REVOKE ALL ON FUNCTION public.list_landing_page_guides(p_page_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.list_landing_page_guides(p_page_id uuid) TO anon;
@@ -460,4 +452,4 @@ GRANT EXECUTE ON FUNCTION public.get_guide_download_files(p_guide_id uuid) TO se
 -- 6. The store says where it is read
 -- ---------------------------------------------------------------------------
 
-COMMENT ON TABLE public.guides IS 'Marketing''s store of guides — PDFs a landing page hands out, one file per site locale in guide_files: the admin-only label and the record of who created each and who last saved it. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_guide, save_guide_label, save_guide_file and remove_guide_file, and nothing deletes a guide: once created it stays. The public reads only which locales and sizes a live landing page''s guides have, through list_landing_page_guides; a signed-in reader''s download is authorized by get_guide_download_files.';
+COMMENT ON TABLE public.guides IS 'Marketing''s store of guides — PDFs a landing page hands out, one file per site locale in guide_files: the admin-only label and the record of who created each and who last saved it. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_guide, save_guide_label, save_guide_file and remove_guide_file, and nothing deletes a guide: once created it stays. The public reads only which guides a live landing page places, through list_landing_page_guides; a signed-in reader''s download is authorized by get_guide_download_files.';

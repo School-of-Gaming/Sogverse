@@ -16,10 +16,9 @@ import { GuidesService } from "@/services/guides/guides.service";
  * `get_guide_download_files` — the scope test the authorization spine names
  * for both — and the admin read of where a guide is offered.
  *
- * Pinned on the public read: anon is answered the guides a LIVE page's
- * published copy places, with which locales have a file and how large each
- * is, and nothing more; never one placed only in a working copy; and every
- * caller is answered alike.
+ * Pinned on the public read: anon is answered the ids of the guides a LIVE
+ * page's published copy places, and nothing more; never one placed only in a
+ * working copy; and every caller is answered alike.
  *
  * Pinned on the download read: anon cannot call it; every signed-in role gets
  * a live guide's files and none of a guide placed only in a working copy; an
@@ -226,23 +225,12 @@ describe("landing page guides", () => {
   // -------------------------------------------------------------------------
 
   describe("the public read", () => {
-    it("answers anon the guides a live page places, with their locales and sizes alone", async () => {
+    it("answers anon the ids of the guides a live page places, and nothing else", async () => {
       await reseed();
       expect(await liveIds(anon, PAGE_LIVE)).toEqual([g[0]]);
       const { data } = await anon.rpc("list_landing_page_guides", { p_page_id: PAGE_LIVE });
-      for (const row of landingPageGuideRows.parse(data)) {
-        expect(Object.keys(row).sort()).toEqual(["files", "guide_id"]);
-        for (const file of row.files) expect(Object.keys(file).sort()).toEqual(["byte_size", "locale"]);
-      }
-      expect(await new GuidesService(anon).listLandingPageGuides(PAGE_LIVE)).toEqual([
-        {
-          id: g[0],
-          files: [
-            { locale: "en", byteSize: 1000 },
-            { locale: "fi", byteSize: 2000 },
-          ],
-        },
-      ]);
+      for (const row of data ?? []) expect(Object.keys(row)).toEqual(["guide_id"]);
+      expect(await new GuidesService(anon).listLandingPageGuides(PAGE_LIVE)).toEqual([g[0]]);
     });
 
     it("never answers a guide placed only in a working copy", async () => {
@@ -356,9 +344,7 @@ describe("landing page guides", () => {
         ["fi", "guide-fi.pdf"],
       ]);
       expect(guide?.created.by).not.toBeNull();
-      expect(await service.listGuideSummaries([g[1], MISSING])).toEqual([
-        { id: g[1], files: [{ locale: "fi", byteSize: 1000 }] },
-      ]);
+      expect(await service.listExistingGuideIds([g[1], MISSING])).toEqual([g[1]]);
       await reseed();
     });
   });

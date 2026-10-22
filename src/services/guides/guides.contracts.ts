@@ -110,16 +110,6 @@ export interface AdminGuide {
   lastSaved: GuideSaver;
 }
 
-/**
- * A placed guide as a page shows it: which languages have a file and how large
- * each is, nothing about where the file is or who keeps it.
- */
-export interface PublicGuide {
-  id: string;
-  /** Every file, in `SUPPORTED_LOCALES` order; never empty. */
-  files: { locale: SupportedLocale; byteSize: number }[];
-}
-
 /** The file one reader downloads: their language's, by the reader fallback. */
 export interface GuideDownload {
   locale: SupportedLocale;
@@ -131,12 +121,7 @@ export interface GuideDownload {
 }
 
 /** What `list_landing_page_guides` answers, written from its body. */
-export const landingPageGuideRows = z.array(
-  z.object({
-    guide_id: z.string().uuid(),
-    files: z.array(z.object({ locale: z.string(), byte_size: z.number().int() })),
-  }),
-);
+export const landingPageGuideRows = z.array(z.object({ guide_id: z.string().uuid() }));
 
 /** What `get_guide_download_files` answers, written from its body. */
 export const guideDownloadRows = z.array(

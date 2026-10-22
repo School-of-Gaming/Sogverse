@@ -5,7 +5,6 @@ import type {
   LandingSection,
   LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
-import type { PublicGuide } from "@/services/guides/guides.contracts";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
@@ -22,22 +21,17 @@ export interface LandingPageBodyProps {
    */
   testimonials: Readonly<Record<string, PublicTestimonial>>;
   /**
-   * The files of each guide the structure places, by id — read from the store
-   * per request like the testimonials, so a replaced file shows without a
-   * republish.
+   * The ids of the guides the structure places that the read answered — read
+   * from the store per request like the testimonials, so a guide's section
+   * shows exactly while it has something to offer.
    */
-  guides: Readonly<Record<string, PublicGuide>>;
+  guideIds: readonly string[];
   /** The shown version's words, by section id. */
   sectionTexts: LandingSectionTexts;
   /** The language the shown version is written in. */
   textLocale: SupportedLocale;
   /** The page's locale — the URL's. */
   locale: SupportedLocale;
-}
-
-/** Guides by id, as the body looks them up. */
-export function guidesById(guides: readonly PublicGuide[]): Record<string, PublicGuide> {
-  return Object.fromEntries(guides.map((guide) => [guide.id, guide]));
 }
 
 /**
@@ -54,17 +48,18 @@ export function LandingPageBody({
   sections,
   imagePaths,
   testimonials,
-  guides,
+  guideIds,
   sectionTexts,
   textLocale,
   locale,
 }: LandingPageBodyProps) {
+  const guides = new Set(guideIds);
   const context: LandingRenderContext = {
     locale,
     textLocale,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
-    guide: (id) => (Object.hasOwn(guides, id) ? guides[id] : null),
+    hasGuide: (id) => guides.has(id),
   };
   return (
     // exact-locale: marks text written in another language than the page with lang

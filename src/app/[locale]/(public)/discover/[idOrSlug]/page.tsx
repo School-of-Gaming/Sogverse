@@ -7,7 +7,7 @@ import {
   landingPageLocalePaths,
   resolveLandingPage,
 } from "@/components/landing-pages/landing-page-address";
-import { guidesById, LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import { landingPageJsonLd } from "@/components/landing-pages/landing-page-json-ld";
 import { landingPageMetadata } from "@/components/landing-pages/landing-page-metadata";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -85,15 +85,15 @@ export default async function LandingPage({ params }: PageProps) {
   if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
   const supabase = await createClient();
-  const [testimonials, guides] = await Promise.all([
+  const [testimonials, guideIds] = await Promise.all([
     landingPlacedTestimonialIds(page.sections).length === 0
       ? {}
       : new TestimonialsService(supabase)
           .listLandingPageTestimonials(page.id)
           .then(testimonialsById),
     landingPlacedGuideIds(page.sections).length === 0
-      ? {}
-      : new GuidesService(supabase).listLandingPageGuides(page.id).then(guidesById),
+      ? []
+      : new GuidesService(supabase).listLandingPageGuides(page.id),
   ]);
 
   return (
@@ -112,7 +112,7 @@ export default async function LandingPage({ params }: PageProps) {
         sections={shown.sections}
         imagePaths={shown.imagePaths}
         testimonials={testimonials}
-        guides={guides}
+        guideIds={guideIds}
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}

@@ -22,8 +22,8 @@ would answer for anyone.
 **Who may download is the database's answer, not the route's**: any signed-in account,
 whatever its role, for a guide the published copy of some live landing page places; an
 admin for any guide, so a preview of a working copy downloads too. A signed-out visitor
-sees the section through the public read — which locales have a file and each file's
-size — and has no download, which is the whole of the gate. No watermark and no download
+sees the section through the public read — the ids of the guides a live page places,
+nothing about their files — and has no download, which is the whole of the gate. No watermark and no download
 log, by the owner's ruling.
 
 **Every upload is a fresh object**, at `<guide id>/<locale>/<random uuid>.pdf`, which the

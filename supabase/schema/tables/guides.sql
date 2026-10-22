@@ -20,7 +20,7 @@ CREATE TABLE public.guides (
 -- Name: TABLE guides; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.guides IS 'Marketing''s store of guides — PDFs a landing page hands out, one file per site locale in guide_files: the admin-only label and the record of who created each and who last saved it. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_guide, save_guide_label, save_guide_file and remove_guide_file, and nothing deletes a guide: once created it stays. The public reads only which locales and sizes a live landing page''s guides have, through list_landing_page_guides; a signed-in reader''s download is authorized by get_guide_download_files.';
+COMMENT ON TABLE public.guides IS 'Marketing''s store of guides — PDFs a landing page hands out, one file per site locale in guide_files: the admin-only label and the record of who created each and who last saved it. Admin-only for the Data API: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_guide, save_guide_label, save_guide_file and remove_guide_file, and nothing deletes a guide: once created it stays. The public reads only which guides a live landing page places, through list_landing_page_guides; a signed-in reader''s download is authorized by get_guide_download_files.';
 
 
 --

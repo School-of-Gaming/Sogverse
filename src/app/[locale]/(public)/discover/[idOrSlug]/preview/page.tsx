@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale } from "next-intl/server";
-import { guidesById, LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { landingPlacedGuideIds } from "@/lib/landing-pages/sections";
@@ -58,18 +58,18 @@ export default async function LandingPagePreviewPage({
 
   // The working copy's guides, through the admin read the public one would
   // not answer for a guide placed only here.
-  const guideIds = landingPlacedGuideIds(draft.sections);
-  const guides =
-    guideIds.length === 0
-      ? {}
-      : guidesById(await new GuidesService(supabase).listGuideSummaries(guideIds));
+  const placedGuideIds = landingPlacedGuideIds(draft.sections);
+  const guideIds =
+    placedGuideIds.length === 0
+      ? []
+      : await new GuidesService(supabase).listExistingGuideIds(placedGuideIds);
 
   return (
     <LandingPageBody
       sections={draft.sections}
       imagePaths={draft.imagePaths}
       testimonials={page.testimonials}
-      guides={guides}
+      guideIds={guideIds}
       sectionTexts={version.sectionTexts}
       textLocale={version.locale}
       locale={locale}

@@ -28,7 +28,6 @@ import type {
 } from "@/lib/landing-pages/sections";
 import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/cn";
-import type { PublicGuide } from "@/services/guides/guides.contracts";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { GuideDownload } from "./guide-download";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
@@ -58,7 +57,7 @@ import { Heading } from "@sog/ui";
  * preview of one still being written shows its blanks as gaps rather than as
  * placeholder copy. The strings of our own are the screen reader's "opens in
  * a new tab" beside a button that leaves the site, and a guide's download —
- * its button, its file's facts and the account a signed-out reader needs.
+ * its button and the account a signed-out reader needs.
  */
 
 /** What every renderer is handed besides its own section and words. */
@@ -77,11 +76,8 @@ export interface LandingRenderContext {
    * answered none for it.
    */
   testimonial: (testimonialId: string) => PublicTestimonial | null;
-  /**
-   * A placed guide's files — each language's and its size — by its id, or
-   * null when the read answered none for it.
-   */
-  guide: (guideId: string) => PublicGuide | null;
+  /** Whether the read answered the placed guide with this id. */
+  hasGuide: (guideId: string) => boolean;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -644,23 +640,22 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
 }
 
 /**
- * A guide to download: the section's header and line over the download, and
- * the cover picture beside them from `lg` when one is placed, after them on a
- * phone — the text section's arrangement, so a guide reads as one more
- * section of the page.
+ * A guide to download: the section's header and line over the download, laid
+ * out like the hero — centred alone; with a cover picture, the words beside it
+ * from `lg`, start-aligned there and centred on a phone, the picture after
+ * them.
  *
- * The file is the one the reader would get: the page's language by the reader
- * fallback, chosen from the files the store holds now, so a file uploaded or
- * replaced shows without a republish. A guide the read did not answer — it has
- * no file in a language the app ships — leaves the section out, since there is
- * nothing to offer. Whether the reader may download is decided in the browser
- * (`guide-download.tsx`); everything here is the same for every reader.
+ * A guide the read did not answer leaves the section out, since there is
+ * nothing to offer; one it answered has a file, and the download route picks
+ * the reader's by the reader fallback. Whether the reader may download is
+ * decided in the browser (`guide-download.tsx`); everything here is the same
+ * for every reader.
  */
 function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
-  const guide = context.guide(section.guideId);
-  const file = guide === null ? null : resolveTranslation(guide.files, context.locale);
-  if (file === null) return null;
+  if (!context.hasGuide(section.guideId)) return null;
   const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
+  const eyebrow = written(text.eyebrow);
+  const heading = written(text.heading);
   const description = written(text.description);
   return (
     <section className={SECTION}>
@@ -668,12 +663,25 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
         className={cn(
           "mx-auto",
           src === null
-            ? "max-w-3xl"
+            ? "max-w-3xl text-center"
             : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
         )}
       >
-        <div>
-          <SectionHeader eyebrow={text.eyebrow} heading={text.heading} centred={false} />
+        <div className={cn(src !== null && "text-center lg:text-left")}>
+          {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
+          {heading !== null && (
+            <div className={cn(eyebrow !== null && "mt-4")}>
+              {/* As in the hero, the heading turns start-aligned at `md` while
+                  the columns split at `lg`. */}
+              <Heading
+                level={2}
+                step="display"
+                align={src === null ? "center" : "center-narrow"}
+              >
+                {heading}
+              </Heading>
+            </div>
+          )}
           {description !== null && (
             <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
           )}
@@ -681,8 +689,8 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
           <div lang={context.textLocale === context.locale ? undefined : context.locale}>
             <GuideDownload
               guideId={section.guideId}
-              file={{ locale: file.locale, byteSize: file.byteSize }}
               locale={context.locale}
+              besidePicture={src !== null}
             />
           </div>
         </div>

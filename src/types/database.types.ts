@@ -5083,7 +5083,6 @@ export type Database = {
       list_landing_page_guides: {
         Args: { p_page_id: string }
         Returns: {
-          files: Json
           guide_id: string
         }[]
       }

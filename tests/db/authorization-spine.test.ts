@@ -941,7 +941,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   // A live landing page's guides, by the same widest reading.
   list_landing_page_guides: {
     scopeTest: "tests/db/landing-guides.test.ts",
-    why: "SECURITY DEFINER over guides, guide_files and landing_page_publications, the first two of which anon holds no grant on and authenticated reads only as an admin. It crosses that boundary to hand back only what one live landing page's published copy places, and of each guide only its id and which locales have a file with each file's byte size — never a storage path, a file name, the label or who uploaded it, and never a guide placed only in an unpublished working copy. It reads no uid and answers every caller identically, anon included, which the scope test proves along with the live-copy-only boundary and the exact keys",
+    why: "SECURITY DEFINER over guides, guide_files and landing_page_publications, the first two of which anon holds no grant on and authenticated reads only as an admin. It crosses that boundary to hand back only what one live landing page's published copy places, and of each guide only its id — never its files, their locales or sizes, a storage path, the label or who uploaded it, and never a guide placed only in an unpublished working copy. It reads no uid and answers every caller identically, anon included, which the scope test proves along with the live-copy-only boundary and the exact keys",
   },
   // The guide download route's read. Not anon's: the signed-out visitor's
   // missing download is this grant. It names no user and reads no uid, only
@@ -1022,8 +1022,8 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * `list_landing_page_testimonials` is a live landing page's quotes: the
  * testimonials its published copy places, their words alone, and never the
  * rest of the admin-only store. `list_landing_page_guides` is the same for a
- * live page's guides: which languages have a file and how large each is, so a
- * signed-out visitor sees the section — never a file, whose read is not here.
+ * live page's guides: only their ids, so a signed-out visitor sees the
+ * section — never a file, whose read is not here.
  */
 const ANON_ALLOWLIST = new Set([
   "can_read_product",

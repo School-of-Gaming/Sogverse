@@ -130,8 +130,8 @@ page by saving the structure without it.
 **A guide is placed by id from the structure, like a testimonial** (`src/services/guides/`):
 a guide section names one guide and an optional cover picture, which the picture triggers
 handle like a hero's; an id no guide has is refused by a trigger on the working copy that
-checks only the ids a save adds. Neither copy carries a guide's files: the live page reads
-which locales have one through the public read that answers only what the published copy
+checks only the ids a save adds. Neither copy carries a guide's files: the live page asks
+the public read only which of its guides exist, answering only what the published copy
 places, and the download is the guide store's, gated on a signed-in reader.
 
 **A page's link preview is its hero's picture**, the one its structured data names as the

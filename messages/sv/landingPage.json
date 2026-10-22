@@ -1,17 +1,7 @@
 {
   "guide": {
     "download": "Ladda ner guiden",
-    "file": "PDF · {size}",
-    "fileInLanguage": "PDF · {size} · {language}",
-    "inLanguage": {
-      "en": "på engelska",
-      "fi": "på finska",
-      "sv": "på svenska",
-      "fr": "på franska",
-      "tlh": "på klingonska"
-    },
-    "accountNeeded": "Du behöver ett kostnadsfritt School of Gaming-konto för att ladda ner guiden.",
-    "createAccount": "Skapa ett konto",
-    "signIn": "Logga in"
+    "createAccountToDownload": "Skapa ett gratis konto för att ladda ner",
+    "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
   }
 }

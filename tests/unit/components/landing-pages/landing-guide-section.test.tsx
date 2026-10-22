@@ -8,7 +8,6 @@ import fiRichText from "@/../messages/fi/richText.json";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
-import type { PublicGuide } from "@/services/guides/guides.contracts";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
@@ -31,12 +30,11 @@ const fi = { landingPage: fiLandingPage, richText: fiRichText };
 
 /**
  * **A landing page's guide section** shows every reader the same section, and
- * only its download depends on who is looking: signed in, whatever the role,
- * a link to the download route in the page's language; signed out, the same
- * button in the same place, disabled, with why and the way to an account that
- * comes back to this page. Pinned too: the file's facts — size, and its
- * language when the fallback picked another — and a guide the read did not
- * answer leaving the section out.
+ * only its button depends on who is looking: signed in, whatever the role, a
+ * link to the download route in the page's language; signed out, the button in
+ * the same place opens a new account, with a sign-in line under it, both
+ * coming back to this page. Pinned too: a guide the read did not answer
+ * leaving the section out.
  */
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -58,27 +56,17 @@ const TEXTS: LandingSectionTexts = {
   },
 };
 
-const MB = 1024 * 1024;
-
-const BOTH: PublicGuide = {
-  id: GUIDE,
-  files: [
-    { locale: "en", byteSize: Math.round(2.4 * MB) },
-    { locale: "fi", byteSize: Math.round(1.2 * MB) },
-  ],
-};
-
 function renderGuide({
-  guides = { [GUIDE]: BOTH },
+  guideIds = [GUIDE],
   locale = "en",
-}: { guides?: Record<string, PublicGuide>; locale?: SupportedLocale } = {}) {
+}: { guideIds?: string[]; locale?: SupportedLocale } = {}) {
   return render(
     <NextIntlClientProvider locale={locale} messages={locale === "fi" ? fi : en}>
       <LandingPageBody
         sections={SECTIONS}
         imagePaths={{}}
         testimonials={{}}
-        guides={guides}
+        guideIds={guideIds}
         sectionTexts={TEXTS}
         textLocale={locale}
         locale={locale}
@@ -117,50 +105,39 @@ describe("the guide section", () => {
       const download = screen.getByRole("link", { name: "Download the guide" });
       expect(download.getAttribute("href")).toBe(`/api/guides/${GUIDE}/download?locale=en`);
       expect(download.hasAttribute("download")).toBe(true);
-      expect(screen.queryByRole("link", { name: "Create an account" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "Create a free account to download" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
     },
   );
 
-  it("disables the download for a signed-out reader, says why, and leads back to this page", () => {
+  it("asks a signed-out reader for an account, both ways leading back to this page", () => {
     renderGuide();
-    const button = screen.getByRole("button", { name: "Download the guide" });
-    expect(button.hasAttribute("disabled")).toBe(true);
-    const reason = screen.getByText(
-      "You need a free School of Gaming account to download the guide.",
-    );
-    expect(button.getAttribute("aria-describedby")).toBe(reason.id);
-
+    expect(screen.queryByRole("link", { name: "Download the guide" })).toBeNull();
     const back = `redirect=${encodeURIComponent(PAGE_PATH)}`;
-    expect(screen.getByRole("link", { name: "Create an account" }).getAttribute("href")).toBe(
-      `/register?${back}`,
-    );
-    expect(screen.getByRole("link", { name: "Sign in" }).getAttribute("href")).toBe(
-      `/login?${back}`,
-    );
+    expect(
+      screen.getByRole("link", { name: "Create a free account to download" }).getAttribute("href"),
+    ).toBe(`/register?${back}`);
+    const signIn = screen.getByRole("link", { name: "Sign in" });
+    expect(signIn.getAttribute("href")).toBe(`/login?${back}`);
+    expect(signIn.parentElement?.textContent).toBe("Already have an account? Sign in");
   });
 
   it("draws the signed-out look while the session is still being looked for", () => {
     mockAuth.mockReturnValue({ user: null, profile: null, isLoading: true });
     renderGuide();
-    expect(screen.getByRole("button", { name: "Download the guide" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Create a free account to download" })).toBeTruthy();
   });
 
-  it("states the file's size, in the page's number conventions", () => {
-    renderGuide();
-    expect(screen.getByText("PDF · 2.4 MB")).toBeTruthy();
-  });
-
-  it("names the file's language when the fallback picked another", () => {
+  it("asks for the download in the page's language", () => {
     signedIn("customer");
-    renderGuide({ guides: { [GUIDE]: { id: GUIDE, files: [BOTH.files[0]] } }, locale: "fi" });
-    expect(screen.getByText("PDF · 2,4 Mt · englanniksi")).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Lataa opas" }).getAttribute("href"),
-    ).toBe(`/api/guides/${GUIDE}/download?locale=fi`);
+    renderGuide({ locale: "fi" });
+    expect(screen.getByRole("link", { name: "Lataa opas" }).getAttribute("href")).toBe(
+      `/api/guides/${GUIDE}/download?locale=fi`,
+    );
   });
 
   it("leaves the section out when the read answered nothing for its guide", () => {
-    const { container } = renderGuide({ guides: {} });
+    const { container } = renderGuide({ guideIds: [] });
     expect(container.querySelectorAll("section")).toHaveLength(1);
   });
 });

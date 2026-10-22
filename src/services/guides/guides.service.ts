@@ -14,7 +14,6 @@ import {
   type GuideDownload,
   type GuideSaver,
   type GuideUsage,
-  type PublicGuide,
 } from "./guides.contracts";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
@@ -70,13 +69,6 @@ function placedIn(sections: unknown): Set<string> {
   return new Set(landingPlacedGuideIds(landingSections.parse(sections)));
 }
 
-/** A guide's files as a page shows them: language and size, in locale order. */
-function publicFiles(
-  rows: readonly { locale: string; byte_size: number }[],
-): PublicGuide["files"] {
-  return inLocaleOrder(rows).map(({ locale, byte_size }) => ({ locale, byteSize: byte_size }));
-}
-
 /**
  * Guides: Marketing's store of PDFs a landing page hands out, the read a live
  * landing page makes of the ones it places, and the download route's read.
@@ -97,22 +89,18 @@ export class GuidesService {
   // -------------------------------------------------------------------------
 
   /**
-   * The guides one live landing page places, each once, with which languages
-   * have a file and each file's size — read from the store, so a replaced file
-   * shows without a republish. Only the published copy is read: an
-   * unpublished page, or a guide placed only in a working copy, answers
-   * nothing. A guide with no file in a language the app ships is left out.
+   * The ids of the guides one live landing page places, each once. Only the
+   * published copy is read: an unpublished page, or a guide placed only in a
+   * working copy, answers nothing. A guide always has a file, so an answered
+   * id is one the page can offer.
    */
-  async listLandingPageGuides(pageId: string): Promise<PublicGuide[]> {
+  async listLandingPageGuides(pageId: string): Promise<string[]> {
     if (!UUID.test(pageId)) return [];
     const { data, error } = await this.supabase.rpc("list_landing_page_guides", {
       p_page_id: pageId,
     });
     if (error) throw error;
-    return landingPageGuideRows.parse(data).flatMap((row) => {
-      const files = publicFiles(row.files);
-      return files.length === 0 ? [] : [{ id: row.guide_id, files }];
-    });
+    return landingPageGuideRows.parse(data).map((row) => row.guide_id);
   }
 
   /**
@@ -190,22 +178,16 @@ export class GuidesService {
   }
 
   /**
-   * The guides with these ids as a page shows them — what an admin's landing
-   * page status and preview read for a working copy, which the public read
-   * never answers. Admin-only by RLS. An id no guide has is simply absent.
+   * Which of these ids a guide has — what an admin's preview reads for a
+   * working copy, which the public read never answers. Admin-only by RLS. An
+   * id no guide has is simply absent.
    */
-  async listGuideSummaries(ids: readonly string[]): Promise<PublicGuide[]> {
+  async listExistingGuideIds(ids: readonly string[]): Promise<string[]> {
     const wanted = ids.filter((id) => UUID.test(id));
     if (wanted.length === 0) return [];
-    const { data, error } = await this.supabase
-      .from("guides")
-      .select("id, files:guide_files(locale, byte_size)")
-      .in("id", wanted);
+    const { data, error } = await this.supabase.from("guides").select("id").in("id", wanted);
     if (error) throw error;
-    return data.flatMap((row) => {
-      const files = publicFiles(row.files);
-      return files.length === 0 ? [] : [{ id: row.id, files }];
-    });
+    return data.map((row) => row.id);
   }
 
   /**
