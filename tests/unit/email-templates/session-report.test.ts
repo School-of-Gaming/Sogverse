@@ -12,6 +12,7 @@ import {
   type SessionReportPhoto,
 } from "@/lib/email-templates/session-photos";
 import { GROUND_TONES } from "@/lib/email-templates/utils";
+import { unhold } from "../../helpers/email-holds";
 import { MAIL_SPACE } from "@/lib/email-templates/type-scale";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 
@@ -98,8 +99,8 @@ describe("buildSessionReportEmail", () => {
    */
   it("pins the button label's colour against Gmail's theme rewriting", () => {
     const html = buildSessionReportEmail(t, "en", base);
-    expect(html).toMatch(/<a href="[^"]+" target="_blank" class="cta-on-brand"/);
-    expect(html).toContain("u + .body .cta-on-brand");
+    expect(html).toMatch(/<a href="[^"]+" target="_blank" class="pin-dark"/);
+    expect(html).toContain("u + .body .pin-dark");
   });
 
   /**
@@ -175,10 +176,12 @@ describe("the staff copy's banner", () => {
    */
   it("sits flush at the top of the mail", () => {
     const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
-    const start = html.lastIndexOf("<table ", html.indexOf(LABEL));
+    // The outer of the panel's two tables: the one painted in the info edge.
+    const start = html.lastIndexOf("<table ", html.indexOf(`background-color:${STATUS.info};`));
     expect(html.slice(start, html.indexOf(">", start))).toContain(
-      `style="margin:0 0 ${MAIL_SPACE.furniture}px;"`,
+      `style="margin:0 0 ${MAIL_SPACE.furniture}px;`,
     );
+    expect(html.indexOf(LABEL)).toBeGreaterThan(start);
   });
 
   it("is absent from the mail a family receives", () => {
@@ -215,29 +218,38 @@ describe("the staff copy's banner", () => {
    */
   it("takes its prominence from the info border, not from coloured text", () => {
     const html = buildSessionReportEmail(t, "en", { ...base, staffCopy: true });
-    // The banner's own cell, from its opening tag to its close, so nothing the
-    // shell around it emits can satisfy or break these.
-    const start = html.lastIndexOf("<td ", html.indexOf(LABEL));
-    const banner = html.slice(start, html.indexOf("</td>", start));
+    // The banner's own two tables, from the outer one's opening tag to its
+    // close, so nothing the shell around it emits can satisfy or break these.
+    const edge = `background-color:${STATUS.info};background-image:linear-gradient(${STATUS.info},${STATUS.info});`;
+    const start = html.lastIndexOf("<table", html.indexOf(edge));
+    const innerClose = html.indexOf("</table>", html.indexOf(LABEL));
+    const banner = html.slice(start, html.indexOf("</table>", innerClose + 1) + "</table>".length);
 
-    // The Alert's full 1px border, in the status's own hue: with no ground
-    // left, the edge is what brings the eye to the panel.
-    expect(banner).toContain(`border:1px solid ${STATUS.info}`);
-    expect(banner).not.toContain(`border:1px solid ${DARK_THEME.border}`);
+    // The Alert's full 1px edge, in the status's own hue: with no ground
+    // left, the edge is what brings the eye to the panel. It is drawn as a
+    // pinned fill one pixel wide, because a status colour cannot be held and a
+    // plain border colour drifts on Gmail iOS — so there is no `border` at all.
+    expect(banner).toContain(edge);
+    expect(banner).toContain("padding:1px;");
+    expect(banner).not.toContain("border:1px solid");
     expect(banner).not.toContain("border-left:");
-    // No ground of its own: a status colour is never a wash, so the panel sits
-    // on the message panel it is already on.
-    expect(banner).not.toContain("background-color:");
-    expect(banner).not.toContain("background-image:");
+    // No wash: inside the edge the panel paints the ground it sits on, through
+    // the shared tone that follows the shell's two grounds.
+    const fills = [...banner.matchAll(/background-color:(#[0-9a-fA-F]{6})/g)].map((m) => m[1]);
+    expect(fills).toEqual([STATUS.info, GROUND_TONES.match.base]);
+    expect(banner).toContain(`class="${GROUND_TONES.match.className}"`);
     // No brand colour anywhere in it: the accent moved, it did not move over.
     expect(banner).not.toContain(BRAND.act);
     expect(banner).not.toContain(BRAND.world);
     // The label takes the status colour and every sentence under it stays ink,
     // which is the app's Alert under the label rule: colour on a label, never
-    // on something the reader reads through.
+    // on something the reader reads through. The label is pinned in that
+    // colour, since a status colour cannot be held, and the ink is held.
     const colors = [
-      ...banner.matchAll(/<p style="[^"]*color:(#[0-9a-fA-F]{6})/g),
+      ...banner.matchAll(/<p [^>]*?style="[^"]*color:(#[0-9a-fA-F]{6})/g),
     ].map((match) => match[1]);
+    expect(colors.length).toBeGreaterThan(1);
+    expect(banner).toContain(`<p class="pin-info" style=`);
     expect(colors[0]).toBe(STATUS.info);
     for (const color of colors.slice(1)) {
       expect(color).toBe(DARK_THEME.foreground);
@@ -313,7 +325,7 @@ describe("the photos under the report", () => {
    * photo.
    */
   it("sets the photos apart as furniture, under a lead-in", () => {
-    const html = withPhotos([PHOTOS.landscape]);
+    const html = unhold(withPhotos([PHOTOS.landscape]));
     const label = html.lastIndexOf("<p ", html.indexOf(HEADING));
     const section = html.lastIndexOf("<div ", label);
     expect(html.slice(section, label).trim()).toBe(
@@ -500,7 +512,10 @@ describe("the photos under the report", () => {
   /**
    * The well is what the reader sees when nothing loads, so it is a real
    * surface: a palette tone declared twice (Gmail's dark theme rewrites a
-   * background-color and leaves a gradient alone) inside the app's own border.
+   * background-color and leaves a gradient alone) inside the app's own border
+   * colour — which is drawn as a pinned fill one pixel wide rather than as a
+   * `border`, since a picture cannot be held and a plain border grey comes
+   * back near-white on Gmail iOS.
    */
   it("paints the reserved box as a toned well, declared twice", () => {
     const html = withPhotos([PHOTOS.landscape]);
@@ -508,8 +523,13 @@ describe("the photos under the report", () => {
     // The inline tone is the card's, because the inline layout is the phone's
     // and there the well sits on the shell's bare ground.
     expect(html).toContain(
-      `background-color:${DARK_THEME.card};background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card});border:1px solid ${DARK_THEME.border}`,
+      `background-color:${DARK_THEME.card};background-image:linear-gradient(${DARK_THEME.card},${DARK_THEME.card});`,
     );
+    expect(html).toContain(
+      `background-color:${DARK_THEME.border};background-image:linear-gradient(${DARK_THEME.border},${DARK_THEME.border});`,
+    );
+    const well = html.slice(html.lastIndexOf("<table", html.indexOf("<img ", html.indexOf(PHOTOS.landscape.src) - 400)));
+    expect(well.slice(0, well.indexOf("<img "))).not.toContain("border:1px solid");
   });
 
   /**

@@ -97,12 +97,37 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: ["nope"] },
     { id: ID, type: "testimonials", arrangement: "feature", testimonials: [ID2] },
   ],
+  products: [
+    { id: ID, type: "products", productIds: [ID2] },
+    { id: ID, type: "products", productIds: [` ${ID2.toUpperCase()} `, ID3] },
+    { id: ID, type: "products", productIds: ids(40) },
+    { id: ID, type: "products", productIds: [] },
+    { id: ID, type: "products" },
+    { id: ID, type: "products", productIds: [ID2, ID2] },
+    { id: ID, type: "products", productIds: ["not a product"] },
+    { id: ID, type: "products", productIds: [{ id: ID2 }] },
+    { id: ID, type: "products", productIds: [ID2], items: [] },
+  ],
+  guide: [
+    { id: ID, type: "guide", guideId: ID2 },
+    { id: ID, type: "guide", guideId: ` ${ID2.toUpperCase()} `, imageId: ID3 },
+    { id: ID, type: "guide" },
+    { id: ID, type: "guide", guideId: "nope" },
+    { id: ID, type: "guide", guideId: ID2, imageId: "nope" },
+    { id: ID, type: "guide", guideIds: [ID2] },
+  ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "faq", items: ids(20).map((id) => ({ id })) },
     { id: ID, type: "faq", items: ids(21).map((id) => ({ id })) },
     { id: ID, type: "faq", items: [] },
     { id: ID, type: "faq", items: [{ id: ID2, question: "?" }] },
+  ],
+  subscribe: [
+    { id: ID, type: "subscribe" },
+    { id: ` ${ID.toUpperCase()} `, type: "subscribe" },
+    { id: ID, type: "subscribe", listId: 3 },
+    { id: ID, type: "subscribe", button: internal },
   ],
   cta: [
     { id: ID, type: "cta", button: internal },
@@ -150,10 +175,30 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
     { heading: 3 },
     { quote: "Words live in the store, never here" },
   ],
+  products: [
+    {},
+    { eyebrow: " This term ", heading: "Clubs in Espoo", intro: "Pick one." },
+    { heading: ["Clubs"] },
+    { items: {} },
+    { body: "Not a products field" },
+  ],
+  guide: [
+    {},
+    { eyebrow: "Free", heading: "The parents' guide", description: "What a club is like.", imageAlt: "The cover" },
+    { description: 3 },
+    { body: "Not a guide field" },
+  ],
   faq: [
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },
     { items: { [ID2]: { title: "Q?" } } },
     { intro: "Not an faq field" },
+  ],
+  subscribe: [
+    {},
+    { eyebrow: " News ", heading: " Stay in touch ", intro: "Once a month.", buttonLabel: "Sign up" },
+    { heading: "H", body: "Not a sign-up field" },
+    { buttonLabel: 7 },
+    { heading: "H", emailSubject: "Not a sign-up field" },
   ],
   cta: [
     { heading: "H", body: "B", buttonLabel: "Go" },
@@ -241,7 +286,9 @@ describe("the manual", () => {
     expect(describeRequiredWords("faq")).toBe(
       "heading; items.<item id>.question; items.<item id>.answer",
     );
+    expect(describeRequiredWords("subscribe")).toBe("heading; buttonLabel");
     expect(describeRequiredWords("cta")).toBe("heading; buttonLabel");
+    expect(describeRequiredWords("products")).toBe("none");
     expect(describeRequiredWords("testimonials")).toBe("none");
   });
 

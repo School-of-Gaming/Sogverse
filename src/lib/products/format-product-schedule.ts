@@ -109,16 +109,20 @@ export function formatWeekday(
   );
 }
 
-// A 24h "HH:MM" clock face for an instant as it falls in `timeZone`. en-GB +
-// hourCycle h23 gives a stable 00–23 "HH:MM" regardless of the UI locale,
-// matching the schedule's existing 24h look.
-//
-// That string is both the key slots are grouped and sorted by and the text the
-// schedule shows. It is fixed rather than the reader's because every formatting
-// locale sets a 24-hour clock today; the day a 12-hour locale (such as `en-us`)
-// is added, the key and the display split, and the display renders through
-// `formattingLocale()`.
-function viewerClock(instant: Date, timeZone: string): string {
+/**
+ * The 24-hour `HH:MM` clock face of an instant as it falls in `timeZone`, as
+ * the schedule lines print it. en-GB with hourCycle h23 gives a stable 00–23
+ * `HH:MM` whatever the UI locale. Exported for a sentence that states one
+ * session's time beside those lines and has to print the same clock face, so
+ * one document never states two clock styles.
+ *
+ * That string is both the key slots are grouped and sorted by and the text the
+ * schedule shows. It is fixed rather than the reader's because every formatting
+ * locale sets a 24-hour clock today; the day a 12-hour locale (such as `en-us`)
+ * is added, the key and the display split, and the display renders through
+ * `formattingLocale()`.
+ */
+export function clockFace(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     hour: "2-digit",
@@ -130,7 +134,13 @@ function viewerClock(instant: Date, timeZone: string): string {
   return `${hh}:${mm}`;
 }
 
-function viewerTzAbbrev(instant: Date, locale: string, timeZone: string): string {
+/**
+ * The zone's short name at that instant, as the schedule lines append it — or
+ * the IANA identifier where `Intl` names none. Exported for a sentence that
+ * states one session's time beside those lines and has to name its zone the
+ * same way.
+ */
+export function zoneAbbrev(instant: Date, locale: string, timeZone: string): string {
   try {
     const parts = new Intl.DateTimeFormat(formattingLocale(locale), {
       timeZone,
@@ -160,9 +170,9 @@ function buildViewerGroups(
 ): { groups: ScheduleTimeGroup[]; sample: Date | null } {
   const buckets = new Map<string, { weekdays: Set<number>; start: string; end: string }>();
   for (const { instant, durationMinutes } of entries) {
-    const start = viewerClock(instant, timeZone);
+    const start = clockFace(instant, timeZone);
     const endInstant = new Date(instant.getTime() + durationMinutes * 60_000);
-    const end = viewerClock(endInstant, timeZone);
+    const end = clockFace(endInstant, timeZone);
     const weekday = viewerWeekdayIndex(instant, timeZone);
     const key = `${start}|${end}`;
     const bucket = buckets.get(key);
@@ -287,8 +297,8 @@ export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
 }
 
 // Multi-line schedule for detail surfaces — the parent/gedu "When & where"
-// card, the admin product details page, and the signup mail that mirrors the
-// confirmation page. Breaks each time-group onto its own line; the rendered
+// card, the admin product details page, the confirmation page's summary card
+// and the signup mail. Breaks each time-group onto its own line; the rendered
 // zone's abbrev decorates the first time-bearing line, on the terms `nameZone`
 // states.
 export function renderScheduleLinesForDetail(
@@ -346,7 +356,7 @@ export function formatProductSchedule({
       const { groups, sample } = buildViewerGroups(entries, locale, timeZone);
       return {
         kind: "recurring",
-        tzAbbrev: viewerTzAbbrev(sample ?? now, locale, timeZone),
+        tzAbbrev: zoneAbbrev(sample ?? now, locale, timeZone),
         tzAdjusted,
         groups,
       };
@@ -367,7 +377,7 @@ export function formatProductSchedule({
       const { groups, sample } = buildViewerGroups(entries, locale, timeZone);
       return {
         kind: "ranged",
-        tzAbbrev: viewerTzAbbrev(sample ?? now, locale, timeZone),
+        tzAbbrev: zoneAbbrev(sample ?? now, locale, timeZone),
         tzAdjusted,
         startDate: formatDateOnly(start, locale),
         endDate: formatDateOnly(product.end_date, locale),
@@ -380,7 +390,7 @@ export function formatProductSchedule({
         // No time of day → the date is zoneless; keep it UTC-pinned, no shift.
         return {
           kind: "single",
-          tzAbbrev: viewerTzAbbrev(now, locale, timeZone),
+          tzAbbrev: zoneAbbrev(now, locale, timeZone),
           tzAdjusted,
           date: formatDateOnly(product.start_date, locale),
           weekday: formatDateOnly(product.start_date, locale, { weekday: "long" }),
@@ -394,11 +404,11 @@ export function formatProductSchedule({
       const endInstant = new Date(instant.getTime() + slot.duration_minutes * 60_000);
       return {
         kind: "single",
-        tzAbbrev: viewerTzAbbrev(instant, locale, timeZone),
+        tzAbbrev: zoneAbbrev(instant, locale, timeZone),
         tzAdjusted,
         date: formatDate(instant, locale, { dateStyle: "medium", timeZone }),
         weekday: formatDate(instant, locale, { weekday: "long", timeZone }),
-        time: { start: viewerClock(instant, timeZone), end: viewerClock(endInstant, timeZone) },
+        time: { start: clockFace(instant, timeZone), end: clockFace(endInstant, timeZone) },
       };
     }
   }

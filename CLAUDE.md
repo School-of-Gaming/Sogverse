@@ -132,6 +132,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
 | Spotlights — the admin notes appended to every parent's session report email | `src/services/spotlights/` |
 | Testimonials — the store of real words from parents, gamers and gedus, the landing pages that quote them, and the arrangements every page lays them out in | `src/services/testimonials/` |
+| Guides — the PDFs landing pages hand out to signed-in readers, their private bucket and who may download | `src/services/guides/` |
 | Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
@@ -166,8 +167,6 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 ## Environment Variables
 
 All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
-
-**Rule: a change that introduces an env var writes its line into both `.env.local` and `.env.local.example` itself, rather than asking the owner to.** The example gets a placeholder value and a comment saying what the var is; `.env.local` gets the line with an empty value, which the owner fills in by hand — a secret is never written there by a session. From a worktree, the line goes into the main checkout's `.env.local` first and is then copied into the worktree's, since the worktree's copy dies at teardown. An agent launched inside the worktree cannot write the main checkout, so it hands the line to the session that launched it.
 
 ## Database
 

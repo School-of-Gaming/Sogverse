@@ -70,7 +70,7 @@ const SECTION_SHAPES = LANDING_SECTION_TYPES.flatMap((type) => {
   return [`${type}, ${which}`];
 }).join("; ");
 
-const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A hero or text section shows one picture, an image section one to four. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also the page's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
+const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A hero, text or guide section shows one picture, an image section one to four. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also the page's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
 
 const shape = z
   .enum(LANDING_PICTURE_SHAPES)
@@ -98,7 +98,7 @@ function placed(
   imageId: string | null,
   pictureId: string | undefined,
 ): { section: LandingSection; pictureId: string | null } | { refusal: string } {
-  if (section.type === "hero" || section.type === "text") {
+  if (section.type === "hero" || section.type === "text" || section.type === "guide") {
     if (pictureId !== undefined) {
       return { refusal: `A ${section.type} section has one picture and no picture items: leave pictureId out.` };
     }

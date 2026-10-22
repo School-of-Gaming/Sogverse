@@ -29,6 +29,9 @@ export const CASE_IDS = {
   faq: id(0x1006),
   cta: id(0x1007),
   testimonials: id(0x1008),
+  products: id(0x1009),
+  guide: id(0x100b),
+  subscribe: id(0x100a),
   picture: id(0x2001),
   pictureTwo: id(0x2002),
   imageItemA: id(0x3001),
@@ -40,6 +43,9 @@ export const CASE_IDS = {
   faqA: id(0x3007),
   testimonialA: id(0x4001),
   testimonialB: id(0x4002),
+  productA: id(0x4003),
+  productB: id(0x4004),
+  guideA: id(0x4101),
 } as const;
 
 const I = CASE_IDS;
@@ -78,11 +84,14 @@ export function everySection(): LandingSection[] {
       testimonialIds: [I.testimonialA, I.testimonialB],
     },
     { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
+    { id: I.guide, type: "guide", guideId: I.guideA, imageId: I.picture },
+    { id: I.subscribe, type: "subscribe" },
     {
       id: I.cta,
       type: "cta",
       button: { kind: "external", url: "https://example.com" },
     },
+    { id: I.products, type: "products", productIds: [I.productA, I.productB] },
   ];
 }
 
@@ -92,6 +101,9 @@ export function plainSections(): LandingSection[] {
     if (section.type === "hero") return { id: section.id, type: "hero" };
     if (section.type === "text") {
       return { id: section.id, type: "text", imageSide: section.imageSide };
+    }
+    if (section.type === "guide") {
+      return { id: section.id, type: "guide", guideId: section.guideId };
     }
     return section;
   });
@@ -139,9 +151,26 @@ export function everyText(): Texts {
       heading: "What parents tell us",
       intro: "In their own words.",
     },
+    [I.products]: {
+      eyebrow: "This term",
+      heading: "Clubs near you",
+      intro: "Online and in person.",
+    },
+    [I.guide]: {
+      eyebrow: "Free download",
+      heading: "The parents' guide",
+      description: "What a club is like.",
+      imageAlt: "The guide's cover",
+    },
     [I.faq]: {
       heading: "Questions",
       items: { [I.faqA]: { question: "Is it safe?", answer: "Yes — *always*." } },
+    },
+    [I.subscribe]: {
+      eyebrow: "News",
+      heading: "Stay in touch",
+      intro: "A short email once a month.",
+      buttonLabel: "Sign up",
     },
     [I.cta]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
   };
@@ -170,6 +199,10 @@ export const EVERY_REQUIRED_PATH: readonly string[] = [
   `sections.${I.faq}.heading`,
   `sections.${I.faq}.items.${I.faqA}.question`,
   `sections.${I.faq}.items.${I.faqA}.answer`,
+  `sections.${I.guide}.heading`,
+  `sections.${I.guide}.imageAlt`,
+  `sections.${I.subscribe}.heading`,
+  `sections.${I.subscribe}.buttonLabel`,
   `sections.${I.cta}.heading`,
   `sections.${I.cta}.buttonLabel`,
 ];
@@ -245,6 +278,7 @@ export function requiredTextCases(): RequiredTextCase[] {
         ...everyText(),
         [I.hero]: { headline: "Gaming clubs" },
         [I.text]: { heading: "How", body: "Like this." },
+        [I.guide]: { heading: "The guide" },
       },
       expected: [],
     },
@@ -278,6 +312,22 @@ export function requiredTextCases(): RequiredTextCase[] {
         `sections.${I.faq}.items.${I.faqA}.question`,
         `sections.${I.faq}.items.${I.faqA}.answer`,
       ],
+    },
+    {
+      name: "a products section with no words at all is complete: its words are optional",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: Object.fromEntries(
+        Object.entries(everyText()).filter(([key]) => key !== I.products),
+      ),
+      expected: [],
+    },
+    {
+      name: "a products section's optional words left blank are not asked for",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: { ...everyText(), [I.products]: { eyebrow: "", heading: " ", intro: 7 } },
+      expected: [],
     },
     {
       name: "text for a section the structure does not hold is ignored",

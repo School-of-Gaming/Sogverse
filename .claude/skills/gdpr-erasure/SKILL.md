@@ -115,8 +115,9 @@ COMMIT;
 - **The `email` in the `WHERE`** guards against a pasted id belonging to someone else.
 - **The guard block** rolls the transaction back unless every expected auth user is gone,
   so a gamer who unexpectedly survives is caught before commit, not after.
-- **psql, not the Admin API**, because the prod service-role key is deliberately absent
-  from `.env.local`. For a delete, raw SQL on `auth.users` is safe; the reason to prefer
+- **psql, not the Admin API**, because the whole erasure has to sit in one transaction
+  with the guard block, and Admin API deletes are separate calls outside it. For a
+  delete, raw SQL on `auth.users` is safe; the reason to prefer
   the Admin API for an email change (the `correct-user-email` skill) doesn't apply when the row
   is removed rather than updated. Storage objects are the exception: a SQL delete leaves
   the file in the bucket, so a storage hit in step 2 is removed through the Storage API

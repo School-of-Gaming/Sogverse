@@ -191,7 +191,9 @@ primitives — not replacing them:
 4. **One message-disclosure point.** The wrapper's outer catch returns a generic
    `{ error }` and logs the real one; forwarding a raw DB/RPC message to the client is a
    per-route opt-in with a comment, preserving the three routes that do it deliberately
-   and ending the five that do it by accident.
+   and ending the five that do it by accident. A disclosed database error keeps its
+   SQLSTATE as `code`, so a client's refusal reader judges a refusal that came through a
+   route the way it judges one from the database directly.
 5. **Optional response schema** — `safeParse` the outgoing payload (500 + log on
    mismatch), unifying the eight routes that already validate RPC results by hand.
 6. **Non-JSON escape hatch** — redirects, 204, and raw-text responses pass through

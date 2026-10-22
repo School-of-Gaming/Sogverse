@@ -1,10 +1,13 @@
 import { z } from "zod";
 import { ctaSection } from "./cta";
 import { faqSection } from "./faq";
+import { guideSection } from "./guide";
 import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
+import { productsSection } from "./products";
 import { stepsSection } from "./steps";
+import { subscribeSection } from "./subscribe";
 import { testimonialSlotProblem, testimonialsSection } from "./testimonials";
 import { textSection } from "./text";
 import {
@@ -38,7 +41,10 @@ export const LANDING_SECTION_TYPES = [
   "points",
   "steps",
   "testimonials",
+  "products",
+  "guide",
   "faq",
+  "subscribe",
   "cta",
 ] as const;
 
@@ -51,7 +57,10 @@ export const LANDING_SECTIONS = {
   points: pointsSection,
   steps: stepsSection,
   testimonials: testimonialsSection,
+  products: productsSection,
+  guide: guideSection,
   faq: faqSection,
+  subscribe: subscribeSection,
   cta: ctaSection,
 } as const satisfies { [Type in LandingSectionType]: { type: Type } };
 
@@ -63,7 +72,10 @@ export const landingSection = z.discriminatedUnion("type", [
   pointsSection.section,
   stepsSection.section,
   testimonialsSection.section,
+  productsSection.section,
+  guideSection.section,
   faqSection.section,
+  subscribeSection.section,
   ctaSection.section,
 ]);
 
@@ -73,6 +85,17 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
   LandingSection,
   { type: Type }
 >;
+
+/**
+ * Every product the structure's products sections pick, each once, in page
+ * order — what one read of the listing has to cover for the page.
+ */
+export function landingPickedProductIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) =>
+    section.type === "products" ? section.productIds : [],
+  );
+  return [...new Set(ids)];
+}
 
 /** One section's words in one language, whichever type it is. */
 export type LandingSectionText = {
@@ -130,6 +153,12 @@ export function landingPlacedTestimonialIds(sections: readonly LandingSection[])
   return [...new Set(ids)];
 }
 
+/** Every guide the structure's guide sections place, each once, in page order. */
+export function landingPlacedGuideIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) => (section.type === "guide" ? [section.guideId] : []));
+  return [...new Set(ids)];
+}
+
 /**
  * The schema of one language's section texts for a given structure: an
  * object keyed by the structure's section ids, each entry its type's text
@@ -184,8 +213,14 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return stepsSection.missingText(section, text);
     case "testimonials":
       return testimonialsSection.missingText();
+    case "products":
+      return productsSection.missingText();
+    case "guide":
+      return guideSection.missingText(section, text);
     case "faq":
       return faqSection.missingText(section, text);
+    case "subscribe":
+      return subscribeSection.missingText(section, text);
     case "cta":
       return ctaSection.missingText(section, text);
   }
@@ -278,10 +313,13 @@ export function landingMarkdownValues(
 
 export { ctaSection } from "./cta";
 export { faqSection } from "./faq";
+export { guideSection } from "./guide";
 export { heroSection } from "./hero";
 export { IMAGE_SECTION_MAX_PICTURES, imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
+export { LANDING_PRODUCT_TYPES, productsSection } from "./products";
 export { stepsSection } from "./steps";
+export { subscribeSection } from "./subscribe";
 export {
   LANDING_TESTIMONIAL_ARRANGEMENTS,
   LANDING_TESTIMONIAL_SLOTS,

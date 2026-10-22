@@ -167,8 +167,7 @@ export function SeatOfferBlock({
   return (
     // **A section of the card, not a card inside it.** The tone is still `info`
     // — this product's colour for "we are telling you something", the one the
-    // awaiting-placement line a few rows up already wears and the one the mail's
-    // own callout panel is built from — but it is carried by the rule, the icon
+    // mail's own callout panel is built from — but it is carried by the rule, the icon
     // and the heading rather than by a box. A rounded, bordered, tinted panel
     // inset inside an already rounded, bordered, tinted card reads as a second
     // card nested in the first, which is a claim about hierarchy that is not

@@ -464,6 +464,20 @@
         "inItem": "Avsnitt {number} ({type}), {item}: {field}",
         "goneSection": "Ett avsnitt som inte längre finns på sidan: {field}"
       },
+      "products": {
+        "heading": "Utvalda produkter",
+        "section": "Avsnitt {number} ({type})",
+        "allShown": "{count, plural, one {Dess produkt visas.} other {Alla # produkter visas.}}",
+        "noneShown": "Ingen av dess produkter visas, så läsarna ser inte det här avsnittet. Byt till listade produkter.",
+        "someHidden": "{shown} av {total} visas. Visas inte:",
+        "unnamed": "En produkt utan namn",
+        "hiddenItem": "{name}: {reasons}",
+        "reasons": {
+          "gone": "ingen produkt har längre detta id",
+          "notListed": "olistad",
+          "ended": "har avslutats"
+        }
+      },
       "testimonials": {
         "heading": "Omdömen",
         "hint": "Orden redigeras under Omdömen, och en ändring syns direkt på den publicerade sidan.",
@@ -525,8 +539,11 @@
       "points": "Punkter",
       "steps": "Steg",
       "faq": "Frågor och svar",
+      "subscribe": "E-postprenumeration",
       "cta": "Uppmaning",
-      "testimonials": "Omdömen"
+      "products": "Produkter",
+      "testimonials": "Omdömen",
+      "guide": "Guide"
     },
     "items": {
       "image": "Bild {number}",
@@ -1916,5 +1933,94 @@
       "saveFailedWithReason": "Omdömet kunde inte sparas: {reason}"
     },
     "onLandingPages": "{count, plural, one {På # landningssida} other {På # landningssidor}}"
+  },
+  "guides": {
+    "subtitle": "PDF-filer som landningssidorna delar ut, en fil per språk. En inloggad läsare laddar ner filen på sitt eget språk.",
+    "newGuide": "Ny guide",
+    "backToList": "Tillbaka till guiderna",
+    "newPage": {
+      "title": "Ny guide",
+      "submit": "Skapa guide"
+    },
+    "editPage": {
+      "title": "Guide"
+    },
+    "listLoadError": "Guiderna kunde inte läsas in. Ladda om sidan och försök igen.",
+    "loadError": "Den här guiden kunde inte läsas in. Ladda om sidan och försök igen.",
+    "notFound": "Ingen guide har den här adressen.",
+    "empty": "Inga guider än.",
+    "allHeading": "Alla guider",
+    "languagesLabel": "Språk",
+    "saved": "Sparad {date}",
+    "onLandingPages": "{count, plural, one {På # landningssida} other {På # landningssidor}}",
+    "fields": {
+      "label": "Namn",
+      "language": "Språk",
+      "file": "PDF-fil",
+      "files": "Filer"
+    },
+    "hints": {
+      "label": "Vad administratörerna kallar den i sina listor. Läsarna ser det aldrig: landningssidans avsnitt säger vad guiden är.",
+      "language": "Språket PDF:en är skriven på. Filer på andra språk läggs till på guidens sida.",
+      "file": "En PDF på högst {limit}.",
+      "files": "En PDF per språk. En läsare laddar ner filen på sitt språk, annars den engelska, annars den på det språk som kommer först i webbplatsens språkordning och har en fil."
+    },
+    "file": {
+      "uploaded": "Uppladdad {date}",
+      "uploadedBy": "Uppladdad {date} av {name}",
+      "uploadedByVia": "Uppladdad {date} av {name} via {app}",
+      "uploadedByViaUnnamed": "Uppladdad {date} av {name} via en AI-app",
+      "open": "Öppna PDF:en",
+      "none": "Ingen fil på {language} än. Ladda upp en för att erbjuda guiden på {language}.",
+      "upload": "Ladda upp PDF",
+      "replace": "Ersätt PDF",
+      "replaceNote": "En ny fil ersätter den här direkt, överallt där guiden erbjuds.",
+      "remove": "Ta bort det här språket",
+      "lastFile": "En guide har alltid minst ett språk, så dess enda fil kan inte tas bort."
+    },
+    "removeDialog": {
+      "title": "Ta bort filen på {language}?",
+      "description": "Läsare på {language} får guiden på ett annat språk i stället, överallt där den erbjuds. Du kan ladda upp en fil på {language} igen när som helst.",
+      "confirm": "Ta bort"
+    },
+    "usage": {
+      "heading": "Var den används",
+      "none": "Den erbjuds inte på någon landningssida än.",
+      "editNote": "En ny fil eller ett borttaget språk ändrar den direkt, överallt där den erbjuds.",
+      "landingPage": "Landningssida: {title}",
+      "landingPageState": {
+        "both": "Läsarna kan ladda ner den där nu.",
+        "liveOnly": "Läsarna kan ladda ner den där fram till nästa publicering, som tar bort den.",
+        "workingOnly": "Erbjuds inte läsarna än: nästa publicering lägger dit den."
+      }
+    },
+    "record": {
+      "created": "Skapad {date}",
+      "createdBy": "Skapad {date} av {name}",
+      "createdByVia": "Skapad {date} av {name} via {app}",
+      "createdByViaUnnamed": "Skapad {date} av {name} via en AI-app",
+      "saved": "Senast sparad {date}",
+      "savedBy": "Senast sparad {date} av {name}",
+      "savedByVia": "Senast sparad {date} av {name} via {app}",
+      "savedByViaUnnamed": "Senast sparad {date} av {name} via en AI-app"
+    },
+    "actions": {
+      "save": "Spara",
+      "cancel": "Avbryt"
+    },
+    "errors": {
+      "labelMissing": "Ge guiden ett namn.",
+      "labelTooLong": "Ett namn får vara högst {max} tecken.",
+      "noFile": "Välj en PDF-fil.",
+      "tooLarge": "Den här PDF:en är {size}, och en guides fil får vara högst {limit}. Exportera den mindre — Canvas ”Compress file” eller Acrobats ”Reduce file size” — och ladda upp den igen.",
+      "notPdf": "Filen är inte en PDF. En guide är en PDF-fil.",
+      "empty": "Filen är tom.",
+      "uploadFailed": "Filen kunde inte laddas upp. Försök igen.",
+      "uploadFailedWithReason": "Filen kunde inte laddas upp: {reason}",
+      "saveFailed": "Namnet kunde inte sparas. Försök igen.",
+      "saveFailedWithReason": "Namnet kunde inte sparas: {reason}",
+      "removeFailed": "Filen kunde inte tas bort. Försök igen.",
+      "removeFailedWithReason": "Filen kunde inte tas bort: {reason}"
+    }
   }
 }

@@ -91,24 +91,30 @@ async function getInitialFamily(): Promise<FamilyMember[] | null> {
 
 /**
  * Server-resolve the parent's Stripe billing accounts, again via their own
- * RLS-scoped client. Resolved here rather than client-side because the count
- * decides how many buttons the billing card renders: fetching it after paint
- * would turn one rendered button into several under the parent's cursor, which
- * the "rendered content must not move" rule forbids.
+ * RLS-scoped client. Resolved here rather than client-side because the answer
+ * decides whether there is a billing section at all and how many buttons its
+ * card renders: fetching it after paint would grow a section, or turn one
+ * button into several, under the parent's cursor — which the "rendered content
+ * must not move" rule forbids.
  *
- * **`[]` on failure, and unlike the three reads above that is the end of it.**
- * This one is not a query seed — the card is handed down as a finished node,
- * with no client query behind it and therefore nothing that could refetch. So
- * there is no stale-seed trick available and none needed: `[]` renders the
- * ordinary single button, which is the right thing to show a parent whose
- * account count we could not read, and the next navigation asks again.
+ * `[]` is a real answer: the parent has never touched Stripe — a free or
+ * municipality-only family — so there is nothing for the portal to show, and
+ * the page has no billing section. Once any account exists the section stays,
+ * subscription or not, because a one-off buyer and a family that has cancelled
+ * still need their receipts and invoices.
+ *
+ * **`null` on failure**, like the reads above, though nothing refetches it: the
+ * card is handed down as a finished node with no client query behind it. A
+ * failure renders the card with the ordinary single button rather than hiding
+ * it — a parent who has an account must not lose the way to it because one
+ * read failed — and the next navigation asks again.
  */
-async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
+async function getInitialBillingAccounts(): Promise<BillingAccount[] | null> {
   try {
     const supabase = await createClient();
     return await resolveBillingAccountsViaRls(supabase);
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -123,7 +129,8 @@ async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
  * is the criterion, not "everything that is cheap". The family read decides how
  * many child sections there are and what they are called; the enrollment rows
  * decide how many cards sit under each and how tall they are; the billing
- * accounts decide how many buttons the billing card renders. Any one of them
+ * accounts decide whether there is a billing section and how many buttons its
+ * card renders. Any one of them
  * arriving after the first paint would resize a page the parent is already
  * reading — the reflow the layout rule exists to prevent — so the first frame is
  * final and there is no skeleton anywhere on this route.
@@ -187,8 +194,16 @@ export default async function CustomerDashboardPage() {
       //
       // Inert for reconciliation — the key never changes, so it cannot cause a
       // remount — and the warning was dev-mode only: nothing was broken.
+      //
+      // `null` — no billing section — only for a parent the read says has no
+      // billing account; a failed read still renders the card (see above).
       billingCard={
-        <ManageBillingCard key="billing-card" accounts={billingAccounts} />
+        billingAccounts?.length === 0 ? null : (
+          <ManageBillingCard
+            key="billing-card"
+            accounts={billingAccounts ?? []}
+          />
+        )
       }
     />
   );

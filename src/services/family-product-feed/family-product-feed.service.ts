@@ -25,15 +25,15 @@ import {
  * someone who did not choose to ask. They are still two values here because the
  * distinction is real, cheap to carry, and the sort of thing a page might one
  * day want to word differently (an unplaced seat is a *state of theirs*, not a
- * refusal, and the dashboard already says so on its awaiting card).
+ * refusal, and the dashboard's card for it renders no link).
  *
  * - `not_yours` — the participation is neither this caller's own seat nor one
  *   of their children's, **or does not exist**.
  *   The two are deliberately indistinguishable: an error that separated them
  *   would answer "does this id exist" for any id anyone cared to try.
  * - `unplaced` — it is genuinely theirs, and it has no group yet. There is no
- *   feed to build and no page behind it, which is exactly what the dashboard's
- *   awaiting card already promises by rendering no link.
+ *   feed to build and no page behind it, which is why the dashboard's card
+ *   renders no link for an unplaced seat.
  */
 export type FamilyProductFeedUnavailableReason = "not_yours" | "unplaced";
 

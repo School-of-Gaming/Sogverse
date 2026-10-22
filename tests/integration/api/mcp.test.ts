@@ -178,8 +178,15 @@ describe("/api/mcp", () => {
       "create_testimonial",
       "save_testimonial_version",
       "remove_testimonial_language",
+      "list_guides",
+      "get_guide",
+      "save_guide_label",
+      "remove_guide_language",
+      "open_guide_uploader",
+      "upload_guide",
       "get_analytics_summary",
       "get_analytics_breakdown",
+      "list_products",
     ]);
     expect(tools.find((tool) => tool.name === "whoami")?.annotations.readOnlyHint).toBe(true);
   });

@@ -18,7 +18,7 @@ import {
 /**
  * A landing page's testimonials section: the structure check's two halves on
  * the slot counts, the refusal of a testimonial named twice and of an id no
- * testimonial has (`check_landing_testimonial_picks`), the public read
+ * testimonial has (`check_landing_section_picks`), the public read
  * `list_landing_page_testimonials` — the scope test the authorization spine
  * names — and the admin reads that list where a testimonial is used and what
  * a page's working copy places.

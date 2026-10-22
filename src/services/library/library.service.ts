@@ -1,3 +1,4 @@
+import { readApiError } from "@/lib/api/json-response";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import type { AppSupabaseClient } from "@/types";
@@ -407,6 +408,39 @@ export class LibraryService {
       p_id: id,
     });
     if (error) throw error;
+  }
+
+  /**
+   * Publish from the browser — the editor. The publish runs on the server,
+   * through the admin's publication route, which then tells search engines
+   * what changed (`src/lib/indexnow/`); the server side calls
+   * `publishArticle` there. A refusal arrives as an `ApiError` carrying the
+   * database's sentence and code, so `libraryWriteFailure` reads it as it
+   * would the database's own.
+   */
+  async publishArticleViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "PUT", "Failed to publish the article");
+  }
+
+  /** Unpublish from the browser, through the same route as `publishArticleViaRoute`. */
+  async unpublishArticleViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(
+      id,
+      "DELETE",
+      "Failed to unpublish the article",
+    );
+  }
+
+  private async changePublicationViaRoute(
+    id: string,
+    method: "PUT" | "DELETE",
+    fallback: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/library/${encodeURIComponent(id)}/publication`,
+      { method },
+    );
+    if (!response.ok) throw await readApiError(response, fallback);
   }
 
   // -------------------------------------------------------------------------

@@ -12,7 +12,8 @@ seat of their own gets one more. Everything the page carries is per-participant 
 attendance today, planned absences and a line to the gedu tomorrow — so a product-scoped
 page would have grown a person selector the moment the second of those landed. **Only a
 placed enrollment has a page**: no group means no feed and nothing to show, so a waitlisted
-or awaiting-placement card links nowhere and the read refuses the id.
+card, or a seat not yet in a group (drawn as a plain seat, with nothing said about
+placement), links nowhere and the read refuses the id.
 
 **Rule: the participant is not always a child, and the copy has to know which.** The role
 root fixes whose page it is; it cannot say who the page is *about*, because a parent

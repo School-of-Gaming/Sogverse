@@ -464,6 +464,20 @@
         "inItem": "Section {number} ({type}), {item}: {field}",
         "goneSection": "A section no longer on the page: {field}"
       },
+      "products": {
+        "heading": "Picked products",
+        "section": "Section {number} ({type})",
+        "allShown": "{count, plural, one {Its product is shown.} other {All # of its products are shown.}}",
+        "noneShown": "None of its products is shown, so readers don’t see this section. Swap in listed products.",
+        "someHidden": "{shown} of {total} shown. Not shown:",
+        "unnamed": "A product with no name",
+        "hiddenItem": "{name}: {reasons}",
+        "reasons": {
+          "gone": "no product has this id any more",
+          "notListed": "unlisted",
+          "ended": "ended"
+        }
+      },
       "testimonials": {
         "heading": "Testimonials",
         "hint": "Their words are edited in Testimonials, and an edit shows on the live page straight away.",
@@ -525,8 +539,11 @@
       "points": "Points",
       "steps": "Steps",
       "faq": "Questions and answers",
+      "subscribe": "Email sign-up",
       "cta": "Call to action",
-      "testimonials": "Testimonials"
+      "products": "Products",
+      "testimonials": "Testimonials",
+      "guide": "Guide"
     },
     "items": {
       "image": "Picture {number}",
@@ -1916,5 +1933,94 @@
       "saveFailedWithReason": "The testimonial could not be saved: {reason}"
     },
     "onLandingPages": "{count, plural, one {On # landing page} other {On # landing pages}}"
+  },
+  "guides": {
+    "subtitle": "PDFs landing pages hand out, one file per language. A signed-in reader downloads the file in their own language.",
+    "newGuide": "New guide",
+    "backToList": "Back to guides",
+    "newPage": {
+      "title": "New guide",
+      "submit": "Create guide"
+    },
+    "editPage": {
+      "title": "Guide"
+    },
+    "listLoadError": "The guides could not be loaded. Reload the page to try again.",
+    "loadError": "This guide could not be loaded. Reload the page to try again.",
+    "notFound": "No guide has this address.",
+    "empty": "No guides yet.",
+    "allHeading": "All guides",
+    "languagesLabel": "Languages",
+    "saved": "Saved {date}",
+    "onLandingPages": "{count, plural, one {On # landing page} other {On # landing pages}}",
+    "fields": {
+      "label": "Label",
+      "language": "Language",
+      "file": "PDF file",
+      "files": "Files"
+    },
+    "hints": {
+      "label": "What admins call it in their lists. Readers never see it: the landing page section says what the guide is.",
+      "language": "The language the PDF is written in. Files in other languages are added on the guide’s page.",
+      "file": "A PDF of {limit} at most.",
+      "files": "One PDF per language. A reader downloads the file in their language, else the English one, else the one in the earliest language that has a file, in the site's language order."
+    },
+    "file": {
+      "uploaded": "Uploaded {date}",
+      "uploadedBy": "Uploaded {date} by {name}",
+      "uploadedByVia": "Uploaded {date} by {name} via {app}",
+      "uploadedByViaUnnamed": "Uploaded {date} by {name} via an AI app",
+      "open": "Open the PDF",
+      "none": "No {language} file yet. Upload one to offer the guide in {language}.",
+      "upload": "Upload PDF",
+      "replace": "Replace PDF",
+      "replaceNote": "A new file replaces this one at once, everywhere the guide is offered.",
+      "remove": "Remove this language",
+      "lastFile": "A guide keeps at least one language, so its only file cannot be removed."
+    },
+    "removeDialog": {
+      "title": "Remove the {language} file?",
+      "description": "Readers in {language} will be given the guide in another language instead, everywhere it is offered. You can upload a {language} file again at any time.",
+      "confirm": "Remove"
+    },
+    "usage": {
+      "heading": "Where it is used",
+      "none": "It is not offered on any landing page yet.",
+      "editNote": "A new file or a removed language changes it everywhere it is offered, at once.",
+      "landingPage": "Landing page: {title}",
+      "landingPageState": {
+        "both": "Readers can download it there now.",
+        "liveOnly": "Readers can download it there until the next publish, which takes it off.",
+        "workingOnly": "Not offered to readers yet: the next publish puts it there."
+      }
+    },
+    "record": {
+      "created": "Created {date}",
+      "createdBy": "Created {date} by {name}",
+      "createdByVia": "Created {date} by {name} via {app}",
+      "createdByViaUnnamed": "Created {date} by {name} via an AI app",
+      "saved": "Last saved {date}",
+      "savedBy": "Last saved {date} by {name}",
+      "savedByVia": "Last saved {date} by {name} via {app}",
+      "savedByViaUnnamed": "Last saved {date} by {name} via an AI app"
+    },
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "labelMissing": "Give the guide a label.",
+      "labelTooLong": "A label is at most {max} characters.",
+      "noFile": "Choose a PDF file.",
+      "tooLarge": "This PDF is {size}, and a guide’s file can be {limit} at most. Export it smaller — Canva’s “Compress file” or Acrobat’s “Reduce file size” — and upload it again.",
+      "notPdf": "That file is not a PDF. A guide is a PDF file.",
+      "empty": "That file is empty.",
+      "uploadFailed": "The file could not be uploaded. Try again.",
+      "uploadFailedWithReason": "The file could not be uploaded: {reason}",
+      "saveFailed": "The label could not be saved. Try again.",
+      "saveFailedWithReason": "The label could not be saved: {reason}",
+      "removeFailed": "The file could not be removed. Try again.",
+      "removeFailedWithReason": "The file could not be removed: {reason}"
+    }
   }
 }

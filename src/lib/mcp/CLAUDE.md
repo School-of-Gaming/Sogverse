@@ -47,9 +47,9 @@ is removing the person's admin role, which the gate reads on every request.
 **Rule: tools act as the admin, through `createBearerClient(authInfo.token)`, and never
 through the service-role client.** Row policies and guarded RPCs then decide exactly as
 they do for the admin in the browser. A tool reads who is calling with `readMcpCaller`.
-The one exception is the bytes of an uploaded picture, which go to its purpose's bucket on
-the service-role client exactly as the image catalogue's upload route sends them — that
-bucket has no other writer — while the catalogue row is still written on the admin's client.
+The one exception is the bytes of an upload — a picture or a guide's PDF — which go to their
+bucket on the service-role client exactly as the area's upload route sends them — that
+bucket has no other writer — while the rows are still written on the admin's client.
 The analytics tools also read Vercel on the server's own analytics token, as the admin
 Analytics page does; that token never reaches the database, and the landing page directory
 they name pages from still reads on the admin's client.
@@ -68,7 +68,9 @@ tool is added there too.
 writers.** No table read or RPC of the tool's own: the service is what the area's UI
 already trusts. Where the area has both a whole-object save (an editor's) and partial
 writers, a tool takes the partial ones — the AI app edits one piece at a time, and a whole
-save would carry a stale copy of everything else and undo another admin's edit.
+save would carry a stale copy of everything else and undo another admin's edit. A publish
+or an unpublish goes through its helper in `src/lib/indexnow/`, which runs the service's
+own and then tells search engines what changed, exactly as the admin's own publish does.
 
 **Rule: a refusal is a tool error the AI app can act on, never a throw.** The SDK turns a
 thrown error into a tool error carrying its raw message, which would hand the app a
@@ -108,9 +110,10 @@ that read only the text.
 
 ## Uploading through an MCP Apps view
 
-The bytes of a picture must never pass through the model, so a catalogue picture is
-uploaded through an **MCP Apps view** (extension `io.modelcontextprotocol/ui`): an opening
-tool (`open_cover_uploader`, `open_landing_image_uploader`) carries `_meta.ui.resourceUri`
+The bytes of a file must never pass through the model, so a catalogue picture or a guide's
+PDF is uploaded through an **MCP Apps view** (extension `io.modelcontextprotocol/ui`): an
+opening tool (`open_cover_uploader`, `open_landing_image_uploader`, `open_guide_uploader`)
+carries `_meta.ui.resourceUri`
 naming a `ui://` resource of type `text/html;profile=mcp-app`, which the AI app renders in a
 sandboxed frame inside the chat. **One view serves every catalogue purpose.** The opening
 tool's `uploader` field says what it is for — the frames the area's pictures come in, each
@@ -155,24 +158,31 @@ judges the whole batch in one write and stays the final gate — and **the model
 whole batch in one context update**, since a host keeps only the last: each file in pick
 order with its new catalogue id, label and shape, or the sentence it was refused with, then
 where the pictures went. A batch that stored something is final; one that stored nothing
-lets the admin pick again. The view holds no token and opens no connection of its own,
-so the gate in front of those calls is the endpoint's.
+lets the admin pick again. A guide's opening has `uploader.kind` `pdf` instead: the view
+takes one file, checks it is a PDF within the call's cap and sends it untouched to
+`upload_guide`, and the store checks it again. The view holds no token and opens no
+connection of its own, so the gate in front of those calls is the endpoint's.
 
-**An app-only tool is a tool all the same.** The upload tool, `upload_catalogue_picture`,
-carries `_meta.ui.visibility: ["app"]`, which tells a host to keep it out of the model's
-tool list and accept it only from this server's own views. That is the host's promise, not
-a gate: the tool is in `tools/list` and any client holding a grant can call it, so it
-checks its input exactly as a model-visible tool would — the caller an admin, the purpose
-one an opening offers, the bytes a JPEG of exactly that purpose's size. A host that cannot show views gets the opening
-tool's text instead, which says so and sends the admin elsewhere — to the Library's editor
-for a cover, to an AI app that shows views for a landing page picture, since landing pages
-have no editor; there is no other way to upload from an AI app, by the owner's ruling. The server cannot ask the client
-first — it is stateless, so the initialize capabilities are gone by the next request.
+**An app-only tool is a tool all the same.** The upload tools, `upload_catalogue_picture`
+and `upload_guide`, carry `_meta.ui.visibility: ["app"]`, which tells a host to keep them
+out of the model's tool list and accept them only from this server's own views. That is
+the host's promise, not a gate: a tool is in `tools/list` and any client holding a grant
+can call it, so each checks its input exactly as a model-visible tool would — for a
+picture, the caller an admin, the purpose one an opening offers, the bytes a JPEG of
+exactly that purpose's size. A host that cannot show views gets the opening tool's text
+instead, which says so and sends the admin elsewhere — to the Library's editor for a
+cover, to an AI app that shows views for a landing page picture, since landing pages have
+no editor, to the admin Guides tab for a guide; there is no other way to upload from an AI
+app, by the owner's ruling. The server cannot ask the client first — it is stateless, so
+the initialize capabilities are gone by the next request.
 
 **The picture travels as base64 inside one JSON-RPC request.** The catalogue's cap is 4 MB,
 but the SDK refuses a request body over 4 MB (Vercel's own limit, 4.5 MB, sits above it), so
 the view is told a smaller cap and re-encodes at a lower quality to fit; a JPEG at any
-catalogue size is a few hundred kilobytes, so neither limit is near in practice.
+catalogue size is a few hundred kilobytes, so neither limit is near in practice. A PDF
+cannot be re-encoded, so a guide's file is capped at about 2.9 MB here — an accepted limit,
+left until it becomes a problem — and the view refuses a larger one before sending it,
+naming the admin Guides tab (up to 4 MB) and how to export the PDF smaller.
 
 **The view is its own workspace package, `packages/mcp-image-uploader`, built to one HTML
 file that is committed.** `@modelcontextprotocol/ext-apps` needs zod 4 as a peer, which the

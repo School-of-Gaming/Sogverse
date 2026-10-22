@@ -46,5 +46,9 @@
   "empty": {
     "noProducts": "Rien ici pour l’instant — de nouvelles offres arrivent.",
     "noMatches": "Aucun résultat. Essayez d’effacer vos filtres."
+  },
+  "rail": {
+    "previous": "Précédents",
+    "next": "Suivants"
   }
 }

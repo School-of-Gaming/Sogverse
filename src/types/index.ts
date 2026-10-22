@@ -389,6 +389,12 @@ export type TestimonialRow = Database["public"]["Tables"]["testimonials"]["Row"]
 export type TestimonialTranslationRow =
   Database["public"]["Tables"]["testimonial_translations"]["Row"];
 
+// Guides — Marketing's store of PDFs: the label and who created and last
+// saved each in `guides`, one file per site locale in `guide_files`. Row
+// aliases only: no guide table carries a write grant for any Data API role.
+export type GuideRow = Database["public"]["Tables"]["guides"]["Row"];
+export type GuideFileRow = Database["public"]["Tables"]["guide_files"]["Row"];
+
 // Landing pages — `landing_pages` is a page's admin-only working copy and
 // `landing_page_publications` its public published copy, whose row existing is
 // the page being live; the section structure is the copy's, and each copy's
@@ -1022,8 +1028,6 @@ export interface CreateGamerInput {
   firstName: string;
   birth: GamerBirthMonthYear;
   gender?: "boy" | "girl" | "non_binary" | null;
-  minecraftUsername?: string;
-  robloxUsername?: string;
   /**
    * How this child will reach their own account. Optional, and absent means
    * `parent` — the switch-only shape every gamer had before the modes existed,

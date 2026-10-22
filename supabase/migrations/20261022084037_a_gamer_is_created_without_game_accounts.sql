@@ -1,0 +1,111 @@
+-- A gamer is created without game accounts.
+--
+-- The parent's Add gamer dialog no longer asks for a Minecraft or Roblox
+-- username: a child's handles are added after the account exists, on the
+-- manage gamer page or by a gedu in the group workspace and voice room. The
+-- dialog is the only caller of create_gamer, so the function loses the four
+-- username parameters and the minecraft_accounts/roblox_accounts inserts they
+-- fed. Everything else in the body is unchanged.
+--
+-- Removing parameters changes the signature, so the old function is dropped
+-- and created again, with its comment and grants re-stated.
+
+DROP FUNCTION public.create_gamer(uuid, uuid, text, text, smallint, smallint, public.gender_type, text, text, text, bigint, public.gamer_sign_in, boolean);
+
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in, p_guardian_attested boolean DEFAULT false) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_declaration_version text;
+begin
+  -- The PIN invariant, first and before anything is written: a gamer must never
+  -- exist in a family that has no parent PIN, because the gate on leaving a
+  -- gamer session IS that PIN, and a family without one would leave the gate
+  -- with nothing behind it. Named SQLSTATE, because this is the one failure in
+  -- this body the parent can actually act on — the route turns P0025 into "set
+  -- a PIN first" rather than into the generic failure the raises below get.
+  if not exists (
+    select 1 from public.customer_profiles
+     where user_id = p_parent_id
+       and pin_hash is not null
+  ) then
+    raise exception 'PIN_REQUIRED' using errcode = 'P0025';
+  end if;
+
+  -- The declaration, refused before anything is written and refused on NULL as
+  -- well as on false: a three-valued answer to "are you this child's parent or
+  -- guardian" is not an answer. There is no route by which a parent reaches
+  -- this with the box unticked — the form disables the button and the body
+  -- schema refuses anything but true — so this is the database's own guarantee
+  -- rather than the user-facing check, and a plain raise is the right shape:
+  -- nothing the parent can act on reaches them through it.
+  if p_guardian_attested is not true then
+    raise exception
+      'a gamer may only be created with the guardian declaration attested';
+  end if;
+
+  -- Promote the trigger-seeded customer profile to a gamer. Gate on role =
+  -- 'customer' so this can't corrupt an already-promoted gamer or an admin/gedu,
+  -- and so a double-call fails on the second pass. Keep the synthetic email
+  -- handle_new_user() copied from auth.users — gamers are email-first.
+  --
+  -- The child starts in the parent's locale: the parent is the one setting the
+  -- account up, so the welcome mail and the child's first sign-in read the way
+  -- the parent uses the site. Copied once, never synced; the child's to change.
+  update public.profiles
+  set role = 'gamer',
+      first_name = p_first_name,
+      last_name = p_last_name,
+      locale = (select parent.locale from public.profiles parent where parent.id = p_parent_id)
+  where id = p_gamer_id
+    and role = 'customer';
+
+  if not found then
+    raise exception 'No promotable customer profile % found for gamer creation', p_gamer_id;
+  end if;
+
+  -- Swap extension tables: drop the customer row handle_new_user() created,
+  -- add the gamer row.
+  delete from public.customer_profiles where user_id = p_gamer_id;
+
+  -- `sign_in` rides along rather than being written afterwards: the route has
+  -- already created the auth user with whichever address the chosen mode calls
+  -- for, so the mode and the address it describes land in one transaction.
+  insert into public.gamer_profiles (user_id, birth_year, birth_month, gender, sign_in)
+  values (p_gamer_id, p_birth_year, p_birth_month, p_gender, p_sign_in);
+
+  -- The declaration, against the wording that is current right now. It has to
+  -- follow the gamer_profiles insert above, because that is what the row's
+  -- foreign key points at. A slug with no published version is a broken deploy
+  -- rather than a runtime condition, and it is named rather than left to the
+  -- NOT NULL to abort with a message mentioning no document.
+  select cdv.version
+    into v_declaration_version
+    from public.consent_document_versions cdv
+   where cdv.document_slug = 'guardian-declaration'
+   order by cdv.created_at desc, cdv.version desc
+   limit 1;
+
+  if v_declaration_version is null then
+    raise exception 'no published version exists for guardian-declaration';
+  end if;
+
+  insert into public.gamer_consent_acceptances (
+    gamer_id, document_slug, document_version, accepted_by
+  )
+  values (
+    p_gamer_id, 'guardian-declaration', v_declaration_version, p_parent_id
+  );
+
+  -- Link to the parent. The validate_parent_gamer_on_insert trigger re-checks
+  -- both roles, so this must run after the promote above.
+  insert into public.parent_gamer (parent_id, gamer_id)
+  values (p_parent_id, p_gamer_id);
+end;
+$$;
+
+COMMENT ON FUNCTION public.create_gamer(uuid, uuid, text, text, smallint, smallint, public.gender_type, public.gamer_sign_in, boolean) IS 'The atomic promote-and-link the gamer-creation route calls once GoTrue has minted the auth user: swaps the trigger-seeded customer profile to a gamer in the parent''s locale, writes the gamer row with its birth year and month and its chosen sign-in mode, records the parent''s guardian declaration about THIS child, and links the parent — in ONE transaction, so a failure anywhere leaves nothing behind for the route to compensate but the auth user itself. service_role only. Refuses with SQLSTATE P0025 and the message PIN_REQUIRED when the named parent holds no PIN: the gate on leaving a gamer session is the parent''s PIN, so a family may not acquire a gamer before it has one, and the route turns that one refusal into a specific ask. Refuses with a plain raise when p_guardian_attested is not true — false and NULL alike, because a three-valued answer to "are you this child''s parent or guardian" is not an answer — and the declaration is written against the CURRENT version of the guardian-declaration document, resolved here and never supplied by a caller. The locale is copied from the parent once and never synced; the child changes it like anyone else. `p_sign_in` defaults to `parent`, the switch-only shape every gamer had before the modes existed; `p_guardian_attested` defaults to false so an untaught caller is refused rather than admitted.';
+
+REVOKE ALL ON FUNCTION public.create_gamer(uuid, uuid, text, text, smallint, smallint, public.gender_type, public.gamer_sign_in, boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(uuid, uuid, text, text, smallint, smallint, public.gender_type, public.gamer_sign_in, boolean) TO service_role;

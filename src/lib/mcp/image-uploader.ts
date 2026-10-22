@@ -1,6 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { DEFAULT_MAX_REQUEST_BODY_SIZE, type McpServer } from "@modelcontextprotocol/server";
+import {
+  DEFAULT_MAX_REQUEST_BODY_SIZE,
+  type CallToolResult,
+  type McpServer,
+  type ServerContext,
+} from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { LANDING_PICTURE_PURPOSES } from "@/lib/landing-pages/picture-shapes";
@@ -16,10 +21,14 @@ import {
   sizeCapRefusal,
   vetCatalogueUpload,
 } from "@/services/catalogue-images/catalogue-images.server";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { GUIDE_MCP_UPLOAD_MAX_BYTES } from "@/services/guides/guides.contracts";
+import { storeGuideFile } from "@/services/guides/guides.server";
+import type { AppSupabaseClient } from "@/types";
 
 /*
  * Uploading a catalogue picture from an AI app — a Library cover, a landing
- * page picture — through an MCP Apps view (extension
+ * page picture — or a guide's PDF, through an MCP Apps view (extension
  * `io.modelcontextprotocol/ui`). The bytes of a picture must never pass
  * through the model — it would have to read and repeat them, and a client
  * refuses a result that large anyway — so the model only opens the uploader,
@@ -37,8 +46,9 @@ import {
  * any other call.
  *
  * One view serves every purpose: what it uploads for, and how, arrives in the
- * opening tool's `uploader` field (`uploaderOpening`), so the view restates
- * nothing the catalogue or an area defines. It is
+ * opening tool's `uploader` field (`uploaderOpening` for a picture, the guide
+ * tools' own for a PDF, which is sent as it is: no crop, no re-encoding), so
+ * the view restates nothing the catalogue or an area defines. It is
  * `packages/mcp-image-uploader`, built to one HTML file that is committed and
  * served here as the resource.
  */
@@ -125,15 +135,15 @@ export interface UploaderRoom {
  * catalogue entries no AI app uploads — so it is this one list, the landing
  * shapes read from their own map.
  */
-export const UPLOADER_PURPOSES = [
+const UPLOADER_PURPOSES = [
   "library_cover",
   ...Object.values(LANDING_PICTURE_PURPOSES),
 ] as const;
 
-export type UploaderPurpose = (typeof UPLOADER_PURPOSES)[number];
+type UploaderPurpose = (typeof UPLOADER_PURPOSES)[number];
 
 /** The app-only tool the view stores every picture through; the view names it too. */
-export const UPLOAD_TOOL = "upload_catalogue_picture";
+const UPLOAD_TOOL = "upload_catalogue_picture";
 
 /** One shape the uploader knows for an area: a catalogue purpose, and whether this opening takes it. */
 export interface UploaderFrameSpec {
@@ -180,6 +190,7 @@ export function uploaderOpening(view: {
   place: UploaderPlacement | null;
 }) {
   return {
+    kind: "picture" as const,
     heading: view.heading,
     subject: view.subject,
     frames: view.frames.map(({ purpose, name, refusal }) => {
@@ -295,9 +306,97 @@ function registerUploadTool(server: McpServer): void {
 }
 
 /**
+ * Register `upload_guide`, the app-only tool the view stores a guide's PDF
+ * through: one language's file of an existing guide, or the first file of a
+ * new one with its label. It lives here rather than with the other guide
+ * tools because, like a picture's, the bytes go to their bucket on the
+ * service-role client — the bucket's one writer — while the guide's rows are
+ * written on the admin's own client, both by the shared store function. `run`
+ * is the guide tools' way of running a tool as the admin, which reads a
+ * database refusal; `tooLarge` follows the store's refusal of a file's size.
+ */
+export function registerGuideUploadTool(
+  server: McpServer,
+  tool: {
+    description: string;
+    tooLarge: string;
+    run: (
+      ctx: ServerContext,
+      body: (client: AppSupabaseClient) => Promise<CallToolResult>,
+    ) => Promise<CallToolResult>;
+  },
+): void {
+  server.registerTool(
+    "upload_guide",
+    {
+      title: "Store an uploaded guide file",
+      description: tool.description,
+      inputSchema: z.object({
+        guideId: z.guid().optional().describe("The guide the file is for; left out for a new guide."),
+        label: z.string().optional().describe("A new guide's label; left out for an existing guide."),
+        locale: z.enum(SUPPORTED_LOCALES).describe("The language the file is in."),
+        fileName: z.string().min(1).max(255).describe("The PDF's file name; a download is offered as it."),
+        pdfBase64: z.string().describe("The PDF's bytes, base64."),
+      }),
+      annotations: {
+        readOnlyHint: false,
+        // It replaces the language's file, if it has one.
+        destructiveHint: true,
+        // Without a guideId, every call creates a guide.
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+      _meta: {
+        ui: { resourceUri: PICTURE_UPLOADER_URI, visibility: ["app"] },
+        "ui/resourceUri": PICTURE_UPLOADER_URI,
+      },
+    },
+    ({ guideId, label, locale, fileName, pdfBase64 }, ctx) =>
+      tool.run(ctx, async (client) => {
+        if ((guideId === undefined) === (label === undefined)) {
+          return refusal(
+            "Name either the guide the file is for (guideId) or a new guide's label, not both.",
+          );
+        }
+        const encoded = pdfBase64.replace(/\s+/g, "");
+        if (encoded.length % 4 !== 0 || !BASE64.test(encoded)) {
+          return refusal("The file did not arrive as base64.");
+        }
+        // The SDK refuses a request over 4 MB, so the decoded file is about
+        // 3 MB at most here; the store checks it against the view's cap.
+        const stored = await storeGuideFile({
+          db: client,
+          admin: createAdminClient(),
+          bytes: Buffer.from(encoded, "base64"),
+          fileName,
+          target:
+            guideId === undefined
+              ? { kind: "new", label: label ?? "" }
+              : { kind: "existing", guideId },
+          locale,
+          maxBytes: GUIDE_MCP_UPLOAD_MAX_BYTES,
+        });
+        if (stored.status === "refused") {
+          const { code, error } = stored.refusal;
+          return refusal(code === "too_large" ? `${error} ${tool.tooLarge}` : error);
+        }
+        return answer({
+          guideId: stored.guideId,
+          created: stored.created,
+          locale: stored.locale,
+          fileName: stored.fileName,
+          byteSize: stored.byteSize,
+          replaced: stored.replaced,
+        });
+      }),
+  );
+}
+
+/**
  * Register the view itself, as the resource every opening tool names, and the
  * one tool it stores a picture through. The opening tools are each area's own
- * (`library-covers.ts`, `landing-pages-images.ts`).
+ * (`library-covers.ts`, `landing-pages-images.ts`, `guides.ts`), and so is
+ * `upload_guide`, which `guides.ts` registers through `registerGuideUploadTool`.
  */
 export function registerImageUploader(server: McpServer): void {
   registerUploadTool(server);
@@ -307,7 +406,7 @@ export function registerImageUploader(server: McpServer): void {
     {
       title: "Picture uploader",
       description:
-        "Where the admin picks a picture from their device to become a Library article's cover or a landing page's picture.",
+        "Where the admin picks a picture from their device to become a Library article's cover or a landing page's picture, or a PDF to become a guide's file.",
       mimeType: MCP_APP_MIME_TYPE,
     },
     async (uri) => ({
