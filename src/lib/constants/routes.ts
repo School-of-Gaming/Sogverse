@@ -788,6 +788,12 @@ export const ROUTES = {
     /** One testimonial's editor. */
     testimonial: (id: string) =>
       ({ pathname: "/admin/testimonials/[id]", params: { id } }) as const,
+    /** Every guide — the PDFs landing pages hand out, one file per language. */
+    guides: "/admin/guides",
+    /** Where a new guide is created with its first file. */
+    guideNew: "/admin/guides/new",
+    /** One guide: its label, its file in each language, and where it is used. */
+    guide: (id: string) => ({ pathname: "/admin/guides/[id]", params: { id } }) as const,
     /**
      * Every spotlight, switched on or not — the notes with a picture appended
      * to every parent's session report email — and where each is switched on and off.

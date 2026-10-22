@@ -394,6 +394,15 @@ import { TEST_IDS } from "./constants";
  *                  clone fixture places, inserted and removed by that file
  *   914            landing-pages.test.ts — the product its required-text
  *                  fixture picks, created and deleted by that file
+ *   915            landing-pages.test.ts — not a product: the guide its clone
+ *                  fixture places, inserted and removed by that file
+ *   920            guides.test.ts — not a product: a guide id that must NEVER
+ *                  exist. Its guides are minted by the RPC under test and
+ *                  found by a label prefix only that file uses
+ *   921-923        landing-guides.test.ts — not products: 921 a landing page
+ *                  kept live, 922 a draft never published, and 923 a guide id
+ *                  that must NEVER exist. Its guides are minted by the RPC and
+ *                  found by a label prefix only that file uses
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

@@ -33,6 +33,7 @@ import {
 import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/cn";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import { GuideDownload } from "./guide-download";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
 import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
@@ -63,8 +64,10 @@ import { Heading } from "@sog/ui";
  * leave out what is not: a published version has every required word, and the
  * preview of one still being written shows its blanks as gaps rather than as
  * placeholder copy. The strings of our own are the screen reader's "opens in
- * a new tab" beside a button that leaves the site, and the email sign-up
- * form's fields, consent and answers, which are the same promise on every page.
+ * a new tab" beside a button that leaves the site, a guide's download —
+ * its button and the account a signed-out reader needs — and the email
+ * sign-up form's fields, consent and answers, which are the same promise on
+ * every page.
  */
 
 /** What every renderer is handed besides its own section and words. */
@@ -98,6 +101,8 @@ export interface LandingRenderContext {
    * live query fetches for itself.
    */
   products: ProductRailPrefetch | null;
+  /** Whether the read answered the placed guide with this id. */
+  hasGuide: (guideId: string) => boolean;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -638,6 +643,73 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
 }
 
 /**
+ * A guide to download: the section's header and line over the download, laid
+ * out like the hero — centred alone; with a cover picture, the words beside it
+ * from `lg`, start-aligned there and centred on a phone, the picture after
+ * them.
+ *
+ * A guide the read did not answer leaves the section out, since there is
+ * nothing to offer; one it answered has a file, and the download route picks
+ * the reader's by the reader fallback. Whether the reader may download is
+ * decided in the browser (`guide-download.tsx`); everything here is the same
+ * for every reader.
+ */
+function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
+  if (!context.hasGuide(section.guideId)) return null;
+  const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
+  const eyebrow = written(text.eyebrow);
+  const heading = written(text.heading);
+  const description = written(text.description);
+  return (
+    <section className={LANDING_SECTION}>
+      <div
+        className={cn(
+          "mx-auto",
+          src === null
+            ? "max-w-3xl text-center"
+            : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
+        )}
+      >
+        <div className={cn(src !== null && "text-center lg:text-left")}>
+          {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
+          {heading !== null && (
+            <div className={cn(eyebrow !== null && "mt-4")}>
+              {/* As in the hero, the heading turns start-aligned at `md` while
+                  the columns split at `lg`. */}
+              <Heading
+                level={2}
+                step="display"
+                align={src === null ? "center" : "center-narrow"}
+              >
+                {heading}
+              </Heading>
+            </div>
+          )}
+          {description !== null && (
+            <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
+          )}
+          {/* exact-locale: resets the body's language mark for our own words */}
+          <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+            <GuideDownload
+              guideId={section.guideId}
+              locale={context.locale}
+              besidePicture={src !== null}
+            />
+          </div>
+        </div>
+        {src !== null && (
+          <LandingPicture
+            src={src}
+            alt={text.imageAlt}
+            sizes="(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)"
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+/**
  * An email sign-up: the heading and intro the page wrote over the site's own
  * form, in the reading column.
  */
@@ -674,6 +746,7 @@ export const LANDING_SECTION_RENDERERS: {
   steps: StepsSection,
   testimonials: TestimonialsSection,
   products: ProductsSection,
+  guide: GuideSection,
   faq: FaqSection,
   subscribe: SubscribeSection,
   cta: CtaSection,

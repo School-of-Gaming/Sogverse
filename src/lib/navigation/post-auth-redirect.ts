@@ -1,6 +1,6 @@
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
-import { toInternalPathname } from "@/lib/navigation/locale-path";
+import { normalizeExternalPath, toInternalPathname } from "@/lib/navigation/locale-path";
 import {
   hasUtmAttribution,
   readUtmFromSearchParams,
@@ -36,6 +36,12 @@ const SAFE_REDIRECT_PREFIXES: readonly string[] = [
   `${ROUTES.schools}/`, // /schools/[municipalityName]/[id]
 ];
 
+// A live landing page, whose guide section sends a signed-out reader to
+// register or sign in and back to the page to download the guide. Matched by
+// its exact template rather than by prefix, so the admin-only preview beneath
+// it is not a destination.
+const LANDING_PAGE_TEMPLATE = ROUTES.landingPage("").pathname;
+
 interface SafeRedirectOptions {
   /**
    * Also admit the finish page an account created through Google completes
@@ -70,7 +76,9 @@ export function resolveSafeRedirect(
   // locale prefix and untranslates the slug for the *check*; what is returned
   // is the original path, so the reader returns to the page they left, in the
   // language they were reading it in.
-  const internal = toInternalPathname(new URL(path, SENTINEL).pathname);
+  const { pathname: internal, template } = normalizeExternalPath(
+    new URL(path, SENTINEL).pathname,
+  );
   if (allowCompleteRegistration && internal === ROUTES.completeRegistration) {
     return path;
   }
@@ -81,6 +89,7 @@ export function resolveSafeRedirect(
   // The Discord and Slack link pages, exactly, on the same reasoning: their
   // one-time token rides on the query this path keeps.
   if (internal === ROUTES.linkDiscord || internal === ROUTES.linkSlack) return path;
+  if (template === LANDING_PAGE_TEMPLATE) return path;
   return SAFE_REDIRECT_PREFIXES.some((p) => internal.startsWith(p))
     ? path
     : null;
@@ -100,7 +109,7 @@ export const COMPLETE_REGISTRATION_GEDU_QUERY = { as: "gedu" } as const;
  */
 export const COMPLETE_REGISTRATION_PARENT_QUERY = { as: "parent" } as const;
 
-/** The finish page's param naming the product page to land on afterwards. */
+/** The finish page's param naming the page to land on afterwards. */
 const REDIRECT_PARAM = "redirect";
 
 /** What the finish page's address carries, each part already sanitised. */
@@ -116,7 +125,7 @@ export interface CompleteRegistrationIntent {
    */
   utm: UtmAttribution;
   /**
-   * The product page the account set out from, to land on once registered —
+   * The product or landing page the account set out from, to land on once registered —
    * only ever a value `resolveSafeRedirect` admitted.
    */
   redirect: string | null;
@@ -192,7 +201,7 @@ export function resolveCompleteRegistrationIntent(
 
 /**
  * The finish page's query: the Gedu variant when asked for, then the
- * attribution, then the product page to return to — the whole of what its
+ * attribution, then the page to return to — the whole of what its
  * address may carry. Shared by the register pages that build `next`, the
  * callback that rebuilds it and the finish page's switch link. The redirect
  * passes the post-auth allowlist here too, so no caller can emit a raw path.

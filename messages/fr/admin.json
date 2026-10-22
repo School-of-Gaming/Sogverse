@@ -542,7 +542,8 @@
       "subscribe": "Inscription par e-mail",
       "cta": "Appel à l’action",
       "products": "Produits",
-      "testimonials": "Témoignages"
+      "testimonials": "Témoignages",
+      "guide": "Guide"
     },
     "items": {
       "image": "Image {number}",
@@ -1932,5 +1933,94 @@
       "saveFailedWithReason": "Le témoignage n’a pas pu être enregistré : {reason}"
     },
     "onLandingPages": "{count, plural, one {Sur # page d’atterrissage} other {Sur # pages d’atterrissage}}"
+  },
+  "guides": {
+    "subtitle": "Les PDF que les pages d’atterrissage distribuent, un fichier par langue. Un lecteur connecté télécharge le fichier dans sa propre langue.",
+    "newGuide": "Nouveau guide",
+    "backToList": "Retour aux guides",
+    "newPage": {
+      "title": "Nouveau guide",
+      "submit": "Créer le guide"
+    },
+    "editPage": {
+      "title": "Guide"
+    },
+    "listLoadError": "Les guides n’ont pas pu être chargés. Rechargez la page pour réessayer.",
+    "loadError": "Ce guide n’a pas pu être chargé. Rechargez la page pour réessayer.",
+    "notFound": "Aucun guide n’a cette adresse.",
+    "empty": "Aucun guide pour l’instant.",
+    "allHeading": "Tous les guides",
+    "languagesLabel": "Langues",
+    "saved": "Enregistré le {date}",
+    "onLandingPages": "{count, plural, one {Sur # page d’atterrissage} other {Sur # pages d’atterrissage}}",
+    "fields": {
+      "label": "Libellé",
+      "language": "Langue",
+      "file": "Fichier PDF",
+      "files": "Fichiers"
+    },
+    "hints": {
+      "label": "Le nom que les administrateurs lui donnent dans leurs listes. Les lecteurs ne le voient jamais : la section de la page d’atterrissage dit ce qu’est le guide.",
+      "language": "La langue dans laquelle le PDF est écrit. Les fichiers dans d’autres langues s’ajoutent sur la page du guide.",
+      "file": "Un PDF de {limit} au plus.",
+      "files": "Un PDF par langue. Un lecteur télécharge le fichier dans sa langue, sinon l’anglais, sinon celui de la première langue qui en a un, dans l’ordre des langues du site."
+    },
+    "file": {
+      "uploaded": "Envoyé le {date}",
+      "uploadedBy": "Envoyé le {date} par {name}",
+      "uploadedByVia": "Envoyé le {date} par {name} via {app}",
+      "uploadedByViaUnnamed": "Envoyé le {date} par {name} via une application d’IA",
+      "open": "Ouvrir le PDF",
+      "none": "Pas encore de fichier en {language}. Envoyez-en un pour proposer le guide en {language}.",
+      "upload": "Envoyer un PDF",
+      "replace": "Remplacer le PDF",
+      "replaceNote": "Un nouveau fichier remplace celui-ci immédiatement, partout où le guide est proposé.",
+      "remove": "Retirer cette langue",
+      "lastFile": "Un guide garde toujours au moins une langue : son seul fichier ne peut donc pas être retiré."
+    },
+    "removeDialog": {
+      "title": "Retirer le fichier en {language} ?",
+      "description": "Les lecteurs en {language} recevront le guide dans une autre langue, partout où il est proposé. Vous pouvez renvoyer un fichier en {language} à tout moment.",
+      "confirm": "Retirer"
+    },
+    "usage": {
+      "heading": "Où il est utilisé",
+      "none": "Il n’est encore proposé sur aucune page d’atterrissage.",
+      "editNote": "Un nouveau fichier ou une langue retirée le modifie immédiatement partout où il est proposé.",
+      "landingPage": "Page d’atterrissage : {title}",
+      "landingPageState": {
+        "both": "Les lecteurs peuvent le télécharger là maintenant.",
+        "liveOnly": "Les lecteurs peuvent le télécharger là jusqu’à la prochaine publication, qui le retire.",
+        "workingOnly": "Pas encore proposé aux lecteurs : la prochaine publication l’y place."
+      }
+    },
+    "record": {
+      "created": "Créé le {date}",
+      "createdBy": "Créé le {date} par {name}",
+      "createdByVia": "Créé le {date} par {name} via {app}",
+      "createdByViaUnnamed": "Créé le {date} par {name} via une application d’IA",
+      "saved": "Dernier enregistrement le {date}",
+      "savedBy": "Dernier enregistrement le {date} par {name}",
+      "savedByVia": "Dernier enregistrement le {date} par {name} via {app}",
+      "savedByViaUnnamed": "Dernier enregistrement le {date} par {name} via une application d’IA"
+    },
+    "actions": {
+      "save": "Enregistrer",
+      "cancel": "Annuler"
+    },
+    "errors": {
+      "labelMissing": "Donnez un libellé au guide.",
+      "labelTooLong": "Un libellé compte au plus {max} caractères.",
+      "noFile": "Choisissez un fichier PDF.",
+      "tooLarge": "Ce PDF fait {size}, et le fichier d’un guide ne peut dépasser {limit}. Exportez-le plus léger — « Compress file » dans Canva ou « Réduire la taille du fichier » dans Acrobat — puis renvoyez-le.",
+      "notPdf": "Ce fichier n’est pas un PDF. Un guide est un fichier PDF.",
+      "empty": "Ce fichier est vide.",
+      "uploadFailed": "Le fichier n’a pas pu être envoyé. Réessayez.",
+      "uploadFailedWithReason": "Le fichier n’a pas pu être envoyé : {reason}",
+      "saveFailed": "Le libellé n’a pas pu être enregistré. Réessayez.",
+      "saveFailedWithReason": "Le libellé n’a pas pu être enregistré : {reason}",
+      "removeFailed": "Le fichier n’a pas pu être retiré. Réessayez.",
+      "removeFailedWithReason": "Le fichier n’a pas pu être retiré : {reason}"
+    }
   }
 }

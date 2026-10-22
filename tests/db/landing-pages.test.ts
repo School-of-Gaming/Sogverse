@@ -1125,12 +1125,15 @@ describe("landing pages", () => {
     const S_CTA = "00000000-0000-4000-8000-0000000008b7";
     const S_QUOTE = "00000000-0000-4000-8000-0000000008b8";
     const S_PICKS = "00000000-0000-4000-8000-0000000008b9";
+    const S_GUIDE = "00000000-0000-4000-8000-0000000008bb";
     const S_SUBSCRIBE = "00000000-0000-4000-8000-0000000008ba";
     const item = (n: number) => `00000000-0000-4000-8000-0000000008c${n}`;
     /** The testimonial the fixture places, which a save refuses unless it exists. */
     const TESTIMONIAL = "00000000-0000-0000-0000-000000000913";
     /** The product the fixture picks, which a save refuses unless it exists. */
     const PICKED = "00000000-0000-0000-0000-000000000914";
+    /** The guide the fixture places, likewise. */
+    const GUIDE = "00000000-0000-0000-0000-000000000915";
 
     beforeAll(async () => {
       await deleteTestProducts(admin, [PICKED]);
@@ -1141,11 +1144,22 @@ describe("landing pages", () => {
         .from("testimonial_translations")
         .insert({ testimonial_id: TESTIMONIAL, locale: "en", attribution: "Mum, fixture", quote: "Clone fixture quote" });
       expect(words.error).toBeNull();
+      const guide = await admin.from("guides").insert({ id: GUIDE, label: "Clone fixture guide" });
+      expect(guide.error).toBeNull();
+      const file = await admin.from("guide_files").insert({
+        guide_id: GUIDE,
+        locale: "en",
+        storage_path: `${GUIDE}/en/00000000-0000-4000-8000-000000000915.pdf`,
+        file_name: "clone-fixture.pdf",
+        byte_size: 100,
+      });
+      expect(file.error).toBeNull();
     });
 
     afterAll(async () => {
       await admin.from("testimonials").delete().eq("id", TESTIMONIAL);
       await deleteTestProducts(admin, [PICKED]);
+      await admin.from("guides").delete().eq("id", GUIDE);
     });
 
     /** One section of every type, every item-bearing one with its items. */
@@ -1158,6 +1172,7 @@ describe("landing pages", () => {
       { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
       { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
       { id: S_PICKS, type: "products", productIds: [PICKED] },
+      { id: S_GUIDE, type: "guide", guideId: GUIDE, imageId: PIC_B },
       { id: S_SUBSCRIBE, type: "subscribe" },
       { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
     ];
@@ -1175,6 +1190,7 @@ describe("landing pages", () => {
         [S_FAQ]: { heading: w("faq"), items: { [item(7)]: { question: w("question 7"), answer: w("answer 7") } } },
         [S_QUOTE]: { heading: w("testimonials") },
         [S_PICKS]: { heading: w("products") },
+        [S_GUIDE]: { heading: w("guide"), imageAlt: w("guide alt") },
         [S_SUBSCRIBE]: { heading: w("subscribe"), buttonLabel: w("subscribe button") },
         [S_CTA]: { heading: w("cta"), buttonLabel: w("cta button") },
       };

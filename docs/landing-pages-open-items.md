@@ -1,6 +1,6 @@
 # Landing pages: the open items
 
-**Status: open, 2026-10-16.** Everything still unresolved from marketing's landing page
+**Status: open, 2026-10-22.** Everything still unresolved from marketing's landing page
 fixes list (13 Oct 2026): the items no one has built yet, the branches built and waiting
 for the owner's review, the operator steps outside the code, and the questions for
 counsel. **When an item is resolved — built and merged, or dropped by the owner — delete
@@ -13,17 +13,6 @@ recommend. Landing pages exist for search engines and AI apps first and people s
 they are written only through the MCP server (`src/services/landing-pages/CLAUDE.md`).
 
 ## Not built yet
-
-### Gated download (list #3) — owner decision pending
-
-The ask: attach a file (a PDF guide) to a page and deliver it after a sign-up. Paused
-while the owner agrees with marketing how gating fits email marketing. The leaning: **a
-free account is the gate**, and marketing consent stays a separate, optional box. The
-reasons, which any design must respect: under EU law marketing consent cannot be the
-price of a download (consent made a condition of a service is not freely given); an
-account is a fair exchange; marketing email goes only to people who ticked the box.
-Whether a free account alone allows follow-up email is a question for counsel (below).
-Build nothing until the owner rules.
 
 ### Video system (list #13) — design first, with the owner
 
@@ -104,7 +93,9 @@ conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
 ## Questions for counsel, asked together
 
 1. Does a free account, with no purchase, qualify for the soft opt-in under §200 of the
-   Finnish Act on Electronic Communications Services?
+   Finnish Act on Electronic Communications Services? The answer decides whether the
+   deferred sync of account holders to Brevo (`landing-email-capture`) may include
+   those who did not tick the marketing box.
 2. Is the registration form's marketing checkbox worded specifically enough?
 
 ## Small follow-ups noticed along the way

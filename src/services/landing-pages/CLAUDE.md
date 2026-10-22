@@ -102,7 +102,7 @@ the structure, so the catalogue's two rules are kept another way, with the same 
 as for a Library cover: a **replace** moves every picture in both copies at once, a live
 page's included, without a republish (the replace's landing half is a database function
 the catalogue's replace calls beside the Library's); a **removal** unlinks the picture
-from both copies at once — a hero or text section loses its picture, an image section
+from both copies at once — a hero, text or guide section loses its picture, an image section
 loses that picture, and an image section left with none is dropped with its words —
 done by a trigger on the catalogue's own delete, so it needs nothing from the remover.
 Either moves the working copy's "last saved" time and saver, as a cover removal does.
@@ -129,6 +129,13 @@ The section's only words are an optional header, so it never makes a version inc
 and it contributes no structured data — review markup a site writes about itself earns
 nothing. Its words are never written through a landing page tool, and a quote comes off a
 page by saving the structure without it.
+
+**A guide is placed by id from the structure, like a testimonial** (`src/services/guides/`):
+a guide section names one guide and an optional cover picture, which the picture triggers
+handle like a hero's; an id no guide has is refused by the shared trigger, which reads the
+section's one id as a list of one. Neither copy carries a guide's files: the live page asks
+the public read only which of its guides exist, answering only what the published copy
+places, and the download is the guide store's, gated on a signed-in reader.
 
 **A page's link preview is its hero's picture**, the one its structured data names as the
 picture the page leads with, with the shown version's alt text; a hero without one shares
@@ -167,8 +174,8 @@ refusals. Nothing else in the save path touches a link. A clone sends no words, 
 none to check: the words it copies were made canonical when they were saved.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
-detail included, the image catalogue's usage map, and the `testimonials` tree, whose
-"where it is used" names each page's copies.
+detail included, the image catalogue's usage map, and the `testimonials` and `guides`
+trees, whose "where it is used" names each page's copies.
 
 **Every publish and unpublish goes through one helper per action in `src/lib/indexnow/`**,
 which runs the service's own publish on the caller's client and then submits every

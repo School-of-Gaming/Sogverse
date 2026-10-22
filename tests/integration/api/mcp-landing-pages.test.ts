@@ -1054,6 +1054,7 @@ describe("pictures", () => {
       title: "Gaming clubs in Espoo",
       sectionId: HERO,
       uploader: {
+        kind: "picture",
         purpose: "landing_image",
         heading: "Landing page picture",
         subject: "For “Gaming clubs in Espoo”",

@@ -60,6 +60,7 @@ function renderPage({
           sections={SECTIONS}
           imagePaths={{}}
           testimonials={{}}
+          guideIds={[]}
           sectionTexts={TEXTS}
           textLocale="fi"
           locale="fi"
