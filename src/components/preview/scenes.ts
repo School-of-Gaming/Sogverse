@@ -335,7 +335,8 @@ export const PREVIEW_SCENES = [
       {
         slug: "new-family",
         label: "New account",
-        description: "The account before its first child exists.",
+        description:
+          "The account before its first child exists or its first purchase, so no billing section.",
       },
       {
         slug: "parent-only",

@@ -19,7 +19,8 @@ import { useNow, useTimezone } from "@/providers";
 /**
  * The parent dashboard as a parent meets it: a section per child, then the
  * parent's own section when they hold a seat themselves, one card per
- * enrollment, then billing and help.
+ * enrollment, then billing — absent for a family with no billing account, as in
+ * the scenarios whose fixture has none — and help.
  *
  * Every section is the real presentational component over fixtures, and no
  * action reaches a backend — the add-gamer affordances, the payment badge that
@@ -62,7 +63,11 @@ export function ParentDashboardScene({
       // the fixtures' own enrolment dates, through the same window rule the
       // live roll-up runs.
       prepDismissed={NO_TOPIC_PREP_READY}
-      billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
+      billingCard={
+        fixture.accounts.length === 0 ? null : (
+          <FixtureBillingCard accounts={fixture.accounts} />
+        )
+      }
       helpForm={<InertHelpRequestCard audience="adult" />}
       onAddGamer={noop}
       onOpenPortal={noop}
