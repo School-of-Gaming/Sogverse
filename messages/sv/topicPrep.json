@@ -37,7 +37,7 @@
   "steps": {
     "minecraftJavaAccount": {
       "title": "Skaffa ett Microsoft-konto med Minecraft på",
-      "body": "Minecraft loggar in med ett Microsoft-konto. Om deltagaren inte har ett skapar en förälder det och köper ”Minecraft: Java & Bedrock Edition for PC” på det kontot. Det är <b>ett köp, inte en prenumeration</b>, och det täcker Java-versionen som de här tillfällena använder. Under installationen efterfrågas ett Java-profilnamn. Det namnet är användarnamnet vi behöver för att lägga till deltagaren i vår Minecraft-värld, så skriv upp det någonstans där det går att hitta igen.",
+      "body": "Minecraft loggar in med ett Microsoft-konto. Om deltagaren inte har ett skapar en förälder det och köper ”Minecraft: Java & Bedrock Edition for PC” på det kontot. Det är <b>ett köp, inte en prenumeration</b>, och det täcker Java-versionen som de här tillfällena använder.",
       "linkLabel": "Skaffa Minecraft för PC"
     },
     "minecraftJavaInstall": {
@@ -55,7 +55,7 @@
     },
     "minecraftBedrockAccount": {
       "title": "Skapa ett Microsoft-konto",
-      "body": "Minecraft Bedrock spelas online via ett Microsoft-konto. Kontots gamertag är så vi hittar deltagaren och lägger till hen i våra världar. Om deltagaren inte har ett konto ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Microsoft använder åldersuppgiften för att avgöra vilka onlinefunktioner som är påslagna. Skriv upp gamertaggen. Vi kommer att fråga efter den."
+      "body": "Minecraft Bedrock spelas online via ett Microsoft-konto. Om deltagaren inte har ett konto ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Microsoft använder åldersuppgiften för att avgöra vilka onlinefunktioner som är påslagna."
     },
     "minecraftBedrockInstall": {
       "title": "Köp och installera Minecraft på rätt enhet",
@@ -68,7 +68,7 @@
     },
     "fortniteAccount": {
       "title": "Skapa ett Epic Games-konto",
-      "body": "Fortnite är gratis att spela och loggar in med ett gratis Epic Games-konto. Om deltagaren inte har ett ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Epic använder åldersuppgiften för att avgöra vilka chatt- och sociala funktioner som är tillgängliga. Skriv upp visningsnamnet. Det är så vi hittar deltagaren."
+      "body": "Fortnite är gratis att spela och loggar in med ett gratis Epic Games-konto. Om deltagaren inte har ett ännu skapar en förälder det. Ange deltagarens rätta födelsedatum, eftersom Epic använder åldersuppgiften för att avgöra vilka chatt- och sociala funktioner som är tillgängliga."
     },
     "fortniteControls": {
       "title": "Ställ in föräldrakontrollerna",
@@ -85,7 +85,7 @@
     },
     "rocketLeagueAccount": {
       "title": "Skapa ett Epic Games-konto",
-      "body": "Rocket League är gratis att spela och loggar in med ett gratis Epic Games-konto, samma sort som Fortnite använder. Om deltagaren redan har ett fungerar det även här. Om det inte finns något ännu skapar en förälder det. Ange deltagarens rätta födelsedatum. Skriv upp visningsnamnet. Det är så vi hittar deltagaren."
+      "body": "Rocket League är gratis att spela och loggar in med ett gratis Epic Games-konto, samma sort som Fortnite använder. Om deltagaren redan har ett fungerar det även här. Om det inte finns något ännu skapar en förälder det. Ange deltagarens rätta födelsedatum."
     },
     "rocketLeagueInstall": {
       "title": "Installera Rocket League",
@@ -102,7 +102,7 @@
     },
     "pokemonGoAccount": {
       "title": "Skapa ett konto",
-      "body": "Att spela kräver ett konto, och spelet erbjuder sig att skapa ett första gången det öppnas. För en deltagare under 13 år skapar en förälder kontot och länkar det till sitt eget, vilket håller inställningarna i en förälders händer. Skriv upp tränarnamnet. Det är så vi hittar deltagaren."
+      "body": "Att spela kräver ett konto, och spelet erbjuder sig att skapa ett första gången det öppnas. För en deltagare under 13 år skapar en förälder kontot och länkar det till sitt eget, vilket håller inställningarna i en förälders händer."
     },
     "pokemonGoPhone": {
       "title": "Ladda telefonen och kolla inställningarna",

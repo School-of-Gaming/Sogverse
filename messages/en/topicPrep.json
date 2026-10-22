@@ -37,7 +37,7 @@
   "steps": {
     "minecraftJavaAccount": {
       "title": "Get a Microsoft account with Minecraft on it",
-      "body": "Minecraft logs in with a Microsoft account. If the participant does not have one, a parent creates it and buys “Minecraft: Java & Bedrock Edition for PC” on that account. That is <b>one purchase, not a subscription</b>, and it covers the Java version these sessions use. Setting it up asks for a Java profile name. That name is the username we need in order to add the participant to our Minecraft world, so write it down somewhere it can be found again.",
+      "body": "Minecraft logs in with a Microsoft account. If the participant does not have one, a parent creates it and buys “Minecraft: Java & Bedrock Edition for PC” on that account. That is <b>one purchase, not a subscription</b>, and it covers the Java version these sessions use.",
       "linkLabel": "Get Minecraft for PC"
     },
     "minecraftJavaInstall": {
@@ -55,7 +55,7 @@
     },
     "minecraftBedrockAccount": {
       "title": "Create a Microsoft account",
-      "body": "Minecraft Bedrock plays online through a Microsoft account. The gamertag on that account is how we find the participant and add them to our worlds. If the participant does not have an account yet, a parent creates one. Make sure to enter the participant’s correct date of birth, as Microsoft uses age information to determine which online features are switched on. Write the gamertag down. We will ask for it."
+      "body": "Minecraft Bedrock plays online through a Microsoft account. If the participant does not have an account yet, a parent creates one. Make sure to enter the participant’s correct date of birth, as Microsoft uses age information to determine which online features are switched on."
     },
     "minecraftBedrockInstall": {
       "title": "Buy and install Minecraft on the right device",
@@ -68,7 +68,7 @@
     },
     "fortniteAccount": {
       "title": "Create an Epic Games account",
-      "body": "Fortnite is free to play and logs in with a free Epic Games account. If the participant does not have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth, as Epic uses age information to determine which chat and social features are available. Write the display name down. That is how we find the participant."
+      "body": "Fortnite is free to play and logs in with a free Epic Games account. If the participant does not have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth, as Epic uses age information to determine which chat and social features are available."
     },
     "fortniteControls": {
       "title": "Set the parental controls",
@@ -85,7 +85,7 @@
     },
     "rocketLeagueAccount": {
       "title": "Create an Epic Games account",
-      "body": "Rocket League is free to play and logs in with a free Epic Games account, the same kind Fortnite uses. If the participant already has one, it works here too. If they don’t have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth. Write the display name down. That is how we find the participant."
+      "body": "Rocket League is free to play and logs in with a free Epic Games account, the same kind Fortnite uses. If the participant already has one, it works here too. If they don’t have one yet, a parent creates it. Make sure to enter the participant’s correct date of birth."
     },
     "rocketLeagueInstall": {
       "title": "Install Rocket League",
@@ -102,7 +102,7 @@
     },
     "pokemonGoAccount": {
       "title": "Create an account",
-      "body": "Playing needs an account, and the game offers to create one the first time it opens. For a participant under 13, a parent creates the account and links it to their own, which keeps the settings in a parent’s hands. Write the trainer name down. That is how we find the participant."
+      "body": "Playing needs an account, and the game offers to create one the first time it opens. For a participant under 13, a parent creates the account and links it to their own, which keeps the settings in a parent’s hands."
     },
     "pokemonGoPhone": {
       "title": "Charge the phone and check its settings",
