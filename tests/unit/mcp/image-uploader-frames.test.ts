@@ -18,7 +18,7 @@ import {
 const HERO_RULE = "A hero section's picture must be wide 16:9.";
 
 function frame(name: string, width: number, height: number, refusal: string | null = null): Frame {
-  return { purpose: name, name, width, height, uploadTool: `upload_${name}`, refusal };
+  return { purpose: name, name, width, height, refusal };
 }
 
 const WIDE = frame("wide 16:9", 1600, 900);

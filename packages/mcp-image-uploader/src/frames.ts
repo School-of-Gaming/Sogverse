@@ -16,7 +16,6 @@ export interface Frame {
   name: string;
   width: number;
   height: number;
-  uploadTool: string;
   /** Why this destination does not take this shape, or null when it does. */
   refusal: string | null;
 }

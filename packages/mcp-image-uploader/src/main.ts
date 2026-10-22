@@ -16,12 +16,13 @@ import "./style.css";
  * the size Sogverse's catalogue refuses anything else than — and a picture of
  * no offered shape, or of one this destination does not take, is refused:
  * nothing uploads, the view says why, and so is the model, which can explain
- * it to the admin. A fitting JPEG goes to its frame's app-only upload tool
- * and, when the opening names a placement, the entry it answers goes to that
- * tool — both through the host: the view holds no token and opens no
- * connection of its own — and the model is then told the new entry's id.
+ * it to the admin. A fitting JPEG goes, with its frame's purpose, to the one
+ * app-only upload tool and, when the opening names a placement, the entry it
+ * answers goes to that tool — both through the host: the view holds no token
+ * and opens no connection of its own — and the model is then told the new
+ * entry's id.
  *
- * Everything that differs by purpose (the frames, their sizes and tools, which
+ * Everything that differs by purpose (the frames, their sizes, which
  * this destination takes and why, the largest JPEG a call can carry, the
  * words) arrives in the opening tool's `uploader` field, so the server is the
  * one definition and this view restates none of it.
@@ -39,6 +40,9 @@ root.setProperty("--act-foreground", BRAND.act.foreground);
 root.setProperty("--destructive", statusHex("destructive"));
 root.setProperty("--font-sans", `${FACES.sans.name}, ${FACES.sans.fallback}`);
 
+/** The app-only tool every picture is stored through, given the frame's purpose. */
+const UPLOAD_TOOL = "upload_catalogue_picture";
+
 /** The opening tool's `uploader` field. */
 const openingSchema = z.object({
   uploader: z.object({
@@ -51,7 +55,6 @@ const openingSchema = z.object({
           name: z.string(),
           width: z.number().int().positive(),
           height: z.number().int().positive(),
-          uploadTool: z.string(),
           refusal: z.string().nullable(),
         }),
       )
@@ -235,14 +238,14 @@ function capitalised(text: string): string {
 uploadButton.addEventListener("click", async () => {
   if (committing || opening === null || picked === null) return;
   const { place } = opening;
-  const { uploadTool } = picked.frame;
   committing = true;
   refresh();
   say("Uploading…");
   try {
     const stored = await app.callServerTool({
-      name: uploadTool,
+      name: UPLOAD_TOOL,
       arguments: {
+        purpose: picked.frame.purpose,
         fileName: picked.fileName,
         label: labelInput.value.trim() || undefined,
         jpegBase64: picked.base64,

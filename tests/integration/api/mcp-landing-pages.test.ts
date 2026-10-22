@@ -1010,9 +1010,9 @@ describe("pictures", () => {
   /** The three frames, each refused with `refusals[shape]` (null: taken). */
   function frames(refusals: { wide: string | null; square: string | null; portrait: string | null }) {
     return [
-      { purpose: "landing_image", name: "wide 16:9", width: 1600, height: 900, uploadTool: "upload_landing_image", refusal: refusals.wide },
-      { purpose: "landing_square_image", name: "square 1:1", width: 1200, height: 1200, uploadTool: "upload_landing_square_image", refusal: refusals.square },
-      { purpose: "landing_portrait_image", name: "portrait 4:5", width: 1200, height: 1500, uploadTool: "upload_landing_portrait_image", refusal: refusals.portrait },
+      { purpose: "landing_image", name: "wide 16:9", width: 1600, height: 900, refusal: refusals.wide },
+      { purpose: "landing_square_image", name: "square 1:1", width: 1200, height: 1200, refusal: refusals.square },
+      { purpose: "landing_portrait_image", name: "portrait 4:5", width: 1200, height: 1500, refusal: refusals.portrait },
     ];
   }
 
@@ -1090,7 +1090,8 @@ describe("pictures", () => {
   it("stores an uploaded picture as a landing page entry", async () => {
     mockFindOrCreate.mockResolvedValue({ status: "added", image: entry(2) });
 
-    const result = await tool("upload_landing_image", {
+    const result = await tool("upload_catalogue_picture", {
+      purpose: "landing_image",
       fileName: "field.jpg",
       jpegBase64: (await jpeg(1600, 900)).toString("base64"),
     });
@@ -1105,12 +1106,13 @@ describe("pictures", () => {
   });
 
   it.each([
-    ["upload_landing_square_image", "landing_square_image", 1200, 1200],
-    ["upload_landing_portrait_image", "landing_portrait_image", 1200, 1500],
-  ] as const)("stores a picture through %s as its own shape's entry", async (name, purpose, width, height) => {
+    ["landing_square_image", 1200, 1200],
+    ["landing_portrait_image", 1200, 1500],
+  ] as const)("stores a %s picture as its own shape's entry", async (purpose, width, height) => {
     mockFindOrCreate.mockResolvedValue({ status: "added", image: entry(4, purpose) });
 
-    const stored = await tool(name, {
+    const stored = await tool("upload_catalogue_picture", {
+      purpose,
       fileName: "field.jpg",
       jpegBase64: (await jpeg(width, height)).toString("base64"),
     });
@@ -1119,7 +1121,8 @@ describe("pictures", () => {
 
     // The wide size is not this shape's, and the exact-size check is the last gate.
     mockFindOrCreate.mockClear();
-    const refused = await tool(name, {
+    const refused = await tool("upload_catalogue_picture", {
+      purpose,
       fileName: "wide.jpg",
       jpegBase64: (await jpeg(1600, 900)).toString("base64"),
     });
@@ -1129,7 +1132,8 @@ describe("pictures", () => {
   });
 
   it("refuses an upload that is not a landing picture's size", async () => {
-    const result = await tool("upload_landing_image", {
+    const result = await tool("upload_catalogue_picture", {
+      purpose: "landing_image",
       fileName: "a.jpg",
       jpegBase64: (await jpeg(800, 600)).toString("base64"),
     });
