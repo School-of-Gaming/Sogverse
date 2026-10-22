@@ -26,7 +26,6 @@ import {
   renderProductLocationLine,
 } from "@/lib/products/format-product-location";
 import {
-  SCHEDULE_PART_SEPARATOR,
   formatProductSchedule,
   renderScheduleLinesForDetail,
 } from "@/lib/products/format-product-schedule";
@@ -183,15 +182,17 @@ export function PurchaseConfirmationView({
         })
       : price;
 
-  const lastLine = isWaitlist
-    ? waitlistPosition !== null
-      ? t("waitlist.position", { position: waitlistPosition })
-      : null
-    : [startsLine, moneyLine]
-        .filter((part): part is string => part !== null)
-        // The schedule's own separator, so the renderer below keeps each
-        // part whole and the line wraps only between them.
-        .join(SCHEDULE_PART_SEPARATOR) || null;
+  // Each on a line of its own: the first-charge money line alone is wider
+  // than the card's text column on a 360px phone, so it has to wrap freely.
+  const closingLines = (
+    isWaitlist
+      ? [
+          waitlistPosition !== null
+            ? t("waitlist.position", { position: waitlistPosition })
+            : null,
+        ]
+      : [startsLine, moneyLine]
+  ).filter((line): line is string => line !== null);
 
   const subheading = isWaitlist
     ? isSelfSeat
@@ -248,11 +249,9 @@ export function PurchaseConfirmationView({
                   </p>
                 ))}
                 <p>{where}</p>
-                {lastLine !== null && (
-                  <p>
-                    <ScheduleLine line={lastLine} />
-                  </p>
-                )}
+                {closingLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
               </div>
             </div>
           </CardContent>
