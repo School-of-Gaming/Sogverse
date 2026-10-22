@@ -405,7 +405,7 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("Paid for by your municipality");
       expect(html).not.toContain("Free");
       expect(html).not.toContain("invoice");
-      expect(html).toContain("in a group with a Gedu");
+      expect(html).toContain("sessions under My SOG");
     });
 
     it("prints no price row at all on a waitlist join", () => {
@@ -483,10 +483,10 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).not.toContain("is enrolled in");
     });
 
-    it("moves the placement line into the second person too", () => {
+    it("moves the sessions line into the second person too", () => {
       const html = render({ participantName: "Marja", isSelfSeat: true });
-      expect(html).toContain("We’ll place you in a group");
-      expect(html).not.toContain("We’ll place Marja");
+      expect(html).toContain("You’ll find your sessions under My SOG.");
+      expect(html).not.toContain("’s sessions");
     });
 
     it("takes the second person on the waitlist as well", () => {
@@ -522,7 +522,7 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("Hi ");
       expect(html).toContain("You’re enrolled in");
       expect(html).not.toContain("is enrolled in");
-      expect(html).toContain("We’ll place you in a group");
+      expect(html).toContain("You’ll find your sessions under My SOG.");
     });
 
     it("states no price and no billing line on any mode", () => {
@@ -728,7 +728,7 @@ describe("the plain-text twin", () => {
       "Language: Finnish",
       "Price: €40.00 / month",
       "What happens next",
-      "- We’ll place Aino in a group",
+      "- You’ll find Aino’s sessions under My SOG.",
       DASHBOARD_URL,
       "Questions? Just reply to this email.",
     ];

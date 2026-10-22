@@ -248,22 +248,19 @@ export function buildParentDashboardFixture(
               waitlistPosition: 3,
             },
             {
-              // Bought yesterday, nobody placed yet. It sits on the same child
+              // Bought yesterday, not yet in a group. It sits on the same child
               // as the waitlist place on purpose: the two are the only inert
-              // cards on the page and the one thing that must be legible at a
-              // glance is that they are *not* the same news. One says the seat
-              // is yours and we are arranging it; the other says there is no
-              // seat. If the blue tone and the two footer sentences do not
-              // carry that difference here, they carry it nowhere.
+              // cards on the page, and they must not read as the same news.
+              // The waitlist card says there is no seat; this one is a plain
+              // seat that says nothing about placement at all.
               participationId: "mock-enrollment-roblox-studio-awaiting",
               productName: "Roblox Studio Club",
               productType: "consumer_club",
               isRemote: true,
               // The unplaced seat is exactly the prep window — the purchase has
-              // landed, nobody has been placed, and there is a week of evenings
-              // in which to install something. So the guide sits under the
-              // "matching you with a Gedu" sentence, on the one card that is
-              // otherwise inert.
+              // landed and there is a week of evenings in which to install
+              // something. With no Join to share a slot with, the guide is the
+              // footer's button, on a card that is otherwise inert.
               topic: "roblox_studio",
               slots: [futureSlot(now, 5, "16:00", 90, FIXTURE_TIMEZONE)],
               startedDaysAgo: 1,

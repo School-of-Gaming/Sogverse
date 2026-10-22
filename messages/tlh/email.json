@@ -105,8 +105,8 @@
     },
     "nextTitle": "qaStaHvIS",
     "next": {
-      "placement": "Gedu tlhej ghomDaq {participantName} wIlanpu’. jIH SOGDaq Qu’mey legh.",
-      "placementSelf": "Gedu tlhej ghomDaq qalanpu’. jIH SOGDaq Qu’mey Dalegh.",
+      "sessions": "jIH SOGDaq {participantName} Qu’mey Datu’.",
+      "sessionsSelf": "jIH SOGDaq Qu’meylIj Datu’.",
       "subscription": "Hoch jar DaDIlnIS. jIH SOGDaq Dajondaq ghap Damevmeh laH.",
       "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
       "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."

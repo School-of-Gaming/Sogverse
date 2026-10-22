@@ -268,17 +268,34 @@ describe("the prep guide on the cards with no Join", () => {
   });
 
   /**
-   * The unplaced seat draws no link and no chevron because there is no page
-   * behind it — and it still offers the guide, because a dialog is not a page
-   * and the wait for a placement is precisely the window the guide is written
-   * for. It also carries no window *end*: nobody has put them in a group, so
-   * there are no sessions of theirs to count.
+   * The unplaced seat draws no link, no chevron and no Join because there is no
+   * page or room behind it — and it still offers the guide, because a dialog is
+   * not a page and the days before the first session are precisely the window
+   * the guide is written for. It also carries no window *end*: there are no
+   * sessions of theirs to count yet. Placement is School of Gaming's job, so
+   * the card says nothing about it.
    */
-  it("sits under the awaiting sentence of an unplaced seat", () => {
+  it("is the footer's button on an unplaced seat, which says nothing about placement", () => {
     renderCard({ awaiting: true, prepWindowEnd: null });
 
-    expect(screen.getByText("familyEnrollment.awaitingGamer")).toBeTruthy();
     expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(lockedJoin()).toBeNull();
+    expect(screen.queryByText(/^familyEnrollment\./)).toBeNull();
+  });
+
+  /** The site is the product's, so a seat not yet in a group names it too. */
+  it("names the site of an unplaced in-person seat", () => {
+    renderCard({
+      awaiting: true,
+      prepWindowEnd: null,
+      isRemote: false,
+      hasVoiceRoom: false,
+      siteName: "Kirjasto Oodi, Helsinki",
+    });
+
+    expect(screen.getByText("Kirjasto Oodi, Helsinki")).toBeTruthy();
+    expect(screen.getByText(TRIGGER)).toBeTruthy();
+    expect(screen.queryByText(/^familyEnrollment\./)).toBeNull();
   });
 
   /**
@@ -425,7 +442,7 @@ describe("the window the offer lives in", () => {
 
     // And the same answer on the placement that has no Join to give back.
     renderCard({ awaiting: true, prepWindowEnd: reopened }, dismissed);
-    expect(screen.getByText("familyEnrollment.awaitingGamer")).toBeTruthy();
+    expect(screen.getByText("Roblox Studio Club")).toBeTruthy();
     expect(screen.queryByText(TRIGGER)).toBeNull();
   });
 
@@ -435,7 +452,7 @@ describe("the window the offer lives in", () => {
    * space back, so a button vanishing on time's own schedule would shrink the
    * card and pull the column up under whoever was reading it.
    */
-  it("leaves the button under the awaiting sentence alone when the window closes mid-read", () => {
+  it("leaves the button on an unplaced seat alone when the window closes mid-read", () => {
     const spec = { awaiting: true, prepWindowEnd: WINDOW_ENDS_SOON };
     const { rerender } = renderCard(spec);
     expect(screen.getByText(TRIGGER)).toBeTruthy();

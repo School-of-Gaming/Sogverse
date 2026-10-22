@@ -155,31 +155,24 @@ export interface FamilyEnrollmentSummary {
   seatOfferSentAt: string | null;
   /**
    * The seat is bought and paid for and nobody has been put in a group yet
-   * (`group_id IS NULL`) — the state between a purchase landing and an admin
-   * placing the child with a Gedu, which can take a day.
+   * (`group_id IS NULL`) — the time between a purchase landing and an admin
+   * placing the seat in a group, which happens before the first session.
    *
-   * A first-class state rather than a variation on running, because *nothing*
-   * behind this enrollment exists yet: no group means no voice room, no feed
-   * and no page, so the card carries no Join, no link and no chevron — the
-   * same inertness a waitlist place has, arrived at for the same reason. It is
-   * distinct from a waitlist place in the one way that matters to the family:
-   * the seat is theirs, and the schedule on the card is one they will actually
-   * be attending.
+   * **The family is never told about it.** Placement is School of Gaming's job,
+   * not something a family waits on, so the card draws an unplaced seat as a
+   * plain seat — its schedule, its site, its prep guide — and says nothing
+   * about groups or matching. What the flag changes is only what cannot exist
+   * yet: no group means no voice room, no feed and no page, so the card has no
+   * Join, no link, no chevron and no Live badge.
    *
    * Never true at the same time as `waitlistPosition !== null`: a waitlisted
    * row has no seat to be unplaced in.
    *
-   * **It *can* be true on a product that has already ended, and that
-   * combination is accepted rather than overlooked.** It means an admin never
-   * placed the child before the run finished. The card then sorts into the
-   * finished band, stays inert and wears the awaiting tone, so the footer's
-   * "matching with a Gedu" reads as a promise about a product that is over —
-   * which is untidy, and was weighed and left alone: the state is an
-   * administrative slip rather than something the product does, it is rare, and
-   * every alternative costs a new card state and five locales' worth of copy to
-   * describe a situation whose real fix is placing the child. The inertness in
-   * particular is *not* a bug to correct — there is genuinely no page behind an
-   * unplaced seat, ended or not, and the feed RPC would refuse it.
+   * It *can* be true on a product that has already ended — an admin never
+   * placed the seat before the run finished. The card then sorts into the
+   * finished band like any ended seat and stays inert, because there is
+   * genuinely no page behind an unplaced seat, ended or not, and the feed RPC
+   * would refuse it.
    */
   awaiting: boolean;
   /** The subscription behind this enrollment is `past_due`. */
