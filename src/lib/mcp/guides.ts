@@ -272,6 +272,7 @@ export function registerGuideTools(server: McpServer): void {
           if (guide === null) return refusal(NOT_FOUND);
         }
         const name = guide?.label ?? input.label ?? "";
+        // exact-locale: the upload replaces the file of the language it names, and no other
         const replaces = guide?.files.find((file) => file.locale === input.locale) ?? null;
         const placed = (guide?.usages.length ?? 0) > 0;
         // Where the admin uploads it instead: this guide's page, or the new guide form.

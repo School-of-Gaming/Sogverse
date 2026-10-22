@@ -1922,11 +1922,6 @@
     "subtitle": "Les PDF que les pages d’atterrissage distribuent, un fichier par langue. Un lecteur connecté télécharge le fichier dans sa propre langue.",
     "newGuide": "Nouveau guide",
     "backToList": "Retour aux guides",
-    "meta": {
-      "list": "Guides",
-      "new": "Nouveau guide",
-      "edit": "Guide"
-    },
     "newPage": {
       "title": "Nouveau guide",
       "submit": "Créer le guide"

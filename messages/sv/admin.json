@@ -1922,11 +1922,6 @@
     "subtitle": "PDF-filer som landningssidorna delar ut, en fil per språk. En inloggad läsare laddar ner filen på sitt eget språk.",
     "newGuide": "Ny guide",
     "backToList": "Tillbaka till guiderna",
-    "meta": {
-      "list": "Guider",
-      "new": "Ny guide",
-      "edit": "Guide"
-    },
     "newPage": {
       "title": "Ny guide",
       "submit": "Skapa guide"

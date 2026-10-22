@@ -1922,11 +1922,6 @@
     "subtitle": "PDFs landing pages hand out, one file per language. A signed-in reader downloads the file in their own language.",
     "newGuide": "New guide",
     "backToList": "Back to guides",
-    "meta": {
-      "list": "Guides",
-      "new": "New guide",
-      "edit": "Guide"
-    },
     "newPage": {
       "title": "New guide",
       "submit": "Create guide"

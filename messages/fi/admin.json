@@ -1922,11 +1922,6 @@
     "subtitle": "PDF-tiedostot, joita laskeutumissivut jakavat, yksi tiedosto kieltä kohden. Kirjautunut lukija lataa tiedoston omalla kielellään.",
     "newGuide": "Uusi opas",
     "backToList": "Takaisin oppaisiin",
-    "meta": {
-      "list": "Oppaat",
-      "new": "Uusi opas",
-      "edit": "Opas"
-    },
     "newPage": {
       "title": "Uusi opas",
       "submit": "Luo opas"

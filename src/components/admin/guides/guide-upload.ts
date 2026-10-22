@@ -1,16 +1,17 @@
-import { z } from "zod";
 import { parseJsonResponse } from "@/lib/api/json-response";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
+  GUIDE_UPLOAD_DATABASE_REFUSAL,
   GUIDE_UPLOAD_MAX_BYTES,
-  GUIDE_UPLOAD_REFUSALS,
-  guideLocale,
+  guideUploadErrorBody,
+  guideUploadResponse,
   type GuideUploadRefusalCode,
+  type GuideUploadResponse,
 } from "@/services/guides/guides.contracts";
 
 /**
- * The admin tab's upload, both ends of the wire: what the route answers, and
- * the browser's call to it.
+ * The admin tab's upload, the browser's end of the wire; the route's answer
+ * and refusal shapes are in the guides contracts.
  *
  * A file's bytes go to a private bucket on the service-role client, so an
  * upload is a route rather than a service method on the admin's session; the
@@ -28,31 +29,6 @@ export const ADMIN_GUIDES_UPLOAD_PATH = "/api/admin/guides";
 export function adminGuideFilePath(guideId: string, locale: SupportedLocale): string {
   return `/api/admin/guides/${encodeURIComponent(guideId)}/file?locale=${locale}`;
 }
-
-/** What the route answers once the file is stored. */
-export const guideUploadResponse = z.object({
-  guideId: z.string().uuid(),
-  /** Whether this upload created the guide. */
-  created: z.boolean(),
-  locale: guideLocale,
-  fileName: z.string(),
-  byteSize: z.number().int(),
-  /** Whether it replaced a file the language already had. */
-  replaced: z.boolean(),
-});
-
-export type GuideUploadResponse = z.infer<typeof guideUploadResponse>;
-
-/**
- * The code a refused upload carries: one of the store's refusals, or
- * `refused` for a database refusal whose sentence is quoted in `error`.
- */
-export const GUIDE_UPLOAD_DATABASE_REFUSAL = "refused";
-
-export const guideUploadErrorBody = z.object({
-  error: z.string(),
-  code: z.enum([...GUIDE_UPLOAD_REFUSALS, GUIDE_UPLOAD_DATABASE_REFUSAL]).optional(),
-});
 
 /** Why an upload did not store, as the page tells the admin. */
 export type GuideUploadFailure =

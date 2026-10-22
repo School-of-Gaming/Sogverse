@@ -87,7 +87,10 @@
     "adminHolidayCalendarEdit": "DuQ jaj Hovtay' choH",
     "adminTestimonials": "jatlhmey",
     "adminTestimonialNew": "jatlh chu’",
-    "adminTestimonialEdit": "jatlh choH"
+    "adminTestimonialEdit": "jatlh choH",
+    "adminGuides": "ghojmoHwI’ paqmey",
+    "adminGuideNew": "ghojmoHwI’ paq chu’",
+    "adminGuideEdit": "ghojmoHwI’ paq"
   },
   "descriptions": {
     "signIn": "School of Gaming account-lIj yI’el. toy’wI’pu’lIj, ghom’a’meychaj, raghmeychaj je Dache’laH.",

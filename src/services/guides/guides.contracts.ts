@@ -189,3 +189,32 @@ export interface GuideUploadRefusal {
   code: GuideUploadRefusalCode;
   error: string;
 }
+
+/**
+ * What the admin upload route (`POST /api/admin/guides`) answers once the file
+ * is stored.
+ */
+export const guideUploadResponse = z.object({
+  guideId: z.string().uuid(),
+  /** Whether this upload created the guide. */
+  created: z.boolean(),
+  locale: guideLocale,
+  fileName: z.string(),
+  byteSize: z.number().int(),
+  /** Whether it replaced a file the language already had. */
+  replaced: z.boolean(),
+});
+
+export type GuideUploadResponse = z.infer<typeof guideUploadResponse>;
+
+/**
+ * The code a refused upload carries: one of the store's refusals, or
+ * `refused` for a database refusal whose sentence is quoted in `error`.
+ */
+export const GUIDE_UPLOAD_DATABASE_REFUSAL = "refused";
+
+/** The body the admin upload route refuses with. */
+export const guideUploadErrorBody = z.object({
+  error: z.string(),
+  code: z.enum([...GUIDE_UPLOAD_REFUSALS, GUIDE_UPLOAD_DATABASE_REFUSAL]).optional(),
+});

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 import { createAdminTestClient, createAnonTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
 import { landingSections, type LandingSection } from "@/lib/landing-pages/sections";
@@ -162,7 +162,7 @@ describe("landing page guides", () => {
 
   describe("the structure", () => {
     it("takes a guide's id and an optional picture, in SQL as in TypeScript", async () => {
-      const cases: [string, Record<string, unknown>, boolean][] = [
+      const cases: [string, { [key: string]: Json }, boolean][] = [
         ["a guide", { id: GUIDE, type: "guide", guideId: MISSING }, true],
         ["a guide with a picture", { id: GUIDE, type: "guide", guideId: MISSING, imageId: MISSING }, true],
         ["no guide", { id: GUIDE, type: "guide" }, false],

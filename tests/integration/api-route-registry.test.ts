@@ -178,6 +178,8 @@ interface RouteEntry {
 const API_DIR = join("src", "app", "api");
 
 const TESTS = {
+  adminGuidesFile: "tests/integration/api/admin-guides-file.test.ts",
+  adminGuidesUpload: "tests/integration/api/admin-guides-upload.test.ts",
   adminLocations: "tests/integration/api/admin-locations.test.ts",
   adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
   billingPortal: "tests/integration/api/billing-portal.test.ts",
@@ -443,6 +445,33 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "inline: one `file`, its required `purpose` (parsed by the catalogueImagePurpose enum) and an optional `label`, read by readImageUpload — the file's size is measured against the purpose by refuseUnlessPurposeSize, and the label is capped rather than refused (catalogueImageLabel governs the rename route, where the label is the request)",
         },
         test: TESTS.catalogueImagesUpload,
+      },
+    },
+  },
+
+  "src/app/api/admin/guides/route.ts": {
+    adminClient:
+      "privileged-bucket storage only, in the private guides bucket: the new object's upload, and the delete of the object a replace lets go of or a refused write leaves behind, all inside storeGuideFile; the guide's rows are written by the admin-guarded create_guide and save_guide_file on the user client",
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: {
+          kind: "multipart",
+          schema:
+            "inline: one `file`, checked as a PDF by its first bytes and against GUIDE_UPLOAD_MAX_BYTES by storeGuideFile; its `locale`, parsed by the guideLocale enum; and exactly one of `guideId` (a uuid, the guide the file goes to) or `label` (a new guide's, parsed by the guideLabel schema inside storeGuideFile)",
+        },
+        test: TESTS.adminGuidesUpload,
+      },
+    },
+  },
+
+  "src/app/api/admin/guides/[id]/file/route.ts": {
+    handlers: {
+      GET: {
+        posture: ADMIN_ONLY,
+        // The language is a query parameter, parsed by the guideLocale enum.
+        body: { kind: "none" },
+        test: TESTS.adminGuidesFile,
       },
     },
   },
@@ -1198,7 +1227,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["admin"],
           primitive: "withMcpAdmin",
           reason:
-            "an AI app working for an admin holds no Sogverse cookie session; it presents an OAuth access token the project's own Auth server issued to it after the admin approved it on the consent page. The gate verifies the token's signature and expiry, that the project's Auth server issued it, and that it carries a client_id — which refuses a first-party session token lifted out of a browser and presented as a bearer — and then reads the caller's role on a client bound to the token, so the read runs under the admin's own row policies and a role change takes effect on the next request rather than when the grant expires. Every tool acts on a client bound to that token; the one service-role client is the picture uploader's write to its purpose's bucket, pinned with its reason in NON_ROUTE_ADMIN_CLIENT_SITES",
+            "an AI app working for an admin holds no Sogverse cookie session; it presents an OAuth access token the project's own Auth server issued to it after the admin approved it on the consent page. The gate verifies the token's signature and expiry, that the project's Auth server issued it, and that it carries a client_id — which refuses a first-party session token lifted out of a browser and presented as a bearer — and then reads the caller's role on a client bound to the token, so the read runs under the admin's own row policies and a role change takes effect on the next request rather than when the grant expires. Every tool acts on a client bound to that token; the one service-role client is the uploader's write to a bucket only the service role writes — a picture's purpose's bucket, or the guides bucket — pinned with its reason in NON_ROUTE_ADMIN_CLIENT_SITES",
         },
         body: { kind: "none" },
         test: TESTS.mcp,
@@ -1669,7 +1698,7 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
   "src/app/[locale]/select-profile/page.tsx":
     "the profile chooser prefetch, through the same family resolver as the family-list route",
   "src/lib/mcp/image-uploader.ts":
-    "the MCP picture uploader stores the admin's JPEG in its purpose's bucket, which only the service role writes — the same split as the catalogue's upload route, through the same shared find-or-create: the bytes on the service-role client, the catalogue row on the admin's own token-bound client. It is reachable only behind the MCP endpoint's admin gate, and only after the upload passed the catalogue's own size, type and exact-dimension checks",
+    "the MCP picture uploader stores the admin's JPEG in its purpose's bucket, which only the service role writes — the same split as the catalogue's upload route, through the same shared find-or-create: the bytes on the service-role client, the catalogue row on the admin's own token-bound client. It is reachable only behind the MCP endpoint's admin gate, and only after the upload passed the catalogue's own size, type and exact-dimension checks. Its app-only `upload_guide` tool stores a guide's PDF the same way, in the private guides bucket the service role alone writes, through storeGuideFile — the one store the admin upload route shares: the object on the service-role client, the guide's rows through the admin-guarded functions on the token-bound client, after the PDF and size checks",
   "src/services/partner/partner-shared-db.server.ts":
     "the partner API's one construction site: Lynx Educate's tooling authenticates with an issued key and holds no Sogverse session for a row policy to evaluate, so every partner read runs as the service role, scoped to the Programme by the partner read modules and shaped by the published contract. Its accessor is confined to the partner routes and services by check 3",
 };

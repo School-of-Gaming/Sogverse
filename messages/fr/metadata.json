@@ -94,7 +94,10 @@
     "adminHolidayCalendarEdit": "Modifier le calendrier de vacances",
     "adminTestimonials": "Témoignages",
     "adminTestimonialNew": "Nouveau témoignage",
-    "adminTestimonialEdit": "Modifier le témoignage"
+    "adminTestimonialEdit": "Modifier le témoignage",
+    "adminGuides": "Guides",
+    "adminGuideNew": "Nouveau guide",
+    "adminGuideEdit": "Guide"
   },
   "descriptions": {
     "signIn": "Connectez-vous à votre compte School of Gaming pour suivre les séances à venir de vos joueurs, gérer les inscriptions et tenir vos informations à jour.",

@@ -94,7 +94,10 @@
     "adminHolidayCalendarEdit": "Edit Holiday Calendar",
     "adminTestimonials": "Testimonials",
     "adminTestimonialNew": "New testimonial",
-    "adminTestimonialEdit": "Edit testimonial"
+    "adminTestimonialEdit": "Edit testimonial",
+    "adminGuides": "Guides",
+    "adminGuideNew": "New guide",
+    "adminGuideEdit": "Guide"
   },
   "descriptions": {
     "signIn": "Sign in to your School of Gaming account to see your gamers’ upcoming sessions, manage enrolments and keep your family’s details up to date.",

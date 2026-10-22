@@ -94,7 +94,10 @@
     "adminHolidayCalendarEdit": "Redigera lovkalender",
     "adminTestimonials": "Omdömen",
     "adminTestimonialNew": "Nytt omdöme",
-    "adminTestimonialEdit": "Redigera omdöme"
+    "adminTestimonialEdit": "Redigera omdöme",
+    "adminGuides": "Guider",
+    "adminGuideNew": "Ny guide",
+    "adminGuideEdit": "Guide"
   },
   "descriptions": {
     "signIn": "Logga in på ditt School of Gaming-konto för att se dina spelares kommande tillfällen, hantera anmälningar och hålla familjens uppgifter aktuella.",

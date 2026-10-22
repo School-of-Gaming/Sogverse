@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  GUIDE_UPLOAD_DATABASE_REFUSAL,
-  type GuideUploadResponse,
-} from "@/components/admin/guides/guide-upload";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  GUIDE_UPLOAD_DATABASE_REFUSAL,
   GUIDE_UPLOAD_MAX_BYTES,
+  type GuideUploadResponse,
   guideLocale,
   guideWriteFailure,
   type GuideUploadRefusalCode,
