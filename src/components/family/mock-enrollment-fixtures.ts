@@ -9,9 +9,9 @@ import {
 } from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import { nextRunning } from "@/lib/planned-sessions";
 import type { ProductTopic, ProductType } from "@/types";
 import {
+  nextSessionFor,
   topicPrepWindowEnd,
   type FamilyEnrollmentSummary,
 } from "./enrollment-rollup";
@@ -167,6 +167,7 @@ export function buildEnrollmentFixture(
           startDate,
           endDate,
           cancelledUpcoming: spec.cancelledUpcomingSessions ?? 0,
+          awaiting: spec.awaiting ?? false,
         });
 
   const scheduleLines = scheduleCardLines(
@@ -266,8 +267,9 @@ export function buildEnrollmentFixture(
  * The soonest session still worth showing that is not cancelled, and the
  * cancelled ones ahead of it — the rule the roll-up behind the live dashboards
  * reads its plan with, including an in-progress session, which is precisely
- * when the Join button matters. The first `cancelledUpcoming` sessions that
- * have not closed are the cancelled ones.
+ * when the Join button matters, and an unplaced seat skipping every session
+ * whose window has opened. The first `cancelledUpcoming` sessions that have not
+ * closed are the cancelled ones.
  */
 function nextOccurrence({
   now,
@@ -275,12 +277,14 @@ function nextOccurrence({
   startDate,
   endDate,
   cancelledUpcoming,
+  awaiting,
 }: {
   now: Date;
   slots: FixtureSlot[];
   startDate: string;
   endDate: string | null;
   cancelledUpcoming: number;
+  awaiting: boolean;
 }): {
   next: { start: Date; end: Date } | null;
   cancelledAhead: { start: Date; end: Date }[];
@@ -299,10 +303,10 @@ function nextOccurrence({
     .filter((session) => session.endsAt.getTime() + closeMarginMs > now.getTime())
     .slice(0, cancelledUpcoming)
     .map((session) => session.date);
-  const { next, cancelledAhead } = nextRunning(
+  const { next, cancelledAhead } = nextSessionFor(
     planOf(cancelledDates),
     now,
-    closeMarginMs,
+    awaiting,
   );
   const occurrence = (session: { startsAt: Date; endsAt: Date }) => ({
     start: session.startsAt,

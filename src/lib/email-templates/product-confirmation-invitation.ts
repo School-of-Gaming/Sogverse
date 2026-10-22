@@ -455,11 +455,9 @@ function locationOf(
  * its schedule section: nothing renders an email's recurrence for a reader, so
  * there the words are the only statement there is.
  *
- * **The placement sentence is out for the neighbouring reason**: it is news
- * about what happens next, and news goes stale where the mail it arrived in
- * does not. A parent opening this entry in week six does not need to be told a
- * group is coming; the mail's own "what happens next" bullet said it once, at
- * the moment it was true.
+ * **The sentence saying where the sessions are is out for the neighbouring
+ * reason**: it is the mail's "what happens next" bullet, and the entry already
+ * carries the My SOG link that sentence points at.
  *
  * What is absent for a third reason is money and the age range: an entry in a
  * calendar is read by whoever the calendar is shared with, and neither is

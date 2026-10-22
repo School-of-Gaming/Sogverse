@@ -3,9 +3,6 @@
   "wontRenew": "qaSqa’be’ — Qu’ Qav {date}",
   "wontRenewLastSession": "qaSqa’be’ — Qu’ Qav ’oH {date}’e’",
   "wontRenewAccessEnds": "qaSqa’be’ — poH Qav {date}",
-  "awaitingCustomer": "DamuvmoHpu’! Qu’ wa’DIch qaSpa’, Gedu ghom je wISamlI’.",
-  "awaitingGamer": "bImuvpu’! Qu’ wa’DIch qaSpa’, Gedu ghom je DISamlI’.",
-  "awaitingSelf": "bImuvpu’, la’! Qu’ wa’DIch qaSpa’, Gedu ghom je DISamlI’. yIloS.",
   "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
   "emptyStateCta": "ghom’a’mey raghmey je tIbej"
 }

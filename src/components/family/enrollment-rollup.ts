@@ -8,7 +8,7 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
-import { nextRunning } from "@/lib/planned-sessions";
+import { nextRunning, type PlannedSession } from "@/lib/planned-sessions";
 import type { FamilyMember } from "@/services/family/family.service";
 import type {
   MyUpcomingSessionRow,
@@ -155,31 +155,24 @@ export interface FamilyEnrollmentSummary {
   seatOfferSentAt: string | null;
   /**
    * The seat is bought and paid for and nobody has been put in a group yet
-   * (`group_id IS NULL`) — the state between a purchase landing and an admin
-   * placing the child with a Gedu, which can take a day.
+   * (`group_id IS NULL`) — the time between a purchase landing and an admin
+   * placing the seat in a group, which happens before the first session.
    *
-   * A first-class state rather than a variation on running, because *nothing*
-   * behind this enrollment exists yet: no group means no voice room, no feed
-   * and no page, so the card carries no Join, no link and no chevron — the
-   * same inertness a waitlist place has, arrived at for the same reason. It is
-   * distinct from a waitlist place in the one way that matters to the family:
-   * the seat is theirs, and the schedule on the card is one they will actually
-   * be attending.
+   * **The family is never told about it.** Placement is School of Gaming's job,
+   * not something a family waits on, so the card draws an unplaced seat as a
+   * plain seat — its schedule, its site, its prep guide — and says nothing
+   * about groups or matching. What the flag changes is only what cannot exist
+   * yet: no group means no voice room, no feed and no page, so the card has no
+   * Join, no link, no chevron and no Live badge.
    *
    * Never true at the same time as `waitlistPosition !== null`: a waitlisted
    * row has no seat to be unplaced in.
    *
-   * **It *can* be true on a product that has already ended, and that
-   * combination is accepted rather than overlooked.** It means an admin never
-   * placed the child before the run finished. The card then sorts into the
-   * finished band, stays inert and wears the awaiting tone, so the footer's
-   * "matching with a Gedu" reads as a promise about a product that is over —
-   * which is untidy, and was weighed and left alone: the state is an
-   * administrative slip rather than something the product does, it is rare, and
-   * every alternative costs a new card state and five locales' worth of copy to
-   * describe a situation whose real fix is placing the child. The inertness in
-   * particular is *not* a bug to correct — there is genuinely no page behind an
-   * unplaced seat, ended or not, and the feed RPC would refuse it.
+   * It *can* be true on a product that has already ended — an admin never
+   * placed the seat before the run finished. The card then sorts into the
+   * finished band like any ended seat and stays inert, because there is
+   * genuinely no page behind an unplaced seat, ended or not, and the feed RPC
+   * would refuse it.
    */
   awaiting: boolean;
   /** The subscription behind this enrollment is `past_due`. */
@@ -753,6 +746,36 @@ function cancellationFor(
 }
 
 /**
+ * The session a seat's card names next, and the cancelled ones before it.
+ *
+ * A session stays the next one until it closes, the voice window after its end
+ * — the same margin the Join keeps the room open for. A cancelled session is
+ * never the next one: the card names, joins and lights up for the first
+ * session that runs, and names the cancelled ones before it on a line of their
+ * own.
+ *
+ * **An unplaced seat skips every session whose window has opened.** It cannot
+ * open a room, so its locked Join must always name a session still to come —
+ * on the exact boundary the Join opens on, so the time it names is never one
+ * whose window is already open. If placement is late, the time rolls on to the
+ * next session.
+ */
+export function nextSessionFor<T extends PlannedSession>(
+  plan: readonly T[],
+  now: Date,
+  awaiting: boolean,
+): { next: T | null; cancelledAhead: T[] } {
+  const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  const opensBeforeMs = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES * 60_000;
+  const candidates = awaiting
+    ? plan.filter(
+        (session) => session.startsAt.getTime() - opensBeforeMs > now.getTime(),
+      )
+    : plan;
+  return nextRunning(candidates, now, closeMarginMs);
+}
+
+/**
  * An `status='active'` row — a seat the family holds, placed or not.
  *
  * **Everything the card shows stops at the paid window.** When a parent has
@@ -772,8 +795,6 @@ function sessionSummary(
   const hasVoiceRoom = product.isRemote;
   const subEnd = row.subscriptionEndsAt;
 
-  // A session stays the next one until it closes, the voice window after its
-  // end — the same margin the Join keeps the room open for.
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
   const covered =
     subEnd === null
@@ -781,10 +802,7 @@ function sessionSummary(
       : row.plan.filter(
           (session) => session.startsAt.getTime() <= subEnd.getTime(),
         );
-  // A cancelled session is never the next one: the card names, joins and
-  // lights up for the first session that runs, and names the cancelled ones
-  // before it on a line of their own.
-  const { next, cancelledAhead } = nextRunning(covered, now, closeMarginMs);
+  const { next, cancelledAhead } = nextSessionFor(covered, now, awaiting);
   // What the paid window still covers, for the winding-down line: the family
   // does not attend a cancelled session, so it cannot be their last one.
   const running = covered.filter(
