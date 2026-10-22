@@ -13,8 +13,9 @@ import {
  *
  * **No shared field but the background every section takes.** The list a
  * reader joins is the deployment's configuration, the same for every page, so
- * nothing about it is the page's to choose. A later field naming what the reader receives once signed up (a
- * download, say) would be structure and would join here.
+ * nothing about it is the page's to choose. A later field naming what the
+ * reader receives once signed up (a download, say) would be structure and
+ * would join here.
  *
  * **The page writes the ask; the form's own words are ours.** The heading, the
  * intro and the button say why a reader would want to sign up from this page,

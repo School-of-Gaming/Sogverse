@@ -107,6 +107,8 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "testimonials", testimonialIds: [ID2] },
     { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: ["nope"] },
     { id: ID, type: "testimonials", arrangement: "feature", testimonials: [ID2] },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: [ID2], background: "card" },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: [ID2], background: "tinted" },
   ],
   products: [
     { id: ID, type: "products", productIds: [ID2] },
@@ -118,6 +120,8 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "products", productIds: ["not a product"] },
     { id: ID, type: "products", productIds: [{ id: ID2 }] },
     { id: ID, type: "products", productIds: [ID2], items: [] },
+    { id: ID, type: "products", productIds: [ID2], background: "card" },
+    { id: ID, type: "products", productIds: [ID2], background: null },
   ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
@@ -133,6 +137,8 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ` ${ID.toUpperCase()} `, type: "subscribe" },
     { id: ID, type: "subscribe", listId: 3 },
     { id: ID, type: "subscribe", button: internal },
+    { id: ID, type: "subscribe", background: "card" },
+    { id: ID, type: "subscribe", background: "tinted" },
   ],
   cta: [
     { id: ID, type: "cta", button: internal },
