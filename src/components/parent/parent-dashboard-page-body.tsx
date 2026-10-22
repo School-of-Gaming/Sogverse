@@ -238,7 +238,7 @@ export function ParentDashboardPageBody({
    * means no billing section at all — heading, pill entry and card — which is
    * what a parent with no billing account yet meets.
    */
-  billingCard: React.ReactNode;
+  billingCard: React.ReactElement | null;
   /**
    * The help form. A node for the same reason the billing card is one: it is a
    * self-contained panel with a backend action behind it, and nothing about this

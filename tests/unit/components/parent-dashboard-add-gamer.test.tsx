@@ -63,7 +63,7 @@ const ADD_GAMER = messages.family.addGamer;
 
 function dashboardHtml(
   gamers: readonly ParentDashboardParticipant[],
-  billingCard: React.ReactNode = <div />,
+  billingCard: React.ReactElement | null = <div />,
 ): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>

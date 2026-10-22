@@ -81,7 +81,7 @@ export function ParentDashboardShell({
    * The Stripe portal card, rendered by the server component above, or `null`
    * for no billing section — the parent has no billing account yet.
    */
-  billingCard: React.ReactNode;
+  billingCard: React.ReactElement | null;
 }) {
   const t = useTranslations("parent");
   const locale = useLocale();
