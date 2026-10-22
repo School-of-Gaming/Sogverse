@@ -111,15 +111,15 @@ export interface UploaderPlacement {
  * catalogue entries no AI app uploads — so it is this one list, the landing
  * shapes read from their own map.
  */
-export const UPLOADER_PURPOSES = [
+const UPLOADER_PURPOSES = [
   "library_cover",
   ...Object.values(LANDING_PICTURE_PURPOSES),
 ] as const;
 
-export type UploaderPurpose = (typeof UPLOADER_PURPOSES)[number];
+type UploaderPurpose = (typeof UPLOADER_PURPOSES)[number];
 
 /** The app-only tool the view stores every picture through; the view names it too. */
-export const UPLOAD_TOOL = "upload_catalogue_picture";
+const UPLOAD_TOOL = "upload_catalogue_picture";
 
 /** One shape the uploader knows for an area: a catalogue purpose, and whether this opening takes it. */
 export interface UploaderFrameSpec {

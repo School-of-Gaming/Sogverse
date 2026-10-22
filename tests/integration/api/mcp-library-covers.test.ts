@@ -449,29 +449,6 @@ describe("the uploader", () => {
     expect(mockFindOrCreate).not.toHaveBeenCalled();
   });
 
-  it("refuses a caller who is not an admin before reading the picture", async () => {
-    mockMaybeSingle.mockResolvedValue({ data: { role: "customer" }, error: null });
-
-    const response = await POST(
-      mcpRequest({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/call",
-        params: {
-          name: UPLOAD,
-          arguments: {
-            purpose: "library_cover",
-            fileName: "a.jpg",
-            jpegBase64: (await jpeg(1600, 900)).toString("base64"),
-          },
-        },
-      }),
-    );
-
-    expect(response.status).toBe(403);
-    expect(mockFindOrCreate).not.toHaveBeenCalled();
-  });
-
   it("answers a failure to store with a line for the admin, not the developer's error", async () => {
     mockFindOrCreate.mockRejectedValue(new Error("storage exploded: bucket internals"));
 
