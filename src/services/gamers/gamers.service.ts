@@ -214,8 +214,6 @@ export class GamerService {
         birthYear: input.birth.year,
         birthMonth: input.birth.month,
         gender: input.gender,
-        minecraftUsername: input.minecraftUsername,
-        robloxUsername: input.robloxUsername,
         // Named one at a time rather than spread, so a field the route does not
         // take cannot arrive by accident. The credential trio is only ever the
         // one its mode calls for; the route re-checks that pairing anyway.
