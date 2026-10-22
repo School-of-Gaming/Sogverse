@@ -14,38 +14,26 @@
       "camp": "{product} QujmeH ghItlhlu’pu’ SoH.",
       "event": "{product}Daq bIjeSpu’."
     },
-    "fallbackName": "SoH",
-    "nextPlacement": "Gedu tlhej ghomDaq qalanpu’. jIH SOGDaq Qu’mey Dalegh.",
+    "nextSessions": "jIH SOGDaq Qu’meylIj Dalegh.",
     "waitlist": {
-      "subheading": "bIloS tetlhDaq: {product}. quS poSDI’, SoH wIja’.",
-      "next2": {
-        "consumer_club": "DIS naQ tetlhDaq Daq DaqaD.",
-        "municipality_club": "DIS naQ tetlhDaq Daq DaqaD.",
-        "camp": "ragh naQ tetlhDaq Daq DaqaD.",
-        "event": "wanI’ tetlhDaq Daq DaqaD."
-      }
+      "subheading": "bIloS tetlhDaq: {product}."
     }
   },
-  "summaryTitle": "ralHa’ghachlIj",
-  "forLabel": {
-    "consumer_club": "ghItlhlu’pu’",
-    "municipality_club": "ghItlhlu’pu’",
-    "camp": "ghItlhlu’pu’",
-    "event": "jeSwI’"
-  },
-  "priceLabel": "wagh",
   "price": {
     "subscription": "{amount} / jar",
     "upfront": "{amount} (wa’logh DIl)",
     "free": "wagh Hutlh",
     "external": "veng Huch nob"
   },
-  "nextTitle": "qaStaHvIS",
+  "card": {
+    "starts": "{date} taghlu’"
+  },
+  "email": {
+    "sentTo": "QIn naQ <strong>{email}</strong>-Daq wIngeHpu’.",
+    "sent": "QIn naQ ngeHlu’pu’."
+  },
   "next": {
-    "placement": "Gedu tlhej ghomDaq {gamer} wIlanpu’. jIH SOGDaq Qu’mey legh.",
-    "subscription": "Hoch jar DaDIlnIS. jIH SOGDaq Dajondaq ghap Damevmeh laH.",
-    "oneTime": "wa’logh neH DIl — latlh DIl Hutlh.",
-    "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."
+    "sessions": "jIH SOGDaq {gamer} Qu’mey Dalegh."
   },
   "goToDashboard": "jIH SOG yIghoS",
   "keepBrowsing": "yIqIm taH",
@@ -57,7 +45,7 @@
   "finalizing": {
     "heading": "DIlmeH mIw rIn",
     "subheading": "ghItlh wIrInmoHtaH — puS poH neH ‘oH.",
-    "reassurance": "naDev yIloS. jIH SOGDaq je ghItlhlIj Daleghbej."
+    "reassurance": "naDev yIloS. QIn je wIngeH."
   },
   "timedOut": {
     "heading": "poH tIn law’ pIH poH tIn puS",
@@ -72,18 +60,8 @@
   "supportLine": "QaH DaneH’a’? <link>{email}</link>-Daq maH yIQIH.",
   "waitlist": {
     "heading": "loS tetlhDaq SoH",
-    "subheading": "{gamer} loS tetlhDaq: {product}. quS poSDI’, SoH wIja’.",
-    "summaryTitle": "loS DaqlIj",
-    "forLabel": "loStaH",
-    "positionLabel": "DaqlIj",
-    "positionValue": "{position}DIch",
-    "next1": "quS poSDI’, QInHom wIngeH.",
-    "next2": {
-      "consumer_club": "DIS naQ tetlhDaq {gamer} Daq qaD.",
-      "municipality_club": "DIS naQ tetlhDaq {gamer} Daq qaD.",
-      "camp": "ragh naQ tetlhDaq {gamer} Daq qaD.",
-      "event": "wanI’ tetlhDaq {gamer} Daq qaD."
-    },
-    "next3": "reH jIH SOGDaq loS DaqlIj DaleghlaH."
+    "subheading": "{gamer} loS tetlhDaq: {product}.",
+    "position": "tetlhDaq Daq: {position}DIch",
+    "next": "quS poSDI’, QInHom wIngeH."
   }
 }

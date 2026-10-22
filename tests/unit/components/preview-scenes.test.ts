@@ -1729,16 +1729,15 @@ describe("the family club page's billing states", () => {
 });
 
 /**
- * The topic axis: a `?topic=` override the two topic-decided surfaces honour,
- * rather than a scenario per topic on each of them.
+ * The topic axis: a `?topic=` override the topic-decided surface honours,
+ * rather than a scenario per topic.
  *
  * Two things are worth pinning. The parser is one — it decides what a URL may
  * put on a `product_topic` column shape, and its whole job is that an unknown
  * value reads as absent rather than as a topic. The other is that the override
- * reaches the row: both cards the axis exists for (the product page's About
- * card, the confirmation page's prep guide) read `product.topic`, so a broken
- * plumbing would show up as the axis silently doing nothing on a page that
- * still renders fine.
+ * reaches the row: the card the axis exists for (the product page's About
+ * card) reads `product.topic`, so a broken plumbing would show up as the axis
+ * silently doing nothing on a page that still renders fine.
  */
 describe("the preview topic axis", () => {
   it("accepts every topic the enum has", () => {
@@ -1768,15 +1767,14 @@ describe("the preview topic axis", () => {
     }
   });
 
-  it("declares the axis on the two surfaces whose cards a topic decides", () => {
+  it("declares the axis on the one surface whose card a topic decides", () => {
     // Through the widened list, for the reason its own comment gives: the
     // registry is `as const`, so a scene that omits the optional flag has no
     // such property on its literal type to ask about.
     const axisSurfaces = PREVIEW_SCENE_LIST.filter(
       (scene) => scene.topicAxis === true,
     ).map((scene) => scene.surface);
-    expect(axisSurfaces).toContain("products");
-    expect(axisSurfaces).toContain("confirmation");
+    expect(axisSurfaces).toEqual(["products"]);
     for (const scene of PREVIEW_SCENE_LIST) {
       if (scene.topicAxis !== true) continue;
       // The link row points at the scene's first scenario, so a scene carrying
@@ -1785,14 +1783,10 @@ describe("the preview topic axis", () => {
     }
   });
 
-  it("puts the overridden topic on the row both surfaces read", () => {
+  it("puts the overridden topic on the row the product page reads", () => {
     for (const topic of PRODUCT_TOPIC_VALUES) {
       expect(
         buildScenarioFixture("consumer-club", { topic }).product.topic,
-        topic,
-      ).toBe(topic);
-      expect(
-        buildConfirmationFixture("consumer-club", { topic }).product.topic,
         topic,
       ).toBe(topic);
     }
