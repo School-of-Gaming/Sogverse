@@ -167,7 +167,7 @@ export function buildEnrollmentFixture(
           startDate,
           endDate,
           cancelledUpcoming: spec.cancelledUpcomingSessions ?? 0,
-          awaiting: spec.awaiting ?? false,
+          lockedJoin: (spec.awaiting ?? false) && spec.isRemote,
         });
 
   const scheduleLines = scheduleCardLines(
@@ -277,14 +277,14 @@ function nextOccurrence({
   startDate,
   endDate,
   cancelledUpcoming,
-  awaiting,
+  lockedJoin,
 }: {
   now: Date;
   slots: FixtureSlot[];
   startDate: string;
   endDate: string | null;
   cancelledUpcoming: number;
-  awaiting: boolean;
+  lockedJoin: boolean;
 }): {
   next: { start: Date; end: Date } | null;
   cancelledAhead: { start: Date; end: Date }[];
@@ -306,7 +306,7 @@ function nextOccurrence({
   const { next, cancelledAhead } = nextSessionFor(
     planOf(cancelledDates),
     now,
-    awaiting,
+    lockedJoin,
   );
   const occurrence = (session: { startsAt: Date; endsAt: Date }) => ({
     start: session.startsAt,

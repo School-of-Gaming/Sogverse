@@ -97,12 +97,9 @@ export interface SignupParticipantChoice {
    * is shown disabled and labels which side it fell out of, exactly as an
    * already-enrolled row does.
    *
-   * **The bound rides on the row rather than on the panel**, which is what
-   * keeps this one optional field the whole of the change: the label names a
-   * number ("Under 8"), and the alternative was threading the product's
-   * `min_age`/`max_age` down through the view, `FormOrAuth` and the form to be
-   * re-derived beside every row anyway. A row that knows why it is blocked can
-   * say so without the panel around it knowing anything.
+   * Which side a child fell out of is a fact about that child, so it is
+   * decided where the age is; the band the label names is the product's, and
+   * rides on the block beside it.
    *
    * **Already-enrolled outranks it** where a row carries both: holding a seat
    * is the more specific fact about that child on this product, and it is also
@@ -114,8 +111,8 @@ export interface SignupParticipantChoice {
 }
 
 /**
- * Why a row is outside the product's age band, and the bound it fell outside
- * of. `kind` picks the label, `bound` fills its number.
+ * Why a row is outside the product's age band, and that band. `kind` picks the
+ * label, `min` and `max` fill the band it names.
  *
  * The decision itself is made in `src/lib/gamer-age-eligibility.ts` — the panel
  * renders it and owns nothing of the arithmetic, which is what lets a preview
@@ -123,8 +120,13 @@ export interface SignupParticipantChoice {
  */
 export interface SignupAgeBlock {
   kind: "under" | "over";
-  /** The product's `min_age` for `under`, its `max_age` for `over`. */
-  bound: number;
+  /**
+   * The product's `min_age` and `max_age`. Both are always there: only a
+   * product with a gamer audience refuses a child for age, and the schema
+   * requires such a product to declare both ends.
+   */
+  min: number;
+  max: number;
 }
 
 export type AuthState =
@@ -574,7 +576,9 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 // in the order the sections stand on the page: add a gamer → set your location
 // → give the required consent → wait for the window. The label points at the
 // nearest unfinished thing above the button, so following it is a walk down the
-// panel rather than a hunt.
+// panel rather than a hunt. Where there is no step to take — nobody on the
+// panel can be signed up — it says why instead, and never names a step the
+// reader cannot finish.
 //
 // **Everything a parent has to agree to lives in ONE section, and it is the last
 // one before the button.** Consent is a single heading holding one tickable row
@@ -942,6 +946,29 @@ function SignupForm(
   // stops the CTA. The wrong-country half never reaches this component — it
   // replaced the form upstream — and `unlocked` renders nothing at all.
   const needsLocation = props.regionGate?.gate.kind === "no_location";
+  // Whether anybody on the panel can be picked at all: a row holding no seat
+  // and inside the band — the same test the hook's preselection applies. A
+  // fact about who is on the panel, so it is read off the rows rather than
+  // off the selection.
+  const anyoneSelectable = props.participants.some(
+    (p) => (p.signupState ?? null) === null && (p.ageBlock ?? null) === null,
+  );
+  // The band the CTA names when it is the whole reason nobody can be picked:
+  // at least one row, every row a child outside the band, and nobody holding a
+  // seat — a family already on the product is told so by its rows, and
+  // "You're all set" stays the truth for them. The reader's own selectable
+  // row is not a refused child, so a both-audiences panel never gets here.
+  // Every block carries the product's band, so any one of them names it.
+  // Null in every other case.
+  const refusedBlocks = props.participants.flatMap((p) =>
+    p.isSelf !== true && (p.signupState ?? null) === null && p.ageBlock
+      ? [p.ageBlock]
+      : [],
+  );
+  const refusedBand =
+    refusedBlocks.length === props.participants.length
+      ? (refusedBlocks.at(0) ?? null)
+      : null;
   // The product's documents, grouped the way the parent will meet them: one row
   // per bundle, plus a row for anything belonging to no bundle. Derived here
   // rather than taken as a prop so the gate below and the rows on screen cannot
@@ -962,20 +989,29 @@ function SignupForm(
 
   // The CTA doubles as the instruction for the parent's next step: while it's
   // disabled it names exactly what's still missing, in the order they can act
-  // on it (add a gamer → set your location → agree to the rules → agree to the
-  // documents → wait for the window), which is the order the sections stand in
-  // on the page. The same
-  // checklist runs whether or not registration is open, so a parent can finish
-  // every step during the pre-open countdown and land on "Ready & waiting",
-  // primed to one-tap the instant it opens. Only the final leaf differs by
-  // window: the live action label once open (`active`), the holding state until
-  // then. selectedParticipantId is null only when nobody is selectable, which
-  // has four causes: there is still room to add a child (canAddGamer → prompt
-  // to add a gamer), every child is already on the product at the gamer cap,
-  // every child the account has is outside the product's age band, or — on a
-  // parents-only product — the reader already holds the one seat there is. The
-  // last three all land on ctaAllSet; the picker rows show each person's exact
-  // reason — seat, waitlist or bound — in place.
+  // on it (pick or add a gamer → set your location → give the required consent
+  // → wait for the window), which is the order the sections stand in on the
+  // page. The same checklist runs whether or not registration is open, so a
+  // parent can finish every step during the pre-open countdown and land on
+  // "Ready & waiting", primed to one-tap the instant it opens. Only the final
+  // leaf differs by window: the live action label once open (`active`), the
+  // holding state until then.
+  //
+  // selectedParticipantId is null only when nobody is selectable, and that
+  // leaf outranks every later one — with nobody to sign up the consents are
+  // disabled, so the button must never send the reader to them. Its causes, in
+  // the order they are checked:
+  //
+  // - every child is outside the product's age band, with nobody holding a
+  //   seat → the button names the band, because that is the whole answer, and
+  //   "Add a gamer" would send the parent to add the same child again;
+  // - there is still room to add a child (canAddGamer) → prompt to add one,
+  //   the empty roster included;
+  // - otherwise everyone is already on the product — every child at the gamer
+  //   cap, or on a parents-only product the reader's own one seat — and a mix
+  //   of seats and refused ages at the cap lands here too → ctaAllSet. The
+  //   picker rows show each person's exact reason — seat, waitlist or band —
+  //   in place.
   //
   // The location step is an instruction and nothing more — the button stays
   // disabled and the section above it carries the action, per the grammar note
@@ -983,9 +1019,15 @@ function SignupForm(
   const ctaLabel = props.submitting
     ? t("ctaSubmitting")
     : props.selectedParticipantId === null
-      ? canAddGamer
-        ? t("ctaAddGamer")
-        : t("ctaAllSet")
+      ? refusedBand !== null
+        ? t("ctaOutOfBand", {
+            min: refusedBand.min,
+            max: refusedBand.max,
+            count: props.participants.length,
+          })
+        : canAddGamer
+          ? t("ctaAddGamer")
+          : t("ctaAllSet")
       : needsLocation
         ? t("regionLock.setLocation")
         : // One leaf for the whole consent section, whatever is unticked inside
@@ -1077,7 +1119,10 @@ function SignupForm(
                     <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
                       <Identicon id={g.id} />
                     </span>
-                    <span className="min-w-0">
+                    {/* Left-aligned against the button's centred default: a
+                        long name that wraps at 360px would otherwise centre
+                        its second line under the first. */}
+                    <span className="min-w-0 text-left">
                       <span
                         className={cn(
                           "font-medium",
@@ -1114,10 +1159,24 @@ function SignupForm(
                         : t("gamerAlreadyWaitlisted")}
                     </span>
                   ) : ageBlock !== null ? (
-                    <span className="shrink-0 text-xs font-semibold text-muted-foreground">
-                      {ageBlock.kind === "under"
-                        ? t("gamerUnderAge", { min: ageBlock.bound })
-                        : t("gamerOverAge", { max: ageBlock.bound })}
+                    // Two lines, the refusal over the band it is measured
+                    // against, rather than one line joining them. One line was
+                    // wider than the room beside a long name at 360px in every
+                    // locale but English, and the name is what must keep its
+                    // line. Two lines of this size are exactly the identicon's
+                    // height, so the stack costs the row nothing.
+                    <span className="flex shrink-0 flex-col items-end text-xs text-muted-foreground">
+                      <span className="font-semibold">
+                        {ageBlock.kind === "under"
+                          ? t("gamerTooYoung")
+                          : t("gamerTooOld")}
+                      </span>
+                      <span>
+                        {t("gamerBand", {
+                          min: ageBlock.min,
+                          max: ageBlock.max,
+                        })}
+                      </span>
                     </span>
                   ) : (
                     selected && (
@@ -1206,7 +1265,15 @@ function SignupForm(
         />
       )}
 
+      {/* With nobody to sign up, every box the panel asks is shown but cannot
+          be answered — the photo rows' rule, applied to the whole consent
+          area. A tickable box under a button that can never go live promises
+          a step the reader can take, and parents took it. The marketing row
+          goes with them: it is the parent's own standing answer rather than a
+          child's, but it is recorded by the button's click, so a tick here
+          could never be sent. */}
       <RequiredConsentSection
+        disabled={!anyoneSelectable}
         productType={props.productType}
         selfSeat={selectedIsSelf}
         rows={consentRows}
@@ -1255,6 +1322,7 @@ function SignupForm(
       />
 
       <OptionalMarketingSection
+        disabled={!anyoneSelectable}
         rows={describeMarketingConsents(props.marketingConsentTypes)}
         granted={props.marketingConsents}
         onGrantedChange={props.onMarketingConsentChange}
@@ -1366,6 +1434,7 @@ function SignupForm(
  * enrolment through without a consent the product legally requires.
  */
 function RequiredConsentSection({
+  disabled,
   productType,
   selfSeat,
   rows,
@@ -1374,6 +1443,12 @@ function RequiredConsentSection({
   rulesAgreed,
   onRulesAgreedChange,
 }: {
+  /**
+   * True while nobody on the panel can be signed up. The rows stay — same
+   * rows, same height, same words — and only stop taking answers, for the
+   * reason the photo section gives in its own note.
+   */
+  disabled: boolean;
   productType: ProductType;
   /**
    * True when the selected participant is the reader themselves. Chosen from
@@ -1429,6 +1504,7 @@ function RequiredConsentSection({
         row.kind === "bundle" ? (
           <BundleConsentRow
             key={row.key}
+            disabled={disabled}
             bundle={row.bundle}
             agreed={agreements.has(row.key)}
             onAgreedChange={(next) => onAgreementChange(row.key, next)}
@@ -1436,6 +1512,7 @@ function RequiredConsentSection({
         ) : (
           <ConsentRow
             key={row.key}
+            disabled={disabled}
             agreed={agreements.has(row.key)}
             onAgreedChange={(next) => onAgreementChange(row.key, next)}
             // The raw slug as the row's title, which is the same position a
@@ -1452,6 +1529,7 @@ function RequiredConsentSection({
           final thing a parent agrees to before the button is the one thing
           School of Gaming asks of them. */}
       <ConsentRow
+        disabled={disabled}
         agreed={rulesAgreed}
         onAgreedChange={onRulesAgreedChange}
         // One title across all five variants. The municipality ones add a
@@ -1589,10 +1667,13 @@ function OptionalGamerPhotoSection({
  * the product read and cannot appear under a reader mid-form.
  */
 function OptionalMarketingSection({
+  disabled,
   rows,
   granted,
   onGrantedChange,
 }: {
+  /** True while nobody on the panel can be signed up — see the call site. */
+  disabled: boolean;
   rows: readonly MarketingConsentAskRow[];
   granted: ReadonlySet<MarketingConsentType>;
   onGrantedChange: (consentType: MarketingConsentType, next: boolean) => void;
@@ -1610,6 +1691,7 @@ function OptionalMarketingSection({
         <CheckboxRow
           key={type}
           size="xs"
+          disabled={disabled}
           checked={granted.has(type)}
           onCheckedChange={(next) => onGrantedChange(type, next)}
           title={t(`${ask.sentenceKey}Title`)}
@@ -1649,10 +1731,12 @@ function OptionalMarketingSection({
  * because an empty href resolves to the page the reader is already on.
  */
 function BundleConsentRow({
+  disabled,
   bundle,
   agreed,
   onAgreedChange,
 }: {
+  disabled: boolean;
   bundle: ConsentDocumentBundle;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
@@ -1674,6 +1758,7 @@ function BundleConsentRow({
   }
   return (
     <ConsentRow
+      disabled={disabled}
       agreed={agreed}
       onAgreedChange={onAgreedChange}
       // What the bundle IS, on the tick's own line, with the sentence that
@@ -1738,11 +1823,13 @@ function ConsentSentenceLink({
  * the section's note above).
  */
 function ConsentRow({
+  disabled,
   agreed,
   onAgreedChange,
   title,
   sentence,
 }: {
+  disabled: boolean;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   /**
@@ -1760,6 +1847,7 @@ function ConsentRow({
   return (
     <CheckboxRow
       size="xs"
+      disabled={disabled}
       checked={agreed}
       onCheckedChange={onAgreedChange}
       title={title}

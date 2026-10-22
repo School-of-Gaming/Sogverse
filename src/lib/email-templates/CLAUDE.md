@@ -201,8 +201,8 @@ the entry-notes bug above.
 
 **Rule: `/shop/confirmation` and `product-confirmation.ts` have different jobs, and
 neither is held to the other's contents.** The page is the few seconds after checkout and
-fits on one phone screen: that it worked, the key facts of what was bought (name,
-schedule, where, the start, one money line), that a confirmation email is on its
+fits on one phone screen: that it worked, the key facts of what was bought (picture,
+name, schedule, where, the start, one money line), that a confirmation email is on its
 way and to which address, and the one next step. The mail is the record a parent keeps
 and comes back to: who holds the seat, the full schedule and term, who it is for, its
 language, holiday breaks, the price and billing detail, what happens next, the "Before

@@ -230,6 +230,7 @@ export function PurchaseConfirmationView({
               src={pictureSrc}
               className="w-28 rounded-md sm:w-[40%] sm:max-w-48 sm:shrink-0"
               sizes="(min-width: 640px) 192px, 112px"
+              eager
             />
             <div className="contents sm:block sm:min-w-0 sm:flex-1">
               <p className="font-semibold">{productName}</p>

@@ -89,8 +89,8 @@ export function ProductBrowseCardView({
           against; the card's own `overflow-hidden` is what rounds the top two
           corners of whatever is painted here. */}
       <div className="relative">
-        {/* The shared 3:2 crop — the same component the detail hero paints,
-            so one stored file is cropped one way
+        {/* The shared 3:2 crop — the same component the detail hero and the
+            confirmation summary paint, so one stored file is cropped one way
             everywhere a family meets it. A product with no picture gets the
             wordmark at the same ratio, so the grid does not develop short
             cards; the picture is decorative here (the card's accessible name

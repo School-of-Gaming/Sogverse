@@ -88,6 +88,7 @@
     "ctaSubmitting": "Ett ögonblick…",
     "ctaAddGamer": "Lägg till en gamer först",
     "ctaAllSet": "Du är klar",
+    "ctaOutOfBand": "{count, plural, one {Din gamer är inte {min}–{max} år} other {Dina gamers är inte {min}–{max} år}}",
     "ctaAgreeConsent": "Ge det obligatoriska samtycket",
     "ctaWaitlist": "Gå med på väntelistan",
     "ctaSignIn": "Logga in",
@@ -99,8 +100,9 @@
       "event": "Redan med"
     },
     "gamerAlreadyWaitlisted": "På väntelistan",
-    "gamerUnderAge": "Under {min} år",
-    "gamerOverAge": "Över {max} år",
+    "gamerTooYoung": "För ung",
+    "gamerTooOld": "För gammal",
+    "gamerBand": "Ålder {min}–{max}",
     "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
     "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
     "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
@@ -138,7 +140,7 @@
     },
     "seatIsFor": "Vem platsen är för",
     "selected": "Vald",
-    "agePill": "Ålder {age}",
+    "agePill": "Ålder\u00a0{age}",
     "parentPill": "Förälder",
     "regionLock": {
       "heading": "Din plats",

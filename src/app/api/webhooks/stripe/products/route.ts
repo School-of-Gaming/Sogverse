@@ -266,8 +266,7 @@ async function handleCheckoutCompleted(
   // just below to write the row, so the period end is already in hand. It is a
   // *deferred* first charge only where nothing moved today — a club bought
   // before it starts completes Checkout at €0 — and only while the instant is
-  // still ahead of us; those two tests are the same pair the confirmation page
-  // makes against the ledger, asked here of the values that produced it.
+  // still ahead of us.
   let firstChargeAt: string | null = null;
   if (isSubscription && typeof session.subscription === "string") {
     const subId = session.subscription;

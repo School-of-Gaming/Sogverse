@@ -73,30 +73,23 @@ import type { ProductTopic, ProductType } from "@/types";
  * seat and therefore no first session — and on both copies, because the guide
  * is one text written to read the same to a parent and to a gamer.
  *
- * **The four places the mail deliberately differs from the page**, each because
- * the medium differs rather than because the copy drifted:
+ * **What the mail does because it is a mail:**
  *
- *   - It closes by inviting a reply, which is an affordance rather than a fact:
- *     a mail can be answered and a page cannot. The line is true because this
- *     send's Reply-To is the support inbox, so it goes wherever that does; it
- *     names the address beside it for a reader whose reply would not.
- *   - It carries an `invite.ics`, and says nothing about it. The page has
- *     nothing to attach; the mail has nothing to announce, because a client
- *     that can act on the file renders the invitation itself and a sentence
- *     underneath would be narrating the attachment list to somebody already
- *     looking at it.
+ *   - It closes by inviting a reply: a mail can be answered and a page cannot.
+ *     The line is true because this send's Reply-To is the support inbox, so
+ *     it goes wherever that does; it names the address beside it for a reader
+ *     whose reply would not.
+ *   - It carries an `invite.ics`, and says nothing about it: a client that can
+ *     act on the file renders the invitation itself, and a sentence underneath
+ *     would be narrating the attachment list to somebody already looking at it.
  *   - It states the schedule in the *product's* own zone and always appends
  *     that zone's short abbrev to the time-bearing line, because a mail has no
- *     viewer zone: the page reads one from the signed-in profile, renders the
- *     clock faces in it, and appends the same abbrev only where the two zones
- *     differ. Same lines, same formatter, one option.
- *   - It drops the waitlist position, and it prints no product picture. A queue
- *     number frozen into an inbox goes stale the moment somebody ahead drops
- *     out and a parent cannot tell a stale one from a live one; the picture is
- *     not built yet, and this directory's `CLAUDE.md` says what it will take.
- *
- * The language fact is the small one: the page shows a flag chip and a code,
- * which a mail has no component for, so the mail names the language instead.
+ *     viewer zone — parents store none, so the reader could not otherwise tell
+ *     which zone the times are in. Same formatter as every other surface, one
+ *     option.
+ *   - It states no waitlist position: a queue number frozen into an inbox goes
+ *     stale the moment somebody ahead drops out, and a parent cannot tell a
+ *     stale one from a live one.
  *
  * **The child's own copy is the same mail with the parent's half taken out.**
  * When a child holds a mailbox of their own they receive their own render
