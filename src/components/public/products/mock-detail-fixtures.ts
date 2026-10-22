@@ -222,9 +222,10 @@ const DEMO_GAMERS_OUT_OF_BAND = [
   {
     id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
     // A long double-barrelled name on purpose, and on the row whose status is
-    // the widest in the widest locale (Finnish "Yli 12-vuotias"): this is the
-    // row that decides whether the name and the reason still share a line at
-    // the 360px floor, and a scene should show the worst case, not the median.
+    // the widest in the widest locale (Swedish "För gammal" over "Ålder
+    // 8–12"): this is the row that decides whether the name and the reason
+    // still share a line at the 360px floor, and a scene should show the worst
+    // case, not the median.
     name: "Sofia-Aleksandra",
     age: 14,
     ageBlock: { kind: "over", bound: 12 },
@@ -353,9 +354,10 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
   },
   "consumer-club-age-band-refused": {
     // Every child on the account is outside the club's band, and nobody holds
-    // a seat — so the form gives way to the refusal message. Its own scenario
-    // because it cannot share a render with the picker: the default roster has
-    // in-band children, and the message exists only where it has none.
+    // a seat — so the CTA names the band and the consents stand disabled. Its
+    // own scenario because it cannot share a render with the picker: the
+    // default roster has in-band children, and that state exists only where it
+    // has none.
     label: "€45/mo — every child outside the age band",
     productType: "consumer_club",
     billingMode: "paid",
@@ -1354,7 +1356,7 @@ function buildAuthState(
         ? DEMO_GAMERS_OUT_OF_BAND.length
         : DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length,
     // The band `buildBaseProduct` gives every product with a gamer audience,
-    // named in full by the message that replaces the form when every child is
+    // named in full beside each refused row and by the CTA when every child is
     // outside it.
     ...(audience === "parents" ? {} : { ageRange: { min: 8, max: 12 } }),
   };

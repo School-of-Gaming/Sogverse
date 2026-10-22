@@ -591,8 +591,9 @@ function describeAgeBlock(
 }
 
 /**
- * The product's band as the panel names it when every child is outside it, or
- * null on a product declaring neither end — which refuses nobody for age.
+ * The product's band as the panel names it beside a refused row and in the CTA
+ * when every child is outside it, or null on a product declaring neither end —
+ * which refuses nobody for age.
  */
 function describeAgeRange(product: {
   min_age: number | null;

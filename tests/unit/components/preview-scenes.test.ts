@@ -487,8 +487,8 @@ describe("the audience scenarios cover all three cases", () => {
   });
 
   it("keeps one roster the band refuses whole, for the age refusal", () => {
-    // The message replacing the form is reachable from this scenario alone:
-    // every row a child outside the band, none holding a seat.
+    // The CTA naming the band is reachable from this scenario alone: every row
+    // a child outside the band, none holding a seat.
     const { participants, ageRange } = pickerRows(
       "consumer-club-age-band-refused",
     );

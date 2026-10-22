@@ -88,6 +88,11 @@
     "ctaSubmitting": "Ett ögonblick…",
     "ctaAddGamer": "Lägg till en gamer först",
     "ctaAllSet": "Du är klar",
+    "ctaOutOfBand": {
+      "between": "{count, plural, one {Din gamer är inte {min}–{max} år} other {Dina gamers är inte {min}–{max} år}}",
+      "from": "{count, plural, one {Din gamer är under {min} år} other {Dina gamers är under {min} år}}",
+      "upTo": "{count, plural, one {Din gamer är över {max} år} other {Dina gamers är över {max} år}}"
+    },
     "ctaAgreeConsent": "Ge det obligatoriska samtycket",
     "ctaWaitlist": "Gå med på väntelistan",
     "ctaSignIn": "Logga in",
@@ -99,8 +104,13 @@
       "event": "Redan med"
     },
     "gamerAlreadyWaitlisted": "På väntelistan",
-    "gamerUnderAge": "Under {min} år",
-    "gamerOverAge": "Över {max} år",
+    "gamerTooYoung": "För ung",
+    "gamerTooOld": "För gammal",
+    "gamerBand": {
+      "between": "Ålder {min}–{max}",
+      "from": "Ålder {min}+",
+      "upTo": "Högst {max} år"
+    },
     "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
     "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
     "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
@@ -151,28 +161,6 @@
       "dialogDescription": "Vi använder det för att se vilka klubbar, läger och evenemang som erbjuds där du bor. Du kan ändra det senare i dina inställningar.",
       "dialogField": "Din plats",
       "dialogSave": "Spara plats"
-    },
-    "ageRefusal": {
-      "heading": {
-        "consumer_club": "Den här klubben är för {range}",
-        "municipality_club": "Den här klubben är för {range}",
-        "camp": "Det här lägret är för {range}",
-        "event": "Det här evenemanget är för {range}"
-      },
-      "range": {
-        "between": "{min}–{max}-åringar",
-        "from": "{min}-åringar och äldre",
-        "upTo": "{max}-åringar och yngre"
-      },
-      "children": "{count, plural, one {{names} hör inte till den åldersgruppen.} other {{names} hör inte till den åldersgruppen.}}",
-      "nameWithAge": "{name}\u00a0({age}\u00a0år)",
-      "findProduct": {
-        "consumer_club": "{count, plural, other {Hitta en klubb för rätt ålder}}",
-        "municipality_club": "{count, plural, other {Hitta en klubb för rätt ålder}}",
-        "camp": "{count, plural, other {Hitta ett läger för rätt ålder}}",
-        "event": "{count, plural, other {Hitta ett evenemang för rätt ålder}}"
-      },
-      "addGamer": "Lägg till ännu en gamer"
     }
   },
   "pricing": {

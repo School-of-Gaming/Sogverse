@@ -88,6 +88,11 @@
     "ctaSubmitting": "One moment…",
     "ctaAddGamer": "Add a gamer to continue",
     "ctaAllSet": "You’re all set",
+    "ctaOutOfBand": {
+      "between": "{count, plural, one {Your gamer isn’t {min}–{max}} other {None of your gamers are {min}–{max}}}",
+      "from": "{count, plural, one {Your gamer is under {min}} other {Your gamers are all under {min}}}",
+      "upTo": "{count, plural, one {Your gamer is over {max}} other {Your gamers are all over {max}}}"
+    },
     "ctaAgreeConsent": "Give the required consent",
     "ctaWaitlist": "Join the waitlist",
     "ctaSignIn": "Sign in",
@@ -99,8 +104,13 @@
       "event": "Already joined"
     },
     "gamerAlreadyWaitlisted": "On waitlist",
-    "gamerUnderAge": "Under {min}",
-    "gamerOverAge": "Over {max}",
+    "gamerTooYoung": "Too young",
+    "gamerTooOld": "Too old",
+    "gamerBand": {
+      "between": "Ages {min}–{max}",
+      "from": "Ages {min}+",
+      "upTo": "Up to age {max}"
+    },
     "nonCustomerNote": "Only parents can register a gamer here.",
     "nonCustomerNoteParents": "Only parents can sign up here.",
     "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
@@ -151,28 +161,6 @@
       "dialogDescription": "We use this to work out which clubs, camps and events are offered where you live. You can change it later in your settings.",
       "dialogField": "Your location",
       "dialogSave": "Save location"
-    },
-    "ageRefusal": {
-      "heading": {
-        "consumer_club": "This club is for ages {range}",
-        "municipality_club": "This club is for ages {range}",
-        "camp": "This camp is for ages {range}",
-        "event": "This event is for ages {range}"
-      },
-      "range": {
-        "between": "{min}–{max}",
-        "from": "{min} and over",
-        "upTo": "{max} and under"
-      },
-      "children": "{count, plural, one {{names} isn’t in that age range.} other {{names} aren’t in that age range.}}",
-      "nameWithAge": "{name}\u00a0({age})",
-      "findProduct": {
-        "consumer_club": "{count, plural, other {Find a club for their age}}",
-        "municipality_club": "{count, plural, other {Find a club for their age}}",
-        "camp": "{count, plural, other {Find a camp for their age}}",
-        "event": "{count, plural, other {Find an event for their age}}"
-      },
-      "addGamer": "Add another gamer"
     }
   },
   "pricing": {

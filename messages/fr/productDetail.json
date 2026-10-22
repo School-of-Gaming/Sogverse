@@ -88,6 +88,11 @@
     "ctaSubmitting": "Un instant…",
     "ctaAddGamer": "Ajoutez un joueur pour continuer",
     "ctaAllSet": "Tout est prêt",
+    "ctaOutOfBand": {
+      "between": "{count, plural, one {Votre joueur n’a pas {min}–{max} ans} other {Vos joueurs n’ont pas {min}–{max} ans}}",
+      "from": "{count, plural, one {Votre joueur a moins de {min} ans} other {Vos joueurs ont moins de {min} ans}}",
+      "upTo": "{count, plural, one {Votre joueur a plus de {max} ans} other {Vos joueurs ont plus de {max} ans}}"
+    },
     "ctaAgreeConsent": "Donnez le consentement requis",
     "ctaWaitlist": "Rejoindre la liste d’attente",
     "ctaSignIn": "Se connecter",
@@ -99,8 +104,13 @@
       "event": "Participe déjà"
     },
     "gamerAlreadyWaitlisted": "En liste d’attente",
-    "gamerUnderAge": "Moins de {min} ans",
-    "gamerOverAge": "Plus de {max} ans",
+    "gamerTooYoung": "Trop jeune",
+    "gamerTooOld": "Trop âgé",
+    "gamerBand": {
+      "between": "{min}–{max} ans",
+      "from": "Dès {min} ans",
+      "upTo": "Jusqu’à {max} ans"
+    },
     "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
     "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
     "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
@@ -151,28 +161,6 @@
       "dialogDescription": "Nous l’utilisons pour déterminer quels clubs, stages et événements sont proposés là où vous vivez. Vous pourrez la modifier plus tard dans vos paramètres.",
       "dialogField": "Votre localisation",
       "dialogSave": "Enregistrer la localisation"
-    },
-    "ageRefusal": {
-      "heading": {
-        "consumer_club": "Ce club s’adresse aux {range}",
-        "municipality_club": "Ce club s’adresse aux {range}",
-        "camp": "Ce stage s’adresse aux {range}",
-        "event": "Cet événement s’adresse aux {range}"
-      },
-      "range": {
-        "between": "{min}–{max} ans",
-        "from": "{min} ans et plus",
-        "upTo": "{max} ans et moins"
-      },
-      "children": "{count, plural, one {{names} n’est pas dans cette tranche d’âge.} other {{names} ne sont pas dans cette tranche d’âge.}}",
-      "nameWithAge": "{name}\u00a0({age}\u00a0ans)",
-      "findProduct": {
-        "consumer_club": "{count, plural, one {Trouver un club adapté à son âge} other {Trouver un club adapté à leur âge}}",
-        "municipality_club": "{count, plural, one {Trouver un club adapté à son âge} other {Trouver un club adapté à leur âge}}",
-        "camp": "{count, plural, one {Trouver un stage adapté à son âge} other {Trouver un stage adapté à leur âge}}",
-        "event": "{count, plural, one {Trouver un événement adapté à son âge} other {Trouver un événement adapté à leur âge}}"
-      },
-      "addGamer": "Ajouter un autre joueur"
     }
   },
   "pricing": {

@@ -88,6 +88,11 @@
     "ctaSubmitting": "yIloS…",
     "ctaAddGamer": "QujwI’ yIchel ’ej taH",
     "ctaAllSet": "bIghuHrup",
+    "ctaOutOfBand": {
+      "between": "{count, plural, one {QujwI’lIj {min}–{max} DIS ghajbe’} other {QujwI’pu’lIj {min}–{max} DIS ghajbe’}}",
+      "from": "{count, plural, one {QujwI’lIj {min} DIS bIng} other {QujwI’pu’lIj {min} DIS bIng}}",
+      "upTo": "{count, plural, one {QujwI’lIj {max} DIS Dung} other {QujwI’pu’lIj {max} DIS Dung}}"
+    },
     "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
     "ctaWaitlist": "tetlh DaqaD",
     "ctaSignIn": "yI’el",
@@ -99,8 +104,13 @@
       "event": "muvpu’"
     },
     "gamerAlreadyWaitlisted": "tetlhDaq",
-    "gamerUnderAge": "{min} bIng",
-    "gamerOverAge": "{max} Dung",
+    "gamerTooYoung": "Qupqu’",
+    "gamerTooOld": "qanqu’",
+    "gamerBand": {
+      "between": "{min}–{max} DIS",
+      "from": "{min}+ DIS",
+      "upTo": "{max} DIS veH"
+    },
     "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
     "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
     "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
@@ -151,28 +161,6 @@
       "dialogDescription": "DaqlIj wISov ’ej naDev qach’a’mey, wanI’mey je wISam. Qapla’ — DaH yIchoH ’e’ DalaH.",
       "dialogField": "DaqlIj",
       "dialogSave": "Daq yISaH"
-    },
-    "ageRefusal": {
-      "heading": {
-        "consumer_club": "{range} DIS ghaHbogh ghotpu’ ghom",
-        "municipality_club": "{range} DIS ghaHbogh ghotpu’ ghom",
-        "camp": "{range} DIS ghaHbogh ghotpu’ raQ",
-        "event": "{range} DIS ghaHbogh ghotpu’ wanI’"
-      },
-      "range": {
-        "between": "{min}–{max}",
-        "from": "{min} pIm",
-        "upTo": "{max} bIng"
-      },
-      "children": "{count, plural, one {{names} DIS mIw ghajbe’.} other {{names} DIS mIw ghajbe’.}}",
-      "nameWithAge": "{name}\u00a0({age})",
-      "findProduct": {
-        "consumer_club": "{count, plural, other {DISchaj ghom yInej!}}",
-        "municipality_club": "{count, plural, other {DISchaj ghom yInej!}}",
-        "camp": "{count, plural, other {DISchaj raQ yInej!}}",
-        "event": "{count, plural, other {DISchaj wanI’ yInej!}}"
-      },
-      "addGamer": "latlh QujwI’ chel"
     }
   },
   "pricing": {
