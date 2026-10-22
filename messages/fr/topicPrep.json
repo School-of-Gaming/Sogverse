@@ -37,7 +37,7 @@
   "steps": {
     "minecraftJavaAccount": {
       "title": "Obtenir un compte Microsoft avec Minecraft dessus",
-      "body": "Minecraft se connecte avec un compte Microsoft. Si le participant n’en a pas, un parent le crée et achète « Minecraft: Java & Bedrock Edition for PC » sur ce compte. C’est <b>un achat unique, pas un abonnement</b>, et il couvre la version Java utilisée pendant ces séances. La configuration demande un nom de profil Java. Ce nom est l’identifiant dont nous avons besoin pour ajouter le participant à notre monde Minecraft, alors notez-le quelque part où il sera facile à retrouver.",
+      "body": "Minecraft se connecte avec un compte Microsoft. Si le participant n’en a pas, un parent le crée et achète « Minecraft: Java & Bedrock Edition for PC » sur ce compte. C’est <b>un achat unique, pas un abonnement</b>, et il couvre la version Java utilisée pendant ces séances.",
       "linkLabel": "Obtenir Minecraft pour PC"
     },
     "minecraftJavaInstall": {
@@ -55,7 +55,7 @@
     },
     "minecraftBedrockAccount": {
       "title": "Créer un compte Microsoft",
-      "body": "Minecraft Bedrock se joue en ligne via un compte Microsoft. C’est le gamertag de ce compte qui nous permet de trouver le participant et de l’ajouter à nos mondes. Si le participant n’a pas encore de compte, un parent le crée. Indiquez la vraie date de naissance du participant, car Microsoft se sert de l’âge pour décider quelles fonctions en ligne sont activées. Notez le gamertag. Nous le demanderons."
+      "body": "Minecraft Bedrock se joue en ligne via un compte Microsoft. Si le participant n’a pas encore de compte, un parent le crée. Indiquez la vraie date de naissance du participant, car Microsoft se sert de l’âge pour décider quelles fonctions en ligne sont activées."
     },
     "minecraftBedrockInstall": {
       "title": "Acheter et installer Minecraft sur le bon appareil",
@@ -68,7 +68,7 @@
     },
     "fortniteAccount": {
       "title": "Créer un compte Epic Games",
-      "body": "Fortnite est gratuit et se connecte avec un compte Epic Games gratuit. Si le participant n’en a pas encore, un parent le crée. Indiquez la vraie date de naissance du participant, car Epic se sert de l’âge pour décider quelles fonctions de discussion et de contacts sont disponibles. Notez le nom affiché. C’est ainsi que nous trouverons le participant."
+      "body": "Fortnite est gratuit et se connecte avec un compte Epic Games gratuit. Si le participant n’en a pas encore, un parent le crée. Indiquez la vraie date de naissance du participant, car Epic se sert de l’âge pour décider quelles fonctions de discussion et de contacts sont disponibles."
     },
     "fortniteControls": {
       "title": "Régler le contrôle parental",
@@ -85,7 +85,7 @@
     },
     "rocketLeagueAccount": {
       "title": "Créer un compte Epic Games",
-      "body": "Rocket League est gratuit et se connecte avec un compte Epic Games gratuit, le même type de compte que Fortnite. Si le participant en a déjà un, il convient aussi ici. S’il n’en a pas encore, un parent le crée. Indiquez la vraie date de naissance du participant. Notez le nom affiché. C’est ainsi que nous trouverons le participant."
+      "body": "Rocket League est gratuit et se connecte avec un compte Epic Games gratuit, le même type de compte que Fortnite. Si le participant en a déjà un, il convient aussi ici. S’il n’en a pas encore, un parent le crée. Indiquez la vraie date de naissance du participant."
     },
     "rocketLeagueInstall": {
       "title": "Installer Rocket League",
@@ -102,7 +102,7 @@
     },
     "pokemonGoAccount": {
       "title": "Créer un compte",
-      "body": "Jouer nécessite un compte, que le jeu propose de créer au premier lancement. Pour un participant de moins de 13 ans, c’est un parent qui crée le compte et le relie au sien, ce qui garde les réglages entre les mains d’un parent. Notez le nom de dresseur. C’est ainsi que nous trouverons le participant."
+      "body": "Jouer nécessite un compte, que le jeu propose de créer au premier lancement. Pour un participant de moins de 13 ans, c’est un parent qui crée le compte et le relie au sien, ce qui garde les réglages entre les mains d’un parent."
     },
     "pokemonGoPhone": {
       "title": "Charger le téléphone et vérifier ses réglages",

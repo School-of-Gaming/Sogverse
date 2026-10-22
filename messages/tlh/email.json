@@ -60,7 +60,7 @@
       "camp": "{productName} raghDaq ghItlhlu’pu’ {participantName}",
       "event": "{productName}Daq jeSpu’ {participantName}"
     },
-    "heading": "Qapla’! Doch Dalajpu’!",
+    "heading": "bImuvpu’!",
     "subheading": {
       "consumer_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
       "municipality_club": "{productName} QujmeH ghItlhlu’pu’ {participantName}.",
@@ -90,12 +90,6 @@
         }
       }
     },
-    "typeLabel": {
-      "consumer_club": "ghom’a’",
-      "municipality_club": "veng ghom’a’",
-      "camp": "ragh",
-      "event": "wanI’"
-    },
     "priceLabel": "wagh",
     "price": {
       "subscription": "{amount} / jar",
@@ -107,9 +101,16 @@
     "next": {
       "sessions": "jIH SOGDaq {participantName} Qu’mey Datu’.",
       "sessionsSelf": "jIH SOGDaq Qu’meylIj Datu’.",
+      "sessionsOnline": "De’wI’Daq {participantName} muv, jIH SOGDaq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
+      "sessionsOnlineSelf": "De’wI’Daq bImuv, jIH SOGDaq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
       "subscription": "Hoch jar DaDIlnIS. jIH SOGDaq Dajondaq ghap Damevmeh laH.",
       "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
-      "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."
+      "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}.",
+      "firstSession": "{participantName} wa’DIch Qu’: {date}, {time}.",
+      "firstSessionSelf": "wa’DIch Qu’lIj: {date}, {time}.",
+      "eventDate": "wanI’ poH: {date}, {time}.",
+      "guarantee": "{participantName}vaD ghom QaQbe’chugh, wa’DIch Qu’ pa’ wejmaH jaj qaStaHvIS maHvaD QIn yIngeH. Hoch DIlmeylIj DIchegh.",
+      "guaranteeSelf": "SoHvaD ghom QaQbe’chugh, wa’DIch Qu’lIj pa’ wejmaH jaj qaStaHvIS maHvaD QIn yIngeH. Hoch DIlmeylIj DIchegh."
     },
     "waitlist": {
       "subject": "{participantName} loS tetlhDaq: {productName}",
@@ -117,8 +118,6 @@
       "heading": "loS tetlhDaq SoH",
       "subheading": "{participantName} loS tetlhDaq: {productName}. quS poSDI’, SoH wIja’.",
       "next1": "quS poSDI’, QInHom wIngeH.",
-      "summaryTitle": "loS DaqlIj",
-      "forLabel": "loStaH",
       "next2": {
         "consumer_club": "DIS naQ tetlhDaq {participantName} Daq qaD.",
         "municipality_club": "DIS naQ tetlhDaq {participantName} Daq qaD.",
@@ -128,8 +127,7 @@
       "next3": "reH jIH SOGDaq loS DaqlIj DaleghlaH."
     },
     "gamer": {
-      "greeting": "nuqneH {participantName}!",
-      "summaryTitle": "ghItlhlIj"
+      "greeting": "nuqneH {participantName}!"
     },
     "invite": {
       "summary": "{productName} – {participantName}",
@@ -142,14 +140,7 @@
       "questions": "yIghel: {supportEmail}."
     },
     "dashboardButton": "jIH SOG yIghoS",
-    "closing": "yIghel’a’? QInvam yIjang neH.",
-    "summaryTitle": "ralHa’ghachlIj",
-    "forLabel": {
-      "consumer_club": "ghItlhlu’pu’",
-      "municipality_club": "ghItlhlu’pu’",
-      "camp": "ghItlhlu’pu’",
-      "event": "jeSwI’"
-    },
+    "closing": "yIghel’a’? QInvam yIjang neH, pagh {supportEmail} yIghItlh.",
     "overview": {
       "schedule": "jaj tetlh",
       "where": "Daq",
