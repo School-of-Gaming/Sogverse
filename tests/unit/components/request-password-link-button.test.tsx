@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enVerifyEmail from "@/../messages/en/verifyEmail.json";
+import enCommon from "@/../messages/en/common.json";
 import { RequestPasswordLinkButton } from "@/components/auth/request-password-link-button";
 import { Link } from "@/i18n/navigation";
+
+const messages = { verifyEmail: enVerifyEmail, common: enCommon };
 
 /**
  * ============================================================================

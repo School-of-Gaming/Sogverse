@@ -1,0 +1,136 @@
+{
+  "waitlist": {
+    "footerReassuranceCustomer": "You’re #{position} in line — we’ll email you the moment a seat opens.",
+    "footerReassuranceGamer": "You’re #{position} in line — we’ll email a parent as soon as a seat opens.",
+    "leave": {
+      "trigger": "Leave waitlist",
+      "confirmTitle": "Leave the waitlist?",
+      "confirmDescription": "{name} will lose their place in line for {product}.",
+      "confirmDescriptionSelf": "You’ll lose your place in line for {product}.",
+      "confirmCta": "Leave waitlist",
+      "backOfLineWarning": "If you join again later, you’ll start at the back of the line."
+    },
+    "seatOffer": {
+      "title": "A seat has opened",
+      "bodyChild": "{name} can have the place, if you still want it.",
+      "bodySelf": "The place is yours, if you still want it.",
+      "bodyGamer": "We have asked a parent whether you still want it.",
+      "deadline": "Answer by {deadline}, or the place goes to the next family in line.",
+      "lapsed": "This offer has run out, so the place can no longer be accepted. If you no longer need a place at all, telling us still helps.",
+      "accept": "Accept the place",
+      "decline": "No, thank you",
+      "confirmTitle": "Give up the place?",
+      "confirmBodyChild": "{name} will lose their place in line, and we will offer it to the next family.",
+      "confirmBodySelf": "You will lose your place in line, and we will offer it to the next family.",
+      "confirmCta": "Yes, I am sure",
+      "error": "Something went wrong and your answer was not saved. Please try again, or write to us at {supportEmail}."
+    }
+  },
+  "billing": {
+    "manage": {
+      "title": "Payment & billing",
+      "description": "Manage your saved cards, invoices, and subscriptions securely on Stripe.",
+      "cta": "Manage billing",
+      "opening": "Opening…",
+      "error": "Couldn’t open the billing portal. Please try again.",
+      "splitExplanation": "Your family’s subscriptions sit on more than one billing account — a leftover from when your clubs moved to this site. Each button opens that account’s own page on Stripe.",
+      "coversItem": "{name} · {product}",
+      "coversFallback": "Saved cards and past invoices"
+    },
+    "alert": {
+      "tooltip": "Payment problem — update your card to keep this club active",
+      "gamerTooltip": "Something’s not right — ask a parent to check this"
+    }
+  },
+  "gamerDetail": {
+    "photoConsent": {
+      "title": "Photos and videos",
+      "description": "For clubs, camps and events run in partnership with Lynx Educate, in collaboration with Roblox.",
+      "sentence": {
+        "lynxEducate": "Photos and videos of {name} may be included in session reports, shared with Lynx Educate and Roblox for impact reporting, and used on School of Gaming’s, Lynx Educate’s and Roblox’s websites and social media. Details are in the <privacy>Creator Academy Privacy Policy</privacy>."
+      },
+      "sentenceTitle": {
+        "lynxEducate": "Photos and videos of {name}"
+      },
+      "hint": "You are asked this again every time you enrol {name} in one of these; your latest answer is what counts.",
+      "saveFailed": "That answer was not saved. Check your connection and try again."
+    },
+    "backToMySog": "Back to My SOG",
+    "title": "Gamer settings",
+    "subtitle": "Manage settings for {name}",
+    "profileDescription": "Update your gamer’s details.",
+    "profileUpdated": "Name updated!",
+    "failedUpdateDisplayName": "Failed to update name",
+    "ageYears": "{age, plural, one {# year old} other {# years old}}",
+    "gender": {
+      "boy": "Boy",
+      "girl": "Girl",
+      "non_binary": "Non-binary"
+    },
+    "notFound": {
+      "title": "Gamer not found",
+      "description": "This gamer account may have been removed or you don’t have access to it."
+    },
+    "minecraft": {
+      "title": "Minecraft account",
+      "description": "Link a Minecraft Java Edition username for in-game features."
+    },
+    "roblox": {
+      "title": "Roblox account",
+      "description": "Link a Roblox username for in-game features."
+    },
+    "signIn": {
+      "title": "Sign-in",
+      "current": {
+        "parent": "{name} signs in through your account.",
+        "username": "{name} signs in with a username and password.",
+        "email": "{name} signs in with their own email address."
+      },
+      "currentUsername": "{name} signs in with the username {username}.",
+      "saved": "Sign-in updated.",
+      "saveFailed": "Couldn’t save this change. Please try again.",
+      "newPasswordTitle": "Set a new password",
+      "newPasswordDescription": "Choose a new password and read it out to {name}. It replaces the old one straight away.",
+      "newPasswordSubmit": "Set password",
+      "newPasswordSaved": "New password set.",
+      "verified": "This address has been verified.",
+      "notVerified": "{name} has not opened the verification link yet.",
+      "resend": "Resend the verification email",
+      "resendSent": "Sent. Ask {name} to check their inbox.",
+      "resendRateLimited": "That is a lot of emails for one gamer. Please try again in a while.",
+      "resendFailed": "We couldn’t send the email. Please try again.",
+      "change": {
+        "username": {
+          "title": "Change the username",
+          "description": "Pick a new username for {name}. Their password stays the same, and the old username stops working straight away.",
+          "submit": "Save the username",
+          "saved": "Username updated. Read the new one out to your gamer."
+        }
+      }
+    }
+  },
+  "switchToGamer": {
+    "title": "Switch to {name}’s profile to join {productName}?",
+    "oneWayWarning": "You’ll be signed out of your parent account."
+  },
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "How does my gamer join a session when it starts?",
+        "answer": "<p>That depends on where it meets, and the card on your My SOG shows which: a session that meets online has a button on it, and one that meets in person names the place.</p><p>Online, the session is a voice room in the browser, with nothing to install:</p><steps><step>On your My SOG, find the card under your child’s name. Until the session is close, its button is locked and tells you the day and time it opens.</step><step>Five minutes before the session starts, the button changes to “Join voice room”.</step><step>Tap it. The room lets in only the people in the group, so from your account you are asked to switch to your child’s profile first — that signs you out of your parent account — and the room then opens as your child.</step><step>Allow microphone access if the browser asks for it.</step></steps><p>Getting back to your own profile afterwards takes your parent PIN. If your child signs in with a username or email of their own, they can open their own My SOG instead and tap the same button there. The room stays open until five minutes after the session ends.</p><p>In person, there is no button. The page for that club, camp or event shows the place it meets at, with the address, and a note about the place for families when there is one — so bring your child there for the start time.</p>"
+      },
+      "parentPin": {
+        "question": "What is the parent PIN, and what if I forget it?",
+        "answer": "<p>Your parent PIN is a four-digit code you set the first time you use your parent account. It gates the parent side of Sogverse rather than each separate action: you unlock once, and the session locks again the moment you switch to a gamer profile or sign out — so a password saved in the browser is not enough on its own to buy anything or change a child’s account. The same PIN gates the way back: a child who entered Sogverse by switching from your account needs it to switch to your profile or to a sibling’s.</p><p>If you forget it, tap “Forgot your PIN?” on the PIN screen: we email a reset link to the address on your account and nowhere else, so a child pressing it simply sends you an email. The link lasts 24 hours and works once.</p><p>You can also change a PIN you still know from Settings.</p>"
+      },
+      "sessionReports": {
+        "question": "Will I hear how sessions went?",
+        "answer": "<p>Yes. After a session your child’s Game Educator writes a report on it — what the group worked on, how it went, and the moments worth remembering — often with photos.</p><p>It appears on that club, camp or event’s page in My SOG, under Sessions, alongside every earlier report and the sessions still to come, and your child sees the same reports in their own My SOG. When the Gedu sends the report, it also arrives by email, addressed to you alone — every family receives their own separate email and no family sees another.</p><p>You will also see your own child’s attendance mark for each session on that page; your child does not see attendance, and no family ever sees another child’s.</p>"
+      },
+      "missedSessions": {
+        "question": "What if we miss a session, or join a club partway through?",
+        "answer": "<p>A club stays open for new gamers while it is running, so you can join partway through a term — the club page shows which day and time it meets each week, the term it runs over, and how many seats are left; once your child is enrolled, their own club page names the date of the next session.</p><p>Camps and events are different: a camp closes to new sign-ups the day before it starts, because the group starts together, and an event closes once its session has ended.</p><p>A club is billed as a full month from the day you sign up, so joining mid-month does not reduce that month’s payment; if a club has not started yet, nothing is charged on the day you sign up and the page tells you the date of your first payment.</p><p>If your child misses a single session there is nothing to do — their place is not affected. Their Gedu marks attendance for each session and you will see that mark on the club page. A session missed is not made up or refunded; on a municipality club, repeated unexcused absences may open the place for the next family on the waiting list, which you agree to when you register.</p>"
+      }
+    }
+  }
+}

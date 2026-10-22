@@ -1,0 +1,94 @@
+{
+  "title": "Användarvillkor",
+  "lastUpdated": "Senast uppdaterad: {date}",
+  "intro": {
+    "heading": "Kort sagt",
+    "paragraphs": [
+      "Det här är villkoren för att använda Sogverse och anmäla ditt barn till våra klubbar, läger och evenemang. Vi har skrivit dem på ett enkelt språk, eftersom vi vill att du faktiskt ska förstå vad du går med på – inte tvingas vada genom juridiskt krångel.",
+      "Kort sagt: våra klubbar hålls online och leds av våra utbildade spelfostrare. Du kan säga upp en månadsklubb när du vill, och varje klubb har 30 dagars pengarna-tillbaka-garanti – om den inte passar ditt barn, säg till inom 30 dagar från barnets första träff så betalar vi tillbaka allt. Om du undrar över något är det bara att mejla {supportEmail}, så hjälper en riktig människa dig."
+    ]
+  },
+  "sections": {
+    "whoWeAre": {
+      "heading": "Vem du ingår avtal med",
+      "paragraphs": [
+        "Sogverse drivs av School of Gaming Galactic Oy (”School of Gaming”, ”vi”, ”oss”), ett finländskt företag. Dessa villkor gäller varje gång du använder Sogverse eller köper någon av våra klubbar, läger eller evenemang.",
+        "Våra officiella uppgifter:"
+      ],
+      "bullets": [
+        "School of Gaming Galactic Oy (FO-nummer 3110461-1)",
+        "Isokatu 56, 90100 Uleåborg, Finland",
+        "E-post: {supportEmail}"
+      ]
+    },
+    "service": {
+      "heading": "Så fungerar våra klubbar",
+      "paragraphs": [
+        "Nästan allt vi gör sker online – ditt barn deltar i sin klubb, sitt läger eller sitt evenemang hemifrån via vår webbplats. Om en viss produkt fungerar annorlunda, till exempel ett evenemang på plats, säger vi alltid det tydligt på produktens sida innan du köper."
+      ]
+    },
+    "games": {
+      "heading": "Spelen ditt barn spelar",
+      "paragraphs": [
+        "Våra klubbar byggs kring videospel som andra företag har gjort, till exempel Minecraft. Vi följer Finlands officiella åldersrekommendationer.",
+        "I praktiken innebär det att ett barn får spela ett spel med en åldersgräns på upp till tre år över barnets egen ålder, så länge en förälder är närvarande och tycker att det är okej – men aldrig ett spel med åldersgränsen 18 år. När du anmäler ditt barn bekräftar du samtidigt att du är bekväm med åldersgränserna för de spel som används."
+      ]
+    },
+    "online": {
+      "heading": "Trygghet online",
+      "paragraphs": [
+        "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto. Sessionerna leds live av våra utbildade spelfostrare (vi kallar dem Geduer)."
+      ]
+    },
+    "pricing": {
+      "heading": "Priser och betalning",
+      "paragraphs": [
+        "Alla priser visas i euro och inkluderar moms. Vi kan ändra våra priser då och då, men en ändring påverkar aldrig en klubb du redan betalar för utan att vi berättar det först."
+      ]
+    },
+    "clubsCancellation": {
+      "heading": "Säga upp en månadsklubb",
+      "paragraphs": [
+        "Våra klubbar löper som en månadsprenumeration, och du är fri att säga upp den när du vill – det finns ingen bindningstid. Du kan göra det själv från ditt konto, och ditt barn behåller sin plats till slutet av den månad du redan har betalat för.",
+        "Vi vill också att du ska kunna prova oss med trygghet, så varje klubb har 30 dagars pengarna-tillbaka-garanti. Om det visar sig att den inte passar ditt barn, mejla {supportEmail} inom 30 dagar från barnets första träff så betalar vi tillbaka allt du har betalat för den klubben. Ingen blankett att fylla i och ingen anledning behöver anges."
+      ]
+    },
+    "campsCancellation": {
+      "heading": "Avboka ett läger",
+      "paragraphs": [
+        "Läger bokas och betalas som en engångskostnad, så avbokningsvillkoren ser lite annorlunda ut. Om du behöver avboka ett läger:"
+      ],
+      "bullets": [
+        "14 dagar eller mer innan lägret börjar: du får full återbetalning.",
+        "Mellan 7 och 14 dagar innan: vi återbetalar dig minus en administrativ avgift på 50 euro.",
+        "Mindre än 7 dagar innan: vi kan tyvärr inte återbetala beloppet, eftersom platsen har hållits och förberetts för ditt barn – om det inte rör sig om ett akut sjukdomsfall eller något helt utanför din kontroll.",
+        "Om ditt barn inte kan delta på grund av sjukdom återbetalar vi dig när du skickar oss ett läkarintyg till {supportEmail}."
+      ]
+    },
+    "conduct": {
+      "heading": "Beteende och att ta ett barn ur en klubb",
+      "paragraphs": [
+        "Vi vill att varje barn ska känna sig tryggt och välkommet, så vi accepterar inte mobbning eller beteende som förstör för andra. När ett problem uppstår börjar vi alltid med att stötta barnet och hjälpa det att ställa saker till rätta – hela vårt arbetssätt beskrivs i vår <linkDiscipline>policy mot mobbning och om disciplin</linkDiscipline>.",
+        "Först efter dessa stödjande steg, och vid fortsatt toxiskt eller störande beteende eller mobbning, kan vi avsluta ett barns deltagande. Vi pratar alltid igenom det med dig först."
+      ]
+    },
+    "privacy": {
+      "heading": "Din familjs integritet",
+      "paragraphs": [
+        "Vi hanterar din familjs uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning, och vi lagrar så lite som möjligt om ditt barn: ett spelarkonto skapas av dig, har en intern Sogverse-adress i stället för barnets egen e-postadress om du inte väljer att ge barnet en, och används aldrig för att rikta reklam till barnet. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
+      ]
+    },
+    "changes": {
+      "heading": "Ändringar av dessa villkor",
+      "paragraphs": [
+        "Vi kan uppdatera dessa villkor då och då, till exempel om vi lägger till en ny sorts klubb eller ändrar hur något fungerar. När vi gör en viktig ändring uppdaterar vi datumet högst upp på den här sidan, och när det är viktigt berättar vi det direkt för dig."
+      ]
+    },
+    "contact": {
+      "heading": "Kontakta oss",
+      "paragraphs": [
+        "Om något här är oklart, eller om du vill prata igenom något, är det bara att mejla {supportEmail}. Det är en riktig människa i andra änden, och vi hjälper gärna till."
+      ]
+    }
+  }
+}

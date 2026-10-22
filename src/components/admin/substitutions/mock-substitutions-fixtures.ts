@@ -3,7 +3,7 @@ import type {
   AdminSubstitutionRequest,
   OpenAdminSubstitutionRequest,
   SubstitutedAdminSubstitutionRequest,
-} from "@/services/session-substitution";
+} from "@/services/session-substitution/session-substitution.contracts";
 
 /**
  * Fixtures for the Substitutions preview scene.
@@ -96,11 +96,13 @@ function product(args: {
     spoken_language_code: args.language,
     timezone: args.timezone,
     is_remote: args.site === "remote",
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     start_date: null,
     end_date: null,
     site_name:
       args.site === "remote" || args.site === null ? null : args.site.building,
-    translations: [{ locale: "en", name: args.name, description: "" }],
+    translations: [{ locale: "en", name: args.name, description: "", voice_join_instructions: null }],
     schedule_slots: args.slots.map((slot) => ({
       weekday: slot.weekday,
       start_time: slot.startTime,

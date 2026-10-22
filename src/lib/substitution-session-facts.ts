@@ -1,7 +1,9 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import type { SessionProductDocument } from "@/services/session-substitution";
+import type {
+  SessionProductDocument,
+} from "@/services/session-substitution/session-substitution.contracts";
 import type {
   ProductTopic,
   ProductType,

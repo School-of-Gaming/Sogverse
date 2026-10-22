@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Heading } from "@sog/ui";
 import { Clock, Languages, Plus, Tag } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -18,12 +19,14 @@ import {
 import { LIBRARY_CATEGORY_MESSAGE_KEY } from "@/components/library/categories";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
-import type { AdminLibraryArticleListItem } from "@/services/library";
+import type {
+  AdminLibraryArticleListItem,
+} from "@/services/library/library.contracts";
 import { libraryArticleStatus } from "./library-article-form";
 import { LibraryArticleStatusChip } from "./library-article-status-chip";
 
@@ -60,7 +63,7 @@ export function AdminLibraryArticlesPage({
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Link

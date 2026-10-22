@@ -1,20 +1,25 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider, createTranslator } from "next-intl";
-import en from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import fiAdmin from "@/../messages/fi/admin.json";
+import fiCommon from "@/../messages/fi/common.json";
 import {
   formatAdminTermWeeks,
   formatProductWeeks,
 } from "@/lib/products/format-product-term-dates";
 import { firstSessionDate, lastSessionDate } from "@/lib/session-dates";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import { SchedulePanel } from "@/components/admin/dashboard/schedule-panel";
 import { ComingUpFeed } from "@/components/admin/dashboard/coming-up-feed";
 import type {
   ComingUpDay,
   ScheduleWeek,
 } from "@/components/admin/dashboard/admin-dashboard-data";
+
+const en = { admin: enAdmin, common: enCommon };
+const fi = { admin: fiAdmin, common: fiCommon };
 
 /**
  * **The ISO week readouts on the admin surfaces**, which are one rule applied

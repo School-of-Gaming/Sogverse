@@ -3,8 +3,10 @@ import { useTranslations } from "next-intl";
 import { Users } from "lucide-react";
 import type { AppHref } from "@/lib/constants/routes";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { actPhrase, PublicIndexHeader } from "@/components/public/public-index-header";
 import { TeamClosingCta } from "./team-closing-cta";
 import { TeamMemberCard } from "./team-member-card";
+import { Heading } from "@sog/ui";
 
 export interface TeamIndexMember {
   profile: TeamProfile;
@@ -40,21 +42,10 @@ export function TeamIndexBody({ members }: { members: readonly TeamIndexMember[]
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-10 sm:py-14">
-      <header>
-        {/* The headline and its rule are centred; the wrapper shrinks to the
-            headline's longest line, so the rule runs exactly its measure. */}
-        <div className="mx-auto w-fit text-center">
-          <h1 className="text-h1-mobile font-bold tracking-tight md:text-5xl">
-            {t.rich("title", {
-              act: (chunks) => <span className="text-act">{chunks}</span>,
-            })}
-          </h1>
-          <span aria-hidden className="mt-4 block h-1.5 w-full rounded-full bg-world" />
-        </div>
-        <p className="mt-5 text-base text-muted-foreground sm:text-lg">
-          {t("intro")}
-        </p>
-      </header>
+      <PublicIndexHeader
+        title={t.rich("title", { act: actPhrase })}
+        intro={t("intro")}
+      />
 
       {members.length === 0 ? (
         <div className="mt-8 flex flex-col items-center py-16 text-center">
@@ -103,9 +94,9 @@ function TeamGroup({
   if (members.length === 0) return null;
   return (
     <section aria-labelledby={headingId} className="mt-10 sm:mt-14">
-      <h2 id={headingId} className="text-2xl font-bold">
+      <Heading level={2} step="display" id={headingId}>
         {heading}
-      </h2>
+      </Heading>
       <ul className="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
         {members.map(({ profile, href }, index) => (
           <li key={profile.id}>

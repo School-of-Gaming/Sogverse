@@ -1,0 +1,14 @@
+{
+  "readMore": "Read more",
+  "showLess": "Show less",
+  "lastEditedBy": "By {name}",
+  "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}",
+  "photos": {
+    "list": "Session photos",
+    "open": "Open photo {index} of {count}",
+    "viewer": "Photo {index} of {count}",
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "close": "Close photo"
+  }
+}

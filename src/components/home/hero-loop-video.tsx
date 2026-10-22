@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   HERO_LOOP_BY_SHAPE,
   HERO_LOOPS,

@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enDatePicker from "@/../messages/en/datePicker.json";
+import enCommon from "@/../messages/en/common.json";
 import { DatePicker, type WeekPick } from "@/components/ui/date-picker";
+
+const messages = { datePicker: enDatePicker, common: enCommon };
 
 /**
  * **The week picker, as the admin who plans in week numbers meets it.**

@@ -3,8 +3,9 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { BadgeCheck, MailCheck } from "lucide-react";
-import { ROLE_INK, ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { ROLE_INK } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
+import { cn } from "@/lib/cn";
 import type { AdminUserRoleStat } from "./admin-dashboard-data";
 
 /**

@@ -2,12 +2,14 @@ import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query
 import { createClient } from "@/lib/supabase/server";
 import {
   FamilyProductFeedService,
+} from "@/services/family-product-feed/family-product-feed.service";
+import {
   familyProductFeedKeys,
-} from "@/services/family-product-feed";
+} from "@/services/family-product-feed/family-product-feed.keys";
 import {
   ParticipationsService,
   type MyUpcomingSessionRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { SessionAudience } from "@/types";
 import { FamilyProductPage } from "./FamilyProductPage";
 

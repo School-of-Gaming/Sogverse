@@ -15,8 +15,10 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { formatCompactDateRange } from "@/lib/utils";
-import type { HolidayCalendarInput } from "@/services/holiday-calendars";
+import { formatCompactDateRange } from "@/lib/date-format";
+import type {
+  HolidayCalendarInput,
+} from "@/services/holiday-calendars/holiday-calendars.contracts";
 import {
   breakNameLanguages,
   breaksInDateOrder,

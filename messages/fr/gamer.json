@@ -1,0 +1,26 @@
+{
+  "welcomeNamed": "Bienvenue, {name} !",
+  "fallbackName": "joueur",
+  "subtitle": "Envie de jouer et d’apprendre ?",
+  "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les stages avec toi, et choisissez-en un ensemble.",
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "Comment je rejoins ma séance quand elle commence ?",
+        "answer": "<p>D’abord, ouvre Mon SOG et retrouve ton club. La suite dépend de l’endroit où ton club se réunit.</p><p>S’il se réunit en ligne, il y a un bouton dessus :</p><steps><step>Jusqu’à peu avant ta séance, le bouton reste verrouillé et t’indique le jour et l’heure d’ouverture.</step><step>Cinq minutes avant le début de ta séance, ce bouton devient « Rejoindre la salle vocale ».</step><step>Appuie dessus. Tu y es.</step></steps><p>Il n’y a rien à installer et aucun code à taper.</p><p>S’il se réunit en présentiel, il n’y a pas de bouton. Ton club affiche à la place le nom du lieu, et la page de ton club donne aussi son adresse. Sois là quand ta séance commence.</p>"
+      },
+      "cannotBeHeard": {
+        "question": "Personne ne m’entend dans la salle vocale — qu’est-ce que je vérifie ?",
+        "answer": "<p>Vérifie ceci dans l’ordre. C’est presque toujours le premier point.</p><steps><step>Ton bouton de micro est-il rouge ? C’est que tu es coupé. Appuie dessus pour réactiver le micro.</step><step>Le bouton affiche-t-il un cadenas ? Ton Gedu a verrouillé ton micro un moment. Il le déverrouillera.</step><step>Appuie sur la petite flèche à côté du bouton de micro. Elle ouvre les paramètres du micro, où tu peux choisir le bon micro dans la liste.</step><step>Parle maintenant, et cherche la barre sous la liste. S’il n’y a aucune barre, ton micro est éteint et non pas silencieux — reviens à l’étape 1. Si la barre est là mais ne bouge jamais, autre chose sur ton appareil occupe ton micro.</step></steps><p>Si tu vois un message rouge disant que nous n’arrivons pas à joindre ton micro : ferme les autres applications et onglets qui l’utilisent, autorise le micro dans les paramètres de ton navigateur, puis appuie sur Recharger.</p><p>Toujours rien ? Dis-le à ton Gedu pendant la séance — il peut t’aider.</p>"
+      },
+      "cannotHearOthers": {
+        "question": "Je n’entends personne dans la salle vocale — qu’est-ce que je vérifie ?",
+        "answer": "<p>Vérifie ceci dans l’ordre :</p><steps><step>Monte le volume de ton appareil et vérifie que ton casque est bien branché.</step><step>Regarde les zones. Tu n’entends que les personnes dans la même zone que toi : si tout le monde est ailleurs, appuie sur leur zone pour les rejoindre.</step><step>Si ton Gedu t’a déplacé dans une zone exprès, reste là. Il viendra te rechercher.</step></steps><p>Si les autres sont dans ta zone, que le volume est monté et que c’est toujours silencieux, dis-le à ton Gedu — à voix haute, ou écris-le dans le chat si ta salle en a un. Il voit qui est dans la salle et peut t’aider.</p>"
+      },
+      "someoneIsMean": {
+        "question": "Et si quelqu’un est méchant avec moi pendant une séance ?",
+        "answer": "<p>Dis-le à ton Gedu ou à un parent. Tu n’as jamais à gérer la méchanceté tout seul, et le dire à un adulte, ce n’est pas rapporter.</p><p>Ton Gedu le prendra toujours au sérieux et t’aidera à tirer au clair ce qui s’est passé. Être méchant avec les autres ou enfreindre les règles du club a des conséquences. Tout le monde a le droit de se sentir en sécurité et bienvenu dans le club.</p>"
+      }
+    }
+  }
+}

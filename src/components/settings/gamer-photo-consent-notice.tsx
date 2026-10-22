@@ -2,11 +2,11 @@
 
 import { Camera } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 /**
@@ -40,7 +40,7 @@ export function GamerPhotoConsentNotice({ granted }: { granted: boolean }) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Camera className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
       </CardHeader>
       <CardContent>

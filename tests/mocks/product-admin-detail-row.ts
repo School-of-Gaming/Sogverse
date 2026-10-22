@@ -1,4 +1,6 @@
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
 
 /** Synthetic admin-detail row covering every field the form touches. */
 export function syntheticConsumerProduct(): ProductAdminDetailRow {
@@ -14,6 +16,8 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
     tag: null,
     region_lock_country: null,
     requires_gamer_creations: false,
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     spoken_language_code: "en",
     // The link is the id; `image_path` is the column the trigger derives from
     // it, and the embed is what the form's image card paints from.
@@ -49,6 +53,7 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
         name: "Build Club",
         short_description: "Build castles together.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },

@@ -1,7 +1,7 @@
 import { DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { MAIL_SPACE } from "./type-scale";
-import { escapeHtml, groundFill } from "./utils";
+import { escapeHtml, framedCell, framedInnerRadius } from "./utils";
 
 /**
  * The session report's photo grid — the one block in this directory whose
@@ -23,7 +23,7 @@ import { escapeHtml, groundFill } from "./utils";
  * documents. Nothing is exported to the shell any more: the stacking query's
  * class name, breakpoint and gutter went with the pairs, and the well's own
  * ground-following tone is one of the two the whole directory shares through
- * `groundFill()` — so this module names no selector of its own and the shell
+ * `framedCell()` — so this module names no selector of its own and the shell
  * imports nothing from it.
  *
  * **Every box is arithmetic from the stored dimensions, under a height budget —
@@ -73,18 +73,6 @@ export const PHOTO_PHONE_COLUMN = 328;
 
 /** The vertical gap between one photo and the next: the tight step. */
 const PHOTO_ROW_GAP = MAIL_SPACE.tight;
-
-/**
- * The well's tone: a step off whichever ground the shell has put it on.
- *
- * On a phone the content sits straight on the dark ground, so the well takes
- * the card's tone and reads as a rectangle; above the shell's breakpoint the
- * same well is inside the card and takes the darker ground instead. Both halves
- * come from the one table the whole directory shares, so the well is toned by
- * the same mechanism as the staff mail's quoted box and the outlined button
- * rather than by a rule of its own.
- */
-const WELL_GROUND = groundFill("step");
 
 /**
  * How far from square a stored pair may be and still be believed.
@@ -187,8 +175,11 @@ export function sessionPhotoBox(
  * identical corners in a client that rounds them and identical square ones in a
  * client that does not.
  *
- * The fill is a step off whichever ground the shell has put the well on — see
- * `WELL_GROUND` above.
+ * The fill is a step off whichever ground the shell has put the well on: the
+ * card's tone on a phone's bare ground, the ground's inside the card. Its edge
+ * is a fill too (`framedCell`) rather than a `border`, because a border grey is
+ * a plain colour Gmail iOS draws near-white, and a hold cannot put it back
+ * around a picture — the picture would come out a negative.
  *
  * **The pixel `width` and `height` on the picture are for the one engine that
  * reads no CSS, and they are the phone's box on purpose.** Outlook on Windows
@@ -225,13 +216,16 @@ function photoWell(photo: SessionReportPhoto): string {
   // the one URL here built around a value off a row, and escaping a
   // well-formed one changes nothing.
   const src = escapeHtml(photo.src);
-  return `<table role="presentation" width="${box.phoneWidth}" cellpadding="0" cellspacing="0" style="margin:0 auto;width:100%;max-width:${box.maxWidth}px;">
-            <tr>
-              <td class="${WELL_GROUND.className}" height="${box.wellHeight}" align="center" valign="middle" style="${WELL_GROUND.fill}border:1px solid ${DARK_THEME.border};border-radius:${RADIUS.md};height:${box.wellHeight}px;font-size:0;line-height:0;">
-                <img src="${src}" width="${box.phoneWidth}" height="${box.wellHeight}" alt="" style="display:block;width:100%;height:auto;max-width:${box.maxWidth}px;border:0;outline:none;text-decoration:none;border-radius:${RADIUS.md};" />
-              </td>
-            </tr>
-          </table>`;
+  return framedCell({
+    edge: DARK_THEME.border,
+    radius: RADIUS.md,
+    ground: "step",
+    tableAttrs: `width="${box.phoneWidth}"`,
+    tableStyle: `margin:0 auto;width:100%;max-width:${box.maxWidth}px;`,
+    cellAttrs: `height="${box.wellHeight}" align="center" valign="middle"`,
+    cellStyle: `height:${box.wellHeight}px;font-size:0;line-height:0;`,
+    content: `<img src="${src}" width="${box.phoneWidth}" height="${box.wellHeight}" alt="" style="display:block;width:100%;height:auto;max-width:${box.maxWidth}px;border:0;outline:none;text-decoration:none;border-radius:${framedInnerRadius(RADIUS.md)};" />`,
+  });
 }
 
 /**

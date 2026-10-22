@@ -1,12 +1,14 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRichText from "@/../messages/en/richText.json";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
 import { LANDING_SECTION_TYPES } from "@/lib/landing-pages/sections";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import { LANDING_SECTION_RENDERERS } from "@/components/landing-pages/landing-sections";
+
+const messages = { richText: enRichText };
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
@@ -61,6 +63,8 @@ const SECTIONS: LandingSection[] = [
   { id: CTA, type: "cta", button: { kind: "external", url: "https://partner.example/join" } },
 ];
 
+const FAQ_ITEMS = { [ITEM(7)]: { question: "Who leads it?", answer: "A *Game Educator*." } };
+
 const TEXTS: LandingSectionTexts = {
   [HERO]: {
     eyebrow: "Espoo",
@@ -81,7 +85,7 @@ const TEXTS: LandingSectionTexts = {
   },
   [FAQ]: {
     heading: "Questions",
-    items: { [ITEM(7)]: { question: "Who leads it?", answer: "A *Game Educator*." } },
+    items: FAQ_ITEMS,
   },
   [CTA]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
 };
@@ -109,9 +113,13 @@ function renderBody(
       <LandingPageBody
         sections={overrides.sections ?? SECTIONS}
         imagePaths={PATHS}
+        testimonials={{}}
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}
+        products={null}
+        pageId={id(500)}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );
@@ -172,11 +180,43 @@ describe("the landing page renderers", () => {
     expect(within(steps).getAllByRole("listitem")).toHaveLength(2);
     expect(within(steps).getByText("2")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 3, name: "Safe" })).toBeTruthy();
-    expect(screen.getByText("Who leads it?")).toBeTruthy();
+    // A question is an H3 under the section's H2, inside the row's summary.
+    const question = screen.getByRole("heading", { level: 3, name: "Who leads it?" });
+    expect(question.parentElement?.tagName).toBe("SUMMARY");
     expect(screen.getByText("Game Educator").tagName).toBe("EM");
     // The second question was never written, so it has no row.
     expect(screen.getAllByText(/Who leads it\?/)).toHaveLength(1);
     expect(document.querySelectorAll("details")).toHaveLength(1);
+  });
+
+  it("makes the questions H2s when the FAQ section has no heading of its own", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[5]],
+      texts: { [FAQ]: { items: FAQ_ITEMS } },
+    });
+    const question = screen.getByRole("heading", { level: 2, name: "Who leads it?" });
+    expect(question.parentElement?.tagName).toBe("SUMMARY");
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+  });
+
+  it("keeps a text section's headings, and unwraps an FAQ answer's to its words", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[1], SECTIONS[5]],
+      texts: {
+        [TEXT]: { heading: "What happens in a club", body: "## Building\n\nWe build things." },
+        [FAQ]: {
+          heading: "Questions",
+          items: { [ITEM(7)]: { question: "Who leads it?", answer: "## Our gedus\n\nA Game Educator." } },
+        },
+      },
+    });
+    // The text section's level-2 heading is drawn under its own H2.
+    expect(screen.getByRole("heading", { level: 3, name: "Building" })).toBeTruthy();
+    // The answer's never ranks beside its question: its words stay, as text.
+    expect(screen.queryByRole("heading", { name: "Our gedus" })).toBeNull();
+    const answer = screen.getByText("Our gedus");
+    expect(answer.closest("details")).not.toBeNull();
+    expect(answer.closest("h1, h2, h3, h4, h5, h6")).toBeNull();
   });
 
   it("marks the words' language where it is not the page's", () => {

@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants/brand";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import {
   getEmailTranslator,
   getTopicPrepTranslator,
 } from "@/lib/email-templates/translator";
 import { getOrigin } from "@/lib/url";
-import { parseEmails } from "@/lib/utils";
+import { parseEmails } from "@/lib/strings";
 import { resolveLocale } from "@/lib/constants/locales";
 
 // --- Request schema ---

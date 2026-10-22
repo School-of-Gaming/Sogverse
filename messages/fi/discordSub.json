@@ -1,0 +1,10 @@
+{
+  "requestTitle": "Pyydä tuuraajaa",
+  "pickPlaceholder": "Valitse kerta",
+  "empty": "Sinulla ei ole tulevia kertoja, joille voisit pyytää tuuraajaa.",
+  "filed": "Tuuraajaa pyydetty: {product} {when}.",
+  "failed": "Jotain meni pieleen. Kokeile /sub-komentoa hetken päästä uudelleen.",
+  "notLinked": "Jotta voit käyttää /sub-komentoa, yhdistä ensin Discord-tilisi School of Gaming -gedutiliisi.",
+  "notLinkedRunLink": "Discord-tiliäsi ei ole yhdistetty School of Gaming -gedutiliin. Yhdistä se komennolla /link ja käytä sitten uudelleen /sub-komentoa.",
+  "previewNotice": "Tämä on esikatselu – mitään ei lähetetty."
+}

@@ -7,7 +7,7 @@ import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Field } from "@/components/ui/field";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * The parent account's answers a registration asks for beyond the name and

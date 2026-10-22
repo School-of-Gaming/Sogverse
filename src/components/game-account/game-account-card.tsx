@@ -3,16 +3,16 @@
 import { useState, type ReactNode } from "react";
 import { Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { useRobloxRender } from "@/services/roblox";
+import { cn } from "@/lib/cn";
+import { useRobloxRender } from "@/services/roblox/roblox.queries";
 import { GameUsernameEditableRow } from "./game-username-editable-row";
 import {
   GAME_PLATFORMS,
@@ -181,7 +181,7 @@ export function GameAccountCard({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Gamepad2 className="h-5 w-5" />
-          <CardTitle>{title}</CardTitle>
+          <Heading level={2} step="card-title">{title}</Heading>
         </div>
         <CardDescription>{description}</CardDescription>
         {note}

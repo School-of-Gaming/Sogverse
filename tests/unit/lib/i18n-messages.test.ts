@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { loadMessages } from "@/i18n/messages";
-import en from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
-import tlh from "@/../messages/tlh.json";
+import en from "@/../messages/en";
+import fi from "@/../messages/fi";
+import tlh from "@/../messages/tlh";
 
 /**
  * Klingon is the one catalog with holes in it. The legal surface — the policy

@@ -5,7 +5,7 @@ import { HelpRequestCard } from "@/components/help/help-request-card";
 import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import { GamerDashboardPageBody } from "./gamer-dashboard-page-body";
 
 /**

@@ -67,12 +67,12 @@ vi.mock(
 const createMutate = vi.fn();
 const waitlistMutate = vi.fn();
 
-vi.mock("@/services/participations", () => ({
+vi.mock("@/services/participations/participations.queries", () => ({
   useCreateParticipation: () => ({ mutate: createMutate }),
   useJoinWaitlist: () => ({ mutate: waitlistMutate }),
 }));
 
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
 }));
 
@@ -80,11 +80,11 @@ vi.mock("@/services/users", () => ({
 // own file; here they are stubbed to nothing so this one stays about the
 // required documents. Both writers are real React Query calls, and there is no
 // QueryClientProvider around these renders.
-vi.mock("@/services/marketing-consents", () => ({
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () => ({
   useSetMarketingConsent: () => ({ mutate: vi.fn() }),
 }));
 
-vi.mock("@/services/gamer-photo-consents", () => ({
+vi.mock("@/services/gamer-photo-consents/gamer-photo-consents.queries", () => ({
   useSetGamerPhotoConsent: () => ({ mutate: vi.fn() }),
 }));
 

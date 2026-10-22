@@ -1,6 +1,6 @@
 import "server-only";
 import { joinGeduSeatRows } from "@/components/gedu/gedu-seat-rows";
-import { SESSION_RECORDING_EPOCH } from "@/lib/constants";
+import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
 import {
   isSupportedLocale,
   type SupportedLocale,

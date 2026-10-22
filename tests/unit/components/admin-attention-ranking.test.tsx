@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
 import {
   PRODUCT_ISSUE_KINDS,
   type ProductAttention,
@@ -11,6 +11,8 @@ import {
   ISSUE_PRESENTATION,
   ProductAttentionGrid,
 } from "@/components/admin/dashboard/product-attention-grid";
+
+const messages = { admin: enAdmin };
 
 /**
  * **The ranking, which is the whole design of the attention queue and until now

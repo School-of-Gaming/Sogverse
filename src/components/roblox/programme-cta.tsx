@@ -3,7 +3,8 @@ import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
+import { Heading } from "@sog/ui";
 
 /**
  * Closing call-to-action for the programme page — the second of the two
@@ -34,7 +35,9 @@ export function ProgrammeCta() {
             only repeat the colour of the button inside the card. */}
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-2xl font-bold sm:text-3xl">{t("heading")}</h2>
+          <Heading level={2} step="display" align="center">
+            {t("heading")}
+          </Heading>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>
           <Link
             href={ROUTES.robloxShop}

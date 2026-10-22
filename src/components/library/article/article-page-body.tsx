@@ -6,7 +6,7 @@ import { Markdown } from "@/components/ui/markdown";
 import { Link } from "@/i18n/navigation";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { LibraryCategory } from "../categories";
 import {
@@ -18,6 +18,7 @@ import { LibraryCover } from "../library-cover";
 import { LibraryClosingCta } from "../library-closing-cta";
 import { readingMinutes } from "./reading-time";
 import { ShareSection } from "./share-section";
+import { Heading } from "@sog/ui";
 
 /**
  * A Library article as its page renders it: the five fields an admin writes
@@ -132,9 +133,11 @@ export function ArticlePageBody({
             />
           )}
           <div lang={lang}>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-4xl">
-              {article.title}
-            </h1>
+            <div className="mt-2">
+              <Heading level={1} step="page-title">
+                {article.title}
+              </Heading>
+            </div>
             <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
               {article.summary}
             </p>
@@ -178,16 +181,13 @@ export function ArticlePageBody({
           aria-labelledby="library-more-heading"
           className="mx-auto mt-16 max-w-6xl sm:mt-24"
         >
-          <h2
-            id="library-more-heading"
-            className="text-xl font-bold tracking-tight sm:text-2xl"
-          >
+          <Heading level={2} step="section" id="library-more-heading">
             {t("article.more")}
-          </h2>
+          </Heading>
           <ul className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {moreArticles.map((more) => (
               <li key={more.id}>
-                <LibraryArticleCard {...more} titleAs="h3" />
+                <LibraryArticleCard {...more} level={3} />
               </li>
             ))}
           </ul>

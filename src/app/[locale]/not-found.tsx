@@ -2,7 +2,8 @@ import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import { Compass } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
+import { Heading } from "@sog/ui";
 
 // The **translated** 404: what every in-app `notFound()` renders, and what an
 // unmatched URL under a real locale prefix (`/fi/nothing-here`) falls back to.
@@ -19,9 +20,9 @@ export default async function NotFound() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 text-center">
       <Compass className="h-12 w-12 text-muted-foreground" aria-hidden />
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        <Heading level={1} step="section" align="center">
           {t("title")}
-        </h1>
+        </Heading>
         <p className="max-w-prose text-sm text-muted-foreground sm:text-base">
           {t("description")}
         </p>

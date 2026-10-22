@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -84,16 +85,18 @@ export default function MinecraftApiDocsPage() {
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight">
+      <Heading level={1} step="section">
         {t('title')}
-      </h1>
+      </Heading>
       <p className="mt-4 text-lg text-muted-foreground">
         {t('description')}
       </p>
 
       {/* Who is let in */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('eligibility.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('eligibility.heading')}
+        </Heading>
         <p className="mt-3 text-muted-foreground">{t('eligibility.intro')}</p>
         <ul className="mt-4 list-inside list-disc space-y-3 leading-relaxed text-muted-foreground">
           <li>{t('eligibility.paidProducts')}</li>
@@ -106,7 +109,9 @@ export default function MinecraftApiDocsPage() {
 
       {/* Authentication */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('authentication.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('authentication.heading')}
+        </Heading>
         <p className="mt-3 leading-relaxed text-muted-foreground">
           {t.rich('authentication.description', codes)}
         </p>
@@ -118,12 +123,18 @@ export default function MinecraftApiDocsPage() {
 
       {/* Endpoint */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('endpoint.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('endpoint.heading')}
+        </Heading>
         <div className="mt-4">
           <CodeBlock>{`GET ${baseUrl}/api/minecraft/join-check?uuid=<minecraft-uuid>`}</CodeBlock>
         </div>
 
-        <h3 className="mt-6 text-lg font-medium">{t('endpoint.queryParams')}</h3>
+        <div className="mt-6">
+          <Heading level={3} step="label">
+            {t('endpoint.queryParams')}
+          </Heading>
+        </div>
         <div className="mt-2">
           <Field name="uuid" type={t('endpoint.uuidType')}>
             {t.rich('endpoint.uuidDescription', codes)}
@@ -133,7 +144,9 @@ export default function MinecraftApiDocsPage() {
 
       {/* Responses */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('responses.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('responses.heading')}
+        </Heading>
         <p className="mt-3 leading-relaxed text-muted-foreground">
           {t.rich('responses.intro', codes)}
         </p>
@@ -142,12 +155,14 @@ export default function MinecraftApiDocsPage() {
           {/* 200 Allowed */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-base">
+              <div className="flex items-center gap-3">
                 <span className="rounded border border-border px-2 py-0.5 text-xs font-semibold text-success">
                   200
                 </span>
-                {t('responses.playerAllowed')}
-              </CardTitle>
+                <Heading level={3} step="label">
+                  {t('responses.playerAllowed')}
+                </Heading>
+              </div>
             </CardHeader>
             <CardContent>
               <CodeBlock>{ALLOWED_EXAMPLE}</CodeBlock>
@@ -157,12 +172,14 @@ export default function MinecraftApiDocsPage() {
           {/* 200 Denied */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-base">
+              <div className="flex items-center gap-3">
                 <span className="rounded border border-border px-2 py-0.5 text-xs font-semibold text-warning">
                   200
                 </span>
-                {t('responses.playerDenied')}
-              </CardTitle>
+                <Heading level={3} step="label">
+                  {t('responses.playerDenied')}
+                </Heading>
+              </div>
             </CardHeader>
             <CardContent>
               <CodeBlock>{DENIED_EXAMPLE}</CodeBlock>
@@ -175,7 +192,9 @@ export default function MinecraftApiDocsPage() {
           {/* Error responses */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t('responses.errorResponses')}</CardTitle>
+              <Heading level={3} step="label">
+                {t('responses.errorResponses')}
+              </Heading>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
@@ -212,7 +231,9 @@ export default function MinecraftApiDocsPage() {
 
       {/* Field reference */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('fields.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('fields.heading')}
+        </Heading>
         <div className="mt-2">
           <Field name="allowed" type="boolean">
             {t.rich('fields.allowed', codes)}
@@ -228,7 +249,11 @@ export default function MinecraftApiDocsPage() {
           </Field>
         </div>
 
-        <h3 className="mt-6 text-lg font-medium">{t('fields.reasonsHeading')}</h3>
+        <div className="mt-6">
+          <Heading level={3} step="label">
+            {t('fields.reasonsHeading')}
+          </Heading>
+        </div>
         <div className="mt-2">
           <Field name="paid_enrollment" type="allowed: true">
             {t('fields.reasons.paidEnrollment')}
@@ -244,7 +269,11 @@ export default function MinecraftApiDocsPage() {
           </Field>
         </div>
 
-        <h3 className="mt-6 text-lg font-medium">{t('fields.gamerHeading')}</h3>
+        <div className="mt-6">
+          <Heading level={3} step="label">
+            {t('fields.gamerHeading')}
+          </Heading>
+        </div>
         <div className="mt-2">
           <Field name="firstName" type="string">
             {t('fields.gamer.firstName')}
@@ -257,7 +286,11 @@ export default function MinecraftApiDocsPage() {
           </Field>
         </div>
 
-        <h3 className="mt-6 text-lg font-medium">{t('fields.enrollmentHeading')}</h3>
+        <div className="mt-6">
+          <Heading level={3} step="label">
+            {t('fields.enrollmentHeading')}
+          </Heading>
+        </div>
         <div className="mt-2">
           <Field name="product" type="string">
             {t('fields.enrollment.product')}
@@ -282,7 +315,9 @@ export default function MinecraftApiDocsPage() {
 
       {/* Example */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('example.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('example.heading')}
+        </Heading>
         <div className="mt-4">
           {/* eslint-disable-next-line i18next/no-literal-string -- curl code sample; code is never translated */}
           <CodeBlock title="curl">{`curl -H "Authorization: Bearer <key>" \\
@@ -292,7 +327,9 @@ export default function MinecraftApiDocsPage() {
 
       {/* Integration notes */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">{t('integrationNotes.heading')}</h2>
+        <Heading level={2} step="card-title">
+          {t('integrationNotes.heading')}
+        </Heading>
         <ul className="mt-4 list-inside list-disc space-y-3 leading-relaxed text-muted-foreground">
           <li>{t.rich('integrationNotes.branchOnAllowed', codes)}</li>
           <li>{t('integrationNotes.failClosed')}</li>

@@ -44,12 +44,14 @@ This gate is mandatory because the fix lands on `main`'s older codebase. A clean
 ## Step 4 — Push & open the PR
 
 1. `git push -u origin hotfix/<slug>`.
-2. Draft and show the user before opening:
+2. Draft the PR:
    - **Title:** `Hotfix: <what it fixes/enables>`. Keep under 70 chars.
    - **Summary:** what the change does and why it can't wait for the next release, plus the cherry-picked `dev` hashes if any.
    - **Test plan:** CI green, plus 1-3 hand-verifiable items on prod after deploy.
    - **Merge note:** merge as a **merge commit**, then merge `main` back into `dev` (Step 5).
-3. Open with `gh pr create --base main --head hotfix/<slug>`.
+3. **Open it without asking** — `gh pr create --base main --head hotfix/<slug>`. Running this command *is* the instruction to open it, and a PR is cheap to edit or close, so a confirmation step buys nothing and costs a round trip. Show the drafted title + body alongside the returned URL rather than ahead of it; the user edits on GitHub, or tells you what to change and you push the edit with `gh pr edit`.
+
+   The one thing that earns a pause is a finding that would change the user's mind about opening it at all — and every such finding already has its own stop above: a dirty tree, a stranded migration, a cherry-pick conflict, a failed verify gate. If something *else* surprises you — a check that passes but reads wrong — say so in the same message as the URL rather than holding the PR hostage to it.
 
 ## Step 5 — Merge `main` back into `dev`
 

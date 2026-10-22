@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { summariseHolidayImpact } from "@/components/admin/holiday-calendars/holiday-calendar-impact";
-import { holidayCalendarChangePreview } from "@/services/holiday-calendars";
+import {
+  holidayCalendarChangePreview,
+} from "@/services/holiday-calendars/holiday-calendars.contracts";
 
 /**
  * What the confirm dialog says per club, shaped from the preview's answer:

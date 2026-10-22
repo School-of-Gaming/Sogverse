@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enFamilyProduct from "@/../messages/en/familyProduct.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { FamilySessionFeed } from "@/components/family/product-page/FamilySessionFeed";
@@ -9,6 +11,12 @@ import type {
   FamilyPastSessionEntry,
   FamilySessionEntry,
 } from "@/components/family/product-page/types";
+
+const messages = {
+  familyProduct: enFamilyProduct,
+  sessionBadge: enSessionBadge,
+  sessionFeed: enSessionFeed,
+};
 
 /**
  * ============================================================================

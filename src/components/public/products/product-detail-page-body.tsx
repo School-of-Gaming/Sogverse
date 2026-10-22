@@ -7,7 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductBanner } from "@/components/ui/product-banner";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -17,7 +17,7 @@ import { localizedLocationName } from "@/lib/locations/localized-name";
 import { topicHasInfoCard } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
-import type { ProductDetailRow } from "@/services/products";
+import type { ProductDetailRow } from "@/services/products/products.service";
 import type { ProductType } from "@/types";
 import { LongDescription } from "./long-description";
 import { cameFromBrowse, listingHrefWithBrowseState } from "./browse-state";
@@ -28,6 +28,7 @@ import { ProductOverviewCard } from "./product-overview-card";
 import { productTagLabelKey } from "./product-tag";
 import { ProductTagNote } from "./product-tag-note";
 import { TopicInfoCard } from "./topic-info-card";
+import { Heading } from "@sog/ui";
 
 // Page body — pure layout + presentation. Owns nothing about fetching, and is
 // agnostic to the signup panel: the panel is injected as a slot, so the
@@ -386,9 +387,11 @@ export function ProductDetailPageBody({
               municipality={municipality}
             />
           </div>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl lg:mt-0 lg:min-w-0 lg:flex-1">
-            {tr?.name}
-          </h1>
+          <div className="mt-1 lg:mt-0 lg:min-w-0 lg:flex-1">
+            <Heading level={1} step="section">
+              {tr?.name}
+            </Heading>
+          </div>
         </div>
       </div>
 

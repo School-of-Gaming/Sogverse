@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
@@ -98,28 +99,21 @@ export function GamerDashboardPageBody({
 
   return (
     <>
-      {/* Visually-hidden page title. The welcome line below is a greeting, not
-          the document's heading — it names the reader rather than the page — so
-          the sections stay equal-weight h2s under one silent h1, matching the
-          parent and gedu dashboards. */}
-      <h1 className="sr-only">{s("pageTitle")}</h1>
-
       <div className="space-y-12 pb-24">
         {/* The greeting comes before the nav, unlike the other two dashboards.
             It is this page's hero and it is three lines tall; a nav bar above it
             would be the first thing a child met on their own home page. The pill
             still sticks the moment it reaches the top of the viewport. */}
-        <div className="text-center">
-          {/* Two-size pattern matching the public Home heading: a long Finnish
-              word like "Tervetuloa," overflows mobile at text-3xl, so the
-              greeting steps down on a narrow viewport. break-words is a safety
-              net for longer translations — and for the name, which is the
-              longest thing that can land in this line and the one part of it no
-              translator controls. */}
-          <h2 className="text-xl font-bold text-act break-words md:text-3xl">
+        <div className="break-words">
+          {/* The greeting is the page's title: it is what a child reads first
+              on their own home page, and the sections below sit under it as
+              h2s. break-words is a safety net for longer translations — and
+              for the name, which is the longest thing that can land in this
+              line and the one part of it no translator controls. */}
+          <Heading level={1} step="page-title" align="center">
             {t("welcomeNamed", { name: firstName })}
-          </h2>
-          <p className="text-muted-foreground">{t("subtitle")}</p>
+          </Heading>
+          <p className="text-center text-muted-foreground">{t("subtitle")}</p>
         </div>
 
         <DashboardSectionPill sections={sections} ariaLabel={s("pageTitle")} />
@@ -139,12 +133,13 @@ export function GamerDashboardPageBody({
               className="scroll-mt-32"
             >
               <div className="mx-auto max-w-3xl space-y-6">
-                <h2
+                <Heading
+                  level={2}
+                  step="section"
                   id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
-                  className="text-3xl font-bold"
                 >
                   {s(ACTIVITY_HEADING_KEY[group.type])}
-                </h2>
+                </Heading>
                 {group.items.length === 0 ? (
                   // Same dashed grammar as the parent page's empty cards: the
                   // section keeps the shape it will have the moment something
@@ -198,9 +193,9 @@ export function GamerDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <Heading level={2} step="section" id="help-heading">
               {h("heading")}
-            </h2>
+            </Heading>
             {helpForm}
             <GamerHelpFaq />
           </div>

@@ -1,0 +1,94 @@
+{
+  "title": "Terms and Conditions",
+  "lastUpdated": "Last updated: {date}",
+  "intro": {
+    "heading": "The short version",
+    "paragraphs": [
+      "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We’ve written them in plain language, because we want you to actually understand what you’re agreeing to — not wade through legal jargon.",
+      "In short: our clubs happen online, run live by our trained Game Educators. You can cancel a monthly club whenever you like, and every club carries a 30-day money-back guarantee — if it isn’t right for your child, tell us within 30 days of their first session and we refund you in full. If you ever have a question, email {supportEmail} and a real person will help."
+    ]
+  },
+  "sections": {
+    "whoWeAre": {
+      "heading": "Who you’re agreeing with",
+      "paragraphs": [
+        "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. These terms apply whenever you use Sogverse or buy one of our clubs, camps, or events.",
+        "Our official details:"
+      ],
+      "bullets": [
+        "School of Gaming Galactic Oy (business ID 3110461-1)",
+        "Isokatu 56, 90100 Oulu, Finland",
+        "Email: {supportEmail}"
+      ]
+    },
+    "service": {
+      "heading": "How our clubs work",
+      "paragraphs": [
+        "Almost everything we do happens online — your child joins their club, camp, or event from home, through our website. If a particular product works differently (for example, an in-person event), we’ll always say so clearly on that product’s page before you buy."
+      ]
+    },
+    "games": {
+      "heading": "The games your child plays",
+      "paragraphs": [
+        "Our clubs are built around video games made by other companies, such as Minecraft. We follow Finland’s official age-rating guidance.",
+        "In practice this means a child may play a game rated for up to three years above their own age, as long as a parent is present and comfortable with it — but never a game rated 18+. When you sign your child up, you’re confirming you’re happy with the age ratings of the games involved."
+      ]
+    },
+    "online": {
+      "heading": "Staying safe online",
+      "paragraphs": [
+        "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent’s account. Sessions are run live by our trained Game Educators (we call them Gedus)."
+      ]
+    },
+    "pricing": {
+      "heading": "Prices and payment",
+      "paragraphs": [
+        "All prices are shown in euros and include VAT. We may change our prices from time to time, but a change will never affect a club you’re already paying for without us telling you first."
+      ]
+    },
+    "clubsCancellation": {
+      "heading": "Cancelling a monthly club",
+      "paragraphs": [
+        "Our clubs run as a monthly subscription, and you’re free to cancel whenever you like — there’s no fixed commitment. You can do it yourself from your account, and your child keeps their place until the end of the month you’ve already paid for.",
+        "We also want you to be able to try us with confidence, so every club comes with a 30-day money-back guarantee. If it turns out not to be right for your child, email {supportEmail} within 30 days of their first session and we’ll refund everything you have paid towards that club. There’s no form to fill in and no reason to give."
+      ]
+    },
+    "campsCancellation": {
+      "heading": "Cancelling a camp",
+      "paragraphs": [
+        "Camps are booked and paid for as a one-off, so the cancellation terms are a little different. If you need to cancel a camp:"
+      ],
+      "bullets": [
+        "14 days or more before the camp starts: you get a full refund.",
+        "Between 7 and 14 days before: we refund you minus a €50 administration fee.",
+        "Less than 7 days before: we’re unable to refund the payment, because the place has been held and prepared for your child — unless it’s a medical emergency or something genuinely outside your control.",
+        "If your child can’t attend because of illness, we’ll refund you when you send us a doctor’s certificate at {supportEmail}."
+      ]
+    },
+    "conduct": {
+      "heading": "Behaviour and removing a child from a club",
+      "paragraphs": [
+        "We want every child to feel safe and welcome, so we don’t tolerate bullying or behaviour that spoils things for others. When a problem comes up, we always start by supporting the child and helping them put it right — our full approach is set out in our <linkDiscipline>Anti-Bullying and Discipline policy</linkDiscipline>.",
+        "Only after those supportive steps, and in the case of ongoing toxic or disruptive behaviour or bullying, may we end a child’s participation. We’ll always talk it through with you first."
+      ]
+    },
+    "privacy": {
+      "heading": "Your family’s privacy",
+      "paragraphs": [
+        "We handle your family’s information in line with Finnish and EU data-protection law, and we hold as little of your child’s as we can: a gamer account is created by you, carries an internal Sogverse address rather than your child’s own email unless you choose to give them one, and is never used to advertise to them. Our <linkPrivacy>Privacy Policy</linkPrivacy> explains exactly what we collect and why."
+      ]
+    },
+    "changes": {
+      "heading": "Changes to these terms",
+      "paragraphs": [
+        "We may update these terms from time to time, for example if we add a new kind of club or change how something works. When we make an important change, we’ll update the date at the top of this page, and where it matters we’ll let you know directly."
+      ]
+    },
+    "contact": {
+      "heading": "Getting in touch",
+      "paragraphs": [
+        "If anything here is unclear, or you’d like to talk something through, just email {supportEmail}. There’s a real person at the other end, and we’re always happy to help."
+      ]
+    }
+  }
+}

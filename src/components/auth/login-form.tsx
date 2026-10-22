@@ -3,15 +3,18 @@
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { identifierToLoginEmail } from "@/lib/gamer-sign-in";
-import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { isSupportedLocale } from "@/lib/constants/locales";
 import { setCookie } from "@/lib/cookies";
 import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
@@ -177,7 +180,7 @@ export function LoginForm({
   return (
     <Card className="w-full max-w-lg">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl">{t('login.welcomeTitle')}</CardTitle>
+        <Heading level={1} step="section" align="center">{t('login.welcomeTitle')}</Heading>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">

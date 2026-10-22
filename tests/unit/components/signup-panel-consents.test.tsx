@@ -10,7 +10,7 @@ import type {
   GamerPhotoConsentType,
   MarketingConsentType,
 } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * **The panel's Required consent section.**

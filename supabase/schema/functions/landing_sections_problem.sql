@@ -20,6 +20,8 @@ DECLARE
   v_field    text;
   v_item     jsonb;
   v_item_ids text[];
+  v_slots    integer;
+  v_count    integer;
 BEGIN
   IF p_sections IS NULL OR jsonb_typeof(p_sections) <> 'array' THEN
     RETURN 'The sections must be a JSON array';
@@ -80,6 +82,58 @@ BEGIN
         IF NOT public.landing_button_is_valid(v_section->'button') THEN
           RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
         END IF;
+      WHEN 'testimonials' THEN
+        -- Each arrangement shows exactly this many: the TypeScript half's
+        -- LANDING_TESTIMONIAL_SLOTS.
+        v_slots := CASE v_section->>'arrangement'
+                     WHEN 'feature'  THEN 1
+                     WHEN 'pair'     THEN 2
+                     WHEN 'row'      THEN 3
+                     WHEN 'showcase' THEN 6
+                   END;
+        IF jsonb_typeof(v_section->'arrangement') IS DISTINCT FROM 'string' OR v_slots IS NULL THEN
+          RETURN format('Section %s needs its arrangement: feature, pair, row or showcase', v_id);
+        END IF;
+        IF jsonb_typeof(v_section->'testimonialIds') IS DISTINCT FROM 'array' THEN
+          RETURN format('Section %s needs its testimonials, as a list of ids', v_id);
+        END IF;
+        v_item_ids := ARRAY[]::text[];
+        FOR v_item IN SELECT e FROM jsonb_array_elements(v_section->'testimonialIds') AS t(e) LOOP
+          IF jsonb_typeof(v_item) IS DISTINCT FROM 'string' OR v_item #>> '{}' !~ c_uuid THEN
+            RETURN format('Every testimonial of section %s must be a testimonial''s lowercase uuid', v_id);
+          END IF;
+          IF v_item #>> '{}' = ANY (v_item_ids) THEN
+            RETURN format('Section %s names the testimonial %s twice', v_id, v_item #>> '{}');
+          END IF;
+          v_item_ids := array_append(v_item_ids, v_item #>> '{}');
+        END LOOP;
+        v_count := jsonb_array_length(v_section->'testimonialIds');
+        IF v_count <> v_slots THEN
+          RETURN format('Section %s: a %s arrangement shows exactly %s %s; this section has %s',
+                        v_id, v_section->>'arrangement', v_slots,
+                        CASE WHEN v_slots = 1 THEN 'testimonial' ELSE 'testimonials' END,
+                        v_count);
+        END IF;
+      WHEN 'products' THEN
+        -- At least one pick and no upper bound: the carousel scrolls.
+        IF jsonb_typeof(v_section->'productIds') IS DISTINCT FROM 'array'
+           OR jsonb_array_length(v_section->'productIds') = 0 THEN
+          RETURN format('Section %s needs at least one product', v_id);
+        END IF;
+        v_item_ids := ARRAY[]::text[];
+        FOR v_item IN SELECT e FROM jsonb_array_elements(v_section->'productIds') AS t(e) LOOP
+          IF jsonb_typeof(v_item) IS DISTINCT FROM 'string' OR v_item #>> '{}' !~ c_uuid THEN
+            RETURN format('Every product of section %s must be a product''s lowercase uuid', v_id);
+          END IF;
+          IF v_item #>> '{}' = ANY (v_item_ids) THEN
+            RETURN format('Section %s names the product %s twice', v_id, v_item #>> '{}');
+          END IF;
+          v_item_ids := array_append(v_item_ids, v_item #>> '{}');
+        END LOOP;
+      WHEN 'subscribe' THEN
+        -- No shared field: the list it signs up to is the deployment's
+        -- configuration, not the page's.
+        NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
@@ -127,7 +181,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial or a picked product exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
 
 
 --

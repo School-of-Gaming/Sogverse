@@ -81,7 +81,7 @@ as the token source.
    keeps one pointer. Where a rule was a pattern each screen repeated (committing, layout
    shift), the library ships the state system instead of the pattern.
 4. **Primitives.** The 24 that lift, with strings turned into props; then the missing
-   middle: heading, page header, empty state, skeleton, inline error, chip, status chip,
+   middle: page header, empty state, skeleton, inline error, chip, status chip,
    accent tile, selection edge, select, table, search input, person row. No `className`
    anywhere; layout primitives with typed spacing. Each lands with every state in the demo.
 5. **Chrome and patterns.** Header, footer, dashboard layout, navigation, the recurring
@@ -89,7 +89,8 @@ as the token source.
 6. **Templates.** Page-shaped compositions in the demo from real chrome and fixtures,
    built early enough that composition is judged before twenty pages depend on the seam.
 7. **The sweep**, in the order `adoption.md` sets: the theme first, then Heading, then
-   Button, then the rest of the missing middle. One PR per construct, each with the lint
+   Button, then the rest of the missing middle; the theme, the faces and Heading have
+   landed. One PR per construct, each with the lint
    rule banning the raw path and the call-site conversion it forces. The admin style
    guide's primitive sections retire into the demo as each component lands; Sogverse's
    preview scenes retire as each page body thins to composition only. Steps 4 to 7

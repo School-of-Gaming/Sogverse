@@ -5,7 +5,6 @@ import { MAX_FILTER_LENGTH } from "@/lib/vercel-analytics.server";
 import {
   buildTrafficPage,
   discoveryBatches,
-  earliestTrafficDay,
   productPagePaths,
   resolveTrafficRange,
 } from "@/services/partner/partner-traffic.server";
@@ -78,14 +77,6 @@ describe("resolveTrafficRange", () => {
 
     const defaultedAfter = () => resolveTrafficRange(undefined, "2030-01-01", now);
     expect(defaultedAfter).toThrow(/^from: defaults to .*2029-12-03/);
-  });
-});
-
-describe("earliestTrafficDay", () => {
-  it("is the day analytics was switched on until two years of retention pass it", () => {
-    expect(earliestTrafficDay(new Date("2026-09-17T23:30:00Z"))).toBe("2026-05-31");
-    expect(earliestTrafficDay(new Date("2028-05-31T12:00:00Z"))).toBe("2026-05-31");
-    expect(earliestTrafficDay(new Date("2028-09-17T00:00:00Z"))).toBe("2026-09-17");
   });
 });
 

@@ -27,9 +27,7 @@ import {
   applyChatLockChange,
   applyChatMessageChange,
   applyChatReactionChange,
-  chatImagePath,
   chatKeys,
-  isChatLockedError,
   useChatChannel,
   useChatHistory,
   useChatRoster,
@@ -40,8 +38,12 @@ import {
   useSendChatMessage,
   useSetChatLock,
   useToggleChatReaction,
-  type ChatHistory,
-} from "@/services/chat";
+} from "@/services/chat/chat.queries";
+import {
+  chatImagePath,
+  isChatLockedError,
+} from "@/services/chat/chat.contracts";
+import type { ChatHistory } from "@/services/chat/chat.service";
 import {
   toChatAccounts,
   toChatMessages,

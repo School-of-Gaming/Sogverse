@@ -2,18 +2,18 @@
 
 import { Check, Copy, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The URL field's id. A named constant rather than a literal in the markup
@@ -44,7 +44,7 @@ export function McpServerCard({ url }: { url: string }) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Plug className="h-5 w-5" />
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
         </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>

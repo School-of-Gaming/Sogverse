@@ -6,14 +6,20 @@ import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import { MunicipalityInvoicingPage } from "@/components/admin/municipality-invoicing/municipality-invoicing-page";
 import { wireErrorMessage } from "@/lib/api/wire-error-message";
 import { earlierPeriodMonths } from "@/lib/finvoice";
-import { InvoiceCustomersService } from "@/services/invoice-customers";
+import {
+  InvoiceCustomersService,
+} from "@/services/invoice-customers/invoice-customers.service";
 import { resolveInvoicingMonthStart } from "@/lib/invoicing/month-param";
 import { createClient } from "@/lib/supabase/server";
 import {
   MunicipalityInvoicingService,
+} from "@/services/municipality-invoicing/municipality-invoicing.service";
+import {
   municipalityInvoicingKeys,
+} from "@/services/municipality-invoicing/municipality-invoicing.keys";
+import {
   type MunicipalityInvoicingSnapshot,
-} from "@/services/municipality-invoicing";
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");

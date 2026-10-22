@@ -2,7 +2,7 @@ import "server-only";
 
 import { lookupMinecraftUser } from "@/lib/mojang";
 import { lookupRobloxProfile } from "@/lib/roblox";
-import { toE164Digits } from "@/lib/utils";
+import { toE164Digits } from "@/lib/constants/phone";
 import type { AppSupabaseClient, SpokenLanguageCode } from "@/types";
 import type { CompleteGeduRegistrationBody } from "./gedu-registration.contracts";
 

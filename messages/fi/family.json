@@ -1,0 +1,43 @@
+{
+  "addGamer": "Lisää pelaaja",
+  "manageGamer": "Hallitse",
+  "manageGamerAria": "Hallitse pelaajaa {name}",
+  "switchFailed": "Tilin vaihtaminen epäonnistui",
+  "loadFailed": "Perheen lataaminen epäonnistui",
+  "switchToParentToAddGamer": {
+    "title": "Vaihda käyttäjän {name} profiiliin pelaajan lisäämistä varten?",
+    "oneWayWarning": "Sinut kirjataan ulos pelaajan tililtä."
+  },
+  "switchGate": {
+    "pinTitle": "Pyydä vanhempaa syöttämään PIN-koodi",
+    "pinDescription": "Vanhemman PIN-koodi tarvitaan, jotta voit vaihtaa käyttäjän {name} profiiliin.",
+    "pinNotSetTitle": "PIN-koodia ei ole vielä asetettu",
+    "pinNotSetDescription": "Vanhemman pitää ensin asettaa PIN-koodi Oma SOG -sivullaan. Sen jälkeen voit vaihtaa tiliä.",
+    "signOutTitle": "Kirjaudu ensin ulos",
+    "signOutOwnSession": "{name} on kirjautunut sisään omilla tunnuksillaan, joten tältä tililtä ei voi vaihtaa toiseen. Näin jokaisen tili pysyy yksityisenä.",
+    "signOutHow": "Kirjaudu ulos ja kirjaudu sitten sisään käyttäjänä {name}.",
+    "signOutHowViaParent": "Kirjaudu ulos, kirjaudu sitten sisään vanhempasi tunnuksilla ja vaihda sieltä käyttäjään {name}."
+  },
+  "addGamerForm": {
+    "title": "Lisää pelaaja",
+    "firstNameLabel": "Etunimi",
+    "firstNamePlaceholder": "esim. Lilja",
+    "birthMonthLabel": "Syntymäkuukausi",
+    "birthMonthPlaceholder": "Kuukausi",
+    "birthYearLabel": "Syntymävuosi",
+    "birthYearPlaceholder": "Vuosi",
+    "genderLabel": "Sukupuoli",
+    "genderBoy": "Poika",
+    "genderGirl": "Tyttö",
+    "genderNonBinary": "Muu",
+    "submit": "Lisää pelaaja",
+    "submitting": "Lisätään…",
+    "firstNameTooShort": "Etunimessä on oltava vähintään 2 merkkiä.",
+    "firstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä.",
+    "birthMonthRequired": "Valitse syntymäkuukausi.",
+    "birthYearRequired": "Valitse syntymävuosi.",
+    "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen.",
+    "guardianAttestation": "{name} on lapseni, tai olen hänen laillinen huoltajansa. Olen lukenut <privacy>tietosuojaselosteen</privacy>.",
+    "guardianAttestationUnnamed": "Tämä pelaaja on lapseni, tai olen hänen laillinen huoltajansa. Olen lukenut <privacy>tietosuojaselosteen</privacy>."
+  }
+}

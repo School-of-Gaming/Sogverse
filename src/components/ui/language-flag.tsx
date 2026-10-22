@@ -2,7 +2,7 @@
 
 import { FLAGS, type FlagCountry } from "@/components/ui/flags";
 import type { SpokenLanguageCode } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 // Spoken-language → country code mapping for flag display.
 //

@@ -1,11 +1,12 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Heading } from "@sog/ui";
 import { IdCard, Loader2, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { teamMemberLinkAddress } from "@/components/team/team-address";
 import { TeamProfilePreviewFrame } from "@/components/team/team-profile-preview-frame";
 import {
@@ -13,7 +14,7 @@ import {
   teamProfileStatus,
 } from "@/components/team/team-profile-status";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
@@ -21,14 +22,16 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   isTeamProfileNotReadyError,
-  useSetTeamProfileApproval,
-  useTeamProfile,
   type TeamProfile,
   type TeamProfileRecord,
-} from "@/services/team-profiles";
+} from "@/services/team-profiles/team-profiles.types";
+import {
+  useSetTeamProfileApproval,
+  useTeamProfile,
+} from "@/services/team-profiles/team-profiles.queries";
 
 /**
  * The team profile on an admin's or a Gedu's `/admin/users/[id]` page: where
@@ -89,10 +92,10 @@ export function UserTeamProfileCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <IdCard className="h-5 w-5 text-act" />
-          {t("userPage.heading")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("userPage.heading")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {written ? (

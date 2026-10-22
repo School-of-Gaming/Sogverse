@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
 import { SessionPhotoGallery, type SessionPhoto } from "@/components/session-feed";
+
+const messages = { sessionFeed: enSessionFeed };
 
 /**
  * ============================================================================

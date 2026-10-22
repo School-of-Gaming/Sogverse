@@ -1,0 +1,10 @@
+{
+  "requestTitle": "Request a substitute",
+  "pickPlaceholder": "Pick a session",
+  "empty": "You have no upcoming sessions to ask for a substitute for.",
+  "filed": "Substitute requested for {product} on {when}.",
+  "failed": "Something went wrong. Run /sub again in a moment.",
+  "notLinked": "To use /sub, first link your Discord account to your School of Gaming Gedu account.",
+  "notLinkedRunLink": "Your Discord account isn’t linked to a School of Gaming Gedu account. Run /link to link it, then /sub again.",
+  "previewNotice": "This is a preview — nothing was filed."
+}

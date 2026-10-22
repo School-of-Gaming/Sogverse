@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { getChildLevel, resolveLabels } from "@/lib/constants";
+import { getChildLevel, resolveLabels } from "@/lib/constants/location-hierarchies";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { Location } from "@/types";
 

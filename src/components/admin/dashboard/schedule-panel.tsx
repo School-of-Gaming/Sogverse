@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { formatInTimeZone } from "date-fns-tz";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 import type { ProductType } from "@/types";
 import {
   runningSessionCount,
@@ -56,7 +58,7 @@ export function SchedulePanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-xl">{t("title")}</CardTitle>
+        <Heading level={2} step="card-title">{t("title")}</Heading>
       </CardHeader>
       <CardContent className="space-y-8">
         <ThisWeek
@@ -71,7 +73,7 @@ export function SchedulePanel({
           aria-label={tComingUp("label")}
           className="space-y-3 border-t border-border pt-6"
         >
-          <h3 className="text-sm font-semibold">{tComingUp("heading")}</h3>
+          <Heading level={3} step="label">{tComingUp("heading")}</Heading>
           <ComingUpFeed days={comingUp} />
         </section>
       </CardContent>

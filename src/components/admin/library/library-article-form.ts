@@ -15,7 +15,7 @@ import {
   type LibraryArticleDraft,
   type LibraryArticleInput,
   type LibraryArticleVersionInput,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 
 /**
  * The cover the form points at: the catalogue entry's id, which is what a save

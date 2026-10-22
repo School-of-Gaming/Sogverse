@@ -8,8 +8,11 @@ import {
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import { nextRunning } from "@/lib/planned-sessions";
-import type { MyAssignedProductSessionRow } from "@/services/assignments";
+import type {
+  MyAssignedProductSessionRow,
+} from "@/services/assignments/assignments.service";
 import type { ProductType } from "@/types";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type {
   AppHrefObject,
   MaybeInertHref,
@@ -157,6 +160,11 @@ export interface GeduAssignmentSummary {
    * instead, at the moment of asking.
    */
   hasVoiceRoom: boolean;
+  /**
+   * How the product's sessions are joined, with the join instructions still
+   * per locale. Meaningful only where `hasVoiceRoom` is true.
+   */
+  voiceRoom: ProductVoiceRoom;
   /** Where the Join button navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
   /**
@@ -257,6 +265,7 @@ export function rollUpGeduAssignments({
       nextSessionEnd: next?.endsAt ?? null,
       cancelledAhead: cancelledAhead.map((session) => session.startsAt),
       hasVoiceRoom,
+      voiceRoom: row.product.voiceRoom,
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
       voiceHref: hasVoiceRoom
@@ -396,6 +405,11 @@ export interface GeduSubstitutionSummary {
   cancelled: boolean;
   /** Whether there is a room at all — true only on a remote product. */
   hasVoiceRoom: boolean;
+  /**
+   * How the product's sessions are joined, with the join instructions still
+   * per locale. Meaningful only where `hasVoiceRoom` is true.
+   */
+  voiceRoom: ProductVoiceRoom;
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
   /**
@@ -517,6 +531,7 @@ export function rollUpGeduSubstitutions({
         ),
         cancelled: row.substitutionCancelled,
         hasVoiceRoom,
+        voiceRoom: row.product.voiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
           : INERT_HREF,

@@ -1,0 +1,19 @@
+{
+  "title": "Anslut en AI-app till Sogverse",
+  "body": "{clientName} ber om att få agera som dig i Sogverse, med allt som ditt administratörskonto kan göra.",
+  "destinationLabel": "Din inloggning skickas till",
+  "loopbackHint": "En app som körs på den här datorn.",
+  "unrecognised": "School of Gaming känner inte igen den här destinationen. Tillåt bara om du precis har börjat ansluta från din egen AI-app. Om inte, välj Neka.",
+  "signedInAs": "Inloggad som {email}",
+  "failed": "Den här begäran kan inte längre besvaras. Börja ansluta på nytt från din AI-app.",
+  "deny": "Neka",
+  "allow": "Tillåt",
+  "unavailable": {
+    "title": "Den här inloggningslänken har redan använts",
+    "body": "Varje länk fungerar en gång och slutar snart att gälla. Börja ansluta på nytt från din AI-app."
+  },
+  "refused": {
+    "title": "Bara administratörer på School of Gaming kan ansluta en AI-app",
+    "body": "Du är inloggad som {email}, som inte är ett administratörskonto."
+  }
+}

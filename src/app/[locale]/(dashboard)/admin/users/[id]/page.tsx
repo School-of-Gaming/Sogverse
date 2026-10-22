@@ -1,15 +1,17 @@
 import type { ComponentProps, ReactNode } from "react";
 import Image from "next/image";
+import { Heading } from "@sog/ui";
 import { Link } from "@/i18n/navigation";
 import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
-import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
@@ -22,15 +24,20 @@ import { UserGamerPhotoConsentCard } from "@/components/admin/user-gamer-photo-c
 import { GamerPersonalDetails } from "@/components/admin/gamer-personal-details";
 import { GamerUsernameLine, UserEmailLine } from "@/components/admin/user-email-line";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate } from "@/lib/date-format";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
-import { UsersService } from "@/services/users";
-import { GamerService } from "@/services/gamers";
-import { MinecraftService } from "@/services/minecraft";
-import { RobloxService } from "@/services/roblox";
-import { ParticipationsService } from "@/services/participations";
-import type { AdminGamerParticipationRow } from "@/services/participations";
+import { UsersService } from "@/services/users/users.service";
+import { GamerService } from "@/services/gamers/gamers.service";
+import { MinecraftService } from "@/services/minecraft/minecraft.service";
+import { RobloxService } from "@/services/roblox/roblox.service";
+import {
+  ParticipationsService,
+} from "@/services/participations/participations.service";
+import type {
+  AdminGamerParticipationRow,
+} from "@/services/participations/participations.service";
 // From the service module, for the reason given for the contract service below.
 import {
   AssignmentsService,
@@ -453,9 +460,9 @@ export default async function AdminUserDetailPage({
             <Identicon id={profile.id} size={64} />
           </Avatar>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">
+            <Heading level={1} step="section">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
-            </h1>
+            </Heading>
             {/* A username-mode child's username. A synthetic handle is never
                 printed as an address: it names no inbox, and for a child in
                 `parent` mode nobody ever types it. */}
@@ -572,10 +579,12 @@ export default async function AdminUserDetailPage({
           {(isCustomer || isGamer) && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-act" />
-                  {isCustomer ? t('linkedGamers') : t('linkedParents')}
-                </CardTitle>
+                  <Heading level={2} step="card-title">
+                    {isCustomer ? t('linkedGamers') : t('linkedParents')}
+                  </Heading>
+                </div>
               </CardHeader>
               <CardContent>
                 {isCustomer && linkedGamers.length > 0 && (
@@ -668,10 +677,10 @@ export default async function AdminUserDetailPage({
           {isGamer && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-act" />
-                  {t('assignedProducts')}
-                </CardTitle>
+                  <Heading level={2} step="card-title">{t('assignedProducts')}</Heading>
+                </div>
               </CardHeader>
               <CardContent>
                 {participationsByGamer.get(userId)?.length ? (
@@ -714,10 +723,10 @@ export default async function AdminUserDetailPage({
           {isGedu && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-act" />
-                  {t('assignedProducts')}
-                </CardTitle>
+                  <Heading level={2} step="card-title">{t('assignedProducts')}</Heading>
+                </div>
               </CardHeader>
               <CardContent>
                 {geduSeats.length > 0 ? (

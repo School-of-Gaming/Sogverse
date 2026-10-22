@@ -28,6 +28,9 @@ export const CASE_IDS = {
   steps: id(0x1005),
   faq: id(0x1006),
   cta: id(0x1007),
+  testimonials: id(0x1008),
+  products: id(0x1009),
+  subscribe: id(0x100a),
   picture: id(0x2001),
   pictureTwo: id(0x2002),
   imageItemA: id(0x3001),
@@ -37,6 +40,10 @@ export const CASE_IDS = {
   stepA: id(0x3005),
   stepB: id(0x3006),
   faqA: id(0x3007),
+  testimonialA: id(0x4001),
+  testimonialB: id(0x4002),
+  productA: id(0x4003),
+  productB: id(0x4004),
 } as const;
 
 const I = CASE_IDS;
@@ -68,12 +75,20 @@ export function everySection(): LandingSection[] {
       ],
     },
     { id: I.steps, type: "steps", items: [{ id: I.stepA }, { id: I.stepB }] },
+    {
+      id: I.testimonials,
+      type: "testimonials",
+      arrangement: "pair",
+      testimonialIds: [I.testimonialA, I.testimonialB],
+    },
     { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
+    { id: I.subscribe, type: "subscribe" },
     {
       id: I.cta,
       type: "cta",
       button: { kind: "external", url: "https://example.com" },
     },
+    { id: I.products, type: "products", productIds: [I.productA, I.productB] },
   ];
 }
 
@@ -125,9 +140,25 @@ export function everyText(): Texts {
         [I.stepB]: { title: "Play", body: "Join the session." },
       },
     },
+    [I.testimonials]: {
+      eyebrow: "Parents",
+      heading: "What parents tell us",
+      intro: "In their own words.",
+    },
+    [I.products]: {
+      eyebrow: "This term",
+      heading: "Clubs near you",
+      intro: "Online and in person.",
+    },
     [I.faq]: {
       heading: "Questions",
       items: { [I.faqA]: { question: "Is it safe?", answer: "Yes — *always*." } },
+    },
+    [I.subscribe]: {
+      eyebrow: "News",
+      heading: "Stay in touch",
+      intro: "A short email once a month.",
+      buttonLabel: "Sign up",
     },
     [I.cta]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
   };
@@ -156,6 +187,8 @@ export const EVERY_REQUIRED_PATH: readonly string[] = [
   `sections.${I.faq}.heading`,
   `sections.${I.faq}.items.${I.faqA}.question`,
   `sections.${I.faq}.items.${I.faqA}.answer`,
+  `sections.${I.subscribe}.heading`,
+  `sections.${I.subscribe}.buttonLabel`,
   `sections.${I.cta}.heading`,
   `sections.${I.cta}.buttonLabel`,
 ];
@@ -264,6 +297,22 @@ export function requiredTextCases(): RequiredTextCase[] {
         `sections.${I.faq}.items.${I.faqA}.question`,
         `sections.${I.faq}.items.${I.faqA}.answer`,
       ],
+    },
+    {
+      name: "a products section with no words at all is complete: its words are optional",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: Object.fromEntries(
+        Object.entries(everyText()).filter(([key]) => key !== I.products),
+      ),
+      expected: [],
+    },
+    {
+      name: "a products section's optional words left blank are not asked for",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: { ...everyText(), [I.products]: { eyebrow: "", heading: " ", intro: 7 } },
+      expected: [],
     },
     {
       name: "text for a section the structure does not hold is ignored",

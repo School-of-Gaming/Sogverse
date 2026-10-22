@@ -11,11 +11,25 @@ import {
   bulletList,
   numberedList,
   inlineBold,
+  quotedMessage,
   sectionLabel,
+  smallNote,
 } from "./blocks";
 import { renderMarkdownForEmail } from "./markdown";
+import { sessionPhotoGrid, type SessionReportPhoto } from "./session-photos";
 import { MAIL_SPACE, MAIL_WEIGHT, mailText } from "./type-scale";
-import { heading, paragraph, pinnedFill, styledName, styledProductName } from "./utils";
+import {
+  TEXT_PINS,
+  defuseAutolinks,
+  heading,
+  holdBlock,
+  holdInline,
+  paragraph,
+  pinnedFill,
+  styledName,
+  styledProductName,
+  subheading,
+} from "./utils";
 
 /**
  * The email components reference — what `/admin/ui-components` is for the app,
@@ -54,6 +68,12 @@ import { heading, paragraph, pinnedFill, styledName, styledProductName } from ".
  * in both. A difference is a finding about a component, not a preference between
  * renderings.
  *
+ * **It is the one mail that has to cover every construct a template uses** —
+ * every helper, every shape a helper takes, every way a picture or a link sits
+ * in a mail — because it is the mail that gets sent to a client when a client
+ * is being checked. A construct a template uses and this page does not show is
+ * a construct nobody has looked at in that client.
+ *
  * **Its copy is literal English and is not translated**, the same call
  * `fixtures/` makes: developer-facing instrumentation that only renders inside
  * `/admin/testing`, whose strings are component names, hex values and sample
@@ -68,9 +88,7 @@ function entry(name: string, specimen: string): string {
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.furniture}px;">
       <tr>
-        <td style="padding:0 0 ${MAIL_SPACE.tight}px;${mailText("small", DARK_THEME.mutedFg, MAIL_WEIGHT.bold)}">
-          ${name}
-        </td>
+        <td style="padding:0 0 ${MAIL_SPACE.tight}px;${mailText("small", DARK_THEME.mutedFg, MAIL_WEIGHT.bold)}">${holdBlock(name)}</td>
       </tr>
       <tr><td>${specimen}</td></tr>
     </table>`;
@@ -103,22 +121,35 @@ function section(title: string): string {
  * `palette-contrast.test.ts`, which is why no ratio is printed here — a number
  * in the mail would be a claim nobody can check from the mail, while the same
  * number in a test fails the build when it stops being true.
+ *
+ * The label is a colour on a fill, so it takes the two treatments a mail gives
+ * text on a fill: a dark label is pinned, as the primary button's is, and a
+ * light one is held, as the violet button's is. The token name beside it is
+ * held like any other small print, and a joiner after each dot stops a client
+ * reading `DARK_THEME.bg` as an address and linking it.
  */
 function swatch(token: string, hex: string, on: string): string {
+  const light = on === DARK_THEME.foreground || on === BRAND.worldForeground;
+  const label = light
+    ? holdInline(hex, "inline-block")
+    : `<span class="${TEXT_PINS.dark.className}" style="color:${on};">${hex}</span>`;
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.tight}px;">
       <tr>
-        <td width="150" style="${pinnedFill(hex)}border-radius:${RADIUS.sm};padding:14px 10px;${mailText("small", on, MAIL_WEIGHT.bold)}text-align:center;">
-          ${hex}
-        </td>
-        <td style="padding-left:12px;${mailText("small", DARK_THEME.foreground)}">
-          ${token}
-        </td>
+        <td width="150" style="${pinnedFill(hex)}border-radius:${RADIUS.sm};padding:14px 10px;${mailText("small", on, MAIL_WEIGHT.bold)}text-align:center;">${label}</td>
+        <td style="padding-left:12px;${mailText("small", DARK_THEME.foreground)}">${holdBlock(defuseAutolinks(token))}</td>
       </tr>
     </table>`;
 }
 
-export function buildComponentsReferenceEmail(locale: string): string {
+/**
+ * The reference's demo photographs: the session report's own fixture art,
+ * handed in by the registry so the builder composes no URL.
+ */
+export function buildComponentsReferenceEmail(
+  locale: string,
+  photos: readonly SessionReportPhoto[],
+): string {
   /*
    * PALETTE
    *
@@ -280,17 +311,26 @@ export function buildComponentsReferenceEmail(locale: string): string {
    * the builder slicing one out of the sentence.
    *
    * `bulletList` takes composed HTML, so anything from a user is escaped before
-   * it goes in. `numberedList` is the same list with the client's own `<ol>`
-   * numbering, for a run whose order is part of what it says; the two are
-   * styled identically, so a mail carrying both spaces them alike.
+   * it goes in. `numberedList` is the same list with numbers, for a run whose
+   * order is part of what it says; the two are styled identically, so a mail
+   * carrying both spaces them alike.
    *
    * `inlineBold` is the emphasis a sentence carries inside itself, and the
    * shape a message's own `<b>` renders to through `t.markup`. Weight, never
    * colour — a dark theme rewrites a colour and leaves a weight alone.
+   *
+   * A list whose items carry a link is its own specimen, because it is drawn
+   * differently: a table with its markers held in a column of their own and
+   * each item held run by run around the link, where a plain list is a real
+   * list held whole (the topic-prep guide's steps are the case). `subheading` is the title of
+   * one item in a run of them, a spotlight's; `smallNote` is the staff-facing
+   * small print under a block; `quotedMessage` is a person's own words in a
+   * staff mail.
    */
   const text = `
     ${section("Text")}
     ${entry("heading + paragraph", `${heading("A heading")}${paragraph("Body copy, which is what most of a mail is.")}`)}
+    ${entry("subheading + paragraph", `${subheading("A subheading")}${paragraph("The item it titles.")}`)}
     ${entry("sectionLabel", `${sectionLabel("A section label")}${paragraph("The block it labels.")}`)}
     ${entry(
       "hairlineRule + heading",
@@ -317,10 +357,25 @@ export function buildComponentsReferenceEmail(locale: string): string {
       numberedList(["The first thing to do.", "And then the second."]),
     )}
     ${entry(
+      "numberedList + inlineLink",
+      numberedList([
+        `${inlineBold("Make an account")}<br />It takes a minute.<br />${inlineLink("https://sogverse.sog.gg/settings", "Open your settings")}`,
+        `${inlineBold("Check the device")}${bulletList(["A mouse.", "Headphones."])}`,
+      ]),
+    )}
+    ${entry(
       "inlineBold",
       paragraph(
         `Buy it on ${inlineBold("the device you will actually play on")} — a copy does not carry over.`,
       ),
+    )}
+    ${entry(
+      "paragraph + smallNote",
+      `${paragraph("The block the note qualifies.")}${smallNote("A note for the staff reading this.")}`,
+    )}
+    ${entry(
+      "sectionLabel + quotedMessage",
+      `${sectionLabel("Message")}${quotedMessage("Hello! Our gamer cannot sign in.<br/>Could you help?")}`,
     )}
   `;
 
@@ -356,6 +411,16 @@ export function buildComponentsReferenceEmail(locale: string): string {
         ["Where", "Kallion kirjasto, Viides linja 11"],
         ["Price", "€40.00 per month"],
       ]),
+    )}
+    ${entry(
+      "factList — leadIn",
+      factList(
+        [
+          ["Club", "Minecraft 101"],
+          ["Price", "€40.00 per month"],
+        ],
+        { leadIn: "Your order" },
+      ),
     )}
   `;
 
@@ -400,6 +465,36 @@ export function buildComponentsReferenceEmail(locale: string): string {
         "feed",
       ),
     )}
+    ${entry(
+      "renderMarkdownForEmail — with links",
+      renderMarkdownForEmail(
+        [
+          "Our winter camp opens for signups on Monday. Read [the camp page](https://sogverse.sog.gg/shop) for the dates.",
+          "",
+          "- Bring **headphones**",
+          "- Ask us anything at [support](https://sogverse.sog.gg/help)",
+        ].join("\n"),
+        "spotlight",
+      ),
+    )}
+  `;
+
+  /*
+   * PHOTOS
+   *
+   * `sessionPhotoGrid` is how a content picture reaches a mail — a session's
+   * photos, and a spotlight's picture as a column of one. Every box is
+   * arithmetic from the stored size under a height budget, painted as a well
+   * so a blocked render keeps its shape. The three demo pictures are the three
+   * shapes the arithmetic answers for: 16:9, portrait and square.
+   *
+   * A picture is never held. Gmail iOS leaves images alone, so a hold would
+   * turn the photograph into its negative; the well's edge is drawn as a fill
+   * for the same reason a callout's is.
+   */
+  const photoSection = `
+    ${section("Photos")}
+    ${entry("sectionLabel + sessionPhotoGrid", `${sectionLabel("Photos from the session")}${sessionPhotoGrid(photos)}`)}
   `;
 
   /*
@@ -439,7 +534,7 @@ export function buildComponentsReferenceEmail(locale: string): string {
 
   return wrapInLayout({
     title: "Email components",
-    content: `${heading("Email components")}${palette}${buttons}${text}${facts}${markdown}${callout}`,
+    content: `${heading("Email components")}${palette}${buttons}${text}${facts}${markdown}${photoSection}${callout}`,
     locale,
   });
 }

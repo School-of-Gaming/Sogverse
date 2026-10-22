@@ -2626,6 +2626,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at: string
+          voice_join_instructions: string | null
         }
         Insert: {
           created_at?: string
@@ -2635,6 +2636,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Update: {
           created_at?: string
@@ -2644,6 +2646,7 @@ export type Database = {
           product_id?: string
           short_description?: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Relationships: [
           {
@@ -2662,6 +2665,7 @@ export type Database = {
           created_at: string
           created_by: string
           end_date: string | null
+          external_voice_url: string | null
           for_gamers: boolean
           for_parents: boolean
           id: string
@@ -2686,6 +2690,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
+          voice_room_mode: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled: boolean
         }
         Insert: {
@@ -2694,6 +2699,7 @@ export type Database = {
           created_at?: string
           created_by: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2718,6 +2724,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Update: {
@@ -2726,6 +2733,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2750,6 +2758,7 @@ export type Database = {
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Relationships: [
@@ -3683,6 +3692,94 @@ export type Database = {
           },
         ]
       }
+      testimonial_translations: {
+        Row: {
+          attribution: string
+          locale: string
+          quote: string
+          testimonial_id: string
+        }
+        Insert: {
+          attribution: string
+          locale: string
+          quote: string
+          testimonial_id: string
+        }
+        Update: {
+          attribution?: string
+          locale?: string
+          quote?: string
+          testimonial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_translations_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "testimonials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_via: string | null
+          id: string
+          last_saved_by: string | null
+          last_saved_via: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_email_requests: {
         Row: {
           created_at: string
@@ -4208,6 +4305,10 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: string[]
       }
+      check_testimonial_version: {
+        Args: { p_attribution: string; p_locale: string; p_quote: string }
+        Returns: undefined
+      }
       claim_expired_seat_offer_notifications: {
         Args: { p_participation_id?: string }
         Returns: Json
@@ -4226,6 +4327,10 @@ export type Database = {
       clear_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
+      }
+      clone_landing_page: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
       }
       confirm_paid_participation: {
         Args: {
@@ -4248,11 +4353,7 @@ export type Database = {
           p_gender?: Database["public"]["Enums"]["gender_type"]
           p_guardian_attested?: boolean
           p_last_name: string
-          p_minecraft_username?: string
-          p_minecraft_uuid?: string
           p_parent_id: string
-          p_roblox_user_id?: number
-          p_roblox_username?: string
           p_sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
         }
         Returns: undefined
@@ -4303,6 +4404,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -4329,6 +4431,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -4337,6 +4440,7 @@ export type Database = {
         Args: { p_enabled: boolean; p_image_id?: string; p_versions: Json }
         Returns: string
       }
+      create_testimonial: { Args: { p_versions: Json }; Returns: string }
       decline_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -4848,6 +4952,13 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      list_landing_page_testimonials: {
+        Args: { p_page_id: string }
+        Returns: {
+          testimonial_id: string
+          versions: Json
+        }[]
+      }
       list_public_team_profiles: {
         Args: never
         Returns: {
@@ -4998,7 +5109,15 @@ export type Database = {
         Args: { p_id: string; p_locale: string }
         Returns: string
       }
+      remove_testimonial_version: {
+        Args: { p_id: string; p_locale: string }
+        Returns: string
+      }
       replace_spotlight_versions: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: undefined
+      }
+      replace_testimonial_versions: {
         Args: { p_id: string; p_versions: Json }
         Returns: undefined
       }
@@ -5135,6 +5254,19 @@ export type Database = {
           p_title?: string
           p_translations: Json
           p_user_id: string
+        }
+        Returns: string
+      }
+      save_testimonial: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
+      }
+      save_testimonial_version: {
+        Args: {
+          p_attribution: string
+          p_id: string
+          p_locale: string
+          p_quote: string
         }
         Returns: string
       }
@@ -5359,6 +5491,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -5385,6 +5518,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -5469,6 +5603,7 @@ export type Database = {
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
+      voice_room_mode: "sogverse" | "external" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5651,6 +5786,7 @@ export const Constants = {
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
+      voice_room_mode: ["sogverse", "external", "none"],
     },
   },
 } as const

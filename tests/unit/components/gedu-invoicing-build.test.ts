@@ -16,7 +16,7 @@ import type {
   GeduInvoicingGroup,
   GeduInvoicingProduct,
   GeduInvoicingSnapshot,
-} from "@/services/gedu-invoicing";
+} from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 
 /**
  * The document → gedu invoice mapping: which seats a gedu is paid for, in which

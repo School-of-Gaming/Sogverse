@@ -27,7 +27,7 @@ vi.mock("@/providers", () => ({
 }));
 
 import { LibraryArticleEditor } from "@/components/admin/library/library-article-editor";
-import type { AdminLibraryArticle } from "@/services/library";
+import type { AdminLibraryArticle } from "@/services/library/library.contracts";
 
 /** A saved draft, never published; each case puts its own body in it. */
 const DRAFT: AdminLibraryArticle = {

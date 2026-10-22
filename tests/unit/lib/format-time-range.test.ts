@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
-import { formatTimeRange } from "@/lib/utils";
+import { formatTimeRange } from "@/lib/date-format";
 
 // A summer instant, so Helsinki is a stable UTC+3.
 const START = new Date("2026-09-23T15:00:00Z"); // 18:00 Helsinki

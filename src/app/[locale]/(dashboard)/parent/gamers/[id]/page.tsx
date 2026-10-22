@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Heading } from "@sog/ui";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GameAccountCard } from "@/components/game-account";
@@ -18,12 +19,19 @@ import { GameAccountCard } from "@/components/game-account";
 // for the sake of one card, and none of the three is reachable from this page.
 import { GamerSignInCard } from "@/components/family/gamer-sign-in-card";
 import { GamerPhotoConsentCard } from "@/components/family/gamer-photo-consent-card";
-import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
-import { useGamerPhotoConsents } from "@/services/gamer-photo-consents";
-import { useMinecraftAccount } from "@/services/minecraft";
-import { useRobloxAccount } from "@/services/roblox";
-import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
-import { computeAge } from "@/lib/utils";
+import {
+  useMyGamers,
+  useUpdateGamer,
+  useGamerProfile,
+} from "@/services/gamers/gamers.queries";
+import {
+  useGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
+import { useMinecraftAccount } from "@/services/minecraft/minecraft.queries";
+import { useRobloxAccount } from "@/services/roblox/roblox.queries";
+import { DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { useTimezone } from "@/providers";
 
 export default function GamerDetailsPage() {
@@ -130,7 +138,9 @@ export default function GamerDetailsPage() {
         </Link>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-medium">{t('gamerDetail.notFound.title')}</h3>
+            <Heading level={1} step="card-title" align="center">
+              {t('gamerDetail.notFound.title')}
+            </Heading>
             <p className="mt-2 text-sm text-muted-foreground">
               {t('gamerDetail.notFound.description')}
             </p>
@@ -157,7 +167,7 @@ export default function GamerDetailsPage() {
       </Link>
 
       <div>
-        <h1 className="text-3xl font-bold">{t('gamerDetail.title')}</h1>
+        <Heading level={1} step="section">{t('gamerDetail.title')}</Heading>
         <p className="text-muted-foreground">
           {t('gamerDetail.subtitle', { name: gamer.first_name })}
         </p>
@@ -168,7 +178,7 @@ export default function GamerDetailsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            <CardTitle>{c('profile')}</CardTitle>
+            <Heading level={2} step="card-title">{c('profile')}</Heading>
           </div>
           <CardDescription>
             {t('gamerDetail.profileDescription')}

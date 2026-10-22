@@ -18,6 +18,7 @@ auto-load here.
 - **Tailwind CSS 4** with class-variance-authority for component variants
 - **Stripe** for payments
 - **Brevo** (formerly Sendinblue) for transactional email — every mail is composed in-repo and sent through Brevo's REST API (`src/lib/email-templates/`, sent via the single `sendTransactionalEmail()` wrapper). **Supabase Auth sends no email**: confirmations are off, and reset/verification links are minted with `generateLink` and sent by our own templates — so GoTrue's SMTP/mailer dashboard config (and its email rate limits) is unused and gates nothing. See `src/lib/email-templates/CLAUDE.md`.
+- **Klaviyo** holds the newsletter list a landing page's email sign-up joins, written one way only (`src/services/landing-pages/`)
 - **Daily.co** for real-time voice/video chat
 - **Vitest** + **Playwright** for testing
 
@@ -64,8 +65,8 @@ is added here: a new opinion goes to SOG-UI, and the construct joins the adoptio
 except where the owner places one here because the library has no home for it yet, and
 such a rule leaves with its adoption like the rest.
 The UI sections below (layout and scrolling, loading and disabled state, button order,
-cards, the headings rule, the UI component reference and preview scenes) are that
-transitional state.
+cards, the caps rule for non-heading markers, the UI component reference and preview
+scenes) are that transitional state.
 
 Colour and the faces have already left: the tokens, the grounds, the one-theme rule, the
 ban on a hardcoded colour, the exhaustive list of faces and the rule that this app defines
@@ -179,7 +180,7 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 **Rule: where two buttons answer one question — one affirmatively, one negatively — the affirmative sits on the RIGHT in a row and on TOP in a stack.** Confirm/Cancel, Save/Discard, Accept/Decline. The **affirmative** is the action the surface exists to ask about, *including* a destructive one — a red Remove in a confirm dialog is still the answer to the dialog's question — and Cancel, Back, Close and Decline are the negative. One order everywhere is the whole point: whoever confirmed the last dialog already knows where this one's confirm button is, and muscle memory that is right most of the time is worse than none at all. Right-in-a-row is the desktop convention; top-in-a-stack is the platform one (Apple HIG stacked alerts, Material stacked dialogs).
 
-**The geometry is not limited to a literal yes and no: any two-action row with one clear primary and one secondary alternative takes the same positions** — a keep-browsing beside a go-to-my-SOG, an explore-the-shop beside a create-an-account. The primary is the one the surface is steering toward, it goes right and on top, and the alternative sits beside it exactly where a Cancel would.
+**The geometry is not limited to a literal yes and no: any two-action row with one clear primary and one secondary alternative takes the same positions** — an explore-the-shop beside a create-an-account. The primary is the one the surface is steering toward, it goes right and on top, and the alternative sits beside it exactly where a Cancel would.
 
 **One DOM order satisfies both, so there is one authoring shape: children in `[negative, affirmative]` order inside `flex flex-col-reverse gap-* sm:flex-row` — plus `sm:justify-end` where the row is a footer.** Last-in-DOM is rightmost in a row and, reversed, topmost in a stack, so the affirmative is always the last child and nobody has to re-derive the reading order per surface. Plain `flex-col` is the bug this replaces: same DOM, and the affirmative lands at the bottom. `DialogFooter` and `ConfirmDialog` bake the shape in — a dialog gets it by using them; a hand-rolled row states the classes itself. **A run of three or more follows the same spine: negative first, affirmative last, everything else between** — a leave-confirmation reading Cancel, End for everyone, Leave has its two ends in the right places and its middle action wherever it reads best. Describe that middle one by what it does, never as "the secondary": under `col-reverse` it is neither second from the left nor second from the top, so a position word will be wrong in one layout or the other.
 
@@ -212,9 +213,9 @@ The pattern stays inline per screen — **do not extract it into a shared `useCo
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**
 
-- **Display formatting.** `Intl` APIs and `next-intl` formatters. Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, `useFormatter().relativeTime()` from `next-intl`. The locale always comes from `useLocale()` (client) or `getLocale()` (server), and what `Intl` is handed is `formattingLocale()` of it, never the app locale itself — the shared helpers resolve it themselves, so they take the app locale (`src/i18n/CLAUDE.md`).
+- **Display formatting.** `Intl` APIs and `next-intl` formatters. Shared helpers live in `src/lib/date-format.ts` (`formatDate`, `formatTime` and the ranges) and `src/lib/money.ts` (`formatCurrency*`). For relative time, `useFormatter().relativeTime()` from `next-intl`. The locale always comes from `useLocale()` (client) or `getLocale()` (server), and what `Intl` is handed is `formattingLocale()` of it, never the app locale itself — the shared helpers resolve it themselves, so they take the app locale (`src/i18n/CLAUDE.md`).
 - **Local-date strings** (calendar keys, "today" markers, anything `YYYY-MM-DD`-shaped that means *today in someone's zone*). Use `formatInTimeZone(new Date(), tz, "yyyy-MM-dd")` from `date-fns-tz`. Pick the timezone deliberately: usually the entity's zone (e.g. `product.timezone`) for entity-local rendering, or the viewer's local zone (no explicit `timeZone`) for personal data. Never both implicitly.
-- **Zone-to-zone conversion.** `fromZonedTime` / `toZonedTime` from `date-fns-tz` (already a project dep — see `src/lib/utils.ts`, `effective-status.ts`).
+- **Zone-to-zone conversion.** `fromZonedTime` / `toZonedTime` from `date-fns-tz` (already a project dep — see `src/lib/schedule-occurrence.ts`, `effective-status.ts`).
 - **Anti-pattern: never write `new Date().toISOString().slice(0, 10)`.** That's the date in UTC, not anyone's local date — for any non-UTC viewer it's off-by-one near midnight and silently wrong everywhere else without anyone noticing. If you find yourself reaching for it, you want `formatInTimeZone` with an explicit zone instead.
 - **Anti-pattern: never do day/week arithmetic on a Date that carries a zoned wall clock** — stepping a `toZonedTime` result by `± n × 86_400_000` (a local day is 24 hours except on the two DST transition days, so instant stepping repeats or skips a calendar date once a year), or mutating one with `setDate()` (it is a runtime-local Date, and a wall clock landing in the *runtime* zone's DST gap silently normalizes an hour away). Both misfire only when the runtime zone crosses a transition, so UTC CI can't catch either. The safe shape has three steps: read the wall clock from the zoned Date's **local** fields (never `getUTC*` — those agree only on a UTC runtime, and in any non-UTC browser they land on the wrong weekday once the runtime offset crosses midnight); do the day-stepping as UTC-pinned calendar arithmetic (`Date.UTC(y, m, d ± n)` read back via `getUTC*` — UTC has no DST, so day arithmetic there is exact; a `T12:00:00Z`-anchored date walk is the same trick); convert back to an instant with `fromZonedTime` at the end. Dates that are UTC-pinned end to end (built from `Date.UTC`/`...Z` strings and read only via `getUTC*`) are outside this rule — arithmetic on those is exact.
 
@@ -300,9 +301,15 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 ## Styling
 
-**Rule: headings are sentence case — never Title Case Every Word, never ALL CAPS.** Proper nouns keep their capitals and nothing else does; this is a house rule, owner-adopted 2026-08-24, and it has teeth because inconsistent heading case is the one typographic slip a reader notices on every page at once. It binds the heading text in `messages/` and the CSS on the element alike, so `uppercase` on a real heading is the same defect as a Title-Cased string.
-
-**The test is voice versus furniture, and the HTML tag does not decide it.** Sentence case wherever the brand is *speaking* — a page title, a card heading, a section heading a reader reads as a sentence; caps are institutional costume there. Caps are permitted on *furniture*: the small, muted, tracked markers a reader scans as structure rather than reads as prose — eyebrows, pills, field labels, table headers, the micro-heading over a list. The brand's own topic-pill spec is bold caps, which is what settles it. An `h2` can be furniture and often is: the tag is there for the accessibility outline, and a `text-[11px]` muted marker over a rail card is a label whether it is an `h2`, a `p` or a `span`. **The corollary that catches the real mistakes: a furniture element and its identically-styled siblings case together** — de-capping an `h2` label while the `span` beside it keeps its caps is the defect, not the fix. And **caps and letterspacing travel as a pair**: a heading that goes sentence case drops its `tracking-wide`/`tracking-wider` in the same edit, because tracked lowercase reads as a rendering fault.
+**Rule: a non-heading marker may be set in caps, and when it is, caps and letterspacing
+travel as a pair.** Headings are SOG-UI's (`packages/sog-ui/CLAUDE.md`); this rule is
+about the small, muted markers a reader scans as structure rather than reads as prose —
+eyebrows, pills, field labels, table headers. The brand's own topic-pill spec is bold caps,
+which is what settles it. **The corollary that catches the real mistakes: a marker and its
+identically-styled siblings case together** — de-capping one label while the one beside it
+keeps its caps is the defect, not the fix. And a marker that goes sentence case drops its
+`tracking-wide`/`tracking-wider` in the same edit, because tracked lowercase reads as a
+rendering fault.
 
 ## Authored rich text
 

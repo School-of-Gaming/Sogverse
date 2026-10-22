@@ -18,8 +18,10 @@ import {
   useRemoveTrainee,
   useRenameGroup,
   useSendSeatOffer,
-} from "@/services/groups";
-import { useSeatOfferSweepOnMount } from "@/services/participations";
+} from "@/services/groups/groups.queries";
+import {
+  useSeatOfferSweepOnMount,
+} from "@/services/participations/participations.queries";
 import type { ProductAudience } from "@/lib/products/product-audience";
 import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import {
@@ -30,13 +32,14 @@ import {
 import { GroupsPanelView, type GroupsPanelActions } from "./groups-panel-view";
 import { SwitchClubSheet } from "./switch-club-sheet";
 import { robloxIdsFrom } from "./panel-rules";
-import { useRobloxRenders } from "@/services/roblox";
+import { useRobloxRenders } from "@/services/roblox/roblox.queries";
 import { platformForTopic } from "@/lib/products/topics";
-import { computeAge } from "@/lib/utils";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type {
   MissingRequirement,
   SessionRequirements,
@@ -78,6 +81,8 @@ interface GroupsPanelProps {
    * session still ahead of it.
    */
   voiceAvailable: boolean;
+  /** How the product's sessions are joined, for the Join button. */
+  voiceRoom: ProductVoiceRoom;
   /** Whether the shared session window is currently open. */
   voiceIsOpen: boolean;
   /** Pre-formatted "next open" date label for the locked Join button. */
@@ -118,6 +123,7 @@ export function GroupsPanel({
   seatCount,
   waitlistEnabled,
   voiceAvailable,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -309,6 +315,7 @@ export function GroupsPanel({
       seatCount={seatCount}
       waitlistEnabled={waitlistEnabled}
       voiceAvailable={voiceAvailable}
+      voiceRoom={voiceRoom}
       voiceIsOpen={voiceIsOpen}
       opensDate={opensDate}
       opensTime={opensTime}

@@ -8,6 +8,11 @@ import {
 } from "lucide-react";
 
 import {
+  HEADING_STEPS,
+  Heading,
+  type HeadingPair,
+} from "../../src/components/heading";
+import {
   BRAND,
   NEUTRALS,
   STATUS,
@@ -64,6 +69,21 @@ import {
 // reads in English.
 const SPECIMEN = "Sogverse ABCÅÄÖÉÇ abcåäöéç 0123";
 const SIGNATURE = "Aino Virtanen";
+
+/**
+ * Every pair the heading table allows, level by level, so each step is drawn
+ * at each level it may take and a pair the table drops leaves the floor with it.
+ * Spelled per level because a level is what narrows its steps in the types.
+ */
+const HEADING_PAIRS: readonly HeadingPair[] = [
+  ...HEADING_STEPS[1].map((step) => ({ level: 1, step }) as const),
+  ...HEADING_STEPS[2].map((step) => ({ level: 2, step }) as const),
+  ...HEADING_STEPS[3].map((step) => ({ level: 3, step }) as const),
+  ...HEADING_STEPS[4].map((step) => ({ level: 4, step }) as const),
+];
+
+/** A heading's words, long enough to wrap where the column is narrow. */
+const HEADING_WORDS = "Clubs, camps and events for every kind of gamer";
 
 /** Three rows, so the hovered one can be seen against the rows that are not. */
 const PEOPLE = ["Aino Virtanen", "Mikael Korhonen", "Sofia Lindgren"];
@@ -204,7 +224,7 @@ function GroundsInUse() {
             </div>
           </div>
         </div>
-        <p className="mt-2 text-h4 font-medium">Hover, on each ground</p>
+        <p className="mt-2 text-body-l font-medium">Hover, on each ground</p>
         <p className="font-mono text-body-s text-muted-foreground">
           hover:bg-hover
         </p>
@@ -216,7 +236,7 @@ function GroundsInUse() {
           <div className="h-4 w-56 max-w-full animate-pulse rounded bg-lifted" />
           <div className="h-4 w-32 max-w-full animate-pulse rounded bg-lifted" />
         </div>
-        <p className="mt-2 text-h4 font-medium">Set back</p>
+        <p className="mt-2 text-body-l font-medium">Set back</p>
         <p className="font-mono text-body-s text-muted-foreground">
           bg-lifted
         </p>
@@ -234,7 +254,7 @@ function Section({
 }) {
   return (
     <section className="mt-20">
-      <h2 className="text-h2">{title}</h2>
+      <Heading level={2} step="section">{title}</Heading>
       <div className="mt-8">{children}</div>
     </section>
   );
@@ -267,7 +287,7 @@ function Swatch({
         className={`h-16 border border-border ${token === undefined ? "" : (FILL[token] ?? "")}`}
         style={fill === undefined ? undefined : { backgroundColor: fill }}
       />
-      <p className="mt-2 text-h4 font-medium">{name}</p>
+      <p className="mt-2 text-body-l font-medium">{name}</p>
       <p className="font-mono text-body-s text-muted-foreground">{hex}</p>
     </div>
   );
@@ -276,7 +296,7 @@ function Swatch({
 export default function FoundationsPage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-16">
-      <h1 className="text-h1-mobile sm:text-h1">SOG-UI</h1>
+      <Heading level={1} step="page-title">SOG-UI</Heading>
 
       <Section title="Ground and ink">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -326,7 +346,7 @@ export default function FoundationsPage() {
                       aria-hidden
                     />
                   </span>
-                  <p className={`text-h4 font-medium ${INK[`yty-${id}`] ?? ""}`}>
+                  <p className={`text-body-l font-medium ${INK[`yty-${id}`] ?? ""}`}>
                     {family.name}
                   </p>
                 </div>
@@ -361,7 +381,7 @@ export default function FoundationsPage() {
                     {STATUS_LABEL[id]}
                   </span>
                 </div>
-                <p className="mt-2 text-h4 font-medium">{STATUS[id].name}</p>
+                <p className="mt-2 text-body-l font-medium">{STATUS[id].name}</p>
                 <p className="font-mono text-body-s text-muted-foreground">
                   {statusHex(id)}
                 </p>
@@ -384,7 +404,7 @@ export default function FoundationsPage() {
                 >
                   <Icon className="h-7 w-7 text-background" aria-hidden />
                 </div>
-                <p className="mt-2 text-h4 font-medium">{KIND_NAME[kind]}</p>
+                <p className="mt-2 text-body-l font-medium">{KIND_NAME[kind]}</p>
                 <p className="font-mono text-body-s text-muted-foreground">
                   {family.name}
                 </p>
@@ -406,7 +426,7 @@ export default function FoundationsPage() {
             return (
               <div key={role}>
                 <div className="flex h-16 items-center justify-center gap-4 rounded-lg border border-border bg-card">
-                  <span className={`text-h4 font-medium ${ink}`}>
+                  <span className={`text-body-l font-medium ${ink}`}>
                     {ROLE_NAME[role]}
                   </span>
                   <span
@@ -415,7 +435,7 @@ export default function FoundationsPage() {
                     {ROLE_NAME[role]}
                   </span>
                 </div>
-                <p className="mt-2 text-h4 font-medium">{ROLE_NAME[role]}</p>
+                <p className="mt-2 text-body-l font-medium">{ROLE_NAME[role]}</p>
                 <p className="font-mono text-body-s text-muted-foreground">
                   {family.name}
                 </p>
@@ -459,14 +479,14 @@ export default function FoundationsPage() {
               <div className="absolute inset-0 bg-scrim" />
               <div className="absolute inset-0 flex items-center justify-center p-6">
                 <div className="w-full rounded-lg border border-border bg-card p-4">
-                  <p className="text-h4">{SPECIMEN}</p>
+                  <p className="text-body-l">{SPECIMEN}</p>
                   <p className="mt-2 text-body-s text-muted-foreground">
                     {SPECIMEN}
                   </p>
                 </div>
               </div>
             </div>
-            <p className="mt-2 text-h4 font-medium">Scrim</p>
+            <p className="mt-2 text-body-l font-medium">Scrim</p>
             <p className="font-mono text-body-s text-muted-foreground">
               bg-scrim
             </p>
@@ -476,10 +496,10 @@ export default function FoundationsPage() {
             <div className="relative h-64 overflow-hidden rounded-lg border border-border">
               <Photograph />
               <div className="glass absolute inset-x-0 top-0 border-b border-border px-4 py-3">
-                <p className="text-h4">{SPECIMEN}</p>
+                <p className="text-body-l">{SPECIMEN}</p>
               </div>
             </div>
-            <p className="mt-2 text-h4 font-medium">Glass over media</p>
+            <p className="mt-2 text-body-l font-medium">Glass over media</p>
             <p className="font-mono text-body-s text-muted-foreground">
               glass
             </p>
@@ -490,7 +510,7 @@ export default function FoundationsPage() {
           <div>
             <div className="relative h-64 overflow-y-auto rounded-lg border border-border">
               <div className="glass sticky top-0 z-10 border-b border-border px-4 py-3">
-                <p className="text-h4">{SPECIMEN}</p>
+                <p className="text-body-l">{SPECIMEN}</p>
               </div>
               <div className="space-y-4 p-4">
                 <div className="rounded-lg border border-border bg-card p-4">
@@ -507,7 +527,7 @@ export default function FoundationsPage() {
                 <p className="text-body-l">{SPECIMEN}</p>
               </div>
             </div>
-            <p className="mt-2 text-h4 font-medium">Glass over content</p>
+            <p className="mt-2 text-body-l font-medium">Glass over content</p>
             <p className="font-mono text-body-s text-muted-foreground">
               glass
             </p>
@@ -519,7 +539,7 @@ export default function FoundationsPage() {
         <div className="space-y-10">
           {Object.entries(FACES).map(([id, face]) => (
             <article key={id}>
-              <h3 className="text-h3">{face.name}</h3>
+              <Heading level={3} step="card-title">{face.name}</Heading>
               {/* Every style the face declares, each drawn at every weight.
                   Only the serif declares a second one, and its two blocks are
                   named because a reader has to be told which is the drawn
@@ -532,7 +552,7 @@ export default function FoundationsPage() {
                     {face.weights.map((weight) => (
                       <p
                         key={weight}
-                        className={`text-h3 ${style === "italic" ? "italic" : ""} ${FACE_CLASS[id] ?? ""} ${WEIGHT_CLASS[weight] ?? ""}`}
+                        className={`text-body-l ${style === "italic" ? "italic" : ""} ${FACE_CLASS[id] ?? ""} ${WEIGHT_CLASS[weight] ?? ""}`}
                       >
                         {id === "cursive" ? SIGNATURE : SPECIMEN}
                       </p>
@@ -546,12 +566,12 @@ export default function FoundationsPage() {
               mail face has no token: it is the reader's own sans and the only
               way to show it is to name the stack, exactly as a mail does. */}
           <article>
-            <h3 className="text-h3">{MAIL_FACE.name}</h3>
+            <Heading level={3} step="card-title">{MAIL_FACE.name}</Heading>
             <div className="mt-4 space-y-2" style={{ fontFamily: MAIL_FACE.stack }}>
               {MAIL_FACE.weights.map((weight) => (
                 <p
                   key={weight}
-                  className={`text-h3 ${WEIGHT_CLASS[weight] ?? ""}`}
+                  className={`text-body-l ${WEIGHT_CLASS[weight] ?? ""}`}
                 >
                   {SPECIMEN}
                 </p>
@@ -580,6 +600,46 @@ export default function FoundationsPage() {
               )}
             </div>
           ))}
+        </div>
+      </Section>
+
+      <Section title="Heading">
+        <div className="space-y-8">
+          {HEADING_PAIRS.map((pair) => (
+            <div
+              key={`${pair.level}-${pair.step}`}
+              className="border-b border-border pb-8"
+            >
+              <Label>{`h${pair.level} · ${pair.step}`}</Label>
+              <div className="mt-1">
+                <Heading {...pair}>{HEADING_WORDS}</Heading>
+              </div>
+            </div>
+          ))}
+          <div className="border-b border-border pb-8">
+            <Label>center</Label>
+            <div className="mt-1">
+              <Heading level={1} step="hero" align="center">
+                {HEADING_WORDS}
+              </Heading>
+            </div>
+          </div>
+          <div className="border-b border-border pb-8">
+            <Label>center-narrow</Label>
+            <div className="mt-1">
+              <Heading level={1} step="hero" align="center-narrow">
+                {HEADING_WORDS}
+              </Heading>
+            </div>
+          </div>
+          <div>
+            <Label>truncate</Label>
+            <div className="mt-1 w-[360px] max-w-full border border-dashed border-border p-4">
+              <Heading level={3} step="card-title" truncate>
+                {HEADING_WORDS}
+              </Heading>
+            </div>
+          </div>
         </div>
       </Section>
     </main>

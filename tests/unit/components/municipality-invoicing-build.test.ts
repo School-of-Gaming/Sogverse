@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { buildMunicipalityInvoicing } from "@/components/admin/municipality-invoicing/build-municipality-invoicing";
-import type { InvoiceCustomerRow } from "@/services/invoice-customers";
+import type {
+  InvoiceCustomerRow,
+} from "@/services/invoice-customers/invoice-customers.contracts";
 import type {
   MunicipalityInvoicingClub,
   MunicipalityInvoicingSnapshot,
-} from "@/services/municipality-invoicing";
+} from "@/services/municipality-invoicing/municipality-invoicing.contracts";
 
 /**
  * The document → invoice mapping, which is where every decision an invoice

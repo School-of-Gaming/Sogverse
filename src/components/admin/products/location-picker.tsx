@@ -4,10 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { MapPin, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import {
-  useLocationsByIds,
-  type LocationWithChain,
-} from "@/services/locations";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import type { LocationWithChain } from "@/services/locations/locations.service";
 import {
   LocationPickerDialog,
   useBoundCountryName,
@@ -20,8 +18,8 @@ import {
   type AcceptedLocation,
 } from "@/lib/locations/stored-pick";
 import { SitePanel } from "@/components/group-workspace/SitePanel";
-import { useSiteNotes } from "@/services/sites";
-import { ROUTES } from "@/lib/constants";
+import { useSiteNotes } from "@/services/sites/sites.queries";
+import { ROUTES } from "@/lib/constants/routes";
 import { MUNI_CLUB_COUNTRY_CODE } from "./product-type-config";
 import { SitePickerDialog } from "./site-picker-dialog";
 

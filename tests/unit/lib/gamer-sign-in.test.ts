@@ -13,8 +13,7 @@ import {
 } from "@/lib/gamer-sign-in";
 
 /**
- * The gamer address helpers, which used to live in `utils.ts` as three loose
- * functions. What they answer now is one question — what a child's stored
+ * The gamer address helpers. What they answer is one question — what a child's stored
  * address *is*, given their sign-in mode — and the cases below are the ones
  * where getting it wrong is expensive: mailing a handle nobody reads, and
  * rewriting an adult's real address into a synthetic one at the login form.

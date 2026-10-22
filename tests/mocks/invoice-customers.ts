@@ -1,4 +1,6 @@
-import type { InvoiceCustomerRow } from "@/services/invoice-customers";
+import type {
+  InvoiceCustomerRow,
+} from "@/services/invoice-customers/invoice-customers.contracts";
 
 /**
  * Invoice customers as the list read delivers them: by invoice name, then by id.

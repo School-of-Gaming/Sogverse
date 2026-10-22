@@ -12,7 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { CatalogueImageUser } from "@/services/catalogue-images";
+import type {
+  CatalogueImageUser,
+} from "@/services/catalogue-images/catalogue-images.service";
 import type { CatalogueImagePurpose } from "@/types";
 import { CATALOGUE_COPY } from "./catalogue-copy";
 import { useCatalogueCrop } from "./catalogue-crop";

@@ -28,22 +28,25 @@
  */
 
 import { useId, useState } from "react";
+import { Heading } from "@sog/ui";
 import { GraduationCap } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { StatusLine } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   GEDU_QUALIFICATIONS,
+  type HeldGeduQualification,
+} from "@/services/gedu/gedu-qualifications.service";
+import {
   useGeduQualifications,
   useSetGeduQualification,
-  type HeldGeduQualification,
-} from "@/services/gedu";
+} from "@/services/gedu/gedu-qualifications.queries";
 import { personName } from "@/components/admin/person-name";
 import { useQualificationNames } from "@/components/admin/qualification-names";
 import { useTimezone } from "@/providers";
 import type { GeduQualification } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 interface GeduQualificationsCardProps {
   geduId: string;
@@ -92,10 +95,10 @@ export function GeduQualificationsCard({ geduId, initial }: GeduQualificationsCa
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <GraduationCap className="h-5 w-5 text-act" aria-hidden />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="divide-y divide-border">
         {GEDU_QUALIFICATIONS.map((qualification) => (

@@ -12,12 +12,8 @@ import {
 } from "@/lib/substitution-session-facts";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useTimezone } from "@/providers";
-import {
-  cn,
-  formatDate,
-  formatDateOnly,
-  formatTimeRange,
-} from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 
 /**
  * **The session, as every substitution surface states it** — when, how soon,

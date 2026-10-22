@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import ReactMarkdown, { type Components } from "react-markdown";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   MARKDOWN_CONTAINER,
   MARKDOWN_LOOK,

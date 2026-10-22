@@ -1,6 +1,6 @@
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 // Consumer clubs are listed with every other product type, narrowed by type.
 // The old URL's own query travels with it.

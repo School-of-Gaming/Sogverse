@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { VOICE_ZONE_ICONS, VOICE_ZONE_ICON_KEYS } from "@/lib/constants/voice-zones";
 import type { ZoneColorClasses } from "@/lib/constants/voice-zones";
 import type { VoiceZoneIcon } from "@/types";

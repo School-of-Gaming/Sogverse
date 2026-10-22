@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { VoiceSessionPage } from "@/components/voice/VoiceSessionPage";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { getUserWithProfile } from "@/lib/supabase/server";

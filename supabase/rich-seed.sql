@@ -539,7 +539,9 @@ COMMIT;
 -- =============================================================================
 -- create_gamer is the atomic promote-and-link the gamer-creation route calls:
 -- it swaps the profile to a gamer, records the parent's guardian declaration
--- against the current document version, links the game accounts and the parent.
+-- against the current document version, and links the parent. Game handles are
+-- never given at creation, so the seed adds them afterwards, as a parent or a
+-- gedu would.
 -- Ages are now()-relative so the catalogue stays plausible however long the
 -- stack has been up, and they spread across every product's audience.
 
@@ -581,9 +583,16 @@ BEGIN
       EXTRACT(YEAR FROM current_date - make_interval(years => r.age, days => 40))::smallint,
       EXTRACT(MONTH FROM current_date - make_interval(years => r.age, days => 40))::smallint,
       r.gender::public.gender_type,
-      r.minecraft, NULL, r.roblox, NULL,
       'parent'::public.gamer_sign_in, true
     );
+    IF r.minecraft IS NOT NULL THEN
+      INSERT INTO public.minecraft_accounts (user_id, minecraft_username)
+      VALUES ((SELECT id FROM public.profiles WHERE email = r.email), r.minecraft);
+    END IF;
+    IF r.roblox IS NOT NULL THEN
+      INSERT INTO public.roblox_accounts (user_id, roblox_username)
+      VALUES ((SELECT id FROM public.profiles WHERE email = r.email), r.roblox);
+    END IF;
   END LOOP;
 END;
 $$;

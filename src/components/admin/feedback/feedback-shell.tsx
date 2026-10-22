@@ -1,12 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Heading } from "@sog/ui";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "@/i18n/navigation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FEEDBACK_SOURCES } from "@/services/session-feedback/admin-feedback.contracts";
 import { feedbackHref, type FeedbackPlace } from "./feedback-place";
 import { FEEDBACK_SOURCE_MESSAGE_KEYS } from "./feedback-sources";
@@ -35,7 +36,7 @@ export function FeedbackShell({
       {back !== null && <BackLink place={back} />}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          <Heading level={1} step="section">{title}</Heading>
           <p className="text-sm text-muted-foreground">{subtitle ?? <SourcesLine />}</p>
         </div>
         {aside}

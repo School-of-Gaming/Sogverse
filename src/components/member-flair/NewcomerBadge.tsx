@@ -2,7 +2,7 @@
 
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { newcomerDaysIn, NEWCOMER_WINDOW_DAYS } from "./newcomer";
 
 /**

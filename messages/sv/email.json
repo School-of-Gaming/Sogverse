@@ -1,0 +1,234 @@
+{
+  "footer": "© {year} School of Gaming. Alla rättigheter förbehållna.",
+  "roleAdmin": "Administratör",
+  "roleParent": "Förälder",
+  "roleGamer": "Spelare",
+  "roleGedu": "Gedu",
+  "passwordReset": {
+    "subject": "Återställ lösenordet till ditt School of Gaming-konto",
+    "heading": "Återställ ditt lösenord",
+    "body": "Vi har mottagit en begäran om att återställa lösenordet till ditt School of Gaming-konto. Klicka på knappen nedan för att välja ett nytt lösenord.",
+    "expiry": "Denna länk upphör att gälla om 1 timme.",
+    "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
+    "button": "Återställ lösenord"
+  },
+  "pinReset": {
+    "subject": "Återställ PIN-koden för ditt föräldrakonto hos School of Gaming",
+    "heading": "Återställ din PIN-kod",
+    "body": "Vi har mottagit en begäran om att återställa PIN-koden för ditt föräldrakonto hos School of Gaming. Klicka på knappen nedan för att välja en ny fyrsiffrig PIN-kod.",
+    "expiry": "Denna länk upphör att gälla om 24 timmar.",
+    "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
+    "button": "Återställ PIN-kod"
+  },
+  "helpRequest": {
+    "subject": "Hjälpförfrågan från {displayName} ({role})",
+    "heading": "Ny hjälpförfrågan",
+    "intro": "Någon har bett om hjälp. Svara på det här mejlet för att svara personen – ditt svar går till adressen nedan.",
+    "from": "Från",
+    "role": "Roll",
+    "replyToLabel": "Svarsadress",
+    "sent": "Skickat",
+    "message": "Meddelande",
+    "gamerNoteNoMailbox": "Skickat från ett spelarkonto ({firstName}) som inte har någon egen e-postadress.",
+    "gamerNoteOwnMailbox": "Skickat från ett spelarkonto ({firstName}) — hen läser också sin egen e-post, {gamerEmail}."
+  },
+  "welcomeParent": {
+    "subject": "Välkommen till School of Gaming",
+    "heading": "Välkommen till School of Gaming",
+    "greeting": "Hej {firstName}, och välkommen. Vi är glada att du är här.",
+    "platform": "Sogverse är School of Gamings plattform, där du sköter familjens klubbar, läger och evenemang.",
+    "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om familjens klubbar. Du kan göra det nu, eller senare i dina {settingsLink}.",
+    "settingsLinkLabel": "inställningar",
+    "verifyButton": "Bekräfta din e-postadress",
+    "shopButton": "Utforska butiken",
+    "dashboardButton": "Gå till Min SOG"
+  },
+  "welcomeGedu": {
+    "subject": "Välkommen till School of Gaming – ditt Gedu-konto",
+    "heading": "Välkommen till School of Gaming",
+    "greeting": "Hej {firstName}, och tack för att du registrerat dig som Gedu.",
+    "certification": "En administratör går igenom ditt konto och certifierar det. Under tiden kan du komma igång i Min SOG, men vissa delar är låsta tills ditt konto är certifierat.",
+    "verifyBody": "När du bekräftar din e-postadress kan vi nå dig om dina grupper och tillfällen. Du kan göra det nu, eller senare i dina {settingsLink}.",
+    "settingsLinkLabel": "inställningar",
+    "verifyButton": "Bekräfta din e-postadress",
+    "dashboardButton": "Gå till Min SOG"
+  },
+  "productConfirmation": {
+    "subject": {
+      "consumer_club": "{participantName} är anmäld till {productName}",
+      "municipality_club": "{participantName} är registrerad för {productName}",
+      "camp": "{participantName} är anmäld till {productName}",
+      "event": "{participantName} har gått med i {productName}"
+    },
+    "heading": "Välkommen med!",
+    "subheading": {
+      "consumer_club": "{participantName} är anmäld till {productName}.",
+      "municipality_club": "{participantName} är registrerad för {productName}.",
+      "camp": "{participantName} är anmäld till {productName}.",
+      "event": "{participantName} har gått med i {productName}."
+    },
+    "self": {
+      "subject": {
+        "consumer_club": "Du är anmäld till {productName}",
+        "municipality_club": "Du är registrerad för {productName}",
+        "camp": "Du är anmäld till {productName}",
+        "event": "Du har gått med i {productName}"
+      },
+      "subheading": {
+        "consumer_club": "Du är anmäld till {productName}.",
+        "municipality_club": "Du är registrerad för {productName}.",
+        "camp": "Du är anmäld till {productName}.",
+        "event": "Du har gått med i {productName}."
+      },
+      "waitlist": {
+        "subheading": "Du står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
+        "next2": {
+          "consumer_club": "Du behåller din plats i kön under hela terminen.",
+          "municipality_club": "Du behåller din plats i kön under hela terminen.",
+          "camp": "Du behåller din plats i kön under hela lägret.",
+          "event": "Du behåller din plats i kön fram till evenemanget."
+        }
+      }
+    },
+    "priceLabel": "Pris",
+    "price": {
+      "subscription": "{amount} / månad",
+      "upfront": "{amount} (engångsbetalning)",
+      "free": "Gratis",
+      "external": "Bekostas av din kommun"
+    },
+    "nextTitle": "Vad händer nu",
+    "next": {
+      "sessions": "Du hittar tillfällena för {participantName} under Min SOG.",
+      "sessionsSelf": "Du hittar dina tillfällen under Min SOG.",
+      "sessionsOnline": "{participantName} deltar i tillfällena online i Min SOG. Röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+      "sessionsOnlineSelf": "Du deltar i tillfällena online i Min SOG. Röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+      "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
+      "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
+      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}.",
+      "firstSession": "Det första tillfället för {participantName} är {date} kl. {time}.",
+      "firstSessionSelf": "Ditt första tillfälle är {date} kl. {time}.",
+      "eventDate": "Evenemanget äger rum {date} kl. {time}.",
+      "guarantee": "Om klubben inte passar {participantName}, mejla oss inom 30 dagar från det första tillfället så betalar vi tillbaka allt du har betalat för klubben.",
+      "guaranteeSelf": "Om klubben inte passar dig, mejla oss inom 30 dagar från ditt första tillfälle så betalar vi tillbaka allt du har betalat för klubben."
+    },
+    "waitlist": {
+      "subject": "{participantName} står på väntelistan för {productName}",
+      "subjectSelf": "Du står på väntelistan för {productName}",
+      "heading": "Du står på väntelistan",
+      "subheading": "{participantName} står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
+      "next1": "Vi mejlar så snart en plats blir ledig.",
+      "next2": {
+        "consumer_club": "{participantName} behåller sin plats i kön under hela terminen.",
+        "municipality_club": "{participantName} behåller sin plats i kön under hela terminen.",
+        "camp": "{participantName} behåller sin plats i kön under hela lägret.",
+        "event": "{participantName} behåller sin plats i kön fram till evenemanget."
+      },
+      "next3": "Du kan följa din plats i kön när som helst i Min SOG."
+    },
+    "gamer": {
+      "greeting": "Hej {participantName}!"
+    },
+    "invite": {
+      "summary": "{productName} – {participantName}",
+      "locationOnline": "Online – Min SOG",
+      "locationInPerson": "{site}, {address}",
+      "whereOnline": "Tillfällena hålls online i Min SOG, och röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+      "whereInPerson": "Tillfällena hålls på {site}.",
+      "whereAddress": "Adress: {address}",
+      "link": "Allt om den här anmälan finns i Min SOG: {url}",
+      "questions": "Frågor? Skriv till {supportEmail}."
+    },
+    "dashboardButton": "Gå till Min SOG",
+    "closing": "Frågor? Svara bara på det här mejlet eller skriv till {supportEmail}.",
+    "overview": {
+      "schedule": "Schema",
+      "where": "Plats",
+      "format": "Format",
+      "online": "Online",
+      "tbd": "Bekräftas senare",
+      "ageRange": "Åldersintervall",
+      "audience": "Målgrupp",
+      "language": "Språk",
+      "ages": "Ålder {min}–{max}",
+      "audienceParents": "För föräldrar",
+      "audienceFamilies": "För familjer",
+      "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}",
+      "holidayBreaks": "Lov",
+      "holidayBreak": "{name}, {range}"
+    }
+  },
+  "verifyEmail": {
+    "subject": "Bekräfta din e-postadress",
+    "heading": "Bekräfta din e-postadress",
+    "body": "Hej {firstName}, du bad oss bekräfta e-postadressen på ditt School of Gaming-konto. Använd knappen nedan för att bekräfta den.",
+    "button": "Bekräfta din e-postadress",
+    "ignore": "Om du inte bad om det här kan du bortse från mejlet. Ingenting ändras."
+  },
+  "gamerWelcome": {
+    "subject": "Ditt School of Gaming-konto är klart",
+    "heading": "Ditt konto är klart",
+    "body": "Hej {gamerName}, din förälder har skapat ett School of Gaming-konto åt dig. För att logga in behöver du ett lösenord – tryck först på knappen för att bekräfta att det här är din e-postadress, sedan får du välja ett.",
+    "button": "Det här är min e-postadress",
+    "ignore": "Om du inte väntade dig det här mejlet kan du bortse från det. Ingenting händer."
+  },
+  "sessionReport": {
+    "subject": "Rapport från passet – {productName}, {sessionDate}",
+    "title": "Rapport från passet",
+    "intro": "Hej! Här är {geduName}s rapport från {gamerName}s pass i {productName}.",
+    "gamerIntro": "Hej {gamerName}! Här är {geduName}s rapport från ditt pass i {productName}.",
+    "groupLabel": "Grupp",
+    "dateLabel": "Datum",
+    "timeLabel": "Tid",
+    "photosHeading": "Bilder från passet",
+    "productButton": "Öppna i Min SOG",
+    "closing": "Den här rapporten, de tidigare och de kommande passen finns alla på sidan för {productName} i Min SOG.",
+    "staffCopyLabel": "Kopia till Geduer och administratörer",
+    "staffCopyBody": "Det här är en kopia av rapporten som skickades till gruppens familjer. Du får den som avsändare eller som administratör, inte som förälder.",
+    "staffCopyPrivacy": "Varje familj fick ett eget separat mejl, adresserat enbart till dem. Adresserna till Geduer och administratörer i den här kopians Till- och Kopia-fält finns bara på den här kopian: ingen förälder ser dem, och ingen familj ser en annan familj."
+  },
+  "seatOffer": {
+    "heading": "En plats har blivit ledig",
+    "question": "Vill du fortfarande ha den? Hör av dig hur det än blir — ett nej hjälper lika mycket, för då kan vi erbjuda platsen till nästa familj direkt.",
+    "deadlineLabel": "Svara senast",
+    "deadlineBody": "{deadline}. Hör vi inget från dig innan dess går platsen vidare till nästa familj i kön.",
+    "accept": "Ta platsen",
+    "decline": "Nej tack",
+    "alsoInMySog": "Samma fråga väntar i Min SOG, om du hellre svarar där.",
+    "dashboardButton": "Svara i Min SOG",
+    "child": {
+      "subject": "{participantName}: en plats har blivit ledig – {productName}",
+      "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: {participantName} kan vara med – {productName}."
+    },
+    "self": {
+      "subject": "En plats har blivit ledig – {productName}",
+      "opening": "Vi lovade att höra av oss så snart en plats blev ledig. Nu har det hänt: du kan vara med – {productName}."
+    },
+    "gamer": {
+      "subject": "En plats har blivit ledig för dig – {productName}",
+      "opening": "Hej {gamerName}, en plats har blivit ledig för dig i {productName}. Goda nyheter!",
+      "parentDecides": "Din förälder har fått ett mejl med frågan om platsen ska tas, och kan svara fram till {deadline}. När svaret kommer ser du det i Min SOG.",
+      "dashboardButton": "Öppna Min SOG"
+    }
+  },
+  "seatOfferStaff": {
+    "participant": "Plats för",
+    "contact": "Kontakt",
+    "contactEmail": "E-post",
+    "product": "Produkt",
+    "schedule": "Schema",
+    "offeredAt": "Erbjöds",
+    "nextStep": "Erbjudandet är över och platsen är ledig igen. Öppna produkten, se kön och skicka nästa inbjudan.",
+    "button": "Öppna produkten",
+    "declined": {
+      "subject": "{participantName} tackade nej till en plats i {productName}",
+      "heading": "Ett platserbjudande tackades nej till",
+      "body": "Familjen kan inte ta platsen och sa till i stället för att låta den hänga. De har tagits bort från väntelistan."
+    },
+    "no_response": {
+      "subject": "Inget svar på ett platserbjudande för {participantName} i {productName}",
+      "heading": "Ett platserbjudande gick ut",
+      "body": "Svarstiden gick ut utan svar. Familjen står kvar på väntelistan och kan erbjudas platsen igen, men själva platsen är ledig nu."
+    }
+  }
+}

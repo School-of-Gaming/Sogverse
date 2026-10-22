@@ -1,0 +1,8 @@
+{
+  "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
+  "wontRenew": "Ei uusiudu — viimeinen kerta {date}",
+  "wontRenewLastSession": "Ei uusiudu — tämä on viimeinen kerta {date}",
+  "wontRenewAccessEnds": "Ei uusiudu — osallistuminen päättyy {date}",
+  "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
+  "emptyStateCta": "Selaa kerhoja ja leirejä"
+}

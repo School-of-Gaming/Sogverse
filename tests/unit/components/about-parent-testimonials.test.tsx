@@ -1,15 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enHome from "@/../messages/en/home.json";
+import enTestimonial from "@/../messages/en/testimonial.json";
 import { ParentTestimonials } from "@/components/about/parent-testimonials";
+
+const messages = { home: enHome, testimonial: enTestimonial };
 
 /**
  * **About carries every parent quote the home page shows.** A signed-in reader
  * never reaches the home page, so a quote that lived only there would be out of
  * their reach. Pinned here: the section is the anchor the section pill points
  * at, it carries the home page's heading, and every one of the home page's
- * quotes appears in it with its attribution.
+ * quotes appears in it, in the locale's quotation marks, with its attribution.
  */
 describe("ParentTestimonials", () => {
   it("renders every home page quote under the anchor the section pill targets", () => {
@@ -29,8 +32,11 @@ describe("ParentTestimonials", () => {
     const items = Object.values(messages.home.testimonials.items);
     expect(items).toHaveLength(6);
     for (const { quote } of items) {
-      expect(screen.getByText(quote)).toBeTruthy();
+      expect(screen.getByText(`“${quote}”`)).toBeTruthy();
     }
+    expect(screen.getAllByText("Mum, Finland")).toHaveLength(
+      items.filter(({ attribution }) => attribution === "Mum, Finland").length,
+    );
     expect(container.querySelectorAll("figure")).toHaveLength(items.length);
   });
 });

@@ -8,26 +8,42 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import {
+  FeatureTestimonial,
+  TestimonialPair,
+  TestimonialRow,
+  TestimonialShowcase,
+  type ShownTestimonial,
+} from "@/components/home/testimonial-arrangements";
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import type {
   ButtonTarget,
   LandingSectionOf,
   LandingSectionType,
 } from "@/lib/landing-pages/sections";
+import {
+  productRailSeed,
+  type ProductRailPrefetch,
+} from "@/components/public/products/product-rail-selection";
 import { buttonTargetHref } from "@/lib/links/button-target";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
+import { LandingProductsSection } from "./landing-products-section";
+import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
 import {
   written,
   type LandingSectionByType,
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
+import { LandingSubscribeForm } from "./landing-subscribe-form";
+import { Heading } from "@sog/ui";
 
 /*
  * **One renderer per section type**, in an exhaustive map, so a type added to
@@ -36,7 +52,8 @@ import {
  * The sections are built from the app's own components in the treatments the
  * home and Roblox pages already use — the act eyebrow over a section heading,
  * the centred heading over a card grid, the act-filled step numbers, the FAQ
- * rows, the closing card with the world rule along its top — so a landing page
+ * rows, the closing card with the world rule along its top, the shop's own
+ * product cards in the Roblox page's carousel — so a landing page
  * reads as part of the same site whatever order an admin puts them in. Every
  * section sits on the plain page ground: an admin chooses the order, and a
  * tinted band beside another tinted band reads as one section with a stray
@@ -45,19 +62,42 @@ import {
  * **Every word is the admin's**, so the renderers paint what is written and
  * leave out what is not: a published version has every required word, and the
  * preview of one still being written shows its blanks as gaps rather than as
- * placeholder copy. The one string of our own is the screen reader's "opens in
- * a new tab" beside a button that leaves the site.
+ * placeholder copy. The strings of our own are the screen reader's "opens in
+ * a new tab" beside a button that leaves the site, and the email sign-up
+ * form's fields, consent and answers, which are the same promise on every page.
  */
 
 /** What every renderer is handed besides its own section and words. */
 export interface LandingRenderContext {
   /** The page's locale: what an own-site button's address is localised to. */
   locale: SupportedLocale;
+  /** The language the shown version's words are in, which the body is marked with. */
+  textLocale: SupportedLocale;
+  /** The page's id: what an email sign-up names as where it came from. */
+  pageId: string;
+  /**
+   * The admin's preview of a working copy, not the live page: an email
+   * sign-up form is drawn but cannot be sent, since the page it would name
+   * may not be live and a live one would sign a real address up.
+   */
+  preview: boolean;
   /**
    * A picture's servable URL by its catalogue entry id, or null when the copy
    * names no path for it (the picture has left the catalogue).
    */
   imageSrc: (imageId: string) => string | null;
+  /**
+   * A placed testimonial's current words by its id, or null when the read
+   * answered none for it.
+   */
+  testimonial: (testimonialId: string) => PublicTestimonial | null;
+  /**
+   * The listing and seat counts, read on the server for every products
+   * section of the page at once (`prefetchLandingProducts`), or null when the
+   * page has none or the read failed — in which case a products section's
+   * live query fetches for itself.
+   */
+  products: ProductRailPrefetch | null;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -68,48 +108,6 @@ interface LandingSectionProps<Type extends LandingSectionType> {
 
 /** A landing picture's stored size: `next/image` reserves its box from it. */
 const PICTURE = CATALOGUE_IMAGE_PURPOSES.landing_image;
-
-/** Vertical rhythm shared by every section after the hero. */
-const SECTION = "container mx-auto px-4 py-16 sm:py-24";
-
-/** The section heading every section but the hero takes. */
-const HEADING = "text-3xl font-bold tracking-tight sm:text-4xl";
-
-/** Small uppercase section label — furniture, so caps; act, as the Roblox page's. */
-function Eyebrow({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-xs font-semibold uppercase tracking-widest text-act">
-      {children}
-    </p>
-  );
-}
-
-/** A section's eyebrow, heading and intro, each drawn only when written. */
-function SectionHeader({
-  eyebrow,
-  heading,
-  intro,
-  centred = true,
-}: {
-  eyebrow?: string;
-  heading?: string;
-  intro?: string;
-  centred?: boolean;
-}) {
-  const label = written(eyebrow);
-  const title = written(heading);
-  const lead = written(intro);
-  if (label === null && title === null && lead === null) return null;
-  return (
-    <div className={cn(centred && "mx-auto max-w-2xl text-center")}>
-      {label !== null && <Eyebrow>{label}</Eyebrow>}
-      {title !== null && (
-        <h2 className={cn(HEADING, label !== null && "mt-4")}>{title}</h2>
-      )}
-      {lead !== null && <p className="mt-4 text-muted-foreground">{lead}</p>}
-    </div>
-  );
-}
 
 /**
  * A landing picture at its stored 16:9, through the image optimizer with its
@@ -225,9 +223,17 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           )}
           {/* Shrink-to-fit, so the rule runs the headline's own measure. */}
           <div className="inline-block">
-            <h1 className="text-balance text-h1-mobile font-bold tracking-tight md:text-5xl">
+            {/* The heading changes alignment at `md`, but this hero's columns
+                split at `lg`, so between 768 and 1023px the headline sits
+                start-aligned over centred words. Accepted until the
+                landing-page design is settled. */}
+            <Heading
+              level={1}
+              step="hero"
+              align={src === null ? "center" : "center-narrow"}
+            >
               {text.headline}
-            </h1>
+            </Heading>
             <span className="mt-5 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
           </div>
           {subline !== null && (
@@ -273,7 +279,7 @@ function TextSection({ section, text, context }: LandingSectionProps<"text">) {
   const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
   const body = written(text.body);
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <div
         className={cn(
           "mx-auto",
@@ -344,9 +350,9 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
   if (pictures.length === 0) return null;
   const grid = pictureGrid(pictures.length);
   const caption = written(text.caption);
-  const hasHeader = written(text.eyebrow) !== null || written(text.heading) !== null;
+  const hasHeader = hasSectionHeader({ eyebrow: text.eyebrow, heading: text.heading });
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
       <figure className={cn("mx-auto", grid.width, hasHeader && "mt-12")}>
         <div className={cn("grid gap-4", grid.columns)}>
@@ -377,7 +383,7 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
 function PointsSection({ section, text }: LandingSectionProps<"points">) {
   const threeAcross = section.items.length % 3 === 0 || section.items.length === 5;
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
       <div
         className={cn(
@@ -395,7 +401,7 @@ function PointsSection({ section, text }: LandingSectionProps<"points">) {
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-act bg-lifted">
                     <Icon aria-hidden="true" className="h-5 w-5 text-act" />
                   </div>
-                  <CardTitle className="text-lg leading-snug">{words?.title}</CardTitle>
+                  <Heading level={3} step="card-title">{words?.title}</Heading>
                 </div>
               </CardHeader>
               <CardContent>
@@ -429,7 +435,7 @@ function stepWidth(count: number): string {
 function StepsSection({ section, text }: LandingSectionProps<"steps">) {
   const width = stepWidth(section.items.length);
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
       <ol
         className={cn(
@@ -447,13 +453,109 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
               >
                 {index + 1}
               </div>
-              <h3 className="mt-4 text-lg font-semibold">{words?.title}</h3>
+              <div className="mt-4">
+                <Heading level={3} step="card-title" align="center">
+                  {words?.title}
+                </Heading>
+              </div>
               <p className="mt-2 text-sm text-muted-foreground">{words?.body}</p>
             </li>
           );
         })}
       </ol>
     </section>
+  );
+}
+
+/**
+ * Testimonials from the store, in the arrangement the admin chose, laid out
+ * exactly as the home page and About lay theirs — through the same shared
+ * arrangements — under the section's optional header.
+ *
+ * Each quote is the store's current words, in the version the reader fallback
+ * picks for the page's locale. Those words are the testimonial's rather than
+ * the version's, so the arrangement is marked with the page's language
+ * wherever the version shown is in another, and a quote in another language
+ * than the page's is marked with its own. A testimonial the read did not
+ * answer leaves its slot out, and a section with none to show is not drawn at
+ * all.
+ */
+function TestimonialsSection({ section, text, context }: LandingSectionProps<"testimonials">) {
+  const pick = (ids: readonly string[]): ShownTestimonial[] =>
+    ids.flatMap((id) => {
+      const testimonial = context.testimonial(id);
+      const version =
+        testimonial === null ? null : resolveTranslation(testimonial.versions, context.locale);
+      if (version === null) return [];
+      return [
+        {
+          key: id,
+          quote: version.quote,
+          attribution: version.from,
+          // exact-locale: marking a quote shown in another language than the page's
+          lang: version.locale === context.locale ? undefined : version.locale,
+        },
+      ];
+    });
+  const shown = pick(section.testimonialIds);
+  if (shown.length === 0) return null;
+  const afterHeader =
+    written(text.eyebrow) !== null || written(text.heading) !== null || written(text.intro) !== null;
+  const placement = cn(afterHeader && "mt-12 lg:mt-16");
+
+  const arrangement = (() => {
+    switch (section.arrangement) {
+      case "feature":
+        return <FeatureTestimonial testimonial={shown[0]} className={placement} />;
+      case "pair":
+        return <TestimonialPair testimonials={shown} className={placement} />;
+      case "row":
+        return <TestimonialRow testimonials={shown} className={placement} />;
+      case "showcase":
+        // The slots by position, so a quote the read left out never moves
+        // another into its group.
+        return (
+          <TestimonialShowcase
+            afterHeading={afterHeader}
+            groups={{
+              feature: pick(section.testimonialIds.slice(0, 1)),
+              pair: pick(section.testimonialIds.slice(1, 3)),
+              row: pick(section.testimonialIds.slice(3, 6)),
+            }}
+          />
+        );
+    }
+  })();
+
+  return (
+    <section className={LANDING_SECTION}>
+      <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
+      {/* exact-locale: resets the body's language mark for the store's own words */}
+      <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+        {arrangement}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * The admin's picked products as the shop's own cards in the shared product
+ * rail, drawn by a client component that keeps them live
+ * (`landing-products-section.tsx`, which says what is drawn and when). The
+ * page's prefetch is narrowed here to this section's picks.
+ */
+function ProductsSection({ section, text, context }: LandingSectionProps<"products">) {
+  return (
+    <LandingProductsSection
+      productIds={section.productIds}
+      eyebrow={text.eyebrow}
+      heading={text.heading}
+      intro={text.intro}
+      seed={productRailSeed(context.products, {
+        kind: "picks",
+        productIds: section.productIds,
+      })}
+    />
   );
 }
 
@@ -474,7 +576,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
         question,
         answer:
           answer === null ? null : (
-            <Markdown variant="landing" emphasis="quiet">
+            <Markdown variant="landing-faq" emphasis="quiet">
               {answer}
             </Markdown>
           ),
@@ -482,11 +584,16 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
     ];
   });
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
-          <FaqAccordion items={items} />
+          {/* The questions sit under the section's H2, or stand as H2s where
+              the section has no heading written yet. */}
+          <FaqAccordion
+            items={items}
+            questionLevel={written(text.heading) === null ? 2 : 3}
+          />
         </div>
       </div>
     </section>
@@ -502,7 +609,7 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   const body = written(text.body);
   const buttonLabel = written(text.buttonLabel);
   return (
-    <section className={SECTION}>
+    <section className={LANDING_SECTION}>
       <Card className="relative mx-auto max-w-3xl overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
         <CardContent className="flex flex-col items-center py-12 text-center">
@@ -511,7 +618,9 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
               <Eyebrow>{eyebrow}</Eyebrow>
             </div>
           )}
-          <h2 className="text-2xl font-bold sm:text-3xl">{text.heading}</h2>
+          <Heading level={2} step="display" align="center">
+            {text.heading}
+          </Heading>
           {body !== null && <p className="mt-4 max-w-xl text-muted-foreground">{body}</p>}
           {buttonLabel !== null && (
             <LandingButton
@@ -528,6 +637,29 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   );
 }
 
+/**
+ * An email sign-up: the heading and intro the page wrote over the site's own
+ * form, in the reading column.
+ */
+function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  return (
+    <section className={LANDING_SECTION}>
+      <div className="mx-auto max-w-xl">
+        <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
+        <div className="mt-10">
+          <LandingSubscribeForm
+            pageId={context.pageId}
+            sectionId={section.id}
+            locale={context.locale}
+            buttonLabel={written(text.buttonLabel) ?? ""}
+            preview={context.preview}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // The map
 // ---------------------------------------------------------------------------
@@ -540,7 +672,10 @@ export const LANDING_SECTION_RENDERERS: {
   image: ImageSection,
   points: PointsSection,
   steps: StepsSection,
+  testimonials: TestimonialsSection,
+  products: ProductsSection,
   faq: FaqSection,
+  subscribe: SubscribeSection,
   cta: CtaSection,
 };
 

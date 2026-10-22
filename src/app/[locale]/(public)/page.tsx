@@ -17,19 +17,23 @@ import {
   VideoOff,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Heading } from "@sog/ui";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { HeroBackdrop } from "@/components/home/hero-backdrop";
 import { MarketingPhoto } from "@/components/marketing/marketing-photo";
 import clubPhoto from "@/assets/marketing/club-lauttasaari.jpg";
 import { Testimonial } from "@/components/home/testimonial";
+import { FeatureTestimonial, TestimonialRow } from "@/components/home/testimonial-arrangements";
 import {
   featureTestimonialKey,
   rowTestimonialKeys,
   safetyTestimonialKeys,
+  type TestimonialKey,
 } from "@/components/home/testimonial-keys";
-import { ROUTES, resolveLocale } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
+import { ROUTES } from "@/lib/constants/routes";
 import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The home page states no title or description of its own — it inherits the
@@ -101,6 +105,12 @@ export default function HomePage() {
     icon: featureIcons[i],
   }));
 
+  const quote = (key: TestimonialKey) => ({
+    key,
+    quote: t(`testimonials.items.${key}.quote`),
+    attribution: t(`testimonials.items.${key}.attribution`),
+  });
+
   return (
     <>
       {/* Hero Section */}
@@ -139,12 +149,12 @@ export default function HomePage() {
                 beneath it runs exactly the headline's measure with nothing
                 measured at runtime. */}
             <div className="inline-block">
-              <h1 className="text-h1-mobile font-bold tracking-tight md:text-6xl">
+              <Heading level={1} step="hero" align="center">
                 {t.rich('hero.title', {
                   br: () => <br />,
                   act: (chunks) => <span className="text-act">{chunks}</span>,
                 })}
-              </h1>
+              </Heading>
               <span className="mt-5 block h-1.5 w-full rounded-full bg-world sm:mt-8" />
             </div>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-foreground sm:mt-6 sm:text-lg sm:leading-8">
@@ -172,20 +182,15 @@ export default function HomePage() {
           offer. No heading — the quote is the section. Its top padding is
           the room between the quote and the hero backdrop's lower edge. */}
       <section className="container mx-auto px-4 py-16 sm:pb-24">
-        <Testimonial
-          size="feature"
-          quote={t(`testimonials.items.${featureTestimonialKey}.quote`)}
-          attribution={t(`testimonials.items.${featureTestimonialKey}.attribution`)}
-          className="mx-auto max-w-3xl"
-        />
+        <FeatureTestimonial testimonial={quote(featureTestimonialKey)} />
       </section>
 
       {/* Features Section */}
       <section className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <Heading level={2} step="display" align="center">
             {t('features.heading')}
-          </h2>
+          </Heading>
           <p className="mt-4 text-muted-foreground">
             {t('features.subheading')}
           </p>
@@ -198,7 +203,7 @@ export default function HomePage() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-act bg-lifted">
                     <feature.icon className="h-6 w-6 text-act" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <Heading level={3} step="card-title">{feature.title}</Heading>
                 </div>
               </CardHeader>
               <CardContent>
@@ -221,9 +226,11 @@ export default function HomePage() {
           The DOM order is the phone's; the wide layout places the three by
           grid position, so the facts span both rows of the left column. */}
       <section className="container mx-auto px-4 py-16 sm:py-24">
-        <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
-          {t('safety.heading')}
-        </h2>
+        <div className="mx-auto max-w-2xl">
+          <Heading level={2} step="display" align="center">
+            {t('safety.heading')}
+          </Heading>
+        </div>
         <div className="mx-auto mt-12 grid max-w-5xl gap-12 lg:mt-16 lg:grid-cols-[3fr_2fr] lg:gap-x-16 lg:gap-y-10">
           <MarketingPhoto
             image={clubPhoto}
@@ -240,7 +247,7 @@ export default function HomePage() {
                     <Icon aria-hidden="true" className="h-5 w-5 text-act" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">{t(`safety.facts.${key}.title`)}</h3>
+                    <Heading level={3} step="card-title">{t(`safety.facts.${key}.title`)}</Heading>
                     <p className="mt-1 text-muted-foreground">
                       {t(`safety.facts.${key}.description`)}
                     </p>
@@ -272,27 +279,21 @@ export default function HomePage() {
           language. The quotes are peers with no action of their own, so they
           sit on the page ground under one heading rather than in cards. */}
       <section className="container mx-auto px-4 py-16 sm:py-24">
-        <h2 className="mx-auto max-w-2xl text-center text-3xl font-bold tracking-tight sm:text-4xl">
-          {t('testimonials.heading')}
-        </h2>
-        <div className="mx-auto mt-12 grid max-w-5xl gap-10 md:grid-cols-3 lg:mt-16">
-          {rowTestimonialKeys.map((key) => (
-            <Testimonial
-              key={key}
-              quote={t(`testimonials.items.${key}.quote`)}
-              attribution={t(`testimonials.items.${key}.attribution`)}
-            />
-          ))}
+        <div className="mx-auto max-w-2xl">
+          <Heading level={2} step="display" align="center">
+            {t('testimonials.heading')}
+          </Heading>
         </div>
+        <TestimonialRow testimonials={rowTestimonialKeys.map(quote)} className="mt-12 lg:mt-16" />
       </section>
 
       {/* How It Works Section */}
       <section className="bg-card py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <Heading level={2} step="display" align="center">
               {t('howItWorks.heading')}
-            </h2>
+            </Heading>
             <p className="mt-4 text-muted-foreground">
               {t('howItWorks.subheading')}
             </p>
@@ -303,7 +304,11 @@ export default function HomePage() {
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-act text-xl font-bold text-act-foreground">
                   {i + 1}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold">{t(`howItWorks.${key}.title`)}</h3>
+                <div className="mt-4">
+                  <Heading level={3} step="card-title" align="center">
+                    {t(`howItWorks.${key}.title`)}
+                  </Heading>
+                </div>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {t(`howItWorks.${key}.description`)}
                 </p>
@@ -323,9 +328,9 @@ export default function HomePage() {
               only repeat the colour of the button inside the card. */}
           <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
           <CardContent className="flex flex-col items-center py-12 text-center">
-            <h2 className="text-2xl font-bold sm:text-3xl">
+            <Heading level={2} step="display" align="center">
               {t('cta.heading')}
-            </h2>
+            </Heading>
             <p className="mt-4 text-muted-foreground">
               {t('cta.subheading')}
             </p>
