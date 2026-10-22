@@ -261,11 +261,9 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are enrolled in Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re enrolled in");
-      // The *sentences* move to the second person; the order summary still
-      // names the person, exactly as the confirmation page's does — there the
-      // name is a value rather than a subject.
-      expect(html).not.toContain("Marja is enrolled");
-      expect(html).toContain("Marja");
+      // Every sentence moves to the second person, and no row of the facts
+      // list names the participant, so the reader's name appears nowhere.
+      expect(html).not.toContain("Marja");
     });
 
     it("says waitlist in the subject when the outcome is a waitlist join", () => {
@@ -290,9 +288,7 @@ describe("templateRegistry render()", () => {
       expect(subject).toBe("You are on the waitlist for Minecraft 101");
       expect(subject).not.toContain("Marja");
       expect(html).toContain("You’re on the waitlist for");
-      expect(html).not.toContain("Marja is on the waitlist");
-      // Named in the summary row alone — see the self-seat case above.
-      expect(html).toContain("Marja");
+      expect(html).not.toContain("Marja");
     });
 
     /**
@@ -492,10 +488,9 @@ describe("templateRegistry render()", () => {
         );
 
         // Everything the page states, in the mail's own shape: one facts list
-        // carrying the seat and the product's own four facts, and the one
-        // button — the page's "keep browsing" is a way back into a shop an
-        // inbox reader is not standing in.
-        expect(html).toContain("Your order");
+        // carrying the product's own four facts, and the one button — the
+        // page's "keep browsing" is a way back into a shop an inbox reader is
+        // not standing in.
         expect(html).toContain("Schedule");
         expect(html).toContain("Ages 8–12");
         expect(html).toContain("Finnish");

@@ -37,7 +37,7 @@
   "steps": {
     "minecraftJavaAccount": {
       "title": "Minecraft ngaSbogh Microsoft pong yISuq",
-      "body": "Microsoft pongDaq ’el Minecraft. pong ghajbe’chugh QujwI’, pong chenmoH vav, ’ej pongvetlhDaq ”Minecraft: Java & Bedrock Edition for PC” je’. <b>wa’logh DIl, tlhachID ghobe’</b>, ’ej ghomHomvam lo’bogh Java mIllogh ngaS. Java pong tlhoblu’. pongvetlh wIpoQ, Minecraft qo’majDaq QujwI’ wIchelmeH. yIqon ’ej DaSamqa’meH Daq yIwIv.",
+      "body": "Microsoft pongDaq ’el Minecraft. pong ghajbe’chugh QujwI’, pong chenmoH vav, ’ej pongvetlhDaq ”Minecraft: Java & Bedrock Edition for PC” je’. <b>wa’logh DIl, tlhachID ghobe’</b>, ’ej ghomHomvam lo’bogh Java mIllogh ngaS.",
       "linkLabel": "De’wI’vaD Minecraft yIje’"
     },
     "minecraftJavaInstall": {
@@ -55,7 +55,7 @@
     },
     "minecraftBedrockAccount": {
       "title": "Microsoft pong yIchenmoH",
-      "body": "Microsoft pong lo’taHvIS online Qujlu’ Minecraft Bedrock. pongvetlh gamertag lo’ma’, QujwI’ DaSammeH ’ej qo’meymajDaq DachelmeH. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: online Dochmey chu’bogh wIvmeH ben De’ lo’ Microsoft. gamertag yIqon. wIpoQbej."
+      "body": "Microsoft pong lo’taHvIS online Qujlu’ Minecraft Bedrock. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: online Dochmey chu’bogh wIvmeH ben De’ lo’ Microsoft."
     },
     "minecraftBedrockInstall": {
       "title": "jan lI’Daq Minecraft yIje’ ’ej yIlan",
@@ -68,7 +68,7 @@
     },
     "fortniteAccount": {
       "title": "Epic Games pong yIchenmoH",
-      "body": "DIl HInobbe’ Fortnite, ’ej tlhab Epic Games pongDaq ’el. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: ja’chuqmeH ’ej ghomchuqmeH Dochmey chu’bogh wIvmeH ben De’ lo’ Epic. pong ’angbogh yIqon. QujwI’ DaSammeH lo’ma’."
+      "body": "DIl HInobbe’ Fortnite, ’ej tlhab Epic Games pongDaq ’el. pong ghajbe’chugh QujwI’, pong chenmoH vav. QujwI’ qoS teH yIghItlh: ja’chuqmeH ’ej ghomchuqmeH Dochmey chu’bogh wIvmeH ben De’ lo’ Epic."
     },
     "fortniteControls": {
       "title": "lojmIt che’wI’ yIchu’",
@@ -85,7 +85,7 @@
     },
     "rocketLeagueAccount": {
       "title": "Epic Games pong yIchenmoH",
-      "body": "DIl HInobbe’ Rocket League, ’ej tlhab Epic Games pongDaq ’el – Fortnite pong rur. pong ghaj QujwI’chugh, lI’bej. pong ghajbe’chugh, pong chenmoH vav. QujwI’ qoS teH yIghItlh. pong ’angbogh yIqon. QujwI’ DaSammeH lo’ma’."
+      "body": "DIl HInobbe’ Rocket League, ’ej tlhab Epic Games pongDaq ’el – Fortnite pong rur. pong ghaj QujwI’chugh, lI’bej. pong ghajbe’chugh, pong chenmoH vav. QujwI’ qoS teH yIghItlh."
     },
     "rocketLeagueInstall": {
       "title": "Rocket League yIlan",
@@ -102,7 +102,7 @@
     },
     "pokemonGoAccount": {
       "title": "pong yIchenmoH",
-      "body": "QujmeH pong poQlu’, ’ej wa’DIch poSlu’DI’, chenmoHmeH nob Quj. wa’maH wej ben QujwI’vaD, chenmoH vav ’ej pongDajDaq rIymoH, vaj vav ghopDaq ratlh DuHmey. QujwI’ pong yIqon. QujwI’ DaSammeH lo’ma’."
+      "body": "QujmeH pong poQlu’, ’ej wa’DIch poSlu’DI’, chenmoHmeH nob Quj. wa’maH wej ben QujwI’vaD, chenmoH vav ’ej pongDajDaq rIymoH, vaj vav ghopDaq ratlh DuHmey."
     },
     "pokemonGoPhone": {
       "title": "telategh yIHoSmoH ’ej DuHmey yInuD",

@@ -37,7 +37,7 @@
   "steps": {
     "minecraftJavaAccount": {
       "title": "Hanki Microsoft-tili, jolla on Minecraft",
-      "body": "Minecraftiin kirjaudutaan Microsoft-tilillä. Jos osallistujalla ei ole sellaista, vanhempi luo sen ja ostaa sille tilille paketin ”Minecraft: Java & Bedrock Edition for PC”. Se on <b>yksi kertaosto, ei tilaus</b>, ja se kattaa näillä kerroilla käytettävän Java-version. Käyttöönotossa kysytään Java-profiilin nimi. Se nimi on käyttäjänimi, jonka tarvitsemme lisätäksemme osallistujan Minecraft-maailmaamme, joten kirjoita se ylös paikkaan, josta se löytyy uudelleen.",
+      "body": "Minecraftiin kirjaudutaan Microsoft-tilillä. Jos osallistujalla ei ole sellaista, vanhempi luo sen ja ostaa sille tilille paketin ”Minecraft: Java & Bedrock Edition for PC”. Se on <b>yksi kertaosto, ei tilaus</b>, ja se kattaa näillä kerroilla käytettävän Java-version.",
       "linkLabel": "Hanki Minecraft tietokoneelle"
     },
     "minecraftJavaInstall": {
@@ -55,7 +55,7 @@
     },
     "minecraftBedrockAccount": {
       "title": "Luo Microsoft-tili",
-      "body": "Minecraft Bedrockia pelataan verkossa Microsoft-tilillä. Tilin gamertag on se, jolla löydämme osallistujan ja lisäämme hänet maailmoihimme. Jos osallistujalla ei vielä ole tiliä, vanhempi luo sen. Merkitse osallistujan oikea syntymäaika, sillä Microsoft päättää ikätiedon perusteella, mitkä verkkotoiminnot ovat käytössä. Kirjoita gamertag ylös. Kysymme sitä."
+      "body": "Minecraft Bedrockia pelataan verkossa Microsoft-tilillä. Jos osallistujalla ei vielä ole tiliä, vanhempi luo sen. Merkitse osallistujan oikea syntymäaika, sillä Microsoft päättää ikätiedon perusteella, mitkä verkkotoiminnot ovat käytössä."
     },
     "minecraftBedrockInstall": {
       "title": "Osta ja asenna Minecraft oikealle laitteelle",
@@ -68,7 +68,7 @@
     },
     "fortniteAccount": {
       "title": "Luo Epic Games -tili",
-      "body": "Fortnite on ilmainen, ja siihen kirjaudutaan ilmaisella Epic Games -tilillä. Jos osallistujalla ei vielä ole tiliä, vanhempi luo sen. Merkitse osallistujan oikea syntymäaika, sillä Epic päättää ikätiedon perusteella, mitkä keskustelu- ja yhteisötoiminnot ovat käytössä. Kirjoita näyttönimi ylös. Sillä löydämme osallistujan."
+      "body": "Fortnite on ilmainen, ja siihen kirjaudutaan ilmaisella Epic Games -tilillä. Jos osallistujalla ei vielä ole tiliä, vanhempi luo sen. Merkitse osallistujan oikea syntymäaika, sillä Epic päättää ikätiedon perusteella, mitkä keskustelu- ja yhteisötoiminnot ovat käytössä."
     },
     "fortniteControls": {
       "title": "Aseta lapsilukko",
@@ -85,7 +85,7 @@
     },
     "rocketLeagueAccount": {
       "title": "Luo Epic Games -tili",
-      "body": "Rocket League on ilmainen, ja siihen kirjaudutaan ilmaisella Epic Games -tilillä, samanlaisella kuin Fortnitessa. Jos osallistujalla on jo tili, se käy tähänkin. Jos tiliä ei vielä ole, vanhempi luo sen. Merkitse osallistujan oikea syntymäaika. Kirjoita näyttönimi ylös. Sillä löydämme osallistujan."
+      "body": "Rocket League on ilmainen, ja siihen kirjaudutaan ilmaisella Epic Games -tilillä, samanlaisella kuin Fortnitessa. Jos osallistujalla on jo tili, se käy tähänkin. Jos tiliä ei vielä ole, vanhempi luo sen. Merkitse osallistujan oikea syntymäaika."
     },
     "rocketLeagueInstall": {
       "title": "Asenna Rocket League",
@@ -102,7 +102,7 @@
     },
     "pokemonGoAccount": {
       "title": "Luo käyttäjätili",
-      "body": "Pelaaminen vaatii tilin, ja peli tarjoutuu luomaan sen ensimmäisellä avauskerralla. Alle 13-vuotiaalle osallistujalle tilin luo vanhempi ja liittää sen omaansa, jolloin asetukset pysyvät vanhemman käsissä. Kirjoita valmentajanimi ylös. Sillä löydämme osallistujan."
+      "body": "Pelaaminen vaatii tilin, ja peli tarjoutuu luomaan sen ensimmäisellä avauskerralla. Alle 13-vuotiaalle osallistujalle tilin luo vanhempi ja liittää sen omaansa, jolloin asetukset pysyvät vanhemman käsissä."
     },
     "pokemonGoPhone": {
       "title": "Lataa puhelin täyteen ja tarkista asetukset",
