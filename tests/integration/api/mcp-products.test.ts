@@ -217,8 +217,14 @@ describe("list_products", () => {
     expect(second.structuredContent).toMatchObject({ nextCursor: null });
   });
 
-  it("refuses a cursor it never handed out, reading nothing", async () => {
-    const result = await tool({ cursor: "not-a-cursor" });
+  it.each([
+    ["one that does not decode", "not-a-cursor"],
+    [
+      "one that decodes but names no real row",
+      Buffer.from(JSON.stringify({ createdAt: "yesterday", id: "x" })).toString("base64url"),
+    ],
+  ])("refuses a cursor it never handed out — %s — reading nothing", async (_, cursor) => {
+    const result = await tool({ cursor });
 
     expect(result.isError).toBe(true);
     expect(resultText(result)).toMatch(/not one list_products handed out/);

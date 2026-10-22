@@ -44,7 +44,14 @@ function encodeCursor(cursor: KeysetCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
-const cursorShape = z.object({ createdAt: z.string().min(1), id: z.string().min(1) });
+// Checked to the shapes the database will parse, so a cursor that decodes but
+// carries a bad timestamp or id is refused as not ours rather than failing in
+// Postgres as a retryable read error. `guid`, not `uuid`: fixture ids are not
+// RFC-versioned. PostgREST writes microseconds and an offset.
+const cursorShape = z.object({
+  createdAt: z.iso.datetime({ offset: true }),
+  id: z.guid(),
+});
 
 function decodeCursor(raw: string): KeysetCursor | null {
   try {
