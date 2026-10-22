@@ -88,6 +88,7 @@
     "ctaSubmitting": "yIloS…",
     "ctaAddGamer": "QujwI’ yIchel ’ej taH",
     "ctaAllSet": "bIghuHrup",
+    "ctaOutOfBand": "{count, plural, one {QujwI’lIj {min}–{max} DIS ghajbe’} other {QujwI’pu’lIj {min}–{max} DIS ghajbe’}}",
     "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
     "ctaWaitlist": "tetlh DaqaD",
     "ctaSignIn": "yI’el",
@@ -99,8 +100,9 @@
       "event": "muvpu’"
     },
     "gamerAlreadyWaitlisted": "tetlhDaq",
-    "gamerUnderAge": "{min} bIng",
-    "gamerOverAge": "{max} Dung",
+    "gamerTooYoung": "Qupqu’",
+    "gamerTooOld": "qanqu’",
+    "gamerBand": "{min}–{max} DIS",
     "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
     "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
     "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
@@ -138,7 +140,7 @@
     },
     "seatIsFor": "’Iv quSvam ghaj",
     "selected": "wIvlu’",
-    "agePill": "qan {age}",
+    "agePill": "qan\u00a0{age}",
     "parentPill": "vav/SoS",
     "regionLock": {
       "heading": "DaqlIj",

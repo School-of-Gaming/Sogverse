@@ -88,6 +88,7 @@
     "ctaSubmitting": "Hetki…",
     "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
     "ctaAllSet": "Olet valmis",
+    "ctaOutOfBand": "{count, plural, one {Pelaajasi ei ole {min}–{max}-vuotias} other {Kukaan ei ole {min}–{max}-vuotias}}",
     "ctaAgreeConsent": "Anna vaadittu suostumus",
     "ctaWaitlist": "Liity jonotuslistalle",
     "ctaSignIn": "Kirjaudu sisään",
@@ -99,8 +100,9 @@
       "event": "Jo liittynyt"
     },
     "gamerAlreadyWaitlisted": "Jonossa",
-    "gamerUnderAge": "Alle {min}-vuotias",
-    "gamerOverAge": "Yli {max}-vuotias",
+    "gamerTooYoung": "Liian nuori",
+    "gamerTooOld": "Liian vanha",
+    "gamerBand": "Ikä {min}–{max}",
     "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
     "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
     "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
@@ -138,7 +140,7 @@
     },
     "seatIsFor": "Kenelle paikka on",
     "selected": "Valittu",
-    "agePill": "Ikä {age}",
+    "agePill": "Ikä\u00a0{age}",
     "parentPill": "Vanhempi",
     "regionLock": {
       "heading": "Sijaintisi",

@@ -486,6 +486,24 @@ describe("the audience scenarios cover all three cases", () => {
     expect(participants[0].signupState).toBe("active");
   });
 
+  it("keeps one roster the band refuses whole, for the age refusal", () => {
+    // The CTA naming the band is reachable from this scenario alone: every row
+    // a child outside the band, none holding a seat — and every block naming
+    // the product's own band, which is the one the CTA reads off them.
+    const slug = "consumer-club-age-band-refused";
+    const { product } = buildScenarioFixture(slug);
+    const { participants } = pickerRows(slug);
+    expect(participants.length).toBeGreaterThan(1);
+    for (const p of participants) {
+      expect(p.isSelf, p.name).not.toBe(true);
+      expect(p.ageBlock, p.name).toMatchObject({
+        min: product.min_age,
+        max: product.max_age,
+      });
+      expect(p.signupState ?? null, p.name).toBeNull();
+    }
+  });
+
   it("keeps the reader out of every gamers-only picker", () => {
     for (const { slug, product, authState } of fixtures) {
       if (product.for_parents || authState.kind !== "ready") continue;
