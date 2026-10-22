@@ -635,6 +635,15 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   );
 }
 
+/**
+ * PLACEHOLDER: the guide section draws nothing yet. Its renderer — the
+ * heading, the download for a signed-in reader and the call to create an
+ * account for a signed-out one — replaces this.
+ */
+function GuideSection(): ReactNode {
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // The map
 // ---------------------------------------------------------------------------
@@ -648,6 +657,7 @@ export const LANDING_SECTION_RENDERERS: {
   points: PointsSection,
   steps: StepsSection,
   testimonials: TestimonialsSection,
+  guide: GuideSection,
   faq: FaqSection,
   cta: CtaSection,
 };

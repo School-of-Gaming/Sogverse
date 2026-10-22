@@ -97,6 +97,14 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: ["nope"] },
     { id: ID, type: "testimonials", arrangement: "feature", testimonials: [ID2] },
   ],
+  guide: [
+    { id: ID, type: "guide", guideId: ID2 },
+    { id: ID, type: "guide", guideId: ` ${ID2.toUpperCase()} `, imageId: ID3 },
+    { id: ID, type: "guide" },
+    { id: ID, type: "guide", guideId: "nope" },
+    { id: ID, type: "guide", guideId: ID2, imageId: "nope" },
+    { id: ID, type: "guide", guideIds: [ID2] },
+  ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "faq", items: ids(20).map((id) => ({ id })) },
@@ -149,6 +157,12 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
     { eyebrow: "Parents", heading: "What parents tell us", intro: "In their words." },
     { heading: 3 },
     { quote: "Words live in the store, never here" },
+  ],
+  guide: [
+    {},
+    { eyebrow: "Free", heading: "The parents' guide", description: "What a club is like.", imageAlt: "The cover" },
+    { description: 3 },
+    { body: "Not a guide field" },
   ],
   faq: [
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },

@@ -526,7 +526,8 @@
       "steps": "Steg",
       "faq": "Frågor och svar",
       "cta": "Uppmaning",
-      "testimonials": "Omdömen"
+      "testimonials": "Omdömen",
+      "guide": "Guide"
     },
     "items": {
       "image": "Bild {number}",

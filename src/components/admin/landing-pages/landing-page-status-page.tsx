@@ -550,6 +550,7 @@ const ITEM_KEYS: {
   points: "points",
   steps: "steps",
   testimonials: null,
+  guide: null,
   faq: "faq",
   cta: null,
 };

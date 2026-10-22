@@ -329,6 +329,29 @@ export const MCP_LANDING_SECTIONS: {
     },
     itemIds: () => null,
   },
+  guide: {
+    about:
+      "A guide from School of Gaming's store — a PDF with one file per language — offered for download, with a heading, an optional description and an optional cover picture. Readers who are signed in download the file in their own language, else English, else the first uploaded; a signed-out reader sees the section and is asked to create an account first. The guide's files live in the store, never in the page, and an id no guide has is refused when the structure is saved. To take a guide off this page, save the structure without this section; guides themselves are never deleted.",
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("guide"),
+      guideId: landingId.describe("The guide's id, from the guide store."),
+      imageId: pictureId.optional(),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading."),
+      description: plainText.describe("A line or two on what the guide holds, plain text. Optional."),
+      imageAlt: plainText.describe("The cover picture's alt text."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "guide", guideId: ANY_ID },
+      withOptional: {
+        imageId: { id: ANY_ID, type: "guide", guideId: ANY_ID, imageId: ANY_ID },
+      },
+    },
+    itemIds: () => null,
+  },
   faq: {
     about:
       "One to twenty questions and answers. Search engines read it as the page's FAQ, so write real questions a reader asks.",

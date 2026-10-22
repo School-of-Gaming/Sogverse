@@ -526,7 +526,8 @@
       "steps": "Vaiheet",
       "faq": "Kysymykset ja vastaukset",
       "cta": "Toimintakehote",
-      "testimonials": "Asiakaskokemukset"
+      "testimonials": "Asiakaskokemukset",
+      "guide": "Opas"
     },
     "items": {
       "image": "Kuva {number}",

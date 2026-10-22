@@ -958,9 +958,12 @@ describe("landing pages", () => {
     const S_FAQ = "00000000-0000-4000-8000-0000000008b6";
     const S_CTA = "00000000-0000-4000-8000-0000000008b7";
     const S_QUOTE = "00000000-0000-4000-8000-0000000008b8";
+    const S_GUIDE = "00000000-0000-4000-8000-0000000008b9";
     const item = (n: number) => `00000000-0000-4000-8000-0000000008c${n}`;
     /** The testimonial the fixture places, which a save refuses unless it exists. */
     const TESTIMONIAL = "00000000-0000-0000-0000-000000000913";
+    /** The guide the fixture places, likewise. */
+    const GUIDE = "00000000-0000-0000-0000-000000000914";
 
     beforeAll(async () => {
       const { error } = await admin.from("testimonials").insert({ id: TESTIMONIAL });
@@ -969,10 +972,21 @@ describe("landing pages", () => {
         .from("testimonial_translations")
         .insert({ testimonial_id: TESTIMONIAL, locale: "en", attribution: "Mum, fixture", quote: "Clone fixture quote" });
       expect(words.error).toBeNull();
+      const guide = await admin.from("guides").insert({ id: GUIDE, label: "Clone fixture guide" });
+      expect(guide.error).toBeNull();
+      const file = await admin.from("guide_files").insert({
+        guide_id: GUIDE,
+        locale: "en",
+        storage_path: `${GUIDE}/en/00000000-0000-4000-8000-000000000914.pdf`,
+        file_name: "clone-fixture.pdf",
+        byte_size: 100,
+      });
+      expect(file.error).toBeNull();
     });
 
     afterAll(async () => {
       await admin.from("testimonials").delete().eq("id", TESTIMONIAL);
+      await admin.from("guides").delete().eq("id", GUIDE);
     });
 
     /** One section of every type, every item-bearing one with its items. */
@@ -984,6 +998,7 @@ describe("landing pages", () => {
       { id: S_STEPS, type: "steps", items: [{ id: item(5) }, { id: item(6) }] },
       { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
       { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
+      { id: S_GUIDE, type: "guide", guideId: GUIDE, imageId: PIC_B },
       { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
     ];
 
@@ -999,6 +1014,7 @@ describe("landing pages", () => {
         [S_STEPS]: { heading: w("steps"), items: { [item(5)]: pair(5, "step"), [item(6)]: pair(6, "step") } },
         [S_FAQ]: { heading: w("faq"), items: { [item(7)]: { question: w("question 7"), answer: w("answer 7") } } },
         [S_QUOTE]: { heading: w("testimonials") },
+        [S_GUIDE]: { heading: w("guide"), imageAlt: w("guide alt") },
         [S_CTA]: { heading: w("cta"), buttonLabel: w("cta button") },
       };
     }

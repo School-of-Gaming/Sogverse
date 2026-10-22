@@ -526,7 +526,8 @@
       "steps": "Étapes",
       "faq": "Questions et réponses",
       "cta": "Appel à l’action",
-      "testimonials": "Témoignages"
+      "testimonials": "Témoignages",
+      "guide": "Guide"
     },
     "items": {
       "image": "Image {number}",

@@ -47,6 +47,7 @@ const ITEM_NOUN: { readonly [Type in LandingSectionType]: string | null } = {
   points: "point",
   steps: "step",
   testimonials: null,
+  guide: null,
   faq: "question",
   cta: null,
 };
@@ -136,6 +137,7 @@ function itemIdsOf(section: LandingSection): string[] {
     case "hero":
     case "text":
     case "testimonials":
+    case "guide":
     case "cta":
       return [];
   }

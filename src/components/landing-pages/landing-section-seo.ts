@@ -83,6 +83,11 @@ export const LANDING_SECTION_SEO: {
   testimonials: {
     structuredData: none,
   },
+  // PLACEHOLDER until the guide section's renderer lands, which decides what a
+  // guide contributes to the page's structured data.
+  guide: {
+    structuredData: none,
+  },
   faq: {
     structuredData: (section, text) =>
       section.items.flatMap((item) => {
