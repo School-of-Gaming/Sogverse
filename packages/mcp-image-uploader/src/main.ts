@@ -35,10 +35,11 @@ import "./style.css";
  *   placement, the entries the uploads answer go to that tool together. The
  *   model is then told the whole batch at once: each file's new entry or why
  *   it was refused, and where the pictures went.
- * - **A PDF** — `open_guide_uploader` for a guide's file. The admin's one file
- *   is sent as it is to the guide upload tool, after checking it is a PDF and
- *   fits the call: no crop, no re-encoding, so a file over the limit is
- *   refused here with the remedy. The model is then told what was stored.
+ * - **A PDF** — `open_guide_uploader` for a guide's file. The admin's one file,
+ *   from the file picker or dropped on the view (the first, when several are
+ *   dropped), is sent as it is to the guide upload tool, after checking it is
+ *   a PDF and fits the call: no crop, no re-encoding, so a file over the limit
+ *   is refused here with the remedy. The model is then told what was stored.
  *
  * Every call goes through the host: the view holds no token and opens no
  * connection of its own. A new opening starts from nothing picked. Everything
@@ -176,7 +177,10 @@ let rows: Row[] = [];
 let pdf: PickedPdf | null = null;
 /** True while a pick of pictures is being checked. */
 let checking = false;
-/** Counts picks, so a newer pick (or a new opening) stops an older one still being checked. */
+/**
+ * Counts picks, of pictures or of a PDF, so a newer pick (or a new opening)
+ * stops an older one still being checked or read.
+ */
 let pickNumber = 0;
 /**
  * Set before the first call and cleared only where the admin may try again —
@@ -202,7 +206,7 @@ function ready(): Row[] {
 function refresh(): void {
   const open = opening !== null && !committing;
   fileInput.disabled = !open;
-  for (const row of rows) row.label.disabled = !open || row.picked === null;
+  for (const row of rows) row.label.disabled = !open || row.picked === null || row.outcome !== null;
   const nothingToSend =
     opening?.kind === "pdf" ? pdf === null : checking || ready().length === 0;
   uploadButton.disabled = !open || nothingToSend;
@@ -450,15 +454,30 @@ function outcomesOf(of: readonly Row[]): FileOutcome[] {
   return of.flatMap((row) => (row.outcome === null ? [] : [row.outcome]));
 }
 
-/** Check a picked PDF and hold it as it is, or say why it cannot be sent. */
-async function pickPdf(file: File, current: PdfOpening): Promise<void> {
+/**
+ * Check a picked PDF and hold it as it is, or say why it cannot be sent —
+ * from the picker or a drop alike, and with no file only clearing the last.
+ * A newer pick, or a new opening, while the file is read drops its result.
+ */
+async function pickPdf(file: File | undefined, current: PdfOpening): Promise<void> {
+  if (committing) return;
+  const mine = ++pickNumber;
+  pdf = null;
+  fileNote.hidden = true;
+  say("");
+  refresh();
+  if (!file) return;
   try {
-    pdf = { base64: await readPdf(file, current), fileName: file.name };
+    const base64 = await readPdf(file, current);
+    if (mine !== pickNumber) return;
+    pdf = { base64, fileName: file.name };
     fileNote.textContent = `${file.name}, ${megabytes(file.size)}.`;
     fileNote.hidden = false;
   } catch (error) {
+    if (mine !== pickNumber) return;
     say(error instanceof Error ? error.message : "That file could not be read.", "error");
   }
+  refresh();
 }
 
 fileInput.addEventListener("change", async () => {
@@ -471,39 +490,48 @@ fileInput.addEventListener("change", async () => {
     await pickPictures(files, opening);
     return;
   }
-  const file = fileInput.files?.[0];
-  pdf = null;
-  fileNote.hidden = true;
-  say("");
-  refresh();
-  if (!file) return;
-  try {
-    await pickPdf(file, opening);
-  } finally {
-    refresh();
-  }
+  await pickPdf(fileInput.files?.[0], opening);
 });
 
-/** Whether a drop is taken now: pictures only, while the view accepts files. */
+/** Whether a drop is taken now: while there is an opening and nothing is being committed. */
 function takesDrops(): boolean {
-  return opening?.kind === "picture" && !committing;
+  return opening !== null && !committing;
 }
 
-// A file dropped anywhere on the view is claimed, never opened by the frame in
-// place of the view; it is only acted on while the view takes pictures.
-drop.addEventListener("dragover", (event) => {
+// A file dragged over the frame is claimed everywhere, so a drop that misses
+// the view is never opened by the frame in place of it; only the view itself
+// takes one, and only while it takes files.
+document.addEventListener("dragover", (event) => {
   event.preventDefault();
-  if (takesDrops()) drop.dataset.over = "true";
+  if (event.dataTransfer && !(event.target instanceof Node && drop.contains(event.target))) {
+    event.dataTransfer.dropEffect = "none";
+  }
+});
+document.addEventListener("drop", (event) => event.preventDefault());
+
+drop.addEventListener("dragover", (event) => {
+  if (takesDrops()) {
+    drop.dataset.over = "true";
+  } else {
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+    delete drop.dataset.over;
+  }
 });
 drop.addEventListener("dragleave", (event) => {
   if (event.relatedTarget instanceof Node && drop.contains(event.relatedTarget)) return;
   delete drop.dataset.over;
 });
+// Pictures take every file dropped; a PDF opening takes the first, as its
+// picker would. Either way the drop goes the path a pick does.
 drop.addEventListener("drop", (event) => {
-  event.preventDefault();
   delete drop.dataset.over;
-  if (opening?.kind !== "picture" || !takesDrops()) return;
-  void pickPictures(Array.from(event.dataTransfer?.files ?? []), opening);
+  if (opening === null || !takesDrops()) return;
+  const files = Array.from(event.dataTransfer?.files ?? []);
+  if (files.length === 0) return;
+  // Cleared, so the picker no longer shows a file the drop replaced.
+  fileInput.value = "";
+  if (opening.kind === "picture") void pickPictures(files, opening);
+  else void pickPdf(files[0], opening);
 });
 
 /** Store one checked picture through the upload tool, with its frame's purpose: a request of its own. */
@@ -595,7 +623,12 @@ async function uploadPictures({ place }: PictureOpening, mine: number): Promise<
       committing = false;
       say("Nothing was uploaded.", "error");
     } else if (placement.kind === "refused") {
-      say(`The pictures are in the catalogue, but they could not be placed: ${placement.reason}`, "error");
+      say(
+        ids.length === 1
+          ? `The picture is in the catalogue, but it could not be placed: ${placement.reason}`
+          : `The pictures are in the catalogue, but they could not be placed: ${placement.reason}`,
+        "error",
+      );
     } else if (placement.kind === "placed") {
       say(place?.done ?? "");
     } else {
@@ -605,8 +638,12 @@ async function uploadPictures({ place }: PictureOpening, mine: number): Promise<
   await reportBatch(outcomes, placement);
 }
 
-/** Store the picked PDF as the opening's guide file, and tell the model. */
-async function uploadPdf(current: PdfOpening, file: PickedPdf): Promise<void> {
+/**
+ * Store the picked PDF as the opening's guide file, and tell the model. The
+ * model hears it even when a new opening took the screen meanwhile; that
+ * opening's screen is left alone.
+ */
+async function uploadPdf(current: PdfOpening, file: PickedPdf, mine: number): Promise<void> {
   say("Uploading…");
   const stored = await app.callServerTool({
     name: PDF_UPLOAD_TOOL,
@@ -617,7 +654,7 @@ async function uploadPdf(current: PdfOpening, file: PickedPdf): Promise<void> {
   if (!answered.success) throw new Error("The file could not be stored.");
   const { guideId, created, fileName } = answered.data;
 
-  say(current.done);
+  if (mine === openingNumber) say(current.done);
   await tellTheModel(
     `The admin uploaded ${fileName} in the uploader as the ${current.language} file of ${created ? "a new guide" : "guide"} ${guideId}. ${current.outcome}`,
   );
@@ -633,7 +670,7 @@ uploadButton.addEventListener("click", async () => {
     await uploadPictures(current, mine);
   } else if (pdf !== null) {
     try {
-      await uploadPdf(current, pdf);
+      await uploadPdf(current, pdf, mine);
     } catch (error) {
       if (mine === openingNumber) {
         committing = false;
