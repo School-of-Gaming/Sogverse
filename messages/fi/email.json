@@ -60,7 +60,7 @@
       "camp": "{participantName} on ilmoitettu leirille {productName}",
       "event": "{participantName} osallistuu tapahtumaan {productName}"
     },
-    "heading": "Valmista tuli!",
+    "heading": "Tervetuloa mukaan!",
     "subheading": {
       "consumer_club": "{participantName} on ilmoitettu toimintaan {productName}.",
       "municipality_club": "{participantName} on ilmoitettu toimintaan {productName}.",
@@ -90,12 +90,6 @@
         }
       }
     },
-    "typeLabel": {
-      "consumer_club": "Kerho",
-      "municipality_club": "Kuntakerho",
-      "camp": "Leiri",
-      "event": "Tapahtuma"
-    },
     "priceLabel": "Hinta",
     "price": {
       "subscription": "{amount} / kk",
@@ -107,6 +101,8 @@
     "next": {
       "sessions": "Tapaamiset, joihin {participantName} osallistuu, löytyvät Oma SOG -sivulta.",
       "sessionsSelf": "Tapaamisesi löytyvät Oma SOG -sivulta.",
+      "sessionsOnline": "{participantName} osallistuu tapaamisiin verkossa Oma SOG -sivulla. Äänihuone avautuu {minutes} minuuttia ennen jokaisen tapaamisen alkua.",
+      "sessionsOnlineSelf": "Osallistut tapaamisiin verkossa Oma SOG -sivulla. Äänihuone avautuu {minutes} minuuttia ennen jokaisen tapaamisen alkua.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
       "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
       "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
@@ -117,8 +113,6 @@
       "heading": "Olet jonotuslistalla",
       "subheading": "{participantName} on jonotuslistalla – {productName}. Ilmoitamme heti, kun paikka vapautuu.",
       "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "summaryTitle": "Jonotuspaikkasi",
-      "forLabel": "Jonotuslistalla",
       "next2": {
         "consumer_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
         "municipality_club": "{participantName} säilyttää paikkansa jonossa koko kauden ajan.",
@@ -128,8 +122,7 @@
       "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
     },
     "gamer": {
-      "greeting": "Hei {participantName}!",
-      "summaryTitle": "Ilmoittautumisesi"
+      "greeting": "Hei {participantName}!"
     },
     "invite": {
       "summary": "{productName} – {participantName}",
@@ -142,14 +135,7 @@
       "questions": "Kysyttävää? Kirjoita osoitteeseen {supportEmail}."
     },
     "dashboardButton": "Siirry Oma SOG -sivulle",
-    "closing": "Kysyttävää? Vastaa vain tähän viestiin.",
-    "summaryTitle": "Tilauksesi",
-    "forLabel": {
-      "consumer_club": "Ilmoitettu",
-      "municipality_club": "Ilmoitettu",
-      "camp": "Ilmoitettu",
-      "event": "Liittynyt"
-    },
+    "closing": "Kysyttävää? Vastaa vain tähän viestiin tai kirjoita osoitteeseen {supportEmail}.",
     "overview": {
       "schedule": "Aikataulu",
       "where": "Missä",

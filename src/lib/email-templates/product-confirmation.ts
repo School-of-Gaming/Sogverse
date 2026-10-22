@@ -8,6 +8,8 @@ import {
   styledProductName,
 } from "./utils";
 import { bulletList, ctaButton, factList, inlineBold, sectionLabel } from "./blocks";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { MAIL_SPACE } from "./type-scale";
 import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
 import { resolveTopicPrep } from "@/lib/products/topics";
@@ -33,21 +35,27 @@ import type { ProductTopic, ProductType } from "@/types";
 /**
  * The mail that follows a signup: **the full record of what was joined, plus
  * the calendar invitation.** The confirmation page the parent lands on is a few
- * seconds of reassurance that points here; this mail is what they keep — who
- * holds the seat, when and where it runs, who it is for, its language, what it
- * costs and what happens next. It lays them out as one list of rows, because a
- * boxed card spends side padding a phone's column does not have to give.
+ * seconds of reassurance that points here; this mail is what they keep — when
+ * and where it runs, who it is for, its language, what it costs and what
+ * happens next. It lays them out as one list of rows, because a boxed card
+ * spends side padding a phone's column does not have to give. Who holds a seat
+ * in what is not a row: the subject and the sentence over the list have
+ * already said it twice.
  *
  * Where a fact has a composition rule, that rule is one function under
  * `src/lib/products/` that every surface stating the fact calls.
  *
- * **The foot is one button.** The page offers a way back into the shop under
+ * **The mail has one button.** The page offers a way back into the shop under
  * its My SOG button, because a reader who has just checked out is still
  * standing in the shop. A reader in their inbox is not standing anywhere, so the
  * mail carries the one action it is asking for — and, being alone, it takes the
- * primary brand fill that a two-button row forbids. Under it the mail says one
- * more thing the page has no use for: that a reply to it reaches a person,
- * which is true because this send's Reply-To is the support inbox.
+ * primary brand fill that a two-button row forbids. It sits straight under what
+ * happens next, above the guide, because the guide runs to a few hundred words
+ * and under it the one action would be the last thing on a phone screen. The
+ * mail closes with one more thing the page has no use for: that a reply to it
+ * reaches a person, which is true because this send's Reply-To is the support
+ * inbox, and the support address beside it, for a copy that has been forwarded
+ * and whose reply no longer comes back to us.
  *
  * (The email translator is scoped to the `email` namespace and cannot reach the
  * page's `purchaseConfirmation` keys, so a sentence both surfaces state is two
@@ -67,7 +75,8 @@ import type { ProductTopic, ProductType } from "@/types";
  *
  *   - It closes by inviting a reply, which is an affordance rather than a fact:
  *     a mail can be answered and a page cannot. The line is true because this
- *     send's Reply-To is the support inbox, so it goes wherever that does.
+ *     send's Reply-To is the support inbox, so it goes wherever that does; it
+ *     names the address beside it for a reader whose reply would not.
  *   - It carries an `invite.ics`, and says nothing about it. The page has
  *     nothing to attach; the mail has nothing to announce, because a client
  *     that can act on the file renders the invitation itself and a sentence
@@ -81,7 +90,7 @@ import type { ProductTopic, ProductType } from "@/types";
  *   - It drops the waitlist position, and it prints no product picture. A queue
  *     number frozen into an inbox goes stale the moment somebody ahead drops
  *     out and a parent cannot tell a stale one from a live one; the picture is
- *     the image rule's doing and is explained where the summary is built.
+ *     not built yet, and this directory's `CLAUDE.md` says what it will take.
  *
  * The language fact is the small one: the page shows a flag chip and a code,
  * which a mail has no component for, so the mail names the language instead.
@@ -168,10 +177,6 @@ export interface ProductConfirmationEmailOptions {
    * participant then moves to the second person, and it moves by swapping the
    * *whole key* rather than interpolating a pronoun — a possessive that agrees
    * with a name in English does not in Finnish or Swedish.
-   *
-   * The order summary still names them either way, exactly as the page does:
-   * there the name is a value rather than a subject, and a reader's own first
-   * name beside "Enrolled" is what they recognise.
    */
   isSelfSeat: boolean;
   productName: string;
@@ -186,7 +191,9 @@ export interface ProductConfirmationEmailOptions {
    * The product's `is_remote`, and the guide's filter: in person we bring the
    * machines with everything installed, so an in-person product states only the
    * account steps and a topic whose every step belongs to our machines states
-   * nothing at all.
+   * nothing at all. It also picks the first "what happens next" bullet: a
+   * remote seat is told how it joins, an in-person one where its sessions are
+   * listed.
    *
    * **Carried here rather than read out of `overview`, though that bundle holds
    * the same column.** `overview` is the "Good to know" card's input and is
@@ -509,7 +516,7 @@ export function buildProductConfirmationEmail(
   content: ProductConfirmationContent,
 ): string {
   const {
-    options: { participantName, productName, productType, mode, dashboardUrl, gamerCopy },
+    options: { participantName, productName, mode, dashboardUrl, gamerCopy },
     // No `invitation` here: the body says nothing about the file, so whether
     // one was composed changes the attachment and the text twin and no byte of
     // the HTML.
@@ -518,22 +525,15 @@ export function buildProductConfirmationEmail(
   const isWaitlist = mode === "waitlist";
   const name = styledName(participantName);
   const product = styledProductName(productName);
-  // The reader is the participant on a self seat and on the child's own copy,
-  // and every sentence naming the participant moves to the second person on
-  // both — by swapping whole keys, as the self seat already does.
-  const secondPerson = readerIsParticipant(content.options);
 
   const title = isWaitlist
     ? t("productConfirmation.waitlist.heading")
     : t("productConfirmation.heading");
 
-  const subheading = isWaitlist
-    ? secondPerson
-      ? t("productConfirmation.self.waitlist.subheading", { productName: product })
-      : t("productConfirmation.waitlist.subheading", { participantName: name, productName: product })
-    : secondPerson
-      ? t(`productConfirmation.self.subheading.${productType}`, { productName: product })
-      : t(`productConfirmation.subheading.${productType}`, { participantName: name, productName: product });
+  const subheading = subheadingSentence(t, content.options, {
+    participantName: name,
+    productName: product,
+  });
 
   // The child's copy is the one variant that greets the reader by name: the
   // second-person sentences under it name nobody, and a mail to a child that
@@ -542,30 +542,18 @@ export function buildProductConfirmationEmail(
     ? paragraph(t("productConfirmation.gamer.greeting", { participantName: name }))
     : "";
 
-  // **One facts list, and it is the whole middle of the mail.** What the page
-  // lays out as two cards — the order summary, then "Good to know" — is one run
-  // of rows here, in the order a parent needs them: what they joined, who it is
-  // for, when and where it happens, and what it costs. Two boxed cards was the
-  // page's arrangement rather than the mail's, and on a phone each one spent
-  // its own border and padding out of a column that had none to give.
+  // **One facts list, and it is the whole middle of the mail**, in the order a
+  // parent needs it: when and where it happens, who it is for, and what it
+  // costs. One run of rows rather than boxed cards, because on a phone each box
+  // spends its own border and padding out of a column that has none to give.
   //
-  // **No picture, and that is the image rule rather than an omission.** A mail
-  // cannot paint the product's photograph, because an image's box here has to be arithmetic from dimensions the sender
-  // already holds, and there are none: `catalogue_images` stores no size, and
-  // entries uploaded before sizes were enforced may be any size and `webp` or
-  // `avif`, neither of which Outlook's desktop engine renders. A fixed 96×64
-  // box would stretch a portrait and a width-only `<img>`
-  // would reserve nothing and reflow the mail when it loaded. So the row is the
-  // type and the name alone, which leaves no hole — the picture was never
-  // carrying a fact the two lines beside it do not.
+  // **It opens on the schedule, with no rows naming the product or the
+  // participant and no label over it.** The subject and the sentence directly
+  // above have both already said who is signed up for what, so a third
+  // statement of it would be the first thing the list says; and that sentence
+  // is what introduces the list, so a label between them would be heading rows
+  // the sentence has already headed.
   const factRows: [string, string][] = [
-    [t(`productConfirmation.typeLabel.${productType}`), product],
-    [
-      isWaitlist
-        ? t("productConfirmation.waitlist.forLabel")
-        : t(`productConfirmation.forLabel.${productType}`),
-      escapeHtml(participantName),
-    ],
     ...overviewRows(overview),
     ...holidayBreakRows(t, content.options.holidayBreaks),
   ];
@@ -583,7 +571,7 @@ export function buildProductConfirmationEmail(
     ${heading(title)}
     ${greeting}
     ${paragraph(subheading)}
-    ${factList(factRows, { leadIn: summaryTitle(t, content.options) })}
+    ${factList(factRows)}
     ${sectionLabel(t("productConfirmation.nextTitle"))}
     ${bulletList(
       nextItems(t, content.options, {
@@ -591,12 +579,26 @@ export function buildProductConfirmationEmail(
         firstChargeDate: escapeHtml(content.options.firstChargeDate ?? ""),
       }),
     )}
+    ${ctaButton({
+      // One button, and it is the page's own primary. The page also offers a
+      // "keep browsing" beside it, because a reader still standing in the shop
+      // has somewhere obvious to go back to; a reader in their inbox does not,
+      // so the mail carries the one action it is actually asking for and takes
+      // the brand fill a two-button row would forbid it.
+      //
+      // It sits under "what happens next" and above the guide, because the
+      // guide runs to a few hundred words: below it, the one action the mail
+      // asks for would be the last thing on a phone screen.
+      href: dashboardUrl,
+      label: t("productConfirmation.dashboardButton"),
+      variant: "primary",
+    })}
     ${
-      // The guide comes after "what happens next" and before the button,
-      // because that list is where the mail says *when* the first session is
-      // and this is what to do before it. Both readers get it: the steps are one
-      // text written to read the same to a parent and to a gamer, so the
-      // child's copy carries the guide the parent's does.
+      // The guide follows the button, and still follows "what happens next",
+      // which is where the mail says *when* the first session is; this is what
+      // to do before it. Both readers get it: the steps are one text written to
+      // read the same to a parent and to a gamer, so the child's copy carries
+      // the guide the parent's does.
       //
       // Already composed HTML from the section builder, spliced whole: it is
       // empty on a topic with no guide, on an in-person product with nothing
@@ -604,16 +606,6 @@ export function buildProductConfirmationEmail(
       // mail nothing — no wrapper left behind, no gap to close.
       content.topicPrep?.html ?? ""
     }
-    ${ctaButton({
-      // One button, and it is the page's own primary. The page also offers a
-      // "keep browsing" beside it, because a reader still standing in the shop
-      // has somewhere obvious to go back to; a reader in their inbox does not,
-      // so the mail carries the one action it is actually asking for and takes
-      // the brand fill a two-button row would forbid it.
-      href: dashboardUrl,
-      label: t("productConfirmation.dashboardButton"),
-      variant: "primary",
-    })}
     ${
       // "Just reply to this email" is a true instruction on this mail and not a
       // figure of speech: every product send carries an explicit Reply-To, and
@@ -622,31 +614,47 @@ export function buildProductConfirmationEmail(
       // unattended sending address would be the void this line exists to prove
       // is not there — so if this send ever takes a Reply-To of its own, this
       // sentence goes with it.
-      paragraph(t("productConfirmation.closing"))
+      //
+      // The support address beside it is for the forwarded copy, whose reply
+      // goes to whoever forwarded it. Displayed and defused rather than linked,
+      // as every address this directory prints is: a client turns a bare one
+      // into a link of its own, in a colour we did not choose.
+      paragraph(
+        t("productConfirmation.closing", {
+          supportEmail: defuseAutolinks(escapeHtml(SUPPORT_EMAIL)),
+        }),
+      )
     }
   `;
-  return wrapInLayout({ title, content: body, locale, t });
+  // The inbox preview is the sentence under the heading, as plain text: left to
+  // itself a client previews the header lockup, which every mail from us opens
+  // with and which says nothing about this one.
+  const preheader = subheadingSentence(t, content.options, { participantName, productName });
+  return wrapInLayout({ title, content: body, locale, t, preheader });
 }
 
 /**
- * The label over the facts list — the page's order-summary title, doing the
- * same job over a longer run of rows.
- *
- * **"Your order" is a buyer's word, and the child's copy has no buyer in it.**
- * That copy states no price and asks for no payment, so the list under it is a
- * record of a signup rather than of a purchase, and naming it after an order a
- * child did not place is the one line where the parent's mail would show
- * through. The waitlist's own title needs no such variant: waiting for a seat
- * is the same fact for whoever is waiting.
+ * The sentence under the heading — who is signed up for what, or waiting for
+ * it — which is also the inbox preview. One composition, handed its values
+ * already prepared for where it is going: marked up for the body, bare for the
+ * preview and the text twin.
  */
-function summaryTitle(
+function subheadingSentence(
   t: EmailTranslator,
-  { mode, gamerCopy }: ProductConfirmationEmailOptions,
+  options: ProductConfirmationEmailOptions,
+  values: { participantName: string; productName: string },
 ): string {
-  if (mode === "waitlist") return t("productConfirmation.waitlist.summaryTitle");
-  return gamerCopy
-    ? t("productConfirmation.gamer.summaryTitle")
-    : t("productConfirmation.summaryTitle");
+  const { productType, mode } = options;
+  const { participantName, productName } = values;
+  const secondPerson = readerIsParticipant(options);
+  if (mode === "waitlist") {
+    return secondPerson
+      ? t("productConfirmation.self.waitlist.subheading", { productName })
+      : t("productConfirmation.waitlist.subheading", { participantName, productName });
+  }
+  return secondPerson
+    ? t(`productConfirmation.self.subheading.${productType}`, { productName })
+    : t(`productConfirmation.subheading.${productType}`, { participantName, productName });
 }
 
 /**
@@ -655,10 +663,9 @@ function summaryTitle(
  *
  * **They carry no section label of their own.** The page heads them "Good to
  * know" because they are a second card there, standing apart from the order
- * summary above; here they are the middle of one list, and a label inside a run
- * of rows would be announcing a break the layout does not make. A send with no
- * facts to state simply has a shorter list — which is the same degradation the
- * card used to make by being absent, with nothing left behind to look empty.
+ * summary above; here they are the list itself, and the sentence over it is
+ * what introduces it. A send with no facts to state simply has a shorter list,
+ * with nothing left behind to look empty.
  */
 function overviewRows(
   overview: ProductConfirmationFact[] | null,
@@ -717,9 +724,10 @@ function holidayBreaksText(
 /**
  * What happens next.
  *
- * Where the sessions are first; then the deferred first charge, on the one signup that has
- * one — the parent has just seen €0 at checkout and is owed the real date in
- * the same breath; then the price-shape line. `free` and `external` state no
+ * Where the sessions are first (on a remote product, how they are joined);
+ * then the deferred first charge, on the one signup that has one — the parent
+ * has just seen €0 at checkout and is owed the real date in the same breath;
+ * then the price-shape line. `free` and `external` state no
  * third bullet at all: the price row above has
  * already said what there is to say about the cost, and every honest expansion
  * of it was some version of who we invoice, which is our arrangement with a
@@ -750,13 +758,7 @@ function nextItems(
     ];
   }
 
-  const items = [
-    secondPerson
-      ? t("productConfirmation.next.sessionsSelf")
-      : t("productConfirmation.next.sessions", {
-          participantName: values.participantName,
-        }),
-  ];
+  const items = [sessionsItem(t, options, values.participantName)];
   // **The child's copy stops here, on every mode.** What is left is the money:
   // when the first charge falls, and that a subscription bills monthly or a
   // one-time payment is done with. All of it is addressed to whoever pays, and
@@ -772,6 +774,32 @@ function nextItems(
     items.push(t(`productConfirmation.next.${mode}`));
   }
   return items;
+}
+
+/**
+ * The first "what happens next" bullet: where the sessions are, or, on a remote
+ * product, how they are joined — online in My SOG, through the voice room that
+ * opens a set number of minutes before each one starts.
+ *
+ * The minutes come from the constant the voice room itself reads, the same one
+ * the calendar entry's notes state, so the mail, the file and the room cannot
+ * disagree about when it opens.
+ */
+function sessionsItem(
+  t: EmailTranslator,
+  options: ProductConfirmationEmailOptions,
+  participantName: string,
+): string {
+  const secondPerson = readerIsParticipant(options);
+  if (options.isRemote) {
+    const minutes = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES;
+    return secondPerson
+      ? t("productConfirmation.next.sessionsOnlineSelf", { minutes })
+      : t("productConfirmation.next.sessionsOnline", { participantName, minutes });
+  }
+  return secondPerson
+    ? t("productConfirmation.next.sessionsSelf")
+    : t("productConfirmation.next.sessions", { participantName });
 }
 
 /**
@@ -795,19 +823,8 @@ export function productConfirmationText(
   if (invitation === null) return undefined;
 
   const {
-    options: {
-      participantName,
-      productName,
-      productType,
-      mode,
-      priceAmount,
-      dashboardUrl,
-      gamerCopy,
-    },
+    options: { participantName, productName, mode, priceAmount, dashboardUrl, gamerCopy },
   } = content;
-  // The same reader test the HTML makes, so the entry's notes speak in the
-  // voice the mail above them does.
-  const secondPerson = readerIsParticipant(content.options);
 
   // The enrolled keys throughout, with no waitlist branch: a waitlist join
   // composes no calendar object, so this function has already returned for it.
@@ -815,17 +832,12 @@ export function productConfirmationText(
     t("productConfirmation.heading"),
     "",
     ...(gamerCopy ? [t("productConfirmation.gamer.greeting", { participantName }), ""] : []),
-    secondPerson
-      ? t(`productConfirmation.self.subheading.${productType}`, { productName })
-      : t(`productConfirmation.subheading.${productType}`, { participantName, productName }),
+    subheadingSentence(t, content.options, { participantName, productName }),
     "",
-    summaryTitle(t, content.options),
-    `${t(`productConfirmation.typeLabel.${productType}`)}: ${productName}`,
-    `${t(`productConfirmation.forLabel.${productType}`)}: ${participantName}`,
   ];
 
-  // The same one list the HTML states, in the same order and with no heading
-  // over its middle: the product's facts run on from the two rows above them.
+  // The same one list the HTML states, in the same order and with no label
+  // over it: the sentence above introduces it.
   if (overview !== null) {
     for (const { label, lines: values } of overview) {
       lines.push(`${label}: ${values.join(" — ")}`);
@@ -845,14 +857,14 @@ export function productConfirmationText(
       participantName,
       firstChargeDate: content.options.firstChargeDate ?? "",
     }).map((item) => `- ${item}`),
+    "",
+    `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
     // The same guide the HTML states, at the same place in the document and
     // from the same resolution — so the calendar entry's notes cannot hold a
     // longer or shorter guide than the mail they were filled from.
     ...(content.topicPrep === null ? [] : ["", ...content.topicPrep.text]),
     "",
-    `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
-    "",
-    t("productConfirmation.closing"),
+    t("productConfirmation.closing", { supportEmail: SUPPORT_EMAIL }),
   );
 
   return lines.join("\n");

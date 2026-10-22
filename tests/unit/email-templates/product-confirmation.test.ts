@@ -20,7 +20,9 @@ import {
   type TopicPrepTranslator,
 } from "@/lib/email-templates/translator";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
-import { styledName } from "@/lib/email-templates/utils";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { defuseAutolinks, styledName } from "@/lib/email-templates/utils";
 
 let t: EmailTranslator;
 /** The guide's own translator — the second namespace this mail reads. */
@@ -127,13 +129,69 @@ function factsList(html: string): string {
   return upTo.slice(upTo.lastIndexOf("<table"));
 }
 
+/** The closing line as the body prints it: the support address defused. */
+const CLOSING = `Questions? Just reply to this email, or write to ${defuseAutolinks(SUPPORT_EMAIL)}.`;
+
 describe("buildProductConfirmationEmail", () => {
-  it("names the participant, the product and its type", () => {
+  it("names the participant and the product in the sentence under the heading", () => {
     const html = render(base);
-    expect(html).toContain("Aino");
+    expect(html).toContain(`${styledName("Aino")} is enrolled in`);
     expect(html).toContain("Minecraft 101");
-    expect(html).toContain("Club");
     expect(html).toContain("<!DOCTYPE html>");
+  });
+
+  /**
+   * One heading for every enrolled mail. "All set" overclaimed on a mail whose
+   * guide then lists the setup still to do; the waitlist keeps its own.
+   */
+  it("opens an enrolled mail with “You’re in!” and a waitlist join with its own heading", () => {
+    for (const overrides of [{}, { gamerCopy: true }, { isRemote: false }, { mode: "free" as const }]) {
+      const html = render(overrides);
+      expect(html).toContain("You’re in!");
+      expect(html).not.toContain("all set");
+    }
+    expect(render({ mode: "waitlist", priceAmount: null })).not.toContain("You’re in!");
+  });
+
+  /**
+   * The inbox preview. Left alone, a client previews the first words of the
+   * document, which in every mail is the header lockup; this one hands it the
+   * sentence under the heading instead, hidden, as the very first thing in the
+   * body.
+   */
+  describe("the inbox preview", () => {
+    function preheader(html: string): string {
+      const body = html.slice(html.indexOf("<body"));
+      const opened = body.slice(body.indexOf(">") + 1);
+      expect(opened.startsWith("<div style=\"display:none;"), opened.slice(0, 80)).toBe(true);
+      return opened.slice(0, opened.indexOf("</div>"));
+    }
+
+    it("is the subheading as plain text, hidden, before anything else in the body", () => {
+      const block = preheader(render(base));
+      expect(block).toContain("Aino is enrolled in Minecraft 101.");
+      expect(block).not.toContain("<strong");
+      for (const hidden of ["max-height:0", "overflow:hidden", "opacity:0", "mso-hide:all"]) {
+        expect(block).toContain(hidden);
+      }
+      // Padded, so a client does not pull the lockup in after the sentence.
+      expect(block).toContain("&#847;&zwnj;&nbsp;");
+    });
+
+    it("follows the reader and the outcome, as the subheading does", () => {
+      expect(preheader(render({ participantName: "Marja", isSelfSeat: true }))).toContain(
+        "You’re enrolled in Minecraft 101.",
+      );
+      expect(preheader(render({ mode: "waitlist", priceAmount: null }))).toContain(
+        "Aino is on the waitlist for Minecraft 101.",
+      );
+    });
+
+    it("escapes the values in it", () => {
+      const block = preheader(render({ productName: "<b>Club</b>" }));
+      expect(block).toContain("&lt;b&gt;Club&lt;/b&gt;");
+      expect(block).not.toContain("<b>");
+    });
   });
 
   /**
@@ -155,15 +213,17 @@ describe("buildProductConfirmationEmail", () => {
   /**
    * The one line the page has no use for. It is an instruction rather than a
    * pleasantry: this send's Reply-To is the support inbox, so a reply reaches a
-   * person — and it sits under the button, where a reader who is not going to
-   * click one has somewhere else to go.
+   * person. It names the support address too, because a forwarded copy's reply
+   * goes to whoever forwarded it — displayed and defused, like every address a
+   * mail here prints, so no client invents a link of its own. It is the last
+   * thing in the mail, under the button and the guide.
    */
-  it("closes by inviting a reply, under the button", () => {
+  it("closes by inviting a reply and naming the support address, last", () => {
     const html = render(base);
-    expect(html).toContain("Questions? Just reply to this email.");
-    expect(html.indexOf("Go to My SOG")).toBeLessThan(
-      html.indexOf("Questions? Just reply to this email."),
-    );
+    expect(html).toContain(CLOSING);
+    expect(html).not.toContain("mailto:");
+    expect(html.indexOf("Go to My SOG")).toBeLessThan(html.indexOf(CLOSING));
+    expect(html.indexOf("Before the first session")).toBeLessThan(html.indexOf(CLOSING));
   });
 
   it("uses the verb the product type calls for", () => {
@@ -171,7 +231,6 @@ describe("buildProductConfirmationEmail", () => {
     const event = render({ ...base, productType: "event" });
     expect(club).toContain("is enrolled in");
     expect(event).toContain("is joining");
-    expect(event).toContain("Event");
   });
 
   /**
@@ -201,44 +260,66 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
-   * The mail's one facts list, opened by the page's order-summary title. The
-   * row that used to carry the page's photograph carries the type and the name
-   * alone — there are no stored dimensions and no enforced aspect to size a box
-   * from, and the accept list admits three formats Outlook's desktop engine
-   * will not render — so the mail states the two lines that sat beside it and
-   * leaves no hole where a picture would have been.
+   * The mail's one facts list. It opens on the schedule, under no label: the
+   * subject and the sentence directly above have already said who is signed up
+   * for what, and that sentence is what introduces the list.
    */
   describe("the facts list", () => {
-    it("states the type, the name, who the seat is for, and the price", () => {
-      const html = render(base);
-      expect(html).toContain("Your order");
-      expect(html).toContain("Enrolled");
-      expect(html).toContain("Aino");
-      expect(html).toContain("Price");
-    });
-
     /**
-     * One list, and the order is the order a parent needs: what they joined,
-     * who holds the seat, when and where it runs, and last what it costs. The
-     * product's facts run on from the two rows above them with no label of
-     * their own — a heading inside a run of rows would announce a break the
-     * layout does not make.
+     * One list, and the order is the order a parent needs: when and where it
+     * runs, who it is for, and last what it costs.
      */
-    it("runs the product's facts between the seat and the price, in one list", () => {
+    it("runs from the schedule to the price, in one list", () => {
       const html = render(base);
-      const order = ["Your order", "Club", "Enrolled", "Schedule", "Language", "Price"];
+      const list = factsList(html);
+      const order = ["Schedule", "Language", "Price"];
       let cursor = -1;
       for (const fragment of order) {
-        const at = html.indexOf(fragment);
+        const at = list.indexOf(fragment);
         expect(at, fragment).toBeGreaterThan(cursor);
         cursor = at;
       }
-      // One table between the section label and the next one, not two.
+      // One table between the sentence over the list and what happens next.
       const between = html.slice(
-        html.indexOf("Your order"),
+        html.lastIndexOf("is enrolled in"),
         html.indexOf("What happens next"),
       );
       expect(between.match(/<table/g)).toHaveLength(1);
+    });
+
+    /**
+     * No row names the product or the participant, and no label sits over the
+     * list — on any outcome and for either reader.
+     */
+    it("states no identity rows and no label, on any mode or copy", () => {
+      const renders = [
+        render(base),
+        render({ participantName: "Marja", isSelfSeat: true }),
+        render({ mode: "waitlist", priceAmount: null }),
+        render({ gamerCopy: true, priceAmount: null }),
+        render({ productType: "event" }),
+      ];
+      for (const html of renders) {
+        const between = html.slice(
+          html.lastIndexOf("Minecraft 101"),
+          html.indexOf("What happens next"),
+        );
+        for (const gone of [
+          "Aino",
+          "Marja",
+          "Club",
+          "Event",
+          "Enrolled",
+          "Joined",
+          "Waitlisted",
+          "Your order",
+          "Your signup",
+          "Your waitlist spot",
+        ]) {
+          expect(between, gone).not.toContain(gone);
+        }
+        expect(between).toContain("Schedule");
+      }
     });
 
     /**
@@ -255,24 +336,10 @@ describe("buildProductConfirmationEmail", () => {
       expect(list).not.toContain("border-radius");
     });
 
-    it("names the participant even on the parent's own seat", () => {
-      const html = render({ participantName: "Marja", isSelfSeat: true });
-      // The sentences move to the second person; the summary row does not — a
-      // reader's own first name beside "Enrolled" is what they recognise.
-      expect(html).toContain("You’re enrolled in");
-      expect(html).toContain("Marja");
-    });
-
     it("carries no product picture", () => {
       expect(render(base)).not.toContain("product-images");
     });
 
-    it("takes the waitlist's own title and label", () => {
-      const html = render({ mode: "waitlist", priceAmount: null });
-      expect(html).toContain("Your waitlist spot");
-      expect(html).toContain("Waitlisted");
-      expect(html).not.toContain("Your order");
-    });
   });
 
   /**
@@ -352,7 +419,6 @@ describe("buildProductConfirmationEmail", () => {
       const html = render({ overview: null });
       expect(html).not.toContain("Schedule");
       expect(html).not.toContain("Language");
-      expect(html).toContain("Your order");
       expect(html).toContain("Price");
       expect(html).toContain("What happens next");
     });
@@ -405,7 +471,7 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("Paid for by your municipality");
       expect(html).not.toContain("Free");
       expect(html).not.toContain("invoice");
-      expect(html).toContain("sessions under My SOG");
+      expect(html).toContain("joins the sessions online in My SOG");
     });
 
     it("prints no price row at all on a waitlist join", () => {
@@ -441,6 +507,37 @@ describe("buildProductConfirmationEmail", () => {
       const html = render({ priceAmount: null });
       expect(html).not.toContain("€");
       expect(html).toContain("billed every month");
+    });
+  });
+
+  /**
+   * The first "what happens next" bullet. A remote seat is told how it joins —
+   * online in My SOG, through a voice room that opens a set number of minutes
+   * before each session, read off the constant the room itself uses — and an
+   * in-person seat where its sessions are listed.
+   */
+  describe("the sessions bullet", () => {
+    const minutes = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES;
+
+    it("says how a remote seat joins, and when the voice room opens", () => {
+      expect(render(base)).toContain(
+        `${styledName("Aino")} joins the sessions online in My SOG. The voice room opens ${minutes} minutes before each session starts.`,
+      );
+    });
+
+    it("takes the second person for the reader who is the participant", () => {
+      const self = `You join the sessions online in My SOG. The voice room opens ${minutes} minutes before each session starts.`;
+      expect(render({ participantName: "Marja", isSelfSeat: true })).toContain(self);
+      expect(render({ gamerCopy: true, priceAmount: null })).toContain(self);
+    });
+
+    it("keeps the in-person bullet where the product is not remote", () => {
+      const html = render({ isRemote: false });
+      expect(html).toContain(`You’ll find ${styledName("Aino")}’s sessions under My SOG.`);
+      expect(html).not.toContain("voice room");
+      expect(render({ isRemote: false, isSelfSeat: true })).toContain(
+        "You’ll find your sessions under My SOG.",
+      );
     });
   });
 
@@ -485,8 +582,8 @@ describe("buildProductConfirmationEmail", () => {
 
     it("moves the sessions line into the second person too", () => {
       const html = render({ participantName: "Marja", isSelfSeat: true });
-      expect(html).toContain("You’ll find your sessions under My SOG.");
-      expect(html).not.toContain("’s sessions");
+      expect(html).toContain("You join the sessions online in My SOG.");
+      expect(html).not.toContain("Marja joins");
     });
 
     it("takes the second person on the waitlist as well", () => {
@@ -522,7 +619,7 @@ describe("buildProductConfirmationEmail", () => {
       expect(html).toContain("Hi ");
       expect(html).toContain("You’re enrolled in");
       expect(html).not.toContain("is enrolled in");
-      expect(html).toContain("You’ll find your sessions under My SOG.");
+      expect(html).toContain("You join the sessions online in My SOG.");
     });
 
     it("states no price and no billing line on any mode", () => {
@@ -543,19 +640,6 @@ describe("buildProductConfirmationEmail", () => {
       });
       expect(html).not.toContain("€40.00");
       expect(html).not.toContain("13 Jan 2027");
-    });
-
-    /**
-     * The card records a signup rather than a purchase, because there is no
-     * purchase in this copy — no price row, and nothing the reader paid.
-     */
-    it("titles the summary after the signup rather than after an order", () => {
-      const html = render(child);
-      expect(html).toContain("Your signup");
-      expect(html).not.toContain("Your order");
-      // Still the same card otherwise: who the seat is for, under the page's
-      // own label.
-      expect(html).toContain("Enrolled");
     });
 
     it("keeps the product's own facts, which are nobody's to withhold", () => {
@@ -648,7 +732,7 @@ describe("buildProductConfirmationEmail", () => {
 
         expect(text).toContain("Hi Aino!");
         expect(text).toContain("You’re enrolled in Minecraft 101.");
-        expect(text).toContain("Your signup");
+        expect(text).not.toContain("Your signup");
         expect(text).toContain(GAMER_DASHBOARD_URL);
         expect(text).not.toContain("Price");
         expect(text).not.toContain("billed every month");
@@ -719,18 +803,16 @@ describe("the plain-text twin", () => {
     const text = productConfirmationText(t, resolve({ invitation: SCHEDULE }))!;
 
     const order = [
-      "You’re all set!",
+      "You’re in!",
       "Aino is enrolled in Minecraft 101.",
-      "Your order",
-      "Club: Minecraft 101",
-      "Enrolled: Aino",
       "Schedule: ",
       "Language: Finnish",
       "Price: €40.00 / month",
       "What happens next",
-      "- You’ll find Aino’s sessions under My SOG.",
-      DASHBOARD_URL,
-      "Questions? Just reply to this email.",
+      `- Aino joins the sessions online in My SOG. The voice room opens ${VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES} minutes before each session starts.`,
+      `Go to My SOG: ${DASHBOARD_URL}`,
+      "Before the first session",
+      `Questions? Just reply to this email, or write to ${SUPPORT_EMAIL}.`,
     ];
     let cursor = -1;
     for (const fragment of order) {
@@ -738,9 +820,12 @@ describe("the plain-text twin", () => {
       expect(at, fragment).toBeGreaterThan(cursor);
       cursor = at;
     }
-    // The facts run on from the rows above them, with no heading of their own,
-    // exactly as they do in the HTML.
+    // The list opens on the schedule with no label and no identity rows,
+    // exactly as it does in the HTML.
     expect(text).not.toContain("Good to know");
+    expect(text).not.toContain("Your order");
+    expect(text).not.toContain("Club: ");
+    expect(text).not.toContain("Enrolled: ");
     // The mail's words, not its markup: an entry's notes are read as text.
     expect(text).not.toContain("<");
     expect(text).not.toContain("&#");
@@ -913,13 +998,18 @@ describe("the “Before the first session” guide", () => {
     expect(render({ isRemote: false })).not.toContain(HEADING);
   });
 
-  /** Where the section sits: after what happens next, before the button. */
-  it("places the guide between the next steps and the My SOG button", () => {
+  /**
+   * Where the section sits: after what happens next and the button, before the
+   * closing — so the one action the mail asks for is not pushed to the bottom
+   * of a phone screen by a few hundred words of guide.
+   */
+  it("places the guide after the next steps and the My SOG button", () => {
     const html = render();
-    expect(html.indexOf("What happens next")).toBeLessThan(html.indexOf(HEADING));
-    expect(html.indexOf(HEADING)).toBeLessThan(
+    expect(html.indexOf("What happens next")).toBeLessThan(
       html.indexOf(`href="${DASHBOARD_URL}"`),
     );
+    expect(html.indexOf(`href="${DASHBOARD_URL}"`)).toBeLessThan(html.indexOf(HEADING));
+    expect(html.indexOf(HEADING)).toBeLessThan(html.indexOf(CLOSING));
   });
 
   /**
@@ -941,8 +1031,9 @@ describe("the “Before the first session” guide", () => {
       expect(body).toContain(`1. ${ACCOUNT_STEP}`);
       expect(body).toContain(`2. ${INSTALL_STEP}`);
       expect(body).toContain(`4. ${REMOTE_STEP}`);
-      expect(body.indexOf("What happens next")).toBeLessThan(body.indexOf(HEADING));
-      expect(body.indexOf(HEADING)).toBeLessThan(body.indexOf(DASHBOARD_URL));
+      expect(body.indexOf("What happens next")).toBeLessThan(body.indexOf(DASHBOARD_URL));
+      expect(body.indexOf(DASHBOARD_URL)).toBeLessThan(body.indexOf(HEADING));
+      expect(body.indexOf(HEADING)).toBeLessThan(body.indexOf(SUPPORT_EMAIL));
     });
 
     it("states the same guide in the child's own copy", () => {
