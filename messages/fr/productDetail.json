@@ -89,7 +89,7 @@
     "ctaAddGamer": "Ajoutez un joueur pour continuer",
     "ctaAllSet": "Tout est prêt",
     "ctaOutOfBand": {
-      "between": "{count, plural, one {Votre joueur n’a pas {min}–{max} ans} other {Vos joueurs n’ont pas {min}–{max} ans}}",
+      "between": "{count, plural, one {Votre joueur n’a pas entre {min} et {max} ans} other {Aucun de vos joueurs n’a {min}–{max} ans}}",
       "from": "{count, plural, one {Votre joueur a moins de {min} ans} other {Vos joueurs ont moins de {min} ans}}",
       "upTo": "{count, plural, one {Votre joueur a plus de {max} ans} other {Vos joueurs ont plus de {max} ans}}"
     },

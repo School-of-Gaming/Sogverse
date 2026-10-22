@@ -201,6 +201,13 @@ const DEMO_GAMERS = [
   { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
 ] as const;
 
+// The age band every product fixture with a gamer audience carries. One
+// constant because three things must agree on it — the product's own bounds,
+// the band the panel is handed, and the bound each refused child fell outside —
+// and a scene whose rows named a different band from its heading would be a
+// false picture of the page.
+const DEMO_AGE_BAND = { min: 8, max: 12 } as const;
+
 // The two siblings the product's own age band refuses, one at each end of it —
 // every product fixture with a gamer audience is 8–12, so a six-year-old and a
 // fourteen-year-old are outside it whichever scenario is being looked at. They
@@ -217,7 +224,7 @@ const DEMO_GAMERS_OUT_OF_BAND = [
     id: "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57",
     name: "Elias",
     age: 6,
-    ageBlock: { kind: "under", bound: 8 },
+    ageBlock: { kind: "under", bound: DEMO_AGE_BAND.min },
   },
   {
     id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
@@ -228,7 +235,7 @@ const DEMO_GAMERS_OUT_OF_BAND = [
     // case, not the median.
     name: "Sofia-Aleksandra",
     age: 14,
-    ageBlock: { kind: "over", bound: 12 },
+    ageBlock: { kind: "over", bound: DEMO_AGE_BAND.max },
   },
 ] as const satisfies readonly SignupParticipantChoice[];
 
@@ -1358,7 +1365,7 @@ function buildAuthState(
     // The band `buildBaseProduct` gives every product with a gamer audience,
     // named in full beside each refused row and by the CTA when every child is
     // outside it.
-    ...(audience === "parents" ? {} : { ageRange: { min: 8, max: 12 } }),
+    ...(audience === "parents" ? {} : { ageRange: DEMO_AGE_BAND }),
   };
 }
 
@@ -1417,8 +1424,8 @@ function buildBaseProduct(
     // band on the browse grid.
     for_gamers: audience !== "parents",
     for_parents: audience !== "gamers",
-    min_age: audience === "parents" ? null : 8,
-    max_age: audience === "parents" ? null : 12,
+    min_age: audience === "parents" ? null : DEMO_AGE_BAND.min,
+    max_age: audience === "parents" ? null : DEMO_AGE_BAND.max,
     // A real row field, like every other product column: the card, the detail
     // hero and the tag note all read `product.tag`, so nothing keyed by
     // scenario can leave two surfaces disagreeing about one club.
