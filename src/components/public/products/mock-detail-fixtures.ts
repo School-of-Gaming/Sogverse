@@ -5,7 +5,6 @@ import type {
   ProductType,
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
-import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { holidayBreakRows, type HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductDetailRow } from "@/services/products/products.service";
 import type {
@@ -1168,13 +1167,12 @@ export function buildScenarioFixture(
     /**
      * A topic other than the one this scenario's row carries.
      *
-     * The topic decides two cards a reader has to be able to read for *every*
-     * topic — the product page's "About {label}" card and the confirmation
-     * page's "Before the first session" guide — and the fixtures name one
-     * topic per scenario. Rather than a scenario per topic on both surfaces,
-     * the two scenes take the topic as an axis over the scenarios they already
-     * have, and this is where it lands on the row, so both cards follow one
-     * value exactly as they do in production.
+     * The topic decides the product page's "About {label}" card, which a
+     * reader has to be able to read for *every* topic, and the fixtures name
+     * one topic per scenario. Rather than a scenario per topic, the product
+     * scene takes the topic as an axis over the scenarios it already has, and
+     * this is where it lands on the row, so the card follows one value exactly
+     * as it does in production.
      */
     topic?: ProductTopic;
   } = {},
@@ -1235,19 +1233,8 @@ export interface ConfirmationFixtureResult {
   outcome: SignupOutcome;
   /** Mock waitlist position for the waitlist outcome; null otherwise. */
   waitlistPosition: number | null;
-  /**
-   * The deferred first charge, as the live page would resolve it: an ISO
-   * instant on a subscription club bought before it starts, null everywhere
-   * else.
-   *
-   * On the real page this stands for two reads the fixture has no database for
-   * — the €0 subscription payment row that marks the purchase as deferred, and
-   * the subscription's `current_period_end`, which for such a purchase *is* the
-   * anchor. Computed here from the same helper the checkout route sets the
-   * anchor with, so the confirmation preview states the date the signup panel
-   * promised.
-   */
-  firstChargeAt: string | null;
+  /** The address the page says the confirmation email went to. */
+  recipientEmail: string;
 }
 
 // Post-signup summary fixture for /preview/confirmation/<scenario>. Reuses the
@@ -1257,28 +1244,14 @@ export interface ConfirmationFixtureResult {
 // the real detail → CTA → summary flow.
 export function buildConfirmationFixture(
   slug: PreviewScenario,
-  overrides: {
-    /** The topic axis, as `buildScenarioFixture` takes it. */
-    topic?: ProductTopic;
-  } = {},
 ): ConfirmationFixtureResult {
-  const { product, state } = buildScenarioFixture(slug, {
-    topic: overrides.topic,
-  });
+  const { product, state } = buildScenarioFixture(slug);
   const isWaitlist = state.kind === "full_waitlist";
   // A parents-only scenario can only have been bought for the reader, so its
   // summary is the self-worded one — which is the only place that copy is
   // reviewable. A mixed product's panel preselects the first child, so it lands
   // on the ordinary third-person page like everything else.
   const isSelfSeat = audienceOf(SCENARIOS[slug]) === "parents";
-  // Only a paid consumer club is bought as a subscription, and only a
-  // subscription carries a billing anchor — a camp starting in three weeks was
-  // paid for in full at checkout and has no first charge still to come.
-  const config = SCENARIOS[slug];
-  const anchor =
-    config.productType === "consumer_club" && config.billingMode === "paid"
-      ? firstChargeAnchor(product.start_date, product.timezone, new Date())
-      : null;
   return {
     product,
     // A literal placeholder rather than a demo child's name — it makes obvious
@@ -1289,8 +1262,8 @@ export function buildConfirmationFixture(
     outcome: isWaitlist ? "waitlisted" : "enrolled",
     // A sample rank so the "You're #N" row shows in the preview.
     waitlistPosition: isWaitlist ? 3 : null,
-    // A waitlist join has bought nothing, so it has no first charge either.
-    firstChargeAt: isWaitlist ? null : (anchor?.toISOString() ?? null),
+    // A reserved example domain, so a preview can never name a real inbox.
+    recipientEmail: "parent@example.com",
   };
 }
 

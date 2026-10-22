@@ -80,11 +80,11 @@ export function formatProductLocation(
  * The one line a surface prints for "where", from that display shape and the
  * two pieces of copy the null case falls back to.
  *
- * It lives here rather than beside either surface because the confirmation page
- * and the mail that mirrors it have to say the same words about the same
- * product — a site with its parent joined by a comma, a municipality on its
- * own, "Online" for a remote product with no municipality behind it, and "to be
- * confirmed" for one whose place is not settled. Two copies of that rule would
+ * It lives here rather than beside any one surface because the product pages,
+ * the confirmation page and the confirmation mail have to say the same words
+ * about the same product — a site with its parent joined by a comma, a
+ * municipality on its own, "Online" for a remote product with no municipality
+ * behind it, and "to be confirmed" for one whose place is not settled. Two copies of that rule would
  * be two answers the first time one of them was corrected.
  *
  * The two fallbacks arrive already translated, in whichever namespace the

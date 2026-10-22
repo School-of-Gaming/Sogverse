@@ -405,6 +405,11 @@ export interface ParticipationConfirmation {
   status: ParticipationStatus;
   productId: string;
   /**
+   * The payer — the profile the confirmation email is always sent to. The page
+   * names that address only when the payer is the one reading.
+   */
+  customerId: string;
+  /**
    * The participant's first name — a child's, or the buyer's own on a self
    * seat. Null → the page falls back to "Your child" / "You" depending on
    * `isSelfSeat`.
@@ -748,6 +753,7 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
+      customerId: data.customer_id,
       participantName: data.participant.first_name || null,
       isSelfSeat: data.participant_id === data.customer_id,
     };
@@ -790,105 +796,10 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
+      customerId: data.customer_id,
       participantName: data.participant.first_name || null,
       isSelfSeat: data.participant_id === data.customer_id,
     };
-  }
-
-  /**
-   * When the **first** subscription charge for this participation will happen —
-   * or `null` when there is no deferred first charge to state.
-   *
-   * A club bought before it starts completes Checkout at €0 and bills for the
-   * first time at the anchor, so the confirmation has to say when that is. One
-   * fact turns the line on and two guards turn it off, and none works alone:
-   *
-   *   - **The signal is the €0 subscription payment row** — the marker the
-   *     webhook writes for a completion that collected nothing. A future
-   *     `current_period_end` on its own is not a signal: an immediately-charged
-   *     subscription has one too (its renewal), and calling a renewal the "first
-   *     charge" is a lie about money.
-   *   - **The first guard is the absence of a positive-amount row** for this
-   *     subscription. The €0 marker is permanent, the deferral is not: once the
-   *     anchor fires, `current_period_end` advances to the *next* renewal, and a
-   *     parent revisiting their confirmation link — which they do — would be told
-   *     a renewal date under a "first charge" label.
-   *   - **The second guard is the clock.** The line only makes a claim about the
-   *     future, so an instant that is not in the future retires it whatever the
-   *     ledger says. That covers what the payment row cannot: an anchor charge
-   *     that *failed* (the subscription goes `past_due`, no positive payment row
-   *     is ever written, and `current_period_end` sits in the past), and an
-   *     `invoice.paid` delivery we never received.
-   *
-   * **What is still open, honestly.** The two guards do not close the
-   * webhook-ordering race: Stripe can deliver `customer.subscription.updated` for
-   * the anchor cycle before the matching `invoice.paid`, and in the window
-   * between them `current_period_end` has already advanced to the next renewal
-   * while no positive payment row exists yet — so a confirmation loaded in that
-   * window states a renewal date under the "first charge" label. The window is
-   * seconds to minutes, both events are near-simultaneous, and the clock guard
-   * does not help because the advanced value is in the future. Closing it (by
-   * recording the anchor at purchase and comparing against it, rather than
-   * inferring from the period end) is a decision deliberately still pending.
-   *
-   * The date itself is the subscription row's `current_period_end`, which for a
-   * deferred purchase *is* the anchor.
-   *
-   * Everything here is RLS-scoped: the `payments` SELECT policy is customer-only,
-   * so a gamer reading their own confirmation gets nothing and sees no billing
-   * line. That is the intended outcome — billing copy is for the payer.
-   */
-  async getDeferredFirstChargeAt(
-    participationId: string,
-  ): Promise<string | null> {
-    const { data: sub, error: subError } = await this.supabase
-      .from("family_subscriptions")
-      .select("stripe_subscription_id, current_period_end")
-      .eq("participation_id", participationId)
-      .maybeSingle();
-    if (subError) throw subError;
-    if (!sub?.current_period_end) return null;
-
-    // A first charge is a promise about the future; an instant already behind us
-    // is not one, whatever the ledger looks like. Checked before the payments
-    // read because it is free and settles the common stale cases on its own. An
-    // instant comparison, not a local-date one — nothing here is being formatted
-    // against anybody's calendar yet.
-    if (new Date(sub.current_period_end).getTime() <= Date.now()) return null;
-
-    // Filtered in JS rather than with a jsonb path filter: the two links live
-    // under different metadata keys (the checkout marker records the
-    // participation, a renewal records the subscription), and one typed read is
-    // simpler than two hand-written PostgREST json filters. Newest first with a
-    // bound, so the read cannot grow without limit as a family's ledger does —
-    // and the ordering is what makes the bound safe in the direction that
-    // matters: a real charge is always *newer* than the €0 marker it follows, so
-    // a window holding the marker holds its successor too. Falling off the end
-    // can only hide the line, never show a stale one.
-    const { data: payments, error: paymentsError } = await this.supabase
-      .from("payments")
-      .select("amount_cents, metadata")
-      .eq("purpose", "subscription_invoice")
-      .order("created_at", { ascending: false })
-      .limit(RECENT_SUBSCRIPTION_PAYMENTS);
-    if (paymentsError) throw paymentsError;
-
-    const deferredMarker = payments.some(
-      (row) =>
-        row.amount_cents === 0 &&
-        metadataString(row.metadata, "participationId") === participationId,
-    );
-    if (!deferredMarker) return null;
-
-    const firstChargeLanded = payments.some(
-      (row) =>
-        row.amount_cents > 0 &&
-        metadataString(row.metadata, "stripeSubscriptionId") ===
-          sub.stripe_subscription_id,
-    );
-    if (firstChargeLanded) return null;
-
-    return sub.current_period_end;
   }
 
   /**
@@ -1240,22 +1151,6 @@ function toMyWaitlistRow(
     position,
     seatOfferSentAt: row.seat_offer_sent_at,
   };
-}
-
-/**
- * How far back the deferred-first-charge read looks through a family's
- * subscription payments. Comfortably more rows than a family accumulates in the
- * window that matters (the €0 marker and any charge that followed it), and small
- * enough that the confirmation page never pulls a decade of ledger.
- */
-const RECENT_SUBSCRIPTION_PAYMENTS = 100;
-
-/** A string value out of a `jsonb` metadata blob, or null if it isn't one. */
-function metadataString(metadata: Json, key: string): string | null {
-  if (typeof metadata !== "object" || metadata === null) return null;
-  if (Array.isArray(metadata)) return null;
-  const value = metadata[key];
-  return typeof value === "string" ? value : null;
 }
 
 type GamerSignupState = "active" | "waitlisted";

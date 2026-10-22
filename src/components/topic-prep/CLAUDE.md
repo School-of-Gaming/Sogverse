@@ -100,21 +100,20 @@ Two consequences the surfaces have to honour:
   there is one, shared by every topic and every form, written so that it is true of all of
   them.
 
-## Four surfaces, two renderers, one guide
+## Three surfaces, two renderers, one guide
 
 The guide is rendered by exactly two pieces of code, and both read the same registry and
 the same catalog:
 
-- **The content component**, for the three in-app surfaces — the purchase confirmation
-  page, the parent's enrolment card and the gamer's. It draws the body only: no card, no
-  dialog, no container. Its heading is a prop, because a page wants one above the intro
-  and a dialog has already said the same words in its title. The dialog beside it is a
+- **The content component**, for the two in-app surfaces — the parent's enrolment card
+  and the gamer's. It draws the body only: no card, no dialog, no container. The dialog beside it is a
   container for that body rather than a second renderer of the guide: it titles the guide,
   scrolls it, and carries the two buttons that answer it — one finishes with it, the other leaves it for later.
 - **The email section builder** under `src/lib/email-templates/`, for the confirmation
   mail, in HTML and in plain text. It cannot share React, so it shares the data instead.
 
-A fifth surface does not add a third renderer. If one is ever needed, it composes one of
+The confirmation page shows no guide: it is a few seconds of reassurance, and the mail it
+points to carries the guide. A new surface does not add a third renderer. If one is ever needed, it composes one of
 these two.
 
 **Rule: the resolver runs once per surface, and what travels afterwards is its answer.**
@@ -127,8 +126,8 @@ composed from the same plan, so they cannot be filtered differently.
 
 ## On an enrolment card the guide is offered once, and then it is gone
 
-The confirmation page and the mail both carry the guide because they *are* the moment
-after the purchase. A My SOG card is different: it is on screen every week for the
+The confirmation mail carries the guide unconditionally because it *is* the moment after
+the purchase. A My SOG card is different: it is on screen every week for the
 length of the run, and a family six weeks into a club has a working setup. A card still
 pointing them at "create the account, install the software" is spending its one
 affordance slot on something they did in February.
