@@ -77,7 +77,10 @@ export function ParentDashboardShell({
    * of a card the reader has already put away themselves.
    */
   prepDismissed: ReadonlySet<string>;
-  /** The Stripe portal card, rendered by the server component above. */
+  /**
+   * The Stripe portal card, rendered by the server component above, or `null`
+   * for no billing section — the parent has no billing account yet.
+   */
   billingCard: React.ReactNode;
 }) {
   const t = useTranslations("parent");

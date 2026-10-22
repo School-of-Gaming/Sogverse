@@ -61,7 +61,10 @@ const VIEWER_ID = "c6d9a0f2-7a4b-4f1e-8f0c-1b2d3e4f5a6b";
  *  regression behind a passing test. */
 const ADD_GAMER = messages.family.addGamer;
 
-function dashboardHtml(gamers: readonly ParentDashboardParticipant[]): string {
+function dashboardHtml(
+  gamers: readonly ParentDashboardParticipant[],
+  billingCard: React.ReactNode = <div />,
+): string {
   return renderToStaticMarkup(
     <NextIntlClientProvider locale="en" messages={messages}>
       {/* Auth alongside the zone and the clock: an enrollment card keys the
@@ -74,7 +77,7 @@ function dashboardHtml(gamers: readonly ParentDashboardParticipant[]): string {
               <ParentDashboardPageBody
                 gamers={gamers}
                 prepDismissed={NO_TOPIC_PREP_READY}
-                billingCard={<div />}
+                billingCard={billingCard}
                 helpForm={<div />}
                 onAddGamer={() => {}}
               />
@@ -118,5 +121,30 @@ describe("the parent dashboard's add-a-child affordance", () => {
     // The no-children card, not the quiet tile — the empty state is a section
     // of its own and the add button is the page's whole next step there.
     expect(html).toContain(messages.familyEnrollment.noGamers);
+  });
+});
+
+/**
+ * **A parent with no billing account has no billing section** — no heading, no
+ * pill entry, no card — because the portal would open on nothing. The pair is
+ * pinned for the same reason as above: a page that never draws the section
+ * passes the first assertion alone.
+ */
+describe("the parent dashboard's billing section", () => {
+  const BILLING = messages.dashboardSections.billing;
+
+  it("is drawn, heading and pill entry included, when there is a card", () => {
+    const html = dashboardHtml([], <div data-testid="billing-card" />);
+
+    expect(html).toContain('id="billing"');
+    expect(html).toContain("billing-card");
+    expect(html).toContain(BILLING);
+  });
+
+  it("is absent altogether when there is no card", () => {
+    const html = dashboardHtml([], null);
+
+    expect(html).not.toContain('id="billing"');
+    expect(html).not.toContain(BILLING);
   });
 });

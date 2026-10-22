@@ -385,6 +385,7 @@ export function buildParentDashboardFixture(
       };
 
     case "new-family":
+      // Nothing bought yet, so no billing account and no billing section.
       return { gamers: [], self: null, accounts: [] };
 
     case "parent-only":
@@ -416,6 +417,8 @@ export function buildParentDashboardFixture(
           gamer(clock, GAMER_IDS.otso, "Otso", []),
         ],
         self: null,
+        // Never bought anything either, so the billing section is absent here
+        // too — the page as a free or municipality-only family meets it.
         accounts: [],
       };
 
