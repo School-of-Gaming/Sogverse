@@ -37,8 +37,7 @@ switches each back on in its editor.
 
 **The session report email reads with the service role.** Both tables are admin-only to
 the Data API, and the route sending a report is a gedu's, so it calls the service's
-enabled-spotlights read on the service-role client it already holds. The service module
-is safe on the server; the package index re-exports the client hooks beside it, so a
-route imports the service file itself.
+enabled-spotlights read on the service-role client it already holds; the service module
+is safe on the server, unlike the client hooks beside it.
 
 **Delete is allowed and outright**, versions with it; the picture stays in the catalogue.

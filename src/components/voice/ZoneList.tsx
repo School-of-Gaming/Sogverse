@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { ChevronLeft, ChevronRight, Lock, Plus, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {

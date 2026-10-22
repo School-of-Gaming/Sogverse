@@ -1,6 +1,6 @@
 import "server-only";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 import {
@@ -28,7 +28,8 @@ import {
   type ClaimedSeatOfferExpiries,
 } from "@/services/participations/seat-offer.contracts";
 import { getOrigin } from "@/lib/url";
-import { DAYS_OF_WEEK, formatDate } from "@/lib/utils";
+import { DAYS_OF_WEEK } from "@/lib/constants/days-of-week";
+import { formatDate } from "@/lib/date-format";
 import type { AppSupabaseClient } from "@/types";
 
 /**

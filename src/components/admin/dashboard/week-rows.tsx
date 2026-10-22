@@ -3,7 +3,8 @@
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, CalendarOff, CalendarX } from "lucide-react";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 import type {
   DateCancellation,
   ScheduleChip,

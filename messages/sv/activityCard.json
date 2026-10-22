@@ -1,0 +1,6 @@
+{
+  "endedOn": "Avslutades {date}",
+  "noSchedule": "Inget schema ännu",
+  "cancelledAhead": "{count, plural, one {<b>{dates}</b> är inställt.} other {<b>{dates}</b> är inställda.}}",
+  "cancelledAheadMore": "<b>{first}</b> och {more, plural, one {# tillfälle till} other {# tillfällen till}} är inställda."
+}

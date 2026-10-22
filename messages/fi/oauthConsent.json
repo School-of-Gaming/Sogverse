@@ -1,0 +1,19 @@
+{
+  "title": "Yhdistä tekoälysovellus Sogverseen",
+  "body": "{clientName} pyytää lupaa toimia Sogversessa sinun nimissäsi kaikilla ylläpitäjän oikeuksillasi.",
+  "destinationLabel": "Kirjautumisesi lähetetään osoitteeseen",
+  "loopbackHint": "Tällä tietokoneella toimiva sovellus.",
+  "unrecognised": "School of Gaming ei tunnista tätä kohdetta. Salli yhteys vain, jos aloitit juuri yhdistämisen omasta tekoälysovelluksestasi. Muussa tapauksessa valitse Estä.",
+  "signedInAs": "Kirjautuneena: {email}",
+  "failed": "Tähän pyyntöön ei voi enää vastata. Aloita yhdistäminen uudelleen tekoälysovelluksestasi.",
+  "deny": "Estä",
+  "allow": "Salli",
+  "unavailable": {
+    "title": "Tämä kirjautumislinkki on jo käytetty",
+    "body": "Kukin linkki toimii kerran ja vanhenee pian. Aloita yhdistäminen uudelleen tekoälysovelluksestasi."
+  },
+  "refused": {
+    "title": "Vain School of Gamingin ylläpitäjät voivat yhdistää tekoälysovelluksen",
+    "body": "Olet kirjautuneena osoitteella {email}, joka ei ole ylläpitäjän tili."
+  }
+}

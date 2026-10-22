@@ -50,6 +50,9 @@ they do for the admin in the browser. A tool reads who is calling with `readMcpC
 The one exception is the bytes of an uploaded picture, which go to its purpose's bucket on
 the service-role client exactly as the image catalogue's upload route sends them — that
 bucket has no other writer — while the catalogue row is still written on the admin's client.
+The analytics tools also read Vercel on the server's own analytics token, as the admin
+Analytics page does; that token never reaches the database, and the landing page directory
+they name pages from still reads on the admin's client.
 
 ## Adding tools
 
@@ -111,12 +114,14 @@ tool (`open_cover_uploader`, `open_landing_image_uploader`) carries `_meta.ui.re
 naming a `ui://` resource of type `text/html;profile=mcp-app`, which the AI app renders in a
 sandboxed frame inside the chat. **One view serves every catalogue purpose.** The opening
 tool's `uploader` field says what it is for — the frames the area's pictures come in, each
-a purpose's exact size with the app-only tool that stores it and, where this destination
-does not take that shape, the sentence saying why; what a picture of no frame's shape is
-told; how many pictures the destination takes at once and whether they must all be one
-shape; the largest JPEG a call may carry; and the tool and arguments that place them (or
-none, to add them to the catalogue alone) — so the view restates nothing the catalogue or an
-area defines, and a new purpose is a new frame or a new opening tool, never a new view.
+a purpose's exact size and, where this destination does not take that shape, the sentence
+saying why; what a picture of no frame's shape is told; how many pictures the destination
+takes at once and whether they must all be one shape; the largest JPEG a call may carry;
+and the tool and arguments that place them (or none, to add them to the catalogue alone) —
+so the view restates nothing the catalogue or an area defines. Every picture is stored
+through one app-only tool that takes the frame's purpose, so a new purpose is a new frame
+or a new opening tool — and an entry in the uploader's list of purposes it takes — never
+a new view or a new upload tool.
 A change to that protocol names a new view address, since hosts may cache a view by it.
 
 **Rule: the view never crops.** It measures the admin's picture and takes it as the frame
@@ -153,11 +158,12 @@ where the pictures went. A batch that stored something is final; one that stored
 lets the admin pick again. The view holds no token and opens no connection of its own,
 so the gate in front of those calls is the endpoint's.
 
-**An app-only tool is a tool all the same.** An upload tool (one per purpose: `upload_library_cover`, `upload_landing_image` and its square and portrait siblings) carries
-`_meta.ui.visibility: ["app"]`, which tells a host to keep it out of the model's tool list
-and accept it only from this server's own views. That is the host's promise, not a gate:
-the tool is in `tools/list` and any client holding a grant can call it, so it checks its
-input exactly as a model-visible tool would. A host that cannot show views gets the opening
+**An app-only tool is a tool all the same.** The upload tool, `upload_catalogue_picture`,
+carries `_meta.ui.visibility: ["app"]`, which tells a host to keep it out of the model's
+tool list and accept it only from this server's own views. That is the host's promise, not
+a gate: the tool is in `tools/list` and any client holding a grant can call it, so it
+checks its input exactly as a model-visible tool would — the caller an admin, the purpose
+one an opening offers, the bytes a JPEG of exactly that purpose's size. A host that cannot show views gets the opening
 tool's text instead, which says so and sends the admin elsewhere — to the Library's editor
 for a cover, to an AI app that shows views for a landing page picture, since landing pages
 have no editor; there is no other way to upload from an AI app, by the owner's ruling. The server cannot ask the client

@@ -33,7 +33,6 @@ import {
 } from "@/lib/mcp/cover-images";
 import {
   UPLOADER_VIEW_META,
-  registerPictureUploadTool,
   uploaderOpening,
   type UploaderPlacement,
   type UploaderRoom,
@@ -76,13 +75,6 @@ const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture 
 const shape = z
   .enum(LANDING_PICTURE_SHAPES)
   .describe("Only pictures of this shape. Left out, every shape.");
-
-/** The upload tool that stores each shape's pictures. */
-const UPLOAD_TOOLS: Record<LandingPictureShape, string> = {
-  wide: "upload_landing_image",
-  square: "upload_landing_square_image",
-  portrait: "upload_landing_portrait_image",
-};
 
 /*
  * Ids are stored lowercase, and compared with `===`: an id an AI app sends in
@@ -461,7 +453,6 @@ export function registerLandingImageTools(server: McpServer): void {
             frames: LANDING_PICTURE_SHAPES.map((each) => ({
               purpose: LANDING_PICTURE_PURPOSES[each],
               name: describeLandingPictureShape(each),
-              uploadTool: UPLOAD_TOOLS[each],
               refusal: destination.shapes.includes(each) ? null : destination.rule,
             })),
             noFrame:
@@ -483,15 +474,4 @@ export function registerLandingImageTools(server: McpServer): void {
         };
       }),
   );
-
-  for (const each of LANDING_PICTURE_SHAPES) {
-    const { width, height } = landingPictureSize(each);
-    registerPictureUploadTool(server, {
-      name: UPLOAD_TOOLS[each],
-      title: `Store an uploaded ${each} landing page picture`,
-      description: `Called by the picture uploader alone. Adds a ${width} × ${height} JPEG to the picture catalogue as a ${describeLandingPictureShape(each)} landing page entry, or answers the entry that already holds these exact bytes. It does not place it in any section.`,
-      purpose: LANDING_PICTURE_PURPOSES[each],
-      run: (ctx, body) => asLandingAdmin(ctx, ({ client }) => body(client)),
-    });
-  }
 }

@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "title": "Spelklubbar i din kommun",
+    "subtitle": "School of Gaming ordnar klubbar tillsammans med finländska kommuner. Hitta din kommun och utforska utbudet.",
+    "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelfostrare finns alltid med och leder verksamheten."
+  },
+  "search": {
+    "label": "Sök din kommun",
+    "placeholder": "Sök kommuner…",
+    "noMatches": "Ingen kommun matchar ”{query}”. Kontrollera stavningen eller prova en närliggande kommun."
+  },
+  "available": {
+    "empty": "Våra första kommunklubbar är på väg. Sök din kommun för att se om vi har nått den ännu."
+  },
+  "status": {
+    "available": "Klubbar tillgängliga",
+    "noClubs": "Inga klubbar här"
+  },
+  "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista. Om ditt barn slutar, kom ihåg att avboka anmälan så att platsen kan erbjudas nästa spelare.",
+  "notListed": {
+    "title": "Hittar du inte din kommun?",
+    "body": "Kommunklubbar ordnas tillsammans med varje kommun, och vi lägger till nya hela tiden. Om din kommun inte är med ännu, berätta för oss:",
+    "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
+  },
+  "municipality": {
+    "heading": "Klubbar från {name}"
+  }
+}

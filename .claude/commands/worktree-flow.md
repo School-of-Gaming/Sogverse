@@ -17,13 +17,25 @@ come hours after setup, when the work itself already feels done, and they are th
 half most easily dropped. A worktree still sitting on disk a day later is this
 command having failed.
 
+**Before anything else, check where the session started** — every run, including
+one told to pick up an existing branch and skip ahead. The session has to start in
+the main checkout, not inside a worktree: it can only write where it started, and
+Phase 5 merges into `dev` and tears the worktree down from the main checkout. Run,
+from the starting directory, before any `EnterWorktree`:
+
+```
+git rev-parse --show-toplevel
+git rev-parse --path-format=absolute --git-common-dir
+```
+
+In the main checkout the second is the first plus `/.git`. Anything else means the
+session was launched inside a worktree: stop and say so — it has to be relaunched
+in the main checkout, with no worktree of its own. The check means nothing later
+in the run, once `EnterWorktree` has legitimately moved the session into one.
+
 ---
 
 ## Phase 1 — Set up
-
-Run from the **main checkout** — the repository root, not a worktree. If the
-session is already inside a worktree, stop and say so: a worktree-isolated
-session cannot create or modify another worktree, and the guard will refuse.
 
 1. **Create the worktree** — one call, from the PowerShell tool:
 
@@ -32,13 +44,19 @@ session cannot create or modify another worktree, and the guard will refuse.
    ```
 
    It verifies the base, creates the worktree at `.claude/worktrees/<short-name>`
-   on branch `feat/<short-name>`, junctions any nested install, and copies
-   `.env.local` in. **Do not run `npm install`** — the worktree resolves
-   `node_modules` upward from the parent checkout, so an install costs several
-   minutes and a gigabyte for nothing. The script's header carries the reasoning
-   for all of it, including the one case it cannot cover: a branch that *will*
+   on branch `feat/<short-name>`, junctions any nested install, copies
+   `.env.local` in, and seeds the type-check caches from a sibling worktree.
+   **Do not run `npm install`** — the worktree resolves `node_modules` upward
+   from the parent checkout, so an install costs several minutes and a gigabyte
+   for nothing. The script's header carries the reasoning
+   for all of it, including the two cases it cannot cover: a branch that *will*
    change dependencies needs `npm install` inside the worktree after that change
-   lands, and only then.
+   lands, and only then; and a branch that edits `packages/sog-ui` sees the main
+   checkout's SOG-UI until it points the app at its own copy, with uncommitted
+   edits the header lists.
+
+   Picking up a branch that already exists: add `-Existing`, which checks it out
+   without a base, then go straight to step 2.
 
    **The base is the latest `dev` unless the user has said otherwise for this
    piece of work.** That is a standing repo rule (the Branching section of the
@@ -149,6 +167,10 @@ Multiline commit messages go through the Bash tool with a heredoc and
 Assume a dev server is already running on the main checkout and being watched. It
 serves `dev`, so it cannot show a worktree branch — and that is the *only* reason
 to start a second one.
+
+**The user reviews in their own browser.** Start the server from the shell and
+report URLs for them to open — never through an in-app preview or browser pane,
+whatever the harness offers.
 
 - **Never restart, kill, or otherwise disturb a server you did not start.**
 - Pick a port no one is already on, and verify it is free before binding rather
@@ -287,12 +309,13 @@ session's context is at its largest, so a command here costs several times what 
 same command cost in Phase 1. Batch what can be batched — independent commands
 belong in one call — and prefer the script wherever one exists.
 
-1. **Confirm clean:** `npm run gates` — lint, type-check, translations and the
-   full suite, in one call. It runs every gate whatever the earlier ones did,
-   so one invocation returns the complete picture instead of one failure per
-   cycle, and prints nothing for a gate that passes. Phase 2's per-file test
-   runs were for iteration; landing gets the whole suite. Everything must be
-   committed too.
+1. **Confirm clean:** `npm run gates` — lint, type-check, translations and every
+   test the branch can affect, in one call. It runs every gate whatever the
+   earlier ones did, so one invocation returns the complete picture instead of
+   one failure per cycle, and prints nothing for a gate that passes. Phase 2's
+   per-file test runs were for iteration; landing gets every test the whole
+   branch can reach, and CI runs the full suite on `dev` after the push.
+   Everything must be committed too.
 
    A run is current as long as HEAD hasn't moved: when the gates already
    passed on the exact commit being merged, say so and skip the re-run — the
@@ -331,12 +354,13 @@ belong in one call — and prefer the script wherever one exists.
       `schema-from-migrations` in place of `supabase/schema/`.
 
 3. **Stop the dev server first, if Phase 3 started one — by port, with a tree
-   kill. Every time; this is the procedure, not a recovery.** On Windows,
-   stopping the background task kills only the wrapper shell and the Next child
+   kill. Every time; this is the procedure, not a recovery.** The server is
+   identified by the port it holds, never by whatever launched it: on Windows,
+   stopping the launcher kills only the wrapper shell and the Next child
    *always* survives it holding the port (deterministic, not a race) — left
    there, it blocks worktree removal in a way that looks like a git error. So:
 
-   1. Stop the background task (retires the wrapper; nothing more).
+   1. Stop whatever launched it (retires the wrapper; nothing more).
    2. Find the real server: `Get-NetTCPConnection -State Listen -LocalPort
       <port>` → the owning PID.
    3. Confirm that PID listens on **only** that port — the user runs servers of
@@ -429,10 +453,25 @@ authors of one file.
 One worktree holds one piece of work — but nothing says only one worktree.
 When the work decomposes into independent pieces, run them in parallel where
 reasonable rather than queuing them: one worktree and one `feat/` branch per
-piece under `.claude/worktrees/`, each built by a delegated background agent
-while this session coordinates. Judge "independent" by files — pieces that
+piece under `.claude/worktrees/`. Judge "independent" by files — pieces that
 would edit the same files belong in one worktree, sequenced, because parallel
 edits to one file are a merge conflict manufactured on purpose.
+
+**Who carries a piece depends on who it answers to.** An agent works for this
+session: its result comes back into this context, it never talks to the user,
+and it cannot land anything. A separate session works for the user: its own
+conversation, its own context, its own Phase 5 on the user's word.
+
+- **Hands within one piece** — building, and every Phase 4 review — are agents,
+  always. A harness that offers sessions does not change that; the review rule
+  in particular admits no exception.
+- **A piece that will need the user's own rulings and its own merge decision**
+  is its own session, started in the main checkout, running its own
+  `/worktree-flow` — wherever the harness can start one (a separate terminal tab
+  does the same job). This session does not coordinate it after the launch.
+- **A piece the user has handed over whole**, wanting a result rather than a
+  conversation, is a background agent in its own worktree while this session
+  coordinates, and lands through this session's Phase 5.
 
 - The shared upward `node_modules` is what makes parallel worktrees cheap:
   no per-worktree install (same dependency-change exception as Phase 1, and

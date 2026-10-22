@@ -1,9 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enCommon from "@/../messages/en/common.json";
 import { Field } from "@/components/ui/field";
 import { InlineCode } from "@/components/ui/inline-code";
+
+const messages = { common: enCommon };
 
 /**
  * **A field points its control at a hint only when there is one.** The hint may

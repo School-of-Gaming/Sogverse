@@ -1,0 +1,26 @@
+{
+  "question": "How will {name} sign in?",
+  "option": {
+    "parent": "Through the parent account",
+    "username": "Through a child account with a username",
+    "email": "Through a child account with the child’s email address"
+  },
+  "optionHint": {
+    "parent": "The parent signs in on the device and hands it to the child. The child has no username or password of their own.",
+    "username": "The parent sets up the username and password for the child.",
+    "email": "The parent creates the account; the child confirms their email address and creates their own password."
+  },
+  "parentModeNote": "Nothing to fill in — {name} will sign in when you switch to them from your own account.",
+  "usernameLabel": "Username",
+  "usernamePlaceholder": "lily2015",
+  "usernameHint": "Letters and numbers only, 3 to 20 characters.",
+  "usernameRequired": "Choose a username.",
+  "usernameInvalid": "Use 3 to 20 letters or numbers, with no spaces.",
+  "usernameTaken": "That username is taken. Try another one.",
+  "passwordHint": "At least {count} characters. Read it out to your gamer — you can change it here later.",
+  "passwordTooShort": "The password needs at least {count} characters.",
+  "emailPlaceholder": "lily@example.com",
+  "emailRequired": "Enter an email address.",
+  "emailInvalid": "That does not look like an email address.",
+  "emailTaken": "That email address already has an account."
+}

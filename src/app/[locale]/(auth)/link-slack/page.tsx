@@ -7,7 +7,7 @@ import {
   SlackLinkRefused,
 } from "@/components/slack-link/slack-link";
 import { getPathname, redirect } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { readSlackLinkToken } from "@/lib/slack-link-token.server";
 import { getUserWithProfile } from "@/lib/supabase/server";
 

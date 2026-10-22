@@ -1223,7 +1223,7 @@ describe("templateRegistry calendarInvitation", () => {
 /**
  * Every registered template, rendered in every locale we ship.
  *
- * The failure this catches is a key added to `en.json` and forgotten in one of
+ * The failure this catches is a key added to the `en` catalog and forgotten in one of
  * the other four: the translator falls back to printing the key path, so the
  * mail still renders, still sends, and reads as `email.welcomeParent.heading`
  * to a Finnish parent. Each case looks for its own template's key prefix, which

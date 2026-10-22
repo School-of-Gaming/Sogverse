@@ -3,7 +3,7 @@ import type { Metadata, ResolvingMetadata } from "next";
 import { getLocale } from "next-intl/server";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { siteJsonLd } from "@/lib/seo/organization";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 
 const SITE = "https://test.sogverse.local";

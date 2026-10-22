@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Field } from "@/components/ui/field";
-import { FormSection, InfoCallout } from "../form-primitives";
+import { Input } from "@/components/ui/input";
+import { Constants } from "@/types";
+import { FormSection } from "../form-primitives";
 import { ChosenSitePanel, LocationPicker } from "../location-picker";
 import {
   locationPickerMode,
@@ -58,7 +60,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
       ) : null}
 
       <div className="mt-3 space-y-4">
-        {showLocationPicker ? (
+        {showLocationPicker && (
           <>
             <Field
               label={
@@ -93,11 +95,67 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
               />
             )}
           </>
-        ) : (
-          <InfoCallout text={t("hints.onlineNoLocation")} />
         )}
 
-        {state.isRemote && <InfoCallout text={t("hints.voiceRoomAuto")} />}
+        {/* How an online product's sessions are joined, beside the choice
+            that makes the question exist. Each mode's own field sits under
+            the options: the meeting link here, and the join instructions in
+            the per-language copy above, where every other translated field
+            is. */}
+        {state.isRemote && (
+          <>
+            <Field label={t("voiceRoomModes.label")}>
+              <div className="space-y-2">
+                {Constants.public.Enums.voice_room_mode.map((option) => (
+                  <label
+                    key={option}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors",
+                      state.voiceRoomMode === option && "border-act"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="voiceRoomMode"
+                      checked={state.voiceRoomMode === option}
+                      onChange={() =>
+                        setState((s) => ({ ...s, voiceRoomMode: option }))
+                      }
+                      className="mt-1 h-4 w-4 accent-act"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">
+                        {t(`voiceRoomModes.${option}`)}
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {t(`voiceRoomModes.${option}Description`)}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </Field>
+
+            {state.voiceRoomMode === "external" && (
+              <Field
+                label={t("labels.externalVoiceUrl")}
+                htmlFor="p-external-voice-url"
+                hint={t("hints.externalVoiceUrlHint")}
+              >
+                <Input
+                  id="p-external-voice-url"
+                  type="url"
+                  placeholder={t("placeholders.externalVoiceUrl")}
+                  value={state.externalVoiceUrl}
+                  onChange={(e) => {
+                    const externalVoiceUrl = e.target.value;
+                    setState((s) => ({ ...s, externalVoiceUrl }));
+                  }}
+                />
+              </Field>
+            )}
+          </>
+        )}
       </div>
     </FormSection>
   );

@@ -78,7 +78,7 @@ const FIXED_TAGS: readonly FixedTag[] = [
     reason: "a zone-validity probe; the formatter is built and discarded",
   },
   {
-    file: "src/lib/utils.ts",
+    file: "src/lib/gamer-age-eligibility.ts",
     within: "computeAge",
     locale: `"en"`,
     reason: "reads numeric date parts only, which no locale changes",

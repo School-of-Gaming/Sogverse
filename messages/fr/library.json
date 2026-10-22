@@ -1,0 +1,35 @@
+{
+  "name": "Bibliothèque",
+  "readingTime": "{minutes, plural, one {# min de lecture} other {# min de lecture}}",
+  "article": {
+    "breadcrumbLabel": "Fil d’Ariane",
+    "more": "À lire aussi dans la Bibliothèque",
+    "share": {
+      "heading": "Partager cet article",
+      "copyLink": "Copier le lien",
+      "copied": "Lien copié",
+      "on": "Partager sur {platform} (s’ouvre dans un nouvel onglet)",
+      "email": "E-mail",
+      "byEmail": "Partager par e-mail",
+      "native": "Partager…"
+    }
+  },
+  "index": {
+    "title": "La <act>bibliothèque</act> de School of Gaming",
+    "intro": "Des conseils pratiques pour les parents sur la sécurité en ligne, le jeu vidéo au quotidien à la maison et ce que les enfants apprennent en jouant.",
+    "empty": "Rien pour l’instant",
+    "all": "Tous",
+    "filterLabel": "Catégories"
+  },
+  "categories": {
+    "onlineSafety": "Sécurité en ligne",
+    "screenTime": "Temps d’écran et vie de famille",
+    "learning": "Apprendre en jouant",
+    "gamesExplained": "Les jeux expliqués",
+    "forSchools": "Pour les écoles"
+  },
+  "cta": {
+    "heading": "Prêt à commencer ?",
+    "button": "Commencer"
+  }
+}

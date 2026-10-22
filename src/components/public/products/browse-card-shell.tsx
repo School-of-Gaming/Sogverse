@@ -3,7 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { SpokenLanguageCode } from "@/types";
 import type { ProductPriceLine } from "./format-product-price";
 import type { ProductCardTag } from "./product-chips";

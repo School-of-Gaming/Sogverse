@@ -2,7 +2,12 @@ import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enCommon from "@/../messages/en/common.json";
+import enProductType from "@/../messages/en/productType.json";
+import enSessionFacts from "@/../messages/en/sessionFacts.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
 import { GeduFileAbsenceEntry } from "@/components/gedu/GeduFileAbsenceEntry";
 import { GeduSubstitutionPoolSectionView } from "@/components/gedu/GeduSubstitutionPoolSectionView";
 import { GeduSubstitutionsPageBody } from "@/components/gedu/gedu-substitutions-page-body";
@@ -12,8 +17,17 @@ import {
 } from "@/components/gedu/mock-substitutions-fixtures";
 import { buttonVariants } from "@/components/ui/button";
 import { NowProvider, TimezoneProvider } from "@/providers";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { alreadyRequestedSessionKeys } from "@/lib/gedu-upcoming-sessions";
+
+const messages = {
+  gedu: enGedu,
+  common: enCommon,
+  productType: enProductType,
+  sessionFacts: enSessionFacts,
+  sessionBadge: enSessionBadge,
+  voiceButton: enVoiceButton,
+};
 
 /**
  * ============================================================================

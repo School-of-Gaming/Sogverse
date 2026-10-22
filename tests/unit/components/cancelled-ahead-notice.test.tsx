@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render } from "@testing-library/react";
 import { CalendarX } from "lucide-react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
-import fi from "@/../messages/fi.json";
+import enActivityCard from "@/../messages/en/activityCard.json";
+import fiActivityCard from "@/../messages/fi/activityCard.json";
 import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
+
+const messages = { activityCard: enActivityCard };
+const fi = { activityCard: fiActivityCard };
 
 /**
  * The warning panel a My SOG card carries for the cancelled sessions it passes

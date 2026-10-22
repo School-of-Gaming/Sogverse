@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 // Live-ticking countdown to a target instant. Renders four cells —
 // days, hrs, min, sec — with tabular numerals so digits don't reflow.

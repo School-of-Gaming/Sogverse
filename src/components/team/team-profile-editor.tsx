@@ -11,12 +11,14 @@ import {
   TeamPhotoUploadError,
   isTeamProfileIncompleteError,
   isTeamProfilePhotoGoneError,
-  useSaveTeamProfile,
   type TeamPhotoToSave,
   type TeamProfilePhoto,
   type TeamProfileRecord,
   type TeamProfileSaveInput,
-} from "@/services/team-profiles";
+} from "@/services/team-profiles/team-profiles.types";
+import {
+  useSaveTeamProfile,
+} from "@/services/team-profiles/team-profiles.queries";
 
 /** What the last save in this visit wrote, or nothing yet. */
 interface LastSave {

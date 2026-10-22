@@ -14,7 +14,7 @@ import { isWithheld } from "@/lib/withheld";
 import {
   SESSION_REPORT_ALREADY_SENT_SQLSTATE,
   SESSION_REPORT_NO_REPORT_SQLSTATE,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * What a session card's writes actually do — the Save's ordering and diffing,

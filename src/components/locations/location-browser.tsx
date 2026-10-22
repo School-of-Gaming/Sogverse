@@ -6,9 +6,11 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   LOCATION_SEARCH_MIN_QUERY,
+} from "@/services/locations/locations.contracts";
+import {
   useLocationChildren,
   useLocationSearch,
-} from "@/services/locations";
+} from "@/services/locations/locations.queries";
 import type { Location, LocationType } from "@/types";
 import {
   LocationPickerPanel,

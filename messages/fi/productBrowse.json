@@ -1,0 +1,50 @@
+{
+  "pageTitle": "Kauppa",
+  "sections": {
+    "clubs": "Kerhot",
+    "camps": "Leirit",
+    "events": "Tapahtumat"
+  },
+  "filters": {
+    "type": "Tyyppi",
+    "audience": "Kohderyhmä",
+    "designedFor": "Kenelle",
+    "typeClubs": "Kerhot",
+    "typeCamps": "Leirit",
+    "typeEvents": "Tapahtumat",
+    "topic": "Aihe",
+    "format": "Muoto",
+    "formatOnline": "Verkossa",
+    "formatInPerson": "Paikan päällä",
+    "price": "Hinta",
+    "priceFree": "Maksuton",
+    "pricePaid": "Maksullinen",
+    "language": "Kieli",
+    "age": "Ikä",
+    "days": "Päivät",
+    "clearAll": "Tyhjennä",
+    "filterBy": "Suodata",
+    "title": "Suodattimet",
+    "activeCount": "{count, plural, one {# suodatin valittuna} other {# suodatinta valittuna}}",
+    "removeFilter": "Poista {label}"
+  },
+  "card": {
+    "ages": "Ikä {min}–{max}",
+    "perMonth": "{price} / kk",
+    "upfrontTotal": "{price}",
+    "free": "Maksuton",
+    "notAvailableInCurrency": "Ei valuutassa {currency}",
+    "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
+    "viewDetails": "Katso",
+    "cardLink": "{action} — {name}",
+    "manage": "Hallitse",
+    "fullDisabled": "Täynnä",
+    "alreadyStarted": "Käynnissä",
+    "alreadyEnded": "Päättynyt",
+    "online": "Verkossa"
+  },
+  "empty": {
+    "noProducts": "Täällä ei ole vielä mitään – uusia on tulossa.",
+    "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
+  }
+}

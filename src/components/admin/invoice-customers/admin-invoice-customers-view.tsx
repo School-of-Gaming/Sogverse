@@ -1,6 +1,8 @@
 "use client";
 
-import { useInvoiceCustomers } from "@/services/invoice-customers";
+import {
+  useInvoiceCustomers,
+} from "@/services/invoice-customers/invoice-customers.queries";
 import { AdminInvoiceCustomersPage } from "./admin-invoice-customers-page";
 
 /**

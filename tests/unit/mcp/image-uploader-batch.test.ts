@@ -16,7 +16,7 @@ import type { Frame } from "../../../packages/mcp-image-uploader/src/frames";
  */
 
 function frame(name: string, width: number, height: number, refusal: string | null = null): Frame {
-  return { purpose: name, name, width, height, uploadTool: `upload_${name}`, refusal };
+  return { purpose: name, name, width, height, refusal };
 }
 
 const WIDE = frame("wide 16:9", 1600, 900);

@@ -1,0 +1,21 @@
+{
+  "newcomer": "Ny",
+  "newcomerTooltip": "Ny i den här gruppen — gick med {days, plural, =0 {i dag} one {för # dag sedan} other {för # dagar sedan}}",
+  "openMember": "Anteckning och skapelse om {name}",
+  "openMemberCreationOwed": "Anteckning och skapelse om {name} — en skapelse saknas fortfarande",
+  "memberTitle": "Om {name}",
+  "noteAudience": "Geduer och administratörer",
+  "noteLabel": "Privat anteckning",
+  "noteHint": "Bara Geduer och administratörer ser det här. Det stannar i den här gruppen, från gång till gång.",
+  "notePlaceholder": "Anteckningar om {name} i den här gruppen.",
+  "noteLastEdited": "Senast redigerad av {name}",
+  "creationAudience": "Familjer ser det här",
+  "creationLabel": "Skapelse",
+  "creationHint": "Något som {name} har gjort i den här gruppen. Familjen ser det på sin egen sida.",
+  "creationTitleLabel": "Titel för skapelsen",
+  "creationTitlePlaceholder": "Vad de gjorde",
+  "creationUrlLabel": "Länk till skapelsen",
+  "creationUrlPlaceholder": "Länk till den",
+  "creationIncomplete": "En skapelse behöver både en titel och en länk.",
+  "saveFailed": "Det sparades inte. Försök igen."
+}

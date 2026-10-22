@@ -1,0 +1,44 @@
+{
+  "addGamer": "QujwI’ chel",
+  "manageGamer": "yISeH",
+  "manageGamerAria": "{name} yISeH",
+  "switchFailed": "qaSbe’ QunwI’ choH",
+  "loadFailed": "qorDu’ polHa’lu’pu’",
+  "switchToParentToAddGamer": {
+    "title": "QujwI’ chelmeH {name} pong yIchoH’a’?",
+    "oneWayWarning": "QujwI’ account lup mejlu’."
+  },
+  "switchGate": {
+    "pinTitle": "PIN ghItlhmeH vav yItlhob",
+    "pinDescription": "{name} DaSuchmeH vav PIN poQlu’.",
+    "pinNotSetTitle": "vav PIN tu’be’lu’",
+    "pinNotSetDescription": "jIH SOG DajDaq PIN cher vav wa’DIch. ghIq account DachoHlaH.",
+    "signOutTitle": "yImej wa’DIch",
+    "signOutOwnSession": "pongDaj lo’ta’ {name}. vaj latlh accountDaq choHlaHbe’ accountvam. Hoch account So’lu’.",
+    "signOutHow": "yImej, ghIq {name} yImoj.",
+    "signOutHowViaParent": "yImej. vavlI’ pong yIlo’, ghIq pa’vo’ {name} yIchoH."
+  },
+  "addGamerForm": {
+    "title": "QujwI’ chu’ chel",
+    "accountsTitle": "{name} Quj pongmey",
+    "firstNameLabel": "wa’DIch pong",
+    "firstNamePlaceholder": "Mara rur",
+    "birthMonthLabel": "qoSlIj jar",
+    "birthMonthPlaceholder": "jar",
+    "birthYearLabel": "qoSlIj DIS",
+    "birthYearPlaceholder": "DIS",
+    "genderLabel": "ghob",
+    "genderBoy": "loDHom",
+    "genderGirl": "be’Hom",
+    "genderNonBinary": "latlh",
+    "submit": "QujwI’ chel",
+    "submitting": "chellu’taH…",
+    "firstNameTooShort": "wa’DIch pong tIn law’ cha’ Hap puS.",
+    "firstNameTooLong": "wa’DIch pong tIn law’ cha’maH cha’ Hap law’.",
+    "birthMonthRequired": "qoSlIj jar yIwIv!",
+    "birthYearRequired": "qoSlIj DIS yIwIv!",
+    "genericError": "QujwI’ chelta’be’. yInIDqa’!",
+    "guardianAttestation": "puqwI’ ghaH {name}’e’ ghap ghaHvaD jIQorghqu’. <privacy>Privacy Policy</privacy> vIlaDta’.",
+    "guardianAttestationUnnamed": "puqwI’ ghaH QujwI’vam’e’ ghap ghaHvaD jIQorghqu’. <privacy>Privacy Policy</privacy> vIlaDta’."
+  }
+}

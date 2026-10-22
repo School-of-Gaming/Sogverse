@@ -27,7 +27,8 @@ export const metadata: Metadata = {
  * its own language; without one, the same fallback a
  * reader gets (English, then the first written). A version still being written
  * is shown as it stands, its unwritten words left out, since it is the one
- * being worked on.
+ * being worked on. Its testimonials are the working copy's, with their
+ * current words from the store, which the admin read carries.
  */
 export default async function LandingPagePreviewPage({
   params,
@@ -54,6 +55,7 @@ export default async function LandingPagePreviewPage({
     <LandingPageBody
       sections={draft.sections}
       pictures={draft.pictures}
+      testimonials={page.testimonials}
       sectionTexts={version.sectionTexts}
       textLocale={version.locale}
       locale={locale}

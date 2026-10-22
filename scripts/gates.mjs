@@ -18,6 +18,12 @@
  *     pool the vitest config is already tuned around, trading its speed for
  *     nothing. It goes after.
  *
+ * The test gate runs only the test files the change could have affected
+ * (scripts/lib/affected-tests.mjs says how they are chosen; the change is
+ * measured against origin/dev). Stage 1 stays whole-repo, and type-check is
+ * what catches a test still importing a module the change deleted or renamed.
+ * CI runs the whole suite on every push.
+ *
  * Run-all, not fail-fast: chained with `&&`, a lint error hides a type error
  * hides a failing test, and each one costs another full cycle to find. Every
  * gate runs whatever the others did, and the command exits non-zero if any
@@ -30,22 +36,31 @@
  *   node scripts/gates.mjs --serial             # one at a time
  *   node scripts/gates.mjs --only lint,test
  *   node scripts/gates.mjs --full               # don't trim failing output
+ *   node scripts/gates.mjs --all                # every test file, not the affected ones
+ *   node scripts/gates.mjs --list               # print the affected test files; run nothing
  */
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import os from 'node:os';
+
+const args = process.argv.slice(2);
+const testCmd = `node scripts/lib/affected-tests.mjs${args.includes('--all') ? ' --all' : ''}`;
+
+if (args.includes('--list')) {
+  const { status } = spawnSync(`${testCmd} --list`, { shell: true, stdio: 'inherit' });
+  process.exit(status ?? 1);
+}
 
 const GATES = [
   { name: 'lint', cmd: 'npm run lint', stage: 1 },
   { name: 'type-check', cmd: 'npm run type-check', stage: 1 },
   { name: 'check-translations', cmd: 'npm run check-translations', stage: 1 },
   { name: 'image-uploader', cmd: 'npm run check-fresh --workspace=@sog/mcp-image-uploader', stage: 1 },
-  { name: 'test', cmd: 'npm run test', stage: 2 },
+  { name: 'test', cmd: testCmd, stage: 2 },
 ];
 
 const TAIL_LINES = 150;
 
-const args = process.argv.slice(2);
 const full = args.includes('--full');
 const serial = args.includes('--serial');
 const onlyArg = args.find((a) => a.startsWith('--only'));
@@ -93,6 +108,9 @@ for (const group of stages) {
   for (const r of done) {
     results.push(r);
     console.log(`${r.ok ? 'PASS' : 'FAIL'}  ${r.name.padEnd(20)} ${r.seconds}s`);
+    // The test gate names what it selected; worth seeing on a pass too.
+    const note = r.output.split('\n').find((line) => line.startsWith(`${r.name}: `));
+    if (note) console.log(`      ${note.trim()}`);
   }
 }
 const wall = ((Date.now() - wallStart) / 1000).toFixed(0);

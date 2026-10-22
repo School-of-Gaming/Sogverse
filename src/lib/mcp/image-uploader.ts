@@ -1,16 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import {
-  DEFAULT_MAX_REQUEST_BODY_SIZE,
-  type CallToolResult,
-  type McpServer,
-  type ServerContext,
-} from "@modelcontextprotocol/server";
+import { DEFAULT_MAX_REQUEST_BODY_SIZE, type McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
+import { LANDING_PICTURE_PURPOSES } from "@/lib/landing-pages/picture-shapes";
+import { readMcpCaller } from "@/lib/mcp/auth";
 import { answer, refusal } from "@/lib/mcp/library-call";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createBearerClient } from "@/lib/supabase/bearer";
 import { CATALOGUE_IMAGE_MAX_BYTES } from "@/services/catalogue-images/catalogue-images.contracts";
 import {
   findOrCreateCatalogueImage,
@@ -18,7 +16,6 @@ import {
   sizeCapRefusal,
   vetCatalogueUpload,
 } from "@/services/catalogue-images/catalogue-images.server";
-import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
 
 /*
  * Uploading a catalogue picture from an AI app — a Library cover, a landing
@@ -32,9 +29,10 @@ import type { AppSupabaseClient, CatalogueImagePurpose } from "@/types";
  * the frames the opening offers. It never crops: a picture of no offered
  * shape is refused, on screen and to the model, so the admin can be told why
  * and re-crop it themselves, and the others go on. A picture that matches is
- * scaled to that frame's purpose's exact size and handed as a JPEG to the
- * frame's app-only tool through the AI app's own connection, one picture per
- * call; the pictures stored are then placed with the tool the opening named. The view never holds a token: the AI app makes the
+ * scaled to that frame's purpose's exact size and handed as a JPEG, with the
+ * frame's purpose, to the one app-only upload tool through the AI app's own
+ * connection, one picture per call; the pictures stored are then placed with
+ * the tool the opening named. The view never holds a token: the AI app makes the
  * calls with its grant, so the gate in front of them is the endpoint's like
  * any other call.
  *
@@ -86,7 +84,8 @@ const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
  * picture travels as base64 inside one JSON-RPC request, which the MCP SDK
  * refuses over its own 4 MB (Vercel's limit, 4.5 MB, sits above that): base64
  * spends four characters on three bytes, and the envelope is left 64 KB. A
- * 1600 × 900 JPEG is a few hundred kilobytes, so neither limit is near.
+ * JPEG at any catalogue size is a few hundred kilobytes, so neither limit is
+ * near.
  */
 export const MAX_UPLOAD_BYTES = Math.min(
   CATALOGUE_IMAGE_MAX_BYTES,
@@ -118,13 +117,29 @@ export interface UploaderRoom {
   full: string;
 }
 
+/**
+ * The catalogue purposes an AI app uploads pictures of: those an opening tool
+ * offers a frame of. The upload tool takes exactly these, and a frame can name
+ * no other, so a new purpose's frame is offered by adding it here. The image
+ * registry has no mark to derive it from — product and spotlight pictures are
+ * catalogue entries no AI app uploads — so it is this one list, the landing
+ * shapes read from their own map.
+ */
+export const UPLOADER_PURPOSES = [
+  "library_cover",
+  ...Object.values(LANDING_PICTURE_PURPOSES),
+] as const;
+
+export type UploaderPurpose = (typeof UPLOADER_PURPOSES)[number];
+
+/** The app-only tool the view stores every picture through; the view names it too. */
+export const UPLOAD_TOOL = "upload_catalogue_picture";
+
 /** One shape the uploader knows for an area: a catalogue purpose, and whether this opening takes it. */
 export interface UploaderFrameSpec {
-  purpose: CatalogueImagePurpose;
+  purpose: UploaderPurpose;
   /** How the admin is told the shape: `wide 16:9`, `16:9`. */
   name: string;
-  /** The app-only tool that stores a picture of this purpose. */
-  uploadTool: string;
   /**
    * Why this opening's destination does not take a picture of this shape, a
    * sentence for the admin, or null when it does.
@@ -135,11 +150,11 @@ export interface UploaderFrameSpec {
 /**
  * What the view is opened with, in the opening tool's result as `uploader`:
  * its words; every shape the area's pictures come in, each with its purpose's
- * exact size, the tool that stores it and whether this destination takes it;
- * what a picture of none of them is told; how many pictures the destination
- * takes and whether they must all be one shape; the largest JPEG a call
- * carries; and where the pictures are placed — or null, when they are only
- * added to the catalogue and the model is told their ids to place.
+ * exact size and whether this destination takes it; what a picture of none
+ * of them is told; how many pictures the destination takes and whether they
+ * must all be one shape; the largest JPEG a call carries; and where the
+ * pictures are placed — or null, when they are only added to the catalogue
+ * and the model is told their ids to place.
  *
  * The view infers a picked picture's shape from these frames alone, counts
  * against the room and compares shapes, and restates none of the rules.
@@ -167,9 +182,9 @@ export function uploaderOpening(view: {
   return {
     heading: view.heading,
     subject: view.subject,
-    frames: view.frames.map(({ purpose, name, uploadTool, refusal }) => {
+    frames: view.frames.map(({ purpose, name, refusal }) => {
       const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
-      return { purpose, name, width, height, uploadTool, refusal };
+      return { purpose, name, width, height, refusal };
     }),
     noFrame: view.noFrame,
     room: view.room,
@@ -179,32 +194,29 @@ export function uploaderOpening(view: {
   };
 }
 
+/** Each purpose with its exact size, `library_cover 1600 × 900`. */
+const PURPOSE_SIZES = UPLOADER_PURPOSES.map((purpose) => {
+  const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
+  return `${purpose} ${width} × ${height}`;
+}).join(", ");
+
 /**
- * Register the app-only tool the view stores a picture of one purpose
- * through. It adds a JPEG exactly the purpose's size to the catalogue, or
- * answers the entry already holding the same bytes, and places it nowhere.
- * `run` is the area's own way of running a tool as the admin.
+ * Register the app-only tool the view stores a picture through, whatever its
+ * purpose. It adds a JPEG exactly the purpose's size to the catalogue, or
+ * answers the entry of that purpose already holding the same bytes, and
+ * places it nowhere. It runs as the admin the gate let through, on their own
+ * token, like every tool.
  */
-export function registerPictureUploadTool(
-  server: McpServer,
-  tool: {
-    name: string;
-    title: string;
-    description: string;
-    purpose: CatalogueImagePurpose;
-    run: (
-      ctx: ServerContext,
-      body: (client: AppSupabaseClient) => Promise<CallToolResult>,
-    ) => Promise<CallToolResult>;
-  },
-): void {
-  const { purpose } = tool;
+function registerUploadTool(server: McpServer): void {
   server.registerTool(
-    tool.name,
+    UPLOAD_TOOL,
     {
-      title: tool.title,
-      description: tool.description,
+      title: "Store an uploaded picture",
+      description: `Called by the picture uploader alone. Adds a JPEG to the picture catalogue as an entry of the given purpose, exactly that purpose's size (${PURPOSE_SIZES}), or answers the entry of that purpose that already holds these exact bytes. It does not place the picture anywhere.`,
       inputSchema: z.object({
+        purpose: z
+          .enum(UPLOADER_PURPOSES)
+          .describe("The catalogue purpose of the frame the picture fits."),
         fileName: z
           .string()
           .min(1)
@@ -229,8 +241,14 @@ export function registerPictureUploadTool(
         "ui/resourceUri": PICTURE_UPLOADER_URI,
       },
     },
-    ({ fileName, label, jpegBase64 }, ctx) =>
-      tool.run(ctx, async (client) => {
+    async ({ purpose, fileName, label, jpegBase64 }, ctx) => {
+      const authInfo = ctx.http?.authInfo;
+      if (!authInfo || !readMcpCaller(authInfo)) {
+        // Unreachable behind the gate, which lets no request through without
+        // an admin's auth info; said rather than assumed.
+        return refusal("No verified caller on this request.");
+      }
+      try {
         const encoded = jpegBase64.replace(/\s+/g, "");
         // Measured from the text before it is decoded: four characters carry
         // three bytes, so an oversized picture costs no buffer.
@@ -251,7 +269,7 @@ export function registerPictureUploadTool(
         // does it; the catalogue row on the admin's own client, where the
         // table's admin-only policy decides.
         const { status, image } = await findOrCreateCatalogueImage({
-          db: client,
+          db: createBearerClient(authInfo.token),
           admin: createAdminClient(),
           file,
           ext: vetted.ext,
@@ -267,16 +285,22 @@ export function registerPictureUploadTool(
             publicUrl: catalogueImageUrl(purpose, image.path),
           },
         });
-      }),
+      } catch (error) {
+        // Nothing on this path raises a sentence written for an admin.
+        console.error("[mcp] picture upload failed:", error);
+        return refusal("Sogverse could not store the picture. Try uploading it again.");
+      }
+    },
   );
 }
 
 /**
- * Register the view itself, as the resource every opening tool names. The
- * opening and storing tools are each area's own (`library-covers.ts`,
- * `landing-pages-images.ts`).
+ * Register the view itself, as the resource every opening tool names, and the
+ * one tool it stores a picture through. The opening tools are each area's own
+ * (`library-covers.ts`, `landing-pages-images.ts`).
  */
 export function registerImageUploader(server: McpServer): void {
+  registerUploadTool(server);
   server.registerResource(
     "Picture uploader",
     PICTURE_UPLOADER_URI,

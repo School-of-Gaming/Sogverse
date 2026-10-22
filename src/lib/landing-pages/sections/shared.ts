@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { LandingPictureShape } from "../picture-shapes";
+import type { MarkdownUseCase } from "@/lib/authored-markdown";
 
 /**
  * What every landing section module builds on: the id shape, the button
@@ -72,7 +73,7 @@ export type ButtonTarget = z.infer<typeof buttonTarget>;
 /** A plain-text field, unwritten while absent or blank. */
 export const plainText = z.string().trim().optional();
 
-/** An authored-markdown field (the `landing` use case), unwritten while absent or blank. */
+/** An authored-markdown field, unwritten while absent or blank; its use case is its `markdownFields` entry's. */
 export const markdownText = z.string().trim().optional();
 
 /**
@@ -129,10 +130,10 @@ export interface LandingSectionDefinition<
    */
   readonly missingText: (section: z.output<Section>, text: TextReading) => string[];
   /**
-   * The words that are authored markdown (the `landing` use case), and so
-   * render as rich text and can hold links: exactly the fields whose schema
-   * is `markdownText`. The one declaration the links hook and the MCP tools'
-   * subset check both read.
+   * The words that are authored markdown, and so render as rich text and
+   * can hold links: exactly the fields whose schema is `markdownText`, each
+   * with the use case it renders under. The one declaration the links hook
+   * and the MCP tools' subset check both read.
    */
   readonly markdownFields: readonly LandingMarkdownField[];
   /**
@@ -146,11 +147,16 @@ export interface LandingSectionDefinition<
 
 /**
  * One authored-markdown field of a section type's words: a field of the
- * section's own, or a field of each item's (`<items>.<item id>.<field>`).
+ * section's own, or a field of each item's (`<items>.<item id>.<field>`), and
+ * the use case it renders under, which every surface showing it passes.
  */
-export type LandingMarkdownField =
+export type LandingMarkdownField = { readonly useCase: LandingMarkdownUseCase } & (
   | { readonly field: string }
-  | { readonly items: string; readonly field: string };
+  | { readonly items: string; readonly field: string }
+);
+
+/** The use cases a landing page's markdown fields render under. */
+export type LandingMarkdownUseCase = Extract<MarkdownUseCase, "landing" | "landing-faq">;
 
 /** Items carrying an id, distinct within their section. */
 export function distinctIds(items: readonly { id: string }[]): boolean {

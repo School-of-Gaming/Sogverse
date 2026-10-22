@@ -11,11 +11,11 @@ import {
   PRODUCT_TYPE_PRESENTATION,
 } from "@/components/admin/dashboard/product-type-presentation";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { useUsersByRole } from "@/services/users";
+import { useUsersByRole } from "@/services/users/users.queries";
+import { useAdminProductList } from "@/services/products/products.queries";
 import {
-  useAdminProductList,
   type ProductListFacetsRow,
-} from "@/services/products";
+} from "@/services/products/products.contracts";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatWeekday } from "@/lib/products/format-product-schedule";
 import { formattingLocale, resolveLocale } from "@/lib/constants/locales";

@@ -13,7 +13,9 @@ import {
   withoutBreakName,
   type HolidayCalendarDraft,
 } from "@/components/admin/holiday-calendars/holiday-calendar-draft";
-import { holidayCalendarInput } from "@/services/holiday-calendars";
+import {
+  holidayCalendarInput,
+} from "@/services/holiday-calendars/holiday-calendars.contracts";
 
 /**
  * The holiday calendar form's draft: what it refuses before anything is asked

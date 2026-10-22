@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enParent from "@/../messages/en/parent.json";
+import enGamerSignIn from "@/../messages/en/gamerSignIn.json";
+import enCommon from "@/../messages/en/common.json";
 import { GamerSignInCard } from "@/components/family";
 import { ApiError } from "@/lib/api/api-error";
 import type { GamerSignIn } from "@/types";
+
+const messages = { parent: enParent, gamerSignIn: enGamerSignIn, common: enCommon };
 
 /**
  * **The card a parent uses to change how one of their children signs in — and,
@@ -42,11 +46,13 @@ const sendVerification = vi.fn<
   ) => void
 >();
 
-vi.mock("@/services/gamers", () => ({
-  // The codes are constants the card compares an ApiError against, so the mock
-  // has to carry them rather than only the hooks.
+// The codes are constants the card compares an ApiError against, so they are
+// mocked beside the hooks rather than left out.
+vi.mock("@/services/gamers/gamers.contracts", () => ({
   GAMER_USERNAME_TAKEN: "USERNAME_TAKEN",
   GAMER_EMAIL_TAKEN: "EMAIL_TAKEN",
+}));
+vi.mock("@/services/gamers/gamers.queries", () => ({
   useUpdateGamer: () => ({ mutateAsync }),
   useSendGamerVerificationEmail: () => ({ mutate: sendVerification }),
 }));

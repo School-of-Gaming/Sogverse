@@ -1,0 +1,89 @@
+{
+  "heading": "Valmista tuli!",
+  "subheading": {
+    "consumer_club": "{gamer} on ilmoitettu toimintaan {product}.",
+    "municipality_club": "{gamer} on ilmoitettu toimintaan {product}.",
+    "camp": "{gamer} on ilmoitettu toimintaan {product}.",
+    "event": "{gamer} on liittynyt toimintaan {product}."
+  },
+  "fallbackGamer": "Lapsesi",
+  "self": {
+    "subheading": {
+      "consumer_club": "Sinut on ilmoitettu toimintaan {product}.",
+      "municipality_club": "Sinut on ilmoitettu toimintaan {product}.",
+      "camp": "Sinut on ilmoitettu toimintaan {product}.",
+      "event": "Olet liittynyt toimintaan {product}."
+    },
+    "fallbackName": "Sinä",
+    "nextPlacement": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+    "waitlist": {
+      "subheading": "Olet jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
+      "next2": {
+        "consumer_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+        "municipality_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+        "camp": "Säilytät paikkasi jonossa koko leirin ajan.",
+        "event": "Säilytät paikkasi jonossa koko tapahtuman ajan."
+      }
+    }
+  },
+  "summaryTitle": "Tilauksesi",
+  "forLabel": {
+    "consumer_club": "Ilmoitettu",
+    "municipality_club": "Ilmoitettu",
+    "camp": "Ilmoitettu",
+    "event": "Liittynyt"
+  },
+  "priceLabel": "Hinta",
+  "price": {
+    "subscription": "{amount} / kk",
+    "upfront": "{amount} (kertamaksu)",
+    "free": "Ilmainen",
+    "external": "Kunnan kustantama"
+  },
+  "nextTitle": "Mitä seuraavaksi tapahtuu",
+  "next": {
+    "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+    "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
+    "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
+    "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
+  },
+  "goToDashboard": "Siirry Oma SOG -sivulle",
+  "keepBrowsing": "Jatka selailua",
+  "notFound": {
+    "title": "Tilausta ei löytynyt",
+    "description": "Linkki saattaa olla vanha tai puutteellinen. Ostoksesi löytyvät aina Oma SOG -sivulta.",
+    "cta": "Siirry Oma SOG -sivulle"
+  },
+  "finalizing": {
+    "heading": "Maksu vastaanotettu",
+    "subheading": "Viimeistelemme ilmoittautumista — tämä kestää vain hetken.",
+    "reassurance": "Voit huoletta jäädä tälle sivulle. Ilmoittautuminen näkyy myös Oma SOG -sivulla."
+  },
+  "timedOut": {
+    "heading": "Tämä kestää odotettua kauemmin",
+    "subheading": "Maksu onnistui, ja se on tallessa.",
+    "body": "Emme ole vielä saaneet ilmoittautumista valmiiksi. Sen pitäisi näkyä Oma SOG -sivulla pian — käy katsomassa, ja kerro meille, jos se ei ilmesty."
+  },
+  "duplicatePayment": {
+    "heading": "Ilmoittautuminen on jo tehty",
+    "subheading": "Henkilöllä, jolle tämä oli tarkoitettu, on jo paikka tässä tuotteessa.",
+    "body": "Tämä maksu ei ole luonut toista ilmoittautumista. Ota yhteyttä, niin selvitämme ylimääräisen veloituksen kanssasi."
+  },
+  "supportLine": "Tarvitsetko apua? Lähetä meille sähköpostia osoitteeseen <link>{email}</link>.",
+  "waitlist": {
+    "heading": "Olet jonotuslistalla",
+    "subheading": "{gamer} on jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
+    "summaryTitle": "Jonotuspaikkasi",
+    "forLabel": "Jonotuslistalla",
+    "positionLabel": "Sijasi jonossa",
+    "positionValue": "{position}.",
+    "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+    "next2": {
+      "consumer_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+      "municipality_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+      "camp": "{gamer} säilyttää paikkansa jonossa koko leirin ajan.",
+      "event": "{gamer} säilyttää paikkansa jonossa koko tapahtuman ajan."
+    },
+    "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
+  }
+}

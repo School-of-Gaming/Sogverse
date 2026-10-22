@@ -17,7 +17,9 @@ import {
   ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES,
   GAMER_PHOTO_CONSENT_ASKS,
 } from "@/lib/constants/gamer-photo-consents";
-import { useConsentDocuments } from "@/services/products";
+import {
+  useConsentDocuments,
+} from "@/services/products/reference-data.queries";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
 

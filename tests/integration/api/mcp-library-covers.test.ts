@@ -12,7 +12,7 @@ import {
 import type {
   AdminLibraryArticle,
   AdminLibraryArticleListItem,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 import type { CatalogueImage } from "@/types";
 
 /**
@@ -59,10 +59,16 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
 }));
 
 vi.mock("next-intl/server", async () => {
-  const en = (await import("../../../messages/en.json")).default;
+  const library = (await import("../../../messages/en/library.json")).default;
   return {
-    getTranslations: async () => (key: keyof typeof en.library.categories) =>
-      en.library.categories[key],
+    getTranslations: async () => (key: keyof typeof library.categories) => {
+      const message: unknown = library.categories[key];
+      // A missing message throws, worded like the provider guard in `tests/setup.ts`.
+      if (typeof message !== "string") {
+        throw new Error(`MISSING_MESSAGE: Could not resolve \`library.categories.${key}\` in messages for locale \`en\`.`);
+      }
+      return message;
+    },
   };
 });
 
@@ -75,6 +81,9 @@ const COVER_ID = "9d39dd23-2b00-43f4-a0f5-af63bd58ad67";
 
 const tool = (name: string, args: Record<string, unknown> = {}) =>
   callTool(POST, name, args);
+
+/** The app-only tool the uploader view stores every picture through. */
+const UPLOAD = "upload_catalogue_picture";
 
 /** A flat JPEG of the given size. */
 function jpeg(width: number, height: number): Promise<Buffer> {
@@ -350,7 +359,8 @@ describe("the uploader", () => {
     mockFindOrCreate.mockResolvedValue({ status: "added", image: STORED });
     const bytes = await jpeg(1600, 900);
 
-    const result = await tool("upload_library_cover", {
+    const result = await tool(UPLOAD, {
+      purpose: "library_cover",
       fileName: "castle.jpg",
       jpegBase64: bytes.toString("base64"),
     });
@@ -377,7 +387,8 @@ describe("the uploader", () => {
   it("answers the entry already holding the same bytes", async () => {
     mockFindOrCreate.mockResolvedValue({ status: "existing", image: STORED });
 
-    const result = await tool("upload_library_cover", {
+    const result = await tool(UPLOAD, {
+      purpose: "library_cover",
       fileName: "again.jpeg",
       label: "Another name",
       jpegBase64: (await jpeg(1600, 900)).toString("base64"),
@@ -392,7 +403,7 @@ describe("the uploader", () => {
     ["a picture over the 4 MB cap", { fileName: "a.jpg", jpegBase64: "A".repeat(5_600_000) }, "Image must be 4 MB or smaller"],
     ["a name that is not a JPEG's", { fileName: "a.png", jpegBase64: "/9j/" }, "Unsupported file type. Use a JPEG."],
   ])("refuses %s before reading it", async (_, args, sentence) => {
-    const result = await tool("upload_library_cover", args);
+    const result = await tool(UPLOAD, { purpose: "library_cover", ...args });
 
     expect(result.isError).toBe(true);
     expect(resultText(result)).toBe(sentence);
@@ -404,20 +415,74 @@ describe("the uploader", () => {
       .png()
       .toBuffer();
 
-    const result = await tool("upload_library_cover", { fileName: "a.jpg", jpegBase64: png.toString("base64") });
+    const result = await tool(UPLOAD, { purpose: "library_cover", fileName: "a.jpg", jpegBase64: png.toString("base64") });
 
     expect(resultText(result)).toBe("Unsupported file type. Use a JPEG.");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
   });
 
   it("refuses a JPEG that is not exactly a cover's size", async () => {
-    const result = await tool("upload_library_cover", {
+    const result = await tool(UPLOAD, {
+      purpose: "library_cover",
       fileName: "a.jpg",
       jpegBase64: (await jpeg(800, 600)).toString("base64"),
     });
 
     expect(resultText(result)).toBe("A Library cover must be exactly 1600 × 900 pixels; this one is 800 × 600");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a catalogue purpose no opening offers", { purpose: "product" }],
+    ["another one", { purpose: "spotlight_image" }],
+    ["a purpose the catalogue does not have", { purpose: "team_photo" }],
+    ["no purpose at all", {}],
+  ])("refuses %s at the schema, before reading the picture", async (_, purpose) => {
+    const result = await tool(UPLOAD, {
+      ...purpose,
+      fileName: "a.jpg",
+      jpegBase64: (await jpeg(1200, 800)).toString("base64"),
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("purpose");
+    expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+
+  it("refuses a caller who is not an admin before reading the picture", async () => {
+    mockMaybeSingle.mockResolvedValue({ data: { role: "customer" }, error: null });
+
+    const response = await POST(
+      mcpRequest({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: {
+          name: UPLOAD,
+          arguments: {
+            purpose: "library_cover",
+            fileName: "a.jpg",
+            jpegBase64: (await jpeg(1600, 900)).toString("base64"),
+          },
+        },
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+
+  it("answers a failure to store with a line for the admin, not the developer's error", async () => {
+    mockFindOrCreate.mockRejectedValue(new Error("storage exploded: bucket internals"));
+
+    const result = await tool(UPLOAD, {
+      purpose: "library_cover",
+      fileName: "a.jpg",
+      jpegBase64: (await jpeg(1600, 900)).toString("base64"),
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe("Sogverse could not store the picture. Try uploading it again.");
   });
 
   it("opens on an article it can find, telling a client without views where else to upload", async () => {
@@ -439,7 +504,6 @@ describe("the uploader", () => {
             name: "16:9",
             width: 1600,
             height: 900,
-            uploadTool: "upload_library_cover",
             refusal: null,
           },
         ],
@@ -486,7 +550,7 @@ describe("the uploader as an MCP Apps view", () => {
       ui: { resourceUri: uri },
       "ui/resourceUri": uri,
     });
-    expect(tools.find((t) => t.name === "upload_library_cover")?._meta).toEqual({
+    expect(tools.find((t) => t.name === UPLOAD)?._meta).toEqual({
       ui: { resourceUri: uri, visibility: ["app"] },
       "ui/resourceUri": uri,
     });
@@ -516,8 +580,8 @@ describe("the uploader as an MCP Apps view", () => {
       _meta: { ui: { prefersBorder: true } },
     });
     expect(read.contents[0].text).toMatch(/^<!doctype html>/i);
-    // The view names no tool of its own: the opening tool hands it them.
-    expect(read.contents[0].text).toContain("uploadTool");
+    // The view stores every picture through the one upload tool, by name.
+    expect(read.contents[0].text).toContain(UPLOAD);
     // One file: nothing for the host's default policy to block.
     expect(read.contents[0].text).not.toMatch(/<script[^>]+src=/);
   });

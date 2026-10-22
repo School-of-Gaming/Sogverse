@@ -1,6 +1,6 @@
 import "server-only";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
@@ -39,7 +39,7 @@ import {
 import { HolidayBreaksService } from "@/services/holiday-breaks/holiday-breaks.service";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { getOrigin } from "@/lib/url";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import type { AppSupabaseClient } from "@/types";
 
 /**

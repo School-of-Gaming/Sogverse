@@ -1,0 +1,94 @@
+{
+  "title": "Conditions générales",
+  "lastUpdated": "Dernière mise à jour : {date}",
+  "intro": {
+    "heading": "En bref",
+    "paragraphs": [
+      "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
+      "En résumé : nos clubs se déroulent en ligne, animés en direct par nos animateurs formés. Vous pouvez résilier un club mensuel quand vous le souhaitez, et chaque club est couvert par une garantie satisfait ou remboursé de 30 jours : si cela ne convient pas à votre enfant, dites-le-nous dans les 30 jours suivant sa première session et nous vous remboursons intégralement. Si vous avez une question, écrivez à {supportEmail} : une vraie personne vous répondra."
+    ]
+  },
+  "sections": {
+    "whoWeAre": {
+      "heading": "Avec qui vous contractez",
+      "paragraphs": [
+        "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, stages ou événements.",
+        "Nos coordonnées officielles :"
+      ],
+      "bullets": [
+        "School of Gaming Galactic Oy (numéro d’entreprise 3110461-1)",
+        "Isokatu 56, 90100 Oulu, Finlande",
+        "E-mail : {supportEmail}"
+      ]
+    },
+    "service": {
+      "heading": "Comment fonctionnent nos clubs",
+      "paragraphs": [
+        "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son stage ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l’indiquons toujours clairement sur sa page avant l’achat."
+      ]
+    },
+    "games": {
+      "heading": "Les jeux auxquels votre enfant joue",
+      "paragraphs": [
+        "Nos clubs s’articulent autour de jeux vidéo édités par d’autres entreprises, comme Minecraft. Nous suivons les recommandations officielles finlandaises en matière de classification par âge.",
+        "En pratique, cela signifie qu’un enfant peut jouer à un jeu classé jusqu’à trois ans au-dessus de son âge, à condition qu’un parent soit présent et y consente — mais jamais à un jeu classé 18+. En inscrivant votre enfant, vous confirmez que les classifications par âge des jeux concernés vous conviennent."
+      ]
+    },
+    "online": {
+      "heading": "La sécurité en ligne",
+      "paragraphs": [
+        "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent. Les sessions sont animées en direct par nos animateurs formés (nous les appelons les Gedus)."
+      ]
+    },
+    "pricing": {
+      "heading": "Prix et paiement",
+      "paragraphs": [
+        "Tous les prix sont affichés en euros, TTC. Nous pouvons modifier nos prix de temps à autre, mais un changement n’affectera jamais un club que vous payez déjà sans que nous vous en informions au préalable."
+      ]
+    },
+    "clubsCancellation": {
+      "heading": "Résilier un club mensuel",
+      "paragraphs": [
+        "Nos clubs fonctionnent par abonnement mensuel, et vous êtes libre de résilier quand vous le souhaitez — il n’y a aucun engagement de durée. Vous pouvez le faire vous-même depuis votre compte, et votre enfant conserve sa place jusqu’à la fin du mois déjà réglé.",
+        "Nous voulons aussi que vous puissiez nous essayer en toute confiance : chaque club est couvert par une garantie satisfait ou remboursé de 30 jours. Si cela ne convient finalement pas à votre enfant, écrivez à {supportEmail} dans les 30 jours suivant sa première session et nous vous remboursons tout ce que vous avez versé pour ce club. Aucun formulaire à remplir, aucune justification à donner."
+      ]
+    },
+    "campsCancellation": {
+      "heading": "Annuler un stage",
+      "paragraphs": [
+        "Les stages sont réservés et payés en une seule fois : les conditions d’annulation sont donc un peu différentes. Si vous devez annuler un stage :"
+      ],
+      "bullets": [
+        "14 jours ou plus avant le début du stage : vous êtes intégralement remboursé.",
+        "Entre 7 et 14 jours avant : nous vous remboursons, déduction faite de 50 € de frais de dossier.",
+        "Moins de 7 jours avant : nous ne pouvons pas rembourser le paiement, car la place a été réservée et préparée pour votre enfant — sauf urgence médicale ou circonstance véritablement indépendante de votre volonté.",
+        "Si votre enfant ne peut pas participer pour cause de maladie, nous vous remboursons sur envoi d’un certificat médical à {supportEmail}."
+      ]
+    },
+    "conduct": {
+      "heading": "Comportement et retrait d’un enfant d’un club",
+      "paragraphs": [
+        "Nous voulons que chaque enfant se sente en sécurité et bienvenu : nous ne tolérons donc ni le harcèlement ni les comportements qui gâchent l’expérience des autres. Quand un problème survient, nous commençons toujours par accompagner l’enfant et l’aider à arranger la situation — notre démarche complète est décrite dans notre <linkDiscipline>politique de lutte contre le harcèlement et de discipline</linkDiscipline>.",
+        "Ce n’est qu’après ces étapes d’accompagnement, et en cas de comportement préjudiciable aux autres ou perturbateur persistant ou de harcèlement, que nous pouvons mettre fin à la participation d’un enfant. Nous en discuterons toujours avec vous au préalable."
+      ]
+    },
+    "privacy": {
+      "heading": "La vie privée de votre famille",
+      "paragraphs": [
+        "Nous traitons les informations de votre famille conformément au droit finlandais et européen de la protection des données, et nous en conservons le moins possible sur votre enfant : un compte joueur est créé par vous, porte une adresse interne Sogverse plutôt que l’e-mail de votre enfant sauf si vous choisissez de lui en donner un, et ne sert jamais à lui adresser de la publicité. Notre <linkPrivacy>politique de confidentialité</linkPrivacy> explique exactement ce que nous collectons et pourquoi."
+      ]
+    },
+    "changes": {
+      "heading": "Modifications de ces conditions",
+      "paragraphs": [
+        "Nous pouvons mettre à jour ces conditions de temps à autre, par exemple si nous ajoutons un nouveau type de club ou modifions le fonctionnement de quelque chose. Lorsque nous apportons une modification importante, nous mettons à jour la date en haut de cette page et, si cela vous concerne, nous vous en informons directement."
+      ]
+    },
+    "contact": {
+      "heading": "Nous contacter",
+      "paragraphs": [
+        "Si quelque chose ici n’est pas clair, ou si vous souhaitez en discuter, écrivez simplement à {supportEmail}. Une vraie personne vous répondra, et nous sommes toujours ravis d’aider."
+      ]
+    }
+  }
+}

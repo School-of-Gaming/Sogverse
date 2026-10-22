@@ -10,7 +10,6 @@ import {
 } from "@/lib/mcp/cover-images";
 import {
   UPLOADER_VIEW_META,
-  registerPictureUploadTool,
   uploaderOpening,
 } from "@/lib/mcp/image-uploader";
 import {
@@ -170,7 +169,6 @@ export function registerLibraryCoverTools(server: McpServer): void {
               {
                 purpose: "library_cover",
                 name: COVER_RATIO,
-                uploadTool: "upload_library_cover",
                 refusal: null,
               },
             ],
@@ -202,12 +200,4 @@ export function registerLibraryCoverTools(server: McpServer): void {
         };
       }),
   );
-
-  registerPictureUploadTool(server, {
-    name: "upload_library_cover",
-    title: "Store an uploaded Library cover",
-    description: `Called by the picture uploader alone. Adds a ${width} × ${height} JPEG to the picture catalogue as a Library cover entry, or answers the entry that already holds these exact bytes. It does not set any article's cover.`,
-    purpose: "library_cover",
-    run: (ctx, body) => asAdmin(ctx, ({ client }) => body(client)),
-  });
 }

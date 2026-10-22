@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { CatalogueImagePurpose } from "@/types";
 import { COVER_HOVER_ZOOM } from "./cover-hover-zoom";
 

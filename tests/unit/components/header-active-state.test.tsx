@@ -1,8 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import en from "@/../messages/en.json";
+import enHeader from "@/../messages/en/header.json";
+import enCommon from "@/../messages/en/common.json";
+import enDashboardSections from "@/../messages/en/dashboardSections.json";
+import enFamily from "@/../messages/en/family.json";
 import { Header } from "@/components/layout/header";
+
+const en = {
+  header: enHeader,
+  common: enCommon,
+  dashboardSections: enDashboardSections,
+  family: enFamily,
+};
 
 /**
  * Where the chrome says the reader is.

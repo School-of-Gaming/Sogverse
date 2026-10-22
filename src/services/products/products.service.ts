@@ -7,10 +7,11 @@ import type {
   SpokenLanguageCode,
   MarketingConsentType,
   GamerPhotoConsentType,
+  VoiceRoomMode,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
-import { escapeLikePattern } from "@/lib/utils";
+import { escapeLikePattern } from "@/lib/search";
 import {
   keysetPage,
   quoteFilterValue,
@@ -394,6 +395,9 @@ export type ProductTranslationInput = {
   // The marketing blurb as authored markdown; null = no long description for
   // this locale (the RPC stores SQL NULL).
   long_description: string | null;
+  // Plain-text join instructions for a product with no voice room; null = none
+  // in this locale, and null on every translation under any other mode.
+  voice_join_instructions: string | null;
 };
 
 export type ScheduleSlotInput = {
@@ -493,6 +497,22 @@ export type CreateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
+  /**
+   * How an online product's sessions are joined: `sogverse` (the Sogverse
+   * voice room), `external` (a meeting on another service at
+   * `external_voice_url`), or `none` (no room; families read the join
+   * instructions each translation carries). An in-person product is always
+   * `sogverse` with no link — the CHECKs on `products` refuse anything else —
+   * and the RPC refuses mode `none` without instructions in any translation,
+   * or instructions under any other mode.
+   *
+   * Both are required, the link required-nullable: the RPC assigns both on
+   * every call, so an omission would reset the product to a Sogverse room. The
+   * link and the instructions are readable by anyone, logged-out visitors
+   * included, which the owner has accepted — see the column comments.
+   */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
   start_date: string;
   end_date: string | null;
   timezone: string;
@@ -608,6 +628,11 @@ export type UpdateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
+  /** How the sessions are joined — see CreateProductInput. Required on the
+   *  update half too, and that is the load-bearing one: the RPC assigns both
+   *  on every call, so an omission resets the product to a Sogverse room. */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
   start_date: string;
   end_date: string | null;
   timezone: string;

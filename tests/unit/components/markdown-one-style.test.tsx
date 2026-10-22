@@ -5,7 +5,7 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import type { ReactElement } from "react";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRichText from "@/../messages/en/richText.json";
 import {
   MARKDOWN_CLASSES,
   MARKDOWN_CONTAINER_CLASSES,
@@ -26,6 +26,8 @@ import {
 } from "@/lib/authored-markdown";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { canonicalizeHref } from "@/lib/links/own-site";
+
+const messages = { richText: enRichText };
 
 /**
  * **Authored markdown renders in one style everywhere, mail included.**
@@ -49,6 +51,7 @@ const VARIANTS = [
   "profile",
   "article",
   "landing",
+  "landing-faq",
   "spotlight",
 ] as const satisfies readonly MarkdownUseCase[];
 

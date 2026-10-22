@@ -12,6 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --cache --cache-strategy content src/ scripts/ tests/ services/ packages/ \"*.mjs\"",
+    "lint:file": "eslint --cache --cache-strategy content",
     "type-check": "tsc --noEmit && npm run type-check --workspaces --if-present",
     "portal:dev": "npm run dev --workspace=sogverse-bedrock-portal",
     "portal:start": "npm run start --workspace=sogverse-bedrock-portal",
@@ -23,6 +24,7 @@
     "check-translations": "node scripts/check-translations.mjs",
     "db": "node scripts/local-db.mjs",
     "gates": "node scripts/gates.mjs",
+    "load": "node scripts/load.mjs",
     "perf:insights": "node scripts/speed-insights.mjs"
   },
   "dependencies": {

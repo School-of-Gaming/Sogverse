@@ -1,0 +1,26 @@
+{
+  "question": "chay’ ’el {name}?",
+  "option": {
+    "parent": "vav account Dung",
+    "username": "puq account: pong lo’",
+    "email": "puq account: puq QIn Daq lo’"
+  },
+  "optionHint": {
+    "parent": "janDaq ’el vav, ’ej puqvaD jan nob. pong ghajbe’ puq, pegh mu’ ghajbe’ je.",
+    "username": "puqvaD pong pegh mu’ je cher vav.",
+    "email": "account chenmoH vav. QIn DaqDaj ngu’ puq, ’ej pegh mu’Daj chenmoH."
+  },
+  "parentModeNote": "pagh yIghItlh. accountlIjvo’ bIchoHDI’ ’el {name}.",
+  "usernameLabel": "pong",
+  "usernamePlaceholder": "mara2015",
+  "usernameHint": "ghItlh mI’ je neH, wej – cha’maH Hap.",
+  "usernameRequired": "pong yIwIv!",
+  "usernameInvalid": "wej – cha’maH ghItlh mI’ joq yIlo’. pe’vIl yIlo’Qo’.",
+  "usernameTaken": "pongvam lo’lu’. latlh yInuD!",
+  "passwordHint": "{count} Hap law’ law’. QujwI’lIjvaD yIjatlh – naDev DachoHlaH.",
+  "passwordTooShort": "{count} Hap law’ law’ poQ mu’mey.",
+  "emailPlaceholder": "mara@example.com",
+  "emailRequired": "QIn Daq yIchel!",
+  "emailInvalid": "QIn Daq rurbe’ vam.",
+  "emailTaken": "account ghaj QIn Daqvam."
+}

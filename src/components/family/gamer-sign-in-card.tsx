@@ -24,9 +24,11 @@ import {
 import {
   GAMER_EMAIL_TAKEN,
   GAMER_USERNAME_TAKEN,
+} from "@/services/gamers/gamers.contracts";
+import {
   useSendGamerVerificationEmail,
   useUpdateGamer,
-} from "@/services/gamers";
+} from "@/services/gamers/gamers.queries";
 import type { GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
 import {

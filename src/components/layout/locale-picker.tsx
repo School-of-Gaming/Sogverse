@@ -29,7 +29,8 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { trackLocalePickerOpen } from "@/lib/analytics";
-import { cn, isKeyOf } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { isKeyOf } from "@/lib/type-guards";
 
 // Klingon Empire flag from Wikimedia Commons (by Oren neu dag, public domain).
 // Simplified from the original Inkscape SVG to a minimal inline component.

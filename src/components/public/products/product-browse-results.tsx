@@ -4,13 +4,15 @@ import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import { filterProducts } from "./filter-products";
 import type { BrowseSurface } from "./browse-surface";
 import { useOfferedBrowseFilters } from "./use-browse-filters";
 import { withBrowseState } from "./browse-state";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilterPanel } from "./product-browse-filter-panel";
 import type { AppHrefObject } from "@/lib/constants/routes";

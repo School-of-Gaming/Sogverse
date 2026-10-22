@@ -1,0 +1,41 @@
+{
+  "offer": {
+    "title": "A seat has opened",
+    "child": "A place has opened for {participantName} in {productName}. Would you still like it?",
+    "self": "A place has opened for you in {productName}. Would you still like it?",
+    "deadline": "Please answer by {deadline}. After that the seat goes to the next family in line.",
+    "accept": "Accept the seat",
+    "decline": "No, thank you",
+    "confirmTitle": "Give up the seat?",
+    "confirmBody": "We will offer it to the next family on the waitlist, and this offer cannot be reopened.",
+    "confirmAction": "Yes, I am sure",
+    "confirmCancel": "Go back",
+    "error": "Something went wrong and your answer was not saved. Please try again, or write to us at {supportEmail}."
+  },
+  "accepted": {
+    "title": "The seat is saved",
+    "body": "We have kept the place for you. You will find it in My SOG alongside everything else your family is signed up for.",
+    "action": "Go to My SOG"
+  },
+  "declined": {
+    "title": "Thank you for telling us",
+    "body": "We have taken the place off your list. Because you answered, another family can have it today instead of it standing empty."
+  },
+  "expired": {
+    "title": "This offer has run out",
+    "body": "A seat offer stays open for {days} days, and this one closed before we heard from you.",
+    "declinePrompt": "You are still on the waitlist. If your family no longer needs a place at all, you can tell us now and free it for someone else.",
+    "declineAction": "Give up our place",
+    "confirmTitle": "Give up your place?",
+    "confirmBody": "We will take you off the waitlist. Joining again later would start you at the back of the queue."
+  },
+  "used": {
+    "title": "This link has already been used",
+    "body": "This invitation is no longer open. Everything your family is signed up for, and every place you are waiting on, is in My SOG.",
+    "action": "Go to My SOG"
+  },
+  "invalid": {
+    "title": "This link did not work",
+    "body": "It may have been cut short by your email app, or copied only part of the way. Try opening it from the email again, or write to us at {supportEmail} and we will help."
+  }
+}

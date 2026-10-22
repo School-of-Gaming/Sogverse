@@ -6,7 +6,7 @@ import {
   municipalitiesOfClubs,
   selectClubsInMunicipality,
 } from "@/lib/schools/municipalities";
-import type { LocationWithChain } from "@/services/locations";
+import type { LocationWithChain } from "@/services/locations/locations.service";
 import type { EmbeddedLocation } from "@/lib/locations/embedded-chain";
 import type { Json, Location } from "@/types";
 

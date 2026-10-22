@@ -28,17 +28,17 @@ import "./style.css";
  * destination has, is refused: it is not uploaded, and the view says why.
  * One refused picture never holds back the others.
  *
- * Each fitting JPEG goes to its frame's app-only upload tool in a call of its
- * own — never two pictures in one request, which has a size limit — and,
- * when the opening names a placement, the entries the uploads answer go to
- * that tool together. Every call goes through the host: the view holds no
- * token and opens no connection of its own. The model is then told the whole
- * batch at once: each file's new entry or why it was refused, and where the
- * pictures went.
+ * Each fitting JPEG goes, with its frame's purpose, to the one app-only upload
+ * tool in a call of its own — never two pictures in one request, which has a
+ * size limit — and, when the opening names a placement, the entries the
+ * uploads answer go to that tool together. Every call goes through the host:
+ * the view holds no token and opens no connection of its own. The model is
+ * then told the whole batch at once: each file's new entry or why it was
+ * refused, and where the pictures went.
  *
- * Everything that differs by purpose (the frames, their sizes and tools, which
- * this destination takes and why, how many it takes, the largest JPEG a call
- * can carry, the words) arrives in the opening tool's `uploader` field, so the
+ * Everything that differs by purpose (the frames, their sizes, which this
+ * destination takes and why, how many it takes, the largest JPEG a call can
+ * carry, the words) arrives in the opening tool's `uploader` field, so the
  * server is the one definition and this view restates none of it.
  */
 
@@ -54,6 +54,9 @@ root.setProperty("--act-foreground", BRAND.act.foreground);
 root.setProperty("--destructive", statusHex("destructive"));
 root.setProperty("--font-sans", `${FACES.sans.name}, ${FACES.sans.fallback}`);
 
+/** The app-only tool every picture is stored through, given the frame's purpose. */
+const UPLOAD_TOOL = "upload_catalogue_picture";
+
 /** The opening tool's `uploader` field. */
 const openingSchema = z.object({
   uploader: z.object({
@@ -66,7 +69,6 @@ const openingSchema = z.object({
           name: z.string(),
           width: z.number().int().positive(),
           height: z.number().int().positive(),
-          uploadTool: z.string(),
           refusal: z.string().nullable(),
         }),
       )
@@ -372,8 +374,9 @@ async function store(row: Row, picked: NonNullable<Row["picked"]>): Promise<File
   const fileName = row.file.name;
   try {
     const stored = await app.callServerTool({
-      name: picked.frame.uploadTool,
+      name: UPLOAD_TOOL,
       arguments: {
+        purpose: picked.frame.purpose,
         fileName: picked.fileName,
         label: row.label.value.trim() || undefined,
         jpegBase64: picked.base64,

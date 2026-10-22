@@ -81,6 +81,11 @@ export const LANDING_SECTION_SEO: {
   steps: {
     structuredData: none,
   },
+  // Testimonials contribute nothing: review markup a site writes about itself
+  // earns no rich result, and the quotes are the page's own words to a reader.
+  testimonials: {
+    structuredData: none,
+  },
   faq: {
     structuredData: (section, text) =>
       section.items.flatMap((item) => {
