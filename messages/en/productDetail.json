@@ -88,11 +88,7 @@
     "ctaSubmitting": "One moment…",
     "ctaAddGamer": "Add a gamer to continue",
     "ctaAllSet": "You’re all set",
-    "ctaOutOfBand": {
-      "between": "{count, plural, one {Your gamer isn’t {min}–{max}} other {None of your gamers are {min}–{max}}}",
-      "from": "{count, plural, one {Your gamer is under {min}} other {Your gamers are all under {min}}}",
-      "upTo": "{count, plural, one {Your gamer is over {max}} other {Your gamers are all over {max}}}"
-    },
+    "ctaOutOfBand": "{count, plural, one {Your gamer isn’t {min}–{max}} other {None of your gamers are {min}–{max}}}",
     "ctaAgreeConsent": "Give the required consent",
     "ctaWaitlist": "Join the waitlist",
     "ctaSignIn": "Sign in",
@@ -106,11 +102,7 @@
     "gamerAlreadyWaitlisted": "On waitlist",
     "gamerTooYoung": "Too young",
     "gamerTooOld": "Too old",
-    "gamerBand": {
-      "between": "Ages {min}–{max}",
-      "from": "Ages {min}+",
-      "upTo": "Up to age {max}"
-    },
+    "gamerBand": "Ages {min}–{max}",
     "nonCustomerNote": "Only parents can register a gamer here.",
     "nonCustomerNoteParents": "Only parents can sign up here.",
     "closedNote": "This one’s not open right now. Keep an eye out for the next one.",

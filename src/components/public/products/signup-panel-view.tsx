@@ -97,11 +97,9 @@ export interface SignupParticipantChoice {
    * is shown disabled and labels which side it fell out of, exactly as an
    * already-enrolled row does.
    *
-   * **The side rides on the row; the band rides on the panel.** Which side a
-   * child fell out of is a fact about that child, so it is decided where the
-   * age is. The band the label names is the product's (`ageRange` on the ready
-   * state), and the row's own bound is what it falls back to naming where the
-   * panel was handed no band.
+   * Which side a child fell out of is a fact about that child, so it is
+   * decided where the age is; the band the label names is the product's, and
+   * rides on the block beside it.
    *
    * **Already-enrolled outranks it** where a row carries both: holding a seat
    * is the more specific fact about that child on this product, and it is also
@@ -113,8 +111,8 @@ export interface SignupParticipantChoice {
 }
 
 /**
- * Why a row is outside the product's age band, and the bound it fell outside
- * of. `kind` picks the label, `bound` fills its number.
+ * Why a row is outside the product's age band, and that band. `kind` picks the
+ * label, `min` and `max` fill the band it names.
  *
  * The decision itself is made in `src/lib/gamer-age-eligibility.ts` — the panel
  * renders it and owns nothing of the arithmetic, which is what lets a preview
@@ -122,8 +120,13 @@ export interface SignupParticipantChoice {
  */
 export interface SignupAgeBlock {
   kind: "under" | "over";
-  /** The product's `min_age` for `under`, its `max_age` for `over`. */
-  bound: number;
+  /**
+   * The product's `min_age` and `max_age`. Both are always there: only a
+   * product with a gamer audience refuses a child for age, and the schema
+   * requires such a product to declare both ends.
+   */
+  min: number;
+  max: number;
 }
 
 export type AuthState =
@@ -145,22 +148,7 @@ export type AuthState =
        * at the cap minus one would be told they were full.
        */
       gamerCount: number;
-      /**
-       * The product's age band, named in full beside each refused row and in
-       * the CTA when every child is outside it. Absent where the product
-       * declares no band; a refused row then names the one bound it carries.
-       */
-      ageRange?: SignupAgeRange;
     };
-
-/**
- * A product's age band: both ends, or the one end the product declares. A
- * product declaring neither refuses nobody for age, so it has no band to name
- * and is not one of these.
- */
-export type SignupAgeRange =
-  | { min: number; max: number | null }
-  | { min: null; max: number };
 
 /**
  * Per-gamer signup state on a product: the child already holds a seat
@@ -661,7 +649,6 @@ function FormOrAuth(props: FormOrAuthProps) {
           {...props}
           participants={props.authState.participants}
           gamerCount={props.authState.gamerCount}
-          ageRange={props.authState.ageRange}
         />
       );
   }
@@ -934,7 +921,6 @@ function SignupForm(
   props: FormOrAuthProps & {
     participants: readonly SignupParticipantChoice[];
     gamerCount: number;
-    ageRange: SignupAgeRange | undefined;
   },
 ) {
   const t = useTranslations("productDetail.signupPanel");
@@ -973,27 +959,17 @@ function SignupForm(
   // seat — a family already on the product is told so by its rows, and
   // "You're all set" stays the truth for them. The reader's own selectable
   // row is not a refused child, so a both-audiences panel never gets here.
+  // Every block carries the product's band, so any one of them names it.
   // Null in every other case.
   const refusedBlocks = props.participants.flatMap((p) =>
     p.isSelf !== true && (p.signupState ?? null) === null && p.ageBlock
       ? [p.ageBlock]
       : [],
   );
-  const firstRefused = refusedBlocks.at(0);
   const refusedBand =
-    firstRefused !== undefined &&
     refusedBlocks.length === props.participants.length
-      ? ageBandOf(
-          props.ageRange ??
-            rangeOfBlocks([firstRefused, ...refusedBlocks.slice(1)]),
-        )
+      ? (refusedBlocks.at(0) ?? null)
       : null;
-  // A refused row names the product's band, or the one bound it carries where
-  // the panel was handed no band.
-  const rowBandLabel = (block: SignupAgeBlock) => {
-    const band = ageBandOf(props.ageRange ?? rangeOfBlocks([block]));
-    return t(`gamerBand.${band.shape}`, band);
-  };
   // The product's documents, grouped the way the parent will meet them: one row
   // per bundle, plus a row for anything belonging to no bundle. Derived here
   // rather than taken as a prop so the gate below and the rows on screen cannot
@@ -1045,8 +1021,9 @@ function SignupForm(
     ? t("ctaSubmitting")
     : props.selectedParticipantId === null
       ? refusedBand !== null
-        ? t(`ctaOutOfBand.${refusedBand.shape}`, {
-            ...refusedBand,
+        ? t("ctaOutOfBand", {
+            min: refusedBand.min,
+            max: refusedBand.max,
             count: props.participants.length,
           })
         : canAddGamer
@@ -1195,7 +1172,12 @@ function SignupForm(
                           ? t("gamerTooYoung")
                           : t("gamerTooOld")}
                       </span>
-                      <span>{rowBandLabel(ageBlock)}</span>
+                      <span>
+                        {t("gamerBand", {
+                          min: ageBlock.min,
+                          max: ageBlock.max,
+                        })}
+                      </span>
                     </span>
                   ) : (
                     selected && (
@@ -1876,37 +1858,6 @@ function ConsentRow({
 }
 
 // ---------- Helpers ----------
-
-/**
- * A band in the shape its copy takes: both ends, from a minimum up, or up to a
- * maximum. Each shape is its own message, because a one-sided band is worded
- * differently rather than printed with a missing end.
- */
-type AgeBand =
-  | { shape: "between"; min: number; max: number }
-  | { shape: "from"; min: number }
-  | { shape: "upTo"; max: number };
-
-function ageBandOf(range: SignupAgeRange): AgeBand {
-  if (range.min === null) return { shape: "upTo", max: range.max };
-  if (range.max === null) return { shape: "from", min: range.min };
-  return { shape: "between", min: range.min, max: range.max };
-}
-
-/**
- * The band the refused rows themselves imply, for a panel handed none: the
- * minimum any row fell under and the maximum any row fell over. Every block
- * carries one end, so there is always at least one to name.
- */
-function rangeOfBlocks(
-  blocks: readonly [SignupAgeBlock, ...SignupAgeBlock[]],
-): SignupAgeRange {
-  const min = blocks.find((b) => b.kind === "under")?.bound ?? null;
-  const max = blocks.find((b) => b.kind === "over")?.bound ?? null;
-  // With no "under" block every block is an "over" one, so `max` is set; the
-  // fallback only tells the compiler so.
-  return min === null ? { min, max: max ?? blocks[0].bound } : { min, max };
-}
 
 function useVerb(productType: ProductType): string {
   const t = useTranslations("productDetail.signupPanel.verb");

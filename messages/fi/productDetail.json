@@ -88,11 +88,7 @@
     "ctaSubmitting": "Hetki…",
     "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
     "ctaAllSet": "Olet valmis",
-    "ctaOutOfBand": {
-      "between": "{count, plural, one {Pelaajasi ei ole {min}–{max}-vuotias} other {Kukaan ei ole {min}–{max}-vuotias}}",
-      "from": "{count, plural, one {Pelaajasi on alle {min}-vuotias} other {Pelaajasi ovat alle {min}-vuotiaita}}",
-      "upTo": "{count, plural, one {Pelaajasi on yli {max}-vuotias} other {Pelaajasi ovat yli {max}-vuotiaita}}"
-    },
+    "ctaOutOfBand": "{count, plural, one {Pelaajasi ei ole {min}–{max}-vuotias} other {Kukaan ei ole {min}–{max}-vuotias}}",
     "ctaAgreeConsent": "Anna vaadittu suostumus",
     "ctaWaitlist": "Liity jonotuslistalle",
     "ctaSignIn": "Kirjaudu sisään",
@@ -106,11 +102,7 @@
     "gamerAlreadyWaitlisted": "Jonossa",
     "gamerTooYoung": "Liian nuori",
     "gamerTooOld": "Liian vanha",
-    "gamerBand": {
-      "between": "Ikä {min}–{max}",
-      "from": "Ikä {min}+",
-      "upTo": "Ikä enintään {max}"
-    },
+    "gamerBand": "Ikä {min}–{max}",
     "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
     "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
     "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",

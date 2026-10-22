@@ -88,11 +88,7 @@
     "ctaSubmitting": "Un instant…",
     "ctaAddGamer": "Ajoutez un joueur pour continuer",
     "ctaAllSet": "Tout est prêt",
-    "ctaOutOfBand": {
-      "between": "{count, plural, one {Âge requis\u00a0: {min}–{max} ans} other {Aucun joueur n’a {min}–{max} ans}}",
-      "from": "{count, plural, one {Votre joueur a moins de {min} ans} other {Vos joueurs ont moins de {min} ans}}",
-      "upTo": "{count, plural, one {Votre joueur a plus de {max} ans} other {Vos joueurs ont plus de {max} ans}}"
-    },
+    "ctaOutOfBand": "{count, plural, one {Âge requis\u00a0: {min}–{max} ans} other {Aucun joueur n’a {min}–{max} ans}}",
     "ctaAgreeConsent": "Donnez le consentement requis",
     "ctaWaitlist": "Rejoindre la liste d’attente",
     "ctaSignIn": "Se connecter",
@@ -106,11 +102,7 @@
     "gamerAlreadyWaitlisted": "En liste d’attente",
     "gamerTooYoung": "Trop jeune",
     "gamerTooOld": "Trop âgé",
-    "gamerBand": {
-      "between": "{min}–{max} ans",
-      "from": "Dès {min} ans",
-      "upTo": "Jusqu’à {max} ans"
-    },
+    "gamerBand": "{min}–{max} ans",
     "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
     "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
     "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",

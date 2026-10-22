@@ -202,10 +202,9 @@ const DEMO_GAMERS = [
 ] as const;
 
 // The age band every product fixture with a gamer audience carries. One
-// constant because three things must agree on it — the product's own bounds,
-// the band the panel is handed, and the bound each refused child fell outside —
-// and a scene whose rows named a different band from its heading would be a
-// false picture of the page.
+// constant because two things must agree on it — the product's own bounds and
+// the band each refused child's block carries — and a scene whose rows named a
+// different band from its heading would be a false picture of the page.
 const DEMO_AGE_BAND = { min: 8, max: 12 } as const;
 
 // The two siblings the product's own age band refuses, one at each end of it —
@@ -224,7 +223,7 @@ const DEMO_GAMERS_OUT_OF_BAND = [
     id: "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57",
     name: "Elias",
     age: 6,
-    ageBlock: { kind: "under", bound: DEMO_AGE_BAND.min },
+    ageBlock: { kind: "under", ...DEMO_AGE_BAND },
   },
   {
     id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
@@ -235,7 +234,7 @@ const DEMO_GAMERS_OUT_OF_BAND = [
     // case, not the median.
     name: "Sofia-Aleksandra",
     age: 14,
-    ageBlock: { kind: "over", bound: DEMO_AGE_BAND.max },
+    ageBlock: { kind: "over", ...DEMO_AGE_BAND },
   },
 ] as const satisfies readonly SignupParticipantChoice[];
 
@@ -1362,10 +1361,6 @@ function buildAuthState(
       : outOfBandOnly
         ? DEMO_GAMERS_OUT_OF_BAND.length
         : DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length,
-    // The band `buildBaseProduct` gives every product with a gamer audience,
-    // named in full beside each refused row and by the CTA when every child is
-    // outside it.
-    ...(audience === "parents" ? {} : { ageRange: DEMO_AGE_BAND }),
   };
 }
 

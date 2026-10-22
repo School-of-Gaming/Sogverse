@@ -3,7 +3,6 @@ import { act, render, renderHook } from "@testing-library/react";
 import {
   SignupPanelView,
   type AuthState,
-  type SignupAgeRange,
   type SignupPanelViewProps,
   type SignupParticipantChoice,
 } from "@/components/public/products/signup-panel-view";
@@ -29,7 +28,7 @@ import type {
  *    and it is the one answering the parent's actual question.
  *
  * Translations are stubbed to echo their key and the values interpolated into
- * it, so the assertions are about which key is reached for and which bound is
+ * it, so the assertions are about which key is reached for and which band is
  * handed to it — never about the wording in `messages/`.
  */
 vi.mock("next-intl", () => {
@@ -56,6 +55,9 @@ const ELIAS_ID = "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57";
 const SOFIA_ID = "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842";
 const PARENT_ID = "5b0f2b6d-6ad9-4a02-8f75-3a3d2a4a7c11";
 
+/** A 8–12 product, the band every refused fixture below is outside of. */
+const BAND = { min: 8, max: 12 } as const;
+
 /** In the band, and the row a working panel should land on. */
 const OONA: SignupParticipantChoice = { id: OONA_ID, name: "Oona", age: 10 };
 /** Two years short of the product's minimum. */
@@ -63,14 +65,14 @@ const ELIAS: SignupParticipantChoice = {
   id: ELIAS_ID,
   name: "Elias",
   age: 6,
-  ageBlock: { kind: "under", bound: 8 },
+  ageBlock: { kind: "under", ...BAND },
 };
 /** Two years past its maximum. */
 const SOFIA: SignupParticipantChoice = {
   id: SOFIA_ID,
   name: "Sofia",
   age: 14,
-  ageBlock: { kind: "over", bound: 12 },
+  ageBlock: { kind: "over", ...BAND },
 };
 
 /** The reader's own row, on a product whose audience admits adults. */
@@ -97,6 +99,7 @@ const readyWith = (
 function panel(
   participants: readonly SignupParticipantChoice[],
   selectedParticipantId: string | null,
+  overrides: Partial<SignupPanelViewProps> = {},
 ): SignupPanelViewProps {
   const authState: AuthState = readyWith(participants);
   return {
@@ -129,6 +132,7 @@ function panel(
     onJoinWaitlist: () => {},
     currency: "eur",
     locale: "en",
+    ...overrides,
   };
 }
 
@@ -161,8 +165,11 @@ function fieldsFor(participants: readonly SignupParticipantChoice[]) {
   return result.current;
 }
 
+/** The product's band as a refused row names it. */
+const BAND_LABEL = 'gamerBand:{"min":8,"max":12}';
+
 describe("a row outside the band is refused in place", () => {
-  it("disables it and says it is too young, naming the bound with no band", () => {
+  it("disables it and says it is too young, beside the whole band", () => {
     const { container } = render(
       <SignupPanelView {...panel([OONA, ELIAS], OONA_ID)} />,
     );
@@ -170,18 +177,17 @@ describe("a row outside the band is refused in place", () => {
     expect(oona.disabled).toBe(false);
     expect(elias.disabled).toBe(true);
     expect(elias.textContent).toContain("gamerTooYoung");
-    // No band handed to the panel: the row names the one bound it carries.
-    expect(elias.textContent).toContain('gamerBand.from:{"shape":"from","min":8}');
+    expect(elias.textContent).toContain(BAND_LABEL);
   });
 
-  it("disables it and says it is too old, naming the bound with no band", () => {
+  it("disables it and says it is too old, beside the whole band", () => {
     const { container } = render(
       <SignupPanelView {...panel([OONA, SOFIA], OONA_ID)} />,
     );
     const [, sofia] = rows(container);
     expect(sofia.disabled).toBe(true);
     expect(sofia.textContent).toContain("gamerTooOld");
-    expect(sofia.textContent).toContain('gamerBand.upTo:{"shape":"upTo","max":12}');
+    expect(sofia.textContent).toContain(BAND_LABEL);
   });
 
   it("still prints the age pill on a refused row", () => {
@@ -263,28 +269,6 @@ describe("preselection skips a refused row", () => {
   });
 });
 
-/** The same panel, handed the product's band the way the detail page does. */
-function panelInBand(
-  participants: readonly SignupParticipantChoice[],
-  selectedParticipantId: string | null,
-  ageRange: SignupAgeRange,
-  overrides: Partial<SignupPanelViewProps> = {},
-): SignupPanelViewProps {
-  return {
-    ...panel(participants, selectedParticipantId),
-    authState: {
-      kind: "ready",
-      participants,
-      gamerCount: participants.filter((p) => p.isSelf !== true).length,
-      ageRange,
-    },
-    ...overrides,
-  };
-}
-
-/** A 8–12 product, the band every fixture above is outside of. */
-const BAND: SignupAgeRange = { min: 8, max: 12 };
-
 /** The panel's last button, which is the CTA. */
 const cta = (c: HTMLElement) => {
   const last = [...c.querySelectorAll("button")].at(-1);
@@ -295,42 +279,6 @@ const checkboxes = (c: HTMLElement) => [
   ...c.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
 ];
 
-describe("a refused row names the product's band", () => {
-  it("says too young or too old beside the whole band", () => {
-    const { container } = render(
-      <SignupPanelView {...panelInBand([OONA, ELIAS, SOFIA], OONA_ID, BAND)} />,
-    );
-    const [, elias, sofia] = rows(container);
-    const band = 'gamerBand.between:{"shape":"between","min":8,"max":12}';
-    expect(elias.textContent).toContain("gamerTooYoung");
-    expect(elias.textContent).toContain(band);
-    expect(sofia.textContent).toContain("gamerTooOld");
-    expect(sofia.textContent).toContain(band);
-  });
-
-  it("words a band with only a minimum as one", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panelInBand([OONA, ELIAS], OONA_ID, { min: 8, max: null })}
-      />,
-    );
-    expect(rows(container)[1].textContent).toContain(
-      'gamerBand.from:{"shape":"from","min":8}',
-    );
-  });
-
-  it("words a band with only a maximum as one", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panelInBand([OONA, SOFIA], OONA_ID, { min: null, max: 12 })}
-      />,
-    );
-    expect(rows(container)[1].textContent).toContain(
-      'gamerBand.upTo:{"shape":"upTo","max":12}',
-    );
-  });
-});
-
 /**
  * **When every child is outside the band, the CTA says so.** "Add a gamer to
  * continue" sent parents to add the same child again; the band is the whole
@@ -340,40 +288,20 @@ describe("a refused row names the product's band", () => {
 describe("the CTA names the band when it is the whole answer", () => {
   it("names it for several children", () => {
     const { container } = render(
-      <SignupPanelView {...panelInBand([ELIAS, SOFIA], null, BAND)} />,
+      <SignupPanelView {...panel([ELIAS, SOFIA], null)} />,
     );
     expect(cta(container).disabled).toBe(true);
     expect(cta(container).textContent).toBe(
-      'ctaOutOfBand.between:{"shape":"between","min":8,"max":12,"count":2}',
+      'ctaOutOfBand:{"min":8,"max":12,"count":2}',
     );
   });
 
   it("names it for one child", () => {
     const { container } = render(
-      <SignupPanelView {...panelInBand([ELIAS], null, BAND)} />,
+      <SignupPanelView {...panel([ELIAS], null)} />,
     );
     expect(cta(container).textContent).toBe(
-      'ctaOutOfBand.between:{"shape":"between","min":8,"max":12,"count":1}',
-    );
-  });
-
-  it("words a one-sided band as one", () => {
-    const { container } = render(
-      <SignupPanelView
-        {...panelInBand([ELIAS], null, { min: 8, max: null })}
-      />,
-    );
-    expect(cta(container).textContent).toBe(
-      'ctaOutOfBand.from:{"shape":"from","min":8,"count":1}',
-    );
-  });
-
-  it("falls back to the rows' own bounds with no band handed in", () => {
-    const { container } = render(
-      <SignupPanelView {...panel([ELIAS, SOFIA], null)} />,
-    );
-    expect(cta(container).textContent).toBe(
-      'ctaOutOfBand.between:{"shape":"between","min":8,"max":12,"count":2}',
+      'ctaOutOfBand:{"min":8,"max":12,"count":1}',
     );
   });
 
@@ -382,28 +310,20 @@ describe("the CTA names the band when it is the whole answer", () => {
     // answer for them.
     const { container } = render(
       <SignupPanelView
-        {...panelInBand(
-          [{ ...OONA, signupState: "active" }, ELIAS, SOFIA],
-          null,
-          BAND,
-        )}
+        {...panel([{ ...OONA, signupState: "active" }, ELIAS, SOFIA], null)}
       />,
     );
     expect(cta(container).textContent).toBe("ctaAddGamer");
   });
 
   it("keeps add-a-gamer on an empty roster", () => {
-    const { container } = render(
-      <SignupPanelView {...panelInBand([], null, BAND)} />,
-    );
+    const { container } = render(<SignupPanelView {...panel([], null)} />);
     expect(cta(container).textContent).toBe("ctaAddGamer");
   });
 
   it("leaves a panel with the reader's own selectable seat alone", () => {
     const { container } = render(
-      <SignupPanelView
-        {...panelInBand([ELIAS, SOFIA, SELF], PARENT_ID, BAND)}
-      />,
+      <SignupPanelView {...panel([ELIAS, SOFIA, SELF], PARENT_ID)} />,
     );
     expect(cta(container).textContent).not.toContain("ctaOutOfBand");
     expect(cta(container).disabled).toBe(false);
@@ -430,7 +350,7 @@ describe("the consents are disabled while nobody can be picked", () => {
   it("disables every box when every child is outside the band", () => {
     const { container } = render(
       <SignupPanelView
-        {...panelInBand([ELIAS, SOFIA], null, BAND, withConsents)}
+        {...panel([ELIAS, SOFIA], null, withConsents)}
       />,
     );
     const boxes = checkboxes(container);
@@ -442,7 +362,7 @@ describe("the consents are disabled while nobody can be picked", () => {
 
   it("disables them on an empty roster too", () => {
     const { container } = render(
-      <SignupPanelView {...panelInBand([], null, BAND, withConsents)} />,
+      <SignupPanelView {...panel([], null, withConsents)} />,
     );
     const boxes = checkboxes(container);
     expect(boxes).toHaveLength(BOXES);
@@ -453,7 +373,7 @@ describe("the consents are disabled while nobody can be picked", () => {
   it("enables them once somebody can be picked", () => {
     const { container } = render(
       <SignupPanelView
-        {...panelInBand([OONA, ELIAS, SOFIA], OONA_ID, BAND, withConsents)}
+        {...panel([OONA, ELIAS, SOFIA], OONA_ID, withConsents)}
       />,
     );
     const boxes = checkboxes(container);
@@ -465,7 +385,7 @@ describe("the consents are disabled while nobody can be picked", () => {
   it("enables them for the reader's own seat beside refused children", () => {
     const { container } = render(
       <SignupPanelView
-        {...panelInBand([ELIAS, SOFIA, SELF], PARENT_ID, BAND, withConsents)}
+        {...panel([ELIAS, SOFIA, SELF], PARENT_ID, withConsents)}
       />,
     );
     const boxes = checkboxes(container);

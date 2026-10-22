@@ -88,11 +88,7 @@
     "ctaSubmitting": "Ett ögonblick…",
     "ctaAddGamer": "Lägg till en gamer först",
     "ctaAllSet": "Du är klar",
-    "ctaOutOfBand": {
-      "between": "{count, plural, one {Din gamer är inte {min}–{max} år} other {Dina gamers är inte {min}–{max} år}}",
-      "from": "{count, plural, one {Din gamer är under {min} år} other {Dina gamers är under {min} år}}",
-      "upTo": "{count, plural, one {Din gamer är över {max} år} other {Dina gamers är över {max} år}}"
-    },
+    "ctaOutOfBand": "{count, plural, one {Din gamer är inte {min}–{max} år} other {Dina gamers är inte {min}–{max} år}}",
     "ctaAgreeConsent": "Ge det obligatoriska samtycket",
     "ctaWaitlist": "Gå med på väntelistan",
     "ctaSignIn": "Logga in",
@@ -106,11 +102,7 @@
     "gamerAlreadyWaitlisted": "På väntelistan",
     "gamerTooYoung": "För ung",
     "gamerTooOld": "För gammal",
-    "gamerBand": {
-      "between": "Ålder {min}–{max}",
-      "from": "Ålder {min}+",
-      "upTo": "Högst {max} år"
-    },
+    "gamerBand": "Ålder {min}–{max}",
     "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
     "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
     "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",

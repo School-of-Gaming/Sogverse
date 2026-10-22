@@ -88,11 +88,7 @@
     "ctaSubmitting": "yIloS…",
     "ctaAddGamer": "QujwI’ yIchel ’ej taH",
     "ctaAllSet": "bIghuHrup",
-    "ctaOutOfBand": {
-      "between": "{count, plural, one {QujwI’lIj {min}–{max} DIS ghajbe’} other {QujwI’pu’lIj {min}–{max} DIS ghajbe’}}",
-      "from": "{count, plural, one {QujwI’lIj {min} DIS bIng} other {QujwI’pu’lIj {min} DIS bIng}}",
-      "upTo": "{count, plural, one {QujwI’lIj {max} DIS Dung} other {QujwI’pu’lIj {max} DIS Dung}}"
-    },
+    "ctaOutOfBand": "{count, plural, one {QujwI’lIj {min}–{max} DIS ghajbe’} other {QujwI’pu’lIj {min}–{max} DIS ghajbe’}}",
     "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
     "ctaWaitlist": "tetlh DaqaD",
     "ctaSignIn": "yI’el",
@@ -106,11 +102,7 @@
     "gamerAlreadyWaitlisted": "tetlhDaq",
     "gamerTooYoung": "Qupqu’",
     "gamerTooOld": "qanqu’",
-    "gamerBand": {
-      "between": "{min}–{max} DIS",
-      "from": "{min}+ DIS",
-      "upTo": "{max} DIS veH"
-    },
+    "gamerBand": "{min}–{max} DIS",
     "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
     "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
     "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
