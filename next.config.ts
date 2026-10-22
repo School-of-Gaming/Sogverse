@@ -209,6 +209,18 @@ const nextConfig: NextConfig = {
     // accepted (ruling of 2026-10-05).
     minimumCacheTTL: 31_536_000,
   },
+  // The IndexNow key file (`src/lib/indexnow/`) has to sit at the site root to
+  // vouch for every URL on the host, and its contents come from the
+  // environment, so the root path is a rewrite to the route that serves it.
+  // Before the filesystem, so the `[locale]` segment never claims the path;
+  // the proxy's matcher excludes it, so it is never locale-redirected.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/indexnow-key.txt", destination: "/api/indexnow/key" }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     return [
       {

@@ -1,7 +1,6 @@
 import {
   EMPTY_FILTERS,
   type BrowseFilters,
-  type ProductFormat,
   type ProductPriceFilter,
 } from "@/components/public/products/filter-products";
 import type { ProductRailSelection } from "@/components/public/products/product-rail-selection";
@@ -9,18 +8,13 @@ import type { ProductTopic } from "@/types";
 
 // Which storefront products belong to the Roblox programme. The programme has
 // no catalogue of its own — it is a slice of the ordinary shop — so these
-// narrowings are the definition of "a programme product", at two widths:
-//
-// - **The shop slice** — Roblox Studio, free. What every "register" / "get
-//   started" CTA on `/roblox` lands on, spelled into those hrefs as `?topic=` /
-//   `?price=` query params (see the programme entries in `routes.ts`).
-// - **The rail slice** — the shop slice, online only. What the Upcoming Events
-//   carousel shows, read by both halves of the shared product rail pipeline:
-//   the server prefetch and the client hook that re-derives the same slice
-//   from the live query.
-//
-// The rail is deliberately the narrower of the two, so the shop link under it
-// is a real widening rather than the same list in a different layout.
+// narrowings are the definition of "a programme product": Roblox Studio, free,
+// in any format. The Upcoming Events carousel shows that slice, read by both
+// halves of the shared product rail pipeline — the server prefetch and the
+// client hook that re-derives the same slice from the live query — and every
+// "register" / "get started" CTA on `/roblox` lands on it in the shop, spelled
+// into those hrefs as `?topic=` / `?price=` query params (see the programme
+// entries in `routes.ts`).
 //
 // Deliberately NOT a "use client" module. The programme page's Server Component
 // imports these values to run its prefetch, and a runtime value imported from a
@@ -34,32 +28,28 @@ import type { ProductTopic } from "@/types";
 /** The programme's topic — one value of the `product_topic` enum. */
 export const PROGRAMME_TOPIC: ProductTopic = "roblox_studio";
 
-/** Every programme link and the rail narrow to free products. */
+/** The programme narrows to free products. */
 export const PROGRAMME_PRICE: ProductPriceFilter = "free";
 
-/** The rail alone narrows further, to online products. */
-const PROGRAMME_RAIL_FORMAT: ProductFormat = "online";
-
 /**
- * The Upcoming Events rail's slice as the shared browse filter expresses it —
- * every other filter left at its no-op value, so this narrows on topic, price
- * and format and on nothing else. Matched by the shared `filterProducts`, through
- * the rail selection below, rather than by a second hand-rolled predicate: the
+ * The programme's slice as the shared browse filter expresses it — every other
+ * filter left at its no-op value, so this narrows on topic and price and on
+ * nothing else. Matched by the shared `filterProducts`, through the rail
+ * selection below, rather than by a second hand-rolled predicate: the
  * storefront and this page must agree on what a match is.
  */
-const PROGRAMME_RAIL_FILTERS: BrowseFilters = {
+const PROGRAMME_FILTERS: BrowseFilters = {
   ...EMPTY_FILTERS,
   topics: [PROGRAMME_TOPIC],
   price: PROGRAMME_PRICE,
-  format: PROGRAMME_RAIL_FORMAT,
 };
 
 /**
- * The rail slice as the shared product rail pipeline takes it — one constant,
- * so the server's prefetch and the client's live query narrow by the same
- * value.
+ * The programme's slice as the shared product rail pipeline takes it — one
+ * constant, so the server's prefetch and the client's live query narrow by the
+ * same value.
  */
 export const PROGRAMME_RAIL_SELECTION: ProductRailSelection = {
   kind: "filters",
-  filters: PROGRAMME_RAIL_FILTERS,
+  filters: PROGRAMME_FILTERS,
 };

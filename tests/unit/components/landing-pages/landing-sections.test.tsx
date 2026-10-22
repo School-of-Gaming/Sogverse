@@ -118,6 +118,8 @@ function renderBody(
         textLocale={overrides.textLocale ?? locale}
         locale={locale}
         products={null}
+        pageId={id(500)}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );

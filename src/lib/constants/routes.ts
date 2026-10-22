@@ -499,6 +499,11 @@ export const ROUTES = {
   libraryArticlePreview: (id: string) =>
     ({ pathname: "/library/[idOrSlug]/preview", params: { idOrSlug: id } }) as const,
   /**
+   * The landing pages' index — every live landing page, listed. Public and
+   * promoted (`docs/architecture/site-quality.md`).
+   */
+  discover: "/discover",
+  /**
    * A live landing page, at either of its two addresses: its id, which
    * resolves in every locale, or the slug its version in the locale stores,
    * which is the one to share and the canonical. Public and promoted
@@ -579,8 +584,8 @@ export const ROUTES = {
    * This is where every "register" / "get started" CTA on `/roblox` lands —
    * the programme has no storefront of its own, so the shop filtered down to it
    * *is* its catalogue, and the same URL is shared by the hero, the closing CTA
-   * and the link under the events rail so all three promise the same page. The
-   * rail itself is narrower (online only; `programme-filters.ts`).
+   * and the link under the events rail so all three promise the same page —
+   * the slice the rail itself shows (`programme-filters.ts`).
    *
    * The `topic` and `price` param names, and their grammar, are the
    * browse-filter hook's (`use-browse-filters.ts`); the values are the

@@ -287,8 +287,8 @@ export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
 }
 
 // Multi-line schedule for detail surfaces — the parent/gedu "When & where"
-// card, the admin product details page, and the signup mail that mirrors the
-// confirmation page. Breaks each time-group onto its own line; the rendered
+// card, the admin product details page, the confirmation page's summary card
+// and the signup mail. Breaks each time-group onto its own line; the rendered
 // zone's abbrev decorates the first time-bearing line, on the terms `nameZone`
 // states.
 export function renderScheduleLinesForDetail(

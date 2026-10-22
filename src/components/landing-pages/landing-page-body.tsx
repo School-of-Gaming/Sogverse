@@ -33,6 +33,10 @@ export interface LandingPageBodyProps {
    * the read failed.
    */
   products: ProductRailPrefetch | null;
+  /** The page's id. */
+  pageId: string;
+  /** The admin's preview of a working copy: an email sign-up form cannot be sent. */
+  preview: boolean;
 }
 
 /**
@@ -53,10 +57,14 @@ export function LandingPageBody({
   textLocale,
   locale,
   products,
+  pageId,
+  preview,
 }: LandingPageBodyProps) {
   const context: LandingRenderContext = {
     locale,
     textLocale,
+    pageId,
+    preview,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,

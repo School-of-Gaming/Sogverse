@@ -105,8 +105,8 @@
     },
     "nextTitle": "La suite",
     "next": {
-      "placement": "Nous placerons {participantName} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
-      "placementSelf": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+      "sessions": "Vous trouverez les sessions de {participantName} dans Mon SOG.",
+      "sessionsSelf": "Vous trouverez vos sessions dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
       "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
       "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."

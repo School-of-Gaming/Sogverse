@@ -105,8 +105,8 @@
     },
     "nextTitle": "Mitä seuraavaksi tapahtuu",
     "next": {
-      "placement": "{participantName} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
-      "placementSelf": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+      "sessions": "Tapaamiset, joihin {participantName} osallistuu, löytyvät Oma SOG -sivulta.",
+      "sessionsSelf": "Tapaamisesi löytyvät Oma SOG -sivulta.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
       "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
       "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."

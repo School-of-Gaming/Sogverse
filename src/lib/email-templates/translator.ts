@@ -32,13 +32,11 @@ export async function getEmailTranslator(
  * **It exists because a namespace is a translator's whole world, and the prose
  * has to have exactly one home.** `EmailTranslator` is scoped to `email`, so it
  * cannot reach a key outside it; the "Before the first session" guide is
- * rendered by the confirmation page, both enrolment cards *and* the
- * confirmation mail, and every one of them must say the same words. Copying the
- * guide into `email.topicPrep` would put the same paragraphs in the catalog
- * twice, in five locales, with nothing asserting they still agree — the failure
- * this directory already documents for the confirmation page's own sentences,
- * accepted there because those sentences are one line each and this is a
- * document.
+ * rendered by both enrolment cards *and* the confirmation mail, and every one
+ * of them must say the same words. Copying the guide into `email.topicPrep`
+ * would put the same paragraphs in the catalog twice, in five locales, with
+ * nothing asserting they still agree — a cost a one-line sentence can bear and
+ * a document cannot.
  *
  * So the mail takes a second translator rather than a second copy of the prose.
  * A builder that needs both takes both, each loaded in the same locale.

@@ -68,7 +68,9 @@ tool is added there too.
 writers.** No table read or RPC of the tool's own: the service is what the area's UI
 already trusts. Where the area has both a whole-object save (an editor's) and partial
 writers, a tool takes the partial ones — the AI app edits one piece at a time, and a whole
-save would carry a stale copy of everything else and undo another admin's edit.
+save would carry a stale copy of everything else and undo another admin's edit. A publish
+or an unpublish goes through its helper in `src/lib/indexnow/`, which runs the service's
+own and then tells search engines what changed, exactly as the admin's own publish does.
 
 **Rule: a refusal is a tool error the AI app can act on, never a throw.** The SDK turns a
 thrown error into a tool error carrying its raw message, which would hand the app a

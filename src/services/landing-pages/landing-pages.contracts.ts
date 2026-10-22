@@ -256,7 +256,11 @@ export interface PublishedLandingVersion extends PublishedLandingVersionSummary 
   sectionTexts: LandingSectionTexts;
 }
 
-/** A published page as a list reads it — the sitemap, `llms.txt`. */
+/**
+ * A published page as a list reads it — the `/discover` index, the sitemap,
+ * `llms.txt`: its live structure, so a card can show the picture the page
+ * leads with, and every live version's short fields, but no words.
+ */
 export interface PublishedLandingPageSummary {
   /** The page's id — its id address. */
   id: string;
@@ -264,6 +268,9 @@ export interface PublishedLandingPageSummary {
   firstPublishedAt: string;
   /** When the live versions were published: the sitemap's `lastmod`. */
   publishedAt: string;
+  sections: LandingSection[];
+  /** As on the working copy, for the live sections. */
+  imagePaths: Record<string, string>;
   /** Every live version, in `SUPPORTED_LOCALES` order; never empty. */
   versions: PublishedLandingVersionSummary[];
 }
@@ -271,9 +278,6 @@ export interface PublishedLandingPageSummary {
 /** A published page whole: its live structure and every live version. */
 export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
-  sections: LandingSection[];
-  /** As on the working copy, for the live sections. */
-  imagePaths: Record<string, string>;
   versions: PublishedLandingVersion[];
 }
 

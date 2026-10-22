@@ -1,0 +1,10 @@
+{
+  "firstName": "First name",
+  "lastName": "Last name",
+  "email": "Email address",
+  "consent": "School of Gaming may send me news and offers by email. Every email has a link to unsubscribe. I have read the <privacy>Privacy Policy</privacy>.",
+  "error": "Something went wrong and you are not signed up yet. Please try again in a moment.",
+  "invalid": "Check your email address and try again.",
+  "successTitle": "You are signed up",
+  "successBody": "Thank you. Our newsletter will be in your inbox soon."
+}

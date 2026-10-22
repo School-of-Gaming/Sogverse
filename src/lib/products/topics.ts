@@ -32,8 +32,8 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 //     needs/costs note, the link/heading label — lives in the
 //     productDetail.topicInfo message namespace, keyed by topic.
 //   - The optional `prep` block is its twin on the other side of the till: it
-//     drives the "Before the first session" guide the confirmation page, the
-//     confirmation mail and the My SOG enrolment cards all render. Its prose
+//     drives the "Before the first session" guide the confirmation mail and
+//     the My SOG enrolment cards render. Its prose
 //     lives in the top-level `topicPrep` namespace — top-level rather than
 //     under a surface's own namespace precisely because three surfaces read it.
 //

@@ -563,29 +563,24 @@ export function ProductDetailPage({
 }
 
 /**
- * The eligibility answer, paired with the bound it fell outside of — which is
- * what the picker row's label needs, and what keeps the panel from having to be
- * told the product's age band separately.
+ * The eligibility answer, paired with the product's band — which is what the
+ * picker row's label names, and what the CTA names when every child is outside
+ * it, so the panel never has to be told the band separately.
  *
- * A block whose own bound is null cannot happen (the helper only returns a side
- * it was given a number for) and resolves to no block rather than to an
- * unlabelable row, so the compiler is satisfied without an assertion.
+ * A product with a gamer audience always declares both ends (the `products`
+ * CHECK requires them together), and only such a product refuses a child for
+ * age, so a block always has a whole band to carry. A missing end resolves to
+ * no block rather than to an unlabelable row, which satisfies the compiler
+ * without an assertion.
  */
 function describeAgeBlock(
   block: GamerAgeBlock | null,
   product: { min_age: number | null; max_age: number | null },
 ): SignupAgeBlock | null {
-  if (block === "under") {
-    return product.min_age === null
-      ? null
-      : { kind: "under", bound: product.min_age };
+  if (block === null || product.min_age === null || product.max_age === null) {
+    return null;
   }
-  if (block === "over") {
-    return product.max_age === null
-      ? null
-      : { kind: "over", bound: product.max_age };
-  }
-  return null;
+  return { kind: block, min: product.min_age, max: product.max_age };
 }
 
 /**

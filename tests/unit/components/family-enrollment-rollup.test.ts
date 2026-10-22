@@ -564,6 +564,72 @@ describe("toFamilyEnrollments — an unplaced seat", () => {
   });
 });
 
+/**
+ * An unplaced seat cannot open a room, so its locked Join must never name a
+ * session whose window has opened: once one has, the card names the next. The
+ * room opens five minutes before the start, so the first Friday's window opens
+ * at 16:55.
+ */
+describe("toFamilyEnrollments — an unplaced seat's next session", () => {
+  const SECOND_FRIDAY = "2026-02-20T17:00:00.000Z";
+
+  function nextAt(
+    at: string,
+    groupId: string | null,
+    cancelledDates?: string[],
+    isRemote = true,
+  ) {
+    const [entry] = toFamilyEnrollments({
+      sessionRows: [
+        sessionRow({ groupId, cancelledDates, product: { isRemote, site: null } }),
+      ],
+      waitlistRows: [],
+      now: new Date(at),
+      locale: "en",
+      timeZone: "UTC",
+    });
+    return entry.enrollment;
+  }
+
+  it("names the following week's session while this week's is running", () => {
+    expect(
+      nextAt("2026-02-13T17:30:00Z", null).nextSessionStart?.toISOString(),
+    ).toBe(SECOND_FRIDAY);
+  });
+
+  it("rolls on the moment the window opens, not when the session starts", () => {
+    expect(
+      nextAt("2026-02-13T16:55:00Z", null).nextSessionStart?.toISOString(),
+    ).toBe(SECOND_FRIDAY);
+    expect(
+      nextAt("2026-02-13T16:54:59Z", null).nextSessionStart?.toISOString(),
+    ).toBe(FIRST_FRIDAY);
+  });
+
+  it("leaves a placed seat on the session in progress", () => {
+    expect(
+      nextAt("2026-02-13T17:30:00Z", GROUP).nextSessionStart?.toISOString(),
+    ).toBe(FIRST_FRIDAY);
+  });
+
+  it("leaves an unplaced in-person seat on the session in progress, having no Join to lock", () => {
+    expect(
+      nextAt("2026-02-13T17:30:00Z", null, undefined, false).nextSessionStart?.toISOString(),
+    ).toBe(FIRST_FRIDAY);
+  });
+
+  it("names only the cancelled sessions before the one it shows", () => {
+    const summary = nextAt("2026-02-13T17:30:00Z", null, [
+      "2026-02-13",
+      "2026-02-20",
+    ]);
+    expect(summary.nextSessionStart?.toISOString()).toBe(THIRD_FRIDAY);
+    expect(summary.cancelledAhead.map((d) => d.toISOString())).toEqual([
+      SECOND_FRIDAY,
+    ]);
+  });
+});
+
 describe("toFamilyEnrollments — a place in line", () => {
   it("carries the position and the schedule, and nothing a seat would", () => {
     const summary = mapOne({ waitlistRows: [waitlistRow()] });

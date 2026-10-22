@@ -37,7 +37,8 @@
         "Viestit, joita lapsesi lähettää tapaamisen chatissa – jotta pelikasvattaja ja muu ryhmä voivat lukea ne tapaamisen aikana ja jotta voimme selvittää mahdollisen huolen jälkikäteen. Lapsesi poistama viesti piilotetaan ryhmältä, mutta se säilytetään tilin sulkemiseen asti.",
         "Palaute, jonka lapsesi antaa meille tapaamisistaan – arviot ja mahdollisen viestin, jotka hän itse päättää antaa, kun kysymme, miten tapaaminen sujui – jotta näemme, miten tapaamisemme sujuvat, ja voimme tehdä niistä parempia.",
         "Tekniset tiedot, joita mikä tahansa verkkosivusto tarvitsee toimiakseen – kirjautumisistunnot, pyyntölokit ja, vain jos valitset sen, nimettömät käyttötilastot. Katso kohdat \"Tekniset tiedot\" ja \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
-        "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta."
+        "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta.",
+        "Jos tilaat uutiskirjeemme jollakin sivuistamme: sähköpostiosoitteesi sekä etu- ja sukunimesi, jos annat ne. Mukana menevät myös sivun kieli ja tieto siitä, mikä sivu oli kyseessä, sekä sen linkin kampanjatunniste, jonka kautta saavuit, jos olet sallinut markkinointievästeet. Kaikki tämä menee suoraan Klaviyolle, joka lähettää uutiskirjeemme, eikä Sogverse säilytä siitä kopiota. Tilaaminen ei vaadi tiliä, eikä se muuta tililläsi olevaa markkinointivalintaa, jos sinulla on tili."
       ]
     },
     "technical": {
@@ -72,6 +73,7 @@
         "Lapsesi sijoittamiseen oikeaan kerho-, leiri- tai tapahtumaryhmään ja pelikasvattajan kanssa yhdistämiseen.",
         "Suorien ääni- ja videotapaamisten järjestämiseen.",
         "Maksujen perimiseen sekä kuittien, muistutusten ja kerhojasi koskevien tärkeiden tiedotteiden lähettämiseen.",
+        "Uutiskirjeemme lähettämiseen niille, jotka ovat tilanneet sen.",
         "Kysymyksiisi vastaamiseen, kun otat meihin yhteyttä.",
         "Sogversen turvallisena pitämiseen, ongelmien korjaamiseen ja palvelun parantamiseen ajan myötä."
       ]
@@ -86,6 +88,7 @@
         "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
         "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
         "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
+        "Suostumuksesi uutiskirjeeseen – voit peruuttaa sen milloin tahansa jokaisessa uutiskirjeessä olevasta tilauksen peruutuslinkistä.",
         "Suostumuksesi analytiikka- ja markkinointievästeisiin sekä kampanjatunnisteeseen – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
       ]
     },
@@ -98,6 +101,7 @@
         "Supabase – tallentaa turvallisesti tili-, perhe- ja kerhotietosi.",
         "Stripe – käsittelee maksut. Korttitietosi menevät suoraan Stripelle, emmekä me näe niitä.",
         "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
+        "Klaviyo – säilyttää uutiskirjeemme tilaajaluettelon ja lähettää uutiskirjeen niille, jotka ovat tilanneet sen.",
         "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset; lapsesi laite yhdistää siihen suoraan tapaamisen aikana.",
         "Vercel – ylläpitää sivustoa, joten jokainen pyyntö kulkee sen kautta (katso kohta \"Tekniset tiedot\"), ja tarjoaa nimettömät käyttötilastot, jos sallit analytiikan.",
         "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",

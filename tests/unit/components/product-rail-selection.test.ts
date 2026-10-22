@@ -26,9 +26,10 @@ const LISTING = [
 ];
 
 describe("selectRailProducts", () => {
-  it("narrows the Roblox programme's rail to its online, free Roblox Studio products", () => {
+  it("narrows the Roblox programme's rail to its free Roblox Studio products, in any format", () => {
     expect(selectRailProducts(LISTING, PROGRAMME_RAIL_SELECTION).map((p) => p.id)).toEqual([
       id(1),
+      id(2),
       id(5),
     ]);
   });
@@ -57,7 +58,7 @@ describe("productRailSeed", () => {
     expect(seed.initialCounts?.map((c) => c.productId)).toEqual([id(2)]);
 
     const roblox = productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION);
-    expect(roblox.initialCounts?.map((c) => c.productId)).toEqual([id(1), id(5)]);
+    expect(roblox.initialCounts?.map((c) => c.productId)).toEqual([id(1), id(2), id(5)]);
   });
 
   it("seeds nothing when the prefetch failed", () => {

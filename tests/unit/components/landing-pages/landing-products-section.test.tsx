@@ -58,6 +58,8 @@ function renderPage(
           textLocale="en"
           locale="en"
           products={{ listing, counts: listing.map((row) => emptyCounts(row.id)) }}
+          pageId={id(500)}
+          preview={false}
         />
       </NextIntlClientProvider>
     </QueryClientProvider>,

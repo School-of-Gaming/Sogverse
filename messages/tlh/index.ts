@@ -66,6 +66,8 @@ import chat from "./chat.json";
 import gamerSignIn from "./gamerSignIn.json";
 import team from "./team.json";
 import library from "./library.json";
+import discover from "./discover.json";
+import landingSubscribe from "./landingSubscribe.json";
 
 const messages = {
   metadata,
@@ -132,6 +134,8 @@ const messages = {
   gamerSignIn,
   team,
   library,
+  discover,
+  landingSubscribe,
 };
 
 export default messages;

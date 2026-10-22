@@ -146,8 +146,16 @@ export const PATHNAMES = {
     fr: "/bibliotheque/[idOrSlug]/apercu",
     tlh: "/library/[idOrSlug]/preview",
   },
+  // Every live landing page, listed.
+  "/discover": {
+    en: "/discover",
+    fi: "/tutustu",
+    sv: "/upptack",
+    fr: "/decouvrir",
+    tlh: "/discover",
+  },
   // A landing page: its id, or the slug its version in the page's locale
-  // stores (`src/services/landing-pages/`). There is no index at `/discover`.
+  // stores (`src/services/landing-pages/`).
   "/discover/[idOrSlug]": {
     en: "/discover/[idOrSlug]",
     fi: "/tutustu/[idOrSlug]",

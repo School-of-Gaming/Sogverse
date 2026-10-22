@@ -37,7 +37,8 @@
         "Les messages que votre enfant envoie dans le chat d’une session — pour que l’animateur et le groupe puissent les lire pendant la session, et pour que nous puissions examiner une inquiétude par la suite. Un message que votre enfant supprime est masqué pour le groupe, mais conservé jusqu’à la fermeture du compte.",
         "Les avis que votre enfant nous donne sur ses sessions — les évaluations et l’éventuel message qu’il choisit de nous laisser lorsque nous lui demandons comment une session s’est passée — afin que nous puissions voir comment se déroulent nos sessions et les améliorer.",
         "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
-        "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée."
+        "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée.",
+        "Si vous vous inscrivez à notre newsletter sur l’une de nos pages : votre adresse e-mail, ainsi que vos prénom et nom si vous les indiquez. S’y ajoutent la langue de la page et la page concernée, ainsi que l’étiquette de campagne du lien par lequel vous êtes arrivé, si vous avez autorisé les cookies marketing. Le tout est transmis directement à Klaviyo, qui envoie notre newsletter, et Sogverse n’en conserve aucune copie. L’inscription ne nécessite pas de compte et ne change rien au choix marketing d’un compte que vous avez déjà."
       ]
     },
     "technical": {
@@ -72,6 +73,7 @@
         "Pour placer votre enfant dans le bon groupe de club, de stage ou d’événement et le mettre en relation avec un animateur.",
         "Pour assurer les sessions audio et vidéo en direct.",
         "Pour encaisser les paiements et envoyer les reçus, rappels et informations importantes concernant vos clubs.",
+        "Pour envoyer notre newsletter aux personnes qui s’y sont inscrites.",
         "Pour répondre à vos questions lorsque vous nous contactez.",
         "Pour maintenir Sogverse sûr, corriger les problèmes et l’améliorer au fil du temps."
       ]
@@ -86,6 +88,7 @@
         "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
         "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
         "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en regard de votre vie privée.",
+        "Votre consentement, pour la newsletter — vous pouvez le retirer à tout moment grâce au lien de désinscription présent dans chaque newsletter.",
         "Votre consentement, pour les cookies de statistiques et de marketing ainsi que pour l’étiquette de campagne — vous pouvez le retirer à tout moment depuis Choix de confidentialité, en bas de chaque page."
       ]
     },
@@ -98,6 +101,7 @@
         "Supabase — stocke de manière sécurisée les informations de votre compte, de votre famille et de vos clubs.",
         "Stripe — traite les paiements. Les données de votre carte vont directement à Stripe ; nous ne les voyons jamais.",
         "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
+        "Klaviyo — conserve la liste des inscrits à notre newsletter et envoie la newsletter aux personnes qui s’y sont inscrites.",
         "Daily.co — assure les sessions audio et vidéo en direct ; l’appareil de votre enfant s’y connecte directement pendant une session.",
         "Vercel — héberge le site, si bien que chaque requête passe par lui (voir « Informations techniques »), et fournit des statistiques d’utilisation anonymes si vous autorisez les statistiques.",
         "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",

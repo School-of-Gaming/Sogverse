@@ -65,24 +65,25 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
     browseRow(id(1), { name: "Roblox club A" }),
     browseRow(id(2), { name: "In-person club", is_remote: false }),
     browseRow(id(3), { name: "Minecraft club", topic: "minecraft_java" }),
+    browseRow(id(5), { name: "Paid club", billing_mode: "paid" }),
     browseRow(id(4), { name: "Roblox club B" }),
   ];
 
   it("shows the programme's slice of the live listing on the first frame, with the shop link", () => {
-    const prefetch = { listing: LISTING, counts: [id(1), id(4)].map(emptyCounts) };
+    const prefetch = { listing: LISTING, counts: [id(1), id(2), id(4)].map(emptyCounts) };
     render(
       <Providers>
         <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />
       </Providers>,
     );
     expect(screen.getByRole("heading", { level: 2, name: roblox.events.heading })).toBeTruthy();
-    expect(shownProducts()).toEqual([id(1), id(4)]);
+    expect(shownProducts()).toEqual([id(1), id(2), id(4)]);
     expect(screen.getByRole("link", { name: roblox.events.browseShop })).toBeTruthy();
     expect(screen.queryByText(roblox.events.empty)).toBeNull();
   });
 
   it("keeps its own empty state, and no shop link, when the slice is empty", () => {
-    const prefetch = { listing: [LISTING[1], LISTING[2]], counts: [] };
+    const prefetch = { listing: [LISTING[2], LISTING[3]], counts: [] };
     render(
       <Providers>
         <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />

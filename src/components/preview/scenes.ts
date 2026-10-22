@@ -108,11 +108,10 @@ export interface PreviewSceneMeta {
    * An **axis**, not a scenario list, and that is the whole reason it is a flag
    * here rather than twelve more slugs: a topic is not a state the page can
    * only be in one of — it is a value every existing scenario can be read at.
-   * Two cards are decided by it (the product page's "About {label}" and the
-   * confirmation page's "Before the first session" guide), so the alternative
-   * was a scenario per topic on both surfaces, multiplying two lists that are
-   * already long by twelve. The scenarios stay what they are — the states — and
-   * the topic rides on top of whichever one is open.
+   * The product page's "About {label}" card is decided by it, so the
+   * alternative was a scenario per topic, multiplying a list that is already
+   * long by twelve. The scenarios stay what they are — the states — and the
+   * topic rides on top of whichever one is open.
    *
    * A value outside the enum is **ignored rather than 404'd**: the scenario is
    * still a real page and the override is a lens over it, so a stale or
@@ -225,7 +224,6 @@ export const PREVIEW_SCENES = [
         label: `Paid, no order — ${label}`,
       })),
     ],
-    topicAxis: true,
   },
   {
     surface: "topic-prep",
@@ -335,7 +333,8 @@ export const PREVIEW_SCENES = [
       {
         slug: "new-family",
         label: "New account",
-        description: "The account before its first child exists.",
+        description:
+          "The account before its first child exists or its first purchase, so no billing section.",
       },
       {
         slug: "parent-only",

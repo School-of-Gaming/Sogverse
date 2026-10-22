@@ -1,13 +1,18 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   landingPageCanonicalPath,
   landingPageLocalePaths,
   resolveLandingPage,
 } from "@/components/landing-pages/landing-page-address";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import {
+  LandingPageBreadcrumb,
+  landingBreadcrumbJsonLd,
+  type LandingBreadcrumb,
+} from "@/components/landing-pages/landing-page-breadcrumb";
 import {
   landingPageJsonLd,
   landingProductListsJsonLd,
@@ -61,6 +66,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * `<discover>/<id>` in every locale, and `<discover>/<slug>` in a locale it is
  * live in. Both name the slug address of the version shown as canonical.
  *
+ * A quiet breadcrumb trail leads it — the landing pages' index, then the
+ * page — the trail its `BreadcrumbList` states, so every landing page links
+ * up to the index that lists it.
+ *
  * Rendered per request, like the Library: a page goes live, changes or leaves
  * the moment an admin publishes or unpublishes it, with no revalidation to wait
  * out. A read that fails is not swallowed into a not-found — a transient
@@ -89,6 +98,11 @@ export default async function LandingPage({ params }: PageProps) {
   if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const tDiscover = await getTranslations("discover");
+  const trail: LandingBreadcrumb = {
+    indexName: tDiscover("name"),
+    title: shown.title,
+  };
   const [products, testimonials] = await Promise.all([
     prefetchLandingProducts(shown.sections),
     landingPlacedTestimonialIds(page.sections).length === 0
@@ -112,6 +126,15 @@ export default async function LandingPage({ params }: PageProps) {
       }).map(({ sectionId, list }) => (
         <JsonLd key={sectionId} data={list} />
       ))}
+      <JsonLd
+        data={landingBreadcrumbJsonLd({ siteUrl, locale, canonicalPath, trail })}
+      />
+      <LandingPageBreadcrumb
+        trail={trail}
+        label={tDiscover("breadcrumbLabel")}
+        textLocale={shown.locale}
+        locale={locale}
+      />
       <LandingPageBody
         sections={shown.sections}
         imagePaths={shown.imagePaths}
@@ -120,6 +143,8 @@ export default async function LandingPage({ params }: PageProps) {
         textLocale={shown.locale}
         locale={locale}
         products={products}
+        pageId={page.id}
+        preview={false}
       />
     </>
   );

@@ -1,44 +1,24 @@
--- A landing page promotes shop products.
+-- A landing page takes an email sign-up section.
 --
 -- WHAT THIS CHANGES
 --
--- A landing page gains a section type, `products`: the products an admin
--- picks, of any type, by id and in order, each drawn on the public page as the shop's own
--- card. Its shared field is {productIds: one or more distinct product uuids},
--- with no upper bound; its words are an optional eyebrow, heading and intro.
+-- A new section type, subscribe: a form where a reader leaves their email
+-- address (and, optionally, their first and last name) to join the newsletter
+-- list in Klaviyo. Its structure is its id and type alone — the list it signs
+-- up to is the deployment's configuration, not the page's — and its words in each language are an
+-- optional eyebrow, a heading, an optional intro line and the button's label.
+-- The form's own field labels, its consent sentence and its answers are fixed
+-- copy in the app, not words a page writes.
 --
--- - landing_sections_problem learns the type and its shape.
--- - landing_version_missing names the type with no required words, so a
---   products section never makes a version incomplete. The TypeScript half of
---   the required-text rule says the same, and the DB test holds the two equal.
--- - check_landing_section_picks, one trigger function for every section type
---   that names rows of another table by id, replaces
---   check_landing_testimonial_picks. Its trigger arguments say which section
---   type, which of its keys holds the ids, which table they name, and the
---   noun and verb its refusal uses; it is attached to the working copy once
---   per such type. The testimonials trigger is recreated on it, refusing
---   exactly as before, and a second trigger refuses a save that picks an id
---   no product has. Both refuse with foreign_key_violation (the code a picture
---   gone from the catalogue is refused with), naming the section by its
---   number and the id. Only an id the save adds is checked: ids already on
---   the page are left alone, so a write that only moves the structure's other
---   contents — a catalogue picture's replace or removal — can never be
---   refused by a pick it did not make.
+-- landing_sections_problem learns the type, which has no shared field to check.
+-- landing_version_missing requires its heading and its button label, as it
+-- requires a call to action's. The TypeScript half of both rules is the
+-- section registry's subscribe module; the DB test holds the required-text
+-- halves equal.
 --
--- WHAT IT DOES NOT DO
---
--- The published copy carries no such check. Publishing copies the working
--- copy's structure as it is, and a pick that has ended or been unlisted is not
--- an error anywhere: the public page asks the listing on every render and
--- leaves out what it does not hold, and the admin's status read reports which
--- picks are hidden and why.
---
--- ACCESS
---
--- The trigger function reads the table its arguments name — products and
--- testimonials, by id; it runs inside the landing page writers, which are
--- SECURITY DEFINER and admin-gated. Granted to service_role alone, like the
--- landing page tables' other trigger functions.
+-- Both functions keep their signatures, owners and grants; the grants are
+-- restated after the replace all the same. Each body is the current one —
+-- testimonials sections included — with the subscribe branch added.
 
 CREATE OR REPLACE FUNCTION public.landing_sections_problem(p_sections jsonb) RETURNS text
     LANGUAGE plpgsql IMMUTABLE
@@ -152,22 +132,10 @@ BEGIN
                         CASE WHEN v_slots = 1 THEN 'testimonial' ELSE 'testimonials' END,
                         v_count);
         END IF;
-      WHEN 'products' THEN
-        -- At least one pick and no upper bound: the carousel scrolls.
-        IF jsonb_typeof(v_section->'productIds') IS DISTINCT FROM 'array'
-           OR jsonb_array_length(v_section->'productIds') = 0 THEN
-          RETURN format('Section %s needs at least one product', v_id);
-        END IF;
-        v_item_ids := ARRAY[]::text[];
-        FOR v_item IN SELECT e FROM jsonb_array_elements(v_section->'productIds') AS t(e) LOOP
-          IF jsonb_typeof(v_item) IS DISTINCT FROM 'string' OR v_item #>> '{}' !~ c_uuid THEN
-            RETURN format('Every product of section %s must be a product''s lowercase uuid', v_id);
-          END IF;
-          IF v_item #>> '{}' = ANY (v_item_ids) THEN
-            RETURN format('Section %s names the product %s twice', v_id, v_item #>> '{}');
-          END IF;
-          v_item_ids := array_append(v_item_ids, v_item #>> '{}');
-        END LOOP;
+      WHEN 'subscribe' THEN
+        -- No shared field: the list it signs up to is the deployment's
+        -- configuration, not the page's.
+        NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
@@ -209,6 +177,8 @@ BEGIN
   RETURN NULL;
 END;
 $_$;
+
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial exists is check_landing_testimonial_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
 
 CREATE OR REPLACE FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) RETURNS text[]
     LANGUAGE plpgsql IMMUTABLE
@@ -300,21 +270,17 @@ BEGIN
             END IF;
           END IF;
         END LOOP;
-      WHEN 'cta' THEN
+      WHEN 'testimonials' THEN
+        -- Its eyebrow, heading and intro are all optional: a testimonials
+        -- section never makes a version incomplete.
+        NULL;
+      WHEN 'cta', 'subscribe' THEN
         IF NOT public.landing_text_is_written(v_texts->'heading') THEN
           v_missing := array_append(v_missing, v_prefix || 'heading');
         END IF;
         IF NOT public.landing_text_is_written(v_texts->'buttonLabel') THEN
           v_missing := array_append(v_missing, v_prefix || 'buttonLabel');
         END IF;
-      WHEN 'testimonials' THEN
-        -- Its eyebrow, heading and intro are all optional: a testimonials
-        -- section never makes a version incomplete.
-        NULL;
-      WHEN 'products' THEN
-        -- Its eyebrow, heading and intro are all optional: a products section
-        -- never makes a version incomplete.
-        NULL;
       ELSE
         NULL;
     END CASE;
@@ -324,86 +290,9 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; cta {button}. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial or a picked product exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) IS 'The SQL half of the landing pages'' required-text rule: what one language version still needs before publishing takes it, given the page''s structure, as a list of paths — title, summary, slug, then per section in order sections.<id>.<field>, sections.<id>.items.<item id>.<field> or sections.<id>.alts.<picture item id>. Empty means complete. Required: hero headline, its buttonLabel when it has a button and its imageAlt when it has a picture; text heading, body and imageAlt with a picture; image an alt per picture; points and steps heading and each item''s title and body; testimonials nothing; faq heading and each item''s question and answer; cta and subscribe heading and buttonLabel. Written means landing_text_is_written. The TypeScript rule in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
 
-COMMENT ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) IS 'The SQL half of the landing pages'' required-text rule: what one language version still needs before publishing takes it, given the page''s structure, as a list of paths — title, summary, slug, then per section in order sections.<id>.<field>, sections.<id>.items.<item id>.<field> or sections.<id>.alts.<picture item id>. Empty means complete. Required: hero headline, its buttonLabel when it has a button and its imageAlt when it has a picture; text heading, body and imageAlt with a picture; image an alt per picture; points and steps heading and each item''s title and body; testimonials nothing; products nothing; faq heading and each item''s question and answer; cta heading and buttonLabel. Written means landing_text_is_written. The TypeScript rule in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
-
-CREATE FUNCTION public.check_landing_section_picks()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path TO ''
-AS $$
-DECLARE
-  c_uuid constant text := '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
-  v_type    text := TG_ARGV[0];
-  v_key     text := TG_ARGV[1];
-  v_table   text := TG_ARGV[2];
-  v_noun    text := TG_ARGV[3];
-  v_verb    text := TG_ARGV[4];
-  v_before  text[] := ARRAY[]::text[];
-  v_section bigint;
-  v_id      text;
-BEGIN
-  IF TG_OP = 'UPDATE' AND jsonb_typeof(OLD.sections) = 'array' THEN
-    SELECT COALESCE(array_agg(p.e #>> '{}'), ARRAY[]::text[]) INTO v_before
-      FROM jsonb_array_elements(OLD.sections) AS s(e),
-           jsonb_array_elements(
-             CASE WHEN s.e->>'type' = v_type AND jsonb_typeof(s.e->v_key) = 'array'
-                  THEN s.e->v_key ELSE '[]'::jsonb END
-           ) AS p(e);
-  END IF;
-
-  IF jsonb_typeof(NEW.sections) IS DISTINCT FROM 'array' THEN
-    RETURN NEW;
-  END IF;
-
-  EXECUTE format($q$
-    SELECT pick.n, pick.id
-      FROM (
-        SELECT s.n, p.e #>> '{}' AS id
-          FROM jsonb_array_elements($1) WITH ORDINALITY AS s(e, n),
-               jsonb_array_elements(
-                 CASE WHEN s.e->>'type' = $2 AND jsonb_typeof(s.e->$3) = 'array'
-                      THEN s.e->$3 ELSE '[]'::jsonb END
-               ) AS p(e)
-         WHERE jsonb_typeof(p.e) = 'string'
-      ) AS pick
-     WHERE NOT (pick.id = ANY ($4))
-       AND NOT EXISTS (
-         SELECT 1 FROM public.%I r
-          WHERE r.id = CASE WHEN pick.id ~ $5 THEN pick.id::uuid END
-       )
-     ORDER BY pick.n
-     LIMIT 1
-  $q$, v_table)
-    INTO v_section, v_id
-    USING NEW.sections, v_type, v_key, v_before, c_uuid;
-
-  IF v_id IS NOT NULL THEN
-    RAISE EXCEPTION 'Section % % the % %, and no % has that id', v_section, v_verb, v_noun, v_id, v_noun
-      USING ERRCODE = 'foreign_key_violation';
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-COMMENT ON FUNCTION public.check_landing_section_picks() IS 'BEFORE INSERT OR UPDATE OF sections on landing_pages (the working copy alone), attached once per section type that names rows of another table by id. Its trigger arguments are the section type, the key holding the ids, the public table they name, and the noun and verb of the refusal. It refuses a save whose sections of that type name an id no row of that table has, with foreign_key_violation naming the section by its number from one and the id ("Section 2 picks the product <id>, and no product has that id"). Only ids the save adds are checked — on an update, an id the stored structure already held is left alone — so a write that moves only the structure''s other contents (a catalogue picture''s replace or removal) is never refused by an id it did not add. No foreign key can reach into the structure, which is why this is a trigger. The published copy has no such check: a testimonial is never deleted by the app, and a product pick that has ended or been unlisted is not an error, since the public page leaves out whatever the listing does not hold.';
-
-REVOKE ALL ON FUNCTION public.check_landing_section_picks() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.check_landing_section_picks() TO service_role;
-
-DROP TRIGGER trg_landing_pages_check_testimonial_picks ON public.landing_pages;
-DROP FUNCTION public.check_landing_testimonial_picks();
-
-CREATE TRIGGER trg_landing_pages_check_testimonial_picks
-  BEFORE INSERT OR UPDATE OF sections ON public.landing_pages
-  FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks(
-    'testimonials', 'testimonialIds', 'testimonials', 'testimonial', 'places'
-  );
-
-CREATE TRIGGER trg_landing_pages_check_product_picks
-  BEFORE INSERT OR UPDATE OF sections ON public.landing_pages
-  FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks(
-    'products', 'productIds', 'products', 'product', 'picks'
-  );
+REVOKE ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) TO service_role;
