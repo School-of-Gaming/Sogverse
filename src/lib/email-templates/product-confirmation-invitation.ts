@@ -190,6 +190,41 @@ function faceOf(
   };
 }
 
+/**
+ * The seat's first session: the session the invitation's `DTSTART` lands on,
+ * and the one the mail's "what happens next" names — one rule, so the mail and
+ * the file beside it cannot name two different days.
+ *
+ * It is the first planned session that has not yet begun, which is the
+ * product's start only for a seat taken before the run begins: a family joining
+ * a club mid-term starts at the next session. An event is one session on one
+ * day, so it is that session — the earliest, should its day carry two — and an
+ * event whose session has begun has none. No slots, or nothing planned ahead,
+ * is `null` too.
+ */
+export function firstSessionAhead({
+  slots,
+  productType,
+  plannedSessions,
+  now,
+}: {
+  slots: readonly InvitationSlot[];
+  productType: ProductType;
+  plannedSessions: readonly InvitationPlannedSession[];
+  now: Date;
+}): InvitationPlannedSession | null {
+  if (slots.length === 0) return null;
+  if (productType === "event") {
+    const session = plannedSessions.at(0);
+    return session === undefined || session.startsAt.getTime() < now.getTime()
+      ? null
+      : session;
+  }
+  return (
+    plannedSessions.find((session) => session.startsAt.getTime() >= now.getTime()) ?? null
+  );
+}
+
 interface ResolvedSchedule {
   start: { date: string; time: string };
   durationMinutes: number;
@@ -245,18 +280,13 @@ function resolveSchedule({
   plannedSessions: readonly InvitationPlannedSession[];
   now: Date;
 }): ResolvedSchedule | null {
-  if (slots.length === 0) return null;
+  const first = firstSessionAhead({ slots, productType, plannedSessions, now });
+  if (first === null) return null;
 
-  // An event is one session on one day: the rule that would state it has
-  // nothing to repeat, so the occurrence is its planned session — the earliest,
-  // should its day carry two. One that has already begun describes nothing a
-  // calendar should be handed.
   if (productType === "event") {
-    const session = plannedSessions.at(0);
-    if (session === undefined || session.startsAt.getTime() < now.getTime()) return null;
-    const face = faceOf(session, timezone);
+    const face = faceOf(first, timezone);
     return {
-      start: { date: session.date, time: face.time },
+      start: { date: first.date, time: face.time },
       durationMinutes: face.durationMinutes,
       recurrence: { kind: "none" },
       excludedDates: [],
@@ -264,12 +294,10 @@ function resolveSchedule({
     };
   }
 
-  // The plan is soonest first, so the first one not yet begun is the next.
+  // The plan is soonest first, so the sessions not yet begun open on `first`.
   const ahead = plannedSessions.filter(
     (session) => session.startsAt.getTime() >= now.getTime(),
   );
-  const first = ahead.at(0);
-  if (first === undefined) return null;
 
   if (new Set(slots.map(shapeOf)).size > 1) {
     // Two slots on one weekday at different times cannot both be stated: the

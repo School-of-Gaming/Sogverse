@@ -105,7 +105,11 @@
       "sessionsOnlineSelf": "Vous rejoignez les sessions en ligne dans Mon SOG. Le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
       "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
+      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}.",
+      "firstSession": "La première session de {participantName} aura lieu le {date} à {time}.",
+      "firstSessionSelf": "Votre première session aura lieu le {date} à {time}.",
+      "guarantee": "Si le club ne convient pas à {participantName}, écrivez-nous dans les 30 jours suivant sa première session et nous vous rembourserons tout ce que vous avez versé pour ce club.",
+      "guaranteeSelf": "Si le club ne vous convient pas, écrivez-nous dans les 30 jours suivant votre première session et nous vous rembourserons tout ce que vous avez versé pour ce club."
     },
     "waitlist": {
       "subject": "{participantName} est sur la liste d’attente pour {productName}",

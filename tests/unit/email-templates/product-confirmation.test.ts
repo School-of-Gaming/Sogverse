@@ -568,6 +568,133 @@ describe("buildProductConfirmationEmail", () => {
   });
 
   /**
+   * The first session, stated outright rather than left to be worked out from
+   * the schedule row — and it is this seat's first session, which is the
+   * product's start only for a seat taken before the run begins.
+   */
+  describe("the first-session bullet", () => {
+    /** The weekly Monday 16:00 club, planned from `startDate`, composed at `now`. */
+    function scheduleAt(startDate: string, now: Date): ProductConfirmationInvitationInput {
+      return {
+        ...SCHEDULE,
+        now,
+        plannedSessions: planSessions({
+          slots: SCHEDULE.slots,
+          startDate,
+          endDate: null,
+          timezone: "Europe/Helsinki",
+          ...invitationPlanWindow({ now, timezone: "Europe/Helsinki", endDate: null }),
+        }),
+      };
+    }
+
+    const FUTURE_START = scheduleAt("2027-01-11", NOW);
+
+    it("names the start, first in the list, for a seat taken before the run begins", () => {
+      const html = render({ invitation: FUTURE_START });
+      const bullet = `${styledName("Aino")}’s first session is on Monday, 11 January 2027 at 16:00 (EET).`;
+      expect(html).toContain(bullet);
+      const next = html.indexOf("What happens next");
+      expect(html.indexOf(bullet)).toBeGreaterThan(next);
+      expect(html.indexOf(bullet)).toBeLessThan(html.indexOf("joins the sessions online"));
+    });
+
+    it("names the next session for a seat taken mid-term", () => {
+      // A Wednesday two weeks into a club that began on 4 January.
+      const midTerm = scheduleAt("2027-01-04", new Date("2027-01-13T10:00:00Z"));
+      expect(render({ invitation: midTerm })).toContain(
+        "first session is on Monday, 18 January 2027 at 16:00 (EET).",
+      );
+    });
+
+    it("skips a session that has already begun today", () => {
+      // Monday 11 January, 17:00 in Helsinki: that day's 16:00 is under way.
+      const begun = scheduleAt("2027-01-04", new Date("2027-01-11T15:00:00Z"));
+      expect(render({ invitation: begun })).toContain(
+        "first session is on Monday, 18 January 2027 at 16:00 (EET).",
+      );
+    });
+
+    it("names the day the calendar entry opens on", () => {
+      const content = resolve({ invitation: scheduleAt("2027-01-04", new Date("2027-01-13T10:00:00Z")) });
+      expect(content.invitation?.ics).toContain("DTSTART;TZID=Europe/Helsinki:20270118T160000");
+      expect(content.firstSession?.date).toBe("Monday, 18 January 2027");
+    });
+
+    it("takes the second person for the reader who is the participant", () => {
+      const self = "Your first session is on Monday, 11 January 2027 at 16:00 (EET).";
+      expect(render({ invitation: FUTURE_START, isSelfSeat: true })).toContain(self);
+      expect(render({ invitation: FUTURE_START, gamerCopy: true, priceAmount: null })).toContain(
+        self,
+      );
+    });
+
+    it("is absent on a waitlist join", () => {
+      expect(render({ invitation: FUTURE_START, mode: "waitlist" })).not.toContain(
+        "first session is on",
+      );
+    });
+
+    it("is absent where the mail has no plan to read", () => {
+      expect(render({ invitation: null })).not.toContain("first session is on");
+      expect(render({ invitation: { ...FUTURE_START, plannedSessions: [] } })).not.toContain(
+        "first session is on",
+      );
+      expect(render({ invitation: { ...FUTURE_START, slots: [] } })).not.toContain(
+        "first session is on",
+      );
+    });
+
+    it("states the same bullet, unescaped, in the text twin", () => {
+      const text = productConfirmationText(t, resolve({ invitation: FUTURE_START }))!;
+      const bullet = "- Aino’s first session is on Monday, 11 January 2027 at 16:00 (EET).";
+      expect(text).toContain(bullet);
+      expect(text.indexOf(bullet)).toBeLessThan(text.indexOf("- Aino joins the sessions"));
+    });
+
+    it("writes the date the way the reader's locale does", async () => {
+      const [tFi, tPrepFi] = await Promise.all([
+        getEmailTranslator("fi"),
+        getTopicPrepTranslator("fi"),
+      ]);
+      const html = buildProductConfirmationEmail(
+        tFi,
+        "fi",
+        resolveProductConfirmation(tFi, tPrepFi, "fi", { ...base, invitation: FUTURE_START }),
+      );
+      expect(html).toContain("maanantaina 11. tammikuuta 2027 klo 16.00");
+    });
+  });
+
+  /**
+   * The terms' 30-day money-back guarantee, which every club carries and only
+   * a club is ever bought on a subscription — so it rides on the mode, after
+   * the billing line, and never reaches a child, since money is the parent's.
+   */
+  describe("the money-back guarantee", () => {
+    const GUARANTEE = `If the club isn’t right for ${styledName("Aino")}, write to us within 30 days of their first session and we’ll refund everything you’ve paid towards it.`;
+
+    it("follows the billing line on a subscription", () => {
+      const html = render(base);
+      expect(html).toContain(GUARANTEE);
+      expect(html.indexOf(GUARANTEE)).toBeGreaterThan(html.indexOf("billed every month"));
+    });
+
+    it("takes the second person on the parent's own seat", () => {
+      expect(render({ participantName: "Marja", isSelfSeat: true })).toContain(
+        "If the club isn’t right for you, write to us within 30 days of your first session and we’ll refund everything you’ve paid towards it.",
+      );
+    });
+
+    it("is absent on every other mode and on the child's copy", () => {
+      for (const mode of ["upfront", "free", "external", "waitlist"] as const) {
+        expect(render({ mode }), mode).not.toContain("within 30 days");
+      }
+      expect(render({ gamerCopy: true, priceAmount: null })).not.toContain("within 30 days");
+    });
+  });
+
+  /**
    * The self seat: the recipient and the participant are one person, so the
    * copy moves to the second person by swapping whole keys — reading your own
    * name back at you in the third person is the shape of a mail sent about
@@ -879,7 +1006,7 @@ describe("the zone the times are given in", () => {
     );
 
     expect(html).toContain(`(${abbrev})`);
-    // The raw IANA identifier is the fallback `viewerTzAbbrev` returns when
+    // The raw IANA identifier is the fallback `zoneAbbrev` returns when
     // `Intl` throws; seeing it here would mean no abbrev was resolved at all.
     expect(html).not.toContain("Europe/Helsinki");
   });

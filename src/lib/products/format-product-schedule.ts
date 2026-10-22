@@ -130,7 +130,13 @@ function viewerClock(instant: Date, timeZone: string): string {
   return `${hh}:${mm}`;
 }
 
-function viewerTzAbbrev(instant: Date, locale: string, timeZone: string): string {
+/**
+ * The zone's short name at that instant, as the schedule lines append it — or
+ * the IANA identifier where `Intl` names none. Exported for a sentence that
+ * states one session's time beside those lines and has to name its zone the
+ * same way.
+ */
+export function zoneAbbrev(instant: Date, locale: string, timeZone: string): string {
   try {
     const parts = new Intl.DateTimeFormat(formattingLocale(locale), {
       timeZone,
@@ -346,7 +352,7 @@ export function formatProductSchedule({
       const { groups, sample } = buildViewerGroups(entries, locale, timeZone);
       return {
         kind: "recurring",
-        tzAbbrev: viewerTzAbbrev(sample ?? now, locale, timeZone),
+        tzAbbrev: zoneAbbrev(sample ?? now, locale, timeZone),
         tzAdjusted,
         groups,
       };
@@ -367,7 +373,7 @@ export function formatProductSchedule({
       const { groups, sample } = buildViewerGroups(entries, locale, timeZone);
       return {
         kind: "ranged",
-        tzAbbrev: viewerTzAbbrev(sample ?? now, locale, timeZone),
+        tzAbbrev: zoneAbbrev(sample ?? now, locale, timeZone),
         tzAdjusted,
         startDate: formatDateOnly(start, locale),
         endDate: formatDateOnly(product.end_date, locale),
@@ -380,7 +386,7 @@ export function formatProductSchedule({
         // No time of day → the date is zoneless; keep it UTC-pinned, no shift.
         return {
           kind: "single",
-          tzAbbrev: viewerTzAbbrev(now, locale, timeZone),
+          tzAbbrev: zoneAbbrev(now, locale, timeZone),
           tzAdjusted,
           date: formatDateOnly(product.start_date, locale),
           weekday: formatDateOnly(product.start_date, locale, { weekday: "long" }),
@@ -394,7 +400,7 @@ export function formatProductSchedule({
       const endInstant = new Date(instant.getTime() + slot.duration_minutes * 60_000);
       return {
         kind: "single",
-        tzAbbrev: viewerTzAbbrev(instant, locale, timeZone),
+        tzAbbrev: zoneAbbrev(instant, locale, timeZone),
         tzAdjusted,
         date: formatDate(instant, locale, { dateStyle: "medium", timeZone }),
         weekday: formatDate(instant, locale, { weekday: "long", timeZone }),

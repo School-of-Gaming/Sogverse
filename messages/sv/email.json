@@ -105,7 +105,11 @@
       "sessionsOnlineSelf": "Du deltar i tillfällena online i Min SOG. Röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
       "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
-      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
+      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}.",
+      "firstSession": "Det första tillfället för {participantName} är {date} kl. {time}.",
+      "firstSessionSelf": "Ditt första tillfälle är {date} kl. {time}.",
+      "guarantee": "Om klubben inte passar {participantName}, mejla oss inom 30 dagar från det första tillfället så betalar vi tillbaka allt du har betalat för klubben.",
+      "guaranteeSelf": "Om klubben inte passar dig, mejla oss inom 30 dagar från ditt första tillfälle så betalar vi tillbaka allt du har betalat för klubben."
     },
     "waitlist": {
       "subject": "{participantName} står på väntelistan för {productName}",

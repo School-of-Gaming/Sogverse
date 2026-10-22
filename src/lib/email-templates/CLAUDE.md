@@ -213,10 +213,23 @@ the heading, and nowhere else.** The facts list opens on the schedule, with no r
 the product or the participant and no label over it: a third statement of the same fact
 would be the first thing the list says, and the sentence directly above is what
 introduces the list. That sentence is also the mail's inbox preview, so a parent scanning
-the inbox reads it before the lockup. On a remote product the first "what happens next"
-bullet says how the sessions are joined — online in My SOG, through a voice room that
-opens a stated number of minutes before each one, the number read from the voice room's
-own constant like the calendar entry's; an in-person one says where they are listed. A fact the mail states and the page
+the inbox reads it before the lockup.
+
+**"What happens next" opens on the seat's first session** — its weekday, full date and
+time — so a parent never has to work it out from the schedule row. It is the first planned
+session that has not yet begun, which is the product's start only for a seat taken before
+the run begins; a seat taken mid-term starts at the next session. It is read from the
+calendar invitation's own input by the same rule that picks the entry's first occurrence,
+so the mail and the file cannot name two days, and it is written in the product's zone
+with the short zone name always beside the time, like the schedule row. A waitlist join,
+a send with no plan to read and a product with nothing ahead state no such bullet. Next,
+on a remote product, comes how the sessions are joined — online in My SOG, through a
+voice room that opens a stated number of minutes before each one, the number read from
+the voice room's own constant like the calendar entry's; an in-person one says where they
+are listed. The money follows, on the parent's copy alone: the deferred first charge, the
+price-shape line and, on a subscription, the terms' 30-day money-back guarantee, worded no
+wider than the terms. Only a consumer club is ever bought on a subscription, which is what
+lets the mode carry the club guarantee. A fact the mail states and the page
 leaves out is the design, not a gap — the page grows a fact only when a parent needs it
 in those seconds.
 

@@ -105,7 +105,11 @@
       "sessionsOnlineSelf": "De’wI’Daq bImuv, jIH SOGDaq. ghom pagh {minutes} tup pa’ poSlu’ ghogh pa’.",
       "subscription": "Hoch jar DaDIlnIS. jIH SOGDaq Dajondaq ghap Damevmeh laH.",
       "upfront": "wa’logh neH DIl — latlh DIl Hutlh.",
-      "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}."
+      "firstCharge": "DaHjaj pagh DIllu’. wa’DIch DIlmeH jajlIj: {date}.",
+      "firstSession": "{participantName} wa’DIch Qu’: {date}, {time}.",
+      "firstSessionSelf": "wa’DIch Qu’lIj: {date}, {time}.",
+      "guarantee": "{participantName}vaD ghom QaQbe’chugh, wa’DIch Qu’ pa’ wejmaH jaj qaStaHvIS maHvaD QIn yIngeH. Hoch DIlmeylIj DIchegh.",
+      "guaranteeSelf": "SoHvaD ghom QaQbe’chugh, wa’DIch Qu’lIj pa’ wejmaH jaj qaStaHvIS maHvaD QIn yIngeH. Hoch DIlmeylIj DIchegh."
     },
     "waitlist": {
       "subject": "{participantName} loS tetlhDaq: {productName}",

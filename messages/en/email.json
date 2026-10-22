@@ -105,7 +105,11 @@
       "sessionsOnlineSelf": "You join the sessions online in My SOG. The voice room opens {minutes} minutes before each session starts.",
       "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
       "upfront": "This was a one-time payment — there’s nothing more to pay.",
-      "firstCharge": "Nothing was charged today. Your first payment is on {date}."
+      "firstCharge": "Nothing was charged today. Your first payment is on {date}.",
+      "firstSession": "{participantName}’s first session is on {date} at {time}.",
+      "firstSessionSelf": "Your first session is on {date} at {time}.",
+      "guarantee": "If the club isn’t right for {participantName}, write to us within 30 days of their first session and we’ll refund everything you’ve paid towards it.",
+      "guaranteeSelf": "If the club isn’t right for you, write to us within 30 days of your first session and we’ll refund everything you’ve paid towards it."
     },
     "waitlist": {
       "subject": "{participantName} is on the waitlist for {productName}",

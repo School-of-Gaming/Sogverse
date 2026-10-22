@@ -105,7 +105,11 @@
       "sessionsOnlineSelf": "Osallistut tapaamisiin verkossa Oma SOG -sivulla. Äänihuone avautuu {minutes} minuuttia ennen jokaisen tapaamisen alkua.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
       "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-      "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}."
+      "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}.",
+      "firstSession": "{participantName} osallistuu ensimmäiseen tapaamiseen {date} klo {time}.",
+      "firstSessionSelf": "Ensimmäinen tapaamisesi on {date} klo {time}.",
+      "guarantee": "Jos kerho ei osoittaudu sopivaksi, lähetä meille viesti 30 päivän kuluessa siitä, kun {participantName} osallistui ensimmäiseen tapaamiseen, niin palautamme kaiken, mitä olet kerhosta maksanut.",
+      "guaranteeSelf": "Jos kerho ei osoittaudu sinulle sopivaksi, lähetä meille viesti 30 päivän kuluessa ensimmäisestä tapaamisestasi, niin palautamme kaiken, mitä olet kerhosta maksanut."
     },
     "waitlist": {
       "subject": "{participantName} on jonotuslistalla – {productName}",

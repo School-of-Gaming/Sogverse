@@ -16,10 +16,13 @@ import { resolveTopicPrep } from "@/lib/products/topics";
 import { textAttachment, type RenderedAttachment } from "./attachments";
 import {
   composeProductConfirmationInvitation,
+  firstSessionAhead,
   type ProductConfirmationInvitation,
   type ProductConfirmationInvitationInput,
 } from "./product-confirmation-invitation";
 import { languageNameIn } from "@/lib/i18n/language-name";
+import { formatDate, formatTime } from "@/lib/date-format";
+import { zoneAbbrev } from "@/lib/products/format-product-schedule";
 import {
   productLocationLabelIsFormat,
   renderProductLocationLine,
@@ -191,9 +194,9 @@ export interface ProductConfirmationEmailOptions {
    * The product's `is_remote`, and the guide's filter: in person we bring the
    * machines with everything installed, so an in-person product states only the
    * account steps and a topic whose every step belongs to our machines states
-   * nothing at all. It also picks the first "what happens next" bullet: a
-   * remote seat is told how it joins, an in-person one where its sessions are
-   * listed.
+   * nothing at all. It also picks the "what happens next" bullet about the
+   * sessions: a remote seat is told how it joins, an in-person one where its
+   * sessions are listed.
    *
    * **Carried here rather than read out of `overview`, though that bundle holds
    * the same column.** `overview` is the "Good to know" card's input and is
@@ -310,6 +313,19 @@ export interface ProductConfirmationContent {
    * entry's notes and not in the mail above it. One composition cannot do that.
    */
   topicPrep: { html: string; text: string[] } | null;
+  /**
+   * This seat's first session, formatted once for both bodies, or `null` where
+   * the mail names none. See `resolveFirstSession`.
+   */
+  firstSession: FirstSessionWords | null;
+}
+
+/** The first session's day and clock face, in the product's own zone. */
+interface FirstSessionWords {
+  /** The weekday and the full date, in the reader's locale. */
+  date: string;
+  /** The clock face with the zone's short name after it. */
+  time: string;
 }
 
 /**
@@ -355,6 +371,50 @@ export function resolveProductConfirmation(
         ? null
         : resolveOverview(t, locale, options.productType, options.overview),
     topicPrep: resolveTopicPrepSection(tPrep, options),
+    firstSession: resolveFirstSession(locale, options),
+  };
+}
+
+/**
+ * The first session's words, or nothing.
+ *
+ * **It is the invitation's first occurrence, read from the invitation's own
+ * input by the composer's own rule**, so the day the mail names and the day the
+ * calendar entry opens on cannot differ: the first planned session not yet
+ * begun, which on a club joined mid-term is the next session rather than the
+ * product's start date. Read from the input rather than from the composed file,
+ * because the file can be withheld for reasons that say nothing about when the
+ * seat starts — a zone this build ships no rules for, two clock faces on one
+ * weekday.
+ *
+ * `null` on a waitlist join and wherever no invitation input was handed over,
+ * and where the plan has nothing ahead — no slots, or a product that is over.
+ * A planned session always carries a clock face, so there is no date-only form.
+ *
+ * In the product's own zone with its short name always beside the time, as the
+ * schedule row above it is: a mail has no viewer zone.
+ */
+function resolveFirstSession(
+  locale: string,
+  options: ProductConfirmationEmailOptions,
+): FirstSessionWords | null {
+  if (options.mode === "waitlist" || options.invitation === null) return null;
+  const { timezone } = options.invitation;
+  const session = firstSessionAhead(options.invitation);
+  if (session === null) return null;
+  return {
+    date: formatDate(session.startsAt, locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: timezone,
+    }),
+    time: `${formatTime(session.startsAt, locale, timezone)} (${zoneAbbrev(
+      session.startsAt,
+      locale,
+      timezone,
+    )})`,
   };
 }
 
@@ -577,6 +637,13 @@ export function buildProductConfirmationEmail(
       nextItems(t, content.options, {
         participantName: name,
         firstChargeDate: escapeHtml(content.options.firstChargeDate ?? ""),
+        firstSession:
+          content.firstSession === null
+            ? null
+            : {
+                date: escapeHtml(content.firstSession.date),
+                time: escapeHtml(content.firstSession.time),
+              },
       }),
     )}
     ${ctaButton({
@@ -724,11 +791,14 @@ function holidayBreaksText(
 /**
  * What happens next.
  *
- * Where the sessions are first (on a remote product, how they are joined);
- * then the deferred first charge, on the one signup that has one — the parent
- * has just seen €0 at checkout and is owed the real date in the same breath;
- * then the price-shape line. `free` and `external` state no
- * third bullet at all: the price row above has
+ * When the first session is, first — its weekday, date and time, so nobody has
+ * to work it out from the schedule row — on a mail that has one to name; then
+ * where the sessions are (on a remote product, how they are joined); then the
+ * deferred first charge, on the one signup that has one — the parent has just
+ * seen €0 at checkout and is owed the real date in the same breath; then the
+ * price-shape line; and on a subscription, last, the 30-day money-back
+ * guarantee the terms give every club, worded no wider than the terms. `free`
+ * and `external` state no billing bullet at all: the price row above has
  * already said what there is to say about the cost, and every honest expansion
  * of it was some version of who we invoice, which is our arrangement with a
  * municipality rather than a thing a parent has any use for.
@@ -742,7 +812,11 @@ function nextItems(
    * the text twin. Passing them in is what lets one composition serve both:
    * escaping inside would put `&#39;` into a calendar entry's notes.
    */
-  values: { participantName: string; firstChargeDate: string },
+  values: {
+    participantName: string;
+    firstChargeDate: string;
+    firstSession: FirstSessionWords | null;
+  },
 ): string[] {
   const { productType, mode, firstChargeDate, gamerCopy } = options;
   const secondPerson = readerIsParticipant(options);
@@ -758,12 +832,23 @@ function nextItems(
     ];
   }
 
-  const items = [sessionsItem(t, options, values.participantName)];
+  const items: string[] = [];
+  if (values.firstSession !== null) {
+    items.push(
+      secondPerson
+        ? t("productConfirmation.next.firstSessionSelf", { ...values.firstSession })
+        : t("productConfirmation.next.firstSession", {
+            participantName: values.participantName,
+            ...values.firstSession,
+          }),
+    );
+  }
+  items.push(sessionsItem(t, options, values.participantName));
   // **The child's copy stops here, on every mode.** What is left is the money:
-  // when the first charge falls, and that a subscription bills monthly or a
-  // one-time payment is done with. All of it is addressed to whoever pays, and
-  // a child told they will be billed every month has been sent their parent's
-  // mail under their own name.
+  // when the first charge falls, that a subscription bills monthly or a
+  // one-time payment is done with, and the refund a subscription can claim.
+  // All of it is addressed to whoever pays, and a child told they will be
+  // billed every month has been sent their parent's mail under their own name.
   if (gamerCopy === true) return items;
   if (mode === "subscription" && firstChargeDate !== null) {
     items.push(
@@ -773,11 +858,22 @@ function nextItems(
   if (mode === "subscription" || mode === "upfront") {
     items.push(t(`productConfirmation.next.${mode}`));
   }
+  // Only a consumer club is ever bought as a subscription, so this is the
+  // terms' club guarantee and promises nothing wider.
+  if (mode === "subscription") {
+    items.push(
+      secondPerson
+        ? t("productConfirmation.next.guaranteeSelf")
+        : t("productConfirmation.next.guarantee", {
+            participantName: values.participantName,
+          }),
+    );
+  }
   return items;
 }
 
 /**
- * The first "what happens next" bullet: where the sessions are, or, on a remote
+ * The "what happens next" bullet saying where the sessions are, or, on a remote
  * product, how they are joined — online in My SOG, through the voice room that
  * opens a set number of minutes before each one starts.
  *
@@ -856,6 +952,7 @@ export function productConfirmationText(
     ...nextItems(t, content.options, {
       participantName,
       firstChargeDate: content.options.firstChargeDate ?? "",
+      firstSession: content.firstSession,
     }).map((item) => `- ${item}`),
     "",
     `${t("productConfirmation.dashboardButton")}: ${dashboardUrl}`,
