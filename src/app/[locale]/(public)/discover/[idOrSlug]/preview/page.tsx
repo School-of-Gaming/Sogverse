@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import { prefetchLandingProducts } from "@/components/landing-pages/landing-page-products";
 import {
   LandingPageBreadcrumb,
   type LandingBreadcrumb,
@@ -37,7 +38,11 @@ export const metadata: Metadata = {
  * being worked on. Its testimonials are the working copy's, with their
  * current words from the store, which the admin read carries. Its guides are
  * the working copy's too, and an admin may download any guide, so the
- * preview's download works as the live page's will.
+ * preview's download works as the live page's will. Its products sections
+ * show what the live page would show now: the picks the listing holds, read
+ * with the admin's own session — which reads the same listing a reader's
+ * does. The guides' and the products' reads are independent, so they run
+ * together.
  */
 export default async function LandingPagePreviewPage({
   params,
@@ -64,12 +69,13 @@ export default async function LandingPagePreviewPage({
   // The working copy's guides, through the admin read the public one would
   // not answer for a guide placed only here.
   const placedGuideIds = landingPlacedGuideIds(draft.sections);
-  const guideIds =
+  const [guideIds, products, tDiscover] = await Promise.all([
     placedGuideIds.length === 0
       ? []
-      : await new GuidesService(supabase).listExistingGuideIds(placedGuideIds);
-
-  const tDiscover = await getTranslations("discover");
+      : new GuidesService(supabase).listExistingGuideIds(placedGuideIds),
+    prefetchLandingProducts(draft.sections),
+    getTranslations("discover"),
+  ]);
   const trail: LandingBreadcrumb = {
     indexName: tDiscover("name"),
     title: version.title,
@@ -91,6 +97,7 @@ export default async function LandingPagePreviewPage({
         sectionTexts={version.sectionTexts}
         textLocale={version.locale}
         locale={locale}
+        products={products}
         pageId={id}
         preview
       />

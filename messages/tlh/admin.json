@@ -464,6 +464,20 @@
         "inItem": "{number} ’ay’ ({type}), {item}: {field}",
         "goneSection": "Sapvam ’ay’ tu’lu’be’: {field}"
       },
+      "products": {
+        "heading": "Dochmey wIwIvta’bogh",
+        "section": "bID {number} ({type})",
+        "allShown": "{count, plural, one {Doch ’agh.} other {Dochmey Hoch # ’agh.}}",
+        "noneShown": "Doch pagh ’agh, bID leghbe’ laDwI’pu’. Dochmey chu’ yIwIv!",
+        "someHidden": "{shown}/{total} ’agh. ’aghbe’:",
+        "unnamed": "Doch pongHa’",
+        "hiddenItem": "{name}: {reasons}",
+        "reasons": {
+          "gone": "Doch tu’lu’be’",
+          "notListed": "tetlhDaq pagh",
+          "ended": "rIn"
+        }
+      },
       "testimonials": {
         "heading": "jatlhmey",
         "hint": "jatlhmeyDaq mu’meychaj DachoHlu’, ’ej Sapvam lo’lu’bogh Daq SIbI’ cha’lu’.",
@@ -527,6 +541,7 @@
       "faq": "ghel ’ej jang",
       "subscribe": "QIn HevmeH chaw’",
       "cta": "ra’ ghItlh",
+      "products": "Dochmey ngevlu’bogh",
       "testimonials": "jatlhmey",
       "guide": "ghojmoHwI’ paq"
     },

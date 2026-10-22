@@ -60,7 +60,7 @@
       "camp": "{participantName} är anmäld till {productName}",
       "event": "{participantName} har gått med i {productName}"
     },
-    "heading": "Allt klart!",
+    "heading": "Välkommen med!",
     "subheading": {
       "consumer_club": "{participantName} är anmäld till {productName}.",
       "municipality_club": "{participantName} är registrerad för {productName}.",
@@ -90,12 +90,6 @@
         }
       }
     },
-    "typeLabel": {
-      "consumer_club": "Klubb",
-      "municipality_club": "Kommunklubb",
-      "camp": "Läger",
-      "event": "Evenemang"
-    },
     "priceLabel": "Pris",
     "price": {
       "subscription": "{amount} / månad",
@@ -107,9 +101,16 @@
     "next": {
       "sessions": "Du hittar tillfällena för {participantName} under Min SOG.",
       "sessionsSelf": "Du hittar dina tillfällen under Min SOG.",
+      "sessionsOnline": "{participantName} deltar i tillfällena online i Min SOG. Röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
+      "sessionsOnlineSelf": "Du deltar i tillfällena online i Min SOG. Röstrummet öppnar {minutes} minuter innan varje tillfälle börjar.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
       "upfront": "Detta var en engångsbetalning – det finns inget mer att betala.",
-      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}."
+      "firstCharge": "Inget debiterades i dag. Din första betalning sker den {date}.",
+      "firstSession": "Det första tillfället för {participantName} är {date} kl. {time}.",
+      "firstSessionSelf": "Ditt första tillfälle är {date} kl. {time}.",
+      "eventDate": "Evenemanget äger rum {date} kl. {time}.",
+      "guarantee": "Om klubben inte passar {participantName}, mejla oss inom 30 dagar från det första tillfället så betalar vi tillbaka allt du har betalat för klubben.",
+      "guaranteeSelf": "Om klubben inte passar dig, mejla oss inom 30 dagar från ditt första tillfälle så betalar vi tillbaka allt du har betalat för klubben."
     },
     "waitlist": {
       "subject": "{participantName} står på väntelistan för {productName}",
@@ -117,8 +118,6 @@
       "heading": "Du står på väntelistan",
       "subheading": "{participantName} står på väntelistan för {productName}. Vi hör av oss så snart en plats blir ledig.",
       "next1": "Vi mejlar så snart en plats blir ledig.",
-      "summaryTitle": "Din väntelisteplats",
-      "forLabel": "På väntelista",
       "next2": {
         "consumer_club": "{participantName} behåller sin plats i kön under hela terminen.",
         "municipality_club": "{participantName} behåller sin plats i kön under hela terminen.",
@@ -128,8 +127,7 @@
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
     },
     "gamer": {
-      "greeting": "Hej {participantName}!",
-      "summaryTitle": "Din anmälan"
+      "greeting": "Hej {participantName}!"
     },
     "invite": {
       "summary": "{productName} – {participantName}",
@@ -142,14 +140,7 @@
       "questions": "Frågor? Skriv till {supportEmail}."
     },
     "dashboardButton": "Gå till Min SOG",
-    "closing": "Frågor? Svara bara på det här mejlet.",
-    "summaryTitle": "Din beställning",
-    "forLabel": {
-      "consumer_club": "Anmäld",
-      "municipality_club": "Registrerad",
-      "camp": "Anmäld",
-      "event": "Deltar"
-    },
+    "closing": "Frågor? Svara bara på det här mejlet eller skriv till {supportEmail}.",
     "overview": {
       "schedule": "Schema",
       "where": "Plats",

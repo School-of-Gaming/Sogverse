@@ -8,6 +8,7 @@ import {
 import { MAIL_SPACE, MAIL_TYPE, mailText } from "./type-scale";
 import {
   BODY_TEXT_STYLE,
+  escapeHtml,
   GROUND_TONES,
   HOLD_CLASS,
   HOLD_GROUND,
@@ -23,6 +24,11 @@ interface LayoutOptions {
   content: string;
   locale?: string;
   t?: EmailTranslator;
+  /**
+   * The inbox preview: plain text, escaped here. Omitted, a client previews the
+   * first words it finds, which in every mail is the header lockup.
+   */
+  preheader?: string;
 }
 
 /**
@@ -282,7 +288,37 @@ function brandMarkRow(): string {
  * Every background is a flat gradient as well as a colour (`pinnedFill`), so
  * the ground stays dark on Gmail iOS; the holds depend on that.
  */
-export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions): string {
+/**
+ * How many padding units follow the preheader. A client fills its preview line
+ * with as much text as fits, so a short preheader is followed by the next words
+ * in the document — the lockup — unless something invisible fills the line
+ * first. Each unit is a combining grapheme joiner, a zero-width non-joiner and
+ * a non-breaking space: characters a client counts towards its preview and
+ * draws as nothing.
+ */
+const PREHEADER_PADDING_UNITS = 90;
+
+/**
+ * The hidden block a client reads its inbox preview from, as the first thing
+ * in the body, or nothing at all.
+ *
+ * Hidden every way a client might honour: `display:none` for the ones that
+ * respect it, and a zero size, zero opacity and Outlook's own `mso-hide` for
+ * the ones that draw it anyway. Its text is transparent rather than in an ink,
+ * so there is no plain neutral in it for the holds to account for.
+ */
+function preheaderBlock(preheader: string | undefined): string {
+  if (preheader === undefined) return "";
+  return `<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:0;line-height:0;color:transparent;">${escapeHtml(preheader)}${"&#847;&zwnj;&nbsp;".repeat(PREHEADER_PADDING_UNITS)}</div>`;
+}
+
+export function wrapInLayout({
+  title,
+  content,
+  locale = "en",
+  t,
+  preheader,
+}: LayoutOptions): string {
   // The copyright line names the company that holds the copyright, so it is the
   // brand alone \u2014 same string the site footer renders, and `SENDER_NAME` rather
   // than a typed literal, because no name in this directory's markup is typed.
@@ -386,7 +422,7 @@ ${groundToneRules}
   </style><![endif]-->
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
-<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:${MAIL_FONT_STACK};">
+<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:${MAIL_FONT_STACK};">${preheaderBlock(preheader)}
   <!-- The ground on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${pinnedFill(DARK_THEME.bg)}">
     <tr>

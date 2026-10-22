@@ -10,7 +10,9 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
  * and its address, with a warning exactly where the publish forecast moves a
  * live address; Publish is held back with a reason when nothing is complete or nothing
  * has changed, and shows the forecast — live, left out, taken down, live
- * addresses changing — before it calls the write; Unpublish confirms first.
+ * addresses changing — before it calls the write; Unpublish confirms first;
+ * and each products section says which of its picks readers are not shown,
+ * by name in the admin's language, and why.
  *
  * Translations echo their key plus the values they were handed; a language is
  * named by its English label.
@@ -104,6 +106,7 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
     publication: null,
     hasUnpublishedChanges: false,
     testimonials: {},
+    productPicks: [],
   };
 }
 
@@ -288,6 +291,88 @@ describe("the landing page status page", () => {
   it("offers no Unpublish while the page is not live", () => {
     renderStatus(draftPage([EN]));
     expect(screen.queryByRole("button", { name: "unpublish" })).toBeNull();
+  });
+
+  describe("picked products", () => {
+    const SHOWN = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a01";
+    const ENDED = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a02";
+    const MUNI = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a03";
+    const GONE = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a04";
+
+    function withPicks(productPicks: AdminLandingPage["productPicks"]): AdminLandingPage {
+      return { ...draftPage([EN]), productPicks };
+    }
+
+    it("says nothing about products on a page without a products section", () => {
+      renderStatus(draftPage([EN]));
+      expect(screen.queryByRole("heading", { name: "statusPage.products.heading" })).toBeNull();
+    });
+
+    it("names each pick readers are not shown, with every reason", () => {
+      renderStatus(
+        withPicks([
+          {
+            sectionId: "s1",
+            sectionNumber: 3,
+            shownCount: 1,
+            picks: [
+              { productId: SHOWN, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+              {
+                productId: ENDED,
+                names: [
+                  { locale: "en", name: "Summer camp" },
+                  { locale: "fi", name: "Kesäleiri" },
+                ],
+                shown: false,
+                reasons: ["notListed", "ended"],
+              },
+              { productId: GONE, names: [], shown: false, reasons: ["gone"] },
+            ],
+          },
+        ]),
+      );
+      const section = screen.getByRole("region", { name: "statusPage.products.heading" });
+      expect(
+        within(section).getByText("statusPage.products.section number=3 type=sectionTypes.products"),
+      ).toBeTruthy();
+      expect(within(section).getByText("statusPage.products.someHidden shown=1 total=3")).toBeTruthy();
+      const items = within(section).getAllByRole("listitem").map((item) => item.textContent);
+      expect(items).toEqual([
+        "hiddenItem name=Summer camp reasons=reasons.notListed and reasons.ended",
+        "hiddenItem name=unnamed reasons=reasons.gone",
+      ]);
+      expect(within(section).queryByText(/Autumn club/)).toBeNull();
+    });
+
+    it("warns when a section shows none of its picks, and says so when it shows them all", () => {
+      renderStatus(
+        withPicks([
+          {
+            sectionId: "s1",
+            sectionNumber: 2,
+            shownCount: 0,
+            picks: [
+              { productId: ENDED, names: [{ locale: "en", name: "Summer camp" }], shown: false, reasons: ["ended"] },
+            ],
+          },
+          {
+            sectionId: "s2",
+            sectionNumber: 4,
+            shownCount: 2,
+            picks: [
+              { productId: SHOWN, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+              // A listed municipality club is shown like any other pick.
+              { productId: MUNI, names: [{ locale: "en", name: "Espoo club" }], shown: true, reasons: [] },
+            ],
+          },
+        ]),
+      );
+      const section = screen.getByRole("region", { name: "statusPage.products.heading" });
+      expect(within(section).getByText("statusPage.products.noneShown")).toBeTruthy();
+      expect(within(section).getByText("hiddenItem name=Summer camp reasons=reasons.ended")).toBeTruthy();
+      expect(within(section).getByText("statusPage.products.allShown count=2")).toBeTruthy();
+      expect(within(section).queryByText(/Espoo club/)).toBeNull();
+    });
   });
 });
 

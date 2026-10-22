@@ -70,6 +70,7 @@ function renderGuide({
         sectionTexts={TEXTS}
         textLocale={locale}
         locale={locale}
+        products={null}
         pageId={id(4)}
         preview={false}
       />

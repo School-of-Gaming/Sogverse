@@ -36,6 +36,10 @@ import {
   landingPublishForecast,
   type LandingPublishForecast,
 } from "@/services/landing-pages/landing-pages.forecast";
+import type {
+  LandingProductPick,
+  LandingProductsSectionPicks,
+} from "@/services/landing-pages/landing-pages.product-picks";
 import {
   landingTestimonialsSections,
   type LandingTestimonialsSection,
@@ -62,7 +66,8 @@ export interface LandingPageStatusActions {
  * Top to bottom: where the page stands with readers and who last saved it
  * (and through which AI app); the publishing row; when the page has
  * testimonials sections, each one's arrangement and the testimonials it
- * places; then one card per written
+ * places; when it has products sections, which of their picked products
+ * readers are shown and why each other one is not; then one card per written
  * language — complete or what it still needs, its address (and, when that
  * differs from the live one, that the next publish moves it), its preview of
  * the saved working copy and, while it is live, its live page.
@@ -110,6 +115,8 @@ export function LandingPageStatusPage({
       {testimonialSections.length > 0 && (
         <PlacedTestimonials sections={testimonialSections} />
       )}
+
+      {page.productPicks.length > 0 && <ProductPicks sections={page.productPicks} />}
 
       <section aria-labelledby="landing-page-languages" className="space-y-3">
         <Heading level={2} step="card-title" id="landing-page-languages">
@@ -402,6 +409,89 @@ function PlacedTestimonials({ sections }: { sections: readonly LandingTestimonia
 }
 
 /**
+ * **Each products section's picks that readers are not shown, and why** — a
+ * pick goes stale as terms end, and the page does not say so to a reader: it
+ * simply leaves the card out, and leaves out a section with none listed. So
+ * this is where the admin finds a pick to swap for next term's product, by
+ * asking an AI app, as for every other change to the page.
+ *
+ * Read from the working copy's structure, which is what the next publish puts
+ * live; the shown/not-shown answer is the listing's, the one the
+ * public page draws by.
+ */
+function ProductPicks({ sections }: { sections: readonly LandingProductsSectionPicks[] }) {
+  const t = useTranslations("admin.landingPages");
+
+  return (
+    <section aria-labelledby="landing-page-products" className="space-y-3">
+      <Heading level={2} step="card-title" id="landing-page-products">
+        {t("statusPage.products.heading")}
+      </Heading>
+      <Card>
+        <CardContent className="divide-y divide-border p-0">
+          {sections.map((section) => (
+            <ProductPicksSection key={section.sectionId} section={section} />
+          ))}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+function ProductPicksSection({ section }: { section: LandingProductsSectionPicks }) {
+  const t = useTranslations("admin.landingPages");
+  const hidden = section.picks.filter((pick) => !pick.shown);
+  const describe = usePickDescription();
+
+  return (
+    <div className="space-y-2 p-6 text-sm">
+      <p className="font-medium">
+        {t("statusPage.products.section", {
+          number: section.sectionNumber,
+          type: t("sectionTypes.products"),
+        })}
+      </p>
+      {hidden.length === 0 ? (
+        <StatusLine status="success">
+          {t("statusPage.products.allShown", { count: section.picks.length })}
+        </StatusLine>
+      ) : (
+        <>
+          {section.shownCount === 0 ? (
+            <StatusLine status="warning">{t("statusPage.products.noneShown")}</StatusLine>
+          ) : (
+            <StatusLine status="info">
+              {t("statusPage.products.someHidden", {
+                shown: section.shownCount,
+                total: section.picks.length,
+              })}
+            </StatusLine>
+          )}
+          <ul className="list-disc space-y-0.5 pl-5">
+            {hidden.map((pick) => (
+              <li key={pick.productId}>{describe(pick)}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** A hidden pick as a line: its name in the admin's language, then why. */
+function usePickDescription(): (pick: LandingProductPick) => string {
+  const t = useTranslations("admin.landingPages.statusPage.products");
+  const uiLocale = resolveLocale(useLocale());
+  const conjunction = new Intl.ListFormat(formattingLocale(uiLocale), { type: "conjunction" });
+
+  return (pick) =>
+    t("hiddenItem", {
+      name: resolveTranslation(pick.names, uiLocale)?.name ?? t("unnamed"),
+      reasons: conjunction.format(pick.reasons.map((reason) => t(`reasons.${reason}`))),
+    });
+}
+
+/**
  * One written language: complete or what it still needs, its address, its
  * preview and — while it is live — its live page. When the next publish would
  * move the language to a new address, the card warns that links to the old
@@ -550,6 +640,7 @@ const ITEM_KEYS: {
   points: "points",
   steps: "steps",
   testimonials: null,
+  products: null,
   guide: null,
   faq: "faq",
   subscribe: null,

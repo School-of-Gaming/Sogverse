@@ -132,6 +132,33 @@ describe("the shell's Gmail rules", () => {
   });
 });
 
+/**
+ * The inbox preview. A mail that states one gets it as the first thing in the
+ * body, hidden and escaped; a mail that states none gets no block at all, so
+ * every other mail is the document it was.
+ */
+describe("the preheader", () => {
+  const bodyOpened = (html: string) => {
+    const body = html.slice(html.indexOf("<body"));
+    return body.slice(body.indexOf(">") + 1);
+  };
+
+  it("is the body's first content, hidden, escaped and padded", () => {
+    const html = wrapInLayout({ title: "Title", content: "<p>Body</p>", preheader: "Aino & <you>" });
+    const opened = bodyOpened(html);
+    expect(opened.startsWith('<div style="display:none;')).toBe(true);
+    const block = opened.slice(0, opened.indexOf("</div>"));
+    expect(block).toContain("Aino &amp; &lt;you&gt;");
+    expect(block).toContain("mso-hide:all");
+    expect(block).toContain("&#847;&zwnj;&nbsp;");
+  });
+
+  it("emits nothing where a mail states none", () => {
+    expect(render()).not.toContain("display:none;max-height:0");
+    expect(bodyOpened(render()).startsWith("\n")).toBe(true);
+  });
+});
+
 describe("the header's text lockup", () => {
   /**
    * The header is the one place in this directory that does not emit

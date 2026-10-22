@@ -464,6 +464,20 @@
         "inItem": "Osio {number} ({type}), {item}: {field}",
         "goneSection": "Osio, jota sivulla ei enää ole: {field}"
       },
+      "products": {
+        "heading": "Valitut tuotteet",
+        "section": "Osio {number} ({type})",
+        "allShown": "{count, plural, one {Sen tuote näkyy.} other {Kaikki sen # tuotetta näkyvät.}}",
+        "noneShown": "Mikään sen tuotteista ei näy, joten lukijat eivät näe tätä osiota. Vaihda tilalle listattuja tuotteita.",
+        "someHidden": "{shown}/{total} näkyy. Ei näy:",
+        "unnamed": "Nimetön tuote",
+        "hiddenItem": "{name}: {reasons}",
+        "reasons": {
+          "gone": "tällä tunnisteella ei ole enää tuotetta",
+          "notListed": "ei listattu",
+          "ended": "päättynyt"
+        }
+      },
       "testimonials": {
         "heading": "Asiakaskokemukset",
         "hint": "Niiden sanoja muokataan Asiakaskokemukset-osiossa, ja muutos näkyy julkaistulla sivulla heti.",
@@ -527,6 +541,7 @@
       "faq": "Kysymykset ja vastaukset",
       "subscribe": "Sähköpostitilaus",
       "cta": "Toimintakehote",
+      "products": "Tuotteet",
       "testimonials": "Asiakaskokemukset",
       "guide": "Opas"
     },

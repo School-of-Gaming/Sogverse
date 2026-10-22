@@ -175,7 +175,8 @@ Each one exists to make the posture above hold by construction rather than by me
   a `Person` on each team profile, whose `worksFor` names the layout's `Organization` by
   `@id`, an `Article` on each Library article, whose `publisher` names it the same
   way, a `WebPage` on each landing page, publisher the same, that becomes a `FAQPage`
-  when a section asks questions — each section type declares its contribution in one
+  when a section asks questions, with an `ItemList` beside it for each section promoting
+  shop products — each section type declares its contribution in one
   exhaustive map, so a new type has to say what it adds, if only nothing — beside a
   `BreadcrumbList` (the index, then the page) drawn from the same names as the trail
   shown above the page, its last step the page's canonical — and on each
@@ -190,8 +191,11 @@ Each one exists to make the posture above hold by construction rather than by me
   a site's street address is staff data and the page never shows it. **Rule: a structured
   data block reads the same source as the visible page** — the same message keys, the
   same prefetched rows — so it can never assert something the page does not show, and
-  only the shop's listing can reach the `ItemList` because only that is ever prefetched
-  for the grid. Each item carries its position, its name and its page's canonical
+  only the shop's listing can reach an `ItemList` because only that is ever prefetched
+  for the grid, or for a landing page's products section, whose list names the cards it
+  draws whose page is promoted: the admin's picks the shop's listing holds, in their
+  order, and none of a product's own markup. The section also draws a listed municipality
+  club the admin picks, and that card stays out of the list, since its page is tier 2. Each item carries its position, its name and its page's canonical
   URL — the address of the locale whose words that page shows at the shop's locale, so
   an item never points at a page that canonicalises elsewhere, while the card's own link
   stays at the shop's locale for the reader. Every one of those pages is promoted,

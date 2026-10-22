@@ -91,7 +91,7 @@ const FIXED_TAGS: readonly FixedTag[] = [
   },
   {
     file: "src/lib/products/format-product-schedule.ts",
-    within: "viewerClock",
+    within: "clockFace",
     locale: `"en-GB"`,
     reason: "a fixed 24-hour HH:MM that is also the key slots are grouped and sorted by",
   },

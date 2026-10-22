@@ -464,6 +464,20 @@
         "inItem": "Section {number} ({type}), {item}: {field}",
         "goneSection": "A section no longer on the page: {field}"
       },
+      "products": {
+        "heading": "Picked products",
+        "section": "Section {number} ({type})",
+        "allShown": "{count, plural, one {Its product is shown.} other {All # of its products are shown.}}",
+        "noneShown": "None of its products is shown, so readers don’t see this section. Swap in listed products.",
+        "someHidden": "{shown} of {total} shown. Not shown:",
+        "unnamed": "A product with no name",
+        "hiddenItem": "{name}: {reasons}",
+        "reasons": {
+          "gone": "no product has this id any more",
+          "notListed": "unlisted",
+          "ended": "ended"
+        }
+      },
       "testimonials": {
         "heading": "Testimonials",
         "hint": "Their words are edited in Testimonials, and an edit shows on the live page straight away.",
@@ -527,6 +541,7 @@
       "faq": "Questions and answers",
       "subscribe": "Email sign-up",
       "cta": "Call to action",
+      "products": "Products",
       "testimonials": "Testimonials",
       "guide": "Guide"
     },

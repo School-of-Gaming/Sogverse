@@ -11,7 +11,7 @@ import { GuidesService } from "@/services/guides/guides.service";
 
 /**
  * A landing page's guide section: the structure check's two halves on a
- * guide's id, the refusal of an id no guide has (`check_landing_guide_picks`),
+ * guide's id, the refusal of an id no guide has (`check_landing_section_picks`),
  * the public read `list_landing_page_guides` and the download read
  * `get_guide_download_files` — the scope test the authorization spine names
  * for both — and the admin read of where a guide is offered.

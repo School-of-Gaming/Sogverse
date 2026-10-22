@@ -60,7 +60,7 @@
       "camp": "L’inscription de {participantName} à {productName} est confirmée",
       "event": "La participation de {participantName} à {productName} est confirmée"
     },
-    "heading": "C’est tout bon !",
+    "heading": "C’est parti !",
     "subheading": {
       "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
       "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
@@ -90,12 +90,6 @@
         }
       }
     },
-    "typeLabel": {
-      "consumer_club": "Club",
-      "municipality_club": "Club municipal",
-      "camp": "Stage",
-      "event": "Événement"
-    },
     "priceLabel": "Prix",
     "price": {
       "subscription": "{amount} / mois",
@@ -107,9 +101,16 @@
     "next": {
       "sessions": "Vous trouverez les sessions de {participantName} dans Mon SOG.",
       "sessionsSelf": "Vous trouverez vos sessions dans Mon SOG.",
+      "sessionsOnline": "{participantName} rejoint les sessions en ligne dans Mon SOG. Le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
+      "sessionsOnlineSelf": "Vous rejoignez les sessions en ligne dans Mon SOG. Le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
       "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}."
+      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}.",
+      "firstSession": "La première session de {participantName} aura lieu le {date} à {time}.",
+      "firstSessionSelf": "Votre première session aura lieu le {date} à {time}.",
+      "eventDate": "L’événement aura lieu le {date} à {time}.",
+      "guarantee": "Si le club ne convient pas à {participantName}, écrivez-nous dans les 30 jours suivant sa première session et nous vous rembourserons tout ce que vous avez versé pour ce club.",
+      "guaranteeSelf": "Si le club ne vous convient pas, écrivez-nous dans les 30 jours suivant votre première session et nous vous rembourserons tout ce que vous avez versé pour ce club."
     },
     "waitlist": {
       "subject": "{participantName} est sur la liste d’attente pour {productName}",
@@ -117,8 +118,6 @@
       "heading": "Vous êtes sur la liste d’attente",
       "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
       "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-      "summaryTitle": "Votre place en liste d’attente",
-      "forLabel": "En liste d’attente",
       "next2": {
         "consumer_club": "{participantName} conserve sa place dans la file pendant toute la période.",
         "municipality_club": "{participantName} conserve sa place dans la file pendant toute la période.",
@@ -128,8 +127,7 @@
       "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
     },
     "gamer": {
-      "greeting": "Bonjour {participantName} !",
-      "summaryTitle": "Votre inscription"
+      "greeting": "Bonjour {participantName} !"
     },
     "invite": {
       "summary": "{productName} – {participantName}",
@@ -142,14 +140,7 @@
       "questions": "Une question ? Écrivez à {supportEmail}."
     },
     "dashboardButton": "Aller à Mon SOG",
-    "closing": "Des questions ? Répondez simplement à cet e-mail.",
-    "summaryTitle": "Votre commande",
-    "forLabel": {
-      "consumer_club": "Inscription",
-      "municipality_club": "Inscription",
-      "camp": "Inscription",
-      "event": "Participation"
-    },
+    "closing": "Des questions ? Répondez simplement à cet e-mail ou écrivez à {supportEmail}.",
     "overview": {
       "schedule": "Planning",
       "where": "Où",

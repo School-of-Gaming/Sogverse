@@ -13,8 +13,12 @@ import {
   landingBreadcrumbJsonLd,
   type LandingBreadcrumb,
 } from "@/components/landing-pages/landing-page-breadcrumb";
-import { landingPageJsonLd } from "@/components/landing-pages/landing-page-json-ld";
+import {
+  landingPageJsonLd,
+  landingProductListsJsonLd,
+} from "@/components/landing-pages/landing-page-json-ld";
 import { landingPageMetadata } from "@/components/landing-pages/landing-page-metadata";
+import { prefetchLandingProducts } from "@/components/landing-pages/landing-page-products";
 import { JsonLd } from "@/components/seo/json-ld";
 import { LocaleSwitchPaths } from "@/i18n/locale-switch-paths";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -80,10 +84,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * through the public read that answers only what the live copy places, so an
  * admin's edit to one shows here at once, without a republish. A page placing
  * none reads nothing more. The guides it places are read the same way, beside
- * them: which languages have a file and how large each is. Who may download
- * one is the only thing on the page that depends on the reader, and it is
- * decided in the browser from the session the app already holds, so the page
- * is the same render for everyone.
+ * them: only which of them exist. Who may download one is the only thing on
+ * the page that depends on the reader, and it is decided in the browser from
+ * the session the app already holds, so the page is the same render for
+ * everyone.
+ *
+ * **A page with products sections waits on one more read before its HTML**:
+ * the listing of every product type and seat counts for every pick at once,
+ * the read the shop and the Roblox page make over their own types, so the
+ * cards — or a section's absence when none of its picks is listed — are in the
+ * first byte and nothing below them moves.
+ * It runs after the page read, since the picks are the page's, beside the
+ * testimonials' and the guides' reads, and a failure of it costs the cards
+ * their first frame and never the page.
  */
 export default async function LandingPage({ params }: PageProps) {
   const { idOrSlug } = await params;
@@ -100,7 +113,8 @@ export default async function LandingPage({ params }: PageProps) {
     title: shown.title,
   };
   const supabase = await createClient();
-  const [testimonials, guideIds] = await Promise.all([
+  const [products, testimonials, guideIds] = await Promise.all([
+    prefetchLandingProducts(shown.sections),
     landingPlacedTestimonialIds(page.sections).length === 0
       ? {}
       : new TestimonialsService(supabase)
@@ -117,6 +131,14 @@ export default async function LandingPage({ params }: PageProps) {
           page's address in every locale. */}
       <LocaleSwitchPaths paths={landingPageLocalePaths(page)} />
       <JsonLd data={landingPageJsonLd({ siteUrl, canonicalPath, page: shown })} />
+      {landingProductListsJsonLd({
+        siteUrl,
+        locale,
+        page: shown,
+        listing: products?.listing ?? null,
+      }).map(({ sectionId, list }) => (
+        <JsonLd key={sectionId} data={list} />
+      ))}
       <JsonLd
         data={landingBreadcrumbJsonLd({ siteUrl, locale, canonicalPath, trail })}
       />
@@ -134,6 +156,7 @@ export default async function LandingPage({ params }: PageProps) {
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}
+        products={products}
         pageId={page.id}
         preview={false}
       />

@@ -46,5 +46,9 @@
   "empty": {
     "noProducts": "Täällä ei ole vielä mitään – uusia on tulossa.",
     "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
+  },
+  "rail": {
+    "previous": "Edelliset",
+    "next": "Seuraavat"
   }
 }

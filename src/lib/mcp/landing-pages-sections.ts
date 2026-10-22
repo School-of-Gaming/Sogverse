@@ -329,6 +329,32 @@ export const MCP_LANDING_SECTIONS: {
     },
     itemIds: () => null,
   },
+  products: {
+    about:
+      "Products of any type — clubs, municipality clubs, camps and events — each drawn as the shop's own card — name, schedule, ages, price, seats and whether registration is open, all live — in a carousel, in the order picked, each card linking to the product's page (a municipality club's is under its town's schools page). Pick at least one, each once; there is no maximum, but a handful reads best. Find them with list_products: a product it reports as listed is drawn. Picks go stale every term: a product that has ended or is unlisted is simply not drawn, and a section with none of its picks listed is not drawn at all, so readers never see a stale card. get_landing_page reports each products section's picks under productPicks — shown or not, and why not — so check it and swap in next term's products when a term ends. A pick no product has is refused when the structure is saved. The heading, eyebrow and intro are optional words, never required.",
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("products"),
+      productIds: z
+        .array(landingId.describe("A product's id, as list_products returns it."))
+        .min(1, "A products section picks at least one product")
+        .refine(
+          (ids) => new Set(ids).size === ids.length,
+          "A products section names each product once",
+        )
+        .describe("The picked products, in the order their cards are shown."),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading. Optional."),
+      intro: plainText.describe("A line under the heading. Optional."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "products", productIds: [ANY_ID] },
+      withOptional: {},
+    },
+    itemIds: () => null,
+  },
   guide: {
     about:
       "A guide from School of Gaming's store — a PDF with one file per language — offered for download, with a heading, an optional description and an optional cover picture. Readers who are signed in download the file in their own language, else English, else the earliest language that has one, in Sogverse's language order; a signed-out reader sees the section and is asked to create an account first. The guide's files live in the store, never in the page: choose one by its id from list_guides, or upload a new guide or another language's file with open_guide_uploader, then place it here. An id no guide has is refused when the structure is saved. To take a guide off this page, save the structure without this section; guides themselves are never deleted.",

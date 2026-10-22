@@ -46,5 +46,9 @@
   "empty": {
     "noProducts": "Inget här ännu – nya är på väg.",
     "noMatches": "Inga träffar. Prova att rensa filtren."
+  },
+  "rail": {
+    "previous": "Föregående",
+    "next": "Nästa"
   }
 }

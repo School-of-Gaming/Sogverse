@@ -2,14 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import { ProductBrowseCard } from "@/components/public/products/product-browse-card";
-import type {
-  ParticipationCounts,
-} from "@/services/participations/participations.service";
+import type { ParticipationCounts } from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
+import { ProductBrowseCard } from "./product-browse-card";
 
 /**
  * How many cards a row holds at each width tier — one card on a phone, two from
@@ -71,29 +68,43 @@ const CARDS_PER_ROW = { base: 1, sm: 2, lg: 3 } as const;
  *     so a ~210px band has its centre at 105–109px.
  * A 40px arrow sits inside either band with ~85px clear at both ends, so drift
  * of a pixel or two here is harmless — only a changed aspect ratio is not.
+ *
+ * Centring a short row moves no card off this line: the arrows exist only
+ * when there are more cards than `sm`'s row holds, and a row is centred only
+ * at a tier whose row holds more cards than there are — so at every width an
+ * arrow can be live at, the cards start at the rail's edge.
  */
 const ARROW_TOP = cn(
   "top-[calc(1px+((100cqw-4.5rem)/2-2px)/3)]",
   "lg:top-[calc(1px+((100cqw-3rem)/3-2px)/3)]",
 );
 
-interface EventsRailProps {
-  /** The programme's products, already narrowed. Never empty — the section
-   *  above renders its own empty state instead of mounting a rail. */
+interface ProductRailProps {
+  /** The rail's products, already selected, in the order they are shown.
+   *  Never empty — a surface with none renders its own empty state, or
+   *  nothing, instead of mounting a rail. */
   products: readonly ProductBrowseRow[];
   /** Seat counts covering those products, in any order — built into a per-id
    *  map here rather than taken as one, so this stays a plain-array boundary a
    *  server component could cross. */
   counts: readonly ParticipationCounts[];
+  /** The two arrows' accessible names, in the surface's own words — "Previous
+   *  events" where the rail shows a programme's events. */
+  labels: { previous: string; next: string };
 }
 
 /**
- * The "What's On" cards as a horizontal snap-scroller.
+ * **A row of the shop's own product cards as a horizontal snap-scroller** — the
+ * one carousel every surface showing live shop products draws, so a family
+ * meets the same card, with the same schedule, price, seat and registration
+ * rules, wherever a product is promoted. The Roblox page's "What's on" and a
+ * landing page's products section are its surfaces; each brings its own frame
+ * (heading, empty state, links) around it, and the data pipeline feeding it is
+ * the shared one in `use-product-rail.ts`.
  *
- * The interactive half of the section, split out so the section itself keeps no
+ * The interactive half of a section, split out so the section itself keeps no
  * hooks beyond translations: the scroll state only exists while there are cards
- * to scroll, and the frame around them (heading, empty state) stays free of a
- * client directive.
+ * to scroll, and the frame around them stays free of a client directive.
  *
  * How it is built, and why each piece is load-bearing:
  *
@@ -106,10 +117,9 @@ interface EventsRailProps {
  *    allowance is real space — 15% of the rail below `sm`, 3rem at `sm` — and
  *    held open beside a card that is the last one, it is a hole, not a hint. So
  *    every tier's width is exact when the products fit it and makes room for the
- *    next card only when there is a next card. One event, the likeliest state at
- *    launch, is a full-width card on a phone and a half-width one at `sm`, which
- *    is exactly what the grid this replaced did.
- *  - **The peek is the affordance.** Below `sm`, with more than one event, a card
+ *    next card only when there is a next card. One product is a full-width card
+ *    on a phone and a half-width one, centred, from `sm`.
+ *  - **The peek is the affordance.** Below `sm`, with more than one product, a card
  *    is 85% of the rail, so
  *    the next one is always visibly cut off at the edge. That sliver is what
  *    tells a reader there is more, and it is why the rail is full-bleed
@@ -124,10 +134,17 @@ interface EventsRailProps {
  *    sheared off; the negative margin gives the space straight back so nothing
  *    below moves.
  *  - **At `lg` three cards fill the rail exactly** ((100% − two 1.5rem gaps)/3),
- *    so a programme with three or fewer events looks like the plain grid this
- *    replaced, with nothing hidden behind an interaction. That the width is
- *    *exact* is what makes desktop overflow a fact about the product count, and
- *    so a fact the server already has.
+ *    so a rail of three or fewer products looks like a plain grid, with nothing
+ *    hidden behind an interaction. That the width is *exact* is what makes
+ *    desktop overflow a fact about the product count, and so a fact the server
+ *    already has.
+ *  - **A row its cards do not fill is centred.** One card from `sm`, or two at
+ *    `lg`, would otherwise sit against the left edge with the rest of the row
+ *    empty beside it, reading as a grid with cards missing. The same count that
+ *    decides overflow decides this, so it is in the server's HTML and never
+ *    changes after paint; and because a tier is centred only when its row holds
+ *    more cards than there are, a centred row never overflows — centring an
+ *    overflowing row would put its first card out of the scroll range's reach.
  *  - **Two circular arrows flank the cards**, straddling the left and right
  *    edges of the card column — the pattern any reader has already met on a
  *    shopping or listings site, so nothing about it has to be learned here. Each
@@ -150,7 +167,7 @@ interface EventsRailProps {
  *    different questions: the one that could move the page is answered before
  *    the page is sent, and the one answered later cannot move anything. Because
  *    the count answers the first question at *some* tier and the viewport
- *    decides which, a pair can render and be permanently inactive — three events
+ *    decides which, a pair can render and be permanently inactive — three products
  *    at `lg` — which `disabled:opacity-0` renders invisible and inert. Two spare
  *    buttons in the DOM is the whole cost of not having to know the viewport.
  *  - **Reduced motion is handled in CSS, not JS.** `scrollBy` is called with no
@@ -167,8 +184,7 @@ interface EventsRailProps {
  *    brightened border and a shadow, dimming exactly the thing the reader is
  *    reaching for. The peek and the arrows already say "more".
  */
-export function EventsRail({ products, counts }: EventsRailProps) {
-  const t = useTranslations("roblox.events");
+export function ProductRail({ products, counts, labels }: ProductRailProps) {
   const railRef = useRef<HTMLDivElement>(null);
 
   // Two questions the product count answers, at two different tiers, and it
@@ -188,9 +204,9 @@ export function EventsRail({ products, counts }: EventsRailProps) {
   // arrow the reader has already looked at fades out from under them; seed it
   // hidden where the client finds overflow and an arrow fades in, which is
   // opacity alone and moves no geometry. So seed only what is true at *every*
-  // tier the pair can appear at — more events than fill the widest row — and let
-  // the narrower tiers fade theirs in. The one combination that pays for this is
-  // exactly three events between `md` and `lg`, which fades in a frame after
+  // tier the pair can appear at — more products than fill the widest row — and
+  // let the narrower tiers fade theirs in. The one combination that pays for this
+  // is exactly three products between `md` and `lg`, which fades in a frame after
   // paint; that is the cheap half of the trade, taken deliberately.
   //
   // The back arrow needs no such care: a rail parks at its left at every tier,
@@ -203,8 +219,8 @@ export function EventsRail({ products, counts }: EventsRailProps) {
   // The card's width per tier. Each tier splits the rail as many ways as it
   // shows cards; what varies is whether it *also* gives up room for the edge of
   // the next one. That allowance is only ever paid for when there is a next card
-  // to spend it on — held open beside the last card it is dead space, and one
-  // event is the likeliest state this page ships in.
+  // to spend it on — held open beside the last card it is dead space, and a
+  // single product is a state every surface showing a rail ships in at times.
   //
   // Below `sm`: one card, so 85% (leaving a ~25px sliver at 360px) against a
   // full-width card when it is the only one. At `sm`: two cards either side of
@@ -218,6 +234,15 @@ export function EventsRail({ products, counts }: EventsRailProps) {
       ? "sm:w-[calc((100%-4.5rem)/2)]"
       : "sm:w-[calc((100%-1.5rem)/2)]",
     "lg:w-[calc((100%-3rem)/3)]",
+  );
+
+  // A row its cards do not fill is centred, tier by tier, from the same count.
+  // Fewer cards than a tier's row holds means that tier cannot overflow, so
+  // centring there never cuts off the start of a scroll range; below `sm` one
+  // card is already full-width and there is nothing to centre.
+  const rowAlignment = cn(
+    products.length < CARDS_PER_ROW.sm && "sm:justify-center",
+    products.length < CARDS_PER_ROW.lg && "lg:justify-center",
   );
 
   const countsByProduct = new Map<string, ParticipationCounts>();
@@ -288,10 +313,13 @@ export function EventsRail({ products, counts }: EventsRailProps) {
        same either way — but the wrapper's box is then honestly the cards' box.
        Note that inline-size containment does not clip: the rail still bleeds
        past this element by `-mx-4`, and the arrows still straddle its edges. */
-    <div className="relative mx-auto mt-12 max-w-5xl [container-type:inline-size]">
+    <div className="relative mx-auto max-w-5xl [container-type:inline-size]">
       <div
         ref={railRef}
-        className="-mx-4 -mb-4 flex snap-x snap-mandatory gap-6 overflow-x-auto overscroll-x-contain scroll-smooth px-4 pb-4 scroll-px-4 motion-reduce:scroll-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={cn(
+          "-mx-4 -mb-4 flex snap-x snap-mandatory gap-6 overflow-x-auto overscroll-x-contain scroll-smooth px-4 pb-4 scroll-px-4 motion-reduce:scroll-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          rowAlignment,
+        )}
       >
         {products.map((product) => (
           <div
@@ -300,8 +328,8 @@ export function EventsRail({ products, counts }: EventsRailProps) {
             // min-content width, which would let one unbreakable 30-character
             // word in a product name push the card past the width declared
             // beside it — and a card wider than the snap step misaligns every
-            // stop after it. The grid this replaced got the same clamp for free
-            // from `minmax(0, 1fr)`.
+            // stop after it. A grid gets the same clamp for free from
+            // `minmax(0, 1fr)`; a flex row has to ask for it.
             className={cn("shrink-0 snap-start min-w-0", cardWidth)}
           >
             <ProductBrowseCard
@@ -330,7 +358,7 @@ export function EventsRail({ products, counts }: EventsRailProps) {
         <>
           <EdgeArrow
             side="start"
-            label={t("previous")}
+            label={labels.previous}
             inactive={!canScrollBack}
             onClick={() => scrollByCard(-1)}
           >
@@ -338,7 +366,7 @@ export function EventsRail({ products, counts }: EventsRailProps) {
           </EdgeArrow>
           <EdgeArrow
             side="end"
-            label={t("next")}
+            label={labels.next}
             inactive={!canScrollForward}
             onClick={() => scrollByCard(1)}
           >

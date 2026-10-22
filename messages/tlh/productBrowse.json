@@ -46,5 +46,9 @@
   "empty": {
     "noProducts": "DaH pagh tu’lu’ — chu’ chenmoH.",
     "noMatches": "pagh Sam. tetlh yISay’moH."
+  },
+  "rail": {
+    "previous": "ret",
+    "next": "veb"
   }
 }
