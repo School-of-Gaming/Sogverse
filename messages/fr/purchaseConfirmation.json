@@ -14,7 +14,7 @@
       "camp": "Votre inscription à {product} est confirmée.",
       "event": "Votre inscription à {product} est confirmée."
     },
-    "nextSessions": "Vos sessions apparaîtront dans Mon SOG avant la première.",
+    "nextSessions": "Vos sessions apparaîtront dans Mon SOG.",
     "waitlist": {
       "subheading": "Vous êtes sur la liste d’attente pour {product}."
     }
@@ -34,7 +34,7 @@
     "sent": "Un e-mail de confirmation a été envoyé."
   },
   "next": {
-    "sessions": "Les sessions de {gamer} apparaîtront dans Mon SOG avant la première."
+    "sessions": "Les sessions de {gamer} apparaîtront dans Mon SOG."
   },
   "goToDashboard": "Aller à Mon SOG",
   "keepBrowsing": "Continuer à explorer",

@@ -14,7 +14,7 @@
       "camp": "Du är anmäld till {product}.",
       "event": "Du har gått med i {product}."
     },
-    "nextSessions": "Dina tillfällen visas under Min SOG före det första.",
+    "nextSessions": "Dina tillfällen visas under Min SOG.",
     "waitlist": {
       "subheading": "Du står på väntelistan för {product}."
     }
@@ -34,7 +34,7 @@
     "sent": "Ett bekräftelsemejl har skickats."
   },
   "next": {
-    "sessions": "Tillfällena för {gamer} visas under Min SOG före det första."
+    "sessions": "Tillfällena för {gamer} visas under Min SOG."
   },
   "goToDashboard": "Gå till Min SOG",
   "keepBrowsing": "Fortsätt bläddra",

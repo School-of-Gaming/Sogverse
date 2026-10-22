@@ -14,7 +14,7 @@
       "camp": "Sinut on ilmoitettu toimintaan {product}.",
       "event": "Olet liittynyt toimintaan {product}."
     },
-    "nextSessions": "Tapaamisesi näkyvät Oma SOG -sivulla ennen ensimmäistä kertaa.",
+    "nextSessions": "Tapaamisesi näkyvät Oma SOG -sivulla.",
     "waitlist": {
       "subheading": "Olet jonotuslistalla – {product}."
     }
@@ -34,7 +34,7 @@
     "sent": "Vahvistus on lähetetty sähköpostitse."
   },
   "next": {
-    "sessions": "Tapaamiset näkyvät Oma SOG -sivulla ennen kuin {gamer} aloittaa."
+    "sessions": "Tapaamiset, joihin {gamer} osallistuu, näkyvät Oma SOG -sivulla."
   },
   "goToDashboard": "Siirry Oma SOG -sivulle",
   "keepBrowsing": "Jatka selailua",

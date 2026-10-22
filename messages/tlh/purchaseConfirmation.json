@@ -14,7 +14,7 @@
       "camp": "{product} QujmeH ghItlhlu’pu’ SoH.",
       "event": "{product}Daq bIjeSpu’."
     },
-    "nextSessions": "wa’DIch Qu’ tagh pa’, jIH SOGDaq Qu’meylIj Dalegh.",
+    "nextSessions": "jIH SOGDaq Qu’meylIj Dalegh.",
     "waitlist": {
       "subheading": "bIloS tetlhDaq: {product}."
     }
@@ -34,7 +34,7 @@
     "sent": "QIn naQ ngeHlu’pu’."
   },
   "next": {
-    "sessions": "wa’DIch Qu’ tagh pa’, jIH SOGDaq {gamer} Qu’mey Dalegh."
+    "sessions": "jIH SOGDaq {gamer} Qu’mey Dalegh."
   },
   "goToDashboard": "jIH SOG yIghoS",
   "keepBrowsing": "yIqIm taH",
