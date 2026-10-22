@@ -98,63 +98,49 @@ describe("buildWelcomeParentEmail", () => {
   });
 
   /**
-   * The outlined buttons' labels carry no class, and that is the fix rather
-   * than an omission. They used to carry a `background-clip:text` pin, which is
-   * what broke them: the pin restates a text colour as a background colour, and
-   * a client's dark theme darkens light backgrounds — so protecting `#ededed`
-   * fed it to the one pass that exists to darken `#ededed`. Measured on Gmail
-   * Android against the shipping markup; a class reappearing here is that bug
-   * coming back.
+   * The outlined buttons' labels carry no pin, and must not: `background-clip`
+   * restates a text colour as a background, and a dark theme darkens light
+   * backgrounds — so a pinned `#ededed` arrives dark on Gmail Android. A light
+   * label is held instead, with the whole outlined button: its border and its
+   * label are both plain neutrals.
    */
-  it("leaves the outlined buttons' light labels unpinned", () => {
+  it("holds the outlined buttons whole, and pins neither light label", () => {
     const html = buildWelcomeParentEmail(t, "en", params);
-    const outlinedAnchors = [...html.matchAll(/<td width="50%"[^>]*>\s*<a ([^>]*)>/g)].map(
+    const halves = [...html.matchAll(/<td width="50%"[^>]*>\s*<div class="bs"><div class="bd">[\s\S]*?<a ([^>]*)>/g)].map(
       (match) => match[1],
     );
-    expect(outlinedAnchors).toHaveLength(2);
-    for (const attrs of outlinedAnchors) {
+    expect(halves).toHaveLength(2);
+    for (const attrs of halves) {
       expect(attrs).toContain(`color:${DARK_THEME.foreground}`);
       expect(attrs).not.toContain("class=");
     }
-    expect(html).not.toContain("cta-on-card");
   });
 
   /**
    * The dark label keeps its pin, and the asymmetry is the point: `#121212` is
    * dark enough that a dark theme leaves it alone as a background, so the same
-   * mechanism that destroys the light label carries this one intact. It fixed a
-   * real fault — the label used to arrive white in one inbox and black in the
-   * next — so removing it would undo that.
+   * mechanism that destroys the light label carries this one intact.
    */
   it("keeps the pin on the filled button's dark label", () => {
     const html = buildWelcomeParentEmail(t, "en", params);
-    expect(html).toContain('class="cta-on-brand"');
-    expect(html).toContain("u + .body .cta-on-brand");
+    expect(html).toContain('class="pin-dark"');
+    expect(html).toContain("u + .body .pin-dark");
     expect(html).toContain(
       `background-color:${BRAND.act};background-image:linear-gradient(${BRAND.act},${BRAND.act})`,
     );
   });
 
   /**
-   * Both surfaces still declare a fill twice. Unproven as a fix on its own, but
-   * it is half of the configuration that measured clean (the check's V2), so it
-   * stays until something measures it away.
+   * The outlined halves paint nothing: a fill inside a hold is screened a few
+   * shades lighter on every Gmail, so the button is drawn on whatever ground it
+   * stands on rather than declaring that ground.
    */
-  it("declares every button fill as a colour and a flat gradient", () => {
+  it("draws the outlined halves with no fill of their own", () => {
     const html = buildWelcomeParentEmail(t, "en", params);
-    const outlined = [...html.matchAll(/<td width="50%"[^>]*style="([^"]*)"/g)].map(
-      (match) => match[1],
-    );
-    expect(outlined).toHaveLength(2);
-    for (const style of outlined) {
-      // The inline half is the phone's: an outlined button declares the ground
-      // it is standing on, and on the card-less phone shell that is the dark
-      // ground. The shell's wide-viewport rule restates it as the card.
-      expect(style).toContain(`background-color:${DARK_THEME.bg}`);
-      expect(style).toContain(
-        `background-image:linear-gradient(${DARK_THEME.bg},${DARK_THEME.bg})`,
-      );
-    }
+    const lastHalf = html.lastIndexOf('<td width="50%"');
+    const row = html.slice(html.indexOf('<td width="50%"'), html.indexOf("</tr>\n    </table>", lastHalf));
+    expect(row).not.toContain("background-color");
+    expect(row).not.toContain("ground-match");
   });
 
   /**
@@ -287,7 +273,7 @@ describe("buildWelcomeGeduEmail", () => {
     expect(html).not.toContain("/verify-email");
     expect(html).not.toContain(`href="${SETTINGS_URL}"`);
     expect(html).toContain(`href="${params.dashboardUrl}"`);
-    expect(html).toContain("cta-on-brand");
-    expect(withLink.split("cta-on-brand").length).toBe(html.split("cta-on-brand").length);
+    expect(html).toContain("pin-dark");
+    expect(withLink.split("pin-dark").length).toBe(html.split("pin-dark").length);
   });
 });
