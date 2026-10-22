@@ -5,10 +5,11 @@ import { buildScenarioFixture } from "@/components/public/products/mock-detail-f
 import type { ProductBrowseRow } from "@/types";
 
 /**
- * The confirmation summary paints the product's picture in the **same 3:2 crop**
- * the browse card and the detail hero paint, because it is the same photograph a
- * parent clicked and then read a page of. These pin the two halves of that: the
- * frame an imaged product gets, and what an un-imaged one gets instead.
+ * The confirmation summary paints the product's picture — the photograph a
+ * parent clicked — flush down the card's left edge, as tall as the text beside
+ * it, so no dead card sits under a short thumb. These pin the two halves of
+ * that: the frame an imaged product gets, and what an un-imaged one gets
+ * instead.
  *
  * The no-image half is the one worth a test rather than an eye: this page holds a
  * row straight out of the database, where "no picture" is representable twice
@@ -63,27 +64,29 @@ describe("purchase confirmation product picture", () => {
   // optimizer rather than handed to the browser whole, and the thumb's own
   // width reaches the browser so it picks a 96px candidate instead of the
   // multi-megabyte master.
-  it("serves a bucket picture through the optimizer at the thumb's width", () => {
+  it("serves a bucket picture through the optimizer at the column's width", () => {
     const { container } = renderConfirmation(
       "b7a1c0de-4f2b-4d1e-9c3a-5e6f70819a2b.png",
     );
     const img = container.querySelector("img");
     expect(img?.getAttribute("src")).toMatch(/^\/_next\/image/);
-    expect(img?.getAttribute("sizes")).toBe("96px");
+    expect(img?.getAttribute("sizes")).toBe("(min-width: 640px) 112px, 96px");
   });
 
-  it("crops the picture to 3:2 rather than letterboxing it", () => {
+  it("fills the card's height beside the text, cropping rather than letterboxing", () => {
     const { container } = renderConfirmation("/preview-art/card-terrain.svg");
     const img = container.querySelector("img");
     expect(img).not.toBeNull();
-    // The ratio lives on the wrapper rather than the image: the banner fills
-    // its frame (`next/image`'s `fill`, which needs a positioned ancestor), so
-    // the frame is the parent and the image is what covers it. Root-relative
-    // fixture art is passed through untouched — the optimizer refuses SVG, so
-    // the rendered src is still the stored value.
+    // The frame is the image's parent (`next/image`'s `fill` needs a positioned
+    // ancestor), and on this card it carries no ratio: it stretches with the
+    // text column, and the picture covers it. Root-relative fixture art is
+    // passed through untouched — the optimizer refuses SVG.
     expect(img?.getAttribute("src")).toBe("/preview-art/card-terrain.svg");
     expect(img?.className).toContain("object-cover");
-    expect(img?.parentElement?.className).toContain("aspect-[3/2]");
+    const frame = img?.parentElement;
+    expect(frame?.className).not.toContain("aspect-");
+    expect(frame?.className).not.toContain("self-start");
+    expect(frame?.className).toContain("w-24");
   });
 
   it.each([

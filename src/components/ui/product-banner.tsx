@@ -28,6 +28,13 @@ import { FramedImage } from "./framed-image";
  * dozens of banners on one page, so the banner lazy-loads by default and the
  * one caller whose banner is reliably above the fold — the detail page's hero
  * — opts into `eager`.
+ *
+ * **One sanctioned departure from the ratio: `fillHeight`.** The purchase
+ * confirmation's summary card sets the picture flush down its left edge, as
+ * tall as the text beside it, because a 3:2 thumb shorter than that text left
+ * dead card under it (owner ruling, 2026-10-22). It is the same stored picture
+ * filling its frame; only the frame's height comes from the card rather than
+ * from the ratio.
  */
 export function ProductBanner({
   src,
@@ -35,6 +42,7 @@ export function ProductBanner({
   sizes,
   eager,
   zoomOnHover,
+  fillHeight,
 }: {
   /** Resolved image URL, or `null` for a product with no picture. */
   src: string | null;
@@ -49,6 +57,9 @@ export function ProductBanner({
   /** Lean the picture in when its card is pointed at — for a card that opens
    *  somewhere, and only then (`COVER_HOVER_ZOOM`). */
   zoomOnHover?: boolean;
+  /** Take the frame's height from its flex row instead of the 3:2 ratio —
+   *  the confirmation card's flush side picture, and nothing else. */
+  fillHeight?: boolean;
 }) {
   return (
     <FramedImage
@@ -58,6 +69,7 @@ export function ProductBanner({
       sizes={sizes}
       eager={eager}
       zoomOnHover={zoomOnHover}
+      fillHeight={fillHeight}
     />
   );
 }

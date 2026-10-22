@@ -94,7 +94,7 @@ describe("waitlist confirmation copy", () => {
       />,
     );
     getByRole("heading", { level: 1, name: "heading" });
-    getByText("next.placement");
+    getByText("next.sessions");
     expect(queryByText("waitlist.heading")).toBeNull();
     expect(queryByText("waitlist.next")).toBeNull();
   });

@@ -14,7 +14,7 @@
       "camp": "Votre inscription à {product} est confirmée.",
       "event": "Votre inscription à {product} est confirmée."
     },
-    "nextPlacement": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+    "nextSessions": "Vos sessions apparaîtront dans Mon SOG avant la première.",
     "waitlist": {
       "subheading": "Vous êtes sur la liste d’attente pour {product}."
     }
@@ -30,11 +30,11 @@
     "firstCharge": "{price}, premier paiement le {date}"
   },
   "email": {
-    "sentTo": "Un e-mail de confirmation avec tous les détails est en route vers <strong>{email}</strong>.",
-    "sent": "Un e-mail de confirmation avec tous les détails est en route."
+    "sentTo": "Nous avons envoyé un e-mail de confirmation à <strong>{email}</strong>.",
+    "sent": "Un e-mail de confirmation a été envoyé."
   },
   "next": {
-    "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG."
+    "sessions": "Les sessions de {gamer} apparaîtront dans Mon SOG avant la première."
   },
   "goToDashboard": "Aller à Mon SOG",
   "keepBrowsing": "Continuer à explorer",

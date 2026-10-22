@@ -14,7 +14,7 @@
       "camp": "Sinut on ilmoitettu toimintaan {product}.",
       "event": "Olet liittynyt toimintaan {product}."
     },
-    "nextPlacement": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+    "nextSessions": "Tapaamisesi näkyvät Oma SOG -sivulla ennen ensimmäistä kertaa.",
     "waitlist": {
       "subheading": "Olet jonotuslistalla – {product}."
     }
@@ -30,11 +30,11 @@
     "firstCharge": "{price}, ensimmäinen maksu {date}"
   },
   "email": {
-    "sentTo": "Lähetämme vahvistuksen ja kaikki tiedot osoitteeseen <strong>{email}</strong>.",
-    "sent": "Lähetämme vahvistuksen ja kaikki tiedot sähköpostitse."
+    "sentTo": "Lähetimme vahvistuksen osoitteeseen <strong>{email}</strong>.",
+    "sent": "Vahvistus on lähetetty sähköpostitse."
   },
   "next": {
-    "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla."
+    "sessions": "Tapaamiset näkyvät Oma SOG -sivulla ennen kuin {gamer} aloittaa."
   },
   "goToDashboard": "Siirry Oma SOG -sivulle",
   "keepBrowsing": "Jatka selailua",

@@ -14,7 +14,7 @@
       "camp": "{product} QujmeH ghItlhlu’pu’ SoH.",
       "event": "{product}Daq bIjeSpu’."
     },
-    "nextPlacement": "Gedu tlhej ghomDaq qalanpu’. jIH SOGDaq Qu’mey Dalegh.",
+    "nextSessions": "wa’DIch Qu’ tagh pa’, jIH SOGDaq Qu’meylIj Dalegh.",
     "waitlist": {
       "subheading": "bIloS tetlhDaq: {product}."
     }
@@ -30,11 +30,11 @@
     "firstCharge": "{price}, wa’DIch DIl: {date}"
   },
   "email": {
-    "sentTo": "QIn naQ <strong>{email}</strong>-Daq ghoS.",
-    "sent": "QIn naQ ghoS."
+    "sentTo": "QIn naQ <strong>{email}</strong>-Daq wIngeHpu’.",
+    "sent": "QIn naQ ngeHlu’pu’."
   },
   "next": {
-    "placement": "Gedu tlhej ghomDaq {gamer} wIlanpu’. jIH SOGDaq Qu’mey legh."
+    "sessions": "wa’DIch Qu’ tagh pa’, jIH SOGDaq {gamer} Qu’mey Dalegh."
   },
   "goToDashboard": "jIH SOG yIghoS",
   "keepBrowsing": "yIqIm taH",

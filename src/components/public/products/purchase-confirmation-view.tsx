@@ -4,13 +4,13 @@ import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Bell,
+  CalendarDays,
   CheckCircle2,
   Clock,
   Hourglass,
   Info,
   Loader2,
   Mail,
-  Users,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +50,17 @@ import { Heading } from "@sog/ui";
 //
 // The page server-fetches the participation + product and hands them here, so
 // it paints complete on first load: no client loading state, no layout shift.
+
+// The summary card's picture column, shared by the card and its finalizing
+// ghost so the skeleton is the card's shape. Fixed width, height from the text
+// column beside it, never shorter than a 3:2 thumb at that width.
+const CARD_PICTURE = "min-h-16 w-24 shrink-0 sm:min-h-[75px] sm:w-28";
+
+// "Keep browsing" under the one primary button: a quiet escape hatch in the
+// muted ink the footer's links use, so the page keeps a single act-coloured
+// action. The height and padding give it a full tap target.
+const QUIET_LINK =
+  "inline-flex h-10 items-center rounded-md px-3 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act";
 
 /** Which signup outcome the summary reassures the parent about. */
 export type SignupOutcome = "enrolled" | "waitlisted";
@@ -207,8 +218,8 @@ export function PurchaseConfirmationView({
   const nextLine = isWaitlist
     ? t("waitlist.next")
     : isSelfSeat
-      ? tSelf("nextPlacement")
-      : t("next.placement", { gamer: participant });
+      ? tSelf("nextSessions")
+      : t("next.sessions", { gamer: participant });
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-12">
@@ -229,17 +240,19 @@ export function PurchaseConfirmationView({
           <p className="mt-1 text-muted-foreground">{subheading}</p>
         </div>
 
-        <Card className="mt-6">
-          <CardContent className="flex gap-4 p-4">
-            {/* The picture at the 3:2 crop the browse card and the detail hero
-                paint — the photograph the parent clicked — as a fixed inline
-                thumb, so it identifies the product without growing the card. */}
+        <Card className="mt-6 overflow-hidden">
+          <CardContent className="flex p-0">
+            {/* The photograph the parent clicked, flush down the card's left
+                edge and as tall as the text beside it, so it identifies the
+                product without leaving dead card under a short thumb. The
+                card's own corners clip it. */}
             <ProductBanner
               src={catalogueImageSrc("product", product.image_path)}
-              className="w-24 shrink-0 self-start rounded-lg"
-              sizes="96px"
+              className={CARD_PICTURE}
+              sizes="(min-width: 640px) 112px, 96px"
+              fillHeight
             />
-            <div className="min-w-0 text-sm">
+            <div className="min-w-0 flex-1 p-4 text-sm">
               <p className="font-semibold">{productName}</p>
               <div className="mt-1 space-y-0.5 text-muted-foreground">
                 {scheduleLines.map((line, idx) => (
@@ -274,7 +287,7 @@ export function PurchaseConfirmationView({
             {isWaitlist ? (
               <Bell className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             ) : (
-              <Users className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             )}
             <span className="min-w-0">{nextLine}</span>
           </li>
@@ -292,7 +305,7 @@ export function PurchaseConfirmationView({
           </Link>
           <Link
             href={ROUTES.shop}
-            className={buttonVariants({ variant: "link" })}
+            className={QUIET_LINK}
           >
             {t("keepBrowsing")}
           </Link>
@@ -427,10 +440,10 @@ export function PurchaseConfirmationNotice({
           <>
             {/* Ghosts shaped like the summary card that replaces them: the
                 picture and the lines beside it. */}
-            <Card className="mt-6">
-              <CardContent className="flex gap-4 p-4">
-                <div className="aspect-[3/2] w-24 shrink-0 animate-pulse rounded-lg bg-lifted" />
-                <div className="min-w-0 flex-1 space-y-2">
+            <Card className="mt-6 overflow-hidden">
+              <CardContent className="flex p-0">
+                <div className={`${CARD_PICTURE} animate-pulse bg-lifted`} />
+                <div className="min-w-0 flex-1 space-y-2 p-4">
                   <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
                   <div className="h-3 animate-pulse rounded bg-lifted" />
                   <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
@@ -473,7 +486,7 @@ export function PurchaseConfirmationNotice({
               </Link>
               <Link
                 href={ROUTES.shop}
-                className={buttonVariants({ variant: "link" })}
+                className={QUIET_LINK}
               >
                 {t("keepBrowsing")}
               </Link>
@@ -506,7 +519,7 @@ export function PurchaseConfirmationFallback() {
             </Link>
             <Link
               href={ROUTES.shop}
-              className={buttonVariants({ variant: "link" })}
+              className={QUIET_LINK}
             >
               {t("keepBrowsing")}
             </Link>

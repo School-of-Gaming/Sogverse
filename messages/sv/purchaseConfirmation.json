@@ -14,7 +14,7 @@
       "camp": "Du är anmäld till {product}.",
       "event": "Du har gått med i {product}."
     },
-    "nextPlacement": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
+    "nextSessions": "Dina tillfällen visas under Min SOG före det första.",
     "waitlist": {
       "subheading": "Du står på väntelistan för {product}."
     }
@@ -30,11 +30,11 @@
     "firstCharge": "{price}, första betalningen den {date}"
   },
   "email": {
-    "sentTo": "En bekräftelse med alla detaljer är på väg till <strong>{email}</strong>.",
-    "sent": "En bekräftelse med alla detaljer är på väg via e-post."
+    "sentTo": "Vi har skickat ett bekräftelsemejl till <strong>{email}</strong>.",
+    "sent": "Ett bekräftelsemejl har skickats."
   },
   "next": {
-    "placement": "Vi placerar {gamer} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG."
+    "sessions": "Tillfällena för {gamer} visas under Min SOG före det första."
   },
   "goToDashboard": "Gå till Min SOG",
   "keepBrowsing": "Fortsätt bläddra",
