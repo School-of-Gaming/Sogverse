@@ -62,29 +62,22 @@ import type { ProductTopic, ProductType } from "@/types";
  * seat and therefore no first session — and on both copies, because the guide
  * is one text written to read the same to a parent and to a gamer.
  *
- * **The four places the mail deliberately differs from the page**, each because
- * the medium differs rather than because the copy drifted:
+ * **What the mail does because it is a mail:**
  *
- *   - It closes by inviting a reply, which is an affordance rather than a fact:
- *     a mail can be answered and a page cannot. The line is true because this
- *     send's Reply-To is the support inbox, so it goes wherever that does.
- *   - It carries an `invite.ics`, and says nothing about it. The page has
- *     nothing to attach; the mail has nothing to announce, because a client
- *     that can act on the file renders the invitation itself and a sentence
- *     underneath would be narrating the attachment list to somebody already
- *     looking at it.
+ *   - It closes by inviting a reply: a mail can be answered and a page cannot.
+ *     The line is true because this send's Reply-To is the support inbox, so
+ *     it goes wherever that does.
+ *   - It carries an `invite.ics`, and says nothing about it: a client that can
+ *     act on the file renders the invitation itself, and a sentence underneath
+ *     would be narrating the attachment list to somebody already looking at it.
  *   - It states the schedule in the *product's* own zone and always appends
  *     that zone's short abbrev to the time-bearing line, because a mail has no
- *     viewer zone: the page reads one from the signed-in profile, renders the
- *     clock faces in it, and appends the same abbrev only where the two zones
- *     differ. Same lines, same formatter, one option.
- *   - It drops the waitlist position, and it prints no product picture. A queue
- *     number frozen into an inbox goes stale the moment somebody ahead drops
- *     out and a parent cannot tell a stale one from a live one; the picture is
- *     the image rule's doing and is explained where the summary is built.
- *
- * The language fact is the small one: the page shows a flag chip and a code,
- * which a mail has no component for, so the mail names the language instead.
+ *     viewer zone — parents store none, so the reader could not otherwise tell
+ *     which zone the times are in. Same formatter as every other surface, one
+ *     option.
+ *   - It states no waitlist position: a queue number frozen into an inbox goes
+ *     stale the moment somebody ahead drops out, and a parent cannot tell a
+ *     stale one from a live one.
  *
  * **The child's own copy is the same mail with the parent's half taken out.**
  * When a child holds a mailbox of their own they receive their own render
@@ -542,22 +535,15 @@ export function buildProductConfirmationEmail(
     ? paragraph(t("productConfirmation.gamer.greeting", { participantName: name }))
     : "";
 
-  // **One facts list, and it is the whole middle of the mail.** What the page
-  // lays out as two cards — the order summary, then "Good to know" — is one run
-  // of rows here, in the order a parent needs them: what they joined, who it is
-  // for, when and where it happens, and what it costs. Two boxed cards was the
-  // page's arrangement rather than the mail's, and on a phone each one spent
-  // its own border and padding out of a column that had none to give.
+  // **One facts list, and it is the whole middle of the mail**, in the order a
+  // parent needs them: what they joined, who it is for, when and where it
+  // happens, and what it costs. One run of rows rather than boxed cards,
+  // because on a phone each box would spend its own border and padding out of
+  // a column that has none to give.
   //
-  // **No picture, and that is the image rule rather than an omission.** A mail
-  // cannot paint the product's photograph, because an image's box here has to be arithmetic from dimensions the sender
-  // already holds, and there are none: `catalogue_images` stores no size, and
-  // entries uploaded before sizes were enforced may be any size and `webp` or
-  // `avif`, neither of which Outlook's desktop engine renders. A fixed 96×64
-  // box would stretch a portrait and a width-only `<img>`
-  // would reserve nothing and reflow the mail when it loaded. So the row is the
-  // type and the name alone, which leaves no hole — the picture was never
-  // carrying a fact the two lines beside it do not.
+  // **No picture yet** — not ruled out, simply not built
+  // (`src/lib/email-templates/CLAUDE.md`). So the row is the type and the name
+  // alone, which leaves no hole.
   const factRows: [string, string][] = [
     [t(`productConfirmation.typeLabel.${productType}`), product],
     [

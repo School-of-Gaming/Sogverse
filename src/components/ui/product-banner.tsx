@@ -4,8 +4,9 @@ import { FramedImage } from "./framed-image";
  * **The 3:2 product picture, cropped — the only product-image presentation.**
  *
  * One stored file, one ratio, every surface — family-facing and admin alike:
- * the browse card's media block, the detail page's hero, the admin product
- * list rows and the admin product page all paint the product's picture through here. That universality
+ * the browse card's media block, the detail page's hero, the purchase
+ * confirmation's summary card, the admin product list rows and the admin
+ * product page all paint the product's picture through here. That universality
  * is an owner rule (2026-08-12), and the admin half of it is the half with the
  * reasoning worth keeping: the admin surfaces are how admins see and think
  * about products, so a thumb cropped differently from the shop has an admin
@@ -25,8 +26,9 @@ import { FramedImage } from "./framed-image";
  *
  * **Lazy by default, eager by request.** A storefront section trio can put
  * dozens of banners on one page, so the banner lazy-loads by default and the
- * one caller whose banner is reliably above the fold — the detail page's hero
- * — opts into `eager`.
+ * callers whose banner is reliably above the fold — the detail page's hero and
+ * the purchase confirmation's summary card, a page built to fit on the first
+ * screen — opt into `eager`.
  */
 export function ProductBanner({
   src,

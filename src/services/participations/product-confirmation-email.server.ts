@@ -411,7 +411,7 @@ async function send({
         : await resolvePriceAmount(client, { productId, mode, currency, locale }),
       // Only a deferred subscription has one, and only the Stripe webhook knows
       // it — see the input's own note. Rendered through the same rule the
-      // confirmation page renders it with, in the product's zone, because a mail
+      // signup panel states it with, in the product's zone, because a mail
       // has no viewer zone to project a clamped instant into. The child's copy
       // states no billing bullet at all, so it composes none.
       firstChargeDate:

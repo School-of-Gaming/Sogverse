@@ -41,9 +41,8 @@ import type { TopicPrepPlan } from "@/lib/products/topics";
  * the header and the footer are fixed to its ends, and the guide is what moves
  * between them.
  *
- * It draws no heading of its own — the dialog's title already says those exact
- * words, and `TopicPrepContent` takes that as a prop precisely so a surface
- * that has said them does not say them twice.
+ * The guide body draws no heading of its own — `TopicPrepContent` never
+ * does — so the dialog's title is the one place the words are said.
  *
  * Nothing about the card underneath reaches this: the dialog primitive portals
  * to `document.body`, so a click inside it cannot land on the stretched anchor

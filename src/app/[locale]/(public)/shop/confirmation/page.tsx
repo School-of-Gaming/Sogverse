@@ -21,6 +21,7 @@ import type {
   ParticipationConfirmation,
 } from "@/services/participations/participations.service";
 import type { AppSupabaseClient, ProductBrowseRow } from "@/types";
+import { confirmationRecipientEmail } from "./confirmation-recipient";
 
 // Post-signup summary page, reached two ways.
 //
@@ -218,17 +219,14 @@ async function renderConfirmation(
 
   if (!product) return <PurchaseConfirmationFallback />;
 
-  // Where the confirmation email went: the payer's own address, which is the
-  // recipient the mail is always sent to. Only the payer can read it — RLS
-  // lets a profile read itself — so it is the signed-in profile's address when
-  // that profile is the payer, and nothing otherwise. The profile read is the
-  // one the root layout already made this render (`cache()`), so it costs no
-  // round trip.
+  // Where the confirmation email went — whose address may be shown is the
+  // helper's rule. The profile read is the one the root layout already made
+  // this render (`cache()`), so it costs no round trip.
   const viewer = await getUserWithProfile();
-  const recipientEmail =
-    viewer?.profile?.id === confirmation.customerId
-      ? viewer.profile.email
-      : null;
+  const recipientEmail = confirmationRecipientEmail(
+    viewer?.profile,
+    confirmation.customerId,
+  );
 
   return (
     <PurchaseConfirmationView
