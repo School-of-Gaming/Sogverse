@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 
 /**
  * The name rules every registration form holds a parent or a Gedu to, as
@@ -37,6 +37,11 @@ export function useNameSchemaFields() {
  * The two halves of one name, side by side from `sm` and stacked below it: a
  * first and last name are one answer split in two, and a wide card that runs
  * them down the middle wastes the width the card was widened for.
+ *
+ * Required by default, as every registration form asks; `optional` marks both
+ * halves optional for a form that only invites a name. `idPrefix` keeps the
+ * inputs' ids unique on a page that can draw the fields more than once, and
+ * the length caps default to an account's display-name limit.
  */
 export function NameFields({
   firstLabel,
@@ -48,6 +53,10 @@ export function NameFields({
   setFirstName,
   setLastName,
   disabled,
+  optional = false,
+  idPrefix = "",
+  firstMaxLength = DISPLAY_NAME_MAX,
+  lastMaxLength = DISPLAY_NAME_MAX,
 }: {
   firstLabel: string;
   lastLabel: string;
@@ -58,32 +67,38 @@ export function NameFields({
   setFirstName: (value: string) => void;
   setLastName: (value: string) => void;
   disabled: boolean;
+  optional?: boolean;
+  idPrefix?: string;
+  firstMaxLength?: number;
+  lastMaxLength?: number;
 }) {
+  const firstId = `${idPrefix}firstName`;
+  const lastId = `${idPrefix}lastName`;
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <Field label={firstLabel} htmlFor="firstName">
+      <Field label={firstLabel} htmlFor={firstId} optional={optional}>
         <Input
-          id="firstName"
+          id={firstId}
           type="text"
           placeholder={firstPlaceholder}
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           disabled={disabled}
-          required
-          maxLength={DISPLAY_NAME_MAX}
+          required={!optional}
+          maxLength={firstMaxLength}
           autoComplete="given-name"
         />
       </Field>
-      <Field label={lastLabel} htmlFor="lastName">
+      <Field label={lastLabel} htmlFor={lastId} optional={optional}>
         <Input
-          id="lastName"
+          id={lastId}
           type="text"
           placeholder={lastPlaceholder}
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           disabled={disabled}
-          required
-          maxLength={DISPLAY_NAME_MAX}
+          required={!optional}
+          maxLength={lastMaxLength}
           autoComplete="family-name"
         />
       </Field>

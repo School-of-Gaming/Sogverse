@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CreditCard, ExternalLink, Info, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { StatusLine } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,11 +11,13 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { BillingService, type BillingAccount } from "@/services/billing";
+import {
+  BillingService,
+  type BillingAccount,
+} from "@/services/billing/billing.service";
 
 /** One portal button's worth of already-localized copy. */
 export interface BillingAccountSummary {
@@ -68,10 +71,12 @@ export function ManageBillingCardView({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          {t("title")}
-        </CardTitle>
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5" aria-hidden />
+          <Heading level={3} step="card-title">
+            {t("title")}
+          </Heading>
+        </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center gap-3 py-6">

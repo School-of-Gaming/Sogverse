@@ -1,4 +1,4 @@
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 
 /**

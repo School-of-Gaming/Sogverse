@@ -3,17 +3,19 @@
 import { useState } from "react";
 import { Link, getPathname } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { z } from "zod";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+import { ROUTES } from "@/lib/constants/routes";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth, useUtm } from "@/providers";
@@ -228,7 +230,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
     // stops the narrower of the two reading as an older screen.
     <Card className="w-full max-w-2xl">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">{t('register.title')}</CardTitle>
+        <Heading level={1} step="section" align="center">{t('register.title')}</Heading>
         <CardDescription className="text-center">
           {t('register.description')}
         </CardDescription>

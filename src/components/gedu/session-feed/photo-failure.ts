@@ -3,7 +3,7 @@ import { NormalizeImageError } from "@/lib/images/normalize-image";
 import {
   isSessionPhotoErrorCode,
   type SessionPhotoErrorCode,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 /**
  * Which of the feature's stable refusal codes a caught photo failure is.

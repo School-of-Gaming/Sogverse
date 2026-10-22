@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enHelpSection from "@/../messages/en/helpSection.json";
+import enCommon from "@/../messages/en/common.json";
 import { HelpRequestCardView } from "@/components/help/help-request-card-view";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
+
+const messages = { helpSection: enHelpSection, common: enCommon };
 
 /**
  * **The support address is in the form's lead paragraph for an adult and

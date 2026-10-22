@@ -1,0 +1,11 @@
+{
+  "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
+  "contact": {
+    "email": "Sähköposti: {email}"
+  },
+  "privacy": "Tietosuojaseloste",
+  "terms": "Käyttöehdot",
+  "antiBullying": "Kiusaamisen ehkäisy",
+  "attributions": "Lähteet ja lisenssit",
+  "privacyChoices": "Yksityisyysvalinnat"
+}

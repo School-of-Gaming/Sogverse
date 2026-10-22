@@ -19,11 +19,15 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useLocationsByIds } from "@/services/locations";
-import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import {
+  useGeduLocations,
+  useSetGeduLocations,
+} from "@/services/gedu-locations/gedu-locations.queries";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { CoverageAreasField } from "./coverage-areas-field";
 import {
@@ -119,7 +123,7 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
+        <Heading level={2} step="card-title">{t("title")}</Heading>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("remoteOnlyNote")}</p>

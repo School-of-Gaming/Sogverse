@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/navigation";
 import { UserCog, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +16,8 @@ import type {
 } from "@/components/family/enrollment-rollup";
 import { ParentHelpFaq } from "@/components/help/help-faq";
 import type { SeatOfferRespondResponse } from "@/services/participations/seat-offer.contracts";
-import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * One person's section, with everything they are signed up for. Enrollments
@@ -231,8 +233,12 @@ export function ParentDashboardPageBody({
    * carrying it, and it is required so a surface cannot forget to answer.
    */
   prepDismissed: ReadonlySet<string>;
-  /** The Stripe portal card. A node, so the shell owns its actions. */
-  billingCard: React.ReactNode;
+  /**
+   * The Stripe portal card. A node, so the shell owns its actions. `null`
+   * means no billing section at all — heading, pill entry and card — which is
+   * what a parent with no billing account yet meets.
+   */
+  billingCard: React.ReactElement | null;
   /**
    * The help form. A node for the same reason the billing card is one: it is a
    * self-contained panel with a backend action behind it, and nothing about this
@@ -327,7 +333,7 @@ export function ParentDashboardPageBody({
 
   // With no children yet, the empty state is still a *section* — "Gamers",
   // with its own pill entry — rather than a card floating unattached while the
-  // scroll-spy highlights Billing beneath it. The moment the first child is
+  // scroll-spy highlights the section beneath it. The moment the first child is
   // added, the heading becomes their name and the pill follows; a one-time
   // renaming the parent themselves just caused.
   const gamerSections: DashboardSection[] =
@@ -359,7 +365,7 @@ export function ParentDashboardPageBody({
             truncateLabel: true,
           },
         ]),
-    { id: "billing", label: t("billing") },
+    ...(billingCard === null ? [] : [{ id: "billing", label: t("billing") }]),
     { id: "help", label: t("help") },
   ];
 
@@ -371,7 +377,9 @@ export function ParentDashboardPageBody({
           server-only (stripped before the client provider), and page copy
           belongs in a page namespace regardless — `metadata` names documents,
           not headings. */}
-      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <Heading level={1} step="section" srOnly>
+        {t("pageTitle")}
+      </Heading>
 
       {/* The pill names the page rather than any one section: with the heading
           set varying per family, borrowing the first section's label would make
@@ -398,12 +406,13 @@ export function ParentDashboardPageBody({
             className="scroll-mt-32"
           >
             <div className="mx-auto max-w-3xl space-y-6">
-              <h2
+              <Heading
+                level={2}
+                step="section"
                 id={`${EMPTY_GAMERS_SECTION_ID}-heading`}
-                className="text-3xl font-bold"
               >
                 {t("myGamers")}
-              </h2>
+              </Heading>
               <NoGamersCard onAddGamer={onAddGamer} />
             </div>
           </section>
@@ -434,12 +443,15 @@ export function ParentDashboardPageBody({
                     <Avatar className="h-10 w-10 shrink-0">
                       <Identicon id={gamer.id} size={40} />
                     </Avatar>
-                    <h2
-                      id={`${gamerSectionId(gamer)}-heading`}
-                      className="min-w-0 break-words text-3xl font-bold"
-                    >
-                      {gamer.firstName}
-                    </h2>
+                    <div className="min-w-0 break-words">
+                      <Heading
+                        level={2}
+                        step="section"
+                        id={`${gamerSectionId(gamer)}-heading`}
+                      >
+                        {gamer.firstName}
+                      </Heading>
+                    </div>
                     {/* The identity page — name, game accounts. An outline
                         button, not a ghost one: this is a mobile-first surface
                         and ghost affordances are hover-discovered, so on touch
@@ -566,12 +578,15 @@ export function ParentDashboardPageBody({
                 <Avatar className="h-10 w-10 shrink-0">
                   <Identicon id={self.id} size={40} />
                 </Avatar>
-                <h2
-                  id={`${SELF_SECTION_ID}-heading`}
-                  className="min-w-0 break-words text-3xl font-bold"
-                >
-                  {self.firstName}
-                </h2>
+                <div className="min-w-0 break-words">
+                  <Heading
+                    level={2}
+                    step="section"
+                    id={`${SELF_SECTION_ID}-heading`}
+                  >
+                    {self.firstName}
+                  </Heading>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -605,18 +620,20 @@ export function ParentDashboardPageBody({
           </section>
         )}
 
-        <section
-          id="billing"
-          aria-labelledby="billing-heading"
-          className="scroll-mt-32"
-        >
-          <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="billing-heading" className="text-3xl font-bold">
-              {t("billing")}
-            </h2>
-            {billingCard}
-          </div>
-        </section>
+        {billingCard !== null && (
+          <section
+            id="billing"
+            aria-labelledby="billing-heading"
+            className="scroll-mt-32"
+          >
+            <div className="mx-auto max-w-3xl space-y-6">
+              <Heading level={2} step="section" id="billing-heading">
+                {t("billing")}
+              </Heading>
+              {billingCard}
+            </div>
+          </section>
+        )}
 
         {/* Help — the same two pieces every role's section is made
             of, in the same order: the message form, and the role's own FAQ
@@ -634,9 +651,9 @@ export function ParentDashboardPageBody({
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 id="help-heading" className="text-3xl font-bold">
+            <Heading level={2} step="section" id="help-heading">
               {h("heading")}
-            </h2>
+            </Heading>
             {helpForm}
             <ParentHelpFaq />
           </div>

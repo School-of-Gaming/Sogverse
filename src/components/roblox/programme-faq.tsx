@@ -6,8 +6,9 @@ import {
   type FaqAccordionItem,
 } from "@/components/ui/faq-accordion";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
+import { Heading } from "@sog/ui";
 
 /**
  * The Programme's questions and answers, in the order Lynx Educate signed them
@@ -124,11 +125,11 @@ export function ProgrammeFaq() {
     <section className="bg-card py-16 sm:py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">
+          <Heading level={2} step="display" align="center">
             {t("heading")}
-          </h2>
+          </Heading>
           <div className="mt-12">
-            <FaqAccordion items={items} />
+            <FaqAccordion items={items} questionLevel={3} />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
@@ -59,32 +59,6 @@ export function landingPagePath(
 /** The page's path at each locale, as the canonical and `hreflang` rule reads it. */
 export function landingPagePaths(page: AddressableLandingPage): TranslatedPagePath {
   return (locale) => landingPagePath(page, locale);
-}
-
-/**
- * The query parameter on a landing page's address that says the reader has
- * just confirmed an email sign-up: the double opt-in's confirmation link
- * brings them back with it, and the sign-up section then thanks them in
- * place of its form.
- */
-export const LANDING_SUBSCRIBED_PARAM = "subscribed";
-
-/** The id a sign-up section's element carries, so an address can scroll to it. */
-export function landingSubscribeAnchor(sectionId: string): string {
-  return `signup-${sectionId}`;
-}
-
-/**
- * Where a reader lands after confirming an email sign-up made on this page:
- * the page in `locale`, saying they confirmed, scrolled to the section they
- * signed up from. A path — the caller puts it on a trusted origin.
- */
-export function landingPageSubscribedPath(
-  page: AddressableLandingPage,
-  locale: SupportedLocale,
-  sectionId: string,
-): string {
-  return `${landingPagePath(page, locale)}?${LANDING_SUBSCRIBED_PARAM}=1#${landingSubscribeAnchor(sectionId)}`;
 }
 
 /**

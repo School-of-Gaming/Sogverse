@@ -1,29 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { KLAVIYO_REVISION } from "@/lib/klaviyo";
 import type { LandingSection } from "@/lib/landing-pages/sections";
 import type { PublishedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
 
 /**
- * **A landing page's email sign-up, end to end through the route.** A public
- * form a stranger controls, whose one power is making Brevo mail a
- * confirmation to whatever address it is handed. So what is pinned is the
- * shape of that power: a bot's honeypot fill costs nothing and learns nothing,
- * the rate limit stands in front of Brevo, a new and a known address get the
- * same answer, the UTM values reach Brevo only under marketing consent, the
- * payload is exactly Brevo's double opt-in contract with a confirmation link
- * on the trusted origin, and a misconfigured deployment refuses rather than
- * swallowing sign-ups.
+ * **A landing page's email sign-up, end to end through the route and the
+ * Klaviyo client.** A public form a stranger controls, whose one power is
+ * putting whatever address it is handed on the newsletter list. So what is
+ * pinned is the shape of that power: a bot's honeypot fill costs nothing and
+ * learns nothing, a new and a known address get the same answer, the UTM
+ * values reach Klaviyo only under marketing consent, the two calls are exactly
+ * Klaviyo's profile-import and subscribe contracts carrying nothing beyond
+ * what the owner ruled, any Klaviyo refusal or timeout is a generic 502 whose
+ * logs never carry the address, and a
+ * misconfigured deployment refuses rather than swallowing sign-ups.
  */
-
-const mockAllowance = vi.fn();
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: () => ({
-    rpc: (fn: string, args: Record<string, unknown>) => {
-      if (fn === "take_landing_signup_allowance") return mockAllowance(args);
-      throw new Error(`Unexpected rpc in admin mock: ${fn}`);
-    },
-  }),
-}));
 
 vi.mock("@/lib/supabase/anon", () => ({ createAnonClient: () => ({}) }));
 
@@ -36,22 +28,14 @@ vi.mock("@/services/landing-pages/landing-pages.service", () => ({
   },
 }));
 
-const mockCreateDoubleOptInContact = vi.fn();
-vi.mock("@/lib/brevo", () => ({
-  createDoubleOptInContact: (...args: unknown[]) => mockCreateDoubleOptInContact(...args),
-}));
-
-// The confirmation link names the page's own address in its locale, so the
-// real navigation is taken over the shared setup's locale-blind mock.
-vi.unmock("@/i18n/navigation");
-vi.unmock("next/navigation");
-
 const { POST } = await import("@/app/api/landing-pages/subscribe/route");
 
 const PAGE = "3f1c2a7e-8d4b-4e59-9a61-0b7c5d2e8f13";
 const HERO = "9d39dd23-2b00-43f4-a0f5-af63bd58ad67";
 const FORM = "5b0a3f0e-1c55-4c43-8d2e-6a7f3f0f2a90";
 const CTA = "0b3c6f52-6d0e-4b8e-9f0c-1f4e8e9c1a21";
+const KEY = "pk_test_landing";
+const LIST = "Y6nRLr";
 
 const SECTIONS: LandingSection[] = [
   { id: HERO, type: "hero" },
@@ -79,6 +63,7 @@ const VALID = {
   locale: "fi",
   email: " Aino@Example.com ",
   firstName: " Aino ",
+  lastName: " Virtanen ",
   consent: true,
   website: "",
   utm: { source: "newsletter", campaign: "autumn" },
@@ -91,81 +76,133 @@ function consentCookie(marketing: boolean): string {
   return `${CONSENT_COOKIE_NAME}=${value}`;
 }
 
-function request(
-  body: unknown,
-  headers: Record<string, string> = {},
-): Request {
+function request(body: unknown, headers: Record<string, string> = {}): Request {
   return new Request("http://localhost:3000/api/landing-pages/subscribe", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-forwarded-for": "203.0.113.7, 10.0.0.1",
-      ...headers,
-    },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
 }
 
-/** What the route handed Brevo, from the one call it should have made. */
-function sentToBrevo(): {
-  email: string;
-  attributes: Record<string, unknown>;
-  listIds: number[];
-  templateId: number;
-  redirectionUrl: string;
-} {
-  expect(mockCreateDoubleOptInContact).toHaveBeenCalledTimes(1);
-  return mockCreateDoubleOptInContact.mock.calls[0][0];
+const mockFetch = vi.fn<(url: string, init: RequestInit) => Promise<Response>>();
+
+function klaviyoAnswers(...statuses: number[]) {
+  for (const status of statuses) {
+    mockFetch.mockResolvedValueOnce(
+      new Response(status === 202 ? null : JSON.stringify({ data: {} }), { status }),
+    );
+  }
+}
+
+interface SentCall {
+  url: string;
+  headers: Record<string, string>;
+  body: { data: Record<string, unknown> & { attributes: Record<string, unknown> } };
+}
+
+/** The calls the route made to Klaviyo, in order. */
+function sentToKlaviyo(): SentCall[] {
+  return mockFetch.mock.calls.map(([url, init]) => ({
+    url,
+    headers: Object.fromEntries(new Headers(init.headers)),
+    body: JSON.parse(String(init.body)),
+  }));
+}
+
+/** The profile attributes the profile-import call carried. */
+function profileSent(): Record<string, unknown> {
+  return sentToKlaviyo()[0].body.data.attributes;
 }
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
-  vi.stubEnv("BREVO_SIGNUP_LIST_ID", "12");
-  vi.stubEnv("BREVO_SIGNUP_DOI_TEMPLATE_ID", "34");
-  vi.stubEnv("BREVO_SIGNUP_DOI_TEMPLATE_ID_FI", "");
-  mockAllowance.mockReset().mockResolvedValue({ data: true, error: null });
+  vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", KEY);
+  vi.stubEnv("KLAVIYO_NEWSLETTER_LIST_ID", LIST);
   mockGetPublishedPage.mockReset().mockResolvedValue(livePage());
-  mockCreateDoubleOptInContact.mockReset().mockResolvedValue(undefined);
+  mockFetch.mockReset();
+  klaviyoAnswers(201, 202);
+  vi.stubGlobal("fetch", mockFetch);
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 describe("POST /api/landing-pages/subscribe", () => {
-  it("hands Brevo the double opt-in: the address, the list, the template and the way back", async () => {
+  it("upserts the profile, then subscribes it to the list", async () => {
     const response = await POST(request(VALID, { cookie: consentCookie(true) }));
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
-    const sent = sentToBrevo();
-    expect(sent.email).toBe("aino@example.com");
-    expect(sent.listIds).toEqual([12]);
-    expect(sent.templateId).toBe(34);
-    // The page in its locale, on the trusted origin, at the form it came from.
-    expect(sent.redirectionUrl).toBe(
-      `https://sog.test/fi/tutustu/espoon-kerhot?subscribed=1#signup-${FORM}`,
-    );
-    expect(sent.attributes).toEqual({
-      FIRSTNAME: "Aino",
-      SIGNUP_PAGE: "espoon-kerhot",
-      SIGNUP_PAGE_ID: PAGE,
-      SIGNUP_LOCALE: "fi",
-      UTM_SOURCE: "newsletter",
-      UTM_CAMPAIGN: "autumn",
+
+    const [profile, subscribe] = sentToKlaviyo();
+    for (const call of [profile, subscribe]) {
+      expect(call.headers).toMatchObject({
+        authorization: `Klaviyo-API-Key ${KEY}`,
+        revision: KLAVIYO_REVISION,
+        "content-type": "application/vnd.api+json",
+        accept: "application/vnd.api+json",
+      });
+    }
+
+    expect(profile.url).toBe("https://a.klaviyo.com/api/profile-import");
+    expect(profile.body).toEqual({
+      data: {
+        type: "profile",
+        attributes: {
+          email: "aino@example.com",
+          first_name: "Aino",
+          last_name: "Virtanen",
+          locale: "fi",
+          properties: {
+            landing_page_id: PAGE,
+            utm_source: "newsletter",
+            utm_campaign: "autumn",
+          },
+        },
+      },
+    });
+
+    expect(subscribe.url).toBe("https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs");
+    expect(subscribe.body).toEqual({
+      data: {
+        type: "profile-subscription-bulk-create-job",
+        attributes: {
+          custom_source: expect.any(String),
+          profiles: {
+            data: [
+              {
+                type: "profile",
+                attributes: {
+                  email: "aino@example.com",
+                  subscriptions: { email: { marketing: { consent: "SUBSCRIBED" } } },
+                },
+              },
+            ],
+          },
+        },
+        relationships: { list: { data: { type: "list", id: LIST } } },
+      },
     });
   });
 
-  it("builds the way back on the trusted origin, never a spoofed Host", async () => {
-    await POST(request(VALID, { host: "evil.example" }));
-    expect(sentToBrevo().redirectionUrl.startsWith("https://sog.test/")).toBe(true);
+  it.each([
+    ["absent", { firstName: undefined, lastName: undefined }],
+    ["blank", { firstName: "", lastName: "   " }],
+  ])("accepts %s names and leaves them out of the profile", async (_, names) => {
+    const response = await POST(request({ ...VALID, ...names }));
+    expect(response.status).toBe(200);
+    const profile = profileSent();
+    expect(profile).not.toHaveProperty("first_name");
+    expect(profile).not.toHaveProperty("last_name");
   });
 
-  it("leaves the first name out when none was given", async () => {
-    await POST(request({ ...VALID, firstName: "  " }));
-    expect(sentToBrevo().attributes).not.toHaveProperty("FIRSTNAME");
+  it("sends only the name that was given", async () => {
+    await POST(request({ ...VALID, lastName: undefined }));
+    expect(profileSent()).toMatchObject({ first_name: "Aino" });
+    expect(profileSent()).not.toHaveProperty("last_name");
   });
 
   it.each([
@@ -173,8 +210,9 @@ describe("POST /api/landing-pages/subscribe", () => {
     ["marketing refused", { cookie: consentCookie(false) }],
   ])("sends no UTM values with %s", async (_, headers) => {
     await POST(request(VALID, headers));
-    const { attributes } = sentToBrevo();
-    expect(Object.keys(attributes).filter((name) => name.startsWith("UTM_"))).toEqual([]);
+    expect(profileSent().properties).toEqual({
+      landing_page_id: PAGE,
+    });
   });
 
   it("drops a UTM value the shared sanitiser refuses, keeping the others", async () => {
@@ -184,67 +222,45 @@ describe("POST /api/landing-pages/subscribe", () => {
         { cookie: consentCookie(true) },
       ),
     );
-    const { attributes } = sentToBrevo();
-    expect(attributes).toMatchObject({ UTM_MEDIUM: "email" });
-    expect(attributes).not.toHaveProperty("UTM_SOURCE");
-  });
-
-  it("uses the locale's own confirmation template where one is set", async () => {
-    vi.stubEnv("BREVO_SIGNUP_DOI_TEMPLATE_ID_FI", "56");
-    await POST(request(VALID));
-    expect(sentToBrevo().templateId).toBe(56);
+    const properties = profileSent().properties;
+    expect(properties).toMatchObject({ utm_medium: "email" });
+    expect(properties).not.toHaveProperty("utm_source");
   });
 
   it("answers a known address exactly as a new one", async () => {
-    // Brevo answers 201 and 204; its client resolves both alike.
+    // Klaviyo answers 201 for a new profile and 200 for one it holds.
+    klaviyoAnswers(200, 202);
     const first = await POST(request(VALID));
     const second = await POST(request(VALID));
+    expect(first.status).toBe(200);
     expect(first.status).toBe(second.status);
     expect(await first.json()).toEqual(await second.json());
   });
 
   describe("the honeypot", () => {
-    it("answers a filled one as a success, sending and counting nothing", async () => {
+    it("answers a filled one as a success, sending nothing", async () => {
       const response = await POST(request({ ...VALID, website: "https://spam.example" }));
       expect(response.status).toBe(200);
       expect(await response.json()).toEqual({ success: true });
-      expect(mockCreateDoubleOptInContact).not.toHaveBeenCalled();
-      expect(mockAllowance).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
       expect(mockGetPublishedPage).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("the rate limit", () => {
-    it("charges the requesting address, hashed, before Brevo is called", async () => {
-      await POST(request(VALID));
-      const { p_client_key: key } = mockAllowance.mock.calls[0][0];
-      expect(key).toMatch(/^[0-9a-f]{64}$/);
-      expect(key).not.toContain("203.0.113.7");
-
-      await POST(request(VALID, { "x-forwarded-for": "198.51.100.1" }));
-      expect(mockAllowance.mock.calls[1][0].p_client_key).not.toBe(key);
-    });
-
-    it("refuses with 429 once spent, and Brevo is not called", async () => {
-      mockAllowance.mockResolvedValue({ data: false, error: null });
-      const response = await POST(request(VALID));
-      expect(response.status).toBe(429);
-      expect(await response.json()).toMatchObject({ code: "RATE_LIMITED" });
-      expect(mockCreateDoubleOptInContact).not.toHaveBeenCalled();
     });
   });
 
   describe("refusals", () => {
     it.each([
       ["no consent", { ...VALID, consent: false }],
+      ["consent sent as a string", { ...VALID, consent: "true" }],
       ["not an address", { ...VALID, email: "aino" }],
       ["our internal domain", { ...VALID, email: "aino@gamer.sogverse.internal" }],
+      ["a first name over the length cap", { ...VALID, firstName: "A".repeat(101) }],
+      ["a last name over the length cap", { ...VALID, lastName: "V".repeat(101) }],
       ["a locale we do not ship", { ...VALID, locale: "de" }],
       ["a page id that is not an id", { ...VALID, pageId: "espoo" }],
     ])("answers 400 to %s", async (_, body) => {
       const response = await POST(request(body));
       expect(response.status).toBe(400);
-      expect(mockCreateDoubleOptInContact).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -258,30 +274,81 @@ describe("POST /api/landing-pages/subscribe", () => {
       mockGetPublishedPage.mockResolvedValue(page);
       const response = await POST(request(VALID));
       expect(response.status).toBe(404);
-      expect(mockCreateDoubleOptInContact).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("refuses every sign-up while the list or template is not configured, saying which", async () => {
-      vi.stubEnv("BREVO_SIGNUP_LIST_ID", "");
-      vi.stubEnv("BREVO_SIGNUP_DOI_TEMPLATE_ID", "not-an-id");
+    it("refuses every sign-up while the key or the list is not configured, saying which", async () => {
+      vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", "");
+      vi.stubEnv("KLAVIYO_NEWSLETTER_LIST_ID", " ");
       const response = await POST(request(VALID));
       expect(response.status).toBe(503);
-      expect(mockAllowance).not.toHaveBeenCalled();
-      expect(mockCreateDoubleOptInContact).not.toHaveBeenCalled();
+      expect(mockFetch).not.toHaveBeenCalled();
       expect(String(vi.mocked(console.error).mock.calls[0])).toContain(
-        "BREVO_SIGNUP_LIST_ID, BREVO_SIGNUP_DOI_TEMPLATE_ID",
+        "KLAVIYO_PRIVATE_API_KEY, KLAVIYO_NEWSLETTER_LIST_ID",
       );
     });
 
-    it("gives a generic error when Brevo refuses, and logs it without the address", async () => {
-      mockCreateDoubleOptInContact.mockRejectedValue(new Error("Attribute not found"));
+    it.each([
+      ["the profile import", [400], 1],
+      ["the subscription", [201, 500], 2],
+    ])(
+      "gives a generic 502 when Klaviyo refuses %s, and logs only its codes, never the address",
+      async (_, statuses, calls) => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        mockFetch.mockReset();
+        for (const status of statuses) {
+          mockFetch.mockResolvedValueOnce(
+            new Response(
+              JSON.stringify(
+                status >= 400
+                  ? {
+                      errors: [
+                        {
+                          status,
+                          code: "invalid",
+                          title: "Invalid input.",
+                          detail: "aino@example.com is not a valid profile",
+                          source: { pointer: "/data/attributes/email" },
+                          meta: { email: "aino@example.com" },
+                        },
+                      ],
+                    }
+                  : { data: {} },
+              ),
+              { status },
+            ),
+          );
+        }
+        const response = await POST(request(VALID));
+        expect(response.status).toBe(502);
+        expect(mockFetch).toHaveBeenCalledTimes(calls);
+        const body = await response.json();
+        expect(JSON.stringify(body)).not.toContain("aino@example.com");
+        expect(JSON.stringify(body)).not.toContain("invalid");
+
+        const logged = [...vi.mocked(console.error).mock.calls, ...warn.mock.calls]
+          .flat()
+          .map((arg) => (arg instanceof Error ? `${arg.message}\n${arg.stack}` : String(arg)))
+          .join("\n");
+        expect(logged).toContain(String(statuses[statuses.length - 1]));
+        expect(logged).toContain("invalid: Invalid input.");
+        expect(logged.toLowerCase()).not.toContain("aino@example.com");
+      },
+    );
+
+    it.each([
+      ["TimeoutError", "The operation was aborted due to timeout"],
+      ["AbortError", "This operation was aborted"],
+    ])("gives the generic 502 when a Klaviyo call is aborted (%s)", async (name, message) => {
+      mockFetch.mockReset();
+      mockFetch.mockRejectedValueOnce(new DOMException(message, name));
       const response = await POST(request(VALID));
       expect(response.status).toBe(502);
-      const body = await response.json();
-      expect(body.error).not.toContain("Attribute");
-      const logged = vi.mocked(console.error).mock.calls.map(String).join("\n");
-      expect(logged).toContain("Attribute not found");
-      expect(logged).not.toContain("aino@example.com");
+      expect(await response.json()).toEqual({
+        error: "Could not sign you up. Please try again later.",
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
     });
   });
 });

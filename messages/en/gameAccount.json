@@ -1,0 +1,15 @@
+{
+  "label": "{platform} Username",
+  "usernameLabel": "{platform} username",
+  "placeholder": "e.g. {example}",
+  "verifying": "Verifying...",
+  "notFound": "{platform} account not found. Check the username and try again.",
+  "verifiedUser": "{username} (verified)",
+  "unverified": "{username} (not yet verified)",
+  "none": "(Unknown)",
+  "edit": "Edit {platform} username",
+  "editFor": "Edit {platform} username for {name}",
+  "save": "Save",
+  "cancel": "Cancel",
+  "saveFailed": "Failed to update {platform} username."
+}

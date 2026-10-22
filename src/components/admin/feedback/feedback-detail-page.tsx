@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
+import { Heading } from "@sog/ui";
 import { ArrowUpRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { FeedbackSource } from "@/services/session-feedback/admin-feedback.contracts";
 import {
   buildFeedbackDetail,
@@ -284,7 +285,7 @@ function GamerList({ gamers, origin }: { gamers: FeedbackGamerEntry[]; origin: F
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-2">
-      <h2 className="text-base font-semibold">{title}</h2>
+      <Heading level={2} step="card-title">{title}</Heading>
       {children}
     </section>
   );

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
 import { cookies } from "next/headers";
 import { resolveCompleteRegistrationIntent } from "@/lib/navigation/post-auth-redirect";

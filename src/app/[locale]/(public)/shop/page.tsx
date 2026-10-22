@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import { createClient } from "@/lib/supabase/server";
-import { ProductsService } from "@/services/products";
+import { ProductsService } from "@/services/products/products.service";
 import {
   ParticipationsService,
   type ParticipationCounts,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import { ShopBrowse } from "@/components/public/products/shop-browse";
 import { ShopItemListJsonLd } from "@/components/public/products/shop-item-list-json-ld";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";

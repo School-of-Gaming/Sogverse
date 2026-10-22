@@ -5,10 +5,9 @@ import type { HolidayBreakLine } from "@/lib/products/holiday-breaks-shown";
  * and its dates on the line under it — the confirmation mail draws them the
  * same way.
  *
- * Shared by every family-facing page that lists them (the product page and the
- * purchase confirmation, both inside the "Good to know" card), and fed lines
- * the shared rule has already chosen and worded, so the pages and the
- * confirmation mail cannot list different breaks or draw one differently.
+ * Used inside the product page's "Good to know" card, and fed lines the shared
+ * rule has already chosen and worded, so the page and the confirmation mail
+ * cannot list different breaks or draw one differently.
  *
  * The dates always take their own line, so every break reads the same in the
  * product page's wide card and in its narrow facts rail, and never break

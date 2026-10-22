@@ -347,7 +347,7 @@ describe("defineRoute", () => {
       expect(console.error).toHaveBeenCalled();
     });
 
-    it("forwards the underlying message only when the route opts in", async () => {
+    it("forwards the underlying message and its code only when the route opts in", async () => {
       const response = await respondToThrown(
         { code: "23514", message: "waitlist is not enabled" },
         { disclose: "the message is the user-facing explanation" },
@@ -355,6 +355,7 @@ describe("defineRoute", () => {
 
       expect(await response.json()).toEqual({
         error: "waitlist is not enabled",
+        code: "23514",
       });
     });
 

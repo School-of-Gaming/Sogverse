@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Constants, type GeduAssignmentRole } from "@/types";
 
 interface GeduPillBaseProps {

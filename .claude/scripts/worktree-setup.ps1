@@ -1,7 +1,9 @@
 <#
 .SYNOPSIS
   Set up a /worktree-flow worktree: verify the base, create the worktree and
-  branch, junction the nested installs, copy .env.local.
+  branch, junction the nested installs, copy .env.local, seed the type-check
+  caches. With -Existing, check out a branch that already exists instead of
+  creating one.
 
 .DESCRIPTION
   This is the *how* for Phase 1; worktree-flow states the obligations and when to
@@ -27,27 +29,76 @@
   today, so this is insurance rather than a live fault; it runs anyway, because
   the day one appears is the day the failure is hardest to read.
 
-  The one case this script cannot cover: a branch that will change dependencies.
-  Upward resolution hands the worktree the main checkout's install, so a branch
-  editing package.json or package-lock.json runs against the wrong tree. Run
-  npm install inside the worktree after that change lands, and only then.
+  Two cases this script cannot cover. The first: a branch that will change
+  dependencies. Upward resolution hands the worktree the main checkout's install,
+  so a branch editing package.json or package-lock.json runs against the wrong
+  tree. Run npm install inside the worktree after that change lands, and only then.
+
+  The second: a branch that edits a workspace package, today packages/sog-ui.
+  The worktree resolves @sog/ui through the main checkout's node_modules, a
+  junction to the main checkout's packages/sog-ui, so lint, type-check, tests and
+  the dev server see whatever SOG-UI the main checkout has out, never the
+  worktree's edits. A branch that adds to SOG-UI and uses it fails its gates; one
+  that restyles SOG-UI previews the old styling, silently. To see the edits,
+  point the consumers at the worktree's own copy for the life of the branch:
+    - tsconfig.json: a compilerOptions.paths entry for each @sog/ui specifier
+      the branch needs ("@sog/ui", "@sog/ui/tokens/brand", ...), mapped to the
+      file SOG-UI's package.json exports for it (tsc, typed lint, next dev);
+    - vitest.config.mts: the same mappings as resolve aliases, exact-match;
+    - src/app/globals.css: the theme imported by its path inside
+      packages/sog-ui instead of as @sog/ui/theme.css, if the branch changes
+      the theme;
+    - packages/mcp-image-uploader (its tsconfig.json and vite.config.ts), if
+      the branch changes the tokens it imports, so its freshness check builds
+      against them.
+  Those edits are never committed: revert them before every commit, and check
+  git diff for them before landing. CI and Vercel have one checkout, so they
+  resolve the branch's own SOG-UI without help. Never junction node_modules/@sog/ui
+  into the worktree instead: git worktree remove follows a junction and deletes
+  what it points at.
+
+  Why the type-check caches come from a sibling worktree, never the main
+  checkout. A .tsbuildinfo records every file relative to itself, with a content
+  hash, so a copy is reused wherever those relative paths still hold. From the
+  main checkout they do not: node_modules is ./node_modules there and
+  ../../../node_modules here, so every package file reads as new, every import as
+  changed, and the first type-check runs as cold as with no cache at all. Every
+  worktree sits at the same depth, so the newest sibling's copy lines up exactly
+  and tsc rechecks only what differs between the two branches. With no sibling
+  holding one, the first type-check is cold. The lint cache is not seeded: ESLint
+  keys it by absolute path and hashes each entry with the config, whose
+  tsconfigRootDir is absolute, so a copy from any other checkout is ignored.
 
 .PARAMETER Name
   Short name for the worktree directory under .claude/worktrees/.
 
 .PARAMETER Branch
   Branch to create. Defaults to feat/<Name>. The feat/ prefix is the convention;
-  feature/ and bare names in the history are drift.
+  feature/ and bare names in the history are drift. With -Existing, the branch to
+  check out instead.
 
 .PARAMETER Base
   Base to branch from. Defaults to dev. Anything else is echoed back loudly, so a
-  deliberate choice and a mistake never look alike in the transcript.
+  deliberate choice and a mistake never look alike in the transcript. Refused
+  with -Existing, which has no base.
 
 .PARAMETER SkipFetch
   Skip the fetch and the base check. For a base already known current this minute.
 
+.PARAMETER Existing
+  Check out a local branch that already exists rather than create one — a branch
+  built elsewhere and picked up by a new session, or a worktree being relocated.
+  The branch must exist locally and must not be checked out in any other worktree.
+  There is no base to verify, so the fetch and base check are skipped; everything
+  after them runs as for a new branch. Without it, a branch that already exists
+  is refused.
+
 .EXAMPLE
   .\.claude\scripts\worktree-setup.ps1 -Name gamer-creations
+
+.EXAMPLE
+  .\.claude\scripts\worktree-setup.ps1 -Name landing-clone -Existing
+  Sets up .claude/worktrees/landing-clone on the existing branch feat/landing-clone.
 #>
 
 [CmdletBinding()]
@@ -55,7 +106,8 @@ param(
   [Parameter(Mandatory = $true)][string]$Name,
   [string]$Branch,
   [string]$Base = 'dev',
-  [switch]$SkipFetch
+  [switch]$SkipFetch,
+  [switch]$Existing
 )
 
 $ErrorActionPreference = 'Stop'
@@ -87,19 +139,37 @@ Write-Host "Worktree setup" -ForegroundColor Cyan
 Write-Host "  repo      $root"
 Write-Host "  worktree  $target"
 Write-Host "  branch    $Branch"
-Write-Host "  base      $Base"
-if ($Base -ne 'dev') { Warn "base is not dev - using $Base because it was asked for" }
+if ($Existing) { Write-Host "  base      (none - existing branch)" }
+else {
+  Write-Host "  base      $Base"
+  if ($Base -ne 'dev') { Warn "base is not dev - using $Base because it was asked for" }
+}
 Write-Host ""
 
 if (Test-Path -LiteralPath $target) { Die "already exists: $target" }
-if (git -C $root rev-parse --verify --quiet "refs/heads/$Branch") { Die "branch already exists: $Branch" }
+if ($Existing) {
+  if ($PSBoundParameters.ContainsKey('Base')) { Die "-Base has no meaning with -Existing: the branch already exists" }
+  if (-not (git -C $root rev-parse --verify --quiet "refs/heads/$Branch")) {
+    Die "no local branch $Branch - -Existing checks out a branch that already exists. Fetch or create it first."
+  }
+  # git refuses a branch checked out twice; say where it is instead of git's text.
+  $cur = $null
+  foreach ($line in (git -C $root worktree list --porcelain)) {
+    if ($line -like 'worktree *') { $cur = ($line.Substring(9) -replace '/', '\') }
+    elseif ($line -eq "branch refs/heads/$Branch") { Die "$Branch is already checked out in $cur" }
+  }
+}
+elseif (git -C $root rev-parse --verify --quiet "refs/heads/$Branch") { Die "branch already exists: $Branch" }
 
 # --- 1. Verify the base ------------------------------------------------------
 # No setting can enforce this, because no setting fetches. main trails dev by
 # hundreds of commits, so a branch cut from a stale base starts life missing work
 # it will later collide with.
 Write-Host "1. Base"
-if ($SkipFetch) {
+if ($Existing) {
+  Step "skipped (-Existing) - $Branch already exists, so there is no base to verify; checking it out as it stands at $(git -C $root rev-parse --short $Branch)"
+}
+elseif ($SkipFetch) {
   Warn "skipping the fetch (-SkipFetch) - $Base is assumed current"
 }
 else {
@@ -132,9 +202,16 @@ else {
 
 # --- 2. Create the worktree --------------------------------------------------
 Write-Host "2. Worktree"
-git -C $root worktree add $target -b $Branch $Base
-if (-not $?) { Die "git worktree add failed" }
-Ok "created $Branch at $target"
+if ($Existing) {
+  git -C $root worktree add $target $Branch
+  if (-not $?) { Die "git worktree add failed" }
+  Ok "checked out existing $Branch at $target"
+}
+else {
+  git -C $root worktree add $target -b $Branch $Base
+  if (-not $?) { Die "git worktree add failed" }
+  Ok "created $Branch at $target"
+}
 
 # --- 3. Junction the nested installs -----------------------------------------
 Write-Host "3. Nested installs"
@@ -166,7 +243,37 @@ if (Test-Path -LiteralPath $envMain) {
 }
 else { Warn "no .env.local in the main checkout - the app will not reach Supabase" }
 
-# --- 5. Hand back what Phase 1 needs next ------------------------------------
+# --- 5. Seed the type-check caches -------------------------------------------
+# Gitignored, so a new worktree starts cold. Each tracked tsconfig.json keeps its
+# cache beside it as tsconfig.tsbuildinfo when it is incremental; the newest
+# sibling worktree's copy is the donor (the header says why not the main checkout).
+Write-Host "5. Type-check caches"
+$siblings = @(Get-ChildItem -LiteralPath (Join-Path $root '.claude\worktrees') -Directory |
+  Where-Object { $_.FullName -ne $target })
+$seeded = 0
+foreach ($config in (git -C $target ls-files -- '*tsconfig*.json')) {
+  $rel = ($config -replace '/', '\') -replace '\.json$', '.tsbuildinfo'
+  $donor = $siblings |
+    ForEach-Object { Join-Path $_.FullName $rel } |
+    Where-Object { Test-Path -LiteralPath $_ } |
+    ForEach-Object { Get-Item -LiteralPath $_ } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+  if (-not $donor) { continue }
+  $from = $donor.FullName.Substring($root.Length + '\.claude\worktrees\'.Length).Split('\')[0]
+  # A cold cache costs one slow type-check; an aborted setup leaves a worktree
+  # a retry refuses to overwrite. So a copy that fails (the donor mid-rewrite
+  # by a sibling's tsc) warns and moves on.
+  try {
+    Copy-Item -LiteralPath $donor.FullName -Destination (Join-Path $target $rel)
+    Ok "seeded $rel from $from"
+    $seeded++
+  }
+  catch { Warn "could not seed $rel from $from ($($_.Exception.Message)) - it runs cold" }
+}
+if ($seeded -eq 0) { Step "none seeded (no sibling worktree has run a type-check) - the first type-check runs cold" }
+
+# --- 6. Hand back what Phase 1 needs next ------------------------------------
 Write-Host ""
 Write-Host "Next: EnterWorktree with path set to" -ForegroundColor Cyan
 Write-Host "  $target"

@@ -16,10 +16,13 @@ import {
 import { staticImageModule } from "../../mocks/static-image";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The Discord field is staff's, and it shows the link the route read.** The
@@ -32,14 +35,14 @@ import type { Profile } from "@/types";
 const auth: { profile: Profile } = { profile: createMockProfile({ role: "gedu" }) };
 
 vi.mock("@/providers", () => providersModule(() => auth.profile));
-vi.mock("@/services/users", () => usersServiceModule());
-vi.mock("@/services/locations", () => locationsServiceModule());
-vi.mock("@/services/minecraft", () => minecraftServiceModule());
-vi.mock("@/services/roblox", () => robloxServiceModule());
+vi.mock("@/services/users/users.queries", () => usersServiceModule());
+vi.mock("@/services/locations/locations.queries", () => locationsServiceModule());
+vi.mock("@/services/minecraft/minecraft.queries", () => minecraftServiceModule());
+vi.mock("@/services/roblox/roblox.queries", () => robloxServiceModule());
 vi.mock("@/components/settings/notification-preferences-card", () =>
   notificationPreferencesCardModule(),
 );
-vi.mock("@/services/marketing-consents", () =>
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () =>
   marketingConsentsServiceModule(),
 );
 vi.mock("@/components/game-account", () => gameAccountModule());

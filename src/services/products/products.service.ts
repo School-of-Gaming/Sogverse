@@ -7,10 +7,11 @@ import type {
   SpokenLanguageCode,
   MarketingConsentType,
   GamerPhotoConsentType,
+  VoiceRoomMode,
 } from "@/types";
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
-import { escapeLikePattern } from "@/lib/utils";
+import { escapeLikePattern } from "@/lib/search";
 import {
   keysetPage,
   quoteFilterValue,
@@ -128,6 +129,19 @@ function buildListingQuery(supabase: AppSupabaseClient, types: ProductType[]) {
   return buildVisibleProductsQuery(supabase, types, LISTING_SELECT);
 }
 
+/**
+ * What a landing page's status read needs to say why a picked product is not
+ * on the listing: whether it is listed, its term, and its name in each
+ * language it is written in. It reads any product, listed or not — the admin
+ * is the reader, and the point is the ones the listing leaves out.
+ */
+const LISTING_FACTS_SELECT =
+  "id, is_visible, start_date, end_date, timezone, product_translations(locale, name)";
+
+function buildListingFactsQuery(supabase: AppSupabaseClient, ids: readonly string[]) {
+  return supabase.from("products").select(LISTING_FACTS_SELECT).in("id", [...ids]);
+}
+
 function buildVisibleLocationsQuery(
   supabase: AppSupabaseClient,
   types: ProductType[],
@@ -181,6 +195,11 @@ export type ProductLocationRow = QueryData<
  */
 export type ProductListingRow = QueryData<
   ReturnType<typeof buildListingQuery>
+>[number];
+
+/** The facts behind a product's place on the listing, and its names. */
+export type ProductListingFactsRow = QueryData<
+  ReturnType<typeof buildListingFactsQuery>
 >[number];
 
 function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
@@ -269,7 +288,8 @@ function buildProductsByTypeQuery(
 }
 
 /**
- * The admin product list's read: the same row, plus three empty embeds that
+ * The admin product list's read: the same row with its prices — which the MCP
+ * product list hands an AI app picking products — plus three empty embeds that
  * exist only to be filtered on.
  *
  * An empty embed (`alias:table()`) puts nothing in the response; paired with a
@@ -296,7 +316,7 @@ function buildAdminProductListQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(locale, name, short_description), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), name_match:product_translations(), day_match:schedule_slots(), municipality_match:locations()",
+      "*, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), name_match:product_translations(), day_match:schedule_slots(), municipality_match:locations()",
       withCount ? { count: "exact" } : undefined,
     );
 }
@@ -394,6 +414,9 @@ export type ProductTranslationInput = {
   // The marketing blurb as authored markdown; null = no long description for
   // this locale (the RPC stores SQL NULL).
   long_description: string | null;
+  // Plain-text join instructions for a product with no voice room; null = none
+  // in this locale, and null on every translation under any other mode.
+  voice_join_instructions: string | null;
 };
 
 export type ScheduleSlotInput = {
@@ -493,6 +516,22 @@ export type CreateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
+  /**
+   * How an online product's sessions are joined: `sogverse` (the Sogverse
+   * voice room), `external` (a meeting on another service at
+   * `external_voice_url`), or `none` (no room; families read the join
+   * instructions each translation carries). An in-person product is always
+   * `sogverse` with no link — the CHECKs on `products` refuse anything else —
+   * and the RPC refuses mode `none` without instructions in any translation,
+   * or instructions under any other mode.
+   *
+   * Both are required, the link required-nullable: the RPC assigns both on
+   * every call, so an omission would reset the product to a Sogverse room. The
+   * link and the instructions are readable by anyone, logged-out visitors
+   * included, which the owner has accepted — see the column comments.
+   */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
   start_date: string;
   end_date: string | null;
   timezone: string;
@@ -608,6 +647,11 @@ export type UpdateProductInput = {
   material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
+  /** How the sessions are joined — see CreateProductInput. Required on the
+   *  update half too, and that is the load-bearing one: the RPC assigns both
+   *  on every call, so an omission resets the product to a Sogverse room. */
+  voice_room_mode: VoiceRoomMode;
+  external_voice_url: string | null;
   start_date: string;
   end_date: string | null;
   timezone: string;
@@ -820,6 +864,33 @@ export class ProductsService {
 
     if (error) throw error;
     return dropEndedProducts(data);
+  }
+
+  // The listing asked about several products at once: which of these ids it
+  // holds now, of these types. A landing page's status read and the MCP
+  // product list are the callers — they report a picked product readers are no
+  // longer shown — and they ask the listing itself for the reason the product
+  // page does: the rule is the query's filters plus the ended pass, and a
+  // restatement of it could disagree with what readers are shown.
+  async listVisibleListingAmong(
+    types: ProductType[],
+    ids: readonly string[],
+  ): Promise<ProductListingRow[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await buildListingQuery(this.supabase, types).in("id", [...ids]);
+
+    if (error) throw error;
+    return dropEndedProducts(data);
+  }
+
+  // The facts that explain a product's absence from the listing, for any of
+  // these ids, listed or not. An id no product has is simply absent.
+  async getListingFacts(ids: readonly string[]): Promise<ProductListingFactsRow[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await buildListingFactsQuery(this.supabase, ids);
+
+    if (error) throw error;
+    return data;
   }
 
   // Single-product detail fetch for the parent-facing detail page

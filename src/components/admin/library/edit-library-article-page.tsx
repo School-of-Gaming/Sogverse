@@ -3,14 +3,14 @@
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   useAdminLibraryArticle,
   usePublishLibraryArticle,
   usePublishedLibraryArticles,
   useSaveLibraryArticle,
   useUnpublishLibraryArticle,
-} from "@/services/library";
+} from "@/services/library/library.queries";
 import { LibraryArticleEditor } from "./library-article-editor";
 import { AdminEditorPageShell } from "@/components/admin/admin-editor-page-shell";
 

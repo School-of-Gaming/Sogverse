@@ -1,6 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function FormSection({
@@ -16,7 +17,7 @@ export function FormSection({
     <Card>
       <CardContent className="p-6">
         <div className="mb-4">
-          <h2 className="text-base font-semibold">{title}</h2>
+          <Heading level={2} step="label">{title}</Heading>
           {description && (
             <p className="mt-0.5 text-sm text-muted-foreground">
               {description}

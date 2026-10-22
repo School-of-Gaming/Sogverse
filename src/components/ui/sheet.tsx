@@ -4,8 +4,9 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { useDocumentScrollLock } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * How long the scrim's fade and the panel's slide take, in milliseconds. It is
@@ -292,15 +293,15 @@ function SheetHeader({
   );
 }
 
-function SheetTitle({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
+/**
+ * The sheet's title: an `h2` at the `card-title` step, for the same reason a
+ * dialog's is — a sheet is a new layer, and an object on it rather than a page.
+ */
+function SheetTitle({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
-    <h2
-      className={cn("text-lg font-semibold leading-none tracking-tight", className)}
-      {...props}
-    />
+    <Heading level={2} step="card-title" id={id}>
+      {children}
+    </Heading>
   );
 }
 

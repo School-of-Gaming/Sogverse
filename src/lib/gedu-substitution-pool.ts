@@ -6,7 +6,9 @@ import {
   sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
-import type { OpenSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  OpenSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
 import type { GeduAssignmentRole, SubstitutionOfferResponse } from "@/types";
 
 /**

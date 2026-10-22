@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { IdCard, User, Lock, LogOut, MailCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   Alert,
   AlertDescription,
@@ -15,7 +16,7 @@ import { Field } from "@/components/ui/field";
 import { codeTag } from "@/components/ui/inline-code";
 import discordSymbol from "@/assets/partners/discord-symbol-blurple.svg";
 import slackMark from "@/assets/partners/slack-mark-color.svg";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GameAccountCard } from "@/components/game-account";
@@ -35,18 +36,29 @@ import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-conse
 import { McpServerCard } from "@/components/settings/mcp-server-card";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import { useUpdateProfile, useSendVerificationEmail } from "@/services/users";
-import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
-import { toE164Digits } from "@/lib/utils";
-import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
-import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
+import {
+  useUpdateProfile,
+  useSendVerificationEmail,
+} from "@/services/users/users.queries";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import type { LocationWithChain } from "@/services/locations/locations.service";
+import { toE164Digits } from "@/lib/constants/phone";
+import {
+  useMyMinecraftAccount,
+  useUpdateMyMinecraft,
+} from "@/services/minecraft/minecraft.queries";
+import {
+  useMyRobloxAccount,
+  useUpdateMyRoblox,
+} from "@/services/roblox/roblox.queries";
 import {
   useMyMarketingConsents,
   useSetMarketingConsent,
-} from "@/services/marketing-consents";
+} from "@/services/marketing-consents/marketing-consents.queries";
 import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   isGamerProfile,
@@ -513,7 +525,7 @@ export function SettingsSectionContent({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{c('settings')}</h1>
+        <Heading level={1} step="section">{c('settings')}</Heading>
         <p className="text-muted-foreground">
           {t('subtitle')}
         </p>
@@ -523,7 +535,7 @@ export function SettingsSectionContent({
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            <CardTitle>{t('personalInformation')}</CardTitle>
+            <Heading level={2} step="card-title">{t('personalInformation')}</Heading>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -790,7 +802,7 @@ export function SettingsSectionContent({
           <CardHeader>
             <div className="flex items-center gap-2">
               <IdCard className="h-5 w-5" />
-              <CardTitle>{t('teamProfile.title')}</CardTitle>
+              <Heading level={2} step="card-title">{t('teamProfile.title')}</Heading>
             </div>
             <CardDescription>{t('teamProfile.description')}</CardDescription>
           </CardHeader>
@@ -880,7 +892,7 @@ export function SettingsSectionContent({
         <CardHeader>
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            <CardTitle>{c('security')}</CardTitle>
+            <Heading level={2} step="card-title">{c('security')}</Heading>
           </div>
           <CardDescription>
             {t('securityDescription')}

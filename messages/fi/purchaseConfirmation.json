@@ -1,0 +1,67 @@
+{
+  "heading": "Valmista tuli!",
+  "subheading": {
+    "consumer_club": "{gamer} on ilmoitettu toimintaan {product}.",
+    "municipality_club": "{gamer} on ilmoitettu toimintaan {product}.",
+    "camp": "{gamer} on ilmoitettu toimintaan {product}.",
+    "event": "{gamer} on liittynyt toimintaan {product}."
+  },
+  "fallbackGamer": "Lapsesi",
+  "self": {
+    "subheading": {
+      "consumer_club": "Sinut on ilmoitettu toimintaan {product}.",
+      "municipality_club": "Sinut on ilmoitettu toimintaan {product}.",
+      "camp": "Sinut on ilmoitettu toimintaan {product}.",
+      "event": "Olet liittynyt toimintaan {product}."
+    },
+    "nextSessions": "Tapaamisesi näkyvät Oma SOG -sivulla.",
+    "waitlist": {
+      "subheading": "Olet jonotuslistalla – {product}."
+    }
+  },
+  "price": {
+    "subscription": "{amount} / kk",
+    "upfront": "{amount} (kertamaksu)",
+    "free": "Ilmainen",
+    "external": "Kunnan kustantama"
+  },
+  "card": {
+    "starts": "Alkaa {date}"
+  },
+  "email": {
+    "sentTo": "Lähetimme vahvistuksen osoitteeseen <strong>{email}</strong>.",
+    "sent": "Vahvistus on lähetetty sähköpostitse."
+  },
+  "next": {
+    "sessions": "Tapaamiset, joihin {gamer} osallistuu, näkyvät Oma SOG -sivulla."
+  },
+  "goToDashboard": "Siirry Oma SOG -sivulle",
+  "keepBrowsing": "Jatka selailua",
+  "notFound": {
+    "title": "Tilausta ei löytynyt",
+    "description": "Linkki saattaa olla vanha tai puutteellinen. Ostoksesi löytyvät aina Oma SOG -sivulta.",
+    "cta": "Siirry Oma SOG -sivulle"
+  },
+  "finalizing": {
+    "heading": "Maksu vastaanotettu",
+    "subheading": "Viimeistelemme ilmoittautumista — tämä kestää vain hetken.",
+    "reassurance": "Voit huoletta jäädä tälle sivulle. Lähetämme vahvistuksen myös sähköpostitse."
+  },
+  "timedOut": {
+    "heading": "Tämä kestää odotettua kauemmin",
+    "subheading": "Maksu onnistui, ja se on tallessa.",
+    "body": "Emme ole vielä saaneet ilmoittautumista valmiiksi. Sen pitäisi näkyä Oma SOG -sivulla pian — käy katsomassa, ja kerro meille, jos se ei ilmesty."
+  },
+  "duplicatePayment": {
+    "heading": "Ilmoittautuminen on jo tehty",
+    "subheading": "Henkilöllä, jolle tämä oli tarkoitettu, on jo paikka tässä tuotteessa.",
+    "body": "Tämä maksu ei ole luonut toista ilmoittautumista. Ota yhteyttä, niin selvitämme ylimääräisen veloituksen kanssasi."
+  },
+  "supportLine": "Tarvitsetko apua? Lähetä meille sähköpostia osoitteeseen <link>{email}</link>.",
+  "waitlist": {
+    "heading": "Olet jonotuslistalla",
+    "subheading": "{gamer} on jonotuslistalla – {product}.",
+    "position": "Sija jonossa: {position}.",
+    "next": "Lähetämme sähköpostia heti, kun paikka vapautuu."
+  }
+}

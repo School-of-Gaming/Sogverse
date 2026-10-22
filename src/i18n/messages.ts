@@ -1,6 +1,6 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type en from "../../messages/en.json";
-import type tlh from "../../messages/tlh.json";
+import type en from "../../messages/en";
+import type tlh from "../../messages/tlh";
 
 export type Messages = typeof en;
 
@@ -52,9 +52,12 @@ function withEnglishFallback(english: Messages, klingon: typeof tlh): Messages {
 }
 
 /**
- * Static import map for translation files. The bundler validates these paths
- * at build time — if a file is moved or deleted, the build fails immediately
- * instead of failing at runtime.
+ * Static import map for translation files. Each locale is a directory of one
+ * file per namespace, assembled by that directory's index, which imports every
+ * namespace statically. The bundler validates these paths at build time — if a
+ * file is moved or deleted, the build fails immediately instead of failing at
+ * runtime — and a static path is also what lets the test dependency graph see
+ * which namespace a module reads. Never compute one at runtime.
  *
  * When adding a new locale, add its import here.
  *
@@ -65,14 +68,14 @@ function withEnglishFallback(english: Messages, klingon: typeof tlh): Messages {
  * the opposite of what we want everywhere the translation is meant seriously.
  */
 const messageLoaders: Record<SupportedLocale, () => Promise<{ default: Messages }>> = {
-  en: () => import("../../messages/en.json"),
-  fi: () => import("../../messages/fi.json"),
-  sv: () => import("../../messages/sv.json"),
-  fr: () => import("../../messages/fr.json"),
+  en: () => import("../../messages/en"),
+  fi: () => import("../../messages/fi"),
+  sv: () => import("../../messages/sv"),
+  fr: () => import("../../messages/fr"),
   tlh: async () => {
     const [english, klingon] = await Promise.all([
-      import("../../messages/en.json"),
-      import("../../messages/tlh.json"),
+      import("../../messages/en"),
+      import("../../messages/tlh"),
     ]);
     return { default: withEnglishFallback(english.default, klingon.default) };
   },

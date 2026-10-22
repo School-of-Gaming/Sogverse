@@ -18,7 +18,8 @@ import { z } from "zod";
  *   response well under the fold cap;
  * - on a folded response in any other grouping, halves the range and asks
  *   again, summing the halves — pageviews add across disjoint ranges, which is
- *   why the reader returns pageviews and never visitors;
+ *   why that read returns pageviews and never visitors (`aggregateVisits`
+ *   reads visitors, and throws on a fold rather than halving);
  * - throws when a single day still folds, rather than returning a count that is
  *   silently short.
  *
@@ -69,6 +70,33 @@ const FOLDED_GROUP = "Others";
 
 const DAY_MS = 86_400_000;
 
+/**
+ * The first UTC day Vercel Web Analytics holds for this project: analytics was
+ * switched on at the end of May 2026.
+ */
+export const TRAFFIC_DATA_START = "2026-05-31";
+
+/** How far back Vercel keeps the counts on the team's plan: two years. */
+export const TRAFFIC_RETENTION_YEARS = 2;
+
+/**
+ * The earliest UTC day any Web Analytics count reaches back to at `now`: the
+ * later of the day analytics was switched on and the day the two-year retention
+ * reaches.
+ */
+export function earliestTrafficDay(now: Date): string {
+  const retained = new Date(
+    Date.UTC(
+      now.getUTCFullYear() - TRAFFIC_RETENTION_YEARS,
+      now.getUTCMonth(),
+      now.getUTCDate(),
+    ),
+  )
+    .toISOString()
+    .slice(0, 10);
+  return retained > TRAFFIC_DATA_START ? retained : TRAFFIC_DATA_START;
+}
+
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
@@ -107,11 +135,19 @@ export function vercelAnalyticsConfig():
 // Queries
 // ---------------------------------------------------------------------------
 
-/** The grouping dimensions this reader supports. `day` is a time granularity. */
+/**
+ * The grouping dimensions this reader supports. `day` is a time granularity;
+ * `environment` is there to ask for a whole range as one row, since the
+ * endpoint refuses a read with no grouping at all.
+ */
 export type VisitsDimension =
   | "day"
+  | "environment"
   | "route"
   | "requestPath"
+  | "referrerHostname"
+  | "country"
+  | "deviceType"
   | "utmCampaign"
   | "utmSource"
   | "utmMedium"
@@ -145,6 +181,15 @@ export interface PageviewsGroup {
   pageviews: number;
 }
 
+/**
+ * One group with its visitors too: the distinct visitor ids Vercel counted in
+ * it. Unlike pageviews they do not add across ranges or groups — one visitor on
+ * two days is one visitor on each and one across both.
+ */
+export interface VisitsGroup extends PageviewsGroup {
+  visitors: number;
+}
+
 /** An OData string literal: single quotes, an embedded quote doubled. */
 export function odataString(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
@@ -164,7 +209,11 @@ const dimensionValue = z.string().nullable();
 const aggregateResponse = z.object({
   data: z.array(
     z
-      .object({ pageviews: z.number().int().nonnegative(), timestamp: z.string().optional() })
+      .object({
+        pageviews: z.number().int().nonnegative(),
+        visitors: z.number().int().nonnegative().optional(),
+        timestamp: z.string().optional(),
+      })
       .catchall(z.unknown()),
   ),
 });
@@ -242,10 +291,45 @@ export class VercelAnalyticsClient {
     return [...merged.values()];
   }
 
+  /**
+   * Every group's pageviews **and visitors** for `query`, or a throw.
+   *
+   * Visitors do not add across ranges, so this read can never be halved the
+   * way `aggregatePageviews` halves a folded one: a response that folded throws
+   * instead. A day-grouped read is still split into its 62-day windows, which
+   * is safe because each day is a group of its own and no group spans two
+   * windows. Use it where the groups are known to stay under the cap — one row
+   * per day, one row for the range, a handful of device types — and
+   * `aggregatePageviews` everywhere else.
+   */
+  async aggregateVisits(query: PageviewsQuery): Promise<VisitsGroup[]> {
+    const windows = query.by.includes("day")
+      ? splitDays(query.from, query.to, MAX_DAYS_PER_DAY_READ)
+      : [{ from: query.from, to: query.to }];
+    const results = await Promise.all(
+      windows.map((window) => this.run(() => this.call({ ...query, ...window }))),
+    );
+    return results.flatMap(({ groups, folded }) => {
+      if (folded) {
+        throw new Error(
+          `Vercel Web Analytics folded groups into "${FOLDED_GROUP}" (by ${query.by.join("+")}) — visitors cannot be summed back together`,
+        );
+      }
+      return groups.map((group): VisitsGroup => {
+        if (group.visitors === undefined) {
+          throw new Error("Vercel Web Analytics answered a row without its visitors");
+        }
+        return { values: group.values, pageviews: group.pageviews, visitors: group.visitors };
+      });
+    });
+  }
+
   /** One window, halved until no response folds. */
   private async unfolded(query: PageviewsQuery): Promise<PageviewsGroup[]> {
     const { groups, folded } = await this.run(() => this.call(query));
-    if (!folded) return groups;
+    if (!folded) {
+      return groups.map(({ values, pageviews }) => ({ values, pageviews }));
+    }
 
     const days = daysBetween(query.from, query.to);
     if (days === 1) {
@@ -267,7 +351,7 @@ export class VercelAnalyticsClient {
   /** One HTTP call: its groups, and whether the response folded some of them. */
   private async call(
     query: PageviewsQuery,
-  ): Promise<{ groups: PageviewsGroup[]; folded: boolean }> {
+  ): Promise<{ groups: (PageviewsGroup & { visitors?: number })[]; folded: boolean }> {
     const params = new URLSearchParams({
       teamId: this.config.teamId,
       projectId: this.config.projectId,
@@ -303,7 +387,7 @@ export class VercelAnalyticsClient {
       );
     }
 
-    const groups = parsed.data.data.map((row): PageviewsGroup => {
+    const groups = parsed.data.data.map((row) => {
       const values: PageviewsGroup["values"] = {};
       for (const dimension of query.by) {
         if (dimension === "day") {
@@ -320,7 +404,7 @@ export class VercelAnalyticsClient {
         // string, which is how the endpoint reports an absent one.
         values[dimension] = value.data ?? "";
       }
-      return { values, pageviews: row.pageviews };
+      return { values, pageviews: row.pageviews, visitors: row.visitors };
     });
     // Only a full response can have folded; below the cap "Others" is a value.
     const folded =

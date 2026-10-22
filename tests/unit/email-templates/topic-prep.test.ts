@@ -7,9 +7,12 @@ import {
   getTopicPrepTranslator,
   type TopicPrepTranslator,
 } from "@/lib/email-templates/translator";
+import { HOLD_CLASS } from "@/lib/email-templates/utils";
 import { resolveTopicPrep } from "@/lib/products/topics";
 import type { ProductTopic } from "@/types";
-import messages from "@/../messages/en.json";
+import enTopicPrep from "@/../messages/en/topicPrep.json";
+
+const messages = { topicPrep: enTopicPrep };
 
 // The mail's half of the "Before the first session" guide. What is worth
 // asserting here is the two answers a caller cannot recover for itself: that
@@ -83,7 +86,12 @@ describe("topic prep email section", () => {
 
     expect(html).toContain(prep.heading);
     expect(html).toContain(prep.topics.roblox_studio.intro);
-    expect(html).toContain("<ol");
+    // The steps carry a link, so their numbers are written out and held in a
+    // column of their own: a list element's markers would vanish on Gmail iOS.
+    expect(html).not.toContain("<ol");
+    for (const marker of ["1.", "2.", "3.", "4."]) {
+      expect(html).toContain(`<div class="${HOLD_CLASS.difference}">${marker}</div>`);
+    }
     expect(html).toContain(prep.steps.robloxStudioAccount.title);
     expect(html).toContain(prep.steps.robloxStudioInstall.title);
     expect(html).toContain(prep.steps.robloxStudioTest.title);

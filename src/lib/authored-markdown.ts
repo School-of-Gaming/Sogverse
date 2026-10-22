@@ -100,10 +100,14 @@ export const MARKDOWN_CONTAINER = {
  *
  * Keyed by the element the markdown produces, so `h1` is the writer's top
  * level whatever tag it is finally painted as. Sizes come from SOG-UI's type
- * scale where it has the step — the top heading level is its `h3` step, the
- * card and sub-section title — and from the base scale where it does not yet:
- * the library ships no 16px body step and no 20px heading step, so those two
- * are `text-base` and `text-xl` until SOG-UI's Heading adoption rules on them.
+ * scale where it has the step: the writer's top level is its `section` step,
+ * because an authored body is a region of its page and its headings are that
+ * region's sections, and the third level is `card-title`, the scale's smallest
+ * heading step that still sits above the body. Between them the scale has no
+ * step — `section` is 24px and `card-title` 18 — so the second level is the
+ * base scale's `text-xl`, as the 16px body is `text-base`: the library ships
+ * neither, and the second level cannot take either neighbouring step without
+ * two toolbar buttons producing one size.
  *
  * **A heading is plainly not a paragraph.** Body copy is 16px; the three levels
  * the editor offers are 24px, 20px and 18px, all semibold, so three toolbar
@@ -121,7 +125,7 @@ export const MARKDOWN_CONTAINER = {
  */
 export const MARKDOWN_LOOK = {
   h1: {
-    classes: "mt-8 text-h3",
+    classes: "mt-8 text-section",
     marginTop: 32,
     fontSize: 24,
     lineHeight: 1.3,
@@ -135,10 +139,10 @@ export const MARKDOWN_LOOK = {
     fontWeight: 600,
   },
   h3: {
-    classes: "mt-6 text-lg font-semibold leading-snug",
+    classes: "mt-6 text-card-title",
     marginTop: 24,
     fontSize: 18,
-    lineHeight: 1.375,
+    lineHeight: 1.4,
     fontWeight: 600,
   },
   p: { classes: "mt-4", marginTop: 16 },
@@ -292,6 +296,7 @@ export type MarkdownUseCase =
   | "profile"
   | "article"
   | "landing"
+  | "landing-faq"
   | "spotlight";
 
 export interface MarkdownUseCaseDefinition {
@@ -337,11 +342,19 @@ export const MARKDOWN_USE_CASES: Record<MarkdownUseCase, MarkdownUseCaseDefiniti
   /** **A Library article's body**: admin-authored, on our own public pages. */
   article: defineUseCase({ headings: true, links: true }, "section"),
   /**
-   * **A landing page's prose** — a text section's body, an FAQ answer:
-   * admin-authored copy on our own public pages, read by a stranger arriving
-   * from a search, so links are part of its job.
+   * **A landing page's prose** — a text section's body: admin-authored copy
+   * on our own public pages, read by a stranger arriving from a search, so
+   * links are part of its job.
    */
   landing: defineUseCase({ headings: true, links: true }, "section"),
+  /**
+   * **A landing page's FAQ answer**: the same authors and readers as
+   * `landing`, so links stay. No headings, since the question is the heading
+   * the answer sits under, and an answer's own heading would rank level with
+   * or above it. No heading survives, so its outline is never reached;
+   * `section` is nominal.
+   */
+  "landing-faq": defineUseCase({ headings: false, links: true }, "section"),
   /**
    * **A spotlight's body**: admin-authored, appended to every family's
    * session report. Links are its point and an admin is trusted with them;

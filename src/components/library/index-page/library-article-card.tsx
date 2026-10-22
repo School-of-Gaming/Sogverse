@@ -1,11 +1,12 @@
 "use client";
 
+import { Heading } from "@sog/ui";
 import { useLocale } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { LibraryCategory } from "../categories";
 import { LibraryCategoryLabel } from "../library-category-label";
@@ -61,13 +62,13 @@ export function LibraryArticleCard({
   summary,
   category,
   publishedAt,
-  titleAs: Title = "h2",
+  level = 2,
 }: LibraryArticleCardProps & {
   /**
-   * The title's heading level: `h2` in the index's grid, `h3` where the grid
+   * The title's outline level: `2` in the index's grid, `3` where the grid
    * sits under a heading of its own.
    */
-  titleAs?: "h2" | "h3";
+  level?: 2 | 3;
 }) {
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -89,14 +90,16 @@ export function LibraryArticleCard({
 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <LibraryCategoryLabel category={category} />
-        <Title lang={lang} className="line-clamp-3 text-base font-semibold">
-          <Link
-            href={href}
-            className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
-          >
-            {title}
-          </Link>
-        </Title>
+        <div className="line-clamp-3">
+          <Heading level={level} step="card-title" lang={lang}>
+            <Link
+              href={href}
+              className="after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
+            >
+              {title}
+            </Link>
+          </Heading>
+        </div>
         <p lang={lang} className="line-clamp-3 text-sm text-muted-foreground">
           {summary}
         </p>

@@ -1,0 +1,199 @@
+{
+  "title": "Politique de confidentialité",
+  "lastUpdated": "Dernière mise à jour : {date}",
+  "intro": {
+    "heading": "En bref",
+    "paragraphs": [
+      "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Cette page présente l’essentiel de ce que nous conservons sur votre enfant, et pourquoi — en langage clair plutôt qu’en jargon juridique, pour que vous puissiez le vérifier vous-même. Un compte joueur n’existe qu’à l’intérieur de votre propre compte, et il porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de donner la sienne à votre enfant.",
+      "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à {supportEmail}."
+    ]
+  },
+  "sections": {
+    "whoWeAre": {
+      "heading": "Qui nous sommes",
+      "paragraphs": [
+        "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Nous sommes responsables de la protection des informations personnelles que vous et votre enfant nous confiez — au sens du droit, nous sommes le « responsable du traitement ».",
+        "Voici nos coordonnées officielles :"
+      ],
+      "bullets": [
+        "School of Gaming Galactic Oy (numéro d’entreprise 3110461-1)",
+        "Isokatu 56, 90100 Oulu, Finlande",
+        "E-mail : {supportEmail}"
+      ]
+    },
+    "infoWeCollect": {
+      "heading": "Les informations que nous collectons",
+      "paragraphs": [
+        "Nous essayons de collecter le moins possible — uniquement ce dont nous avons réellement besoin pour faire fonctionner Sogverse. Concrètement :"
+      ],
+      "bullets": [
+        "Votre nom, votre adresse e-mail et (si vous en ajoutez un) votre numéro de téléphone — pour créer votre compte et rester en contact au sujet des clubs de votre enfant.",
+        "Vos préférences de langue et de devise — pour que le site s’affiche comme vous l’attendez.",
+        "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
+        "Les informations de paiement sont traitées directement par Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
+        "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement. Nous enregistrons aussi votre nom de famille sur son compte, parce que votre enfant fait partie de votre compte ; les Gedus et les autres joueurs ne le voient jamais. Le compte lui-même porte une adresse interne Sogverse plutôt qu’un véritable e-mail, sauf si vous choisissez de lui permettre de se connecter avec sa propre adresse e-mail ; nous conservons alors cette adresse et lui envoyons sa propre copie des e-mails que nous vous adressons au sujet de ses clubs, stages et événements.",
+        "Facultativement, le nom d’utilisateur de votre enfant dans les jeux utilisés par ses clubs — aujourd’hui Minecraft et Roblox — ainsi que l’identifiant de compte que le jeu lui attribue, pour que nous puissions le reconnaître dans le jeu et pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
+        "Ce que nos animateurs notent au fil des sessions — présences, comptes rendus de session et courtes notes qui nous aident à accompagner votre enfant dans le groupe.",
+        "Les messages que votre enfant envoie dans le chat d’une session — pour que l’animateur et le groupe puissent les lire pendant la session, et pour que nous puissions examiner une inquiétude par la suite. Un message que votre enfant supprime est masqué pour le groupe, mais conservé jusqu’à la fermeture du compte.",
+        "Les avis que votre enfant nous donne sur ses sessions — les évaluations et l’éventuel message qu’il choisit de nous laisser lorsque nous lui demandons comment une session s’est passée — afin que nous puissions voir comment se déroulent nos sessions et les améliorer.",
+        "Les informations techniques nécessaires au fonctionnement de tout site web — sessions de connexion, journaux de requêtes et, uniquement si vous le choisissez, statistiques d’utilisation anonymes. Voir « Informations techniques » et « Cookies, statistiques et publicité » ci-dessous.",
+        "L’étiquette de campagne — source, support et campagne — portée par le lien à l’origine de votre visite. Nous l’enregistrons une fois, à la création du compte, et uniquement si vous avez autorisé les cookies marketing, pour savoir, avec nos partenaires, quelles actions touchent réellement les familles. Refuser le marketing par la suite ne supprime pas une étiquette déjà enregistrée.",
+        "Si vous vous inscrivez à notre newsletter sur l’une de nos pages : votre adresse e-mail, ainsi que vos prénom et nom si vous les indiquez. S’y ajoutent la langue de la page et la page concernée, ainsi que l’étiquette de campagne du lien par lequel vous êtes arrivé, si vous avez autorisé les cookies marketing. Le tout est transmis directement à Klaviyo, qui envoie notre newsletter, et Sogverse n’en conserve aucune copie. L’inscription ne nécessite pas de compte et ne change rien au choix marketing d’un compte que vous avez déjà."
+      ]
+    },
+    "technical": {
+      "heading": "Informations techniques",
+      "paragraphs": [
+        "Faire vivre un site web suppose que certaines informations techniques transitent par les entreprises qui l’hébergent et le sécurisent pour nous. Rien de tout cela ne vous est demandé, et nous n’en conservons aucune copie dans aucune de nos tables — ces informations existent dans les systèmes de nos prestataires aussi longtemps qu’ils en ont besoin pour garder le site fonctionnel et sûr, et nous n’allongeons pas cette durée. Voici de quoi il s’agit, et où cela va :"
+      ],
+      "bullets": [
+        "Les traces de connexion — lorsque vous vous connectez, Supabase, qui gère nos comptes, conserve une trace de la session : son heure de début, le navigateur et l’appareil d’où elle vient et son adresse internet. C’est ce qui nous permet de maintenir votre session ouverte et de mettre fin à une session qui n’a pas lieu d’être. Cette trace est supprimée à la fin de la session, et tout disparaît avec le compte.",
+        "Les requêtes et les erreurs — chaque page que vous ouvrez est une requête adressée à Vercel, qui héberge le site. Comme tout hébergeur, Vercel la consigne : la page, l’heure, le type de votre navigateur et de votre appareil, son adresse internet, ainsi que toute erreur survenue. Ces journaux nous servent à garder le site en état de marche et à repérer les pannes. Vercel compte aussi, sur ses propres serveurs, les requêtes reçues par chaque partie du site — des totaux, pas des personnes — et ce comptage fonctionne sans aucun cookie ni consentement. Il est distinct des statistiques que vous pouvez activer ou désactiver ci-dessous.",
+        "Les cookies et les statistiques — quelques cookies nécessaires, puis les statistiques et le marketing uniquement si vous les acceptez. Tout cela est détaillé sous « Cookies, statistiques et publicité » ci-dessous.",
+        "Les sessions en direct — pendant une session audio, l’appareil de votre enfant se connecte directement à Daily.co : Daily voit donc son adresse internet et les détails de sa connexion pendant toute la durée de l’appel. Voir « Sessions audio et vidéo » ci-dessous.",
+        "Ce que nous ne faisons pas — nous n’exploitons aucun service de suivi d’erreurs ou de journalisation qui nous soit propre, nous n’enregistrons jamais votre adresse internet ni les détails de votre navigateur dans aucune de nos tables, et rien de tout cela ne sert à établir un profil de vous ou de votre enfant."
+      ]
+    },
+    "childrensPrivacy": {
+      "heading": "La vie privée des enfants passe avant tout",
+      "paragraphs": [
+        "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
+        "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
+        "Ce que nous conservons au sujet d’un enfant est présenté ci-dessus sous « Les informations que nous collectons » et « Informations techniques », et nous ne collectons rien sur un enfant au-delà de ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne montrons jamais de publicité aux enfants et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Lorsque votre enfant est connecté en tant que joueur, rien de sa navigation n’est transmis à une plateforme publicitaire, même si le marketing est activé sur l’appareil. Les sessions en direct sont animées par nos animateurs formés (nous les appelons les Gedus).",
+        "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à {supportEmail} et nous nous en occuperons."
+      ]
+    },
+    "howWeUse": {
+      "heading": "Comment nous utilisons vos informations",
+      "paragraphs": [
+        "Nous utilisons les informations ci-dessus uniquement pour faire fonctionner Sogverse et offrir à votre famille une bonne expérience — en particulier :"
+      ],
+      "bullets": [
+        "Pour créer et gérer votre compte et celui de votre enfant.",
+        "Pour placer votre enfant dans le bon groupe de club, de stage ou d’événement et le mettre en relation avec un animateur.",
+        "Pour assurer les sessions audio et vidéo en direct.",
+        "Pour encaisser les paiements et envoyer les reçus, rappels et informations importantes concernant vos clubs.",
+        "Pour envoyer notre newsletter aux personnes qui s’y sont inscrites.",
+        "Pour répondre à vos questions lorsque vous nous contactez.",
+        "Pour maintenir Sogverse sûr, corriger les problèmes et l’améliorer au fil du temps."
+      ]
+    },
+    "legalBasis": {
+      "heading": "Pourquoi nous avons le droit de les utiliser",
+      "paragraphs": [
+        "Le droit de la protection des données (le RGPD) nous impose d’avoir une raison claire d’utiliser vos informations. Les nôtres sont simples :"
+      ],
+      "bullets": [
+        "Pour vous fournir ce que vous avez souscrit — les clubs, stages et événements auxquels vous avez inscrit votre enfant, payants ou gratuits (notre contrat avec vous).",
+        "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
+        "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
+        "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en regard de votre vie privée.",
+        "Votre consentement, pour la newsletter — vous pouvez le retirer à tout moment grâce au lien de désinscription présent dans chaque newsletter.",
+        "Votre consentement, pour les cookies de statistiques et de marketing ainsi que pour l’étiquette de campagne — vous pouvez le retirer à tout moment depuis Choix de confidentialité, en bas de chaque page."
+      ]
+    },
+    "providers": {
+      "heading": "Les entreprises qui nous aident à faire fonctionner Sogverse",
+      "paragraphs": [
+        "Faire vivre un service en ligne suppose de s’appuyer sur quelques entreprises de confiance pour l’hébergement, les paiements ou l’e-mail. Elles ne traitent vos informations que pour accomplir leur mission pour nous, dans le cadre de contrats qui les obligent à les protéger. Les principales sont :"
+      ],
+      "bullets": [
+        "Supabase — stocke de manière sécurisée les informations de votre compte, de votre famille et de vos clubs.",
+        "Stripe — traite les paiements. Les données de votre carte vont directement à Stripe ; nous ne les voyons jamais.",
+        "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
+        "Klaviyo — conserve la liste des inscrits à notre newsletter et envoie la newsletter aux personnes qui s’y sont inscrites.",
+        "Daily.co — assure les sessions audio et vidéo en direct ; l’appareil de votre enfant s’y connecte directement pendant une session.",
+        "Vercel — héberge le site, si bien que chaque requête passe par lui (voir « Informations techniques »), et fournit des statistiques d’utilisation anonymes si vous autorisez les statistiques.",
+        "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp.",
+        "Roblox — reçoit l’identifiant de compte Roblox de votre enfant, pour que nous puissions vérifier le compte, et votre navigateur récupère son avatar directement auprès de Roblox.",
+        "Mojang (Microsoft) — reçoit le nom d’utilisateur Minecraft de votre enfant, pour que nous puissions vérifier le compte.",
+        "mc-heads.net — votre navigateur y récupère directement l’image du personnage Minecraft de votre enfant, à partir de son nom d’utilisateur Minecraft, qui est public dans le jeu. C’est un service public gratuit et non l’un de nos prestataires, et il ne voit que cette requête.",
+        "Meta (Facebook et Instagram) — voit, via le pixel Meta dans votre navigateur et les rapports envoyés par nos serveurs, comment vous utilisez notre site, pour que nous puissions vous y montrer nos publicités et mesurer leurs performances. Lorsque vous créez un compte ou que vous vous inscrivez, nos serveurs envoient aussi à Meta des copies brouillées (hachées) de votre adresse e-mail et de l’identifiant de votre compte School of Gaming, ainsi que le club, le stage ou l’événement concerné par votre inscription, ou celui depuis la page duquel vous avez créé votre compte, afin que Meta puisse vous reconnaître si vous utilisez Facebook ou Instagram et savoir qu’il s’agit du même parent d’une visite à l’autre. Ni l’adresse ni l’identifiant eux-mêmes ne sont jamais envoyés, et jamais le nom, l’âge ou d’autres informations sur votre enfant. Uniquement si vous autorisez les cookies marketing.",
+        "Google (Analytics et Ads) — voit, via un gestionnaire de balises présent dans votre navigateur, quelles pages publiques de notre site vous consultez et ce à quoi votre famille s’est inscrite, pour que nous puissions mesurer les performances de notre publicité et vous montrer nos annonces. Uniquement si vous autorisez les cookies marketing — et non les statistiques : les statistiques que vous pouvez activer sont uniquement celles de Vercel."
+      ]
+    },
+    "partners": {
+      "heading": "L’Académie des Créateurs, menée avec Lynx Educate",
+      "blocks": [
+        "Si vous inscrivez votre enfant à l’Académie des Créateurs, que nous menons en collaboration avec Roblox, nous transmettons à Lynx Educate, qui le met en œuvre avec nous, ce dont le programme a besoin, et un ensemble limité d’informations à Roblox pour sa recherche sur le programme. Lynx Educate reçoit :",
+        [
+          "L’étiquette de campagne enregistrée sur votre compte — source, support et campagne — pour qu’ils sachent quelle action a conduit votre famille jusqu’au programme.",
+          "Vos prénom, nom et adresse e-mail — pour qu’ils puissent vous contacter au sujet du programme.",
+          "La commune et le pays que vous avez indiqués comme domicile de votre famille, le cas échéant.",
+          "Le prénom de votre enfant.",
+          "Le mois et l’année de naissance de votre enfant — nous n’en demandons jamais le jour.",
+          "Le nom d’utilisateur Roblox de votre enfant et l’identifiant de compte que Roblox lui attribue.",
+          "Les conditions et politiques que vous avez acceptées lors de l’inscription, ainsi que vos réponses aux questions sur le marketing et la photographie.",
+          "L’inscription elle-même — le club, le stage ou l’événement, le groupe dans lequel se trouve votre enfant, et la date à laquelle il s’y est inscrit.",
+          "Le fait que votre enfant ait été noté présent ou absent à chaque session.",
+          "Le titre et le lien de ce que votre enfant publie sur Roblox, tel qu’un animateur l’enregistre.",
+          "Les photographies jointes à un compte rendu de session — uniquement lorsque vous avez autorisé la photographie."
+        ],
+        "Lynx s’en sert pour mener le programme, sur la base des conditions du programme que vous acceptez lors de l’inscription et de son intérêt légitime à le mener en toute sécurité — à l’exception de l’étiquette de campagne, transmise uniquement si vous avez autorisé les cookies marketing, et des photographies, transmises uniquement si vous avez coché la case. Ce que reçoit Roblox, et tout le reste au sujet du programme, figure dans la <linkRobloxPrivacy>Politique de confidentialité de l’Académie des Créateurs</linkRobloxPrivacy>."
+      ]
+    },
+    "cookies": {
+      "heading": "Cookies, statistiques et publicité",
+      "paragraphs": [
+        "Quelques cookies sont simplement la façon dont le site fonctionne : ils maintiennent votre session ouverte et retiennent que vous êtes passé d’un compte à l’autre au sein de votre famille, retiennent que vous avez saisi votre code parent, conservent votre langue et votre fuseau horaire, enregistrent le choix que vous faites en matière de cookies et retiennent que vous avez fermé le guide que nous affichons avant une première session. Ceux-là ne nécessitent pas votre consentement — sans eux, il n’y a pas de site auquel consentir.",
+        "Tout le reste vous attend. Lors de votre première visite, nous vous posons la question, et rien d’autre que ces cookies nécessaires ne démarre dans votre navigateur tant que vous n’avez pas répondu. Vous pouvez changer d’avis quand vous le souhaitez depuis Choix de confidentialité, en bas de chaque page : désactiver quelque chose prend effet immédiatement, et ne change rien à ce que nous avons fait pendant que c’était actif.",
+        "Deux choses appellent un oui ou un non :"
+      ],
+      "bullets": [
+        "Les statistiques — celles de Vercel, et seulement si vous les acceptez. Elles comptent les visites, mesurent la vitesse d’affichage des pages et reçoivent quelques événements anonymes sur l’usage du site : comment on accède à Mon SOG, quand la langue est changée. Elles ne peuvent pas savoir qui vous êtes, et nous ne les transmettons jamais à des annonceurs.",
+        "Le marketing — des cookies publicitaires, et seulement si vous les acceptez. Ils permettent aux plateformes publicitaires citées plus haut — aujourd’hui Meta et Google — de voir comment vous utilisez notre site, afin qu’elles puissent vous montrer nos publicités et que nous sachions lesquelles fonctionnent. Les balises de Google arrivent dans votre navigateur via un gestionnaire de balises, qui nous permet, ainsi qu’au partenaire qui gère nos campagnes, d’ajouter ou de retirer une plateforme sans modifier le site ; quelles que soient les plateformes qu’il embarque, elles sont nommées dans la liste ci-dessus, et cette liste porte une date. Si vous créez un compte au cours d’une visite, l’étiquette de campagne portée par le lien à l’origine de celle-ci y est également enregistrée. Ils ne sont jamais actifs pendant qu’un joueur est connecté. Désactiver le marketing supprime ces cookies, ainsi que le peu de données que ces scripts conservent à côté d’eux dans votre navigateur, mais pas ce que les plateformes détiennent déjà — vous pouvez leur demander de le supprimer dans vos paramètres chez elles."
+      ]
+    },
+    "voice": {
+      "heading": "Sessions audio et vidéo",
+      "paragraphs": [
+        "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Les sessions sont animées en direct par nos animateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit.",
+        "L’appareil de votre enfant se connecte directement à Daily.co pour l’appel : Daily voit donc son adresse internet et les détails de sa connexion pendant toute la durée de la session, et le propre logiciel de Daily renvoie à Daily les erreurs qu’il rencontre dans le navigateur. Pour placer votre enfant dans la bonne salle, nous transmettons à Daily son prénom et, s’il en a ajouté un, son nom d’utilisateur de jeu ainsi que l’identifiant que ce jeu lui attribue, afin que le Gedu et les autres joueurs présents dans la salle puissent voir qui parle. L’audio et la vidéo ne sont pas enregistrés."
+      ]
+    },
+    "retention": {
+      "heading": "Combien de temps nous conservons vos informations",
+      "paragraphs": [
+        "Nous conservons vos informations aussi longtemps que vous avez un compte chez nous. Si vous fermez votre compte, nous supprimons ou anonymisons vos informations — sauf lorsque la loi nous impose de conserver certains documents plus longtemps, comme la loi comptable finlandaise, qui impose de conserver les pièces de paiement pendant plusieurs années."
+      ]
+    },
+    "storage": {
+      "heading": "Où vos informations sont conservées",
+      "paragraphs": [
+        "Certaines des entreprises qui nous aident (mentionnées ci-dessus) sont établies en dehors de l’Union européenne, par exemple aux États-Unis. Lorsque vos informations leur sont transmises, nous veillons à ce qu’elles soient protégées par les garanties exigées par le droit de la protection des données — généralement les clauses contractuelles types de la Commission européenne."
+      ]
+    },
+    "rights": {
+      "heading": "Vos droits — et ceux de votre enfant",
+      "paragraphs": [
+        "Vous gardez la maîtrise de vos informations. À tout moment, vous pouvez nous demander de :"
+      ],
+      "bullets": [
+        "Vous montrer les informations que nous détenons sur vous et sur votre enfant.",
+        "Corriger tout ce qui est inexact.",
+        "Supprimer vos informations (le « droit à l’oubli »).",
+        "Vous en fournir une copie à emporter ailleurs.",
+        "Cesser ou limiter l’usage que nous en faisons."
+      ]
+    },
+    "security": {
+      "heading": "La sécurité de vos informations",
+      "paragraphs": [
+        "Nous protégeons vos informations avec des mesures conformes aux normes du secteur : connexions chiffrées, mots de passe conservés uniquement sous forme hachée et restrictions strictes sur les personnes pouvant accéder aux données. Aucun système n’est parfaitement sûr, mais nous mettons tout en œuvre pour protéger les informations de votre famille."
+      ]
+    },
+    "changes": {
+      "heading": "Modifications de cette politique",
+      "paragraphs": [
+        "Nous pouvons mettre à jour cette politique de temps à autre — par exemple si nous ajoutons une nouvelle fonctionnalité. Lorsque nous apportons une modification importante, nous mettons à jour la date en haut de la page et, si cela vous concerne, nous vous en informons."
+      ]
+    },
+    "contact": {
+      "heading": "Nous contacter et votre droit de réclamation",
+      "paragraphs": [
+        "Pour exercer l’un des droits ci-dessus, ou si vous avez une question sur votre vie privée ou sur les informations de votre enfant, écrivez simplement à {supportEmail}. C’est gratuit, nous répondons toujours, et l’e-mail est le meilleur moyen de nous joindre.",
+        "Si vous n’êtes pas satisfait de la façon dont nous avons traité vos informations, vous avez le droit d’introduire une réclamation auprès du médiateur finlandais à la protection des données (Tietosuojavaltuutetun toimisto), sur <linkTietosuoja>tietosuoja.fi</linkTietosuoja>."
+      ]
+    }
+  }
+}

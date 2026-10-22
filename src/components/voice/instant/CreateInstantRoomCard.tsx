@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { CreateInstantRoomCardView } from "./CreateInstantRoomCardView";
 
 /**
@@ -17,7 +17,7 @@ import { CreateInstantRoomCardView } from "./CreateInstantRoomCardView";
  * disabled across the network round-trip. See CLAUDE.md "Loading & Disabled
  * State".
  */
-export function CreateInstantRoomCard() {
+export function CreateInstantRoomCard({ level }: { level: 2 | 3 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
@@ -69,6 +69,7 @@ export function CreateInstantRoomCard() {
       createFailed={createFailed}
       onCreate={() => void handleCreate()}
       onJoin={handleJoin}
+      level={level}
     />
   );
 }

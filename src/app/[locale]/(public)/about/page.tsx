@@ -7,6 +7,7 @@ import { AboutSection } from "@/components/about/about-section";
 import { ParentTestimonials } from "@/components/about/parent-testimonials";
 import { SectionPill } from "@/components/about/section-pill";
 import { YtySection } from "@/components/about/yty-section";
+import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata");
@@ -43,7 +44,9 @@ export default function AboutPage() {
 
   return (
     <>
-      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <Heading level={1} step="hero" srOnly>
+        {t("pageTitle")}
+      </Heading>
 
       <SectionPill />
 

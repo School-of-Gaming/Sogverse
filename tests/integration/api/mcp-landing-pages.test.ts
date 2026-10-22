@@ -11,8 +11,9 @@ import {
 import type {
   AdminLandingPage,
   AdminLandingPageListItem,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 import type { CatalogueImage } from "@/types";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
 /**
  * **The landing page tools, through the real endpoint.** The real gate, SDK
@@ -39,6 +40,7 @@ const landing = {
   listAdminPages: vi.fn(),
   getAdminPage: vi.fn(),
   createPage: vi.fn(),
+  clonePage: vi.fn(),
   saveStructure: vi.fn(),
   saveVersion: vi.fn(),
   removeVersion: vi.fn(),
@@ -65,6 +67,30 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
 // over the shared setup's locale-blind mock.
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
+
+// Each locale's own message file, as the clone's copy markers are read.
+vi.mock("next-intl/server", async () => {
+  const catalogs = {
+    en: (await import("../../../messages/en/admin.json")).default,
+    fi: (await import("../../../messages/fi/admin.json")).default,
+    sv: (await import("../../../messages/sv/admin.json")).default,
+    fr: (await import("../../../messages/fr/admin.json")).default,
+    tlh: (await import("../../../messages/tlh/admin.json")).default,
+  };
+  return {
+    getTranslations: async ({ locale, namespace }: { locale: keyof typeof catalogs; namespace: string }) => {
+      expect(namespace).toBe("admin.landingPages");
+      return (key: "copyMarker") => {
+        const message: unknown = catalogs[locale].landingPages[key];
+        // A missing message throws, worded like the provider guard in `tests/setup.ts`.
+        if (typeof message !== "string") {
+          throw new Error(`MISSING_MESSAGE: Could not resolve \`admin.landingPages.${key}\` in messages for locale \`${locale}\`.`);
+        }
+        return message;
+      };
+    },
+  };
+});
 
 const { POST } = await import("@/app/api/mcp/route");
 
@@ -144,6 +170,8 @@ const PAGE: AdminLandingPage = {
     ],
   },
   hasUnpublishedChanges: true,
+  testimonials: {},
+  productPicks: [],
 };
 
 const LIST_ITEM: AdminLandingPageListItem = {
@@ -289,6 +317,56 @@ describe("reading", () => {
     expect(resultText(result)).toContain(`Picture ${CASTLE}: ${BUCKET}/castle.jpg`);
   });
 
+  it("reports each products section's picks, shown or not and why", async () => {
+    const PICKS = "a1000000-0000-4000-8000-000000000005";
+    const CLUB = "c3000000-0000-4000-8000-000000000001";
+    const CAMP = "c3000000-0000-4000-8000-000000000002";
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [...PAGE.draft.sections, { id: PICKS, type: "products", productIds: [CLUB, CAMP] }],
+      },
+      productPicks: [
+        {
+          sectionId: PICKS,
+          sectionNumber: 5,
+          shownCount: 1,
+          picks: [
+            { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+            {
+              productId: CAMP,
+              names: [{ locale: "en", name: "Summer camp" }],
+              shown: false,
+              reasons: ["notListed", "ended"],
+            },
+          ],
+        },
+      ],
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.structuredContent?.productPicks).toEqual([
+      {
+        section: "section 5 (Products)",
+        sectionId: PICKS,
+        shown: 1,
+        picked: 2,
+        drawn: true,
+        picks: [
+          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, notShownBecause: [] },
+          {
+            productId: CAMP,
+            names: [{ locale: "en", name: "Summer camp" }],
+            shown: false,
+            notShownBecause: ["it is unlisted", "its term has ended"],
+          },
+        ],
+      },
+    ]);
+  });
+
   it("lists the live addresses a publish would change, with both links, and none for a language going live first", async () => {
     const [en, fi] = PAGE.draft.versions;
     landing.getAdminPage.mockResolvedValue({
@@ -360,6 +438,12 @@ describe("reading", () => {
       "Before a publish that changes a live language's address, confirm it with the admin, because links shared outside the site to the old address stop working",
     );
     expect(publish).toContain("slugsChanging");
+    // The products section says how its picks go stale, and where that is read.
+    expect(structure).toContain("list_products");
+    expect(structure).toContain("Picks go stale every term");
+    expect(structure).toContain("productPicks");
+    const read = tools.find((t) => t.name === "get_landing_page")?.description;
+    expect(read).toContain("productPicks");
     for (const { name, description } of tools) {
       if (name.includes("landing")) expect(description, name).not.toMatch(/fixed for good|permanent/i);
     }
@@ -497,6 +581,123 @@ describe("creating", () => {
   });
 });
 
+describe("cloning", () => {
+  const CLONE = "7c2d4e6f-1a3b-4c5d-8e9f-0a1b2c3d4e5f";
+  /** The clone as the database leaves it: PAGE's working copy, new ids, marked titles. */
+  const CLONED: AdminLandingPage = {
+    draft: {
+      ...PAGE.draft,
+      id: CLONE,
+      versions: [
+        { ...PAGE.draft.versions[0], title: "Gaming clubs in Espoo (Copy)", slug: "gaming-clubs-in-espoo-copy" },
+        { ...PAGE.draft.versions[1], title: "Pelikerhot Espoossa (kopio)", slug: "pelikerhot-espoossa-kopio-2" },
+      ],
+      lastSavedVia: { clientId: CLIENT_ID, name: "Claude" },
+    },
+    publication: null,
+    hasUnpublishedChanges: true,
+    testimonials: {},
+    productPicks: [],
+  };
+
+  it("clones in one call with each language's own copy marker, and answers the clone's titles, slugs and links", async () => {
+    landing.getAdminPage.mockResolvedValueOnce(PAGE).mockResolvedValueOnce(CLONED);
+    landing.clonePage.mockResolvedValue(CLONE);
+
+    const result = await tool("clone_landing_page", { pageId: ID });
+
+    expect(result.isError).toBeUndefined();
+    expect(landing.clonePage).toHaveBeenCalledTimes(1);
+    const [source, copyMarker] = landing.clonePage.mock.calls[0];
+    expect(source).toEqual(PAGE.draft);
+    const markers = await Promise.all(
+      SUPPORTED_LOCALES.map(async (locale) => [locale, await copyMarker(locale)]),
+    );
+    expect(Object.fromEntries(markers)).toEqual({
+      en: "(Copy)",
+      fi: "(kopio)",
+      sv: "(kopia)",
+      fr: "(copie)",
+      tlh: "(velqa’)",
+    });
+    for (const write of [landing.createPage, landing.saveStructure, landing.saveVersion]) {
+      expect(write).not.toHaveBeenCalled();
+    }
+
+    expect(result.structuredContent).toEqual({
+      pageId: CLONE,
+      clonedFrom: ID,
+      live: false,
+      versions: [
+        {
+          locale: "en",
+          title: "Gaming clubs in Espoo (Copy)",
+          slug: "gaming-clubs-in-espoo-copy",
+          address: `${ORIGIN}/en/discover/gaming-clubs-in-espoo-copy`,
+          complete: true,
+          missing: [],
+          previewLink: `${ORIGIN}/en/discover/${CLONE}/preview`,
+        },
+        {
+          locale: "fi",
+          title: "Pelikerhot Espoossa (kopio)",
+          slug: "pelikerhot-espoossa-kopio-2",
+          address: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa-kopio-2`,
+          complete: false,
+          missing: [FI_MISSING],
+          previewLink: `${ORIGIN}/fi/tutustu/${CLONE}/esikatselu`,
+        },
+      ],
+      adminLink: `${ORIGIN}/en/admin/landing-pages/${CLONE}`,
+    });
+  });
+
+  it("answers an id no page has as a tool error, cloning nothing", async () => {
+    landing.getAdminPage.mockResolvedValue(null);
+
+    const result = await tool("clone_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe("No landing page has that id.");
+    expect(landing.clonePage).not.toHaveBeenCalled();
+  });
+
+  it("quotes the database's refusal", async () => {
+    const sentence = "The page has no sv version to copy";
+    landing.clonePage.mockRejectedValue(dbError("23514", sentence));
+
+    const result = await tool("clone_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(sentence);
+  });
+
+  it("tells the AI app a clone is a structure to rewrite, never a page to publish as it is", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({
+        tools: z.array(
+          z.object({
+            name: z.string(),
+            description: z.string(),
+            annotations: z.object({ readOnlyHint: z.boolean(), destructiveHint: z.boolean() }),
+          }),
+        ),
+      })
+      .parse(body.result);
+    const clone = tools.find((t) => t.name === "clone_landing_page");
+
+    expect(clone?.description).toContain("every word of every language must be rewritten");
+    expect(clone?.description).toContain("doorway pages");
+    expect(clone?.description).toContain("Rename each language's title");
+    expect(clone?.description).toContain("remove_landing_page_language");
+    expect(clone?.description).toContain("created unpublished");
+    expect(clone?.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: false });
+  });
+});
+
 describe("saving", () => {
   it("saves the whole structure and names the sections it removed", async () => {
     const after: AdminLandingPage = {
@@ -527,6 +728,7 @@ describe("saving", () => {
   it("writes one language's words checked against the structure", async () => {
     const sectionTexts = {
       [HERO]: { headline: "Pelikerhot", buttonLabel: "Kauppaan", imageAlt: "Linna" },
+      [TEXT]: { heading: "Kerhossa", body: "## Rakennamme\n\nYhdessä." },
       [FAQ]: { heading: "Kysymyksiä", items: { [QUESTION]: { question: "Mitä?", answer: "**Pelejä**." } } },
       [GALLERY]: { alts: { [PICTURE_ITEM]: "Linna" } },
     };
@@ -575,7 +777,12 @@ describe("saving", () => {
     [
       "markdown outside the landing subset",
       { [TEXT]: { heading: "x", body: "![A castle](https://x.test/c.jpg)" } },
-      "The words of section 2 (Text), body: uses markdown a landing page does not show — an image (![alt](url)) on line 1",
+      "The words of section 2 (Text), body: uses markdown this field does not show — an image (![alt](url)) on line 1",
+    ],
+    [
+      "a heading in an FAQ answer, which its question already heads",
+      { [FAQ]: { items: { [QUESTION]: { question: "Why?", answer: "Because.\n\n## More" } } } },
+      "The words of section 3 (Questions and answers), question 1, answer: uses markdown this field does not show — a level-2 heading (##) on line 3",
     ],
   ])("refuses %s, naming it, and saves nothing", async (_, sectionTexts, named) => {
     const result = await tool("save_landing_page_text", {
@@ -589,6 +796,40 @@ describe("saving", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain(named);
     expect(landing.saveVersion).not.toHaveBeenCalled();
+  });
+
+  it("saves a products section's picks as structure, and quotes the refusal of an id no product has", async () => {
+    const PICKS = "a1000000-0000-4000-8000-000000000005";
+    const GONE = "c3000000-0000-4000-8000-0000000000ff";
+    const sentence = `Section 2 picks the product ${GONE}, and no product has that id`;
+    landing.saveStructure.mockRejectedValue(dbError("23503", sentence));
+
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { id: PICKS, type: "products", productIds: [GONE.toUpperCase()] },
+      ],
+    });
+
+    expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
+      PAGE.draft.sections[0],
+      { id: PICKS, type: "products", productIds: [GONE] },
+    ]);
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(sentence);
+  });
+
+  it("refuses a products section with no picks before anything is sent", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [PAGE.draft.sections[0], { type: "products", productIds: [] }],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("Section 2 (Products)");
+    expect(resultText(result)).toContain("A products section picks at least one product");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
   it("quotes the database's refusal of a slug another page holds", async () => {
@@ -866,5 +1107,136 @@ describe("pictures", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain("landing page picture must be exactly 1600 × 900");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("testimonials sections", () => {
+  const QUOTES = "a1000000-0000-4000-8000-000000000009";
+  const ONE = "c1000000-0000-4000-8000-000000000001";
+  const TWO = "c1000000-0000-4000-8000-000000000002";
+  const THREE = "c1000000-0000-4000-8000-000000000003";
+  const LONG =
+    "Our son talks about the club all week and has made friends there he now plays with every evening.";
+
+  const withQuotes: AdminLandingPage = {
+    ...PAGE,
+    draft: {
+      ...PAGE.draft,
+      sections: [
+        ...PAGE.draft.sections,
+        { id: QUOTES, type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO] },
+      ],
+    },
+    testimonials: {
+      [ONE]: {
+        id: ONE,
+        versions: [
+          { locale: "en", from: "Mum, Espoo", quote: LONG },
+          { locale: "fi", from: "Äiti, Espoo", quote: "Poikamme puhuu kerhosta koko viikon." },
+        ],
+      },
+      [TWO]: { id: TWO, versions: [{ locale: "sv", from: "Pappa, Vasa", quote: "Roligt." }] },
+    },
+  };
+
+  it("reads each section's arrangement and its testimonials, told apart by whom and an excerpt", async () => {
+    landing.getAdminPage.mockResolvedValue(withQuotes);
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      testimonials: [
+        {
+          section: "section 5 (Testimonials)",
+          sectionId: QUOTES,
+          arrangement: "pair",
+          slots: 2,
+          testimonials: [
+            {
+              testimonialId: ONE,
+              from: "Mum, Espoo",
+              excerpt: `${LONG.slice(0, 79).trimEnd()}…`,
+              languages: ["en", "fi"],
+            },
+            { testimonialId: TWO, from: "Pappa, Vasa", excerpt: "Roligt.", languages: ["sv"] },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("saves a section placing testimonials by id and arrangement", async () => {
+    const sections = [
+      ...PAGE.draft.sections,
+      { id: QUOTES, type: "testimonials", arrangement: "row", testimonialIds: [ONE, TWO, THREE] },
+    ];
+    landing.getAdminPage.mockResolvedValue(PAGE);
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(result.isError).toBeUndefined();
+    expect(landing.saveStructure).toHaveBeenCalledWith(ID, sections);
+  });
+
+  it("refuses a count its arrangement does not show, saying both, and saves nothing", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO, THREE] },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(
+      "A pair arrangement shows exactly 2 testimonials; this section has 3",
+    );
+    expect(resultText(result)).toContain("Section 2 (Testimonials)");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
+  it("refuses the same testimonial twice before anything is sent", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { type: "testimonials", arrangement: "pair", testimonialIds: [ONE, ONE] },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("A testimonials section names each testimonial once");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
+  it("quotes the database's refusal of an id no testimonial has", async () => {
+    landing.saveStructure.mockRejectedValue(
+      dbError("23503", `Section 2 places the testimonial ${THREE}, and no testimonial has that id`),
+    );
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        PAGE.draft.sections[0],
+        { type: "testimonials", arrangement: "feature", testimonialIds: [THREE] },
+      ],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(
+      `Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
+    );
+  });
+
+  it("describes the arrangements, where the ids come from and that the words live in the store", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    const save = tools.find((t) => t.name === "save_landing_page_structure");
+    expect(save?.description).toContain("showcase (exactly 6:");
+    expect(save?.description).toContain("list_testimonials");
+    expect(save?.description).toContain("never invent one");
+    expect(save?.description).toContain("To take a quote off this page");
   });
 });

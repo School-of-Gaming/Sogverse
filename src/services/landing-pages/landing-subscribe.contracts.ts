@@ -14,6 +14,19 @@ import {
 /** The longest first name the form passes on. */
 export const LANDING_SUBSCRIBE_FIRST_NAME_MAX = 100;
 
+/** The longest last name the form passes on. */
+export const LANDING_SUBSCRIBE_LAST_NAME_MAX = 100;
+
+/** An optional name: trimmed, and a blank one is the same as none. */
+function optionalName(max: number) {
+  return z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((name) => (name === "" ? undefined : name));
+}
+
 /**
  * The honeypot field's name: an input no person sees or fills, so a body
  * carrying anything in it came from a bot filling every field it found. A
@@ -26,17 +39,12 @@ export const landingSubscribeBody = z.object({
   pageId: landingId,
   /** The sign-up section on it, so the route can check the page still has it. */
   sectionId: landingId,
-  /** The page's locale: what the confirmation mail and the way back are in. */
+  /** The page's locale: the language the reader signed up in. */
   locale: z.enum(SUPPORTED_LOCALES),
   email: realEmailValue,
-  /** Optional; blank is the same as absent. */
-  firstName: z
-    .string()
-    .trim()
-    .max(LANDING_SUBSCRIBE_FIRST_NAME_MAX)
-    .optional()
-    .transform((name) => (name === "" ? undefined : name)),
-  /** The consent box. The form refuses to post unticked, and so does the route. */
+  firstName: optionalName(LANDING_SUBSCRIBE_FIRST_NAME_MAX),
+  lastName: optionalName(LANDING_SUBSCRIBE_LAST_NAME_MAX),
+  /** The consent box. The form will not post unticked, and the route refuses it. */
   consent: z.literal(true),
   /**
    * The honeypot. Taken as any string, so a filled one reaches the handler
@@ -56,10 +64,7 @@ export type LandingSubscribeBody = z.input<typeof landingSubscribeBody>;
 
 /**
  * What the route answers on success, whether the address was new, already on
- * the list, or a bot's: the form says "check your inbox" either way, so the
+ * the list, or a bot's: the form says "you are signed up" either way, so the
  * answer cannot be used to learn who is subscribed.
  */
 export const landingSubscribeResponse = z.object({ success: z.literal(true) });
-
-/** The machine-readable code on the one refusal a visitor can act on: too many tries. */
-export const LANDING_SUBSCRIBE_RATE_LIMITED = "RATE_LIMITED";

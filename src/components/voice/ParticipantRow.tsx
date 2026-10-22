@@ -25,8 +25,8 @@ import {
   LockedButton,
   type LockExplanation,
 } from "@/components/ui/locked-control";
-import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import { cn } from "@/lib/cn";
 import type { VoiceRole } from "./hooks/types";
 
 export interface ParticipantRowData {

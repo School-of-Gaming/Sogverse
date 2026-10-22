@@ -21,11 +21,11 @@ describe("describeMissingWords", () => {
   it("numbers a section and an item from one, and names the field", () => {
     expect(describeMissingWords(`sections.${I.faq}.items.${I.faqA}.question`, sections)).toEqual({
       path: `sections.${I.faq}.items.${I.faqA}.question`,
-      sectionNumber: 6,
+      sectionNumber: 7,
       sectionType: "faq",
       itemNumber: 1,
       field: "question",
-      text: "Section 6 (Questions and answers), question 1: the question",
+      text: "Section 7 (Questions and answers), question 1: the question",
     });
   });
 

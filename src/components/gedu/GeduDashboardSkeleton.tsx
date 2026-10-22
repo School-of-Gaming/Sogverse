@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import {
   GeduContractNotice,
   GeduCriminalRecordCheckNotice,
@@ -47,7 +48,9 @@ export function GeduDashboardSkeleton({
 
   return (
     <>
-      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <Heading level={1} step="section" srOnly>
+        {t("pageTitle")}
+      </Heading>
       <p role="status" className="sr-only">
         {t("loadingAssignments")}
       </p>
@@ -66,7 +69,7 @@ export function GeduDashboardSkeleton({
 
       <div aria-hidden className="space-y-24 pb-24">
         <section className="mx-auto max-w-5xl space-y-6">
-          <div className="h-9 w-40 animate-pulse rounded-md bg-lifted" />
+          <div className="h-8 w-40 animate-pulse rounded-md bg-lifted" />
           {/* Three ghost cards on the same grid the real ones tile on, so the
               column count and the gutters are already right when they land. */}
           <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -77,7 +80,7 @@ export function GeduDashboardSkeleton({
         </section>
 
         <section className="mx-auto max-w-5xl space-y-6">
-          <div className="h-9 w-56 animate-pulse rounded-md bg-lifted" />
+          <div className="h-8 w-56 animate-pulse rounded-md bg-lifted" />
           <div className="h-40 animate-pulse rounded-lg border border-border bg-lifted" />
         </section>
 
@@ -87,7 +90,7 @@ export function GeduDashboardSkeleton({
             be pushed down the page by the sections landing above it, which is
             the one shift the layout rules forbid. */}
         <section className="mx-auto max-w-5xl space-y-6">
-          <div className="h-9 w-48 animate-pulse rounded-md bg-lifted" />
+          <div className="h-8 w-48 animate-pulse rounded-md bg-lifted" />
           <div className="h-28 animate-pulse rounded-lg border border-border bg-lifted" />
           <div className="h-64 animate-pulse rounded-lg border border-border bg-lifted" />
         </section>

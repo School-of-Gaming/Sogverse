@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { Heading } from "@sog/ui";
 import { AlertCircle } from "lucide-react";
 import { PinPad } from "./pin-pad";
 import { usePinField } from "./use-pin-field";
@@ -78,7 +79,7 @@ export function PinSet({
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-8 text-center">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <Heading level={1} step="section" align="center">{title}</Heading>
         {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       <PinPad

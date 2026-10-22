@@ -88,6 +88,32 @@ vi.mock("@/i18n/navigation", async () => {
   };
 });
 
+// A missing message throws instead of rendering its key. next-intl's default
+// only logs one and renders the key path, so a test handed too few namespace
+// files would still pass while asserting on copy it never rendered. A test
+// imports just the namespace files its tree reads (`src/i18n/CLAUDE.md`), and
+// this is what proves the list complete. Only `MISSING_MESSAGE` is promoted;
+// every other report keeps the default handling, a log. A test passing its own
+// `onError` keeps it, and a nested provider inherits this one.
+vi.mock("next-intl", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next-intl")>();
+  const { createElement } = await import("react");
+  const { IntlErrorCode } = actual;
+
+  function onError(error: InstanceType<typeof actual.IntlError>) {
+    if (error.code === IntlErrorCode.MISSING_MESSAGE) throw error;
+    console.error(error);
+  }
+
+  function NextIntlClientProvider(
+    props: import("react").ComponentProps<typeof actual.NextIntlClientProvider>,
+  ) {
+    return createElement(actual.NextIntlClientProvider, { onError, ...props });
+  }
+
+  return { ...actual, NextIntlClientProvider };
+});
+
 // Mock Supabase client
 vi.mock("@/lib/supabase/client", () => ({
   createClient: vi.fn(() => mockSupabaseClient),

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { z } from "zod";
 import { POST } from "@/app/api/gamers/create/route";
 import { NextResponse } from "next/server";
-import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 
 // --- Mocks ---
 
@@ -28,27 +27,10 @@ vi.mock("@/lib/supabase/admin", () => ({
   })),
 }));
 
-// Only the network hop is replaced. Neither platform module carries a format
-// rule any more — the wire schema is a trim and a length bound, and the platform
-// alone decides whether a name resolves.
-const mockLookupMinecraftUser = vi.fn();
-vi.mock("@/lib/mojang", () => ({
-  lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
-}));
-
 const mockSendGamerWelcomeEmail = vi.fn();
 vi.mock("@/lib/gamer-welcome.server", () => ({
   sendGamerWelcomeEmail: (...args: unknown[]) => mockSendGamerWelcomeEmail(...args),
 }));
-
-const mockLookupRobloxProfile = vi.fn();
-vi.mock("@/lib/roblox", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/roblox")>();
-  return {
-    ...actual,
-    lookupRobloxProfile: (...args: unknown[]) => mockLookupRobloxProfile(...args),
-  };
-});
 
 // --- Helpers ---
 
@@ -82,9 +64,7 @@ const validBody = {
 /**
  * Configure admin.from() chain mocks for the pre-createUser phase.
  * Only needs to handle "profiles" (synthetic-email uniqueness check) — tests
- * that use this helper stop before the post-createUser DB operations. The route
- * never queries `minecraft_accounts` itself; a Minecraft link is written by the
- * RPC and is not checked against anything.
+ * that use this helper stop before the post-createUser DB operations.
  */
 function mockPreCreateChecks(config: {
   emailExists?: boolean;
@@ -195,222 +175,6 @@ describe("POST /api/gamers/create — birth month validation", () => {
 
     const response = await POST(createRequest(validBody));
     expect(response.status).toBe(403);
-  });
-});
-
-describe("POST /api/gamers/create — Minecraft linking", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
-    mockCreateUser.mockResolvedValue({
-      data: { user: { id: "new-gamer-id" } },
-      error: null,
-    });
-    mockDeleteUser.mockResolvedValue({ error: null });
-    mockRpc.mockResolvedValue({ error: null });
-  });
-
-  it("links a Minecraft account another Sogverse user already holds", async () => {
-    // The point of dropping the minecraft_uuid UNIQUE: two siblings sharing one
-    // Minecraft account on separate Sogverse accounts. The route asks Mojang who
-    // the name belongs to and writes it — it never asks whether anyone else has
-    // it, so there is nothing here that can refuse.
-    mockLookupMinecraftUser.mockResolvedValue({
-      username: "SharedPlayer",
-      uuid: "shared-uuid",
-    });
-
-    const response = await POST(
-      createRequest({ ...validBody, minecraftUsername: "SharedPlayer" }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({
-        p_minecraft_username: "SharedPlayer",
-        p_minecraft_uuid: "shared-uuid",
-      }),
-    );
-    // No lookup against the table at all — not for this or any other reason.
-    expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
-  });
-
-  it("still links a username Mojang cannot resolve, with a null uuid", async () => {
-    mockLookupMinecraftUser.mockResolvedValue(null);
-
-    const response = await POST(
-      createRequest({ ...validBody, minecraftUsername: "unknown_player" }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({
-        p_minecraft_username: "unknown_player",
-        // Omitted rather than null — the RPC's params default to null and the
-        // generated Args type accepts undefined, not null.
-        p_minecraft_uuid: undefined,
-      }),
-    );
-  });
-
-  it("skips Mojang entirely when no minecraft username is provided", async () => {
-    const response = await POST(createRequest(validBody));
-
-    expect(response.status).toBe(200);
-    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({ p_minecraft_username: undefined }),
-    );
-  });
-});
-
-describe("POST /api/gamers/create — Roblox linking", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
-    mockCreateUser.mockResolvedValue({
-      data: { user: { id: "new-gamer-id" } },
-      error: null,
-    });
-    mockDeleteUser.mockResolvedValue({ error: null });
-    mockRpc.mockResolvedValue({ error: null });
-  });
-
-  it("resolves the handle server-side and passes the numeric account id", async () => {
-    mockLookupRobloxProfile.mockResolvedValue({
-      username: "builderman",
-      userId: 156,
-      displayName: "builderman",
-      avatarUrl: null,
-      headshotUrl: null,
-    });
-
-    const response = await POST(
-      createRequest({ ...validBody, robloxUsername: "builderman" }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({
-        p_roblox_username: "builderman",
-        p_roblox_user_id: 156,
-      }),
-    );
-  });
-
-  it("still links a handle Roblox cannot resolve, with no account id", async () => {
-    mockLookupRobloxProfile.mockResolvedValue(null);
-
-    const response = await POST(
-      createRequest({ ...validBody, robloxUsername: "nobody_here" }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({
-        p_roblox_username: "nobody_here",
-        // Omitted rather than null — the RPC's params default to null and the
-        // generated Args type accepts undefined, not null.
-        p_roblox_user_id: undefined,
-      }),
-    );
-  });
-
-  it("skips Roblox entirely when no handle is provided", async () => {
-    const response = await POST(createRequest(validBody));
-
-    expect(response.status).toBe(200);
-    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({ p_roblox_username: undefined }),
-    );
-  });
-
-  /**
-   * **The decision, on gamer creation: no handle is refused for its shape.** Two
-   * underscores was a 400 here once, on the strength of a copy of Roblox's
-   * *current* signup validator — a rule younger than the accounts it judges. A
-   * parent typing their child's real handle could not create the account at all,
-   * on a form whose subject is a name and a birthday.
-   */
-  it.each([
-    ["two underscores", "a_b_c"],
-    ["a space", "Old Timer"],
-  ])(
-    "creates the gamer with a handle carrying %s, unresolved",
-    async (_label, username) => {
-      mockLookupRobloxProfile.mockResolvedValue(null);
-
-      const response = await POST(
-        createRequest({ ...validBody, robloxUsername: username }),
-      );
-
-      expect(response.status).toBe(200);
-      expect(mockLookupRobloxProfile).toHaveBeenCalledWith(username);
-      expect(mockRpc).toHaveBeenCalledWith(
-        "create_gamer",
-        expect.objectContaining({
-          p_roblox_username: username,
-          p_roblox_user_id: undefined,
-        }),
-      );
-    },
-  );
-
-  // The one refusal left, and it still lands before `createUser` burns the email
-  // irreversibly.
-  it("rejects a handle past the length bound, before any account exists", async () => {
-    const response = await POST(
-      createRequest({
-        ...validBody,
-        robloxUsername: "a".repeat(GAME_USERNAME_MAX_LENGTH + 1),
-      }),
-    );
-
-    expect(response.status).toBe(400);
-    expect(mockCreateUser).not.toHaveBeenCalled();
-    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
-  });
-
-  it("carries both platforms through in one call", async () => {
-    mockLookupMinecraftUser.mockResolvedValue({
-      username: "Notch",
-      uuid: "mc-uuid",
-    });
-    mockLookupRobloxProfile.mockResolvedValue({
-      username: "builderman",
-      userId: 156,
-      displayName: "builderman",
-      avatarUrl: null,
-      headshotUrl: null,
-    });
-
-    const response = await POST(
-      createRequest({
-        ...validBody,
-        minecraftUsername: "Notch",
-        robloxUsername: "builderman",
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(mockRpc).toHaveBeenCalledWith(
-      "create_gamer",
-      expect.objectContaining({
-        p_minecraft_username: "Notch",
-        p_minecraft_uuid: "mc-uuid",
-        p_roblox_username: "builderman",
-        p_roblox_user_id: 156,
-      }),
-    );
   });
 });
 
@@ -531,12 +295,9 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 
-  // 23505 is in this list on purpose. It used to be special-cased into a 409
-  // "already linked to another user", which was only ever reachable via the
-  // minecraft_uuid UNIQUE; with that constraint dropped, a unique violation here
-  // means some *other* constraint and must not be mislabelled as a Minecraft
-  // conflict. Pinning it alongside an ordinary failure is what keeps the
-  // special case from growing back.
+  // 23505 is in this list on purpose: a unique violation is as internal as any
+  // other failure here, and pinning it alongside an ordinary one keeps it from
+  // being special-cased into a refusal the parent sees.
   it.each([
     ["P0001", "boom"],
     ["23505", "duplicate key"],

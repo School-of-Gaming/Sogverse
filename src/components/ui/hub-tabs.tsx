@@ -2,7 +2,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import type { StaticAppHref } from "@/lib/constants/routes";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 export interface HubTab {
   href: StaticAppHref;

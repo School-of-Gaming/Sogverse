@@ -19,12 +19,16 @@ import {
 import { useNow, useTimezone } from "@/providers";
 import {
   useMyAssignedProducts,
+} from "@/services/assignments/assignments.queries";
+import {
   type MyAssignedProductSessionRow,
-} from "@/services/assignments";
+} from "@/services/assignments/assignments.service";
 import {
   useGeduAssignmentSummaries,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
   type GeduAssignmentSummary,
-} from "@/services/gedu-sessions";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   geduSeatHrefs,
   geduSubstitutionAttention,
@@ -129,8 +133,8 @@ export function GeduDashboardPage({
       certified={certified}
       contractAccepted={contractAccepted}
       criminalRecordCheckPassed={criminalRecordCheckPassed}
-      toolsCard={<MinecraftPasswordResetCard />}
-      instantRoomCard={<CreateInstantRoomCard />}
+      toolsCard={<MinecraftPasswordResetCard level={3} />}
+      instantRoomCard={<CreateInstantRoomCard level={3} />}
       // The adult wording — a gedu is written to in the same register a parent
       // is; only a child's copy forks.
       helpForm={<HelpRequestCard audience="adult" />}

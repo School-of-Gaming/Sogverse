@@ -2,7 +2,7 @@
 
 import { AlertTriangle, Check, Eye, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { isExpectedOnEntry } from "./entry-state";
 import type { SessionFeedEntry, SessionFeedGamer } from "./types";
 

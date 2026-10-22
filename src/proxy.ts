@@ -3,7 +3,7 @@ import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_COOKIE_NAME } from "@/lib/locale-cookie";
 import {
   DEFAULT_LOCALE,
@@ -159,9 +159,9 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // of that match by `isAdminOnlySurface` below.
 // ROUTES.team is the Team index, and its prefix match covers each person's
 // page at either address (/team/[idOrSlug]).
-// A landing page (/discover/[idOrSlug]) has no index to prefix-match, so it is
-// admitted by its template (`isLandingPage` below). Its admin preview is a
-// template of its own, so that match never reaches it.
+// ROUTES.discover is the landing pages' index, and its prefix match covers
+// each landing page (/discover/[idOrSlug]). The admin's preview beneath a page
+// is held out of that match by `isAdminOnlySurface` below.
 // ROUTES.oauthConsent is where an AI app sends an admin to approve it, and it
 // is listed here only because the login bounce below keeps the pathname alone:
 // it would drop `?authorization_id=`, which is the whole of the request. The
@@ -171,7 +171,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // Gedu or an admin there with a one-time `?token=` the login bounce would drop.
 // The page gates itself, and spending the token is a role-gated POST.
 // ROUTES.linkSlack is the Slack app's twin of it, for admins.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -187,6 +187,14 @@ const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.registerGedu];
+
+// The crawlers that fetch a pasted link to draw its preview card, matched on the
+// token each one's User-Agent carries: Slack, WhatsApp, Discord, Telegram, Meta's
+// (Facebook and Messenger, and iMessage, which borrows its UA), LinkedIn, X and
+// Microsoft Teams. A preview fetched by the sender's own app, as Signal's is,
+// arrives as an ordinary browser and cannot be told apart.
+const LINK_PREVIEW_CRAWLER =
+  /Slackbot|WhatsApp|Discordbot|TelegramBot|facebookexternalhit|Facebot|LinkedInBot|Twitterbot|SkypeUriPreview|MicrosoftPreview/i;
 
 /**
  * Build a Content-Security-Policy header value.
@@ -505,17 +513,12 @@ export async function proxy(request: NextRequest) {
     template === "/library/[idOrSlug]/preview" ||
     template === "/discover/[idOrSlug]/preview";
 
-  // A live landing page, public at either address. Matched by its exact
-  // template, so nothing else under the segment is admitted with it.
-  const isLandingPage = template === "/discover/[idOrSlug]";
-
   // Check if route is public. A non-page path always passes (an API handler
   // owns its own auth; a `/_vercel/*` or `/.well-known/*` file has none).
   // The /voice/group/[id] branch is excluded so its public-prefix match here
   // can't shadow the authenticated-route handling below.
   const isPublicRoute =
     isNonPagePath(pathname) ||
-    isLandingPage ||
     (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
       !isAdminOnlySurface &&
       PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
@@ -620,6 +623,16 @@ export async function proxy(request: NextRequest) {
 
   // For protected routes, require authentication
   if (!userId) {
+    // A link-preview crawler gets a 404 rather than the login bounce: followed,
+    // the bounce previews every gated link as the sign-in page's card, and with
+    // nothing to fetch the app draws no card at all. These paths are already
+    // disallowed to crawlers in robots.txt, which Slack at least does not honour
+    // across the redirect; a human still gets the bounce with `?redirect=`.
+    if (LINK_PREVIEW_CRAWLER.test(request.headers.get("user-agent") ?? "")) {
+      const notFound = new NextResponse(null, { status: 404 });
+      notFound.headers.set("Content-Security-Policy", cspHeader);
+      return notFound;
+    }
     const loginUrl = localizedUrl(ROUTES.login);
     loginUrl.searchParams.set("redirect", externalPathname);
     return redirect(loginUrl);
@@ -672,6 +685,9 @@ export const config = {
      * - llms.txt — a route handler, not a file convention, but the same shape:
      *   a bare public URL answered from the deployed catalog and marked
      *   publicly cacheable, so it is excluded for the reason spelled out below
+     * - indexnow-key.txt — the IndexNow key file, a bare root URL by the
+     *   protocol, rewritten to its route in next.config.ts; it carries no
+     *   locale, and the proxy has nothing to do for it
      * - api/locations/search — see below, this one is load-bearing
      * - api/team/photos/ — the public team page's photos, marked publicly
      *   cacheable for the same reason as the location search
@@ -697,6 +713,6 @@ export const config = {
      * made. Excluding the path makes it ours. The route needs nothing from the
      * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|api/locations/search|api/team/photos/|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|llms\\.txt|indexnow-key\\.txt|api/locations/search|api/team/photos/|media/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

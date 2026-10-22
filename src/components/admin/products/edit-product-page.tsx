@@ -1,17 +1,18 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { useProductAdmin } from "@/services/products";
+import { useProductAdmin } from "@/services/products/products.queries";
 import { ProductFormEdit } from "./product-form-edit";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface EditProductPageProps {
   productType: ProductType;
@@ -56,15 +57,17 @@ export function EditProductPage({
         <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("editPage.kicker", { type: config.i18nKey })}
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {product
-            ? t("editPage.title", {
-                name:
-                  resolveTranslation(product.product_translations, uiLocale)
-                    ?.name ?? t("list.untitled"),
-              })
-            : " "}
-        </h1>
+        <div className="mt-1">
+          <Heading level={1} step="section">
+            {product
+              ? t("editPage.title", {
+                  name:
+                    resolveTranslation(product.product_translations, uiLocale)
+                      ?.name ?? t("list.untitled"),
+                })
+              : " "}
+          </Heading>
+        </div>
       </div>
 
       {isLoading && (

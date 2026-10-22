@@ -9,7 +9,7 @@ import {
   type InvitationOverride,
   type InvitationRecurrence,
 } from "@/lib/calendar-invitations/invitation";
-import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import type { ProductType } from "@/types";
@@ -19,13 +19,11 @@ import type { EmailTranslator } from "./translator";
  * The signup confirmation's calendar invitation — a product's schedule as one
  * iCalendar object, and the sentences the document itself states.
  *
- * **The mail's own schedule section is no longer composed here**, and that is
- * the boundary worth knowing. The mail is the confirmation page's twin, so it
- * states the schedule in the page's words, through the page's formatter
- * (`@/lib/products/product-overview-facts`). This module used to write a second
- * set of sentences for it, which meant one product's schedule had two
- * renderings that could disagree the first time either was corrected. What is
- * left here is the document: its properties, and the notes a parent reads
+ * **The mail's own schedule section is not composed here**, and that is the
+ * boundary worth knowing. The mail states the schedule in the words every
+ * product surface prints, through the shared formatter
+ * (`@/lib/products/product-overview-facts`), so one product's schedule has one
+ * rendering. What is here is the document: its properties, and the notes a parent reads
  * inside the entry weeks later.
  *
  * **It lives here rather than beside the builder because it knows what a club
@@ -455,11 +453,9 @@ function locationOf(
  * its schedule section: nothing renders an email's recurrence for a reader, so
  * there the words are the only statement there is.
  *
- * **The placement sentence is out for the neighbouring reason**: it is news
- * about what happens next, and news goes stale where the mail it arrived in
- * does not. A parent opening this entry in week six does not need to be told a
- * group is coming; the mail's own "what happens next" bullet said it once, at
- * the moment it was true.
+ * **The sentence saying where the sessions are is out for the neighbouring
+ * reason**: it is the mail's "what happens next" bullet, and the entry already
+ * carries the My SOG link that sentence points at.
  *
  * What is absent for a third reason is money and the age range: an entry in a
  * calendar is read by whoever the calendar is shared with, and neither is

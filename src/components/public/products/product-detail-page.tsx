@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatInTimeZone } from "date-fns-tz";
@@ -18,16 +18,18 @@ import {
   type GamerAgeBlock,
 } from "@/lib/gamer-age-eligibility";
 import { useAuth } from "@/providers/auth-provider";
-import { useLocationsByIds } from "@/services/locations";
-import { useProductDetail } from "@/services/products";
-import { useHolidayBreaks } from "@/services/holiday-breaks";
+import { useLocationsByIds } from "@/services/locations/locations.queries";
+import { useProductDetail } from "@/services/products/products.queries";
+import {
+  useHolidayBreaks,
+} from "@/services/holiday-breaks/holiday-breaks.queries";
 import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
-import { useGamerBirths, useMyGamers } from "@/services/gamers";
+import { useGamerBirths, useMyGamers } from "@/services/gamers/gamers.queries";
 import {
   useParticipationCounts,
   useProductSeatCountsRealtime,
-} from "@/services/participations";
+} from "@/services/participations/participations.queries";
 import {
   deriveRegistrationState,
   registrationCtaKind,
@@ -43,6 +45,7 @@ import type {
   ConfirmedHomeLocation,
   SignupAgeBlock,
 } from "./signup-panel-view";
+import { Heading } from "@sog/ui";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -560,29 +563,24 @@ export function ProductDetailPage({
 }
 
 /**
- * The eligibility answer, paired with the bound it fell outside of — which is
- * what the picker row's label needs, and what keeps the panel from having to be
- * told the product's age band separately.
+ * The eligibility answer, paired with the product's band — which is what the
+ * picker row's label names, and what the CTA names when every child is outside
+ * it, so the panel never has to be told the band separately.
  *
- * A block whose own bound is null cannot happen (the helper only returns a side
- * it was given a number for) and resolves to no block rather than to an
- * unlabelable row, so the compiler is satisfied without an assertion.
+ * A product with a gamer audience always declares both ends (the `products`
+ * CHECK requires them together), and only such a product refuses a child for
+ * age, so a block always has a whole band to carry. A missing end resolves to
+ * no block rather than to an unlabelable row, which satisfies the compiler
+ * without an assertion.
  */
 function describeAgeBlock(
   block: GamerAgeBlock | null,
   product: { min_age: number | null; max_age: number | null },
 ): SignupAgeBlock | null {
-  if (block === "under") {
-    return product.min_age === null
-      ? null
-      : { kind: "under", bound: product.min_age };
+  if (block === null || product.min_age === null || product.max_age === null) {
+    return null;
   }
-  if (block === "over") {
-    return product.max_age === null
-      ? null
-      : { kind: "over", bound: product.max_age };
-  }
-  return null;
+  return { kind: block, min: product.min_age, max: product.max_age };
 }
 
 /**
@@ -703,7 +701,9 @@ function DetailNotFound() {
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
         <CardContent className="flex flex-col items-center py-12 text-center">
-          <h2 className="text-lg font-semibold">{t("notFound.title")}</h2>
+          <Heading level={2} step="card-title" align="center">
+            {t("notFound.title")}
+          </Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>

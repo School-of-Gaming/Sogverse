@@ -3,7 +3,7 @@
 import { useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "next-intl";
 import { useScrollSentinel } from "@/hooks/use-scroll-sentinel";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useTimezone } from "@/providers";
 import { NowDivider } from "./NowDivider";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";

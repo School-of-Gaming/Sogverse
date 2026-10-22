@@ -18,7 +18,8 @@ STAGING_PARENT_EMAIL=...     STAGING_PARENT_PASSWORD=...     STAGING_PARENT_PIN=
   worktree gets a copy of `.env.local`; lines added inside one are copied back to the main
   checkout's file before it is removed. Never print the values.
 - **Sign in through the real login form**: email input `#identifier`, password `#password`.
-  `scripts/preview-export/` does this for the admin account.
+  `scripts/preview-export/` does this for the admin, the parent and a gamer, PIN unlock
+  and switch included — its `export.mjs` sign-in is the working example.
 - **The parent is PIN-locked after login.** The proxy bounces every page, the shop
   included, to `/parent/unlock` until `POST /api/auth/pin/verify` with `{ pin }` succeeds —
   so a script unlocks before navigating anywhere.

@@ -12,13 +12,17 @@
  */
 
 import { useState } from "react";
+import { Heading } from "@sog/ui";
 import { AlertCircle, Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { SPOKEN_LANGUAGES } from "@/lib/constants/spoken-languages";
-import { useProfile, useSetUserSpokenLanguages } from "@/services/users";
+import {
+  useProfile,
+  useSetUserSpokenLanguages,
+} from "@/services/users/users.queries";
 import type { Profile, SpokenLanguageCode } from "@/types";
 
 function sameLanguages(a: readonly SpokenLanguageCode[], b: readonly SpokenLanguageCode[]) {
@@ -74,10 +78,10 @@ export function GeduSpokenLanguagesCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Languages className="h-5 w-5 text-act" aria-hidden />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("note")}</p>

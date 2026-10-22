@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Check, Link as LinkIcon, Mail, Share2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { buildShareLinks } from "./share-links";
 import { LinkedInMark, RedditMark, WhatsAppMark, XMark } from "./share-marks";
+import { Heading } from "@sog/ui";
 
 const SHARE_BUTTON = buttonVariants({ variant: "outline", size: "sm" });
 
@@ -49,9 +50,9 @@ export function ShareSection({ url, title }: { url: string; title: string }) {
 
   return (
     <section aria-labelledby="library-share-heading" className="mt-10">
-      <h2 id="library-share-heading" className="text-lg font-semibold">
+      <Heading level={2} step="card-title" id="library-share-heading">
         {t("heading")}
-      </h2>
+      </Heading>
       <ul className="mt-4 flex flex-wrap gap-2">
         <li>
           <CopyLinkButton url={url} />

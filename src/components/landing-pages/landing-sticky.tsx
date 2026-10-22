@@ -4,7 +4,7 @@ import { useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { usePublishedHeight } from "@/hooks/use-published-height";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The two client halves of a landing page's sticky section: the column that

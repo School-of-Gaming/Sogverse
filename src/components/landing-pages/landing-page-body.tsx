@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import type { ProductRailPrefetch } from "@/components/public/products/product-rail-selection";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import {
@@ -7,6 +8,7 @@ import {
   type LandingSectionTexts,
   type LandingStickySide,
 } from "@/lib/landing-pages/sections";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { landingSectionText } from "./landing-section-types";
 import {
   landingStickyOffer,
@@ -20,16 +22,28 @@ export interface LandingPageBodyProps {
   sections: readonly LandingSection[];
   /** Each picture's path in the `landing-images` bucket, by catalogue entry id. */
   imagePaths: Readonly<Record<string, string>>;
+  /**
+   * The current words of each testimonial the structure places, by id — read
+   * from the store per request, never from the copy, so an edit shows
+   * without a republish.
+   */
+  testimonials: Readonly<Record<string, PublicTestimonial>>;
   /** The shown version's words, by section id. */
   sectionTexts: LandingSectionTexts;
   /** The language the shown version is written in. */
   textLocale: SupportedLocale;
   /** The page's locale — the URL's. */
   locale: SupportedLocale;
+  /**
+   * The listing and seat counts for the page's products sections, read
+   * on the server (`prefetchLandingProducts`); null when the page has none or
+   * the read failed.
+   */
+  products: ProductRailPrefetch | null;
   /** The page's id. */
   pageId: string;
-  /** The reader has just confirmed an email sign-up made on this page. */
-  subscribed: boolean;
+  /** The admin's preview of a working copy: an email sign-up form cannot be sent. */
+  preview: boolean;
 }
 
 /**
@@ -123,18 +137,23 @@ const STICKY_RAIL =
 export function LandingPageBody({
   sections,
   imagePaths,
+  testimonials,
   sectionTexts,
   textLocale,
   locale,
+  products,
   pageId,
-  subscribed,
+  preview,
 }: LandingPageBodyProps) {
   const sticky = landingStickySection(sections);
   const base: LandingRenderContext = {
     locale,
+    textLocale,
     pageId,
-    subscribed,
+    preview,
     imageSrc: (imageId) => catalogueImageSrc("landing_image", imagePaths[imageId]),
+    testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
+    products,
     underHero: null,
   };
   const offer =

@@ -7,10 +7,18 @@
 @import "@sog/ui/theme.css";
 
 /* Tailwind 4 anchors its automatic content scan on the nearest package.json, which
-   for this file is the repo root, so without this line every class the UI package
-   and its demo write is compiled into Sogverse's stylesheet against a theme that
-   cannot resolve the package's tokens. */
-@source not "../../packages";
+   for this file is the repo root, so everything under packages/ is scanned unless
+   excluded. The UI package's source is scanned, because its primitives are
+   rendered here: a class a component writes is a class this stylesheet has to
+   contain. Everything else under packages/ is excluded — the UI package's demo,
+   its docs and its notes, and the image uploader — because Sogverse renders none
+   of it, and a class only they write would ship in this stylesheet for nothing.
+   The exclusions are listed rather than written as "all of packages/ but one
+   folder", because a `not` outranks any `@source` naming a folder inside it. */
+@source not "../../packages/mcp-image-uploader";
+@source not "../../packages/sog-ui/demo";
+@source not "../../packages/sog-ui/docs";
+@source not "../../packages/sog-ui/*.md";
 
 /* Everything Sogverse still declares for itself — which is, by definition, the
    list of tokens @sog/ui does not own yet (the backlog in

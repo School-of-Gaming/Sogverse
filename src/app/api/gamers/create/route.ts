@@ -7,8 +7,6 @@ import {
   randomSyntheticGamerEmail,
   usernameToSyntheticEmail,
 } from "@/lib/gamer-sign-in";
-import { lookupMinecraftUser } from "@/lib/mojang";
-import { lookupRobloxProfile } from "@/lib/roblox";
 import {
   createGamerBody,
   CREATE_GAMER_PIN_REQUIRED_SQLSTATE,
@@ -65,8 +63,6 @@ export const POST = defineRoute({
       birthYear,
       birthMonth,
       gender: providedGender,
-      minecraftUsername,
-      robloxUsername,
       signIn,
       username,
       email,
@@ -137,30 +133,6 @@ export const POST = defineRoute({
       .single();
     const inheritedLastName = parentProfile?.last_name ?? "";
 
-    // Resolve the optional game accounts before creating the auth user, so a
-    // Mojang or Roblox outage costs nothing rather than an auth user created and
-    // then compensated away. Nothing here can reject a username: another
-    // Sogverse account may already hold it (siblings share accounts), and one
-    // the platform can't resolve is stored as-typed with a null account key.
-    //
-    // The two lookups are independent reads of two unrelated third parties, so
-    // they run together — a child with both handles waits for the slower one
-    // rather than for the sum.
-    const [resolvedMinecraft, resolvedRoblox] = await Promise.all([
-      minecraftUsername
-        ? lookupMinecraftUser(minecraftUsername).then((mojang) => ({
-            username: minecraftUsername,
-            uuid: mojang?.uuid ?? null,
-          }))
-        : null,
-      robloxUsername
-        ? lookupRobloxProfile(robloxUsername).then((profile) => ({
-            username: robloxUsername,
-            userId: profile?.userId ?? null,
-          }))
-        : null,
-    ]);
-
     // Compose display_name for the Supabase auth dashboard label.
     const composedDisplayName = [firstName, inheritedLastName]
       .filter(Boolean)
@@ -225,9 +197,9 @@ export const POST = defineRoute({
     try {
       // Step 2: Promote + link atomically. handle_new_user already seeded a
       // 'customer' profile + customer_profiles row for the new auth user; this
-      // RPC swaps it to a gamer, inserts the gamer/minecraft rows, and links the
-      // parent — all in one transaction, so a failure can't leave a
-      // half-promoted orphan. The address the trigger copied from auth.users is
+      // RPC swaps it to a gamer, inserts the gamer row and the guardian
+      // declaration, and links the parent — all in one transaction, so a
+      // failure can't leave a half-promoted orphan. The address the trigger copied from auth.users is
       // left untouched (gamers are email-first, whichever mode they are in).
       const { error: rpcError } = await admin.rpc("create_gamer", {
         p_gamer_id: gamerId,
@@ -236,15 +208,9 @@ export const POST = defineRoute({
         p_last_name: inheritedLastName,
         p_birth_year: birthYear,
         p_birth_month: birthMonth,
-        // Omit (→ undefined) rather than pass null: the RPC params default to
-        // null, and the generated Args type accepts undefined, not null. A null
-        // account key still inserts the row (username present, key null) on
-        // either platform.
+        // Omit (→ undefined) rather than pass null: the RPC param defaults to
+        // null, and the generated Args type accepts undefined, not null.
         p_gender: gender ?? undefined,
-        p_minecraft_username: resolvedMinecraft?.username ?? undefined,
-        p_minecraft_uuid: resolvedMinecraft?.uuid ?? undefined,
-        p_roblox_username: resolvedRoblox?.username ?? undefined,
-        p_roblox_user_id: resolvedRoblox?.userId ?? undefined,
         p_sign_in: signIn,
         // The parent's declaration about THIS child, recorded by the RPC in the
         // same transaction as the child. The body schema has already refused

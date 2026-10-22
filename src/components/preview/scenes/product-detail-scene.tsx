@@ -18,7 +18,6 @@ import type {
   MarketingConsentType,
   ProductTopic,
 } from "@/types";
-import { PREVIEW_TOPIC_PARAM } from "../scenes";
 import { previewSceneHref } from "../href";
 
 /**
@@ -110,13 +109,7 @@ export function ProductDetailScene({
     auth,
     topic: topic ?? undefined,
   });
-  // The CTA carries the axis across with it, so walking product → confirmation
-  // stays on the topic being reviewed rather than dropping back to the
-  // fixture's own on the page where the prep guide is.
-  const summaryHref = {
-    ...previewSceneHref("confirmation", scenario),
-    ...(topic === null ? {} : { query: { [PREVIEW_TOPIC_PARAM]: topic } }),
-  };
+  const summaryHref = previewSceneHref("confirmation", scenario);
 
   // The lock rides on the product row, as it does in the database, so nothing
   // downstream is handed a fixture shape the live page would not have.

@@ -2,16 +2,18 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
-import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
-import type { ParticipationCounts } from "@/services/participations";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "@/lib/products/format-product-location";
+import { productPageHref } from "@/lib/products/product-page-href";
 import { audienceLabelKey } from "@/lib/products/product-audience";
 import { formatProductPrice, statesAPrice } from "./format-product-price";
 import {
@@ -36,9 +38,11 @@ interface ProductBrowseCardProps {
    */
   counts?: ParticipationCounts | null;
   /**
-   * Detail-page URL override. Defaults to the storefront `/shop/[id]`; the
-   * per-municipality schools page passes `/schools/<slug>/[id]` so the card,
-   * and the detail page it opens, stay in that municipality's URL namespace.
+   * Detail-page URL override. Defaults to the product's own page at the
+   * reader's locale (`productPageHref`) — the storefront `/shop/[id]`, or a
+   * municipality club's page under its town's `/schools/<slug>`; the
+   * per-municipality schools page passes the slug the reader is on, so the
+   * card, and the detail page it opens, stay in that URL namespace.
    */
   detailHref?: AppHref;
   /**
@@ -195,7 +199,7 @@ export function useBrowseCardViewProps(
     spokenLanguageCode: product.spoken_language_code,
     footerLeft,
     state,
-    detailHref: detailHref ?? ROUTES.shopProduct(product.id),
+    detailHref: detailHref ?? productPageHref(product, uiLocale),
   };
 }
 

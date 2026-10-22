@@ -19,17 +19,18 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ROUTES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants/routes";
+import { cn } from "@/lib/cn";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
-import type { GroupPending } from "@/services/groups";
+import type { GroupPending } from "@/services/groups/groups.queries";
 import type { GeduAssignmentRole, ProductGroupWithDetails } from "@/types";
 import { ParticipantChip } from "./participant-chip";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { chipGameIdentity } from "./panel-rules";
 import { GeduPill } from "./gedu-pill";
 import type { AppHref } from "@/lib/constants/routes";
+import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 
 interface GroupColumnProps {
   group: ProductGroupWithDetails;
@@ -43,6 +44,8 @@ interface GroupColumnProps {
    * still ahead. False for in-person and completed products — no Join button.
    */
   voiceAvailable: boolean;
+  /** How the product's sessions are joined, for the Join button. */
+  voiceRoom: ProductVoiceRoom;
   /** Whether the shared session window is currently open. */
   voiceIsOpen: boolean;
   /** Pre-formatted "next open" date label for the locked Join button. */
@@ -90,6 +93,7 @@ export function GroupColumn({
   gamePlatform,
   robloxRenders,
   voiceAvailable,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -275,6 +279,7 @@ export function GroupColumn({
             <div className="mt-6 flex shrink-0 items-center gap-2">
               {showVoice && (
                 <JoinVoiceButton
+                  voiceRoom={voiceRoom}
                   voiceIsOpen={voiceIsOpen}
                   voiceHref={voiceHref}
                   opensDate={opensDate}

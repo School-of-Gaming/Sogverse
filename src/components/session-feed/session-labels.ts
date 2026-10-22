@@ -9,7 +9,7 @@
  * a translated string).
  */
 
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/date-format";
 import { formattingLocale } from "@/lib/constants/locales";
 
 export interface SessionLabels {

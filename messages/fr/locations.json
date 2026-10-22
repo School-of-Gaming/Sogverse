@@ -1,0 +1,26 @@
+{
+  "picker": {
+    "coverageTitle": "Choisissez les zones que vous couvrez",
+    "coverageDescription": "Cochez tout ce que vous pouvez couvrir. Chaque case cochée couvre tout ce qu’elle contient : cocher une région couvre déjà toutes ses communes.",
+    "searchPlaceholder": "Rechercher par nom, code ou code postal…",
+    "searchingEverywhere": "Recherche dans tous les pays",
+    "searchingCountry": "Recherche : {country}",
+    "allCountries": "Tous les pays",
+    "noResults": "Aucun résultat pour « {query} ».",
+    "keepTyping": "Saisissez au moins {count} caractères pour lancer la recherche.",
+    "nothingHere": "Rien ici.",
+    "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+    "loadMore": "Afficher plus",
+    "browseInto": "Afficher le contenu de {name}",
+    "confirm": "Continuer",
+    "confirming": "Ouverture…",
+    "clearSearch": "Effacer la recherche",
+    "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
+    "done": "Terminé"
+  },
+  "home": {
+    "choose": "Ajoutez votre localisation",
+    "dialogTitle": "Où habitez-vous ?",
+    "dialogDescription": "Parcourez la liste ou recherchez par nom ou code postal."
+  }
+}

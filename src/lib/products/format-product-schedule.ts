@@ -3,7 +3,7 @@ import {
   nextOccurrenceInstant,
   viewerWeekdayIndex,
 } from "@/lib/schedule-occurrence";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { formattingLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 
@@ -287,8 +287,8 @@ export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
 }
 
 // Multi-line schedule for detail surfaces — the parent/gedu "When & where"
-// card, the admin product details page, and the signup mail that mirrors the
-// confirmation page. Breaks each time-group onto its own line; the rendered
+// card, the admin product details page, the confirmation page's summary card
+// and the signup mail. Breaks each time-group onto its own line; the rendered
 // zone's abbrev decorates the first time-bearing line, on the terms `nameZone`
 // states.
 export function renderScheduleLinesForDetail(

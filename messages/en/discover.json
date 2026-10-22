@@ -1,0 +1,9 @@
+{
+  "name": "Discover",
+  "breadcrumbLabel": "Breadcrumb",
+  "index": {
+    "title": "<act>Discover</act> School of Gaming",
+    "intro": "What School of Gaming offers particular schools, towns, organisations and events, each on a page written for the people it is about.",
+    "empty": "Nothing here yet"
+  }
+}

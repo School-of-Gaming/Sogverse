@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   invoiceBillingCadence,
   type InvoiceCustomerInput,
-} from "@/services/invoice-customers";
+} from "@/services/invoice-customers/invoice-customers.contracts";
 import { BILLING_CADENCE_LABEL } from "./billing-cadence-label";
 import {
   invoiceCustomerSaveFailure,

@@ -1,0 +1,74 @@
+{
+  "title": "Kiusaamisen ehkäisy ja kurinpito",
+  "lastUpdated": "Päivitetty viimeksi: {date}",
+  "intro": {
+    "heading": "Lyhyesti",
+    "paragraphs": [
+      "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa – eikä Sogverse-alustalla voi lähettää yksityisviestejä: keskustelu käydään yhteisissä ryhmätiloissa, ja ryhmäpuhelun viestit näkyvät kaikille huoneessa eikä niitä tallenneta.",
+      "Kun jokin menee pieleen, emme pelkästään rankaise – me autamme. Käytämme rauhallista, askel askeleelta etenevää tapaa, joka keskittyy auttamaan lasta ymmärtämään tapahtunutta, korjaamaan tilanteen ja toimimaan paremmin seuraavalla kerralla. Siirrymme tiukempaan vaiheeseen vain, jos käytös jatkuu, ja pidämme sinut ajan tasalla koko ajan."
+    ]
+  },
+  "sections": {
+    "commitment": {
+      "heading": "Lapset ensin. Aina.",
+      "paragraphs": [
+        "Kerhomme ovat paikka oppia, saada kavereita ja pitää hauskaa – ja se onnistuu vain, jos jokainen tuntee olonsa turvalliseksi. Olemme sitoutuneet yhteisöön, jossa ei ole kiusaamista, häirintää eikä ilkeyttä ja jossa sekä pelikasvattajat että lapset kohtelevat toisiaan kunnioittavasti."
+      ]
+    },
+    "approach": {
+      "heading": "Miten käsittelemme ongelmia",
+      "paragraphs": [
+        "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, pelikasvattajamme (kutsumme heitä Geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
+        "Hoidamme useimmat tilanteet hellävaraisesti, juttelemalla kahden kesken. Jos käytös jatkuu, otamme tiukempia askelia yksi kerrallaan. Alla olevat vaiheet ovat portaikko, jota seuraamme, ja pidämme sinut mukana koko matkan."
+      ]
+    },
+    "step1": {
+      "heading": "Vaihe 1 – Muistutus ja virheen korjaaminen",
+      "paragraphs": [
+        "Gedu keskustelee lapsesi kanssa siitä, mitä tapahtui ja miten se vaikutti muihin, ja auttaa häntä löytämään paremman tavan toimia. Se on lempeää ja arkista – esimerkiksi: ”Muistathan, ettet ota toisen arkusta ilman lupaa. Voit kysyä, haluaisiko toinen käydä vaihtokauppaa kanssasi.”"
+      ]
+    },
+    "step2": {
+      "heading": "Vaihe 2 – Kahdenkeskinen juttelu",
+      "paragraphs": [
+        "Jos tilanne toistuu, Gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
+      ]
+    },
+    "step3": {
+      "heading": "Vaihe 3 – Puuttuminen istunnon aikana",
+      "paragraphs": [
+        "Jos häiritsevä käytös jatkuu, Gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
+      ]
+    },
+    "step4": {
+      "heading": "Vaihe 4 – Jäähy istunnosta",
+      "paragraphs": [
+        "Jos tilanne ei vieläkään rauhoitu, Gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia ({supportEmail}) liittyy mukaan keskusteluun."
+      ]
+    },
+    "step5": {
+      "heading": "Vaihe 5 – Tauko yhteisöstä",
+      "paragraphs": [
+        "Jos käytös jatkuu kaikesta edellä kuvatusta huolimatta, lapsi voidaan poistaa School of Gamingin yhteisöstä joksikin aikaa – tämä tarkoittaa hänen kerhojaan ja itse Sogversea, mukaan lukien pelipalvelimemme. Kanslia ottaa sinuun yhteyttä ja kertoo päätöksestä, ja juttelemme tilanteesta myös lapsesi kanssa."
+      ]
+    },
+    "step6": {
+      "heading": "Vaihe 6 – Uusi alku myöhemmin",
+      "paragraphs": [
+        "Tauko ei välttämättä ole loppu. Lapsesi voi palata, kun sekä sinä että hän tunnette olevanne siihen valmiita. Jos hän palaa eikä käytös ole muuttunut, poistamme hänet toiminnasta pysyvästi sen sijaan, että aloittaisimme portaikon alusta – mutta toiveemme on aina onnistunut uusi alku."
+      ]
+    },
+    "partnership": {
+      "heading": "Teemme tätä yhdessä",
+      "paragraphs": [
+        "Sinä tunnet lapsesi parhaiten, ja saamme parhaat tulokset, kun toimimme yhdessä. Jos sinua huolettaa, miten lapsellasi menee – tai jos epäilet, että joku kohtelee häntä ilkeästi – kerro meille. Kun kotona ja kerhossa puhutaan samoista odotuksista, sillä on suuri merkitys."
+      ]
+    },
+    "contact": {
+      "heading": "Yhteydenotto",
+      "paragraphs": [
+        "Jos sinulla on kysyttävää tästä ohjeesta tai haluat keskustella jostakin tapahtuneesta, lähetä kanslialle viesti osoitteeseen {supportEmail}. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
+      ]
+    }
+  }
+}

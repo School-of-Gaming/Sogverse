@@ -1,14 +1,17 @@
 "use client";
 
 import { Camera } from "lucide-react";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES } from "@/lib/constants/gamer-photo-consents";
 import { findGamerPhotoConsentRow } from "@/lib/gamer-photo-consent-answer";
-import { useGamerPhotoConsents } from "@/services/gamer-photo-consents";
+import {
+  useGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import { useTimezone } from "@/providers";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 /**
  * What a gamer's parent has said about photographs of them.
@@ -44,10 +47,10 @@ export function UserGamerPhotoConsentCard({ gamerId }: { gamerId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Camera className="h-5 w-5 text-act" />
-          {t("title")}
-        </CardTitle>
+          <Heading level={2} step="card-title">{t("title")}</Heading>
+        </div>
       </CardHeader>
       <CardContent className="@container">
         {/* Two abreast once the card is wide enough, matching the marketing

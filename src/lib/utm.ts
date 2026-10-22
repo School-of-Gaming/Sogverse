@@ -79,7 +79,7 @@
  *     whatever it likes.
  *
  *     **The same gate covers every other write of them.** A landing page's
- *     email sign-up passes them to Brevo as contact attributes, through
+ *     email sign-up passes them to Klaviyo as profile properties, through
  *     {@link utmMetadataForConsent} and the request's own consent cookie,
  *     exactly as a registration stores them.
  *

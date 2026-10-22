@@ -1,0 +1,136 @@
+{
+  "waitlist": {
+    "footerReassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
+    "footerReassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
+    "leave": {
+      "trigger": "tlhegh yImej",
+      "confirmTitle": "tlhegh Damejqang’a’?",
+      "confirmDescription": "DaqDaj chIl {name}. ({product})",
+      "confirmDescriptionSelf": "DaqlIj DachIl. ({product})",
+      "confirmCta": "tlhegh yImej",
+      "backOfLineWarning": "tlhegh DajeSqa’chugh, tlhegh HeHDaq bIQam."
+    },
+    "seatOffer": {
+      "title": "quS poSchoHpu’",
+      "bodyChild": "quS laj {name}, DaneHtaHchugh.",
+      "bodySelf": "quS DaghajlaH, DaneHtaHchugh.",
+      "bodyGamer": "SoSlI’ vavlI’ je wItlhob.",
+      "deadline": "{deadline} qaSpa’ yIjang, pagh latlh qorDu’vaD jaH quS.",
+      "lapsed": "rInpu’ nob poH, vaj quS DaSuqlaHbe’. quS DaHechbe’chugh, DaH je maHvaD yIja’ — bIQaH.",
+      "accept": "quS vISuq",
+      "decline": "Qo’, qatlho’",
+      "confirmTitle": "quS Danobqu’’a’?",
+      "confirmBodyChild": "loS tetlhDaq Daq chIl {name}, ’ej latlh qorDu’vaD wInob.",
+      "confirmBodySelf": "loS tetlhDaq DaqlIj DachIl, ’ej latlh qorDu’vaD wInob.",
+      "confirmCta": "HISlaH, jISovchu’",
+      "error": "Qagh! polbe’lu’ jangwI’lIj. yInIDqa’ pagh {supportEmail}-Daq maHvaD yIghItlh."
+    }
+  },
+  "billing": {
+    "manage": {
+      "title": "Huch je tlhob",
+      "description": "Stripe Daq HuchHommey, jabbI’IDmey, je rarmeH tlhobmey DawIvlaH ’ej DaSeHlaH.",
+      "cta": "Huch yISeH",
+      "opening": "poSmoHlu’taH…",
+      "error": "Huch lojmIt poSmoHlu’pu’be’. yInIDqa’.",
+      "splitExplanation": "wa’ Huch juH neH Dapoq ’e’ DaHar’a’? ghobe’! qorDu’lI’ rarmeH tlhobmey lu’ev Huch juHmey law’ — tlhejwI’ wo’ ngo’vo’ bIghoSpu’mo’. wa’ juH neH poSmoH Hoch ’och Stripe Daq.",
+      "coversItem": "{name} · {product}",
+      "coversFallback": "HuchHommey polbogh je jabbI’IDmey ngo’"
+    },
+    "alert": {
+      "tooltip": "Huch Qob! DaSDIq yIchoH ’ej tlhejwI’ wo’ yItaHmoH",
+      "gamerTooltip": "wanI’ qaS! SoSlI’ vavlI’ je yIja’"
+    }
+  },
+  "gamerDetail": {
+    "photoConsent": {
+      "title": "mIloghmey HaSta je",
+      "description": "Lynx Educate Roblox je tIq boq: ghommey, raQmey, wanI’mey je.",
+      "sentence": {
+        "lynxEducate": "{name} mIloghmey HaSta je lo’lu’laH: poH ja’ghItlhmeyDaq, Lynx Educate Roblox je De’meyDaq, School of Gaming Lynx Educate Roblox je De’wI’ yotlhmeyDaq ghantoHmeyDaq je. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD."
+      },
+      "sentenceTitle": {
+        "lynxEducate": "{name} mIloghmey HaSta je"
+      },
+      "hint": "Hoch muvmoHmeH poH {name} wIghelqa’. Qav jangbogh mu’, ghaH potlh.",
+      "saveFailed": "jang polbe’lu’. QummeH He yInuD ’ej yInIDqa’."
+    },
+    "backToMySog": "jIH SOGDaq yIchegh",
+    "title": "toy’wI’ ngoQmey",
+    "subtitle": "{name}vaH ngoQmey tI’ang",
+    "profileDescription": "toy’wI’ De’ yIchoH.",
+    "profileUpdated": "pong choHlu’! Qapla’!",
+    "failedUpdateDisplayName": "pong choH Dabe’lu’",
+    "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
+    "gender": {
+      "boy": "loDHom",
+      "girl": "be’Hom",
+      "non_binary": "ghob ghajbe’"
+    },
+    "notFound": {
+      "title": "toy’wI’ tu’be’lu’",
+      "description": "toy’wI’ account HoHlu’ qoj DaghajlaHbe’."
+    },
+    "minecraft": {
+      "title": "Minecraft account",
+      "description": "Minecraft Java Edition lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
+    },
+    "roblox": {
+      "title": "Roblox account",
+      "description": "Roblox lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
+    },
+    "signIn": {
+      "title": "’el mIw",
+      "current": {
+        "parent": "accountlIj Dung ’el {name}.",
+        "username": "pong mu’mey je lo’ ’ej ’el {name}.",
+        "email": "QIn Daq Daj lo’ ’ej ’el {name}."
+      },
+      "currentUsername": "{username} pong lo’ ’ej ’el {name}.",
+      "saved": "choHlu’ta’ ’el mIw.",
+      "saveFailed": "choHlu’be’ta’. yInIDqa’!",
+      "newPasswordTitle": "mu’mey chu’ yIwIv",
+      "newPasswordDescription": "mu’mey chu’ yIwIv ’ej {name}vaD yIjatlh. SIbI’ lonlu’ mu’mey ngo’.",
+      "newPasswordSubmit": "mu’mey yIchoH",
+      "newPasswordSaved": "chenta’ mu’mey chu’.",
+      "verified": "ngu’lu’pu’ Daqvam.",
+      "notVerified": "ngu’meH lInk poSmoHpu’be’ {name}.",
+      "resend": "ngu’meH QIn yIngeHqa’",
+      "resendSent": "ngeHta’. QIn buq nuD ’e’ {name} yItlhob.",
+      "resendRateLimited": "wa’ QujwI’vaD QIn law’ qar’a’! tugh yInIDqa’.",
+      "resendFailed": "ngeHlu’be’ta’ QIn. yInIDqa’!",
+      "change": {
+        "username": {
+          "title": "pong yIchoH",
+          "description": "{name}vaD pong chu’ yIwIv. rInbe’ mu’mey, ’ach SIbI’ Qapbe’choH pong ngo’.",
+          "submit": "pong yIpol",
+          "saved": "choHlu’ta’ pong. QujwI’lIjvaD chu’ yIjatlh."
+        }
+      }
+    }
+  },
+  "switchToGamer": {
+    "title": "{name}vaD pong yIchoH ’ej {productName}vaD yIghaj?",
+    "oneWayWarning": "vav/SoS account vIqaSlu’."
+  },
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "may’ taghDI’, chay’ muv toy’wI’wI’?",
+        "answer": "<p>nuqDaq qaS may’? jIH SOGlIjDaq nagh beQ ja’: ’etlh ghajchugh, ghogh pa’Daq qaS; Daq pong ghajchugh, Daqvetlh qaS.</p><p>ghogh pa’Daq: Hal qawwI’Daq qaS, ’ej chenmoHnISlu’bogh pagh:</p><steps><step>jIH SOGlIjDaq puqlI’ pong bIngDaq nagh beQ yISam. may’ SumtaHvIS jonta’ ’etlh, ’ej jaj poH je ja’.</step><step>may’ taghpa’ vagh tup, choH ’etlh: ”ghogh pa’Daq yIghoS” moj.</step><step>yIqIp. ghom ghotpu’ neH chaw’ pa’, vaj wa’DIch puqlI’ profile DawIvnIS — vav/SoS accountlIjvo’ bImej — ’ej puqlI’ pongDaq poS pa’.</step><step>wab jan tlhobchugh Hal qawwI’, yIchaw’.</step></steps><p>profilelIj DacheghmeH, vav PIN DapoQ. mob pong ngoq qoj jabbI’ID ghajchugh puqlI’, jIH SOGDaj poSmoHlaH ’ej ’etlh rap qIplaH. may’ rInpu’DI’ vagh tup poStaH pa’.</p><p>Daq’e’ qaSchugh, ’etlh tu’lu’be’. ghom’a’, ragh, wanI’ HalDaq Daq pong Daq ngoq je cha’lu’, ’ej qorDu’vaD Daq De’ tu’lu’chugh, ’oH je cha’lu’ — vaj may’ taghDI’, puqlI’ tlhej Daqvetlh yIghoS!</p>"
+      },
+      "parentPin": {
+        "question": "nuq ’oH vav PIN’e’, ’ej vIlIjchugh?",
+        "answer": "<p>vav accountlIj DaDIchDaq Dalo’DI’ DawIvbogh loS mI’ ngoq ’oH vav PIN’e’. Qu’ Hoch jonbe’ — Sogverse vav Daq naQ jon: wa’logh yIpoSmoH, ’ej toy’wI’ profile DawIvDI’ qoj bImejDI’, SIbI’ jonqa’lu’ — vaj Hal qawwI’Daq polta’bogh mu’ pegh mob: je’meH qoj puq account choHmeH lI’be’. He chegh je jon PIN’vam: accountlIjvo’ Sogverse ’elpu’bogh puq: profilelIj qoj loDnI’ be’nI’ profile wIvmeH PIN poQ.</p><p>DalIjchugh, PIN jIHDaq ”PIN DalIj’a’?” yIqIp: accountlIj jabbI’ID DaqDaq neH chu’moHmeH He wIngeH — latlh DaqDaq pagh. vaj qIptaHvIS puq, jabbI’ID neH DangeHmoH. cha’maH loS rep yIntaH He, ’ej wa’logh neH Qap.</p><p>PIN DaqawtaHchugh, ngoQmeyDaq DachoHlaH je.</p>"
+      },
+      "sessionReports": {
+        "question": "may’mey chay’ qaSpu’ vISov’a’?",
+        "answer": "<p>HIja’. may’ rInDI’, may’ De’ qon puqlI’ Gedu — ghom Qu’, chay’ qaSpu’, ’ej qawnISlu’bogh poHmey — motlh mIlloghmey tlhej.</p><p>ghom’a’, ragh, wanI’ HalDaq jIH SOGDaq nargh, may’mey ’ay’Daq, ret may’ De’mey Hoch ’ej ratlhbogh may’mey tlhej. jIH SOGDaj qoDDaq De’ rap legh puqlI’. Gedu De’ ngeHDI’, jabbI’ID je Sup — SoHvaD neH. qorDu’ Hoch Suq jabbI’ID mob, ’ej latlh qorDu’ jabbI’ID legh pagh.</p><p>may’ Hoch puqlI’ pawwI’ ngu’ghach je Dalegh HalDaq; pawwI’ ngu’ghachmey leghbe’ puqlI’, ’ej latlh puq ngu’ghach legh pagh qorDu’ not.</p>"
+      },
+      "missedSessions": {
+        "question": "may’ wIchIlchugh, qoj botDaq ghom’a’ wImuvchugh?",
+        "answer": "<p>qaStaHvIS ghom’a’, toy’wI’pu’ chu’vaD poStaH: vaj botDaq bImuvlaH — ghom’a’ HalDaq legh: Hogh Hoch nuq jaj nuq rep je ghomlu’, nuq poH qaStaH, ’ej ratlhbogh pa’mey mI’. puqlI’ chelpu’DI’, ghom’a’ Hal mob: may’ veb jaj ja’.</p><p>pIm raghmey wanI’mey je: taghpa’ jaj wa’, chelwI’pu’ chu’vaD SoQmoH ragh, ghom rap taghmo’; ’ej may’Daj rInDI’ SoQmoH wanI’.</p><p>bIchelbogh jajvo’ jar naQ nge’lu’ ghom’a’: vaj jar botDaq bImuvchugh, jarvetlh Huch machbe’. ghom’a’ taghpa’ bIchelchugh, jajvetlh pagh nge’lu’, ’ej Huch wa’DIch jaj ja’ Hal.</p><p>wa’ may’ chIlchugh puqlI’, pagh yIta’ — pa’Daj Qaw’be’. may’ Hoch pawwI’pu’ ngu’ Gedu, ’ej ghom’a’ HalDaq ngu’ghach Dalegh. chIlta’bogh may’ nobqa’lu’be’, tamlu’be’ je; ghomHom vengDaq, ja’be’taHvIS pIj ghoSbe’chugh puq, loSwI’pu’ tetlhDaq qorDu’ vebvaD pa’ poSlaH — bIchelDI’ Dalajta’.</p>"
+      }
+    }
+  }
+}

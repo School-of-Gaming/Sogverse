@@ -7,13 +7,14 @@ import { Copyright } from "./copyright";
 import { PrivacyChoicesLink } from "@/components/consent";
 import {
   REGISTERED_TRADEMARK,
-  ROUTES,
   SENDER_NAME,
   SUPPORT_EMAIL,
-} from "@/lib/constants";
+} from "@/lib/constants/brand";
+import { ROUTES } from "@/lib/constants/routes";
 
 export function Footer() {
   const t = useTranslations('footer');
+  const tDiscover = useTranslations('discover');
 
   return (
     <footer className="border-t border-border bg-card">
@@ -72,6 +73,18 @@ export function Footer() {
             {t('contact.email', { email: SUPPORT_EMAIL })}
           </a>
           <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            {/* The landing pages' index, named as the page names itself. The
+                one link on the site to the page listing every landing page,
+                which is how a crawler reaches them by following links rather
+                than through the sitemap alone; the header and the tab bar
+                deliberately leave it out, because people reach landing pages
+                from advertising and marketing, not by browsing. */}
+            <Link
+              href={ROUTES.discover}
+              className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {tDiscover('name')}
+            </Link>
             <Link
               href={ROUTES.privacy}
               className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
@@ -101,7 +114,7 @@ export function Footer() {
             >
               {t('attributions')}
             </Link>
-            {/* The fifth item, and the only one that is not a link: it reopens
+            {/* The last item, and the only one that is not a link: it reopens
                 the consent strip on this page instead of navigating. It says
                 the same words the strip's own heading does — the privacy
                 policy and the banner's copy both promise a way back "from the

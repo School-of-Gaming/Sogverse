@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { Link } from "@/i18n/navigation";
+import { Heading } from "@sog/ui";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, ArrowLeft, Check, Copy, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,12 +10,15 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { ROUTES, SUPPORTED_CURRENCIES } from "@/lib/constants";
+import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
+import { ROUTES } from "@/lib/constants/routes";
 import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
-import { cn, formatCurrencyFromCents, formatDate, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { formatInTimeZone } from "date-fns-tz";
 import { addCalendarDays } from "@/lib/calendar-date";
 import type { PlannedSession } from "@/lib/planned-sessions";
@@ -48,14 +52,17 @@ import { describeGamerPhotoConsents } from "@/lib/constants/gamer-photo-consents
 import {
   usePlannedSessions,
   useProductAdmin,
+} from "@/services/products/products.queries";
+import {
   type ProductAdminDetailRow,
-} from "@/services/products";
+} from "@/services/products/products.service";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import {
   effectiveStatus,
   type EffectiveProductStatus,
 } from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
+import { productVoiceRoom } from "@/lib/products/voice-room";
 import { useNow, useTimezone } from "@/providers";
 import { personName } from "@/components/admin/person-name";
 import { GroupsPanel } from "./groups/groups-panel";
@@ -200,6 +207,13 @@ export function ProductDetailsPage({
     timeZone,
   });
   const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
+  const voiceRoom = productVoiceRoom(product, product.product_translations);
+  // The same pick a family's "How to join" dialog makes, so a locale with no
+  // instructions of its own falls back exactly as theirs does.
+  const joinInstructions =
+    voiceRoom.mode === "none"
+      ? (resolveTranslation(voiceRoom.instructions, uiLocale)?.text ?? null)
+      : null;
   const topicName = topicLabel(product.topic);
 
   return (
@@ -236,6 +250,7 @@ export function ProductDetailsPage({
             seatCount={product.seat_count}
             waitlistEnabled={product.waitlist_enabled}
             voiceAvailable={voiceAvailable}
+            voiceRoom={voiceRoom}
             voiceIsOpen={voice.voiceIsOpen}
             opensDate={voice.opensDate}
             opensTime={voice.opensTime}
@@ -246,6 +261,7 @@ export function ProductDetailsPage({
           product={product}
           plannedSessions={plannedSessions}
           topicName={topicName}
+          joinInstructions={joinInstructions}
           uiLocale={uiLocale}
           timeZone={timeZone}
           t={t}
@@ -312,7 +328,9 @@ function HeaderCard({
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {kicker}
             </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight">{title}</h1>
+            <div className="mt-1">
+              <Heading level={1} step="section">{title}</Heading>
+            </div>
             {description && (
               <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                 {description}
@@ -368,6 +386,7 @@ function ProductDetailsCard({
   product,
   plannedSessions,
   topicName,
+  joinInstructions,
   uiLocale,
   timeZone,
   t,
@@ -377,6 +396,8 @@ function ProductDetailsCard({
   /** The product's plan; `undefined` only when the read failed. */
   plannedSessions: readonly PlannedSession[] | undefined;
   topicName: string | null;
+  /** The join instructions of the translation the header shows, or null. */
+  joinInstructions: string | null;
   uiLocale: string;
   timeZone: string;
   t: ReturnType<typeof useTranslations<"admin.products">>;
@@ -558,9 +579,9 @@ function ProductDetailsCard({
     <section aria-labelledby={headingId} className="min-w-0">
       <Card className="@container">
         <CardContent className="p-4 sm:p-5">
-          <h2 id={headingId} className="text-base font-semibold">
+          <Heading level={2} step="card-title" id={headingId}>
             {t("detailsPage.title")}
-          </h2>
+          </Heading>
           <div className="mt-3 grid grid-cols-1 items-start gap-x-8 gap-y-5 @3xl:grid-cols-2">
             <DetailsSection title={t("detailsPage.sections.schedule")}>
               <DetailRow label={t("labels.schedule")}>
@@ -661,6 +682,32 @@ function ProductDetailsCard({
                   tbd: tFamily("tbd"),
                 })}
               </DetailRow>
+
+              {/* How an online product's sessions are joined. The meeting link
+                  is shown whole, since it is what an admin checks; the join
+                  instructions are the version the header's copy comes from,
+                  one locale's, like the rest of that copy. */}
+              {product.is_remote && (
+                <DetailRow label={t("detailsPage.fields.voiceRoom")}>
+                  <div>{t(`voiceRoomModes.${product.voice_room_mode}`)}</div>
+                  {product.voice_room_mode === "external" &&
+                    product.external_voice_url && (
+                      <a
+                        href={product.external_voice_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="break-all text-act underline-offset-2 hover:underline"
+                      >
+                        {product.external_voice_url}
+                      </a>
+                    )}
+                  {product.voice_room_mode === "none" && joinInstructions && (
+                    <p className="whitespace-pre-wrap text-muted-foreground">
+                      {joinInstructions}
+                    </p>
+                  )}
+                </DetailRow>
+              )}
 
               {/* Null only for a row carrying neither an audience label nor an
                   age range, which the schema's CHECKs make unreachable — the row
@@ -962,8 +1009,8 @@ function ProductDetailsCard({
 }
 
 /**
- * One named run of facts. The heading is furniture — small, muted, caps and
- * tracked — and every section's heading wears the same treatment.
+ * One named run of facts. The heading is a label, and every section's heading
+ * takes the same step.
  *
  * Each section is its own size container, so its rows are laid out by the
  * width of the column they are in: when the card pairs its sections up, a row
@@ -978,10 +1025,9 @@ function DetailsSection({
 }) {
   return (
     <section className="@container min-w-0">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-      >
+      <Heading level={3} step="label">
         {title}
-      </h3>
+      </Heading>
       <dl className="mt-1 divide-y divide-border">{children}</dl>
     </section>
   );

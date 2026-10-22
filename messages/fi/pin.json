@@ -1,0 +1,37 @@
+{
+  "create": {
+    "enterTitle": "Luo vanhemman PIN",
+    "confirmTitle": "Vahvista PIN",
+    "description": "Jokainen ostos, jokainen ilmoittautuminen ja jokainen muutos siihen, kenen kanssa lapsesi pelaavat, kysyy ensin tätä PIN-koodia. Vain sinä tiedät sen, joten tällä tilillä ei osteta eikä muuteta mitään ilman sinua."
+  },
+  "unlock": {
+    "title": "Syötä vanhemman PIN",
+    "description": "Ostokset ja muutokset lastesi tileihin on suojattu tällä PIN-koodilla, joten vain sinä voit tehdä ne.",
+    "forgot": "Unohditko PIN-koodin?"
+  },
+  "mismatch": "PIN-koodit eivät täsmänneet. Yritetään uudelleen.",
+  "deleteDigit": "Poista viimeinen numero",
+  "forgotSent": {
+    "title": "Tarkista sähköpostisi",
+    "description": "Jos tilillesi on tallennettu sähköpostiosoite, lähetimme linkin PIN-koodin nollaamiseen. Linkki vanhenee 24 tunnin kuluttua.",
+    "back": "Takaisin PIN-koodin syöttöön"
+  },
+  "reset": {
+    "description": "Aseta uusi 4-numeroinen PIN, jonka vain sinä tiedät.",
+    "enterTitle": "Valitse uusi PIN",
+    "confirmTitle": "Vahvista uusi PIN",
+    "successTitle": "PIN nollattu",
+    "successDescription": "Vanhemman PIN on päivitetty. Kirjaudu sisään ja syötä se jatkaaksesi.",
+    "invalidTitle": "Linkki vanhentunut",
+    "invalidDescription": "Tämä PIN-koodin nollauslinkki on virheellinen tai vanhentunut. Kirjaudu sisään ja pyydä uusi.",
+    "backToLogin": "Takaisin kirjautumiseen"
+  },
+  "change": {
+    "newTitle": "Valitse uusi PIN",
+    "confirmTitle": "Vahvista uusi PIN",
+    "cancel": "Peruuta",
+    "successTitle": "PIN päivitetty",
+    "successDescription": "Vanhemman PIN on vaihdettu.",
+    "backToSettings": "Takaisin asetuksiin"
+  }
+}

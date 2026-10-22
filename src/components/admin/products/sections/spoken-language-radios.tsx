@@ -21,7 +21,7 @@
 
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { useLanguageNames } from "@/hooks/use-language-names";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   SPOKEN_LANGUAGES,
   type SpokenLanguageCode,

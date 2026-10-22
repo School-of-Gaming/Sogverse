@@ -9,8 +9,6 @@ import {
 } from "@/lib/images/ingest-image.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { storeTeamPhotoResponse } from "@/services/team-profiles/team-profiles.contracts";
-// The module directly rather than the feature barrel: the barrel carries
-// browser-only React Query hooks.
 import { TEAM_PHOTO_URL_TTL_SECONDS } from "@/services/team-profiles/team-profiles.types";
 
 const ROUTE_LABEL = "/api/team/profiles/[userId]/photo";

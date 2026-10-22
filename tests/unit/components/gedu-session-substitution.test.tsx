@@ -9,7 +9,9 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enCommon from "@/../messages/en/common.json";
 import { alertVariants } from "@/components/ui/alert";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
@@ -25,6 +27,8 @@ import {
   type SubstitutionRequestInput,
   type StaffingAssignment,
 } from "@/lib/session-staffing";
+
+const messages = { gedu: enGedu, sessionBadge: enSessionBadge, common: enCommon };
 
 // Nothing here opens an editor or types into a note, so the markdown editor is
 // opaque — and it is by a wide margin the heaviest thing a feed suite loads.

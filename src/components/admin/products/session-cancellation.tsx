@@ -20,7 +20,7 @@ import {
   SessionCardMenu,
   type SessionCardMenuItem,
 } from "@/components/gedu/session-feed";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 import {
   SessionStaffingEditor,
   type SessionStaffingEditorProps,

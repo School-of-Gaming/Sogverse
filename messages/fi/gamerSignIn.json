@@ -1,0 +1,26 @@
+{
+  "question": "Miten {name} kirjautuu sisään?",
+  "option": {
+    "parent": "Vanhemman tilin kautta",
+    "username": "Lapsen tilin kautta käyttäjätunnuksella",
+    "email": "Lapsen tilin kautta lapsen sähköpostiosoitteella"
+  },
+  "optionHint": {
+    "parent": "Vanhempi kirjautuu sisään laitteella ja antaa laitteen lapselle. Lapsella ei ole omaa käyttäjätunnusta eikä salasanaa.",
+    "username": "Vanhempi luo lapselle käyttäjätunnuksen ja salasanan.",
+    "email": "Vanhempi luo tilin, ja lapsi vahvistaa sähköpostiosoitteensa ja luo oman salasanansa."
+  },
+  "parentModeNote": "Ei täytettävää – {name} kirjautuu sisään, kun vaihdat hänen tililleen omalta tililtäsi.",
+  "usernameLabel": "Käyttäjätunnus",
+  "usernamePlaceholder": "lilja2015",
+  "usernameHint": "Vain kirjaimia ja numeroita, 3–20 merkkiä.",
+  "usernameRequired": "Valitse käyttäjätunnus.",
+  "usernameInvalid": "Käytä 3–20 kirjainta tai numeroa ilman välilyöntejä.",
+  "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
+  "passwordHint": "Vähintään {count} merkkiä. Lue se ääneen pelaajallesi – voit vaihtaa sen täällä myöhemmin.",
+  "passwordTooShort": "Salasanassa on oltava vähintään {count} merkkiä.",
+  "emailPlaceholder": "lilja@example.com",
+  "emailRequired": "Syötä sähköpostiosoite.",
+  "emailInvalid": "Tämä ei näytä sähköpostiosoitteelta.",
+  "emailTaken": "Tällä sähköpostiosoitteella on jo tili."
+}

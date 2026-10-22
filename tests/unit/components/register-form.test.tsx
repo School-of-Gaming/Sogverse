@@ -77,7 +77,7 @@ vi.mock("@/components/locations/home-location-field", () => ({
 }));
 
 import { RegisterForm } from "@/components/auth/register-form";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 const mockFetch = vi.fn();
 

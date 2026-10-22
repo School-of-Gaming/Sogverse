@@ -13,13 +13,15 @@ import {
   sessionFactsWhen,
 } from "@/components/session-substitution/SubstitutionSessionFacts";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
-import { substitutionAnswerFailureKey } from "@/services/session-substitution";
+import {
+  substitutionAnswerFailureKey,
+} from "@/services/session-substitution/session-substitution.refusals";
 import {
   isSubstitutionUrgent,
   type SubstitutionPoolRow,
 } from "@/lib/gedu-substitution-pool";
 import { useNow, useTimezone } from "@/providers";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 
 export interface GeduSubstitutionPoolSectionViewProps {
   /**

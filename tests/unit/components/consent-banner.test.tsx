@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enConsent from "@/../messages/en/consent.json";
 import { ConsentBanner, ConsentProvider, useConsent } from "@/components/consent";
 import {
   CONSENT_COOKIE_NAME,
@@ -9,6 +9,8 @@ import {
   type ConsentState,
 } from "@/lib/consent";
 import { getCookie } from "@/lib/cookies";
+
+const messages = { consent: enConsent };
 
 /**
  * ============================================================================

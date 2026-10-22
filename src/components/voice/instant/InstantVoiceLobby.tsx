@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Mic, MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { cn } from "@/lib/cn";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";
 import { MicSettingsPopover } from "@/components/voice/MicSettingsPopover";
@@ -241,7 +242,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, joinFailed }:
     <div className="container mx-auto max-w-3xl p-4 md:p-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
+          <Heading level={1} step="section">{t("title")}</Heading>
           <CardDescription>{t("description")}</CardDescription>
           {/* The room link, right where someone waiting in the lobby wants it:
               the first person to arrive is usually the one inviting the rest. */}

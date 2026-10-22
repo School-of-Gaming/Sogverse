@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { generateIdenticon, IDENTICON_GROUND } from "@/lib/identicon";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 interface IdenticonProps {
   id: string;
   size?: number;

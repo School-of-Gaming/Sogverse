@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * A person as a pill: their identicon and their first name, nothing else.

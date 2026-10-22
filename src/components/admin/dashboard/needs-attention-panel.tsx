@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { AlertTriangle, CircleCheck } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { ProductAttention } from "./admin-dashboard-data";
 import { PixelSprite, TROPHY_CUP } from "./pixel-art";
 import { ProductAttentionGrid } from "./product-attention-grid";
@@ -44,7 +45,7 @@ export function NeedsAttentionPanel({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-xl">{t("title")}</CardTitle>
+        <Heading level={2} step="card-title">{t("title")}</Heading>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-sm font-semibold text-warning">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {products.length}
@@ -105,16 +106,12 @@ function AllClearPanel() {
           wordmark and wraps within itself rather than pushing the card sideways.
           `justify-end` keeps it packed right wherever it lands. */}
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-6 gap-y-3 space-y-0">
-        {/* The all-clear line is the card's heading, in the app face like every
-            other panel title on this page; the pixel cup beside it is artwork
-            and carries the reward on its own. `text-sm` because at the title's
-            own size the longest locale would set this wider than a phone, and
-            `leading-relaxed`/`tracking-normal` because the heading sits on one
-            row beside the sprite and the base class's tight leading and
-            `tracking-tight` are drawn for a title stacked over body copy. */}
-        <CardTitle className="text-sm leading-relaxed tracking-normal text-act sm:text-base">
+        {/* The all-clear line is the card's heading, at the quietest step: with
+            nothing to act on, the panel has no reason to call for attention.
+            The pixel cup beside it is artwork and carries the reward on its own. */}
+        <Heading level={2} step="label">
           {t("allClearTitle")}
-        </CardTitle>
+        </Heading>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
           <p className="text-sm text-muted-foreground">{t("allClearLine")}</p>
           <PixelSprite art={TROPHY_CUP} />

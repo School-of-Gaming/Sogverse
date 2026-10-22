@@ -1,10 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FamilyProfileSelector } from "@/components/family";
-import type { FamilyMember } from "@/services/family";
+import type { FamilyMember } from "@/services/family/family.service";
 import type { SessionProvenance } from "@/lib/session-provenance";
 
 /**
@@ -38,9 +39,9 @@ export function SelectProfileView({
 
   return (
     <div className="w-full max-w-3xl space-y-10 sm:space-y-12">
-      <h1 className="text-balance text-center text-3xl font-bold sm:text-4xl">
+      <Heading level={1} step="page-title" align="center">
         {t("title")}
-      </h1>
+      </Heading>
       <FamilyProfileSelector
         autoOpenAddGamerFromUrl
         initialFamily={initialFamily}

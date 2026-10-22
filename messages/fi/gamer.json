@@ -1,0 +1,26 @@
+{
+  "welcomeNamed": "Tervetuloa, {name}!",
+  "fallbackName": "pelaaja",
+  "subtitle": "Valmis pelaamaan ja oppimaan?",
+  "emptyDashboard": "Täällä ei ole vielä mitään. Pyydä vanhempaasi katsomaan kerhoja ja leirejä kanssasi, niin voitte valita jotain yhdessä.",
+  "helpFaq": {
+    "items": {
+      "joiningSession": {
+        "question": "Miten pääsen mukaan, kun kertani alkaa?",
+        "answer": "<p>Avaa ensin Oma SOG ja etsi kerhosi. Seuraava vaihe riippuu siitä, missä kerhosi kokoontuu.</p><p>Jos kerho kokoontuu verkossa, siinä on painike:</p><steps><step>Ennen kerran alkua painike on lukittuna ja kertoo, minä päivänä ja mihin aikaan se avautuu.</step><step>Viisi minuuttia ennen kerran alkua painikkeen teksti vaihtuu: siinä lukee ”Liity äänihuoneeseen”.</step><step>Napauta sitä. Nyt olet mukana.</step></steps><p>Mitään ei tarvitse asentaa eikä koodia kirjoittaa.</p><p>Jos kerho kokoontuu paikan päällä, painiketta ei ole. Kerhossasi näkyy sen sijaan paikan nimi, ja kerhosi sivulla näkyy myös osoite. Ole paikalla, kun kertasi alkaa.</p>"
+      },
+      "cannotBeHeard": {
+        "question": "Kukaan ei kuule minua äänihuoneessa – mitä tarkistan?",
+        "answer": "<p>Tarkista nämä järjestyksessä. Kyse on melkein aina ensimmäisestä.</p><steps><step>Onko mikrofonipainikkeesi punainen? Silloin olet mykistettynä. Napauta sitä, niin mykistys poistuu.</step><step>Näkyykö painikkeessa lukko? Gedusi on lukinnut mikrofonisi hetkeksi. Hän avaa sen kyllä.</step><step>Napauta mikrofonipainikkeen vieressä olevaa pientä nuolta. Se avaa mikrofoniasetukset, joista voit valita oikean mikrofonin listalta.</step><step>Puhu nyt ja etsi listan alta palkkia. Jos palkkia ei näy lainkaan, mikrofonisi on pois päältä eikä vain hiljainen – palaa kohtaan 1. Jos palkki näkyy muttei liiku, mikrofoni on jonkin muun ohjelman käytössä.</step></steps><p>Jos näet punaisen viestin, jonka mukaan emme saa yhteyttä mikrofoniisi, sulje muut sovellukset ja välilehdet, jotka käyttävät sitä, salli mikrofonin käyttö selaimesi asetuksista ja napauta Lataa uudelleen.</p><p>Eikö vieläkään kuulu? Kerro Gedullesi kerran aikana – hän auttaa.</p>"
+      },
+      "cannotHearOthers": {
+        "question": "En kuule ketään äänihuoneessa – mitä tarkistan?",
+        "answer": "<p>Tarkista nämä järjestyksessä:</p><steps><step>Nosta laitteesi äänenvoimakkuutta ja tarkista, että kuulokkeet ovat kunnolla kiinni.</step><step>Katso alueita. Kuulet vain ne, jotka ovat samalla alueella kuin sinä, joten jos muut ovat jossain muualla, napauta heidän aluettaan ja siirry sinne.</step><step>Jos Gedusi on siirtänyt sinut alueelle tarkoituksella, pysy siellä. Hän tuo sinut takaisin.</step></steps><p>Jos muut ovat samalla alueella, äänet ovat päällä eikä silti kuulu mitään, kerro Gedullesi – sano se ääneen tai kirjoita chattiin, jos huoneessasi on sellainen. Hän näkee, ketkä huoneessa ovat, ja auttaa.</p>"
+      },
+      "someoneIsMean": {
+        "question": "Mitä jos joku on kerralla ilkeä minulle?",
+        "answer": "<p>Kerro Gedullesi tai vanhemmallesi. Sinun ei tarvitse koskaan selvittää ilkeyttä yksin, eikä aikuiselle kertominen ole kantelua.</p><p>Gedusi ottaa asian aina tosissaan ja auttaa selvittämään, mitä tapahtui. Toisten kiusaamisesta ja kerhon sääntöjen rikkomisesta seuraa aina jotain. Jokaisella on oikeus tuntea olonsa turvalliseksi ja tervetulleeksi kerhossa.</p>"
+      }
+    }
+  }
+}

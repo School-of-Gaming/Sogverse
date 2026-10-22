@@ -8,7 +8,9 @@ import {
   sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
-import type { LiveSubstitutionRequest } from "@/services/session-substitution";
+import type {
+  LiveSubstitutionRequest,
+} from "@/services/session-substitution/session-substitution.contracts";
 import type { GeduAssignmentRole } from "@/types";
 
 /**

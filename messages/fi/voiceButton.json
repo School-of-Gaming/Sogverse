@@ -1,0 +1,7 @@
+{
+  "joinVoice": "Liity äänihuoneeseen",
+  "joinMeeting": "Liity kokoukseen",
+  "opensInNewTab": "(avautuu uuteen välilehteen)",
+  "howToJoin": "Näin liityt",
+  "locked": "Avautuu {date} klo {time}"
+}

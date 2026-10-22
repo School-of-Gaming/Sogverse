@@ -1,49 +1,47 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enFamily from "@/../messages/en/family.json";
+import enGamerSignIn from "@/../messages/en/gamerSignIn.json";
+import enCommon from "@/../messages/en/common.json";
 import { AddGamerFormCard } from "@/components/family";
 import { ApiError } from "@/lib/api/api-error";
-import { GAMER_EMAIL_TAKEN, GAMER_USERNAME_TAKEN } from "@/services/gamers";
+import {
+  GAMER_EMAIL_TAKEN,
+  GAMER_USERNAME_TAKEN,
+} from "@/services/gamers/gamers.contracts";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 import type { CreateGamerInput } from "@/types";
 
+const messages = {
+  family: enFamily,
+  gamerSignIn: enGamerSignIn,
+  common: enCommon,
+};
+
 /**
- * **The add-gamer form is three pages for every parent: who the child is, how
- * they sign in, then the optional game handles.**
+ * **The add-gamer form is two pages for every parent: who the child is, then how
+ * they sign in.**
  *
  * Seven things are pinned here. That each page's title is that page's own
  * question — which on page two means the title is also what labels the radio
- * group, there being no label over it any more. That page two's Next waits for
- * the fields its mode asks for, while a filled-in answer that is merely wrong
- * still reaches the press and gets the sentence explaining it. That the flow is
- * fixed — the first two pages
- * always advance, the last always creates, and no radio changes any of it —
- * which is the whole of what replaced a footer that used to re-decide itself as
- * a mode was picked. That page one's guardian declaration gates its own Next, so
- * a child cannot be created without it and the parent meets that gate before
- * answering anything else. That page two holds one box whose declared height
- * does not move as the radio does, because the footer sits directly under it and
- * a parent's thumb is on the radio they just pressed. That each mode sends
- * exactly its own fields. And that the two refusals only the server can make
- * land on the field the parent can fix — which now means walking the form back
- * to the page that field is on, since the create is pressed a page later than
- * the typing.
+ * group, there being no label over it. That page two's create waits for the
+ * fields its mode asks for, while a filled-in answer that is merely wrong still
+ * reaches the press and gets the sentence explaining it. That the flow is fixed
+ * — page one always advances, page two always creates, and no radio changes
+ * either. That page one's guardian declaration gates its own Next, so a child
+ * cannot be created without it and the parent meets that gate before answering
+ * anything else. That page two holds one box whose declared height does not move
+ * as the radio does, because the footer sits directly under it and a parent's
+ * thumb is on the radio they just pressed. That each mode sends exactly its own
+ * fields, and no game handles at all. And that the two refusals only the server
+ * can make land on the field the parent can fix, on the page they pressed the
+ * create on.
  *
  * The real catalogue rather than echoed keys, because the footer's label is the
  * assertion in half these cases and "which key" would not distinguish Next from
  * Add gamer.
  */
-
-// The game rows do real platform lookups on commit and contribute nothing to
-// any question here; page three is the two of them and nothing else.
-vi.mock("@/components/game-account", () => ({
-  GAME_PLATFORMS: {
-    minecraft: { name: "Minecraft" },
-    roblox: { name: "Roblox" },
-  },
-  GameUsernameEditableRow: () => <div data-testid="game-row" />,
-}));
 
 const ADD_GAMER = messages.family.addGamerForm.submit;
 const NEXT = messages.common.next;
@@ -52,10 +50,10 @@ const QUESTION = messages.gamerSignIn.question.replace("{name}", "Lily");
 
 const onCreate = vi.fn<(input: CreateGamerInput) => Promise<{ gamerId: string }>>();
 
-function renderCard() {
+function renderCard(onOpenChange: (open: boolean) => void = vi.fn()) {
   const view = render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <AddGamerFormCard onOpenChange={vi.fn()} onCreate={onCreate} />
+      <AddGamerFormCard onOpenChange={onOpenChange} onCreate={onCreate} />
     </NextIntlClientProvider>,
   );
 
@@ -184,10 +182,6 @@ function renderCard() {
     async goToSignIn() {
       await submit();
     },
-    /** Page two → page three, likewise. */
-    async goToAccounts() {
-      await submit();
-    },
   };
 }
 
@@ -196,7 +190,7 @@ beforeEach(() => {
   onCreate.mockResolvedValue({ gamerId: "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44" });
 });
 
-describe("the flow is the same three pages for everyone", () => {
+describe("the flow is the same two pages for everyone", () => {
   it("opens on page one, whose affirmative is always a Next", () => {
     const view = renderCard();
 
@@ -206,8 +200,6 @@ describe("the flow is the same three pages for everyone", () => {
     expect(
       view.container.querySelector('input[name="add-gamer-sign-in"]'),
     ).toBeNull();
-    // The game handles are page three's, for the same reason.
-    expect(view.queryAllByTestId("game-row")).toHaveLength(0);
   });
 
   it("refuses page one's own rules rather than advancing", async () => {
@@ -237,13 +229,13 @@ describe("the flow is the same three pages for everyone", () => {
     expect(view.radio("username").checked).toBe(false);
     expect(view.radio("email").checked).toBe(false);
     expect(view.title().textContent).toBe(QUESTION);
-    // Page two advances too — only page three creates.
-    expect(view.affirmative().textContent).toContain(NEXT);
+    // Page two is the last page, so its affirmative is the create.
+    expect(view.affirmative().textContent).toContain(ADD_GAMER);
     expect(view.negative(BACK)).toBeTruthy();
     expect(onCreate).not.toHaveBeenCalled();
   });
 
-  it("creates a switch-only child from page three with no credential fields", async () => {
+  it("creates a switch-only child from page two with no credential fields", async () => {
     const view = renderCard();
     view.fillDetails();
     await view.goToSignIn();
@@ -255,13 +247,6 @@ describe("the flow is the same three pages for everyone", () => {
     ).toBeTruthy();
     expect(view.container.querySelector("#add-gamer-username")).toBeNull();
     expect(view.container.querySelector("#add-gamer-email")).toBeNull();
-
-    await view.goToAccounts();
-
-    // Page three: the two optional game rows, the create, and nothing else.
-    expect(view.queryAllByTestId("game-row")).toHaveLength(2);
-    expect(view.affirmative().textContent).toContain(ADD_GAMER);
-    expect(onCreate).not.toHaveBeenCalled();
 
     await view.submit();
 
@@ -276,9 +261,12 @@ describe("the flow is the same three pages for everyone", () => {
       // rather than re-derived anywhere between.
       guardianAttested: true,
     });
+    // The game handles are not this dialog's question; they are added later.
+    expect(onCreate.mock.calls[0][0]).not.toHaveProperty("minecraftUsername");
+    expect(onCreate.mock.calls[0][0]).not.toHaveProperty("robloxUsername");
   });
 
-  // The same three pages, walked the way a parent walks them: every advance is
+  // The same two pages, walked the way a parent walks them: every advance is
   // a press of the footer's own button, so each page's gate has to actually
   // release for the flow to reach the next one.
   it("goes all the way through on presses of the footer's own button", async () => {
@@ -290,9 +278,6 @@ describe("the flow is the same three pages for everyone", () => {
     view.chooseMode("username");
     view.fill("add-gamer-username", "Lily2015");
     view.fill("add-gamer-password", "a-long-enough-password");
-    await view.press();
-
-    expect(view.queryAllByTestId("game-row")).toHaveLength(2);
     expect(view.affirmative().textContent).toContain(ADD_GAMER);
     await view.press();
 
@@ -303,24 +288,6 @@ describe("the flow is the same three pages for everyone", () => {
       username: "lily2015",
       guardianAttested: true,
     });
-  });
-
-  it("walks back a page at a time, keeping what was typed on each", async () => {
-    const view = renderCard();
-    view.fillDetails();
-    await view.goToSignIn();
-    view.chooseMode("username");
-    view.fill("add-gamer-username", "lily2015");
-    view.fill("add-gamer-password", "a-long-enough-password");
-    await view.goToAccounts();
-
-    await act(async () => {
-      view.negative(BACK).click();
-    });
-
-    expect(view.field("add-gamer-username").value).toBe("lily2015");
-    expect(view.affirmative().textContent).toContain(NEXT);
-    expect(onCreate).not.toHaveBeenCalled();
   });
 
   it("goes back to page one with what was typed there still in place", async () => {
@@ -382,17 +349,6 @@ describe("the title is the page's own question", () => {
     expect(group.getAttribute("aria-labelledby")).toBe(view.title().id);
     expect(view.title().id).not.toBe("");
   });
-
-  it("names the child's game accounts on page three", async () => {
-    const view = renderCard();
-    view.fillDetails();
-    await view.goToSignIn();
-    await view.goToAccounts();
-
-    expect(view.title().textContent).toBe(
-      messages.family.addGamerForm.accountsTitle.replace("{name}", "Lily"),
-    );
-  });
 });
 
 /**
@@ -450,16 +406,16 @@ describe("page one's guardian declaration", () => {
   // cases above pin. This one pins the thing underneath it: the create itself
   // refuses without the declaration, so the attestation the request carries is
   // an answer somebody gave rather than a constant the payload spells. Driven
-  // through the `initial` seam, which is the one way to stand on page three
+  // through the `initial` seam, which is the one way to stand on page two
   // without passing the button — exactly the shape a future caller or a demo
   // could take by accident.
-  it("does not create when page three is reached with the box unticked", async () => {
+  it("does not create when page two is reached with the box unticked", async () => {
     const view = render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <AddGamerFormCard
           onOpenChange={vi.fn()}
           onCreate={onCreate}
-          initial={{ step: "accounts", firstName: "Lily" }}
+          initial={{ step: "signIn", firstName: "Lily" }}
         />
       </NextIntlClientProvider>,
     );
@@ -532,7 +488,7 @@ describe("the box under the radios", () => {
 });
 
 /**
- * **Page two's Next is gated on the fields its mode asks for**, and on nothing
+ * **Page two's create is gated on the fields its mode asks for**, and on nothing
  * else.
  *
  * The split is what these cases pin: an *empty* field is a question the parent
@@ -542,7 +498,7 @@ describe("the box under the radios", () => {
  * judged the format would leave a parent holding a password the button silently
  * disliked with nothing on screen saying so.
  */
-describe("page two's Next waits for the mode's own fields", () => {
+describe("page two's create waits for the mode's own fields", () => {
   it("is enabled straight away for the switch-only answer, which asks for nothing", async () => {
     const view = renderCard();
     view.fillDetails();
@@ -570,7 +526,7 @@ describe("page two's Next waits for the mode's own fields", () => {
     view.fill("add-gamer-password", "   ");
     expect(view.affirmative().disabled).toBe(true);
     // Same label throughout: the gate is the disabled state alone.
-    expect(view.affirmative().textContent).toContain(NEXT);
+    expect(view.affirmative().textContent).toContain(ADD_GAMER);
   });
 
   it("waits for the address", async () => {
@@ -675,7 +631,6 @@ describe("what page two sends", () => {
 
     view.fill("add-gamer-username", "Lily2015");
     view.fill("add-gamer-password", "a-long-enough-password");
-    await view.goToAccounts();
     await view.submit();
 
     expect(onCreate.mock.calls[0][0]).toMatchObject({
@@ -693,7 +648,6 @@ describe("what page two sends", () => {
     view.chooseMode("email");
 
     view.fill("add-gamer-email", " lily@example.test ");
-    await view.goToAccounts();
     await view.submit();
 
     expect(onCreate.mock.calls[0][0]).toMatchObject({
@@ -749,12 +703,11 @@ describe("the two refusals only the server can make", () => {
     view.chooseMode("username");
     view.fill("add-gamer-username", "lily2015");
     view.fill("add-gamer-password", "a-long-enough-password");
-    await view.goToAccounts();
     await view.submit();
 
-    // The create is pressed on page three; the refusal walks the form back to
-    // page two, where the field it is about lives.
-    expect(view.field("add-gamer-username")).toBeTruthy();
+    // Still on page two, where the create was pressed and the field lives.
+    expect(view.title().textContent).toBe(QUESTION);
+    expect(view.field("add-gamer-username").value).toBe("lily2015");
     expect(screen.getByText(messages.gamerSignIn.usernameTaken)).toBeTruthy();
     // Not the banner: a parent who can see which field is wrong can fix it.
     expect(
@@ -772,10 +725,10 @@ describe("the two refusals only the server can make", () => {
     await view.goToSignIn();
     view.chooseMode("email");
     view.fill("add-gamer-email", "lily@example.test");
-    await view.goToAccounts();
     await view.submit();
 
-    expect(view.field("add-gamer-email")).toBeTruthy();
+    expect(view.title().textContent).toBe(QUESTION);
+    expect(view.field("add-gamer-email").value).toBe("lily@example.test");
     expect(screen.getByText(messages.gamerSignIn.emailTaken)).toBeTruthy();
     expect(
       screen.queryByText(messages.family.addGamerForm.genericError),
@@ -790,12 +743,44 @@ describe("the two refusals only the server can make", () => {
     await view.goToSignIn();
     view.chooseMode("email");
     view.fill("add-gamer-email", "lily@example.test");
-    await view.goToAccounts();
     await view.submit();
 
     expect(
       screen.getByText(messages.family.addGamerForm.genericError),
     ).toBeTruthy();
+  });
+});
+
+describe("while the create is in flight", () => {
+  it("holds the button disabled with the committing label until the outcome", async () => {
+    let resolve: (value: { gamerId: string }) => void = () => {};
+    onCreate.mockReturnValue(
+      new Promise((r) => {
+        resolve = r;
+      }),
+    );
+
+    const onOpenChange = vi.fn();
+    const view = renderCard(onOpenChange);
+    view.fillDetails();
+    await view.goToSignIn();
+    await view.press();
+
+    expect(view.affirmative().disabled).toBe(true);
+    expect(view.affirmative().textContent).toContain(
+      messages.family.addGamerForm.submitting,
+    );
+    expect(view.negative(BACK).disabled).toBe(true);
+
+    await act(async () => {
+      resolve({ gamerId: "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44" });
+    });
+
+    expect(onCreate).toHaveBeenCalledTimes(1);
+    // Success closes the dialog with the button still latched: nothing clears
+    // `committing`, because the card unmounts.
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(view.affirmative().disabled).toBe(true);
   });
 });
 

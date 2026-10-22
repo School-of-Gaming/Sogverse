@@ -1223,7 +1223,7 @@ describe("templateRegistry calendarInvitation", () => {
 /**
  * Every registered template, rendered in every locale we ship.
  *
- * The failure this catches is a key added to `en.json` and forgotten in one of
+ * The failure this catches is a key added to the `en` catalog and forgotten in one of
  * the other four: the translator falls back to printing the key path, so the
  * mail still renders, still sends, and reads as `email.welcomeParent.heading`
  * to a Finnish parent. Each case looks for its own template's key prefix, which
@@ -1408,7 +1408,9 @@ describe("every template renders in every locale", () => {
  */
 describe("templateRegistry componentsReference", () => {
   function render() {
-    return templateRegistry.componentsReference.render({}, translatorStub, "en");
+    return templateRegistry.componentsReference.render({}, translatorStub, "en", {
+      origin: "https://sogverse.sog.gg",
+    });
   }
 
   let translatorStub: EmailTranslator;
@@ -1452,11 +1454,20 @@ describe("templateRegistry componentsReference", () => {
     // too (the buttons, the shell), so a check for the gradient alone passes
     // with their swatches deleted. Only the swatch cell is 150 wide, and the
     // whole list is compared, so a removed, added or re-paired swatch fails.
+    // The label and the token are read as their text: each sits in the span
+    // or hold Gmail needs, and the token carries a joiner after every dot.
+    const textOf = (markup: string) =>
+      markup.replace(/<[^>]+>/g, "").replace(/&#8288;/g, "").trim();
     const swatches = [
       ...html.matchAll(
-        /<td width="150" style="background-color:([^;]+);background-image:linear-gradient\(\1,\1\);[^"]*?color:([^;]+);[^"]*">\s*([^<]*?)\s*<\/td>\s*<td[^>]*>\s*([^<]*?)\s*<\/td>/g,
+        /<td width="150" style="background-color:([^;]+);background-image:linear-gradient\(\1,\1\);[^"]*?color:([^;]+);[^"]*">([\s\S]*?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/g,
       ),
-    ].map(([, fill, label, printed, token]) => ({ token, fill, label, printed }));
+    ].map(([, fill, label, printed, token]) => ({
+      token: textOf(token),
+      fill,
+      label,
+      printed: textOf(printed),
+    }));
     expect(swatches).toEqual(
       (
         [

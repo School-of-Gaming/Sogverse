@@ -56,13 +56,16 @@ BEGIN
     'start_date',               p.start_date,
     'end_date',                 p.end_date,
     'is_remote',                p.is_remote,
+    'voice_room_mode',          p.voice_room_mode,
+    'external_voice_url',       p.external_voice_url,
     'material_url',             psd.material_url,
     'requires_gamer_creations', p.requires_gamer_creations,
     'translations', COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
                'locale',      pt.locale,
                'name',        pt.name,
-               'description', pt.short_description
+               'description', pt.short_description,
+               'voice_join_instructions', pt.voice_join_instructions
              ) ORDER BY pt.locale)
         FROM public.product_translations pt WHERE pt.product_id = p.id
     ), '[]'::jsonb),

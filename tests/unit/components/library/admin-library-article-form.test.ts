@@ -16,7 +16,7 @@ import {
 import {
   libraryWriteFailure,
   type LibraryArticleDraft,
-} from "@/services/library";
+} from "@/services/library/library.contracts";
 
 /**
  * The admin Library editor's rules, apart from any render: where an article

@@ -5,10 +5,11 @@ import type {
   ProductType,
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
-import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { holidayBreakRows, type HolidayBreak } from "@/lib/holiday-breaks";
-import type { ProductDetailRow } from "@/services/products";
-import type { ParticipationCounts } from "@/services/participations";
+import type { ProductDetailRow } from "@/services/products/products.service";
+import type {
+  ParticipationCounts,
+} from "@/services/participations/participations.service";
 import type { RegistrationState } from "./derive-registration-state";
 import type { ProductTag } from "./product-tag";
 import type {
@@ -79,6 +80,7 @@ export type PreviewScenario =
   | "consumer-club-future-start"
   | "consumer-club-future-start-clamped"
   | "consumer-club-parents-only"
+  | "consumer-club-age-band-refused"
   | "muni-empty"
   | "muni-filling"
   | "muni-almost-full"
@@ -162,6 +164,12 @@ interface ScenarioBase {
    * previews.
    */
   startsInDays?: number;
+  /**
+   * The roster is only the children the product's age band refuses, for the
+   * one scenario that exists to show the panel when nobody on it can be
+   * signed up for age. Only meaningful with `signed-in-with-gamers`.
+   */
+  outOfBandRosterOnly?: boolean;
 }
 
 // A scenario either authors a static registration state, or is a live
@@ -192,6 +200,12 @@ const DEMO_GAMERS = [
   { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
 ] as const;
 
+// The age band every product fixture with a gamer audience carries. One
+// constant because two things must agree on it — the product's own bounds and
+// the band each refused child's block carries — and a scene whose rows named a
+// different band from its heading would be a false picture of the page.
+const DEMO_AGE_BAND = { min: 8, max: 12 } as const;
+
 // The two siblings the product's own age band refuses, one at each end of it —
 // every product fixture with a gamer audience is 8–12, so a six-year-old and a
 // fourteen-year-old are outside it whichever scenario is being looked at. They
@@ -208,17 +222,18 @@ const DEMO_GAMERS_OUT_OF_BAND = [
     id: "c4f1a9e6-2b7d-4e83-95a1-6d0c3f8b2e57",
     name: "Elias",
     age: 6,
-    ageBlock: { kind: "under", bound: 8 },
+    ageBlock: { kind: "under", ...DEMO_AGE_BAND },
   },
   {
     id: "9b3e7c25-8d41-4a06-b7f9-1e5a0c6d3842",
     // A long double-barrelled name on purpose, and on the row whose status is
-    // the widest in the widest locale (Finnish "Yli 12-vuotias"): this is the
-    // row that decides whether the name and the reason still share a line at
-    // the 360px floor, and a scene should show the worst case, not the median.
+    // the widest in the widest locale (Swedish "För gammal" over "Ålder
+    // 8–12"): this is the row that decides whether the name and the reason
+    // still share a line at the 360px floor, and a scene should show the worst
+    // case, not the median.
     name: "Sofia-Aleksandra",
     age: 14,
-    ageBlock: { kind: "over", bound: 12 },
+    ageBlock: { kind: "over", ...DEMO_AGE_BAND },
   },
 ] as const satisfies readonly SignupParticipantChoice[];
 
@@ -341,6 +356,27 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     audience: "parents",
     selfSignupState: "active",
     state: { kind: "open", seatCount: 20, seatsLeft: 6, waitlistEnabled: false },
+  },
+  "consumer-club-age-band-refused": {
+    // Every child on the account is outside the club's band, and nobody holds
+    // a seat — so the CTA names the band and the consents stand disabled. Its
+    // own scenario because it cannot share a render with the picker: the
+    // default roster has in-band children, and that state exists only where it
+    // has none.
+    label: "€45/mo — every child outside the age band",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    outOfBandRosterOnly: true,
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
   },
   "muni-empty": {
     label: "15 / 15 seats",
@@ -619,6 +655,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club-future-start",
   "consumer-club-future-start-clamped",
   "consumer-club-parents-only",
+  "consumer-club-age-band-refused",
   "muni-empty",
   "muni-filling",
   "muni-almost-full",
@@ -1130,13 +1167,12 @@ export function buildScenarioFixture(
     /**
      * A topic other than the one this scenario's row carries.
      *
-     * The topic decides two cards a reader has to be able to read for *every*
-     * topic — the product page's "About {label}" card and the confirmation
-     * page's "Before the first session" guide — and the fixtures name one
-     * topic per scenario. Rather than a scenario per topic on both surfaces,
-     * the two scenes take the topic as an axis over the scenarios they already
-     * have, and this is where it lands on the row, so both cards follow one
-     * value exactly as they do in production.
+     * The topic decides the product page's "About {label}" card, which a
+     * reader has to be able to read for *every* topic, and the fixtures name
+     * one topic per scenario. Rather than a scenario per topic, the product
+     * scene takes the topic as an axis over the scenarios it already has, and
+     * this is where it lands on the row, so the card follows one value exactly
+     * as it does in production.
      */
     topic?: ProductTopic;
   } = {},
@@ -1197,19 +1233,8 @@ export interface ConfirmationFixtureResult {
   outcome: SignupOutcome;
   /** Mock waitlist position for the waitlist outcome; null otherwise. */
   waitlistPosition: number | null;
-  /**
-   * The deferred first charge, as the live page would resolve it: an ISO
-   * instant on a subscription club bought before it starts, null everywhere
-   * else.
-   *
-   * On the real page this stands for two reads the fixture has no database for
-   * — the €0 subscription payment row that marks the purchase as deferred, and
-   * the subscription's `current_period_end`, which for such a purchase *is* the
-   * anchor. Computed here from the same helper the checkout route sets the
-   * anchor with, so the confirmation preview states the date the signup panel
-   * promised.
-   */
-  firstChargeAt: string | null;
+  /** The address the page says the confirmation email went to. */
+  recipientEmail: string;
 }
 
 // Post-signup summary fixture for /preview/confirmation/<scenario>. Reuses the
@@ -1219,28 +1244,14 @@ export interface ConfirmationFixtureResult {
 // the real detail → CTA → summary flow.
 export function buildConfirmationFixture(
   slug: PreviewScenario,
-  overrides: {
-    /** The topic axis, as `buildScenarioFixture` takes it. */
-    topic?: ProductTopic;
-  } = {},
 ): ConfirmationFixtureResult {
-  const { product, state } = buildScenarioFixture(slug, {
-    topic: overrides.topic,
-  });
+  const { product, state } = buildScenarioFixture(slug);
   const isWaitlist = state.kind === "full_waitlist";
   // A parents-only scenario can only have been bought for the reader, so its
   // summary is the self-worded one — which is the only place that copy is
   // reviewable. A mixed product's panel preselects the first child, so it lands
   // on the ordinary third-person page like everything else.
   const isSelfSeat = audienceOf(SCENARIOS[slug]) === "parents";
-  // Only a paid consumer club is bought as a subscription, and only a
-  // subscription carries a billing anchor — a camp starting in three weeks was
-  // paid for in full at checkout and has no first charge still to come.
-  const config = SCENARIOS[slug];
-  const anchor =
-    config.productType === "consumer_club" && config.billingMode === "paid"
-      ? firstChargeAnchor(product.start_date, product.timezone, new Date())
-      : null;
   return {
     product,
     // A literal placeholder rather than a demo child's name — it makes obvious
@@ -1251,8 +1262,8 @@ export function buildConfirmationFixture(
     outcome: isWaitlist ? "waitlisted" : "enrolled",
     // A sample rank so the "You're #N" row shows in the preview.
     waitlistPosition: isWaitlist ? 3 : null,
-    // A waitlist join has bought nothing, so it has no first charge either.
-    firstChargeAt: isWaitlist ? null : (anchor?.toISOString() ?? null),
+    // A reserved example domain, so a preview can never name a real inbox.
+    recipientEmail: "parent@example.com",
   };
 }
 
@@ -1284,19 +1295,22 @@ function buildAuthState(
   // they hold a waitlist spot; otherwise they hold a seat.
   const childState: MyParticipationState =
     state.kind === "full_waitlist" ? "waitlisted" : "active";
+  const outOfBandOnly = config.outOfBandRosterOnly === true;
   const gamerRows: SignupParticipantChoice[] =
-    hasGamers && audience !== "parents"
-      ? [
-          { ...DEMO_GAMERS[0] },
-          { ...DEMO_GAMERS[1], signupState: childState },
-          { ...DEMO_GAMERS[2] },
-          // Last, where the picker's refused rows sit in the live page too: the
-          // adapter builds the roster in the order the account holds it, and
-          // these two are simply the siblings the band excludes.
-          { ...DEMO_GAMERS_OUT_OF_BAND[0] },
-          { ...DEMO_GAMERS_OUT_OF_BAND[1] },
-        ]
-      : [];
+    !hasGamers || audience === "parents"
+      ? []
+      : outOfBandOnly
+        ? DEMO_GAMERS_OUT_OF_BAND.map((g) => ({ ...g }))
+        : [
+            { ...DEMO_GAMERS[0] },
+            { ...DEMO_GAMERS[1], signupState: childState },
+            { ...DEMO_GAMERS[2] },
+            // Last, where the picker's refused rows sit in the live page too:
+            // the adapter builds the roster in the order the account holds it,
+            // and these two are simply the siblings the band excludes.
+            { ...DEMO_GAMERS_OUT_OF_BAND[0] },
+            { ...DEMO_GAMERS_OUT_OF_BAND[1] },
+          ];
   const selfRow: SignupParticipantChoice[] =
     audience === "gamers"
       ? []
@@ -1315,9 +1329,11 @@ function buildAuthState(
     // Every child on the account, the two the age band refuses included: the
     // cap is about how many children a parent may hold, not about how many of
     // them this particular product would take.
-    gamerCount: hasGamers
-      ? DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length
-      : 0,
+    gamerCount: !hasGamers
+      ? 0
+      : outOfBandOnly
+        ? DEMO_GAMERS_OUT_OF_BAND.length
+        : DEMO_GAMERS.length + DEMO_GAMERS_OUT_OF_BAND.length,
   };
 }
 
@@ -1376,8 +1392,8 @@ function buildBaseProduct(
     // band on the browse grid.
     for_gamers: audience !== "parents",
     for_parents: audience !== "gamers",
-    min_age: audience === "parents" ? null : 8,
-    max_age: audience === "parents" ? null : 12,
+    min_age: audience === "parents" ? null : DEMO_AGE_BAND.min,
+    max_age: audience === "parents" ? null : DEMO_AGE_BAND.max,
     // A real row field, like every other product column: the card, the detail
     // hero and the tag note all read `product.tag`, so nothing keyed by
     // scenario can leave two surfaces disagreeing about one club.
@@ -1391,6 +1407,8 @@ function buildBaseProduct(
     // Staff-facing only: no public or family surface draws this flag, and the
     // fixture holds it purely because the row type does.
     requires_gamer_creations: false,
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
@@ -1435,6 +1453,7 @@ function buildBaseProduct(
         name: copy.name,
         short_description: copy.description,
         long_description: copy.long ?? null,
+        voice_join_instructions: null,
         product_id: id,
         created_at: refTimestamp,
         updated_at: refTimestamp,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Heading } from "@sog/ui";
 import type {
   AdminSubstitutionsData,
   SeatSubstituteDraft,
@@ -56,7 +57,7 @@ export function AdminSubstitutionsPageBody({
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <Heading level={1} step="section">{t("title")}</Heading>
         <p className="text-muted-foreground">
           {data.timeZoneAbbrev === null
             ? t("description")
@@ -92,14 +93,14 @@ function SubstitutedSessionsSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="flex items-baseline gap-2 text-xl font-semibold">
-        {t("substitutedLabel")}
+      <div className="flex items-baseline gap-2">
+        <Heading level={2} step="card-title">{t("substitutedLabel")}</Heading>
         {sessions.length > 0 && (
           <span className="text-sm font-normal text-muted-foreground">
             {sessions.length}
           </span>
         )}
-      </h2>
+      </div>
 
       {sessions.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("substitutedEmpty")}</p>

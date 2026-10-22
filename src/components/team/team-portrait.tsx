@@ -2,7 +2,7 @@ import Image from "next/image";
 import { TeamPhotoPlaceholder } from "@/components/team/team-photo-placeholder";
 import { COVER_HOVER_ZOOM } from "@/components/ui/cover-hover-zoom";
 import { VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   isPublicTeamPhotoUrl,
   type TeamProfile,

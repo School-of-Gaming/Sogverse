@@ -2,11 +2,14 @@ import { readdir, readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import en from "../../../messages/en.json";
+import enFamily from "../../../messages/en/family.json";
+import enAuth from "../../../messages/en/auth.json";
 import {
   GAMER_CONSENT_DOCUMENTS,
   REGISTRATION_CONSENT_DOCUMENTS,
 } from "@/lib/constants/consent-documents";
+
+const en = { family: enFamily, auth: enAuth };
 
 /**
  * ============================================================================

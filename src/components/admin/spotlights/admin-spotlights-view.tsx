@@ -1,6 +1,9 @@
 "use client";
 
-import { useAdminSpotlights, useDeleteSpotlight } from "@/services/spotlights";
+import {
+  useAdminSpotlights,
+  useDeleteSpotlight,
+} from "@/services/spotlights/spotlights.queries";
 import { AdminSpotlightsPage } from "./admin-spotlights-page";
 
 /** The live data shell for `/admin/spotlights`: one read and the list's one write, into the body beside it. */

@@ -14,7 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { HolidayBreak } from "@/lib/holiday-breaks";
 import {
   holidayBreakLines,
@@ -32,18 +32,17 @@ import {
   productWhoItsFor,
 } from "@/lib/products/product-overview-facts";
 import { ScheduleLine } from "./schedule-line";
+import { Heading } from "@sog/ui";
 
 // Shared "Good to know" overview card. Renders schedule (day/time),
 // location/format, who the product is for (its audience, its age range, or
 // both in one cell), and spoken language — the at-a-glance facts.
-// Used by the shop detail body and the purchase-confirmation view, so the
-// layout lives here as the single source of truth.
+// Used by the shop detail body, so the layout lives here as the single source
+// of truth.
 
 interface ProductOverviewCardProps {
-  // Structural subset of the fields this card actually reads, so both the
-  // shop's detail row and the browse row the purchase confirmation holds
-  // satisfy it: they are two independently selected rows, and both carry these
-  // logistics columns/joins.
+  // Structural subset of the fields this card actually reads, so any product
+  // row carrying these logistics columns/joins satisfies it.
   product: Pick<
     ProductBrowseRow,
     | "product_type"
@@ -70,8 +69,7 @@ interface ProductOverviewCardProps {
    * card cannot know how wide its column is — `sm:` and friends measure the
    * viewport, and a 1920px viewport says nothing about a 256px rail. The prop
    * names the arrangement its caller put it in, which is why it stays a prop:
-   * the detail page is the only caller in a rail, while the purchase
-   * confirmation view renders this card at full width and leaves it unset.
+   * the detail page puts it in a rail only from `2xl`.
    */
   railFrom2xl?: boolean;
   /**
@@ -82,7 +80,7 @@ interface ProductOverviewCardProps {
    * **They arrive with the card, never after it.** The section is the card's
    * last row, and below `2xl` the card sits in the reading column above the
    * topic card — so a list landing a round trip late would push that card
-   * down. Both callers hold them in the page's initial data instead.
+   * down. The caller holds them in the page's initial data instead.
    */
   holidayBreaks?: readonly HolidayBreak[];
 }
@@ -102,8 +100,8 @@ export function ProductOverviewCard({
   const labelIsFormat = productLocationLabelIsFormat(product.is_remote, location);
 
   // The three-shape "who is this for" answer, and the club term range folded
-  // into the schedule, are both shared rules — the mail that mirrors the
-  // purchase confirmation states them in the same words, so the composition
+  // into the schedule, are both shared rules — the signup confirmation mail
+  // states them in the same words, so the composition
   // lives in `@/lib/products/product-overview-facts` and each surface only
   // renders it. The label follows the shape: "Age range" where the cell is a
   // range, "Audience" where it leads with the audience word.
@@ -129,9 +127,9 @@ export function ProductOverviewCard({
           railFrom2xl && "2xl:p-4",
         )}
       >
-        <h2 className="text-sm font-semibold text-muted-foreground">
+        <Heading level={2} step="card-title">
           {t("sections.overview")}
-        </h2>
+        </Heading>
         {/* Two-up on wider widths and a single stacked column on mobile, where
             there isn't room. Exactly four facts on every audience — Schedule |
             Format, then who-it's-for | Language — so the grid is a filled 2×2

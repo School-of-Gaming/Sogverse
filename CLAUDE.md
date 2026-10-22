@@ -9,11 +9,13 @@ npm run dev              # Start dev server
 npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
+npm run lint:file -- <f> # ESLint on just these files, keeping the cache — a bare `npx eslint` deletes .eslintcache
 npm run type-check       # TypeScript check (tsc --noEmit)
-npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + tests (runs all, reports every failure)
+npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + the tests the change can affect vs origin/dev (runs all, reports every failure; -- --all for every test, -- --list to see the selection)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run load             # CPU use and the test runs in progress, by checkout — read before blaming a timeout on the test
 npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
 npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
 ```
@@ -94,6 +96,14 @@ For work that wants its own worktree — the usual shape when several things are
 flight at once — `/worktree-flow` runs the whole lifecycle, from cutting the
 branch to tearing the worktree down after the merge.
 
+**Rule: a worktree lives under `.claude/worktrees/`, created by
+`.claude/scripts/worktree-setup.ps1` — never a sibling directory.** It resolves
+`node_modules` upward from the main checkout, so it needs no install of its own; a
+sibling directory has nothing above it to resolve to and costs a full install.
+`/worktree-flow` is one way to carry a piece of work through a worktree, used when
+the owner asks for it; the location and the setup script apply either way. A branch
+that already exists is set up with the script's `-Existing` switch.
+
 ## Documentation
 
 System architecture lives in **colocated `CLAUDE.md` files** next to the code they describe. They auto-load when you (or a future session) work in that directory — no pointer needed here — and are owned like code: update them in the same change that touches their system. Current homes:
@@ -121,6 +131,8 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Library — articles, their working and published copies | `src/services/library/` |
 | Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
 | Spotlights — the admin notes appended to every parent's session report email | `src/services/spotlights/` |
+| Testimonials — the store of real words from parents, gamers and gedus, the landing pages that quote them, and the arrangements every page lays them out in | `src/services/testimonials/` |
+| Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
@@ -154,8 +166,6 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 ## Environment Variables
 
 All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
-
-**Rule: a change that introduces an env var writes its line into both `.env.local` and `.env.local.example` itself, rather than asking the owner to.** The example gets a placeholder value and a comment saying what the var is; `.env.local` gets the line with an empty value, which the owner fills in by hand — a secret is never written there by a session. From a worktree, the line goes into the main checkout's `.env.local` first and is then copied into the worktree's, since the worktree's copy dies at teardown. An agent launched inside the worktree cannot write the main checkout, so it hands the line to the session that launched it.
 
 ## Database
 
@@ -212,8 +222,18 @@ work under `tests/`). Two things worth knowing from anywhere:
   failed; the intermittence is a real non-determinism (an effect racing an assertion, a
   mock shared across cases, a timer leaking from a neighbour) and the fix is its root
   cause, in the test or in the component — never a retry, a longer timeout, a skip, or a
-  note that it is "unrelated to this branch". It is fixed on the branch that saw it fail,
-  before that branch lands, and proven by repeated runs under load plus the full suite.
+  note that it is "unrelated to this branch". It is found by **reasoning about the code to
+  a named cause**, and fixed on the branch that saw it fail, before that branch lands.
+  Repeated runs are a last resort for testing one specific hypothesis, never the proof: a
+  pass on repetition shows only that the race did not fire that time.
+- **A timeout is a claim about speed, so first rule out a machine without capacity.**
+  Several agents and sessions often test in parallel on one machine, and when they
+  saturate it, correct tests miss their timeouts. Before treating a timeout as a defect,
+  run `npm run load`: it reports CPU use and the test runs in progress, and where. If
+  other runs have the machine saturated, the timeout says nothing about the test yet —
+  don't re-run it in a loop, which only adds load; wait for capacity, or agree with the
+  other agents and sessions who runs what, then re-run that one file once. A timeout that
+  repeats on a machine with capacity is a real failure.
 - **A new API route has to be classified in the integration suite's route posture
   registry** — its auth posture (with a written reason for anything that is not
   role-gated), how it takes its body, and the test that exercises it. The registry's

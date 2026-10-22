@@ -7,7 +7,7 @@ import { Markdown } from "@/components/ui/markdown";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   teamMemberHeadline,
   teamMemberSubline,
@@ -17,6 +17,7 @@ import {
   teamPickClasses,
 } from "@/components/team/team-portrait";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
+import { Heading } from "@sog/ui";
 
 /**
  * The public team profile page body: one person, admin or Gedu, on one page.
@@ -116,19 +117,19 @@ export function TeamProfileBody({
           <div className="min-w-0 flex-1">
             {/* The wrapper shrinks to the headline's longest line, so the rule
                 runs exactly the headline's measure, as on the home hero. The
-                headline is one size for every name, the largest at which a
-                twenty-character nickname fits the column on its own line at
-                each step: 328px stacked at 360, 368px beside the portrait
-                from 40rem, 496px from 48rem. A name too wide for one line
-                puts the nickname, an unbroken block, whole on the second. */}
-            <div className="inline-block max-w-full">
-              <h1 className="break-words text-[1.625rem] font-bold leading-[1.1] tracking-tight @min-[40rem]:text-h1-mobile @min-[48rem]:text-[2.5rem]">
+                headline is a page title — a person's profile is a page about
+                them, not a story's opening line — at one size at every width.
+                A name too wide for one line puts the nickname, an unbroken
+                block, whole on the second; a nickname wider than the column
+                breaks inside itself rather than running out of it. */}
+            <div className="inline-block max-w-full break-words">
+              <Heading level={1} step="page-title">
                 {teamMemberHeadline(profile, (nickname) => (
                   <span className="inline-block max-w-full text-act">
                     {nickname}
                   </span>
                 ))}
-              </h1>
+              </Heading>
               <span
                 aria-hidden
                 className="mt-4 block h-1.5 w-full rounded-full bg-world"
@@ -169,9 +170,9 @@ export function TeamProfileBody({
         </header>
 
         <section aria-labelledby={aboutId} className="mt-12">
-          <h2 id={aboutId} className="text-xl font-semibold">
+          <Heading level={2} step="section" id={aboutId}>
             {t("whoIs", { firstName: profile.firstName })}
-          </h2>
+          </Heading>
           {longDescription === "" ? (
             <p className="mt-4 leading-relaxed text-muted-foreground">
               {t("draft.longDescription")}
@@ -193,12 +194,9 @@ export function TeamProfileBody({
               pick === null ? "border-act" : pick.edge,
             )}
           >
-            <h2
-              id={funFactId}
-              className="text-sm font-semibold text-muted-foreground"
-            >
+            <Heading level={2} step="card-title" id={funFactId}>
               {t("funFact")}
-            </h2>
+            </Heading>
             <p lang={lang} className="mt-1 text-lg leading-relaxed">
               {funFact}
             </p>

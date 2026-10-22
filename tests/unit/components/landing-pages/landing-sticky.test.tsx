@@ -1,7 +1,8 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import common from "@/../messages/en/common.json";
+import landingSubscribe from "@/../messages/en/landingSubscribe.json";
 import {
   LANDING_STICKY_ANCHOR,
   LandingPageBody,
@@ -35,6 +36,8 @@ Object.defineProperty(Element.prototype, "scrollIntoView", {
   value: scrollIntoView,
 });
 
+const messages = { common, landingSubscribe };
+
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const HERO = id(1);
 const FORM = id(2);
@@ -60,11 +63,9 @@ const TEXTS: LandingSectionTexts = {
 function renderBody({
   side = "right",
   texts = TEXTS,
-  subscribed = false,
 }: {
   side?: LandingStickySide | null;
   texts?: LandingSectionTexts;
-  subscribed?: boolean;
 } = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -72,11 +73,13 @@ function renderBody({
         <LandingPageBody
           sections={structure(side)}
           imagePaths={{}}
+          testimonials={{}}
           sectionTexts={texts}
           textLocale="en"
           locale="en"
+          products={null}
           pageId={id(500)}
-          subscribed={subscribed}
+          preview={false}
         />
       </UtmProvider>
     </NextIntlClientProvider>,
@@ -145,10 +148,7 @@ describe("a page's sticky section", () => {
     expect(scrollIntoView.mock.contexts[0]).toBe(document.getElementById(LANDING_STICKY_ANCHOR));
   });
 
-  it("withdraws the jump while the section offers nothing: a reader back from confirming, or no button words", () => {
-    const confirmed = renderBody({ subscribed: true });
-    expect(jump()).toBeNull();
-    confirmed.unmount();
+  it("withdraws the jump while the section offers nothing: no button words", () => {
     renderBody({ texts: { ...TEXTS, [FORM]: { heading: "Hear about new clubs first" } } });
     expect(jump()).toBeNull();
   });

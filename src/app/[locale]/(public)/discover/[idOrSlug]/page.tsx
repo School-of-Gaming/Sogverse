@@ -1,26 +1,36 @@
 import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
-  LANDING_SUBSCRIBED_PARAM,
   landingPageCanonicalPath,
   landingPageLocalePaths,
   resolveLandingPage,
 } from "@/components/landing-pages/landing-page-address";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
-import { landingPageJsonLd } from "@/components/landing-pages/landing-page-json-ld";
+import {
+  LandingPageBreadcrumb,
+  landingBreadcrumbJsonLd,
+  type LandingBreadcrumb,
+} from "@/components/landing-pages/landing-page-breadcrumb";
+import {
+  landingPageJsonLd,
+  landingProductListsJsonLd,
+} from "@/components/landing-pages/landing-page-json-ld";
 import { landingPageMetadata } from "@/components/landing-pages/landing-page-metadata";
+import { prefetchLandingProducts } from "@/components/landing-pages/landing-page-products";
 import { JsonLd } from "@/components/seo/json-ld";
 import { LocaleSwitchPaths } from "@/i18n/locale-switch-paths";
 import { resolveLocale } from "@/lib/constants/locales";
+import { landingPlacedTestimonialIds } from "@/lib/landing-pages/sections";
 import { createClient } from "@/lib/supabase/server";
 import { localizeLandingPage } from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
+import { testimonialsById } from "@/services/landing-pages/landing-pages.testimonials";
+import { TestimonialsService } from "@/services/testimonials/testimonials.service";
 
 interface PageProps {
   params: Promise<{ idOrSlug: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 /**
@@ -56,43 +66,85 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  * `<discover>/<id>` in every locale, and `<discover>/<slug>` in a locale it is
  * live in. Both name the slug address of the version shown as canonical.
  *
+ * A quiet breadcrumb trail leads it — the landing pages' index, then the
+ * page — the trail its `BreadcrumbList` states, so every landing page links
+ * up to the index that lists it.
+ *
  * Rendered per request, like the Library: a page goes live, changes or leaves
  * the moment an admin publishes or unpublishes it, with no revalidation to wait
  * out. A read that fails is not swallowed into a not-found — a transient
  * database error is not "this page does not exist" — and surfaces to the error
  * boundary.
+ *
+ * The testimonials the page places are read from the store on every request,
+ * through the public read that answers only what the live copy places, so an
+ * admin's edit to one shows here at once, without a republish. A page placing
+ * none reads nothing more.
+ *
+ * **A page with products sections waits on one more read before its HTML**:
+ * the listing of every product type and seat counts for every pick at once,
+ * the read the shop and the Roblox page make over their own types, so the
+ * cards — or a section's absence when none of its picks is listed — are in the
+ * first byte and nothing below them moves.
+ * It runs after the page read, since the picks are the page's, and a failure
+ * of it costs the cards their first frame and never the page.
  */
-export default async function LandingPage({ params, searchParams }: PageProps) {
+export default async function LandingPage({ params }: PageProps) {
   const { idOrSlug } = await params;
-  // Set by an email sign-up's confirmation link, which returns here.
-  const subscribed = (await searchParams)[LANDING_SUBSCRIBED_PARAM] === "1";
   const locale = resolveLocale(await getLocale());
   const page = await loadPage(idOrSlug);
   if (page === null) notFound();
   const shown = localizeLandingPage(page, locale);
   if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const tDiscover = await getTranslations("discover");
+  const trail: LandingBreadcrumb = {
+    indexName: tDiscover("name"),
+    title: shown.title,
+  };
+  const [products, testimonials] = await Promise.all([
+    prefetchLandingProducts(shown.sections),
+    landingPlacedTestimonialIds(page.sections).length === 0
+      ? {}
+      : new TestimonialsService(await createClient())
+          .listLandingPageTestimonials(page.id)
+          .then(testimonialsById),
+  ]);
 
   return (
     <>
       {/* A slug resolves only in its own locale, so the picker is told this
           page's address in every locale. */}
       <LocaleSwitchPaths paths={landingPageLocalePaths(page)} />
+      <JsonLd data={landingPageJsonLd({ siteUrl, canonicalPath, page: shown })} />
+      {landingProductListsJsonLd({
+        siteUrl,
+        locale,
+        page: shown,
+        listing: products?.listing ?? null,
+      }).map(({ sectionId, list }) => (
+        <JsonLd key={sectionId} data={list} />
+      ))}
       <JsonLd
-        data={landingPageJsonLd({
-          siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "",
-          canonicalPath,
-          page: shown,
-        })}
+        data={landingBreadcrumbJsonLd({ siteUrl, locale, canonicalPath, trail })}
+      />
+      <LandingPageBreadcrumb
+        trail={trail}
+        label={tDiscover("breadcrumbLabel")}
+        textLocale={shown.locale}
+        locale={locale}
       />
       <LandingPageBody
         sections={shown.sections}
         imagePaths={shown.imagePaths}
+        testimonials={testimonials}
         sectionTexts={shown.sectionTexts}
         textLocale={shown.locale}
         locale={locale}
+        products={products}
         pageId={page.id}
-        subscribed={subscribed}
+        preview={false}
       />
     </>
   );
