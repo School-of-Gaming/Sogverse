@@ -196,39 +196,24 @@ async function renderConfirmation(
 
   let product: ProductBrowseRow | null = null;
   let waitlistPosition: number | null = null;
-  // "Your first charge is on …", for a club bought before it starts. Null on
-  // every other signup, and on any read the viewer isn't the payer for.
-  let firstChargeAt: string | null = null;
   // A waitlisted participation lands on the waitlist summary variant.
   const outcome: SignupOutcome =
     confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
 
   try {
-    // Side by side, not one after the other: the deferred-charge read knows
-    // nothing about the product row and every enrolled confirmation makes both,
-    // so serialising them would put two round trips in front of first paint
-    // where one wait does. It swallows its own failure rather than sharing the
-    // outer catch, because the billing line is optional and the summary is not —
-    // a read that fails here must cost the line, never the whole page.
-    [product, firstChargeAt] = await Promise.all([
-      new ProductsService(supabase).getDetailById(confirmation.productId),
-      outcome === "enrolled" && confirmation.participationId
-        ? participations
-            .getDeferredFirstChargeAt(confirmation.participationId)
-            .catch(() => null)
-        : null,
-    ]);
+    product = await new ProductsService(supabase).getDetailById(
+      confirmation.productId,
+    );
     // "You're #N" — fetched live (not the stale join-time value) so a parent
     // who revisits sees their position shrink as people ahead leave. Null is
-    // tolerated: the view just omits the line. Left sequential because it is the
-    // other outcome's read: a waitlisted row never runs the pair above.
+    // tolerated: the view just omits the line.
     if (outcome === "waitlisted" && confirmation.participationId) {
       waitlistPosition = await participations.getWaitlistPosition(
         confirmation.participationId,
       );
     }
   } catch {
-    // Same swallow as above — a friendly fallback beats a 500.
+    // A friendly fallback beats a 500.
   }
 
   if (!product) return <PurchaseConfirmationFallback />;
@@ -255,7 +240,6 @@ async function renderConfirmation(
       isSelfSeat={confirmation.isSelfSeat}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
-      firstChargeAt={firstChargeAt}
       recipientEmail={recipientEmail}
     />
   );

@@ -26,8 +26,7 @@
     "external": "Paid for by your municipality"
   },
   "card": {
-    "starts": "Starts {date}",
-    "firstCharge": "{price}, first payment on {date}"
+    "starts": "Starts {date}"
   },
   "email": {
     "sentTo": "We’ve sent a confirmation email to <strong>{email}</strong>.",

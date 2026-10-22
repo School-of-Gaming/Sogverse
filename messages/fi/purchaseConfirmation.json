@@ -26,8 +26,7 @@
     "external": "Kunnan kustantama"
   },
   "card": {
-    "starts": "Alkaa {date}",
-    "firstCharge": "{price}, ensimmäinen maksu {date}"
+    "starts": "Alkaa {date}"
   },
   "email": {
     "sentTo": "Lähetimme vahvistuksen osoitteeseen <strong>{email}</strong>.",

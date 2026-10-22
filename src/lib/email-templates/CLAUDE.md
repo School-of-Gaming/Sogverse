@@ -214,8 +214,8 @@ when the payer is the one reading, since nobody else can read it. A change to wh
 the mail is a change to the page's line too.
 
 **Rule: a fact both surfaces state is formatted by one function, and that function lives
-in `src/lib/products/`.** The schedule lines, the "where" line and the first-charge date
-are the shared rules, imported — a second rendering of a product's schedule in this
+in `src/lib/products/`.** The schedule lines and the "where" line are the shared rules,
+imported — a second rendering of a product's schedule in this
 template would let the mail and the page disagree about when a club meets. A
 sentence both state, such as the price wording or the subject's enrolled/registered verb,
 is still two strings in the catalog, because the email translator is scoped to the

@@ -5,7 +5,6 @@ import type {
   ProductType,
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
-import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { holidayBreakRows, type HolidayBreak } from "@/lib/holiday-breaks";
 import type { ProductDetailRow } from "@/services/products/products.service";
 import type {
@@ -1198,19 +1197,6 @@ export interface ConfirmationFixtureResult {
   outcome: SignupOutcome;
   /** Mock waitlist position for the waitlist outcome; null otherwise. */
   waitlistPosition: number | null;
-  /**
-   * The deferred first charge, as the live page would resolve it: an ISO
-   * instant on a subscription club bought before it starts, null everywhere
-   * else.
-   *
-   * On the real page this stands for two reads the fixture has no database for
-   * — the €0 subscription payment row that marks the purchase as deferred, and
-   * the subscription's `current_period_end`, which for such a purchase *is* the
-   * anchor. Computed here from the same helper the checkout route sets the
-   * anchor with, so the confirmation preview states the date the signup panel
-   * promised.
-   */
-  firstChargeAt: string | null;
   /** The address the page says the confirmation email went to. */
   recipientEmail: string;
 }
@@ -1230,14 +1216,6 @@ export function buildConfirmationFixture(
   // reviewable. A mixed product's panel preselects the first child, so it lands
   // on the ordinary third-person page like everything else.
   const isSelfSeat = audienceOf(SCENARIOS[slug]) === "parents";
-  // Only a paid consumer club is bought as a subscription, and only a
-  // subscription carries a billing anchor — a camp starting in three weeks was
-  // paid for in full at checkout and has no first charge still to come.
-  const config = SCENARIOS[slug];
-  const anchor =
-    config.productType === "consumer_club" && config.billingMode === "paid"
-      ? firstChargeAnchor(product.start_date, product.timezone, new Date())
-      : null;
   return {
     product,
     // A literal placeholder rather than a demo child's name — it makes obvious
@@ -1248,8 +1226,6 @@ export function buildConfirmationFixture(
     outcome: isWaitlist ? "waitlisted" : "enrolled",
     // A sample rank so the "You're #N" row shows in the preview.
     waitlistPosition: isWaitlist ? 3 : null,
-    // A waitlist join has bought nothing, so it has no first charge either.
-    firstChargeAt: isWaitlist ? null : (anchor?.toISOString() ?? null),
     // A reserved example domain, so a preview can never name a real inbox.
     recipientEmail: "parent@example.com",
   };

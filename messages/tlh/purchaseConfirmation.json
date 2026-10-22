@@ -26,8 +26,7 @@
     "external": "veng Huch nob"
   },
   "card": {
-    "starts": "{date} taghlu’",
-    "firstCharge": "{price}, wa’DIch DIl: {date}"
+    "starts": "{date} taghlu’"
   },
   "email": {
     "sentTo": "QIn naQ <strong>{email}</strong>-Daq wIngeHpu’.",

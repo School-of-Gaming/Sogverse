@@ -7,12 +7,14 @@ import type { AuthState } from "@/components/public/products/signup-panel-view";
 import type { ProductBrowseRow } from "@/types";
 
 /**
- * The two parent-facing halves of deferred billing: the shop panel that has to
- * explain the €0 Stripe page *before* the click, and the confirmation that has
- * to restate the real date afterwards.
+ * The parent-facing side of deferred billing: the shop panel that has to
+ * explain the €0 Stripe page *before* the click, and the confirmation page that
+ * afterwards states only the club's start and its monthly price — the start is
+ * in practice the first session and the first charge, so it names no separate
+ * payment date.
  *
- * What is actually under test here is the **projection rule**, because it is the
- * one place this feature can quietly lie about money. An unclamped anchor is the
+ * What is mostly under test here is the panel's **projection rule**, because it
+ * is the one place this feature can quietly lie about money. An unclamped anchor is the
  * club's own start date and must render as the bare calendar date the rest of
  * the page shows; a clamped one is a true instant with no calendar date of its
  * own and must be projected into the *viewer's* zone, because that is the day
@@ -95,72 +97,20 @@ describe("the signup panel's first-charge date", () => {
   });
 });
 
-describe("the confirmation's first-charge line", () => {
-  function renderConfirmation(
-    firstChargeAt: string | null,
-    startDate = "2027-06-01",
-  ) {
+describe("the confirmation for a club bought before it starts", () => {
+  it("states the start and the plain monthly price, and no payment date", () => {
+    viewerZone.value = "Europe/Helsinki";
     const { product } = buildScenarioFixture("consumer-club");
-    return render(
+    const { container } = render(
       <PurchaseConfirmationView
-        product={{ ...product, start_date: startDate }}
+        product={{ ...product, start_date: "2027-02-24" }}
         participantName="Aino"
         outcome="enrolled"
-        firstChargeAt={firstChargeAt}
       />,
     );
-  }
-
-  /**
-   * The date handed to the money line's first-charge message, or null when the
-   * card states no such line. The echo puts the values after the key as JSON,
-   * and the money line is the last part of the card's last line.
-   */
-  function firstChargeDate(container: HTMLElement): string | null {
-    const marker = "card.firstCharge|";
     const text = container.textContent;
-    const at = text.indexOf(marker);
-    if (at === -1) return null;
-    const json = text.slice(at + marker.length).match(/^\{.*?"date":"[^"]*"\}/);
-    if (json === null) return null;
-    const values: unknown = JSON.parse(json[0]);
-    return typeof values === "object" && values !== null && "date" in values
-      ? String(values.date)
-      : null;
-  }
-
-  it("renders the club's bare start date when the stored anchor is not clamped", () => {
-    // The stored instant is product-local midnight of the start date — an
-    // unclamped anchor, i.e. the club's own start — so it must print as that
-    // bare calendar date, exactly as the panel printed it before the click and
-    // as the start date reads elsewhere on this page. The viewer is five hours
-    // behind Helsinki, where a viewer-zone projection would slip it to the 23rd
-    // and make one club start on two days on one screen.
-    viewerZone.value = "America/New_York";
-    const { container } = renderConfirmation(
-      "2027-02-23T22:00:00.000Z",
-      "2027-02-24",
-    );
-    expect(firstChargeDate(container)).toBe("24 Feb 2027");
-  });
-
-  it("states a clamped anchor in the viewer's zone", () => {
-    // Nowhere near the June start, so this instant is Stripe's ceiling rather
-    // than the club's start: a true instant with no calendar date of its own.
-    // The same instant-vs-day trap as the clamped panel case — 22:30 UTC is the
-    // next day in Helsinki, and the parent's statement will say so.
-    viewerZone.value = "Europe/Helsinki";
-    const { container } = renderConfirmation("2027-03-03T22:30:00.000Z");
-    expect(firstChargeDate(container)).toBe("4 Mar 2027");
-  });
-
-  it("states the price alone when nothing was deferred", () => {
-    // Which is also what a gamer reading their own confirmation gets: the
-    // payments policy is customer-only, so the page resolves null for them and
-    // the money line is the monthly price with no date beside it.
-    viewerZone.value = "Europe/Helsinki";
-    const { container } = renderConfirmation(null);
-    expect(container.textContent).not.toContain("card.firstCharge");
-    expect(container.textContent).toContain("price.subscription");
+    expect(text).toContain('card.starts|{"date":"24 Feb 2027"}');
+    expect(text).toContain("price.subscription|");
+    expect(text).not.toMatch(/firstCharge|first payment/i);
   });
 });

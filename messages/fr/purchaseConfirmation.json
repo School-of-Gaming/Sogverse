@@ -26,8 +26,7 @@
     "external": "Pris en charge par votre commune"
   },
   "card": {
-    "starts": "Début le {date}",
-    "firstCharge": "{price}, premier paiement le {date}"
+    "starts": "Début le {date}"
   },
   "email": {
     "sentTo": "Nous avons envoyé un e-mail de confirmation à <strong>{email}</strong>.",

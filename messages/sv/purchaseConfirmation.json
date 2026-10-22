@@ -26,8 +26,7 @@
     "external": "Bekostas av din kommun"
   },
   "card": {
-    "starts": "Startar {date}",
-    "firstCharge": "{price}, första betalningen den {date}"
+    "starts": "Startar {date}"
   },
   "email": {
     "sentTo": "Vi har skickat ett bekräftelsemejl till <strong>{email}</strong>.",

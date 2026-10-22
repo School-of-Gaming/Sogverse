@@ -31,7 +31,6 @@ import {
 } from "@/lib/products/format-product-schedule";
 import { productToday } from "@/lib/products/holiday-breaks-shown";
 import { formatCurrencyFromCents } from "@/lib/money";
-import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { useNow, useTimezone } from "@/providers";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
@@ -82,20 +81,6 @@ interface PurchaseConfirmationViewProps {
    */
   waitlistPosition?: number | null;
   /**
-   * When the first subscription charge falls, as a true instant (ISO), for a
-   * club bought before it started — the parent paid €0 at checkout and is owed
-   * the real date. Null on every other signup, and whenever the reader is not
-   * the payer (the `payments` policy is customer-only), in which case the money
-   * line states the price alone.
-   *
-   * An instant rather than a calendar date on purpose: it is the subscription's
-   * stored period end, and whether that instant is the club's own start or a
-   * clamped one is exactly the question that decides how it renders. The answer
-   * comes from the shared anchor helper, which the shop's signup panel asks the
-   * same way — a bare start date when unclamped, the viewer's own day when not.
-   */
-  firstChargeAt?: string | null;
-  /**
    * The address the confirmation email went to — the payer's own, so only
    * known when the payer is the one reading. Null for anyone else (a gamer
    * reading their own seat) and whenever it could not be read; the email line
@@ -110,7 +95,6 @@ export function PurchaseConfirmationView({
   isSelfSeat = false,
   outcome = "enrolled",
   waitlistPosition = null,
-  firstChargeAt = null,
   recipientEmail = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
@@ -170,25 +154,9 @@ export function PurchaseConfirmationView({
     currencyLabel: CURRENCY_CONFIG[DEFAULT_CURRENCY].label,
   });
   const price = isWaitlist ? null : priceText(pricingOption, locale, t);
-  // One money line. A club bought before it starts completed checkout at €0,
-  // so the parent is owed the date the first payment really falls on beside
-  // the monthly price — which date that is is the shared anchor rule's call.
-  const moneyLine =
-    price !== null && firstChargeAt !== null
-      ? t("card.firstCharge", {
-          price,
-          date: formatFirstChargeDate(
-            firstChargeAt,
-            product.start_date,
-            product.timezone,
-            locale,
-            viewerTimezone,
-          ),
-        })
-      : price;
 
-  // Each on a line of its own: the first-charge money line alone is wider
-  // than the card on a 360px phone, so it has to wrap freely.
+  // Each fact on a line of its own, so a long one wraps on a 360px phone
+  // without dragging its neighbour along.
   const closingLines = (
     isWaitlist
       ? [
@@ -196,7 +164,7 @@ export function PurchaseConfirmationView({
             ? t("waitlist.position", { position: waitlistPosition })
             : null,
         ]
-      : [startsLine, moneyLine]
+      : [startsLine, price]
   ).filter((line): line is string => line !== null);
 
   const subheading = isWaitlist

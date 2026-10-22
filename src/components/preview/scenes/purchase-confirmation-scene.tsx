@@ -26,7 +26,6 @@ export function PurchaseConfirmationScene({
     isSelfSeat,
     outcome,
     waitlistPosition,
-    firstChargeAt,
     recipientEmail,
   } = buildConfirmationFixture(scenario);
   return (
@@ -36,7 +35,6 @@ export function PurchaseConfirmationScene({
       isSelfSeat={isSelfSeat}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
-      firstChargeAt={firstChargeAt}
       recipientEmail={recipientEmail}
     />
   );
