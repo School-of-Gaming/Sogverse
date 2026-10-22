@@ -69,7 +69,7 @@
       },
       "howToStart": {
         "question": "Hur kommer jag igång?",
-        "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält placerar vi ditt barn i en grupp med en Gedu före hens första tillfälle, och klubben dyker sedan upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — om du inte väljer att ge hen en egen inloggning från Min SOG.</p>"
+        "answer": "<p>Skapa ett föräldrakonto, lägg till ditt barn som spelare från Min SOG, och bläddra sedan i butiken och anmäl hen — anmälningspanelen frågar vem platsen är till för, och uppmanar dig att lägga till en spelare om du inte har gjort det än.</p><p>När du har anmält dyker klubben upp på Min SOG för er båda.</p><p>Hen går med i tillfällena via ditt konto — du växlar till hens profil — om du inte väljer att ge hen en egen inloggning från Min SOG.</p>"
       },
       "isItASchool": {
         "question": "Är det här skola?",

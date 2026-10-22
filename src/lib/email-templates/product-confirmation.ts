@@ -703,7 +703,7 @@ function holidayBreaksText(
 /**
  * What happens next.
  *
- * Placement first; then the deferred first charge, on the one signup that has
+ * Where the sessions are first; then the deferred first charge, on the one signup that has
  * one — the parent has just seen €0 at checkout and is owed the real date in
  * the same breath; then the price-shape line. `free` and `external` state no
  * third bullet at all: the price row above has
@@ -738,8 +738,8 @@ function nextItems(
 
   const items = [
     secondPerson
-      ? t("productConfirmation.next.placementSelf")
-      : t("productConfirmation.next.placement", {
+      ? t("productConfirmation.next.sessionsSelf")
+      : t("productConfirmation.next.sessions", {
           participantName: values.participantName,
         }),
   ];

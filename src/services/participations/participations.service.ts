@@ -62,9 +62,9 @@ export interface ProductSiteName {
  *
  * Filtered to active participations (assigned and unassigned alike);
  * waitlisted rows are excluded since they have no placement. `groupId` is
- * null for unassigned rows — the adapter turns those into "awaiting Gedu
- * placement" cards (full schedule, disabled Join button) so a fresh
- * purchase shows up before an admin has placed the gamer in a group.
+ * null for unassigned rows — the adapter turns those into plain seat cards
+ * whose Join stays locked and which open no page, so a fresh purchase shows
+ * up before an admin has placed the gamer in a group.
  */
 export interface MyUpcomingSessionRow {
   /**
@@ -495,7 +495,7 @@ export class ParticipationsService {
    * *product* (`schedule_slots`), not the group, so an unassigned gamer's
    * sessions are identical to an assigned one's — the only difference is
    * there's no voice room to join yet. The adapter keys off `group_id`
-   * (null → "awaiting Gedu placement" card with a disabled Join button) so
+   * (null → a plain seat card whose Join stays locked and which opens no page) so
    * a parent sees their purchase reflected immediately instead of an empty
    * section while an admin places the gamer in a group.
    *

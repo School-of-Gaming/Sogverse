@@ -1766,7 +1766,7 @@ function EnrollmentCardDemo() {
     label: string;
     enrollment: (typeof cards)[keyof typeof cards];
   }[] = [
-    { label: "Awaiting placement", enrollment: cards.awaiting },
+    { label: "Unplaced seat", enrollment: cards.awaiting },
     { label: "Waitlisted", enrollment: cards.waitlisted },
     // Directly under the plain queue place, because the pair is the comparison
     // worth having: the leave link stands down when the offer arrives, and

@@ -105,8 +105,8 @@
     },
     "nextTitle": "What happens next",
     "next": {
-      "placement": "We’ll place {participantName} in a group with a Gedu. The sessions will then appear under My SOG.",
-      "placementSelf": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
+      "sessions": "You’ll find {participantName}’s sessions under My SOG.",
+      "sessionsSelf": "You’ll find your sessions under My SOG.",
       "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
       "upfront": "This was a one-time payment — there’s nothing more to pay.",
       "firstCharge": "Nothing was charged today. Your first payment is on {date}."

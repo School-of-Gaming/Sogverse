@@ -57,12 +57,12 @@ export function ParentDashboardScene({
     <ParentDashboardPageBody
       gamers={fixture.gamers}
       self={fixture.self}
-      // Nothing dismissed: a scene is where the prep placements are judged, and
-      // the answer is a prop now rather than something a browser store could
-      // leak into the page. Which cards actually offer the guide is decided by
-      // the fixtures' own enrolment dates, through the same window rule the
-      // live roll-up runs.
-      prepDismissed={NO_TOPIC_PREP_READY}
+      // Dismissed only where the fixture says so: a scene is where the prep
+      // placements are judged, and the answer is a prop now rather than
+      // something a browser store could leak into the page. Which cards
+      // actually offer the guide is decided by the fixtures' own enrolment
+      // dates, through the same window rule the live roll-up runs.
+      prepDismissed={fixture.prepReady ?? NO_TOPIC_PREP_READY}
       billingCard={
         fixture.accounts.length === 0 ? null : (
           <FixtureBillingCard accounts={fixture.accounts} />
