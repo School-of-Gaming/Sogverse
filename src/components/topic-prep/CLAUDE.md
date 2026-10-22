@@ -106,9 +106,7 @@ The guide is rendered by exactly two pieces of code, and both read the same regi
 the same catalog:
 
 - **The content component**, for the two in-app surfaces — the parent's enrolment card
-  and the gamer's. It draws the body only: no card, no dialog, no container. Its heading
-  is a prop, because a dialog has already said the same words in its title while a
-  surface without one wants it above the intro. The dialog beside it is a
+  and the gamer's. It draws the body only: no card, no dialog, no container. The dialog beside it is a
   container for that body rather than a second renderer of the guide: it titles the guide,
   scrolls it, and carries the two buttons that answer it — one finishes with it, the other leaves it for later.
 - **The email section builder** under `src/lib/email-templates/`, for the confirmation

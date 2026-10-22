@@ -117,8 +117,7 @@ export function PurchaseConfirmationView({
   const isWaitlist = outcome === "waitlisted";
   const tr = resolveTranslation(product.product_translations, locale);
   const productName = tr?.name ?? "";
-  const participant =
-    participantName ?? (isSelfSeat ? tSelf("fallbackName") : t("fallbackGamer"));
+  const participant = participantName ?? t("fallbackGamer");
 
   // The schedule as the detail surfaces print it, minus the club's term range:
   // the start date below covers what a parent needs from it on this page, and

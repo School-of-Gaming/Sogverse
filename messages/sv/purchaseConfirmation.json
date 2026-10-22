@@ -14,7 +14,6 @@
       "camp": "Du är anmäld till {product}.",
       "event": "Du har gått med i {product}."
     },
-    "fallbackName": "Du",
     "nextPlacement": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
     "waitlist": {
       "subheading": "Du står på väntelistan för {product}."

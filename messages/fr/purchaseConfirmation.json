@@ -14,7 +14,6 @@
       "camp": "Votre inscription à {product} est confirmée.",
       "event": "Votre inscription à {product} est confirmée."
     },
-    "fallbackName": "Vous",
     "nextPlacement": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
     "waitlist": {
       "subheading": "Vous êtes sur la liste d’attente pour {product}."

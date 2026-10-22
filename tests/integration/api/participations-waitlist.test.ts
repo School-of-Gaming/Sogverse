@@ -138,9 +138,8 @@ function mockAuthenticatedCustomer() {
  * are the same row), and the schedule and location the mail's "Good to know"
  * facts are composed from.
  *
- * That third read runs on the waitlist path too, because the mail is the
- * confirmation page's twin and the page states those facts for a waitlisted
- * seat as well. Only the site's *details* are unreadable through a customer's
+ * That third read runs on the waitlist path too, because the mail itself
+ * states those facts on every mode, a waitlisted seat included. Only the site's *details* are unreadable through a customer's
  * own client, and nothing built from them reaches a waitlist mail — a place in
  * a queue composes no calendar entry.
  */

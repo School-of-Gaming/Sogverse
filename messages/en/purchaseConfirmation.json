@@ -14,7 +14,6 @@
       "camp": "You’re signed up for {product}.",
       "event": "You’re joining {product}."
     },
-    "fallbackName": "You",
     "nextPlacement": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
     "waitlist": {
       "subheading": "You’re on the waitlist for {product}."

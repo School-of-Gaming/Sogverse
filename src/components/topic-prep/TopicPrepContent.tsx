@@ -3,7 +3,6 @@
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { TopicPrepPlan } from "@/lib/products/topics";
-import { Heading } from "@sog/ui";
 
 // The "Before the first session" guide, rendered from the topic's prep block
 // and the `topicPrep` catalog. One component, two surfaces — the parent's
@@ -13,8 +12,7 @@ import { Heading } from "@sog/ui";
 // catalog instead (`src/lib/email-templates/topic-prep.ts`).
 //
 // It renders the body and nothing around it: no card, no dialog, no wrapper of
-// its own. A card and a dialog title the same guide differently, so the heading
-// is a prop rather than an assumption, and the surface owns its own container.
+// its own; the surface owns its container and any title above it.
 //
 // **It takes a resolved plan rather than a topic**, because every surface that
 // renders it has already had to ask `resolveTopicPrep` whether there is a guide
@@ -33,17 +31,9 @@ import { Heading } from "@sog/ui";
 export interface TopicPrepContentProps {
   /** What to render — `resolveTopicPrep`'s answer, resolved by the surface. */
   plan: TopicPrepPlan;
-  /**
-   * Draws the guide's own heading above the intro. A card wants it; a dialog
-   * already says the same words in its title and would say them twice.
-   */
-  showHeading?: boolean;
 }
 
-export function TopicPrepContent({
-  plan,
-  showHeading = false,
-}: TopicPrepContentProps) {
+export function TopicPrepContent({ plan }: TopicPrepContentProps) {
   const t = useTranslations("topicPrep");
 
   // One branch per form, because each reads a different key and only two of
@@ -59,12 +49,6 @@ export function TopicPrepContent({
 
   return (
     <div className="space-y-4">
-      {showHeading && (
-        <Heading level={2} step="card-title">
-          {t("heading")}
-        </Heading>
-      )}
-
       <p className="text-sm text-muted-foreground">{intro}</p>
 
       <ol className="list-decimal space-y-4 pl-5 text-sm marker:text-muted-foreground">

@@ -1729,16 +1729,15 @@ describe("the family club page's billing states", () => {
 });
 
 /**
- * The topic axis: a `?topic=` override the two topic-decided surfaces honour,
- * rather than a scenario per topic on each of them.
+ * The topic axis: a `?topic=` override the topic-decided surface honours,
+ * rather than a scenario per topic.
  *
  * Two things are worth pinning. The parser is one — it decides what a URL may
  * put on a `product_topic` column shape, and its whole job is that an unknown
  * value reads as absent rather than as a topic. The other is that the override
- * reaches the row: both cards the axis exists for (the product page's About
- * card, the confirmation page's prep guide) read `product.topic`, so a broken
- * plumbing would show up as the axis silently doing nothing on a page that
- * still renders fine.
+ * reaches the row: the card the axis exists for (the product page's About
+ * card) reads `product.topic`, so a broken plumbing would show up as the axis
+ * silently doing nothing on a page that still renders fine.
  */
 describe("the preview topic axis", () => {
   it("accepts every topic the enum has", () => {

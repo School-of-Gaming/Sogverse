@@ -14,7 +14,6 @@
       "camp": "Sinut on ilmoitettu toimintaan {product}.",
       "event": "Olet liittynyt toimintaan {product}."
     },
-    "fallbackName": "Sinä",
     "nextPlacement": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
     "waitlist": {
       "subheading": "Olet jonotuslistalla – {product}."
