@@ -549,9 +549,8 @@ export function buildProductConfirmationEmail(
   // page's arrangement rather than the mail's, and on a phone each one spent
   // its own border and padding out of a column that had none to give.
   //
-  // **No picture, and that is the image rule rather than an omission.** The
-  // page paints the product's photograph at a 96×64 crop; a mail cannot,
-  // because an image's box here has to be arithmetic from dimensions the sender
+  // **No picture, and that is the image rule rather than an omission.** A mail
+  // cannot paint the product's photograph, because an image's box here has to be arithmetic from dimensions the sender
   // already holds, and there are none: `catalogue_images` stores no size, and
   // entries uploaded before sizes were enforced may be any size and `webp` or
   // `avif`, neither of which Outlook's desktop engine renders. A fixed 96×64

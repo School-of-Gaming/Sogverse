@@ -14,12 +14,10 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ProductBanner } from "@/components/ui/product-banner";
 import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { formatDateOnly } from "@/lib/date-format";
-import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   formatProductLocation,
@@ -50,11 +48,6 @@ import { Heading } from "@sog/ui";
 //
 // The page server-fetches the participation + product and hands them here, so
 // it paints complete on first load: no client loading state, no layout shift.
-
-// The summary card's picture column, shared by the card and its finalizing
-// ghost so the skeleton is the card's shape. Fixed width, height from the text
-// column beside it, never shorter than a 3:2 thumb at that width.
-const CARD_PICTURE = "min-h-16 w-24 shrink-0 sm:min-h-[75px] sm:w-28";
 
 // "Keep browsing" under the one primary button: a quiet escape hatch in the
 // muted ink the footer's links use, so the page keeps a single act-coloured
@@ -193,7 +186,7 @@ export function PurchaseConfirmationView({
       : price;
 
   // Each on a line of its own: the first-charge money line alone is wider
-  // than the card's text column on a 360px phone, so it has to wrap freely.
+  // than the card on a 360px phone, so it has to wrap freely.
   const closingLines = (
     isWaitlist
       ? [
@@ -240,31 +233,19 @@ export function PurchaseConfirmationView({
           <p className="mt-1 text-muted-foreground">{subheading}</p>
         </div>
 
-        <Card className="mt-6 overflow-hidden">
-          <CardContent className="flex p-0">
-            {/* The photograph the parent clicked, flush down the card's left
-                edge and as tall as the text beside it, so it identifies the
-                product without leaving dead card under a short thumb. The
-                card's own corners clip it. */}
-            <ProductBanner
-              src={catalogueImageSrc("product", product.image_path)}
-              className={CARD_PICTURE}
-              sizes="(min-width: 640px) 112px, 96px"
-              fillHeight
-            />
-            <div className="min-w-0 flex-1 p-4 text-sm">
-              <p className="font-semibold">{productName}</p>
-              <div className="mt-1 space-y-0.5 text-muted-foreground">
-                {scheduleLines.map((line, idx) => (
-                  <p key={idx}>
-                    <ScheduleLine line={line} />
-                  </p>
-                ))}
-                <p>{where}</p>
-                {closingLines.map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
-              </div>
+        <Card className="mt-6">
+          <CardContent className="p-4 text-sm sm:p-5">
+            <p className="font-semibold">{productName}</p>
+            <div className="mt-1 space-y-0.5 text-muted-foreground">
+              {scheduleLines.map((line, idx) => (
+                <p key={idx}>
+                  <ScheduleLine line={line} />
+                </p>
+              ))}
+              <p>{where}</p>
+              {closingLines.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -439,15 +420,12 @@ export function PurchaseConfirmationNotice({
         {isFinalizing ? (
           <>
             {/* Ghosts shaped like the summary card that replaces them: the
-                picture and the lines beside it. */}
-            <Card className="mt-6 overflow-hidden">
-              <CardContent className="flex p-0">
-                <div className={`${CARD_PICTURE} animate-pulse bg-lifted`} />
-                <div className="min-w-0 flex-1 space-y-2 p-4">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
-                  <div className="h-3 animate-pulse rounded bg-lifted" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
-                </div>
+                name, then the fact lines under it. */}
+            <Card className="mt-6">
+              <CardContent className="space-y-2 p-4 sm:p-5">
+                <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
+                <div className="h-3 animate-pulse rounded bg-lifted" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
               </CardContent>
             </Card>
             <p className="mt-5 text-center text-sm text-muted-foreground">

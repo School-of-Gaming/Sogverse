@@ -60,13 +60,6 @@ export interface FramedImageProps {
   /** Lean the picture in when its card is pointed at — for a card that opens
    *  somewhere, and only then (`COVER_HOVER_ZOOM`). */
   zoomOnHover?: boolean;
-  /**
-   * Drop the purpose's ratio and take the frame's height from the layout: the
-   * frame stretches to whatever its flex row gives it, and the picture crops to
-   * fill it. For a picture set flush down one side of a card whose text decides
-   * the card's height; the caller still states the width.
-   */
-  fillHeight?: boolean;
 }
 
 /**
@@ -109,29 +102,7 @@ export function FramedImage({
   sizes = "100vw",
   eager = false,
   zoomOnHover = false,
-  fillHeight = false,
 }: FramedImageProps) {
-  if (fillHeight) {
-    // A stretched frame has no ratio of its own, so the placeholder cannot be
-    // the frame: it is drawn at the purpose's ratio inside a frame painted the
-    // placeholder's own ground, which fills whatever the drawing leaves.
-    return (
-      <div className={cn("relative overflow-hidden bg-lifted", className)}>
-        {src === null ? (
-          <NoImagePlaceholder purpose={purpose} className="absolute inset-0" />
-        ) : (
-          <Image
-            src={src}
-            alt=""
-            fill
-            sizes={sizes}
-            priority={eager}
-            className={cn("object-cover", zoomOnHover && COVER_HOVER_ZOOM)}
-          />
-        )}
-      </div>
-    );
-  }
   if (src === null) {
     return (
       <NoImagePlaceholder

@@ -4,9 +4,8 @@ import { FramedImage } from "./framed-image";
  * **The 3:2 product picture, cropped — the only product-image presentation.**
  *
  * One stored file, one ratio, every surface — family-facing and admin alike:
- * the browse card's media block, the detail page's hero, the purchase
- * confirmation's summary row, the admin product list rows and the admin
- * product page all paint the product's picture through here. That universality
+ * the browse card's media block, the detail page's hero, the admin product
+ * list rows and the admin product page all paint the product's picture through here. That universality
  * is an owner rule (2026-08-12), and the admin half of it is the half with the
  * reasoning worth keeping: the admin surfaces are how admins see and think
  * about products, so a thumb cropped differently from the shop has an admin
@@ -28,13 +27,6 @@ import { FramedImage } from "./framed-image";
  * dozens of banners on one page, so the banner lazy-loads by default and the
  * one caller whose banner is reliably above the fold — the detail page's hero
  * — opts into `eager`.
- *
- * **One sanctioned departure from the ratio: `fillHeight`.** The purchase
- * confirmation's summary card sets the picture flush down its left edge, as
- * tall as the text beside it, because a 3:2 thumb shorter than that text left
- * dead card under it (owner ruling, 2026-10-22). It is the same stored picture
- * filling its frame; only the frame's height comes from the card rather than
- * from the ratio.
  */
 export function ProductBanner({
   src,
@@ -42,7 +34,6 @@ export function ProductBanner({
   sizes,
   eager,
   zoomOnHover,
-  fillHeight,
 }: {
   /** Resolved image URL, or `null` for a product with no picture. */
   src: string | null;
@@ -57,9 +48,6 @@ export function ProductBanner({
   /** Lean the picture in when its card is pointed at — for a card that opens
    *  somewhere, and only then (`COVER_HOVER_ZOOM`). */
   zoomOnHover?: boolean;
-  /** Take the frame's height from its flex row instead of the 3:2 ratio —
-   *  the confirmation card's flush side picture, and nothing else. */
-  fillHeight?: boolean;
 }) {
   return (
     <FramedImage
@@ -69,7 +57,6 @@ export function ProductBanner({
       sizes={sizes}
       eager={eager}
       zoomOnHover={zoomOnHover}
-      fillHeight={fillHeight}
     />
   );
 }
