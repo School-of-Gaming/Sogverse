@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProductBanner } from "@/components/ui/product-banner";
 import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { formatDateOnly } from "@/lib/date-format";
+import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   formatProductLocation,
@@ -208,6 +210,21 @@ export function PurchaseConfirmationView({
           product: productName,
         });
 
+  const pictureSrc = catalogueImageSrc("product", product.image_path);
+  const factLines = (
+    <>
+      {scheduleLines.map((line, idx) => (
+        <p key={idx}>
+          <ScheduleLine line={line} />
+        </p>
+      ))}
+      <p>{where}</p>
+      {closingLines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </>
+  );
+
   const nextLine = isWaitlist
     ? t("waitlist.next")
     : isSelfSeat
@@ -234,18 +251,23 @@ export function PurchaseConfirmationView({
         </div>
 
         <Card className="mt-6">
-          <CardContent className="p-4 text-sm sm:p-5">
-            <p className="font-semibold">{productName}</p>
-            <div className="mt-1 space-y-0.5 text-muted-foreground">
-              {scheduleLines.map((line, idx) => (
-                <p key={idx}>
-                  <ScheduleLine line={line} />
-                </p>
-              ))}
-              <p>{where}</p>
-              {closingLines.map((line) => (
-                <p key={line}>{line}</p>
-              ))}
+          {/* The picture is always whole at 3:2, so it sits beside text
+              rather than over it. On a wide card it is centred beside the
+              whole text block; on a phone a text column beside it would be
+              too narrow for the facts, so it sits beside the name alone and
+              the facts run the full width under a divider. One DOM: the
+              text wrapper dissolves (`contents`) into the phone grid. */}
+          <CardContent className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-3 p-4 text-sm sm:flex sm:gap-4 sm:p-5">
+            <ProductBanner
+              src={pictureSrc}
+              className="w-28 rounded-md sm:w-[40%] sm:max-w-48 sm:shrink-0"
+              sizes="(min-width: 640px) 192px, 112px"
+            />
+            <div className="contents sm:block sm:min-w-0 sm:flex-1">
+              <p className="font-semibold">{productName}</p>
+              <div className="col-span-2 mt-3 space-y-0.5 border-t border-border pt-3 text-muted-foreground sm:mt-1 sm:border-t-0 sm:pt-0">
+                {factLines}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -420,12 +442,18 @@ export function PurchaseConfirmationNotice({
         {isFinalizing ? (
           <>
             {/* Ghosts shaped like the summary card that replaces them: the
-                name, then the fact lines under it. */}
+                picture and the name beside it, the fact lines under the name
+                on a wide card and under both on a phone. */}
             <Card className="mt-6">
-              <CardContent className="space-y-2 p-4 sm:p-5">
-                <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
-                <div className="h-3 animate-pulse rounded bg-lifted" />
-                <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
+              <CardContent className="grid grid-cols-[7rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3 p-4 sm:flex sm:gap-4 sm:p-5">
+                <div className="aspect-[3/2] w-28 animate-pulse rounded-md bg-lifted sm:w-[40%] sm:max-w-48 sm:shrink-0" />
+                <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:space-y-2">
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-lifted" />
+                  <div className="col-span-2 space-y-2">
+                    <div className="h-3 animate-pulse rounded bg-lifted" />
+                    <div className="h-3 w-1/2 animate-pulse rounded bg-lifted" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
             <p className="mt-5 text-center text-sm text-muted-foreground">
