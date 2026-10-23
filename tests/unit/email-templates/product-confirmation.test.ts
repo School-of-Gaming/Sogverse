@@ -711,7 +711,7 @@ describe("buildProductConfirmationEmail", () => {
     it("writes the date the way the reader's locale does, and the time as the schedule row does", async () => {
       const html = await renderFi();
       expect(html).toContain(
-        `Ensimmäinen tapaaminen, johon ${styledName("Aino")} osallistuu, on maanantaina 11. tammikuuta 2027 klo 16:00 (UTC+2).`,
+        `${styledName("Aino")} aloittaa maanantaina 11. tammikuuta 2027 klo 16:00 (UTC+2).`,
       );
       // One clock style in one mail: the schedule row's, not the locale's "16.00".
       expect(html).toContain("16:00–17:00 (UTC+2)");

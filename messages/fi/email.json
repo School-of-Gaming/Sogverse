@@ -106,7 +106,7 @@
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
       "upfront": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
       "firstCharge": "Tänään ei veloitettu mitään. Ensimmäinen maksu veloitetaan {date}.",
-      "firstSession": "Ensimmäinen tapaaminen, johon {participantName} osallistuu, on {date} klo {time}.",
+      "firstSession": "{participantName} aloittaa {date} klo {time}.",
       "firstSessionSelf": "Ensimmäinen tapaamisesi on {date} klo {time}.",
       "eventDate": "Tapahtuma järjestetään {date} klo {time}.",
       "guarantee": "Jos kerho ei osoittaudu sopivaksi, lähetä meille viesti 30 päivän kuluessa siitä, kun {participantName} on osallistunut ensimmäiseen tapaamiseen, niin saat rahasi takaisin!",
