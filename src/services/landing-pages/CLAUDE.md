@@ -240,8 +240,8 @@ stands as a sticky card in the page's gutter on its side, outside the sections' 
 and pinned under the header, as the shop's filter rail does: **a section is never narrowed
 or padded for a card** — with one card the content keeps its full measure, moving away from
 the card only as far as the viewport makes it; with a card on each side both gutters hold
-their floor, so the content stays centred and its track narrows (an 800px measure at 1536,
-the full one from 1888). A `card` section's band still runs the full width, its content
+their floor, so the content stays centred and its track narrows (an 816px measure at 1536,
+the full one from 1872). A `card` section's band still runs the full width, its content
 lined up with every other section's. A sticky section is never on a band — a background
 stored on it is kept but not drawn, in the gutter and at the page's end alike, since the
 card carries its own edge. Every sticky type draws in the one sticky card frame the renderer

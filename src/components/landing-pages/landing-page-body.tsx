@@ -75,39 +75,41 @@ export interface LandingPageBodyProps {
 //   as on a page without a sticky section, so its measure and its pictures'
 //   `sizes` hold.
 // - **A card's gutter** is `minmax(rail + gap, 1fr)`: the card, 20rem
-//   (`--landing-rail-width`), in a layer with the container's 1rem inline
-//   padding. That 1rem toward the content and the section's own 1rem are the
-//   2rem gap (`--landing-rail-gap`) between card and measure, the card pinned
-//   against the content as the shop's filter rail is; its 1rem outward is the
-//   page's edge, as the shop's.
+//   (`--landing-rail-width`), in a layer with 1rem of padding outward and
+//   0.5rem toward the content. That 0.5rem and the section's own 1rem are the
+//   1.5rem gap (`--landing-rail-gap`, the product page's and the shop's
+//   `gap-6`) between card and measure, the card pinned against the content as
+//   the shop's filter rail is; its 1rem outward is the page's edge, as the
+//   shop's, and the card's whole distance from the window when its gutter is
+//   at the floor.
 // - **A gutter with no card** is `minmax(0, 1fr)`, free to close entirely.
 //
 // Both gutters are `1fr`, so the content is dead centre wherever they can be
-// equal. **A card on one side:** below 1888 the card's gutter holds its 352px
+// equal. **A card on one side:** below 1872 the card's gutter holds its 344px
 // floor and the opposite one takes the rest, so the content slides away from
 // the card only as far as it must. Measured in a real browser without a
-// scrollbar, for a right card: at 1536 the content track is 1184 at the
-// viewport's edge, the measure 16–1168 (176px left of centre) and the card
-// 1200–1520, so the whole 1152px measure fits with nothing to spare; at 1680
-// the measure is 160–1312 (104px left of centre), the card 1344–1664; at 1856
-// the measure is 336–1488 (16px left), the card 1520–1840; from 1888 (1184 +
-// 2 × 352) the gutters are equal and the measure centred — at 1920 it is
-// 384–1536, the card 1568–1888.
+// scrollbar, for a right card: at 1536 the content track is 8–1192, the
+// measure 24–1176 (168px left of centre) and the card 1200–1520, so the whole
+// 1152px measure fits with 8px to spare; at 1680 the measure is 168–1320 (96px
+// left of centre), the card 1344–1664; at 1700 the measure is 188–1340 (86px
+// left), the card 1364–1684; at 1856 the measure is 344–1496 (8px left), the
+// card 1520–1840; from 1872 (1184 + 2 × 344) the gutters are equal and the
+// measure centred — at 1920 it is 384–1536, the card 1560–1880.
 //
 // **A card on each side:** both gutters hold their floor, so the content never
 // slides — it stays dead centre and the content track narrows instead, to
-// whatever the two 352px floors leave. Worked through from the same tracks:
-// at 1536 the track is 352–1184 (832), the measure 368–1168 (800), the cards
-// 16–336 and 1200–1520; at 1700 the track is 352–1348 (996), the measure
-// 368–1332 (964), the cards 16–336 and 1364–1684; at 1888 the track reaches
-// its 1184 and the measure 368–1520 its full 1152, the cards 16–336 and
-// 1552–1872; wider, the gutters grow alike. A section measure narrower than
+// whatever the two 344px floors leave. Worked through from the same tracks:
+// at 1536 the track is 344–1192 (848), the measure 360–1176 (816), the cards
+// 16–336 and 1200–1520; at 1700 the track is 344–1356 (1012), the measure
+// 360–1340 (980), the cards 16–336 and 1364–1684; at 1872 the track reaches
+// its 1184 and the measure 360–1512 its full 1152, the cards 16–336 and
+// 1536–1856; wider, the gutters grow alike. A section measure narrower than
 // the track keeps its own width; a wider one is held to the track, as on any
 // viewport narrower than its measure.
 //
 // A classic scrollbar (about 17px on Windows) comes out of the content track
 // wherever a gutter is at its floor: at 1536 it leaves a lone card's measure
-// 1135px and two cards' 783px.
+// 1143px and two cards' 799px.
 //
 // **Full-width bands keep spanning the viewport.** Each section is drawn in a
 // row that spans all three tracks and inherits them (`subgrid`), the section
@@ -161,12 +163,13 @@ const STICKY_SECTIONS = "2xl:col-span-full 2xl:row-start-2 2xl:grid 2xl:grid-col
  * section is a band — `STICKY_LAYER_AFTER_BAND` — and the first card's own
  * bottom spacing is the gap above the second). From `2xl` it is the card's
  * gutter in the sections' row, as tall as they are, starting and ending with
- * the hero's and the last section's spacing; a left card is pushed to the
- * gutter's inner edge, against the content.
+ * the hero's and the last section's spacing, its padding toward the content
+ * halved so the section's own adds up to the gap; a left card is pushed to
+ * the gutter's inner edge, against the content.
  */
 const STICKY_LAYER: Record<LandingStickySide, string> = {
-  left: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-1 2xl:row-start-2 2xl:pt-24",
-  right: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-3 2xl:row-start-2 2xl:pt-24",
+  left: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-1 2xl:row-start-2 2xl:pt-24 2xl:pr-2",
+  right: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-3 2xl:row-start-2 2xl:pt-24 2xl:pl-2",
 };
 
 /**
