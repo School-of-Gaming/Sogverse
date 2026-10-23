@@ -52,7 +52,6 @@ export type LocationFormParent = Pick<
  * admin names.
  */
 interface LocationFormDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: LocationFormValues) => Promise<void>;
   isPending: boolean;
@@ -60,35 +59,13 @@ interface LocationFormDialogProps {
   parent: LocationFormParent;
 }
 
+/** Mounted by its caller only while open, so each opening starts from an empty name. */
 export function LocationFormDialog({
-  open,
   onOpenChange,
   onSubmit,
   isPending,
   parent,
 }: LocationFormDialogProps) {
-  if (!open) return null;
-
-  return (
-    <LocationFormDialogInner
-      onOpenChange={onOpenChange}
-      onSubmit={onSubmit}
-      isPending={isPending}
-      parent={parent}
-    />
-  );
-}
-
-/**
- * Inner component that mounts fresh each time the dialog opens,
- * so useState initializers run with the latest props.
- */
-function LocationFormDialogInner({
-  onOpenChange,
-  onSubmit,
-  isPending,
-  parent,
-}: Omit<LocationFormDialogProps, "open">) {
   const t = useTranslations('admin.locations');
   const c = useTranslations('common');
   const locale = useLocale();
