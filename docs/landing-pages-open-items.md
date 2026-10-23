@@ -1,9 +1,8 @@
 # Landing pages: the open items
 
-**Status: open, 2026-10-22.** Everything still unresolved from marketing's landing page
+**Status: open, 2026-10-23.** Everything still unresolved from marketing's landing page
 fixes list (13 Oct 2026): the items no one has built yet, the branches built and waiting
-for the owner's review, the operator steps outside the code, and the questions for
-counsel. **When an item is resolved — built and merged, or dropped by the owner — delete
+for the owner's review, and the operator steps outside the code. **When an item is resolved — built and merged, or dropped by the owner — delete
 its section. Delete this file when nothing is left.** It is self-contained: nothing
 outside the repo is needed to pick any item up.
 
@@ -74,12 +73,5 @@ conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
 ## Operator steps outside the code
 
 - **Google Search Console:** the `sog.gg` Domain property is verified by a TXT record in
-  the DNS — keep it. Three owners without an `@sog.gg` address are to be reviewed.
-
-## Questions for counsel, asked together
-
-1. Does a free account, with no purchase, qualify for the soft opt-in under §200 of the
-   Finnish Act on Electronic Communications Services? The answer decides whether the
-   deferred sync of account holders to Brevo (`landing-email-capture`) may include
-   those who did not tick the marketing box.
-2. Is the registration form's marketing checkbox worded specifically enough?
+  the DNS — keep it. One owner without an `@sog.gg` address is left, waiting on the CEO's
+  word on whether they still need access.
