@@ -163,7 +163,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `The cover uploader is shown to the admin; it takes pictures that are already ${COVER_RATIO}, as many as they like at once, and adds them to the picture catalogue. Wait for them to pick; you will be told the whole batch at once, in the order picked: each new cover's catalogue id, label and file name, and each refused file's size and why, to explain to the admin. ${UPLOADED_NEXT_STEP} If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the cover in the Sogverse editor instead, or choose an existing one from list_library_covers.
+              text: `The cover uploader is shown to the admin; it takes pictures that are already ${COVER_RATIO}, as many as they like at once, and adds them to the picture catalogue. Wait for them to pick; you will be told the whole batch at once, in the order picked: each new cover's catalogue id, label and file name, and each refused file's size and why, to explain to the admin. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the cover in the Sogverse editor instead, or choose an existing one from list_library_covers.
 
 ${JSON.stringify(value, null, 2)}`,
             },

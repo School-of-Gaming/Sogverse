@@ -370,7 +370,7 @@ export function registerLandingImageTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `The picture uploader is shown to the admin; it takes pictures that are already ${accepts}, as many as they like at once, and adds them to the picture catalogue. Wait for them to pick; you will be told the whole batch at once, in the order picked: each stored picture's catalogue id, label, shape and file name, and each refused file's size and why, to explain to the admin. ${UPLOADED_NEXT_STEP} If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the picture from an AI app that does, or choose an existing one from list_landing_images.
+              text: `The picture uploader is shown to the admin; it takes pictures that are already ${accepts}, as many as they like at once, and adds them to the picture catalogue. Wait for them to pick; you will be told the whole batch at once, in the order picked: each stored picture's catalogue id, label, shape and file name, and each refused file's size and why, to explain to the admin. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the picture from an AI app that does, or choose an existing one from list_landing_images.
 
 ${JSON.stringify(value, null, 2)}`,
             },
