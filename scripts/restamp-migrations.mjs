@@ -78,6 +78,22 @@ const committed = lines(
 );
 
 /**
+ * Every migration the incoming side of a merge holds. Mid-merge — `origin/dev`
+ * merged in but not yet committed, which is exactly when landing runs this —
+ * the files arriving from dev show in the status as staged adds,
+ * indistinguishable there from the branch's own, and restamping them would
+ * rename applied history. So a file `origin/dev` (or the merge's other side)
+ * already holds is never this branch's, whatever the status says.
+ */
+const incoming = new Set(lines(git('ls-tree', '-r', '--name-only', 'origin/dev', '--', `${MIGRATIONS_DIR}/`)));
+const mergeHead = lines(git('rev-parse', '--git-path', 'MERGE_HEAD'))[0];
+if (existsSync(path.resolve(checkout, mergeHead))) {
+  for (const file of lines(git('ls-tree', '-r', '--name-only', 'MERGE_HEAD', '--', `${MIGRATIONS_DIR}/`))) {
+    incoming.add(file);
+  }
+}
+
+/**
  * The same question for the working tree, so the script is as usable before
  * the branch's last commit as after it. Everything else the status reports
  * under migrations/ is a modification, a deletion or a rename of a file this
@@ -93,8 +109,9 @@ for (const line of lines(git('status', '--porcelain', '--', `${MIGRATIONS_DIR}/`
     .split(' -> ')
     .map((p) => p.replace(/^"|"$/g, ''));
   const added = code === '??' || code.startsWith('A');
-  if (added && paths.length === 1) uncommitted.push(paths[0]);
-  else suspect.push(...paths.map((p) => `${code.trim() || '??'}  ${p}`));
+  if (added && paths.length === 1) {
+    if (!incoming.has(paths[0])) uncommitted.push(paths[0]);
+  } else suspect.push(...paths.map((p) => `${code.trim() || '??'}  ${p}`));
 }
 
 const allAdds = [...new Set([...committed, ...uncommitted])].filter((file) => file.endsWith('.sql'));
