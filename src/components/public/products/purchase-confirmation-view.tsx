@@ -20,7 +20,7 @@ import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { formatDateOnly } from "@/lib/date-format";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   formatProductLocation,
   renderProductLocationLine,
@@ -105,8 +105,7 @@ export function PurchaseConfirmationView({
   const now = useNow();
 
   const isWaitlist = outcome === "waitlisted";
-  const tr = resolveTranslation(product.product_translations, locale);
-  const productName = tr?.name ?? "";
+  const productName = resolveRequiredTranslation(product.product_translations, locale).name;
   const participant = participantName ?? t("fallbackGamer");
 
   // The schedule as the detail surfaces print it, minus the club's term range:

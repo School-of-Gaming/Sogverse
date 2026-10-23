@@ -11,7 +11,7 @@ import { ROUTES } from "@/lib/constants/routes";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { scrollToAnchor } from "@/lib/navigation/scroll-to-anchor";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { topicHasInfoCard } from "@/lib/products/topics";
@@ -186,14 +186,14 @@ export function ProductDetailPageBody({
   const tVerb = useTranslations("productDetail.signupPanel.verb");
   const getTopicLabel = useTopicLabel();
 
-  const tr = resolveTranslation(
+  const tr = resolveRequiredTranslation(
     product.product_translations,
     uiLocale,
   );
   const topicLabel = getTopicLabel(product.topic);
   // Authored markdown, and the empty string is the ordinary "no blurb" state:
   // most products carry none, and the card below withdraws itself for it.
-  const longDescription = tr?.long_description ?? "";
+  const longDescription = tr.long_description ?? "";
 
   const verb = tVerb(product.product_type);
 
@@ -389,7 +389,7 @@ export function ProductDetailPageBody({
           </div>
           <div className="mt-1 lg:mt-0 lg:min-w-0 lg:flex-1">
             <Heading level={1} step="section">
-              {tr?.name}
+              {tr.name}
             </Heading>
           </div>
         </div>
@@ -416,7 +416,7 @@ export function ProductDetailPageBody({
           <ProductMediaChips tag={tag} whoLabel={whoLabel} />
         </div>
 
-        {tr?.short_description && (
+        {tr.short_description && (
           <p className="mt-4 text-muted-foreground">{tr.short_description}</p>
         )}
 

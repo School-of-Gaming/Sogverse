@@ -13,7 +13,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   BillingService,
   type BillingAccount,
@@ -170,7 +170,7 @@ export function ManageBillingCard({
     stripeCustomerId: account.stripeCustomerId,
     covers: account.covers.map((cover) => {
       const productName =
-        resolveTranslation(cover.productTranslations, locale)?.name ?? "";
+        resolveRequiredTranslation(cover.productTranslations, locale).name;
       // A profile can legitimately have no first name; the club alone still
       // identifies which subscription this account pays for.
       return cover.participantFirstName

@@ -11,7 +11,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Link, useRouter } from "@/i18n/navigation";
 import { LOCALE_CONFIG, formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
 import { cn } from "@/lib/cn";
 import { formatDate, formatDateOnly } from "@/lib/date-format";
@@ -323,7 +323,6 @@ export function LandingPagesTable({ rows }: { rows: LandingPageRow[] }) {
         <TableHead columns={[t("columns.page"), t("columns.pageviews")]} />
         <tbody className="divide-y divide-border">
           {rows.map((row) => {
-            const title = row.page ? resolveTranslation(row.page.versions, locale)?.title : null;
             return (
               <tr key={row.page?.id ?? row.path}>
                 <td className="space-y-0.5 px-4 py-2.5">
@@ -332,7 +331,7 @@ export function LandingPagesTable({ rows }: { rows: LandingPageRow[] }) {
                       href={ROUTES.admin.landingPage(row.page.id)}
                       className="font-medium hover:underline"
                     >
-                      {title ?? row.page.id}
+                      {resolveRequiredTranslation(row.page.versions, locale).title}
                     </Link>
                   ) : (
                     <>

@@ -1,6 +1,6 @@
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
   recordHasHappened,
@@ -654,7 +654,7 @@ function buildClub(
 
   return {
     id: club.id,
-    name: resolveTranslation(club.product_translations, locale)?.name ?? "",
+    name: resolveRequiredTranslation(club.product_translations, locale).name,
     municipalityName: localizedLocationName(club.municipality, locale),
     locationName:
       club.location === null

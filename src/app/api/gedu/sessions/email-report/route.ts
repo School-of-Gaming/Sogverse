@@ -21,10 +21,7 @@ import {
   resolveFamilyRecipients,
   type FamilyRecipient,
 } from "@/lib/email/family-recipients.server";
-import {
-  resolveRequiredTranslation,
-  resolveTranslation,
-} from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatTimeRange } from "@/lib/date-format";
 import { getOrigin } from "@/lib/url";
 import { ApiError } from "@/lib/api/api-error";
@@ -662,18 +659,15 @@ async function readEnabledSpotlights(
 
 /**
  * Each spotlight in one reader's version, picked by the shared fallback — the
- * reader's locale, then English, then the first written. A spotlight always
- * has a version, so none is dropped for real data.
+ * reader's locale, then English, then the first written.
  */
 function spotlightsFor(
   spotlights: readonly EnabledSpotlight[],
   locale: SupportedLocale,
 ): SessionReportSpotlight[] {
-  return spotlights.flatMap((spotlight) => {
-    const version = resolveTranslation(spotlight.versions, locale);
-    return version
-      ? [{ title: version.title, body: version.body, image: spotlight.image }]
-      : [];
+  return spotlights.map((spotlight) => {
+    const version = resolveRequiredTranslation(spotlight.versions, locale);
+    return { title: version.title, body: version.body, image: spotlight.image };
   });
 }
 

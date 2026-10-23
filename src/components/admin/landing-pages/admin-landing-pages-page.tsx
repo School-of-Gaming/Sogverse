@@ -16,7 +16,7 @@ import {
 } from "@/components/admin/admin-list-url-state";
 import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/cn";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
@@ -76,7 +76,7 @@ function SearchablePages({ pages }: { pages: readonly AdminLandingPageListItem[]
   // back as a reader's would; the search reaches every version's title and
   // address, since an admin may remember a page by any of them.
   const rows = useMemo(
-    () => pages.map((page) => ({ page, version: resolveTranslation(page.versions, uiLocale) })),
+    () => pages.map((page) => ({ page, version: resolveRequiredTranslation(page.versions, uiLocale) })),
     [pages, uiLocale],
   );
 
@@ -128,8 +128,8 @@ function SearchablePages({ pages }: { pages: readonly AdminLandingPageListItem[]
             <PageRow
               key={page.id}
               page={page}
-              title={version?.title ?? ""}
-              summary={version?.summary ?? ""}
+              title={version.title}
+              summary={version.summary}
             />
           ))}
         </div>

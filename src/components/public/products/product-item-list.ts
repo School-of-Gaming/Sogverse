@@ -1,6 +1,6 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { translatedCanonicalPath } from "@/lib/metadata/translated-page";
 import { productPagePath } from "@/lib/products/product-metadata";
 import type { ProductBrowseRow } from "@/types";
@@ -44,7 +44,7 @@ export function productItemList(
     .map((product) => {
       const written = inLocaleOrder(product.product_translations);
       return {
-        name: resolveTranslation(written, locale)?.name ?? "",
+        name: resolveRequiredTranslation(written, locale).name,
         url: `${siteUrl}${translatedCanonicalPath(
           written,
           locale,

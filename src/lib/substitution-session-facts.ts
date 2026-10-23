@@ -1,6 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   SessionProductDocument,
 } from "@/services/session-substitution/session-substitution.contracts";
@@ -135,7 +135,7 @@ export function buildSessionFacts({
     timezone: product.timezone,
     startsAt,
     endsAt,
-    productName: resolveTranslation(product.translations, locale)?.name ?? "",
+    productName: resolveRequiredTranslation(product.translations, locale).name,
     productType: product.productType,
     topic: product.topic,
     spokenLanguageCode: product.spokenLanguageCode,

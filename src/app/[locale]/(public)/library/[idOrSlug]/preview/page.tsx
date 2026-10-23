@@ -7,7 +7,7 @@ import {
   libraryArticleCanonicalPath,
   libraryArticlePath,
 } from "@/components/library/article/article-metadata";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveLocale } from "@/lib/constants/locales";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { LibraryService } from "@/services/library/library.service";
@@ -60,8 +60,7 @@ export default async function LibraryArticlePreviewPage({
 
   const locale = resolveLocale(await getLocale());
   const { draft, publication } = article;
-  const version = resolveTranslation(draft.versions, locale);
-  if (version === null) notFound();
+  const version = resolveRequiredTranslation(draft.versions, locale);
 
   return (
     <ArticlePageBody
