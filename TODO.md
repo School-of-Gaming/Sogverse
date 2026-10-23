@@ -420,6 +420,16 @@ is a perfectly good outcome.
 - [ ] **About 1,240 of 1,590 parent accounts hold no School of Gaming marketing answer, so we can mail none of them.** Counted on prod 2026-10-08: 143 said yes and 213 said no, about 40% yes among those who answered. The rest were created before the parent-registration question went live around 1 September 2026, most of them in the bulk arrival of existing families in late August. An absent answer already means "do not mail", so nothing is wrong today, but the list we may mail is a fraction of the families we have. **The fix:** ask once in the app. On the next visit to the dashboard, a parent with no School of Gaming answer sees a single yes-or-no question. It saves through the same path as the Settings toggle, so the answer lands in the consent history the same way, and it never appears again once answered. It reaches only parents who sign in (about 220 of the unanswered signed in during the 30 days before the count), which is fine, because the rest simply stay unmailed. **Don't ask by email:** an email requesting marketing consent can itself count as marketing under GDPR. If Finland's existing-customer exception is to be relied on instead, that is a legal call, not an engineering one.
 - [ ] **New parent accounts still arrive without an answer.** Seven parent accounts created since 28 September 2026 hold none, so some way of creating a parent (an admin creating the account, the partner API, or adopting an outside Stripe subscription are the likely candidates) skips the question. Find the path and ask there, or accept that it is answered by the in-app question above.
 
+## Landing page analytics cannot say what a page led to
+
+Marketing asked for views, button clicks and signups by source page (13 Oct 2026). The admin
+Analytics page answers views; the other two have nothing to read from.
+
+- [ ] **Button clicks are not tracked anywhere.** Landing page buttons carry no tracking, and
+  the Meta Pixel reports product-page signup clicks only to Meta.
+- [ ] **A signup cannot be tied to the page it came from.** Only the arrival link's campaign
+  labels are stored, and only for parents who accepted marketing cookies.
+
 ## Chargebee is still open, and still connected to our Stripe account
 
 SOGGA was shut down on 12 October 2026 and its data, Chargebee's included, is archived on the
