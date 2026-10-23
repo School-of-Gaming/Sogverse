@@ -91,6 +91,9 @@ interface ProductRailProps {
   /** The two arrows' accessible names, in the surface's own words — "Previous
    *  events" where the rail shows a programme's events. */
   labels: { previous: string; next: string };
+  /** The cards' title level — H3 under the surface's heading, the default, or
+   *  H2 where the rail stands under none. */
+  titleLevel?: 2 | 3;
 }
 
 /**
@@ -184,7 +187,7 @@ interface ProductRailProps {
  *    brightened border and a shadow, dimming exactly the thing the reader is
  *    reaching for. The peek and the arrows already say "more".
  */
-export function ProductRail({ products, counts, labels }: ProductRailProps) {
+export function ProductRail({ products, counts, labels, titleLevel }: ProductRailProps) {
   const railRef = useRef<HTMLDivElement>(null);
 
   // Two questions the product count answers, at two different tiers, and it
@@ -335,6 +338,7 @@ export function ProductRail({ products, counts, labels }: ProductRailProps) {
             <ProductBrowseCard
               product={product}
               counts={countsByProduct.get(product.id) ?? null}
+              titleLevel={titleLevel}
             />
           </div>
         ))}

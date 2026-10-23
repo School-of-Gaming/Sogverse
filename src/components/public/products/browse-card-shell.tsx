@@ -94,6 +94,12 @@ export interface ProductBrowseCardViewProps {
    * word; required, that combination cannot be expressed.
    */
   detailHref: AppHref;
+  /**
+   * The title's outline level: an H3 under the surface's H2 by default, an H2
+   * where the cards stand under no heading of their own. The size never
+   * changes with it.
+   */
+  titleLevel?: 2 | 3;
 }
 
 export type SeatBarValue = {

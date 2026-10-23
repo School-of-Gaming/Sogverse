@@ -11,6 +11,7 @@ import { useProductRail } from "@/components/public/products/use-product-rail";
 import { cn } from "@/lib/cn";
 import { LANDING_PRODUCT_TYPES } from "@/lib/landing-pages/sections";
 import { LANDING_SECTION, SectionHeader, hasSectionHeader } from "./landing-section-header";
+import { written } from "./landing-section-types";
 
 interface LandingProductsSectionProps {
   /** The admin's picks, in their order. */
@@ -72,6 +73,9 @@ export function LandingProductsSection({
           products={products}
           counts={counts}
           labels={{ previous: t("previous"), next: t("next") }}
+          // The cards' titles sit under the section's H2, or stand as H2s
+          // where the section has no heading written yet.
+          titleLevel={written(heading) === null ? 2 : 3}
         />
       </div>
     </section>
