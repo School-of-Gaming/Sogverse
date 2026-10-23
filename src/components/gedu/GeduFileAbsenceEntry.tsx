@@ -542,19 +542,21 @@ function SessionPickerRow({
       )}
     >
       <SessionSummaryLine session={session} />
-      <span className="text-xs text-muted-foreground">
-        {session.isRemote ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Radio className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {t("remote")}
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5">
+      {/* An in-person session whose site is not known states no place rather
+          than claim one is still to be confirmed. */}
+      {session.isRemote ? (
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Radio className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {t("remote")}
+        </span>
+      ) : (
+        session.siteName !== null && (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {session.siteName ?? t("siteUnknown")}
+            {session.siteName}
           </span>
-        )}
-      </span>
+        )
+      )}
       {/* In place of the row's status, exactly where a reader's eye already is
           — rather than a refusal one click later. */}
       {reason !== null && (

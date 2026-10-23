@@ -105,7 +105,7 @@ export function SubstitutionSessionFacts({
             <RelativeTime startsAt={facts.startsAt} now={howSoon.now} />
           </span>
         )}
-        <SessionWhere facts={facts} size="xs" />
+        {statesWhere(facts) && <SessionWhere facts={facts} size="xs" />}
         {(tags || children !== undefined) && (
           <SessionTags facts={facts} tags={tags}>
             {children}
@@ -131,9 +131,11 @@ export function SubstitutionSessionFacts({
             urgent={howSoon.urgent}
           />
         )}
-        <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-          <SessionWhere facts={facts} size="sm" />
-        </p>
+        {statesWhere(facts) && (
+          <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+            <SessionWhere facts={facts} size="sm" />
+          </p>
+        )}
       </div>
       {(tags || children !== undefined) && (
         <div className="flex flex-wrap items-center gap-2">
@@ -218,12 +220,17 @@ function SessionHowSoonLine({
 }
 
 /**
+ * Whether the card has a "where" to state: online, or a known site. An
+ * in-person session whose site is not known states no place at all rather
+ * than claim one is still to be confirmed.
+ */
+function statesWhere(facts: SessionFacts): boolean {
+  return facts.isRemote || facts.siteName !== null;
+}
+
+/**
  * Online, or where — the one fact a reader cannot work out from anything else
- * on a card.
- *
- * **"Place to be confirmed" is not "online".** An in-person product with no
- * site recorded still needs somebody in a room; saying nothing would read as
- * remote, so it says the place is not known yet.
+ * on a card. Rendered only when {@link statesWhere} says there is one.
  */
 function SessionWhere({
   facts,
@@ -245,9 +252,7 @@ function SessionWhere({
       ) : (
         <>
           <MapPin className={icon} aria-hidden />
-          <span className="min-w-0 truncate">
-            {facts.siteName ?? t("siteUnknown")}
-          </span>
+          <span className="min-w-0 truncate">{facts.siteName}</span>
         </>
       )}
     </span>

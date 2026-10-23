@@ -211,7 +211,7 @@ describe("GeduSubstitutionCard", () => {
     expect(count(opened)).toBe(1);
   });
 
-  it("says the place is still to be confirmed rather than reading as online", () => {
+  it("states no place for an in-person session whose site is not known, and never online", () => {
     const html = cardHtml({
       ...fixtureLockedSubstitution(),
       session: {
@@ -221,7 +221,7 @@ describe("GeduSubstitutionCard", () => {
       },
       hasVoiceRoom: false,
     });
-    expect(html).toContain(messages.sessionFacts.siteUnknown);
+    expect(html).not.toContain(messages.sessionFacts.siteUnknown);
     expect(html).not.toContain(messages.sessionFacts.remote);
   });
 
