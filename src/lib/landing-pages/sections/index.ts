@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ctaSection } from "./cta";
 import { faqSection } from "./faq";
+import { guideSection } from "./guide";
 import { heroSection } from "./hero";
 import { imageSection } from "./image";
 import { pointsSection } from "./points";
@@ -14,6 +15,7 @@ import {
   stickyField,
   type LandingMarkdownField,
   type LandingMarkdownUseCase,
+  type LandingSectionBackground,
   type LandingStickySide,
   type TextReading,
 } from "./shared";
@@ -43,6 +45,7 @@ export const LANDING_SECTION_TYPES = [
   "steps",
   "testimonials",
   "products",
+  "guide",
   "faq",
   "subscribe",
   "cta",
@@ -58,6 +61,7 @@ export const LANDING_SECTIONS = {
   steps: stepsSection,
   testimonials: testimonialsSection,
   products: productsSection,
+  guide: guideSection,
   faq: faqSection,
   subscribe: subscribeSection,
   cta: ctaSection,
@@ -76,6 +80,7 @@ export const landingSection = z.discriminatedUnion("type", [
   stepsSection.section.extend(stickyField),
   testimonialsSection.section.extend(stickyField),
   productsSection.section.extend(stickyField),
+  guideSection.section.extend(stickyField),
   faqSection.section.extend(stickyField),
   subscribeSection.section.extend(stickyField),
   ctaSection.section.extend(stickyField),
@@ -87,6 +92,15 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
   LandingSection,
   { type: Type }
 >;
+
+/**
+ * The ground a section sits on. The hero has no choice and opens the page on
+ * its own ground; every other type carries the field, so a type added without
+ * it fails type-check here.
+ */
+export function landingSectionBackground(section: LandingSection): LandingSectionBackground {
+  return section.type === "hero" ? "default" : section.background;
+}
 
 /**
  * Every product the structure's products sections pick, each once, in page
@@ -180,6 +194,12 @@ export function landingPlacedTestimonialIds(sections: readonly LandingSection[])
   return [...new Set(ids)];
 }
 
+/** Every guide the structure's guide sections place, each once, in page order. */
+export function landingPlacedGuideIds(sections: readonly LandingSection[]): string[] {
+  const ids = sections.flatMap((section) => (section.type === "guide" ? [section.guideId] : []));
+  return [...new Set(ids)];
+}
+
 /**
  * The schema of one language's section texts for a given structure: an
  * object keyed by the structure's section ids, each entry its type's text
@@ -236,6 +256,8 @@ function missingInSection(section: LandingSection, text: TextReading): string[] 
       return testimonialsSection.missingText();
     case "products":
       return productsSection.missingText();
+    case "guide":
+      return guideSection.missingText(section, text);
     case "faq":
       return faqSection.missingText(section, text);
     case "subscribe":
@@ -332,8 +354,9 @@ export function landingMarkdownValues(
 
 export { ctaSection } from "./cta";
 export { faqSection } from "./faq";
+export { guideSection } from "./guide";
 export { heroSection } from "./hero";
-export { imageSection } from "./image";
+export { IMAGE_SECTION_MAX_PICTURES, imageSection } from "./image";
 export { LANDING_ICONS, pointsSection, type LandingIcon } from "./points";
 export { LANDING_PRODUCT_TYPES, productsSection } from "./products";
 export { stepsSection } from "./steps";
@@ -353,9 +376,11 @@ export {
   type LandingStickySide,
   LANDING_EMAIL_PATTERN,
   LANDING_ID_PATTERN,
+  LANDING_SECTION_BACKGROUNDS,
   landingId,
   type ButtonTarget,
   type LandingMarkdownField,
   type LandingMarkdownUseCase,
+  type LandingSectionBackground,
   type LandingSectionDefinition,
 } from "./shared";

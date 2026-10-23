@@ -3,6 +3,7 @@ import {
   distinctIds,
   entryOf,
   isWritten,
+  landingBackgroundField,
   landingId,
   markdownText,
   plainText,
@@ -17,6 +18,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("faq"),
+    ...landingBackgroundField,
     items: z
       .array(z.object({ id: landingId }).strict())
       .min(1, "A questions section has at least one question")
@@ -56,4 +58,5 @@ export const faqSection = {
     }),
   ],
   markdownFields: [{ items: "items", field: "answer", useCase: "landing-faq" }],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"faq", typeof section, typeof text>;

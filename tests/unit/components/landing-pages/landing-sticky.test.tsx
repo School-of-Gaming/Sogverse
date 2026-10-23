@@ -9,6 +9,7 @@ import {
 } from "@/components/landing-pages/landing-page-body";
 import type {
   LandingSection,
+  LandingSectionBackground,
   LandingSectionTexts,
   LandingStickySide,
 } from "@/lib/landing-pages/sections";
@@ -44,12 +45,17 @@ const FORM = id(2);
 const FAQ = id(3);
 const CTA = id(4);
 
-function structure(side: LandingStickySide | null): LandingSection[] {
+function structure(
+  side: LandingStickySide | null,
+  background: LandingSectionBackground = "default",
+): LandingSection[] {
   return [
     { id: HERO, type: "hero", button: { kind: "internal", path: "/shop" } },
-    side === null ? { id: FORM, type: "subscribe" } : { id: FORM, type: "subscribe", sticky: side },
-    { id: FAQ, type: "faq", items: [{ id: id(10) }] },
-    { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+    side === null
+      ? { id: FORM, type: "subscribe", background }
+      : { id: FORM, type: "subscribe", background, sticky: side },
+    { id: FAQ, type: "faq", background, items: [{ id: id(10) }] },
+    { id: CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
   ];
 }
 
@@ -63,17 +69,20 @@ const TEXTS: LandingSectionTexts = {
 function renderBody({
   side = "right",
   texts = TEXTS,
+  background = "default",
 }: {
   side?: LandingStickySide | null;
   texts?: LandingSectionTexts;
+  background?: LandingSectionBackground;
 } = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
         <LandingPageBody
-          sections={structure(side)}
-          imagePaths={{}}
+          sections={structure(side, background)}
+          pictures={{}}
           testimonials={{}}
+          guideIds={[]}
           sectionTexts={texts}
           textLocale="en"
           locale="en"
@@ -125,6 +134,19 @@ describe("a page's sticky section", () => {
       );
       unmount();
     }
+  });
+
+  it("lays a card band under the column, with the inset on the section inside it, and never bands the sticky card", () => {
+    renderBody({ background: "card" });
+    const faq = screen.getByRole("heading", { name: "Questions" }).closest("section");
+    // The band is the full-width wrapper; the section is the content box that clears the column.
+    expect(faq?.parentElement?.className).toBe("bg-card");
+    expect(faq?.className).toContain("var(--landing-rail-space-right)");
+    expect(faq?.parentElement?.className).not.toContain("container");
+    // The sticky section's own background is not drawn: it stands on the page as a card.
+    const form = screen.getByRole("heading", { name: "Hear about new clubs first" }).closest("section");
+    expect(document.getElementById(LANDING_STICKY_ANCHOR)?.contains(form ?? null)).toBe(true);
+    expect(form?.parentElement?.className).not.toBe("bg-card");
   });
 
   it("stacks the form's name fields in the column, which is narrower than the viewport says", () => {

@@ -81,7 +81,8 @@ notices:
 - **A product links only a `product` entry, and an article's cover only a
   `library_cover` one** — each table's trigger refuses any other purpose (23514). The
   catalogue dialog, opened for one purpose, lists only that purpose, so this fires only on
-  a state the UI cannot produce.
+  a state the UI cannot produce. A landing page links only its three picture purposes,
+  each section only the shapes it takes (`src/services/landing-pages/CLAUDE.md`).
 - **An entry's purpose never changes** — a BEFORE UPDATE trigger on the table refuses any
   update that moves it (23514), while a label edit passes. The object lives in the
   purpose's bucket and every link was checked against the purpose when it was made, so a
@@ -152,20 +153,24 @@ changed:
 |---|---|---|
 | `product` | `product-images` | exactly 1200 × 800 |
 | `library_cover` | `library-covers` | exactly 1600 × 900 |
-| `landing_image` | `landing-images` | exactly 1600 × 900 |
+| `landing_image` | `landing-images` | exactly 1600 × 900 (wide 16:9) |
+| `landing_square_image` | `landing-square-images` | exactly 1200 × 1200 (square 1:1) |
+| `landing_portrait_image` | `landing-portrait-images` | exactly 1200 × 1500 (portrait 4:5) |
 | `spotlight_image` | `spotlight-images` | exactly 1200 × 600 |
 
 The purpose is a column; the bucket and the size live once, in the purpose map in
 `src/lib/images/` — the catalogue's slice of the image purpose registry there — which
 everything reads them from: URL building, the upload and the
 removal, the crop dialog, the size check and the image optimizer's allowed patterns in
-`next.config.ts`. Both buckets are public, and every URL is built from the purpose, since
-the same path can exist in both.
+`next.config.ts`. Every catalogue bucket is public, and every URL is built from the
+purpose, since the same path can exist in several.
 
 **The table stores no aspect ratio, width or height, and a ratio never decides a
 purpose.** A purpose outlives any one crop: if the shop's crop changes, product pictures
 are still product pictures, so the change is one edit to the map and no row moves. The
 database never sees the bytes either, so a stored size would be a claim nobody checked.
+Where one use needs pictures of more than one shape, as a landing page does, each shape is
+a purpose of its own, so the purpose still says the size.
 
 Where each rule is enforced:
 
@@ -175,8 +180,10 @@ Where each rule is enforced:
   purpose's size, with a stable code. A new entry's purpose is the form's `purpose` field;
   a replacement takes the replaced entry's purpose and ignores the field, because
   everything following the repoint may link only that purpose. The browser always sends a
-  conforming file: every upload, and every replace, goes through the shared crop dialog at
-  its purpose's size, and the crop comes out as a JPEG.
+  conforming file: every upload, and every replace, in Sogverse goes through the shared
+  crop dialog at its purpose's size, and the crop comes out as a JPEG; the MCP uploader
+  takes only a picture already of one of its purposes' shapes and scales it to that
+  purpose's size (`src/lib/mcp/`).
 - **Linking and immutability — the database**, as listed under the invariants above.
 - **The bucket's own cap and types — storage.** `library-covers` refuses anything over the
   routes' 4 MB or other than JPEG before the bytes land; `product-images` still holds

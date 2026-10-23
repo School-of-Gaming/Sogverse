@@ -52,8 +52,9 @@ function renderPage(
       <NextIntlClientProvider locale="en" messages={{ productBrowse, richText }}>
         <LandingPageBody
           sections={sections}
-          imagePaths={{}}
+          pictures={{}}
           testimonials={{}}
+          guideIds={[]}
           sectionTexts={texts}
           textLocale="en"
           locale="en"
@@ -75,6 +76,7 @@ const hero: LandingSection = { id: HERO, type: "hero" };
 const picks = (productIds: string[], sectionId = PICKS): LandingSection => ({
   id: sectionId,
   type: "products",
+  background: "default",
   productIds,
 });
 const TEXTS: LandingSectionTexts = {

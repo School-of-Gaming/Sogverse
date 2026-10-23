@@ -37,13 +37,14 @@ export const ADMIN_HUBS = {
     alsoCovers: [],
   },
   // What the public site says to win families: the landing pages, the
-  // testimonials the site quotes, and the spotlights the session report
-  // emails carry. Each tab's detail, new and edit pages sit beneath its own
+  // testimonials the site quotes, the guides it hands out, and the spotlights
+  // the session report emails carry. Each tab's detail, new and edit pages sit beneath its own
   // path, so its prefix already lights the entry there.
   marketing: {
     tabs: [
       { id: "landingPages", href: ROUTES.admin.landingPages },
       { id: "testimonials", href: ROUTES.admin.testimonials },
+      { id: "guides", href: ROUTES.admin.guides },
       { id: "spotlights", href: ROUTES.admin.spotlights },
     ],
     alsoCovers: [],

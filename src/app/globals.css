@@ -86,12 +86,11 @@
   /* A landing page's sticky side column, from `xl`: its width, the gap between
      it and the sections' content, and its measured height for the same
      two-end sticky clamp as the signup rail's (zero until measured, which pins
-     it under the header). The sections pay for the column out of their own
-     inline padding rather than out of a grid track: a section's own box still
-     runs under the column, and the inset is its content padding. A full-width
-     band would wrap that padded box as an inner box rather than carry the
-     padding itself. The width budget is worked through in the landing page
-     body. */
+     it under the header). The sections pay for the column out of their
+     content box's inline padding rather than out of a grid track: a `card`
+     section's full-width band runs under the column, and the content box
+     inside it carries the inset. The width budget is worked through in the
+     landing page body. */
   --landing-rail-width: 20rem;
   --landing-rail-gap: 2rem;
   --landing-rail-height: 0px;

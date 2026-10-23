@@ -36,7 +36,7 @@ function page(
     draft: {
       id: "page",
       sections: [],
-      imagePaths: {},
+      pictures: {},
       versions,
       createdAt: "2026-10-01T08:00:00Z",
       updatedAt: "2026-10-01T08:00:00Z",
@@ -51,7 +51,7 @@ function page(
             firstPublishedAt: "2026-10-01T08:00:00Z",
             publishedAt: "2026-10-01T08:00:00Z",
             sections: [],
-            imagePaths: {},
+            pictures: {},
             versions: live.map(([locale, slug]) => ({
               locale,
               title: `Title ${locale}`,

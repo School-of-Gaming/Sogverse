@@ -3,6 +3,7 @@ import {
   distinctIds,
   entryOf,
   isWritten,
+  landingBackgroundField,
   landingId,
   plainText,
   type LandingSectionDefinition,
@@ -13,6 +14,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("steps"),
+    ...landingBackgroundField,
     items: z
       .array(z.object({ id: landingId }).strict())
       .min(2, "A steps section has at least two steps")
@@ -50,4 +52,5 @@ export const stepsSection = {
     }),
   ],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"steps", typeof section, typeof text>;

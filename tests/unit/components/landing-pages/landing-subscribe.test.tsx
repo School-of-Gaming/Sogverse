@@ -22,7 +22,7 @@ const FORM = id(2);
 
 const SECTIONS: LandingSection[] = [
   { id: HERO, type: "hero" },
-  { id: FORM, type: "subscribe" },
+  { id: FORM, type: "subscribe", background: "default" },
 ];
 
 const TEXTS: LandingSectionTexts = {
@@ -58,8 +58,9 @@ function renderPage({
       <UtmProvider initialUtm={utm}>
         <LandingPageBody
           sections={SECTIONS}
-          imagePaths={{}}
+          pictures={{}}
           testimonials={{}}
+          guideIds={[]}
           sectionTexts={TEXTS}
           textLocale="fi"
           locale="fi"

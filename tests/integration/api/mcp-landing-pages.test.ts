@@ -125,11 +125,12 @@ const PAGE: AdminLandingPage = {
     id: ID,
     sections: [
       { id: HERO, type: "hero", imageId: CASTLE, button: { kind: "internal", path: "/shop" } },
-      { id: TEXT, type: "text", imageSide: "start" },
-      { id: FAQ, type: "faq", items: [{ id: QUESTION }] },
-      { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
+      // Two related sections grouped on one band.
+      { id: TEXT, type: "text", background: "card", imageSide: "start" },
+      { id: FAQ, type: "faq", background: "card", items: [{ id: QUESTION }] },
+      { id: GALLERY, type: "image", background: "default", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
     ],
-    imagePaths: { [CASTLE]: "castle.jpg" },
+    pictures: { [CASTLE]: { path: "castle.jpg", purpose: "landing_image" } },
     versions: [
       {
         locale: "en",
@@ -158,7 +159,7 @@ const PAGE: AdminLandingPage = {
     firstPublishedAt: "2026-10-02T10:00:00Z",
     publishedAt: "2026-10-03T10:00:00Z",
     sections: [],
-    imagePaths: {},
+    pictures: {},
     versions: [
       {
         locale: "en",
@@ -202,15 +203,26 @@ const FI_MISSING = {
   text: "Section 3 (Questions and answers), question 1: the answer",
 };
 
-function entry(n: number): CatalogueImage {
+function entry(
+  n: number,
+  purpose: CatalogueImage["purpose"] = "landing_image",
+  createdAt = "2026-10-01T10:00:00Z",
+): CatalogueImage {
   return {
     id: `10000000-0000-4000-8000-${String(n).padStart(12, "0")}`,
     label: `Picture ${n}`,
     sha256: String(n).padStart(64, "0"),
     path: `${String(n).padStart(64, "0")}.jpg`,
-    purpose: "landing_image",
-    created_at: "2026-10-01T10:00:00Z",
+    purpose,
+    created_at: createdAt,
   };
+}
+
+/** The catalogue answering `entries` to a list of their purpose. */
+function catalogueHolds(...entries: CatalogueImage[]) {
+  catalogue.listImages.mockImplementation(async (purpose: string) =>
+    entries.filter((each) => each.purpose === purpose),
+  );
 }
 
 beforeEach(() => {
@@ -278,7 +290,7 @@ describe("reading", () => {
     expect(result.structuredContent).toMatchObject({
       pageId: ID,
       sections: PAGE.draft.sections,
-      pictures: [{ catalogueId: CASTLE, publicUrl: `${BUCKET}/castle.jpg` }],
+      pictures: [{ catalogueId: CASTLE, shape: "wide 16:9", publicUrl: `${BUCKET}/castle.jpg` }],
       lastSaved: { by: "Kyle Hutchinson", via: { name: "Claude" } },
       hasUnpublishedChanges: true,
       publish: {
@@ -314,7 +326,7 @@ describe("reading", () => {
     ]);
     // The page's picture, shown small and named in text.
     expect(result.content.filter((block) => block.type === "image")).toHaveLength(1);
-    expect(resultText(result)).toContain(`Picture ${CASTLE}: ${BUCKET}/castle.jpg`);
+    expect(resultText(result)).toContain(`Picture ${CASTLE} (wide 16:9): ${BUCKET}/castle.jpg`);
   });
 
   it("reports each products section's picks, shown or not and why", async () => {
@@ -325,7 +337,7 @@ describe("reading", () => {
       ...PAGE,
       draft: {
         ...PAGE.draft,
-        sections: [...PAGE.draft.sections, { id: PICKS, type: "products", productIds: [CLUB, CAMP] }],
+        sections: [...PAGE.draft.sections, { id: PICKS, type: "products", background: "default", productIds: [CLUB, CAMP] }],
       },
       productPicks: [
         {
@@ -428,6 +440,19 @@ describe("reading", () => {
     expect(structure).toContain("A page starts with its hero section");
     expect(structure).toContain("headline; imageAlt when imageId is set; buttonLabel when button is set");
     expect(structure).toContain("drops its words in every language");
+    expect(structure).toContain("adjacent card sections share one band and read as one related group");
+    expect(structure).toContain("The hero takes no background");
+    // Which shapes each section's pictures may be, from the section registry.
+    expect(structure).toContain("Its picture must be wide 16:9.");
+    expect(structure).toContain(
+      "Its pictures may be wide 16:9, square 1:1 or portrait 4:5, all one shape.",
+    );
+    const uploader = tools.find((t) => t.name === "open_landing_image_uploader")?.description;
+    expect(uploader).toContain(
+      "wide 16:9 (1600 × 900), square 1:1 (1200 × 1200) or portrait 4:5 (1200 × 1500)",
+    );
+    expect(uploader).toContain("hero, wide 16:9 only; text, any shape; image, any shape");
+    expect(uploader).toContain("never offer to pad, stretch or crop it on their behalf");
     const text = tools.find((t) => t.name === "save_landing_page_text")?.description;
     expect(text).toContain("A slug can be changed at any time");
     expect(text).toContain(
@@ -725,6 +750,45 @@ describe("saving", () => {
     });
   });
 
+  it("saves each section's background, adjacent card sections included, reading one left out as default", async () => {
+    landing.getAdminPage.mockResolvedValue(PAGE);
+
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        { id: HERO, type: "hero" },
+        { id: TEXT, type: "text", imageSide: "start", background: "card" },
+        { id: FAQ, type: "faq", items: [{ id: QUESTION }], background: "card" },
+        { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
+      { id: HERO, type: "hero" },
+      { id: TEXT, type: "text", imageSide: "start", background: "card" },
+      { id: FAQ, type: "faq", items: [{ id: QUESTION }], background: "card" },
+      { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }], background: "default" },
+    ]);
+  });
+
+  it.each([
+    ["the hero's background", [{ type: "hero", background: "card" }], "Section 1 (Hero)"],
+    [
+      "a ground there is none of",
+      [{ type: "hero" }, { type: "cta", button: { kind: "internal", path: "/" }, background: "tinted" }],
+      "Section 2 (Call to action), background: ",
+    ],
+  ])("refuses %s, saving nothing", async (_, sections, named) => {
+    landing.getAdminPage.mockResolvedValue(PAGE);
+
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
   it("writes one language's words checked against the structure", async () => {
     const sectionTexts = {
       [HERO]: { headline: "Pelikerhot", buttonLabel: "Kauppaan", imageAlt: "Linna" },
@@ -814,7 +878,7 @@ describe("saving", () => {
 
     expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
       PAGE.draft.sections[0],
-      { id: PICKS, type: "products", productIds: [GONE] },
+      { id: PICKS, type: "products", background: "default", productIds: [GONE] },
     ]);
     expect(result.isError).toBe(true);
     expect(resultText(result)).toBe(sentence);
@@ -971,7 +1035,7 @@ describe("publishing", () => {
 
 describe("pictures", () => {
   it("lists the landing page entries with the pages that show them", async () => {
-    catalogue.listImages.mockResolvedValue([entry(1)]);
+    catalogueHolds(entry(1));
     catalogue.getUsage.mockResolvedValue({
       [entry(1).id]: [{ kind: "landing-page", id: ID, title: "Gaming clubs in Espoo", is_live: true }],
     });
@@ -986,6 +1050,7 @@ describe("pictures", () => {
       pictures: [
         {
           catalogueId: entry(1).id,
+          shape: "wide 16:9",
           label: "Picture 1",
           publicUrl: `${BUCKET}/${entry(1).path}`,
           uploadedAt: "2026-10-01T10:00:00Z",
@@ -994,6 +1059,36 @@ describe("pictures", () => {
       ],
     });
     expect(result.content.filter((block) => block.type === "image")).toHaveLength(1);
+  });
+
+  it("lists every shape newest first, each from its own bucket, or one shape alone", async () => {
+    catalogueHolds(
+      entry(1, "landing_image", "2026-10-01T10:00:00Z"),
+      entry(2, "landing_square_image", "2026-10-03T10:00:00Z"),
+      entry(3, "landing_portrait_image", "2026-10-02T10:00:00Z"),
+    );
+    catalogue.getUsage.mockResolvedValue({});
+
+    const every = await tool("list_landing_images");
+    expect(every.structuredContent?.pictures).toEqual([
+      expect.objectContaining({
+        catalogueId: entry(2).id,
+        shape: "square 1:1",
+        publicUrl: `${SUPABASE_URL}/storage/v1/object/public/landing-square-images/${entry(2).path}`,
+      }),
+      expect.objectContaining({
+        catalogueId: entry(3).id,
+        shape: "portrait 4:5",
+        publicUrl: `${SUPABASE_URL}/storage/v1/object/public/landing-portrait-images/${entry(3).path}`,
+      }),
+      expect.objectContaining({ catalogueId: entry(1).id, shape: "wide 16:9" }),
+    ]);
+
+    catalogue.listImages.mockClear();
+    const square = await tool("list_landing_images", { shape: "square" });
+    expect(catalogue.listImages).toHaveBeenCalledTimes(1);
+    expect(catalogue.listImages).toHaveBeenCalledWith("landing_square_image");
+    expect(square.structuredContent).toMatchObject({ total: 1 });
   });
 
   it("replaces a hero's picture, touching nothing else in the structure", async () => {
@@ -1046,45 +1141,117 @@ describe("pictures", () => {
     expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
-  it("opens the uploader to place a picture in a section", async () => {
-    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: HERO });
+  it("opens the uploader to add landing pictures to the catalogue, of every shape, ending with the next step", async () => {
+    const result = await tool("open_landing_image_uploader");
 
+    const shapes = "wide 16:9, square 1:1 or portrait 4:5";
+    expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toEqual({
-      pageId: ID,
-      title: "Gaming clubs in Espoo",
-      sectionId: HERO,
+      accepts: shapes,
       uploader: {
-        purpose: "landing_image",
-        heading: "Landing page picture",
-        subject: "For “Gaming clubs in Espoo”",
-        frame: { width: 1600, height: 900, maxBytes: expect.any(Number) },
-        uploadTool: "upload_landing_image",
-        place: expect.objectContaining({
-          tool: "set_landing_section_image",
-          arguments: { pageId: ID, sectionId: HERO },
-          imageArgument: "imageId",
-        }),
+        kind: "picture",
+        heading: "Landing page pictures",
+        subject: expect.any(String),
+        frames: [
+          { purpose: "landing_image", name: "wide 16:9", width: 1600, height: 900 },
+          { purpose: "landing_square_image", name: "square 1:1", width: 1200, height: 1200 },
+          { purpose: "landing_portrait_image", name: "portrait 4:5", width: 1200, height: 1500 },
+        ],
+        noFrame: `A landing page picture must be ${shapes}.`,
+        maxBytes: expect.any(Number),
+        nextStep: expect.any(String),
       },
     });
+    // The next step names the placing tools, and the text result carries it too.
+    const { nextStep } = z.object({ uploader: z.object({ nextStep: z.string() }) }).parse(result.structuredContent).uploader;
+    expect(nextStep).toContain("set_landing_section_image");
+    expect(nextStep).toContain("save_landing_page_structure");
+    expect(resultText(result)).toContain(nextStep);
+    // It names no destination, so no page is read.
+    expect(landing.getAdminPage).not.toHaveBeenCalled();
   });
 
-  it("opens it to add to the catalogue alone, without a section", async () => {
-    const result = await tool("open_landing_image_uploader", { pageId: ID });
-
-    expect(result.structuredContent).toMatchObject({ sectionId: null, uploader: { place: null } });
+  it("takes no destination: the opening tool has no inputs", async () => {
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), inputSchema: z.object({ properties: z.record(z.string(), z.unknown()).optional() }) })) })
+      .parse(
+        (await readRpc(await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }))))
+          .result,
+      );
+    const opening = tools.find((t) => t.name === "open_landing_image_uploader");
+    expect(Object.keys(opening?.inputSchema.properties ?? {})).toEqual([]);
   });
 
-  it("refuses to open on a placement that would be refused, before the admin picks a picture", async () => {
-    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: FAQ });
+  it("adds several pictures to an image section in one write, in order, answering their item ids", async () => {
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: GALLERY,
+      imageIds: [FIELD, CASTLE],
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(landing.saveStructure).toHaveBeenCalledTimes(1);
+    const [, sections] = landing.saveStructure.mock.calls[0];
+    expect(sections[3].images).toEqual([
+      { id: PICTURE_ITEM, imageId: CASTLE },
+      { id: expect.stringMatching(/^[0-9a-f-]{36}$/), imageId: FIELD },
+      { id: expect.stringMatching(/^[0-9a-f-]{36}$/), imageId: CASTLE },
+    ]);
+    expect(result.structuredContent?.pictureIds).toEqual([sections[3].images[1].id, sections[3].images[2].id]);
+    expect(result.structuredContent).not.toHaveProperty("pictureId");
+  });
+
+  it("quotes the database's refusal of a batch it will not take, such as one of mixed shapes", async () => {
+    landing.saveStructure.mockRejectedValue(
+      dbError("23514", "An image section's pictures must all be one shape: wide 16:9 and square 1:1."),
+    );
+
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: GALLERY,
+      imageIds: [FIELD],
+    });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe("A faq section has no picture.");
+    expect(resultText(result)).toBe("An image section's pictures must all be one shape: wide 16:9 and square 1:1.");
+  });
+
+  it.each([
+    ["more pictures than the section has room for", { sectionId: GALLERY, imageIds: [FIELD, FIELD, FIELD, FIELD] }, "has room for 3 more"],
+    ["several pictures for a hero", { sectionId: HERO, imageIds: [FIELD] }, "send imageId, not imageIds"],
+    ["imageIds with a pictureId", { sectionId: GALLERY, imageIds: [FIELD], pictureId: PICTURE_ITEM }, "leave pictureId out"],
+    ["both imageId and imageIds", { sectionId: GALLERY, imageId: FIELD, imageIds: [FIELD] }, "one of the two"],
+    ["neither imageId nor imageIds", { sectionId: GALLERY }, "one of the two"],
+  ])("refuses %s, saving nothing", async (_, args, named) => {
+    const result = await tool("set_landing_section_image", { pageId: ID, ...args });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
+  it("refuses several pictures for a guide section, which shows one, saving nothing", async () => {
+    const GUIDE = "a1000000-0000-4000-8000-000000000005";
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [...PAGE.draft.sections, { id: GUIDE, type: "guide" as const, guideId: QUESTION }],
+      },
+    });
+
+    const result = await tool("set_landing_section_image", { pageId: ID, sectionId: GUIDE, imageIds: [FIELD] });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe("A guide section has one picture: send imageId, not imageIds.");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
   it("stores an uploaded picture as a landing page entry", async () => {
     mockFindOrCreate.mockResolvedValue({ status: "added", image: entry(2) });
 
-    const result = await tool("upload_landing_image", {
+    const result = await tool("upload_catalogue_picture", {
+      purpose: "landing_image",
       fileName: "field.jpg",
       jpegBase64: (await jpeg(1600, 900)).toString("base64"),
     });
@@ -1098,8 +1265,35 @@ describe("pictures", () => {
     });
   });
 
+  it.each([
+    ["landing_square_image", 1200, 1200],
+    ["landing_portrait_image", 1200, 1500],
+  ] as const)("stores a %s picture as its own shape's entry", async (purpose, width, height) => {
+    mockFindOrCreate.mockResolvedValue({ status: "added", image: entry(4, purpose) });
+
+    const stored = await tool("upload_catalogue_picture", {
+      purpose,
+      fileName: "field.jpg",
+      jpegBase64: (await jpeg(width, height)).toString("base64"),
+    });
+    expect(stored.isError).toBeFalsy();
+    expect(mockFindOrCreate).toHaveBeenCalledWith(expect.objectContaining({ purpose }));
+
+    // The wide size is not this shape's, and the exact-size check is the last gate.
+    mockFindOrCreate.mockClear();
+    const refused = await tool("upload_catalogue_picture", {
+      purpose,
+      fileName: "wide.jpg",
+      jpegBase64: (await jpeg(1600, 900)).toString("base64"),
+    });
+    expect(refused.isError).toBe(true);
+    expect(resultText(refused)).toContain(`must be exactly ${width} × ${height}`);
+    expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+
   it("refuses an upload that is not a landing picture's size", async () => {
-    const result = await tool("upload_landing_image", {
+    const result = await tool("upload_catalogue_picture", {
+      purpose: "landing_image",
       fileName: "a.jpg",
       jpegBase64: (await jpeg(800, 600)).toString("base64"),
     });
@@ -1124,7 +1318,7 @@ describe("testimonials sections", () => {
       ...PAGE.draft,
       sections: [
         ...PAGE.draft.sections,
-        { id: QUOTES, type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO] },
+        { id: QUOTES, type: "testimonials", background: "default", arrangement: "pair", testimonialIds: [ONE, TWO] },
       ],
     },
     testimonials: {
@@ -1168,7 +1362,7 @@ describe("testimonials sections", () => {
   it("saves a section placing testimonials by id and arrangement", async () => {
     const sections = [
       ...PAGE.draft.sections,
-      { id: QUOTES, type: "testimonials", arrangement: "row", testimonialIds: [ONE, TWO, THREE] },
+      { id: QUOTES, type: "testimonials", background: "card", arrangement: "row", testimonialIds: [ONE, TWO, THREE] },
     ];
     landing.getAdminPage.mockResolvedValue(PAGE);
     const result = await tool("save_landing_page_structure", { pageId: ID, sections });

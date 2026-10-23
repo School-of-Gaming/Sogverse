@@ -100,6 +100,12 @@ const files = (root: string) =>
     text: readFileSync(path, "utf8"),
   }));
 
+// Each tree is read once, while the file is collected, so the reads stay out of
+// every test's time budget: reading all of src/ and tests/ is disk-bound, and
+// inside a test it ran past the five-second timeout on a machine under load.
+const TEST_FILES = files("tests");
+const SRC_FILES = files("src");
+
 /** Every quoted string or template literal naming a path under the repo's `messages/`. */
 function messagePaths(text: string): string[] {
   return [...text.matchAll(/["'`]([^"'`\n]*\.\.\/messages\/[^"'`\n]*)["'`]/g)].map(
@@ -115,7 +121,7 @@ function isWholeCatalog(path: string): boolean {
 
 describe("imports of the message catalogs", () => {
   it("a test imports namespace files, never a whole catalog", () => {
-    const offenders = files("tests")
+    const offenders = TEST_FILES
       .filter(({ file }) => file !== THIS_FILE && !(file in WHOLE_CATALOG_TESTS))
       .flatMap(({ file, text }) =>
         messagePaths(text)
@@ -126,7 +132,7 @@ describe("imports of the message catalogs", () => {
   });
 
   it("a test imports no value from the catalog loader", () => {
-    const offenders = files("tests")
+    const offenders = TEST_FILES
       .filter(({ file }) => file !== THIS_FILE && !(file in WHOLE_CATALOG_TESTS))
       .filter(({ file, text }) => importsLoader(text, file))
       .map(({ file }) => file);
@@ -134,7 +140,7 @@ describe("imports of the message catalogs", () => {
   });
 
   it("app code imports no value from the catalog loader, but the modules that need every namespace", () => {
-    const importers = files("src")
+    const importers = SRC_FILES
       .filter(({ file, text }) => importsLoader(text, file))
       .map(({ file }) => file);
     expect([...importers].sort()).toEqual(Object.keys(WHOLE_CATALOG_APP_MODULES).sort());

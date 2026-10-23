@@ -317,7 +317,9 @@ export async function vetCatalogueUpload(
 const PURPOSE_NAME: Record<CatalogueImagePurpose, string> = {
   product: "product picture",
   library_cover: "Library cover",
-  landing_image: "landing page picture",
+  landing_image: "wide landing page picture",
+  landing_square_image: "square landing page picture",
+  landing_portrait_image: "portrait landing page picture",
   spotlight_image: "spotlight picture",
 };
 

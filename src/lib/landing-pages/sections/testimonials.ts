@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { landingId, plainText, type LandingSectionDefinition } from "./shared";
+import {
+  landingBackgroundField,
+  landingId,
+  plainText,
+  type LandingSectionDefinition,
+} from "./shared";
 
 /**
  * Testimonials from Marketing's store, placed by id and laid out in one of the
@@ -65,6 +70,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("testimonials"),
+    ...landingBackgroundField,
     arrangement: z.enum(LANDING_TESTIMONIAL_ARRANGEMENTS),
     /** In reading order; for a showcase, the feature, then the pair, then the row. */
     testimonialIds: z
@@ -92,4 +98,5 @@ export const testimonialsSection = {
   text,
   missingText: () => [],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"testimonials", typeof section, typeof text>;

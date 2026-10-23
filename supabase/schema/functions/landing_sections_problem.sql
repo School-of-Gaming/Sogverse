@@ -70,7 +70,7 @@ BEGIN
     END IF;
 
     -- A single picture, where a type takes one, is optional and a uuid.
-    IF v_type IN ('hero', 'text') AND v_section ? 'imageId'
+    IF v_type IN ('hero', 'text', 'guide') AND v_section ? 'imageId'
        AND (jsonb_typeof(v_section->'imageId') IS DISTINCT FROM 'string'
             OR v_section->>'imageId' !~ c_uuid) THEN
       RETURN format('The picture of section %s must be a catalogue entry''s lowercase uuid', v_id);
@@ -148,13 +148,30 @@ BEGIN
           END IF;
           v_item_ids := array_append(v_item_ids, v_item #>> '{}');
         END LOOP;
+      WHEN 'guide' THEN
+        IF jsonb_typeof(v_section->'guideId') IS DISTINCT FROM 'string'
+           OR v_section->>'guideId' !~ c_uuid THEN
+          RETURN format('Section %s needs its guide, as a guide''s lowercase uuid', v_id);
+        END IF;
       WHEN 'subscribe' THEN
-        -- No shared field: the list it signs up to is the deployment's
-        -- configuration, not the page's.
+        -- No shared field but its background: the list it signs up to is the
+        -- deployment's configuration, not the page's.
         NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
+
+    -- The ground a section sits on: every type but the hero may name one, and
+    -- a section without one sits on the page's own ground.
+    IF v_section ? 'background' THEN
+      IF v_type = 'hero' THEN
+        RETURN 'The hero section takes no background';
+      END IF;
+      IF jsonb_typeof(v_section->'background') IS DISTINCT FROM 'string'
+         OR v_section->>'background' NOT IN ('default', 'card') THEN
+        RETURN format('The background of section %s is default or card', v_id);
+      END IF;
+    END IF;
 
     IF v_key IS NOT NULL THEN
       IF jsonb_typeof(v_section->v_key) IS DISTINCT FROM 'array'
@@ -199,7 +216,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. sticky, left or right, marks the page''s one sticky section and its side, and only a subscribe section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial or a picked product exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. sticky, left or right, marks the page''s one sticky section and its side, and only a subscribe section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
 
 
 --

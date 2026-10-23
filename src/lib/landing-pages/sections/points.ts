@@ -3,6 +3,7 @@ import {
   distinctIds,
   entryOf,
   isWritten,
+  landingBackgroundField,
   landingId,
   plainText,
   type LandingSectionDefinition,
@@ -48,6 +49,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("points"),
+    ...landingBackgroundField,
     items: z
       .array(z.object({ id: landingId, icon: z.enum(LANDING_ICONS) }).strict())
       .min(2, "A points section has at least two points")
@@ -85,4 +87,5 @@ export const pointsSection = {
     }),
   ],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"points", typeof section, typeof text>;

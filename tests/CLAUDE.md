@@ -97,9 +97,10 @@ raw text. Tests of the editor itself never see it.
 
 ## The smoke check is a build gate first
 
-`smoke/` is the only place we build the app and serve it. Playwright's config starts the
-production server, so the check fails if the build breaks or the server refuses to boot —
-and that gate is most of its value. The assertions on top of it are the ones that can
+The Build & Smoke CI job is the only place we build the app and serve it: its build step
+runs first, then Playwright's config starts the production server on that build, so the
+job fails if the build breaks or the server refuses to boot — and that gate is most of
+its value. The assertions on top of it are the ones that can
 only be made against a real response: the static security headers, and the per-request
 CSP nonce the proxy generates (which is absent in dev, so nothing else can verify it) —
 plus assertions on what the build output contains, such as dev-only code the build must
@@ -110,6 +111,13 @@ it is what keeps the job cheap: no engine matrix, no device emulation, no browse
 binaries to install in CI, no retries, because HTTP header assertions are deterministic.
 A spec that reads the build's files needs no fixture at all.
 A spec here that needs a `page` does not belong here.
+
+**CI is where it runs.** The Build & Smoke job runs it on every push to every branch, so
+to smoke-check a branch, push it and read that job. `npm run test:smoke` does not build:
+a run by hand needs `npm run build` in the same checkout first, and the `PORT` environment
+variable set to a free port when something already holds 3000. It never reuses a server already on the port, so a
+held port stops the run rather than testing whatever app is listening there. A stale
+`.next` from an earlier commit is served as it is.
 
 There was a browser-driven suite before, asserting on marketing copy and unauthenticated
 redirects; it was deleted in August 2026 for churning on every copy edit while catching

@@ -1,23 +1,8 @@
--- A landing page may mark one section sticky.
---
--- WHAT THIS CHANGES
---
--- Any section of a page's structure may carry sticky, left or right: that
--- section is the page's sticky one, drawn on wide screens in a sticky column
--- on that side beside the other sections, and below that at the page's end.
--- landing_sections_problem refuses sticky on any type but subscribe (the email
--- sign-up), a side other than left or right, and a second sticky section. The
--- TypeScript half is the section registry's structure rule, where each type's
--- module says whether it may be sticky; a DB test runs every type through both.
---
--- The flag lives in the sections themselves, so everything that already
--- copies, compares or cascades the structure — publishing, the unpublished
--- changes digest, a structure save that drops a section — carries it with no
--- change, and removing the sticky section is what makes a page have none.
---
--- The function keeps its signature, owner and grants; the grants are restated
--- after the replace all the same. Its body is the current one — testimonials,
--- products and email sign-up sections included — with the sticky rule added.
+-- Every landing section but the hero takes a background in its structure:
+-- default (the page's own ground) or card (a full-width band of the card
+-- ground). Absent reads as default, so stored structures stay valid as they
+-- are and nothing is backfilled. The registry in src/lib/landing-pages/sections/
+-- is the other half, and a DB test holds the two equal.
 
 CREATE OR REPLACE FUNCTION public.landing_sections_problem(p_sections jsonb) RETURNS text
     LANGUAGE plpgsql IMMUTABLE
@@ -31,7 +16,6 @@ DECLARE
   v_type     text;
   v_ids      text[] := ARRAY[]::text[];
   v_heroes   integer := 0;
-  v_sticky   integer := 0;
   v_key      text;
   v_min      integer;
   v_max      integer;
@@ -69,25 +53,8 @@ BEGIN
     END IF;
     v_ids := array_append(v_ids, v_id);
 
-    -- The page's one sticky section, of a type that may be: every type takes
-    -- the field, and the types allowed it are the section modules' that say
-    -- sticky: true. A DB test holds this list to theirs.
-    IF v_section ? 'sticky' THEN
-      IF v_type IS DISTINCT FROM 'subscribe' THEN
-        RETURN format('Section %s cannot be sticky: only an email sign-up section can', v_id);
-      END IF;
-      IF jsonb_typeof(v_section->'sticky') IS DISTINCT FROM 'string'
-         OR v_section->>'sticky' NOT IN ('left', 'right') THEN
-        RETURN format('The sticky side of section %s is left or right', v_id);
-      END IF;
-      v_sticky := v_sticky + 1;
-      IF v_sticky > 1 THEN
-        RETURN 'A page has at most one sticky section';
-      END IF;
-    END IF;
-
     -- A single picture, where a type takes one, is optional and a uuid.
-    IF v_type IN ('hero', 'text') AND v_section ? 'imageId'
+    IF v_type IN ('hero', 'text', 'guide') AND v_section ? 'imageId'
        AND (jsonb_typeof(v_section->'imageId') IS DISTINCT FROM 'string'
             OR v_section->>'imageId' !~ c_uuid) THEN
       RETURN format('The picture of section %s must be a catalogue entry''s lowercase uuid', v_id);
@@ -165,13 +132,30 @@ BEGIN
           END IF;
           v_item_ids := array_append(v_item_ids, v_item #>> '{}');
         END LOOP;
+      WHEN 'guide' THEN
+        IF jsonb_typeof(v_section->'guideId') IS DISTINCT FROM 'string'
+           OR v_section->>'guideId' !~ c_uuid THEN
+          RETURN format('Section %s needs its guide, as a guide''s lowercase uuid', v_id);
+        END IF;
       WHEN 'subscribe' THEN
-        -- No shared field: the list it signs up to is the deployment's
-        -- configuration, not the page's.
+        -- No shared field but its background: the list it signs up to is the
+        -- deployment's configuration, not the page's.
         NULL;
       ELSE
         RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
     END CASE;
+
+    -- The ground a section sits on: every type but the hero may name one, and
+    -- a section without one sits on the page's own ground.
+    IF v_section ? 'background' THEN
+      IF v_type = 'hero' THEN
+        RETURN 'The hero section takes no background';
+      END IF;
+      IF jsonb_typeof(v_section->'background') IS DISTINCT FROM 'string'
+         OR v_section->>'background' NOT IN ('default', 'card') THEN
+        RETURN format('The background of section %s is default or card', v_id);
+      END IF;
+    END IF;
 
     IF v_key IS NOT NULL THEN
       IF jsonb_typeof(v_section->v_key) IS DISTINCT FROM 'array'
@@ -211,7 +195,18 @@ BEGIN
 END;
 $_$;
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; subscribe {} (no shared field); cta {button}. sticky, left or right, marks the page''s one sticky section and its side, and only a subscribe section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial or a picked product exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts too, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
 
-REVOKE ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) TO service_role;
+
+-- Every structure already stored, in both copies, still passes: none names a
+-- background, and the check refuses only a background that is named.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.landing_pages
+              WHERE public.landing_sections_problem(sections) IS NOT NULL)
+     OR EXISTS (SELECT 1 FROM public.landing_page_publications
+                 WHERE public.landing_sections_problem(sections) IS NOT NULL) THEN
+    RAISE EXCEPTION 'A stored landing page structure fails the section check';
+  END IF;
+END;
+$$;

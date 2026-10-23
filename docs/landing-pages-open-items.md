@@ -1,6 +1,6 @@
 # Landing pages: the open items
 
-**Status: open, 2026-10-16.** Everything still unresolved from marketing's landing page
+**Status: open, 2026-10-22.** Everything still unresolved from marketing's landing page
 fixes list (13 Oct 2026): the items no one has built yet, the branches built and waiting
 for the owner's review, the operator steps outside the code, and the questions for
 counsel. **When an item is resolved — built and merged, or dropped by the owner — delete
@@ -13,17 +13,6 @@ recommend. Landing pages exist for search engines and AI apps first and people s
 they are written only through the MCP server (`src/services/landing-pages/CLAUDE.md`).
 
 ## Not built yet
-
-### Gated download (list #3) — owner decision pending
-
-The ask: attach a file (a PDF guide) to a page and deliver it after a sign-up. Paused
-while the owner agrees with marketing how gating fits email marketing. The leaning: **a
-free account is the gate**, and marketing consent stays a separate, optional box. The
-reasons, which any design must respect: under EU law marketing consent cannot be the
-price of a download (consent made a condition of a service is not freely given); an
-account is a fair exchange; marketing email goes only to people who ticked the box.
-Whether a free account alone allows follow-up email is a question for counsel (below).
-Build nothing until the owner rules.
 
 ### Video system (list #13) — design first, with the owner
 
@@ -83,18 +72,13 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 | Worktree | Item | Points for the review |
 |---|---|---|
 | `landing-share-card` | #12 share title and picture per page | In the MCP tools, leaving a share field out of a save clears it — decide whether that is acceptable. |
-| `landing-picture-shapes` | #14 pictures in three shapes (wide 16:9, square, portrait 4:5), never cropped | Library covers uploaded through the AI app are now refused rather than cropped when not 16:9; a column was renamed to hold each picture's purpose; the uploader view has a new address. Not yet tried in a real AI app. |
-| `landing-section-backgrounds` | #17 a default or card background per section | The default is written into the structure, so an existing page shows "unpublished changes" once after its first structure save. The Products section needs the field when the two branches meet. Final full test run outstanding. |
-| `landing-sticky-section` | #17 one sticky section (email sign-up only) in a side column from 1280px, at the page's end with a jump button below that | Built on an earlier version of the email sign-up (Brevo, double opt-in), which landed as a one-way send to Klaviyo: merging `dev` in rewrites its sign-up side. Merging with `landing-section-backgrounds` conflicts in the section renderer: the column inset belongs on each section's inner container, not its band. Image size hints still assume no column. |
-| `uploader-multi-file` | #18 several pictures at once in the uploader | Built on `landing-picture-shapes`, which must land first. Files past the room are refused before any upload; one batch per opening. Final full test run outstanding; not yet tried in a real AI app. |
+| `landing-sticky-section` | #17 one sticky section (email sign-up only) in a side column from 1280px, at the page's end with a jump button below that | Built on an earlier version of the email sign-up (Brevo, double opt-in), which landed as a one-way send to Klaviyo: merging `dev` in rewrites its sign-up side. Section backgrounds are on `dev`, so merging it in conflicts in the section renderer: the column inset belongs on each section's inner container, not its band. Image size hints still assume no column. |
 | `landing-mcp-seo-and-links` | extras 1 and 2: rendered SEO values in the page read tool; the link rule explained, and rewrites reported on save | The share-card branch's override belongs inside the one function that computes the rendered values. |
 
-**Merge order.** Any order within these constraints:
-`landing-picture-shapes` before `uploader-multi-file`. Expect small
+**Merge order.** Any order. Expect small
 conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
-`/discover` index work put on `dev` (sitemap, landing metadata, the production check), and among
-`landing-section-backgrounds`, `landing-sticky-section` and the Products section now on
-`dev` (the section registry and renderer).
+`/discover` index work put on `dev` (sitemap, landing metadata, the production check), and between
+`landing-sticky-section` and the section registry and renderer on `dev`.
 
 ## Operator steps outside the code
 
@@ -104,12 +88,12 @@ conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
 ## Questions for counsel, asked together
 
 1. Does a free account, with no purchase, qualify for the soft opt-in under §200 of the
-   Finnish Act on Electronic Communications Services?
+   Finnish Act on Electronic Communications Services? The answer decides whether the
+   deferred sync of account holders to Brevo (`landing-email-capture`) may include
+   those who did not tick the marketing box.
 2. Is the registration form's marketing checkbox worded specifically enough?
 
 ## Small follow-ups noticed along the way
 
 - A landing "points" section without a heading draws its item titles as H3, which can
   skip a level after the page's H1.
-- `npm run test:smoke` was reported to need a prior `npm run build`, contrary to the root
-  `CLAUDE.md`; verify, then fix the doc or the script.

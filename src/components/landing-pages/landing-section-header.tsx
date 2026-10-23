@@ -13,8 +13,9 @@ import { written } from "./landing-section-types";
 /**
  * A section's content box: the page container, with its inline padding grown
  * on the side a sticky column takes from `xl` (the page body sets the two
- * spaces; both are zero otherwise), so the content clears the column while
- * the section itself still runs the container's whole width.
+ * spaces; both are zero otherwise), so the content clears the column. A
+ * `card` section's band is the page body's wrapper around this box, so the
+ * band runs the full width under the column and only the content moves.
  */
 export const LANDING_CONTENT =
   "container mx-auto pl-[calc(1rem+var(--landing-rail-space-left))] pr-[calc(1rem+var(--landing-rail-space-right))]";

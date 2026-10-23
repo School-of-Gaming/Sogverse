@@ -7,6 +7,7 @@ import {
   landingMarkdownValues,
   landingPlacedTestimonialIds,
   landingSection,
+  landingSectionBackground,
   landingSections,
   landingSectionTextsSchema,
   landingStickySection,
@@ -17,6 +18,10 @@ import {
   type LandingMarkdownField,
 } from "@/lib/landing-pages/sections";
 import { markdownText } from "@/lib/landing-pages/sections/shared";
+import {
+  adjacentCardSections,
+  backgroundCases,
+} from "../../helpers/landing-background-cases";
 import { BUTTON_TARGET_CASES } from "../../helpers/landing-button-cases";
 import {
   CASE_IDS as I,
@@ -177,7 +182,7 @@ describe("the sticky section", () => {
   it("may be a section of a type whose module allows it, on either side", () => {
     for (const side of LANDING_STICKY_SIDES) {
       const parsed = landingSections.parse(marked([I.subscribe], side));
-      expect(landingStickySection(parsed)).toEqual({ id: I.subscribe, type: "subscribe", sticky: side });
+      expect(landingStickySection(parsed)).toMatchObject({ id: I.subscribe, type: "subscribe", sticky: side });
     }
     expect(landingStickySection(landingSections.parse(sections))).toBeNull();
   });
@@ -202,6 +207,42 @@ describe("the sticky section", () => {
       messages([...marked([I.subscribe]), { id: crypto.randomUUID(), type: "subscribe", sticky: "left" }]),
     ).toEqual(["A page has at most one sticky section"]);
     expect(messages(marked([I.subscribe], "top"))).toHaveLength(1);
+  });
+});
+
+describe("a section's background", () => {
+  it.each(backgroundCases().map((c) => [c.name, c] as const))(
+    "judges %s by the verdict SQL is held to",
+    (_, testCase) => {
+      const parsed = landingSections.safeParse(testCase.sections);
+      expect(parsed.success).toBe(testCase.valid);
+      if (parsed.success) expect(landingSectionBackground(parsed.data[1])).toBe(testCase.reads);
+    },
+  );
+
+  it("is tried on every type, each one but the hero taking card", () => {
+    const cases = backgroundCases();
+    for (const type of LANDING_SECTION_TYPES) {
+      const accepted = cases.filter((c) => c.name.startsWith(`${type} on card`) && c.valid);
+      expect(accepted.length, type).toBe(type === "hero" ? 0 : 1);
+    }
+    expect(cases.filter((c) => c.name.startsWith("the hero")).every((c) => !c.valid)).toBe(true);
+  });
+
+  it("reads a stored section without one as default, and the hero as default always", () => {
+    const stored = everySection().map((section) =>
+      Object.fromEntries(Object.entries(section).filter(([key]) => key !== "background")),
+    );
+    const [hero, ...rest] = landingSections.parse(stored);
+    expect(landingSectionBackground(hero)).toBe("default");
+    for (const section of rest) expect(landingSectionBackground(section)).toBe("default");
+  });
+
+  it("allows adjacent card sections", () => {
+    const parsed = landingSections.parse(adjacentCardSections());
+    expect(parsed.slice(1).map(landingSectionBackground)).toEqual(
+      parsed.slice(1).map(() => "card"),
+    );
   });
 });
 
@@ -242,8 +283,8 @@ describe("a products section", () => {
     expect(
       landingPickedProductIds([
         hero,
-        { id: product(10), type: "products", productIds: [product(3), product(1)] },
-        { id: product(11), type: "products", productIds: [product(1), product(2)] },
+        { id: product(10), type: "products", background: "default", productIds: [product(3), product(1)] },
+        { id: product(11), type: "products", background: "card", productIds: [product(1), product(2)] },
       ]),
     ).toEqual([product(3), product(1), product(2)]);
   });

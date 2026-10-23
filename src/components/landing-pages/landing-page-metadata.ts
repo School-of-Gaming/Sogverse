@@ -43,7 +43,7 @@ export async function landingPageMetadata(
   const images = [
     picture === null
       ? await ogCardImage("site", locale)
-      : ogPictureImage("landing_image", picture.path, picture.alt ?? title),
+      : ogPictureImage(picture.purpose, picture.path, picture.alt ?? title),
   ];
   const alternates = translatedPageMetadataAlternates(
     page.versions,
