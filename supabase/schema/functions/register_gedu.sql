@@ -5,7 +5,7 @@
 CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages public.spoken_language[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $$
+    AS $_$
 BEGIN
   -- Only operate on a freshly-created customer profile (the role the new-user
   -- trigger seeds). Refusing anything else stops this from being used to mutate
@@ -19,11 +19,12 @@ BEGIN
   -- Callers pass '' for absent optional text (the generated RPC arg types are
   -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
   -- phone stays NULL rather than tripping the profiles.phone format CHECK.
-  -- The names are trimmed, as the profiles CHECKs store them.
+  -- The names are trimmed of whitespace of every kind, which the profiles
+  -- CHECKs refuse at either edge.
   UPDATE public.profiles
   SET role             = 'gedu',
-      first_name       = btrim(p_first_name),
-      last_name        = btrim(p_last_name),
+      first_name       = regexp_replace(p_first_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
+      last_name        = regexp_replace(p_last_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
       locale           = NULLIF(p_locale, ''),
       phone            = NULLIF(p_phone, ''),
       spoken_languages = COALESCE(p_spoken_languages, '{}'),
@@ -60,7 +61,7 @@ BEGIN
     VALUES (p_user_id, p_roblox_username, NULLIF(p_roblox_user_id, '')::bigint);
   END IF;
 END;
-$$;
+$_$;
 
 
 --

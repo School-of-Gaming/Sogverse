@@ -1,12 +1,17 @@
 -- Names are stored trimmed, places never loop, and the waitlist promotion
 -- leaves the group check to the trigger that already makes it.
 --
--- * profiles.first_name and last_name are stored trimmed, a first name two to
---   32 characters long once trimmed and a last name at most 32. A person can
---   update their own names straight through the Data API (column grants plus
---   users_update_own_profile), so this has to be the database's rule rather
---   than the forms'. The new-user trigger, create_gamer and register_gedu trim
---   what they are handed before writing it; every route trims too, and the
+-- * profiles.first_name and last_name are stored trimmed of whitespace of
+--   every kind at both edges — [[:space:]] plus U+00A0, U+200B and U+FEFF,
+--   named outright because the class does not cover the last two in our
+--   collation and its coverage of the first depends on the collation. A first
+--   name is two to 32 characters with at least one that is not whitespace, a
+--   last name at most 32. btrim() would not do: it strips spaces only. A
+--   person can update their own names straight through the Data API (column
+--   grants plus users_update_own_profile), so this has to be the database's
+--   rule rather than the forms'. The new-user trigger, create_gamer and
+--   register_gedu trim the same class from what they are handed before writing
+--   it; every route trims too, and the
 --   forms say why a name is refused before the CHECK has to. Staging and
 --   production held no row that breaks either rule; the UPDATEs below repair
 --   any other database before the constraints go on.
@@ -38,26 +43,27 @@
 
 -- Not expected to touch a row on staging or production, which held none.
 UPDATE public.profiles
-   SET first_name = btrim(first_name)
- WHERE first_name <> btrim(first_name);
+   SET first_name = regexp_replace(first_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g')
+ WHERE first_name ~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$';
 
 UPDATE public.profiles
-   SET last_name = btrim(last_name)
- WHERE last_name <> btrim(last_name);
+   SET last_name = regexp_replace(last_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g')
+ WHERE last_name ~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$';
 
 ALTER TABLE public.profiles
   DROP CONSTRAINT profiles_first_name_len,
   DROP CONSTRAINT profiles_last_name_len,
   ADD CONSTRAINT profiles_first_name_shape
-    CHECK (first_name = btrim(first_name)
-           AND char_length(first_name) BETWEEN 2 AND 32),
+    CHECK (char_length(first_name) BETWEEN 2 AND 32
+           AND first_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'
+           AND first_name ~ '[^[:space:]\u00A0\u200B\uFEFF]'),
   ADD CONSTRAINT profiles_last_name_shape
-    CHECK (last_name = btrim(last_name)
-           AND char_length(last_name) <= 32);
+    CHECK (char_length(last_name) <= 32
+           AND last_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$');
 
-COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first name is stored trimmed and is 2 to 32 characters long. Held here rather than only in the forms because a person may update their own first_name straight through the Data API. Every reader may therefore use it as it is: it is never empty, never blank and never padded.';
+COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first name is 2 to 32 characters long, neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF — and holds at least one character that is none of those. Held here rather than only in the forms because a person may update their own first_name straight through the Data API. Every reader may therefore use it as it is: it is never empty, never blank and never padded.';
 
-COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is stored trimmed and is at most 32 characters long. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
+COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is at most 32 characters long and neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
 
 CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
@@ -78,15 +84,18 @@ DECLARE
   utm_term_value       TEXT;
   registration_value   TIMESTAMPTZ;
 BEGIN
-  -- Both names trimmed first, because the profiles CHECKs store them trimmed.
-  -- A first name of nothing but spaces is then '' and takes the stand-in like
-  -- an absent one.
+  -- Both names trimmed of whitespace of every kind first, because the
+  -- profiles CHECKs refuse it at either edge. A first name of nothing but
+  -- whitespace is then '' and takes the stand-in like an absent one.
   profile_first_name := COALESCE(
-    NULLIF(btrim(NEW.raw_user_meta_data->>'first_name'), ''),
+    NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'), ''),
     'New User'
   );
 
-  profile_last_name := COALESCE(btrim(NEW.raw_user_meta_data->>'last_name'), '');
+  profile_last_name := COALESCE(
+    regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
+    ''
+  );
 
   -- Sanitise here, in the body, rather than letting the CHECKs decide: a
   -- malformed value must cost this family nothing at all, so it degrades to
@@ -216,11 +225,12 @@ begin
   -- The child starts in the parent's locale: the parent is the one setting the
   -- account up, so the welcome mail and the child's first sign-in read the way
   -- the parent uses the site. Copied once, never synced; the child's to change.
-  -- The names are trimmed, as the profiles CHECKs store them.
+  -- The names are trimmed of whitespace of every kind, which the profiles
+  -- CHECKs refuse at either edge.
   update public.profiles
   set role = 'gamer',
-      first_name = btrim(p_first_name),
-      last_name = btrim(p_last_name),
+      first_name = regexp_replace(p_first_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
+      last_name = regexp_replace(p_last_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
       locale = (select parent.locale from public.profiles parent where parent.id = p_parent_id)
   where id = p_gamer_id
     and role = 'customer';
@@ -286,11 +296,12 @@ BEGIN
   -- Callers pass '' for absent optional text (the generated RPC arg types are
   -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
   -- phone stays NULL rather than tripping the profiles.phone format CHECK.
-  -- The names are trimmed, as the profiles CHECKs store them.
+  -- The names are trimmed of whitespace of every kind, which the profiles
+  -- CHECKs refuse at either edge.
   UPDATE public.profiles
   SET role             = 'gedu',
-      first_name       = btrim(p_first_name),
-      last_name        = btrim(p_last_name),
+      first_name       = regexp_replace(p_first_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
+      last_name        = regexp_replace(p_last_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
       locale           = NULLIF(p_locale, ''),
       phone            = NULLIF(p_phone, ''),
       spoken_languages = COALESCE(p_spoken_languages, '{}'),
@@ -1199,8 +1210,8 @@ BEGIN
          AND contype = 'c'
          AND convalidated
          AND conname IN ('profiles_first_name_shape', 'profiles_last_name_shape')
-         AND pg_get_constraintdef(oid) LIKE '%btrim%') <> 2 THEN
-    RAISE EXCEPTION 'profiles must carry validated, trimming profiles_first_name_shape and profiles_last_name_shape';
+         AND pg_get_constraintdef(oid) LIKE '%u200B%') <> 2 THEN
+    RAISE EXCEPTION 'profiles must carry validated profiles_first_name_shape and profiles_last_name_shape refusing whitespace of every kind';
   END IF;
 
   IF EXISTS (
@@ -1218,7 +1229,7 @@ BEGIN
     JOIN pg_namespace n ON n.oid = p.pronamespace
    WHERE n.nspname = 'public'
      AND p.proname IN ('handle_new_user', 'create_gamer', 'register_gedu')
-     AND p.prosrc NOT LIKE '%btrim(%first_name%';
+     AND p.prosrc NOT LIKE '%regexp_replace(%first_name%u200B%';
   IF v_found IS NOT NULL THEN
     RAISE EXCEPTION '% writes a first name untrimmed', v_found;
   END IF;

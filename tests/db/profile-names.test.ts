@@ -13,6 +13,10 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * Every write here is either refused or writes back the value already stored,
  * so the seed rows other files read are never changed.
  */
+const NBSP = String.fromCharCode(0x00a0);
+const ZWSP = String.fromCharCode(0x200b);
+const BOM = String.fromCharCode(0xfeff);
+
 describe("profiles names are stored trimmed", () => {
   let customer: SupabaseClient<Database>;
   let stored: { first_name: string; last_name: string };
@@ -57,6 +61,38 @@ describe("profiles names are stored trimmed", () => {
 
   it("refuses a first name that is one character once trimmed", async () => {
     const { error } = await updateOwn({ first_name: "A " });
+
+    expect(error?.code).toBe("23514");
+  });
+
+  it("refuses a first name of nothing but tabs", async () => {
+    const { error } = await updateOwn({ first_name: "\t\t\t" });
+
+    expect(error?.code).toBe("23514");
+  });
+
+  it("refuses a first name padded with newlines", async () => {
+    const { error } = await updateOwn({ first_name: `\n${stored.first_name}\n` });
+
+    expect(error?.code).toBe("23514");
+  });
+
+  it("refuses a first name padded with a non-breaking space", async () => {
+    const { error } = await updateOwn({ first_name: `${stored.first_name}${NBSP}` });
+
+    expect(error?.code).toBe("23514");
+  });
+
+  it("refuses a first name of a zero-width space and a byte-order mark", async () => {
+    // Two characters, neither of them [[:space:]] in our collation: the CHECK
+    // names both outright.
+    const { error } = await updateOwn({ first_name: `${ZWSP}${BOM}` });
+
+    expect(error?.code).toBe("23514");
+  });
+
+  it("refuses a last name padded with a non-breaking space", async () => {
+    const { error } = await updateOwn({ last_name: `${NBSP}Padded` });
 
     expect(error?.code).toBe("23514");
   });

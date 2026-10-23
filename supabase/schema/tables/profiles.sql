@@ -22,8 +22,8 @@ CREATE TABLE public.profiles (
     registration_completed_at timestamp with time zone,
     utm_content text,
     utm_term text,
-    CONSTRAINT profiles_first_name_shape CHECK (((first_name = btrim(first_name)) AND ((char_length(first_name) >= 2) AND (char_length(first_name) <= 32)))),
-    CONSTRAINT profiles_last_name_shape CHECK (((last_name = btrim(last_name)) AND (char_length(last_name) <= 32))),
+    CONSTRAINT profiles_first_name_shape CHECK ((((char_length(first_name) >= 2) AND (char_length(first_name) <= 32)) AND (first_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text) AND (first_name ~ '[^[:space:]\u00A0\u200B\uFEFF]'::text))),
+    CONSTRAINT profiles_last_name_shape CHECK (((char_length(last_name) <= 32) AND (last_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text))),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
     CONSTRAINT profiles_utm_campaign_format CHECK (((utm_campaign IS NULL) OR ((btrim(utm_campaign) <> ''::text) AND (char_length(btrim(utm_campaign)) <= 200) AND (utm_campaign !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_campaign), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
     CONSTRAINT profiles_utm_content_format CHECK (((utm_content IS NULL) OR ((btrim(utm_content) <> ''::text) AND (char_length(btrim(utm_content)) <= 200) AND (utm_content !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_content), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
@@ -114,14 +114,14 @@ COMMENT ON COLUMN public.profiles.utm_term IS 'Optional marketing provenance: th
 -- Name: CONSTRAINT profiles_first_name_shape ON profiles; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first name is stored trimmed and is 2 to 32 characters long. Held here rather than only in the forms because a person may update their own first_name straight through the Data API. Every reader may therefore use it as it is: it is never empty, never blank and never padded.';
+COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first name is 2 to 32 characters long, neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF — and holds at least one character that is none of those. Held here rather than only in the forms because a person may update their own first_name straight through the Data API. Every reader may therefore use it as it is: it is never empty, never blank and never padded.';
 
 
 --
 -- Name: CONSTRAINT profiles_last_name_shape ON profiles; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is stored trimmed and is at most 32 characters long. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
+COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is at most 32 characters long and neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
 
 
 --
