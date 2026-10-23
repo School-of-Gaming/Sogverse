@@ -14,6 +14,7 @@ import {
   SLOT_CASE_SECTION,
   testimonialSlotCases,
 } from "../helpers/landing-testimonial-slot-cases";
+import { inTurn } from "../helpers/in-turn";
 
 /**
  * A landing page's testimonials section: the structure check's two halves on
@@ -149,10 +150,8 @@ describe("landing page testimonials", () => {
   describe("the slot counts", () => {
     it("are judged in SQL exactly as in TypeScript, on every arrangement and count", async () => {
       const cases = testimonialSlotCases();
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_sections_problem", { p_sections: testCase.sections }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_sections_problem", { p_sections: testCase.sections }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];

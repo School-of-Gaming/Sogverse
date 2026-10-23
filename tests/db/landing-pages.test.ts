@@ -37,6 +37,7 @@ import { asObject } from "../helpers/json";
 import { backgroundCases } from "../helpers/landing-background-cases";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
 import { everySection, requiredTextCases } from "../helpers/landing-required-text-cases";
+import { inTurn } from "../helpers/in-turn";
 
 /**
  * Landing pages: `landing_pages` (a page's admin-only working copy, holding
@@ -274,16 +275,14 @@ describe("landing pages", () => {
   describe("the required-text rule", () => {
     it("answers in SQL exactly what it answers in TypeScript, on every case", async () => {
       const cases = requiredTextCases();
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_version_missing", {
-            p_sections: testCase.sections,
-            p_title: testCase.title,
-            p_summary: testCase.summary,
-            p_slug: testCase.slug,
-            p_section_texts: testCase.sectionTexts,
-          }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_version_missing", {
+          p_sections: testCase.sections,
+          p_title: testCase.title,
+          p_summary: testCase.summary,
+          p_slug: testCase.slug,
+          p_section_texts: testCase.sectionTexts,
+        }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -310,8 +309,8 @@ describe("landing pages", () => {
         const parsed = buttonTarget.safeParse(testCase.target);
         return { ...testCase, accepted: parsed.success, stored: parsed.success ? parsed.data : testCase.target };
       });
-      const answers = await Promise.all(
-        cases.map((testCase) => admin.rpc("landing_button_is_valid", { p_button: testCase.stored })),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_button_is_valid", { p_button: testCase.stored }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -332,10 +331,8 @@ describe("landing pages", () => {
           stored: parsed.success ? parsed.data : testCase.sections,
         };
       });
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_sections_problem", { p_sections: testCase.stored }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_sections_problem", { p_sections: testCase.stored }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -474,10 +471,8 @@ describe("landing pages", () => {
           ),
         { name: "no sticky section", structure: sections },
       ];
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_sections_problem", { p_sections: testCase.structure }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_sections_problem", { p_sections: testCase.structure }),
       );
       // Both halves refuse with the same sentence, word for word, a section
       // named by its number from one.
