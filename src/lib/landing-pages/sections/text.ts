@@ -2,6 +2,7 @@ import { z } from "zod";
 import { LANDING_PICTURE_SHAPES } from "../picture-shapes";
 import {
   isWritten,
+  landingBackgroundField,
   landingId,
   markdownText,
   plainText,
@@ -16,6 +17,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("text"),
+    ...landingBackgroundField,
     imageId: landingId.optional(),
     imageSide: z.enum(LANDING_IMAGE_SIDES),
   })

@@ -39,8 +39,8 @@ const LIST = "Y6nRLr";
 
 const SECTIONS: LandingSection[] = [
   { id: HERO, type: "hero" },
-  { id: FORM, type: "subscribe" },
-  { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+  { id: FORM, type: "subscribe", background: "default" },
+  { id: CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
 ];
 
 function livePage(sections: LandingSection[] = SECTIONS): PublishedLandingPage {
@@ -268,7 +268,7 @@ describe("POST /api/landing-pages/subscribe", () => {
       ["a page without that form", livePage([SECTIONS[0], SECTIONS[2]])],
       [
         "a section of that id that is not a form",
-        livePage([SECTIONS[0], { id: FORM, type: "cta", button: { kind: "internal", path: "/" } }]),
+        livePage([SECTIONS[0], { id: FORM, type: "cta", background: "default", button: { kind: "internal", path: "/" } }]),
       ],
     ])("answers 404 to %s", async (_, page) => {
       mockGetPublishedPage.mockResolvedValue(page);

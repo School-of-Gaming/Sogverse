@@ -42,7 +42,7 @@ const PREFIX = "Fixture landing guide:";
 function structure(guideId: string): LandingSection[] {
   return [
     { id: HERO, type: "hero" },
-    { id: GUIDE, type: "guide", guideId },
+    { id: GUIDE, type: "guide", background: "default", guideId },
   ];
 }
 
@@ -210,8 +210,8 @@ describe("landing page guides", () => {
 
       const moved: LandingSection[] = [
         { id: HERO, type: "hero" },
-        { id: GUIDE, type: "guide", guideId: doomed },
-        { id: randomUUID(), type: "guide", guideId: g[2] },
+        { id: GUIDE, type: "guide", background: "default", guideId: doomed },
+        { id: randomUUID(), type: "guide", background: "default", guideId: g[2] },
       ];
       await pages.saveStructure(PAGE_DRAFT, moved);
       const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_DRAFT).single();

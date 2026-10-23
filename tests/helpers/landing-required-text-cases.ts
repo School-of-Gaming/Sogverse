@@ -59,10 +59,11 @@ export function everySection(): LandingSection[] {
       imageId: I.picture,
       button: { kind: "internal", path: "/shop" },
     },
-    { id: I.text, type: "text", imageId: I.picture, imageSide: "end" },
+    { id: I.text, type: "text", background: "default", imageId: I.picture, imageSide: "end" },
     {
       id: I.image,
       type: "image",
+      background: "default",
       images: [
         { id: I.imageItemA, imageId: I.picture },
         { id: I.imageItemB, imageId: I.pictureTwo },
@@ -71,27 +72,40 @@ export function everySection(): LandingSection[] {
     {
       id: I.points,
       type: "points",
+      background: "card",
       items: [
         { id: I.pointA, icon: "star" },
         { id: I.pointB, icon: "heart" },
       ],
     },
-    { id: I.steps, type: "steps", items: [{ id: I.stepA }, { id: I.stepB }] },
+    {
+      id: I.steps,
+      type: "steps",
+      background: "card",
+      items: [{ id: I.stepA }, { id: I.stepB }],
+    },
     {
       id: I.testimonials,
       type: "testimonials",
+      background: "card",
       arrangement: "pair",
       testimonialIds: [I.testimonialA, I.testimonialB],
     },
-    { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
-    { id: I.guide, type: "guide", guideId: I.guideA, imageId: I.picture },
-    { id: I.subscribe, type: "subscribe" },
+    { id: I.faq, type: "faq", background: "default", items: [{ id: I.faqA }] },
+    { id: I.guide, type: "guide", background: "card", guideId: I.guideA, imageId: I.picture },
+    { id: I.subscribe, type: "subscribe", background: "card" },
     {
       id: I.cta,
       type: "cta",
+      background: "default",
       button: { kind: "external", url: "https://example.com" },
     },
-    { id: I.products, type: "products", productIds: [I.productA, I.productB] },
+    {
+      id: I.products,
+      type: "products",
+      background: "default",
+      productIds: [I.productA, I.productB],
+    },
   ];
 }
 
@@ -100,10 +114,10 @@ export function plainSections(): LandingSection[] {
   return everySection().map((section) => {
     if (section.type === "hero") return { id: section.id, type: "hero" };
     if (section.type === "text") {
-      return { id: section.id, type: "text", imageSide: section.imageSide };
+      return { id: section.id, type: "text", background: section.background, imageSide: section.imageSide };
     }
     if (section.type === "guide") {
-      return { id: section.id, type: "guide", guideId: section.guideId };
+      return { id: section.id, type: "guide", background: section.background, guideId: section.guideId };
     }
     return section;
   });

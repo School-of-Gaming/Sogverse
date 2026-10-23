@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { Constants, type ProductType } from "@/types";
-import { landingId, plainText, type LandingSectionDefinition } from "./shared";
+import {
+  landingBackgroundField,
+  landingId,
+  plainText,
+  type LandingSectionDefinition,
+} from "./shared";
 
 /**
  * **The product types a products section draws from: every one.** A pick is
@@ -41,6 +46,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("products"),
+    ...landingBackgroundField,
     productIds: z
       .array(landingId)
       .min(1, "A products section picks at least one product")

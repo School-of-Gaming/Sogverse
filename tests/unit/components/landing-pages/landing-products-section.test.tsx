@@ -76,6 +76,7 @@ const hero: LandingSection = { id: HERO, type: "hero" };
 const picks = (productIds: string[], sectionId = PICKS): LandingSection => ({
   id: sectionId,
   type: "products",
+  background: "default",
   productIds,
 });
 const TEXTS: LandingSectionTexts = {

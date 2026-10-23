@@ -20,6 +20,8 @@ import {
   LANDING_SECTIONS,
   buttonTarget,
   LANDING_SECTION_TYPES,
+  landingSectionBackground,
+  landingSections,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
@@ -28,6 +30,7 @@ import {
   type LandingPictureShape,
 } from "@/lib/landing-pages/picture-shapes";
 import { asObject } from "../helpers/json";
+import { backgroundCases } from "../helpers/landing-background-cases";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
 import { everySection, requiredTextCases } from "../helpers/landing-required-text-cases";
 
@@ -118,7 +121,7 @@ function structure(heroImage: string | null = PIC_A): LandingSection[] {
     heroImage === null
       ? { id: HERO, type: "hero" }
       : { id: HERO, type: "hero", imageId: heroImage },
-    { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+    { id: CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
   ];
 }
 
@@ -314,6 +317,81 @@ describe("landing pages", () => {
         expect(testCase.accepted, testCase.name).toBe(testCase.valid);
         expect(data, testCase.name).toBe(testCase.valid);
       });
+    });
+  });
+
+  describe("a section's background", () => {
+    it("is judged in SQL as the registry judges it, on what the registry would store", async () => {
+      const cases = backgroundCases().map((testCase) => {
+        const parsed = landingSections.safeParse(testCase.sections);
+        return {
+          ...testCase,
+          accepted: parsed.success,
+          stored: parsed.success ? parsed.data : testCase.sections,
+        };
+      });
+      const answers = await Promise.all(
+        cases.map((testCase) =>
+          admin.rpc("landing_sections_problem", { p_sections: testCase.stored }),
+        ),
+      );
+      cases.forEach((testCase, index) => {
+        const { data, error } = answers[index];
+        expect(error, testCase.name).toBeNull();
+        expect(testCase.accepted, testCase.name).toBe(testCase.valid);
+        expect(data === null, `${testCase.name}: ${data}`).toBe(testCase.valid);
+      });
+    });
+
+    it("is stored for adjacent card sections as sent, and kept by a picture's removal", async () => {
+      await reseed();
+      await service.saveStructure(PAGE_A, [
+        ...structure(),
+        {
+          id: GALLERY,
+          type: "image",
+          background: "card",
+          images: [
+            { id: SHOT_1, imageId: PIC_DOOMED },
+            { id: SHOT_2, imageId: PIC_B },
+          ],
+        },
+        { id: FAQ, type: "faq", background: "card", items: [{ id: FAQ_1 }] },
+      ]);
+      await admin.from("catalogue_images").delete().eq("id", PIC_DOOMED);
+      const view = await service.getAdminPage(PAGE_A);
+      expect(view?.draft.sections.map(landingSectionBackground)).toEqual([
+        "default",
+        "default",
+        "card",
+        "card",
+      ]);
+    });
+
+    it("reads as default on a section stored without one, in the working and the published copy", async () => {
+      await reseed();
+      // A structure written before sections had a background: no section names one.
+      const bare = [
+        { id: HERO, type: "hero", imageId: PIC_A },
+        { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+      ];
+      const stored = await admin.from("landing_pages").update({ sections: bare }).eq("id", PAGE_A);
+      expect(stored.error).toBeNull();
+      expect((await admin.rpc("landing_sections_problem", { p_sections: bare })).data).toBeNull();
+
+      const draft = await service.getAdminPage(PAGE_A);
+      expect(draft?.draft.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
+
+      await service.publishPage(PAGE_A);
+      const { data: published } = await admin
+        .from("landing_page_publications")
+        .select("sections")
+        .eq("page_id", PAGE_A)
+        .single();
+      expect(published?.sections).toEqual(bare);
+      const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
+      expect(live?.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
+      await service.unpublishPage(PAGE_A);
     });
   });
 
@@ -879,7 +957,7 @@ describe("landing pages", () => {
     /** The fixture structure with a products section after the hero. */
     const withPicks = (productIds: string[]): LandingSection[] => {
       const [hero, cta] = structure();
-      return [hero, { id: PICKS, type: "products", productIds }, cta];
+      return [hero, { id: PICKS, type: "products", background: "default", productIds }, cta];
     };
 
     beforeAll(async () => {
@@ -1069,6 +1147,7 @@ describe("landing pages", () => {
       const gallery: LandingSection = {
         id: GALLERY,
         type: "image",
+        background: "default",
         images: [{ id: SHOT_1, imageId: PIC_DOOMED_TOO }],
       };
       await saveWhole(PAGE_A, {
@@ -1118,6 +1197,7 @@ describe("landing pages", () => {
       expect(view?.draft.sections[2]).toEqual({
         id: GALLERY,
         type: "image",
+        background: "default",
         images: [{ id: SHOT_2, imageId: PIC_B }],
       });
       expect(view?.draft.pictures).toEqual({
@@ -1158,9 +1238,9 @@ describe("landing pages", () => {
     function withPicture(type: "hero" | "text" | "image" | "guide", imageId: string): LandingSection[] {
       const [hero, cta] = structure(null);
       if (type === "hero") return [{ id: HERO, type: "hero", imageId }, cta];
-      if (type === "text") return [hero, { id: GALLERY, type: "text", imageSide: "start", imageId }, cta];
-      if (type === "guide") return [hero, { id: GALLERY, type: "guide", guideId: SHAPES_GUIDE, imageId }, cta];
-      return [hero, { id: GALLERY, type: "image", images: [{ id: SHOT_1, imageId }] }, cta];
+      if (type === "text") return [hero, { id: GALLERY, type: "text", background: "default", imageSide: "start", imageId }, cta];
+      if (type === "guide") return [hero, { id: GALLERY, type: "guide", background: "default", guideId: SHAPES_GUIDE, imageId }, cta];
+      return [hero, { id: GALLERY, type: "image", background: "default", images: [{ id: SHOT_1, imageId }] }, cta];
     }
 
     // The SQL half of which shapes a section takes, held equal to the section
@@ -1200,7 +1280,7 @@ describe("landing pages", () => {
       await saveWhole(PAGE_A, {
         sections: [
           ...structure(),
-          { id: GALLERY, type: "image", images: [{ id: SHOT_1, imageId: PORTRAIT }] },
+          { id: GALLERY, type: "image", background: "default", images: [{ id: SHOT_1, imageId: PORTRAIT }] },
         ],
         versions: [
           {
@@ -1245,6 +1325,7 @@ describe("landing pages", () => {
       const gallery: LandingSection = {
         id: GALLERY,
         type: "image",
+        background: "default",
         images: [
           { id: SHOT_1, imageId: SQUARE },
           { id: SHOT_2, imageId: SQUARE_TOO },
@@ -1291,7 +1372,7 @@ describe("landing pages", () => {
       const removed = await adminAuth.from("catalogue_images").delete().eq("id", SQUARE_TOO);
       expect(removed.error).toBeNull();
       const view = await service.getAdminPage(PAGE_A);
-      expect(view?.draft.sections[2]).toEqual({ id: GALLERY, type: "text", imageSide: "end" });
+      expect(view?.draft.sections[2]).toEqual({ id: GALLERY, type: "text", background: "default", imageSide: "end" });
       expect(view?.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
     });
   });
@@ -1350,16 +1431,16 @@ describe("landing pages", () => {
     /** One section of every type, every item-bearing one with its items. */
     const RICH: LandingSection[] = [
       { id: S_HERO, type: "hero", imageId: PIC_A, button: { kind: "internal", path: "/shop" } },
-      { id: S_TEXT, type: "text", imageId: PIC_B, imageSide: "end" },
-      { id: S_GALLERY, type: "image", images: [{ id: item(1), imageId: PIC_A }, { id: item(2), imageId: PIC_B }] },
-      { id: S_POINTS, type: "points", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },
-      { id: S_STEPS, type: "steps", items: [{ id: item(5) }, { id: item(6) }] },
-      { id: S_FAQ, type: "faq", items: [{ id: item(7) }] },
-      { id: S_QUOTE, type: "testimonials", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
-      { id: S_PICKS, type: "products", productIds: [PICKED] },
-      { id: S_GUIDE, type: "guide", guideId: GUIDE, imageId: PIC_B },
-      { id: S_SUBSCRIBE, type: "subscribe" },
-      { id: S_CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+      { id: S_TEXT, type: "text", background: "default", imageId: PIC_B, imageSide: "end" },
+      { id: S_GALLERY, type: "image", background: "default", images: [{ id: item(1), imageId: PIC_A }, { id: item(2), imageId: PIC_B }] },
+      { id: S_POINTS, type: "points", background: "default", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },
+      { id: S_STEPS, type: "steps", background: "default", items: [{ id: item(5) }, { id: item(6) }] },
+      { id: S_FAQ, type: "faq", background: "default", items: [{ id: item(7) }] },
+      { id: S_QUOTE, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
+      { id: S_PICKS, type: "products", background: "default", productIds: [PICKED] },
+      { id: S_GUIDE, type: "guide", background: "default", guideId: GUIDE, imageId: PIC_B },
+      { id: S_SUBSCRIBE, type: "subscribe", background: "default" },
+      { id: S_CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
     ];
 
     /** Every word of `RICH` in one language, each naming where it belongs. */
