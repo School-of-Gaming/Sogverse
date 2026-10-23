@@ -254,6 +254,13 @@ locale only and a hand-picked one is a 404 in every other. The renderer and the 
 contribution (structured data) are each an exhaustive map over the section
 types.
 
+**The page's outline is the hero's H1 and an H2 for each section heading written, and the
+titles of a section's items — its points, steps, questions or product cards — are H3s
+under that H2, or H2s themselves where the section has no heading written.** A fixed H3
+would skip a level after the H1, or file the items under an earlier section's heading,
+which is what a screen reader and an AI app reading the outline are handed. The size is
+the same at either level.
+
 **Every section but the hero has a background, `default` or `card`, and it is structure**,
 shared by every language. `default` is the page ground; `card` lays the section on a band
 of the card ground that runs the viewport's full width, the content keeping the section's
