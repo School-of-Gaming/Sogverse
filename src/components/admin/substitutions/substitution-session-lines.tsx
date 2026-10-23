@@ -109,7 +109,7 @@ export function SubstitutionAwayLine({
       <span className="text-muted-foreground">{t("away")}</span>
       <PersonChip
         id={session.requesterId}
-        name={session.requesterName ?? t("unnamed")}
+        name={session.requesterName}
         size="compact"
       />
       <span className="text-muted-foreground">

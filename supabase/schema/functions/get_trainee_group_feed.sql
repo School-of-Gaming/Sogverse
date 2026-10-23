@@ -45,7 +45,7 @@ BEGIN
   v_horizon := public.session_plan_horizon(v_product_id, p_group_id);
 
   -- Ages are counted on the product's own calendar day.
-  v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
+  v_today := (now() AT TIME ZONE v_timezone)::date;
 
   -- The shell, the material link included: a trainee prepares from the same
   -- material the session is run from.

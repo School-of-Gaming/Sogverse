@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "Syötä etunimesi",
   "lastNamePlaceholder": "Syötä sukunimesi",
   "invalidPhone": "Syötä kelvollinen puhelinnumero.",
+  "firstNameRequired": "Etunimessä on oltava vähintään {min} merkkiä.",
   "lastNameRequired": "Sukunimessä on oltava vähintään {min} merkkiä.",
   "profileUpdated": "Henkilötiedot tallennettu.",
   "failedToUpdateProfile": "Henkilötietojen tallentaminen epäonnistui.",

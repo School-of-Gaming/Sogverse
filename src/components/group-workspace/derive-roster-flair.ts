@@ -38,8 +38,8 @@ import type { GamerCreation } from "@/types";
  */
 export interface RosterFlairSource {
   participant_id: string;
-  /** When this seat entered THIS group, or `null` if that is not recorded. */
-  group_joined_at: string | null;
+  /** When this seat entered THIS group. */
+  group_joined_at: string;
   note: string | null;
   note_updated_by_first_name: string | null;
   /**
@@ -67,7 +67,7 @@ export function deriveRosterFlairMaps(
   const creations: Record<string, readonly GamerCreation[]> = {};
 
   for (const member of roster) {
-    if (drawsNewcomerBadge && member.group_joined_at !== null) {
+    if (drawsNewcomerBadge) {
       newcomers[member.participant_id] = member.group_joined_at;
     }
     if (member.note !== null) {

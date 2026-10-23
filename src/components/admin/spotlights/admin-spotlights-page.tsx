@@ -13,7 +13,7 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/cn";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
@@ -182,7 +182,7 @@ function SpotlightRow({
   const uiLocale = resolveLocale(locale);
   const timeZone = useTimezone();
 
-  const title = resolveTranslation(spotlight.versions, uiLocale)?.title ?? "";
+  const title = resolveRequiredTranslation(spotlight.versions, uiLocale).title;
 
   return (
     // `relative` is what the title link's `::after` is positioned against;

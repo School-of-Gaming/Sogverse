@@ -8,7 +8,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -395,9 +395,10 @@ export default async function AdminUserDetailPage({
   const renderAssignedProducts = (rows: AdminGamerParticipationRow[]) =>
     rows.map((row) => {
       const product = row.product;
-      const name =
-        resolveTranslation(product.product_translations, uiLocale)?.name.trim() ||
-        t("untitledProduct");
+      const name = resolveRequiredTranslation(
+        product.product_translations,
+        uiLocale,
+      ).name.trim();
       return (
         <AssignedProductRow
           key={row.id}
@@ -422,9 +423,10 @@ export default async function AdminUserDetailPage({
   const renderGeduSeats = (rows: AdminGeduSeatRow[]) =>
     rows.map((row) => {
       const product = row.product;
-      const name =
-        resolveTranslation(product.product_translations, uiLocale)?.name.trim() ||
-        t("untitledProduct");
+      const name = resolveRequiredTranslation(
+        product.product_translations,
+        uiLocale,
+      ).name.trim();
       return (
         <AssignedProductRow
           key={row.group.id}
@@ -603,7 +605,7 @@ export default async function AdminUserDetailPage({
                               </Avatar>
                               <div>
                                 <p className="text-sm font-medium">
-                                  {gamer.first_name || t('unnamedGamer')}
+                                  {gamer.first_name}
                                 </p>
                               </div>
                             </div>
@@ -651,7 +653,7 @@ export default async function AdminUserDetailPage({
                           </Avatar>
                           <div>
                             <p className="text-sm font-medium">
-                              {parent.first_name || t('unnamedUser')}
+                              {parent.first_name}
                             </p>
                             <p className="text-xs text-muted-foreground ">
                               {parent.email}

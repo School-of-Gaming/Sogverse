@@ -6,7 +6,6 @@
     "camp": "{gamer} on ilmoitettu toimintaan {product}.",
     "event": "{gamer} on liittynyt toimintaan {product}."
   },
-  "fallbackGamer": "Lapsesi",
   "self": {
     "subheading": {
       "consumer_club": "Sinut on ilmoitettu toimintaan {product}.",

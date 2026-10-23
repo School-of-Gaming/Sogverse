@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  resolveRequiredTranslation,
+  resolveTranslation,
+} from "@/lib/i18n/resolve-translation";
 
 // The pick: reader's locale → en → the earliest written locale in the app's
 // locale order (en, fi, sv, fr, tlh, then unknown codes by code). Every
@@ -100,5 +103,20 @@ describe("resolveTranslation", () => {
     }
     expect(resolveTranslation(rows, "fi")?.name).toBe("Swedish");
     expect(resolveTranslation(rows, "tlh")?.name).toBe("Klingon");
+  });
+});
+
+describe("resolveRequiredTranslation", () => {
+  it("returns the same pick as resolveTranslation", () => {
+    const rows: Row[] = [
+      { locale: "fi", name: "Finnish" },
+      { locale: "en", name: "English" },
+    ];
+    expect(resolveRequiredTranslation(rows, "sv").name).toBe("English");
+    expect(resolveRequiredTranslation(rows, "fi").name).toBe("Finnish");
+  });
+
+  it("throws on an empty set", () => {
+    expect(() => resolveRequiredTranslation<Row>([], "en")).toThrow();
   });
 });

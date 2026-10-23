@@ -163,7 +163,7 @@ function DeclinesLine({
       {t("declinedBy", {
         names: new Intl.ListFormat(formattingLocale(locale), {
           type: "conjunction",
-        }).format(declines.map((decline) => decline.name ?? t("unnamed"))),
+        }).format(declines.map((decline) => decline.name)),
       })}
     </p>
   );
@@ -220,7 +220,7 @@ function OfferRow({
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2">
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <PersonChip id={offer.geduId} name={offer.name ?? t("unnamed")} />
+        <PersonChip id={offer.geduId} name={offer.name} />
       </div>
       <Button type="button" size="sm" onClick={onApprove}>
         {t("approve")}

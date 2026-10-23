@@ -5127,6 +5127,13 @@ export type Database = {
         Args: { p_breaks: Json; p_calendar_id: string }
         Returns: undefined
       }
+      location_lineage: {
+        Args: { p_location_id: string }
+        Returns: {
+          distance: number
+          location_id: string
+        }[]
+      }
       location_search_blob: {
         Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
         Returns: string

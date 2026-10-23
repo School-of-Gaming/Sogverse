@@ -79,7 +79,11 @@ import {
 const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
 /** Which sentence a refused personal-information save shows: a `settings` key. */
-type ProfileSaveError = "invalidPhone" | "lastNameRequired" | "failedToUpdateProfile";
+type ProfileSaveError =
+  | "invalidPhone"
+  | "firstNameRequired"
+  | "lastNameRequired"
+  | "failedToUpdateProfile";
 
 /**
  * The read-only username row's id. A named constant rather than a literal in
@@ -436,6 +440,14 @@ export function SettingsSectionContent({
         return;
       }
 
+      // The profiles CHECK holds a first name to at least two characters once
+      // trimmed; saying so here keeps a refusal from reading as a failed save.
+      if (firstName.trim().length < DISPLAY_NAME_MIN) {
+        setSaveError("firstNameRequired");
+        setIsSaving(false);
+        return;
+      }
+
       // Last name is required for non-gamers (gamers don't render the field and
       // keep their inherited name). This also gradually backfills legacy rows
       // that hold an empty last name from before it was required.
@@ -571,8 +583,8 @@ export function SettingsSectionContent({
           {saveError && (
             <Alert variant="destructive">
               <AlertDescription>
-                {saveError === "lastNameRequired"
-                  ? t("lastNameRequired", { min: DISPLAY_NAME_MIN })
+                {saveError === "firstNameRequired" || saveError === "lastNameRequired"
+                  ? t(saveError, { min: DISPLAY_NAME_MIN })
                   : t(saveError)}
               </AlertDescription>
             </Alert>

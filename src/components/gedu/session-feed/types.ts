@@ -46,20 +46,10 @@ export interface SessionFeedGamer {
    * floor the register's expectations are measured from.
    *
    * It is `participations.group_joined_at` and nothing else. Every seat
-   * that holds a group carries one: a trigger stamps every write path, and any
-   * seat that predates the column was backfilled from its own product signup
-   * as a *data* fix, rather than by a fallback smuggled into every
+   * that holds a group carries one — a CHECK holds the stamp to the group —
+   * and any seat that predates the column was backfilled from its own product
+   * signup as a *data* fix, rather than by a fallback smuggled into every
    * reader.
-   *
-   * Non-nullable on purpose, which is what keeps that guarantee from
-   * propagating a `Date | null` through every derivation downstream. The
-   * nullability dies once, at the map site that builds this roster, and it dies
-   * in the **safe direction**: a stamp that is somehow absent resolves to an
-   * instant before every session, so the member is expected everywhere. That is
-   * exactly today's behaviour and it is the harmless error — expecting somebody
-   * on a session they were not on costs a mark nobody needed, while exempting
-   * somebody who really was there is a false "complete" on a register that was
-   * never taken.
    */
   inGroupSince: Date;
 }

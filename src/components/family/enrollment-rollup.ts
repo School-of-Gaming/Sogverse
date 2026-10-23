@@ -5,7 +5,7 @@ import {
 import { INERT_HREF, ROUTES } from "@/lib/constants/routes";
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import { nextRunning, type PlannedSession } from "@/lib/planned-sessions";
@@ -842,7 +842,7 @@ function sessionSummary(
         ? precomputedPrepWindowEnd
         : prepWindowEndForRow(row),
     participationId: row.participationId,
-    productName: resolveTranslation(product.translations, locale)?.name ?? "",
+    productName: resolveRequiredTranslation(product.translations, locale).name,
     productType: product.type,
     topic: product.topic,
     isRemote: product.isRemote,
@@ -920,7 +920,7 @@ function waitlistSummary(
   const { product } = row;
   return {
     participationId: row.participationId,
-    productName: resolveTranslation(product.translations, locale)?.name ?? "",
+    productName: resolveRequiredTranslation(product.translations, locale).name,
     productType: product.type,
     topic: product.topic,
     isRemote: product.isRemote,

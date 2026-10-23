@@ -347,6 +347,19 @@ describe("member flair", () => {
       expect(after?.group_joined_at).toBeNull();
     });
 
+    it("refuses a stamp out of step with group_id", async () => {
+      // A write that does not name group_id never reaches the trigger, so the
+      // CHECK is what holds a seat in a group to its stamp — the guarantee the
+      // register's readers rely on in place of a NULL branch.
+      const row = await seat(GROUP_T1);
+
+      const { error } = await admin
+        .from("participations")
+        .update({ group_joined_at: null })
+        .eq("id", row.id);
+      expect(error?.code).toBe("23514");
+    });
+
     it("does not re-stamp on an UPDATE that never names group_id", async () => {
       // The trigger is BEFORE INSERT OR UPDATE **OF group_id**, so a status
       // change — or the updated_at touch riding with it — cannot reach it.

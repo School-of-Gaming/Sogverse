@@ -626,26 +626,6 @@ describe("templateRegistry render()", () => {
         expect(text).toContain("Kallion kirjasto");
       });
 
-      /**
-       * The two page facts that can genuinely be absent. The untouched form
-       * states both, because the fuller mail is the one worth looking at.
-       */
-      it("drops the Age range fact for a `none` age range", () => {
-        const { html } = templateRegistry.productConfirmation.render(
-          { ...untouched, ageRange: "none" },
-          t,
-          "en",
-        );
-
-        expect(html).not.toContain("Age range");
-        // The token can never reach the copy — it is parsed into a pair of
-        // numbers or into nothing — so what is asserted is the fact's absence.
-        expect(html).not.toContain("Ages ");
-        // The three facts either side of it are untouched.
-        expect(html).toContain("Schedule");
-        expect(html).toContain("Language");
-      });
-
       it("states no billing date for a `none` first charge", () => {
         const paid = { ...untouched, mode: "subscription", firstChargeDate: "13 Jan 2027" };
         expect(
@@ -659,6 +639,25 @@ describe("templateRegistry render()", () => {
           ).html,
         ).not.toContain("Nothing was charged today.");
       });
+    });
+
+    /**
+     * The audience decides whether the age range is read: the schema ties a
+     * range to a product for gamers, both ways, so a parents-only product
+     * states the audience and no ages, whatever the field holds.
+     */
+    it("states no age range for a product sold to parents", () => {
+      const { html } = templateRegistry.productConfirmation.render(
+        { ...untouchedParams(templateRegistry.productConfirmation), audience: "parents" },
+        t,
+        "en",
+      );
+
+      expect(html).not.toContain("Age range");
+      expect(html).not.toContain("Ages ");
+      expect(html).toContain("For parents");
+      expect(html).toContain("Schedule");
+      expect(html).toContain("Language");
     });
   });
 });

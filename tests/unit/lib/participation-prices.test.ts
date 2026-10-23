@@ -542,17 +542,4 @@ describe("ensureStripeProductForProduct", () => {
 
     expect(mockProductsUpdate).not.toHaveBeenCalled();
   });
-
-  it("raises rather than naming a Product generically when translations are missing", async () => {
-    // Fail closed. Every product is DB-guaranteed at least one translation, so
-    // an empty array means the row was not read properly — and the same read
-    // decides the tax code, where degrading quietly would mint a camp's Product
-    // at the standard rate and leave it there permanently.
-    mockProductsSearch.mockResolvedValue({ data: [] });
-
-    await expect(
-      ensureStripeProductForProduct({ ...CAMP, product_translations: [] }),
-    ).rejects.toThrow(/no translation/);
-    expect(mockProductsCreate).not.toHaveBeenCalled();
-  });
 });

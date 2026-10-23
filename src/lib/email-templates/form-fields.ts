@@ -82,19 +82,17 @@ export function noneOrText(value: string): string | null {
 }
 
 /**
- * An age range as one field — `8-12`, or `none` for a product that states no
- * ages at all.
+ * An age range as one field — `8-12`.
  *
  * One control rather than two, because the two columns behind it are
  * both-or-neither in the schema and a form offering a minimum without a maximum
  * would compose a product row the database refuses. The separator is tolerant
  * of the dashes a person actually types.
  */
-export function noneOrAgeRange(
+export function requireAgeRange(
   value: string,
   field: string,
-): { min: number; max: number } | null {
-  if (isNoneToken(value)) return null;
+): { min: number; max: number } {
   const parts = value.trim().split(/\s*[-–—]\s*/);
   if (parts.length !== 2) fail(field, "two ages separated by a dash", value);
   const min = requireWholeNumber(parts[0], field, 0);

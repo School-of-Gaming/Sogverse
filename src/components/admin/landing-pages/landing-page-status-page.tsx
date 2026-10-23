@@ -21,7 +21,10 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  resolveRequiredTranslation,
+  resolveTranslation,
+} from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
   type MissingWordsDescription,
@@ -90,7 +93,7 @@ export function LandingPageStatusPage({
 }) {
   const t = useTranslations("admin.landingPages");
   const uiLocale = resolveLocale(useLocale());
-  const version = resolveTranslation(page.draft.versions, uiLocale);
+  const version = resolveRequiredTranslation(page.draft.versions, uiLocale);
   const liveLocales = new Set(page.publication?.versions.map((v) => v.locale) ?? []);
   // The card's address warning is the publish confirmation's, so the two
   // never disagree: a live language the publish would take down moves nowhere.
@@ -101,7 +104,7 @@ export function LandingPageStatusPage({
     <div className="space-y-6">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Heading level={2} step="card-title">{version?.title ?? ""}</Heading>
+          <Heading level={2} step="card-title">{version.title}</Heading>
           <LandingPageStatusChip
             status={landingPageStatus({
               isPublished: page.publication !== null,

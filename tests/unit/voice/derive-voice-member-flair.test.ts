@@ -29,7 +29,7 @@ const IDS = {
   oskar: "516dd311-5433-4da7-9020-4bb951657d8b",
   /** A stamp and no note. */
   emil: "882f2236-47fe-4ac3-854e-03de1103a84c",
-  /** No mark of any kind, and still a seat holder — most of a real group. */
+  /** No note and an old stamp, and still a seat holder — most of a real group. */
   hilda: "a1f0c60c-6d33-4a1e-91ca-6b1a2f1c6a4d",
   /** In the room, in nobody's seat: the Gedu running the session. */
   sanna: "afa4218c-d0fe-4d7f-8f2a-30a805832e2e",
@@ -37,6 +37,8 @@ const IDS = {
 
 const NOW = new Date("2026-03-16T12:00:00.000Z");
 const JOINED_RECENTLY = "2026-03-06T12:00:00.000Z";
+/** Every seat in a group carries a stamp; this one is long past the badge. */
+const JOINED_LONG_AGO = "2020-01-01T00:00:00.000Z";
 const STORED_NOTE = "Quiet in big groups — pair her rather than letting her pick.";
 const CASTLE = {
   title: "Lohikäärmeen linna",
@@ -48,7 +50,7 @@ function member(
   flair: Partial<GroupStaffOverlayMember> = {},
 ): GroupStaffOverlayMember {
   return {
-    group_joined_at: null,
+    group_joined_at: JOINED_LONG_AGO,
     note: null,
     note_updated_by_first_name: null,
     // Never null on the wire: a list has a real empty value where a note does
@@ -130,7 +132,9 @@ describe("deriveVoiceMemberFlair — the clubs-only badge gate", () => {
 
       expect(flair?.newcomers).toEqual({
         [IDS.siiri]: JOINED_RECENTLY,
+        [IDS.oskar]: JOINED_LONG_AGO,
         [IDS.emil]: JOINED_RECENTLY,
+        [IDS.hilda]: JOINED_LONG_AGO,
       });
     },
   );
@@ -173,7 +177,12 @@ describe("deriveVoiceMemberFlair — absence is how none is spelled", () => {
     // against the key lists: a null written in as a value would pass the
     // shape assertions above and break every consumer, which reads a missing
     // key as the answer.
-    expect(Object.keys(flair?.newcomers ?? {})).toEqual([IDS.siiri, IDS.emil]);
+    expect(Object.keys(flair?.newcomers ?? {})).toEqual([
+      IDS.siiri,
+      IDS.oskar,
+      IDS.emil,
+      IDS.hilda,
+    ]);
     expect(Object.keys(flair?.notes ?? {})).toEqual([IDS.siiri]);
     expect(Object.keys(flair?.noteEditors ?? {})).toEqual([IDS.siiri]);
     expect(Object.keys(flair?.creations ?? {})).toEqual([IDS.oskar]);
@@ -279,7 +288,11 @@ describe("deriveVoiceMemberFlair — a trainee's redacted overlay", () => {
         has_note: false,
         creations: [],
       },
-      [IDS.hilda]: { group_joined_at: null, has_note: false, creations: [] },
+      [IDS.hilda]: {
+        group_joined_at: JOINED_LONG_AGO,
+        has_note: false,
+        creations: [],
+      },
     },
   };
 
@@ -290,6 +303,7 @@ describe("deriveVoiceMemberFlair — a trainee's redacted overlay", () => {
     expect(flair?.newcomers).toEqual({
       [IDS.siiri]: JOINED_RECENTLY,
       [IDS.emil]: JOINED_RECENTLY,
+      [IDS.hilda]: JOINED_LONG_AGO,
     });
   });
 

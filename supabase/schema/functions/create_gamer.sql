@@ -5,7 +5,7 @@
 CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_birth_year smallint, p_birth_month smallint, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_sign_in public.gamer_sign_in DEFAULT 'parent'::public.gamer_sign_in, p_guardian_attested boolean DEFAULT false) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
-    AS $$
+    AS $_$
 declare
   v_declaration_version text;
 begin
@@ -43,10 +43,12 @@ begin
   -- The child starts in the parent's locale: the parent is the one setting the
   -- account up, so the welcome mail and the child's first sign-in read the way
   -- the parent uses the site. Copied once, never synced; the child's to change.
+  -- The names are trimmed of whitespace of every kind, which the profiles
+  -- CHECKs refuse at either edge.
   update public.profiles
   set role = 'gamer',
-      first_name = p_first_name,
-      last_name = p_last_name,
+      first_name = regexp_replace(p_first_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
+      last_name = regexp_replace(p_last_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
       locale = (select parent.locale from public.profiles parent where parent.id = p_parent_id)
   where id = p_gamer_id
     and role = 'customer';
@@ -93,7 +95,7 @@ begin
   insert into public.parent_gamer (parent_id, gamer_id)
   values (p_parent_id, p_gamer_id);
 end;
-$$;
+$_$;
 
 
 --

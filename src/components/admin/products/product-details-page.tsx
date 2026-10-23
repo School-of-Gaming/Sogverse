@@ -13,7 +13,10 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { ROUTES } from "@/lib/constants/routes";
 import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  resolveRequiredTranslation,
+  resolveTranslation,
+} from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import { cn } from "@/lib/cn";
@@ -189,7 +192,7 @@ export function ProductDetailsPage({
     );
   }
 
-  const tr = resolveTranslation(product.product_translations, uiLocale);
+  const tr = resolveRequiredTranslation(product.product_translations, uiLocale);
   const status = effectiveStatus(product, now);
   // Every group on the product shares one plan, so resolve the voice window
   // once here and thread it into each group's Join button. `useNow` ticks so
@@ -223,8 +226,8 @@ export function ProductDetailsPage({
       <HeaderCard
         imagePath={product.image_path}
         kicker={label}
-        title={tr?.name ?? t("list.untitled")}
-        description={tr?.short_description ?? null}
+        title={tr.name}
+        description={tr.short_description}
         statusKey={status}
         isVisible={product.is_visible}
         listedLabel={t("detailsPage.listed")}
@@ -709,26 +712,19 @@ function ProductDetailsCard({
                 </DetailRow>
               )}
 
-              {/* Null only for a row carrying neither an audience label nor an
-                  age range, which the schema's CHECKs make unreachable — the row
-                  is left out rather than rendered empty. */}
-              {whoItsFor !== null && (
-                <DetailRow
-                  label={
-                    whoItsFor.label === "ageRange"
-                      ? t("detailsPage.fields.ageRange")
-                      : t("sections.audience")
-                  }
-                >
-                  {whoItsFor.value.kind === "ages"
-                    ? tFamily("ages", whoItsFor.value)
-                    : whoItsFor.value.kind === "parents"
-                      ? tAudience("parents")
-                      : whoItsFor.value.kind === "families"
-                        ? tAudience("families")
-                        : tAudience("familiesWithAges", whoItsFor.value)}
-                </DetailRow>
-              )}
+              <DetailRow
+                label={
+                  whoItsFor.label === "ageRange"
+                    ? t("detailsPage.fields.ageRange")
+                    : t("sections.audience")
+                }
+              >
+                {whoItsFor.value.kind === "ages"
+                  ? tFamily("ages", whoItsFor.value)
+                  : whoItsFor.value.kind === "parents"
+                    ? tAudience("parents")
+                    : tAudience("familiesWithAges", whoItsFor.value)}
+              </DetailRow>
 
               <DetailRow label={t("labels.spokenLanguage")}>
                 <LanguageFlag code={product.spoken_language_code} />

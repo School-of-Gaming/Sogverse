@@ -185,6 +185,11 @@ depends only on which locales are written, never on the order of the rows, so ne
 code nor a database function orders rows for it. A database function returns every
 version and never picks one itself.
 
+Over a set the database keeps non-empty — a product's translations, an article's or a
+landing page's versions — call `resolveRequiredTranslation()`, which returns the row and
+throws on an empty set; `resolveTranslation()` and its `null` are for a set that can really
+be empty, such as a form for an item not saved yet.
+
 **Every other lookup of one locale's row is exact on purpose and says why** — a slug
 address, an editor's tab, a writer saving a named version, an `hreflang` list — with a
 comment `exact-locale: <reason>` on its line or the line above. A unit test sweeps `src/`
