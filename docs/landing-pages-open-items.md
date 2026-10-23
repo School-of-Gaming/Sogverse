@@ -83,8 +83,3 @@ conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
    deferred sync of account holders to Brevo (`landing-email-capture`) may include
    those who did not tick the marketing box.
 2. Is the registration form's marketing checkbox worded specifically enough?
-
-## Small follow-ups noticed along the way
-
-- A landing "points" section without a heading draws its item titles as H3, which can
-  skip a level after the page's H1.

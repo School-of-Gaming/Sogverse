@@ -312,6 +312,39 @@ describe("the landing page renderers", () => {
     expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
   });
 
+  it("titles points and steps as H3s under the section's H2", () => {
+    renderBody({ sections: [SECTIONS[0], SECTIONS[3], SECTIONS[4]] });
+    for (const [heading, titles] of [
+      ["Why families choose us", ["Fun", "Safe"]],
+      ["How to join", ["Choose", "Register"]],
+    ] as const) {
+      const section = enclosing(screen.getByRole("heading", { level: 2, name: heading }), "section");
+      expect(within(section).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(titles);
+      expect(within(section).getAllByRole("heading", { level: 2 })).toHaveLength(1);
+    }
+  });
+
+  it("makes points' and steps' titles H2s when the section has no heading of its own", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[3], SECTIONS[4]],
+      texts: {
+        [HERO]: { headline: "Gaming clubs in Espoo" },
+        [POINTS]: { items: { [ITEM(3)]: { title: "Fun" }, [ITEM(4)]: { title: "Safe" } } },
+        [STEPS]: {
+          eyebrow: "Joining",
+          items: { [ITEM(5)]: { title: "Choose" }, [ITEM(6)]: { title: "Register" } },
+        },
+      },
+    });
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "Fun",
+      "Safe",
+      "Choose",
+      "Register",
+    ]);
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+  });
+
   it("keeps a text section's headings, and unwraps an FAQ answer's to its words", () => {
     renderBody({
       sections: [SECTIONS[0], SECTIONS[1], SECTIONS[5]],

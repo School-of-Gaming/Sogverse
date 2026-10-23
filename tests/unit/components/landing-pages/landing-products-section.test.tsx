@@ -15,12 +15,15 @@ import type { ProductBrowseRow } from "@/types";
  * not drawn, and a section none of whose picks is listed draws nothing at
  * all — no heading, no empty state.
  *
- * The card is a stub naming its product, so what is pinned is which rows
- * reach the shop's card; the card's own rendering is its own tests'.
+ * The card is a stub naming its product and the title level it was handed, so
+ * what is pinned is which rows reach the shop's card and where they sit in the
+ * outline; the card's own rendering is its own tests'.
  */
 vi.mock("@/components/public/products/product-browse-card", () => ({
-  ProductBrowseCard: ({ product }: { product: ProductBrowseRow }) => (
-    <article data-product={product.id}>{product.product_translations[0]?.name}</article>
+  ProductBrowseCard: ({ product, titleLevel }: { product: ProductBrowseRow; titleLevel?: 2 | 3 }) => (
+    <article data-product={product.id} data-title-level={titleLevel}>
+      {product.product_translations[0]?.name}
+    </article>
   ),
 }));
 
@@ -91,6 +94,23 @@ describe("a landing page's products section", () => {
     expect(screen.getByRole("heading", { level: 2, name: "Pick a club" })).toBeTruthy();
     expect(screen.getByText("This term")).toBeTruthy();
     expect(screen.getByText("All online.")).toBeTruthy();
+  });
+
+  it("titles its cards as H3s under its heading, or as H2s where it has none", () => {
+    const titleLevels = () =>
+      Array.from(document.querySelectorAll("article[data-product]")).map((card) =>
+        card.getAttribute("data-title-level"),
+      );
+    const headed = renderPage([hero, picks([P(1), P(2)])], TEXTS, [P(1), P(2)].map((p) => browseRow(p)));
+    expect(titleLevels()).toEqual(["3", "3"]);
+    headed.unmount();
+
+    renderPage(
+      [hero, picks([P(1), P(2)])],
+      { [HERO]: { headline: "Clubs" }, [PICKS]: { eyebrow: "This term", heading: " " } },
+      [P(1), P(2)].map((p) => browseRow(p)),
+    );
+    expect(titleLevels()).toEqual(["2", "2"]);
   });
 
   it("leaves out a pick the shop no longer lists", () => {
