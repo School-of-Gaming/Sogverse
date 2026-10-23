@@ -427,8 +427,9 @@ Analytics page answers views; the other two have nothing to read from.
 
 - [ ] **Button clicks are not tracked anywhere.** Landing page buttons carry no tracking, and
   the Meta Pixel reports product-page signup clicks only to Meta.
-- [ ] **A signup cannot be tied to the page it came from.** Only the arrival link's campaign
-  labels are stored, and only for parents who accepted marketing cookies.
+- [ ] **An account registration cannot be tied to the landing page it came from.** Only the
+  arrival link's campaign labels are stored, and only for parents who accepted marketing
+  cookies. A landing page's email sign-up is tied already: it sends the page's id to Klaviyo.
 
 ## Chargebee is still open, and still connected to our Stripe account
 
