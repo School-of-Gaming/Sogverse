@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "Saisissez votre prénom",
   "lastNamePlaceholder": "Saisissez votre nom",
   "invalidPhone": "Veuillez saisir un numéro de téléphone valide.",
+  "firstNameRequired": "Le prénom doit contenir au moins {min} caractères.",
   "lastNameRequired": "Le nom doit contenir au moins {min} caractères.",
   "profileUpdated": "Informations personnelles enregistrées.",
   "failedToUpdateProfile": "Impossible d’enregistrer vos informations personnelles.",
