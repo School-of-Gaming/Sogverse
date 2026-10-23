@@ -9,6 +9,7 @@ CREATE FUNCTION public.apply_spotlight_image_path() RETURNS trigger
 DECLARE
   v_path    text;
   v_purpose public.catalogue_image_purpose;
+  v_words   text;
 BEGIN
   IF NEW.image_id IS NOT NULL THEN
     SELECT path, purpose INTO v_path, v_purpose
@@ -28,9 +29,16 @@ BEGIN
     -- another frame. The picker offers only spotlight pictures; this refuses
     -- loudly the state it cannot produce.
     IF v_purpose <> 'spotlight_image' THEN
+      CASE v_purpose
+        WHEN 'product' THEN v_words := 'a product picture';
+        WHEN 'library_cover' THEN v_words := 'a Library cover';
+        WHEN 'landing_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and a spotlight shows only spotlight pictures',
-        NEW.image_id,
-        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a landing page picture' END
+        NEW.image_id, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 

@@ -345,8 +345,9 @@ export class LandingPageService {
   /**
    * The label of every guide a structure places, by id — the name admins know
    * each guide by, read under the admin policy, so an AI app can say which
-   * guide a section offers. A structure placing none reads nothing; an id no
-   * guide has (one removed by hand, since the app deletes none) is absent.
+   * guide a section offers. A structure placing none reads nothing. Every id
+   * placed has its guide: the app deletes none and a save adding an unknown
+   * one is refused, so an id the read does not answer throws.
    */
   async listPlacedGuideLabels(
     sections: readonly LandingSection[],
@@ -355,7 +356,11 @@ export class LandingPageService {
     if (ids.length === 0) return {};
     const { data, error } = await this.supabase.from("guides").select("id, label").in("id", ids);
     if (error) throw error;
-    return Object.fromEntries(data.map((row) => [row.id, row.label]));
+    const labels = Object.fromEntries(data.map((row) => [row.id, row.label]));
+    for (const id of ids) {
+      if (!Object.hasOwn(labels, id)) throw new Error(`No guide has the id ${id}`);
+    }
+    return labels;
   }
 
   /**

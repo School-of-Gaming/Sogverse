@@ -15,6 +15,8 @@ DECLARE
   v_purpose  public.catalogue_image_purpose;
   v_first    public.catalogue_image_purpose;
   v_takes    public.catalogue_image_purpose[];
+  v_words    text;
+  v_beside   text;
   v_pictures jsonb := '{}'::jsonb;
   v_share    uuid;
   v_shares   uuid[];
@@ -73,18 +75,27 @@ BEGIN
         -- another frame. The uploader and the picker offer only landing
         -- pictures; this refuses loudly the state they cannot produce.
         IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
+          CASE v_purpose
+            WHEN 'product' THEN v_words := 'a product picture';
+            WHEN 'library_cover' THEN v_words := 'a Library cover';
+            WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+            ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+          END CASE;
           RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
-            v_ref,
-            CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a spotlight picture' END
+            v_ref, v_words
             USING ERRCODE = 'check_violation';
         END IF;
 
         IF NOT v_purpose = ANY (v_takes) THEN
+          CASE v_purpose
+            WHEN 'landing_square_image' THEN v_words := 'square 1:1';
+            WHEN 'landing_portrait_image' THEN v_words := 'portrait 4:5';
+            ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+          END CASE;
           RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and the picture % is %',
             v_section->>'type',
             CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
-            v_ref,
-            CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
+            v_ref, v_words
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -93,11 +104,20 @@ BEGIN
         IF v_first IS NULL THEN
           v_first := v_purpose;
         ELSIF v_purpose <> v_first THEN
+          CASE v_purpose
+            WHEN 'landing_image' THEN v_words := 'wide 16:9';
+            WHEN 'landing_square_image' THEN v_words := 'square 1:1';
+            WHEN 'landing_portrait_image' THEN v_words := 'portrait 4:5';
+            ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+          END CASE;
+          CASE v_first
+            WHEN 'landing_image' THEN v_beside := 'wide 16:9';
+            WHEN 'landing_square_image' THEN v_beside := 'square 1:1';
+            WHEN 'landing_portrait_image' THEN v_beside := 'portrait 4:5';
+            ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_first;
+          END CASE;
           RAISE EXCEPTION 'The pictures of an image section must all be one shape so they line up, and in section % the picture % is % beside a % one',
-            v_n,
-            v_ref,
-            CASE v_purpose WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
-            CASE v_first WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
+            v_n, v_ref, v_words, v_beside
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -136,15 +156,25 @@ BEGIN
     END IF;
 
     IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
+      CASE v_purpose
+        WHEN 'product' THEN v_words := 'a product picture';
+        WHEN 'library_cover' THEN v_words := 'a Library cover';
+        WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
-        v_share,
-        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a spotlight picture' END
+        v_share, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 
     IF v_purpose <> 'landing_image' THEN
+      CASE v_purpose
+        WHEN 'landing_square_image' THEN v_words := 'square 1:1';
+        WHEN 'landing_portrait_image' THEN v_words := 'portrait 4:5';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and the picture % is %',
-        v_share, CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
+        v_share, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 

@@ -242,8 +242,9 @@ that one element, never by drawing it twice. **A section is never narrowed or pa
 card**: with one card the content keeps its full measure, moving away from the card only
 as far as the viewport makes it; with a card on each side both gutters hold their floor,
 so the content stays centred and its track narrows (the page body's comment works the
-widths through). Every sticky type draws in the one sticky card frame the renderer shares,
-in place of its own card rather than around it, so the cards read as one family.
+widths through). From `2xl` the guide and the email sign-up draw in the sticky card frame
+the renderer shares, in place of their own card; the call to action, already a card in the
+flow, restyles its own card to match, so the cards read as one family.
 
 **The page's outline is the hero's H1 and an H2 for each section heading written, and the
 titles of a section's items — its points, steps, questions or product cards — are H3s
@@ -321,4 +322,5 @@ without the ticked consent and a page whose published copy no longer holds the s
 and answers a new address and a known one identically. **The names are anyone's words, an
 accepted risk**: anyone can submit any address, and the import overwrites the names
 Klaviyo holds for it, so a mail that prints a subscriber's name may print a stranger's
-text. The owner accepted that over dropping the names.
+text. The owner accepted that over dropping the names. The route has no honeypot and no
+rate limit, by the owner's ruling of 2026-10-23: anyone can submit any address, accepted.

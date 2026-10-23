@@ -137,7 +137,8 @@ export interface LandingPageBodyProps {
 // never reach the footer or run past the page's end. Because it is placed
 // rather than flowed, the rows around it close up: two `card` sections either
 // side of it meet as one band from `2xl`, and that is accepted. A band
-// crossing the gutter passes behind the card, which is drawn after it.
+// crossing the gutter passes behind the card, which its z-index lifts over
+// the bands.
 //
 // The card is what the email form inside it is fitted to: its inputs are
 // 270px, close to the 278 a 360px phone gives them, and that holds for the

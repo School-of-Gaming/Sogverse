@@ -135,24 +135,22 @@ export function LandingSubscribeForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* In the sticky card the pair is stacked from `2xl`, laid over the
-          fields' own `sm` pair: their `stacked` holds at every width, and below
-          `2xl` the section is in the flow, where the pair is right. */}
-      <div className={cn(sticky && "2xl:[&>div]:grid-cols-1")}>
-        <NameFields
-          firstLabel={t("firstName")}
-          lastLabel={t("lastName")}
-          firstName={firstName}
-          lastName={lastName}
-          setFirstName={setFirstName}
-          setLastName={setLastName}
-          disabled={committing}
-          optional
-          idPrefix={`${sectionId}-`}
-          firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
-          lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}
-        />
-      </div>
+      {/* In the sticky card the pair is stacked from `2xl`; below it the
+          section is in the flow, where the fields' own pair is right. */}
+      <NameFields
+        firstLabel={t("firstName")}
+        lastLabel={t("lastName")}
+        firstName={firstName}
+        lastName={lastName}
+        setFirstName={setFirstName}
+        setLastName={setLastName}
+        disabled={committing}
+        optional
+        stackFrom={sticky ? "2xl" : undefined}
+        idPrefix={`${sectionId}-`}
+        firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
+        lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}
+      />
       <Field label={t("email")} htmlFor={`${sectionId}-email`}>
         <Input
           id={`${sectionId}-email`}

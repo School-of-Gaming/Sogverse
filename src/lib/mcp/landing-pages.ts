@@ -559,8 +559,8 @@ function productPicks(page: AdminLandingPage) {
 
 /**
  * Each guide section of the working copy, which the next publish puts live,
- * with the guide it offers: its id and its label, the name admins know it by
- * (null for an id no guide has any more). get_guide reads one whole.
+ * with the guide it offers: its id and its label, the name admins know it by.
+ * get_guide reads one whole.
  */
 function placedGuides(page: AdminLandingPage, labels: Readonly<Record<string, string>>) {
   return page.draft.sections.flatMap((section, index) =>
@@ -570,7 +570,7 @@ function placedGuides(page: AdminLandingPage, labels: Readonly<Record<string, st
             section: landingSectionName(index + 1, "guide"),
             sectionId: section.id,
             guideId: section.guideId,
-            label: Object.hasOwn(labels, section.guideId) ? labels[section.guideId] : null,
+            label: labels[section.guideId],
           },
         ]
       : [],

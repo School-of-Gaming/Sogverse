@@ -18,6 +18,8 @@
 --   picture, a Library cover, a spotlight picture, a landing page picture.
 --
 -- refuse_catalogue_image_purpose_change names the picture the same way.
+-- Each purpose's words are listed by name, and a purpose with none raises, so
+-- a purpose added to the enum fails loudly rather than being named wrongly.
 -- Behaviour is otherwise unchanged: the same states are refused, with the
 -- same SQLSTATEs, and the derived path columns are written as before.
 
@@ -28,6 +30,7 @@ CREATE OR REPLACE FUNCTION public.apply_library_cover_path() RETURNS trigger
 DECLARE
   v_path    text;
   v_purpose public.catalogue_image_purpose;
+  v_words   text;
 BEGIN
   IF NEW.cover_image_id IS NOT NULL THEN
     SELECT path, purpose INTO v_path, v_purpose
@@ -50,9 +53,16 @@ BEGIN
     -- resolve against the wrong bucket. The cover picker offers only Library
     -- cover entries; this refuses loudly the state that picker cannot produce.
     IF v_purpose <> 'library_cover' THEN
+      CASE v_purpose
+        WHEN 'product' THEN v_words := 'a product picture';
+        WHEN 'landing_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+        WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and an article''s cover can only be a Library cover',
-        NEW.cover_image_id,
-        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'spotlight_image' THEN 'a spotlight picture' ELSE 'a landing page picture' END
+        NEW.cover_image_id, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -79,6 +89,7 @@ CREATE OR REPLACE FUNCTION public.apply_spotlight_image_path() RETURNS trigger
 DECLARE
   v_path    text;
   v_purpose public.catalogue_image_purpose;
+  v_words   text;
 BEGIN
   IF NEW.image_id IS NOT NULL THEN
     SELECT path, purpose INTO v_path, v_purpose
@@ -98,9 +109,16 @@ BEGIN
     -- another frame. The picker offers only spotlight pictures; this refuses
     -- loudly the state it cannot produce.
     IF v_purpose <> 'spotlight_image' THEN
+      CASE v_purpose
+        WHEN 'product' THEN v_words := 'a product picture';
+        WHEN 'library_cover' THEN v_words := 'a Library cover';
+        WHEN 'landing_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and a spotlight shows only spotlight pictures',
-        NEW.image_id,
-        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a landing page picture' END
+        NEW.image_id, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -127,6 +145,7 @@ CREATE OR REPLACE FUNCTION public.apply_product_image_path() RETURNS trigger
 DECLARE
   v_path    text;
   v_purpose public.catalogue_image_purpose;
+  v_words   text;
 BEGIN
   IF NEW.image_id IS NOT NULL THEN
     SELECT path, purpose INTO v_path, v_purpose
@@ -152,9 +171,16 @@ BEGIN
     -- entries; this is the schema refusing loudly the state that picker
     -- cannot produce.
     IF v_purpose <> 'product' THEN
+      CASE v_purpose
+        WHEN 'library_cover' THEN v_words := 'a Library cover';
+        WHEN 'landing_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+        WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and a product shows only product pictures',
-        NEW.image_id,
-        CASE v_purpose WHEN 'library_cover' THEN 'a Library cover' WHEN 'spotlight_image' THEN 'a spotlight picture' ELSE 'a landing page picture' END
+        NEW.image_id, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -183,16 +209,21 @@ CREATE OR REPLACE FUNCTION public.refuse_catalogue_image_purpose_change() RETURN
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
+DECLARE
+  v_words text;
 BEGIN
   IF NEW.purpose IS DISTINCT FROM OLD.purpose THEN
+    CASE OLD.purpose
+      WHEN 'product' THEN v_words := 'a product picture';
+      WHEN 'library_cover' THEN v_words := 'a Library cover';
+      WHEN 'landing_image' THEN v_words := 'a landing page picture';
+      WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+      WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+      WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+      ELSE RAISE EXCEPTION 'No words for the picture purpose %', OLD.purpose;
+    END CASE;
     RAISE EXCEPTION 'The picture % is %, and a picture''s purpose never changes',
-      OLD.id,
-      CASE OLD.purpose
-        WHEN 'product' THEN 'a product picture'
-        WHEN 'library_cover' THEN 'a Library cover'
-        WHEN 'spotlight_image' THEN 'a spotlight picture'
-        ELSE 'a landing page picture'
-      END
+      OLD.id, v_words
       USING ERRCODE = 'check_violation';
   END IF;
 

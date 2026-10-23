@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
+import { cn } from "@/lib/cn";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 
 /**
@@ -36,9 +37,9 @@ export function useNameSchemaFields() {
 /**
  * The two halves of one name, side by side from `sm` and stacked below it: a
  * first and last name are one answer split in two, and a wide card that runs
- * them down the middle wastes the width the card was widened for. `stacked`
- * keeps them one above the other at every width, for a form set in a column
- * narrower than the viewport says.
+ * them down the middle wastes the width the card was widened for.
+ * `stackFrom` stacks them again from that breakpoint up, for a form that from
+ * there is set in a column narrower than the viewport says.
  *
  * Required by default, as every registration form asks; `optional` marks both
  * halves optional for a form that only invites a name. `idPrefix` keeps the
@@ -56,7 +57,7 @@ export function NameFields({
   setLastName,
   disabled,
   optional = false,
-  stacked = false,
+  stackFrom,
   idPrefix = "",
   firstMaxLength = DISPLAY_NAME_MAX,
   lastMaxLength = DISPLAY_NAME_MAX,
@@ -71,7 +72,7 @@ export function NameFields({
   setLastName: (value: string) => void;
   disabled: boolean;
   optional?: boolean;
-  stacked?: boolean;
+  stackFrom?: "2xl";
   idPrefix?: string;
   firstMaxLength?: number;
   lastMaxLength?: number;
@@ -79,7 +80,7 @@ export function NameFields({
   const firstId = `${idPrefix}firstName`;
   const lastId = `${idPrefix}lastName`;
   return (
-    <div className={stacked ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}>
+    <div className={cn("grid gap-4 sm:grid-cols-2", stackFrom === "2xl" && "2xl:grid-cols-1")}>
       <Field label={firstLabel} htmlFor={firstId} optional={optional}>
         <Input
           id={firstId}

@@ -9,6 +9,7 @@ CREATE FUNCTION public.apply_library_cover_path() RETURNS trigger
 DECLARE
   v_path    text;
   v_purpose public.catalogue_image_purpose;
+  v_words   text;
 BEGIN
   IF NEW.cover_image_id IS NOT NULL THEN
     SELECT path, purpose INTO v_path, v_purpose
@@ -31,9 +32,16 @@ BEGIN
     -- resolve against the wrong bucket. The cover picker offers only Library
     -- cover entries; this refuses loudly the state that picker cannot produce.
     IF v_purpose <> 'library_cover' THEN
+      CASE v_purpose
+        WHEN 'product' THEN v_words := 'a product picture';
+        WHEN 'landing_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+        WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and an article''s cover can only be a Library cover',
-        NEW.cover_image_id,
-        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'spotlight_image' THEN 'a spotlight picture' ELSE 'a landing page picture' END
+        NEW.cover_image_id, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 

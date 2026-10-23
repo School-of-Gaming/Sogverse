@@ -268,14 +268,14 @@ describe("a page's sticky section", () => {
     const nameRow = () => document.querySelector('input[autocomplete="given-name"]')?.closest(".grid");
     const { unmount } = renderBody();
     expect(nameRow()?.className).toContain("sm:grid-cols-2");
-    expect(nameRow()?.parentElement?.className).toContain("2xl:[&>div]:grid-cols-1");
+    expect(nameRow()?.className).toContain("2xl:grid-cols-1");
     const submit = screen.getByRole("button", { name: /Keep me posted/ });
     expect(submit.className).toContain("sm:w-auto");
     expect(submit.className).toContain("2xl:w-full");
     unmount();
     renderBody({ sides: [] });
     expect(nameRow()?.className).toContain("sm:grid-cols-2");
-    expect(nameRow()?.parentElement?.className).not.toContain("grid-cols-1");
+    expect(nameRow()?.className).not.toContain("2xl:grid-cols-1");
   });
 
   it("draws the header start-aligned under the card's heading from 2xl, centred in the flow", () => {

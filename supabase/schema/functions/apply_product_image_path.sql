@@ -9,6 +9,7 @@ CREATE FUNCTION public.apply_product_image_path() RETURNS trigger
 DECLARE
   v_path    text;
   v_purpose public.catalogue_image_purpose;
+  v_words   text;
 BEGIN
   IF NEW.image_id IS NOT NULL THEN
     SELECT path, purpose INTO v_path, v_purpose
@@ -34,9 +35,16 @@ BEGIN
     -- entries; this is the schema refusing loudly the state that picker
     -- cannot produce.
     IF v_purpose <> 'product' THEN
+      CASE v_purpose
+        WHEN 'library_cover' THEN v_words := 'a Library cover';
+        WHEN 'landing_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+        WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+        WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+        ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
+      END CASE;
       RAISE EXCEPTION 'The picture % is %, and a product shows only product pictures',
-        NEW.image_id,
-        CASE v_purpose WHEN 'library_cover' THEN 'a Library cover' WHEN 'spotlight_image' THEN 'a spotlight picture' ELSE 'a landing page picture' END
+        NEW.image_id, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 

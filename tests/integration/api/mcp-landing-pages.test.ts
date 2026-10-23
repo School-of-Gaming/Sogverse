@@ -413,11 +413,10 @@ describe("reading", () => {
     const OFFER = "a1000000-0000-4000-8000-000000000006";
     const SIDEBAR = "a1000000-0000-4000-8000-000000000007";
     const PARENTS = "d4000000-0000-4000-8000-000000000001";
-    const GONE = "d4000000-0000-4000-8000-000000000002";
     const sections: AdminLandingPage["draft"]["sections"] = [
       ...PAGE.draft.sections,
       { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
-      { id: SIDEBAR, type: "guide", background: "default", guideId: GONE, sticky: "right" },
+      { id: SIDEBAR, type: "guide", background: "default", guideId: PARENTS, sticky: "right" },
     ];
     landing.getAdminPage.mockResolvedValue({ ...PAGE, draft: { ...PAGE.draft, sections } });
     landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
@@ -428,7 +427,7 @@ describe("reading", () => {
     expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
     expect(result.structuredContent?.guides).toEqual([
       { section: "section 5 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
-      { section: "section 6 (Guide)", sectionId: SIDEBAR, guideId: GONE, label: null },
+      { section: "section 6 (Guide)", sectionId: SIDEBAR, guideId: PARENTS, label: "Parents' guide 2026" },
     ]);
   });
 
