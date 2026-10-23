@@ -17,6 +17,7 @@ describe("canonicalizeMarkdownLinks", () => {
     ).resolves.toEqual({
       markdown: 'See **the [shop](/shop/123 "Shop")** _now_.\n',
       deadLinks: [],
+      rewrites: [{ text: "shop", from: "/fi/kauppa/123", to: "/shop/123" }],
     });
   });
 
@@ -36,7 +37,7 @@ describe("canonicalizeMarkdownLinks", () => {
       "[mail](mailto:hi@sog.gg) [top](#top) [bad](javascript:alert(1))",
       "<https://example.com/x> ![img](/fi/kauppa)",
     ].join("\n");
-    await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [] });
+    await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [], rewrites: [] });
   });
 
   it("reports every dead own-site link with its words, in order, and changes nothing for it", async () => {
@@ -47,6 +48,7 @@ describe("canonicalizeMarkdownLinks", () => {
         { text: "first one", href: "/fi/ei-mitaan" },
         { text: "second", href: "/fi/kirjasto/tuntematon" },
       ],
+      rewrites: [],
     });
   });
 
@@ -62,11 +64,13 @@ describe("canonicalizeMarkdownLinks", () => {
     const result = await canonical(source);
     expect(result.markdown).toBe(source.replace("[s]: /fi/kauppa", "[s]: /shop"));
     expect(result.deadLinks).toEqual([{ text: "gone", href: "/fi/ei-mitaan" }]);
+    // One stored rewrite, the definition, named by the first link using it.
+    expect(result.rewrites).toEqual([{ text: "Shop", from: "/fi/kauppa", to: "/shop" }]);
   });
 
   it("ignores an unreferenced definition", async () => {
     const source = "Text.\n\n[x]: /fi/ei-mitaan\n";
-    await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [] });
+    await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [], rewrites: [] });
   });
 
   it("rewrites an angle-bracketed destination", async () => {
@@ -85,8 +89,11 @@ describe("canonicalizeMarkdownLinks", () => {
   });
 
   it("turns an own-site autolink into a link that still reads as its address", async () => {
-    const { markdown } = await canonical(`Go to <${SITE}/fi/kauppa?a_b=1>.`);
+    const { markdown, rewrites } = await canonical(`Go to <${SITE}/fi/kauppa?a_b=1>.`);
     expect(markdown).toBe(`Go to [${SITE}/fi/kauppa?a\\_b=1](/shop?a_b=1).`);
+    expect(rewrites).toEqual([
+      { text: `${SITE}/fi/kauppa?a_b=1`, from: `${SITE}/fi/kauppa?a_b=1`, to: "/shop?a_b=1" },
+    ]);
   });
 
   it("escapes an & that would read as a character reference", async () => {
@@ -113,6 +120,6 @@ describe("canonicalizeMarkdownLinks", () => {
 
   it("returns markdown with no links unchanged", async () => {
     const source = "# Title\n\nJust *words* & things.\n";
-    await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [] });
+    await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [], rewrites: [] });
   });
 });

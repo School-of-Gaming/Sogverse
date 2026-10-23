@@ -406,7 +406,7 @@ describe("landing pages", () => {
 
   describe("create and save", () => {
     it("creates a page whole, stamping the admin and deriving a missing slug from the title", async () => {
-      const id = await service.createPage({
+      const { id } = await service.createPage({
         sections: structure(null),
         versions: [
           {
@@ -1313,7 +1313,7 @@ describe("landing pages", () => {
 
     it("is created with a page", async () => {
       await reseed();
-      const id = await service.createPage({
+      const { id } = await service.createPage({
         sections: structure(),
         versions: [
           {

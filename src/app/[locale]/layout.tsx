@@ -15,6 +15,7 @@ import { UTM_HEADER, parseUtmHeader } from "@/lib/utm";
 import { BRAND_LOCKUP } from "@/lib/constants/brand";
 import { isSupportedLocale, resolveLocale, toDetectedLocale } from "@/lib/constants/locales";
 import { ogCardImage } from "@/lib/og/card-metadata";
+import { SITE_TITLE_TEMPLATE } from "@/lib/metadata/site-title";
 import { getServerConsent } from "@/lib/consent.server";
 import { JsonLd } from "@/components/seo/json-ld";
 import { siteJsonLd } from "@/lib/seo/organization";
@@ -108,7 +109,7 @@ export async function generateMetadata({
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
     title: {
       default: title,
-      template: "%s | School of Gaming",
+      template: SITE_TITLE_TEMPLATE,
     },
     // One description, everywhere. This used to be the short line — the brand
     // name and the tagline joined by an en dash — which spent a search snippet

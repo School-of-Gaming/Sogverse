@@ -200,6 +200,13 @@ tools both show it. Whether a pick is shown is the listing's own answer, asked o
 same types the public page draws by; the reasons only explain it. The MCP product list
 answers the same question per product, from the same read.
 
+**What the page serves to search engines and link previews is decided by one function**
+over a published copy, in `src/components/landing-pages/` — the title, description,
+canonical, `hreflang` and share card — which the page hands to Next and the MCP tools run
+over the copy a publish now would leave (the working copy's complete versions, built in
+this directory). Every rule about those values goes into that function, never beside it,
+so what an AI app is told the next publish serves is what it serves.
+
 **The working copy records who last saved it, and through which AI app**, by the same
 trigger pattern as the Library: no writer passes either, and publishing moves neither.
 
@@ -208,7 +215,9 @@ writer is held to the same links: own-site links in the markdown and in
 button targets are stored canonical there, a slug address at the id of the live page it
 names. A link leading to no page — or to a slug no live page has — refuses the write as a
 `check_violation` naming the link, so it reaches the admin like the database's own
-refusals. Nothing else in the save path touches a link. A clone sends no words, so it has
+refusals. Each link stored at another address than the one written comes back from the
+write, from and to, for the MCP tools to report — a rewrite is the save working, not a
+refusal. Nothing else in the save path touches a link. A clone sends no words, so it has
 none to check: the words it copies were made canonical when they were saved.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin

@@ -62,12 +62,9 @@ owner's word. Where a final full test run was skipped, run `npm run gates` (and
 | Worktree | Item | Points for the review |
 |---|---|---|
 | `landing-sticky-section` | #17 one sticky section (email sign-up only) in a side column from 1280px, at the page's end with a jump button below that | Built on an earlier version of the email sign-up (Brevo, double opt-in), which landed as a one-way send to Klaviyo: merging `dev` in rewrites its sign-up side. Section backgrounds are on `dev`, so merging it in conflicts in the section renderer: the column inset belongs on each section's inner container, not its band. Image size hints still assume no column. |
-| `landing-mcp-seo-and-links` | extras 1 and 2: rendered SEO values in the page read tool; the link rule explained, and rewrites reported on save | The share-card override now on `dev` belongs inside the one function that computes the rendered values. |
 
-**Merge order.** Any order. Expect small
-conflicts between `landing-mcp-seo-and-links` and what the share-card and
-`/discover` index work put on `dev` (sitemap, landing metadata, the production check), and between
-`landing-sticky-section` and the section registry and renderer on `dev`.
+**Merge conflicts.** Expect small conflicts between `landing-sticky-section` and the
+section registry and renderer on `dev`.
 
 ## Operator steps outside the code
 

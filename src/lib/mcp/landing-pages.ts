@@ -10,10 +10,16 @@ import {
   markdownOutsideSubset,
 } from "@/lib/authored-markdown-subset";
 import {
+  landingPageSeo,
+  renderedLandingSeo,
+  type RenderedLandingSeo,
+} from "@/components/landing-pages/landing-page-metadata";
+import {
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { siteDocumentTitle } from "@/lib/metadata/site-title";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
@@ -60,7 +66,11 @@ import {
   landingShareCardInUse,
   type LandingShareCardInUse,
 } from "@/components/landing-pages/landing-share-card";
-import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
+import {
+  landingPublishForecast,
+  landingPublishedCopy,
+} from "@/services/landing-pages/landing-pages.forecast";
+import type { LandingLinkRewrite } from "@/services/landing-pages/landing-pages.links";
 import {
   LANDING_SHARE_TITLE_MAX_LENGTH,
   LANDING_SLUG_MAX_LENGTH,
@@ -68,6 +78,7 @@ import {
   LANDING_TITLE_MAX_LENGTH,
   landingSlug,
   type AdminLandingPage,
+  type PublishedLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
 import type { LandingPickReason } from "@/services/landing-pages/landing-pages.product-picks";
 import { landingTestimonialsSections } from "@/services/landing-pages/landing-pages.testimonials";
@@ -114,7 +125,12 @@ const ADDRESSES =
 const STRUCTURE_WRITES =
   "Removing a section drops its words in every language, and so does sending it without its id, which makes it a new section; the same holds for items. Keep every id you want to keep.";
 
-const MARKDOWN = `Markdown fields take only their own subset: a text section's body ${describeMarkdownSubset("landing")}; an FAQ answer ${describeMarkdownSubset("landing-faq")}, with no headings, since the question is the answer's heading. Anything else is refused with the construct named, and nothing is saved. Every other field is plain text.`;
+const LINKS =
+  "Write a link to a page of this site (a markdown link, or a button's internal path) without a language, e.g. /shop/<product id>: it is shown in the language of the page it is read on, so on a Finnish page /shop/<product id> opens /fi/kauppa/<product id>. A link written with a language or with translated segments (/fi/kauppa/<id>, /sv/butik/<id>), or as a full address on this site, is accepted and stored without its language (/shop/<id>), its query and #fragment kept. A link to a page whose address is a slug — a Library article, a team profile, a landing page — is stored at that page's id address, which works in every language, and only a slug a live page has is accepted. A link to a path no page of the site is served from is refused, and nothing is saved. Another site's address is stored as written. The answer lists in linkRewrites each link stored at another address than the one written, from → to; that is the save working, not a problem — tell the admin what changed only when it matters to them.";
+
+const MARKDOWN = `Markdown fields take only their own subset: a text section's body ${describeMarkdownSubset("landing")}; an FAQ answer ${describeMarkdownSubset("landing-faq")}, with no headings, since the question is the answer's heading. Anything else is refused with the construct named, and nothing is saved. Every other field is plain text. ${LINKS}`;
+
+const SEO = `Each language version carries seo: what the page will serve to search engines and link previews once a publish now puts it live, computed by the same code the public page runs — title (the browser tab and search result title, with the site's suffix: "${siteDocumentTitle("<title>")}"; titleLength counts it, and a search result cuts a title much past 60 characters short), description (the meta description: the summary), canonical (the page's canonical address), hreflang (each live language's address and x-default, the address a reader in any other language is sent to), and shareCard (the title, description, image URL and alt text a chat or feed shows where the page is shared). Where the card's title and picture come from is the version's own shareCard, beside seo. Check these instead of fetching the page. seo is null for a version a publish would leave out. Where the language is live and readers are served something else now, seo.liveDiffers names each such field with the value live now.`;
 
 const OFFER_PREVIEW =
   "After creating a page, or after a large change, offer the admin the preview link.";
@@ -366,6 +382,78 @@ function publishForecast(page: AdminLandingPage, origin: string) {
 }
 
 /**
+ * What one version would serve once a publish now puts it live, and where it
+ * is live and served otherwise now, each field that differs with its live
+ * value. Both sides are the public page's own metadata (`landingPageSeo`),
+ * run over the copy a publish would leave and over the live one.
+ */
+type VersionSeo = RenderedLandingSeo & { liveDiffers?: Record<string, unknown> };
+
+/** The fields a reader of the served page meets, flattened one level: `shareCard.title`. */
+function seoFields(seo: RenderedLandingSeo): Record<string, unknown> {
+  const { title, description, canonical, hreflang, shareCard } = seo;
+  return {
+    title,
+    description,
+    canonical,
+    hreflang,
+    ...Object.fromEntries(
+      Object.entries(shareCard).map(([field, value]) => [`shareCard.${field}`, value]),
+    ),
+  };
+}
+
+async function servedAt(
+  copy: PublishedLandingPage | null,
+  locale: SupportedLocale,
+  siteUrl: string,
+): Promise<RenderedLandingSeo | null> {
+  if (copy === null) return null;
+  const seo = await landingPageSeo(copy, locale);
+  return seo === null ? null : renderedLandingSeo(seo, siteUrl);
+}
+
+/** Each written version's `seo`, by locale: null for one a publish would leave out. */
+async function versionsSeo(
+  page: AdminLandingPage,
+  siteUrl: string,
+): Promise<Map<SupportedLocale, VersionSeo | null>> {
+  const next = landingPublishedCopy(page);
+  const entries = await Promise.all(
+    page.draft.versions.map(async (version): Promise<[SupportedLocale, VersionSeo | null]> => {
+      if (version.missing.length > 0) return [version.locale, null];
+      const served = await servedAt(next, version.locale, siteUrl);
+      if (served === null) return [version.locale, null];
+      // exact-locale: what this language's own live version serves
+      const isLive = page.publication?.versions.some((v) => v.locale === version.locale) ?? false;
+      const live = isLive ? await servedAt(page.publication, version.locale, siteUrl) : null;
+      if (live === null) return [version.locale, served];
+      const liveFields = seoFields(live);
+      const differs = Object.entries(seoFields(served)).filter(
+        ([field, value]) => JSON.stringify(value) !== JSON.stringify(liveFields[field]),
+      );
+      return [
+        version.locale,
+        differs.length === 0
+          ? served
+          : {
+              ...served,
+              liveDiffers: Object.fromEntries(
+                differs.map(([field]) => [field, liveFields[field]]),
+              ),
+            },
+      ];
+    }),
+  );
+  return new Map(entries);
+}
+
+/** A write's link rewrites, as its answer carries them: only when there are some. */
+function rewritten(linkRewrites: readonly LandingLinkRewrite[]) {
+  return linkRewrites.length === 0 ? {} : { linkRewrites };
+}
+
+/**
  * The share card a version uses (`landingShareCard`): which halves are the
  * language's own overrides, the card's title, and its picture with where it
  * comes from — so an AI app can see an override the page has since moved
@@ -465,9 +553,11 @@ function lastSaved(draft: AdminLandingPage["draft"]) {
   return { at: draft.updatedAt, by: draft.lastSavedBy, via: draft.lastSavedVia };
 }
 
-function pageView(page: AdminLandingPage, origin: string) {
+async function pageView(page: AdminLandingPage, origin: string) {
   const { draft, publication } = page;
   const liveLocales = new Set(publication?.versions.map((v) => v.locale) ?? []);
+  // The served page's addresses are on its `metadataBase`, the site's own origin.
+  const seo = await versionsSeo(page, process.env.NEXT_PUBLIC_SITE_URL ?? origin);
   return {
     pageId: draft.id,
     sections: draft.sections,
@@ -494,6 +584,8 @@ function pageView(page: AdminLandingPage, origin: string) {
       missing: missingWords(page, version),
       live: liveLocales.has(version.locale),
       previewLink: previewLink(origin, draft.id, version.locale),
+      // exact-locale: each version carries what its own language would serve
+      seo: seo.get(version.locale) ?? null,
     })),
     hasUnpublishedChanges: page.hasUnpublishedChanges,
     testimonials: placedTestimonials(page),
@@ -575,7 +667,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it is unlisted) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING} ${SHARE_CARD}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it is unlisted) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${SEO} ${COMPLETE} ${PUBLISHING} ${SHARE_CARD}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -583,7 +675,7 @@ export function registerLandingPageTools(server: McpServer): void {
       asLandingAdmin(ctx, async ({ service, origin }) => {
         const page = await service.getAdminPage(id);
         if (page === null) return refusal(NOT_FOUND);
-        const view = pageView(page, origin);
+        const view = await pageView(page, origin);
         return answerWithCovers(
           view,
           Object.entries(page.draft.pictures).map(([catalogueId, { path, purpose }]) => ({
@@ -663,7 +755,7 @@ ${SECTIONS_MANUAL}`,
         if ("refusal" in structure) return structure.refusal;
         const words = readWords(structure.sections, input.sectionTexts ?? {});
         if ("refusal" in words) return words.refusal;
-        const id = await service.createPage({
+        const { id, linkRewrites } = await service.createPage({
           sections: structure.sections,
           versions: [
             {
@@ -694,6 +786,7 @@ ${SECTIONS_MANUAL}`,
           productPicks: productPicks(page),
           previewLink: previewLink(origin, id, input.locale),
           adminLink: adminLink(origin, id),
+          ...rewritten(linkRewrites),
         });
       }),
   );
@@ -741,7 +834,7 @@ ${SECTIONS_MANUAL}`,
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials), and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials), and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING} ${LINKS}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({ pageId, sections: mcpLandingStructure }),
         z.object({ pageId, sections: mcpLandingStructure }),
@@ -754,7 +847,7 @@ ${SECTIONS_MANUAL}`,
         if (before === null) return refusal(NOT_FOUND);
         const structure = readStructure(sections);
         if ("refusal" in structure) return structure.refusal;
-        await service.saveStructure(id, structure.sections);
+        const { linkRewrites } = await service.saveStructure(id, structure.sections);
         const after = await service.getAdminPage(id);
         if (after === null) return refusal(NOT_FOUND);
         const kept = new Set(after.draft.sections.map((section) => section.id));
@@ -769,6 +862,7 @@ ${SECTIONS_MANUAL}`,
           productPicks: productPicks(after),
           hasUnpublishedChanges: after.hasUnpublishedChanges,
           publish: publishForecast(after, origin),
+          ...rewritten(linkRewrites),
         });
       }),
   );
@@ -814,7 +908,7 @@ ${SECTIONS_MANUAL}`,
         // working copy just read; a new language has none to keep.
         // exact-locale: the tool writes the version it was asked for
         const current = before.draft.versions.find((v) => v.locale === input.locale);
-        await service.saveVersion(input.pageId, {
+        const { linkRewrites } = await service.saveVersion(input.pageId, {
           locale: input.locale,
           title: input.title,
           summary: input.summary,
@@ -844,6 +938,7 @@ ${SECTIONS_MANUAL}`,
             page.publication?.versions.some((v) => v.locale === input.locale) ?? false,
           hasUnpublishedChanges: page.hasUnpublishedChanges,
           publish: publishForecast(page, origin),
+          ...rewritten(linkRewrites),
         });
       }),
   );
