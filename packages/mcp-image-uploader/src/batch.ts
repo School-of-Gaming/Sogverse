@@ -36,12 +36,21 @@ function fileLine(outcome: FileOutcome, number: number): string {
 }
 
 /**
+ * Where a batch stored something and left a file behind: the uploader takes
+ * no more picks once anything is stored, so a re-cropped or failed picture
+ * needs a new opening.
+ */
+const NO_MORE_PICKS =
+  "This uploader takes no more pictures: to upload a re-cropped or failed picture, open the uploader again.";
+
+/**
  * **The whole batch, as the model is told it**, in one piece: a host keeps
  * only the last context update, so a line per file would leave the model
  * the last file alone. Each file in the order picked, with its new catalogue
  * id, label and shape, or the sentence it was refused with; then, where
  * anything was uploaded, the opening's sentence saying what to do with the
- * new entries.
+ * new entries, and where a file was also left behind, that this uploader
+ * takes no more.
  */
 export function batchReport(outcomes: readonly FileOutcome[], nextStep: string): string {
   const uploaded = outcomes.filter((each) => each.kind === "uploaded").length;
@@ -59,6 +68,6 @@ export function batchReport(outcomes: readonly FileOutcome[], nextStep: string):
     ...outcomes.map((outcome, index) => fileLine(outcome, index + 1)),
     uploaded === 0
       ? "Nothing was uploaded; the admin can pick again in the same uploader."
-      : `The uploaded pictures are in the catalogue, placed nowhere yet. ${nextStep}`,
+      : `The uploaded pictures are in the catalogue, placed nowhere yet. ${nextStep}${refused + failed > 0 ? ` ${NO_MORE_PICKS}` : ""}`,
   ].join("\n");
 }

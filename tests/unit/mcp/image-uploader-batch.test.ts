@@ -9,6 +9,8 @@ import { batchReport, type FileOutcome } from "../../../packages/mcp-image-uploa
 
 const NO_FRAME = "A landing page picture must be wide 16:9, square 1:1 or portrait 4:5.";
 const NEXT_STEP = "Then place them with set_landing_section_image.";
+const NO_MORE_PICKS =
+  "This uploader takes no more pictures: to upload a re-cropped or failed picture, open the uploader again.";
 
 const CASTLE = "10000000-0000-4000-8000-000000000001";
 const FIELD = "10000000-0000-4000-8000-000000000002";
@@ -43,8 +45,14 @@ describe("batchReport", () => {
       `2. "beach.jpg": refused, nothing uploaded. This picture is 3:2 (1500 × 1000). ${NO_FRAME}`,
       `3. "field.jpg": uploaded as catalogue entry ${FIELD} ("Field day"), square 1:1; it is smaller than that shape's size, so it will look soft.`,
       `4. "tree.jpg": could not be uploaded. The connection failed: timeout.`,
-      `The uploaded pictures are in the catalogue, placed nowhere yet. ${NEXT_STEP}`,
+      `The uploaded pictures are in the catalogue, placed nowhere yet. ${NEXT_STEP} ${NO_MORE_PICKS}`,
     ]);
+  });
+
+  it("sends a failed picture to a new opening when the rest of the batch was stored", () => {
+    expect(batchReport([castle, tree], NEXT_STEP).split("\n").at(-1)).toBe(
+      `The uploaded pictures are in the catalogue, placed nowhere yet. ${NEXT_STEP} ${NO_MORE_PICKS}`,
+    );
   });
 
   it("ends a batch of one with the next step", () => {

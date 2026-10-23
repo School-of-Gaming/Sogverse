@@ -19,6 +19,7 @@ import {
   LANDING_SECTION_TYPES,
   type LandingSection,
   type LandingSectionOf,
+  type LandingSectionType,
 } from "@/lib/landing-pages/sections";
 import {
   COVER_THUMBNAIL,
@@ -58,7 +59,30 @@ const SECTION_SHAPES = LANDING_SECTION_TYPES.flatMap((type) => {
   return [`${type}, ${which}`];
 }).join("; ");
 
-const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A hero, text or guide section shows one picture, an image section one to four. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also the page's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
+/**
+ * The section types that show one picture, in an `imageId` of their own: the
+ * types with pictures whose registry schema carries that field, where the
+ * image section carries a list of picture items instead.
+ */
+type OnePictureType = {
+  [Type in LandingSectionType]: "imageId" extends keyof LandingSectionOf<Type> ? Type : never;
+}[LandingSectionType];
+
+const ONE_PICTURE_TYPES = LANDING_SECTION_TYPES.filter(
+  (type): type is OnePictureType =>
+    LANDING_SECTIONS[type].pictureShapes.length > 0 && "imageId" in LANDING_SECTIONS[type].section.shape,
+);
+
+const ONE_PICTURE: ReadonlySet<LandingSectionType> = new Set(ONE_PICTURE_TYPES);
+
+/** The one-picture types as an admin reads them, `hero, text or guide`. */
+const ONE_PICTURE_NAMES = orList(ONE_PICTURE_TYPES);
+
+function showsOnePicture(section: LandingSection): section is LandingSectionOf<OnePictureType> {
+  return ONE_PICTURE.has(section.type);
+}
+
+const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A ${ONE_PICTURE_NAMES} section shows one picture, an image section one to four. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also the page's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
 
 /**
  * What the model is told to do with pictures the uploader has added to the
@@ -66,7 +90,7 @@ const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture 
  * placing tools, choosing by the section rules, where the database is the
  * final judge of whether a picture fits.
  */
-const UPLOADED_NEXT_STEP = `Then place the uploaded pictures where the admin wants them: with set_landing_section_image — imageId for a hero, text or guide section, which shows one picture, or imageIds to add several to the end of an image section — or in a new section through save_landing_page_structure, choosing for each section only a shape it takes (${SECTION_SHAPES}; an image section's pictures all one shape), and write each one's alt text in every language with save_landing_page_text. A picture that does not fit where the admin wanted it stays in the catalogue, in list_landing_images, for another section: tell the admin so.`;
+const UPLOADED_NEXT_STEP = `Then place the uploaded pictures where the admin wants them: with set_landing_section_image — imageId for a ${ONE_PICTURE_NAMES} section, which shows one picture, or imageIds to add several to the end of an image section — or in a new section through save_landing_page_structure, choosing for each section only a shape it takes (${SECTION_SHAPES}; an image section's pictures all one shape), and write each one's alt text in every language with save_landing_page_text. A picture that does not fit where the admin wanted it stays in the catalogue, in list_landing_images, for another section: tell the admin so.`;
 
 const shape = z
   .enum(LANDING_PICTURE_SHAPES)
@@ -94,7 +118,7 @@ function placed(
   imageId: string | null,
   pictureId: string | undefined,
 ): { section: LandingSection; pictureId: string | null } | { refusal: string } {
-  if (section.type === "hero" || section.type === "text" || section.type === "guide") {
+  if (showsOnePicture(section)) {
     if (pictureId !== undefined) {
       return { refusal: `A ${section.type} section has one picture and no picture items: leave pictureId out.` };
     }
@@ -149,7 +173,7 @@ function placedAll(
   section: LandingSection,
   imageIds: readonly string[],
 ): { section: LandingSection; pictureIds: string[] } | { refusal: string } {
-  if (section.type === "hero" || section.type === "text" || section.type === "guide") {
+  if (showsOnePicture(section)) {
     return { refusal: `A ${section.type} section has one picture: send imageId, not imageIds.` };
   }
   if (section.type !== "image") {
@@ -248,7 +272,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "set_landing_section_image",
     {
       title: "Place a picture in a landing page section",
-      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a hero, text or guide section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An entry that is not a landing page picture, has left the catalogue, or is a shape the section does not take is refused, saying which.`,
+      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a ${ONE_PICTURE_NAMES} section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An entry that is not a landing page picture, has left the catalogue, or is a shape the section does not take is refused, saying which.`,
       inputSchema: z.object({
         pageId,
         sectionId,
@@ -320,7 +344,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "open_landing_image_uploader",
     {
       title: "Upload landing page pictures",
-      description: `Show the admin an uploader, inside this chat, where they pick pictures from their device to add to Sogverse's picture catalogue as landing page pictures — as many as they like at once, from the file picker or by dropping them on it. It only adds them to the catalogue and places none: you place them afterwards. The uploader never crops: it measures each picture and takes it as the shape it already is, within 1% — ${SHAPES_WITH_SIZES} — scaled to that shape's exact size as a JPEG; the admin does not choose a shape. Each picture is judged on its own, and a refused one never holds back the others: a picture of none of those shapes is refused and not uploaded. Explain each refusal to the admin in plain words — they can crop a picture to one of the shapes themselves and pick it again — and never offer to pad, stretch or crop it on their behalf. The pictures never pass through you; once the admin has uploaded, you are told the whole batch at once, in the order picked: each uploaded picture's new catalogue id, label, shape and the file name it came from, and each refused file with why. ${UPLOADED_NEXT_STEP} Use it when the admin wants a picture that is not in list_landing_images yet — also when they ask for a section of their own photos, such as a gallery: upload first, then place the new ids. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
+      description: `Show the admin an uploader, inside this chat, where they pick pictures from their device to add to Sogverse's picture catalogue as landing page pictures — as many as they like at once, from the file picker or by dropping them on it. It only adds them to the catalogue and places none: you place them afterwards. The uploader never crops: it measures each picture and takes it as the shape it already is, within 1% — ${SHAPES_WITH_SIZES} — scaled to that shape's exact size as a JPEG; the admin does not choose a shape. Each picture is judged on its own, and a refused one never holds back the others: a picture of none of those shapes is refused and not uploaded. Explain each refusal to the admin in plain words — they can crop a picture to one of the shapes themselves and pick it again, in the same uploader if the batch stored nothing and otherwise in a new one you open with open_landing_image_uploader — and never offer to pad, stretch or crop it on their behalf. The pictures never pass through you; once the admin has uploaded, you are told the whole batch at once, in the order picked: each uploaded picture's new catalogue id, label, shape and the file name it came from, and each refused file with why. ${UPLOADED_NEXT_STEP} Use it when the admin wants a picture that is not in list_landing_images yet — also when they ask for a section of their own photos, such as a gallery: upload first, then place the new ids. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
       inputSchema: z.object({}),
       annotations: READ_ONLY,
       _meta: UPLOADER_VIEW_META,
