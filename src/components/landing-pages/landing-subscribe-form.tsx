@@ -15,18 +15,21 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { utmRegistrationBody } from "@/lib/utm";
 import { useUtm } from "@/providers";
 import {
-  LANDING_SUBSCRIBE_HONEYPOT,
   LANDING_SUBSCRIBE_FIRST_NAME_MAX,
   LANDING_SUBSCRIBE_LAST_NAME_MAX,
   type LandingSubscribeBody,
 } from "@/services/landing-pages/landing-subscribe.contracts";
+import { cn } from "@/lib/cn";
+import { LANDING_STICKY_ACTION } from "./landing-section-header";
 
 /** Which refusal sentence a failed post reads. */
 type Refusal = "invalid" | "error";
 
 /**
  * **A landing page's email sign-up form**: an optional first and last name,
- * side by side as the registration forms set them, an email address and the
+ * side by side as the registration forms set them (stacked in the sticky
+ * card from `2xl`, whose column is too narrow for a pair, where the button
+ * also fills the column), an email address and the
  * consent box, posted to the sign-up route, which puts the address on the
  * newsletter list at once (single opt-in). The button stays disabled until an
  * address is typed and the box is ticked — the names never hold it back;
@@ -46,15 +49,30 @@ export function LandingSubscribeForm({
   sectionId,
   locale,
   buttonLabel,
+  buttonLabelLang,
   preview,
+  sticky = false,
 }: {
   pageId: string;
   sectionId: string;
   /** The page's locale: the language the reader signs up in. */
   locale: SupportedLocale;
   buttonLabel: string;
+  /**
+   * The language the button label is written in, where it is not the page's:
+   * the label is the page version's words, and every other word here is ours.
+   */
+  buttonLabelLang?: SupportedLocale;
   /** The admin's preview: the form is drawn, but its button is disabled and nothing is posted. */
   preview: boolean;
+  /**
+   * In a sticky section, which from `2xl` is the sticky card, a 20rem column:
+   * there the name fields stand one above the other and the button takes the
+   * column's full width. Below `2xl`, and on a section that is not sticky, the
+   * names pair up from `sm` and the button is centred under the centred
+   * heading.
+   */
+  sticky?: boolean;
 }) {
   const t = useTranslations("landingSubscribe");
   const utm = useUtm();
@@ -62,9 +80,6 @@ export function LandingSubscribeForm({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [consent, setConsent] = useState(false);
-  // The honeypot's value. A person never sees the field, so it stays empty
-  // for them; it is read from state so a bot's fill is posted like any field.
-  const [trap, setTrap] = useState("");
   const [committing, setCommitting] = useState(false);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   const [signedUp, setSignedUp] = useState(false);
@@ -98,7 +113,6 @@ export function LandingSubscribeForm({
       firstName,
       lastName,
       consent: true,
-      [LANDING_SUBSCRIBE_HONEYPOT]: trap,
       utm: utmRegistrationBody(utm),
     };
     try {
@@ -121,6 +135,8 @@ export function LandingSubscribeForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* In the sticky card the pair is stacked from `2xl`; below it the
+          section is in the flow, where the fields' own pair is right. */}
       <NameFields
         firstLabel={t("firstName")}
         lastLabel={t("lastName")}
@@ -130,6 +146,7 @@ export function LandingSubscribeForm({
         setLastName={setLastName}
         disabled={committing}
         optional
+        stackFrom={sticky ? "2xl" : undefined}
         idPrefix={`${sectionId}-`}
         firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
         lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}
@@ -145,19 +162,6 @@ export function LandingSubscribeForm({
           autoComplete="email"
         />
       </Field>
-      {/* The honeypot: out of sight and out of the tab order and the
-          accessibility tree, so only something filling every input it finds
-          ever puts a value in it. */}
-      <div aria-hidden="true" className="hidden">
-        <input
-          type="text"
-          name={LANDING_SUBSCRIBE_HONEYPOT}
-          tabIndex={-1}
-          autoComplete="off"
-          value={trap}
-          onChange={(event) => setTrap(event.target.value)}
-        />
-      </div>
       <CheckboxRow
         checked={consent}
         onCheckedChange={setConsent}
@@ -186,10 +190,10 @@ export function LandingSubscribeForm({
         <Button
           type="submit"
           size="lg"
-          className="w-full sm:w-auto"
+          className={cn("w-full sm:w-auto", sticky && LANDING_STICKY_ACTION)}
           disabled={committing || preview || !complete}
         >
-          {buttonLabel}
+          <span lang={buttonLabelLang}>{buttonLabel}</span>
           <Send aria-hidden="true" />
         </Button>
       </div>

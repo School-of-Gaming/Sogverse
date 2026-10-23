@@ -39,7 +39,16 @@ import type { PublicTestimonial } from "@/services/testimonials/testimonials.con
 import { GuideDownload } from "./guide-download";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
-import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
+import {
+  Eyebrow,
+  hasSectionHeader,
+  LANDING_CONTENT,
+  LANDING_SECTION,
+  LANDING_STICKY_ACTION,
+  LANDING_STICKY_SECTION,
+  LANDING_STICKY_WORDS,
+  SectionHeader,
+} from "./landing-section-header";
 import {
   itemHeadingLevel,
   written,
@@ -90,10 +99,10 @@ export interface LandingRenderContext {
    */
   preview: boolean;
   /**
-   * A picture's servable URL and its shape by its catalogue entry id, or null
-   * when the copy names no path for it (the picture has left the catalogue).
+   * A picture's servable URL and its shape by its catalogue entry id. The copy
+   * carries every picture it names, so this throws for one it does not.
    */
-  picture: (imageId: string) => ShownPicture | null;
+  picture: (imageId: string) => ShownPicture;
   /**
    * A placed testimonial's current words by its id, or null when the read
    * answered none for it.
@@ -106,8 +115,11 @@ export interface LandingRenderContext {
    * live query fetches for itself.
    */
   products: ProductRailPrefetch | null;
-  /** Whether the read answered the placed guide with this id. */
-  hasGuide: (guideId: string) => boolean;
+  /**
+   * The page has a sticky card on each side, which narrows the sections'
+   * measure from `2xl` — what a picture's `sizes` states.
+   */
+  twoCards: boolean;
 }
 
 /** A picture as a renderer draws it: where it is, and the shape its box is reserved at. */
@@ -175,26 +187,28 @@ function LandingButton({
   target,
   label,
   subject,
-  locale,
+  context,
   className,
 }: {
   target: ButtonTarget;
   label: string;
   /** The email's subject line in this language, for an email target. */
   subject: string | undefined;
-  locale: SupportedLocale;
+  context: Pick<LandingRenderContext, "locale" | "textLocale">;
   className?: string;
 }) {
   const t = useTranslations("richText");
   const classes = buttonVariants({ size: "lg", className: cn("gap-2", className) });
-  const href = buttonTargetHref(target, locale, { subject });
+  const href = buttonTargetHref(target, context.locale, { subject });
   switch (target.kind) {
     case "external":
       return (
         <a href={href} target="_blank" rel="noopener noreferrer" className={classes}>
           {label}
           <ExternalLink aria-hidden="true" className="h-4 w-4" />
-          <span className="sr-only">{t("opensInNewTab")}</span>
+          <span className="sr-only" lang={pageLang(context)}>
+            {t("opensInNewTab")}
+          </span>
         </a>
       );
     case "email":
@@ -214,6 +228,59 @@ function LandingButton({
   }
 }
 
+/**
+ * **A sticky section's card frame, from `2xl`** — the one frame every type
+ * that may be sticky is drawn in there, so the cards beside a page read as one
+ * family: the closing card's world rule along its top, the card's own padding,
+ * the words start-aligned under a heading a step down
+ * (`LANDING_STICKY_WORDS`), and the action the card's full width. In the
+ * page's gutter it is an object standing on the page beside the sections
+ * rather than one of them, so it carries its own edge. The call to action is
+ * a card in the flow already, so it restyles its own card rather than take
+ * this one, since a card does not contain a card.
+ *
+ * **Below `2xl` the frame is not there at all**: the card and its content are
+ * `display: contents`, so they draw no box and the section's own children are
+ * laid out as they are on a section that is not sticky, and the world rule is
+ * hidden. On a section that is not sticky it is nothing but its children.
+ */
+function StickyFrame({ sticky, children }: { sticky: boolean; children: ReactNode }) {
+  if (!sticky) return children;
+  return (
+    <Card data-sticky-card className="relative overflow-hidden max-2xl:contents">
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-world max-2xl:hidden" />
+      <CardContent className="pt-8 max-2xl:contents">{children}</CardContent>
+    </Card>
+  );
+}
+
+/**
+ * The CSS width of a picture across a sticky card from `2xl`, the card's
+ * 20rem, ahead of the `sizes` it has in the flow below that.
+ */
+function stickyCardSizes(flowSizes: string): string {
+  return `(min-width: 1536px) 20rem, ${flowSizes}`;
+}
+
+/**
+ * The `lang` for words in the page's own language — ours, the store's, the
+ * shop's — inside a body marked with the version's: the page's locale where
+ * the two differ, else nothing, since the document already says it.
+ */
+function pageLang(context: Pick<LandingRenderContext, "locale" | "textLocale">) {
+  // exact-locale: resets the body's language mark for words in the page's language
+  return context.textLocale === context.locale ? undefined : context.locale;
+}
+
+/**
+ * The `lang` for the version's words set inside a part reset to the page's
+ * (`pageLang`): the version's language where the two differ, else nothing.
+ */
+function textLang(context: Pick<LandingRenderContext, "locale" | "textLocale">) {
+  // exact-locale: marks the version's words inside a part in the page's language
+  return context.textLocale === context.locale ? undefined : context.textLocale;
+}
+
 // ---------------------------------------------------------------------------
 // The sections
 // ---------------------------------------------------------------------------
@@ -231,7 +298,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
   const subline = written(text.subline);
   const buttonLabel = written(text.buttonLabel);
   return (
-    <section className="container mx-auto px-4 pb-16 pt-8 sm:py-24">
+    <section className={cn(LANDING_CONTENT, "pb-16 pt-8 sm:py-24")}>
       <div
         className={cn(
           "mx-auto",
@@ -277,22 +344,72 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
                 target={section.button}
                 label={buttonLabel}
                 subject={text.emailSubject}
-                locale={context.locale}
+                context={context}
               />
             </div>
           )}
         </div>
         {picture !== null && (
-          <LandingPicture picture={picture} alt={text.imageAlt} sizes={HALF_COLUMN} eager />
+          <LandingPicture
+            picture={picture}
+            alt={text.imageAlt}
+            sizes={halfColumnSizes(HALF_COLUMN_PX, context.twoCards)}
+            eager
+          />
         )}
       </div>
     </section>
   );
 }
 
-/** The CSS width of one of the two columns words and a picture share from `lg`. */
-const HALF_COLUMN =
-  "(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)";
+/**
+ * Where a page with a sticky card on each side narrows the sections' measure:
+ * from `2xl` both gutters hold their 344px floor, so the content box is the
+ * viewport less 720px (the two floors and the section's 1rem padding either
+ * side) until it reaches its full 1152px at 1872 (the page body's width
+ * budget). One card leaves the full measure from `2xl` on — its opposite
+ * gutter gives way first — so only two narrow it.
+ */
+const TWO_CARDS_FROM = 1536;
+const TWO_CARDS_TAKE = 720;
+
+/**
+ * A `sizes` whose picture, between two sticky cards, is `calc(<vw>vw - <px>px)`
+ * until it reaches `fixedPx`, prepended to the page's own `sizes` — which
+ * holds below `2xl`. Nothing changes where the picture is already at its fixed
+ * width by `2xl`.
+ */
+function betweenTwoCards(
+  sizes: string,
+  fixedPx: number,
+  fluid: { vw: number; px: number },
+): string {
+  const fixedFrom = Math.ceil((fixedPx + fluid.px) / (fluid.vw / 100));
+  if (fixedFrom <= TWO_CARDS_FROM) return sizes;
+  return [
+    `(min-width: ${fixedFrom}px) ${fixedPx}px`,
+    `(min-width: ${TWO_CARDS_FROM}px) calc(${css(fluid.vw, "vw")} - ${Number(fluid.px.toFixed(3))}px)`,
+    sizes,
+  ].join(", ");
+}
+
+/**
+ * The CSS width of a picture in one of the two columns words and a picture
+ * share from `lg` (their gap 4rem), held to `maxPx` within it when it is
+ * narrower than the column: the column's 544px at the full measure.
+ */
+function halfColumnSizes(maxPx: number, twoCards: boolean): string {
+  const sizes =
+    maxPx === HALF_COLUMN_PX
+      ? `(min-width: 1152px) ${HALF_COLUMN_PX}px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)`
+      : `(min-width: ${maxPx + 32}px) ${maxPx}px, calc(100vw - 2rem)`;
+  return twoCards
+    ? betweenTwoCards(sizes, maxPx, { vw: 50, px: (TWO_CARDS_TAKE + 64) / 2 })
+    : sizes;
+}
+
+/** One of the two columns at the full 1152px measure: (1152 − 64) / 2. */
+const HALF_COLUMN_PX = 544;
 
 /**
  * How a text section's picture is drawn beside the words, by its shape: a
@@ -300,10 +417,10 @@ const HALF_COLUMN =
  * centred in it, so it stands about as tall as a few paragraphs rather than
  * towering over them, and does not fill a phone's whole screen either.
  */
-const BESIDE_WORDS: Record<LandingPictureShape, { width: string; sizes: string }> = {
-  wide: { width: "", sizes: HALF_COLUMN },
-  square: { width: "max-w-md", sizes: "(min-width: 480px) 448px, calc(100vw - 2rem)" },
-  portrait: { width: "max-w-sm", sizes: "(min-width: 416px) 384px, calc(100vw - 2rem)" },
+const BESIDE_WORDS: Record<LandingPictureShape, { width: string; widthPx: number }> = {
+  wide: { width: "", widthPx: HALF_COLUMN_PX },
+  square: { width: "max-w-md", widthPx: 448 },
+  portrait: { width: "max-w-sm", widthPx: 384 },
 };
 
 /**
@@ -343,7 +460,7 @@ function TextSection({ section, text, context }: LandingSectionProps<"text">) {
             <LandingPicture
               picture={picture}
               alt={text.imageAlt}
-              sizes={BESIDE_WORDS[picture.shape].sizes}
+              sizes={halfColumnSizes(BESIDE_WORDS[picture.shape].widthPx, context.twoCards)}
             />
           </div>
         )}
@@ -415,9 +532,13 @@ function css(value: number, unit: "rem" | "vw"): string {
  * The CSS width each picture of a grid resolves to, as `sizes` states it: the
  * page's 1rem gutters either side and the grid's 1rem gaps taken out of the
  * viewport, until the figure reaches its own width and each picture stops
- * growing.
+ * growing — and, between two sticky cards, the cards' gutters taken out too
+ * from `2xl` (`betweenTwoCards`), where every grid has its most columns.
  */
-function pictureGridSizes(grid: Pick<PictureGrid, "widthPx" | "steps">): string {
+function pictureGridSizes(
+  grid: Pick<PictureGrid, "widthPx" | "steps">,
+  twoCards: boolean,
+): string {
   const gutters = 2;
   const widest = grid.steps.at(-1)?.columns ?? 1;
   const fixed = Math.round((grid.widthPx - (widest - 1) * 16) / widest);
@@ -427,11 +548,17 @@ function pictureGridSizes(grid: Pick<PictureGrid, "widthPx" | "steps">): string 
       ({ from, columns }) =>
         `(min-width: ${from}px) calc(${css(100 / columns, "vw")} - ${css((gutters + columns - 1) / columns, "rem")})`,
     );
-  return [
+  const sizes = [
     `(min-width: ${grid.widthPx + gutters * 16}px) ${fixed}px`,
     ...fluid,
     `calc(100vw - ${gutters}rem)`,
   ].join(", ");
+  return twoCards
+    ? betweenTwoCards(sizes, fixed, {
+        vw: 100 / widest,
+        px: (TWO_CARDS_TAKE + (widest - 1) * 16) / widest,
+      })
+    : sizes;
 }
 
 /** The grid of `count` pictures of one shape. */
@@ -441,17 +568,19 @@ function pictureGrid(shape: LandingPictureShape, count: number): PictureGrid {
 
 /**
  * One to four pictures of one shape, with an optional heading and caption. A
- * picture that has left the catalogue is not drawn. The database keeps a
- * section's pictures one shape, so the first one's is the grid's.
+ * picture removed from the catalogue is unlinked from the section, and a
+ * section left with none is dropped, so there is always one to draw. The
+ * database keeps a section's pictures one shape, so the first one's is the
+ * grid's.
  */
 function ImageSection({ section, text, context }: LandingSectionProps<"image">) {
-  const pictures = section.images.flatMap((image) => {
-    const picture = context.picture(image.imageId);
-    return picture === null ? [] : [{ id: image.id, picture, alt: text.alts?.[image.id] }];
-  });
-  if (pictures.length === 0) return null;
+  const pictures = section.images.map((image) => ({
+    id: image.id,
+    picture: context.picture(image.imageId),
+    alt: text.alts?.[image.id],
+  }));
   const grid = pictureGrid(pictures[0].picture.shape, pictures.length);
-  const sizes = pictureGridSizes(grid);
+  const sizes = pictureGridSizes(grid, context.twoCards);
   const caption = written(text.caption);
   const hasHeader = hasSectionHeader({ eyebrow: text.eyebrow, heading: text.heading });
   return (
@@ -577,8 +706,8 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
  * the version's, so the arrangement is marked with the page's language
  * wherever the version shown is in another, and a quote in another language
  * than the page's is marked with its own. A testimonial the read did not
- * answer leaves its slot out, and a section with none to show is not drawn at
- * all.
+ * answer leaves its slot out; the page body leaves out a section with none
+ * answered, so one drawn here has at least one quote.
  */
 function TestimonialsSection({ section, text, context }: LandingSectionProps<"testimonials">) {
   const pick = (ids: readonly string[]): ShownTestimonial[] =>
@@ -598,7 +727,6 @@ function TestimonialsSection({ section, text, context }: LandingSectionProps<"te
       ];
     });
   const shown = pick(section.testimonialIds);
-  if (shown.length === 0) return null;
   const afterHeader =
     written(text.eyebrow) !== null || written(text.heading) !== null || written(text.intro) !== null;
   const placement = cn(afterHeader && "mt-12 lg:mt-16");
@@ -630,10 +758,8 @@ function TestimonialsSection({ section, text, context }: LandingSectionProps<"te
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
-      {/* exact-locale: resets the body's language mark for the store's own words */}
-      <div lang={context.textLocale === context.locale ? undefined : context.locale}>
-        {arrangement}
-      </div>
+      {/* The store's own words, not the version's. */}
+      <div lang={pageLang(context)}>{arrangement}</div>
     </section>
   );
 }
@@ -642,7 +768,8 @@ function TestimonialsSection({ section, text, context }: LandingSectionProps<"te
  * The admin's picked products as the shop's own cards in the shared product
  * rail, drawn by a client component that keeps them live
  * (`landing-products-section.tsx`, which says what is drawn and when). The
- * page's prefetch is narrowed here to this section's picks.
+ * page's prefetch is narrowed here to this section's picks. The cards are the
+ * shop's, in the page's language, so the rail resets the body's mark.
  */
 function ProductsSection({ section, text, context }: LandingSectionProps<"products">) {
   return (
@@ -651,6 +778,7 @@ function ProductsSection({ section, text, context }: LandingSectionProps<"produc
       eyebrow={text.eyebrow}
       heading={text.heading}
       intro={text.intro}
+      railLang={pageLang(context)}
       seed={productRailSeed(context.products, {
         kind: "picks",
         productIds: section.productIds,
@@ -698,16 +826,27 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
 /**
  * The closing call to action, as the home and Roblox pages close: the plain
  * card with one world rule along its top edge, a heading, a line, one button.
+ * As a sticky section it is the same card, and from `2xl` the sticky card: the
+ * words start-aligned under the card's heading, the button the card's width.
  */
 function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
+  const sticky = section.sticky !== undefined;
   const eyebrow = written(text.eyebrow);
   const body = written(text.body);
   const buttonLabel = written(text.buttonLabel);
   return (
-    <section className={LANDING_SECTION}>
-      <Card className="relative mx-auto max-w-3xl overflow-hidden">
+    <section className={cn(LANDING_SECTION, sticky && LANDING_STICKY_SECTION)}>
+      <Card
+        data-sticky-card={sticky || undefined}
+        className="relative mx-auto max-w-3xl overflow-hidden"
+      >
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
-        <CardContent className="flex flex-col items-center py-12 text-center">
+        <CardContent
+          className={cn(
+            "flex flex-col items-center py-12 text-center",
+            sticky && ["2xl:items-stretch 2xl:pb-6 2xl:pt-8", LANDING_STICKY_WORDS],
+          )}
+        >
           {eyebrow !== null && (
             <div className="mb-4">
               <Eyebrow>{eyebrow}</Eyebrow>
@@ -722,8 +861,8 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
               target={section.button}
               label={buttonLabel}
               subject={text.emailSubject}
-              locale={context.locale}
-              className="mt-8"
+              context={context}
+              className={cn("mt-8", sticky && ["2xl:mt-6", LANDING_STICKY_ACTION])}
             />
           )}
         </CardContent>
@@ -738,82 +877,128 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * from `lg`, start-aligned there and centred on a phone, the picture after
  * them.
  *
- * A guide the read did not answer leaves the section out, since there is
- * nothing to offer; one it answered has a file, and the download route picks
- * the reader's by the reader fallback. Whether the reader may download is
- * decided in the browser (`guide-download.tsx`); everything here is the same
- * for every reader.
+ * As a sticky section it is the same section, and from `2xl` the sticky card:
+ * the cover picture across its top, the header and line under it, the
+ * download the card's full width.
+ *
+ * The page body leaves out a guide the read did not answer, so one drawn here
+ * has a file, and the download route picks the reader's by the reader
+ * fallback. Whether the reader may download is decided in the browser
+ * (`guide-download.tsx`); everything here is the same for every reader.
  */
 function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
-  if (!context.hasGuide(section.guideId)) return null;
+  const sticky = section.sticky !== undefined;
   const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const eyebrow = written(text.eyebrow);
   const heading = written(text.heading);
   const description = written(text.description);
+  const ownLang = pageLang(context);
+  // A sticky guide is in the flow only below `2xl`, where the page's measure
+  // is never narrowed for a card; from there it is the card's 20rem.
+  const cover =
+    picture === null ? null : (
+      <LandingPicture
+        picture={picture}
+        alt={text.imageAlt}
+        sizes={
+          sticky
+            ? stickyCardSizes(halfColumnSizes(HALF_COLUMN_PX, false))
+            : halfColumnSizes(HALF_COLUMN_PX, context.twoCards)
+        }
+      />
+    );
   return (
-    <section className={LANDING_SECTION}>
-      <div
-        className={cn(
-          "mx-auto",
-          picture === null
-            ? "max-w-3xl text-center"
-            : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
-        )}
-      >
-        <div className={cn(picture !== null && "text-center lg:text-left")}>
-          {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
-          {heading !== null && (
-            <div className={cn(eyebrow !== null && "mt-4")}>
-              {/* As in the hero, the heading turns start-aligned at `md` while
-                  the columns split at `lg`. */}
-              <Heading
-                level={2}
-                step="display"
-                align={picture === null ? "center" : "center-narrow"}
+    <section className={cn(LANDING_SECTION, sticky && LANDING_STICKY_SECTION)}>
+      <StickyFrame sticky={sticky}>
+        <div
+          className={cn(
+            "mx-auto",
+            picture === null
+              ? "max-w-3xl text-center"
+              : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
+            sticky && picture !== null && "2xl:grid-cols-1 2xl:gap-6",
+          )}
+        >
+          <div
+            className={cn(
+              picture !== null && "text-center lg:text-left",
+              sticky && LANDING_STICKY_WORDS,
+            )}
+          >
+            {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
+            {heading !== null && (
+              <div className={cn(eyebrow !== null && "mt-4")}>
+                {/* As in the hero, the heading turns start-aligned at `md` while
+                    the columns split at `lg`. */}
+                <Heading
+                  level={2}
+                  step="display"
+                  align={picture === null ? "center" : "center-narrow"}
+                >
+                  {heading}
+                </Heading>
+              </div>
+            )}
+            {description !== null && (
+              <p
+                className={cn(
+                  "mt-4 text-lg leading-8 text-muted-foreground",
+                  // The card's line is body text, as its header's intro.
+                  sticky && "2xl:text-base 2xl:leading-normal",
+                )}
               >
-                {heading}
-              </Heading>
+                {description}
+              </p>
+            )}
+            <div lang={ownLang}>
+              <GuideDownload
+                guideId={section.guideId}
+                locale={context.locale}
+                placement={picture === null ? "centred" : "beside-picture"}
+                sticky={sticky}
+              />
             </div>
-          )}
-          {description !== null && (
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
-          )}
-          {/* exact-locale: resets the body's language mark for our own words */}
-          <div lang={context.textLocale === context.locale ? undefined : context.locale}>
-            <GuideDownload
-              guideId={section.guideId}
-              locale={context.locale}
-              besidePicture={picture !== null}
-            />
           </div>
+          {/* After the words in the flow; across the card's top from `2xl`. */}
+          {cover !== null && sticky ? <div className="2xl:order-first">{cover}</div> : cover}
         </div>
-        {picture !== null && (
-          <LandingPicture picture={picture} alt={text.imageAlt} sizes={HALF_COLUMN} />
-        )}
-      </div>
+      </StickyFrame>
     </section>
   );
 }
 
 /**
  * An email sign-up: the heading and intro the page wrote over the site's own
- * form, in the reading column.
+ * form, in the reading column. As a sticky section it is the same section, and
+ * from `2xl` the sticky card: the form's names stacked and its button the
+ * card's full width.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  const sticky = section.sticky !== undefined;
   return (
-    <section className={LANDING_SECTION}>
-      <div className="mx-auto max-w-xl">
-        <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
-        <div className="mt-10">
-          <LandingSubscribeForm
-            pageId={context.pageId}
-            sectionId={section.id}
-            locale={context.locale}
-            buttonLabel={written(text.buttonLabel) ?? ""}
-            preview={context.preview}
+    <section className={cn(LANDING_SECTION, sticky && LANDING_STICKY_SECTION)}>
+      <StickyFrame sticky={sticky}>
+        <div className="mx-auto max-w-xl">
+          <SectionHeader
+            eyebrow={text.eyebrow}
+            heading={text.heading}
+            intro={text.intro}
+            sticky={sticky}
           />
+          {/* The form's own words are the page's; only its button label is the version's. */}
+          <div lang={pageLang(context)} className={cn("mt-10", sticky && "2xl:mt-6")}>
+            <LandingSubscribeForm
+              pageId={context.pageId}
+              sectionId={section.id}
+              locale={context.locale}
+              buttonLabel={written(text.buttonLabel) ?? ""}
+              buttonLabelLang={textLang(context)}
+              preview={context.preview}
+              sticky={sticky}
+            />
+          </div>
         </div>
-      </div>
+      </StickyFrame>
     </section>
   );
 }

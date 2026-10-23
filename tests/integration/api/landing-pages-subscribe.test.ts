@@ -8,8 +8,7 @@ import type { PublishedLandingPage } from "@/services/landing-pages/landing-page
  * **A landing page's email sign-up, end to end through the route and the
  * Klaviyo client.** A public form a stranger controls, whose one power is
  * putting whatever address it is handed on the newsletter list. So what is
- * pinned is the shape of that power: a bot's honeypot fill costs nothing and
- * learns nothing, a new and a known address get the same answer, the UTM
+ * pinned is the shape of that power: a new and a known address get the same answer, the UTM
  * values reach Klaviyo only under marketing consent, the two calls are exactly
  * Klaviyo's profile-import and subscribe contracts carrying nothing beyond
  * what the owner ruled, any Klaviyo refusal or timeout is a generic 502 whose
@@ -65,7 +64,6 @@ const VALID = {
   firstName: " Aino ",
   lastName: " Virtanen ",
   consent: true,
-  website: "",
   utm: { source: "newsletter", campaign: "autumn" },
 };
 
@@ -235,16 +233,6 @@ describe("POST /api/landing-pages/subscribe", () => {
     expect(first.status).toBe(200);
     expect(first.status).toBe(second.status);
     expect(await first.json()).toEqual(await second.json());
-  });
-
-  describe("the honeypot", () => {
-    it("answers a filled one as a success, sending nothing", async () => {
-      const response = await POST(request({ ...VALID, website: "https://spam.example" }));
-      expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ success: true });
-      expect(mockFetch).not.toHaveBeenCalled();
-      expect(mockGetPublishedPage).not.toHaveBeenCalled();
-    });
   });
 
   describe("refusals", () => {

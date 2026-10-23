@@ -139,14 +139,30 @@ export function landingStructuredParts(
 }
 
 /**
+ * A picture a copy names — from a section or a version's share picture — as
+ * the copy carries it. Every one is there: the database derives a copy's
+ * pictures from everything it names, in the same row write, refuses an entry
+ * that is gone, and unlinks a removed one from the copy in the removal's own
+ * write, and each read takes the copy and its pictures in one statement. So a
+ * missing one is a broken invariant, and throws rather than paint a page short
+ * of a picture.
+ */
+export function landingCopyPicture(
+  pictures: Readonly<Record<string, LandingPicture>>,
+  imageId: string,
+): LandingPicture {
+  if (!Object.hasOwn(pictures, imageId)) {
+    throw new Error(`The copy names the picture ${imageId} and carries no path for it`);
+  }
+  return pictures[imageId];
+}
+
+/**
  * The picture a live page leads with — the hero's — as its stored path and
  * purpose and its alt text, or null when the hero has none. A hero's picture
  * is wide, which the database keeps true. The page's structured data names
  * this picture, and so does its link preview unless the shown version sets
- * a share picture of its own (`landingShareCard`). A picture with no path is
- * treated as none: the database derives the paths and unlinks a removed
- * picture, so it should not arise, and naming no picture is the safe answer
- * if it does.
+ * a share picture of its own (`landingShareCard`).
  */
 export function landingLeadPicture(
   page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "pictures">,
@@ -154,8 +170,8 @@ export function landingLeadPicture(
   const part = landingStructuredParts(page.sections, page.sectionTexts).find(
     (candidate) => candidate.kind === "image",
   );
-  if (part === undefined || !Object.hasOwn(page.pictures, part.imageId)) return null;
-  return { ...page.pictures[part.imageId], alt: part.alt };
+  if (part === undefined) return null;
+  return { ...landingCopyPicture(page.pictures, part.imageId), alt: part.alt };
 }
 
 /**

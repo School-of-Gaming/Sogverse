@@ -4,7 +4,7 @@ import type {
   LandingPicture,
   LocalizedLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
-import { landingLeadPicture } from "./landing-section-seo";
+import { landingCopyPicture, landingLeadPicture } from "./landing-section-seo";
 
 /** What a share card is read from: one version of a page, live or working. */
 export type LandingShareCardSource = Pick<
@@ -44,10 +44,7 @@ export interface LandingShareCard {
  * version's share title, else its page title. **The picture** is the
  * version's share picture with its share alt text, else the hero's picture
  * (`landingLeadPicture`) with the hero's alt text, else none, and the card is
- * the site-wide one. A picture's alt text falls back to the card's title. A
- * share picture whose picture the copy does not carry is treated as none, as the
- * hero's is: the database derives the paths and unsets a removed picture, so
- * it should not arise, and the hero is the safe answer if it does.
+ * the site-wide one. A picture's alt text falls back to the card's title.
  *
  * The description is always the summary, so it is no part of this.
  */
@@ -58,16 +55,34 @@ export function landingShareCard(page: LandingShareCardSource): LandingShareCard
 }
 
 function sharePicture(page: LandingShareCardSource, title: string): LandingSharePicture {
-  if (page.shareImageId !== null && Object.hasOwn(page.pictures, page.shareImageId)) {
+  if (page.shareImageId !== null) {
     return {
       source: "custom",
-      ...page.pictures[page.shareImageId],
+      ...landingCopyPicture(page.pictures, page.shareImageId),
       alt: page.shareImageAlt === "" ? title : page.shareImageAlt,
     };
   }
   const hero = landingLeadPicture(page);
   if (hero === null) return { source: "site" };
   return { source: "hero", path: hero.path, purpose: hero.purpose, alt: hero.alt ?? title };
+}
+
+/**
+ * Whether two cards look the same where the page is shared: the same title,
+ * the same picture (or both the site-wide card) and the same alt text. Where
+ * each half comes from is not compared, so a share picture that is the hero's
+ * own picture shares as the hero's does.
+ */
+export function sameSharedCard(a: LandingShareCard, b: LandingShareCard): boolean {
+  if (a.title !== b.title) return false;
+  if (a.picture.source === "site" || b.picture.source === "site") {
+    return a.picture.source === b.picture.source;
+  }
+  return (
+    a.picture.path === b.picture.path &&
+    a.picture.purpose === b.picture.purpose &&
+    a.picture.alt === b.picture.alt
+  );
 }
 
 /** Which halves of a share card are the page's own overrides, as one name. */

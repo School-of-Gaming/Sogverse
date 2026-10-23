@@ -11,9 +11,9 @@ import {
  * An email sign-up form: a reader leaves their address, and optionally their
  * first and last name, to join the newsletter list in Klaviyo, single opt-in.
  *
- * **No shared field but the background every section takes.** The list a
- * reader joins is the deployment's configuration, the same for every page, so
- * nothing about it is the page's to choose. A later field naming what the
+ * **No shared field but the background and the sticky side every section
+ * takes.** The list a reader joins is the deployment's configuration, the
+ * same for every page, so nothing about it is the page's to choose. A later field naming what the
  * reader receives once signed up (a download, say) would be structure and
  * would join here.
  *
@@ -44,6 +44,7 @@ const text = z
 export const subscribeSection = {
   type: "subscribe",
   label: "Email sign-up",
+  sticky: true,
   section,
   text,
   missingText: (_section, words) => [

@@ -9,6 +9,8 @@ import {
   LANDING_SECTION_BACKGROUNDS,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
+  LANDING_STICKY_SIDES,
+  LANDING_STICKY_TYPES,
   LANDING_TESTIMONIAL_ARRANGEMENTS,
   LANDING_TESTIMONIAL_SLOTS,
   landingStructureProblem,
@@ -71,7 +73,7 @@ const buttonTarget = z
         .trim()
         .regex(/^\/(?!\/)/, "A site path starts with a single /")
         .describe(
-          "A page of this site by its path without a language prefix, e.g. /shop/<product id>; readers are taken to it in their own language.",
+          "A page of this site by its path without a language, e.g. /shop/<product id>; it opens in the language of the page the button is on. A path with a language or translated segments (/fi/kauppa/<id>) is accepted and stored without it, a slug page's address is stored at its id address, and a path no page is served from is refused.",
         ),
     }),
     z.strictObject({
@@ -81,7 +83,9 @@ const buttonTarget = z
         .trim()
         .url("Not a web address")
         .regex(/^https?:\/\//, "A web address starts with http:// or https://")
-        .describe("Another site's http(s) address. Uncommon: prefer a page of this site."),
+        .describe(
+          "Another site's http(s) address. Uncommon: prefer a page of this site. An address on this site sent here is stored as an internal path.",
+        ),
     }),
     z.strictObject({
       kind: z.literal("email"),
@@ -98,7 +102,9 @@ const buttonTarget = z
 
 /**
  * The background every section but the hero takes, spread into each of their
- * structures as the registry spreads its own.
+ * structures as the registry spreads its own. The registry requires one; an
+ * AI app may leave it out, and this is where the omission becomes `default`,
+ * before the registry reads the structure.
  */
 const backgroundField = {
   background: z
@@ -356,7 +362,7 @@ export const MCP_LANDING_SECTIONS: {
   },
   products: {
     about:
-      "Products of any type — clubs, municipality clubs, camps and events — each drawn as the shop's own card — name, schedule, ages, price, seats and whether registration is open, all live — in a carousel, in the order picked, each card linking to the product's page (a municipality club's is under its town's schools page). Pick at least one, each once; there is no maximum, but a handful reads best. Find them with list_products: a product it reports as listed is drawn. Picks go stale every term: a product that has ended or is unlisted is simply not drawn, and a section with none of its picks listed is not drawn at all, so readers never see a stale card. get_landing_page reports each products section's picks under productPicks — shown or not, and why not — so check it and swap in next term's products when a term ends. A pick no product has is refused when the structure is saved. The heading, eyebrow and intro are optional words, never required.",
+      "Products of any type — clubs, municipality clubs, camps and events — each drawn as the shop's own card — name, schedule, ages, price, seats and whether registration is open, all live — in a carousel, in the order picked, each card linking to the product's page (a municipality club's is under its town's schools page). Pick at least one, each once; there is no maximum, but a handful reads best. Find them with list_products: a product it reports as listed is drawn. Picks go stale every term: a product that has ended or is unlisted is simply not drawn, and a section with none of its picks listed is not drawn at all, so readers never see a stale card. get_landing_page reports each products section's picks in the working copy under productPicks — whether each would be drawn once published, and why not — so check it and swap in next term's products when a term ends. A pick no product has is refused when the structure is saved. The heading, eyebrow and intro are optional words, never required.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("products"),
@@ -485,6 +491,28 @@ export const MCP_LANDING_SECTIONS: {
 // Inputs built from the record
 // ---------------------------------------------------------------------------
 
+/** The types that may be sticky, by their names as the tools write them. */
+const STICKY_TYPES = LANDING_STICKY_TYPES.map(
+  (type) => `${type} (${LANDING_SECTIONS[type].label})`,
+).join(", ");
+
+/** How a sticky section is drawn, for the AI app. */
+export const STICKY_MANUAL = `A page may mark a section sticky, by giving it sticky: ${LANDING_STICKY_SIDES.join(" or ")}; only these types may be: ${STICKY_TYPES}. A page has at most one sticky section on each side, so two at most, one left and one right. A sticky section is an ordinary section that wide screens also lift into the page's margin. On narrower screens (below 1536px), phones and laptops included, it is drawn exactly as the same section would be without sticky: where it sits in the list is where it appears, on its own background, so a card background puts it on a band like any other section and a default one between two card sections keeps their bands apart. So place it in the list where it reads best on a phone. On wide screens (1536px and wider) it leaves the flow of the page and stands as a narrow card in the page's margin on its side, pinned under the site header as the reader scrolls; its background is not drawn there, since the card carries its own edge, and the sections around it close up, so two card sections either side of it meet as one band. Every other section keeps its full width where the screen allows: with one card, the sections stay in the page's centre and move away from the card only as far as the screen requires; with a card on each side, they stay centred and are narrower until the screen is about 1870px wide. In the card its words are start-aligned under a smaller heading, and its button, form or download spans the card's width; a guide's cover picture runs across the card's top. Removing the section, or leaving sticky out, unmarks it. A sticky guide readers cannot be offered draws nothing, neither in the list nor as a card, as a guide that is not sticky draws nothing.`;
+
+/**
+ * The shared field every section takes, as the registry's `stickyField`; the
+ * structure rule then refuses it on a type that may not be sticky, with a
+ * sentence naming the types that may.
+ */
+const sticky = {
+  sticky: z
+    .enum(LANDING_STICKY_SIDES)
+    .optional()
+    .describe(
+      `Makes this a sticky section, its card on this side on wide screens; at most one section per side. Only for ${STICKY_TYPES}; leave it out on every other section.`,
+    ),
+};
+
 const { hero, ...afterHero } = MCP_LANDING_SECTIONS;
 const others = Object.values(afterHero);
 
@@ -496,8 +524,8 @@ const others = Object.values(afterHero);
 export const mcpLandingStructure = z
   .array(
     z.discriminatedUnion("type", [
-      hero.structure,
-      ...others.map((section) => section.structure),
+      hero.structure.extend(sticky),
+      ...others.map((section) => section.structure.extend(sticky)),
     ]),
   )
   .describe(
@@ -576,7 +604,12 @@ export function describeRequiredWords(type: LandingSectionType): string {
   return required.length === 0 ? "none" : required.join("; ");
 }
 
-/** What the arrangement rule refuses, from the rule itself. */
+/**
+ * What the arrangement rule refuses about the page as a whole, from the rule
+ * itself. The sticky rules are STICKY_MANUAL's: the rule's refusal of a
+ * second sticky section names the sections of one structure, so it reads as
+ * one refusal rather than as the rule.
+ */
 const STRUCTURE_RULES = [
   landingStructureProblem([{ id: "a", type: "text" }]),
   landingStructureProblem([
@@ -606,5 +639,6 @@ export const SECTIONS_MANUAL = [
       `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about}${describePictureShapes(type)} Required words in every language: ${describeRequiredWords(type)}.`,
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
-  `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}, default when left out. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,
+  `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}; a section sent without one is saved on default. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,
+  STICKY_MANUAL,
 ].join("\n");

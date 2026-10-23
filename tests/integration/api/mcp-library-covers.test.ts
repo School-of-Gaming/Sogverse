@@ -340,7 +340,7 @@ describe("set_library_article_cover", () => {
 
   it("quotes the database's refusal of an entry that is not a Library cover", async () => {
     const sentence =
-      "That picture is a product picture, and a Library cover has to be a library_cover one (catalogue_images row x)";
+      "The picture x is a product picture, and an article's cover can only be a Library cover";
     library.setArticleCover.mockRejectedValue(
       Object.assign(new Error(sentence), { code: "23514", details: null, hint: null }),
     );

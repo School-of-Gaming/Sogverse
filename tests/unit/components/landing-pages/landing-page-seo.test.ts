@@ -28,8 +28,10 @@ const {
   landingPagePath,
   resolveLandingPage,
 } = await import("@/components/landing-pages/landing-page-address");
-const { landingPageMetadata } = await import(
-  "@/components/landing-pages/landing-page-metadata"
+const { landingPageMetadata, landingPageSeo, landingSeoMetadata, renderedLandingSeo } =
+  await import("@/components/landing-pages/landing-page-metadata");
+const { landingPublishedCopy } = await import(
+  "@/services/landing-pages/landing-pages.forecast"
 );
 const { landingPageJsonLd, landingProductListsJsonLd } = await import(
   "@/components/landing-pages/landing-page-json-ld"
@@ -209,12 +211,12 @@ describe("landingPageMetadata", () => {
     });
   });
 
-  it("takes the site card when the hero's picture has no path", async () => {
-    const metadata = await landingPageMetadata({ ...PAGE, pictures: {} }, "en");
-
-    expect(metadata.openGraph).toMatchObject({
-      images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],
-    });
+  it("throws for a hero picture the copy does not carry", async () => {
+    // The database derives a copy's pictures from everything it names, so a
+    // missing one is a broken invariant, never a page without a picture.
+    await expect(landingPageMetadata({ ...PAGE, pictures: {} }, "en")).rejects.toThrow(
+      /carries no path/,
+    );
   });
 
   describe("with the share card overridden", () => {
@@ -332,20 +334,20 @@ describe("landingPageMetadata", () => {
     });
 
     it("falls back to the hero's picture once the share picture has left the catalogue", async () => {
-      // The removal unsets the id; a copy still naming one whose path it does
-      // not carry is read the same way.
+      // The removal unsets the id.
       const unset = overridden({ en: { shareImageAlt: "A club room" } });
+      const metadata = await landingPageMetadata(unset, "en");
+      expect(metadata.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Children at a club" })],
+      });
+    });
+
+    it("throws for a share picture the copy names and does not carry", async () => {
       const pathless = {
         ...overridden({ en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" } }),
         pictures: PAGE.pictures,
       };
-
-      for (const page of [unset, pathless]) {
-        const metadata = await landingPageMetadata(page, "en");
-        expect(metadata.openGraph).toMatchObject({
-          images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Children at a club" })],
-        });
-      }
+      await expect(landingPageMetadata(pathless, "en")).rejects.toThrow(/carries no path/);
     });
 
     it("keeps the page title in a language with no share title while another has one", async () => {
@@ -367,6 +369,163 @@ describe("landingPageMetadata", () => {
     const metadata = await landingPageMetadata(klingon, "tlh");
 
     expect(metadata.alternates).toEqual({ canonical: "/tlh/discover/qapla" });
+  });
+});
+
+const SITE = "https://site.test";
+
+/** PAGE with its English share card overridden whole. */
+const SHARED: PublishedLandingPage = {
+  ...PAGE,
+  pictures: {
+    ...PAGE.pictures,
+    [SHARE_PICTURE]: { path: "pictures/share.jpg", purpose: "landing_image" },
+  },
+  versions: [
+    {
+      ...PAGE.versions[0],
+      shareTitle: "Join a gaming club in Espoo",
+      shareImageId: SHARE_PICTURE,
+      shareImageAlt: "A club room",
+    },
+    PAGE.versions[1],
+  ],
+};
+
+describe("renderedLandingSeo", () => {
+  it("reads the metadata out as served: the template's suffix, absolute addresses, hreflang with x-default", async () => {
+    const seo = await landingPageSeo(PAGE, "fi");
+
+    expect(renderedLandingSeo(seo, SITE)).toEqual({
+      title: "Pelikerhot Espoossa | School of Gaming",
+      titleLength: 38,
+      description: "Iltapäiväkerhot.",
+      canonical: `${SITE}/fi/tutustu/pelikerhot-espoo`,
+      hreflang: {
+        en: `${SITE}/en/discover/gaming-clubs-espoo`,
+        fi: `${SITE}/fi/tutustu/pelikerhot-espoo`,
+        "x-default": `${SITE}/en/discover/gaming-clubs-espoo`,
+      },
+      shareCard: {
+        title: "Pelikerhot Espoossa",
+        description: "Iltapäiväkerhot.",
+        imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/club.jpg`,
+        imageAlt: "Lapsia",
+      },
+    });
+  });
+
+  it("serves the site card when the hero has no picture", async () => {
+    const seo = await landingPageSeo(
+      { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
+      "en",
+    );
+
+    expect(renderedLandingSeo(seo, SITE).shareCard).toMatchObject({
+      imageUrl: `${SITE}/opengraph-images/site?locale=en`,
+      imageAlt: "en:metadata.og.site.alt",
+    });
+  });
+
+  it("serves the version's own share card when it sets one", async () => {
+    const seo = await landingPageSeo(SHARED, "en");
+
+    expect(renderedLandingSeo(seo, SITE)).toMatchObject({
+      // The <title> stays the page title; only the card takes the share title.
+      title: "Gaming clubs in Espoo | School of Gaming",
+      shareCard: {
+        title: "Join a gaming club in Espoo",
+        description: "After-school clubs for Espoo families.",
+        imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/share.jpg`,
+        imageAlt: "A club room",
+      },
+    });
+  });
+
+  it("counts a long title with its suffix", async () => {
+    const long = "Pelikerhot ja pelikasvatusta Espoon kouluille ja perheille koko lukuvuoden ajan";
+    const seo = await landingPageSeo(
+      { ...PAGE, versions: [{ ...PAGE.versions[0], title: long }] },
+      "en",
+    );
+
+    const rendered = renderedLandingSeo(seo, SITE);
+    expect(rendered.title).toBe(`${long} | School of Gaming`);
+    expect(rendered.titleLength).toBe(long.length + " | School of Gaming".length);
+    expect(rendered.shareCard.title).toBe(long);
+  });
+
+  it("is the page's own metadata: the page and the MCP tools read one function", async () => {
+    for (const [page, locale] of [
+      ...["en", "fi", "sv", "tlh"].map((locale) => [PAGE, locale] as const),
+      [SHARED, "en"] as const,
+    ]) {
+      const seo = await landingPageSeo(page, locale);
+      const metadata = await landingPageMetadata(page, locale);
+      expect(metadata).toEqual(landingSeoMetadata(seo));
+
+      const rendered = renderedLandingSeo(seo, SITE);
+      // Next applies the layout's template to the title and resolves every
+      // relative address on `metadataBase`, the site's origin.
+      expect(rendered.title).toBe(`${String(metadata.title)} | School of Gaming`);
+      expect(rendered.canonical).toBe(new URL(String(metadata.alternates?.canonical), SITE).href);
+      expect(rendered.shareCard.imageUrl).toBe(new URL(seo.card.image.url, SITE).href);
+      expect(metadata.openGraph).toMatchObject({
+        title: rendered.shareCard.title,
+        images: [seo.card.image],
+      });
+      expect(metadata.twitter).toMatchObject({
+        title: rendered.shareCard.title,
+        images: [seo.card.image],
+      });
+    }
+  });
+});
+
+describe("landingPublishedCopy", () => {
+  const draftVersion = (
+    version: PublishedLandingPage["versions"][number],
+    missing: string[] = [],
+  ) => ({ ...version, missing });
+
+  it("is the working copy with its complete versions alone, as a publish would leave it", () => {
+    const copy = landingPublishedCopy({
+      draft: {
+        id: ID,
+        sections: PAGE.sections,
+        pictures: PAGE.pictures,
+        versions: [draftVersion(PAGE.versions[0]), draftVersion(PAGE.versions[1], ["title"])],
+        createdAt: "2026-08-01T08:00:00Z",
+        updatedAt: "2026-10-05T08:00:00Z",
+        lastSavedBy: null,
+        lastSavedVia: null,
+      },
+      publication: PAGE,
+    });
+
+    expect(copy).toEqual({
+      ...PAGE,
+      publishedAt: "2026-10-05T08:00:00Z",
+      versions: [PAGE.versions[0]],
+    });
+  });
+
+  it("is null when no version is complete", () => {
+    expect(
+      landingPublishedCopy({
+        draft: {
+          id: ID,
+          sections: PAGE.sections,
+          pictures: {},
+          versions: [draftVersion(PAGE.versions[0], ["summary"])],
+          createdAt: "2026-08-01T08:00:00Z",
+          updatedAt: "2026-10-05T08:00:00Z",
+          lastSavedBy: null,
+          lastSavedVia: null,
+        },
+        publication: null,
+      }),
+    ).toBeNull();
   });
 });
 

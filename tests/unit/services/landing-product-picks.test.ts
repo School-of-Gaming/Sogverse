@@ -7,7 +7,7 @@ import {
 import type { ProductListingFactsRow } from "@/services/products/products.service";
 
 /**
- * **Which of a page's picks readers are shown, and why the others are not** —
+ * **Which of a structure's picks would be drawn, and why the others would not** —
  * what the status page and the MCP read tools report per products section.
  * Shown is the listing's answer, the one the public page draws by; the
  * reasons only explain an absence, every one that holds, in the product's own

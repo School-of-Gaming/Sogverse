@@ -441,6 +441,7 @@
     "backToList": "Sap ghItlhmeyDaq yIchegh",
     "notFound": "ngu’meH mI’vam ghaj Sap ghItlh tu’lu’be’.",
     "loadError": "Sap ghItlhvam lI’laHbe’lu’. yIchu’qa’.",
+    "listLoadError": "Sap ghItlhmey lI’laHbe’lu’. yIchu’qa’.",
     "statusPage": {
       "title": "Sap ghItlh",
       "authoring": "Sapvam DachoHchugh, Sogverse rarlu’bogh De’wI’ qoq yItlhob.",
@@ -457,7 +458,8 @@
         "stillNeeded": "pIm ’e’ ghajnIS:",
         "address": "Daq:",
         "noAddress": "pagh",
-        "addressChanging": "DaH {address} Daq. ngeHlu’qa’DI’, Daqvam Daq choHlu’; Daq ngo’ rar mutlhwI’ Qapbe’."
+        "addressChanging": "DaH {address} Daq. ngeHlu’qa’DI’, Daqvam Daq choHlu’; Daq ngo’ rar mutlhwI’ Qapbe’.",
+        "removed": "teqlu’pu’, ’ach DaH Daq yIn. ngeHlu’qa’DI’, Daq teqlu’."
       },
       "missing": {
         "inSection": "{number} ’ay’ ({type}): {field}",
@@ -476,7 +478,8 @@
           "page": "pong: nav pong."
         },
         "description": "QIjmeH mu': Hoch Hol nav mu' ngaj.",
-        "stale": "nav pong pagh tagh mIllogh choHlu'DI', pong le' pagh mIllogh le' choHbe'. nav mabbe'chugh, yIteqmoH 'e' yIra'."
+        "stale": "nav pong pagh tagh mIllogh choHlu'DI', pong le' pagh mIllogh le' choHbe'. nav mabbe'chugh, yIteqmoH 'e' yIra'.",
+        "nextPublish": "qaSpa' ghItlh veb, Hol rar mu'tlhegh ngo' leghlu'taH. yIloS, SuvwI'."
       },
       "products": {
         "heading": "Dochmey wIwIvta’bogh",

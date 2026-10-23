@@ -321,7 +321,7 @@ describe("a refused write", () => {
   it.each([
     ["23514", "The article cannot be published without a summary"],
     ["P0002", "Library article not found"],
-    ["23503", "That picture is no longer in the catalogue"],
+    ["23503", "No picture in the catalogue has the id x"],
   ])("quotes the database's own sentence under %s", (code, message) => {
     expect(libraryWriteFailure({ code, message })).toEqual({
       kind: "reason",

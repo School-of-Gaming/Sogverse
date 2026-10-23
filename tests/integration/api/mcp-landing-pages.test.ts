@@ -46,6 +46,7 @@ const landing = {
   removeVersion: vi.fn(),
   publishPage: vi.fn(),
   unpublishPage: vi.fn(),
+  listPlacedGuideLabels: vi.fn(),
 };
 vi.mock("@/services/landing-pages/landing-pages.service", () => ({
   LandingPageService: vi.fn(() => landing),
@@ -68,7 +69,9 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
-// Each locale's own message file, as the clone's copy markers are read.
+// Each locale's own message file, as the clone's copy markers are read. The
+// site card's alt text reads the catalog too, which a request outside a
+// rendered page reaches through `next-intl/server`; a stub says which locale asked.
 vi.mock("next-intl/server", async () => {
   const catalogs = {
     en: (await import("../../../messages/en/admin.json")).default,
@@ -79,6 +82,7 @@ vi.mock("next-intl/server", async () => {
   };
   return {
     getTranslations: async ({ locale, namespace }: { locale: keyof typeof catalogs; namespace: string }) => {
+      if (namespace === "metadata.og") return (key: string) => `${locale}:${namespace}.${key}`;
       expect(namespace).toBe("admin.landingPages");
       return (key: "copyMarker") => {
         const message: unknown = catalogs[locale].landingPages[key];
@@ -252,6 +256,11 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const method of Object.values(landing)) method.mockReset();
   landing.getAdminPage.mockResolvedValue(PAGE);
+  landing.listPlacedGuideLabels.mockResolvedValue({});
+  // A write answers its id and the links it stored elsewhere: none, unless a case says.
+  landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
+  landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [] });
+  landing.saveVersion.mockResolvedValue({ id: ID, linkRewrites: [] });
   catalogue.listImages.mockReset();
   catalogue.getUsage.mockReset();
   mockFindOrCreate.mockReset();
@@ -290,6 +299,18 @@ describe("reading", () => {
         },
       ],
     });
+  });
+
+  it("gives a page that is not live no unpublished changes either way: null, not false", async () => {
+    landing.listAdminPages.mockResolvedValue([{ ...LIST_ITEM, isPublished: false }]);
+    landing.getAdminPage.mockResolvedValue({ ...PAGE, publication: null, hasUnpublishedChanges: false });
+
+    const list = await tool("list_landing_pages");
+    expect(list.structuredContent).toMatchObject({
+      pages: [{ live: false, hasUnpublishedChanges: null }],
+    });
+    const read = await tool("get_landing_page", { pageId: ID });
+    expect(read.structuredContent).toMatchObject({ live: null, hasUnpublishedChanges: null });
   });
 
   it("reads one page whole, with addresses, completeness and what a publish would do", async () => {
@@ -338,7 +359,7 @@ describe("reading", () => {
     expect(resultText(result)).toContain(`Picture ${CASTLE} (wide 16:9): ${BUCKET}/castle.jpg`);
   });
 
-  it("reports each products section's picks, shown or not and why", async () => {
+  it("reports each products section's picks, whether each would be drawn and why not", async () => {
     const PICKS = "a1000000-0000-4000-8000-000000000005";
     const CLUB = "c3000000-0000-4000-8000-000000000001";
     const CAMP = "c3000000-0000-4000-8000-000000000002";
@@ -372,19 +393,41 @@ describe("reading", () => {
       {
         section: "section 5 (Products)",
         sectionId: PICKS,
-        shown: 1,
+        drawnPicks: 1,
         picked: 2,
         drawn: true,
         picks: [
-          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, notShownBecause: [] },
+          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], drawn: true, notDrawnBecause: [] },
           {
             productId: CAMP,
             names: [{ locale: "en", name: "Summer camp" }],
-            shown: false,
-            notShownBecause: ["it is unlisted", "its term has ended"],
+            drawn: false,
+            notDrawnBecause: ["it is unlisted", "its term has ended"],
           },
         ],
       },
+    ]);
+  });
+
+  it("names each guide section's guide by its label, read once for the working copy", async () => {
+    const OFFER = "a1000000-0000-4000-8000-000000000006";
+    const SIDEBAR = "a1000000-0000-4000-8000-000000000007";
+    const PARENTS = "d4000000-0000-4000-8000-000000000001";
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      ...PAGE.draft.sections,
+      { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
+      { id: SIDEBAR, type: "guide", background: "default", guideId: PARENTS, sticky: "right" },
+    ];
+    landing.getAdminPage.mockResolvedValue({ ...PAGE, draft: { ...PAGE.draft, sections } });
+    landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledTimes(1);
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
+    expect(result.structuredContent?.guides).toEqual([
+      { section: "section 5 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
+      { section: "section 6 (Guide)", sectionId: SIDEBAR, guideId: PARENTS, label: "Parents' guide 2026" },
     ]);
   });
 
@@ -733,7 +776,7 @@ describe("the share card", () => {
 
 describe("creating", () => {
   it("gives new sections ids, writes the first language and answers the address", async () => {
-    landing.createPage.mockResolvedValue(ID);
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
 
     const result = await tool("create_landing_page", {
       locale: "fi",
@@ -806,7 +849,7 @@ describe("creating", () => {
   });
 
   it("takes a button that opens an email", async () => {
-    landing.createPage.mockResolvedValue(ID);
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
 
     const result = await tool("create_landing_page", {
       locale: "en",
@@ -951,7 +994,7 @@ describe("cloning", () => {
     const result = await tool("clone_landing_page", { pageId: ID });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("tells the AI app a clone is a structure to rewrite, never a page to publish as it is", async () => {
@@ -1005,6 +1048,26 @@ describe("saving", () => {
         { locale: "fi", complete: false },
       ],
     });
+  });
+
+  it("names the guide a saved guide section offers, read from the saved structure", async () => {
+    const OFFER = "a1000000-0000-4000-8000-000000000006";
+    const PARENTS = "d4000000-0000-4000-8000-000000000001";
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      PAGE.draft.sections[0],
+      { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
+    ];
+    landing.getAdminPage
+      .mockResolvedValueOnce(PAGE)
+      .mockResolvedValueOnce({ ...PAGE, draft: { ...PAGE.draft, sections } });
+    landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
+
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
+    expect(result.structuredContent?.guides).toEqual([
+      { section: "section 2 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
+    ]);
   });
 
   it("saves each section's background, adjacent card sections included, reading one left out as default", async () => {
@@ -1141,7 +1204,7 @@ describe("saving", () => {
       { id: PICKS, type: "products", background: "default", productIds: [GONE] },
     ]);
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("refuses a products section with no picks before anything is sent", async () => {
@@ -1171,7 +1234,7 @@ describe("saving", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("answers anything else with a generic line", async () => {
@@ -1226,7 +1289,7 @@ describe("removing a language", () => {
     const result = await tool("remove_landing_page_language", { pageId: ID, locale: "en" });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("answers an id no page has as a tool error, removing nothing", async () => {
@@ -1282,7 +1345,17 @@ describe("publishing", () => {
 
     const result = await tool("publish_landing_page", { pageId: ID });
 
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing changed on the site: ${sentence}`);
+  });
+
+  it("says nothing changed on the site when the database refuses an unpublish", async () => {
+    const sentence = "No landing page has that id";
+    landing.unpublishPage.mockRejectedValue(dbError("P0002", sentence));
+
+    const result = await tool("unpublish_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(`Nothing changed on the site: ${sentence}`);
   });
 
   it("unpublishes, keeping the working copy", async () => {
@@ -1473,7 +1546,9 @@ describe("pictures", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe("An image section's pictures must all be one shape: wide 16:9 and square 1:1.");
+    expect(resultText(result)).toBe(
+      "Nothing was saved: An image section's pictures must all be one shape: wide 16:9 and square 1:1.",
+    );
   });
 
   it.each([
@@ -1561,6 +1636,216 @@ describe("pictures", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain("landing page picture must be exactly 1600 × 900");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("what a publish now would serve", () => {
+  const SUFFIX = " | School of Gaming";
+
+  it("gives each version the page's own rendered metadata, and what differs from what is live", async () => {
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [en, fi] = z
+      .array(z.object({ locale: z.string(), seo: z.unknown() }))
+      .parse(result.structuredContent?.versions);
+    expect(en.seo).toEqual({
+      title: `Gaming clubs in Espoo${SUFFIX}`,
+      titleLength: `Gaming clubs in Espoo${SUFFIX}`.length,
+      description: "After-school clubs.",
+      canonical: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      // English alone would be live: Finnish is left out until complete.
+      hreflang: {
+        en: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+        "x-default": `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      },
+      shareCard: {
+        title: "Gaming clubs in Espoo",
+        description: "After-school clubs.",
+        // The hero's picture, with the title for want of alt text.
+        imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/castle.jpg`,
+        imageAlt: "Gaming clubs in Espoo",
+      },
+      // Live now with no hero picture, so readers are shared the site card.
+      liveDiffers: {
+        "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
+        "shareCard.imageAlt": "en:metadata.og.site.alt",
+      },
+    });
+    // A version a publish would leave out serves nothing.
+    expect(fi.seo).toBeNull();
+  });
+
+  it("reports a language's own share card as the page serves it", async () => {
+    const SHARE = "b1000000-0000-4000-8000-000000000099";
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        pictures: {
+          ...PAGE.draft.pictures,
+          [SHARE]: { path: "share.jpg", purpose: "landing_image" },
+        },
+        versions: [
+          {
+            ...en,
+            shareTitle: "Join a gaming club in Espoo",
+            shareImageId: SHARE,
+            shareImageAlt: "A club room",
+          },
+          fi,
+        ],
+      },
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [enView] = z
+      .array(z.object({ seo: z.record(z.string(), z.unknown()).nullable() }))
+      .parse(result.structuredContent?.versions);
+    expect(enView.seo).toMatchObject({
+      // The search title stays the page's own; only the card takes the share title.
+      title: `Gaming clubs in Espoo${SUFFIX}`,
+      shareCard: {
+        title: "Join a gaming club in Espoo",
+        imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/share.jpg`,
+        imageAlt: "A club room",
+      },
+      liveDiffers: {
+        "shareCard.title": "Gaming clubs in Espoo",
+        "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
+        "shareCard.imageAlt": "en:metadata.og.site.alt",
+      },
+    });
+  });
+
+  it("names every language and x-default once two would be live, and the site card without a hero picture", async () => {
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [{ id: HERO, type: "hero" }],
+        pictures: {},
+        versions: [
+          { ...en, title: "A much longer title for the Espoo gaming clubs page than fits" },
+          { ...fi, missing: [] },
+        ],
+      },
+      publication: null,
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [enSeo, fiSeo] = z
+      .array(z.object({ seo: z.record(z.string(), z.unknown()) }))
+      .parse(result.structuredContent?.versions)
+      .map((version) => version.seo);
+    const hreflang = {
+      en: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      fi: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+      "x-default": `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+    };
+    expect(enSeo).toMatchObject({
+      title: `A much longer title for the Espoo gaming clubs page than fits${SUFFIX}`,
+      titleLength: 80,
+      hreflang,
+      shareCard: { imageUrl: `${ORIGIN}/opengraph-images/site?locale=en` },
+    });
+    expect(fiSeo).toMatchObject({
+      title: `Pelikerhot Espoossa${SUFFIX}`,
+      canonical: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+      hreflang,
+      shareCard: { imageUrl: `${ORIGIN}/opengraph-images/site?locale=fi` },
+    });
+    // Not live: nothing to differ from.
+    expect(enSeo).not.toHaveProperty("liveDiffers");
+  });
+
+  it("says what the values are in the tool's description", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    const get = tools.find((t) => t.name === "get_landing_page")?.description;
+    expect(get).toContain(`"<title>${SUFFIX}"`);
+    expect(get).toContain("Check these instead of fetching the page");
+    expect(get).toContain("the version's own shareCard, beside seo");
+    expect(get).toContain("liveDiffers");
+  });
+});
+
+describe("own-site links", () => {
+  const REWRITE = {
+    sectionId: TEXT,
+    section: "section 2 (Text)",
+    locale: "fi",
+    field: "body",
+    text: "kauppa",
+    from: "/fi/kauppa/123",
+    to: "/shop/123",
+  };
+
+  it("lists each link a save stored at another address, from → to", async () => {
+    landing.saveVersion.mockResolvedValue({ id: ID, linkRewrites: [REWRITE] });
+
+    const result = await tool("save_landing_page_text", {
+      pageId: ID,
+      locale: "fi",
+      title: "Pelikerhot Espoossa",
+      summary: "Kerhoja.",
+      sectionTexts: { [TEXT]: { body: "Katso [kauppa](/fi/kauppa/123)." } },
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent?.linkRewrites).toEqual([REWRITE]);
+  });
+
+  it("lists a structure save's button rewrites, and a create's", async () => {
+    const button = { ...REWRITE, sectionId: HERO, section: "section 1 (Hero)", locale: null, field: "button", text: null };
+    landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [button] });
+
+    const saved = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero", button: { kind: "internal", path: "/fi/kauppa/123" } }],
+    });
+    expect(saved.structuredContent?.linkRewrites).toEqual([button]);
+
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [button] });
+    const created = await tool("create_landing_page", {
+      locale: "en",
+      title: "Clubs",
+      sections: [{ type: "hero", button: { kind: "internal", path: "/fi/kauppa/123" } }],
+    });
+    expect(created.structuredContent?.linkRewrites).toEqual([button]);
+  });
+
+  it("carries no linkRewrites when every link was stored as written", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero" }],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).not.toHaveProperty("linkRewrites");
+  });
+
+  it("states how own-site links are stored in every write tool's description", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    for (const name of ["create_landing_page", "save_landing_page_structure", "save_landing_page_text"]) {
+      const description = tools.find((t) => t.name === name)?.description;
+      expect(description, name).toContain("on a Finnish page /shop/<product id> opens /fi/kauppa/<product id>");
+      expect(description, name).toContain("stored at that page's id address");
+      expect(description, name).toContain("A link to a path no page of the site is served from is refused");
+      expect(description, name).toContain("linkRewrites");
+    }
   });
 });
 
@@ -1675,8 +1960,8 @@ describe("testimonials sections", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toContain(
-      `Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
+    expect(resultText(result)).toBe(
+      `Nothing was saved: Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
     );
   });
 

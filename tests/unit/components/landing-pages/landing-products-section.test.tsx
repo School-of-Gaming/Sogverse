@@ -47,6 +47,7 @@ function renderPage(
   sections: LandingSection[],
   texts: LandingSectionTexts,
   listing: ProductBrowseRow[],
+  { textLocale = "en" }: { textLocale?: "en" | "fi" } = {},
 ) {
   const client = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity } } });
   renderedClient = client;
@@ -59,7 +60,7 @@ function renderPage(
           testimonials={{}}
           guideIds={[]}
           sectionTexts={texts}
-          textLocale="en"
+          textLocale={textLocale}
           locale="en"
           products={{ listing, counts: listing.map((row) => emptyCounts(row.id)) }}
           pageId={id(500)}
@@ -111,6 +112,14 @@ describe("a landing page's products section", () => {
       [P(1), P(2)].map((p) => browseRow(p)),
     );
     expect(titleLevels()).toEqual(["2", "2"]);
+  });
+
+  it("marks the shop's cards with the page's language inside a body in another", () => {
+    renderPage([hero, picks([P(1)])], TEXTS, [browseRow(P(1))], { textLocale: "fi" });
+    const card = document.querySelector("article[data-product]");
+    expect(card?.closest("[lang]")?.getAttribute("lang")).toBe("en");
+    const heading = screen.getByRole("heading", { name: "Pick a club" });
+    expect(heading.closest("[lang]")?.getAttribute("lang")).toBe("fi");
   });
 
   it("leaves out a pick the shop no longer lists", () => {

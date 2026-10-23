@@ -5,6 +5,7 @@ import { walkPages } from "@/lib/supabase/paging";
 import {
   LANDING_PRODUCT_TYPES,
   landingPickedProductIds,
+  landingPlacedGuideIds,
   landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
@@ -39,7 +40,11 @@ import {
   type PublishedLandingPage,
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
-import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import {
+  canonicaliseLandingLinks,
+  siteSlugResolver,
+  type LandingLinkRewrite,
+} from "./landing-pages.links";
 import {
   landingProductPicks,
   type LandingProductsSectionPicks,
@@ -177,6 +182,16 @@ function toVersionPayload(version: ParsedLandingVersion) {
 }
 
 /**
+ * What a write answers: the page's id, and each own-site link the link hook
+ * stored at another address than the one written (`canonicaliseLandingLinks`)
+ * — empty when every link was stored as written.
+ */
+export interface LandingWriteResult {
+  id: string;
+  linkRewrites: LandingLinkRewrite[];
+}
+
+/**
  * Landing pages: the admin's working copies and publishing, and the published
  * copies the public pages read.
  *
@@ -249,8 +264,9 @@ export class LandingPageService {
    * query. Each draft version carries what it still needs before publishing
    * takes it, by the TypeScript half of the required-text rule; the page
    * carries the current words of every testimonial its working copy places;
-   * and each products section of the working copy, which of its picks readers
-   * are shown now and why the others are not.
+   * and each products section of the working copy, which of its picks the
+   * listing holds now — the cards that structure draws once published — and
+   * why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -327,7 +343,28 @@ export class LandingPageService {
   }
 
   /**
-   * Each products section's picks, shown or not and why: the listing of every
+   * The label of every guide a structure places, by id — the name admins know
+   * each guide by, read under the admin policy, so an AI app can say which
+   * guide a section offers. A structure placing none reads nothing. Every id
+   * placed has its guide: the app deletes none and a save adding an unknown
+   * one is refused, so an id the read does not answer throws.
+   */
+  async listPlacedGuideLabels(
+    sections: readonly LandingSection[],
+  ): Promise<Record<string, string>> {
+    const ids = landingPlacedGuideIds(sections);
+    if (ids.length === 0) return {};
+    const { data, error } = await this.supabase.from("guides").select("id, label").in("id", ids);
+    if (error) throw error;
+    const labels = Object.fromEntries(data.map((row) => [row.id, row.label]));
+    for (const id of ids) {
+      if (!Object.hasOwn(labels, id)) throw new Error(`No guide has the id ${id}`);
+    }
+    return labels;
+  }
+
+  /**
+   * Each products section's picks, drawn or not and why: the listing of every
    * product type asked about the picks — the answer the public page draws by —
    * and the picks' own rows for the reasons. A structure with no products
    * section reads nothing.
@@ -376,8 +413,11 @@ export class LandingPageService {
   // Admin writes
   // -------------------------------------------------------------------------
 
-  /** Create a page's working copy, whole. Returns its id. */
-  async createPage(input: LandingPageInput): Promise<string> {
+  /**
+   * Create a page's working copy, whole. Returns its id, and each link stored
+   * at another address than the one written.
+   */
+  async createPage(input: LandingPageInput): Promise<LandingWriteResult> {
     const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
       resolver: this.slugResolver(),
     });
@@ -389,7 +429,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("create_landing_page returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**
@@ -397,7 +437,7 @@ export class LandingPageService {
    * shared fields. No version's words are written, except that a section the
    * structure drops takes its words in every language with it.
    */
-  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<string> {
+  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<LandingWriteResult> {
     const write = await canonicaliseLandingLinks(
       { sections: landingSections.parse(sections), versions: [] },
       { resolver: this.slugResolver() },
@@ -410,7 +450,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_structure returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**
@@ -422,7 +462,7 @@ export class LandingPageService {
    * The words are checked against the page's current structure, read first;
    * a page that does not exist is left to the database to refuse.
    */
-  async saveVersion(id: string, version: LandingVersionInput): Promise<string> {
+  async saveVersion(id: string, version: LandingVersionInput): Promise<LandingWriteResult> {
     const parsed = landingVersionInput.parse(version);
     const sections = await this.currentSections(id);
     const checked: ParsedLandingVersion = {
@@ -454,7 +494,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_version returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**

@@ -104,7 +104,6 @@ export default async function LandingPage({ params }: PageProps) {
   const page = await loadPage(idOrSlug);
   if (page === null) notFound();
   const shown = localizeLandingPage(page, locale);
-  if (shown === null) notFound();
   const canonicalPath = landingPageCanonicalPath(page, locale);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const tDiscover = await getTranslations("discover");
@@ -142,13 +141,15 @@ export default async function LandingPage({ params }: PageProps) {
       <JsonLd
         data={landingBreadcrumbJsonLd({ siteUrl, locale, canonicalPath, trail })}
       />
-      <LandingPageBreadcrumb
-        trail={trail}
-        label={tDiscover("breadcrumbLabel")}
-        textLocale={shown.locale}
-        locale={locale}
-      />
       <LandingPageBody
+        breadcrumb={
+          <LandingPageBreadcrumb
+            trail={trail}
+            label={tDiscover("breadcrumbLabel")}
+            textLocale={shown.locale}
+            locale={locale}
+          />
+        }
         sections={shown.sections}
         pictures={shown.pictures}
         testimonials={testimonials}

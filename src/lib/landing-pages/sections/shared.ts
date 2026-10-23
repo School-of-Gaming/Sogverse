@@ -71,13 +71,32 @@ export const buttonTarget = z.discriminatedUnion("kind", [
 export type ButtonTarget = z.infer<typeof buttonTarget>;
 
 /**
+ * The side of the page a sticky section's column takes on wide screens. The
+ * SQL half (`landing_sections_problem`) states the same two.
+ */
+export const LANDING_STICKY_SIDES = ["left", "right"] as const;
+
+export type LandingStickySide = (typeof LANDING_STICKY_SIDES)[number];
+
+/**
+ * The shared field every section takes, whatever its type: present, the
+ * section is one of the page's sticky sections, on that side — at most one on
+ * each side. Which types may carry it is each module's `sticky`, held by the
+ * structure rule.
+ */
+export const stickyField = {
+  sticky: z.enum(LANDING_STICKY_SIDES).optional(),
+};
+
+/**
  * The ground a section sits on: `default`, the page's own, or `card`, a band
  * of the card ground running the viewport's width. Every section type but the
- * hero takes one, by spreading `landingBackgroundField` into its schema, and a
- * section stored without one reads as `default`. Adjacent `card` sections
- * share one band, which is how an admin sets related sections apart as a
- * group. The SQL half (`landing_sections_problem`) holds the same values and
- * refuses one on the hero.
+ * hero takes one, by spreading `landingBackgroundField` into its schema, and
+ * every one of them has one: a section without it is refused, here and by the
+ * SQL half. Adjacent `card` sections share one band, which is how an admin
+ * sets related sections apart as a group. The SQL half
+ * (`landing_sections_problem`) holds the same values and refuses one on the
+ * hero.
  */
 export const LANDING_SECTION_BACKGROUNDS = ["default", "card"] as const;
 
@@ -85,7 +104,7 @@ export type LandingSectionBackground = (typeof LANDING_SECTION_BACKGROUNDS)[numb
 
 /** The background field, spread into every non-hero section's schema. */
 export const landingBackgroundField = {
-  background: z.enum(LANDING_SECTION_BACKGROUNDS).default("default"),
+  background: z.enum(LANDING_SECTION_BACKGROUNDS),
 };
 
 /** A plain-text field, unwritten while absent or blank. */
@@ -137,6 +156,15 @@ export interface LandingSectionDefinition<
   readonly type: Type;
   /** The admin-facing name of the type. */
   readonly label: string;
+  /**
+   * Whether a section of this type may be one of the page's sticky sections:
+   * on wide screens a sticky card in the page's gutter beside the other
+   * sections, below that at the bottom of the page. Every section takes the
+   * `sticky` shared field; the structure rule refuses it on a type that says
+   * false here, and the SQL structure check names the same types. A type says
+   * true only once its renderer reads well in that narrow column.
+   */
+  readonly sticky: boolean;
   /** The section in the page's structure: `id`, `type` and its shared fields. */
   readonly section: Section;
   /** The section's text fields in one language. Every field may be unwritten. */
