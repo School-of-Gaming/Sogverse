@@ -1650,6 +1650,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt: string
+          share_image_id: string | null
+          share_title: string
           slug: string
           summary: string
           texts_md5: string | null
@@ -1659,6 +1662,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug: string
           summary: string
           texts_md5?: string | null
@@ -1668,6 +1674,9 @@ export type Database = {
           locale?: string
           page_id?: string
           section_texts?: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1724,6 +1733,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt: string
+          share_image_id: string | null
+          share_title: string
           slug: string
           summary: string
           texts_md5: string | null
@@ -1734,6 +1746,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts?: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1744,6 +1759,9 @@ export type Database = {
           locale?: string
           page_id?: string
           section_texts?: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -5352,6 +5370,9 @@ export type Database = {
           p_id: string
           p_locale: string
           p_section_texts?: Json
+          p_share_image_alt?: string
+          p_share_image_id?: string
+          p_share_title?: string
           p_slug?: string
           p_summary?: string
           p_title: string
@@ -5683,6 +5704,9 @@ export type Database = {
           p_id: string
           p_locale: string
           p_section_texts: Json
+          p_share_image_alt: string
+          p_share_image_id: string
+          p_share_title: string
           p_slug: string
           p_summary: string
           p_title: string

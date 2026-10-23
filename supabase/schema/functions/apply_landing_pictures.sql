@@ -15,6 +15,8 @@ DECLARE
   v_first    public.catalogue_image_purpose;
   v_takes    public.catalogue_image_purpose[];
   v_pictures jsonb := '{}'::jsonb;
+  v_share    uuid;
+  v_shares   uuid[];
 BEGIN
   IF jsonb_typeof(NEW.sections) = 'array' THEN
     FOR v_section IN
@@ -44,9 +46,17 @@ BEGIN
       LOOP
         v_path := NULL;
         IF v_ref ~ c_uuid THEN
+          -- Locked so a removal of this entry waits for this save to commit,
+          -- and its unlink then sees the rows this save wrote: unlocked, a
+          -- removal racing the save leaves a picture named that no longer
+          -- exists, which no tool can then clear. A removal locks the entry
+          -- before the page, the opposite order, so the two can deadlock in
+          -- that same window: one is aborted (40P01) and retried, which is
+          -- loud where the dangling picture was silent.
           SELECT path, purpose INTO v_path, v_purpose
             FROM public.catalogue_images
-           WHERE id = v_ref::uuid;
+           WHERE id = v_ref::uuid
+             FOR KEY SHARE;
         END IF;
 
         -- The reachable cause is an entry another admin removed after this
@@ -89,6 +99,49 @@ BEGIN
     END LOOP;
   END IF;
 
+  -- The copy's versions' share pictures: the working versions for the working
+  -- copy, the live ones for the published copy. Each is wide, as the hero's
+  -- picture is, because the link preview it stands for is drawn at 16:9.
+  -- Read per table, since only the published copy's row has a page_id.
+  IF TG_TABLE_NAME = 'landing_pages' THEN
+    SELECT array_agg(DISTINCT share_image_id) INTO v_shares
+      FROM public.landing_page_translations
+     WHERE page_id = NEW.id AND share_image_id IS NOT NULL;
+  ELSE
+    SELECT array_agg(DISTINCT share_image_id) INTO v_shares
+      FROM public.landing_page_publication_translations
+     WHERE page_id = NEW.page_id AND share_image_id IS NOT NULL;
+  END IF;
+
+  FOREACH v_share IN ARRAY COALESCE(v_shares, '{}'::uuid[])
+  LOOP
+    v_path := NULL;
+    -- Locked for the same reason as a section's picture.
+    SELECT path, purpose INTO v_path, v_purpose
+      FROM public.catalogue_images
+     WHERE id = v_share
+       FOR KEY SHARE;
+
+    IF v_path IS NULL THEN
+      RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_share
+        USING ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
+      RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_share
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF v_purpose <> 'landing_image' THEN
+      RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and that picture is % (catalogue_images row %)',
+        CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_share
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    v_pictures := v_pictures
+      || jsonb_build_object(v_share::text, jsonb_build_object('path', v_path, 'purpose', v_purpose));
+  END LOOP;
+
   NEW.pictures := v_pictures;
   RETURN NEW;
 END;
@@ -99,7 +152,7 @@ $_$;
 -- Name: FUNCTION apply_landing_pictures(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the sections name (a hero, text or guide section''s imageId, an image section''s images[].imageId), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture that is not wide (landing_image), since it is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose (each 23514).';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose (each 23514).';
 
 
 --

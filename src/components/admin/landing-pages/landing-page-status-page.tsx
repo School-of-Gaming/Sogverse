@@ -9,9 +9,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { landingPageHref } from "@/components/landing-pages/landing-page-address";
+import { draftShareCard } from "@/components/landing-pages/landing-share-card";
+import { FramedImage } from "@/components/ui/framed-image";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
+import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import {
   formattingLocale,
   LOCALE_CONFIG,
@@ -64,13 +67,14 @@ export interface LandingPageStatusActions {
  * what readers see.
  *
  * Top to bottom: where the page stands with readers and who last saved it
- * (and through which AI app); the publishing row; when the page has
- * testimonials sections, each one's arrangement and the testimonials it
- * places; when it has products sections, which of their picked products
- * readers are shown and why each other one is not; then one card per written
- * language — complete or what it still needs, its address (and, when that
- * differs from the live one, that the next publish moves it), its preview of
- * the saved working copy and, while it is live, its live page.
+ * (and through which AI app); the publishing row; the link preview each
+ * language is shared with; when the page has testimonials sections, each one's
+ * arrangement and the testimonials it places; when it has products sections,
+ * which of their picked products readers are shown and why each other one is
+ * not; then one card per written language — complete or what it still needs,
+ * its address (and, when that differs from the live one, that the next
+ * publish moves it), its preview of the saved working copy and, while it is
+ * live, its live page.
  *
  * **Publish says what it would do before it does it**: the confirm lists the
  * languages going live, those left out as incomplete, the live ones taken
@@ -111,6 +115,8 @@ export function LandingPageStatusPage({
       </div>
 
       <Publishing page={page} actions={actions} />
+
+      <ShareCard draft={page.draft} />
 
       {testimonialSections.length > 0 && (
         <PlacedTestimonials sections={testimonialSections} />
@@ -346,6 +352,70 @@ function PublishForecast({ forecast }: { forecast: LandingPublishForecast }) {
 /** Where a version with this slug is read once its language is live. */
 function slugPath(slug: string, locale: SupportedLocale): string {
   return getPathname({ href: ROUTES.landingPage(slug), locale });
+}
+
+/**
+ * Which link preview each saved language is shared with: its picture and its
+ * title, each derived from the page or the language's own override, which an
+ * admin's AI app sets. An override does not follow later edits to the page
+ * title or the hero, so it is stated plainly here, where a stale one would be
+ * noticed. The languages are rows of one card: facts about one page.
+ */
+function ShareCard({ draft }: { draft: LandingPageDraft }) {
+  const t = useTranslations("admin.landingPages.statusPage.shareCard");
+  const languageName = useLanguageNames();
+
+  const cards = draft.versions.map((version) => ({
+    locale: version.locale,
+    card: draftShareCard(draft, version),
+  }));
+  const overridden = cards.some(
+    ({ card }) => card.titleSource === "custom" || card.picture.source === "custom",
+  );
+
+  return (
+    <section aria-labelledby="landing-page-share-card" className="space-y-3">
+      <Heading level={2} step="card-title" id="landing-page-share-card">
+        {t("heading")}
+      </Heading>
+      <Card>
+        <CardContent className="space-y-4 p-6">
+          <ul className="divide-y divide-border">
+            {cards.map(({ locale, card }) => (
+              <li
+                key={locale}
+                aria-label={languageName(locale, LOCALE_CONFIG[locale].label)}
+                className="flex items-start gap-4 py-3 first:pt-0 last:pb-0"
+              >
+                {/* The site-wide card is no picture of the page's own, so it
+                    paints the no-picture frame and says what stands in. */}
+                <FramedImage
+                  purpose="landing_image"
+                  src={
+                    card.picture.source === "site"
+                      ? null
+                      : catalogueImageUrl(card.picture.purpose, card.picture.path)
+                  }
+                  className="w-40 shrink-0 rounded-md"
+                  sizes="160px"
+                />
+                <div className="min-w-0 space-y-0.5 text-sm">
+                  <p className="text-muted-foreground">
+                    {languageName(locale, LOCALE_CONFIG[locale].label)}
+                  </p>
+                  <p className="font-medium">{card.title}</p>
+                  <p>{t(`picture.${card.picture.source}`)}</p>
+                  <p>{t(`title.${card.titleSource}`)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm">{t("description")}</p>
+          {overridden && <p className="text-sm text-muted-foreground">{t("stale")}</p>}
+        </CardContent>
+      </Card>
+    </section>
+  );
 }
 
 /**

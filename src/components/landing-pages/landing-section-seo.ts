@@ -141,11 +141,12 @@ export function landingStructuredParts(
 /**
  * The picture a live page leads with — the hero's — as its stored path and
  * purpose and its alt text, or null when the hero has none. A hero's picture
- * is wide, which the database keeps true. The page's structured data and
- * its link preview both name this one picture, so they cannot disagree. A
- * picture with no path is treated as none: the database derives the paths
- * and unlinks a removed picture, so it should not arise, and naming no
- * picture is the safe answer if it does.
+ * is wide, which the database keeps true. The page's structured data names
+ * this picture, and so does its link preview unless the shown version sets
+ * a share picture of its own (`landingShareCard`). A picture with no path is
+ * treated as none: the database derives the paths and unlinks a removed
+ * picture, so it should not arise, and naming no picture is the safe answer
+ * if it does.
  */
 export function landingLeadPicture(
   page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "pictures">,

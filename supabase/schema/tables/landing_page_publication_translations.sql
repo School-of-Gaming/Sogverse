@@ -10,6 +10,9 @@ CREATE TABLE public.landing_page_publication_translations (
     slug text NOT NULL,
     section_texts jsonb NOT NULL,
     texts_md5 text GENERATED ALWAYS AS (md5((section_texts)::text)) STORED,
+    share_title text DEFAULT ''::text NOT NULL,
+    share_image_id uuid,
+    share_image_alt text DEFAULT ''::text NOT NULL,
     CONSTRAINT chk_landing_page_publication_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT chk_landing_page_publication_translations_slug_format CHECK (((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text) AND (char_length(slug) <= 80) AND (slug !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text))),
     CONSTRAINT chk_landing_page_publication_translations_summary_present CHECK ((btrim(summary) <> ''::text)),
@@ -33,6 +36,27 @@ COMMENT ON COLUMN public.landing_page_publication_translations.texts_md5 IS 'md5
 
 
 --
+-- Name: COLUMN landing_page_publication_translations.share_title; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_publication_translations.share_title IS 'The live link preview''s title in this language, copied by publishing; the empty string uses the title.';
+
+
+--
+-- Name: COLUMN landing_page_publication_translations.share_image_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_publication_translations.share_image_id IS 'The live share picture in this language, copied by publishing, or NULL to use the hero''s. The catalogue''s replace and removal change it without a republish, as they do the pictures in sections.';
+
+
+--
+-- Name: COLUMN landing_page_publication_translations.share_image_alt; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_publication_translations.share_image_alt IS 'The live share picture''s alt text in this language, copied by publishing; the empty string while unwritten.';
+
+
+--
 -- Name: landing_page_publication_translations landing_page_publication_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -46,6 +70,13 @@ ALTER TABLE ONLY public.landing_page_publication_translations
 
 ALTER TABLE ONLY public.landing_page_publication_translations
     ADD CONSTRAINT uq_landing_page_publication_translations_locale_slug UNIQUE (locale, slug);
+
+
+--
+-- Name: landing_page_publication_translations trg_landing_page_publication_translations_refresh_pictures; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_landing_page_publication_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_publication_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
 
 --

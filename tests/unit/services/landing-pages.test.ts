@@ -147,6 +147,9 @@ describe("unpublished changes", () => {
     summary: "S",
     slug: "s",
     texts_md5: md5,
+    share_title: "",
+    share_image_id: null as string | null,
+    share_image_alt: "",
   });
   const copy = (
     versions: ComparableLandingCopy["versions"],
@@ -168,6 +171,16 @@ describe("unpublished changes", () => {
     expect(hasUnpublishedChanges(copy([{ ...v("en"), slug: "x" }]), live)).toBe(true);
     expect(hasUnpublishedChanges(copy([v("en"), v("fi")]), live)).toBe(true);
     expect(hasUnpublishedChanges(copy([]), live)).toBe(true);
+  });
+
+  it("is true for a language's changed share picture, share title or share picture alt text", () => {
+    const live = copy([v("en"), v("fi")]);
+    const sharing = { ...v("fi"), share_image_id: I.hero };
+    expect(hasUnpublishedChanges(copy([v("en"), sharing]), live)).toBe(true);
+    expect(hasUnpublishedChanges(live, copy([v("en"), sharing]))).toBe(true);
+    expect(hasUnpublishedChanges(copy([{ ...v("en"), share_title: "Share" }, v("fi")]), live)).toBe(true);
+    expect(hasUnpublishedChanges(copy([{ ...v("en"), share_image_alt: "Alt" }, v("fi")]), live)).toBe(true);
+    expect(hasUnpublishedChanges(copy([v("en"), sharing]), copy([v("en"), sharing]))).toBe(false);
   });
 
   it("counts a digest the database failed to produce as a change", () => {

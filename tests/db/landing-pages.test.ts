@@ -14,6 +14,7 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import type { CatalogueImageInsert } from "@/types";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
+import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
 import { defaultLandingSlug } from "@/services/landing-pages/landing-pages.contracts";
 import { landingPublishForecast } from "@/services/landing-pages/landing-pages.forecast";
 import {
@@ -43,11 +44,15 @@ import { everySection, requiredTextCases } from "../helpers/landing-required-tex
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
  * removal (a trigger) reaching both copies; the shapes each section's
- * pictures may be, held equal to the section registry's; the record of who
- * last saved and through which AI app; the SQL half of the required-text rule
- * held equal to the TypeScript half; and the products a products section
- * picks — an id no product has refused at save, and the admin read saying
- * which picks the listing shows, a municipality club included.
+ * pictures may be, held equal to the section registry's; the share card
+ * override per language — a share picture held to every one of the
+ * catalogue's guarantees, and to the wide shape, while any language of either
+ * copy names it, and share words — with publishing, the clone and the
+ * unpublished-changes digest reading it; the record of who last saved and
+ * through which AI app; the SQL half of the required-text rule held equal to
+ * the TypeScript half; and the products a products section picks — an id no
+ * product has refused at save, and the admin read saying which picks the
+ * listing shows, a municipality club included.
  *
  * No landing page table carries a write grant for any Data API role, so there
  * is no write-IDOR case to make: a direct write is refused at the grant, which
@@ -1208,6 +1213,265 @@ describe("landing pages", () => {
   });
 
   // -------------------------------------------------------------------------
+  // The share card override
+  // -------------------------------------------------------------------------
+
+  describe("the share card override", () => {
+    const FI_SLUG = "fixture-landing-a-fi";
+
+    async function copies(id: string) {
+      const view = await service.getAdminPage(id);
+      if (view === null) throw new Error(`no landing page ${id}`);
+      return view;
+    }
+
+    /** Which copies of page A the catalogue's usage map lists under an entry. */
+    async function usedBy(entry: string) {
+      const usage = await new CatalogueImagesService(adminAuth).getUsage();
+      return (usage[entry] ?? [])
+        .filter((user) => user.kind === "landing-page" && user.id === PAGE_A)
+        .map((user) => (user.kind === "landing-page" ? user.is_live : null));
+    }
+
+    it("refuses a share picture of another purpose, one that is not wide, and one no longer in the catalogue, saving nothing", async () => {
+      await reseed();
+      for (const [shareImageId, code] of [
+        [PRODUCT_PICTURE, "23514"],
+        [SQUARE, "23514"],
+        [PORTRAIT, "23514"],
+        [PAGE_MISSING, "23503"],
+      ] as const) {
+        const { error } = await adminAuth.rpc("save_landing_page_version", {
+          p_id: PAGE_A,
+          p_locale: "fi",
+          p_title: "Fixture landing fi",
+          p_share_image_id: shareImageId,
+        });
+        expect(error?.code).toBe(code);
+        const created = await adminAuth.rpc("create_landing_page", {
+          p_sections: structure(null),
+          p_versions: [{ locale: "en", title: "Fixture share", share_image_id: shareImageId }],
+        });
+        expect(created.error?.code).toBe(code);
+      }
+      const { draft } = await copies(PAGE_A);
+      expect(draft.versions.map((v) => v.locale)).toEqual(["en"]);
+      expect(draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+    });
+
+    it("is per language: a picture only Finnish names is in use, by its path, until Finnish lets it go", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, {
+        ...version("fi", FI_SLUG),
+        shareTitle: "Liity kerhoon",
+        shareImageId: PIC_B,
+        shareImageAlt: "Kerho",
+      });
+
+      const { draft } = await copies(PAGE_A);
+      expect(draft.versions.map((v) => [v.locale, v.shareTitle, v.shareImageId, v.shareImageAlt])).toEqual([
+        ["en", "", null, ""],
+        ["fi", "Liity kerhoon", PIC_B, "Kerho"],
+      ]);
+      expect(draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(await usedBy(PIC_B)).toEqual([false]);
+      // None of it counts toward completeness.
+      for (const row of await draftVersions(PAGE_A)) expect(row.is_complete).toBe(true);
+
+      // A structure write leaves every language's card alone.
+      await service.saveStructure(PAGE_A, structure());
+      expect((await copies(PAGE_A)).draft.versions[1].shareImageId).toBe(PIC_B);
+
+      // A write of Finnish without it lets it go.
+      await service.saveVersion(PAGE_A, version("fi", FI_SLUG));
+      expect((await copies(PAGE_A)).draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(await usedBy(PIC_B)).toEqual([]);
+    });
+
+    it("keeps a picture two languages name in use while either still does", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), shareImageId: PIC_B });
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      await service.saveVersion(PAGE_A, version("en", SLUG_A));
+
+      expect((await copies(PAGE_A)).draft.pictures).toEqual({
+        [PIC_A]: pictured(PIC_A),
+        [PIC_B]: pictured(PIC_B),
+      });
+    });
+
+    it("refuses a share title longer than a share card's", async () => {
+      await reseed();
+      const { error } = await adminAuth.rpc("save_landing_page_version", {
+        p_id: PAGE_A,
+        p_locale: "en",
+        p_title: "Fixture landing en",
+        p_share_title: "x".repeat(71),
+      });
+      expect(error?.code).toBe("23514");
+    });
+
+    it("is created with a page", async () => {
+      await reseed();
+      const id = await service.createPage({
+        sections: structure(),
+        versions: [
+          {
+            ...version("en", "fixture-share-created"),
+            shareTitle: "Created with a card",
+            shareImageId: PIC_B,
+            shareImageAlt: "Created alt",
+          },
+        ],
+      });
+      minted.push(id);
+      const { draft } = await copies(id);
+      expect(draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(draft.versions[0]).toMatchObject({
+        shareTitle: "Created with a card",
+        shareImageId: PIC_B,
+        shareImageAlt: "Created alt",
+      });
+    });
+
+    it("is what publishing copies, per language, and a change to any part of it is an unpublished change", async () => {
+      await reseed();
+      const english = {
+        ...version("en", SLUG_A),
+        shareTitle: "Join a fixture club",
+        shareImageAlt: "A fixture",
+      };
+      await service.saveVersion(PAGE_A, english);
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      await service.publishPage(PAGE_A);
+
+      const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
+      expect(live?.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(live?.versions.map((v) => [v.locale, v.shareTitle, v.shareImageId, v.shareImageAlt])).toEqual([
+        ["en", "Join a fixture club", null, "A fixture"],
+        ["fi", "", PIC_B, ""],
+      ]);
+      expect(await usedBy(PIC_B)).toEqual([true]);
+
+      const changed = async () => {
+        const detail = (await copies(PAGE_A)).hasUnpublishedChanges;
+        const listed = (await service.listAdminPages()).find((page) => page.id === PAGE_A);
+        expect(listed?.hasUnpublishedChanges).toBe(detail);
+        return detail;
+      };
+      expect(await changed()).toBe(false);
+
+      // Each part, changed and then put back.
+      for (const card of [
+        { shareTitle: "Another line" },
+        { shareImageAlt: "Another alt" },
+        { shareImageId: PIC_DOOMED },
+      ]) {
+        await service.saveVersion(PAGE_A, { ...english, ...card });
+        expect(await changed()).toBe(true);
+      }
+      await service.saveVersion(PAGE_A, english);
+      expect(await changed()).toBe(false);
+
+      // Taking Finnish's picture off is a change too, until it is published.
+      await service.saveVersion(PAGE_A, version("fi", FI_SLUG));
+      expect(await changed()).toBe(true);
+      await service.publishPage(PAGE_A);
+      const republished = await new LandingPageService(anon).getPublishedPage(PAGE_A);
+      expect(republished?.versions[1].shareImageId).toBeNull();
+      expect(republished?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(await changed()).toBe(false);
+      expect(await usedBy(PIC_B)).toEqual([]);
+    });
+
+    it("removing a language lets its share picture go from the working copy, and the next publish from the live one", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      await service.publishPage(PAGE_A);
+
+      await service.removeVersion(PAGE_A, "fi");
+      expect((await copies(PAGE_A)).draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      // Finnish is still live, its picture with it.
+      expect(await usedBy(PIC_B)).toEqual([true]);
+
+      await service.publishPage(PAGE_A);
+      expect((await copies(PAGE_A)).publication?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(await usedBy(PIC_B)).toEqual([]);
+
+      // And an unpublish takes the live copy's with it.
+      await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), shareImageId: PIC_B });
+      await service.publishPage(PAGE_A);
+      await service.unpublishPage(PAGE_A);
+      expect(await usedBy(PIC_B)).toEqual([false]);
+    });
+
+    it("a replace moves a language's share picture in both copies, a live page's without a republish", async () => {
+      await reseed();
+      // Finnish's share picture is page A's only use of PIC_B.
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      await service.publishPage(PAGE_A);
+
+      const { data: moved, error } = await adminAuth.rpc("repoint_landing_images", {
+        p_from: PIC_B,
+        p_to: PIC_DOOMED,
+      });
+      expect(error).toBeNull();
+      expect(moved).toBe(1);
+
+      const view = await copies(PAGE_A);
+      expect(view.draft.versions[1].shareImageId).toBe(PIC_DOOMED);
+      expect(view.publication?.versions[1].shareImageId).toBe(PIC_DOOMED);
+      expect(view.draft.sections).toEqual(structure());
+      for (const paths of [view.draft.pictures, view.publication?.pictures]) {
+        expect(paths).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_DOOMED]: pictured(PIC_DOOMED) });
+      }
+      expect(view.hasUnpublishedChanges).toBe(false);
+    });
+
+    it("a replace refused for its purpose or its shape moves no share picture", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      const { error } = await adminAuth.rpc("repoint_landing_images", {
+        p_from: PIC_B,
+        p_to: PRODUCT_PICTURE,
+      });
+      expect(error?.code).toBe("23514");
+      // A share picture is the page's only use of PIC_B, so a shape no share
+      // picture takes is refused by the share picture alone.
+      const square = await adminAuth.rpc("repoint_landing_images", { p_from: PIC_B, p_to: SQUARE });
+      expect(square.error?.code).toBe("23514");
+      expect(square.error?.message).toContain("A share picture must be wide 16:9");
+      expect((await copies(PAGE_A)).draft.versions[1].shareImageId).toBe(PIC_B);
+    });
+
+    it("a removal unsets a language's share picture in both copies, and it falls back to its hero's", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, {
+        ...version("fi", FI_SLUG),
+        shareImageId: PIC_DOOMED,
+        shareImageAlt: "Tuhoon",
+      });
+      await service.publishPage(PAGE_A);
+      const { data: before } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
+
+      const removed = await adminAuth.from("catalogue_images").delete().eq("id", PIC_DOOMED);
+      expect(removed.error).toBeNull();
+
+      const view = await copies(PAGE_A);
+      expect(view.draft.versions[1]).toMatchObject({ shareImageId: null, shareImageAlt: "Tuhoon" });
+      expect(view.publication?.versions[1].shareImageId).toBeNull();
+      // The hero's picture stays, and is what the card falls back to.
+      expect(view.draft.sections).toEqual(structure());
+      expect(view.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(view.publication?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(view.hasUnpublishedChanges).toBe(false);
+      // A removal moves the working copy's last-saved time, as for any picture.
+      const { data: after } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
+      expect(Date.parse(after?.updated_at ?? "")).toBeGreaterThan(Date.parse(before?.updated_at ?? ""));
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Picture shapes
   // -------------------------------------------------------------------------
 
@@ -1539,6 +1803,42 @@ describe("landing pages", () => {
       const source = await richSource();
       const clone = await cloneOf(source.draft);
       expect(clone.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+    });
+
+    it("carries each language's share card, its picture included", async () => {
+      await richSource();
+      for (const [locale, slug, picture] of [
+        ["en", SLUG_A, null],
+        ["fi", "fixture-landing-a-fi", PIC_DOOMED],
+      ] as const) {
+        await service.saveVersion(PAGE_A, {
+          ...version(locale, slug),
+          sectionTexts: richWords(locale),
+          shareTitle: `Share ${locale}`,
+          shareImageId: picture,
+          shareImageAlt: `Alt ${locale}`,
+        });
+      }
+      const source = await service.getAdminPage(PAGE_A);
+      if (source === null) throw new Error("the source is missing");
+
+      const clone = await cloneOf(source.draft);
+      expect(clone.draft.pictures).toEqual({
+        [PIC_A]: pictured(PIC_A),
+        [PIC_B]: pictured(PIC_B),
+        [PIC_DOOMED]: pictured(PIC_DOOMED),
+      });
+      expect(
+        clone.draft.versions.map(({ locale, shareTitle, shareImageId, shareImageAlt }) => ({
+          locale,
+          shareTitle,
+          shareImageId,
+          shareImageAlt,
+        })),
+      ).toEqual([
+        { locale: "en", shareTitle: "Share en", shareImageId: null, shareImageAlt: "Alt en" },
+        { locale: "fi", shareTitle: "Share fi", shareImageId: PIC_DOOMED, shareImageAlt: "Alt fi" },
+      ]);
     });
 
     it("marks each title in its own language and derives its slug from the new title", async () => {

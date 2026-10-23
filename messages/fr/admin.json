@@ -464,6 +464,20 @@
         "inItem": "Section {number} ({type}), {item} : {field}",
         "goneSection": "Une section qui n’est plus sur la page : {field}"
       },
+      "shareCard": {
+        "heading": "Aperçu du lien",
+        "picture": {
+          "custom": "Image : l'image de partage propre à cette langue.",
+          "hero": "Image : l'image de la section d'ouverture.",
+          "site": "Image : la carte commune du site, car la section d'ouverture n'a pas d'image."
+        },
+        "title": {
+          "custom": "Titre : le titre de partage propre à cette langue.",
+          "page": "Titre : le titre de la page."
+        },
+        "description": "Description : le résumé dans chaque langue.",
+        "stale": "Un titre ou une image personnalisés restent tels quels quand le titre de la page ou l'image de la section d'ouverture change. S'ils ne correspondent plus à la page, demandez à l'application d'IA de les retirer."
+      },
       "products": {
         "heading": "Produits choisis",
         "section": "Section {number} ({type})",

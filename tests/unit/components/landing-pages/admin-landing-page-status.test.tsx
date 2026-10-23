@@ -31,6 +31,8 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
+vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
+
 vi.mock("@/hooks/use-language-names", () => ({
   useLanguageNames: () => (code: string, fallback?: string) => fallback ?? code,
 }));
@@ -58,6 +60,9 @@ const EN: LandingPageDraftVersion = {
   summary: "Clubs in Minecraft, Roblox and more, after school in Espoo.",
   slug: "espoo-clubs",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageId: null,
+  shareImageAlt: "",
   missing: [],
 };
 
@@ -68,6 +73,9 @@ const SV: LandingPageDraftVersion = {
   summary: "",
   slug: "spelklubbar-i-esbo",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageId: null,
+  shareImageAlt: "",
   missing: [
     "summary",
     `sections.${TEXT_ID}.heading`,
@@ -82,6 +90,9 @@ const FI: LandingPageDraftVersion = {
   summary: "Kerhoja koulun jälkeen.",
   slug: "pelikerhot-espoossa",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageId: null,
+  shareImageAlt: "",
   missing: [],
 };
 
@@ -125,6 +136,9 @@ function publication(locales: readonly string[]): PublishedLandingPage {
         summary: v.summary,
         slug: v.slug,
         sectionTexts: {},
+        shareTitle: v.shareTitle,
+        shareImageId: v.shareImageId,
+        shareImageAlt: v.shareImageAlt,
       })),
   };
 }
@@ -416,5 +430,99 @@ describe("the landing page status page's testimonials", () => {
   it("is not shown for a page with no testimonials section", () => {
     renderStatus(draftPage([EN]));
     expect(screen.queryByRole("region", { name: "statusPage.testimonials.heading" })).toBeNull();
+  });
+});
+
+describe("the link preview it states", () => {
+  const SHARE_PICTURE = "5c3b7a52-0d9e-4f0b-a6d2-8e1f4c7b9a30";
+  const HERO_PICTURE = "e2a4c6d8-1b3f-4a5c-8e7d-9f0a1b2c3d4e";
+
+  /** The link preview's section, named by its heading. */
+  const preview = () => screen.getByRole("region", { name: "heading" });
+  /** One language's row of it: its lines of text, and its picture's source. */
+  const row = (language: string) => {
+    const item = within(preview()).getByRole("listitem", { name: language });
+    return {
+      lines: Array.from(item.querySelectorAll("p")).map((line) => line.textContent),
+      picture: item.querySelector("img")?.getAttribute("src") ?? null,
+    };
+  };
+
+  it("shows each language's derived card, with no warning, while nothing is overridden", () => {
+    renderStatus(draftPage([EN, FI]));
+
+    // The fixture's hero has no picture, so the site-wide card stands in.
+    expect(row("English")).toEqual({
+      lines: ["English", "Gaming clubs in Espoo", "picture.site", "title.page"],
+      picture: null,
+    });
+    expect(row("Finnish").lines).toEqual([
+      "Finnish",
+      "Pelikerhot Espoossa",
+      "picture.site",
+      "title.page",
+    ]);
+    expect(within(preview()).getByText("description")).toBeTruthy();
+    expect(within(preview()).queryByText("stale")).toBeNull();
+  });
+
+  it("shows the hero's picture when the hero has one", () => {
+    const page = draftPage([EN]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
+        pictures: { [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" } },
+      },
+    });
+
+    expect(row("English").lines[2]).toBe("picture.hero");
+    expect(row("English").picture).toContain("hero.jpg");
+  });
+
+  it("shows each language's own overrides, the others derived, and warns they do not follow the page", () => {
+    const page = draftPage([
+      { ...EN, shareTitle: "Join a club in Espoo", shareImageId: SHARE_PICTURE },
+      FI,
+    ]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
+        pictures: {
+          [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" },
+          [SHARE_PICTURE]: { path: "share.jpg", purpose: "landing_image" },
+        },
+      },
+    });
+
+    expect(row("English").lines).toEqual([
+      "English",
+      "Join a club in Espoo",
+      "picture.custom",
+      "title.custom",
+    ]);
+    expect(row("English").picture).toContain("share.jpg");
+    expect(row("Finnish").lines).toEqual([
+      "Finnish",
+      "Pelikerhot Espoossa",
+      "picture.hero",
+      "title.page",
+    ]);
+    expect(row("Finnish").picture).toContain("hero.jpg");
+    expect(within(preview()).getByText("stale")).toBeTruthy();
+  });
+
+  it("warns for a custom title alone", () => {
+    renderStatus(draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }]));
+
+    expect(row("English").lines.slice(1)).toEqual([
+      "Join a club in Espoo",
+      "picture.site",
+      "title.custom",
+    ]);
+    expect(within(preview()).getByText("stale")).toBeTruthy();
   });
 });

@@ -101,7 +101,7 @@ BEGIN
 
   -- Each named language: its words re-keyed, its new title, its free slug.
   FOR v_source IN
-    SELECT t.locale, t.summary, t.section_texts
+    SELECT t.locale, t.summary, t.section_texts, t.share_title, t.share_image_id, t.share_image_alt
       FROM public.landing_page_translations t
      WHERE t.page_id = p_id
        AND EXISTS (SELECT 1 FROM jsonb_array_elements(p_versions) AS s(e)
@@ -145,7 +145,10 @@ BEGIN
       'title',         v_sent->>'title',
       'summary',       v_source.summary,
       'slug',          v_slug,
-      'section_texts', v_texts));
+      'section_texts', v_texts,
+      'share_title',     v_source.share_title,
+      'share_image_id',  v_source.share_image_id,
+      'share_image_alt', v_source.share_image_alt));
   END LOOP;
 
   -- As create_landing_page writes a new page: an empty structure stands in
@@ -165,7 +168,7 @@ $$;
 -- Name: FUNCTION clone_landing_page(p_id uuid, p_versions jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.clone_landing_page(p_id uuid, p_versions jsonb) IS 'Admin-gated clone of a landing page''s working copy into a new, unpublished page; returns its id. p_versions names the languages to copy, a JSON array of {locale, title, default_slug}: the copy''s title in that language and the slug the application derives from it. Each named language''s summary and words are copied from the source, re-keyed to the copy''s ids; the structure is copied with a new id for every section and every item (any object with an id inside a section''s array field), pictures included. A default_slug another page holds in that locale, working or live, takes the first free number (<slug>-2, …, cut to 80 characters). Written through save_landing_page on a new row, as create_landing_page writes one, whose rules and refusals are this function''s. An id no page has raises no_data_found; a named language the source lacks raises check_violation; no language, or p_versions not an array, or a language named twice, raises check_violation or 22023. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.clone_landing_page(p_id uuid, p_versions jsonb) IS 'Admin-gated clone of a landing page''s working copy into a new, unpublished page; returns its id. p_versions names the languages to copy, a JSON array of {locale, title, default_slug}: the copy''s title in that language and the slug the application derives from it. Each named language''s summary and words, and its share card (share title, share picture and share picture alt text), are copied from the source, the words re-keyed to the copy''s ids; the structure is copied with a new id for every section and every item (any object with an id inside a section''s array field), pictures included. A default_slug another page holds in that locale, working or live, takes the first free number (<slug>-2, …, cut to 80 characters). Written through save_landing_page on a new row, as create_landing_page writes one, whose rules and refusals are this function''s. An id no page has raises no_data_found; a named language the source lacks raises check_violation; no language, or p_versions not an array, or a language named twice, raises check_violation or 22023. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --
