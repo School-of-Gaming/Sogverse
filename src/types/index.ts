@@ -825,15 +825,15 @@ export interface GeduAssignedProductRosterEntry {
   /**
    * When this seat entered **this group** — not when it was taken on the
    * product. A move between two groups of one product resets it, which is the
-   * whole claim the newcomer badge makes. Null when the seat predates the
-   * column: there was deliberately no backfill, so launch day is quiet.
+   * whole claim the newcomer badge makes. Never null: a roster row is a seat
+   * in this group, and the schema holds a seat in a group to its stamp.
    *
    * Emitted unconditionally, on camps and events too. The timestamp is a
    * **fact**; whether to draw a badge from it is a **presentation** rule, and
    * that rule lives in one place (`showsNewcomerBadge`) rather than in four
    * RPCs.
    */
-  group_joined_at: string | null;
+  group_joined_at: string;
   /**
    * The staff-only note about this member **in this group**, and null when
    * nobody has written one — the absence of a row is what "no note" means

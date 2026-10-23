@@ -1,5 +1,4 @@
 import { buildGroupWorkspaceFixture } from "@/components/group-workspace/mock-workspace-fixtures";
-import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import { isRedactedMember } from "@/components/group-workspace/types";
 import { productLocalDate } from "@/lib/session-occurrence";
 import { computeAge } from "@/lib/gamer-age-eligibility";
@@ -41,21 +40,11 @@ export function buildTraineeWorkspaceFixture(now: Date): {
   const roster = (own.roster ?? []).map((member) => {
     if (isRedactedMember(member)) return member;
     const birth = gamerBirthOf(member.birth_year, member.birth_month);
-    // The staff roster leaves its stamps null (its flair travels by prop), and
-    // a trainee roster row always carries one: the seat's own join instant
-    // from the session-feed roster the club fixture is built over.
-    const person = SESSION_FEED_ROSTER.find(
-      (gamer) => gamer.id === member.participant_id,
-    );
-    if (person === undefined) {
-      throw new Error(`No session-feed roster member ${member.participant_id}.`);
-    }
-    const joined = person.inGroupSince.toISOString();
     return {
       participant_id: member.participant_id,
       first_name: member.first_name,
-      signed_up_at: joined,
-      group_joined_at: joined,
+      signed_up_at: member.group_joined_at,
+      group_joined_at: member.group_joined_at,
       age: birth === null ? null : computeAge(birth, timeZone),
       gender: member.gender,
       minecraft_username: member.minecraft_username,
