@@ -138,11 +138,10 @@ export const geduFeedRosterEntry = z.object({
    *
    * That distinction is also what the **session register** now measures itself
    * against: a member is expected on a session only if this stamp is at or
-   * before the session's end instant. Which is why the rows that predated the
-   * column no longer carry null — they were backfilled from their own
-   * `signed_up_at`, a provable lower bound on the true join, by the migration
-   * that introduced the rule. Null here now means only what the column comment
-   * says it means: a seat holding no group at all, which no roster contains.
+   * before the session's end instant. Never null: a roster row is a seat in
+   * the group, and the schema holds a seat in a group to its stamp. The rows
+   * that predated the column carry one backfilled from their own
+   * `signed_up_at`, a provable lower bound on the true join.
    *
    * `note` is the (group, member) staff note, null when no row exists — the
    * absence of a row is what "no note" means everywhere.
@@ -150,7 +149,7 @@ export const geduFeedRosterEntry = z.object({
    * account is gone (`updated_by` is ON DELETE SET NULL), and the surface then
    * shows the note with no editor line.
    */
-  group_joined_at: z.string().nullable(),
+  group_joined_at: z.string(),
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
   /**
@@ -425,7 +424,7 @@ export const traineeRosterEntry = z.object({
   participant_id: z.string(),
   first_name: z.string(),
   signed_up_at: z.string(),
-  group_joined_at: z.string().nullable(),
+  group_joined_at: z.string(),
   /**
    * Whole years on the product's own calendar day, a year older from the 1st
    * of the birth month; null on an adult seat, which has no birth on file.

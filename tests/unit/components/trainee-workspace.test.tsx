@@ -99,11 +99,12 @@ describe("the trainee shell's mapping", () => {
   it("gates newcomer stamps on the caller's clubs-only answer", () => {
     const roster = [
       { ...feed.roster[0], group_joined_at: "2026-03-10T12:00:00.000Z" },
-      { ...feed.roster[1], group_joined_at: null },
+      { ...feed.roster[1], group_joined_at: "2020-01-01T00:00:00.000Z" },
     ];
     expect(traineeFlairMaps(roster, false).newcomers).toEqual({});
     expect(traineeFlairMaps(roster, true).newcomers).toEqual({
       [roster[0].participant_id]: "2026-03-10T12:00:00.000Z",
+      [roster[1].participant_id]: "2020-01-01T00:00:00.000Z",
     });
   });
 

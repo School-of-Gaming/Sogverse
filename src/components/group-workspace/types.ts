@@ -32,7 +32,7 @@ export interface RedactedRosterMember {
   participant_id: string;
   first_name: string;
   signed_up_at: string;
-  group_joined_at: string | null;
+  group_joined_at: string;
   age: number | null;
   gender: GenderType | null;
   minecraft_username: string | null;
