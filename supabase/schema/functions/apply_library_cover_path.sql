@@ -16,11 +16,13 @@ BEGIN
      WHERE id = NEW.cover_image_id;
 
     -- This runs before the foreign key, which is checked at statement end, so
-    -- it makes the key's own claim first and with the key's own SQLSTATE: the
-    -- reachable cause is an entry another admin removed after this one was
-    -- chosen. Saving with no cover instead would be the worst answer to that.
+    -- it makes the key's own claim first and with the key's own SQLSTATE.
+    -- Reached by an id an AI app sent that no entry has, and by an entry
+    -- another admin removed after this one was chosen; saving with no cover
+    -- instead would be the worst answer to either. The refusal says only
+    -- that no entry has the id, which is true of both.
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', NEW.cover_image_id
+      RAISE EXCEPTION 'No picture in the catalogue has the id %', NEW.cover_image_id
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
@@ -29,7 +31,9 @@ BEGIN
     -- resolve against the wrong bucket. The cover picker offers only Library
     -- cover entries; this refuses loudly the state that picker cannot produce.
     IF v_purpose <> 'library_cover' THEN
-      RAISE EXCEPTION 'That picture is a % picture, and a Library cover has to be a library_cover one (catalogue_images row %)', v_purpose, NEW.cover_image_id
+      RAISE EXCEPTION 'The picture % is %, and an article''s cover can only be a Library cover',
+        NEW.cover_image_id,
+        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'spotlight_image' THEN 'a spotlight picture' ELSE 'a landing page picture' END
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -48,7 +52,7 @@ $$;
 -- Name: FUNCTION apply_library_cover_path(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_library_cover_path() IS 'BEFORE INSERT OR UPDATE on library_articles and on library_article_publications: cover_path is derived from the linked catalogue_images entry, and is NULL whenever cover_image_id is. No branch keeps a statement-supplied path, so this function is the column''s only writer on both tables, and the triggers carry no column list so no statement can name cover_path and win. Refuses an entry that is gone (23503) or whose purpose is not library_cover (23514): its object lives in another bucket.';
+COMMENT ON FUNCTION public.apply_library_cover_path() IS 'BEFORE INSERT OR UPDATE on library_articles and on library_article_publications: cover_path is derived from the linked catalogue_images entry, and is NULL whenever cover_image_id is. No branch keeps a statement-supplied path, so this function is the column''s only writer on both tables, and the triggers carry no column list so no statement can name cover_path and win. Refuses an entry that is gone (23503) or whose purpose is not library_cover (23514): its object lives in another bucket. Each refusal names the picture by its catalogue id, the id the writer sent, and a purpose in plain words.';
 
 
 --

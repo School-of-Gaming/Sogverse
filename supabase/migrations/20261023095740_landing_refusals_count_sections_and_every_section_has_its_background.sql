@@ -21,7 +21,9 @@
 --    apply_landing_pictures' refusals name a picture by its catalogue id, the
 --    id the writer sent, and no longer by the table it lives in; one no entry
 --    has is "No picture in the catalogue has the id ...", which is true of an
---    id that never existed as well as of one removed since it was chosen.
+--    id that never existed as well as of one removed since it was chosen. A
+--    picture of another purpose is named by that purpose in plain words ("is
+--    a Library cover"), never by its enum value.
 --
 --    check_landing_section_picks names every id the save adds that no row
 --    has, for its section type, in one refusal ("No product has these ids:
@@ -163,7 +165,9 @@ BEGIN
         -- another frame. The uploader and the picker offer only landing
         -- pictures; this refuses loudly the state they cannot produce.
         IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-          RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_ref, v_purpose
+          RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
+            v_ref,
+            CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a spotlight picture' END
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -224,7 +228,9 @@ BEGIN
     END IF;
 
     IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-      RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_share, v_purpose
+      RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
+        v_share,
+        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a spotlight picture' END
         USING ERRCODE = 'check_violation';
     END IF;
 

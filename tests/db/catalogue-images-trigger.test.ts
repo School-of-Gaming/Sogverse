@@ -590,7 +590,9 @@ describe("catalogue_images and the image_path trigger", () => {
         .eq("id", LEGACY_PRODUCT);
 
       expect(error?.code).toBe("23503"); // foreign_key_violation
-      expect(error?.message).toContain("does not exist or is not visible");
+      expect(error?.message).toBe(
+        "No picture in the catalogue has the id ffffffff-ffff-ffff-ffff-ffffffffffff",
+      );
       expect(await imageStateOf(LEGACY_PRODUCT)).toMatchObject({
         image_id: null,
       });
@@ -614,7 +616,9 @@ describe("catalogue_images and the image_path trigger", () => {
         .eq("id", LEGACY_PRODUCT);
 
       expect(error?.code).toBe("23514"); // check_violation
-      expect(error?.message).toContain("can only show a product picture");
+      expect(error?.message).toBe(
+        `The picture ${ENTRY_WIDE} is a Library cover, and a product shows only product pictures`,
+      );
       expect(await imageStateOf(LEGACY_PRODUCT)).toEqual({
         image_id: null,
         image_path: null,
@@ -648,7 +652,9 @@ describe("catalogue_images and the image_path trigger", () => {
         .eq("id", ENTRY_A);
 
       expect(error?.code).toBe("23514"); // check_violation
-      expect(error?.message).toContain("purpose never changes");
+      expect(error?.message).toBe(
+        `The picture ${ENTRY_A} is a product picture, and a picture's purpose never changes`,
+      );
       const { data } = await admin
         .from("catalogue_images")
         .select("purpose")

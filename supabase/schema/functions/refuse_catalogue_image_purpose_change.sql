@@ -8,7 +8,14 @@ CREATE FUNCTION public.refuse_catalogue_image_purpose_change() RETURNS trigger
     AS $$
 BEGIN
   IF NEW.purpose IS DISTINCT FROM OLD.purpose THEN
-    RAISE EXCEPTION 'catalogue_images row % is a % picture, and an entry''s purpose never changes', OLD.id, OLD.purpose
+    RAISE EXCEPTION 'The picture % is %, and a picture''s purpose never changes',
+      OLD.id,
+      CASE OLD.purpose
+        WHEN 'product' THEN 'a product picture'
+        WHEN 'library_cover' THEN 'a Library cover'
+        WHEN 'spotlight_image' THEN 'a spotlight picture'
+        ELSE 'a landing page picture'
+      END
       USING ERRCODE = 'check_violation';
   END IF;
 

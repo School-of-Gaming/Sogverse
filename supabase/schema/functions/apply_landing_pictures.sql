@@ -73,7 +73,9 @@ BEGIN
         -- another frame. The uploader and the picker offer only landing
         -- pictures; this refuses loudly the state they cannot produce.
         IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-          RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_ref, v_purpose
+          RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
+            v_ref,
+            CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a spotlight picture' END
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -134,7 +136,9 @@ BEGIN
     END IF;
 
     IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-      RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_share, v_purpose
+      RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
+        v_share,
+        CASE v_purpose WHEN 'product' THEN 'a product picture' WHEN 'library_cover' THEN 'a Library cover' ELSE 'a spotlight picture' END
         USING ERRCODE = 'check_violation';
     END IF;
 

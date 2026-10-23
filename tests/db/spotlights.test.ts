@@ -211,7 +211,9 @@ describe("spotlights", () => {
         p_image_id: COVER,
       });
       expect(cover.error?.code).toBe("23514");
-      expect(cover.error?.message).toMatch(/spotlight_image/);
+      expect(cover.error?.message).toBe(
+        `The picture ${COVER} is a Library cover, and a spotlight shows only spotlight pictures`,
+      );
 
       const missing = await adminAuth.rpc("save_spotlight", {
         p_id: SPOTLIGHT_MISSING,

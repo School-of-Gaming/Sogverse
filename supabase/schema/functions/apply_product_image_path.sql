@@ -19,12 +19,12 @@ BEGIN
     -- at statement end — so it pre-empts the FK's own check rather than relying
     -- on it. The reachable cause of an empty lookup is that the row is gone
     -- (another admin removed the entry between this admin loading the form and
-    -- saving it); RLS hiding it is the other half of the message, and a half
-    -- that is not reachable in practice. Blanking the picture silently would
-    -- be the worst possible answer to either; raise instead, with the SQLSTATE
-    -- the FK itself would have used, because it is the same claim made earlier.
+    -- saving it). Blanking the picture silently would be the worst possible
+    -- answer; raise instead, with the SQLSTATE the FK itself would have used,
+    -- because it is the same claim made earlier. The refusal says only that
+    -- no entry has the id.
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'catalogue_images row % does not exist or is not visible to this writer', NEW.image_id
+      RAISE EXCEPTION 'No picture in the catalogue has the id %', NEW.image_id
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
@@ -34,7 +34,9 @@ BEGIN
     -- entries; this is the schema refusing loudly the state that picker
     -- cannot produce.
     IF v_purpose <> 'product' THEN
-      RAISE EXCEPTION 'catalogue_images row % is a % picture; a product can only show a product picture', NEW.image_id, v_purpose
+      RAISE EXCEPTION 'The picture % is %, and a product shows only product pictures',
+        NEW.image_id,
+        CASE v_purpose WHEN 'library_cover' THEN 'a Library cover' WHEN 'spotlight_image' THEN 'a spotlight picture' ELSE 'a landing page picture' END
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -58,7 +60,7 @@ $$;
 -- Name: FUNCTION apply_product_image_path(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_product_image_path() IS 'BEFORE INSERT OR UPDATE on products: image_path is derived from the linked catalogue_images entry, and is NULL whenever image_id is. No branch preserves an app-supplied path, so this function is the column''s ONLY writer — which is what carries the invariant that a served path is a catalogue path, and why there is deliberately no foreign key on image_path (a second relationship between products and catalogue_images makes every PostgREST embed ambiguous). Refuses (23514) an entry whose purpose is not ''product'': its object lives in another bucket. Carries no column list on the trigger deliberately, so no statement can name image_path and win.';
+COMMENT ON FUNCTION public.apply_product_image_path() IS 'BEFORE INSERT OR UPDATE on products: image_path is derived from the linked catalogue_images entry, and is NULL whenever image_id is. No branch preserves an app-supplied path, so this function is the column''s ONLY writer — which is what carries the invariant that a served path is a catalogue path, and why there is deliberately no foreign key on image_path (a second relationship between products and catalogue_images makes every PostgREST embed ambiguous). Refuses an entry that is gone (23503) or whose purpose is not ''product'' (23514): its object lives in another bucket. Each refusal names the picture by its catalogue id, the id the writer sent, and a purpose in plain words. Carries no column list on the trigger deliberately, so no statement can name image_path and win.';
 
 
 --
