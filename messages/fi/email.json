@@ -152,7 +152,6 @@
       "language": "Kieli",
       "ages": "Ikä {min}–{max}",
       "audienceParents": "Vanhemmille",
-      "audienceFamilies": "Perheille",
       "audienceFamiliesWithAges": "Perheille, ikä {min}–{max}",
       "holidayBreaks": "Loma-ajat",
       "holidayBreak": "{name}, {range}"

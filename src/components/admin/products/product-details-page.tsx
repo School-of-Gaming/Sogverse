@@ -709,26 +709,19 @@ function ProductDetailsCard({
                 </DetailRow>
               )}
 
-              {/* Null only for a row carrying neither an audience label nor an
-                  age range, which the schema's CHECKs make unreachable — the row
-                  is left out rather than rendered empty. */}
-              {whoItsFor !== null && (
-                <DetailRow
-                  label={
-                    whoItsFor.label === "ageRange"
-                      ? t("detailsPage.fields.ageRange")
-                      : t("sections.audience")
-                  }
-                >
-                  {whoItsFor.value.kind === "ages"
-                    ? tFamily("ages", whoItsFor.value)
-                    : whoItsFor.value.kind === "parents"
-                      ? tAudience("parents")
-                      : whoItsFor.value.kind === "families"
-                        ? tAudience("families")
-                        : tAudience("familiesWithAges", whoItsFor.value)}
-                </DetailRow>
-              )}
+              <DetailRow
+                label={
+                  whoItsFor.label === "ageRange"
+                    ? t("detailsPage.fields.ageRange")
+                    : t("sections.audience")
+                }
+              >
+                {whoItsFor.value.kind === "ages"
+                  ? tFamily("ages", whoItsFor.value)
+                  : whoItsFor.value.kind === "parents"
+                    ? tAudience("parents")
+                    : tAudience("familiesWithAges", whoItsFor.value)}
+              </DetailRow>
 
               <DetailRow label={t("labels.spokenLanguage")}>
                 <LanguageFlag code={product.spoken_language_code} />
