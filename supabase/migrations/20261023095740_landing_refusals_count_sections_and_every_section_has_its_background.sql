@@ -18,6 +18,19 @@
 --    word. apply_landing_pictures' refusal of an image section whose pictures
 --    are of two shapes names the section by its number too.
 --
+--    apply_landing_pictures' refusals name a picture by its catalogue id, the
+--    id the writer sent, and no longer by the table it lives in; one no entry
+--    has is "No picture in the catalogue has the id ...", which is true of an
+--    id that never existed as well as of one removed since it was chosen.
+--
+--    check_landing_section_picks names every id the save adds that no row
+--    has, for its section type, in one refusal ("No product has these ids:
+--    section 2 picks <id> and <id>; section 4 picks <id>"), so an AI app
+--    clears them in one round trip; a single one keeps its sentence ("Section
+--    2 picks the product <id>, and no product has that id"). Each type is its
+--    own trigger, so a save naming unknown ids of two types is refused for
+--    the first type alone (the triggers fire in name order).
+--
 -- 2. The background is written onto every section stored without one.
 --    Sections stored before backgrounds existed have no background key, while
 --    every structure save now writes "background": "default". The unpublished
@@ -61,7 +74,9 @@
 --    clone_landing_page, both SECURITY DEFINER, which run it as its owner;
 --    no application code calls it, so authenticated loses EXECUTE and
 --    service_role keeps it, as for write_landing_page_version. Its comment
---    says so.
+--    says so. Both callers hand it a row they have just inserted, holding no
+--    version, so its removal of the locales a save omits and its refusal of
+--    an id no page has had no producer, and both are gone.
 --
 -- 5. Comments: landing_sections_problem's says the email sign-up takes the
 --    sticky side as well as the background; the landing_pages table's lists
@@ -70,10 +85,12 @@
 --    (repoint_landing_images) and removal (unlink_removed_landing_image),
 --    which write a version's share picture.
 --
--- Both replaced functions keep their signatures, owners and grants; the
--- grants are restated after each replace all the same. Each body is the
--- current one with only the refusals changed: their wording, and in
--- landing_sections_problem the background a non-hero section must carry.
+-- Every replaced function keeps its signature, owner and grants; the grants
+-- are restated after each replace all the same. Each body is the current one
+-- with only the refusals changed — their wording, in landing_sections_problem
+-- the background a non-hero section must carry, and in
+-- check_landing_section_picks every unknown id collected — but
+-- save_landing_page's, which loses its two dead branches.
 
 CREATE OR REPLACE FUNCTION public.apply_landing_pictures() RETURNS trigger
     LANGUAGE plpgsql
@@ -133,10 +150,12 @@ BEGIN
              FOR KEY SHARE;
         END IF;
 
-        -- The reachable cause is an entry another admin removed after this
-        -- one was chosen; saving without the picture would be the worst answer.
+        -- Reached by an id an AI app sent that no entry has, and by an entry
+        -- another admin removed after this one was chosen; saving without the
+        -- picture would be the worst answer. The refusal says only that no
+        -- entry has the id, which is true of both.
         IF v_path IS NULL THEN
-          RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_ref
+          RAISE EXCEPTION 'No picture in the catalogue has the id %', v_ref
             USING ERRCODE = 'foreign_key_violation';
         END IF;
 
@@ -144,15 +163,16 @@ BEGIN
         -- another frame. The uploader and the picker offer only landing
         -- pictures; this refuses loudly the state they cannot produce.
         IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-          RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_ref
+          RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_ref, v_purpose
             USING ERRCODE = 'check_violation';
         END IF;
 
         IF NOT v_purpose = ANY (v_takes) THEN
-          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and that picture is % (catalogue_images row %)',
+          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and the picture % is %',
             v_section->>'type',
             CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
-            CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_ref
+            v_ref,
+            CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -161,11 +181,11 @@ BEGIN
         IF v_first IS NULL THEN
           v_first := v_purpose;
         ELSIF v_purpose <> v_first THEN
-          RAISE EXCEPTION 'The pictures of an image section must all be one shape so they line up, and section % has a % picture beside a % one (catalogue_images row %)',
+          RAISE EXCEPTION 'The pictures of an image section must all be one shape so they line up, and in section % the picture % is % beside a % one',
             v_n,
-            CASE v_first WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
+            v_ref,
             CASE v_purpose WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
-            v_ref
+            CASE v_first WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -199,18 +219,18 @@ BEGIN
        FOR KEY SHARE;
 
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_share
+      RAISE EXCEPTION 'No picture in the catalogue has the id %', v_share
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
     IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-      RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_share
+      RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_share, v_purpose
         USING ERRCODE = 'check_violation';
     END IF;
 
     IF v_purpose <> 'landing_image' THEN
-      RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and that picture is % (catalogue_images row %)',
-        CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_share
+      RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and the picture % is %',
+        v_share, CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -223,7 +243,7 @@ BEGIN
 END;
 $_$;
 
-COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose, naming the section by its number from one (each 23514).';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose, naming the section by its number from one (each 23514). Each refusal names the picture by its catalogue id, the id the writer sent.';
 
 REVOKE ALL ON FUNCTION public.apply_landing_pictures() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.apply_landing_pictures() TO service_role;
@@ -518,11 +538,158 @@ GRANT ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) TO servi
 
 COMMENT ON TABLE public.landing_pages IS 'The WORKING COPY of each landing page — what an admin is editing, which may be saved incomplete: the section structure here, shared by every language, and the words per language in landing_page_translations. The public never reads this table: what is live is the page''s row in landing_page_publications, copied from this one by publish_landing_page. The id is the page''s id address. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are create_landing_page, clone_landing_page, save_landing_page, save_landing_page_structure, save_landing_page_version and remove_landing_page_version, and the catalogue''s repoint_landing_images and removal trigger. No delete: a page that has to come down is unpublished.';
 
-COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and remove_landing_page_version refuses to remove the last. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which replaces the whole set, save_landing_page_version, which writes one, remove_landing_page_version, which removes one, the structure cascade (cascade_landing_structure), which drops the text of a section the structure no longer holds, and the catalogue''s replace (repoint_landing_images) and removal (unlink_removed_landing_image), which move or unset a version''s share picture.';
+COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and remove_landing_page_version refuses to remove the last. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which writes a new page''s set, save_landing_page_version, which writes one, remove_landing_page_version, which removes one, the structure cascade (cascade_landing_structure), which drops the text of a section the structure no longer holds, and the catalogue''s replace (repoint_landing_images) and removal (unlink_removed_landing_image), which move or unset a version''s share picture.';
 
 -- save_landing_page is internal: create_landing_page and clone_landing_page
 -- call it as its owner, and nothing else may.
 REVOKE EXECUTE ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) FROM authenticated;
 
-COMMENT ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) IS 'Internal: the save of a landing page''s WHOLE working copy, for create_landing_page and clone_landing_page, which call it on the row they have just inserted; returns its id. Not executable by authenticated or anon; its admin guard runs inside their calls. Never touches the published copy. p_sections is the structure (landing_sections_problem names what is wrong with one, as check_violation). p_versions is the whole version set, a JSON array of {locale, title, summary, slug, default_slug, section_texts, share_title, share_image_id, share_image_alt}, replacing what was stored: a locale it omits is removed. At least one version, each written by write_landing_page_version''s rules; a locale named twice, or p_versions not an array, raises 22023. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) IS 'Internal: the save of a landing page''s WHOLE working copy, for create_landing_page and clone_landing_page, which call it on the row they have just inserted; returns its id. Not executable by authenticated or anon; its admin guard runs inside their calls. Never touches the published copy. p_sections is the structure (landing_sections_problem names what is wrong with one, as check_violation). p_versions is the new page''s version set, a JSON array of {locale, title, summary, slug, default_slug, section_texts, share_title, share_image_id, share_image_alt}. At least one version, each written by write_landing_page_version''s rules; a locale named twice, or p_versions not an array, raises 22023. SECURITY DEFINER because no landing page table carries a write grant.';
+
+-- The picks check names every unknown id the save adds, grouped by section,
+-- in one refusal.
+CREATE OR REPLACE FUNCTION public.check_landing_section_picks() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $_$
+DECLARE
+  c_uuid constant text := '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+  v_type    text := TG_ARGV[0];
+  v_key     text := TG_ARGV[1];
+  v_table   text := TG_ARGV[2];
+  v_noun    text := TG_ARGV[3];
+  v_verb    text := TG_ARGV[4];
+  v_before  text[] := ARRAY[]::text[];
+  v_section bigint;
+  v_ids     text[];
+  v_count   integer := 0;
+  v_parts   text[] := ARRAY[]::text[];
+BEGIN
+  -- The key holds a list of ids, or a single id; a single one is read as a
+  -- list of one.
+  IF TG_OP = 'UPDATE' AND jsonb_typeof(OLD.sections) = 'array' THEN
+    SELECT COALESCE(array_agg(p.e #>> '{}'), ARRAY[]::text[]) INTO v_before
+      FROM jsonb_array_elements(OLD.sections) AS s(e),
+           jsonb_array_elements(
+             CASE WHEN s.e->>'type' IS DISTINCT FROM v_type THEN '[]'::jsonb
+                  WHEN jsonb_typeof(s.e->v_key) = 'array'  THEN s.e->v_key
+                  WHEN jsonb_typeof(s.e->v_key) = 'string' THEN jsonb_build_array(s.e->v_key)
+                  ELSE '[]'::jsonb END
+           ) AS p(e);
+  END IF;
+
+  IF jsonb_typeof(NEW.sections) IS DISTINCT FROM 'array' THEN
+    RETURN NEW;
+  END IF;
+
+  -- Every unknown id the save adds, per section in the structure's order and
+  -- within one in the order it names them, so one refusal names them all.
+  FOR v_section, v_ids IN EXECUTE format($q$
+    SELECT pick.n, array_agg(pick.id ORDER BY pick.k)
+      FROM (
+        SELECT s.n, p.k, p.e #>> '{}' AS id
+          FROM jsonb_array_elements($1) WITH ORDINALITY AS s(e, n),
+               jsonb_array_elements(
+                 CASE WHEN s.e->>'type' IS DISTINCT FROM $2 THEN '[]'::jsonb
+                      WHEN jsonb_typeof(s.e->$3) = 'array'  THEN s.e->$3
+                      WHEN jsonb_typeof(s.e->$3) = 'string' THEN jsonb_build_array(s.e->$3)
+                      ELSE '[]'::jsonb END
+               ) WITH ORDINALITY AS p(e, k)
+         WHERE jsonb_typeof(p.e) = 'string'
+      ) AS pick
+     WHERE NOT (pick.id = ANY ($4))
+       AND NOT EXISTS (
+         SELECT 1 FROM public.%I r
+          WHERE r.id = CASE WHEN pick.id ~ $5 THEN pick.id::uuid END
+       )
+     GROUP BY pick.n
+     ORDER BY pick.n
+  $q$, v_table)
+    USING NEW.sections, v_type, v_key, v_before, c_uuid
+  LOOP
+    v_count := v_count + cardinality(v_ids);
+    v_parts := v_parts || format('section %s %s %s', v_section, v_verb,
+      CASE WHEN cardinality(v_ids) = 1 THEN v_ids[1]
+           ELSE array_to_string(v_ids[1:cardinality(v_ids) - 1], ', ') || ' and ' || v_ids[cardinality(v_ids)]
+      END);
+  END LOOP;
+
+  -- One unknown id keeps the sentence naming it alone; several are listed.
+  IF v_count = 1 THEN
+    RAISE EXCEPTION 'Section % % the % %, and no % has that id', v_section, v_verb, v_noun, v_ids[1], v_noun
+      USING ERRCODE = 'foreign_key_violation';
+  ELSIF v_count > 1 THEN
+    RAISE EXCEPTION 'No % has these ids: %', v_noun, array_to_string(v_parts, '; ')
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  RETURN NEW;
+END;
+$_$;
+
+COMMENT ON FUNCTION public.check_landing_section_picks() IS 'BEFORE INSERT OR UPDATE OF sections on landing_pages (the working copy alone), attached once per section type that names rows of another table by id. Its trigger arguments are the section type, the key holding the ids — a list of ids, or a single id — the public table they name, and the noun and verb of the refusal. It refuses a save whose sections of that type name an id no row of that table has, with foreign_key_violation naming the section by its number from one and the id ("Section 2 picks the product <id>, and no product has that id"); a save adding several such ids is refused once, naming every one by its section ("No product has these ids: section 2 picks <id> and <id>; section 4 picks <id>"). Each type is its own trigger, so a save adding unknown ids of two types is refused for the first trigger''s type alone. Only ids the save adds are checked — on an update, an id the stored structure already held is left alone — so a write that moves only the structure''s other contents (a catalogue picture''s replace or removal) is never refused by an id it did not add. No foreign key can reach into the structure, which is why this is a trigger. The published copy has no such check: a testimonial or a guide is never deleted by the app, and a product pick that has ended or been unlisted is not an error, since the public page leaves out whatever the listing does not hold.';
+
+REVOKE ALL ON FUNCTION public.check_landing_section_picks() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.check_landing_section_picks() TO service_role;
+
+-- save_landing_page without the two branches its callers cannot reach: each
+-- hands it a row it has just inserted, so the row exists and holds no version
+-- for a save to remove.
+CREATE OR REPLACE FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_problem text;
+  v_version jsonb;
+BEGIN
+  PERFORM public.assert_admin();
+
+  IF p_versions IS NULL OR jsonb_typeof(p_versions) <> 'array' THEN
+    RAISE EXCEPTION 'p_versions must be a JSON array'
+      USING ERRCODE = '22023';
+  END IF;
+
+  v_problem := public.landing_sections_problem(p_sections);
+  IF v_problem IS NOT NULL THEN
+    RAISE EXCEPTION '%', v_problem
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF jsonb_array_length(p_versions) = 0 THEN
+    RAISE EXCEPTION 'A landing page needs a title'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF (SELECT count(DISTINCT e->>'locale') <> count(*)
+        FROM jsonb_array_elements(p_versions) AS t(e)) THEN
+    RAISE EXCEPTION 'Each language may have one version'
+      USING ERRCODE = '22023';
+  END IF;
+
+  -- Written first, so each version's words are checked against this
+  -- structure.
+  UPDATE public.landing_pages SET sections = p_sections
+  WHERE id = p_id;
+
+  FOR v_version IN SELECT e FROM jsonb_array_elements(p_versions) AS t(e) LOOP
+    PERFORM public.write_landing_page_version(
+      p_id,
+      v_version->>'locale',
+      v_version->>'title',
+      v_version->>'summary',
+      v_version->>'slug',
+      v_version->>'default_slug',
+      v_version->'section_texts',
+      v_version->>'share_title',
+      (v_version->>'share_image_id')::uuid,
+      v_version->>'share_image_alt');
+  END LOOP;
+
+  RETURN p_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) TO service_role;

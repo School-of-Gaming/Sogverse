@@ -470,7 +470,8 @@ export function localizeLandingPage(
  * admin-facing sentences under four SQLSTATEs — `check_violation` (a missing
  * title, a malformed structure or address, nothing complete to publish, a
  * picture of another purpose), `no_data_found` (the
- * page is gone), `foreign_key_violation` (a picture left the catalogue) and
+ * page is gone), `foreign_key_violation` (a picture, testimonial, product or guide id
+ * nothing has) and
  * `unique_violation` (an address another page holds). Every other code carries
  * a message written for a developer, so it falls back to a generic line. The
  * status page and the MCP tools both read a refusal through this.

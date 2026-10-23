@@ -91,8 +91,9 @@ const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO, SQUA
 const LISTED = "00000000-0000-0000-0000-00000000083c";
 const UNLISTED = "00000000-0000-0000-0000-00000000083e";
 const ENDED = "00000000-0000-0000-0000-00000000083f";
-/** A product id that must NEVER exist. */
+/** Product ids that must NEVER exist. */
 const NO_PRODUCT = "00000000-0000-0000-0000-00000000083d";
+const NO_PRODUCT_TOO = "00000000-0000-0000-0000-0000000008ff";
 const PICKS = "00000000-0000-4000-8000-0000000008a8";
 
 /** Section and item ids inside the fixture structures. */
@@ -1052,6 +1053,35 @@ describe("landing pages", () => {
       expect(data?.sections).toEqual(structure());
     });
 
+    it("names every pick no product has in one refusal, by section and in order", async () => {
+      await reseed();
+      const oneSection = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: withPicks([NO_PRODUCT_TOO, LISTED, NO_PRODUCT]),
+      });
+      expect(oneSection.error?.code).toBe("23503");
+      expect(oneSection.error?.message).toBe(
+        `No product has these ids: section 2 picks ${NO_PRODUCT_TOO} and ${NO_PRODUCT}`,
+      );
+
+      const [hero, picks, cta] = withPicks([NO_PRODUCT]);
+      const twoSections = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: [
+          hero,
+          picks,
+          cta,
+          { id: "00000000-0000-4000-8000-0000000008a9", type: "products", background: "default", productIds: [LISTED, NO_PRODUCT_TOO] },
+        ],
+      });
+      expect(twoSections.error?.code).toBe("23503");
+      expect(twoSections.error?.message).toBe(
+        `No product has these ids: section 2 picks ${NO_PRODUCT}; section 4 picks ${NO_PRODUCT_TOO}`,
+      );
+      const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_A).single();
+      expect(data?.sections).toEqual(structure());
+    });
+
     it("refuses a section with no picks, a pick twice, or a pick that is not an id", async () => {
       for (const productIds of [[], [LISTED, LISTED], ["a-club"]]) {
         const { error } = await adminAuth.rpc("save_landing_page_structure", {
@@ -1164,6 +1194,11 @@ describe("landing pages", () => {
         p_sections: structure(PAGE_MISSING),
       });
       expect(gone.error?.code).toBe("23503");
+      // True of an id that never existed as of one removed since it was chosen.
+      expect(gone.error?.message).toBe(`No picture in the catalogue has the id ${PAGE_MISSING}`);
+      expect(product.error?.message).toBe(
+        `The picture ${PRODUCT_PICTURE} is a product picture, and a landing page shows only landing pictures`,
+      );
     });
 
     it("a replace moves both copies' pictures, a live page's without a republish", async () => {
@@ -1296,6 +1331,8 @@ describe("landing pages", () => {
           p_share_image_id: shareImageId,
         });
         expect(error?.code).toBe(code);
+        expect(error?.message).toContain(shareImageId);
+        expect(error?.message).not.toContain("catalogue_images");
         const created = await adminAuth.rpc("create_landing_page", {
           p_sections: structure(null),
           p_versions: [{ locale: "en", title: "Fixture share", share_image_id: shareImageId }],
@@ -1584,6 +1621,7 @@ describe("landing pages", () => {
       } else {
         expect(error?.code).toBe("23514");
         expect(error?.message).toContain("must be wide 16:9");
+        expect(error?.message).toContain(`and the picture ${OF_SHAPE[shape]} is`);
       }
     });
 
@@ -1628,7 +1666,8 @@ describe("landing pages", () => {
       });
       expect(error?.code).toBe("23514");
       expect(error?.message).toContain("must all be one shape");
-      expect(error?.message).toContain("a square 1:1 picture beside a wide 16:9 one");
+      expect(error?.message).toContain(`in section 3 the picture ${PIC_B} is wide 16:9 beside a square 1:1 one`);
+      expect(error?.message).not.toContain("catalogue_images");
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections).toEqual(structure());
     });

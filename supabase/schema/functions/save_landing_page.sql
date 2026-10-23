@@ -34,25 +34,10 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  -- Written first, so an id no page has is refused before any version is, the
-  -- row's updated_at and saver move, and the row lock publish takes orders
-  -- this save wholly before or after a publish. The structure trigger drops
-  -- the text of any section this structure no longer holds.
+  -- Written first, so each version's words are checked against this
+  -- structure.
   UPDATE public.landing_pages SET sections = p_sections
   WHERE id = p_id;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Landing page not found'
-      USING ERRCODE = 'no_data_found';
-  END IF;
-
-  -- The version set is replaced whole: a locale the save no longer names is
-  -- gone, and every named one is written as sent.
-  DELETE FROM public.landing_page_translations t
-   WHERE t.page_id = p_id
-     AND NOT EXISTS (
-       SELECT 1 FROM jsonb_array_elements(p_versions) e
-        WHERE e->>'locale' = t.locale);
 
   FOR v_version IN SELECT e FROM jsonb_array_elements(p_versions) AS t(e) LOOP
     PERFORM public.write_landing_page_version(
@@ -77,7 +62,7 @@ $$;
 -- Name: FUNCTION save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) IS 'Internal: the save of a landing page''s WHOLE working copy, for create_landing_page and clone_landing_page, which call it on the row they have just inserted; returns its id. Not executable by authenticated or anon; its admin guard runs inside their calls. Never touches the published copy. p_sections is the structure (landing_sections_problem names what is wrong with one, as check_violation). p_versions is the whole version set, a JSON array of {locale, title, summary, slug, default_slug, section_texts, share_title, share_image_id, share_image_alt}, replacing what was stored: a locale it omits is removed. At least one version, each written by write_landing_page_version''s rules; a locale named twice, or p_versions not an array, raises 22023. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.save_landing_page(p_id uuid, p_sections jsonb, p_versions jsonb) IS 'Internal: the save of a landing page''s WHOLE working copy, for create_landing_page and clone_landing_page, which call it on the row they have just inserted; returns its id. Not executable by authenticated or anon; its admin guard runs inside their calls. Never touches the published copy. p_sections is the structure (landing_sections_problem names what is wrong with one, as check_violation). p_versions is the new page''s version set, a JSON array of {locale, title, summary, slug, default_slug, section_texts, share_title, share_image_id, share_image_alt}. At least one version, each written by write_landing_page_version''s rules; a locale named twice, or p_versions not an array, raises 22023. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --

@@ -44,6 +44,7 @@ import {
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import {
   NOT_FOUND,
+  UNPUBLISHED_CHANGES,
   adminLink,
   asLandingAdmin,
   issueSentence,
@@ -52,6 +53,7 @@ import {
   publicLink,
   readableInput,
   slugLink,
+  unpublishedChanges,
 } from "@/lib/mcp/landing-pages-call";
 import {
   MCP_LANDING_SECTIONS,
@@ -616,7 +618,7 @@ async function pageView(
       // exact-locale: each version carries what its own language would serve
       seo: seo.get(version.locale) ?? null,
     })),
-    hasUnpublishedChanges: page.hasUnpublishedChanges,
+    hasUnpublishedChanges: unpublishedChanges(page.publication !== null, page.hasUnpublishedChanges),
     testimonials: placedTestimonials(page),
     guides: placedGuides(page, guideLabels),
     productPicks: productPicks(page),
@@ -666,7 +668,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "list_landing_pages",
     {
       title: "List landing pages",
-      description: `Every School of Gaming landing page, most recently saved first: its id, each language's title, slug and whether it is complete, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. get_landing_page reads one whole. ${MODEL}`,
+      description: `Every School of Gaming landing page, most recently saved first: its id, each language's title, slug and whether it is complete, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. get_landing_page reads one whole. ${UNPUBLISHED_CHANGES} ${MODEL}`,
       annotations: READ_ONLY,
     },
     (ctx) =>
@@ -682,7 +684,7 @@ export function registerLandingPageTools(server: McpServer): void {
               complete: version.isComplete,
             })),
             live: page.isPublished,
-            hasUnpublishedChanges: page.hasUnpublishedChanges,
+            hasUnpublishedChanges: unpublishedChanges(page.isPublished, page.hasUnpublishedChanges),
             lastSaved: {
               at: page.updatedAt,
               by: page.lastSavedBy,
@@ -697,7 +699,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields, each sticky section with its side in sticky), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); each guide section's guide, with its id and label, the name admins know it by (guides); for each products section, its picked products under productPicks — whether each would be drawn once the working copy is published, because the shop lists it now, and why not (its term ended, it is unlisted) — with drawn false when none would be, in which case the section would leave no trace on the page; these, like the structure, are the working copy's, so a section or pick saved since the last publish is not what readers see yet; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${SEO} ${COMPLETE} ${PUBLISHING} ${SHARE_CARD} ${STICKY_MANUAL}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields, each sticky section with its side in sticky), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); each guide section's guide, with its id and label, the name admins know it by (guides); for each products section, its picked products under productPicks — whether each would be drawn once the working copy is published, because the shop lists it now, and why not (its term ended, it is unlisted) — with drawn false when none would be, in which case the section would leave no trace on the page; these, like the structure, are the working copy's, so a section or pick saved since the last publish is not what readers see yet; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${UNPUBLISHED_CHANGES} ${SEO} ${COMPLETE} ${PUBLISHING} ${SHARE_CARD} ${STICKY_MANUAL}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -893,7 +895,7 @@ ${SECTIONS_MANUAL}`,
           testimonials: placedTestimonials(after),
           guides: placedGuides(after, guideLabels),
           productPicks: productPicks(after),
-          hasUnpublishedChanges: after.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(after.publication !== null, after.hasUnpublishedChanges),
           publish: publishForecast(after, origin),
           ...rewritten(linkRewrites),
         });
@@ -969,7 +971,7 @@ ${SECTIONS_MANUAL}`,
           languageIsLive:
             // exact-locale: whether the named version is live
             page.publication?.versions.some((v) => v.locale === input.locale) ?? false,
-          hasUnpublishedChanges: page.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(page.publication !== null, page.hasUnpublishedChanges),
           publish: publishForecast(page, origin),
           ...rewritten(linkRewrites),
         });
@@ -1002,7 +1004,7 @@ ${SECTIONS_MANUAL}`,
           // exact-locale: whether the removed version is live
           languageIsLive: page.publication?.versions.some((v) => v.locale === removed) ?? false,
           languages: languages(page),
-          hasUnpublishedChanges: page.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(page.publication !== null, page.hasUnpublishedChanges),
           publish: publishForecast(page, origin),
         });
       }),

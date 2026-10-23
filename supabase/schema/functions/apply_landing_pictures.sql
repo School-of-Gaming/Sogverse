@@ -60,10 +60,12 @@ BEGIN
              FOR KEY SHARE;
         END IF;
 
-        -- The reachable cause is an entry another admin removed after this
-        -- one was chosen; saving without the picture would be the worst answer.
+        -- Reached by an id an AI app sent that no entry has, and by an entry
+        -- another admin removed after this one was chosen; saving without the
+        -- picture would be the worst answer. The refusal says only that no
+        -- entry has the id, which is true of both.
         IF v_path IS NULL THEN
-          RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_ref
+          RAISE EXCEPTION 'No picture in the catalogue has the id %', v_ref
             USING ERRCODE = 'foreign_key_violation';
         END IF;
 
@@ -71,15 +73,16 @@ BEGIN
         -- another frame. The uploader and the picker offer only landing
         -- pictures; this refuses loudly the state they cannot produce.
         IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-          RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_ref
+          RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_ref, v_purpose
             USING ERRCODE = 'check_violation';
         END IF;
 
         IF NOT v_purpose = ANY (v_takes) THEN
-          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and that picture is % (catalogue_images row %)',
+          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and the picture % is %',
             v_section->>'type',
             CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
-            CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_ref
+            v_ref,
+            CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -88,11 +91,11 @@ BEGIN
         IF v_first IS NULL THEN
           v_first := v_purpose;
         ELSIF v_purpose <> v_first THEN
-          RAISE EXCEPTION 'The pictures of an image section must all be one shape so they line up, and section % has a % picture beside a % one (catalogue_images row %)',
+          RAISE EXCEPTION 'The pictures of an image section must all be one shape so they line up, and in section % the picture % is % beside a % one',
             v_n,
-            CASE v_first WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
+            v_ref,
             CASE v_purpose WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
-            v_ref
+            CASE v_first WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -126,18 +129,18 @@ BEGIN
        FOR KEY SHARE;
 
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_share
+      RAISE EXCEPTION 'No picture in the catalogue has the id %', v_share
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
     IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
-      RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_share
+      RAISE EXCEPTION 'The picture % is a % picture, and a landing page shows only landing pictures', v_share, v_purpose
         USING ERRCODE = 'check_violation';
     END IF;
 
     IF v_purpose <> 'landing_image' THEN
-      RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and that picture is % (catalogue_images row %)',
-        CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_share
+      RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and the picture % is %',
+        v_share, CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -155,7 +158,7 @@ $_$;
 -- Name: FUNCTION apply_landing_pictures(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose, naming the section by its number from one (each 23514).';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose, naming the section by its number from one (each 23514). Each refusal names the picture by its catalogue id, the id the writer sent.';
 
 
 --

@@ -28,7 +28,12 @@ import {
 } from "@/lib/mcp/cover-images";
 import { UPLOADER_VIEW_META, uploaderOpening } from "@/lib/mcp/image-uploader";
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
-import { NOT_FOUND, asLandingAdmin, pageId } from "@/lib/mcp/landing-pages-call";
+import {
+  NOT_FOUND,
+  asLandingAdmin,
+  pageId,
+  unpublishedChanges,
+} from "@/lib/mcp/landing-pages-call";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
 import type { CatalogueImagePurpose } from "@/types";
 
@@ -272,7 +277,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "set_landing_section_image",
     {
       title: "Place a picture in a landing page section",
-      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a ${ONE_PICTURE_NAMES} section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An entry that is not a landing page picture, has left the catalogue, or is a shape the section does not take is refused, saying which.`,
+      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a ${ONE_PICTURE_NAMES} section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An id no catalogue entry has, an entry that is not a landing page picture, or one of a shape the section does not take is refused, saying which.`,
       inputSchema: z.object({
         pageId,
         sectionId,
@@ -335,7 +340,7 @@ export function registerLandingImageTools(server: McpServer): void {
               .map((path) => describeMissingWords(path, after.draft.sections));
             return missing.length === 0 ? [] : [{ locale: version.locale, missing }];
           }),
-          hasUnpublishedChanges: after.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(after.publication !== null, after.hasUnpublishedChanges),
         });
       }),
   );

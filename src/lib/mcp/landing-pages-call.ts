@@ -44,6 +44,22 @@ export const pageId = z
 export const NOT_FOUND = "No landing page has that id.";
 
 /**
+ * What every landing page answer says of hasUnpublishedChanges, which compares
+ * the working copy with the live one.
+ */
+export const UNPUBLISHED_CHANGES =
+  "hasUnpublishedChanges says whether the saved working copy differs from what readers see now, so whether a publish would change the live page; it is null while the page is not live, when there is no live page to compare with.";
+
+/**
+ * Whether a publish would change what readers see, as an answer gives it: null
+ * while the page is not live, where the service's false would read as "nothing
+ * to publish" on a page that has never been published.
+ */
+export function unpublishedChanges(isLive: boolean, hasUnpublishedChanges: boolean): boolean | null {
+  return isLive ? hasUnpublishedChanges : null;
+}
+
+/**
  * A failed call as the AI app reads it: a database refusal written for an
  * admin quoted as is, anything else logged and answered without its
  * developer-facing detail.

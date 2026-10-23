@@ -301,6 +301,18 @@ describe("reading", () => {
     });
   });
 
+  it("gives a page that is not live no unpublished changes either way: null, not false", async () => {
+    landing.listAdminPages.mockResolvedValue([{ ...LIST_ITEM, isPublished: false }]);
+    landing.getAdminPage.mockResolvedValue({ ...PAGE, publication: null, hasUnpublishedChanges: false });
+
+    const list = await tool("list_landing_pages");
+    expect(list.structuredContent).toMatchObject({
+      pages: [{ live: false, hasUnpublishedChanges: null }],
+    });
+    const read = await tool("get_landing_page", { pageId: ID });
+    expect(read.structuredContent).toMatchObject({ live: null, hasUnpublishedChanges: null });
+  });
+
   it("reads one page whole, with addresses, completeness and what a publish would do", async () => {
     const result = await tool("get_landing_page", { pageId: ID });
 
