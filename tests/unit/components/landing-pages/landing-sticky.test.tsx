@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import common from "@/../messages/en/common.json";
+import landingPage from "@/../messages/en/landingPage.json";
 import landingSubscribe from "@/../messages/en/landingSubscribe.json";
+import richText from "@/../messages/en/richText.json";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import type {
   LandingSection,
@@ -17,6 +19,10 @@ import { UtmProvider } from "@/providers";
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 afterAll(() => vi.unstubAllEnvs());
 
+/** The reader a guide's download is drawn for: signed out unless a test signs one in. */
+const mockAuth = vi.fn(() => ({ user: null as { id: string } | null }));
+vi.mock("@/providers/auth-provider", () => ({ useAuth: () => mockAuth() }));
+
 /**
  * **A page's sticky sections, as the body draws them.** jsdom has no layout,
  * so what is pinned is the markup the layout follows: each sticky section
@@ -28,7 +34,7 @@ afterAll(() => vi.unstubAllEnvs());
  * real browser.
  */
 
-const messages = { common, landingSubscribe };
+const messages = { common, landingPage, landingSubscribe, richText };
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const HERO = id(1);
@@ -273,5 +279,122 @@ describe("a sticky section on each side", () => {
     expect(first).toMatch(/(?:^|\s)pt-16 sm:pt-24(?:\s|$)/);
     expect(second).not.toMatch(/(?:^|\s)pt-16(?:\s|$)/);
     for (const layer of [first, second]) expect(layer).toContain("pb-16 sm:pb-24");
+  });
+});
+
+describe("a sticky call to action and a sticky guide", () => {
+  const GUIDE_SECTION = id(20);
+  const GUIDE = id(21);
+  const COVER = id(22);
+  const STICKY_CTA = id(23);
+
+  const SECTIONS: LandingSection[] = [
+    { id: HERO, type: "hero" },
+    { id: FAQ, type: "faq", background: "card", items: [{ id: id(10) }] },
+    {
+      id: STICKY_CTA,
+      type: "cta",
+      background: "card",
+      button: { kind: "internal", path: "/shop" },
+      sticky: "right",
+    },
+    { id: GUIDE_SECTION, type: "guide", background: "card", guideId: GUIDE, imageId: COVER, sticky: "left" },
+  ];
+  const STICKY_TEXTS: LandingSectionTexts = {
+    ...TEXTS,
+    [STICKY_CTA]: { eyebrow: "Clubs", heading: "Find your club", body: "Every term, every city.", buttonLabel: "Browse clubs" },
+    [GUIDE_SECTION]: {
+      eyebrow: "Free guide",
+      heading: "A parent's guide to gaming",
+      description: "Everything we tell parents, in one PDF.",
+      imageAlt: "The guide's cover",
+    },
+  };
+
+  function renderSticky(guideIds: readonly string[] = [GUIDE]) {
+    return render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
+          <LandingPageBody
+            sections={SECTIONS}
+            pictures={{ [COVER]: { path: "cover.jpg", purpose: "landing_image" } }}
+            testimonials={{}}
+            guideIds={guideIds}
+            sectionTexts={STICKY_TEXTS}
+            textLocale="en"
+            locale="en"
+            products={null}
+            pageId={id(500)}
+            preview={false}
+          />
+        </UtmProvider>
+      </NextIntlClientProvider>,
+    );
+  }
+
+  /** The sticky card around a heading: the card itself, inside its section, inside the rail. */
+  function cardOf(heading: string): HTMLElement {
+    const rail = railOf(heading);
+    const card = rail.querySelector<HTMLElement>("section > .rounded-lg.border");
+    if (card === null) throw new Error(`no card around ${heading}`);
+    return card;
+  }
+
+  it("draws the call to action as the sticky card: start-aligned, the compact heading, its button the card's width", () => {
+    renderSticky();
+    const card = cardOf("Find your club");
+    // The same frame as the sticky sign-up: the world rule, the card's padding, never on a band.
+    expect(card.querySelector(".bg-world")).not.toBeNull();
+    expect(card.querySelector(".pt-8")).not.toBeNull();
+    expect(railOf("Find your club").querySelector(".bg-card:not(.rounded-lg)")).toBeNull();
+    // No card inside the card: the flow's centred closing card is not drawn.
+    expect(card.querySelectorAll(".rounded-lg.border")).toHaveLength(0);
+    expect(card.querySelector(".text-center:not(a)")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Find your club" }).className).not.toContain("text-center");
+    expect(card.textContent).toContain("Every term, every city.");
+    const button = screen.getByRole("link", { name: /Browse clubs/ });
+    expect(card.contains(button)).toBe(true);
+    expect(button.className).toContain("w-full");
+    expect(button.className).toContain("whitespace-normal");
+  });
+
+  it("draws the guide as the sticky card: the cover across its top, the words start-aligned, the action the card's width", () => {
+    mockAuth.mockReturnValue({ user: null });
+    const { unmount } = renderSticky();
+    const card = cardOf("A parent's guide to gaming");
+    expect(card.querySelector(".bg-world")).not.toBeNull();
+    expect(card.querySelectorAll(".rounded-lg.border")).toHaveLength(0);
+    expect(card.querySelector(".text-center:not(a)")).toBeNull();
+    const cover = screen.getByRole("img", { name: "The guide's cover" });
+    expect(card.contains(cover)).toBe(true);
+    expect(cover.getAttribute("sizes")).toBe("(min-width: 1536px) 20rem, (min-width: 608px) 36rem, 100vw");
+    // The cover comes first, before the heading.
+    const heading = screen.getByRole("heading", { name: "A parent's guide to gaming" });
+    expect(cover.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Signed out: the account ask the card's width, its sign-in line under it.
+    const ask = screen.getByRole("link", { name: "Create a free account to download" });
+    expect(card.contains(ask)).toBe(true);
+    expect(ask.className).toContain("w-full");
+    expect(ask.parentElement?.className).toContain("items-stretch");
+    expect(card.textContent).toContain("Already have an account?");
+    unmount();
+    // Signed in: the download in the same place, the card's width.
+    mockAuth.mockReturnValue({ user: { id: id(600) } });
+    renderSticky();
+    const download = screen.getByRole("link", { name: "Download the guide" });
+    expect(cardOf("A parent's guide to gaming").contains(download)).toBe(true);
+    expect(download.className).toContain("w-full");
+    mockAuth.mockReturnValue({ user: null });
+  });
+
+  it("draws no card for a sticky guide the read did not answer, and holds no gutter open for it", () => {
+    const { container } = renderSticky([]);
+    expect(screen.queryByRole("heading", { name: "A parent's guide to gaming" })).toBeNull();
+    // One card left, the call to action's, and no empty layer on the guide's side.
+    expect(container.querySelectorAll('[class*="2xl:sticky"]')).toHaveLength(1);
+    expect(container.querySelector('[class*="2xl:col-start-1"]')).toBeNull();
+    const [first, , last] = tracks(railOf("Find your club").parentElement?.parentElement?.className);
+    expect(last).toContain(FLOOR);
+    expect(first).not.toContain(FLOOR);
   });
 });

@@ -344,6 +344,8 @@ describe("the sticky sections", () => {
   const hero = { id: ID, type: "hero" };
   const subscribe = { id: ID2, type: "subscribe" };
   const another = { id: ID3, type: "subscribe" };
+  const cta = { id: ID3, type: "cta", button: { kind: "internal", path: "/shop" } };
+  const guide = { id: ID3, type: "guide", guideId: ID2 };
 
   it("is written on the section, and judged by the tools' schema as by the registry's", () => {
     for (const structure of [
@@ -352,11 +354,21 @@ describe("the sticky sections", () => {
       [hero, { ...subscribe, sticky: "top" }],
       [hero, { ...subscribe, sticky: null }],
       [hero, { ...subscribe, sticky: "left" }, { ...another, sticky: "right" }],
+      [hero, { ...subscribe, sticky: "left" }, { ...cta, sticky: "right" }],
+      [hero, { ...subscribe, sticky: "left" }, { ...guide, sticky: "right" }],
     ]) {
       const expected = landingSections.safeParse(structure);
       const actual = mcpLandingStructure.safeParse(structure);
       expect(actual.success, JSON.stringify(structure)).toBe(expected.success);
       if (expected.success) expect(actual.data).toEqual(expected.data);
+    }
+  });
+
+  it("is taken on a call to action and on a guide, as on the email sign-up", () => {
+    for (const section of [subscribe, cta, guide]) {
+      for (const tool of [landingSections, mcpLandingStructure]) {
+        expect(tool.safeParse([hero, { ...section, sticky: "right" }]).success, section.type).toBe(true);
+      }
     }
   });
 
@@ -367,13 +379,16 @@ describe("the sticky sections", () => {
     ]);
     expect(parsed.success).toBe(false);
     expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
-      `Section ${ID} (Hero) cannot be sticky: only Email sign-up sections can`,
+      `Section ${ID} (Hero) cannot be sticky: only Guide, Email sign-up, Call to action sections can`,
     ]);
   });
 
   it("tells the AI app what they are, which types may be, how many, and how they render on a phone", () => {
     expect(SECTIONS_MANUAL).toContain("A page has at most one sticky section on each side");
-    expect(SECTIONS_MANUAL).toContain("sticky: left or right; only these types may be: subscribe (Email sign-up)");
+    expect(SECTIONS_MANUAL).toContain(
+      "sticky: left or right; only these types may be: guide (Guide), subscribe (Email sign-up), cta (Call to action)",
+    );
+    expect(SECTIONS_MANUAL).toContain("draws no card");
     expect(SECTIONS_MANUAL).toContain("at the bottom of the page");
     expect(SECTIONS_MANUAL).not.toContain("under the hero");
   });

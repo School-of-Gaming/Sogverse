@@ -13,6 +13,16 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/providers/auth-provider";
 
+/** Where a guide section draws its download. */
+export type GuideDownloadPlacement = "centred" | "beside-picture" | "card";
+
+/** The download's alignment and its gap from the words above, by placement. */
+const PLACEMENT: Record<GuideDownloadPlacement, string> = {
+  centred: "mt-8 flex flex-col items-center",
+  "beside-picture": "mt-8 flex flex-col items-center lg:items-start",
+  card: "mt-6 flex flex-col items-stretch",
+};
+
 /**
  * **A guide section's download, decided by whether the reader is signed in** —
  * the one part of a landing page that depends on who is looking, so the one
@@ -25,7 +35,8 @@ import { useAuth } from "@/providers/auth-provider";
  * offers the sign-in, each returning to this page.
  *
  * Centred like the section around it; beside a cover picture, centred on a
- * phone and start-aligned from `lg`, where the picture takes the other column.
+ * phone and start-aligned from `lg`, where the picture takes the other column;
+ * in a sticky card, start-aligned with the button the card's full width.
  *
  * **Nothing moves when the session is known.** The locale layout reads the
  * session on the server and seeds the provider, so a signed-in reader's first
@@ -39,27 +50,35 @@ import { useAuth } from "@/providers/auth-provider";
 export function GuideDownload({
   guideId,
   locale,
-  besidePicture,
+  placement,
 }: {
   guideId: string;
   /** The page's locale: the language the download asks for. */
   locale: SupportedLocale;
-  /** Whether a cover picture takes the other column from `lg`. */
-  besidePicture: boolean;
+  /**
+   * Where the section draws it: `centred` alone, `beside-picture` where a
+   * cover picture takes the other column from `lg`, or `card` in a sticky
+   * card's narrow column.
+   */
+  placement: GuideDownloadPlacement;
 }) {
   const t = useTranslations("landingPage.guide");
   const { user } = useAuth();
   const pathname = usePathname();
-  // The label may wrap: at 360px the French call to action is wider than the
-  // column, and an unwrapped button runs past the page's gutters.
+  // The label may wrap: at 360px, and in a sticky card's 20rem, the French
+  // call to action is wider than the column, and an unwrapped button runs past
+  // its edge.
   const buttonClass = buttonVariants({
     size: "lg",
-    className: "h-auto min-h-11 max-w-full gap-2 whitespace-normal py-2.5 text-center",
+    className: cn(
+      "h-auto min-h-11 max-w-full gap-2 whitespace-normal py-2.5 text-center",
+      placement === "card" && "w-full",
+    ),
   });
   const redirectQuery = { redirect: pathname };
 
   return (
-    <div className={cn("mt-8 flex flex-col items-center", besidePicture && "lg:items-start")}>
+    <div className={PLACEMENT[placement]}>
       {user !== null ? (
         <a
           href={`/api/guides/${guideId}/download?locale=${locale}`}

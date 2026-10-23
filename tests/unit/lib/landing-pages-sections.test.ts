@@ -201,8 +201,8 @@ describe("the sticky sections", () => {
     ]);
   });
 
-  it("is allowed on the email sign-up alone, by its module's own declaration", () => {
-    expect(LANDING_STICKY_TYPES).toEqual(["subscribe"]);
+  it("is allowed on the email sign-up, the call to action and the guide alone, by each module's own declaration", () => {
+    expect(LANDING_STICKY_TYPES).toEqual(["guide", "subscribe", "cta"]);
     for (const type of LANDING_SECTION_TYPES) {
       const section = sections.find((candidate) => candidate.type === type);
       if (section === undefined) throw new Error(`no ${type} case`);
@@ -212,8 +212,13 @@ describe("the sticky sections", () => {
 
   it("is refused on any other type, saying which types may be", () => {
     expect(messages(marked([I.faq]))).toEqual([
-      `Section ${I.faq} (Questions and answers) cannot be sticky: only Email sign-up sections can`,
+      `Section ${I.faq} (Questions and answers) cannot be sticky: only Guide, Email sign-up, Call to action sections can`,
     ]);
+    for (const type of LANDING_SECTION_TYPES.filter((t) => !LANDING_STICKY_TYPES.includes(t))) {
+      const section = sections.find((candidate) => candidate.type === type);
+      if (section === undefined) throw new Error(`no ${type} case`);
+      expect(messages(marked([section.id])), type).toHaveLength(1);
+    }
   });
 
   it("is one per side, and on a side the field has", () => {

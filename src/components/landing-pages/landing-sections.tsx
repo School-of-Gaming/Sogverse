@@ -219,6 +219,42 @@ function LandingButton({
   }
 }
 
+/**
+ * **A sticky section's card** — the one frame every type that may be sticky is
+ * drawn in, so the cards beside a page read as one family: the closing card's
+ * world rule along its top, the card's own padding, the words start-aligned
+ * under a heading a step down (`SectionHeader`'s `compact`), and the action the
+ * card's full width. In the page's gutter it is an object standing on the page
+ * beside the sections rather than one of them, so it carries its own edge, and
+ * a section's band running across the gutter passes behind it. It replaces the
+ * section's own frame rather than holding it, since a card does not contain a
+ * card. The page gives it its place and its spacing — the gutter from `2xl`,
+ * the page's end below that — and the card is the same in both.
+ */
+function StickyCard({ children }: { children: ReactNode }) {
+  return (
+    <section>
+      <Card className="relative mx-auto max-w-xl overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
+        <CardContent className="pt-8">{children}</CardContent>
+      </Card>
+    </section>
+  );
+}
+
+/**
+ * A sticky card's button: the card's full width, its label wrapping where a
+ * long one is wider than the card's 20rem, as the guide's download does.
+ */
+const STICKY_CARD_BUTTON = "h-auto min-h-11 w-full whitespace-normal py-2.5 text-center";
+
+/**
+ * The CSS width a picture across a sticky card resolves to, stated as the
+ * card's own: 20rem in the gutter from `2xl`, and below that the card at the
+ * page's end, as wide as its 36rem measure or the viewport allows.
+ */
+const STICKY_CARD_PICTURE = "(min-width: 1536px) 20rem, (min-width: 608px) 36rem, 100vw";
+
 // ---------------------------------------------------------------------------
 // The sections
 // ---------------------------------------------------------------------------
@@ -706,11 +742,34 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
 /**
  * The closing call to action, as the home and Roblox pages close: the plain
  * card with one world rule along its top edge, a heading, a line, one button.
+ * As a sticky section it is the sticky card instead, the same words in it.
  */
 function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   const eyebrow = written(text.eyebrow);
   const body = written(text.body);
   const buttonLabel = written(text.buttonLabel);
+  if (section.sticky !== undefined) {
+    return (
+      <StickyCard>
+        <SectionHeader
+          eyebrow={text.eyebrow}
+          heading={text.heading}
+          intro={text.body}
+          centred={false}
+          compact
+        />
+        {buttonLabel !== null && (
+          <LandingButton
+            target={section.button}
+            label={buttonLabel}
+            subject={text.emailSubject}
+            locale={context.locale}
+            className={cn("mt-6", STICKY_CARD_BUTTON)}
+          />
+        )}
+      </StickyCard>
+    );
+  }
   return (
     <section className={LANDING_SECTION}>
       <Card className="relative mx-auto max-w-3xl overflow-hidden">
@@ -746,11 +805,15 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * from `lg`, start-aligned there and centred on a phone, the picture after
  * them.
  *
+ * As a sticky section it is the sticky card: the cover picture across its
+ * top, the header and line under it, the download the card's full width.
+ *
  * A guide the read did not answer leaves the section out, since there is
- * nothing to offer; one it answered has a file, and the download route picks
- * the reader's by the reader fallback. Whether the reader may download is
- * decided in the browser (`guide-download.tsx`); everything here is the same
- * for every reader.
+ * nothing to offer — and the page body leaves it out of the page before that,
+ * so a sticky one leaves no empty card; one it answered has a file, and the
+ * download route picks the reader's by the reader fallback. Whether the
+ * reader may download is decided in the browser (`guide-download.tsx`);
+ * everything here is the same for every reader.
  */
 function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
   if (!context.hasGuide(section.guideId)) return null;
@@ -758,6 +821,29 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
   const eyebrow = written(text.eyebrow);
   const heading = written(text.heading);
   const description = written(text.description);
+  // exact-locale: resets the body's language mark for our own words
+  const ownLang = context.textLocale === context.locale ? undefined : context.locale;
+  if (section.sticky !== undefined) {
+    return (
+      <StickyCard>
+        {picture !== null && (
+          <div className="mb-6">
+            <LandingPicture picture={picture} alt={text.imageAlt} sizes={STICKY_CARD_PICTURE} />
+          </div>
+        )}
+        <SectionHeader
+          eyebrow={text.eyebrow}
+          heading={text.heading}
+          intro={text.description}
+          centred={false}
+          compact
+        />
+        <div lang={ownLang}>
+          <GuideDownload guideId={section.guideId} locale={context.locale} placement="card" />
+        </div>
+      </StickyCard>
+    );
+  }
   return (
     <section className={LANDING_SECTION}>
       <div
@@ -786,12 +872,11 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
           {description !== null && (
             <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
           )}
-          {/* exact-locale: resets the body's language mark for our own words */}
-          <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+          <div lang={ownLang}>
             <GuideDownload
               guideId={section.guideId}
               locale={context.locale}
-              besidePicture={picture !== null}
+              placement={picture === null ? "centred" : "beside-picture"}
             />
           </div>
         </div>
@@ -805,14 +890,8 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
 
 /**
  * An email sign-up: the heading and intro the page wrote over the site's own
- * form, in the reading column.
- *
- * **As the page's sticky section it is a card**, the closing card's world rule
- * along its top and the heading a step down: in the page's gutter it is an
- * object standing on the page beside the sections rather than one of them, so
- * it carries its own edge, and a section's band running across the gutter
- * passes behind it. The page gives it its place and its spacing — the gutter
- * from `2xl`, the page's end below that — and the card is the same in both.
+ * form, in the reading column. As a sticky section it is the sticky card, the
+ * form's names stacked and its button the card's full width.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
   const sticky = section.sticky !== undefined;
@@ -828,21 +907,16 @@ function SubscribeSection({ section, text, context }: LandingSectionProps<"subsc
   );
   if (sticky) {
     return (
-      <section>
-        <Card className="relative mx-auto max-w-xl overflow-hidden">
-          <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
-          <CardContent className="pt-8">
-            <SectionHeader
-              eyebrow={text.eyebrow}
-              heading={text.heading}
-              intro={text.intro}
-              centred={false}
-              compact
-            />
-            <div className="mt-6">{form}</div>
-          </CardContent>
-        </Card>
-      </section>
+      <StickyCard>
+        <SectionHeader
+          eyebrow={text.eyebrow}
+          heading={text.heading}
+          intro={text.intro}
+          centred={false}
+          compact
+        />
+        <div className="mt-6">{form}</div>
+      </StickyCard>
     );
   }
   return (

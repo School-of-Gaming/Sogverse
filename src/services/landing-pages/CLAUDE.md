@@ -230,9 +230,10 @@ download) would add a shared field to this type, not a second form.
 **A page may have a sticky section on each side, marked on the section itself** — a
 `sticky` side, `left` or `right`, in the structure — so it is copied, compared and cascaded
 with the rest of the structure, and removing the section is what unmarks it. Which types
-may carry it is declared in each type's section module (only the email sign-up today):
-allowing another is that module's one line, plus the same type in the SQL structure check,
-and a DB test running every type through both halves fails until the two agree. The
+may carry it is declared in each type's section module (the email sign-up, the call to
+action and the guide today): allowing another is that module's one line and a card variant
+in its renderer, plus the same type in the SQL structure check, and a DB test running every
+type through both halves fails until the two agree. The
 structure rule refuses a second sticky section on a side that has one and a type not
 allowed one, naming the types that are. From `2xl` each sticky section leaves the flow and
 stands as a sticky card in the page's gutter on its side, outside the sections' content box
@@ -243,7 +244,10 @@ their floor, so the content stays centred and its track narrows (an 800px measur
 the full one from 1888). A `card` section's band still runs the full width, its content
 lined up with every other section's. A sticky section is never on a band — a background
 stored on it is kept but not drawn, in the gutter and at the page's end alike, since the
-card carries its own edge. Below `2xl` the sticky sections are drawn at the page's end,
+card carries its own edge. Every sticky type draws in the one sticky card frame the renderer
+shares, in place of its own card rather than around it, so the cards read as one family; a
+guide the read did not answer is left out of the page before the layout is chosen, so it
+leaves no empty card. Below `2xl` the sticky sections are drawn at the page's end,
 after the last section and in the structure's order. Each is drawn once, after every other
 section in the document, so its heading keeps its level and the outline its reading order
 wherever it is painted; the structured data does not depend on where it sits.

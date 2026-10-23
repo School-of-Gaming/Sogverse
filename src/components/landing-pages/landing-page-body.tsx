@@ -225,8 +225,14 @@ export function LandingPageBody({
   preview,
   breadcrumb,
 }: LandingPageBodyProps) {
-  const stickies = landingStickySections(sections);
   const guides = new Set(guideIds);
+  // A guide the read did not answer has nothing to offer, so it is no part of
+  // the page: in the flow it would draw nothing inside an empty band, and as a
+  // sticky section an empty card's layer and a gutter held open for it.
+  const shown = sections.filter(
+    (section) => section.type !== "guide" || guides.has(section.guideId),
+  );
+  const stickies = landingStickySections(shown);
   const context: LandingRenderContext = {
     locale,
     textLocale,
@@ -271,12 +277,12 @@ export function LandingPageBody({
     return (
       <>
         {breadcrumb}
-        <div lang={lang}>{sections.map((section) => draw(section))}</div>
+        <div lang={lang}>{shown.map((section) => draw(section))}</div>
       </>
     );
   }
   const stuck = new Set(stickies.map((section) => section.id));
-  const flowed = sections.filter((section) => !stuck.has(section.id));
+  const flowed = shown.filter((section) => !stuck.has(section.id));
   const last = flowed.at(-1);
   const afterBand = last !== undefined && landingSectionBackground(last) === "card";
   // The structure rule allows one card a side, so two cards are one on each.
