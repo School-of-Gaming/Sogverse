@@ -22,8 +22,10 @@ import {
   buttonTarget,
   LANDING_SECTION_TYPES,
   LANDING_STICKY_TYPES,
+  landingSection,
   landingSectionBackground,
   landingSections,
+  landingStructureProblem,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
@@ -497,11 +499,16 @@ describe("landing pages", () => {
           admin.rpc("landing_sections_problem", { p_sections: testCase.structure }),
         ),
       );
+      // Both halves refuse with the same sentence, word for word, a section
+      // named by its number from one.
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
         expect(error, testCase.name).toBeNull();
         expect(data === null, testCase.name).toBe(
           landingSections.safeParse(testCase.structure).success,
+        );
+        expect(data, testCase.name).toBe(
+          landingStructureProblem(landingSection.array().parse(testCase.structure)),
         );
       });
       // A lone sticky section is accepted on some types and refused on others.
@@ -515,8 +522,21 @@ describe("landing pages", () => {
           testCase.name.endsWith(`and another on the ${second}`) ? [answers[index].data] : [],
         );
       expect(new Set(pairs("right"))).toEqual(new Set([null]));
+      // The second is named by its number, with the side and the first's.
       expect(new Set(pairs("left"))).toEqual(
-        new Set(["A page has at most one sticky section on each side"]),
+        new Set(
+          sections
+            .flatMap((section, at) => (LANDING_STICKY_TYPES.includes(section.type) ? [at + 1] : []))
+            .map(
+              (first) =>
+                `Section ${sections.length + 1}: a page has at most one sticky section on each side, and section ${first} is already sticky on the left`,
+            ),
+        ),
+      );
+      // A type not allowed is named by its number, the allowed by their keys.
+      const faqAt = sections.findIndex((section) => section.type === "faq");
+      expect(answers[faqAt].data).toBe(
+        `Section ${faqAt + 1}: only a section of type guide, subscribe or cta can be sticky`,
       );
 
       const [allowed] = sections.filter((section) => LANDING_STICKY_TYPES.includes(section.type));
@@ -524,7 +544,9 @@ describe("landing pages", () => {
       const { data: sideProblem } = await admin.rpc("landing_sections_problem", {
         p_sections: side,
       });
-      expect(sideProblem).toBe(`The sticky side of section ${allowed.id} is left or right`);
+      expect(sideProblem).toBe(
+        `The sticky side of section ${sections.indexOf(allowed) + 1} is left or right`,
+      );
       expect(landingSections.safeParse(side).success).toBe(false);
     });
 
@@ -1754,19 +1776,22 @@ describe("landing pages", () => {
       await admin.from("guides").delete().eq("id", GUIDE);
     });
 
-    /** One section of every type, every item-bearing one with its items. */
+    /**
+     * One section of every type, every item-bearing one with its items, on
+     * both backgrounds, with a sticky section on each side.
+     */
     const RICH: LandingSection[] = [
       { id: S_HERO, type: "hero", imageId: PIC_A, button: { kind: "internal", path: "/shop" } },
-      { id: S_TEXT, type: "text", background: "default", imageId: PIC_B, imageSide: "end" },
+      { id: S_TEXT, type: "text", background: "card", imageId: PIC_B, imageSide: "end" },
       { id: S_GALLERY, type: "image", background: "default", images: [{ id: item(1), imageId: PIC_A }, { id: item(2), imageId: PIC_B }] },
       { id: S_POINTS, type: "points", background: "default", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },
       { id: S_STEPS, type: "steps", background: "default", items: [{ id: item(5) }, { id: item(6) }] },
       { id: S_FAQ, type: "faq", background: "default", items: [{ id: item(7) }] },
       { id: S_QUOTE, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
       { id: S_PICKS, type: "products", background: "default", productIds: [PICKED] },
-      { id: S_GUIDE, type: "guide", background: "default", guideId: GUIDE, imageId: PIC_B },
+      { id: S_GUIDE, type: "guide", background: "default", guideId: GUIDE, imageId: PIC_B, sticky: "left" },
       { id: S_SUBSCRIBE, type: "subscribe", background: "default" },
-      { id: S_CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
+      { id: S_CTA, type: "cta", background: "card", button: { kind: "internal", path: "/shop" }, sticky: "right" },
     ];
 
     /** Every word of `RICH` in one language, each naming where it belongs. */
@@ -1849,6 +1874,22 @@ describe("landing pages", () => {
       const rekey = (value: unknown): unknown =>
         JSON.parse(from.reduce((json, id, n) => json.replaceAll(id, to[n]), JSON.stringify(value)));
       expect(clone.draft.sections).toEqual(rekey(source.draft.sections));
+      // The backgrounds and the sticky sides come with it, and the copy is a
+      // structure both halves of the structure rule accept.
+      expect(
+        clone.draft.sections.map((section) => [landingSectionBackground(section), section.sticky ?? null]),
+      ).toEqual(RICH.map((section) => [landingSectionBackground(section), section.sticky ?? null]));
+      expect(clone.draft.sections.map((section) => section.sticky)).toEqual(
+        expect.arrayContaining(["left", "right"]),
+      );
+      expect(clone.draft.sections.map(landingSectionBackground)).toEqual(
+        expect.arrayContaining(["default", "card"]),
+      );
+      expect(landingSections.safeParse(clone.draft.sections).success).toBe(true);
+      const { data: cloneProblem } = await admin.rpc("landing_sections_problem", {
+        p_sections: clone.draft.sections,
+      });
+      expect(cloneProblem).toBeNull();
       expect(clone.draft.versions.map((v) => v.locale)).toEqual(["en", "fi"]);
       for (const [n, copy] of clone.draft.versions.entries()) {
         const original = source.draft.versions[n];

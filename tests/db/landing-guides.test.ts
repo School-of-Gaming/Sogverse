@@ -178,7 +178,7 @@ describe("landing page guides", () => {
       const { data } = await admin.rpc("landing_sections_problem", {
         p_sections: [{ id: HERO, type: "hero" }, { id: GUIDE, type: "guide" }],
       });
-      expect(data).toBe(`Section ${GUIDE} needs its guide, as a guide's lowercase uuid`);
+      expect(data).toBe("Section 2 needs its guide, as a guide's lowercase uuid");
     });
   });
 
