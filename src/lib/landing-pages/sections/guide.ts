@@ -45,6 +45,7 @@ const text = z
 export const guideSection = {
   type: "guide",
   label: "Guide",
+  sticky: true,
   section,
   text,
   missingText: (block, words) => [

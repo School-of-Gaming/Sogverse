@@ -21,6 +21,7 @@ import {
   LANDING_SECTIONS,
   buttonTarget,
   LANDING_SECTION_TYPES,
+  LANDING_STICKY_TYPES,
   landingSectionBackground,
   landingSections,
   missingInLandingVersion,
@@ -464,6 +465,67 @@ describe("landing pages", () => {
       });
       expect(error).toBeNull();
       expect(data).toBeNull();
+    });
+
+    it("lets a section be sticky exactly where the registry does, once per side and on a side", async () => {
+      // Every type marked sticky alone, then a second sticky section beside
+      // each type that may be one — on the other side, then on the same side —
+      // then no sticky section at all.
+      const sections = everySection();
+      const marked = (id: string, side: string): Json[] =>
+        sections.map((section) => (section.id === id ? { ...section, sticky: side } : section));
+      const cases: { name: string; structure: Json[] }[] = [
+        ...sections.map((section) => ({
+          name: `a sticky ${section.type}`,
+          structure: marked(section.id, section.type === "hero" ? "right" : "left"),
+        })),
+        ...sections
+          .filter((section) => LANDING_STICKY_TYPES.includes(section.type))
+          .flatMap((section) =>
+            (["right", "left"] as const).map((second) => ({
+              name: `a ${section.type} sticky on the left and another on the ${second}`,
+              structure: [
+                ...marked(section.id, "left"),
+                { ...section, id: crypto.randomUUID(), sticky: second },
+              ],
+            })),
+          ),
+        { name: "no sticky section", structure: sections },
+      ];
+      const answers = await Promise.all(
+        cases.map((testCase) =>
+          admin.rpc("landing_sections_problem", { p_sections: testCase.structure }),
+        ),
+      );
+      cases.forEach((testCase, index) => {
+        const { data, error } = answers[index];
+        expect(error, testCase.name).toBeNull();
+        expect(data === null, testCase.name).toBe(
+          landingSections.safeParse(testCase.structure).success,
+        );
+      });
+      // A lone sticky section is accepted on some types and refused on others.
+      const lone = answers.slice(0, sections.length).map(({ data }) => data === null);
+      expect(lone).toContain(true);
+      expect(lone).toContain(false);
+      // A pair on two sides is accepted and a pair on one side refused, so
+      // the parity above is not two refusals agreeing.
+      const pairs = (second: string) =>
+        cases.flatMap((testCase, index) =>
+          testCase.name.endsWith(`and another on the ${second}`) ? [answers[index].data] : [],
+        );
+      expect(new Set(pairs("right"))).toEqual(new Set([null]));
+      expect(new Set(pairs("left"))).toEqual(
+        new Set(["A page has at most one sticky section on each side"]),
+      );
+
+      const [allowed] = sections.filter((section) => LANDING_STICKY_TYPES.includes(section.type));
+      const side = marked(allowed.id, "top");
+      const { data: sideProblem } = await admin.rpc("landing_sections_problem", {
+        p_sections: side,
+      });
+      expect(sideProblem).toBe(`The sticky side of section ${allowed.id} is left or right`);
+      expect(landingSections.safeParse(side).success).toBe(false);
     });
 
     it("refuses words for a section the page does not have", async () => {

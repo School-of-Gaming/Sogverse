@@ -20,13 +20,16 @@ import {
   LANDING_SUBSCRIBE_LAST_NAME_MAX,
   type LandingSubscribeBody,
 } from "@/services/landing-pages/landing-subscribe.contracts";
+import { LANDING_CARD_ACTION } from "./landing-section-header";
 
 /** Which refusal sentence a failed post reads. */
 type Refusal = "invalid" | "error";
 
 /**
  * **A landing page's email sign-up form**: an optional first and last name,
- * side by side as the registration forms set them, an email address and the
+ * side by side as the registration forms set them (stacked in the sticky
+ * card, whose column is too narrow for a pair, where the button also fills
+ * the column), an email address and the
  * consent box, posted to the sign-up route, which puts the address on the
  * newsletter list at once (single opt-in). The button stays disabled until an
  * address is typed and the box is ticked — the names never hold it back;
@@ -47,6 +50,7 @@ export function LandingSubscribeForm({
   locale,
   buttonLabel,
   preview,
+  inCard = false,
 }: {
   pageId: string;
   sectionId: string;
@@ -55,6 +59,13 @@ export function LandingSubscribeForm({
   buttonLabel: string;
   /** The admin's preview: the form is drawn, but its button is disabled and nothing is posted. */
   preview: boolean;
+  /**
+   * Drawn in the sticky card, a 20rem column: the name fields one above the
+   * other and the button the column's full width, at every width. On the
+   * page itself the names pair up and the button is centred under the
+   * centred heading.
+   */
+  inCard?: boolean;
 }) {
   const t = useTranslations("landingSubscribe");
   const utm = useUtm();
@@ -130,6 +141,7 @@ export function LandingSubscribeForm({
         setLastName={setLastName}
         disabled={committing}
         optional
+        stacked={inCard}
         idPrefix={`${sectionId}-`}
         firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
         lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}
@@ -186,7 +198,7 @@ export function LandingSubscribeForm({
         <Button
           type="submit"
           size="lg"
-          className="w-full sm:w-auto"
+          className={inCard ? LANDING_CARD_ACTION : "w-full sm:w-auto"}
           disabled={committing || preview || !complete}
         >
           {buttonLabel}

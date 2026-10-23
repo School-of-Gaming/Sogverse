@@ -1,17 +1,21 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { ProductRailPrefetch } from "@/components/public/products/product-rail-selection";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { cn } from "@/lib/cn";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { landingPictureShapeOf } from "@/lib/landing-pages/picture-shapes";
 import {
   landingSectionBackground,
+  landingStickySections,
   type LandingSection,
   type LandingSectionTexts,
+  type LandingStickySide,
 } from "@/lib/landing-pages/sections";
 import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import { landingSectionText } from "./landing-section-types";
 import { renderLandingSection, type LandingRenderContext } from "./landing-sections";
+import { LandingStickyRail } from "./landing-sticky";
 
 export interface LandingPageBodyProps {
   /** The structure, in page order: the hero first. */
@@ -46,7 +50,146 @@ export interface LandingPageBodyProps {
   pageId: string;
   /** The admin's preview of a working copy: an email sign-up form cannot be sent. */
   preview: boolean;
+  /**
+   * The trail drawn above the sections, in the page's own language. The body
+   * draws it so that, on a page with a sticky section, it stands in the same
+   * content track as the sections and keeps their left edge.
+   */
+  breadcrumb?: ReactNode;
 }
+
+// ---- The sticky cards' width budget ----
+//
+// Borrowed from the shop's browse grid: the content stays in the page's
+// centre and a sticky card stands in the gutter beside it, outside the
+// content box. Nothing a section draws is narrowed or padded for a card. A
+// page has a card on the left, on the right, on both sides or on neither.
+//
+// From `2xl` (1536px) a page with a sticky section is a three-track grid,
+// gutter | content | gutter, as wide as the viewport so a card can live in
+// its margin:
+//
+// - **The content track** is `minmax(0, 74rem)`: the widest section measure
+//   (`max-w-6xl`, 72rem, 1152px) plus the container's 1rem inline padding
+//   either side, which every section keeps. A section is drawn in it exactly
+//   as on a page without a sticky section, so its measure and its pictures'
+//   `sizes` hold.
+// - **A card's gutter** is `minmax(rail + gap, 1fr)`: the card, 20rem
+//   (`--landing-rail-width`), in a layer with 1rem of padding outward and
+//   0.5rem toward the content. That 0.5rem and the section's own 1rem are the
+//   1.5rem gap (`--landing-rail-gap`, the product page's and the shop's
+//   `gap-6`) between card and measure, the card pinned against the content as
+//   the shop's filter rail is; its 1rem outward is the page's edge, as the
+//   shop's, and the card's whole distance from the window when its gutter is
+//   at the floor.
+// - **A gutter with no card** is `minmax(0, 1fr)`, free to close entirely.
+//
+// Both gutters are `1fr`, so the content is dead centre wherever they can be
+// equal. **A card on one side:** below 1872 the card's gutter holds its 344px
+// floor and the opposite one takes the rest, so the content slides away from
+// the card only as far as it must. Measured in a real browser without a
+// scrollbar, for a right card: at 1536 the content track is 8–1192, the
+// measure 24–1176 (168px left of centre) and the card 1200–1520, so the whole
+// 1152px measure fits with 8px to spare; at 1680 the measure is 168–1320 (96px
+// left of centre), the card 1344–1664; at 1700 the measure is 188–1340 (86px
+// left), the card 1364–1684; at 1856 the measure is 344–1496 (8px left), the
+// card 1520–1840; from 1872 (1184 + 2 × 344) the gutters are equal and the
+// measure centred — at 1920 it is 384–1536, the card 1560–1880.
+//
+// **A card on each side:** both gutters hold their floor, so the content never
+// slides — it stays dead centre and the content track narrows instead, to
+// whatever the two 344px floors leave. Worked through from the same tracks:
+// at 1536 the track is 344–1192 (848), the measure 360–1176 (816), the cards
+// 16–336 and 1200–1520; at 1700 the track is 344–1356 (1012), the measure
+// 360–1340 (980), the cards 16–336 and 1364–1684; at 1872 the track reaches
+// its 1184 and the measure 360–1512 its full 1152, the cards 16–336 and
+// 1536–1856; wider, the gutters grow alike. A section measure narrower than
+// the track keeps its own width; a wider one is held to the track, as on any
+// viewport narrower than its measure.
+//
+// A classic scrollbar (about 17px on Windows) comes out of the content track
+// wherever a gutter is at its floor: at 1536 it leaves a lone card's measure
+// 1143px and two cards' 799px.
+//
+// **Full-width bands keep spanning the viewport.** Each section is drawn in a
+// row that spans all three tracks and inherits them (`subgrid`), the section
+// in the middle one; a `card` section's band is that row on the card ground,
+// so it runs edge to edge while its content lines up with every other
+// section's. A subgrid states the template once, on the page, for every row
+// to follow — where an offset computed per section would have to agree with
+// the cards' sides by arithmetic. Each card's layer takes the same grid row as
+// the sections, in its own gutter, so it is as tall as they are: sticky
+// travels only within that, so a card can never reach the footer or run past
+// the page's end. The breadcrumb is the grid's first row, a row like a
+// section's, so it keeps the content's left edge wherever the content sits.
+//
+// The card is what the email form inside it is fitted to: its inputs are
+// 270px, close to the 278 a 360px phone gives them, and that holds for the
+// name fields only because the card stacks them — side by side, as the
+// viewport's width would otherwise set them, each would get about 128px.
+//
+// Below `2xl` none of this exists: the sticky sections are drawn at the
+// page's end, after the last section and before the footer, in the
+// structure's order. Every class here naming `2xl` is that one decision
+// written where it applies, so they change together.
+
+/** Which gutters hold a card: one side's, or both. */
+type StickySides = LandingStickySide | "both";
+
+/**
+ * The page grid, by the gutters holding a card: a card's gutter keeps its
+ * floor, a gutter with none may close. The one statement of the template.
+ */
+const STICKY_PAGE: Record<StickySides, string> = {
+  left: "2xl:grid 2xl:grid-cols-[minmax(calc(var(--landing-rail-width)+var(--landing-rail-gap)),1fr)_minmax(0,74rem)_minmax(0,1fr)]",
+  right:
+    "2xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,74rem)_minmax(calc(var(--landing-rail-width)+var(--landing-rail-gap)),1fr)]",
+  both: "2xl:grid 2xl:grid-cols-[minmax(calc(var(--landing-rail-width)+var(--landing-rail-gap)),1fr)_minmax(0,74rem)_minmax(calc(var(--landing-rail-width)+var(--landing-rail-gap)),1fr)]",
+};
+
+/** One section's row — its band, when it has one: all three tracks, the section in the content one. */
+const STICKY_ROW = "2xl:col-span-full 2xl:grid 2xl:grid-cols-subgrid 2xl:*:col-start-2";
+
+/** The breadcrumb: the page grid's first row, drawn as a section's row is. */
+const STICKY_BREADCRUMB = `${STICKY_ROW} 2xl:row-start-1`;
+
+/** The sections: the page grid's second row, across all three tracks, which each section's row inherits. */
+const STICKY_SECTIONS = "2xl:col-span-full 2xl:row-start-2 2xl:grid 2xl:grid-cols-subgrid";
+
+/**
+ * The layer that holds a card, by its side. Below `2xl` it is the page's
+ * end: the container, with the bottom spacing a section has (the last
+ * section's own bottom spacing is the gap above the first card, unless that
+ * section is a band — `STICKY_LAYER_AFTER_BAND` — and the first card's own
+ * bottom spacing is the gap above the second). From `2xl` it is the card's
+ * gutter in the sections' row, as tall as they are, starting and ending with
+ * the hero's and the last section's spacing, its padding toward the content
+ * halved so the section's own adds up to the gap; a left card is pushed to
+ * the gutter's inner edge, against the content.
+ */
+const STICKY_LAYER: Record<LandingStickySide, string> = {
+  left: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-1 2xl:row-start-2 2xl:pt-24 2xl:pr-2",
+  right: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-3 2xl:row-start-2 2xl:pt-24 2xl:pl-2",
+};
+
+/**
+ * Below `2xl`, the gap above the first card when the last section is a band:
+ * that section's bottom spacing is inside the band, so the layer brings a
+ * section's spacing of its own rather than meet the band's edge.
+ */
+const STICKY_LAYER_AFTER_BAND = "pt-16 sm:pt-24";
+
+/**
+ * A card's holder: pinned under the site header from `2xl` with the two-end
+ * clamp (`min(header offset, viewport − its height − gap)`), so a card taller
+ * than the window is still reachable to its last control. The height is the
+ * one its own rail publishes on itself, so two cards each clamp by their own.
+ */
+const STICKY_RAIL: Record<LandingStickySide, string> = {
+  left: "2xl:sticky 2xl:top-[min(calc(var(--header-height)+1.5rem),calc(100vh-var(--landing-rail-height)-1.5rem))] 2xl:ml-auto 2xl:w-[var(--landing-rail-width)]",
+  right:
+    "2xl:sticky 2xl:top-[min(calc(var(--header-height)+1.5rem),calc(100vh-var(--landing-rail-height)-1.5rem))] 2xl:w-[var(--landing-rail-width)]",
+};
 
 /**
  * **A landing page's body: its sections in order, each through its type's
@@ -57,6 +200,13 @@ export interface LandingPageBodyProps {
  * language than the page — the reader fallback answered — the whole body
  * carries that language, for a screen reader's voice and the browser's
  * hyphenation alike.
+ *
+ * **A page's sticky sections are each drawn once**, after every other
+ * section in the document and in the structure's order, which is where they
+ * sit below `2xl` and what keeps the page's outline in reading order wherever
+ * they are painted: each heading is an H2 under the hero's H1 like every
+ * other section's. From `2xl` the same elements are the sticky cards, each in
+ * the gutter on its side beside the sections (the budget above).
  *
  * A section whose background is `card` sits on a band of the card ground that
  * runs the viewport's full width, while its content keeps the section's own
@@ -76,8 +226,16 @@ export function LandingPageBody({
   products,
   pageId,
   preview,
+  breadcrumb,
 }: LandingPageBodyProps) {
   const guides = new Set(guideIds);
+  // A guide the read did not answer has nothing to offer, so it is no part of
+  // the page: in the flow it would draw nothing inside an empty band, and as a
+  // sticky section an empty card's layer and a gutter held open for it.
+  const shown = sections.filter(
+    (section) => section.type !== "guide" || guides.has(section.guideId),
+  );
+  const stickies = landingStickySections(shown);
   const context: LandingRenderContext = {
     locale,
     textLocale,
@@ -91,28 +249,69 @@ export function LandingPageBody({
     },
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,
-    hasGuide: (id) => guides.has(id),
   };
+  const render = (section: LandingSection) =>
+    renderLandingSection(
+      section.type,
+      section,
+      landingSectionText(sectionTexts, section.id),
+      context,
+    );
+  // A section in the flow, on its band when its background is `card`: the
+  // band is the full-width wrapper and the section inside it is the content
+  // box. On a page with a sticky section every section has a row of the page
+  // grid (`STICKY_ROW`), the band being that row on the card ground.
+  const draw = (section: LandingSection, row?: string) => {
+    const band = landingSectionBackground(section) === "card";
+    if (row === undefined && !band) {
+      return <Fragment key={section.id}>{render(section)}</Fragment>;
+    }
+    return (
+      <div key={section.id} className={cn(band && "bg-card", row)}>
+        {render(section)}
+      </div>
+    );
+  };
+
+  // exact-locale: marks text written in another language than the page with lang
+  const lang = textLocale === locale ? undefined : textLocale;
+  if (stickies.length === 0) {
+    return (
+      <>
+        {breadcrumb}
+        <div lang={lang}>{shown.map((section) => draw(section))}</div>
+      </>
+    );
+  }
+  const stuck = new Set(stickies.map((section) => section.id));
+  const flowed = shown.filter((section) => !stuck.has(section.id));
+  const last = flowed.at(-1);
+  const afterBand = last !== undefined && landingSectionBackground(last) === "card";
+  // The structure rule allows one card a side, so two cards are one on each.
+  const sides: StickySides = stickies.length > 1 ? "both" : stickies[0].sticky;
+  // The breadcrumb is in the page's language, so `lang` marks the sections
+  // and the cards rather than the grid holding them all.
   return (
-    // exact-locale: marks text written in another language than the page with lang
-    <div lang={textLocale === locale ? undefined : textLocale}>
-      {sections.map((section) => {
-        const drawn = renderLandingSection(
-          section.type,
-          section,
-          landingSectionText(sectionTexts, section.id),
-          context,
-        );
-        return (
-          <Fragment key={section.id}>
-            {landingSectionBackground(section) === "card" ? (
-              <div className="bg-card">{drawn}</div>
-            ) : (
-              drawn
-            )}
-          </Fragment>
-        );
-      })}
+    <div className={STICKY_PAGE[sides]}>
+      {breadcrumb !== undefined && <div className={STICKY_BREADCRUMB}>{breadcrumb}</div>}
+      <div lang={lang} className={STICKY_SECTIONS}>
+        {flowed.map((section) => draw(section, STICKY_ROW))}
+      </div>
+      {stickies.map((sticky, index) => (
+        <div
+          key={sticky.id}
+          lang={lang}
+          className={cn(
+            STICKY_LAYER[sticky.sticky],
+            index === 0 && afterBand && STICKY_LAYER_AFTER_BAND,
+          )}
+        >
+          <LandingStickyRail className={STICKY_RAIL[sticky.sticky]}>
+            {/* Never on a band: a sticky section is a card standing on the page. */}
+            {render(sticky)}
+          </LandingStickyRail>
+        </div>
+      ))}
     </div>
   );
 }

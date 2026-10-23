@@ -36,7 +36,9 @@ export function useNameSchemaFields() {
 /**
  * The two halves of one name, side by side from `sm` and stacked below it: a
  * first and last name are one answer split in two, and a wide card that runs
- * them down the middle wastes the width the card was widened for.
+ * them down the middle wastes the width the card was widened for. `stacked`
+ * keeps them one above the other at every width, for a form set in a column
+ * narrower than the viewport says.
  *
  * Required by default, as every registration form asks; `optional` marks both
  * halves optional for a form that only invites a name. `idPrefix` keeps the
@@ -54,6 +56,7 @@ export function NameFields({
   setLastName,
   disabled,
   optional = false,
+  stacked = false,
   idPrefix = "",
   firstMaxLength = DISPLAY_NAME_MAX,
   lastMaxLength = DISPLAY_NAME_MAX,
@@ -68,6 +71,7 @@ export function NameFields({
   setLastName: (value: string) => void;
   disabled: boolean;
   optional?: boolean;
+  stacked?: boolean;
   idPrefix?: string;
   firstMaxLength?: number;
   lastMaxLength?: number;
@@ -75,7 +79,7 @@ export function NameFields({
   const firstId = `${idPrefix}firstName`;
   const lastId = `${idPrefix}lastName`;
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className={stacked ? "grid gap-4" : "grid gap-4 sm:grid-cols-2"}>
       <Field label={firstLabel} htmlFor={firstId} optional={optional}>
         <Input
           id={firstId}
