@@ -96,7 +96,7 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
     draft: {
       id: PAGE_ID,
       sections: SECTIONS,
-      imagePaths: {},
+      pictures: {},
       versions,
       createdAt: "2026-10-01T08:00:00Z",
       updatedAt: "2026-10-02T08:00:00Z",
@@ -116,7 +116,7 @@ function publication(locales: readonly string[]): PublishedLandingPage {
     firstPublishedAt: "2026-10-03T08:00:00Z",
     publishedAt: "2026-10-03T08:00:00Z",
     sections: SECTIONS,
-    imagePaths: {},
+    pictures: {},
     versions: [EN, SV]
       .filter((v) => locales.includes(v.locale))
       .map((v) => ({

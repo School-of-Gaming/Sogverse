@@ -49,7 +49,7 @@ function livePage(sections: LandingSection[] = SECTIONS): PublishedLandingPage {
     firstPublishedAt: "2026-10-01T00:00:00Z",
     publishedAt: "2026-10-01T00:00:00Z",
     sections,
-    imagePaths: {},
+    pictures: {},
     versions: [
       { locale: "en", title: "Espoo", summary: "Clubs", slug: "espoo-clubs", sectionTexts: {} },
       { locale: "fi", title: "Espoo", summary: "Kerhot", slug: "espoon-kerhot", sectionTexts: {} },

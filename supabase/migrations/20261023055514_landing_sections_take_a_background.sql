@@ -54,7 +54,7 @@ BEGIN
     v_ids := array_append(v_ids, v_id);
 
     -- A single picture, where a type takes one, is optional and a uuid.
-    IF v_type IN ('hero', 'text') AND v_section ? 'imageId'
+    IF v_type IN ('hero', 'text', 'guide') AND v_section ? 'imageId'
        AND (jsonb_typeof(v_section->'imageId') IS DISTINCT FROM 'string'
             OR v_section->>'imageId' !~ c_uuid) THEN
       RETURN format('The picture of section %s must be a catalogue entry''s lowercase uuid', v_id);
@@ -132,6 +132,11 @@ BEGIN
           END IF;
           v_item_ids := array_append(v_item_ids, v_item #>> '{}');
         END LOOP;
+      WHEN 'guide' THEN
+        IF jsonb_typeof(v_section->'guideId') IS DISTINCT FROM 'string'
+           OR v_section->>'guideId' !~ c_uuid THEN
+          RETURN format('Section %s needs its guide, as a guide''s lowercase uuid', v_id);
+        END IF;
       WHEN 'subscribe' THEN
         -- No shared field but its background: the list it signs up to is the
         -- deployment's configuration, not the page's.
@@ -190,7 +195,7 @@ BEGIN
 END;
 $_$;
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists and has the landing_image purpose is apply_landing_image_paths''; whether a placed testimonial or a picked product exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
 
 
 -- Every structure already stored, in both copies, still passes: none names a

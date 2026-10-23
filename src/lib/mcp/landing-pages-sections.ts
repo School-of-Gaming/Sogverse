@@ -16,6 +16,11 @@ import {
   type LandingSectionOf,
   type LandingSectionType,
 } from "@/lib/landing-pages/sections";
+import {
+  LANDING_PICTURE_SHAPES,
+  describeLandingPictureShapes,
+  type LandingPictureShape,
+} from "@/lib/landing-pages/picture-shapes";
 
 /*
  * The landing page sections as an AI app writes them. The section registry
@@ -53,7 +58,7 @@ const itemId = landingId
   .describe("The item's id. Keep it on every existing item; leave it out for a new one.");
 
 const pictureId = landingId.describe(
-  "A picture's catalogue id: a landing page picture entry, as list_landing_images returns it.",
+  "A picture's catalogue id: a landing page picture entry of a shape the section takes, as list_landing_images returns it.",
 );
 
 const buttonTarget = z
@@ -375,6 +380,30 @@ export const MCP_LANDING_SECTIONS: {
     },
     itemIds: () => null,
   },
+  guide: {
+    about:
+      "A guide from School of Gaming's store — a PDF with one file per language — offered for download, with a heading, an optional description and an optional cover picture. Readers who are signed in download the file in their own language, else English, else the earliest language that has one, in Sogverse's language order; a signed-out reader sees the section and is asked to create an account first. The guide's files live in the store, never in the page: choose one by its id from list_guides, or upload a new guide or another language's file with open_guide_uploader, then place it here. An id no guide has is refused when the structure is saved. To take a guide off this page, save the structure without this section; guides themselves are never deleted.",
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("guide"),
+      ...backgroundField,
+      guideId: landingId.describe("The guide's id, as list_guides returns it."),
+      imageId: pictureId.optional(),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading."),
+      description: plainText.describe("A line or two on what the guide holds, plain text. Optional."),
+      imageAlt: plainText.describe("The cover picture's alt text."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "guide", background: "default", guideId: ANY_ID },
+      withOptional: {
+        imageId: { id: ANY_ID, type: "guide", background: "default", guideId: ANY_ID, imageId: ANY_ID },
+      },
+    },
+    itemIds: () => null,
+  },
   faq: {
     about:
       "One to twenty questions and answers. Search engines read it as the page's FAQ, so write real questions a reader asks.",
@@ -557,12 +586,23 @@ const STRUCTURE_RULES = [
   .filter((rule) => rule !== null)
   .join("; ");
 
+/** The shapes a type's pictures may be, in words, from the registry; nothing for a type without pictures. */
+function describePictureShapes(type: LandingSectionType): string {
+  const shapes: readonly LandingPictureShape[] = LANDING_SECTIONS[type].pictureShapes;
+  if (shapes.length === 0) return "";
+  const which = describeLandingPictureShapes(shapes);
+  if (type === "image") return ` Its pictures may be ${which}, all one shape.`;
+  return shapes.length === LANDING_PICTURE_SHAPES.length
+    ? ` Its picture may be ${which}.`
+    : ` Its picture must be ${which}.`;
+}
+
 /** Every section type, what it is, and which of its words are required. */
 export const SECTIONS_MANUAL = [
   `${STRUCTURE_RULES}; the other sections follow in any order and number.`,
   ...LANDING_SECTION_TYPES.map(
     (type) =>
-      `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about} Required words in every language: ${describeRequiredWords(type)}.`,
+      `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about}${describePictureShapes(type)} Required words in every language: ${describeRequiredWords(type)}.`,
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
   `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}, default when left out. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,

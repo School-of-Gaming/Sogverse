@@ -45,7 +45,7 @@ const LIVE = [
   {
     page_id: ESPOO,
     sections: [{ id: HERO, type: "hero", imageId: PICTURE }],
-    image_paths: { [PICTURE]: "pictures/espoo.jpg" },
+    pictures: { [PICTURE]: { path: "pictures/espoo.jpg", purpose: "landing_image" } },
     published_at: "2026-10-01T08:00:00Z",
     first_published_at: "2026-09-02T08:00:00Z",
     versions: [
@@ -55,7 +55,7 @@ const LIVE = [
   {
     page_id: ESBO,
     sections: [{ id: HERO, type: "hero" }],
-    image_paths: {},
+    pictures: {},
     published_at: "2026-09-01T08:00:00Z",
     first_published_at: "2026-09-01T08:00:00Z",
     versions: [

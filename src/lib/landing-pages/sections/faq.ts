@@ -57,4 +57,5 @@ export const faqSection = {
     }),
   ],
   markdownFields: [{ items: "items", field: "answer", useCase: "landing-faq" }],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"faq", typeof section, typeof text>;

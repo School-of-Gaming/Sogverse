@@ -12,7 +12,10 @@ no purpose, a purpose naming no bucket, or a visibility that disagrees with the 
 they were uploaded in. Whatever crops a picture to a fixed size, and whatever checks a
 stored picture against it, reads the size from the registry — no feature declares a fixed
 size of its own. A picture that keeps its shape is never cropped; how far it may be scaled
-down is its feature's own limit, not the registry's.
+down is its feature's own limit, not the registry's. **A fixed size is one shape**, so a
+feature whose pictures come in several shapes declares a purpose, and a bucket, per shape —
+as a landing page's wide, square and portrait pictures are — and reads a picture's shape
+off its purpose rather than storing it beside the picture.
 
 **Whether a purpose belongs to the admin image catalogue is a separate declaration**, not
 implied by a fixed size: a team photo is cropped to its frame but is one person's own

@@ -238,7 +238,7 @@ function landingPage(
     firstPublishedAt: "2026-09-01T08:00:00Z",
     publishedAt: "2026-10-01T08:00:00Z",
     sections: [],
-    imagePaths: {},
+    pictures: {},
     versions: versions.map((v) => ({ ...v, title: v.slug, summary: "S" })),
   };
 }

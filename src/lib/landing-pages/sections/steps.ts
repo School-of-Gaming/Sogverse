@@ -51,4 +51,5 @@ export const stepsSection = {
     }),
   ],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"steps", typeof section, typeof text>;

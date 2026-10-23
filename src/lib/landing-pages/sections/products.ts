@@ -72,4 +72,5 @@ export const productsSection = {
   text,
   missingText: () => [],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"products", typeof section, typeof text>;

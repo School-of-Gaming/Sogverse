@@ -10,8 +10,10 @@ import {
 /**
  * The page's opening: its one H1, an optional line under it, an optional
  * picture and an optional button. Every page has exactly one, and it is first.
- * Alone of the types it takes no background: it opens the page on the page's
- * own ground, and its schema refuses the field.
+ * Its picture is wide only: it is also the page's link preview and the picture
+ * its structured data leads with, both drawn at 16:9. Alone of the types it
+ * takes no background: it opens the page on the page's own ground, and its
+ * schema refuses the field.
  */
 const section = z
   .object({
@@ -50,4 +52,5 @@ export const heroSection = {
       : []),
   ],
   markdownFields: [],
+  pictureShapes: ["wide"],
 } as const satisfies LandingSectionDefinition<"hero", typeof section, typeof text>;

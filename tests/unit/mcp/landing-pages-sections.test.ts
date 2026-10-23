@@ -123,6 +123,16 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "products", productIds: [ID2], background: "card" },
     { id: ID, type: "products", productIds: [ID2], background: null },
   ],
+  guide: [
+    { id: ID, type: "guide", guideId: ID2 },
+    { id: ID, type: "guide", guideId: ` ${ID2.toUpperCase()} `, imageId: ID3 },
+    { id: ID, type: "guide" },
+    { id: ID, type: "guide", guideId: "nope" },
+    { id: ID, type: "guide", guideId: ID2, imageId: "nope" },
+    { id: ID, type: "guide", guideIds: [ID2] },
+    { id: ID, type: "guide", guideId: ID2, background: "card" },
+    { id: ID, type: "guide", guideId: ID2, background: "tinted" },
+  ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "faq", items: ids(20).map((id) => ({ id })) },
@@ -195,6 +205,12 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
     { heading: ["Clubs"] },
     { items: {} },
     { body: "Not a products field" },
+  ],
+  guide: [
+    {},
+    { eyebrow: "Free", heading: "The parents' guide", description: "What a club is like.", imageAlt: "The cover" },
+    { description: 3 },
+    { body: "Not a guide field" },
   ],
   faq: [
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },

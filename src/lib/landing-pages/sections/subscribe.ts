@@ -51,4 +51,5 @@ export const subscribeSection = {
     ...(isWritten(words.buttonLabel) ? [] : ["buttonLabel"]),
   ],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"subscribe", typeof section, typeof text>;
