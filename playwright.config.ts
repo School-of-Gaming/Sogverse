@@ -8,7 +8,9 @@ import { defineConfig } from "@playwright/test";
 // binaries to install.
 //
 // PORT lets a local run avoid a dev server already holding the default; CI takes
-// the default.
+// the default. A server already on the port is never reused: it is usually a dev
+// server on another checkout, and the specs would pass against that app instead
+// of this checkout's build. Playwright refuses to start instead.
 const port = Number(process.env.PORT ?? 3000);
 const baseURL = `http://localhost:${port}`;
 
@@ -31,6 +33,6 @@ export default defineConfig({
   webServer: {
     command: `npm run start -- --port ${port}`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 });
