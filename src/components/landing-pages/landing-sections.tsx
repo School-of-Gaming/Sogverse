@@ -840,7 +840,7 @@ function SubscribeSection({ section, text, context }: LandingSectionProps<"subsc
       locale={context.locale}
       buttonLabel={written(text.buttonLabel) ?? ""}
       preview={context.preview}
-      stacked={sticky}
+      inCard={sticky}
     />
   );
   if (sticky) {
