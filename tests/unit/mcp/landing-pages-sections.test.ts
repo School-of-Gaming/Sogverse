@@ -394,7 +394,9 @@ describe("the sticky sections", () => {
     expect(SECTIONS_MANUAL).toContain(
       "sticky: left or right; only these types may be: guide (Guide), subscribe (Email sign-up), cta (Call to action)",
     );
-    expect(SECTIONS_MANUAL).toContain("draws no card");
-    expect(SECTIONS_MANUAL).toContain("at the bottom of the page");
+    // Below the gutter's width it is an ordinary section, where the list puts it, on its background.
+    expect(SECTIONS_MANUAL).toContain("where it sits in the list is where it appears, on its own background");
+    expect(SECTIONS_MANUAL).toContain("its background is not drawn there");
+    expect(SECTIONS_MANUAL).toContain("draws nothing, neither in the list nor as a card");
   });
 });

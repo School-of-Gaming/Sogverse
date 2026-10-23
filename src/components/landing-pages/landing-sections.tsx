@@ -42,9 +42,11 @@ import { LandingProductsSection } from "./landing-products-section";
 import {
   Eyebrow,
   hasSectionHeader,
-  LANDING_CARD_ACTION,
   LANDING_CONTENT,
   LANDING_SECTION,
+  LANDING_STICKY_ACTION,
+  LANDING_STICKY_SECTION,
+  LANDING_STICKY_WORDS,
   SectionHeader,
 } from "./landing-section-header";
 import {
@@ -227,34 +229,38 @@ function LandingButton({
 }
 
 /**
- * **A sticky section's card** — the one frame every type that may be sticky is
- * drawn in, so the cards beside a page read as one family: the closing card's
- * world rule along its top, the card's own padding, the words start-aligned
- * under a heading a step down (`SectionHeader`'s `compact`), and the action the
- * card's full width. In the page's gutter it is an object standing on the page
- * beside the sections rather than one of them, so it carries its own edge, and
- * a section's band running across the gutter passes behind it. It replaces the
- * section's own frame rather than holding it, since a card does not contain a
- * card. The page gives it its place and its spacing — the gutter from `2xl`,
- * the page's end below that — and the card is the same in both.
+ * **A sticky section's card frame, from `2xl`** — the one frame every type
+ * that may be sticky is drawn in there, so the cards beside a page read as one
+ * family: the closing card's world rule along its top, the card's own padding,
+ * the words start-aligned under a heading a step down
+ * (`LANDING_STICKY_WORDS`), and the action the card's full width. In the
+ * page's gutter it is an object standing on the page beside the sections
+ * rather than one of them, so it carries its own edge. The call to action is
+ * a card in the flow already, so it restyles its own card rather than take
+ * this one, since a card does not contain a card.
+ *
+ * **Below `2xl` the frame is not there at all**: the card and its content are
+ * `display: contents`, so they draw no box and the section's own children are
+ * laid out as they are on a section that is not sticky, and the world rule is
+ * hidden. On a section that is not sticky it is nothing but its children.
  */
-function StickyCard({ children }: { children: ReactNode }) {
+function StickyFrame({ sticky, children }: { sticky: boolean; children: ReactNode }) {
+  if (!sticky) return children;
   return (
-    <section>
-      <Card data-sticky-card className="relative mx-auto max-w-xl overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
-        <CardContent className="pt-8">{children}</CardContent>
-      </Card>
-    </section>
+    <Card data-sticky-card className="relative overflow-hidden max-2xl:contents">
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-world max-2xl:hidden" />
+      <CardContent className="pt-8 max-2xl:contents">{children}</CardContent>
+    </Card>
   );
 }
 
 /**
- * The CSS width a picture across a sticky card resolves to, stated as the
- * card's own: 20rem in the gutter from `2xl`, and below that the card at the
- * page's end, as wide as its 36rem measure or the viewport allows.
+ * The CSS width of a picture across a sticky card from `2xl`, the card's
+ * 20rem, ahead of the `sizes` it has in the flow below that.
  */
-const STICKY_CARD_PICTURE = "(min-width: 1536px) 20rem, (min-width: 608px) 36rem, 100vw";
+function stickyCardSizes(flowSizes: string): string {
+  return `(min-width: 1536px) 20rem, ${flowSizes}`;
+}
 
 /**
  * The `lang` for words in the page's own language — ours, the store's, the
@@ -820,39 +826,27 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
 /**
  * The closing call to action, as the home and Roblox pages close: the plain
  * card with one world rule along its top edge, a heading, a line, one button.
- * As a sticky section it is the sticky card instead, the same words in it.
+ * As a sticky section it is the same card, and from `2xl` the sticky card: the
+ * words start-aligned under the card's heading, the button the card's width.
  */
 function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
+  const sticky = section.sticky !== undefined;
   const eyebrow = written(text.eyebrow);
   const body = written(text.body);
   const buttonLabel = written(text.buttonLabel);
-  if (section.sticky !== undefined) {
-    return (
-      <StickyCard>
-        <SectionHeader
-          eyebrow={text.eyebrow}
-          heading={text.heading}
-          intro={text.body}
-          centred={false}
-          compact
-        />
-        {buttonLabel !== null && (
-          <LandingButton
-            target={section.button}
-            label={buttonLabel}
-            subject={text.emailSubject}
-            context={context}
-            className={cn("mt-6", LANDING_CARD_ACTION)}
-          />
-        )}
-      </StickyCard>
-    );
-  }
   return (
-    <section className={LANDING_SECTION}>
-      <Card className="relative mx-auto max-w-3xl overflow-hidden">
+    <section className={cn(LANDING_SECTION, sticky && LANDING_STICKY_SECTION)}>
+      <Card
+        data-sticky-card={sticky || undefined}
+        className="relative mx-auto max-w-3xl overflow-hidden"
+      >
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
-        <CardContent className="flex flex-col items-center py-12 text-center">
+        <CardContent
+          className={cn(
+            "flex flex-col items-center py-12 text-center",
+            sticky && ["2xl:items-stretch 2xl:pb-6 2xl:pt-8", LANDING_STICKY_WORDS],
+          )}
+        >
           {eyebrow !== null && (
             <div className="mb-4">
               <Eyebrow>{eyebrow}</Eyebrow>
@@ -868,7 +862,7 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
               label={buttonLabel}
               subject={text.emailSubject}
               context={context}
-              className="mt-8"
+              className={cn("mt-8", sticky && ["2xl:mt-6", LANDING_STICKY_ACTION])}
             />
           )}
         </CardContent>
@@ -883,8 +877,9 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * from `lg`, start-aligned there and centred on a phone, the picture after
  * them.
  *
- * As a sticky section it is the sticky card: the cover picture across its
- * top, the header and line under it, the download the card's full width.
+ * As a sticky section it is the same section, and from `2xl` the sticky card:
+ * the cover picture across its top, the header and line under it, the
+ * download the card's full width.
  *
  * The page body leaves out a guide the read did not answer, so one drawn here
  * has a file, and the download route picks the reader's by the reader
@@ -892,120 +887,118 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * (`guide-download.tsx`); everything here is the same for every reader.
  */
 function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
+  const sticky = section.sticky !== undefined;
   const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const eyebrow = written(text.eyebrow);
   const heading = written(text.heading);
   const description = written(text.description);
   const ownLang = pageLang(context);
-  if (section.sticky !== undefined) {
-    return (
-      <StickyCard>
-        {picture !== null && (
-          <div className="mb-6">
-            <LandingPicture picture={picture} alt={text.imageAlt} sizes={STICKY_CARD_PICTURE} />
-          </div>
-        )}
-        <SectionHeader
-          eyebrow={text.eyebrow}
-          heading={text.heading}
-          intro={text.description}
-          centred={false}
-          compact
-        />
-        <div lang={ownLang}>
-          <GuideDownload guideId={section.guideId} locale={context.locale} placement="card" />
-        </div>
-      </StickyCard>
+  // A sticky guide is in the flow only below `2xl`, where the page's measure
+  // is never narrowed for a card; from there it is the card's 20rem.
+  const cover =
+    picture === null ? null : (
+      <LandingPicture
+        picture={picture}
+        alt={text.imageAlt}
+        sizes={
+          sticky
+            ? stickyCardSizes(halfColumnSizes(HALF_COLUMN_PX, false))
+            : halfColumnSizes(HALF_COLUMN_PX, context.twoCards)
+        }
+      />
     );
-  }
   return (
-    <section className={LANDING_SECTION}>
-      <div
-        className={cn(
-          "mx-auto",
-          picture === null
-            ? "max-w-3xl text-center"
-            : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
-        )}
-      >
-        <div className={cn(picture !== null && "text-center lg:text-left")}>
-          {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
-          {heading !== null && (
-            <div className={cn(eyebrow !== null && "mt-4")}>
-              {/* As in the hero, the heading turns start-aligned at `md` while
-                  the columns split at `lg`. */}
-              <Heading
-                level={2}
-                step="display"
-                align={picture === null ? "center" : "center-narrow"}
+    <section className={cn(LANDING_SECTION, sticky && LANDING_STICKY_SECTION)}>
+      <StickyFrame sticky={sticky}>
+        <div
+          className={cn(
+            "mx-auto",
+            picture === null
+              ? "max-w-3xl text-center"
+              : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
+            sticky && picture !== null && "2xl:grid-cols-1 2xl:gap-6",
+          )}
+        >
+          <div
+            className={cn(
+              picture !== null && "text-center lg:text-left",
+              sticky && LANDING_STICKY_WORDS,
+            )}
+          >
+            {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
+            {heading !== null && (
+              <div className={cn(eyebrow !== null && "mt-4")}>
+                {/* As in the hero, the heading turns start-aligned at `md` while
+                    the columns split at `lg`. */}
+                <Heading
+                  level={2}
+                  step="display"
+                  align={picture === null ? "center" : "center-narrow"}
+                >
+                  {heading}
+                </Heading>
+              </div>
+            )}
+            {description !== null && (
+              <p
+                className={cn(
+                  "mt-4 text-lg leading-8 text-muted-foreground",
+                  // The card's line is body text, as its header's intro.
+                  sticky && "2xl:text-base 2xl:leading-normal",
+                )}
               >
-                {heading}
-              </Heading>
+                {description}
+              </p>
+            )}
+            <div lang={ownLang}>
+              <GuideDownload
+                guideId={section.guideId}
+                locale={context.locale}
+                placement={picture === null ? "centred" : "beside-picture"}
+                sticky={sticky}
+              />
             </div>
-          )}
-          {description !== null && (
-            <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
-          )}
-          <div lang={ownLang}>
-            <GuideDownload
-              guideId={section.guideId}
-              locale={context.locale}
-              placement={picture === null ? "centred" : "beside-picture"}
-            />
           </div>
+          {/* After the words in the flow; across the card's top from `2xl`. */}
+          {cover !== null && sticky ? <div className="2xl:order-first">{cover}</div> : cover}
         </div>
-        {picture !== null && (
-          <LandingPicture
-            picture={picture}
-            alt={text.imageAlt}
-            sizes={halfColumnSizes(HALF_COLUMN_PX, context.twoCards)}
-          />
-        )}
-      </div>
+      </StickyFrame>
     </section>
   );
 }
 
 /**
  * An email sign-up: the heading and intro the page wrote over the site's own
- * form, in the reading column. As a sticky section it is the sticky card, the
- * form's names stacked and its button the card's full width.
+ * form, in the reading column. As a sticky section it is the same section, and
+ * from `2xl` the sticky card: the form's names stacked and its button the
+ * card's full width.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
   const sticky = section.sticky !== undefined;
-  const form = (
-    <LandingSubscribeForm
-      pageId={context.pageId}
-      sectionId={section.id}
-      locale={context.locale}
-      buttonLabel={written(text.buttonLabel) ?? ""}
-      buttonLabelLang={textLang(context)}
-      preview={context.preview}
-      inCard={sticky}
-    />
-  );
-  // The form's own words are the page's; only its button label is the version's.
-  const ownForm = <div lang={pageLang(context)}>{form}</div>;
-  if (sticky) {
-    return (
-      <StickyCard>
-        <SectionHeader
-          eyebrow={text.eyebrow}
-          heading={text.heading}
-          intro={text.intro}
-          centred={false}
-          compact
-        />
-        <div className="mt-6">{ownForm}</div>
-      </StickyCard>
-    );
-  }
   return (
-    <section className={LANDING_SECTION}>
-      <div className="mx-auto max-w-xl">
-        <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
-        <div className="mt-10">{ownForm}</div>
-      </div>
+    <section className={cn(LANDING_SECTION, sticky && LANDING_STICKY_SECTION)}>
+      <StickyFrame sticky={sticky}>
+        <div className="mx-auto max-w-xl">
+          <SectionHeader
+            eyebrow={text.eyebrow}
+            heading={text.heading}
+            intro={text.intro}
+            sticky={sticky}
+          />
+          {/* The form's own words are the page's; only its button label is the version's. */}
+          <div lang={pageLang(context)} className={cn("mt-10", sticky && "2xl:mt-6")}>
+            <LandingSubscribeForm
+              pageId={context.pageId}
+              sectionId={section.id}
+              locale={context.locale}
+              buttonLabel={written(text.buttonLabel) ?? ""}
+              buttonLabelLang={textLang(context)}
+              preview={context.preview}
+              sticky={sticky}
+            />
+          </div>
+        </div>
+      </StickyFrame>
     </section>
   );
 }

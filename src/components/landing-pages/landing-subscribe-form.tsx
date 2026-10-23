@@ -19,7 +19,8 @@ import {
   LANDING_SUBSCRIBE_LAST_NAME_MAX,
   type LandingSubscribeBody,
 } from "@/services/landing-pages/landing-subscribe.contracts";
-import { LANDING_CARD_ACTION } from "./landing-section-header";
+import { cn } from "@/lib/cn";
+import { LANDING_STICKY_ACTION } from "./landing-section-header";
 
 /** Which refusal sentence a failed post reads. */
 type Refusal = "invalid" | "error";
@@ -27,8 +28,8 @@ type Refusal = "invalid" | "error";
 /**
  * **A landing page's email sign-up form**: an optional first and last name,
  * side by side as the registration forms set them (stacked in the sticky
- * card, whose column is too narrow for a pair, where the button also fills
- * the column), an email address and the
+ * card from `2xl`, whose column is too narrow for a pair, where the button
+ * also fills the column), an email address and the
  * consent box, posted to the sign-up route, which puts the address on the
  * newsletter list at once (single opt-in). The button stays disabled until an
  * address is typed and the box is ticked — the names never hold it back;
@@ -50,7 +51,7 @@ export function LandingSubscribeForm({
   buttonLabel,
   buttonLabelLang,
   preview,
-  inCard = false,
+  sticky = false,
 }: {
   pageId: string;
   sectionId: string;
@@ -65,12 +66,13 @@ export function LandingSubscribeForm({
   /** The admin's preview: the form is drawn, but its button is disabled and nothing is posted. */
   preview: boolean;
   /**
-   * Drawn in the sticky card, a 20rem column: the name fields one above the
-   * other and the button the column's full width, at every width. On the
-   * page itself the names pair up and the button is centred under the
-   * centred heading.
+   * In a sticky section, which from `2xl` is the sticky card, a 20rem column:
+   * there the name fields stand one above the other and the button takes the
+   * column's full width. Below `2xl`, and on a section that is not sticky, the
+   * names pair up from `sm` and the button is centred under the centred
+   * heading.
    */
-  inCard?: boolean;
+  sticky?: boolean;
 }) {
   const t = useTranslations("landingSubscribe");
   const utm = useUtm();
@@ -133,20 +135,24 @@ export function LandingSubscribeForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <NameFields
-        firstLabel={t("firstName")}
-        lastLabel={t("lastName")}
-        firstName={firstName}
-        lastName={lastName}
-        setFirstName={setFirstName}
-        setLastName={setLastName}
-        disabled={committing}
-        optional
-        stacked={inCard}
-        idPrefix={`${sectionId}-`}
-        firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
-        lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}
-      />
+      {/* In the sticky card the pair is stacked from `2xl`, laid over the
+          fields' own `sm` pair: their `stacked` holds at every width, and below
+          `2xl` the section is in the flow, where the pair is right. */}
+      <div className={cn(sticky && "2xl:[&>div]:grid-cols-1")}>
+        <NameFields
+          firstLabel={t("firstName")}
+          lastLabel={t("lastName")}
+          firstName={firstName}
+          lastName={lastName}
+          setFirstName={setFirstName}
+          setLastName={setLastName}
+          disabled={committing}
+          optional
+          idPrefix={`${sectionId}-`}
+          firstMaxLength={LANDING_SUBSCRIBE_FIRST_NAME_MAX}
+          lastMaxLength={LANDING_SUBSCRIBE_LAST_NAME_MAX}
+        />
+      </div>
       <Field label={t("email")} htmlFor={`${sectionId}-email`}>
         <Input
           id={`${sectionId}-email`}
@@ -186,7 +192,7 @@ export function LandingSubscribeForm({
         <Button
           type="submit"
           size="lg"
-          className={inCard ? LANDING_CARD_ACTION : "w-full sm:w-auto"}
+          className={cn("w-full sm:w-auto", sticky && LANDING_STICKY_ACTION)}
           disabled={committing || preview || !complete}
         >
           <span lang={buttonLabelLang}>{buttonLabel}</span>
