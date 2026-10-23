@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useProductAdmin } from "@/services/products/products.queries";
 import { cloneFormState } from "./product-build";
 import { ProductFormCreate } from "./product-form-create";
@@ -71,11 +71,10 @@ export function NewProductPage({
               ? t("newPage.title", { type })
               : source
                 ? t("clonePage.title", {
-                    name:
-                      resolveTranslation(
-                        source.product_translations,
-                        uiLocale,
-                      )?.name ?? t("list.untitled"),
+                    name: resolveRequiredTranslation(
+                      source.product_translations,
+                      uiLocale,
+                    ).name,
                   })
                 : " "}
           </Heading>
