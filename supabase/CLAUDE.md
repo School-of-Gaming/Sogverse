@@ -392,6 +392,20 @@ you reach for instead):
   (Where a *test* must admit a value the generated type forbids — e.g. RLS nulling an
   embed — widen with a plain type annotation derived from `QueryData`, never a cast.)
 
+**Two more guarantees no TypeScript type carries**, and each one invites a fallback that
+lint cannot see:
+
+- **A text column whose CHECK forbids empty** (a length floor, `length(trim(x)) > 0`)
+  arrives as plain `string`, so `x || "Unknown"` type-checks and reads as prudent. It is
+  dead code. Use the value as it is; a placeholder for it is copy, and message keys,
+  that nothing can ever show.
+- **A helper over a set the database keeps non-empty** (a parent row that a create
+  function and a delete trigger guarantee at least one child for) tends to return
+  `T | null` for the empty case, and every caller then grows `?.x ?? ""`. Give the
+  guaranteed callers a variant that returns `T` and throws on empty; the nullable one
+  stays only for callers that really can hold an empty set, such as a form for an item
+  not yet saved.
+
 ## Access control: every object is GRANTed and RLS-protected
 
 **Rule: Migrations must explicitly `GRANT` every object they create — new tables, views,
