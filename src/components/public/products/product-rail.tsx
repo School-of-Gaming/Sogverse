@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { ParticipationCounts } from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
+import type { ProductBrowseCardViewProps } from "./browse-card-shell";
 import { ProductBrowseCard } from "./product-browse-card";
 
 /**
@@ -93,7 +94,7 @@ interface ProductRailProps {
   labels: { previous: string; next: string };
   /** The cards' title level — H3 under the surface's heading, the default, or
    *  H2 where the rail stands under none. */
-  titleLevel?: 2 | 3;
+  titleLevel?: ProductBrowseCardViewProps["titleLevel"];
 }
 
 /**

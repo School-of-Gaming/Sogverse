@@ -41,6 +41,7 @@ import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
 import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
 import {
+  itemHeadingLevel,
   written,
   type LandingSectionByType,
   type LandingTextByType,
@@ -479,9 +480,7 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
  */
 function PointsSection({ section, text }: LandingSectionProps<"points">) {
   const threeAcross = section.items.length % 3 === 0 || section.items.length === 5;
-  // The titles sit under the section's H2, or stand as H2s where the section
-  // has no heading written yet.
-  const titleLevel = written(text.heading) === null ? 2 : 3;
+  const titleLevel = itemHeadingLevel(text.heading);
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
@@ -534,8 +533,7 @@ function stepWidth(count: number): string {
  */
 function StepsSection({ section, text }: LandingSectionProps<"steps">) {
   const width = stepWidth(section.items.length);
-  // As the points' titles: H3s under the section's H2, or H2s without one.
-  const titleLevel = written(text.heading) === null ? 2 : 3;
+  const titleLevel = itemHeadingLevel(text.heading);
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
@@ -690,12 +688,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
-          {/* The questions sit under the section's H2, or stand as H2s where
-              the section has no heading written yet. */}
-          <FaqAccordion
-            items={items}
-            questionLevel={written(text.heading) === null ? 2 : 3}
-          />
+          <FaqAccordion items={items} questionLevel={itemHeadingLevel(text.heading)} />
         </div>
       </div>
     </section>
