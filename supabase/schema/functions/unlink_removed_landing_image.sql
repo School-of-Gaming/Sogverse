@@ -14,17 +14,26 @@ BEGIN
   -- Taken out of both copies before the entry goes, so the image-path trigger
   -- re-deriving each copy never meets the entry it is removing; the structure
   -- trigger drops the text of an image section this leaves with no picture.
-  -- A share picture that was this entry is unset, and the page's preview
-  -- falls back to its hero's picture.
+  -- The copies are found by their paths before the share pictures are unset,
+  -- so a working copy whose only use was a share picture moves its last-saved
+  -- time too.
   UPDATE public.landing_pages
-     SET sections       = public.landing_sections_without_image(sections, OLD.id),
-         share_image_id = NULLIF(share_image_id, OLD.id)
+     SET sections = public.landing_sections_without_image(sections, OLD.id)
    WHERE image_paths ? OLD.id::text;
 
   UPDATE public.landing_page_publications
-     SET sections       = public.landing_sections_without_image(sections, OLD.id),
-         share_image_id = NULLIF(share_image_id, OLD.id)
+     SET sections = public.landing_sections_without_image(sections, OLD.id)
    WHERE image_paths ? OLD.id::text;
+
+  -- A share picture that was this entry is unset, and that language's preview
+  -- falls back to the hero's picture.
+  UPDATE public.landing_page_translations
+     SET share_image_id = NULL
+   WHERE share_image_id = OLD.id;
+
+  UPDATE public.landing_page_publication_translations
+     SET share_image_id = NULL
+   WHERE share_image_id = OLD.id;
 
   RETURN OLD;
 END;
@@ -35,7 +44,7 @@ $$;
 -- Name: FUNCTION unlink_removed_landing_image(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.unlink_removed_landing_image() IS 'BEFORE DELETE on catalogue_images: the landing pages'' half of a removal, standing in for the foreign key a picture inside sections JSON cannot have. Takes a removed landing_image entry out of every landing page, working and published copies alike, as a cover''s SET NULL does: a hero or text section loses its picture, an image section loses that picture, an image section left with none is dropped with its text, and a share picture is unset, so the link preview falls back to the hero''s picture. A live page changes without a republish; the working copy''s updated_at and saver move, as a cover removal''s do. SECURITY DEFINER because the remover is an admin''s own session and no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.unlink_removed_landing_image() IS 'BEFORE DELETE on catalogue_images: the landing pages'' half of a removal, standing in for the foreign key a picture inside sections JSON cannot have. Takes a removed landing_image entry out of every landing page, working and published copies alike, as a cover''s SET NULL does: a hero or text section loses its picture, an image section loses that picture, an image section left with none is dropped with its text, and a language''s share picture is unset, so that language''s link preview falls back to the hero''s picture. A live page changes without a republish; the working copy''s updated_at and saver move, as a cover removal''s do. SECURITY DEFINER because the remover is an admin''s own session and no landing page table carries a write grant.';
 
 
 --

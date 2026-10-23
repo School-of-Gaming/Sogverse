@@ -18,8 +18,8 @@ export type LandingShareCardSource = Pick<
 >;
 
 /**
- * The picture a share card shows: the page's own share picture, its hero's,
- * or none, when the card is the site-wide one. A picture carries its stored
+ * The picture a share card shows: the version's own share picture, the
+ * hero's, or none, when the card is the site-wide one. A picture carries its stored
  * path in the `landing-images` bucket and its alt text in the version's
  * language.
  */
@@ -40,8 +40,8 @@ export interface LandingShareCard {
  * metadata carry, and what the status page and the MCP read say is in use.
  *
  * Each half is an override or derived from the page. **The title** is the
- * version's share title, else its page title. **The picture** is the page's
- * share picture with the version's share alt text, else the hero's picture
+ * version's share title, else its page title. **The picture** is the
+ * version's share picture with its share alt text, else the hero's picture
  * (`landingLeadPicture`) with the hero's alt text, else none, and the card is
  * the site-wide one. A picture's alt text falls back to the card's title. A
  * share picture whose path the copy does not carry is treated as none, as the
@@ -93,22 +93,22 @@ export function landingShareCardInUse({
 
 /**
  * The share card a working version would carry once published: the version's
- * words read with the working copy's structure and share picture.
+ * words and share card read with the working copy's structure.
  */
 export function draftShareCard(
-  draft: Pick<LandingPageDraft, "sections" | "imagePaths" | "shareImageId">,
+  draft: Pick<LandingPageDraft, "sections" | "imagePaths">,
   version: Pick<
     LandingPageDraftVersion,
-    "title" | "sectionTexts" | "shareTitle" | "shareImageAlt"
+    "title" | "sectionTexts" | "shareTitle" | "shareImageId" | "shareImageAlt"
   >,
 ): LandingShareCard {
   return landingShareCard({
     title: version.title,
     sectionTexts: version.sectionTexts,
     shareTitle: version.shareTitle,
+    shareImageId: version.shareImageId,
     shareImageAlt: version.shareImageAlt,
     sections: draft.sections,
     imagePaths: draft.imagePaths,
-    shareImageId: draft.shareImageId,
   });
 }

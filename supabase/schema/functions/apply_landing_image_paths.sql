@@ -12,7 +12,20 @@ DECLARE
   v_purpose public.catalogue_image_purpose;
   v_paths   jsonb := '{}'::jsonb;
   v_sections jsonb := CASE WHEN jsonb_typeof(NEW.sections) = 'array' THEN NEW.sections ELSE '[]'::jsonb END;
+  v_shares  uuid[];
 BEGIN
+  -- The copy's versions' share pictures: the working versions for the working
+  -- copy, the live ones for the published copy.
+  IF TG_TABLE_NAME = 'landing_pages' THEN
+    SELECT array_agg(share_image_id) INTO v_shares
+      FROM public.landing_page_translations
+     WHERE page_id = NEW.id AND share_image_id IS NOT NULL;
+  ELSE
+    SELECT array_agg(share_image_id) INTO v_shares
+      FROM public.landing_page_publication_translations
+     WHERE page_id = NEW.page_id AND share_image_id IS NOT NULL;
+  END IF;
+
   FOR v_ref IN
     SELECT DISTINCT r.ref FROM (
       SELECT s.e->>'imageId' AS ref
@@ -26,8 +39,8 @@ BEGIN
              ) AS i(e)
        WHERE jsonb_typeof(i.e->'imageId') = 'string'
       UNION ALL
-      SELECT NEW.share_image_id::text
-       WHERE NEW.share_image_id IS NOT NULL
+      SELECT u.id::text
+        FROM unnest(COALESCE(v_shares, '{}'::uuid[])) AS u(id)
     ) AS r
   LOOP
     v_path := NULL;
@@ -65,7 +78,7 @@ $_$;
 -- Name: FUNCTION apply_landing_image_paths(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_landing_image_paths() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: image_paths is derived from every catalogue entry the copy names (a section''s imageId, an image section''s images[].imageId, and the share picture''s share_image_id), as {entry id: path}. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer. Refuses an entry that is gone (23503) or whose purpose is not landing_image (23514).';
+COMMENT ON FUNCTION public.apply_landing_image_paths() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: image_paths is derived from every catalogue entry the copy names (a section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: path}. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_image_paths re-runs it when a version''s share picture changes. Refuses an entry that is gone (23503) or whose purpose is not landing_image (23514).';
 
 
 --

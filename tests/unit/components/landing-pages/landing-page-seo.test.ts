@@ -52,6 +52,7 @@ const S1 = "66666666-6666-4666-8666-666666666666";
 const S2 = "77777777-7777-4777-8777-777777777777";
 const PICTURE = "88888888-8888-4888-8888-888888888888";
 const SHARE_PICTURE = "99999999-9999-4999-8999-999999999999";
+const FI_SHARE_PICTURE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 /** Live in English and Finnish, with a hero picture, steps and two questions. */
 const PAGE: PublishedLandingPage = {
@@ -64,7 +65,6 @@ const PAGE: PublishedLandingPage = {
     { id: FAQ, type: "faq", items: [{ id: Q1 }, { id: Q2 }] },
   ],
   imagePaths: { [PICTURE]: "pictures/club.jpg" },
-  shareImageId: null,
   versions: [
     {
       locale: "en",
@@ -86,6 +86,7 @@ const PAGE: PublishedLandingPage = {
         },
       },
       shareTitle: "",
+      shareImageId: null,
       shareImageAlt: "",
     },
     {
@@ -95,6 +96,7 @@ const PAGE: PublishedLandingPage = {
       slug: "pelikerhot-espoo",
       sectionTexts: { [HERO]: { headline: "Kerhot Espoossa", imageAlt: "Lapsia" } },
       shareTitle: "",
+      shareImageId: null,
       shareImageAlt: "",
     },
   ],
@@ -219,28 +221,29 @@ describe("landingPageMetadata", () => {
     const HERO_IMAGE = "/opengraph-images/picture/landing_image/pictures/club.jpg";
     const SHARE_IMAGE = "/opengraph-images/picture/landing_image/pictures/share.jpg";
 
-    /** PAGE with overrides: a share picture, and words per language. */
-    function overridden(
-      shareImageId: string | null,
-      words: Partial<Record<"en" | "fi", { shareTitle?: string; shareImageAlt?: string }>>,
-    ): PublishedLandingPage {
+    const FI_SHARE_IMAGE = "/opengraph-images/picture/landing_image/pictures/share-fi.jpg";
+
+    type ShareCard = { shareTitle?: string; shareImageId?: string | null; shareImageAlt?: string };
+
+    /** PAGE with each language's overrides; the copy carries every named picture's path. */
+    function overridden(cards: Partial<Record<"en" | "fi", ShareCard>>): PublishedLandingPage {
       return {
         ...PAGE,
-        shareImageId,
         imagePaths: {
           ...PAGE.imagePaths,
-          ...(shareImageId === null ? {} : { [SHARE_PICTURE]: "pictures/share.jpg" }),
+          [SHARE_PICTURE]: "pictures/share.jpg",
+          [FI_SHARE_PICTURE]: "pictures/share-fi.jpg",
         },
         versions: PAGE.versions.map((version) => ({
           ...version,
-          ...words[version.locale === "en" ? "en" : "fi"],
+          ...cards[version.locale === "en" ? "en" : "fi"],
         })),
       };
     }
 
     it("takes the share title alone, keeping the page title and the hero's picture", async () => {
       const metadata = await landingPageMetadata(
-        overridden(null, { en: { shareTitle: "Join a gaming club in Espoo" } }),
+        overridden({ en: { shareTitle: "Join a gaming club in Espoo" } }),
         "en",
       );
 
@@ -257,20 +260,20 @@ describe("landingPageMetadata", () => {
       });
     });
 
-    it("takes the share picture alone, with its alt text in the shown version's language", async () => {
-      const page = overridden(SHARE_PICTURE, {
-        en: { shareImageAlt: "A club room" },
-        fi: { shareImageAlt: "Kerhohuone" },
+    it("takes the shown version's own share picture alone, with its alt text", async () => {
+      const page = overridden({
+        en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" },
+        fi: { shareImageId: FI_SHARE_PICTURE, shareImageAlt: "Kerhohuone" },
       });
 
       const finnish = await landingPageMetadata(page, "fi");
       expect(finnish.openGraph).toMatchObject({
         title: "Pelikerhot Espoossa",
-        images: [{ url: SHARE_IMAGE, alt: "Kerhohuone", width: 1200, height: 675 }],
+        images: [{ url: FI_SHARE_IMAGE, alt: "Kerhohuone", width: 1200, height: 675 }],
       });
       expect(finnish.twitter).toMatchObject({
         title: "Pelikerhot Espoossa",
-        images: [expect.objectContaining({ url: SHARE_IMAGE, alt: "Kerhohuone" })],
+        images: [expect.objectContaining({ url: FI_SHARE_IMAGE, alt: "Kerhohuone" })],
       });
 
       // Swedish is shown the English version, and so its alt text.
@@ -280,9 +283,22 @@ describe("landingPageMetadata", () => {
       });
     });
 
+    it("keeps the hero's picture in a language with no share picture while another has one", async () => {
+      const page = overridden({ en: { shareImageId: SHARE_PICTURE } });
+
+      const finnish = await landingPageMetadata(page, "fi");
+      expect(finnish.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Lapsia" })],
+      });
+      const english = await landingPageMetadata(page, "en");
+      expect(english.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: SHARE_IMAGE })],
+      });
+    });
+
     it("gives a share picture with no alt text the card's title", async () => {
       const metadata = await landingPageMetadata(
-        overridden(SHARE_PICTURE, { en: { shareTitle: "Clubs for Espoo kids" } }),
+        overridden({ en: { shareTitle: "Clubs for Espoo kids", shareImageId: SHARE_PICTURE } }),
         "en",
       );
 
@@ -293,8 +309,12 @@ describe("landingPageMetadata", () => {
 
     it("takes both together", async () => {
       const metadata = await landingPageMetadata(
-        overridden(SHARE_PICTURE, {
-          en: { shareTitle: "Join a gaming club in Espoo", shareImageAlt: "A club room" },
+        overridden({
+          en: {
+            shareTitle: "Join a gaming club in Espoo",
+            shareImageId: SHARE_PICTURE,
+            shareImageAlt: "A club room",
+          },
         }),
         "en",
       );
@@ -314,8 +334,11 @@ describe("landingPageMetadata", () => {
     it("falls back to the hero's picture once the share picture has left the catalogue", async () => {
       // The removal unsets the id; a copy still naming one whose path it does
       // not carry is read the same way.
-      const unset = overridden(null, { en: { shareImageAlt: "A club room" } });
-      const pathless = { ...unset, shareImageId: SHARE_PICTURE };
+      const unset = overridden({ en: { shareImageAlt: "A club room" } });
+      const pathless = {
+        ...overridden({ en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" } }),
+        imagePaths: PAGE.imagePaths,
+      };
 
       for (const page of [unset, pathless]) {
         const metadata = await landingPageMetadata(page, "en");
@@ -326,7 +349,7 @@ describe("landingPageMetadata", () => {
     });
 
     it("keeps the page title in a language with no share title while another has one", async () => {
-      const page = overridden(null, { en: { shareTitle: "Join a gaming club in Espoo" } });
+      const page = overridden({ en: { shareTitle: "Join a gaming club in Espoo" } });
 
       const finnish = await landingPageMetadata(page, "fi");
       expect(finnish.openGraph?.title).toBe("Pelikerhot Espoossa");

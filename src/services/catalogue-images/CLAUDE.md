@@ -43,9 +43,10 @@ error.
 
 A landing page's pictures are named inside its section structure, where no foreign key
 reaches, so their half of a replace is `repoint_landing_images(old, new)`, the same shape
-over both of a page's copies (`src/services/landing-pages/CLAUDE.md`). A page's share
-picture sits beside the sections and is kept by the same functions and triggers as the
-pictures inside them, so it is held to every rule here exactly as they are.
+over both of a page's copies (`src/services/landing-pages/CLAUDE.md`). A language's share
+picture is named on its version rather than in the structure, and is kept by the same
+functions and triggers as the pictures inside it, so it is held to every rule here exactly
+as they are: in use while any language of either copy names it.
 A spotlight's half is `repoint_spotlight_images(old, new)`; its half of a removal is a
 trigger on the row's delete that takes the picture off **and switches the spotlight off**,
 since an enabled spotlight cannot be without one (`src/services/spotlights/CLAUDE.md`).

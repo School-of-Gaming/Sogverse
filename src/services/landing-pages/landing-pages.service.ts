@@ -6,9 +6,11 @@ import {
   LANDING_PRODUCT_TYPES,
   landingPickedProductIds,
   landingPlacedTestimonialIds,
+  landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
   type LandingSection,
+  type LandingSectionInput,
 } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
@@ -23,7 +25,6 @@ import {
   landingCopyTitle,
   landingImagePaths,
   landingPageInput,
-  landingStructureInput,
   landingVersionInput,
   oauthClientNameRows,
   readSectionTexts,
@@ -33,7 +34,6 @@ import {
   type ComparableLandingCopy,
   type LandingPageDraft,
   type LandingPageInput,
-  type LandingStructureInput,
   type LandingVersionInput,
   type ParsedLandingVersion,
   type PublishedLandingPage,
@@ -52,19 +52,19 @@ const UUID =
 
 /** A working version whole, with what comparing and publishing read off it. */
 const DRAFT_VERSION_COLUMNS =
-  "locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_alt, is_complete";
+  "locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
 /** A working version for the list: no words, but their digest and completeness. */
 const DRAFT_VERSION_LIST_COLUMNS =
-  "locale, title, summary, slug, texts_md5, share_title, share_image_alt, is_complete";
+  "locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
-const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, share_image_id, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_alt)`;
+const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt)`;
 
 /** The published copy's columns for a list: the structure, and no words. */
 const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
 
 /** The published copy's columns for comparing, without its words. */
-const PUBLICATION_COMPARE_COLUMNS = `sections_md5, share_image_id, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5, share_title, share_image_alt)`;
+const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt)`;
 
 /**
  * The last saver's profile, embedded by its constraint's name, since the
@@ -85,7 +85,6 @@ function saverName(
  */
 function publishable(row: {
   sections_md5: string | null;
-  share_image_id: string | null;
   versions: readonly {
     locale: string;
     title: string;
@@ -93,13 +92,13 @@ function publishable(row: {
     slug: string;
     texts_md5: string | null;
     share_title: string;
+    share_image_id: string | null;
     share_image_alt: string;
     is_complete: boolean;
   }[];
 }): ComparableLandingCopy {
   return {
     sections_md5: row.sections_md5,
-    share_image_id: row.share_image_id,
     versions: row.versions.filter((version) => version.is_complete),
   };
 }
@@ -114,7 +113,6 @@ interface PublicationSummaryRow {
 }
 
 interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
-  share_image_id: string | null;
   versions: readonly {
     locale: string;
     title: string;
@@ -122,6 +120,7 @@ interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
     slug: string;
     section_texts: unknown;
     share_title: string;
+    share_image_id: string | null;
     share_image_alt: string;
   }[];
 }
@@ -147,15 +146,15 @@ function toPublished(row: PublicationRow): PublishedLandingPage {
   const { sections } = summary;
   return {
     ...summary,
-    shareImageId: row.share_image_id,
     versions: inLocaleOrder(row.versions).map(
-      ({ locale, title, summary, slug, section_texts, share_title, share_image_alt }) => ({
+      ({ locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt }) => ({
         locale,
         title,
         summary,
         slug,
         sectionTexts: readSectionTexts(sections, section_texts),
         shareTitle: share_title,
+        shareImageId: share_image_id,
         shareImageAlt: share_image_alt,
       }),
     ),
@@ -172,6 +171,7 @@ function toVersionPayload(version: ParsedLandingVersion) {
     default_slug: defaultLandingSlug(version.title),
     section_texts: version.sectionTexts,
     share_title: version.shareTitle,
+    share_image_id: version.shareImageId,
     share_image_alt: version.shareImageAlt,
   };
 }
@@ -207,7 +207,7 @@ export class LandingPageService {
       this.supabase
         .from("landing_pages")
         .select(
-          `id, sections_md5, share_image_id, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COMPARE_COLUMNS})`,
+          `id, sections_md5, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_LIST_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COMPARE_COLUMNS})`,
           { count: "exact" },
         )
         .order("updated_at", { ascending: false })
@@ -258,7 +258,7 @@ export class LandingPageService {
     const { data, error } = await this.supabase
       .from("landing_pages")
       .select(
-        `id, sections, sections_md5, share_image_id, image_paths, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
+        `id, sections, sections_md5, image_paths, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -272,7 +272,6 @@ export class LandingPageService {
       id: data.id,
       sections,
       imagePaths,
-      shareImageId: data.share_image_id,
       versions: inLocaleOrder(data.versions).map((version) => {
         const sectionTexts = readSectionTexts(sections, version.section_texts);
         return {
@@ -282,6 +281,7 @@ export class LandingPageService {
           slug: version.slug,
           sectionTexts,
           shareTitle: version.share_title,
+          shareImageId: version.share_image_id,
           shareImageAlt: version.share_image_alt,
           missing: missingInLandingVersion(sections, {
             title: version.title,
@@ -378,15 +378,13 @@ export class LandingPageService {
 
   /** Create a page's working copy, whole. Returns its id. */
   async createPage(input: LandingPageInput): Promise<string> {
-    const { shareImageId, ...page } = landingPageInput.parse(input);
-    const write = await canonicaliseLandingLinks(page, {
+    const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
       resolver: this.slugResolver(),
     });
 
     const { data, error } = await this.supabase.rpc("create_landing_page", {
       p_sections: write.sections ?? [],
       p_versions: write.versions.map(toVersionPayload),
-      p_share_image_id: shareImageId ?? undefined,
     });
 
     if (error) throw error;
@@ -396,22 +394,18 @@ export class LandingPageService {
 
   /**
    * Save the working copy's structure alone — the ordered sections and their
-   * shared fields, and the share picture. No version's words are written,
-   * except that a section the structure drops takes its words in every
-   * language with it. The structure is sent whole: a share picture left out
-   * is removed.
+   * shared fields. No version's words are written, except that a section the
+   * structure drops takes its words in every language with it.
    */
-  async saveStructure(id: string, structure: LandingStructureInput): Promise<string> {
-    const { sections, shareImageId } = landingStructureInput.parse(structure);
+  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<string> {
     const write = await canonicaliseLandingLinks(
-      { sections, versions: [] },
+      { sections: landingSections.parse(sections), versions: [] },
       { resolver: this.slugResolver() },
     );
 
     const { data, error } = await this.supabase.rpc("save_landing_page_structure", {
       p_id: id,
       p_sections: write.sections ?? [],
-      p_share_image_id: shareImageId ?? undefined,
     });
 
     if (error) throw error;
@@ -421,9 +415,9 @@ export class LandingPageService {
 
   /**
    * Save one language version of the working copy — its title, summary, slug,
-   * every section's words and the share card's words in that language —
-   * creating it when the language is new. No other version, and not the
-   * structure, is touched.
+   * every section's words and the share card in that language — creating it
+   * when the language is new. No other version, and not the structure, is
+   * touched.
    *
    * The words are checked against the page's current structure, read first;
    * a page that does not exist is left to the database to refuse.
@@ -454,6 +448,7 @@ export class LandingPageService {
       p_default_slug: payload.default_slug,
       p_section_texts: payload.section_texts,
       p_share_title: payload.share_title,
+      p_share_image_id: payload.share_image_id ?? undefined,
       p_share_image_alt: payload.share_image_alt,
     });
 

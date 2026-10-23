@@ -265,8 +265,9 @@ export class CatalogueImagesService {
 
   /**
    * Every landing page with the pictures of both its copies. Each copy's
-   * `image_paths` is keyed by the entries its sections and share picture
-   * show, derived by the database, so the structure itself is never read here.
+   * `image_paths` is keyed by the entries its sections and its versions' share
+   * pictures show, derived by the database, so neither the structure nor the
+   * versions are read here.
    */
   private readLandingPageUsage() {
     return walkPages("landingPageImageUsage", (from, to) =>

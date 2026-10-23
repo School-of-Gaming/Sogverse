@@ -457,8 +457,7 @@
         "stillNeeded": "pIm ’e’ ghajnIS:",
         "address": "Daq:",
         "noAddress": "pagh",
-        "addressChanging": "DaH {address} Daq. ngeHlu’qa’DI’, Daqvam Daq choHlu’; Daq ngo’ rar mutlhwI’ Qapbe’.",
-        "shareTitle": "ngeHmeH pong:"
+        "addressChanging": "DaH {address} Daq. ngeHlu’qa’DI’, Daqvam Daq choHlu’; Daq ngo’ rar mutlhwI’ Qapbe’."
       },
       "missing": {
         "inSection": "{number} ’ay’ ({type}): {field}",
@@ -467,20 +466,15 @@
       },
       "shareCard": {
         "heading": "rar mu'tlhegh",
-        "inUse": {
-          "derived": "nav vo' chenmoHlu'.",
-          "customTitle": "pong le' lo'.",
-          "customPicture": "mIllogh le' lo'.",
-          "customTitleAndPicture": "pong le' mIllogh le' je lo'."
-        },
         "picture": {
-          "custom": "mIllogh: nav ngeHmeH mIllogh.",
+          "custom": "mIllogh: Hol ngeHmeH mIllogh le'.",
           "hero": "mIllogh: tagh mIllogh.",
           "site": "mIllogh: Hoch Daq ngeHmeH mIllogh; tagh mIllogh ghajbe'."
         },
-        "titlePage": "pong: Hoch Hol nav pong.",
-        "titleCustomEvery": "pong: Hoch Hol ngeHmeH pong le'.",
-        "titleCustomSome": "pong: {languages} ngeHmeH pong le'; latlh Hol nav pong.",
+        "title": {
+          "custom": "pong: Hol ngeHmeH pong le'.",
+          "page": "pong: nav pong."
+        },
         "description": "QIjmeH mu': Hoch Hol nav mu' ngaj.",
         "stale": "nav pong pagh tagh mIllogh choHlu'DI', pong le' pagh mIllogh le' choHbe'. nav mabbe'chugh, yIteqmoH 'e' yIra'."
       },

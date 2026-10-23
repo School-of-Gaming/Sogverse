@@ -25,14 +25,14 @@ import { landingShareCard } from "./landing-share-card";
  *   live are the language versions, each at its slug address, and a locale
  *   with no live version canonicalises to the slug address of the version it
  *   shows. `og:url` is the canonical.
- * - **The card's picture is the page's share picture when it sets one, else
- *   the hero's**, the one the page leads with (`landingShareCard`), served
- *   through the preview picture route with the shown version's alt text. A
- *   page with neither takes the site-wide card, at the request's locale.
- *   Either is restated rather than inherited because Next assigns a child's
- *   `openGraph` and `twitter` over the layout's, dropping its image;
- *   `siteName` and `type` are restated for the same reason. `og:locale` is the language of the version whose words the
- *   card carries.
+ * - **The card's picture is the shown version's share picture when it sets
+ *   one, else the hero's**, the one the page leads with (`landingShareCard`),
+ *   served through the preview picture route with the shown version's alt
+ *   text. A version with neither takes the site-wide card, at the request's
+ *   locale. Either is restated rather than inherited because Next assigns a
+ *   child's `openGraph` and `twitter` over the layout's, dropping its image;
+ *   `siteName` and `type` are restated for the same reason. `og:locale` is
+ *   the language of the version whose words the card carries.
  */
 export async function landingPageMetadata(
   page: PublishedLandingPage,

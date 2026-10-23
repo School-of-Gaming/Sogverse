@@ -205,7 +205,7 @@ describe("landing page testimonials", () => {
         `Section 2 places the testimonial ${MISSING}, and no testimonial has that id`,
       );
       await expect(
-        pages.saveStructure(PAGE_DRAFT, { sections: structure("feature", [MISSING]) }),
+        pages.saveStructure(PAGE_DRAFT, structure("feature", [MISSING])),
       ).rejects.toMatchObject({ code: "23503" });
       const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_DRAFT).single();
       expect(data?.sections).toEqual(structure("feature", [t[3]]));
@@ -222,10 +222,10 @@ describe("landing page testimonials", () => {
     it("checks only the ids a save adds, so a placement already there never refuses a save", async () => {
       // A testimonial the app never deletes, removed by hand behind the page.
       const doomed = await testimonials.createTestimonial({ versions: [quote(9)] });
-      await pages.saveStructure(PAGE_DRAFT, { sections: structure("pair", [t[3], doomed]) });
+      await pages.saveStructure(PAGE_DRAFT, structure("pair", [t[3], doomed]));
       expect((await admin.from("testimonials").delete().eq("id", doomed)).error).toBeNull();
 
-      await pages.saveStructure(PAGE_DRAFT, { sections: structure("pair", [doomed, t[3]]) });
+      await pages.saveStructure(PAGE_DRAFT, structure("pair", [doomed, t[3]]));
       const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_DRAFT).single();
       expect(data?.sections).toEqual(structure("pair", [doomed, t[3]]));
       await reseed();
@@ -254,7 +254,7 @@ describe("landing page testimonials", () => {
       // The draft page has never been published.
       expect(await liveIds(anon, PAGE_DRAFT)).toEqual([]);
       // The live page's working copy moves on; readers keep the published row.
-      await pages.saveStructure(PAGE_LIVE, { sections: structure("feature", [t[3]]) });
+      await pages.saveStructure(PAGE_LIVE, structure("feature", [t[3]]));
       expect(await liveIds(anon, PAGE_LIVE)).toEqual(t.slice(0, 3).sort());
       // Once published, the new placement is what readers get.
       await pages.publishPage(PAGE_LIVE);
@@ -329,7 +329,7 @@ describe("landing page testimonials", () => {
     it("lists each landing page placing it, live, working or both", async () => {
       await reseed();
       // The live page's working copy keeps t[1] and t[2], drops t[0] and adds t[4].
-      await pages.saveStructure(PAGE_LIVE, { sections: structure("row", [t[4], t[1], t[2]]) });
+      await pages.saveStructure(PAGE_LIVE, structure("row", [t[4], t[1], t[2]]));
 
       const usage = async (id: string) => (await testimonials.getAdminTestimonial(id))?.usages;
 

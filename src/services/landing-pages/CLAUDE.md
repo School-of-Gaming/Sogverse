@@ -9,8 +9,8 @@ the sections are the registry's, in `src/lib/landing-pages/sections/`.
 the admin. In Sogverse an admin has the list of pages, a tab of the Marketing hub, and, for each, a status page that is
 read-only apart from publishing: per language, complete or what is still missing, its
 preview and live links, and its address; for the page, whether it has unpublished
-changes, who last saved it and through which AI app, which link preview it is shared
-with, and Publish and Unpublish.
+changes, who last saved it and through which AI app, which link preview each language is
+shared with, and Publish and Unpublish.
 
 **A page has two copies, and a published row existing is what "live" means.** The working
 copy (`landing_pages`) is admin-only; the published copy (`landing_page_publications`) is
@@ -41,9 +41,8 @@ publish, which takes it down.
 **A clone is a create whose content the database copies in one call**, so no word passes
 through the application or the AI app. Everything in the source's working copy is copied
 verbatim — the structure, the pictures (catalogue entries are shared, so the clone names
-the same ones), the share picture, and each language's summary, words and share card words
-— with two departures. Every section
-and every item gets a new id, and each language's words are re-keyed by the same map, so
+the same ones), and each language's summary, words and share card — with two departures.
+Every section and every item gets a new id, and each language's words are re-keyed by the same map, so
 they stay on what they were written for and the clone shares no id with its source. And
 each language's title is the source's followed by a copy marker in that language's own
 word, from the message files rather than the admin's locale, because each title derives
@@ -54,7 +53,9 @@ stamped with its saver like any create. The application names the languages to c
 one the source does not have is refused. The tool's description carries the rule that
 matters most: a clone is a starting structure, and every word is rewritten for the new
 page before it is published, since near-identical pages that only swap a city or an
-audience are what search engines penalise as doorway pages.
+audience are what search engines penalise as doorway pages; and because a copied share
+card shows only in link previews, it tells the AI app to have the admin review each
+language's.
 
 **A version is complete when its title, summary and slug are written and every section
 has every required word in that language.** Which words a type requires is declared in
@@ -75,9 +76,8 @@ directory, which the status page shows before Publish is confirmed and the MCP t
 the AI app before it publishes. The database still decides; the forecast is never a gate.
 
 **"Unpublished changes" compares what publishing would copy with what is live** — the
-structure's digest and the share picture and, for the complete versions, their short
-fields (the share card's words among them) and the digest of their words — so the admin
-list never reads a page's words.
+structure's digest and, for the complete versions, their short fields (the share card
+among them) and the digest of their words — so the admin list never reads a page's words.
 
 **Slugs are stored, per language, and can change at any time, a live language's
 included.** A slug is lowercase a–z, digits and single hyphens, length-capped, and never
@@ -97,19 +97,21 @@ admin before publishing.
 written per locale"). An id address resolves in every locale; a slug address only
 in its own.
 
-**Pictures are `landing_image` entries of the shared image catalogue, referenced by id from
-the structure** — from a section, or as the page's share picture, which sits beside the
-sections rather than in them. Each copy carries the path of every picture its structure
-names, derived by the database, which refuses an entry that is gone or of another purpose
-— so public pages paint a path without reading the admin-only catalogue. No foreign key can reach into
+**Pictures are `landing_image` entries of the shared image catalogue, referenced by id** —
+from a section of the structure, or from a language version as its share picture. Each
+copy carries the path of every picture its structure or any of its versions names, derived
+by the database and re-derived whenever a version's share picture is written or the version
+goes, which refuses an entry that is gone or of another purpose — so public pages paint a
+path without reading the admin-only catalogue, and a picture only one language names is in
+use for exactly as long as that language names it. No foreign key can reach into
 the structure, so the catalogue's two rules are kept another way, with the same outcome
 as for a Library cover: a **replace** moves every picture in both copies at once, a live
 page's included, without a republish (the replace's landing half is a database function
 the catalogue's replace calls beside the Library's); a **removal** unlinks the picture
 from both copies at once — a hero or text section loses its picture, an image section
 loses that picture, an image section left with none is dropped with its words, and a
-share picture is unset — done by a trigger on the catalogue's own delete, so it needs
-nothing from the remover.
+language's share picture is unset — done by a trigger on the catalogue's own delete, so it
+needs nothing from the remover.
 Either moves the working copy's "last saved" time and saver, as a cover removal does.
 
 **Testimonials are placed by id from the structure and read live from the store**
@@ -135,16 +137,19 @@ and it contributes no structured data — review markup a site writes about itse
 nothing. Its words are never written through a landing page tool, and a quote comes off a
 page by saving the structure without it.
 
-**A page's link preview is derived from the page unless the admin overrides it.**
-Derived, it carries the shown version's title and summary and the hero's picture — the one
-its structured data names as the picture the page leads with — with that version's alt
-text; a hero without one shares the site-wide card. Two optional overrides replace part of
-it: a **share picture**, structure and so one per page, with its alt text per language; and
-a **share title**, a word per language, capped at a share card's length. The description
-is always the summary. Neither counts toward completeness, and the structure is written
-whole, so a structure write that leaves the share picture out removes it. An override does
-not follow later edits to the title or the hero, so the status page and the MCP page read
-each say which card a language uses, derived or custom. Whichever picture the card shows
+**A page's link preview is derived from the page, per language, unless the admin overrides
+it.** Derived, it carries the shown version's title and summary and the hero's picture — the
+one its structured data names as the picture the page leads with — with that version's alt
+text; a hero without one shares the site-wide card. Each language may override part of its
+own card: a **share title**, capped at a share card's length, and a **share picture** with
+its alt text. The picture is per language, not structure, because a share picture often
+carries words of its own, as the app's own drawn cards do per locale. The description is
+always the summary. None of it counts toward completeness. The share card is written with
+the language's words, and it is the one exception to a one-language write carrying the whole
+language: the MCP tool changes a share field only when the call sends it, an empty value
+clearing it, so a call that rewrites the words cannot drop a card it did not mention. An
+override does not follow later edits to the title or the hero, so the status page and the
+MCP page read each show the card a language uses, derived or custom. Whichever picture the card shows
 is placed in every chat and feed the page is shared to, so a partner's mark in a hero
 picture or a share picture needs that partner's sign-off (`src/CLAUDE.md`).
 

@@ -164,7 +164,7 @@ export const MCP_LANDING_SECTIONS: {
 } = {
   hero: {
     about:
-      "The page's opening: the headline is the page's only H1, with an optional line under it, an optional picture and an optional button. Every page has exactly one, first. Its picture is also the page's link preview, the image shown wherever the page is shared, with its alt text, unless the page sets a share picture of its own (shareImageId); a hero without one, on a page without one, shares the site-wide card. A partner's logo in it (Roblox's, Lynx's) is a new placement of their mark, which needs that partner's sign-off first.",
+      "The page's opening: the headline is the page's only H1, with an optional line under it, an optional picture and an optional button. Every page has exactly one, first. Its picture is also the page's link preview, the image shown wherever the page is shared, with its alt text, in every language that sets no share picture of its own (shareImageId); a hero without one shares the site-wide card in those languages. A partner's logo in it (Roblox's, Lynx's) is a new placement of their mark, which needs that partner's sign-off first.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("hero"),

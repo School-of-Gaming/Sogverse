@@ -25,6 +25,7 @@ function version(
     slug,
     sectionTexts: {},
     shareTitle: "",
+    shareImageId: null,
     shareImageAlt: "",
     missing: complete ? [] : ["summary"],
   };
@@ -39,7 +40,6 @@ function page(
       id: "page",
       sections: [],
       imagePaths: {},
-      shareImageId: null,
       versions,
       createdAt: "2026-10-01T08:00:00Z",
       updatedAt: "2026-10-01T08:00:00Z",
@@ -55,7 +55,6 @@ function page(
             publishedAt: "2026-10-01T08:00:00Z",
             sections: [],
             imagePaths: {},
-            shareImageId: null,
             versions: live.map(([locale, slug]) => ({
               locale,
               title: `Title ${locale}`,
@@ -63,6 +62,7 @@ function page(
               slug,
               sectionTexts: {},
               shareTitle: "",
+              shareImageId: null,
               shareImageAlt: "",
             })),
           },

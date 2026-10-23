@@ -35,10 +35,11 @@ import { everySection, requiredTextCases } from "../helpers/landing-required-tex
  * and one-language, a language's removal and the clone — publish and unpublish; the stored, per-language slugs
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
- * removal (a trigger) reaching both copies; the share card override — a
- * share picture held to every one of the catalogue's guarantees, and share
- * words per language — with publishing and the unpublished-changes digest
- * reading it; the record of who last saved
+ * removal (a trigger) reaching both copies; the share card override per
+ * language — a share picture held to every one of the catalogue's
+ * guarantees while any language of either copy names it, and share words —
+ * with publishing, the clone and the unpublished-changes digest reading it;
+ * the record of who last saved
  * and through which AI app; the SQL half of the required-text rule held
  * equal to the TypeScript half; and the products a products section picks —
  * an id no product has refused at save, and the admin read saying which picks
@@ -569,7 +570,7 @@ describe("landing pages", () => {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
-      await service.saveStructure(PAGE_A, { sections: [structure()[0]] });
+      await service.saveStructure(PAGE_A, [structure()[0]]);
 
       for (const draft of await draftVersions(PAGE_A)) {
         expect(Object.keys(asObject(draft.section_texts))).toEqual([HERO]);
@@ -579,12 +580,10 @@ describe("landing pages", () => {
 
     it("a structure save adding a section makes every version incomplete until it is written", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, {
-        sections: [
-          ...structure(),
-          { id: FAQ, type: "faq", items: [{ id: FAQ_1 }] },
-        ],
-      });
+      await service.saveStructure(PAGE_A, [
+        ...structure(),
+        { id: FAQ, type: "faq", items: [{ id: FAQ_1 }] },
+      ]);
       const [en] = await draftVersions(PAGE_A);
       expect(en.is_complete).toBe(false);
       const view = await service.getAdminPage(PAGE_A);
@@ -886,7 +885,7 @@ describe("landing pages", () => {
 
     it("saves picks as structure, in order, and requires no words of them", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, { sections: withPicks([ENDED, LISTED]) });
+      await service.saveStructure(PAGE_A, withPicks([ENDED, LISTED]));
       const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_A).single();
       expect(data?.sections).toEqual(withPicks([ENDED, LISTED]));
       // The English version stays complete: a products section asks for no words.
@@ -927,10 +926,10 @@ describe("landing pages", () => {
       // A minted id, so no fixture range is spent on a product deleted mid-case.
       const doomed = await createTestProduct(admin, { seatCount: null });
       try {
-        await service.saveStructure(PAGE_A, { sections: withPicks([doomed, LISTED]) });
+        await service.saveStructure(PAGE_A, withPicks([doomed, LISTED]));
         await deleteTestProducts(admin, [doomed]);
         // Reordering keeps the stale pick and adds nothing new: accepted.
-        await service.saveStructure(PAGE_A, { sections: withPicks([LISTED, doomed]) });
+        await service.saveStructure(PAGE_A, withPicks([LISTED, doomed]));
         // A catalogue replace rewrites the structure around it: accepted.
         const { error } = await adminAuth.rpc("repoint_landing_images", {
           p_from: PIC_A,
@@ -950,7 +949,7 @@ describe("landing pages", () => {
 
     it("reads which picks the shop's listing shows, and why each other one is not", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, { sections: withPicks([UNLISTED, LISTED, ENDED]) });
+      await service.saveStructure(PAGE_A, withPicks([UNLISTED, LISTED, ENDED]));
       const page = await service.getAdminPage(PAGE_A);
       expect(page?.productPicks).toEqual([
         {
@@ -985,7 +984,7 @@ describe("landing pages", () => {
         isVisible: false,
       });
       try {
-        await service.saveStructure(PAGE_A, { sections: withPicks([club, hidden, LISTED]) });
+        await service.saveStructure(PAGE_A, withPicks([club, hidden, LISTED]));
         const page = await service.getAdminPage(PAGE_A);
         expect(page?.productPicks[0]).toMatchObject({
           shownCount: 2,
@@ -1003,7 +1002,7 @@ describe("landing pages", () => {
 
     it("publishes a stale pick as it is: the published copy carries no product check", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, { sections: withPicks([ENDED]) });
+      await service.saveStructure(PAGE_A, withPicks([ENDED]));
       await service.publishPage(PAGE_A);
       const live = await service.getPublishedPage(PAGE_A);
       expect(live?.sections).toEqual(withPicks([ENDED]));
@@ -1092,19 +1091,17 @@ describe("landing pages", () => {
 
     it("a removal keeps an image section that still has another picture", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, {
-        sections: [
-          ...structure(),
-          {
-            id: GALLERY,
-            type: "image",
-            images: [
-              { id: SHOT_1, imageId: PIC_DOOMED_TOO },
-              { id: SHOT_2, imageId: PIC_B },
-            ],
-          },
-        ],
-      });
+      await service.saveStructure(PAGE_A, [
+        ...structure(),
+        {
+          id: GALLERY,
+          type: "image",
+          images: [
+            { id: SHOT_1, imageId: PIC_DOOMED_TOO },
+            { id: SHOT_2, imageId: PIC_B },
+          ],
+        },
+      ]);
       await admin.from("catalogue_images").delete().eq("id", PIC_DOOMED_TOO);
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections[2]).toEqual({
@@ -1124,16 +1121,20 @@ describe("landing pages", () => {
   // -------------------------------------------------------------------------
 
   describe("the share card override", () => {
-    /** Page A's structure as it is, with a share picture beside it. */
-    const withSharePicture = (shareImageId: string | null) => ({
-      sections: structure(),
-      shareImageId,
-    });
+    const FI_SLUG = "fixture-landing-a-fi";
 
     async function copies(id: string) {
       const view = await service.getAdminPage(id);
       if (view === null) throw new Error(`no landing page ${id}`);
       return view;
+    }
+
+    /** Which copies of page A the catalogue's usage map lists under an entry. */
+    async function usedBy(entry: string) {
+      const usage = await new CatalogueImagesService(adminAuth).getUsage();
+      return (usage[entry] ?? [])
+        .filter((user) => user.kind === "landing-page" && user.id === PAGE_A)
+        .map((user) => (user.kind === "landing-page" ? user.is_live : null));
     }
 
     it("refuses a share picture of another purpose, and one no longer in the catalogue, saving nothing", async () => {
@@ -1142,46 +1143,63 @@ describe("landing pages", () => {
         [PRODUCT_PICTURE, "23514"],
         [PAGE_MISSING, "23503"],
       ] as const) {
-        const { error } = await adminAuth.rpc("save_landing_page_structure", {
+        const { error } = await adminAuth.rpc("save_landing_page_version", {
           p_id: PAGE_A,
-          p_sections: structure(),
+          p_locale: "fi",
+          p_title: "Fixture landing fi",
           p_share_image_id: shareImageId,
         });
         expect(error?.code).toBe(code);
         const created = await adminAuth.rpc("create_landing_page", {
           p_sections: structure(null),
-          p_versions: [{ locale: "en", title: "Fixture share" }],
-          p_share_image_id: shareImageId,
+          p_versions: [{ locale: "en", title: "Fixture share", share_image_id: shareImageId }],
         });
         expect(created.error?.code).toBe(code);
       }
-      expect((await copies(PAGE_A)).draft.shareImageId).toBeNull();
+      const { draft } = await copies(PAGE_A);
+      expect(draft.versions.map((v) => v.locale)).toEqual(["en"]);
+      expect(draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
     });
 
-    it("carries the share picture's path, and the share words per language, with no effect on completeness", async () => {
+    it("is per language: a picture only Finnish names is in use, by its path, until Finnish lets it go", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_B));
       await service.saveVersion(PAGE_A, {
-        ...version("en", SLUG_A),
-        shareTitle: "Join a fixture club",
-        shareImageAlt: "A fixture",
+        ...version("fi", FI_SLUG),
+        shareTitle: "Liity kerhoon",
+        shareImageId: PIC_B,
+        shareImageAlt: "Kerho",
       });
-      await service.saveVersion(PAGE_A, version("fi", "fixture-landing-a-fi"));
 
       const { draft } = await copies(PAGE_A);
-      expect(draft.shareImageId).toBe(PIC_B);
-      expect(draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
-      expect(draft.versions.map((v) => [v.locale, v.shareTitle, v.shareImageAlt])).toEqual([
-        ["en", "Join a fixture club", "A fixture"],
-        ["fi", "", ""],
+      expect(draft.versions.map((v) => [v.locale, v.shareTitle, v.shareImageId, v.shareImageAlt])).toEqual([
+        ["en", "", null, ""],
+        ["fi", "Liity kerhoon", PIC_B, "Kerho"],
       ]);
+      expect(draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
+      expect(await usedBy(PIC_B)).toEqual([false]);
+      // None of it counts toward completeness.
       for (const row of await draftVersions(PAGE_A)) expect(row.is_complete).toBe(true);
 
-      // A structure write is the whole structure: leaving the picture out removes it.
-      await service.saveStructure(PAGE_A, { sections: structure() });
-      const after = await copies(PAGE_A);
-      expect(after.draft.shareImageId).toBeNull();
-      expect(after.draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
+      // A structure write leaves every language's card alone.
+      await service.saveStructure(PAGE_A, structure());
+      expect((await copies(PAGE_A)).draft.versions[1].shareImageId).toBe(PIC_B);
+
+      // A write of Finnish without it lets it go.
+      await service.saveVersion(PAGE_A, version("fi", FI_SLUG));
+      expect((await copies(PAGE_A)).draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
+      expect(await usedBy(PIC_B)).toEqual([]);
+    });
+
+    it("keeps a picture two languages name in use while either still does", async () => {
+      await reseed();
+      await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), shareImageId: PIC_B });
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      await service.saveVersion(PAGE_A, version("en", SLUG_A));
+
+      expect((await copies(PAGE_A)).draft.imagePaths).toEqual({
+        [PIC_A]: pathOf(PIC_A),
+        [PIC_B]: pathOf(PIC_B),
+      });
     });
 
     it("refuses a share title longer than a share card's", async () => {
@@ -1199,41 +1217,43 @@ describe("landing pages", () => {
       await reseed();
       const id = await service.createPage({
         sections: structure(),
-        shareImageId: PIC_B,
         versions: [
           {
             ...version("en", "fixture-share-created"),
             shareTitle: "Created with a card",
+            shareImageId: PIC_B,
             shareImageAlt: "Created alt",
           },
         ],
       });
       minted.push(id);
       const { draft } = await copies(id);
-      expect(draft.shareImageId).toBe(PIC_B);
+      expect(draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
       expect(draft.versions[0]).toMatchObject({
         shareTitle: "Created with a card",
+        shareImageId: PIC_B,
         shareImageAlt: "Created alt",
       });
     });
 
-    it("is what publishing copies, and a change to any part of it is an unpublished change", async () => {
+    it("is what publishing copies, per language, and a change to any part of it is an unpublished change", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_B));
-      await service.saveVersion(PAGE_A, {
+      const english = {
         ...version("en", SLUG_A),
         shareTitle: "Join a fixture club",
         shareImageAlt: "A fixture",
-      });
+      };
+      await service.saveVersion(PAGE_A, english);
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
       await service.publishPage(PAGE_A);
 
       const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
-      expect(live?.shareImageId).toBe(PIC_B);
       expect(live?.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
-      expect(live?.versions[0]).toMatchObject({
-        shareTitle: "Join a fixture club",
-        shareImageAlt: "A fixture",
-      });
+      expect(live?.versions.map((v) => [v.locale, v.shareTitle, v.shareImageId, v.shareImageAlt])).toEqual([
+        ["en", "Join a fixture club", null, "A fixture"],
+        ["fi", "", PIC_B, ""],
+      ]);
+      expect(await usedBy(PIC_B)).toEqual([true]);
 
       const changed = async () => {
         const detail = (await copies(PAGE_A)).hasUnpublishedChanges;
@@ -1244,37 +1264,53 @@ describe("landing pages", () => {
       expect(await changed()).toBe(false);
 
       // Each part, changed and then put back.
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_A));
-      expect(await changed()).toBe(true);
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_B));
-      expect(await changed()).toBe(false);
-
-      for (const words of [
-        { shareTitle: "Another line", shareImageAlt: "A fixture" },
-        { shareTitle: "Join a fixture club", shareImageAlt: "Another alt" },
+      for (const card of [
+        { shareTitle: "Another line" },
+        { shareImageAlt: "Another alt" },
+        { shareImageId: PIC_DOOMED },
       ]) {
-        await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), ...words });
+        await service.saveVersion(PAGE_A, { ...english, ...card });
         expect(await changed()).toBe(true);
       }
-      await service.saveVersion(PAGE_A, {
-        ...version("en", SLUG_A),
-        shareTitle: "Join a fixture club",
-        shareImageAlt: "A fixture",
-      });
+      await service.saveVersion(PAGE_A, english);
       expect(await changed()).toBe(false);
 
-      // Taking the override off is a change too, until it is published.
-      await service.saveStructure(PAGE_A, withSharePicture(null));
+      // Taking Finnish's picture off is a change too, until it is published.
+      await service.saveVersion(PAGE_A, version("fi", FI_SLUG));
       expect(await changed()).toBe(true);
       await service.publishPage(PAGE_A);
-      expect((await new LandingPageService(anon).getPublishedPage(PAGE_A))?.shareImageId).toBeNull();
+      const republished = await new LandingPageService(anon).getPublishedPage(PAGE_A);
+      expect(republished?.versions[1].shareImageId).toBeNull();
+      expect(republished?.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
       expect(await changed()).toBe(false);
+      expect(await usedBy(PIC_B)).toEqual([]);
     });
 
-    it("a replace moves the share picture in both copies, a live page's without a republish", async () => {
+    it("removing a language lets its share picture go from the working copy, and the next publish from the live one", async () => {
       await reseed();
-      // The share picture is page A's only use of PIC_B.
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_B));
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
+      await service.publishPage(PAGE_A);
+
+      await service.removeVersion(PAGE_A, "fi");
+      expect((await copies(PAGE_A)).draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
+      // Finnish is still live, its picture with it.
+      expect(await usedBy(PIC_B)).toEqual([true]);
+
+      await service.publishPage(PAGE_A);
+      expect((await copies(PAGE_A)).publication?.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
+      expect(await usedBy(PIC_B)).toEqual([]);
+
+      // And an unpublish takes the live copy's with it.
+      await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), shareImageId: PIC_B });
+      await service.publishPage(PAGE_A);
+      await service.unpublishPage(PAGE_A);
+      expect(await usedBy(PIC_B)).toEqual([false]);
+    });
+
+    it("a replace moves a language's share picture in both copies, a live page's without a republish", async () => {
+      await reseed();
+      // Finnish's share picture is page A's only use of PIC_B.
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
       await service.publishPage(PAGE_A);
 
       const { data: moved, error } = await adminAuth.rpc("repoint_landing_images", {
@@ -1285,31 +1321,33 @@ describe("landing pages", () => {
       expect(moved).toBe(1);
 
       const view = await copies(PAGE_A);
-      expect(view.draft.shareImageId).toBe(PIC_DOOMED);
-      expect(view.publication?.shareImageId).toBe(PIC_DOOMED);
+      expect(view.draft.versions[1].shareImageId).toBe(PIC_DOOMED);
+      expect(view.publication?.versions[1].shareImageId).toBe(PIC_DOOMED);
       expect(view.draft.sections).toEqual(structure());
-      expect(view.publication?.imagePaths).toEqual({
-        [PIC_A]: pathOf(PIC_A),
-        [PIC_DOOMED]: pathOf(PIC_DOOMED),
-      });
+      for (const paths of [view.draft.imagePaths, view.publication?.imagePaths]) {
+        expect(paths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_DOOMED]: pathOf(PIC_DOOMED) });
+      }
       expect(view.hasUnpublishedChanges).toBe(false);
     });
 
     it("a replace refused for its purpose moves no share picture", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_B));
+      await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
       const { error } = await adminAuth.rpc("repoint_landing_images", {
         p_from: PIC_B,
         p_to: PRODUCT_PICTURE,
       });
       expect(error?.code).toBe("23514");
-      expect((await copies(PAGE_A)).draft.shareImageId).toBe(PIC_B);
+      expect((await copies(PAGE_A)).draft.versions[1].shareImageId).toBe(PIC_B);
     });
 
-    it("a removal unsets the share picture in both copies, and the page falls back to its hero's", async () => {
+    it("a removal unsets a language's share picture in both copies, and it falls back to its hero's", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_DOOMED));
-      await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), shareImageAlt: "Doomed" });
+      await service.saveVersion(PAGE_A, {
+        ...version("fi", FI_SLUG),
+        shareImageId: PIC_DOOMED,
+        shareImageAlt: "Tuhoon",
+      });
       await service.publishPage(PAGE_A);
       const { data: before } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
 
@@ -1317,8 +1355,8 @@ describe("landing pages", () => {
       expect(removed.error).toBeNull();
 
       const view = await copies(PAGE_A);
-      expect(view.draft.shareImageId).toBeNull();
-      expect(view.publication?.shareImageId).toBeNull();
+      expect(view.draft.versions[1]).toMatchObject({ shareImageId: null, shareImageAlt: "Tuhoon" });
+      expect(view.publication?.versions[1].shareImageId).toBeNull();
       // The hero's picture stays, and is what the card falls back to.
       expect(view.draft.sections).toEqual(structure());
       expect(view.draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A) });
@@ -1327,19 +1365,6 @@ describe("landing pages", () => {
       // A removal moves the working copy's last-saved time, as for any picture.
       const { data: after } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
       expect(Date.parse(after?.updated_at ?? "")).toBeGreaterThan(Date.parse(before?.updated_at ?? ""));
-    });
-
-    it("is in the catalogue's usage map, under the copy that shows it", async () => {
-      await reseed();
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_B));
-      await service.publishPage(PAGE_A);
-      await service.saveStructure(PAGE_A, withSharePicture(PIC_DOOMED));
-
-      const usage = await new CatalogueImagesService(adminAuth).getUsage();
-      const pageA = (entry: string) =>
-        (usage[entry] ?? []).filter((user) => user.kind === "landing-page" && user.id === PAGE_A);
-      expect(pageA(PIC_B)).toEqual([expect.objectContaining({ is_live: true })]);
-      expect(pageA(PIC_DOOMED)).toEqual([expect.objectContaining({ is_live: false })]);
     });
   });
 
@@ -1421,7 +1446,7 @@ describe("landing pages", () => {
     /** PAGE_A as a page of every section type, complete in English and Finnish. */
     async function richSource() {
       await reseed();
-      await service.saveStructure(PAGE_A, { sections: RICH });
+      await service.saveStructure(PAGE_A, RICH);
       await service.saveVersion(PAGE_A, { ...version("en", SLUG_A), sectionTexts: richWords("en") });
       await service.saveVersion(PAGE_A, { ...version("fi", "fixture-landing-a-fi"), sectionTexts: richWords("fi") });
       const page = await service.getAdminPage(PAGE_A);
@@ -1491,14 +1516,17 @@ describe("landing pages", () => {
       expect(clone.draft.imagePaths).toEqual({ [PIC_A]: pathOf(PIC_A), [PIC_B]: pathOf(PIC_B) });
     });
 
-    it("carries the share card: the share picture with the structure, each language's share words with its words", async () => {
+    it("carries each language's share card, its picture included", async () => {
       await richSource();
-      await service.saveStructure(PAGE_A, { sections: RICH, shareImageId: PIC_DOOMED });
-      for (const [locale, slug] of [["en", SLUG_A], ["fi", "fixture-landing-a-fi"]] as const) {
+      for (const [locale, slug, picture] of [
+        ["en", SLUG_A, null],
+        ["fi", "fixture-landing-a-fi", PIC_DOOMED],
+      ] as const) {
         await service.saveVersion(PAGE_A, {
           ...version(locale, slug),
           sectionTexts: richWords(locale),
           shareTitle: `Share ${locale}`,
+          shareImageId: picture,
           shareImageAlt: `Alt ${locale}`,
         });
       }
@@ -1506,15 +1534,21 @@ describe("landing pages", () => {
       if (source === null) throw new Error("the source is missing");
 
       const clone = await cloneOf(source.draft);
-      expect(clone.draft.shareImageId).toBe(PIC_DOOMED);
       expect(clone.draft.imagePaths).toEqual({
         [PIC_A]: pathOf(PIC_A),
         [PIC_B]: pathOf(PIC_B),
         [PIC_DOOMED]: pathOf(PIC_DOOMED),
       });
-      expect(clone.draft.versions.map(({ locale, shareTitle, shareImageAlt }) => ({ locale, shareTitle, shareImageAlt }))).toEqual([
-        { locale: "en", shareTitle: "Share en", shareImageAlt: "Alt en" },
-        { locale: "fi", shareTitle: "Share fi", shareImageAlt: "Alt fi" },
+      expect(
+        clone.draft.versions.map(({ locale, shareTitle, shareImageId, shareImageAlt }) => ({
+          locale,
+          shareTitle,
+          shareImageId,
+          shareImageAlt,
+        })),
+      ).toEqual([
+        { locale: "en", shareTitle: "Share en", shareImageId: null, shareImageAlt: "Alt en" },
+        { locale: "fi", shareTitle: "Share fi", shareImageId: PIC_DOOMED, shareImageAlt: "Alt fi" },
       ]);
     });
 
@@ -1530,7 +1564,7 @@ describe("landing pages", () => {
     it("numbers a slug another page holds, working or only live, until it is free", async () => {
       const source = await richSource();
       // PAGE_B holds the English slug live only, and the Finnish one in its working copy.
-      await service.saveStructure(PAGE_B, { sections: structure() });
+      await service.saveStructure(PAGE_B, structure());
       await service.saveVersion(PAGE_B, { ...version("en", "fixture-landing-en-copy"), sectionTexts: words("en") });
       await service.publishPage(PAGE_B);
       await service.saveVersion(PAGE_B, version("en", "fixture-landing-b-moved"));
@@ -1675,10 +1709,10 @@ describe("landing pages", () => {
         name: "Fixture landing AI app",
       });
 
-      await viaApp.saveStructure(PAGE_A, { sections: structure() });
+      await viaApp.saveStructure(PAGE_A, structure());
       expect((await saver())?.last_saved_via).toBe(grant.clientId);
 
-      await service.saveStructure(PAGE_A, { sections: structure() });
+      await service.saveStructure(PAGE_A, structure());
       expect(await saver()).toEqual({ last_saved_by: TEST_IDS.ADMIN, last_saved_via: null });
     });
 
@@ -1696,7 +1730,7 @@ describe("landing pages", () => {
 
     it("publishing records no save", async () => {
       await reseed();
-      await service.saveStructure(PAGE_A, { sections: structure() });
+      await service.saveStructure(PAGE_A, structure());
       const { data: before } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
       await viaApp.publishPage(PAGE_A);
       expect((await saver())?.last_saved_via).toBeNull();

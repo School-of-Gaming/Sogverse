@@ -50,10 +50,9 @@ function livePage(sections: LandingSection[] = SECTIONS): PublishedLandingPage {
     publishedAt: "2026-10-01T00:00:00Z",
     sections,
     imagePaths: {},
-    shareImageId: null,
     versions: [
-      { locale: "en", title: "Espoo", summary: "Clubs", slug: "espoo-clubs", sectionTexts: {}, shareTitle: "", shareImageAlt: "" },
-      { locale: "fi", title: "Espoo", summary: "Kerhot", slug: "espoon-kerhot", sectionTexts: {}, shareTitle: "", shareImageAlt: "" },
+      { locale: "en", title: "Espoo", summary: "Clubs", slug: "espoo-clubs", sectionTexts: {}, shareTitle: "", shareImageId: null, shareImageAlt: "" },
+      { locale: "fi", title: "Espoo", summary: "Kerhot", slug: "espoon-kerhot", sectionTexts: {}, shareTitle: "", shareImageId: null, shareImageAlt: "" },
     ],
   };
 }

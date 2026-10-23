@@ -132,8 +132,8 @@ export function landingStructuredParts(
 /**
  * The picture a live page leads with — the hero's — as its stored path and
  * alt text, or null when the hero has none. The page's structured data names
- * this picture, and so does its link preview unless the page sets a share
- * picture of its own (`landingShareCard`). A picture with no path is treated
+ * this picture, and so does its link preview unless the shown version sets
+ * a share picture of its own (`landingShareCard`). A picture with no path is treated
  * as none: the database derives the paths and unlinks a removed picture, so
  * it should not arise, and naming no picture is the safe answer if it does.
  */

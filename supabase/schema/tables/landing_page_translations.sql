@@ -12,6 +12,7 @@ CREATE TABLE public.landing_page_translations (
     texts_md5 text GENERATED ALWAYS AS (md5((section_texts)::text)) STORED,
     is_complete boolean DEFAULT false NOT NULL,
     share_title text DEFAULT ''::text NOT NULL,
+    share_image_id uuid,
     share_image_alt text DEFAULT ''::text NOT NULL,
     CONSTRAINT chk_landing_page_translations_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT chk_landing_page_translations_share_title_length CHECK ((char_length(share_title) <= 70)),
@@ -87,6 +88,13 @@ COMMENT ON COLUMN public.landing_page_translations.share_title IS 'The link prev
 
 
 --
+-- Name: COLUMN landing_page_translations.share_image_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a landing_image catalogue entry the link preview shows in place of the hero''s picture, or NULL to use the hero''s. No foreign key, as for the pictures in sections: the copy''s image_paths names it (apply_landing_image_paths, kept current by refresh_landing_image_paths), which refuses an entry that is gone or of another purpose, and the catalogue''s replace moves it and its removal unsets it.';
+
+
+--
 -- Name: COLUMN landing_page_translations.share_image_alt; Type: COMMENT; Schema: public; Owner: -
 --
 
@@ -113,6 +121,13 @@ CREATE UNIQUE INDEX uq_landing_page_translations_locale_slug ON public.landing_p
 --
 
 CREATE TRIGGER trg_landing_page_translations_completeness BEFORE INSERT OR UPDATE ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.apply_landing_version_completeness();
+
+
+--
+-- Name: landing_page_translations trg_landing_page_translations_refresh_image_paths; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_landing_page_translations_refresh_image_paths AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_image_paths();
 
 
 --

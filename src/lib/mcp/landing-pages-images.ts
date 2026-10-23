@@ -104,7 +104,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "list_landing_images",
     {
       title: "List landing page pictures",
-      description: `The pictures a landing page's sections can show — the landing page entries of the picture catalogue, newest first, a page at a time — each with its catalogue id (what the sections, set_landing_section_image and a page's share picture, shareImageId, take), its label, its public URL, when it was uploaded and which pages show it, saying whether readers see it there now or only the working copy has it. Each is shown as a small picture too. ${PICTURE_RULES} A picture not in the catalogue yet is added with open_landing_image_uploader.`,
+      description: `The pictures a landing page's sections can show — the landing page entries of the picture catalogue, newest first, a page at a time — each with its catalogue id (what the sections, set_landing_section_image and a language's share picture, shareImageId, take), its label, its public URL, when it was uploaded and which pages show it, saying whether readers see it there now or only the working copy has it. Each is shown as a small picture too. ${PICTURE_RULES} A picture not in the catalogue yet is added with open_landing_image_uploader.`,
       inputSchema: z.object({
         offset: z
           .number()
@@ -185,11 +185,10 @@ export function registerLandingImageTools(server: McpServer): void {
         }
         const result = placed(target, input.imageId, input.pictureId);
         if ("refusal" in result) return refusal(result.refusal);
-        await service.saveStructure(input.pageId, {
-          sections: sections.map((section) => (section === target ? result.section : section)),
-          // The structure is sent whole, so the share picture goes back as it was.
-          shareImageId: page.draft.shareImageId,
-        });
+        await service.saveStructure(
+          input.pageId,
+          sections.map((section) => (section === target ? result.section : section)),
+        );
         const after = await service.getAdminPage(input.pageId);
         if (after === null) return refusal(NOT_FOUND);
         const prefix = `sections.${input.sectionId}.`;
@@ -213,7 +212,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "open_landing_image_uploader",
     {
       title: "Upload a landing page picture",
-      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device. It is cropped to the middle ${width}:${height} frame and saved as a ${width} × ${height} JPEG in Sogverse's picture catalogue; with a sectionId it is then placed in that section as set_landing_section_image would (pictureId as there), and without one it is only added to the catalogue — as a share picture is, which save_landing_page_structure then sets as shareImageId. The picture never passes through you, and you are told the new catalogue id once it is stored. Use it when the admin wants a picture that is not in list_landing_images yet. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
+      description: `Show the admin an uploader, inside this chat, where they pick a picture from their device. It is cropped to the middle ${width}:${height} frame and saved as a ${width} × ${height} JPEG in Sogverse's picture catalogue; with a sectionId it is then placed in that section as set_landing_section_image would (pictureId as there), and without one it is only added to the catalogue — as a share picture is, which save_landing_page_text then sets as a language's shareImageId. The picture never passes through you, and you are told the new catalogue id once it is stored. Use it when the admin wants a picture that is not in list_landing_images yet. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
       inputSchema: z.object({
         pageId,
         sectionId: sectionId.optional(),

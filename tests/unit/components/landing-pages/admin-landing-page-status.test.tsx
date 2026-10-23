@@ -31,6 +31,8 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
+vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
+
 vi.mock("@/hooks/use-language-names", () => ({
   useLanguageNames: () => (code: string, fallback?: string) => fallback ?? code,
 }));
@@ -59,6 +61,7 @@ const EN: LandingPageDraftVersion = {
   slug: "espoo-clubs",
   sectionTexts: {},
   shareTitle: "",
+  shareImageId: null,
   shareImageAlt: "",
   missing: [],
 };
@@ -71,6 +74,7 @@ const SV: LandingPageDraftVersion = {
   slug: "spelklubbar-i-esbo",
   sectionTexts: {},
   shareTitle: "",
+  shareImageId: null,
   shareImageAlt: "",
   missing: [
     "summary",
@@ -87,6 +91,7 @@ const FI: LandingPageDraftVersion = {
   slug: "pelikerhot-espoossa",
   sectionTexts: {},
   shareTitle: "",
+  shareImageId: null,
   shareImageAlt: "",
   missing: [],
 };
@@ -103,7 +108,6 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
       id: PAGE_ID,
       sections: SECTIONS,
       imagePaths: {},
-      shareImageId: null,
       versions,
       createdAt: "2026-10-01T08:00:00Z",
       updatedAt: "2026-10-02T08:00:00Z",
@@ -124,7 +128,6 @@ function publication(locales: readonly string[]): PublishedLandingPage {
     publishedAt: "2026-10-03T08:00:00Z",
     sections: SECTIONS,
     imagePaths: {},
-    shareImageId: null,
     versions: [EN, SV]
       .filter((v) => locales.includes(v.locale))
       .map((v) => ({
@@ -134,6 +137,7 @@ function publication(locales: readonly string[]): PublishedLandingPage {
         slug: v.slug,
         sectionTexts: {},
         shareTitle: v.shareTitle,
+        shareImageId: v.shareImageId,
         shareImageAlt: v.shareImageAlt,
       })),
   };
@@ -435,22 +439,34 @@ describe("the link preview it states", () => {
 
   /** The link preview's section, named by its heading. */
   const preview = () => screen.getByRole("region", { name: "heading" });
-  const lines = () =>
-    within(preview())
-      .getAllByRole("listitem")
-      .map((item) => item.textContent);
+  /** One language's row of it: its lines of text, and its picture's source. */
+  const row = (language: string) => {
+    const item = within(preview()).getByRole("listitem", { name: language });
+    return {
+      lines: Array.from(item.querySelectorAll("p")).map((line) => line.textContent),
+      picture: item.querySelector("img")?.getAttribute("src") ?? null,
+    };
+  };
 
-  it("says it is derived from the page, with no warning, while nothing is overridden", () => {
+  it("shows each language's derived card, with no warning, while nothing is overridden", () => {
     renderStatus(draftPage([EN, FI]));
 
-    expect(within(preview()).getByText("inUse.derived")).toBeTruthy();
     // The fixture's hero has no picture, so the site-wide card stands in.
-    expect(lines()).toEqual(["picture.site", "titlePage", "description"]);
+    expect(row("English")).toEqual({
+      lines: ["English", "Gaming clubs in Espoo", "picture.site", "title.page"],
+      picture: null,
+    });
+    expect(row("Finnish").lines).toEqual([
+      "Finnish",
+      "Pelikerhot Espoossa",
+      "picture.site",
+      "title.page",
+    ]);
+    expect(within(preview()).getByText("description")).toBeTruthy();
     expect(within(preview()).queryByText("stale")).toBeNull();
-    expect(within(card("English")).queryByText(/statusPage\.language\.shareTitle/)).toBeNull();
   });
 
-  it("names the hero's picture when the hero has one", () => {
+  it("shows the hero's picture when the hero has one", () => {
     const page = draftPage([EN]);
     renderStatus({
       ...page,
@@ -461,51 +477,49 @@ describe("the link preview it states", () => {
       },
     });
 
-    expect(lines()[0]).toBe("picture.hero");
+    expect(row("English").lines[2]).toBe("picture.hero");
+    expect(row("English").picture).toContain("hero.jpg");
   });
 
-  it("says which overrides are in use, names the languages with a share title, and warns they do not follow the page", () => {
-    const page = draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }, FI]);
+  it("shows each language's own overrides, the others derived, and warns they do not follow the page", () => {
+    const page = draftPage([
+      { ...EN, shareTitle: "Join a club in Espoo", shareImageId: SHARE_PICTURE },
+      FI,
+    ]);
     renderStatus({
       ...page,
       draft: {
         ...page.draft,
-        shareImageId: SHARE_PICTURE,
-        imagePaths: { [SHARE_PICTURE]: "share.jpg" },
+        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
+        imagePaths: { [HERO_PICTURE]: "hero.jpg", [SHARE_PICTURE]: "share.jpg" },
       },
     });
 
-    expect(within(preview()).getByText("inUse.customTitleAndPicture")).toBeTruthy();
-    expect(lines()).toEqual([
+    expect(row("English").lines).toEqual([
+      "English",
+      "Join a club in Espoo",
       "picture.custom",
-      "titleCustomSome languages=English",
-      "description",
+      "title.custom",
+    ]);
+    expect(row("English").picture).toContain("share.jpg");
+    expect(row("Finnish").lines).toEqual([
+      "Finnish",
+      "Pelikerhot Espoossa",
+      "picture.hero",
+      "title.page",
+    ]);
+    expect(row("Finnish").picture).toContain("hero.jpg");
+    expect(within(preview()).getByText("stale")).toBeTruthy();
+  });
+
+  it("warns for a custom title alone", () => {
+    renderStatus(draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }]));
+
+    expect(row("English").lines.slice(1)).toEqual([
+      "Join a club in Espoo",
+      "picture.site",
+      "title.custom",
     ]);
     expect(within(preview()).getByText("stale")).toBeTruthy();
-    expect(within(card("English")).getByText("Join a club in Espoo")).toBeTruthy();
-    expect(within(card("Finnish")).queryByText(/statusPage\.language\.shareTitle/)).toBeNull();
-  });
-
-  it("says a custom title alone, in every language", () => {
-    renderStatus(
-      draftPage([
-        { ...EN, shareTitle: "Join a club in Espoo" },
-        { ...FI, shareTitle: "Liity kerhoon Espoossa" },
-      ]),
-    );
-
-    expect(within(preview()).getByText("inUse.customTitle")).toBeTruthy();
-    expect(lines()[1]).toBe("titleCustomEvery");
-  });
-
-  it("says a custom picture alone", () => {
-    const page = draftPage([EN]);
-    renderStatus({
-      ...page,
-      draft: { ...page.draft, shareImageId: SHARE_PICTURE, imagePaths: { [SHARE_PICTURE]: "share.jpg" } },
-    });
-
-    expect(within(preview()).getByText("inUse.customPicture")).toBeTruthy();
-    expect(lines()).toEqual(["picture.custom", "titlePage", "description"]);
   });
 });

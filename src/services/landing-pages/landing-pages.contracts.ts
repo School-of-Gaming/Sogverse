@@ -32,11 +32,12 @@ import type { LandingProductsSectionPicks } from "./landing-pages.product-picks"
  * section, keyed by section id. Versions are listed in `SUPPORTED_LOCALES`
  * order everywhere.
  *
- * **The share card may be overridden, in the same two halves.** A share
- * picture is structure (a catalogue entry, once per page); a share title and
- * the share picture's alt text are words (per language). All three are
- * optional and none counts toward completeness: absent, the card is derived
- * from the page (`landingShareCard`).
+ * **The share card may be overridden, per language.** A share title, a share
+ * picture (a catalogue entry, per language because a picture often carries
+ * words of its own) and that picture's alt text are written with the
+ * language's words. All three are optional and none counts toward
+ * completeness: absent, the card is derived from the page
+ * (`landingShareCard`).
  */
 
 // ---------------------------------------------------------------------------
@@ -126,10 +127,10 @@ export function landingCopyTitle(title: string, copyMarker: string): string {
  * slug may change at any time; a live language's new address goes live with
  * the next publish. `sectionTexts` is the whole of this language's words,
  * keyed by section id, and is checked against the page's structure by the
- * writer that has it. `shareTitle` and `shareImageAlt` are the share card's
- * words in this language; like the section words, a save carries the whole
- * of them, so one left out is saved empty: the card then takes the page
- * title, and its picture's alt text the card's title.
+ * writer that has it. `shareTitle`, `shareImageId` and `shareImageAlt` are
+ * the share card in this language; a save carries the whole of it, so one
+ * left out is saved empty: the card then takes the page title, the hero's
+ * picture, and for the share picture's alt text the card's title.
  */
 export const landingVersionInput = z.object({
   locale: z.enum(SUPPORTED_LOCALES),
@@ -155,6 +156,7 @@ export const landingVersionInput = z.object({
       `A share title is at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters`,
     )
     .default(""),
+  shareImageId: landingId.nullable().default(null),
   shareImageAlt: z.string().trim().default(""),
 });
 
@@ -190,15 +192,6 @@ const distinctLocales = (versions: readonly { locale: string }[]) =>
   new Set(versions.map((version) => version.locale)).size === versions.length;
 
 /**
- * The share picture as a structure write carries it: a catalogue entry id, or
- * null for none. The structure is sent whole, so leaving it out is none.
- */
-const landingShareImageId = landingId
-  .nullable()
-  .optional()
-  .transform((id) => id ?? null);
-
-/**
  * A page's working copy whole, as a page is created: the structure and the
  * whole version set, replacing what is stored — a language left out is
  * removed. At least one version, each with a title; the rest may wait, because
@@ -207,7 +200,6 @@ const landingShareImageId = landingId
 export const landingPageInput = z
   .object({
     sections: landingSections,
-    shareImageId: landingShareImageId,
     versions: z
       .array(landingVersionInput)
       .min(1, "A landing page needs a title")
@@ -222,19 +214,11 @@ export const landingPageInput = z
       ]);
       if (parsed !== null) versions.push(parsed);
     });
-    return { sections: input.sections, shareImageId: input.shareImageId, versions };
+    return { sections: input.sections, versions };
   });
 
 export type LandingPageInput = z.input<typeof landingPageInput>;
 export type ParsedLandingPage = z.output<typeof landingPageInput>;
-
-/** A page's structure as a structure write sends it: the sections and the share picture. */
-export const landingStructureInput = z.object({
-  sections: landingSections,
-  shareImageId: landingShareImageId,
-});
-
-export type LandingStructureInput = z.input<typeof landingStructureInput>;
 
 // ---------------------------------------------------------------------------
 // What the reads return
@@ -251,6 +235,12 @@ export interface LandingPageDraftVersion {
   sectionTexts: LandingSectionTexts;
   /** The share card's title in this language; the empty string uses the title. */
   shareTitle: string;
+  /**
+   * The share picture's catalogue entry in this language, which the link
+   * preview shows in place of the hero's picture, or null to use the hero's.
+   * Its path is in the copy's `imagePaths`.
+   */
+  shareImageId: string | null;
   /** The share picture's alt text in this language; the empty string while unwritten. */
   shareImageAlt: string;
   /**
@@ -282,15 +272,10 @@ export interface LandingPageDraft extends LandingPageSaver {
   /**
    * Each picture the sections show, by catalogue entry id, as its path in the
    * `landing-images` bucket — resolve it with `catalogueImageSrc` as a
-   * `landing_image`. Derived by the database from the sections.
+   * `landing_image`. Derived by the database from the sections and every
+   * version's share picture.
    */
   imagePaths: Record<string, string>;
-  /**
-   * The share picture's catalogue entry, which the link preview shows in
-   * place of the hero's picture, or null to derive it. Its path is in
-   * `imagePaths`.
-   */
-  shareImageId: string | null;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: LandingPageDraftVersion[];
   createdAt: string;
@@ -311,6 +296,7 @@ export interface PublishedLandingVersion extends PublishedLandingVersionSummary 
   sectionTexts: LandingSectionTexts;
   /** As on the working copy. */
   shareTitle: string;
+  shareImageId: string | null;
   shareImageAlt: string;
 }
 
@@ -336,8 +322,6 @@ export interface PublishedLandingPageSummary {
 /** A published page whole: its live structure and every live version. */
 export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
-  /** As on the working copy. */
-  shareImageId: string | null;
   versions: PublishedLandingVersion[];
 }
 
@@ -493,6 +477,7 @@ export interface ComparableLandingVersion {
   summary: string;
   slug: string;
   share_title: string;
+  share_image_id: string | null;
   share_image_alt: string;
   /** md5 of the section texts, generated by the database on both tables. */
   texts_md5: string | null;
@@ -502,8 +487,6 @@ export interface ComparableLandingVersion {
 export interface ComparableLandingCopy {
   /** md5 of the structure, generated by the database on both tables. */
   sections_md5: string | null;
-  /** The share picture: structure, kept beside the sections rather than in them. */
-  share_image_id: string | null;
   /**
    * The versions publishing would copy — for the working copy, its complete
    * ones alone; for the published copy, all of them.
@@ -516,9 +499,8 @@ export interface ComparableLandingCopy {
  * published copy, because a page that is not live has nothing for its edits
  * to be "unpublished" against.
  *
- * Compared on the structure's digest and share picture, and on each
- * version's short fields (the share card's words among them) and words'
- * digest, so the admin list never reads a page's words. The working
+ * Compared on the structure's digest, and on each version's short fields
+ * (its share card among them) and words' digest, so the admin list never reads a page's words. The working
  * side is the versions publishing would copy, so a half-written new language
  * is not a change readers would see, and a live language whose working
  * version is no longer complete is one (publishing would take it down). A
@@ -532,7 +514,6 @@ export function hasUnpublishedChanges(
   if (
     draft.sections_md5 === null ||
     draft.sections_md5 !== publication.sections_md5 ||
-    draft.share_image_id !== publication.share_image_id ||
     draft.versions.length !== publication.versions.length
   ) {
     return true;
@@ -549,6 +530,7 @@ export function hasUnpublishedChanges(
       version.summary !== published.summary ||
       version.slug !== published.slug ||
       version.share_title !== published.share_title ||
+      version.share_image_id !== published.share_image_id ||
       version.share_image_alt !== published.share_image_alt ||
       version.texts_md5 !== published.texts_md5
     );

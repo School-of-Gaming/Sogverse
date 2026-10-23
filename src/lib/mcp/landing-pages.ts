@@ -118,9 +118,14 @@ const OFFER_PREVIEW =
 const NO_DELETE =
   "There is no delete: unpublishing takes a page down and keeps it to work on.";
 
-const SHARE_CARD = `A page's share card — the link preview shown wherever its address is shared, in a chat or a feed — is derived from the page: each language's title and summary, and the hero's picture (the site-wide card when the hero has none). Two optional overrides replace part of it: a share picture for the page (shareImageId, a catalogue id from list_landing_images, saved with the structure by save_landing_page_structure, with its alt text per language in shareImageAlt), and a share title per language (shareTitle, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters, saved with that language's words by save_landing_page_text). The summary is always the card's description. An override does not follow later edits to the page: a share title stays as written when the page title changes, and a share picture stays when the hero's picture changes. So set one only when the shared line is meant to differ from the search title, or the shared picture from the hero's, and clear it when it no longer applies. A partner's logo (Roblox's, Lynx's) in a share picture is a new placement of their mark, which needs that partner's sign-off first, as in a hero. get_landing_page says which card each language uses (shareCard).`;
+const SHARE_CARD = `A page's share card — the link preview shown wherever its address is shared, in a chat or a feed — is derived from the page, per language: that language's title and summary, and the hero's picture (the site-wide card when the hero has none). Each language may override part of its own card, written with that language's words: a share title (shareTitle, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters), a share picture (shareImageId, a catalogue id from list_landing_images) and the share picture's alt text (shareImageAlt). The picture is per language because a share picture often carries words of its own, which must be in that language; give each language its own picture, or the same one where it has no words. The summary is always the card's description. An override does not follow later edits to the page: a share title stays as written when the page title changes, and a share picture stays when the hero's picture changes. So set one only when the shared line is meant to differ from the search title, or the shared picture from the hero's, and clear it when it no longer applies. A partner's logo (Roblox's, Lynx's) in a share picture is a new placement of their mark, which needs that partner's sign-off first, as in a hero. get_landing_page says which card each language uses (shareCard).`;
+
+/** How a one-language write treats the share card, the one part it does not write whole. */
+const SHARE_CARD_KEPT =
+  "The share card fields are the exception to writing the language whole: each one is changed only when sent. Leave shareTitle, shareImageId or shareImageAlt out to keep what the language has; send shareImageId as null, or shareTitle or shareImageAlt as an empty string, to clear it back to the derived card.";
+
 const CLONE_REWRITE =
-  "A clone is a starting structure, not a page to publish: before it is published, every word of every language must be rewritten for the new page's own audience. Near-identical pages that only swap a city or an audience are what search engines penalise as doorway pages, and the penalty can reach the page the clone was made from. Rename each language's title, which carries a copy marker in that language, and give it a slug of its own; remove the languages the new page does not need with remove_landing_page_language.";
+  "A clone is a starting structure, not a page to publish: before it is published, every word of every language must be rewritten for the new page's own audience. Near-identical pages that only swap a city or an audience are what search engines penalise as doorway pages, and the penalty can reach the page the clone was made from. Rename each language's title, which carries a copy marker in that language, and give it a slug of its own; remove the languages the new page does not need with remove_landing_page_language. Each language's share card — its share title, share picture and alt text, when it has them — is copied unchanged too and shows only in link previews, never on the page, so remind the admin to review each language's share card (shareCard in the answer) before publishing.";
 
 // ---------------------------------------------------------------------------
 // Inputs
@@ -172,14 +177,14 @@ const shareTitle = z
     `A share title is at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters`,
   )
   .describe(
-    `The share card's title in this language, in place of the page title, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters. Optional, and like the section words it is the whole of what the language holds: left out or empty, the card takes the page title. It does not follow later changes to the title.`,
+    `The share card's title in this language, in place of the page title, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters. Optional; an empty string means none, and the card takes the page title. It does not follow later changes to the title.`,
   );
 
 const shareImageAlt = z
   .string()
   .trim()
   .describe(
-    "The share picture's alt text in this language. Optional: left out or empty, the card's title stands in for it. Only read while the page has a share picture.",
+    "The share picture's alt text in this language. Optional; an empty string means none, and the card's title stands in for it. Only read while the language has a share picture.",
   );
 
 /*
@@ -191,7 +196,7 @@ const shareImageId = z
   .toLowerCase()
   .nullable()
   .describe(
-    "The share picture: the catalogue id of a landing page picture from list_landing_images, shown on the link preview in place of the hero's picture. Optional, and part of the structure, which is sent whole: left out or null, the page has none and the preview takes the hero's picture. It does not follow later changes to the hero's picture.",
+    "The share picture in this language: the catalogue id of a landing page picture from list_landing_images, shown on this language's link preview in place of the hero's picture. Optional; null means none, and the preview takes the hero's picture. It does not follow later changes to the hero's picture.",
   );
 
 /**
@@ -358,8 +363,9 @@ function publishForecast(page: AdminLandingPage, origin: string) {
 
 /**
  * The share card a version uses (`landingShareCard`): which halves are the
- * page's own overrides, the card's title, and its picture with where it comes
- * from — so an AI app can see an override the page has since moved away from.
+ * language's own overrides, the card's title, and its picture with where it
+ * comes from — so an AI app can see an override the page has since moved
+ * away from.
  */
 const SHARE_CARD_IN_USE: Readonly<Record<LandingShareCardInUse, string>> = {
   derived: "derived from the page",
@@ -465,7 +471,6 @@ function pageView(page: AdminLandingPage, origin: string) {
       catalogueId,
       publicUrl: catalogueImageUrl("landing_image", path),
     })),
-    shareImageId: draft.shareImageId,
     createdAt: draft.createdAt,
     lastSaved: lastSaved(draft),
     versions: draft.versions.map((version) => ({
@@ -477,6 +482,7 @@ function pageView(page: AdminLandingPage, origin: string) {
       address: slugLink(origin, version.slug, version.locale),
       sectionTexts: version.sectionTexts,
       shareTitle: version.shareTitle,
+      shareImageId: version.shareImageId,
       shareImageAlt: version.shareImageAlt,
       shareCard: shareCardView(page, version),
       complete: version.missing.length === 0,
@@ -623,8 +629,8 @@ ${SECTIONS_MANUAL}`,
           slug: slug.optional(),
           sections: mcpLandingStructure,
           sectionTexts: mcpSectionTexts.optional(),
-          shareImageId: shareImageId.optional(),
           shareTitle: shareTitle.optional(),
+          shareImageId: shareImageId.optional(),
           shareImageAlt: shareImageAlt.optional(),
         }),
         z.object({
@@ -634,8 +640,8 @@ ${SECTIONS_MANUAL}`,
           slug: slug.optional(),
           sections: mcpLandingStructure,
           sectionTexts: wordsByHand.optional(),
-          shareImageId: shareImageId.optional(),
           shareTitle: shareTitle.optional(),
+          shareImageId: shareImageId.optional(),
           shareImageAlt: shareImageAlt.optional(),
         }),
       ),
@@ -654,7 +660,6 @@ ${SECTIONS_MANUAL}`,
         if ("refusal" in words) return words.refusal;
         const id = await service.createPage({
           sections: structure.sections,
-          shareImageId: input.shareImageId ?? null,
           versions: [
             {
               locale: input.locale,
@@ -663,6 +668,7 @@ ${SECTIONS_MANUAL}`,
               slug: input.slug,
               sectionTexts: words.texts,
               shareTitle: input.shareTitle ?? "",
+              shareImageId: input.shareImageId ?? null,
               shareImageAlt: input.shareImageAlt ?? "",
             },
           ],
@@ -691,7 +697,7 @@ ${SECTIONS_MANUAL}`,
     "clone_landing_page",
     {
       title: "Clone a landing page",
-      description: `Start a new landing page as a copy of an existing one's saved working copy, made in one step on the server: its structure with every picture and its share picture, and every language version's summary, words, share title and share picture alt text, are copied as they are, while every section and item gets a new id (the words stay with their sections and items). Each language's title is the source's followed by a copy marker in that language, and its slug is derived from that new title, numbered (-2, -3, …) when another page already has it in that language. The clone is created unpublished, and the source is not changed. The answer gives the new page's id, each language's title, slug, address once published, completeness and preview link (previewLink), and the new page's status page in Sogverse admin (adminLink). ${CLONE_REWRITE} ${SLUGS}`,
+      description: `Start a new landing page as a copy of an existing one's saved working copy, made in one step on the server: its structure with every picture, and every language version's summary, words and share card (share title, share picture and alt text), are copied as they are, while every section and item gets a new id (the words stay with their sections and items). Each language's title is the source's followed by a copy marker in that language, and its slug is derived from that new title, numbered (-2, -3, …) when another page already has it in that language. The clone is created unpublished, and the source is not changed. The answer gives the new page's id, each language's title, slug, address once published, completeness, share card (shareCard) and preview link (previewLink), and the new page's status page in Sogverse admin (adminLink). ${CLONE_REWRITE} ${SLUGS}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: {
         readOnlyHint: false,
@@ -718,6 +724,7 @@ ${SECTIONS_MANUAL}`,
             address: slugLink(origin, version.slug, version.locale),
             complete: version.missing.length === 0,
             missing: missingWords(page, version),
+            shareCard: shareCardView(page, version),
             previewLink: previewLink(origin, cloneId, version.locale),
           })),
           adminLink: adminLink(origin, cloneId),
@@ -729,25 +736,20 @@ ${SECTIONS_MANUAL}`,
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed, the share picture (shareImageId) included, so send it back to keep it. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, the share card each language now uses, and each testimonials section's testimonials (testimonials), and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING} ${SHARE_CARD}
-
-${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials), and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
-        z.object({ pageId, sections: mcpLandingStructure, shareImageId: shareImageId.optional() }),
-        z.object({ pageId, sections: mcpLandingStructure, shareImageId: shareImageId.optional() }),
+        z.object({ pageId, sections: mcpLandingStructure }),
+        z.object({ pageId, sections: mcpLandingStructure }),
       ),
       annotations: OVERWRITES,
     },
-    ({ pageId: id, sections, shareImageId: sharePicture }, ctx) =>
+    ({ pageId: id, sections }, ctx) =>
       asLandingAdmin(ctx, async ({ service, origin }) => {
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
         const structure = readStructure(sections);
         if ("refusal" in structure) return structure.refusal;
-        await service.saveStructure(id, {
-          sections: structure.sections,
-          shareImageId: sharePicture ?? null,
-        });
+        await service.saveStructure(id, structure.sections);
         const after = await service.getAdminPage(id);
         if (after === null) return refusal(NOT_FOUND);
         const kept = new Set(after.draft.sections.map((section) => section.id));
@@ -757,7 +759,6 @@ ${SECTIONS_MANUAL}`,
           removedSections: before.draft.sections
             .filter((section) => !kept.has(section.id))
             .map((section) => ({ id: section.id, type: section.type })),
-          shareImageId: after.draft.shareImageId,
           languages: languages(after),
           testimonials: placedTestimonials(after),
           productPicks: productPicks(after),
@@ -771,7 +772,7 @@ ${SECTIONS_MANUAL}`,
     "save_landing_page_text",
     {
       title: "Save a landing page's language version",
-      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. The share title and share picture alt text are this language's words too: left out, each is saved empty, so send them back to keep them. ${DISTINCT} ${SLUGS} ${MARKDOWN} ${SHARE_CARD}`,
+      description: `Write one language version of the page — its title, summary, optional slug and every section's words — replacing what that language held, or add a language it does not have yet. No other language, nor the structure, is touched. sectionTexts is the whole of this language's words: a section left out is saved with no words in this language. The words are checked against the page's structure as it is now. Readers see nothing until the next publish; leaving a live language incomplete means the next publish takes it down. ${SHARE_CARD_KEPT} ${DISTINCT} ${SLUGS} ${MARKDOWN} ${SHARE_CARD}`,
       inputSchema: readableInput(
         z.object({
           pageId,
@@ -781,6 +782,7 @@ ${SECTIONS_MANUAL}`,
           slug: slug.optional(),
           sectionTexts: mcpSectionTexts,
           shareTitle: shareTitle.optional(),
+          shareImageId: shareImageId.optional(),
           shareImageAlt: shareImageAlt.optional(),
         }),
         z.object({
@@ -791,6 +793,7 @@ ${SECTIONS_MANUAL}`,
           slug: slug.optional(),
           sectionTexts: wordsByHand,
           shareTitle: shareTitle.optional(),
+          shareImageId: shareImageId.optional(),
           shareImageAlt: shareImageAlt.optional(),
         }),
       ),
@@ -802,14 +805,22 @@ ${SECTIONS_MANUAL}`,
         if (before === null) return refusal(NOT_FOUND);
         const words = readWords(before.draft.sections, input.sectionTexts);
         if ("refusal" in words) return words.refusal;
+        // The share card is kept where the call leaves it out, read from the
+        // working copy just read; a new language has none to keep.
+        // exact-locale: the tool writes the version it was asked for
+        const current = before.draft.versions.find((v) => v.locale === input.locale);
         await service.saveVersion(input.pageId, {
           locale: input.locale,
           title: input.title,
           summary: input.summary,
           slug: input.slug,
           sectionTexts: words.texts,
-          shareTitle: input.shareTitle ?? "",
-          shareImageAlt: input.shareImageAlt ?? "",
+          shareTitle: input.shareTitle ?? current?.shareTitle ?? "",
+          shareImageId:
+            input.shareImageId === undefined
+              ? (current?.shareImageId ?? null)
+              : input.shareImageId,
+          shareImageAlt: input.shareImageAlt ?? current?.shareImageAlt ?? "",
         });
         const page = await service.getAdminPage(input.pageId);
         if (page === null) return refusal(NOT_FOUND);

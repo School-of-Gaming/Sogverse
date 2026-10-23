@@ -11,8 +11,7 @@ CREATE TABLE public.landing_pages (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     last_saved_by uuid,
-    last_saved_via uuid,
-    share_image_id uuid
+    last_saved_via uuid
 );
 
 
@@ -48,7 +47,7 @@ COMMENT ON COLUMN public.landing_pages.sections_md5 IS 'md5 of sections, generat
 -- Name: COLUMN landing_pages.image_paths; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_pages.image_paths IS 'Each catalogue entry the sections and the share picture show, as {entry id: object name in the landing-images bucket}, derived from sections and share_image_id by apply_landing_image_paths and never written by anything else.';
+COMMENT ON COLUMN public.landing_pages.image_paths IS 'Each catalogue entry the sections and every version''s share picture show, as {entry id: object name in the landing-images bucket}, derived by apply_landing_image_paths and never written by anything else.';
 
 
 --
@@ -70,13 +69,6 @@ COMMENT ON COLUMN public.landing_pages.last_saved_by IS 'The admin whose write l
 --
 
 COMMENT ON COLUMN public.landing_pages.last_saved_via IS 'The OAuth client — an AI app connected through the MCP endpoint — that last_saved_by''s write came through: auth.oauth_clients.id, read from the token''s client_id claim by stamp_landing_page_saver. NULL for a write made in Sogverse itself, and whenever last_saved_by is NULL. No foreign key: the client belongs to Supabase Auth, and the record outlives it.';
-
-
---
--- Name: COLUMN landing_pages.share_image_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.landing_pages.share_image_id IS 'The share picture: a landing_image catalogue entry the page''s link preview shows in place of its hero''s picture, or NULL to derive the preview as usual. Structure, written by the structure writers beside sections. No foreign key, as for the pictures in sections: apply_landing_image_paths refuses an entry that is gone or of another purpose and names it in image_paths, the catalogue''s replace moves it and its removal unsets it.';
 
 
 --

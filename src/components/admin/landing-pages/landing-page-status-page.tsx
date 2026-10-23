@@ -9,13 +9,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { landingPageHref } from "@/components/landing-pages/landing-page-address";
-import {
-  draftShareCard,
-  landingShareCardInUse,
-} from "@/components/landing-pages/landing-share-card";
+import { draftShareCard } from "@/components/landing-pages/landing-share-card";
+import { FramedImage } from "@/components/ui/framed-image";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
+import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import {
   formattingLocale,
   LOCALE_CONFIG,
@@ -68,14 +67,14 @@ export interface LandingPageStatusActions {
  * what readers see.
  *
  * Top to bottom: where the page stands with readers and who last saved it
- * (and through which AI app); the publishing row; the link preview the page
- * is shared with; when the page has testimonials sections, each one's
+ * (and through which AI app); the publishing row; the link preview each
+ * language is shared with; when the page has testimonials sections, each one's
  * arrangement and the testimonials it places; when it has products sections,
  * which of their picked products readers are shown and why each other one is
  * not; then one card per written language — complete or what it still needs,
  * its address (and, when that differs from the live one, that the next
- * publish moves it), its share title when it has one, its preview of
- * the saved working copy and, while it is live, its live page.
+ * publish moves it), its preview of the saved working copy and, while it is
+ * live, its live page.
  *
  * **Publish says what it would do before it does it**: the confirm lists the
  * languages going live, those left out as incomplete, the live ones taken
@@ -356,38 +355,23 @@ function slugPath(slug: string, locale: SupportedLocale): string {
 }
 
 /**
- * Which link preview the saved page is shared with: derived from the page, or
- * a custom title and/or picture the admin's AI app set. An override does not
- * follow later edits to the page title or the hero, so it is stated plainly
- * here, where a stale one would be noticed. The picture is the page's, the
- * title each language's own: the languages with a share title are named, and
- * each card below shows it.
+ * Which link preview each saved language is shared with: its picture and its
+ * title, each derived from the page or the language's own override, which an
+ * admin's AI app sets. An override does not follow later edits to the page
+ * title or the hero, so it is stated plainly here, where a stale one would be
+ * noticed. The languages are rows of one card: facts about one page.
  */
 function ShareCard({ draft }: { draft: LandingPageDraft }) {
   const t = useTranslations("admin.landingPages.statusPage.shareCard");
-  const conjunction = new Intl.ListFormat(formattingLocale(useLocale()), {
-    type: "conjunction",
-  });
   const languageName = useLanguageNames();
 
   const cards = draft.versions.map((version) => ({
     locale: version.locale,
     card: draftShareCard(draft, version),
   }));
-  const customTitles = cards
-    .filter(({ card }) => card.titleSource === "custom")
-    .map(({ locale }) => languageName(locale, LOCALE_CONFIG[locale].label));
-  // The picture is the page's, so any version's card names it.
-  const picture = cards[0]?.card.picture.source ?? "site";
-  const inUse = landingShareCardInUse({
-    title: customTitles.length > 0,
-    picture: picture === "custom",
-  });
-
-  let titleLine: string;
-  if (customTitles.length === 0) titleLine = t("titlePage");
-  else if (customTitles.length === cards.length) titleLine = t("titleCustomEvery");
-  else titleLine = t("titleCustomSome", { languages: conjunction.format(customTitles) });
+  const overridden = cards.some(
+    ({ card }) => card.titleSource === "custom" || card.picture.source === "custom",
+  );
 
   return (
     <section aria-labelledby="landing-page-share-card" className="space-y-3">
@@ -395,16 +379,39 @@ function ShareCard({ draft }: { draft: LandingPageDraft }) {
         {t("heading")}
       </Heading>
       <Card>
-        <CardContent className="space-y-3 p-6">
-          <StatusLine status="info">{t(`inUse.${inUse}`)}</StatusLine>
-          <ul className="space-y-0.5 text-sm">
-            <li>{t(`picture.${picture}`)}</li>
-            <li>{titleLine}</li>
-            <li>{t("description")}</li>
+        <CardContent className="space-y-4 p-6">
+          <ul className="divide-y divide-border">
+            {cards.map(({ locale, card }) => (
+              <li
+                key={locale}
+                aria-label={languageName(locale, LOCALE_CONFIG[locale].label)}
+                className="flex items-start gap-4 py-3 first:pt-0 last:pb-0"
+              >
+                {/* The site-wide card is no picture of the page's own, so it
+                    paints the no-picture frame and says what stands in. */}
+                <FramedImage
+                  purpose="landing_image"
+                  src={
+                    card.picture.source === "site"
+                      ? null
+                      : catalogueImageUrl("landing_image", card.picture.path)
+                  }
+                  className="w-40 shrink-0 rounded-md"
+                  sizes="160px"
+                />
+                <div className="min-w-0 space-y-0.5 text-sm">
+                  <p className="text-muted-foreground">
+                    {languageName(locale, LOCALE_CONFIG[locale].label)}
+                  </p>
+                  <p className="font-medium">{card.title}</p>
+                  <p>{t(`picture.${card.picture.source}`)}</p>
+                  <p>{t(`title.${card.titleSource}`)}</p>
+                </div>
+              </li>
+            ))}
           </ul>
-          {inUse !== "derived" && (
-            <p className="text-sm text-muted-foreground">{t("stale")}</p>
-          )}
+          <p className="text-sm">{t("description")}</p>
+          {overridden && <p className="text-sm text-muted-foreground">{t("stale")}</p>}
         </CardContent>
       </Card>
     </section>
@@ -655,14 +662,6 @@ function LanguageCard({
                 address: slugPath(movingFrom, version.locale),
               })}
             </StatusLine>
-          )}
-          {version.shareTitle !== "" && (
-            <p>
-              <span className="text-muted-foreground">
-                {t("statusPage.language.shareTitle")}{" "}
-              </span>
-              {version.shareTitle}
-            </p>
           )}
         </div>
       </CardContent>
