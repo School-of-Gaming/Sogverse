@@ -1,0 +1,13 @@
+{
+  "successTitle": "Email verified",
+  "successDescription": "Thanks — we know this address reaches you now, so nothing important will get lost.",
+  "goToDashboard": "Go to My SOG",
+  "invalidTitle": "This link no longer works",
+  "invalidDescription": "A verification link stops working once the email address on the account changes. Open your settings and send yourself a fresh one.",
+  "goToSettings": "Go to settings",
+  "gamerVerifiedTitle": "Your email is confirmed",
+  "gamerChoosePasswordDescription": "Next, choose your password — we will email you a link.",
+  "gamerSendPasswordLink": "Send me a password link",
+  "gamerPasswordLinkSent": "Sent. Have a look in your email.",
+  "gamerPasswordLinkFailed": "That did not work. Try again."
+}

@@ -1,0 +1,67 @@
+{
+  "heading": "You’re all set!",
+  "subheading": {
+    "consumer_club": "{gamer} is enrolled in {product}.",
+    "municipality_club": "{gamer} is registered for {product}.",
+    "camp": "{gamer} is signed up for {product}.",
+    "event": "{gamer} is joining {product}."
+  },
+  "fallbackGamer": "Your child",
+  "self": {
+    "subheading": {
+      "consumer_club": "You’re enrolled in {product}.",
+      "municipality_club": "You’re registered for {product}.",
+      "camp": "You’re signed up for {product}.",
+      "event": "You’re joining {product}."
+    },
+    "nextSessions": "Your sessions will show up in My SOG.",
+    "waitlist": {
+      "subheading": "You’re on the waitlist for {product}."
+    }
+  },
+  "price": {
+    "subscription": "{amount} / month",
+    "upfront": "{amount} (one-time)",
+    "free": "Free",
+    "external": "Paid for by your municipality"
+  },
+  "card": {
+    "starts": "Starts {date}"
+  },
+  "email": {
+    "sentTo": "We’ve sent a confirmation email to <strong>{email}</strong>.",
+    "sent": "A confirmation email has been sent."
+  },
+  "next": {
+    "sessions": "{gamer}’s sessions will show up in My SOG."
+  },
+  "goToDashboard": "Go to My SOG",
+  "keepBrowsing": "Keep browsing",
+  "notFound": {
+    "title": "We couldn’t find that order",
+    "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
+    "cta": "Go to My SOG"
+  },
+  "finalizing": {
+    "heading": "Payment received",
+    "subheading": "We’re finalizing the signup — this only takes a moment.",
+    "reassurance": "You can safely stay on this page. We’ll also email you a confirmation."
+  },
+  "timedOut": {
+    "heading": "This is taking longer than expected",
+    "subheading": "Your payment went through, and it is safe.",
+    "body": "We have not finished setting the signup up yet. It should appear in My SOG shortly — have a look there, and let us know if it has not turned up."
+  },
+  "duplicatePayment": {
+    "heading": "Already signed up",
+    "subheading": "The person this was for already has a place on this product.",
+    "body": "This payment has not created a second signup. Get in touch and our team will look into the extra charge with you."
+  },
+  "supportLine": "Need a hand? Email us at <link>{email}</link>.",
+  "waitlist": {
+    "heading": "You’re on the waitlist",
+    "subheading": "{gamer} is on the waitlist for {product}.",
+    "position": "Place in line: #{position}",
+    "next": "We’ll email you the moment a seat opens."
+  }
+}

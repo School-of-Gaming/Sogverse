@@ -6,12 +6,19 @@ import {
 } from "@/lib/constants/locales";
 import {
   LANDING_ID_PATTERN,
+  landingId,
   landingSections,
   landingSectionTextsSchema,
   type LandingSection,
   type LandingSectionTexts,
 } from "@/lib/landing-pages/sections";
+import {
+  isLandingPicturePurpose,
+  type LandingPicturePurpose,
+} from "@/lib/landing-pages/picture-shapes";
 import { slugify } from "@/lib/slug";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import type { LandingProductsSectionPicks } from "./landing-pages.product-picks";
 
 /**
  * Contracts for landing pages.
@@ -28,6 +35,13 @@ import { slugify } from "@/lib/slug";
  * Each language version holds a title, a summary, a slug and the text of every
  * section, keyed by section id. Versions are listed in `SUPPORTED_LOCALES`
  * order everywhere.
+ *
+ * **The share card may be overridden, per language.** A share title, a share
+ * picture (a catalogue entry, per language because a picture often carries
+ * words of its own) and that picture's alt text are written with the
+ * language's words. All three are optional and none counts toward
+ * completeness: absent, the card is derived from the page
+ * (`landingShareCard`).
  */
 
 // ---------------------------------------------------------------------------
@@ -90,6 +104,26 @@ export const LANDING_TITLE_MAX_LENGTH = 120;
 export const LANDING_SUMMARY_MAX_LENGTH = 160;
 
 /**
+ * The longest share title the database stores. A share card's length, not a
+ * page title's: Facebook, LinkedIn and X cut a card's title at about 60–70
+ * characters, so a longer one is truncated mid-word in the feed it was
+ * written for.
+ */
+export const LANDING_SHARE_TITLE_MAX_LENGTH = 70;
+
+/**
+ * A clone's title in one language: the source's, followed by that language's
+ * copy marker ("(Copy)", "(kopio)", …), so the clone is told apart and the
+ * admin is nudged to rename it. The source title is cut, never the marker,
+ * when the two together would pass the length cap.
+ */
+export function landingCopyTitle(title: string, copyMarker: string): string {
+  const marker = copyMarker.trim();
+  const room = LANDING_TITLE_MAX_LENGTH - marker.length - 1;
+  return `${title.trim().slice(0, room).trimEnd()} ${marker}`;
+}
+
+/**
  * One language version as an admin saves it.
  *
  * `slug` is optional: left out (or blank), the version keeps the address it
@@ -97,7 +131,10 @@ export const LANDING_SUMMARY_MAX_LENGTH = 160;
  * slug may change at any time; a live language's new address goes live with
  * the next publish. `sectionTexts` is the whole of this language's words,
  * keyed by section id, and is checked against the page's structure by the
- * writer that has it.
+ * writer that has it. `shareTitle`, `shareImageId` and `shareImageAlt` are
+ * the share card in this language; a save carries the whole of it, so one
+ * left out is saved empty: the card then takes the page title, the hero's
+ * picture, and for the share picture's alt text the card's title.
  */
 export const landingVersionInput = z.object({
   locale: z.enum(SUPPORTED_LOCALES),
@@ -115,6 +152,16 @@ export const landingVersionInput = z.object({
     .optional()
     .transform((slug) => (slug === "" ? undefined : slug)),
   sectionTexts: z.record(z.string(), z.unknown()),
+  shareTitle: z
+    .string()
+    .trim()
+    .max(
+      LANDING_SHARE_TITLE_MAX_LENGTH,
+      `A share title is at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters`,
+    )
+    .default(""),
+  shareImageId: landingId.nullable().default(null),
+  shareImageAlt: z.string().trim().default(""),
 });
 
 export type LandingVersionInput = z.input<typeof landingVersionInput>;
@@ -190,6 +237,16 @@ export interface LandingPageDraftVersion {
   /** The empty string while unwritten. */
   slug: string;
   sectionTexts: LandingSectionTexts;
+  /** The share card's title in this language; the empty string uses the title. */
+  shareTitle: string;
+  /**
+   * The share picture's catalogue entry in this language, which the link
+   * preview shows in place of the hero's picture, or null to use the hero's.
+   * Its path and purpose are in the copy's `pictures`; it is always wide.
+   */
+  shareImageId: string | null;
+  /** The share picture's alt text in this language; the empty string while unwritten. */
+  shareImageAlt: string;
   /**
    * What the version still needs before publishing takes it, as paths
    * (`missingInLandingVersion`); empty when complete.
@@ -217,11 +274,10 @@ export interface LandingPageDraft extends LandingPageSaver {
   id: string;
   sections: LandingSection[];
   /**
-   * Each picture the sections show, by catalogue entry id, as its path in the
-   * `landing-images` bucket — resolve it with `catalogueImageSrc` as a
-   * `landing_image`. Derived by the database from the sections.
+   * Each picture the sections and every version's share picture show, by
+   * catalogue entry id. Derived by the database.
    */
-  imagePaths: Record<string, string>;
+  pictures: LandingPictures;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
   versions: LandingPageDraftVersion[];
   createdAt: string;
@@ -240,9 +296,17 @@ export interface PublishedLandingVersionSummary {
 /** One live language version whole. */
 export interface PublishedLandingVersion extends PublishedLandingVersionSummary {
   sectionTexts: LandingSectionTexts;
+  /** As on the working copy. */
+  shareTitle: string;
+  shareImageId: string | null;
+  shareImageAlt: string;
 }
 
-/** A published page as a list reads it — the sitemap, `llms.txt`. */
+/**
+ * A published page as a list reads it — the `/discover` index, the sitemap,
+ * `llms.txt`: its live structure, so a card can show the picture the page
+ * leads with, and every live version's short fields, but no words.
+ */
 export interface PublishedLandingPageSummary {
   /** The page's id — its id address. */
   id: string;
@@ -250,6 +314,9 @@ export interface PublishedLandingPageSummary {
   firstPublishedAt: string;
   /** When the live versions were published: the sitemap's `lastmod`. */
   publishedAt: string;
+  sections: LandingSection[];
+  /** As on the working copy, for the live sections. */
+  pictures: LandingPictures;
   /** Every live version, in `SUPPORTED_LOCALES` order; never empty. */
   versions: PublishedLandingVersionSummary[];
 }
@@ -257,9 +324,6 @@ export interface PublishedLandingPageSummary {
 /** A published page whole: its live structure and every live version. */
 export interface PublishedLandingPage
   extends Omit<PublishedLandingPageSummary, "versions"> {
-  sections: LandingSection[];
-  /** As on the working copy, for the live sections. */
-  imagePaths: Record<string, string>;
   versions: PublishedLandingVersion[];
 }
 
@@ -301,10 +365,43 @@ export interface AdminLandingPage {
   /** Null while the page is not live. */
   publication: PublishedLandingPage | null;
   hasUnpublishedChanges: boolean;
+  /**
+   * The current words of every testimonial the working copy places, by id —
+   * what its preview paints and its status shows. Empty when it places none.
+   */
+  testimonials: Readonly<Record<string, PublicTestimonial>>;
+  /**
+   * Each products section of the working copy, in page order, with which of
+   * its picks readers are shown now and why each other one is not; empty when
+   * the working copy has no products section.
+   */
+  productPicks: LandingProductsSectionPicks[];
 }
 
-/** A copy's `image_paths` column, as the database derives it. */
-export const landingImagePaths = z.record(z.string(), z.string());
+/**
+ * One picture a copy shows: its path in its purpose's bucket, and its purpose,
+ * which is its shape — resolve the path with `catalogueImageSrc` as that
+ * purpose, and reserve its box at that purpose's stored size.
+ */
+export interface LandingPicture {
+  path: string;
+  purpose: LandingPicturePurpose;
+}
+
+/** Every picture a copy shows, by catalogue entry id. */
+export type LandingPictures = Record<string, LandingPicture>;
+
+/** A copy's `pictures` column, as the database derives it. */
+export const landingPictures: z.ZodType<LandingPictures, z.ZodTypeDef, unknown> = z.record(
+  z.string(),
+  z.object({
+    path: z.string(),
+    purpose: z.custom<LandingPicturePurpose>(
+      (value) => typeof value === "string" && isLandingPicturePurpose(value),
+      "Not a landing picture purpose",
+    ),
+  }),
+);
 
 /**
  * What `get_oauth_client` answers, narrowed to what naming an AI app needs.
@@ -403,6 +500,9 @@ export interface ComparableLandingVersion {
   title: string;
   summary: string;
   slug: string;
+  share_title: string;
+  share_image_id: string | null;
+  share_image_alt: string;
   /** md5 of the section texts, generated by the database on both tables. */
   texts_md5: string | null;
 }
@@ -423,8 +523,8 @@ export interface ComparableLandingCopy {
  * published copy, because a page that is not live has nothing for its edits
  * to be "unpublished" against.
  *
- * Compared on the structure's digest and on each version's short fields and
- * words' digest, so the admin list never reads a page's words. The working
+ * Compared on the structure's digest, and on each version's short fields
+ * (its share card among them) and words' digest, so the admin list never reads a page's words. The working
  * side is the versions publishing would copy, so a half-written new language
  * is not a change readers would see, and a live language whose working
  * version is no longer complete is one (publishing would take it down). A
@@ -453,6 +553,9 @@ export function hasUnpublishedChanges(
       version.title !== published.title ||
       version.summary !== published.summary ||
       version.slug !== published.slug ||
+      version.share_title !== published.share_title ||
+      version.share_image_id !== published.share_image_id ||
+      version.share_image_alt !== published.share_image_alt ||
       version.texts_md5 !== published.texts_md5
     );
   });

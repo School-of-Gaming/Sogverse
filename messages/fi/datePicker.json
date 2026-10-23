@@ -1,0 +1,9 @@
+{
+  "openCalendar": "Avaa kalenteri",
+  "previousMonth": "Edellinen kuukausi",
+  "nextMonth": "Seuraava kuukausi",
+  "weekNumber": "Viikon numero",
+  "goToWeek": "Siirry viikkoon",
+  "selectWeek": "Valitse viikko {week}",
+  "today": "Tänään"
+}

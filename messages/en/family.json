@@ -1,0 +1,43 @@
+{
+  "addGamer": "Add Gamer",
+  "manageGamer": "Manage",
+  "manageGamerAria": "Manage {name}",
+  "switchFailed": "Failed to switch accounts",
+  "loadFailed": "Failed to load family",
+  "switchToParentToAddGamer": {
+    "title": "Switch to {name}’s profile to add a gamer?",
+    "oneWayWarning": "You’ll be signed out of your gamer account."
+  },
+  "switchGate": {
+    "pinTitle": "Ask a parent to enter their PIN",
+    "pinDescription": "A parent’s PIN is needed to switch to {name}.",
+    "pinNotSetTitle": "No parent PIN yet",
+    "pinNotSetDescription": "A parent needs to set a PIN from their own My SOG first. Then you can switch accounts.",
+    "signOutTitle": "Sign out first",
+    "signOutOwnSession": "{name} is signed in with their own login, so this account can’t switch to another one. That keeps everyone’s account private.",
+    "signOutHow": "Sign out, then sign in as {name}.",
+    "signOutHowViaParent": "Sign out, then sign in as your parent and switch to {name} from there."
+  },
+  "addGamerForm": {
+    "title": "Add a gamer",
+    "firstNameLabel": "First name",
+    "firstNamePlaceholder": "e.g. Lily",
+    "birthMonthLabel": "Birth month",
+    "birthMonthPlaceholder": "Month",
+    "birthYearLabel": "Birth year",
+    "birthYearPlaceholder": "Year",
+    "genderLabel": "Gender",
+    "genderBoy": "Boy",
+    "genderGirl": "Girl",
+    "genderNonBinary": "Non-binary",
+    "submit": "Add gamer",
+    "submitting": "Adding…",
+    "firstNameTooShort": "First name must be at least 2 characters.",
+    "firstNameTooLong": "First name must be 32 characters or fewer.",
+    "birthMonthRequired": "Pick a birth month.",
+    "birthYearRequired": "Pick a birth year.",
+    "genericError": "Couldn’t add this gamer. Please try again.",
+    "guardianAttestation": "{name} is my child, or I am their legal guardian. I have read the <privacy>Privacy Policy</privacy>.",
+    "guardianAttestationUnnamed": "This gamer is my child, or I am their legal guardian. I have read the <privacy>Privacy Policy</privacy>."
+  }
+}

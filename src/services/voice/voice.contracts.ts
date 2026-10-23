@@ -15,6 +15,13 @@ export const voiceTokenResponse = z.object({
 });
 
 /**
+ * The token route's refusal code for a group whose product is not joined
+ * through a Sogverse room — a meeting elsewhere, or written instructions. The
+ * voice page shows its own message for it.
+ */
+export const NOT_A_SOGVERSE_ROOM = "NOT_A_SOGVERSE_ROOM";
+
+/**
  * What the joiner is in this room, as the token route admitted them.
  *
  * `moderator` is exactly the token's owner flag. `trainee` is a gedu admitted

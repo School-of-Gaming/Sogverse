@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { resolveLocale } from "@/lib/constants/locales";
 import { breakName } from "@/lib/holiday-breaks";
-import { formatCompactDateRange } from "@/lib/utils";
+import { formatCompactDateRange } from "@/lib/date-format";
 import { useNow, useTimezone } from "@/providers";
 
 /**

@@ -1,0 +1,13 @@
+{
+  "successTitle": "ngu’lu’pu’ QIn Daq",
+  "successDescription": "qatlho’ — DaH SoH lIngeHlaH ’e’ wISov, ’ej chIlbe’ QIn potlh.",
+  "goToDashboard": "jIH SOG yIghoS",
+  "invalidTitle": "Qapbe’ lInkvam",
+  "invalidDescription": "choHlu’DI’ QIn Daq, Qapbe’choH ngu’meH lInk. DuHmeylIj yIpoSmoH ’ej lInk chu’ yIngeH.",
+  "goToSettings": "DuHmey yIghoS",
+  "gamerVerifiedTitle": "ngu’lu’pu’ QIn DaqlIj",
+  "gamerChoosePasswordDescription": "DaH mu’meylIj yIwIv – lInk wIngeHbej.",
+  "gamerSendPasswordLink": "mu’mey lInk HIngeH",
+  "gamerPasswordLinkSent": "ngeHta’. QIn yInuD.",
+  "gamerPasswordLinkFailed": "Qapbe’. yInIDqa’!"
+}

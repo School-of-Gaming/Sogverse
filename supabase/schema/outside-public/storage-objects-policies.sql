@@ -13,6 +13,31 @@ CREATE POLICY chat_images_member_read ON storage.objects
             ELSE NULL::uuid
         END) AND public.is_chat_channel_member(m.channel_id) AND ((m.hidden_at IS NULL) OR public.is_chat_channel_moderator(m.channel_id)))))));
 
+CREATE POLICY guides_admin_delete ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  TO authenticated
+  USING (((bucket_id = 'guides'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY guides_admin_insert ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (((bucket_id = 'guides'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY guides_admin_read ON storage.objects
+  AS PERMISSIVE
+  FOR SELECT
+  TO authenticated
+  USING (((bucket_id = 'guides'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY guides_admin_update ON storage.objects
+  AS PERMISSIVE
+  FOR UPDATE
+  TO authenticated
+  USING (((bucket_id = 'guides'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
+  WITH CHECK (((bucket_id = 'guides'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
 CREATE POLICY landing_images_admin_delete ON storage.objects
   AS PERMISSIVE
   FOR DELETE
@@ -31,6 +56,44 @@ CREATE POLICY landing_images_admin_update ON storage.objects
   TO authenticated
   USING (((bucket_id = 'landing-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
   WITH CHECK (((bucket_id = 'landing-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY landing_portrait_images_admin_delete ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  TO authenticated
+  USING (((bucket_id = 'landing-portrait-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY landing_portrait_images_admin_insert ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (((bucket_id = 'landing-portrait-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY landing_portrait_images_admin_update ON storage.objects
+  AS PERMISSIVE
+  FOR UPDATE
+  TO authenticated
+  USING (((bucket_id = 'landing-portrait-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
+  WITH CHECK (((bucket_id = 'landing-portrait-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY landing_square_images_admin_delete ON storage.objects
+  AS PERMISSIVE
+  FOR DELETE
+  TO authenticated
+  USING (((bucket_id = 'landing-square-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY landing_square_images_admin_insert ON storage.objects
+  AS PERMISSIVE
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (((bucket_id = 'landing-square-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
+
+CREATE POLICY landing_square_images_admin_update ON storage.objects
+  AS PERMISSIVE
+  FOR UPDATE
+  TO authenticated
+  USING (((bucket_id = 'landing-square-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)))
+  WITH CHECK (((bucket_id = 'landing-square-images'::text) AND (public.get_user_role() = 'admin'::public.user_role)));
 
 CREATE POLICY library_covers_admin_delete ON storage.objects
   AS PERMISSIVE

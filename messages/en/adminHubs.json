@@ -1,0 +1,19 @@
+{
+  "titles": {
+    "products": "Clubs, camps and events",
+    "invoicing": "Invoicing",
+    "marketing": "Marketing"
+  },
+  "tabs": {
+    "products": "Products",
+    "sites": "Sites",
+    "holidayCalendars": "Holiday calendars",
+    "municipalities": "Municipalities",
+    "invoiceCustomers": "Invoice customers",
+    "gedus": "Gedus",
+    "landingPages": "Landing pages",
+    "testimonials": "Testimonials",
+    "guides": "Guides",
+    "spotlights": "Spotlights"
+  }
+}

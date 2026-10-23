@@ -24,9 +24,10 @@ import {
   type GamePlatform,
 } from "@/components/game-account";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
-import { cn, computeAge } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import {

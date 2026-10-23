@@ -1,0 +1,9 @@
+{
+  "openCalendar": "Ouvrir le calendrier",
+  "previousMonth": "Mois précédent",
+  "nextMonth": "Mois suivant",
+  "weekNumber": "Numéro de semaine",
+  "goToWeek": "Aller à la semaine",
+  "selectWeek": "Sélectionner la semaine {week}",
+  "today": "Aujourd’hui"
+}

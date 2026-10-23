@@ -5,7 +5,7 @@ import type {
   AdminSubstitutionsData,
   SubstitutedSession,
 } from "@/components/admin/substitutions/admin-substitutions-data";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { sessionFacts } from "../../mocks/session-facts";
 
 /**

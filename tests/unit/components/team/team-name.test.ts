@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createTranslator } from "next-intl";
-import en from "../../../../messages/en.json";
 import {
   teamMemberPlainName,
   teamMemberSubline,
@@ -9,8 +8,9 @@ import {
   publicAdminProfile,
   publicGeduProfile,
 } from "../../../mocks/team-profile";
+import enTeam from "../../../../messages/en/team.json";
 
-const t = createTranslator({ locale: "en", messages: en, namespace: "team.profile" });
+const t = createTranslator({ locale: "en", messages: { team: enTeam }, namespace: "team.profile" });
 
 describe("a team member headed", () => {
   it("heads an admin with their surname under the rule", () => {

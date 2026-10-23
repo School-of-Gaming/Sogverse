@@ -8,11 +8,11 @@ import { Field } from "@/components/ui/field";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { FramedImage } from "@/components/ui/framed-image";
 import {
   useUploadCatalogueImage,
-} from "@/services/catalogue-images";
+} from "@/services/catalogue-images/catalogue-images.queries";
 import type { CatalogueImagePurpose } from "@/types";
 import { CATALOGUE_COPY } from "./catalogue-copy";
 import { useCatalogueCrop } from "./catalogue-crop";
@@ -28,12 +28,15 @@ import type {
  * readers meet it through, so what an admin approves here is what a family or
  * a reader sees — and the fixed width it takes in the form. The widths give
  * the ratios about the same weight on the page: a 3:2 product picture at
- * 240px and a 16:9 cover or landing picture at 288px stand the same height.
+ * 240px, a 16:9 cover or wide landing picture at 288px, a square landing
+ * picture at 160px and a portrait one at 128px stand about the same height.
  */
 const PICKER_FRAMES = {
   product: { Frame: ProductBanner, width: "w-60", sizes: "240px" },
   library_cover: { Frame: LibraryCover, width: "w-72", sizes: "288px" },
   landing_image: { Frame: LandingImageFrame, width: "w-72", sizes: "288px" },
+  landing_square_image: { Frame: LandingSquareImageFrame, width: "w-40", sizes: "160px" },
+  landing_portrait_image: { Frame: LandingPortraitImageFrame, width: "w-32", sizes: "128px" },
   spotlight_image: { Frame: SpotlightImageFrame, width: "w-72", sizes: "288px" },
 } as const satisfies Record<
   CatalogueImagePurpose,
@@ -42,13 +45,15 @@ const PICKER_FRAMES = {
       | typeof ProductBanner
       | typeof LibraryCover
       | typeof LandingImageFrame
+      | typeof LandingSquareImageFrame
+      | typeof LandingPortraitImageFrame
       | typeof SpotlightImageFrame;
     width: string;
     sizes: string;
   }
 >;
 
-/** A landing page picture in its purpose's 16:9 frame. */
+/** A wide landing page picture in its purpose's 16:9 frame. */
 function LandingImageFrame({
   src,
   className,
@@ -60,6 +65,36 @@ function LandingImageFrame({
 }) {
   return (
     <FramedImage purpose="landing_image" src={src} className={className} sizes={sizes} />
+  );
+}
+
+/** A square landing page picture in its purpose's 1:1 frame. */
+function LandingSquareImageFrame({
+  src,
+  className,
+  sizes,
+}: {
+  src: string | null;
+  className?: string;
+  sizes?: string;
+}) {
+  return (
+    <FramedImage purpose="landing_square_image" src={src} className={className} sizes={sizes} />
+  );
+}
+
+/** A portrait landing page picture in its purpose's 4:5 frame. */
+function LandingPortraitImageFrame({
+  src,
+  className,
+  sizes,
+}: {
+  src: string | null;
+  className?: string;
+  sizes?: string;
+}) {
+  return (
+    <FramedImage purpose="landing_portrait_image" src={src} className={className} sizes={sizes} />
   );
 }
 

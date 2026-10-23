@@ -1,0 +1,4 @@
+{
+  "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
+  "waitlistAvailable": "Jonotuslista"
+}

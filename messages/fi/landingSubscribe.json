@@ -1,0 +1,10 @@
+{
+  "firstName": "Etunimi",
+  "lastName": "Sukunimi",
+  "email": "Sähköpostiosoite",
+  "consent": "School of Gaming saa lähettää minulle uutisia ja tarjouksia sähköpostitse. Olen lukenut <privacy>tietosuojaselosteen</privacy>.",
+  "error": "Jokin meni vikaan, eikä tilaus vielä onnistunut. Yritä hetken päästä uudelleen.",
+  "invalid": "Tarkista sähköpostiosoitteesi ja yritä uudelleen.",
+  "successTitle": "Tilaus onnistui",
+  "successBody": "Kiitos! Uutiskirjeemme saapuu pian sähköpostiisi."
+}

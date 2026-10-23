@@ -1,0 +1,79 @@
+{
+  "title": "Barnskyddspolicy för Skaparnas akademi",
+  "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet.",
+  "lastUpdated": "Senast granskad: {date}",
+  "intro": {
+    "heading": "Vårt åtagande",
+    "blocks": [
+      "Varje barn som deltar i det här Programmet har rätt att känna sig tryggt, respekterat och skyddat – oavsett om barnet deltar online eller på ett fysiskt evenemang. Det bärs upp av hur Programmet är byggt: varje barns konto är kopplat till en förälders konto, all kommunikation sker i grupp utan privata meddelanden mellan barn, och bara registrerade deltagare och kontrollerade spelfostrare kan delta."
+    ]
+  },
+  "sections": {
+    "covers": {
+      "heading": "Vilka omfattas",
+      "blocks": [
+        "Policyn gäller all personal hos Lynx Educate och School of Gaming, alla spelfostrare (eller ”Geduer”), volontärer och alla uppdragstagare som möter barn genom Programmet."
+      ]
+    },
+    "vetting": {
+      "heading": "Innan en spelfostrare arbetar med barn",
+      "blocks": [
+        "Alla spelfostrare (Geduer) måste genomgå School of Gamings egen kontroll- och utbildningsprocess innan de arbetar med barn i Sogverse. Detta omfattar:",
+        [
+          "Att vara över 18 år. Varje spelfostrare är vuxen.",
+          "En bakgrundskontroll. Varje Gedu visar oss ett utdrag ur belastningsregistret av det slag som utfärdas för den som arbetar med barn, innan hen tilldelas någon grupp – så att vi vet vem som tillbringar tid med ditt barn. Vi kontrollerar utdraget själva, och vi får inte behålla någon kopia, så det gör vi inte.",
+          "School of Gamings grundkurs för spelfostrare, som varje Gedu måste slutföra med godkänt resultat.",
+          "Vår handbok för spelfostrare, som beskriver hur vi förväntar oss att en Gedu uppträder och gör stämningen i gruppen till hens ansvar.",
+          "Ett undertecknat avtal med School of Gaming, som gås igenom tillsammans med någon ur vår personal innan det skrivs under. Det beskriver det skriftliga förfarande vi följer – som börjar med en varning och ett samtal – om en Gedu inte lever upp till förväntningarna."
+        ]
+      ]
+    },
+    "online": {
+      "heading": "Under träffar online",
+      "blocks": [
+        [
+          "Varje Spelares konto är kopplat till ett föräldrakonto; barn kan inte anmäla sig själva.",
+          "Det finns inga direktmeddelanden mellan barn – all kommunikation sker i grupp och övervakas aktivt av en utbildad spelfostrare.",
+          "Endast anmälda Spelare och kontrollerade spelfostrare får delta – inga externa inbjudningar eller utomstående kontakter.",
+          "Träffarna spelas inte in."
+        ]
+      ]
+    },
+    "inPerson": {
+      "heading": "Under fysiska evenemang",
+      "blocks": [
+        "Våra spelfostrare håller i träffen, men de är inte arrangörer av evenemanget. Lynx Educate ansvarar för att de lokaler organisationen samarbetar med är lämpliga för träffen och uppfyller Programmets krav på barns trygghet. De närmare arrangemangen kan variera från lokal till lokal."
+      ]
+    },
+    "behaviour": {
+      "heading": "Beteende och disciplin",
+      "blocks": [
+        "Vardagliga beteendefrågor under träffar som SOG håller i hanteras enligt School of Gamings <linkDiscipline>policy mot mobbning och disciplin</linkDiscipline>, som bygger på ett stödjande steg-för-steg-arbetssätt innan ett barn tas bort från en träff eller från gemenskapen."
+      ]
+    },
+    "escalation": {
+      "heading": "Så förs ärenden vidare",
+      "blocks": [
+        "School of Gaming hanterar ärenden i första hand, eftersom de har daglig kontakt med deltagarna. Alla ärenden som rör barns trygghet – övergrepp, trakasserier, självskadebeteende eller allvarlig skada – förs vidare till Lynx Educate inom 24 timmar, och Lynx informerar Roblox utan dröjsmål när det krävs. Om ett barn kan vara i omedelbar fara kontaktar vi räddningstjänsten först, före all intern hantering."
+      ]
+    },
+    "concern": {
+      "heading": "Om du är orolig",
+      "blocks": [
+        "Om du eller ditt barn har en oro som rör barns trygghet, kontakta School of Gaming på {supportEmail} eller Lynx Educate på support@lynxeducate.com."
+      ]
+    },
+    "data": {
+      "heading": "Uppgifter och foton",
+      "blocks": [
+        "Ett barn syns identifierbart på ett foto endast när barnets förälder kryssat i det frivilliga mediasamtycket för barnet vid anmälan. Föräldern kan ändra svaret när som helst på barnets sida i Min SOG, och en spelfostrare frågar barnet innan ett foto tas, även när föräldern har samtyckt. <linkRobloxPrivacy>Integritetspolicyn för Skaparnas akademi</linkRobloxPrivacy> beskriver vad samtycket omfattar. Översiktsbilder av ett evenemang eller en workshop kan tas på avstånd, när inget barn går att identifiera."
+      ]
+    },
+    "review": {
+      "heading": "Översyn av policyn",
+      "blocks": [
+        "Vi ser över den här policyn varje år."
+      ]
+    }
+  }
+}

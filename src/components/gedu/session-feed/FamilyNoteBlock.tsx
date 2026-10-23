@@ -2,7 +2,7 @@
 
 import { Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * The family-facing half of a session write-up, marked as such while it is

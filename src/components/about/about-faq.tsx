@@ -2,7 +2,7 @@ import { useTranslations } from "next-intl";
 import { FaqAccordion, type FaqAccordionItem } from "@/components/ui/faq-accordion";
 import { FAQ_ANSWER_TAGS } from "@/components/ui/faq-answer";
 import { JsonLd } from "@/components/seo/json-ld";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { messageToPlainText } from "@/lib/i18n/plain-text";
 import { rawString } from "@/lib/i18n/raw-messages";
 import { Heading } from "@sog/ui";
@@ -118,7 +118,7 @@ export function AboutFaq({ id }: AboutFaqProps) {
           {t("heading")}
         </Heading>
         <div className="mt-12">
-          <FaqAccordion items={items} />
+          <FaqAccordion items={items} questionLevel={3} />
         </div>
       </div>
     </section>

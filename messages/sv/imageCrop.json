@@ -1,0 +1,9 @@
+{
+  "title": "Beskär bilden",
+  "description": "Dra bilden för att placera den i ramen och zooma så att den passar.",
+  "zoom": "Zoom",
+  "confirm": "Använd bild",
+  "unreadable": "Den här filen kan inte öppnas som en bild här. Välj en JPEG-, PNG- eller WebP-bild. iPhone-foton i HEIC-format måste konverteras först.",
+  "chooseAnother": "Välj en annan bild",
+  "failed": "Bilden kunde inte beskäras. Försök igen eller välj en annan bild."
+}

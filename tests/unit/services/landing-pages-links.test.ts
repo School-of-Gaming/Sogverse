@@ -77,7 +77,7 @@ describe("canonicaliseLandingLinks", () => {
       { resolver, siteUrl: SITE },
     );
     const [hero] = result.sections ?? [];
-    const cta = result.sections?.at(-1);
+    const cta = result.sections?.find((section) => section.type === "cta");
     expect(hero).toMatchObject({ button: { kind: "internal", path: `/library/${ARTICLE}` } });
     expect(cta).toMatchObject({ button: { kind: "external", url: "https://example.com/x" } });
   });
@@ -88,7 +88,7 @@ describe("canonicaliseLandingLinks", () => {
       section.type === "cta" ? { ...section, button: { kind: "email", to: "hello@sog.gg" } } : section,
     );
     const result = await canonicaliseLandingLinks(write(sections), { resolver: lookups, siteUrl: SITE });
-    expect(result.sections?.at(-1)).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
+    expect(result.sections?.find((section) => section.type === "cta")).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
     expect(lookups).not.toHaveBeenCalled();
   });
 
@@ -132,7 +132,7 @@ describe("canonicaliseLandingLinks", () => {
     );
     await expect(attempt).rejects.toThrow(
       "The button in section 1 (Hero) leads to /no-such-page, which doesn't lead to a page on the site. " +
-        'The link "the guide" to /fi/kirjasto/ei-julkaistu, in the English words of section 6 (Questions and answers), doesn\'t lead to a page on the site.',
+        'The link "the guide" to /fi/kirjasto/ei-julkaistu, in the English words of section 7 (Questions and answers), doesn\'t lead to a page on the site.',
     );
   });
 

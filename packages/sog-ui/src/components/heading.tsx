@@ -54,6 +54,9 @@ export type HeadingLevel = 1 | 2 | 3 | 4;
  * - **`h3`**: up to `section`, a story page's sub-section.
  * - **`h4`**: up to `card-title`.
  *
+ * `item-title` is offered from `h2` down and never at `h1`: it titles one item
+ * in a run of like items, a question in an FAQ, which is never a page.
+ *
  * Each level's top sits under the top of the level above it, so no heading
  * can outrank the outline over it. Within a page the rule is stricter than the
  * table: **a heading is always smaller than the heading it sits under**, and
@@ -64,15 +67,16 @@ export type HeadingLevel = 1 | 2 | 3 | 4;
  * Two rules choose between the steps a level allows. **A title is never
  * smaller than the text it titles**, so `label` is for a heading over a compact
  * region — a list, a row of chips, a set of controls or fields, metadata — and
- * a heading over prose takes `card-title`. And **the two story steps stay
- * public**: `hero` and `display` are for a page telling the story, never for
- * making an app section feel important.
+ * a heading over prose takes `card-title`, or `item-title` where it titles one
+ * item among a run of like ones. And **the two story steps stay public**:
+ * `hero` and `display` are for a page telling the story, never for making an
+ * app section feel important.
  */
 export const HEADING_STEPS = {
   1: ["hero", "page-title", "section", "card-title", "label"],
-  2: ["display", "section", "card-title", "label"],
-  3: ["section", "card-title", "label"],
-  4: ["card-title", "label"],
+  2: ["display", "section", "card-title", "item-title", "label"],
+  3: ["section", "card-title", "item-title", "label"],
+  4: ["card-title", "item-title", "label"],
 } as const satisfies Record<HeadingLevel, readonly TypeStepId[]>;
 
 /** Every step a heading can wear, at some level. */
@@ -163,6 +167,7 @@ const STEP_CLASS = {
   "page-title": "text-page-title",
   section: "text-section",
   "card-title": "text-card-title",
+  "item-title": "text-item-title",
   label: "text-label",
 } as const satisfies Record<HeadingStep, string>;
 

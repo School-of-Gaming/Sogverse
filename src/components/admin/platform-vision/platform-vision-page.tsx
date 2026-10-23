@@ -33,7 +33,8 @@ import {
 import { Heading } from "@sog/ui";
 import { Card } from "@/components/ui/card";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 import {
   CampfireArt,
   ForestToPixelsArt,

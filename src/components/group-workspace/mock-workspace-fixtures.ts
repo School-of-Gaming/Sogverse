@@ -1750,6 +1750,8 @@ export function buildGroupWorkspaceFixture(
         start_date: startDate,
         end_date: endDate,
         is_remote: config.isRemote,
+        voice_room_mode: "sogverse",
+        external_voice_url: null,
         // Flagged on two scenarios, one per tone of the session card's
         // creations block: the camp, whose run is still going, states the
         // obligation quietly; `owed`, whose run has ended, states it in the warning tone.
@@ -1762,6 +1764,7 @@ export function buildGroupWorkspaceFixture(
             locale: "en",
             name: config.productName,
             description: "",
+            voice_join_instructions: null,
           },
         ],
         schedule_slots: config.slots,

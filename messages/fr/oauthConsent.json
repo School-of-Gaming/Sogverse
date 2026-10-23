@@ -1,0 +1,19 @@
+{
+  "title": "Connecter une application d’IA à Sogverse",
+  "body": "{clientName} demande à agir en votre nom dans Sogverse, avec tous les droits de votre compte administrateur.",
+  "destinationLabel": "Votre connexion sera envoyée à",
+  "loopbackHint": "Une application qui tourne sur cet ordinateur.",
+  "unrecognised": "School of Gaming ne reconnaît pas cette destination. N’autorisez que si vous venez de lancer la connexion depuis votre propre application d’IA. Sinon, choisissez Refuser.",
+  "signedInAs": "Connecté en tant que {email}",
+  "failed": "Il n’est plus possible de répondre à cette demande. Relancez la connexion depuis votre application d’IA.",
+  "deny": "Refuser",
+  "allow": "Autoriser",
+  "unavailable": {
+    "title": "Ce lien de connexion a déjà été utilisé",
+    "body": "Chaque lien ne fonctionne qu’une fois et expire peu après. Relancez la connexion depuis votre application d’IA."
+  },
+  "refused": {
+    "title": "Seuls les administrateurs de School of Gaming peuvent connecter une application d’IA",
+    "body": "Vous êtes connecté en tant que {email}, qui n’est pas un compte administrateur."
+  }
+}

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { switchGateFor } from "@/services/family/switch-gate";
-import type { UserRole } from "@/lib/constants";
+import type { UserRole } from "@/lib/constants/roles";
 import type { SessionProvenance } from "@/lib/session-provenance";
 
 /**

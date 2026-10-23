@@ -10,7 +10,7 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE, resolveLocale } from "@/lib/constants/locales";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { getOrigin } from "@/lib/url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { stripe } from "@/lib/stripe/client";

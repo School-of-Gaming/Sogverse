@@ -9,9 +9,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   NOTIFICATION_TOGGLES,
+} from "@/services/notification-preferences/notification-preferences.service";
+import {
   useMyNotificationPreferences,
   useSetNotificationPreference,
-} from "@/services/notification-preferences";
+} from "@/services/notification-preferences/notification-preferences.queries";
 import {
   Constants,
   type NotificationChannel,

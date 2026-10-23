@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * A region that animates open and closed by growing **downward**, leaving

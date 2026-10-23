@@ -8,7 +8,7 @@ import {
   helpRequestReplyToAddress,
 } from "@/lib/email-templates/help-request";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import {
   detectLocaleFromHeader,
   formattingLocale,

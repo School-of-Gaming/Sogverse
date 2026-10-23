@@ -5,7 +5,7 @@ import {
 } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { formatInTimeZone } from "date-fns-tz";
 import type {
   BillingMode,

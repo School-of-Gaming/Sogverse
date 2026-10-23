@@ -6,7 +6,7 @@ import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { possibleAgeOnDate } from "@/lib/gamer-age-eligibility";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
 import { walkPages } from "@/lib/supabase/paging";
-import { escapeLikePattern } from "@/lib/utils";
+import { escapeLikePattern } from "@/lib/search";
 import {
   CAMPAIGN_MINIMUM_COUNT,
   LYNX_CAMPAIGN_PREFIX,

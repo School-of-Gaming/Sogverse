@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import type {
   LocalizedLandingPage,
   PublishedLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 
 // The shared setup mocks the wrapped navigation, and its `getPathname` ignores
 // the locale. Addresses and canonicals are *about* which locale's path they
@@ -31,9 +31,10 @@ const {
 const { landingPageMetadata } = await import(
   "@/components/landing-pages/landing-page-metadata"
 );
-const { landingPageJsonLd } = await import(
+const { landingPageJsonLd, landingProductListsJsonLd } = await import(
   "@/components/landing-pages/landing-page-json-ld"
 );
+const { browseRow } = await import("../../../mocks/product-browse-row");
 const { landingStructuredParts } = await import(
   "@/components/landing-pages/landing-section-seo"
 );
@@ -50,6 +51,8 @@ const STEPS = "55555555-5555-4555-8555-555555555555";
 const S1 = "66666666-6666-4666-8666-666666666666";
 const S2 = "77777777-7777-4777-8777-777777777777";
 const PICTURE = "88888888-8888-4888-8888-888888888888";
+const SHARE_PICTURE = "99999999-9999-4999-8999-999999999999";
+const FI_SHARE_PICTURE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 /** Live in English and Finnish, with a hero picture, steps and two questions. */
 const PAGE: PublishedLandingPage = {
@@ -58,10 +61,10 @@ const PAGE: PublishedLandingPage = {
   publishedAt: "2026-10-01T08:00:00Z",
   sections: [
     { id: HERO, type: "hero", imageId: PICTURE },
-    { id: STEPS, type: "steps", items: [{ id: S1 }, { id: S2 }] },
-    { id: FAQ, type: "faq", items: [{ id: Q1 }, { id: Q2 }] },
+    { id: STEPS, type: "steps", background: "default", items: [{ id: S1 }, { id: S2 }] },
+    { id: FAQ, type: "faq", background: "default", items: [{ id: Q1 }, { id: Q2 }] },
   ],
-  imagePaths: { [PICTURE]: "pictures/club.jpg" },
+  pictures: { [PICTURE]: { path: "pictures/club.jpg", purpose: "landing_image" } },
   versions: [
     {
       locale: "en",
@@ -82,6 +85,9 @@ const PAGE: PublishedLandingPage = {
           },
         },
       },
+      shareTitle: "",
+      shareImageId: null,
+      shareImageAlt: "",
     },
     {
       locale: "fi",
@@ -89,6 +95,9 @@ const PAGE: PublishedLandingPage = {
       summary: "Iltapäiväkerhot.",
       slug: "pelikerhot-espoo",
       sectionTexts: { [HERO]: { headline: "Kerhot Espoossa", imageAlt: "Lapsia" } },
+      shareTitle: "",
+      shareImageId: null,
+      shareImageAlt: "",
     },
   ],
 };
@@ -173,6 +182,9 @@ describe("landingPageMetadata", () => {
       card: "summary_large_image",
       images: [expect.objectContaining({ alt: "Lapsia" })],
     });
+    // With no override, the card's title is the page title.
+    expect(metadata.openGraph?.title).toBe("Pelikerhot Espoossa");
+    expect(metadata.twitter?.title).toBe("Pelikerhot Espoossa");
   });
 
   it("canonicalises a fallback locale to the version shown, alt text included", async () => {
@@ -188,7 +200,7 @@ describe("landingPageMetadata", () => {
 
   it("takes the site card at the request locale when the hero has no picture", async () => {
     const metadata = await landingPageMetadata(
-      { ...PAGE, sections: [{ id: HERO, type: "hero" }], imagePaths: {} },
+      { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
       "fr",
     );
 
@@ -198,10 +210,152 @@ describe("landingPageMetadata", () => {
   });
 
   it("takes the site card when the hero's picture has no path", async () => {
-    const metadata = await landingPageMetadata({ ...PAGE, imagePaths: {} }, "en");
+    const metadata = await landingPageMetadata({ ...PAGE, pictures: {} }, "en");
 
     expect(metadata.openGraph).toMatchObject({
       images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],
+    });
+  });
+
+  describe("with the share card overridden", () => {
+    const HERO_IMAGE = "/opengraph-images/picture/landing_image/pictures/club.jpg";
+    const SHARE_IMAGE = "/opengraph-images/picture/landing_image/pictures/share.jpg";
+
+    const FI_SHARE_IMAGE = "/opengraph-images/picture/landing_image/pictures/share-fi.jpg";
+
+    type ShareCard = { shareTitle?: string; shareImageId?: string | null; shareImageAlt?: string };
+
+    /** PAGE with each language's overrides; the copy carries every named picture's path. */
+    function overridden(cards: Partial<Record<"en" | "fi", ShareCard>>): PublishedLandingPage {
+      return {
+        ...PAGE,
+        pictures: {
+          ...PAGE.pictures,
+          [SHARE_PICTURE]: { path: "pictures/share.jpg", purpose: "landing_image" },
+          [FI_SHARE_PICTURE]: { path: "pictures/share-fi.jpg", purpose: "landing_image" },
+        },
+        versions: PAGE.versions.map((version) => ({
+          ...version,
+          ...cards[version.locale === "en" ? "en" : "fi"],
+        })),
+      };
+    }
+
+    it("takes the share title alone, keeping the page title and the hero's picture", async () => {
+      const metadata = await landingPageMetadata(
+        overridden({ en: { shareTitle: "Join a gaming club in Espoo" } }),
+        "en",
+      );
+
+      expect(metadata.title).toBe("Gaming clubs in Espoo");
+      expect(metadata.description).toBe("After-school clubs for Espoo families.");
+      expect(metadata.openGraph).toMatchObject({
+        title: "Join a gaming club in Espoo",
+        description: "After-school clubs for Espoo families.",
+        images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Children at a club" })],
+      });
+      expect(metadata.twitter).toMatchObject({
+        title: "Join a gaming club in Espoo",
+        description: "After-school clubs for Espoo families.",
+      });
+    });
+
+    it("takes the shown version's own share picture alone, with its alt text", async () => {
+      const page = overridden({
+        en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" },
+        fi: { shareImageId: FI_SHARE_PICTURE, shareImageAlt: "Kerhohuone" },
+      });
+
+      const finnish = await landingPageMetadata(page, "fi");
+      expect(finnish.openGraph).toMatchObject({
+        title: "Pelikerhot Espoossa",
+        images: [{ url: FI_SHARE_IMAGE, alt: "Kerhohuone", width: 1200, height: 675 }],
+      });
+      expect(finnish.twitter).toMatchObject({
+        title: "Pelikerhot Espoossa",
+        images: [expect.objectContaining({ url: FI_SHARE_IMAGE, alt: "Kerhohuone" })],
+      });
+
+      // Swedish is shown the English version, and so its alt text.
+      const swedish = await landingPageMetadata(page, "sv");
+      expect(swedish.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: SHARE_IMAGE, alt: "A club room" })],
+      });
+    });
+
+    it("keeps the hero's picture in a language with no share picture while another has one", async () => {
+      const page = overridden({ en: { shareImageId: SHARE_PICTURE } });
+
+      const finnish = await landingPageMetadata(page, "fi");
+      expect(finnish.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Lapsia" })],
+      });
+      const english = await landingPageMetadata(page, "en");
+      expect(english.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: SHARE_IMAGE })],
+      });
+    });
+
+    it("gives a share picture with no alt text the card's title", async () => {
+      const metadata = await landingPageMetadata(
+        overridden({ en: { shareTitle: "Clubs for Espoo kids", shareImageId: SHARE_PICTURE } }),
+        "en",
+      );
+
+      expect(metadata.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: SHARE_IMAGE, alt: "Clubs for Espoo kids" })],
+      });
+    });
+
+    it("takes both together", async () => {
+      const metadata = await landingPageMetadata(
+        overridden({
+          en: {
+            shareTitle: "Join a gaming club in Espoo",
+            shareImageId: SHARE_PICTURE,
+            shareImageAlt: "A club room",
+          },
+        }),
+        "en",
+      );
+
+      expect(metadata.title).toBe("Gaming clubs in Espoo");
+      expect(metadata.openGraph).toMatchObject({
+        title: "Join a gaming club in Espoo",
+        description: "After-school clubs for Espoo families.",
+        images: [expect.objectContaining({ url: SHARE_IMAGE, alt: "A club room" })],
+      });
+      expect(metadata.twitter).toMatchObject({
+        title: "Join a gaming club in Espoo",
+        images: [expect.objectContaining({ url: SHARE_IMAGE, alt: "A club room" })],
+      });
+    });
+
+    it("falls back to the hero's picture once the share picture has left the catalogue", async () => {
+      // The removal unsets the id; a copy still naming one whose path it does
+      // not carry is read the same way.
+      const unset = overridden({ en: { shareImageAlt: "A club room" } });
+      const pathless = {
+        ...overridden({ en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" } }),
+        pictures: PAGE.pictures,
+      };
+
+      for (const page of [unset, pathless]) {
+        const metadata = await landingPageMetadata(page, "en");
+        expect(metadata.openGraph).toMatchObject({
+          images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Children at a club" })],
+        });
+      }
+    });
+
+    it("keeps the page title in a language with no share title while another has one", async () => {
+      const page = overridden({ en: { shareTitle: "Join a gaming club in Espoo" } });
+
+      const finnish = await landingPageMetadata(page, "fi");
+      expect(finnish.openGraph?.title).toBe("Pelikerhot Espoossa");
+      expect(finnish.twitter?.title).toBe("Pelikerhot Espoossa");
+      const english = await landingPageMetadata(page, "en");
+      expect(english.openGraph?.title).toBe("Join a gaming club in Espoo");
     });
   });
 
@@ -273,6 +427,116 @@ describe("landingPageJsonLd", () => {
     expect(plain["@type"]).toBe("WebPage");
     expect(plain).not.toHaveProperty("mainEntity");
     expect(plain).not.toHaveProperty("primaryImageOfPage");
+  });
+});
+
+describe("landingProductListsJsonLd", () => {
+  const PICKS = "99999999-9999-4999-8999-999999999999";
+  const MORE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const P1 = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c01";
+  const P2 = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c02";
+  const P3 = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c03";
+  const LISTING = [
+    browseRow(P1, {
+      product_translations: [
+        { locale: "en", name: "Roblox club", short_description: "" },
+        { locale: "fi", name: "Roblox-kerho", short_description: "" },
+      ],
+    }),
+    browseRow(P2, { name: "Minecraft camp" }),
+  ];
+  const page = (sections: LocalizedLandingPage["sections"]) => ({ sections, sectionTexts: {} });
+
+  it("lists each products section's listed picks, in the admin's order, by name and page", () => {
+    const lists = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "en",
+      page: page([
+        { id: HERO, type: "hero" },
+        { id: PICKS, type: "products", background: "default", productIds: [P2, P3, P1] },
+      ]),
+      listing: LISTING,
+    });
+    expect(lists).toEqual([
+      {
+        sectionId: PICKS,
+        list: {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Minecraft camp", url: `https://sog.test/en/shop/${P2}` },
+            { "@type": "ListItem", position: 2, name: "Roblox club", url: `https://sog.test/en/shop/${P1}` },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("names each product as its card does in the page's locale, at its canonical page", () => {
+    const [{ list }] = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "fi",
+      page: page([{ id: PICKS, type: "products", background: "default", productIds: [P1, P2] }]),
+      listing: LISTING,
+    });
+    expect(list.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Roblox-kerho", url: `https://sog.test/fi/kauppa/${P1}` },
+      // Written in English alone, so its page canonicalises to the English one.
+      { "@type": "ListItem", position: 2, name: "Minecraft camp", url: `https://sog.test/en/shop/${P2}` },
+    ]);
+  });
+
+  it("lists a drawn municipality club nowhere, since its schools page is never promoted", () => {
+    const MUNI = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c04";
+    const sections = [
+      { id: PICKS, type: "products" as const, background: "default" as const, productIds: [MUNI, P1] },
+      { id: MORE, type: "products" as const, background: "default" as const, productIds: [MUNI] },
+    ];
+    const lists = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "en",
+      page: page(sections),
+      listing: [...LISTING, browseRow(MUNI, { product_type: "municipality_club", name: "Espoo club" })],
+    });
+    expect(lists.map((entry) => entry.sectionId)).toEqual([PICKS]);
+    expect(lists[0].list.itemListElement).toEqual([
+      { "@type": "ListItem", position: 1, name: "Roblox club", url: `https://sog.test/en/shop/${P1}` },
+    ]);
+  });
+
+  it("repeats none of a product's own markup", () => {
+    const [{ list }] = landingProductListsJsonLd({
+      siteUrl: "https://sog.test",
+      locale: "en",
+      page: page([{ id: PICKS, type: "products", background: "default", productIds: [P1] }]),
+      listing: LISTING,
+    });
+    expect(Object.keys(list.itemListElement[0]).sort()).toEqual(["@type", "name", "position", "url"]);
+  });
+
+  it("lists nothing for a section with none listed, and nothing at all without the listing", () => {
+    const sections = [
+      { id: PICKS, type: "products" as const, background: "default" as const, productIds: [P3] },
+      { id: MORE, type: "products" as const, background: "default" as const, productIds: [P1] },
+    ];
+    expect(
+      landingProductListsJsonLd({ siteUrl: "", locale: "en", page: page(sections), listing: LISTING }).map(
+        (entry) => entry.sectionId,
+      ),
+    ).toEqual([MORE]);
+    expect(
+      landingProductListsJsonLd({ siteUrl: "", locale: "en", page: page(sections), listing: null }),
+    ).toEqual([]);
+  });
+
+  it("leaves the page's own node as it was", () => {
+    const withPicks = landingPageJsonLd({
+      siteUrl: "https://sog.test",
+      canonicalPath: "/en/discover/x",
+      page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }, { id: PICKS, type: "products", background: "default", productIds: [P1] }] },
+    });
+    expect(withPicks["@type"]).toBe("WebPage");
+    expect(JSON.stringify(withPicks)).not.toContain(P1);
   });
 });
 

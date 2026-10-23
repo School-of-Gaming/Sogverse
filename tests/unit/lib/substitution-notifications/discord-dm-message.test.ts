@@ -15,11 +15,14 @@ import {
   type DiscordSubOfferCopy,
 } from "@/lib/substitution-notifications/discord-dm-message";
 import type { NotificationStateKind } from "@/lib/substitution-notifications/state";
-import fi from "../../../../messages/fi.json";
+import fiDiscordSubOffer from "../../../../messages/fi/discordSubOffer.json";
+import fiGedu from "../../../../messages/fi/gedu.json";
 import {
   SNAPSHOT_IDS,
   notificationSnapshot,
 } from "../../../mocks/substitution-notifications";
+
+const fi = { discordSubOffer: fiDiscordSubOffer, gedu: fiGedu };
 
 /**
  * The substitution DMs, as the data Discord is sent: the controls following the

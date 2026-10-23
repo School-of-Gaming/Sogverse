@@ -1,0 +1,10 @@
+{
+  "firstName": "Förnamn",
+  "lastName": "Efternamn",
+  "email": "E-postadress",
+  "consent": "School of Gaming får skicka mig nyheter och erbjudanden via e-post. Jag har läst <privacy>integritetspolicyn</privacy>.",
+  "error": "Något gick fel och du prenumererar inte ännu. Försök igen om en stund.",
+  "invalid": "Kontrollera din e-postadress och försök igen.",
+  "successTitle": "Du prenumererar nu",
+  "successBody": "Tack! Vårt nyhetsbrev kommer snart till din inkorg."
+}

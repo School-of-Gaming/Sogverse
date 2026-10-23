@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getClient } from "@/lib/supabase/client";
-import { PinService } from "@/services/pin";
+import { PinService } from "@/services/pin/pin.service";
 import { PinEntry } from "./pin-entry";
 import { PinSet } from "./pin-set";
 import { PinNotice } from "./pin-notice";

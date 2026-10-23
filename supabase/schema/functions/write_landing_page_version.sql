@@ -1,8 +1,8 @@
 --
--- Name: write_landing_page_version(uuid, text, text, text, text, text, jsonb); Type: FUNCTION; Schema: public; Owner: -
+-- Name: write_landing_page_version(uuid, text, text, text, text, text, jsonb, text, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) RETURNS void
+CREATE FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) RETURNS void
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $_$
@@ -24,6 +24,10 @@ BEGIN
   END IF;
   IF char_length(btrim(COALESCE(p_summary, ''))) > 160 THEN
     RAISE EXCEPTION 'The % summary is longer than 160 characters', p_locale
+      USING ERRCODE = 'check_violation';
+  END IF;
+  IF char_length(btrim(COALESCE(p_share_title, ''))) > 70 THEN
+    RAISE EXCEPTION 'The % share title is longer than 70 characters', p_locale
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -92,34 +96,43 @@ BEGIN
   END IF;
 
   INSERT INTO public.landing_page_translations AS t
-         (page_id, locale, title, summary, slug, section_texts)
+         (page_id, locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt)
   VALUES (p_id,
           p_locale,
           btrim(p_title),
           btrim(COALESCE(p_summary, '')),
           v_slug,
-          COALESCE(p_section_texts, '{}'::jsonb))
+          COALESCE(p_section_texts, '{}'::jsonb),
+          btrim(COALESCE(p_share_title, '')),
+          p_share_image_id,
+          btrim(COALESCE(p_share_image_alt, '')))
   ON CONFLICT (page_id, locale) DO UPDATE
-     SET title         = EXCLUDED.title,
-         summary       = EXCLUDED.summary,
-         slug          = EXCLUDED.slug,
-         section_texts = EXCLUDED.section_texts;
+     SET title           = EXCLUDED.title,
+         summary         = EXCLUDED.summary,
+         slug            = EXCLUDED.slug,
+         section_texts   = EXCLUDED.section_texts,
+         share_title     = EXCLUDED.share_title,
+         share_image_id  = EXCLUDED.share_image_id,
+         share_image_alt = EXCLUDED.share_image_alt;
+  -- The page's pictures are re-derived by refresh_landing_pictures when the
+  -- share picture changed, which refuses one that is gone (23503), not a
+  -- landing picture or not wide (23514).
 END;
 $_$;
 
 
 --
--- Name: FUNCTION write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else p_default_slug (the application''s derivation from the title), else unwritten; it may differ from the page''s own live slug, which changes at the next publish. A malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. Carries no guard: not granted to any Data API role.';
+COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary or share title, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else p_default_slug (the application''s derivation from the title), else unwritten; it may differ from the page''s own live slug, which changes at the next publish. A malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. The share title, share picture and share picture alt text are written as sent, NULL as the empty string or no picture: like the words, a write carries the whole of what the version holds. A share picture that is gone raises foreign_key_violation, and one that is not a wide landing picture (landing_image) check_violation. Carries no guard: not granted to any Data API role.';
 
 
 --
--- Name: FUNCTION write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) TO service_role;
 
 

@@ -17,7 +17,8 @@ import { SeatKindBadge } from "./SeatKindBadge";
 import { CancelledAheadNotice } from "@/components/session-feed/CancelledAheadNotice";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
-import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDate, formatDateOnly, formatTime } from "@/lib/date-format";
 import { runEndedOn, runLiveness } from "@/lib/product-run";
 import type { GeduAssignmentSummary } from "@/lib/gedu-assignment-rollup";
 import { INERT_HREF } from "@/lib/constants/routes";
@@ -224,6 +225,7 @@ export function GeduAssignmentCard({
     nextSessionEnd,
     hasVoiceRoom,
     voiceHref,
+    voiceRoom,
     openHref,
     attentionCount,
     siteName,
@@ -445,6 +447,7 @@ export function GeduAssignmentCard({
               // thing lifted above the stretched link covering the card.
               <span className="relative z-10">
                 <JoinVoiceButton
+                  voiceRoom={voiceRoom}
                   voiceIsOpen={voiceIsOpen}
                   voiceHref={voiceHref}
                   opensDate={formatDate(nextSessionStart, locale, {

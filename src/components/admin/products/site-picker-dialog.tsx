@@ -18,7 +18,10 @@ import {
 } from "@/components/locations/location-browser";
 import type { LocationSummary } from "@/components/locations/location-picker-panel";
 import { LocationFormDialog } from "@/components/admin/location-form-dialog";
-import { useCreateLocation, useSitesByParent } from "@/services/locations";
+import {
+  useCreateLocation,
+  useSitesByParent,
+} from "@/services/locations/locations.queries";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { LocationType } from "@/types";
 

@@ -18,7 +18,7 @@
  * here takes the reader's locale as an argument for the same reason.
  */
 
-import { formatDateOnly } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/date-format";
 
 /** A bare `YYYY-MM-DD` read as an instant at UTC midnight. */
 export function parseCalendarDate(iso: string): Date {

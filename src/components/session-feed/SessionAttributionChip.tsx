@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { PersonChip } from "@/components/ui/person-chip";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * Who last edited a session, as a chip straddling the **bottom-right corner** of

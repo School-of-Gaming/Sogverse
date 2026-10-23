@@ -1,0 +1,234 @@
+{
+  "footer": "© {year} School of Gaming. Tous droits réservés.",
+  "roleAdmin": "Administrateur",
+  "roleParent": "Parent",
+  "roleGamer": "Joueur",
+  "roleGedu": "Gedu",
+  "passwordReset": {
+    "subject": "Réinitialisez le mot de passe de votre compte School of Gaming",
+    "heading": "Réinitialisez votre mot de passe",
+    "body": "Nous avons reçu une demande de réinitialisation du mot de passe de votre compte School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
+    "expiry": "Ce lien expirera dans 1 heure.",
+    "ignore": "Si vous n’avez pas demandé de réinitialisation de mot de passe, vous pouvez ignorer cet e-mail sans crainte. Votre mot de passe ne sera pas modifié.",
+    "button": "Réinitialiser le mot de passe"
+  },
+  "pinReset": {
+    "subject": "Réinitialisez le code PIN de votre compte parent School of Gaming",
+    "heading": "Réinitialisez votre code PIN parent",
+    "body": "Nous avons reçu une demande de réinitialisation du code PIN de votre compte parent School of Gaming. Cliquez sur le bouton ci-dessous pour choisir un nouveau code PIN à 4 chiffres.",
+    "expiry": "Ce lien expirera dans 24 heures.",
+    "ignore": "Si vous n’avez pas demandé de réinitialisation du code PIN, vous pouvez ignorer cet e-mail sans crainte. Votre code PIN ne sera pas modifié.",
+    "button": "Réinitialiser le code PIN"
+  },
+  "helpRequest": {
+    "subject": "Demande d’aide de {displayName} ({role})",
+    "heading": "Nouvelle demande d’aide",
+    "intro": "Quelqu’un a demandé de l’aide. Répondez à cet e-mail pour lui écrire — votre réponse ira à l’adresse ci-dessous.",
+    "from": "De",
+    "role": "Rôle",
+    "replyToLabel": "Répondre à",
+    "sent": "Envoyé",
+    "message": "Message",
+    "gamerNoteNoMailbox": "Message envoyé depuis un compte joueur ({firstName}), qui n’a pas d’adresse e-mail propre.",
+    "gamerNoteOwnMailbox": "Message envoyé depuis un compte joueur ({firstName}) — cette personne lit aussi sa propre boîte e-mail, {gamerEmail}."
+  },
+  "welcomeParent": {
+    "subject": "Bienvenue chez School of Gaming",
+    "heading": "Bienvenue chez School of Gaming",
+    "greeting": "Bonjour {firstName}, et bienvenue. Nous sommes ravis de vous compter parmi nous.",
+    "platform": "Sogverse est la plateforme de School of Gaming : c’est là que vous gérez les clubs, stages et événements de votre famille.",
+    "verifyBody": "Confirmer votre adresse e-mail nous permet de vous joindre au sujet des clubs de votre famille. Vous pouvez le faire maintenant, ou plus tard depuis vos {settingsLink}.",
+    "settingsLinkLabel": "réglages",
+    "verifyButton": "Confirmer votre adresse e-mail",
+    "shopButton": "Parcourir la boutique",
+    "dashboardButton": "Aller à Mon SOG"
+  },
+  "welcomeGedu": {
+    "subject": "Bienvenue chez School of Gaming – votre compte Gedu",
+    "heading": "Bienvenue chez School of Gaming",
+    "greeting": "Bonjour {firstName}, et merci de votre inscription en tant que Gedu.",
+    "certification": "Un administrateur va examiner votre compte et le certifier. Vous pouvez commencer à découvrir Mon SOG en attendant, mais certaines parties restent verrouillées jusqu’à la certification de votre compte.",
+    "verifyBody": "Confirmer votre adresse e-mail nous permet de vous joindre au sujet de vos groupes et de vos sessions. Vous pouvez le faire maintenant, ou plus tard depuis vos {settingsLink}.",
+    "settingsLinkLabel": "réglages",
+    "verifyButton": "Confirmer votre adresse e-mail",
+    "dashboardButton": "Aller à Mon SOG"
+  },
+  "productConfirmation": {
+    "subject": {
+      "consumer_club": "L’inscription de {participantName} à {productName} est confirmée",
+      "municipality_club": "L’inscription de {participantName} à {productName} est confirmée",
+      "camp": "L’inscription de {participantName} à {productName} est confirmée",
+      "event": "La participation de {participantName} à {productName} est confirmée"
+    },
+    "heading": "C’est parti !",
+    "subheading": {
+      "consumer_club": "L’inscription de {participantName} à {productName} est confirmée.",
+      "municipality_club": "L’inscription de {participantName} à {productName} est confirmée.",
+      "camp": "L’inscription de {participantName} à {productName} est confirmée.",
+      "event": "L’inscription de {participantName} à {productName} est confirmée."
+    },
+    "self": {
+      "subject": {
+        "consumer_club": "Votre inscription à {productName} est confirmée",
+        "municipality_club": "Votre inscription à {productName} est confirmée",
+        "camp": "Votre inscription à {productName} est confirmée",
+        "event": "Votre participation à {productName} est confirmée"
+      },
+      "subheading": {
+        "consumer_club": "Votre inscription à {productName} est confirmée.",
+        "municipality_club": "Votre inscription à {productName} est confirmée.",
+        "camp": "Votre inscription à {productName} est confirmée.",
+        "event": "Votre inscription à {productName} est confirmée."
+      },
+      "waitlist": {
+        "subheading": "Vous êtes sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+        "next2": {
+          "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
+          "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
+          "camp": "Vous conservez votre place dans la file pendant toute la durée du stage.",
+          "event": "Vous conservez votre place dans la file jusqu’à l’événement."
+        }
+      }
+    },
+    "priceLabel": "Prix",
+    "price": {
+      "subscription": "{amount} / mois",
+      "upfront": "{amount} (paiement unique)",
+      "free": "Gratuit",
+      "external": "Pris en charge par votre commune"
+    },
+    "nextTitle": "La suite",
+    "next": {
+      "sessions": "Vous trouverez les sessions de {participantName} dans Mon SOG.",
+      "sessionsSelf": "Vous trouverez vos sessions dans Mon SOG.",
+      "sessionsOnline": "{participantName} rejoint les sessions en ligne dans Mon SOG. Le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
+      "sessionsOnlineSelf": "Vous rejoignez les sessions en ligne dans Mon SOG. Le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
+      "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
+      "upfront": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
+      "firstCharge": "Rien n’a été débité aujourd’hui. Votre premier paiement aura lieu le {date}.",
+      "firstSession": "La première session de {participantName} aura lieu le {date} à {time}.",
+      "firstSessionSelf": "Votre première session aura lieu le {date} à {time}.",
+      "eventDate": "L’événement aura lieu le {date} à {time}.",
+      "guarantee": "Si le club ne convient pas à {participantName}, écrivez-nous dans les 30 jours suivant sa première session et nous vous rembourserons tout ce que vous avez versé pour ce club.",
+      "guaranteeSelf": "Si le club ne vous convient pas, écrivez-nous dans les 30 jours suivant votre première session et nous vous rembourserons tout ce que vous avez versé pour ce club."
+    },
+    "waitlist": {
+      "subject": "{participantName} est sur la liste d’attente pour {productName}",
+      "subjectSelf": "Vous êtes sur la liste d’attente pour {productName}",
+      "heading": "Vous êtes sur la liste d’attente",
+      "subheading": "{participantName} est sur la liste d’attente pour {productName}. Nous vous préviendrons dès qu’une place se libère.",
+      "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
+      "next2": {
+        "consumer_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+        "municipality_club": "{participantName} conserve sa place dans la file pendant toute la période.",
+        "camp": "{participantName} conserve sa place dans la file pendant toute la durée du stage.",
+        "event": "{participantName} conserve sa place dans la file jusqu’à l’événement."
+      },
+      "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
+    },
+    "gamer": {
+      "greeting": "Bonjour {participantName} !"
+    },
+    "invite": {
+      "summary": "{productName} – {participantName}",
+      "locationOnline": "En ligne – Mon SOG",
+      "locationInPerson": "{site}, {address}",
+      "whereOnline": "Les sessions ont lieu en ligne dans Mon SOG, et le salon vocal ouvre {minutes} minutes avant le début de chaque session.",
+      "whereInPerson": "Les sessions ont lieu à {site}.",
+      "whereAddress": "Adresse : {address}",
+      "link": "Tout sur cette inscription se trouve dans Mon SOG : {url}",
+      "questions": "Une question ? Écrivez à {supportEmail}."
+    },
+    "dashboardButton": "Aller à Mon SOG",
+    "closing": "Des questions ? Répondez simplement à cet e-mail ou écrivez à {supportEmail}.",
+    "overview": {
+      "schedule": "Planning",
+      "where": "Où",
+      "format": "Format",
+      "online": "En ligne",
+      "tbd": "À confirmer",
+      "ageRange": "Tranche d’âge",
+      "audience": "Public",
+      "language": "Langue",
+      "ages": "{min}–{max} ans",
+      "audienceParents": "Pour les parents",
+      "audienceFamilies": "Pour les familles",
+      "audienceFamiliesWithAges": "Pour les familles, {min}–{max} ans",
+      "holidayBreaks": "Vacances",
+      "holidayBreak": "{name}, {range}"
+    }
+  },
+  "verifyEmail": {
+    "subject": "Confirmez votre adresse e-mail",
+    "heading": "Confirmez votre adresse e-mail",
+    "body": "Bonjour {firstName}, vous avez demandé à confirmer l’adresse e-mail de votre compte School of Gaming. Utilisez le bouton ci-dessous.",
+    "button": "Confirmer votre adresse e-mail",
+    "ignore": "Si vous n’êtes pas à l’origine de cette demande, vous pouvez ignorer cet e-mail. Rien ne changera."
+  },
+  "gamerWelcome": {
+    "subject": "Ton compte School of Gaming est prêt",
+    "heading": "Ton compte est prêt",
+    "body": "Bonjour {gamerName}, ton parent a créé un compte School of Gaming pour toi. Pour te connecter, il te faut un mot de passe — appuie d’abord sur le bouton pour confirmer que c’est bien ton adresse e-mail, puis tu pourras en choisir un.",
+    "button": "C’est bien mon adresse",
+    "ignore": "Si tu n’attendais pas cet e-mail, tu peux l’ignorer. Rien ne changera."
+  },
+  "sessionReport": {
+    "subject": "Compte rendu de la session – {productName}, {sessionDate}",
+    "title": "Compte rendu de la session",
+    "intro": "Bonjour ! Voici le compte rendu de {geduName} sur la session de {gamerName} dans {productName}.",
+    "gamerIntro": "Bonjour {gamerName} ! Voici le compte rendu de {geduName} sur ta session dans {productName}.",
+    "groupLabel": "Groupe",
+    "dateLabel": "Date",
+    "timeLabel": "Heure",
+    "photosHeading": "Photos de la session",
+    "productButton": "Ouvrir dans Mon SOG",
+    "closing": "Ce compte rendu, les précédents et les prochaines sessions se trouvent sur la page de {productName} dans Mon SOG.",
+    "staffCopyLabel": "Copie pour les Gedus et les admins",
+    "staffCopyBody": "Ceci est une copie du compte rendu envoyé aux familles du groupe. Vous la recevez en tant qu’expéditeur ou en tant qu’administrateur, et non en tant que parent.",
+    "staffCopyPrivacy": "Chaque famille a reçu son propre e-mail, adressé à elle seule. Les adresses des Gedus et des admins qui figurent dans les champs À et Cc de cette copie n’apparaissent que sur cette copie : aucun parent ne les voit, et aucune famille n’en voit une autre."
+  },
+  "seatOffer": {
+    "heading": "Une place s’est libérée",
+    "question": "La voulez-vous toujours ? Dites-le-nous dans un sens comme dans l’autre — un non aide tout autant, car il nous permet de proposer la place à la famille suivante sans attendre.",
+    "deadlineLabel": "Merci de répondre avant le",
+    "deadlineBody": "{deadline}. Sans réponse de votre part d’ici là, la place ira à la famille suivante sur la liste.",
+    "accept": "Accepter la place",
+    "decline": "Non, merci",
+    "alsoInMySog": "La même question vous attend dans Mon SOG, si vous préférez répondre là-bas.",
+    "dashboardButton": "Répondre dans Mon SOG",
+    "child": {
+      "subject": "{participantName} : une place s’est libérée pour {productName}",
+      "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : {participantName} peut nous rejoindre — {productName}."
+    },
+    "self": {
+      "subject": "Une place s’est libérée pour {productName}",
+      "opening": "Nous avions promis de vous écrire dès qu’une place se libérerait. C’est le cas : vous pouvez nous rejoindre — {productName}."
+    },
+    "gamer": {
+      "subject": "Une place s’est libérée pour toi dans {productName}",
+      "opening": "Bonjour {gamerName}, une place s’est libérée pour toi dans {productName}. Bonne nouvelle !",
+      "parentDecides": "Ton parent a reçu un e-mail qui lui demande de dire oui ou non, et la réponse est attendue avant le {deadline}. Dès qu’elle arrive, tu la verras dans Mon SOG.",
+      "dashboardButton": "Ouvrir Mon SOG"
+    }
+  },
+  "seatOfferStaff": {
+    "participant": "Place pour",
+    "contact": "Contact",
+    "contactEmail": "E-mail",
+    "product": "Produit",
+    "schedule": "Horaires",
+    "offeredAt": "Proposée le",
+    "nextStep": "La proposition est terminée et la place est de nouveau libre. Ouvrez le produit pour voir la file d’attente et envoyer la prochaine invitation.",
+    "button": "Ouvrir le produit",
+    "declined": {
+      "subject": "{participantName} a refusé une place pour {productName}",
+      "heading": "Une proposition de place a été refusée",
+      "body": "La famille ne peut pas prendre la place et nous l’a dit plutôt que de la laisser en suspens. Elle a été retirée de la liste d’attente."
+    },
+    "no_response": {
+      "subject": "Aucune réponse à une proposition de place pour {participantName} — {productName}",
+      "heading": "Une proposition de place a expiré",
+      "body": "Le délai de réponse s’est écoulé sans réponse. La famille reste sur la liste d’attente et peut recevoir une nouvelle proposition, mais la place elle-même est libre dès maintenant."
+    }
+  }
+}

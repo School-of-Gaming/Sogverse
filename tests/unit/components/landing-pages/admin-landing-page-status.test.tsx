@@ -10,7 +10,9 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
  * and its address, with a warning exactly where the publish forecast moves a
  * live address; Publish is held back with a reason when nothing is complete or nothing
  * has changed, and shows the forecast — live, left out, taken down, live
- * addresses changing — before it calls the write; Unpublish confirms first.
+ * addresses changing — before it calls the write; Unpublish confirms first;
+ * and each products section says which of its picks readers are not shown,
+ * by name in the admin's language, and why.
  *
  * Translations echo their key plus the values they were handed; a language is
  * named by its English label.
@@ -29,6 +31,8 @@ vi.mock("@/providers", () => ({
   useTimezone: () => "Europe/Helsinki",
 }));
 
+vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
+
 vi.mock("@/hooks/use-language-names", () => ({
   useLanguageNames: () => (code: string, fallback?: string) => fallback ?? code,
 }));
@@ -41,7 +45,7 @@ import type {
   AdminLandingPage,
   LandingPageDraftVersion,
   PublishedLandingPage,
-} from "@/services/landing-pages";
+} from "@/services/landing-pages/landing-pages.contracts";
 
 const PAGE_ID = "746388a7-2edd-456b-b7d1-4e9828f85af9";
 const HERO_ID = "9d1f06bf-9895-4f04-9ec5-3d86382afb8e";
@@ -56,6 +60,9 @@ const EN: LandingPageDraftVersion = {
   summary: "Clubs in Minecraft, Roblox and more, after school in Espoo.",
   slug: "espoo-clubs",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageId: null,
+  shareImageAlt: "",
   missing: [],
 };
 
@@ -66,6 +73,9 @@ const SV: LandingPageDraftVersion = {
   summary: "",
   slug: "spelklubbar-i-esbo",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageId: null,
+  shareImageAlt: "",
   missing: [
     "summary",
     `sections.${TEXT_ID}.heading`,
@@ -80,13 +90,16 @@ const FI: LandingPageDraftVersion = {
   summary: "Kerhoja koulun jälkeen.",
   slug: "pelikerhot-espoossa",
   sectionTexts: {},
+  shareTitle: "",
+  shareImageId: null,
+  shareImageAlt: "",
   missing: [],
 };
 
 const SECTIONS: AdminLandingPage["draft"]["sections"] = [
   { id: HERO_ID, type: "hero" },
-  { id: TEXT_ID, type: "text", imageSide: "end" },
-  { id: FAQ_ID, type: "faq", items: [{ id: QUESTION_ID }] },
+  { id: TEXT_ID, type: "text", background: "default", imageSide: "end" },
+  { id: FAQ_ID, type: "faq", background: "default", items: [{ id: QUESTION_ID }] },
 ];
 
 function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
@@ -94,7 +107,7 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
     draft: {
       id: PAGE_ID,
       sections: SECTIONS,
-      imagePaths: {},
+      pictures: {},
       versions,
       createdAt: "2026-10-01T08:00:00Z",
       updatedAt: "2026-10-02T08:00:00Z",
@@ -103,6 +116,8 @@ function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
     },
     publication: null,
     hasUnpublishedChanges: false,
+    testimonials: {},
+    productPicks: [],
   };
 }
 
@@ -112,7 +127,7 @@ function publication(locales: readonly string[]): PublishedLandingPage {
     firstPublishedAt: "2026-10-03T08:00:00Z",
     publishedAt: "2026-10-03T08:00:00Z",
     sections: SECTIONS,
-    imagePaths: {},
+    pictures: {},
     versions: [EN, SV]
       .filter((v) => locales.includes(v.locale))
       .map((v) => ({
@@ -121,6 +136,9 @@ function publication(locales: readonly string[]): PublishedLandingPage {
         summary: v.summary,
         slug: v.slug,
         sectionTexts: {},
+        shareTitle: v.shareTitle,
+        shareImageId: v.shareImageId,
+        shareImageAlt: v.shareImageAlt,
       })),
   };
 }
@@ -287,5 +305,224 @@ describe("the landing page status page", () => {
   it("offers no Unpublish while the page is not live", () => {
     renderStatus(draftPage([EN]));
     expect(screen.queryByRole("button", { name: "unpublish" })).toBeNull();
+  });
+
+  describe("picked products", () => {
+    const SHOWN = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a01";
+    const ENDED = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a02";
+    const MUNI = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a03";
+    const GONE = "6a3f8a54-0c43-4c55-9b59-3f6f6a0b7a04";
+
+    function withPicks(productPicks: AdminLandingPage["productPicks"]): AdminLandingPage {
+      return { ...draftPage([EN]), productPicks };
+    }
+
+    it("says nothing about products on a page without a products section", () => {
+      renderStatus(draftPage([EN]));
+      expect(screen.queryByRole("heading", { name: "statusPage.products.heading" })).toBeNull();
+    });
+
+    it("names each pick readers are not shown, with every reason", () => {
+      renderStatus(
+        withPicks([
+          {
+            sectionId: "s1",
+            sectionNumber: 3,
+            shownCount: 1,
+            picks: [
+              { productId: SHOWN, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+              {
+                productId: ENDED,
+                names: [
+                  { locale: "en", name: "Summer camp" },
+                  { locale: "fi", name: "Kesäleiri" },
+                ],
+                shown: false,
+                reasons: ["notListed", "ended"],
+              },
+              { productId: GONE, names: [], shown: false, reasons: ["gone"] },
+            ],
+          },
+        ]),
+      );
+      const section = screen.getByRole("region", { name: "statusPage.products.heading" });
+      expect(
+        within(section).getByText("statusPage.products.section number=3 type=sectionTypes.products"),
+      ).toBeTruthy();
+      expect(within(section).getByText("statusPage.products.someHidden shown=1 total=3")).toBeTruthy();
+      const items = within(section).getAllByRole("listitem").map((item) => item.textContent);
+      expect(items).toEqual([
+        "hiddenItem name=Summer camp reasons=reasons.notListed and reasons.ended",
+        "hiddenItem name=unnamed reasons=reasons.gone",
+      ]);
+      expect(within(section).queryByText(/Autumn club/)).toBeNull();
+    });
+
+    it("warns when a section shows none of its picks, and says so when it shows them all", () => {
+      renderStatus(
+        withPicks([
+          {
+            sectionId: "s1",
+            sectionNumber: 2,
+            shownCount: 0,
+            picks: [
+              { productId: ENDED, names: [{ locale: "en", name: "Summer camp" }], shown: false, reasons: ["ended"] },
+            ],
+          },
+          {
+            sectionId: "s2",
+            sectionNumber: 4,
+            shownCount: 2,
+            picks: [
+              { productId: SHOWN, names: [{ locale: "en", name: "Autumn club" }], shown: true, reasons: [] },
+              // A listed municipality club is shown like any other pick.
+              { productId: MUNI, names: [{ locale: "en", name: "Espoo club" }], shown: true, reasons: [] },
+            ],
+          },
+        ]),
+      );
+      const section = screen.getByRole("region", { name: "statusPage.products.heading" });
+      expect(within(section).getByText("statusPage.products.noneShown")).toBeTruthy();
+      expect(within(section).getByText("hiddenItem name=Summer camp reasons=reasons.ended")).toBeTruthy();
+      expect(within(section).getByText("statusPage.products.allShown count=2")).toBeTruthy();
+      expect(within(section).queryByText(/Espoo club/)).toBeNull();
+    });
+  });
+});
+
+describe("the landing page status page's testimonials", () => {
+  const QUOTES_ID = "c4a7e2f1-5b3d-4e8a-9c6f-2d1b0a9e8f7c";
+  const ONE = "0e6b9a52-31d4-4c7e-8f20-6a5d4c3b2a19";
+  const TWO = "7c2d1e0f-9a8b-4c6d-8e5f-4a3b2c1d0e9f";
+
+  it("shows each testimonials section's arrangement and its quotes, each opening its editor", () => {
+    const page = draftPage([EN]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [
+          ...SECTIONS,
+          { id: QUOTES_ID, type: "testimonials", background: "default", arrangement: "pair", testimonialIds: [ONE, TWO] },
+        ],
+      },
+      testimonials: {
+        [ONE]: { id: ONE, versions: [{ locale: "en", from: "Mum, Finland", quote: "Gaming is fun." }] },
+        [TWO]: { id: TWO, versions: [{ locale: "fi", from: "Äiti", quote: "Hauskaa." }] },
+      },
+    });
+
+    const block = screen.getByRole("region", { name: "statusPage.testimonials.heading" });
+    expect(
+      within(block).getByText(
+        "statusPage.testimonials.section number=4 type=sectionTypes.testimonials arrangement=statusPage.testimonials.arrangements.pair",
+      ),
+    ).toBeTruthy();
+    const links = within(block).getAllByRole("link");
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Gaming is fun.Mum, Finland",
+      // No English version: the admin reads the first one written.
+      "Hauskaa.Äiti",
+    ]);
+    expect(links[0].getAttribute("href")).toContain(`/admin/testimonials/${ONE}`);
+  });
+
+  it("is not shown for a page with no testimonials section", () => {
+    renderStatus(draftPage([EN]));
+    expect(screen.queryByRole("region", { name: "statusPage.testimonials.heading" })).toBeNull();
+  });
+});
+
+describe("the link preview it states", () => {
+  const SHARE_PICTURE = "5c3b7a52-0d9e-4f0b-a6d2-8e1f4c7b9a30";
+  const HERO_PICTURE = "e2a4c6d8-1b3f-4a5c-8e7d-9f0a1b2c3d4e";
+
+  /** The link preview's section, named by its heading. */
+  const preview = () => screen.getByRole("region", { name: "heading" });
+  /** One language's row of it: its lines of text, and its picture's source. */
+  const row = (language: string) => {
+    const item = within(preview()).getByRole("listitem", { name: language });
+    return {
+      lines: Array.from(item.querySelectorAll("p")).map((line) => line.textContent),
+      picture: item.querySelector("img")?.getAttribute("src") ?? null,
+    };
+  };
+
+  it("shows each language's derived card, with no warning, while nothing is overridden", () => {
+    renderStatus(draftPage([EN, FI]));
+
+    // The fixture's hero has no picture, so the site-wide card stands in.
+    expect(row("English")).toEqual({
+      lines: ["English", "Gaming clubs in Espoo", "picture.site", "title.page"],
+      picture: null,
+    });
+    expect(row("Finnish").lines).toEqual([
+      "Finnish",
+      "Pelikerhot Espoossa",
+      "picture.site",
+      "title.page",
+    ]);
+    expect(within(preview()).getByText("description")).toBeTruthy();
+    expect(within(preview()).queryByText("stale")).toBeNull();
+  });
+
+  it("shows the hero's picture when the hero has one", () => {
+    const page = draftPage([EN]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
+        pictures: { [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" } },
+      },
+    });
+
+    expect(row("English").lines[2]).toBe("picture.hero");
+    expect(row("English").picture).toContain("hero.jpg");
+  });
+
+  it("shows each language's own overrides, the others derived, and warns they do not follow the page", () => {
+    const page = draftPage([
+      { ...EN, shareTitle: "Join a club in Espoo", shareImageId: SHARE_PICTURE },
+      FI,
+    ]);
+    renderStatus({
+      ...page,
+      draft: {
+        ...page.draft,
+        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
+        pictures: {
+          [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" },
+          [SHARE_PICTURE]: { path: "share.jpg", purpose: "landing_image" },
+        },
+      },
+    });
+
+    expect(row("English").lines).toEqual([
+      "English",
+      "Join a club in Espoo",
+      "picture.custom",
+      "title.custom",
+    ]);
+    expect(row("English").picture).toContain("share.jpg");
+    expect(row("Finnish").lines).toEqual([
+      "Finnish",
+      "Pelikerhot Espoossa",
+      "picture.hero",
+      "title.page",
+    ]);
+    expect(row("Finnish").picture).toContain("hero.jpg");
+    expect(within(preview()).getByText("stale")).toBeTruthy();
+  });
+
+  it("warns for a custom title alone", () => {
+    renderStatus(draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }]));
+
+    expect(row("English").lines.slice(1)).toEqual([
+      "Join a club in Espoo",
+      "picture.site",
+      "title.custom",
+    ]);
+    expect(within(preview()).getByText("stale")).toBeTruthy();
   });
 });

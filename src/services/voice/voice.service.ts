@@ -1,5 +1,5 @@
 import type { AppSupabaseClient } from "@/types";
-import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
+import { parseJsonResponse, readApiError } from "@/lib/api/json-response";
 import { voiceTokenResponse, type VoiceRoomStanding } from "./voice.contracts";
 
 /**
@@ -34,8 +34,10 @@ export class VoiceService {
       body: JSON.stringify({ groupId }),
     });
 
+    // An `ApiError`, so a refusal's code (`NOT_A_SOGVERSE_ROOM`) reaches the
+    // page; its message is still the route's, as before.
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, "Failed to get token"));
+      throw await readApiError(response, "Failed to get token");
     }
 
     return parseJsonResponse(response, voiceTokenResponse);

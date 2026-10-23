@@ -220,9 +220,9 @@ fifth family cannot be loaded and a face of the consumer's own cannot be declare
 two decisions: the **level** is the outline a screen reader and a search engine walk, and
 the **step** is how much attention the page gives it. Which steps a level may take is a
 table the types enforce — `h1`: hero, page-title, section, card-title, label; `h2`:
-display, section, card-title, label; `h3`: section, card-title, label; `h4`: card-title,
-label. **Each level has a ceiling** — a heading never takes a step louder than its place in
-the outline allows — **and the steps named for what they title belong to one level**:
+display, section, card-title, item-title, label; `h3`: section, card-title, item-title,
+label; `h4`: card-title, item-title, label. **Each level has a ceiling** — a heading
+never takes a step louder than its place in the outline allows — **and the steps named for what they title belong to one level**:
 `hero` and `page-title` title a page, so they are `h1`'s alone; `display` titles a story
 section, so it is `h2`'s alone. So the same card is an `h2` on one page and an `h3` on
 another without changing size. **Below that, which step a heading takes is the page's
@@ -234,8 +234,9 @@ page a heading is always smaller than the heading it sits under**, and siblings 
 a step; the types see one heading at a time, so this one is held in review. **A title is
 never smaller than the text it titles**: `label` is for a heading over a compact region —
 a list, a row of chips, a set of controls or fields, metadata — and a heading over prose
-takes `card-title`. Size is the only thing that shows rank: one heading weight, no
-tracking, the step's own leading, and **ink** — a heading has no colour, and the public
+takes `card-title`, or `item-title` when it titles one of a run of like items under the
+region's own heading, such as an FAQ's questions. Size is the only thing that shows
+rank: one heading weight, no tracking, the step's own leading, and **ink** — a heading has no colour, and the public
 hero's act phrase is the one declared departure. **A heading titles a region** — a page, a
 section, a card, a dialog, a compact group — and text that titles nothing is not a heading
 however it is meant to look: an eyebrow, a field label or a lead sentence is text.

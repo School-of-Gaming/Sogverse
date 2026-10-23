@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasGoogleVerifiedAddress } from "@/services/users/registration-completion.server";
 import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { isSupportedLocale } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
 import { NO_UTM_ATTRIBUTION } from "@/lib/utm";

@@ -7,7 +7,15 @@ import {
   within,
 } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
+import enProductType from "@/../messages/en/productType.json";
+import enGroups from "@/../messages/en/groups.json";
+import enCommon from "@/../messages/en/common.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
+import enMemberFlair from "@/../messages/en/memberFlair.json";
+import enGameAccount from "@/../messages/en/gameAccount.json";
+import enSessionFeed from "@/../messages/en/sessionFeed.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { TraineeWorkspace } from "@/components/gedu/session-details/TraineeProductPage";
@@ -23,7 +31,19 @@ import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import { isWithheld, WITHHELD } from "@/lib/withheld";
 import { installFakeIntersectionObserver } from "../../mocks/intersection-observer";
 
-vi.mock("@/services/roblox", () => ({
+const messages = {
+  gedu: enGedu,
+  productType: enProductType,
+  groups: enGroups,
+  common: enCommon,
+  voiceButton: enVoiceButton,
+  memberFlair: enMemberFlair,
+  gameAccount: enGameAccount,
+  sessionFeed: enSessionFeed,
+  sessionBadge: enSessionBadge,
+};
+
+vi.mock("@/services/roblox/roblox.queries", () => ({
   useRobloxRenders: () => ({ data: undefined }),
 }));
 

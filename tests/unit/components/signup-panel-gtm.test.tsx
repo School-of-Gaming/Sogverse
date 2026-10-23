@@ -92,18 +92,18 @@ const createMutate =
 const waitlistMutate =
   vi.fn<(input: unknown, handlers: Handlers<JoinWaitlistResponse>) => void>();
 
-vi.mock("@/services/participations", () => ({
+vi.mock("@/services/participations/participations.queries", () => ({
   useCreateParticipation: () => ({ mutate: createMutate }),
   useJoinWaitlist: () => ({ mutate: waitlistMutate }),
 }));
 
-vi.mock("@/services/users", () => ({
+vi.mock("@/services/users/users.queries", () => ({
   useUpdateProfile: () => ({ mutateAsync: vi.fn() }),
 }));
-vi.mock("@/services/marketing-consents", () => ({
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () => ({
   useSetMarketingConsent: () => ({ mutate: vi.fn() }),
 }));
-vi.mock("@/services/gamer-photo-consents", () => ({
+vi.mock("@/services/gamer-photo-consents/gamer-photo-consents.queries", () => ({
   useSetGamerPhotoConsent: () => ({ mutate: vi.fn() }),
 }));
 

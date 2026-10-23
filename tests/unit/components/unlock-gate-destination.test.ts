@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { resolveUnlockDestination } from "@/components/pin/unlock-gate";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * Where entering the parent PIN sends the reader.

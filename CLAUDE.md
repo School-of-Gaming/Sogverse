@@ -9,11 +9,12 @@ npm run dev              # Start dev server
 npm run dev:stripe       # Start dev server + Stripe webhook listener
 npm run build            # Production build
 npm run lint             # ESLint
+npm run lint:file -- <f> # ESLint on just these files, keeping the cache — a bare `npx eslint` deletes .eslintcache
 npm run type-check       # TypeScript check (tsc --noEmit)
-npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + tests (runs all, reports every failure)
+npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + the tests the change can affect vs origin/dev (runs all, reports every failure; -- --all for every test, -- --list to see the selection)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
-npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run test:smoke       # Smoke check of this checkout's existing production build (headers/CSP) — CI runs it on every push; tests/CLAUDE.md
 npm run load             # CPU use and the test runs in progress, by checkout — read before blaming a timeout on the test
 npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
 npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
@@ -130,6 +131,9 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Library — articles, their working and published copies | `src/services/library/` |
 | Landing pages — their sections, copies, slugs and pictures | `src/services/landing-pages/` |
 | Spotlights — the admin notes appended to every parent's session report email | `src/services/spotlights/` |
+| Testimonials — the store of real words from parents, gamers and gedus, the landing pages that quote them, and the arrangements every page lays them out in | `src/services/testimonials/` |
+| Guides — the PDFs landing pages hand out to signed-in readers, their private bucket and who may download | `src/services/guides/` |
+| Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
@@ -163,8 +167,6 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 ## Environment Variables
 
 All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF`, which the Supabase CLI commands in `supabase/CLAUDE.md` read from there.
-
-**Rule: a change that introduces an env var writes its line into both `.env.local` and `.env.local.example` itself, rather than asking the owner to.** The example gets a placeholder value and a comment saying what the var is; `.env.local` gets the line with an empty value, which the owner fills in by hand — a secret is never written there by a session. From a worktree, the line goes into the main checkout's `.env.local` first and is then copied into the worktree's, since the worktree's copy dies at teardown. An agent launched inside the worktree cannot write the main checkout, so it hands the line to the session that launched it.
 
 ## Database
 
@@ -212,7 +214,7 @@ work under `tests/`). Two things worth knowing from anywhere:
   database it builds and removes itself (`tests/CLAUDE.md` has the details).
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
-- **`smoke/` is the only CI job that builds the app**, and it asserts security headers
+- **Build & Smoke is the only CI job that builds the app**, and `smoke/` asserts security headers
   and the per-request CSP against a served production build over plain HTTP, and that the
   build has dropped the dev-only code it must not contain. No browser
   is launched there; a test that needs one does not belong in that directory.

@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { useTimezone } from "@/providers";
 import { formattingLocale } from "@/lib/constants/locales";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date-format";
 
 /**
  * How many dates the notice lists by name before it counts the rest. Three

@@ -11,15 +11,17 @@ import { Input } from "@/components/ui/input";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { SitePickerDialog } from "@/components/admin/products/site-picker-dialog";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   LOCATION_SEARCH_MAX_QUERY,
   LOCATION_SEARCH_MIN_QUERY,
+} from "@/services/locations/locations.contracts";
+import {
   useAllSites,
   useLocationSearch,
-} from "@/services/locations";
-import { useSiteProductCounts } from "@/services/sites";
+} from "@/services/locations/locations.queries";
+import { useSiteProductCounts } from "@/services/sites/sites.queries";
 import type { Json, LocationType } from "@/types";
 import { sitePlacePath, type PlacePathNode } from "./site-place-path";
 

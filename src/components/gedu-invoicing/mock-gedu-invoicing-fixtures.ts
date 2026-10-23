@@ -3,7 +3,7 @@ import type {
   GeduInvoicingGroup,
   GeduInvoicingProduct,
   GeduInvoicingSnapshot,
-} from "@/services/gedu-invoicing";
+} from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 
 /**
  * Fixtures for the gedu invoicing preview scenes: one month as the RPC would

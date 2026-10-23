@@ -1,12 +1,22 @@
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
-import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
+import { BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants/brand";
 import { RADIUS } from "@/lib/constants/radius";
 import {
   MAIL_FONT_STACK,
   MAIL_WORD_ENGINE_FONT_STACK,
 } from "@/lib/constants/typography";
 import { MAIL_SPACE, MAIL_TYPE, mailText } from "./type-scale";
-import { BODY_TEXT_STYLE, GROUND_TONES, pinnedFill } from "./utils";
+import {
+  BODY_TEXT_STYLE,
+  escapeHtml,
+  GROUND_TONES,
+  HOLD_CLASS,
+  HOLD_GROUND,
+  TEXT_PINS,
+  holdBlock,
+  holdInline,
+  pinnedFill,
+} from "./utils";
 import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
@@ -14,6 +24,11 @@ interface LayoutOptions {
   content: string;
   locale?: string;
   t?: EmailTranslator;
+  /**
+   * The inbox preview: plain text, escaped here. Omitted, a client previews the
+   * first words it finds, which in every mail is the header lockup.
+   */
+  preheader?: string;
 }
 
 /**
@@ -128,6 +143,22 @@ function pinnedFillRule(color: string): string {
  */
 const groundToneRules = Object.values(GROUND_TONES)
   .map((tone) => `      .${tone.className} {\n        ${pinnedFillRule(tone.wide)}\n      }`)
+  .join("\n");
+
+/**
+ * Every pinned text colour, as a Gmail-only rule. Built here for the same
+ * reason as the ground tones above: one table names each class and its
+ * colour, and the markup takes its classes from the same table.
+ */
+const textPinRules = Object.values(TEXT_PINS)
+  .map(
+    ({ className, color }) => `    u + .body .${className} {
+      background-image: linear-gradient(${color}, ${color}) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      color: transparent !important;
+    }`,
+  )
   .join("\n");
 
 /**
@@ -246,18 +277,48 @@ function brandMarkRow(): string {
  * Wraps email content in a branded dark-theme layout.
  * Table-based with all inline CSS for email client compatibility.
  *
- * Gmail Android quirks addressed in the <style> block:
- * - Brand text colors use background-clip:text (via "u + .body" Gmail-only selector)
- *   because Gmail Android dark mode shifts the "color" property but preserves gradients.
- *   That flat act-to-act gradient is a delivery mechanism for a text colour, not a
- *   blend, which is why it survives a sweep that removed every real gradient here.
+ * Gmail's colour rewriting, addressed in the <style> block behind the
+ * Gmail-only "u + .body" selector:
+ * - Brand and status text colours, and the dark label on a light fill, are
+ *   pinned through background-clip:text, because every Gmail rewrites a plain
+ *   "color" and leaves a gradient alone.
+ * - Plain neutrals — the ink and the border grey — are held (`HOLD_CLASS`),
+ *   because Gmail iOS inverts them and the hold inverts them back.
  *
- * The shell used to carry a class-based hero gradient, on the body and on the
- * outer table, because Gmail Android rewrites an inline linear-gradient() into
- * url(linear-gradient(...)) and breaks it. There is no gradient left to place,
- * so both elements simply carry the ground, pinned like every other background.
+ * Every background is a flat gradient as well as a colour (`pinnedFill`), so
+ * the ground stays dark on Gmail iOS; the holds depend on that.
  */
-export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions): string {
+/**
+ * How many padding units follow the preheader. A client fills its preview line
+ * with as much text as fits, so a short preheader is followed by the next words
+ * in the document — the lockup — unless something invisible fills the line
+ * first. Each unit is a combining grapheme joiner, a zero-width non-joiner and
+ * a non-breaking space: characters a client counts towards its preview and
+ * draws as nothing.
+ */
+const PREHEADER_PADDING_UNITS = 90;
+
+/**
+ * The hidden block a client reads its inbox preview from, as the first thing
+ * in the body, or nothing at all.
+ *
+ * Hidden every way a client might honour: `display:none` for the ones that
+ * respect it, and a zero size, zero opacity and Outlook's own `mso-hide` for
+ * the ones that draw it anyway. Its text is transparent rather than in an ink,
+ * so there is no plain neutral in it for the holds to account for.
+ */
+function preheaderBlock(preheader: string | undefined): string {
+  if (preheader === undefined) return "";
+  return `<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;font-size:0;line-height:0;color:transparent;">${escapeHtml(preheader)}${"&#847;&zwnj;&nbsp;".repeat(PREHEADER_PADDING_UNITS)}</div>`;
+}
+
+export function wrapInLayout({
+  title,
+  content,
+  locale = "en",
+  t,
+  preheader,
+}: LayoutOptions): string {
   // The copyright line names the company that holds the copyright, so it is the
   // brand alone \u2014 same string the site footer renders, and `SENDER_NAME` rather
   // than a typed literal, because no name in this directory's markup is typed.
@@ -274,42 +335,26 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
   <meta name="supported-color-schemes" content="dark" />
   <title>${title}</title>
   <style>
-    .brand-act { color: ${BRAND.act} !important; }
-    /* Gmail-only: color text via gradient + background-clip instead of the "color" property,
-       because Gmail Android dark mode shifts "color" values but preserves gradient values.
-       "u + .body" only matches Gmail's rendering wrapper. Outlook doesn't support
-       background-clip:text at all, so it must stay Gmail-targeted.
+    .${TEXT_PINS.act.className} { color: ${BRAND.act} !important; }
+    /* Gmail-only, behind "u + .body", which matches the render wrapper of every
+       Gmail app and of Gmail web, and nothing else. Outlook does not support
+       background-clip:text or the blends below, so both stay Gmail-targeted.
 
-       Only act has a rule: the brand's world colour was retired from inline text
-       because Gmail's rewriting left it unreadable, so no builder emits a world
-       brand class any more and a rule for one would be dead weight. */
-    u + .body .brand-act {
-      background-image: linear-gradient(${BRAND.act}, ${BRAND.act}) !important;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      color: transparent !important;
-    }
-    /* Button labels, same mechanism. Gmail flips a label's "color" by luminance
-       and by the reader's theme, so the dark label on the brand fill came back
-       white in some inboxes and black in others. Pinning it through a gradient
-       gives one answer everywhere Gmail renders. The class names are emitted by
-       blocks.ts — keep them in step.
-
-       Only the dark label is pinned, and only because it is dark. There was a
-       matching rule for the outlined button's near-white label; it was the
-       cause of that button's bug, not its cure. background-clip:text restates a
-       text colour as a background colour, and a dark theme darkens light
-       backgrounds — so pinning the body foreground fed it to the exact pass
-       that darkens near-white. Measured against a client, not reasoned. Never
-       add a rule here for a colour a dark theme would lighten or darken as a
-       background; those colours are already safe inline, and the pinned ones
-       are listed with their evidence in the house-style test. */
-    u + .body .cta-on-brand {
-      background-image: linear-gradient(${DARK_THEME.bg}, ${DARK_THEME.bg}) !important;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      color: transparent !important;
-    }
+       The pins: a text colour painted as a flat gradient clipped to the glyphs.
+       Every Gmail rewrites a plain "color" and leaves a gradient alone, so a
+       pinned colour arrives exact. Only colours a dark theme leaves alone as a
+       background may be pinned — a near-white pinned this way turns dark on
+       Gmail Android — and each one is listed with its evidence in the
+       house-style test. Built from TEXT_PINS in utils.ts, which the markup's
+       classes come from too. */
+${textPinRules}
+    /* The hold: Gmail iOS inverts every plain colour (text, border, fill) and
+       leaves gradients and images alone. These two blacks are plain colours
+       too, so on Gmail iOS alone they turn white and the pair re-inverts what
+       it wraps; everywhere else black is the identity for both blends. Only
+       plain neutrals may sit inside — see HOLD_CLASS in utils.ts. */
+    u + .body .${HOLD_CLASS.screen} { background: ${HOLD_GROUND} !important; mix-blend-mode: screen !important; }
+    u + .body .${HOLD_CLASS.difference} { background: ${HOLD_GROUND} !important; mix-blend-mode: difference !important; }
     /* The card, and the one media query a mail carries.
 
        The layout above this rule is the phone's, and it is the whole layout:
@@ -350,8 +395,8 @@ export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions
       }
       /* The fills that are chosen in relation to what sits behind them, and
          this block is where what sits behind them changes: a photo's reserved
-         well and a quoted box are a tone *off* the ground, the outlined button
-         means to *be* the ground. Inline they are the phone's values, against
+         well and a quoted box are a tone *off* the ground, the inside of a box
+         whose edge is a fill means to *be* it. Inline they are the phone's values, against
          the bare ground; here they are restated against the card.
 
          Nothing about the layout depends on these rules — the inline values
@@ -377,7 +422,7 @@ ${groundToneRules}
   </style><![endif]-->
 </head>
 <!-- "body" class is required for the "u + .body" Gmail-only selector in the style block above -->
-<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:${MAIL_FONT_STACK};">
+<body class="body" style="margin:0;padding:0;${pinnedFill(DARK_THEME.bg)}font-family:${MAIL_FONT_STACK};">${preheaderBlock(preheader)}
   <!-- The ground on both body and table: body for clients that respect it, table for Gmail which strips body styles -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="${pinnedFill(DARK_THEME.bg)}">
     <tr>
@@ -402,10 +447,14 @@ ${groundToneRules}
                parts instead of emitting BRAND_LOCKUP whole. Both halves still
                come from the constants module — no character of the lockup, and
                above all not the en dash, is typed here — and a unit test
-               asserts the two spans still read as BRAND_LOCKUP exactly. -->
+               asserts the two spans still read as BRAND_LOCKUP exactly.
+
+               The tail is held, inline so the line still breaks where it
+               would: its ink is a plain colour Gmail iOS inverts. The amber
+               half is pinned, and a pinned colour is never held. -->
           <tr>
             <td align="center" style="padding-bottom:16px;">
-              <span class="brand-act" style="${LOCKUP_TYPE}color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span><span style="${LOCKUP_TYPE}color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>
+              <span class="${TEXT_PINS.act.className}" style="${LOCKUP_TYPE}color:${BRAND.act};letter-spacing:0.5px;">${SENDER_NAME}</span>${holdInline(`<span style="${LOCKUP_TYPE}color:${DARK_THEME.foreground};letter-spacing:0.5px;">${BRAND_LOCKUP_TAIL}</span>`)}
             </td>
           </tr>
           <!-- The world rule under the lockup. See HEADER_RULE_HEIGHT. -->
@@ -441,14 +490,15 @@ ${groundToneRules}
           </tr>
           <!-- The footer's hairline, for the phone layout only: with no card,
                it is what ends the mail above the footer. The query hides it
-               where the card's edge does that job. -->
+               where the card's edge does that job. Held, like every rule:
+               the border grey is a plain colour. -->
           <tr class="${SHELL_CLASS.footerRule}">
-            <td style="height:${MAIL_SPACE.furniture}px;line-height:${MAIL_SPACE.furniture}px;font-size:0;border-bottom:1px solid ${DARK_THEME.border};">&nbsp;</td>
+            <td>${holdBlock(`<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:${MAIL_SPACE.furniture}px;line-height:${MAIL_SPACE.furniture}px;font-size:0;border-bottom:1px solid ${DARK_THEME.border};">&nbsp;</td></tr></table>`)}</td>
           </tr>
           <!-- Footer -->
           <tr>
             <td align="center" style="padding-top:24px;${mailText("small", DARK_THEME.mutedFg)}">
-              ${footerText}
+              ${holdBlock(footerText)}
             </td>
           </tr>
         </table>

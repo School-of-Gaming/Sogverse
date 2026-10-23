@@ -1,0 +1,5 @@
+{
+  "parents": "For parents",
+  "families": "For families",
+  "familiesWithAges": "For families, ages {min}–{max}"
+}

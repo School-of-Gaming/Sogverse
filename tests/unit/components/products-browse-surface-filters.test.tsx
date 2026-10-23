@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, renderHook, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enProductBrowse from "@/../messages/en/productBrowse.json";
+import enProductAudience from "@/../messages/en/productAudience.json";
+import enProductTag from "@/../messages/en/productTag.json";
 import { useBrowseFilterRows } from "@/components/public/products/browse-filter-rows";
 import type { BrowseSurface } from "@/components/public/products/browse-surface";
 import { filterProducts } from "@/components/public/products/filter-products";
@@ -12,6 +14,12 @@ import { useOfferedBrowseFilters } from "@/components/public/products/use-browse
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { formatWeekday } from "@/lib/products/format-product-schedule";
 import type { ProductBrowseRow } from "@/types";
+
+const messages = {
+  productBrowse: enProductBrowse,
+  productAudience: enProductAudience,
+  productTag: enProductTag,
+};
 
 /**
  * **A page applies, counts and clears exactly the filters it draws a row for.**

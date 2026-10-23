@@ -3,7 +3,7 @@
 import { CornerUpLeft, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { chatBodyPlainText } from "./chat-body";
 import type { ChatAccount, ChatMessage } from "./types";
 

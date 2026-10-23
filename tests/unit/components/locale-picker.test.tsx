@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enCommon from "@/../messages/en/common.json";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { LocaleProvider } from "@/providers/locale-provider";
 import {
@@ -14,6 +14,8 @@ import {
   type DetectedLocale,
 } from "@/lib/constants/locales";
 import type { Profile } from "@/types";
+
+const messages = { common: enCommon };
 
 /**
  * **`locale_picker_open` is a wire contract, and nothing else in the suite

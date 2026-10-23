@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Mic, Loader2, PhoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";

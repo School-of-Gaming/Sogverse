@@ -1,0 +1,35 @@
+{
+  "name": "Biblioteket",
+  "readingTime": "{minutes, plural, one {# min läsning} other {# min läsning}}",
+  "article": {
+    "breadcrumbLabel": "Brödsmulor",
+    "more": "Mer från Biblioteket",
+    "share": {
+      "heading": "Dela artikeln",
+      "copyLink": "Kopiera länk",
+      "copied": "Länken kopierad",
+      "on": "Dela på {platform} (öppnas i en ny flik)",
+      "email": "E-post",
+      "byEmail": "Dela via e-post",
+      "native": "Dela…"
+    }
+  },
+  "index": {
+    "title": "School of Gamings <act>bibliotek</act>",
+    "intro": "Praktisk vägledning för föräldrar om säkerhet på nätet, spelande i vardagen och vad barn lär sig genom lek.",
+    "empty": "Här finns inget ännu",
+    "all": "Alla",
+    "filterLabel": "Kategorier"
+  },
+  "categories": {
+    "onlineSafety": "Säkerhet på nätet",
+    "screenTime": "Skärmtid och familjeliv",
+    "learning": "Lärande genom spel",
+    "gamesExplained": "Spelen förklarade",
+    "forSchools": "För skolor"
+  },
+  "cta": {
+    "heading": "Redo att börja?",
+    "button": "Kom igång"
+  }
+}

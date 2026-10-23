@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { GroupsPanel } from "@/components/admin/products/groups/groups-panel";
 import type { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
 import { TimezoneProvider } from "@/providers";
-import type { UserListEntry } from "@/services/users";
+import type { UserListEntry } from "@/services/users/users.contracts";
 import type {
   BillingMode,
   ProductGroupsSnapshot,
@@ -187,7 +187,7 @@ const waitlistCard = vi.hoisted(() => ({
 // asserts; it is stubbed so the panel does not reach for a Supabase client.
 const seatOffer = vi.hoisted(() => ({ send: vi.fn() }));
 
-vi.mock("@/services/participations", () => ({
+vi.mock("@/services/participations/participations.queries", () => ({
   useSeatOfferSweepOnMount: () => {},
 }));
 
@@ -200,14 +200,14 @@ const roblox = vi.hoisted(() => ({
   data: undefined as Record<string, string | null> | undefined,
 }));
 
-vi.mock("@/services/roblox", () => ({
+vi.mock("@/services/roblox/roblox.queries", () => ({
   useRobloxRenders: (ids: readonly number[], figure: string) => {
     roblox.renders(ids, figure);
     return { data: roblox.data };
   },
 }));
 
-vi.mock("@/services/groups", () => {
+vi.mock("@/services/groups/groups.queries", () => {
   const stub = (pick: () => () => void) => () => ({
     mutate: pick(),
     mutateAsync: vi.fn(),
@@ -350,6 +350,7 @@ function renderPanel(
         seatCount={null}
         waitlistEnabled
         voiceAvailable={false}
+        voiceRoom={{ mode: "sogverse" }}
         voiceIsOpen={false}
         opensDate=""
         opensTime=""

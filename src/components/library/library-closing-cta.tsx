@@ -3,12 +3,13 @@ import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { Heading } from "@sog/ui";
 
 /**
- * **The Library's closing call to action**, the same card on the index and at
- * the end of every article: a reader who has finished reading is asked one
+ * **The Library's closing call to action**, the same card on the index, at
+ * the end of every article and closing the landing pages' index: a reader who
+ * has finished reading is asked one
  * thing, and the shop is where it leads. It is the Roblox programme page's
  * closing card in shape and words — one world rule along the top, a question
  * and a button — without that page's scarcity line, which the Library has no

@@ -1,0 +1,20 @@
+{
+  "nav": {
+    "shop": "Boutique",
+    "yty": "Yty",
+    "about": "À propos",
+    "parents": "Parents",
+    "faq": "FAQ",
+    "substitutions": "Remplacements",
+    "home": "Accueil",
+    "library": "Bibliothèque",
+    "libraryShort": "Biblio",
+    "team": "Équipe",
+    "tabBar": "Principale"
+  },
+  "accountMenu": "Menu du compte – {name}",
+  "continueToAccount": "Continuer vers votre compte",
+  "switchTo": "Changer de profil",
+  "invoicing": "Facturation",
+  "teamProfile": "Mon profil"
+}

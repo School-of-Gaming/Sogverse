@@ -1,0 +1,184 @@
+{
+  "jumpToSignup": "{verb} maintenant !",
+  "back": {
+    "consumer_club": "Retour aux clubs",
+    "municipality_club": "Retour aux clubs municipaux",
+    "camp": "Retour aux stages",
+    "event": "Retour aux événements"
+  },
+  "typeLabel": {
+    "consumer_club": "Club",
+    "municipality_club": "Club municipal",
+    "camp": "Stage",
+    "event": "Événement"
+  },
+  "sections": {
+    "overview": "Bon à savoir"
+  },
+  "topicInfo": {
+    "heading": "À propos de {name}",
+    "pegi": "PEGI {age}",
+    "topics": {
+      "minecraft_java": {
+        "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Java » est la version d’origine pour les ordinateurs Windows, Mac et Linux. C’est celle qu’utilisent nos clubs à distance, car elle prend en charge les outils dont nos animateurs ont besoin.",
+        "note": "Pour nos clubs à distance, votre enfant a besoin de Minecraft sur un ordinateur. Sur le site de Minecraft, il est vendu sous le nom « Minecraft: Java & Bedrock Edition for PC ». C’est un achat unique et non un abonnement, et il comprend la version que nous utilisons. La version distincte pour consoles, téléphones et tablettes ne fonctionne pas pour ces clubs.",
+        "linkLabel": "Obtenir Minecraft pour PC"
+      },
+      "minecraft_bedrock": {
+        "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Bedrock » est la version qui fonctionne sur consoles (Xbox, PlayStation, Switch), téléphones, tablettes et PC Windows.",
+        "note": "Minecraft Bedrock n’est pas compris dans le prix. C’est le même jeu vendu séparément pour chaque appareil, et un exemplaire acheté pour un appareil ne se reporte pas sur un autre. Celui qui compte est celui de l’appareil sur lequel votre enfant jouera. Sur une console de jeu, jouer en ligne nécessite en plus l’abonnement en ligne payant de cette console.",
+        "linkLabel": "Où se le procurer"
+      },
+      "minecraft_education": {
+        "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent. Minecraft Education est une version conçue pour les groupes encadrés. La construction est la même, ouverte et bienveillante, avec des outils supplémentaires pour l’adulte qui anime la séance.",
+        "note": "Il n’y a rien à acheter ni de compte scolaire à obtenir. School of Gaming fournit les comptes Minecraft Education que les participants utilisent pendant les séances. Pour les clubs à distance, le jeu lui-même se télécharge gratuitement depuis le Microsoft Store ou depuis le site de Minecraft Education. Il fonctionne sur les ordinateurs Windows et Mac ainsi que sur iPad et Chromebook.",
+        "linkLabel": "À propos de Minecraft Education"
+      },
+      "fortnite": {
+        "description": "Fortnite est un jeu en ligne coloré, au style cartoon, où les joueurs font équipe et s’affrontent dans des parties courtes. Il est extrêmement populaire et très social, et les enfants y jouent ensemble entre amis. L’esthétique est vive et non réaliste, sans sang ni scènes gore. Les parties sont compétitives et se jouent en ligne avec d’autres personnes.",
+        "note": "Fortnite est gratuit à télécharger et à jouer, il n’y a donc pas de jeu à acheter. Jouer nécessite un compte Epic Games gratuit. Certains extras facultatifs sont payants, comme les tenues. Le contrôle parental d’Epic est attaché au compte plutôt qu’à un appareil, et il permet de limiter ces extras.",
+        "linkLabel": "Obtenir Fortnite"
+      },
+      "pokemon_go": {
+        "description": "Pokémon GO se joue dehors, sur un téléphone. Des créatures apparaissent sur une carte du monde réel, et les enfants marchent jusqu’aux parcs, aux rues et aux monuments pour les trouver et les collectionner. Le jeu repose sur la collection plutôt que sur le combat. L’intérêt est d’explorer, de compléter son Pokédex et de comparer ses trouvailles avec ses amis. L’essentiel du jeu se fait à pied, ce qui fait bouger les enfants.",
+        "note": "Pokémon GO est gratuit à télécharger et à jouer, il n’y a donc pas de jeu à acheter. Il faut un téléphone avec GPS et connexion mobile, ainsi qu’un compte gratuit. Pour un enfant de moins de 13 ans, le compte est créé par un parent et reste relié au sien. Le jeu propose des achats facultatifs, que le contrôle parental peut limiter. On y joue dehors, dans de vrais lieux. Il garde aussi l’écran, le GPS et les données allumés en permanence, donc la batterie ne tient pas longtemps.",
+        "linkLabel": "Où se le procurer"
+      },
+      "roblox_studio": {
+        "description": "Roblox Studio est l’outil gratuit avec lequel les vrais jeux Roblox sont créés. Les enfants conçoivent des mondes, construisent avec de vrais outils 3D et écrivent du vrai code. Leurs idées deviennent des jeux auxquels d’autres peuvent vraiment jouer. Dans nos clubs, ils créent au lieu de jouer, et c’est le premier pas vers la vraie création de jeux vidéo.",
+        "note": "Roblox Studio est gratuit, il n’y a donc rien à acheter. Il fonctionne uniquement sur PC Windows et Mac, pas sur iPad ni sur une autre tablette, pas sur Chromebook, téléphone ou console de jeu. Un compte Roblox gratuit est également nécessaire, et le réglage d’âge du compte détermine les paramètres de chat et de confidentialité. Les créations terminées peuvent être publiées pour que d’autres joueurs les découvrent et y jouent.",
+        "linkLabel": "Obtenir Roblox Studio"
+      },
+      "rocket_league": {
+        "description": "Rocket League, c’est du football joué avec des voitures propulsées par fusée. Deux équipes s’affrontent dans une arène et poussent un ballon surdimensionné dans le but adverse, en matchs courts d’environ cinq minutes. L’univers est vif et façon dessin animé, sans aucune violence. C’est un sport et non un jeu de tir, et cela se suit très facilement depuis le bord du terrain, même sans y avoir jamais joué. Presque chaque but naît du jeu d’équipe, ce qui en fait un jeu parfaitement adapté au club.",
+        "note": "Rocket League est gratuit à télécharger et à jouer, il n’y a donc pas de jeu à acheter. Jouer nécessite un compte Epic Games gratuit. Le jeu fonctionne sur PC Windows, PlayStation, Xbox et Nintendo Switch. Les joueurs sur des appareils différents peuvent jouer ensemble, donc l’appareil de votre enfant n’a pas besoin d’être le même que celui des autres. Des achats facultatifs sont proposés dans le jeu, comme des décorations pour les voitures, que le contrôle parental peut limiter.",
+        "linkLabel": "Obtenir Rocket League"
+      }
+    }
+  },
+  "info": {
+    "schedule": "Planning",
+    "where": "Où",
+    "format": "Format",
+    "ages": "{min}–{max} ans",
+    "ageRange": "Tranche d’âge",
+    "audience": "Public",
+    "language": "Langue",
+    "online": "En ligne",
+    "tbd": "À confirmer",
+    "holidayBreaks": "Vacances"
+  },
+  "signupPanel": {
+    "verb": {
+      "consumer_club": "S’inscrire",
+      "municipality_club": "S’inscrire",
+      "camp": "S’inscrire",
+      "event": "Participer"
+    },
+    "noun": {
+      "consumer_club": "Inscription",
+      "municipality_club": "Inscription",
+      "camp": "Inscription",
+      "event": "Participation"
+    },
+    "ctaReadyWaiting": "Prêt et en attente",
+    "ctaActive": "{verb} maintenant",
+    "ctaActiveWithPrice": "{verb} maintenant {price}",
+    "ctaActiveWithPriceSub": "{verb} maintenant · {price}/mois",
+    "ctaSubmitting": "Un instant…",
+    "ctaAddGamer": "Ajoutez un joueur pour continuer",
+    "ctaAllSet": "Tout est prêt",
+    "ctaOutOfBand": "{count, plural, one {Âge requis\u00a0: {min}–{max} ans} other {Aucun joueur n’a {min}–{max} ans}}",
+    "ctaAgreeConsent": "Donnez le consentement requis",
+    "ctaWaitlist": "Rejoindre la liste d’attente",
+    "ctaSignIn": "Se connecter",
+    "ctaCreateAccount": "Créer un compte",
+    "gamerAlreadySignedUp": {
+      "consumer_club": "Déjà inscrit",
+      "municipality_club": "Déjà inscrit",
+      "camp": "Déjà inscrit",
+      "event": "Participe déjà"
+    },
+    "gamerAlreadyWaitlisted": "En liste d’attente",
+    "gamerTooYoung": "Trop jeune",
+    "gamerTooOld": "Trop âgé",
+    "gamerBand": "{min}–{max} ans",
+    "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
+    "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
+    "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
+    "rules": {
+      "title": "Nos règles",
+      "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+      "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
+      "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
+      "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>.",
+      "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, comme le précise sa <policy>politique de lutte contre le harcèlement et de discipline</policy>."
+    },
+    "consents": {
+      "heading": "Consentement",
+      "agree": "J’ai lu et j’accepte ces documents.",
+      "bundles": {
+        "robloxProgramme": "J’ai lu et j’accepte les <terms>Conditions générales</terms> et la <privacy>Politique de confidentialité</privacy> de l’Académie des Créateurs.",
+        "robloxProgrammeTitle": "Conditions et confidentialité de l’Académie des Créateurs"
+      },
+      "gamerPhoto": {
+        "lynxEducate": "Les photos et vidéos de mon enfant peuvent figurer dans les comptes rendus de séance, être partagées avec Lynx Educate et Roblox à des fins de rapport d’impact, et être utilisées sur les sites web et les réseaux sociaux de School of Gaming, de Lynx Educate et de Roblox. Les détails figurent dans la <privacy>Politique de confidentialité de l’Académie des Créateurs</privacy>.",
+        "lynxEducateTitle": "Photos et vidéos de votre enfant",
+        "hint": "Facultatif — vous pouvez modifier ce choix à tout moment sur la page de votre enfant dans Mon SOG."
+      },
+      "marketing": {
+        "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment.",
+        "lynxEducateTitle": "Actualités de Lynx Educate",
+        "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
+      }
+    },
+    "whoAreYouSigningUp": {
+      "consumer_club": "Qui inscrivez-vous ?",
+      "municipality_club": "Qui inscrivez-vous ?",
+      "camp": "Qui inscrivez-vous ?",
+      "event": "Qui participe ?"
+    },
+    "seatIsFor": "À qui revient cette place",
+    "selected": "Sélectionné",
+    "agePill": "{age}\u00a0ans",
+    "parentPill": "Parent",
+    "regionLock": {
+      "heading": "Votre localisation",
+      "note": "Ce produit n’est proposé que dans certains pays. Indiquez où habite votre famille.",
+      "setLocation": "Ajoutez votre localisation",
+      "wrongCountry": "Ce produit n’est proposé que dans un seul pays : <name>{country}</name>.",
+      "eligible": "Rien que pour les familles de votre pays : {country}",
+      "eligibleLocation": "Localisation de votre famille : {location}",
+      "dialogTitle": "Où vit votre famille ?",
+      "dialogDescription": "Nous l’utilisons pour déterminer quels clubs, stages et événements sont proposés là où vous vivez. Vous pourrez la modifier plus tard dans vos paramètres.",
+      "dialogField": "Votre localisation",
+      "dialogSave": "Enregistrer la localisation"
+    }
+  },
+  "pricing": {
+    "subscriptionHint": "Facturé mensuellement · résiliable à tout moment.",
+    "free": "Gratuit",
+    "freeHint": "Aucun paiement nécessaire.",
+    "external": "Pris en charge par votre commune",
+    "upfrontHint": "Paiement unique.",
+    "notAvailable": "Les tarifs ne sont pas encore disponibles en {currency}.",
+    "cadenceMonth": "/ mois",
+    "firstChargeOn": "Premier paiement le {date} — rien à payer aujourd’hui.",
+    "guarantee": {
+      "title": "30 jours satisfait ou remboursé",
+      "body": "Si cela ne convient pas à votre enfant, nous vous remboursons — sans discussion gênante. Les 30 jours courent à partir de sa première session.",
+      "contact": "Écrivez simplement à <link>{email}</link> et une vraie personne s’en occupe."
+    }
+  },
+  "countdown": {
+    "days": "j",
+    "hours": "h",
+    "minutes": "min",
+    "seconds": "s"
+  },
+  "notFound": {
+    "title": "On n’a pas trouvé ça",
+    "description": "Elle a peut-être été supprimée ou le lien est erroné. Parcourez l’offre disponible ci-dessous.",
+    "cta": "Retour au catalogue"
+  }
+}

@@ -12,7 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { utmRegistrationBody, type UtmAttribution } from "@/lib/utm";
 import {
   COMPLETE_REGISTRATION_PARENT_QUERY,

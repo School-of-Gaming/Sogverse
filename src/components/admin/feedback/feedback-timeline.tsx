@@ -12,7 +12,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { formatDateOnly, formatDateRange } from "@/lib/utils";
+import { formatDateOnly, formatDateRange } from "@/lib/date-format";
 import type { FeedbackTimeline as Timeline, FeedbackTimelinePoint } from "./aggregate-feedback";
 import { formatShare } from "./feedback-format";
 

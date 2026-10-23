@@ -73,11 +73,10 @@ the `remote-supabase` skill; incident forensics in the `prod-incident-investigat
   privileged Prometheus endpoint
   `https://<ref>.supabase.co/customer/v1/privileged/metrics` (basic auth
   `service_role:<key>`).
-  - **The prod service-role key is deliberately NOT in `.env.local`** (only staging's
-    is; prod rejects it). Intentional: the key is god-mode and the owner wants to
-    minimize prod/staging misroute risk. **Only ask for it when an investigation
-    genuinely needs route (2)** — a live, scriptable read of node gauges the dashboard
-    can't give. For one-off infra questions, the dashboard is the expected path.
+  - **Route (2) takes the prod key, `SUPABASE_PROD_SERVICE_ROLE_KEY`** — the plain
+    `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` is staging's, and prod rejects it. Use it
+    only when an investigation genuinely needs a live, scriptable read of node gauges the
+    dashboard can't give; for one-off infra questions, the dashboard is the expected path.
 - The **CPU "Max per day"** dashboard bar is a per-day instantaneous max — a single
   query spike inflates it. The time-of-day breakdown is the real picture; busy slivers
   that are **IOwait** (red), not User/System, mean a disk-IO story, not a CPU one.

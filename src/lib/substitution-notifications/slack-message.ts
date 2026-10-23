@@ -7,7 +7,8 @@ import {
   sessionFactsProduct,
   sessionWindowOf,
 } from "@/lib/substitution-session-facts";
-import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
+import { formatDate } from "@/lib/date-format";
 import type { GeduQualification, SubstitutionReason } from "@/types";
 import { substitutionDmWhen } from "./discord-dm-message";
 import type {

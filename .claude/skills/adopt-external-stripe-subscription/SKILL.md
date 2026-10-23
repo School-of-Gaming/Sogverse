@@ -11,10 +11,13 @@ subscription, and a cancel or non-payment frees the seat. **Adopt-and-bind — n
 cancel and re-subscribe, never swap the price.** Batches arrive as a roster from the club
 organizer; the people involved and past batch precedents are in local memory, not here.
 
-Tools: prod psql (the `remote-supabase` skill); the Auth admin API, which needs the prod
-service-role key — deliberately absent from `.env.local`, so ask the owner for it, and it
-is rotated afterwards; the Stripe CLI in live mode; the Mojang API. The Stripe CLI is
-pinned to an old API version, so `search` calls take `--stripe-version 2020-08-27`.
+Tools: prod psql (the `remote-supabase` skill); the Auth admin API, with the prod
+service-role key from `.env.local` (`SUPABASE_PROD_SERVICE_ROLE_KEY`), called through
+`supabase-js` from a throwaway `.mts` script inside the repo, deleted after the run (a
+`.ts` one fails on top-level `await`). The key is rotated only if its value leaks into
+the chat, never as a routine end-of-batch step; the Stripe CLI in live mode; the Mojang
+API. The Stripe CLI is pinned to an old API version, so `search` calls take
+`--stripe-version 2020-08-27`.
 
 ## Step 1 — Identify and dedupe before creating anything
 

@@ -1,0 +1,11 @@
+{
+  "copyright": "© {year} School of Gaming. Tous droits réservés.",
+  "contact": {
+    "email": "E-mail : {email}"
+  },
+  "privacy": "Politique de confidentialité",
+  "terms": "Conditions générales",
+  "antiBullying": "Lutte contre le harcèlement",
+  "attributions": "Crédits et licences",
+  "privacyChoices": "Choix de confidentialité"
+}

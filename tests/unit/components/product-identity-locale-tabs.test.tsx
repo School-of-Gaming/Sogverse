@@ -73,6 +73,7 @@ describe("the product form's language tabs", () => {
       name: "",
       shortDescription: "",
       longDescription: "",
+      voiceJoinInstructions: "",
     });
     expect(nameBox().value).toBe("");
     expect(

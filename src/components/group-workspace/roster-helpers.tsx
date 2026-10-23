@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { PersonChipListPerson } from "@/components/ui/person-chip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { GeduAssignedProductGroup } from "@/types";
 
 /**

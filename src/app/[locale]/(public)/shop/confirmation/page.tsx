@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import type Stripe from "stripe";
-import { createClient, getUser } from "@/lib/supabase/server";
-import { ParticipationsService } from "@/services/participations";
-import { ProductsService } from "@/services/products";
-import { HolidayBreaksService } from "@/services/holiday-breaks";
-import { holidayBreaksSpan } from "@/lib/products/holiday-breaks-shown";
+import {
+  createClient,
+  getUser,
+  getUserWithProfile,
+} from "@/lib/supabase/server";
+import {
+  ParticipationsService,
+} from "@/services/participations/participations.service";
+import { ProductsService } from "@/services/products/products.service";
 import {
   PurchaseConfirmationView,
   PurchaseConfirmationFallback,
@@ -13,8 +17,11 @@ import {
 } from "@/components/public/products/purchase-confirmation-view";
 import { PurchaseConfirmationFinalizing } from "@/components/public/products/purchase-confirmation-finalizing";
 import { stripe } from "@/lib/stripe/client";
-import type { ParticipationConfirmation } from "@/services/participations";
+import type {
+  ParticipationConfirmation,
+} from "@/services/participations/participations.service";
 import type { AppSupabaseClient, ProductBrowseRow } from "@/types";
+import { confirmationRecipientEmail } from "./confirmation-recipient";
 
 // Post-signup summary page, reached two ways.
 //
@@ -190,55 +197,36 @@ async function renderConfirmation(
 
   let product: ProductBrowseRow | null = null;
   let waitlistPosition: number | null = null;
-  // "Your first charge is on …", for a club bought before it starts. Null on
-  // every other signup, and on any read the viewer isn't the payer for.
-  let firstChargeAt: string | null = null;
   // A waitlisted participation lands on the waitlist summary variant.
   const outcome: SignupOutcome =
     confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
 
   try {
-    // Side by side, not one after the other: the deferred-charge read knows
-    // nothing about the product row and every enrolled confirmation makes both,
-    // so serialising them would put two round trips in front of first paint
-    // where one wait does. It swallows its own failure rather than sharing the
-    // outer catch, because the billing line is optional and the summary is not —
-    // a read that fails here must cost the line, never the whole page.
-    [product, firstChargeAt] = await Promise.all([
-      new ProductsService(supabase).getDetailById(confirmation.productId),
-      outcome === "enrolled" && confirmation.participationId
-        ? participations
-            .getDeferredFirstChargeAt(confirmation.participationId)
-            .catch(() => null)
-        : null,
-    ]);
+    product = await new ProductsService(supabase).getDetailById(
+      confirmation.productId,
+    );
     // "You're #N" — fetched live (not the stale join-time value) so a parent
     // who revisits sees their position shrink as people ahead leave. Null is
-    // tolerated: the view just omits the line. Left sequential because it is the
-    // other outcome's read: a waitlisted row never runs the pair above.
+    // tolerated: the view just omits the line.
     if (outcome === "waitlisted" && confirmation.participationId) {
       waitlistPosition = await participations.getWaitlistPosition(
         confirmation.participationId,
       );
     }
   } catch {
-    // Same swallow as above — a friendly fallback beats a 500.
+    // A friendly fallback beats a 500.
   }
 
   if (!product) return <PurchaseConfirmationFallback />;
 
-  // The club's holiday breaks, for the "Good to know" card — read here, with
-  // the rest of the page's data, so the list is on the first paint rather than
-  // arriving above the cards under it. After the product read rather than
-  // beside it, because the span follows the club's own term and zone. Every other product
-  // type reads nothing; a failed read costs the list, never the summary.
-  const breaksSpan = holidayBreaksSpan(product, new Date());
-  const holidayBreaks =
-    breaksSpan === null
-      ? []
-      : await new HolidayBreaksService(supabase)
-          .getHolidayBreaks(product.id, breaksSpan.from, breaksSpan.to)
-          .catch(() => []);
+  // Where the confirmation email went — whose address may be shown is the
+  // helper's rule. The profile read is the one the root layout already made
+  // this render (`cache()`), so it costs no round trip.
+  const viewer = await getUserWithProfile();
+  const recipientEmail = confirmationRecipientEmail(
+    viewer?.profile,
+    confirmation.customerId,
+  );
 
   return (
     <PurchaseConfirmationView
@@ -250,8 +238,7 @@ async function renderConfirmation(
       isSelfSeat={confirmation.isSelfSeat}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
-      firstChargeAt={firstChargeAt}
-      holidayBreaks={holidayBreaks}
+      recipientEmail={recipientEmail}
     />
   );
 }
