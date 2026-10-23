@@ -19,10 +19,11 @@ BEGIN
   -- Callers pass '' for absent optional text (the generated RPC arg types are
   -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
   -- phone stays NULL rather than tripping the profiles.phone format CHECK.
+  -- The names are trimmed, as the profiles CHECKs store them.
   UPDATE public.profiles
   SET role             = 'gedu',
-      first_name       = p_first_name,
-      last_name        = p_last_name,
+      first_name       = btrim(p_first_name),
+      last_name        = btrim(p_last_name),
       locale           = NULLIF(p_locale, ''),
       phone            = NULLIF(p_phone, ''),
       spoken_languages = COALESCE(p_spoken_languages, '{}'),

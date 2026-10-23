@@ -23,7 +23,7 @@ BEGIN
 
   v_month_end := (p_month_start + INTERVAL '1 month' - INTERVAL '1 day')::date;
 
-  WITH RECURSIVE
+  WITH
   -- Standing seats: every group a gedu is assigned to TODAY whose month says
   -- anything — its product's term overlaps the month, or it stored a session
   -- row inside it (a stored row on an unscheduled date still ran). Assignments
@@ -87,31 +87,18 @@ BEGIN
       FROM public.products p
      WHERE p.id IN (SELECT sg.product_id FROM seat_group sg)
   ),
-  -- The ancestor-or-self walk to the nearest municipality, the same walk the
-  -- municipality invoicing read makes, so a club can be labelled by its town.
-  -- A consumer club may reach none, and then carries null.
-  walk AS (
-    SELECT l.id AS origin_id, l.id, l.parent_id, l.type, l.name, l.name_i18n,
-           0 AS depth
-      FROM public.locations l
-     WHERE l.id IN (
-             SELECT sp.location_id FROM seat_product sp
-              WHERE sp.location_id IS NOT NULL
-           )
-     UNION ALL
-    SELECT w.origin_id, l.id, l.parent_id, l.type, l.name, l.name_i18n,
-           w.depth + 1
-      FROM walk w
-      JOIN public.locations l ON l.id = w.parent_id
-     WHERE w.type <> 'municipality'
-       AND w.depth < 16
-  ),
+  -- The nearest municipality in the lineage of each product's location, the
+  -- same read the municipality invoicing document makes, so a club can be
+  -- labelled by its town. A consumer club may reach none, and an online one
+  -- may have no location; either then carries null.
   municipality AS (
-    SELECT DISTINCT ON (w.origin_id)
-           w.origin_id, w.id, w.name, w.name_i18n
-      FROM walk w
-     WHERE w.type = 'municipality'
-     ORDER BY w.origin_id, w.depth
+    SELECT DISTINCT ON (o.location_id)
+           o.location_id AS origin_id, l.id, l.name, l.name_i18n
+      FROM (SELECT DISTINCT sp.location_id FROM seat_product sp) AS o
+     CROSS JOIN LATERAL public.location_lineage(o.location_id) AS lin
+      JOIN public.locations l ON l.id = lin.location_id
+     WHERE l.type = 'municipality'
+     ORDER BY o.location_id, lin.distance
   )
   SELECT jsonb_build_object(
            'month_start', to_char(p_month_start, 'YYYY-MM-DD'),

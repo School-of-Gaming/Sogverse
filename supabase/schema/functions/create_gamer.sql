@@ -43,10 +43,11 @@ begin
   -- The child starts in the parent's locale: the parent is the one setting the
   -- account up, so the welcome mail and the child's first sign-in read the way
   -- the parent uses the site. Copied once, never synced; the child's to change.
+  -- The names are trimmed, as the profiles CHECKs store them.
   update public.profiles
   set role = 'gamer',
-      first_name = p_first_name,
-      last_name = p_last_name,
+      first_name = btrim(p_first_name),
+      last_name = btrim(p_last_name),
       locale = (select parent.locale from public.profiles parent where parent.id = p_parent_id)
   where id = p_gamer_id
     and role = 'customer';

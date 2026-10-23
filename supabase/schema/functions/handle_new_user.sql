@@ -21,15 +21,15 @@ DECLARE
   utm_term_value       TEXT;
   registration_value   TIMESTAMPTZ;
 BEGIN
+  -- Both names trimmed first, because the profiles CHECKs store them trimmed.
+  -- A first name of nothing but spaces is then '' and takes the stand-in like
+  -- an absent one.
   profile_first_name := COALESCE(
-    NULLIF(NEW.raw_user_meta_data->>'first_name', ''),
+    NULLIF(btrim(NEW.raw_user_meta_data->>'first_name'), ''),
     'New User'
   );
 
-  profile_last_name := COALESCE(
-    NULLIF(NEW.raw_user_meta_data->>'last_name', ''),
-    ''
-  );
+  profile_last_name := COALESCE(btrim(NEW.raw_user_meta_data->>'last_name'), '');
 
   -- Sanitise here, in the body, rather than letting the CHECKs decide: a
   -- malformed value must cost this family nothing at all, so it degrades to

@@ -28,7 +28,7 @@ BEGIN
 
   v_month_end := (p_month_start + INTERVAL '1 month' - INTERVAL '1 day')::date;
 
-  WITH RECURSIVE candidate AS (
+  WITH candidate AS (
     SELECT p.*
       FROM public.products p
      WHERE p.product_type = 'municipality_club'
@@ -49,45 +49,19 @@ BEGIN
              )
            )
   ),
-  -- The ancestor-or-self walk, one chain per candidate's own location. It
-  -- stops climbing the moment it has emitted a municipality, so the shortest
-  -- chain wins by construction; `depth` is kept so the DISTINCT ON below picks
-  -- the nearest one even if a tree ever nests two municipalities.
-  walk AS (
-    SELECT l.id AS origin_id,
-           l.id,
-           l.parent_id,
-           l.type,
-           l.name,
-           l.name_i18n,
-           0 AS depth
-      FROM public.locations l
-     WHERE l.id IN (SELECT c.location_id FROM candidate c)
-     UNION ALL
-    SELECT w.origin_id,
-           l.id,
-           l.parent_id,
-           l.type,
-           l.name,
-           l.name_i18n,
-           w.depth + 1
-      FROM walk w
-      JOIN public.locations l ON l.id = w.parent_id
-     -- Two stops, and each earns its place: the first is the answer, the second
-     -- is a belt-and-braces bound on a tree the schema does not forbid a cycle
-     -- in beyond a row parenting itself.
-     WHERE w.type <> 'municipality'
-       AND w.depth < 16
-  ),
+  -- The nearest municipality in the lineage of each candidate's own location,
+  -- nearest by distance in case a tree ever nests two.
   municipality AS (
-    SELECT DISTINCT ON (w.origin_id)
-           w.origin_id,
-           w.id,
-           w.name,
-           w.name_i18n
-      FROM walk w
-     WHERE w.type = 'municipality'
-     ORDER BY w.origin_id, w.depth
+    SELECT DISTINCT ON (o.location_id)
+           o.location_id AS origin_id,
+           l.id,
+           l.name,
+           l.name_i18n
+      FROM (SELECT DISTINCT c.location_id FROM candidate c) AS o
+     CROSS JOIN LATERAL public.location_lineage(o.location_id) AS lin
+      JOIN public.locations l ON l.id = lin.location_id
+     WHERE l.type = 'municipality'
+     ORDER BY o.location_id, lin.distance
   )
   SELECT COALESCE(jsonb_agg(club.doc ORDER BY club.id), '[]'::jsonb)
     INTO v_clubs
