@@ -46,6 +46,7 @@ const landing = {
   removeVersion: vi.fn(),
   publishPage: vi.fn(),
   unpublishPage: vi.fn(),
+  listPlacedGuideLabels: vi.fn(),
 };
 vi.mock("@/services/landing-pages/landing-pages.service", () => ({
   LandingPageService: vi.fn(() => landing),
@@ -255,6 +256,7 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const method of Object.values(landing)) method.mockReset();
   landing.getAdminPage.mockResolvedValue(PAGE);
+  landing.listPlacedGuideLabels.mockResolvedValue({});
   // A write answers its id and the links it stored elsewhere: none, unless a case says.
   landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
   landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [] });
@@ -345,7 +347,7 @@ describe("reading", () => {
     expect(resultText(result)).toContain(`Picture ${CASTLE} (wide 16:9): ${BUCKET}/castle.jpg`);
   });
 
-  it("reports each products section's picks, shown or not and why", async () => {
+  it("reports each products section's picks, whether each would be drawn and why not", async () => {
     const PICKS = "a1000000-0000-4000-8000-000000000005";
     const CLUB = "c3000000-0000-4000-8000-000000000001";
     const CAMP = "c3000000-0000-4000-8000-000000000002";
@@ -379,19 +381,42 @@ describe("reading", () => {
       {
         section: "section 5 (Products)",
         sectionId: PICKS,
-        shown: 1,
+        drawnPicks: 1,
         picked: 2,
         drawn: true,
         picks: [
-          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, notShownBecause: [] },
+          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], drawn: true, notDrawnBecause: [] },
           {
             productId: CAMP,
             names: [{ locale: "en", name: "Summer camp" }],
-            shown: false,
-            notShownBecause: ["it is unlisted", "its term has ended"],
+            drawn: false,
+            notDrawnBecause: ["it is unlisted", "its term has ended"],
           },
         ],
       },
+    ]);
+  });
+
+  it("names each guide section's guide by its label, read once for the working copy", async () => {
+    const OFFER = "a1000000-0000-4000-8000-000000000006";
+    const SIDEBAR = "a1000000-0000-4000-8000-000000000007";
+    const PARENTS = "d4000000-0000-4000-8000-000000000001";
+    const GONE = "d4000000-0000-4000-8000-000000000002";
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      ...PAGE.draft.sections,
+      { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
+      { id: SIDEBAR, type: "guide", background: "default", guideId: GONE, sticky: "right" },
+    ];
+    landing.getAdminPage.mockResolvedValue({ ...PAGE, draft: { ...PAGE.draft, sections } });
+    landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledTimes(1);
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
+    expect(result.structuredContent?.guides).toEqual([
+      { section: "section 5 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
+      { section: "section 6 (Guide)", sectionId: SIDEBAR, guideId: GONE, label: null },
     ]);
   });
 
@@ -1012,6 +1037,26 @@ describe("saving", () => {
         { locale: "fi", complete: false },
       ],
     });
+  });
+
+  it("names the guide a saved guide section offers, read from the saved structure", async () => {
+    const OFFER = "a1000000-0000-4000-8000-000000000006";
+    const PARENTS = "d4000000-0000-4000-8000-000000000001";
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      PAGE.draft.sections[0],
+      { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
+    ];
+    landing.getAdminPage
+      .mockResolvedValueOnce(PAGE)
+      .mockResolvedValueOnce({ ...PAGE, draft: { ...PAGE.draft, sections } });
+    landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
+
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
+    expect(result.structuredContent?.guides).toEqual([
+      { section: "section 2 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
+    ]);
   });
 
   it("saves each section's background, adjacent card sections included, reading one left out as default", async () => {

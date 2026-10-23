@@ -372,8 +372,9 @@ export interface AdminLandingPage {
   testimonials: Readonly<Record<string, PublicTestimonial>>;
   /**
    * Each products section of the working copy, in page order, with which of
-   * its picks readers are shown now and why each other one is not; empty when
-   * the working copy has no products section.
+   * its picks the listing holds now — the cards that structure draws once it
+   * is published — and why each other one is not; empty when the working copy
+   * has no products section.
    */
   productPicks: LandingProductsSectionPicks[];
 }
