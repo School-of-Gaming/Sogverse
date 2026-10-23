@@ -68,7 +68,9 @@ vi.mock("@/services/catalogue-images/catalogue-images.server", async (importOrig
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
-// Each locale's own message file, as the clone's copy markers are read.
+// Each locale's own message file, as the clone's copy markers are read. The
+// site card's alt text reads the catalog too, which a request outside a
+// rendered page reaches through `next-intl/server`; a stub says which locale asked.
 vi.mock("next-intl/server", async () => {
   const catalogs = {
     en: (await import("../../../messages/en/admin.json")).default,
@@ -79,6 +81,7 @@ vi.mock("next-intl/server", async () => {
   };
   return {
     getTranslations: async ({ locale, namespace }: { locale: keyof typeof catalogs; namespace: string }) => {
+      if (namespace === "metadata.og") return (key: string) => `${locale}:${namespace}.${key}`;
       expect(namespace).toBe("admin.landingPages");
       return (key: "copyMarker") => {
         const message: unknown = catalogs[locale].landingPages[key];
@@ -138,6 +141,9 @@ const PAGE: AdminLandingPage = {
         summary: "After-school clubs.",
         slug: "gaming-clubs-in-espoo",
         sectionTexts: {},
+        shareTitle: "",
+        shareImageId: null,
+        shareImageAlt: "",
         missing: [],
       },
       {
@@ -146,6 +152,9 @@ const PAGE: AdminLandingPage = {
         summary: "Kerhoja.",
         slug: "pelikerhot-espoossa",
         sectionTexts: {},
+        shareTitle: "",
+        shareImageId: null,
+        shareImageAlt: "",
         missing: [`sections.${FAQ}.items.${QUESTION}.answer`],
       },
     ],
@@ -167,6 +176,9 @@ const PAGE: AdminLandingPage = {
         summary: "After-school clubs.",
         slug: "gaming-clubs-in-espoo",
         sectionTexts: {},
+        shareTitle: "",
+        shareImageId: null,
+        shareImageAlt: "",
       },
     ],
   },
@@ -243,6 +255,10 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const method of Object.values(landing)) method.mockReset();
   landing.getAdminPage.mockResolvedValue(PAGE);
+  // A write answers its id and the links it stored elsewhere: none, unless a case says.
+  landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
+  landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [] });
+  landing.saveVersion.mockResolvedValue({ id: ID, linkRewrites: [] });
   catalogue.listImages.mockReset();
   catalogue.getUsage.mockReset();
   mockFindOrCreate.mockReset();
@@ -479,9 +495,252 @@ describe("reading", () => {
   });
 });
 
+/** The tools as tools/list describes them. */
+async function listedTools() {
+  const body = await readRpc(
+    await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+  );
+  return z
+    .object({
+      tools: z.array(
+        z.object({
+          name: z.string(),
+          description: z.string(),
+          inputSchema: z.object({ properties: z.record(z.string(), z.unknown()) }),
+        }),
+      ),
+    })
+    .parse(body.result).tools;
+}
+
+describe("the share card", () => {
+  /** PAGE's working copy with English carrying a share card, as the read before a write sees it. */
+  const SHARING: AdminLandingPage = {
+    ...PAGE,
+    draft: {
+      ...PAGE.draft,
+      pictures: { ...PAGE.draft.pictures, [FIELD]: { path: "field.jpg", purpose: "landing_image" } },
+      versions: [
+        {
+          ...PAGE.draft.versions[0],
+          shareTitle: "Join a club",
+          shareImageId: FIELD,
+          shareImageAlt: "A field",
+        },
+        PAGE.draft.versions[1],
+      ],
+    },
+  };
+
+  /** English's words, as a save_landing_page_text call sends them. */
+  const ENGLISH = {
+    pageId: ID,
+    locale: "en",
+    title: "Gaming clubs in Espoo",
+    summary: "After-school clubs.",
+    sectionTexts: {},
+  };
+
+  it("is written with a language, never with the structure", async () => {
+    const tools = await listedTools();
+    const fields = (name: string) =>
+      Object.keys(tools.find((t) => t.name === name)?.inputSchema.properties ?? {});
+
+    for (const name of ["create_landing_page", "save_landing_page_text"]) {
+      expect(fields(name), name).toEqual(
+        expect.arrayContaining(["shareTitle", "shareImageId", "shareImageAlt"]),
+      );
+    }
+    expect(fields("save_landing_page_structure")).not.toContain("shareImageId");
+    expect(fields("save_landing_page_structure")).not.toContain("shareTitle");
+  });
+
+  it("tells the AI app an override does not follow the page, so to set it only when it should differ and clear it when it no longer applies", async () => {
+    const tools = await listedTools();
+    for (const name of ["create_landing_page", "save_landing_page_text", "get_landing_page"]) {
+      const description = tools.find((t) => t.name === name)?.description ?? "";
+      expect(description, name).toContain("An override does not follow later edits to the page");
+      expect(description, name).toContain(
+        "set one only when the shared line is meant to differ from the search title",
+      );
+      expect(description, name).toContain("clear it when it no longer applies");
+      expect(description, name).toContain("needs that partner's sign-off");
+      expect(description, name).toContain("The picture is per language");
+    }
+    const text = tools.find((t) => t.name === "save_landing_page_text")?.description ?? "";
+    expect(text).toContain("each one is changed only when sent");
+    expect(text).toContain("send shareImageId as null, or shareTitle or shareImageAlt as an empty string, to clear it");
+  });
+
+  it("tells the AI app to have the admin review each language's copied share card", async () => {
+    const tools = await listedTools();
+    const clone = tools.find((t) => t.name === "clone_landing_page")?.description ?? "";
+    expect(clone).toContain("remind the admin to review each language's share card");
+  });
+
+  it("refuses a share title over a share card's length, saving nothing", async () => {
+    const result = await tool("save_landing_page_text", { ...ENGLISH, shareTitle: "x".repeat(71) });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("A share title is at most 70 characters");
+    expect(landing.saveVersion).not.toHaveBeenCalled();
+  });
+
+  it("saves a language's share card with its words, the picture's id lowercased", async () => {
+    await tool("save_landing_page_text", {
+      ...ENGLISH,
+      shareTitle: " Join a gaming club in Espoo ",
+      shareImageId: FIELD.toUpperCase(),
+      shareImageAlt: "A club room",
+    });
+
+    expect(landing.saveVersion).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({
+        locale: "en",
+        shareTitle: "Join a gaming club in Espoo",
+        shareImageId: FIELD,
+        shareImageAlt: "A club room",
+      }),
+    );
+  });
+
+  it("keeps each share field a call leaves out, as the language holds it", async () => {
+    landing.getAdminPage.mockResolvedValue(SHARING);
+
+    await tool("save_landing_page_text", { ...ENGLISH, summary: "New summary." });
+
+    expect(landing.saveVersion).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({
+        summary: "New summary.",
+        shareTitle: "Join a club",
+        shareImageId: FIELD,
+        shareImageAlt: "A field",
+      }),
+    );
+  });
+
+  it("changes only the share field a call sends, keeping the others", async () => {
+    landing.getAdminPage.mockResolvedValue(SHARING);
+
+    await tool("save_landing_page_text", { ...ENGLISH, shareTitle: "Another title" });
+
+    expect(landing.saveVersion).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({
+        shareTitle: "Another title",
+        shareImageId: FIELD,
+        shareImageAlt: "A field",
+      }),
+    );
+  });
+
+  it("clears a share field sent empty: null for the picture, an empty string for the words", async () => {
+    landing.getAdminPage.mockResolvedValue(SHARING);
+
+    await tool("save_landing_page_text", {
+      ...ENGLISH,
+      shareTitle: "",
+      shareImageId: null,
+      shareImageAlt: "",
+    });
+
+    expect(landing.saveVersion).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({ shareTitle: "", shareImageId: null, shareImageAlt: "" }),
+    );
+  });
+
+  it("keeps nothing of another language's card, and a new language starts with none", async () => {
+    landing.getAdminPage.mockResolvedValue(SHARING);
+
+    await tool("save_landing_page_text", { ...ENGLISH, locale: "fi", title: "Pelikerhot" });
+    await tool("save_landing_page_text", { ...ENGLISH, locale: "sv", title: "Spelklubbar" });
+
+    for (const [, version] of landing.saveVersion.mock.calls) {
+      expect(version).toMatchObject({ shareTitle: "", shareImageId: null, shareImageAlt: "" });
+    }
+  });
+
+  it("creates a page with a share card only when the call sends one", async () => {
+    landing.createPage.mockResolvedValue(ID);
+
+    await tool("create_landing_page", {
+      locale: "en",
+      title: "A page",
+      sections: [{ id: HERO, type: "hero" }],
+      shareTitle: "Share me",
+      shareImageId: FIELD.toUpperCase(),
+      shareImageAlt: "A field",
+    });
+
+    const [input] = landing.createPage.mock.calls[0];
+    expect(input.versions[0]).toMatchObject({
+      shareTitle: "Share me",
+      shareImageId: FIELD,
+      shareImageAlt: "A field",
+    });
+  });
+
+  it("states in the page read which card each language uses", async () => {
+    landing.getAdminPage.mockResolvedValue(SHARING);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.structuredContent?.versions).toEqual([
+      expect.objectContaining({
+        locale: "en",
+        shareTitle: "Join a club",
+        shareImageId: FIELD,
+        shareImageAlt: "A field",
+        shareCard: {
+          inUse: "custom title and picture",
+          title: "Join a club",
+          titleFrom: "shareTitle",
+          picture: { from: "shareImageId", publicUrl: `${BUCKET}/field.jpg`, alt: "A field" },
+          description: "the summary",
+        },
+      }),
+      expect.objectContaining({
+        locale: "fi",
+        shareImageId: null,
+        // Finnish has no card of its own: English's picture is not its.
+        shareCard: expect.objectContaining({
+          inUse: "derived from the page",
+          title: "Pelikerhot Espoossa",
+          titleFrom: "the page title",
+          picture: expect.objectContaining({
+            from: "the hero's picture",
+            publicUrl: `${BUCKET}/castle.jpg`,
+          }),
+        }),
+      }),
+    ]);
+  });
+
+  it("states a derived card, from the hero's picture", async () => {
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.structuredContent?.versions).toEqual([
+      expect.objectContaining({
+        shareCard: expect.objectContaining({
+          inUse: "derived from the page",
+          titleFrom: "the page title",
+          picture: expect.objectContaining({
+            from: "the hero's picture",
+            publicUrl: `${BUCKET}/castle.jpg`,
+          }),
+        }),
+      }),
+      expect.anything(),
+    ]);
+  });
+});
+
 describe("creating", () => {
   it("gives new sections ids, writes the first language and answers the address", async () => {
-    landing.createPage.mockResolvedValue(ID);
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
 
     const result = await tool("create_landing_page", {
       locale: "fi",
@@ -502,6 +761,9 @@ describe("creating", () => {
         summary: "",
         slug: undefined,
         sectionTexts: { [HERO]: { headline: "Pelikerhot" } },
+        shareTitle: "",
+        shareImageId: null,
+        shareImageAlt: "",
       },
     ]);
     expect(input.sections[0]).toEqual({ id: HERO, type: "hero" });
@@ -551,7 +813,7 @@ describe("creating", () => {
   });
 
   it("takes a button that opens an email", async () => {
-    landing.createPage.mockResolvedValue(ID);
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
 
     const result = await tool("create_landing_page", {
       locale: "en",
@@ -661,6 +923,7 @@ describe("cloning", () => {
           address: `${ORIGIN}/en/discover/gaming-clubs-in-espoo-copy`,
           complete: true,
           missing: [],
+          shareCard: expect.objectContaining({ inUse: "derived from the page" }),
           previewLink: `${ORIGIN}/en/discover/${CLONE}/preview`,
         },
         {
@@ -670,6 +933,7 @@ describe("cloning", () => {
           address: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa-kopio-2`,
           complete: false,
           missing: [FI_MISSING],
+          shareCard: expect.objectContaining({ inUse: "derived from the page" }),
           previewLink: `${ORIGIN}/fi/tutustu/${CLONE}/esikatselu`,
         },
       ],
@@ -812,6 +1076,9 @@ describe("saving", () => {
       summary: "Kerhoja.",
       slug: undefined,
       sectionTexts,
+      shareTitle: "",
+      shareImageId: null,
+      shareImageAlt: "",
     });
     expect(result.structuredContent).toMatchObject({
       locale: "fi",
@@ -1301,6 +1568,216 @@ describe("pictures", () => {
     expect(result.isError).toBe(true);
     expect(resultText(result)).toContain("landing page picture must be exactly 1600 × 900");
     expect(mockFindOrCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe("what a publish now would serve", () => {
+  const SUFFIX = " | School of Gaming";
+
+  it("gives each version the page's own rendered metadata, and what differs from what is live", async () => {
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [en, fi] = z
+      .array(z.object({ locale: z.string(), seo: z.unknown() }))
+      .parse(result.structuredContent?.versions);
+    expect(en.seo).toEqual({
+      title: `Gaming clubs in Espoo${SUFFIX}`,
+      titleLength: `Gaming clubs in Espoo${SUFFIX}`.length,
+      description: "After-school clubs.",
+      canonical: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      // English alone would be live: Finnish is left out until complete.
+      hreflang: {
+        en: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+        "x-default": `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      },
+      shareCard: {
+        title: "Gaming clubs in Espoo",
+        description: "After-school clubs.",
+        // The hero's picture, with the title for want of alt text.
+        imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/castle.jpg`,
+        imageAlt: "Gaming clubs in Espoo",
+      },
+      // Live now with no hero picture, so readers are shared the site card.
+      liveDiffers: {
+        "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
+        "shareCard.imageAlt": "en:metadata.og.site.alt",
+      },
+    });
+    // A version a publish would leave out serves nothing.
+    expect(fi.seo).toBeNull();
+  });
+
+  it("reports a language's own share card as the page serves it", async () => {
+    const SHARE = "b1000000-0000-4000-8000-000000000099";
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        pictures: {
+          ...PAGE.draft.pictures,
+          [SHARE]: { path: "share.jpg", purpose: "landing_image" },
+        },
+        versions: [
+          {
+            ...en,
+            shareTitle: "Join a gaming club in Espoo",
+            shareImageId: SHARE,
+            shareImageAlt: "A club room",
+          },
+          fi,
+        ],
+      },
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [enView] = z
+      .array(z.object({ seo: z.record(z.string(), z.unknown()).nullable() }))
+      .parse(result.structuredContent?.versions);
+    expect(enView.seo).toMatchObject({
+      // The search title stays the page's own; only the card takes the share title.
+      title: `Gaming clubs in Espoo${SUFFIX}`,
+      shareCard: {
+        title: "Join a gaming club in Espoo",
+        imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/share.jpg`,
+        imageAlt: "A club room",
+      },
+      liveDiffers: {
+        "shareCard.title": "Gaming clubs in Espoo",
+        "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
+        "shareCard.imageAlt": "en:metadata.og.site.alt",
+      },
+    });
+  });
+
+  it("names every language and x-default once two would be live, and the site card without a hero picture", async () => {
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [{ id: HERO, type: "hero" }],
+        pictures: {},
+        versions: [
+          { ...en, title: "A much longer title for the Espoo gaming clubs page than fits" },
+          { ...fi, missing: [] },
+        ],
+      },
+      publication: null,
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    const [enSeo, fiSeo] = z
+      .array(z.object({ seo: z.record(z.string(), z.unknown()) }))
+      .parse(result.structuredContent?.versions)
+      .map((version) => version.seo);
+    const hreflang = {
+      en: `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+      fi: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+      "x-default": `${ORIGIN}/en/discover/gaming-clubs-in-espoo`,
+    };
+    expect(enSeo).toMatchObject({
+      title: `A much longer title for the Espoo gaming clubs page than fits${SUFFIX}`,
+      titleLength: 80,
+      hreflang,
+      shareCard: { imageUrl: `${ORIGIN}/opengraph-images/site?locale=en` },
+    });
+    expect(fiSeo).toMatchObject({
+      title: `Pelikerhot Espoossa${SUFFIX}`,
+      canonical: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
+      hreflang,
+      shareCard: { imageUrl: `${ORIGIN}/opengraph-images/site?locale=fi` },
+    });
+    // Not live: nothing to differ from.
+    expect(enSeo).not.toHaveProperty("liveDiffers");
+  });
+
+  it("says what the values are in the tool's description", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    const get = tools.find((t) => t.name === "get_landing_page")?.description;
+    expect(get).toContain(`"<title>${SUFFIX}"`);
+    expect(get).toContain("Check these instead of fetching the page");
+    expect(get).toContain("the version's own shareCard, beside seo");
+    expect(get).toContain("liveDiffers");
+  });
+});
+
+describe("own-site links", () => {
+  const REWRITE = {
+    sectionId: TEXT,
+    section: "section 2 (Text)",
+    locale: "fi",
+    field: "body",
+    text: "kauppa",
+    from: "/fi/kauppa/123",
+    to: "/shop/123",
+  };
+
+  it("lists each link a save stored at another address, from → to", async () => {
+    landing.saveVersion.mockResolvedValue({ id: ID, linkRewrites: [REWRITE] });
+
+    const result = await tool("save_landing_page_text", {
+      pageId: ID,
+      locale: "fi",
+      title: "Pelikerhot Espoossa",
+      summary: "Kerhoja.",
+      sectionTexts: { [TEXT]: { body: "Katso [kauppa](/fi/kauppa/123)." } },
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent?.linkRewrites).toEqual([REWRITE]);
+  });
+
+  it("lists a structure save's button rewrites, and a create's", async () => {
+    const button = { ...REWRITE, sectionId: HERO, section: "section 1 (Hero)", locale: null, field: "button", text: null };
+    landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [button] });
+
+    const saved = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero", button: { kind: "internal", path: "/fi/kauppa/123" } }],
+    });
+    expect(saved.structuredContent?.linkRewrites).toEqual([button]);
+
+    landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [button] });
+    const created = await tool("create_landing_page", {
+      locale: "en",
+      title: "Clubs",
+      sections: [{ type: "hero", button: { kind: "internal", path: "/fi/kauppa/123" } }],
+    });
+    expect(created.structuredContent?.linkRewrites).toEqual([button]);
+  });
+
+  it("carries no linkRewrites when every link was stored as written", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero" }],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).not.toHaveProperty("linkRewrites");
+  });
+
+  it("states how own-site links are stored in every write tool's description", async () => {
+    const body = await readRpc(
+      await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} })),
+    );
+    const { tools } = z
+      .object({ tools: z.array(z.object({ name: z.string(), description: z.string() })) })
+      .parse(body.result);
+    for (const name of ["create_landing_page", "save_landing_page_structure", "save_landing_page_text"]) {
+      const description = tools.find((t) => t.name === name)?.description;
+      expect(description, name).toContain("on a Finnish page /shop/<product id> opens /fi/kauppa/<product id>");
+      expect(description, name).toContain("stored at that page's id address");
+      expect(description, name).toContain("A link to a path no page of the site is served from is refused");
+      expect(description, name).toContain("linkRewrites");
+    }
   });
 });
 

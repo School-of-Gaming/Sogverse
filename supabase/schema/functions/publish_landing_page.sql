@@ -30,8 +30,8 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The structure is copied and the picture paths are not: the trigger
-  -- derives the published copy's own.
+  -- The structure is copied and the pictures are not: the triggers derive
+  -- the published copy's own, its versions' share pictures included.
   INSERT INTO public.landing_page_publications (page_id, sections, published_at, first_published_at)
   VALUES (v_page.id, v_page.sections, now(), now())
   ON CONFLICT (page_id) DO UPDATE SET
@@ -45,8 +45,8 @@ BEGIN
    WHERE page_id = p_id;
 
   INSERT INTO public.landing_page_publication_translations
-         (page_id, locale, title, summary, slug, section_texts)
-  SELECT page_id, locale, title, summary, slug, section_texts
+         (page_id, locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt)
+  SELECT page_id, locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt
     FROM public.landing_page_translations
    WHERE page_id = p_id
      AND is_complete;
@@ -60,7 +60,7 @@ $$;
 -- Name: FUNCTION publish_landing_page(p_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.publish_landing_page(p_id uuid) IS 'Admin-gated publish: copies the page''s working copy over its published copy, making it live or replacing the live version — the structure and every complete language version at once (is_complete: title, summary, slug and every section''s required text written); the live version set becomes exactly those. An incomplete version stays in the working copy. Refuses a page with no complete version with check_violation. A version whose slug differs from its live one moves that language to the new address; nothing redirects from the old. A republish moves published_at and keeps first_published_at. The working copy is locked for the copy. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.publish_landing_page(p_id uuid) IS 'Admin-gated publish: copies the page''s working copy over its published copy, making it live or replacing the live version — the structure and every complete language version at once, each with its share title, share picture and share picture alt text (is_complete: title, summary, slug and every section''s required text written); the live version set becomes exactly those. An incomplete version stays in the working copy. Refuses a page with no complete version with check_violation. A version whose slug differs from its live one moves that language to the new address; nothing redirects from the old. A republish moves published_at and keeps first_published_at. The working copy is locked for the copy. An id no page has raises no_data_found. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --

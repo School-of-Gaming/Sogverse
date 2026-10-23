@@ -48,6 +48,7 @@ import {
   SectionHeader,
 } from "./landing-section-header";
 import {
+  itemHeadingLevel,
   written,
   type LandingSectionByType,
   type LandingTextByType,
@@ -514,6 +515,7 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
  */
 function PointsSection({ section, text }: LandingSectionProps<"points">) {
   const threeAcross = section.items.length % 3 === 0 || section.items.length === 5;
+  const titleLevel = itemHeadingLevel(text.heading);
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
@@ -533,7 +535,7 @@ function PointsSection({ section, text }: LandingSectionProps<"points">) {
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-act bg-lifted">
                     <Icon aria-hidden="true" className="h-5 w-5 text-act" />
                   </div>
-                  <Heading level={3} step="card-title">{words?.title}</Heading>
+                  <Heading level={titleLevel} step="card-title">{words?.title}</Heading>
                 </div>
               </CardHeader>
               <CardContent>
@@ -566,6 +568,7 @@ function stepWidth(count: number): string {
  */
 function StepsSection({ section, text }: LandingSectionProps<"steps">) {
   const width = stepWidth(section.items.length);
+  const titleLevel = itemHeadingLevel(text.heading);
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
@@ -586,7 +589,7 @@ function StepsSection({ section, text }: LandingSectionProps<"steps">) {
                 {index + 1}
               </div>
               <div className="mt-4">
-                <Heading level={3} step="card-title" align="center">
+                <Heading level={titleLevel} step="card-title" align="center">
                   {words?.title}
                 </Heading>
               </div>
@@ -720,12 +723,7 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
       <div className="mx-auto max-w-3xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
         <div className="mt-12">
-          {/* The questions sit under the section's H2, or stand as H2s where
-              the section has no heading written yet. */}
-          <FaqAccordion
-            items={items}
-            questionLevel={written(text.heading) === null ? 2 : 3}
-          />
+          <FaqAccordion items={items} questionLevel={itemHeadingLevel(text.heading)} />
         </div>
       </div>
     </section>

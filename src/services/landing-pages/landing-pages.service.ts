@@ -39,7 +39,11 @@ import {
   type PublishedLandingPage,
   type PublishedLandingPageSummary,
 } from "./landing-pages.contracts";
-import { canonicaliseLandingLinks, siteSlugResolver } from "./landing-pages.links";
+import {
+  canonicaliseLandingLinks,
+  siteSlugResolver,
+  type LandingLinkRewrite,
+} from "./landing-pages.links";
 import {
   landingProductPicks,
   type LandingProductsSectionPicks,
@@ -52,19 +56,19 @@ const UUID =
 
 /** A working version whole, with what comparing and publishing read off it. */
 const DRAFT_VERSION_COLUMNS =
-  "locale, title, summary, slug, section_texts, texts_md5, is_complete";
+  "locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
 /** A working version for the list: no words, but their digest and completeness. */
 const DRAFT_VERSION_LIST_COLUMNS =
-  "locale, title, summary, slug, texts_md5, is_complete";
+  "locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
-const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5)`;
+const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt)`;
 
 /** The published copy's columns for a list: the structure, and no words. */
 const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
 
 /** The published copy's columns for comparing, without its words. */
-const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5)`;
+const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt)`;
 
 /**
  * The last saver's profile, embedded by its constraint's name, since the
@@ -91,6 +95,9 @@ function publishable(row: {
     summary: string;
     slug: string;
     texts_md5: string | null;
+    share_title: string;
+    share_image_id: string | null;
+    share_image_alt: string;
     is_complete: boolean;
   }[];
 }): ComparableLandingCopy {
@@ -116,6 +123,9 @@ interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
     summary: string;
     slug: string;
     section_texts: unknown;
+    share_title: string;
+    share_image_id: string | null;
+    share_image_alt: string;
   }[];
 }
 
@@ -141,12 +151,15 @@ function toPublished(row: PublicationRow): PublishedLandingPage {
   return {
     ...summary,
     versions: inLocaleOrder(row.versions).map(
-      ({ locale, title, summary, slug, section_texts }) => ({
+      ({ locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt }) => ({
         locale,
         title,
         summary,
         slug,
         sectionTexts: readSectionTexts(sections, section_texts),
+        shareTitle: share_title,
+        shareImageId: share_image_id,
+        shareImageAlt: share_image_alt,
       }),
     ),
   };
@@ -161,7 +174,20 @@ function toVersionPayload(version: ParsedLandingVersion) {
     slug: version.slug ?? null,
     default_slug: defaultLandingSlug(version.title),
     section_texts: version.sectionTexts,
+    share_title: version.shareTitle,
+    share_image_id: version.shareImageId,
+    share_image_alt: version.shareImageAlt,
   };
+}
+
+/**
+ * What a write answers: the page's id, and each own-site link the link hook
+ * stored at another address than the one written (`canonicaliseLandingLinks`)
+ * — empty when every link was stored as written.
+ */
+export interface LandingWriteResult {
+  id: string;
+  linkRewrites: LandingLinkRewrite[];
 }
 
 /**
@@ -268,6 +294,9 @@ export class LandingPageService {
           summary: version.summary,
           slug: version.slug,
           sectionTexts,
+          shareTitle: version.share_title,
+          shareImageId: version.share_image_id,
+          shareImageAlt: version.share_image_alt,
           missing: missingInLandingVersion(sections, {
             title: version.title,
             summary: version.summary,
@@ -361,8 +390,11 @@ export class LandingPageService {
   // Admin writes
   // -------------------------------------------------------------------------
 
-  /** Create a page's working copy, whole. Returns its id. */
-  async createPage(input: LandingPageInput): Promise<string> {
+  /**
+   * Create a page's working copy, whole. Returns its id, and each link stored
+   * at another address than the one written.
+   */
+  async createPage(input: LandingPageInput): Promise<LandingWriteResult> {
     const write = await canonicaliseLandingLinks(landingPageInput.parse(input), {
       resolver: this.slugResolver(),
     });
@@ -374,7 +406,7 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("create_landing_page returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**
@@ -382,7 +414,7 @@ export class LandingPageService {
    * shared fields. No version's words are written, except that a section the
    * structure drops takes its words in every language with it.
    */
-  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<string> {
+  async saveStructure(id: string, sections: LandingSectionInput[]): Promise<LandingWriteResult> {
     const write = await canonicaliseLandingLinks(
       { sections: landingSections.parse(sections), versions: [] },
       { resolver: this.slugResolver() },
@@ -395,18 +427,19 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_structure returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**
-   * Save one language version of the working copy — its title, summary, slug
-   * and every section's words in that language — creating it when the
-   * language is new. No other version, and not the structure, is touched.
+   * Save one language version of the working copy — its title, summary, slug,
+   * every section's words and the share card in that language — creating it
+   * when the language is new. No other version, and not the structure, is
+   * touched.
    *
    * The words are checked against the page's current structure, read first;
    * a page that does not exist is left to the database to refuse.
    */
-  async saveVersion(id: string, version: LandingVersionInput): Promise<string> {
+  async saveVersion(id: string, version: LandingVersionInput): Promise<LandingWriteResult> {
     const parsed = landingVersionInput.parse(version);
     const sections = await this.currentSections(id);
     const checked: ParsedLandingVersion = {
@@ -431,11 +464,14 @@ export class LandingPageService {
       p_slug: payload.slug ?? undefined,
       p_default_slug: payload.default_slug,
       p_section_texts: payload.section_texts,
+      p_share_title: payload.share_title,
+      p_share_image_id: payload.share_image_id ?? undefined,
+      p_share_image_alt: payload.share_image_alt,
     });
 
     if (error) throw error;
     if (!data) throw new Error("save_landing_page_version returned no id");
-    return data;
+    return { id: data, linkRewrites: write.rewrites };
   }
 
   /**

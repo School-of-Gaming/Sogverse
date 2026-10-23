@@ -464,6 +464,20 @@
         "inItem": "Osio {number} ({type}), {item}: {field}",
         "goneSection": "Osio, jota sivulla ei enää ole: {field}"
       },
+      "shareCard": {
+        "heading": "Linkin esikatselu",
+        "picture": {
+          "custom": "Kuva: tämän kieliversion oma jakokuva.",
+          "hero": "Kuva: avausosion kuva.",
+          "site": "Kuva: koko sivuston yhteinen kortti, koska avausosiossa ei ole kuvaa."
+        },
+        "title": {
+          "custom": "Otsikko: tämän kieliversion oma jako-otsikko.",
+          "page": "Otsikko: sivun otsikko."
+        },
+        "description": "Kuvaus: kunkin kieliversion tiivistelmä.",
+        "stale": "Oma otsikko tai kuva pysyy ennallaan, vaikka sivun otsikko tai avausosion kuva muuttuisi. Jos se ei enää sovi sivulle, pyydä tekoälysovellusta poistamaan se."
+      },
       "products": {
         "heading": "Valitut tuotteet",
         "section": "Osio {number} ({type})",

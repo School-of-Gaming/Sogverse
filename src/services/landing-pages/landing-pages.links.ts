@@ -31,6 +31,37 @@ export interface LandingWrite {
 }
 
 /**
+ * One link the write stores at another address than the one written: an
+ * own-site address made canonical. The rewrite is the save working, reported
+ * so whoever wrote the link can be told what is stored.
+ */
+export interface LandingLinkRewrite {
+  /** The section holding the link, by id. */
+  sectionId: string;
+  /** The section in an admin's words: "section 3 (Text)", numbered from one. */
+  section: string;
+  /** The language whose words hold the link; null for a button, which every language shares. */
+  locale: SupportedLocale | null;
+  /**
+   * Where in the section: `button`, or the markdown field's path in the
+   * section's words — `body`, `items.<item id>.answer`.
+   */
+  field: string;
+  /** A markdown link's words; null for a button. */
+  text: string | null;
+  /** The address as written. */
+  from: string;
+  /** The address stored. */
+  to: string;
+}
+
+/** A write with its links canonical, and every link that changed on the way. */
+export interface CanonicalLandingWrite extends LandingWrite {
+  /** In structure order, the buttons first; empty when every link was stored as written. */
+  rewrites: LandingLinkRewrite[];
+}
+
+/**
  * A write refused because of a link it carries. It is a `check_violation`
  * with an admin-facing sentence, the shape the database's own refusals take,
  * so `landingWriteFailure` quotes it the way it quotes the database's.
@@ -74,13 +105,17 @@ const BUTTON_REFUSAL: Record<ButtonTargetRefusal, string> = {
  * site's address is left as written. An email button names no page, so it is
  * stored as it is. A button or a markdown link leading to
  * no page on the site refuses the whole write, with one sentence per link
- * naming where it is and what it says.
+ * naming where it is and what it says. What is stored is all this decides;
+ * the write also comes back with each link it stored at another address than
+ * the one written, for the writer to report.
  */
 export async function canonicaliseLandingLinks(
   write: LandingWrite,
   { resolver, structure = write.sections ?? [], siteUrl = process.env.NEXT_PUBLIC_SITE_URL }: LandingLinkOptions,
-): Promise<LandingWrite> {
+): Promise<CanonicalLandingWrite> {
   const refusals: string[] = [];
+  const buttonRewrites: (LandingLinkRewrite | null)[] = [];
+  const textRewrites: LandingLinkRewrite[][] = [];
   const position = new Map(structure.map((section, index) => [section.id, index]));
   const sectionName = (section: Pick<LandingSection, "id" | "type">, index?: number) =>
     landingSectionName((index ?? position.get(section.id) ?? 0) + 1, section.type);
@@ -99,22 +134,49 @@ export async function canonicaliseLandingLinks(
               );
               return section;
             }
+            const from = hrefOf(button);
+            const to = hrefOf(result.target);
+            buttonRewrites[index] =
+              from === to
+                ? null
+                : {
+                    sectionId: section.id,
+                    section: sectionName(section, index),
+                    locale: null,
+                    field: "button",
+                    text: null,
+                    from,
+                    to,
+                  };
             return withButton(section, result.target);
           }),
         );
 
   const versions = await Promise.all(
-    write.versions.map(async (version) => {
+    write.versions.map(async (version, versionIndex) => {
+      const rewrites: LandingLinkRewrite[] = [];
+      textRewrites[versionIndex] = rewrites;
       const sectionTexts: LandingSectionTexts = {};
       for (const section of structure) {
         const text: unknown = version.sectionTexts[section.id];
         if (text === undefined) continue;
-        sectionTexts[section.id] = await canonicalText(section.type, text, async (markdown) => {
+        sectionTexts[section.id] = await canonicalText(section.type, text, async (markdown, field) => {
           const canonical = await canonicalizeMarkdownLinks(markdown, resolver, siteUrl);
           for (const dead of canonical.deadLinks) {
             refusals.push(
               `The link "${dead.text}" to ${dead.href}, in the ${languageName(version.locale)} words of ${sectionName(section)}, doesn't lead to a page on the site.`,
             );
+          }
+          for (const { text: words, from, to } of canonical.rewrites) {
+            rewrites.push({
+              sectionId: section.id,
+              section: sectionName(section),
+              locale: version.locale,
+              field,
+              text: words,
+              from,
+              to,
+            });
           }
           return canonical.markdown;
         });
@@ -124,7 +186,14 @@ export async function canonicaliseLandingLinks(
   );
 
   if (refusals.length > 0) throw new LandingLinkRefusal(refusals.join(" "));
-  return { sections, versions };
+  return {
+    sections,
+    versions,
+    rewrites: [
+      ...buttonRewrites.filter((rewrite) => rewrite !== null),
+      ...textRewrites.flat(),
+    ],
+  };
 }
 
 /**
@@ -186,11 +255,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** One section's words with every markdown field passed through `rewrite`. */
+/**
+ * One section's words with every markdown field passed through `rewrite`,
+ * which is told the field's path in the words (`body`, `items.<id>.answer`).
+ */
 async function canonicalText(
   type: LandingSectionType,
   text: unknown,
-  rewrite: (markdown: string) => Promise<string>,
+  rewrite: (markdown: string, field: string) => Promise<string>,
 ): Promise<LandingSectionText> {
   const value: Record<string, unknown> = isRecord(text) ? { ...text } : {};
   const fields: readonly LandingMarkdownField[] = LANDING_SECTIONS[type].markdownFields;
@@ -203,13 +275,13 @@ async function canonicalText(
         const markdown = isRecord(item) ? item[spec.field] : undefined;
         rewritten[itemId] =
           isRecord(item) && typeof markdown === "string"
-            ? { ...item, [spec.field]: await rewrite(markdown) }
+            ? { ...item, [spec.field]: await rewrite(markdown, `${spec.items}.${itemId}.${spec.field}`) }
             : item;
       }
       value[spec.items] = rewritten;
     } else {
       const markdown = value[spec.field];
-      if (typeof markdown === "string") value[spec.field] = await rewrite(markdown);
+      if (typeof markdown === "string") value[spec.field] = await rewrite(markdown, spec.field);
     }
   }
   return LANDING_SECTIONS[type].text.parse(value);

@@ -1,5 +1,5 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { AdminLandingPage } from "./landing-pages.contracts";
+import type { AdminLandingPage, PublishedLandingPage } from "./landing-pages.contracts";
 
 /**
  * **What a publish would do now**, read from one admin read of the page: the
@@ -55,5 +55,43 @@ export function landingPublishForecast(
         ? [{ locale: v.locale, from, to: v.slug }]
         : [];
     }),
+  };
+}
+
+/**
+ * **The published copy a publish now would leave**, from the same read: the
+ * working structure and pictures with the complete versions alone, or null
+ * when none is complete and the publish would be refused. It is what the
+ * public page's own builders — its metadata above all — are run over to say
+ * what the next publish would serve.
+ *
+ * The two dates are stand-ins, since no publish has happened: the page's
+ * first publish where it has one, and the last save. Nothing that reads the
+ * copy for what it would serve reads either.
+ */
+export function landingPublishedCopy(
+  page: Pick<AdminLandingPage, "draft" | "publication">,
+): PublishedLandingPage | null {
+  const { draft, publication } = page;
+  const versions = draft.versions
+    .filter((v) => v.missing.length === 0)
+    .map(({ locale, title, summary, slug, sectionTexts, shareTitle, shareImageId, shareImageAlt }) => ({
+      locale,
+      title,
+      summary,
+      slug,
+      sectionTexts,
+      shareTitle,
+      shareImageId,
+      shareImageAlt,
+    }));
+  if (versions.length === 0) return null;
+  return {
+    id: draft.id,
+    firstPublishedAt: publication?.firstPublishedAt ?? draft.updatedAt,
+    publishedAt: draft.updatedAt,
+    sections: draft.sections,
+    pictures: draft.pictures,
+    versions,
   };
 }

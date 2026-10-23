@@ -73,7 +73,7 @@ const buttonTarget = z
         .trim()
         .regex(/^\/(?!\/)/, "A site path starts with a single /")
         .describe(
-          "A page of this site by its path without a language prefix, e.g. /shop/<product id>; readers are taken to it in their own language.",
+          "A page of this site by its path without a language, e.g. /shop/<product id>; it opens in the language of the page the button is on. A path with a language or translated segments (/fi/kauppa/<id>) is accepted and stored without it, a slug page's address is stored at its id address, and a path no page is served from is refused.",
         ),
     }),
     z.strictObject({
@@ -83,7 +83,9 @@ const buttonTarget = z
         .trim()
         .url("Not a web address")
         .regex(/^https?:\/\//, "A web address starts with http:// or https://")
-        .describe("Another site's http(s) address. Uncommon: prefer a page of this site."),
+        .describe(
+          "Another site's http(s) address. Uncommon: prefer a page of this site. An address on this site sent here is stored as an internal path.",
+        ),
     }),
     z.strictObject({
       kind: z.literal("email"),
@@ -186,7 +188,7 @@ export const MCP_LANDING_SECTIONS: {
 } = {
   hero: {
     about:
-      "The page's opening: the headline is the page's only H1, with an optional line under it, an optional picture and an optional button. Every page has exactly one, first. Its picture is also the page's link preview, the image shown wherever the page is shared, with its alt text; a hero without one shares the site-wide card. A partner's logo in it (Roblox's, Lynx's) is a new placement of their mark, which needs that partner's sign-off first.",
+      "The page's opening: the headline is the page's only H1, with an optional line under it, an optional picture and an optional button. Every page has exactly one, first. Its picture is also the page's link preview, the image shown wherever the page is shared, with its alt text, in every language that sets no share picture of its own (shareImageId); a hero without one shares the site-wide card in those languages. A partner's logo in it (Roblox's, Lynx's) is a new placement of their mark, which needs that partner's sign-off first.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("hero"),

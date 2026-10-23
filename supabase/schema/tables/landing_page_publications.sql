@@ -52,7 +52,7 @@ COMMENT ON COLUMN public.landing_page_publications.first_published_at IS 'When t
 -- Name: COLUMN landing_page_publications.pictures; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_publications.pictures IS 'Each catalogue entry the live sections show, as {entry id: {"path", "purpose"}}, derived by apply_landing_pictures — what the public pages paint, and the shape each picture''s box is reserved at, readable without reading the admin-only catalogue.';
+COMMENT ON COLUMN public.landing_page_publications.pictures IS 'Each catalogue entry the live sections and every live version''s share picture show, as {entry id: {"path", "purpose"}}, derived by apply_landing_pictures — what the public pages paint, and the shape each picture''s box is reserved at, readable without reading the admin-only catalogue.';
 
 
 --

@@ -464,6 +464,20 @@
         "inItem": "Section {number} ({type}), {item}: {field}",
         "goneSection": "A section no longer on the page: {field}"
       },
+      "shareCard": {
+        "heading": "Link preview",
+        "picture": {
+          "custom": "Picture: this language's own share picture.",
+          "hero": "Picture: the opening section's picture.",
+          "site": "Picture: the site-wide card, because the opening section has no picture."
+        },
+        "title": {
+          "custom": "Title: this language's own share title.",
+          "page": "Title: the page title."
+        },
+        "description": "Description: each language's summary.",
+        "stale": "A custom title or picture stays as it is when the page title or the opening section's picture changes. If it no longer fits the page, ask the AI app to clear it."
+      },
       "products": {
         "heading": "Picked products",
         "section": "Section {number} ({type})",

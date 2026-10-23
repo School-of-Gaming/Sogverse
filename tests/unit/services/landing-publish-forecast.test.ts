@@ -24,6 +24,9 @@ function version(
     summary: complete ? "Summary" : "",
     slug,
     sectionTexts: {},
+    shareTitle: "",
+    shareImageId: null,
+    shareImageAlt: "",
     missing: complete ? [] : ["summary"],
   };
 }
@@ -58,6 +61,9 @@ function page(
               summary: "Summary",
               slug,
               sectionTexts: {},
+              shareTitle: "",
+              shareImageId: null,
+              shareImageAlt: "",
             })),
           },
   };

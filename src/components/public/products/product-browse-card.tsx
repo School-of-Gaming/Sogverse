@@ -52,6 +52,8 @@ interface ProductBrowseCardProps {
    * any other online product.
    */
   municipalityScoped?: boolean;
+  /** The title's outline level, the view's to default. */
+  titleLevel?: ProductBrowseCardViewProps["titleLevel"];
 }
 
 // Adapter: resolves a `ProductBrowseRow` into the display props
@@ -66,6 +68,7 @@ export function ProductBrowseCard({
   counts,
   detailHref,
   municipalityScoped = false,
+  titleLevel,
 }: ProductBrowseCardProps) {
   const viewProps = useBrowseCardViewProps(
     product,
@@ -73,7 +76,7 @@ export function ProductBrowseCard({
     detailHref,
     municipalityScoped,
   );
-  return <ProductBrowseCardView {...viewProps} />;
+  return <ProductBrowseCardView {...viewProps} titleLevel={titleLevel} />;
 }
 
 /**

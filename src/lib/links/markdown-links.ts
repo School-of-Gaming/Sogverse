@@ -6,7 +6,8 @@ import { resolveCanonicalHref, type ResolvedHref, type SlugResolver } from "./ow
 /**
  * **Every link in a markdown source, stored canonical**: each own-site href
  * rewritten to its internal route path (a slug address to its id address),
- * and each own-site href that leads nowhere reported for the writer to refuse.
+ * each own-site href that leads nowhere reported for the writer to refuse, and
+ * each rewrite reported for the writer to tell whoever wrote the link.
  *
  * **What counts as a link is the renderer's answer.** The source is parsed by
  * `remark-parse` without extensions — the parser inside `react-markdown` — so
@@ -28,10 +29,26 @@ export interface DeadLink {
   href: string;
 }
 
+/** A link whose stored destination is not the one written. */
+export interface RewrittenLink {
+  /** The link's words, as the reader sees them. */
+  text: string;
+  /** The address as written. */
+  from: string;
+  /** The address stored. */
+  to: string;
+}
+
 export interface CanonicalMarkdown {
   markdown: string;
   /** Every own-site link leading nowhere, in source order; empty when there is none. */
   deadLinks: DeadLink[];
+  /**
+   * Every link whose destination the rewrite changed, in source order — a
+   * reference link once per definition it uses. Empty when the source was
+   * already canonical.
+   */
+  rewrites: RewrittenLink[];
 }
 
 const parser = unified().use(remarkParse);
@@ -47,19 +64,28 @@ export async function canonicalizeMarkdownLinks(
   const resolve = (href: string): Promise<ResolvedHref> =>
     resolveCanonicalHref(href, resolver, siteUrl);
   const linkResults = await Promise.all(links.map((link) => resolve(link.url)));
-  const usedDefinitions = [...definitions.values()].filter((definition) =>
-    references.some((reference) => reference.identifier === definition.identifier),
-  );
+  const firstReferences = new Map<string, LinkReference>();
+  for (const reference of references) {
+    if (!firstReferences.has(reference.identifier)) {
+      firstReferences.set(reference.identifier, reference);
+    }
+  }
+  // Each definition some link uses, with the first link using it.
+  const usedDefinitions = [...definitions.values()].flatMap((definition) => {
+    const first = firstReferences.get(definition.identifier);
+    return first === undefined ? [] : [{ definition, first }];
+  });
   const definitionResults = new Map(
     await Promise.all(
       usedDefinitions.map(
-        async (definition) => [definition.identifier, await resolve(definition.url)] as const,
+        async ({ definition }) => [definition.identifier, await resolve(definition.url)] as const,
       ),
     ),
   );
 
   const edits: Edit[] = [];
   const deadLinks: { offset: number; link: DeadLink }[] = [];
+  const rewrites: { offset: number; link: RewrittenLink }[] = [];
 
   links.forEach((link, i) => {
     const result = linkResults[i];
@@ -67,12 +93,21 @@ export async function canonicalizeMarkdownLinks(
       deadLinks.push({ offset: offsetOf(link), link: { text: textOf(link), href: link.url } });
     } else if (result.kind === "internal" && result.path !== link.url) {
       edits.push(linkEdit(markdown, link, result.path));
+      rewrites.push({
+        offset: offsetOf(link),
+        link: { text: textOf(link), from: link.url, to: result.path },
+      });
     }
   });
-  for (const definition of usedDefinitions) {
+  for (const { definition, first } of usedDefinitions) {
     const result = definitionResults.get(definition.identifier);
     if (result?.kind === "internal" && result.path !== definition.url) {
       edits.push(definitionEdit(markdown, definition, result.path));
+      // Named by the words of the first link that uses it.
+      rewrites.push({
+        offset: offsetOf(first),
+        link: { text: textOf(first), from: definition.url, to: result.path },
+      });
     }
   }
   for (const reference of references) {
@@ -91,6 +126,7 @@ export async function canonicalizeMarkdownLinks(
   return {
     markdown: rewritten,
     deadLinks: deadLinks.sort((a, b) => a.offset - b.offset).map(({ link }) => link),
+    rewrites: rewrites.sort((a, b) => a.offset - b.offset).map(({ link }) => link),
   };
 }
 

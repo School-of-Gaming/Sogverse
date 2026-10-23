@@ -284,6 +284,21 @@ and ask whether the difference is deliberate, and aligning them is the simpler a
 even though leaving them alone is the smaller diff. Leaving the code as it stands is
 right only when it already reads as the simplest version of itself.
 
+### A state nothing can produce gets no code path
+
+**Rule: before writing a fallback, an early return, a `catch` or a placeholder, name what
+produces the state it handles — and check it, don't assume it.** Real producers are
+concrete: a race or a concurrent write, an `ON DELETE SET NULL`, a third party or a
+webhook arriving late, a browser bundle from before a deploy, another tab, input from a
+person. If the schema (a `NOT NULL`, a CHECK, a trigger, a foreign key) or every caller
+rules the state out, write no branch for it. When the type still insists, the type is
+looser than the truth: tighten it where the value is built (`supabase/CLAUDE.md`,
+"Generated nullability can lie"), or throw — never a fallback value, which turns a
+broken invariant into plausible wrong output. A comment explaining that a branch is
+unreachable describes the defect rather than justifying it. The check cuts both ways: a
+comment calling a branch theoretical is a claim to verify before relying on it, because
+deleting a branch something does produce is a bug.
+
 ### A comment describes current behaviour, never a migration number
 
 **Rule: a comment — in TypeScript, in SQL, or on a database object — says what the thing

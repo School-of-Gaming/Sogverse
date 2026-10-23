@@ -60,6 +60,8 @@ Read the code with these concerns in mind. Do not produce a section per concern 
 
 **Error-handling restraint:** Do *not* flag missing try/catch, missing null checks, or missing logging unless the absence would break a user flow or create bad UX. Errors caught and logged "for safety" are noise, not a fix. Only surface error-handling gaps that have a concrete user-visible consequence.
 
+**Guards against states nothing produces.** For every fallback value, early return, `catch`, placeholder label or extra union variant the diff adds, name what produces the state it handles, and verify it. Lint already removes the guards the *types* rule out, so the ones left are those the type allows but the system may not: read the column's constraints and triggers in `supabase/schema/`, the callers, the parse layer. Real producers are concrete — a race, an `ON DELETE SET NULL`, a late webhook, a third-party failure, a browser bundle from before a deploy, another tab, a person's input, a hosted database that has drifted from `migrations/` (what a migration's end-state assertions exist to catch). When the schema or every caller rules the state out, the guard is a finding: delete the branch, tighten the type where the value is built, or throw. A comment in the diff saying a branch is unreachable, defensive or "belt and braces" is a lead to check, not an excuse — and a comment calling an *existing* branch theoretical is a claim to check the other way, because removing a branch that something does produce is a bug. Before reporting one of these, state in the finding the constraint or caller that rules the state out; if you cannot name one, you have not found a defect.
+
 ## Step 4 — Output
 
 Produce one ranked list, most important to least important. Each finding includes:
@@ -70,7 +72,7 @@ Produce one ranked list, most important to least important. Each finding include
 - A suggested direction
 - **`mechanical` or `fork`** — whether settling it is a judgment call
 
-**Mark every finding `mechanical` or `fork`.** *Mechanical* means one defensible resolution and nothing left to weigh: a correctness fix, a guard or assertion strengthened, a test pinned, a doc corrected, housekeeping. *Fork* means the fix has to choose between two defensible options, or it touches product behaviour, money or auth semantics, schema shape, user-facing copy, or a plan's step boundaries. The test is whether two reasonable people could settle it differently — **not** how confident you are that your own answer is right.
+**Mark every finding `mechanical` or `fork`.** *Mechanical* means one defensible resolution and nothing left to weigh: a correctness fix, a test pinned, a doc corrected, housekeeping. Removing or loosening any guard, check, default or fallback is `fork` — even one you judge plainly redundant: its case rests on a claim about what the system can produce, and the reader should see that claim before the branch goes. *Fork* means the fix has to choose between two defensible options, or it touches product behaviour, money or auth semantics, schema shape, user-facing copy, or a plan's step boundaries. The test is whether two reasonable people could settle it differently — **not** how confident you are that your own answer is right.
 
 **Code you can prove unused — nothing in `src` or `tests` calls it — is `mechanical`: delete it.** Never keep it for a caller that might come later, and never frame its removal as a question about plans: git history keeps it for the day one does.
 

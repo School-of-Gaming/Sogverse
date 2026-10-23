@@ -464,6 +464,20 @@
         "inItem": "{number} ’ay’ ({type}), {item}: {field}",
         "goneSection": "Sapvam ’ay’ tu’lu’be’: {field}"
       },
+      "shareCard": {
+        "heading": "rar mu'tlhegh",
+        "picture": {
+          "custom": "mIllogh: Hol ngeHmeH mIllogh le'.",
+          "hero": "mIllogh: tagh mIllogh.",
+          "site": "mIllogh: Hoch Daq ngeHmeH mIllogh; tagh mIllogh ghajbe'."
+        },
+        "title": {
+          "custom": "pong: Hol ngeHmeH pong le'.",
+          "page": "pong: nav pong."
+        },
+        "description": "QIjmeH mu': Hoch Hol nav mu' ngaj.",
+        "stale": "nav pong pagh tagh mIllogh choHlu'DI', pong le' pagh mIllogh le' choHbe'. nav mabbe'chugh, yIteqmoH 'e' yIra'."
+      },
       "products": {
         "heading": "Dochmey wIwIvta’bogh",
         "section": "bID {number} ({type})",
