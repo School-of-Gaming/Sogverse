@@ -44,9 +44,8 @@ BEGIN
                   AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
              )
           OR (
-               p.start_date IS NOT NULL
-               AND p.start_date <= v_month_end
-               AND (p.end_date IS NULL OR p.end_date >= p_month_start)
+               p.start_date <= v_month_end
+               AND p.end_date >= p_month_start
              )
            )
   ),
@@ -63,9 +62,7 @@ BEGIN
            l.name_i18n,
            0 AS depth
       FROM public.locations l
-     WHERE l.id IN (
-             SELECT c.location_id FROM candidate c WHERE c.location_id IS NOT NULL
-           )
+     WHERE l.id IN (SELECT c.location_id FROM candidate c)
      UNION ALL
     SELECT w.origin_id,
            l.id,
@@ -107,14 +104,12 @@ BEGIN
                'planned_dates',          pd.items,
                'holiday_breaks',         hb.items,
                'location',
-                 CASE WHEN l.id IS NULL THEN NULL
-                      ELSE jsonb_build_object(
-                             'id',        l.id,
-                             'name',      l.name,
-                             'name_i18n', l.name_i18n,
-                             'type',      l.type
-                           )
-                 END,
+                 jsonb_build_object(
+                   'id',        l.id,
+                   'name',      l.name,
+                   'name_i18n', l.name_i18n,
+                   'type',      l.type
+                 ),
                'municipality',
                  CASE WHEN m.id IS NULL THEN NULL
                       ELSE jsonb_build_object(
@@ -147,7 +142,10 @@ BEGIN
                'group_ids',              gr.items
              ) AS doc
         FROM candidate c
-        LEFT JOIN public.locations l ON l.id = c.location_id
+        -- Every municipality club has a location, in person and online alike
+        -- (chk_products_in_person_has_location, chk_products_online_muni_has_location),
+        -- and its foreign key is ON DELETE RESTRICT.
+        JOIN public.locations l ON l.id = c.location_id
         LEFT JOIN municipality m ON m.origin_id = c.location_id
         -- The link is the club's own column and never the location's: one city
         -- can be two customers, and an association can buy clubs sited in a

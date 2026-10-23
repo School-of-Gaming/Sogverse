@@ -160,8 +160,8 @@ export interface InvoiceClub {
    * cannot take the municipality from the section they were rendered under.
    */
   municipalityName: string;
-  /** The school hall it meets in. Null is type-driven only — see `buildClub`. */
-  locationName: string | null;
+  /** The school hall it meets in, or the municipality itself for an online club. */
+  locationName: string;
   /**
    * Whether the club's own location *is* its municipality, which is what a
    * remote club looks like: it points at the municipality directly rather than
@@ -656,17 +656,13 @@ function buildClub(
     id: club.id,
     name: resolveTranslation(club.product_translations, locale)?.name ?? "",
     municipalityName: localizedLocationName(club.municipality, locale),
-    locationName:
-      club.location === null
-        ? null
-        : localizedLocationName(club.location, locale),
+    locationName: localizedLocationName(club.location, locale),
     // An online club points at the municipality itself rather than at a hall
     // inside one — the ancestor-or-*self* half of the invoice's walk up the
     // chain — and the comparison is on the row rather than on the location's
     // type, because a `municipality` row that is not this club's own
     // municipality would still be a place worth naming.
-    locationIsMunicipality:
-      club.location !== null && club.location.id === club.municipality.id,
+    locationIsMunicipality: club.location.id === club.municipality.id,
     scheduleSummary:
       schedule === null ? null : joinScheduleGroups(schedule.groups) || null,
     compactSchedule:

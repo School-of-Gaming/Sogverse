@@ -110,8 +110,8 @@ export const municipalityInvoicingSession = z.object({
 export const municipalityInvoicingClub = z.object({
   id: z.string(),
   timezone: z.string(),
-  start_date: z.string().nullable(),
-  end_date: z.string().nullable(),
+  start_date: z.string(),
+  end_date: z.string(),
   municipality_fee_cents: z.number().nullable(),
   product_translations: z.array(productName),
   schedule_slots: z.array(municipalityInvoicingScheduleSlot),
@@ -127,7 +127,7 @@ export const municipalityInvoicingClub = z.object({
    * left out of the Finvoice file.
    */
   holiday_breaks: holidayBreakRows,
-  location: municipalityInvoicingLocation.nullable(),
+  location: municipalityInvoicingLocation,
   municipality: municipalityInvoicingMunicipality,
   invoice_customer: invoiceCustomerRow.nullable(),
   sessions: z.array(municipalityInvoicingSession),

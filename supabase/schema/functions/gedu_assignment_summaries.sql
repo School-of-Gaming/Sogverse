@@ -134,7 +134,7 @@ BEGIN
              WHERE gs.group_id = g.id
                AND gs.ends_at <= now()
                AND gs.session_date >= COALESCE(p_epoch_date, DATE '0001-01-01')
-               AND (p.start_date IS NULL OR gs.session_date >= p.start_date)
+               AND gs.session_date >= p.start_date
           ) AS occurrence
 
           -- The occurrence's END INSTANT — one value per occurrence, and the
@@ -175,21 +175,16 @@ BEGIN
           -- not a per-occurrence question. This one also answers the
           -- empty-group exemption below, which is.
           --
-          -- The NULL branches are explicit rather than left to a comparison's
-          -- behaviour on NULL, and both point the same way — expected. A seat
-          -- with no stamp holds no group, so it cannot be here at all; an
-          -- occurrence with no end instant cannot arise either. Where the
-          -- unreachable happens anyway, the answer is the behaviour that
-          -- predates this migration, which costs a mark nobody needed rather
-          -- than producing a false "complete".
+          -- Both sides of the comparison are always there: a seat in a group
+          -- carries its join stamp (chk_participations_group_joined_at_iff_group),
+          -- and an occurrence's end is a stored row's NOT NULL ends_at or, for
+          -- a date only the plan projects, that same plan's end.
           CROSS JOIN LATERAL (
             SELECT COUNT(*)::integer AS expected_size
               FROM public.participations part4
              WHERE part4.group_id = g.id
                AND part4.status   = 'active'::public.participation_status
-               AND (part4.group_joined_at IS NULL
-                    OR occurrence_end.ends_at IS NULL
-                    OR part4.group_joined_at <= occurrence_end.ends_at)
+               AND part4.group_joined_at <= occurrence_end.ends_at
           ) AS expected
 
          -- A session nobody in the group was expected at owes nothing: there
@@ -270,9 +265,7 @@ BEGIN
                    ON part2.participant_id = att.participant_id
                   AND part2.group_id = g.id
                   AND part2.status   = 'active'::public.participation_status
-                  AND (part2.group_joined_at IS NULL
-                       OR occurrence_end.ends_at IS NULL
-                       OR part2.group_joined_at <= occurrence_end.ends_at)
+                  AND part2.group_joined_at <= occurrence_end.ends_at
                 WHERE gs2.group_id     = g.id
                   AND gs2.session_date = occurrence.session_date
              ) < expected.expected_size
@@ -337,10 +330,9 @@ BEGIN
              -- every seat postdating it — is already excluded by the
              -- expected_size guard above, so nothing here has to restate it.
              --
-             -- The array-length test is defensive: the CHECK on the table
-             -- refuses an empty array and the write RPC deletes the row instead
-             -- of storing one, so "no row" is the only reachable empty. It costs
-             -- nothing and it states what "has a creation" means.
+             -- A row IS a creation: the table's CHECK refuses an empty array and
+             -- the write RPC deletes the row instead of storing one, so "no row"
+             -- is the only empty there is.
              OR (
                p.requires_gamer_creations
                AND occurrence.session_date = final_occurrence.session_date
@@ -349,21 +341,14 @@ BEGIN
                    FROM public.participations part3
                   WHERE part3.group_id = g.id
                     AND part3.status   = 'active'::public.participation_status
-                    -- The same three-branch shape (1) and the expected-size
-                    -- lateral use, against the same per-occurrence end instant,
-                    -- and NULL points the same way in both: expected, which is
-                    -- the behaviour that predates this file and can only ever
-                    -- ask for a creation nobody needed rather than declare a
-                    -- run finished that is not.
-                    AND (part3.group_joined_at IS NULL
-                         OR occurrence_end.ends_at IS NULL
-                         OR part3.group_joined_at <= occurrence_end.ends_at)
+                    -- The same join-date test (1) and the expected-size
+                    -- lateral use, against the same per-occurrence end instant.
+                    AND part3.group_joined_at <= occurrence_end.ends_at
                     AND NOT EXISTS (
                       SELECT 1
                         FROM public.gamer_group_creations c
                        WHERE c.group_id       = g.id
                          AND c.participant_id = part3.participant_id
-                         AND jsonb_array_length(c.creations) > 0
                     )
                )
              )

@@ -15,8 +15,8 @@ BEGIN
   PERFORM public.refresh_product_seat_counts(NEW.product_id);
 
   -- An UPDATE that moved a row to a different product needs the old product
-  -- recomputed too (theoretical — product_id doesn't change in practice,
-  -- but the trigger covers it anyway).
+  -- recomputed too, or the seat it left keeps counting there:
+  -- admin_move_participation moves a seat between two clubs this way.
   IF TG_OP = 'UPDATE' AND OLD.product_id <> NEW.product_id THEN
     PERFORM public.refresh_product_seat_counts(OLD.product_id);
   END IF;
