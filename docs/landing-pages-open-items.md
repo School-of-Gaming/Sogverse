@@ -98,5 +98,3 @@ conflicts between `landing-share-card`, `landing-mcp-seo-and-links` and what the
 
 - A landing "points" section without a heading draws its item titles as H3, which can
   skip a level after the page's H1.
-- `npm run test:smoke` was reported to need a prior `npm run build`, contrary to the root
-  `CLAUDE.md`; verify, then fix the doc or the script.
