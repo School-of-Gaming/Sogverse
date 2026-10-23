@@ -14,7 +14,7 @@ npm run type-check       # TypeScript check (tsc --noEmit)
 npm run gates            # All landing gates: lint + type-check + translations + the MCP picture uploader's build freshness + the tests the change can affect vs origin/dev (runs all, reports every failure; -- --all for every test, -- --list to see the selection)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
-npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
+npm run test:smoke       # Smoke check of this checkout's existing production build (headers/CSP) — CI runs it on every push; tests/CLAUDE.md
 npm run load             # CPU use and the test runs in progress, by checkout — read before blaming a timeout on the test
 npm run db -- generate   # Regenerate database.types.ts and supabase/schema/ from this checkout's migrations
 npm run db               # The local database commands (up, park, down, reset, migrate, list) — supabase/CLAUDE.md
@@ -214,7 +214,7 @@ work under `tests/`). Two things worth knowing from anywhere:
   database it builds and removes itself (`tests/CLAUDE.md` has the details).
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
-- **`smoke/` is the only CI job that builds the app**, and it asserts security headers
+- **Build & Smoke is the only CI job that builds the app**, and `smoke/` asserts security headers
   and the per-request CSP against a served production build over plain HTTP, and that the
   build has dropped the dev-only code it must not contain. No browser
   is launched there; a test that needs one does not belong in that directory.
