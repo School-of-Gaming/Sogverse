@@ -1,0 +1,19 @@
+{
+  "titles": {
+    "products": "Kerhot, leirit ja tapahtumat",
+    "invoicing": "Laskutus",
+    "marketing": "Markkinointi"
+  },
+  "tabs": {
+    "products": "Tuotteet",
+    "sites": "Toimipisteet",
+    "holidayCalendars": "Lomakalenterit",
+    "municipalities": "Kunnat",
+    "invoiceCustomers": "Laskutusasiakkaat",
+    "gedus": "Gedut",
+    "landingPages": "Laskeutumissivut",
+    "testimonials": "Asiakaskokemukset",
+    "guides": "Oppaat",
+    "spotlights": "Nostot"
+  }
+}

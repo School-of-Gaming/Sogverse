@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enChat from "@/../messages/en/chat.json";
 import { ChatMessageActions } from "@/components/chat/ChatMessageActions";
 import {
   deriveChatMessageCapabilities,
@@ -12,6 +12,8 @@ import type {
   ChatMessage,
   ChatModerationLocks,
 } from "@/components/chat/types";
+
+const messages = { chat: enChat };
 
 /**
  * ============================================================================

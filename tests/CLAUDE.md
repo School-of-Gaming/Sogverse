@@ -20,6 +20,14 @@ run a single file, use `npx vitest run <file>` — never `npm run test -- --run 
 the npm script already carries `--run`, so the doubled flag is a vitest error ("Expected
 a single value for option --run").
 
+`npm run gates` runs only the `unit/` + `integration/` files whose import closure the
+change touches, plus every file whose closure imports `fs`, `child_process`, a glob
+library or one of the libraries the selector lists as opening the paths they are handed
+— the sweeps that read the repo from disk always run. So code that hands a file path to
+a library not on that list (`sharp(path)`, a TypeScript program) adds the library to the
+selector's list in the same change: otherwise the selector sees an ordinary test and
+skips it when the files it reads change.
+
 ## Node is the default environment; the DOM is opted into
 
 Booting a jsdom realm is the single largest cost in this suite, and it was being paid by
@@ -89,9 +97,10 @@ raw text. Tests of the editor itself never see it.
 
 ## The smoke check is a build gate first
 
-`smoke/` is the only place we build the app and serve it. Playwright's config starts the
-production server, so the check fails if the build breaks or the server refuses to boot —
-and that gate is most of its value. The assertions on top of it are the ones that can
+The Build & Smoke CI job is the only place we build the app and serve it: its build step
+runs first, then Playwright's config starts the production server on that build, so the
+job fails if the build breaks or the server refuses to boot — and that gate is most of
+its value. The assertions on top of it are the ones that can
 only be made against a real response: the static security headers, and the per-request
 CSP nonce the proxy generates (which is absent in dev, so nothing else can verify it) —
 plus assertions on what the build output contains, such as dev-only code the build must
@@ -102,6 +111,13 @@ it is what keeps the job cheap: no engine matrix, no device emulation, no browse
 binaries to install in CI, no retries, because HTTP header assertions are deterministic.
 A spec that reads the build's files needs no fixture at all.
 A spec here that needs a `page` does not belong here.
+
+**CI is where it runs.** The Build & Smoke job runs it on every push to every branch, so
+to smoke-check a branch, push it and read that job. `npm run test:smoke` does not build:
+a run by hand needs `npm run build` in the same checkout first, and the `PORT` environment
+variable set to a free port when something already holds 3000. It never reuses a server already on the port, so a
+held port stops the run rather than testing whatever app is listening there. A stale
+`.next` from an earlier commit is served as it is.
 
 There was a browser-driven suite before, asserting on marketing copy and unauthenticated
 redirects; it was deleted in August 2026 for churning on every copy edit while catching
@@ -244,6 +260,12 @@ drift silently. Two things it does with the locale segment, both load-bearing:
 own wrapped navigation module (`@/i18n/navigation`) and the browser Supabase client
 (`@/lib/supabase/client`), exposing `mockSupabaseClient` for assertions. Components and
 hooks under test get a working router and Supabase client without per-test wiring.
+
+**It also wraps next-intl's `NextIntlClientProvider` so a missing message throws.** A
+component test hands the provider only the namespace files its tree reads
+(`src/i18n/CLAUDE.md`), and a namespace left out then fails the test by name instead of
+rendering a key the assertions may never look at. A test that mocks `next-intl` itself
+replaces the wrapper along with the rest.
 
 **The wrapped navigation mock is not optional decoration.** Components name routes
 through that module now, and its hooks read a routing context that a rendered component

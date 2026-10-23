@@ -61,6 +61,10 @@ this routing exists to remove.
 
 ## UI shape
 
+No customer → no billing section on the dashboard at all, heading and nav entry
+included: there is nothing for the portal to show. A failed account read shows the
+section with the single button rather than hiding it.
+
 One customer → today's single unlabelled "Manage billing" button, unchanged.
 More than one → a button per customer, each labelled with the children/clubs it
 covers, under a short line explaining the split.

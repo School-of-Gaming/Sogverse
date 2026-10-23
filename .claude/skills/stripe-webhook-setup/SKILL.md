@@ -15,7 +15,7 @@ Three Vercel environments → three webhook endpoints. Stripe distinguishes test
 
 The Vercel CLI defaults to no branch scope (env var applies to *all* preview deployments). The Stripe CLI defaults to **test** mode (must pass `--live` for production). Both defaults are intentional here — don't override them without a reason.
 
-The signing secret is `STRIPE_PRODUCTS_WEBHOOK_SECRET` — not `STRIPE_WEBHOOK_SECRET`, a dead name (`docs/architecture/products.md` §Billing has the env-var facts). Adding it to Vercel follows the `vercel-env-vars` skill: piped through the CLI, `--sensitive` on preview and production.
+The signing secret is `STRIPE_PRODUCTS_WEBHOOK_SECRET` — not `STRIPE_WEBHOOK_SECRET`, a dead name (`docs/architecture/products.md` §Billing has the env-var facts). Adding it to Vercel follows the `env-vars` skill: piped through the CLI, `--sensitive` on preview and production.
 
 The path is always `/api/webhooks/stripe/products`. The events are always:
 

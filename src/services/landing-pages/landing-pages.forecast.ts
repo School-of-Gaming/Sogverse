@@ -75,12 +75,15 @@ export function landingPublishedCopy(
   const { draft, publication } = page;
   const versions = draft.versions
     .filter((v) => v.missing.length === 0)
-    .map(({ locale, title, summary, slug, sectionTexts }) => ({
+    .map(({ locale, title, summary, slug, sectionTexts, shareTitle, shareImageId, shareImageAlt }) => ({
       locale,
       title,
       summary,
       slug,
       sectionTexts,
+      shareTitle,
+      shareImageId,
+      shareImageAlt,
     }));
   if (versions.length === 0) return null;
   return {
@@ -88,7 +91,7 @@ export function landingPublishedCopy(
     firstPublishedAt: publication?.firstPublishedAt ?? draft.updatedAt,
     publishedAt: draft.updatedAt,
     sections: draft.sections,
-    imagePaths: draft.imagePaths,
+    pictures: draft.pictures,
     versions,
   };
 }

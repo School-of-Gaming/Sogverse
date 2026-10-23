@@ -1,12 +1,15 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enRichText from "@/../messages/en/richText.json";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
 import { LANDING_SECTION_TYPES } from "@/lib/landing-pages/sections";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
+import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
 import { LANDING_SECTION_RENDERERS } from "@/components/landing-pages/landing-sections";
+
+const messages = { richText: enRichText };
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
@@ -30,6 +33,9 @@ const FAQ = id(6);
 const CTA = id(7);
 const PIC_A = id(10);
 const PIC_B = id(11);
+const SQUARE_A = id(12);
+const SQUARE_B = id(13);
+const PORTRAIT = id(14);
 const ITEM = (n: number) => id(100 + n);
 
 const SECTIONS: LandingSection[] = [
@@ -39,10 +45,11 @@ const SECTIONS: LandingSection[] = [
     imageId: PIC_A,
     button: { kind: "internal", path: "/shop" },
   },
-  { id: TEXT, type: "text", imageId: PIC_B, imageSide: "start" },
+  { id: TEXT, type: "text", background: "default", imageId: PIC_B, imageSide: "start" },
   {
     id: IMAGE,
     type: "image",
+    background: "default",
     images: [
       { id: ITEM(1), imageId: PIC_A },
       { id: ITEM(2), imageId: id(99) },
@@ -51,15 +58,18 @@ const SECTIONS: LandingSection[] = [
   {
     id: POINTS,
     type: "points",
+    background: "default",
     items: [
       { id: ITEM(3), icon: "trophy" },
       { id: ITEM(4), icon: "shield-check" },
     ],
   },
-  { id: STEPS, type: "steps", items: [{ id: ITEM(5) }, { id: ITEM(6) }] },
-  { id: FAQ, type: "faq", items: [{ id: ITEM(7) }, { id: ITEM(8) }] },
-  { id: CTA, type: "cta", button: { kind: "external", url: "https://partner.example/join" } },
+  { id: STEPS, type: "steps", background: "default", items: [{ id: ITEM(5) }, { id: ITEM(6) }] },
+  { id: FAQ, type: "faq", background: "default", items: [{ id: ITEM(7) }, { id: ITEM(8) }] },
+  { id: CTA, type: "cta", background: "default", button: { kind: "external", url: "https://partner.example/join" } },
 ];
+
+const FAQ_ITEMS = { [ITEM(7)]: { question: "Who leads it?", answer: "A *Game Educator*." } };
 
 const TEXTS: LandingSectionTexts = {
   [HERO]: {
@@ -81,12 +91,18 @@ const TEXTS: LandingSectionTexts = {
   },
   [FAQ]: {
     heading: "Questions",
-    items: { [ITEM(7)]: { question: "Who leads it?", answer: "A *Game Educator*." } },
+    items: FAQ_ITEMS,
   },
   [CTA]: { heading: "Ready?", body: "Join today.", buttonLabel: "Join" },
 };
 
-const PATHS = { [PIC_A]: "a.jpg", [PIC_B]: "b.jpg" };
+const PICTURES: LandingPictures = {
+  [PIC_A]: { path: "a.jpg", purpose: "landing_image" },
+  [PIC_B]: { path: "b.jpg", purpose: "landing_image" },
+  [SQUARE_A]: { path: "sa.jpg", purpose: "landing_square_image" },
+  [SQUARE_B]: { path: "sb.jpg", purpose: "landing_square_image" },
+  [PORTRAIT]: { path: "p.jpg", purpose: "landing_portrait_image" },
+};
 
 /** The nearest `selector` around `element`, which the test requires to exist. */
 function enclosing(element: HTMLElement, selector: string): HTMLElement {
@@ -108,10 +124,15 @@ function renderBody(
     <NextIntlClientProvider locale={locale} messages={messages}>
       <LandingPageBody
         sections={overrides.sections ?? SECTIONS}
-        imagePaths={PATHS}
+        pictures={PICTURES}
+        testimonials={{}}
+        guideIds={[]}
         sectionTexts={overrides.texts ?? TEXTS}
         textLocale={overrides.textLocale ?? locale}
         locale={locale}
+        products={null}
+        pageId={id(500)}
+        preview={false}
       />
     </NextIntlClientProvider>,
   );
@@ -150,6 +171,67 @@ describe("the landing page renderers", () => {
     expect(within(figure).getByAltText("A club room")).toBeTruthy();
   });
 
+  it("reserves a square or portrait text picture's own box, held narrower than its column", () => {
+    for (const [imageId, width, height, bucket, frame, sizes] of [
+      [SQUARE_A, "1200", "1200", "landing-square-images/sa.jpg", "max-w-md", "(min-width: 480px) 448px, calc(100vw - 2rem)"],
+      [PORTRAIT, "1200", "1500", "landing-portrait-images/p.jpg", "max-w-sm", "(min-width: 416px) 384px, calc(100vw - 2rem)"],
+    ] as const) {
+      const { unmount } = renderBody({
+        sections: [
+          { id: HERO, type: "hero" },
+          { id: TEXT, type: "text", background: "default", imageId, imageSide: "end" },
+        ],
+        texts: { [TEXT]: { heading: "Beside", body: "Words.", imageAlt: "Beside the words" } },
+      });
+      const picture = screen.getByAltText("Beside the words");
+      expect(picture.getAttribute("width")).toBe(width);
+      expect(picture.getAttribute("height")).toBe(height);
+      expect(picture.getAttribute("src")).toContain(encodeURIComponent(bucket));
+      expect(picture.getAttribute("sizes")).toBe(sizes);
+      expect(picture.parentElement?.className).toContain(frame);
+      unmount();
+    }
+  });
+
+  it("lays an image section out by its pictures' shape, with honest sizes", () => {
+    const gallery = (images: string[]): LandingSection[] => [
+      { id: HERO, type: "hero" },
+      { id: IMAGE, type: "image", background: "default", images: images.map((imageId, n) => ({ id: ITEM(20 + n), imageId })) },
+    ];
+    const sizesOf = () =>
+      [...document.querySelectorAll("figure img")].map((img) => img.getAttribute("sizes"));
+
+    const wide = renderBody({ sections: gallery([PIC_A, PIC_B]), texts: {} });
+    expect(sizesOf()).toEqual([
+      "(min-width: 1056px) 504px, (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
+      "(min-width: 1056px) 504px, (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
+    ]);
+    wide.unmount();
+
+    const squares = renderBody({
+      sections: gallery([SQUARE_A, SQUARE_B, SQUARE_A, SQUARE_B]),
+      texts: {},
+    });
+    expect(new Set(sizesOf())).toEqual(
+      new Set([
+        "(min-width: 1184px) 276px, (min-width: 1024px) calc(25vw - 1.25rem), (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
+      ]),
+    );
+    const grid = document.querySelector("figure > div");
+    expect(grid?.className).toContain("lg:grid-cols-4");
+    for (const img of document.querySelectorAll("figure img")) {
+      expect(img.getAttribute("width")).toBe("1200");
+      expect(img.getAttribute("height")).toBe("1200");
+      expect(img.className).toContain("aspect-square");
+    }
+    squares.unmount();
+
+    renderBody({ sections: gallery([PORTRAIT]), texts: {} });
+    expect(sizesOf()).toEqual(["(min-width: 480px) 448px, calc(100vw - 2rem)"]);
+    expect(document.querySelector("figure")?.className).toContain("max-w-md");
+    expect(document.querySelector("figure img")?.className).toContain("aspect-[4/5]");
+  });
+
   it("sends an own-site button to the page's language and an outside one to a new tab", () => {
     renderBody({ locale: "fi" });
     expect(screen.getByRole("link", { name: "Find a club" }).getAttribute("href")).toBe("/fi/kauppa");
@@ -172,11 +254,115 @@ describe("the landing page renderers", () => {
     expect(within(steps).getAllByRole("listitem")).toHaveLength(2);
     expect(within(steps).getByText("2")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 3, name: "Safe" })).toBeTruthy();
-    expect(screen.getByText("Who leads it?")).toBeTruthy();
+    // A question is an H3 under the section's H2, inside the row's summary.
+    const question = screen.getByRole("heading", { level: 3, name: "Who leads it?" });
+    expect(question.parentElement?.tagName).toBe("SUMMARY");
     expect(screen.getByText("Game Educator").tagName).toBe("EM");
     // The second question was never written, so it has no row.
     expect(screen.getAllByText(/Who leads it\?/)).toHaveLength(1);
     expect(document.querySelectorAll("details")).toHaveLength(1);
+  });
+
+  it("lays a card section on a full-width band, its content keeping the section's container", () => {
+    const { container } = renderBody({
+      sections: SECTIONS.map((section) =>
+        section.type === "points" || section.type === "steps" || section.type === "cta"
+          ? { ...section, background: "card" }
+          : section,
+      ),
+    });
+    const body = container.firstElementChild;
+    const sectionOf = (heading: string) =>
+      enclosing(screen.getByRole("heading", { name: heading }), "section");
+
+    // A band is the card ground and nothing more — no container, no width cap,
+    // no spacing of its own — directly in the body, so it runs edge to edge.
+    const points = sectionOf("Why families choose us");
+    const band = points.parentElement;
+    expect(band?.className).toBe("bg-card");
+    expect(band?.parentElement).toBe(body);
+    expect(points.className).toContain("container");
+
+    // Adjacent card sections share one run of the card ground: two bands
+    // touching, with each section's own padding inside them.
+    const steps = sectionOf("How to join");
+    expect(steps.parentElement?.className).toBe("bg-card");
+    expect(band?.nextElementSibling).toBe(steps.parentElement);
+
+    // A default section sits straight on the page ground between them.
+    const faq = sectionOf("Questions");
+    expect(faq.parentElement).toBe(body);
+    expect(sectionOf("Ready?").parentElement?.className).toBe("bg-card");
+    expect(enclosing(screen.getByRole("heading", { level: 1 }), "section").parentElement).toBe(body);
+  });
+
+  it("lays no band under a section on the default ground", () => {
+    const { container } = renderBody();
+    const body = container.firstElementChild;
+    expect([...(body?.children ?? [])].every((child) => child.tagName === "SECTION")).toBe(true);
+  });
+
+  it("makes the questions H2s when the FAQ section has no heading of its own", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[5]],
+      texts: { [FAQ]: { items: FAQ_ITEMS } },
+    });
+    const question = screen.getByRole("heading", { level: 2, name: "Who leads it?" });
+    expect(question.parentElement?.tagName).toBe("SUMMARY");
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+  });
+
+  it("titles points and steps as H3s under the section's H2", () => {
+    renderBody({ sections: [SECTIONS[0], SECTIONS[3], SECTIONS[4]] });
+    for (const [heading, titles] of [
+      ["Why families choose us", ["Fun", "Safe"]],
+      ["How to join", ["Choose", "Register"]],
+    ] as const) {
+      const section = enclosing(screen.getByRole("heading", { level: 2, name: heading }), "section");
+      expect(within(section).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(titles);
+      expect(within(section).getAllByRole("heading", { level: 2 })).toHaveLength(1);
+    }
+  });
+
+  it("makes points' and steps' titles H2s when the section has no heading of its own", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[3], SECTIONS[4]],
+      texts: {
+        [HERO]: { headline: "Gaming clubs in Espoo" },
+        [POINTS]: { items: { [ITEM(3)]: { title: "Fun" }, [ITEM(4)]: { title: "Safe" } } },
+        [STEPS]: {
+          eyebrow: "Joining",
+          items: { [ITEM(5)]: { title: "Choose" }, [ITEM(6)]: { title: "Register" } },
+        },
+      },
+    });
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "Fun",
+      "Safe",
+      "Choose",
+      "Register",
+    ]);
+    expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+  });
+
+  it("keeps a text section's headings, and unwraps an FAQ answer's to its words", () => {
+    renderBody({
+      sections: [SECTIONS[0], SECTIONS[1], SECTIONS[5]],
+      texts: {
+        [TEXT]: { heading: "What happens in a club", body: "## Building\n\nWe build things." },
+        [FAQ]: {
+          heading: "Questions",
+          items: { [ITEM(7)]: { question: "Who leads it?", answer: "## Our gedus\n\nA Game Educator." } },
+        },
+      },
+    });
+    // The text section's level-2 heading is drawn under its own H2.
+    expect(screen.getByRole("heading", { level: 3, name: "Building" })).toBeTruthy();
+    // The answer's never ranks beside its question: its words stay, as text.
+    expect(screen.queryByRole("heading", { name: "Our gedus" })).toBeNull();
+    const answer = screen.getByText("Our gedus");
+    expect(answer.closest("details")).not.toBeNull();
+    expect(answer.closest("h1, h2, h3, h4, h5, h6")).toBeNull();
   });
 
   it("marks the words' language where it is not the page's", () => {

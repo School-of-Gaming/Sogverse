@@ -1,5 +1,9 @@
 import type { QueryData } from "@supabase/supabase-js";
 import type { PlannedSession } from "@/lib/planned-sessions";
+import {
+  productVoiceRoom,
+  type ProductVoiceRoom,
+} from "@/lib/products/voice-room";
 import type {
   AppSupabaseClient,
   GeduAssignedProduct,
@@ -39,6 +43,11 @@ export interface MyAssignedProductSessionRow {
     endDate: string | null;
     /** False for in-person products — the join button is a no-op in that case. */
     isRemote: boolean;
+    /**
+     * How the product's sessions are joined — the Sogverse room, a meeting
+     * elsewhere, or instructions per locale. Always `sogverse` in person.
+     */
+    voiceRoom: ProductVoiceRoom;
     /**
      * The venue on an in-person product, or `null` — always on a remote one
      * (the read tests the remote flag, never the presence of a location, since a
@@ -303,6 +312,7 @@ function toMyAssignedProductSessionRow(
       startDate: row.product.start_date,
       endDate: row.product.end_date,
       isRemote: row.product.is_remote,
+      voiceRoom: productVoiceRoom(row.product, row.product.translations),
       siteName: row.product.site_name,
       topic: row.product.topic,
       spokenLanguageCode: row.product.spoken_language_code,

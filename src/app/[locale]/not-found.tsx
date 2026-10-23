@@ -2,7 +2,7 @@ import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import { Compass } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { Heading } from "@sog/ui";
 
 // The **translated** 404: what every in-app `notFound()` renders, and what an

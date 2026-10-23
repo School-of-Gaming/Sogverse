@@ -9,7 +9,7 @@ import {
   type PublishedLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
 import { landingPagePaths } from "./landing-page-address";
-import { landingLeadPicture } from "./landing-section-seo";
+import { landingShareCard, type LandingSharePicture } from "./landing-share-card";
 
 /*
  * **What a landing page tells search engines and link previews** — decided
@@ -21,25 +21,28 @@ import { landingLeadPicture } from "./landing-section-seo";
  *
  * Landing pages are promoted (`docs/architecture/site-quality.md`), and every
  * affordance is the system's: the admin writes a title, a summary and a slug,
- * and nothing else.
+ * and may override the share card's title and picture, and nothing else.
  *
  * - **The title and description are the shown version's own** — its title and
  *   its summary, which the schema caps at a search result's length. The
  *   `<title>` is that title through the root layout's template
- *   (`SITE_TITLE_TEMPLATE`); the card's title is it bare.
+ *   (`SITE_TITLE_TEMPLATE`). The share card's title is the version's share
+ *   title when it sets one, else the same title bare; its description is
+ *   always the summary.
  * - **The canonical and language versions follow the rule every page written
  *   per locale follows** (`src/lib/metadata/translated-page.ts`): the locales
  *   live are the language versions, each at its slug address, and a locale
  *   with no live version canonicalises to the slug address of the version it
  *   shows. `og:url` is the canonical.
- * - **The card is the hero's picture**, the one the page leads with
- *   (`landingLeadPicture`), served through the preview picture route with the
- *   shown version's alt text, else its title. A page whose hero has no picture
- *   takes the site-wide card, at the request's locale. Either is restated
- *   rather than inherited because Next assigns a child's `openGraph` and
- *   `twitter` over the layout's, dropping its image; `siteName` and `type` are
- *   restated for the same reason. `og:locale` is the language of the version
- *   whose words the card carries.
+ * - **The card's picture is the shown version's share picture when it sets
+ *   one, else the hero's**, the one the page leads with (`landingShareCard`),
+ *   served through the preview picture route with the shown version's alt
+ *   text, else the card's title. A version with neither takes the site-wide
+ *   card, at the request's locale. Either is restated rather than inherited
+ *   because Next assigns a child's `openGraph` and `twitter` over the
+ *   layout's, dropping its image; `siteName` and `type` are restated for the
+ *   same reason. `og:locale` is the language of the version whose words the
+ *   card carries.
  */
 
 /** One Open Graph / Twitter image entry, its URL relative to the site's origin. */
@@ -53,9 +56,12 @@ export interface LandingCardImage {
 /** The site-wide card at a locale; a page reads it from the catalog (`ogCardImage`). */
 export type SiteCardImage = (locale: SupportedLocale) => Promise<LandingCardImage>;
 
+/** Where a share card's picture comes from: the version's override, the hero's, or the site's. */
+export type LandingCardImageSource = "share-picture" | "hero" | "site-card";
+
 /** Everything a landing page's metadata is made of, read at one locale. */
 export interface LandingPageSeo {
-  /** The shown version's own title: the card's title, and the `<title>` through the template. */
+  /** The shown version's own title: the `<title>` through the template. */
   title: string;
   /** The shown version's summary: the meta description and the card's. */
   description: string;
@@ -63,10 +69,18 @@ export interface LandingPageSeo {
   alternates: { canonical: string; languages?: Record<string, string> };
   /** The language of the version whose words the card carries. */
   locale: SupportedLocale;
-  image: LandingCardImage;
-  /** Whether the card's picture is the hero's or the site-wide card. */
-  imageSource: "hero" | "site-card";
+  /** The share card (`landingShareCard`), its description being `description`. */
+  card: {
+    /** The version's share title, else its title. */
+    title: string;
+    titleSource: "share-title" | "page-title";
+    image: LandingCardImage;
+    imageSource: LandingCardImageSource;
+  };
 }
+
+const CARD_IMAGE_SOURCE: Readonly<Record<LandingSharePicture["source"], LandingCardImageSource>> =
+  { custom: "share-picture", hero: "hero", site: "site-card" };
 
 /**
  * The page's metadata read at `requestLocale`, or null for a page with no
@@ -81,23 +95,27 @@ export async function landingPageSeo(
   const shown = localizeLandingPage(page, locale);
   if (shown === null) return null;
   const { title, summary: description } = shown;
-  const picture = landingLeadPicture(shown);
+  const card = landingShareCard(shown);
   return {
     title,
     description,
     alternates: translatedPageMetadataAlternates(page.versions, locale, landingPagePaths(page)),
     locale: shown.locale,
-    image:
-      picture === null
-        ? await siteCard(locale)
-        : ogPictureImage("landing_image", picture.path, picture.alt ?? title),
-    imageSource: picture === null ? "site-card" : "hero",
+    card: {
+      title: card.title,
+      titleSource: card.titleSource === "custom" ? "share-title" : "page-title",
+      image:
+        card.picture.source === "site"
+          ? await siteCard(locale)
+          : ogPictureImage(card.picture.purpose, card.picture.path, card.picture.alt),
+      imageSource: CARD_IMAGE_SOURCE[card.picture.source],
+    },
   };
 }
 
 /** The metadata Next is handed for `seo`. */
 export function landingSeoMetadata(seo: LandingPageSeo): Metadata {
-  const { title, description, alternates, image } = seo;
+  const { title, description, alternates, card } = seo;
   return {
     title,
     description,
@@ -107,11 +125,16 @@ export function landingSeoMetadata(seo: LandingPageSeo): Metadata {
       siteName: "School of Gaming",
       locale: seo.locale,
       url: alternates.canonical,
-      title,
+      title: card.title,
       description,
-      images: [image],
+      images: [card.image],
     },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    twitter: {
+      card: "summary_large_image",
+      title: card.title,
+      description,
+      images: [card.image],
+    },
   };
 }
 
@@ -143,10 +166,15 @@ export interface RenderedLandingSeo {
   shareCard: {
     title: string;
     description: string;
+    /** `share-title` for the version's override, `page-title` for its title. */
+    titleSource: LandingPageSeo["card"]["titleSource"];
     imageUrl: string;
     imageAlt: string;
-    /** `hero` for the hero's picture, `site-card` for the site-wide card. */
-    image: LandingPageSeo["imageSource"];
+    /**
+     * `share-picture` for the version's override, `hero` for the hero's
+     * picture, `site-card` for the site-wide card.
+     */
+    image: LandingCardImageSource;
   };
 }
 
@@ -162,11 +190,12 @@ export function renderedLandingSeo(seo: LandingPageSeo, siteUrl: string): Render
       Object.entries(seo.alternates.languages ?? {}).map(([lang, path]) => [lang, absolute(path)]),
     ),
     shareCard: {
-      title: seo.title,
+      title: seo.card.title,
+      titleSource: seo.card.titleSource,
       description: seo.description,
-      imageUrl: absolute(seo.image.url),
-      imageAlt: seo.image.alt,
-      image: seo.imageSource,
+      imageUrl: absolute(seo.card.image.url),
+      imageAlt: seo.card.image.alt,
+      image: seo.card.imageSource,
     },
   };
 }

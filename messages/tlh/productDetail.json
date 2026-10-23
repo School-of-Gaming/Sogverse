@@ -1,0 +1,184 @@
+{
+  "jumpToSignup": "DaH {verb}!",
+  "back": {
+    "consumer_club": "ghom’a’meyDaq yIchegh",
+    "municipality_club": "veng ghom’a’meyDaq yIchegh",
+    "camp": "raghmeyDaq yIchegh",
+    "event": "wanI’meyDaq yIchegh"
+  },
+  "typeLabel": {
+    "consumer_club": "ghom’a’",
+    "municipality_club": "veng ghom’a’",
+    "camp": "ragh",
+    "event": "wanI’"
+  },
+  "sections": {
+    "overview": "yISov"
+  },
+  "topicInfo": {
+    "heading": "{name} De’",
+    "pegi": "PEGI {age}",
+    "topics": {
+      "minecraft_java": {
+        "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH – juHHom, veng, qo’ naQ ghap. Suvbe’lu’, QaplaHbe’lu’; jot ’ej tlhab Daq ’oH, vaj nuD ’ej Qatlh Sov luSamlaH. ”Java” ’oH mung Quj’e’, De’wI’mey Windows, Mac, Linux je lo’meH; ghojmoHwI’pu’maj lulo’.",
+        "note": "Hop ghojmoHghachmaj luSuvmeH, De’wI’Daq Minecraft poQ puqlI’. Minecraft Daq ”Minecraft: Java & Bedrock Edition for PC” ponglu’ – wa’logh DIl, tlhachID ghobe’, ’ej mIllogh lo’bogh ngaS. console, telategh, tablet je mIllogh pIm lI’be’.",
+        "linkLabel": "De’wI’vaD Minecraft yIje’"
+      },
+      "minecraft_bedrock": {
+        "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH – juHHom, veng, qo’ naQ ghap. Suvbe’lu’, QaplaHbe’lu’; jot ’ej tlhab Daq ’oH. ”Bedrock” ’oH mIllogh qImroQ (Xbox, PlayStation, Switch), telategh, tablet, Windows De’wI’ je lo’bogh.",
+        "note": "Huch ngaSbe’ Minecraft Bedrock. rap Quj, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq jaHbe’ – lI’bogh je’lu’bogh, jan Quj puqlI’. qImroQDaq, online Suvmey luSuvmeH, qImroQ Huch-membership je poQlu’.",
+        "linkLabel": "nuqDaq Suqlu’"
+      },
+      "minecraft_education": {
+        "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH. Minecraft Education ’oH Devlu’bogh ghommeyvaD chenmoHbogh mIllogh. rap chenmoHmeH qo’ Dun, ’ej ghomHom Devbogh nuv tInvaD jan chu’mey tu’lu’.",
+        "note": "pagh yIje’ ’ej ghojwI’choH pat pong yInIDQo’ – Minecraft Education pongmey nob School of Gaming, ’ej ghomHommeyDaq lulo’ QujwI’pu’. Hop ghojmoHghachmeyvaD, Quj naQ DIl HInobbe’: Microsoft Store pagh Minecraft Education Daq yISuq; Windows De’wI’, Mac, iPad, Chromebook je Qop.",
+        "linkLabel": "Minecraft Education De’"
+      },
+      "fortnite": {
+        "description": "Fortnite ’oH ’IH, na’rural online Quj’e’, ghochDaq ghom chenmoH ’ej tlhup ngajbogh ghochmeyDaq Suvchuq. tlhIng’a’ Suy’, tlhIngan jaj rur – juppu’ tlhej puqpu’. wovbogh ’ej teHbe’bogh ’IH (’Iw ghobe’, SuvwI’Hey ghobe’), ’ach qugh Suvmey, latlhpu’ tlhej online.",
+        "note": "Fortnite yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. tlhab Epic Games pong poQ QujmeH. wejwI’ DachmeH (Sut latlh je) Huch poQlu’; Epic lojmIt che’wI’ pongDaq ratlh, janDaq ratlhbe’, ’ej lujey.",
+        "linkLabel": "Fortnite yISuq"
+      },
+      "pokemon_go": {
+        "description": "Pokémon GO QujmeH juHlIj yImej – Hurgh yIghoS! qo’ teH chartDaq Ha’DIbaHmey chenlu’, ’ej Sammeh yIt puqpu’: wIchmey, Hemey, Daq Dunmey je. Suvbe’lu’ – qemlu’ neH. Pokédex yIteb ’ej juppu’ tlhej SammeH yIqel. Qujchugh puq, yItnIS – vaj vIHmoH Quj.",
+        "note": "Pokémon GO yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. GPS mobile-data je ghajbogh telategh poQlu’, ’ej tlhab pong; wa’maH wej ben puqvaD pong chenmoH vav, ’ej vav pongDaq rIn. wejwI’ DachmeH Huch poQlu’, ’ej lojmIt che’wI’ lujey. Hurgh Qujlu’, Daq teHDaq, ’ej HoS jan, GPS, De’ je vumtaH – vaj tugh HoS natlh.",
+        "linkLabel": "nuqDaq Suqlu’"
+      },
+      "roblox_studio": {
+        "description": "Roblox Studio ’oH tlhab jan’e’, Roblox Qujmey chenmoHlu’meH lo’lu’bogh. qo’mey Hutlhbogh chenmoH puqpu’, teH 3D janmey lo’, ’ej teH ngoq ghItlh – qechmeychaj Qujmey moj, ’ej bIQujlaHbogh latlhpu’. ghom’a’meymajDaq Qujbe’ puqpu’ – chenmoH! Quj chenmoHwI’ teH mIw ’oH.",
+        "note": "tlhab ’oH Roblox Studio’e’ – pagh yIje’. Windows De’wI’ Mac je neH: iPad ghobe’, tablet ghobe’, Chromebook ghobe’, telategh ghobe’, qImroQ ghobe’. tlhab Roblox pong je poQlu’, ’ej pong qan chur QIn ’ej pegh lojmIt che’. chenmoHpu’bogh Dochmey ngeHlaH, vaj Sam ’ej Quj latlh QujwI’pu’.",
+        "linkLabel": "Roblox Studio yISuq"
+      },
+      "rocket_league": {
+        "description": "Rocket League ’oH Ho’DoS’e’ – qul’a’ ghajbogh Dujmey lo’lu’, ’ej moQ tIn luqIp. cha’ ghom: jagh lojmItDaq moQ ghoSmoHmeH lulo’. vagh tup neH Suvmey; ngaj ’ej pay’. wov ’ej na’rural mIllogh, ’Iw tu’lu’be’, nuH tu’lu’be’ – Ho’DoS ’oH, Suv-Quj ghobe’. Qujbe’bogh vav je: nuq qaS, tugh yaj. ghom wa’chuqchugh neH Qapla’ chav – vaj ghomHommeymajvaD QaQqu’.",
+        "note": "Rocket League yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. tlhab Epic Games pong poQ QujmeH. Windows De’wI’, PlayStation, Xbox, Nintendo Switch je Daq Qop, ’ej jan pIm lo’bogh QujwI’pu’ tay’ Quj – vaj janlIj rap jan poQbe’lu’. Quj qoDDaq wejwI’ DachmeH Huch poQlu’ (Duj ’IHmoHmeH Dochmey), ’ej lojmIt che’wI’ lujey.",
+        "linkLabel": "Rocket League yISuq"
+      }
+    }
+  },
+  "info": {
+    "schedule": "jaj tetlh",
+    "where": "Daq",
+    "format": "rurmeH",
+    "ages": "qan {min}–{max}",
+    "ageRange": "qan SaH",
+    "audience": "ghotpu’",
+    "language": "Hol",
+    "online": "QumDaq",
+    "tbd": "Sov pagh",
+    "holidayBreaks": "SuvwI’pu’ leSbogh poHmey"
+  },
+  "signupPanel": {
+    "verb": {
+      "consumer_club": "yImuv",
+      "municipality_club": "yIqon",
+      "camp": "yImuv",
+      "event": "yImuv"
+    },
+    "noun": {
+      "consumer_club": "muvghach",
+      "municipality_club": "qonghach",
+      "camp": "muvghach",
+      "event": "muvghach"
+    },
+    "ctaReadyWaiting": "ghuHta’, yIloS",
+    "ctaActive": "DaH {verb}",
+    "ctaActiveWithPrice": "DaH {verb} {price}",
+    "ctaActiveWithPriceSub": "DaH {verb} · {price}/jar",
+    "ctaSubmitting": "yIloS…",
+    "ctaAddGamer": "QujwI’ yIchel ’ej taH",
+    "ctaAllSet": "bIghuHrup",
+    "ctaOutOfBand": "{count, plural, one {QujwI’lIj {min}–{max} DIS ghajbe’} other {QujwI’pu’lIj {min}–{max} DIS ghajbe’}}",
+    "ctaAgreeConsent": "poQlu’bogh chaw’ yInob",
+    "ctaWaitlist": "tetlh DaqaD",
+    "ctaSignIn": "yI’el",
+    "ctaCreateAccount": "Account chu’ chenmoH",
+    "gamerAlreadySignedUp": {
+      "consumer_club": "muvpu’",
+      "municipality_club": "qonpu’",
+      "camp": "muvpu’",
+      "event": "muvpu’"
+    },
+    "gamerAlreadyWaitlisted": "tetlhDaq",
+    "gamerTooYoung": "Qupqu’",
+    "gamerTooOld": "qanqu’",
+    "gamerBand": "{min}–{max} DIS",
+    "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
+    "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
+    "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
+    "rules": {
+      "title": "chutmeymaj",
+      "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+      "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+      "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+      "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’.",
+      "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj. <policy>Anti-Bullying and Discipline policy</policy> vIlaDpu’."
+    },
+    "consents": {
+      "heading": "chaw’",
+      "agree": "ghItlhmeyvam vIlaDpu’ ’ej vIlaj.",
+      "bundles": {
+        "robloxProgramme": "<terms>Creator Academy Terms & Conditions</terms>, <privacy>Creator Academy Privacy Policy</privacy> je vIlaDpu’ ’ej vIlaj.",
+        "robloxProgrammeTitle": "Creator Academy ghItlhmey"
+      },
+      "gamerPhoto": {
+        "lynxEducate": "puqwI’ mIllogh HaSta je lo’lu’: qaStaHvIS ja’chuqmeH nab, Lynx Educate Roblox je lughojmoH, ’ej School of Gaming, Lynx Educate, Roblox je De’wI’ HeDaq nItebHa’ cha’lu’. <privacy>Creator Academy Privacy Policy</privacy> DaH yIlaD.",
+        "lynxEducateTitle": "puqlI’ mIloghmey HaSta je",
+        "hint": "ra’be’lu’ — jIH SOGDaq puqlI’ HevDaq reH DachoHlaH."
+      },
+      "marketing": {
+        "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH.",
+        "lynxEducateTitle": "Lynx Educate QInmey",
+        "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
+      }
+    },
+    "whoAreYouSigningUp": {
+      "consumer_club": "’Iv muvbogh SoH?",
+      "municipality_club": "’Iv qonbogh SoH?",
+      "camp": "’Iv muvbogh SoH?",
+      "event": "’Iv muvbogh SoH?"
+    },
+    "seatIsFor": "’Iv quSvam ghaj",
+    "selected": "wIvlu’",
+    "agePill": "qan\u00a0{age}",
+    "parentPill": "vav/SoS",
+    "regionLock": {
+      "heading": "DaqlIj",
+      "note": "Sepmey puS neHvaD Doch vam ngeHlu’. qorDu’lIj Daq yIper.",
+      "setLocation": "DaqlIj yIchel",
+      "wrongCountry": "wa’ Sep neHDaq ngevlu’ Dochvam: <name>{country}</name>.",
+      "eligible": "SeplIj qorDu’pu’vaD neH: {country}",
+      "eligibleLocation": "qorDu’lIj Daq: {location}",
+      "dialogTitle": "nuqDaq qorDu’lIj Dab?",
+      "dialogDescription": "DaqlIj wISov ’ej naDev qach’a’mey, wanI’mey je wISam. Qapla’ — DaH yIchoH ’e’ DalaH.",
+      "dialogField": "DaqlIj",
+      "dialogSave": "Daq yISaH"
+    }
+  },
+  "pricing": {
+    "subscriptionHint": "jar Hoch Huch lo’ · DaH yIqIl ’e’ DaneHchugh, yIqIl.",
+    "free": "Huch pagh",
+    "freeHint": "Huch poQbe’.",
+    "external": "veng Huch nob",
+    "upfrontHint": "wa’logh Huch.",
+    "notAvailable": "{currency} Huch DaH ghajbe’.",
+    "cadenceMonth": "/ jar",
+    "firstChargeOn": "wa’DIch DIlmeH jaj: {date} — DaHjaj pagh DaDIlnIS.",
+    "guarantee": {
+      "title": "wejmaH jaj Huch nobHa’ ’Ip",
+      "body": "puqlI’vaD QaQbe’chugh, HuchlIj wInobHa’ — ja’chuqghach Qatlh poQbe’lu’. puqlI’ qep wa’DIchvo’ tagh wejmaH jaj.",
+      "contact": "<link>{email}</link>Daq QIn yIngeH; nuv teH DuQaH."
+    }
+  },
+  "countdown": {
+    "days": "jaj",
+    "hours": "rep",
+    "minutes": "tup",
+    "seconds": "lup"
+  },
+  "notFound": {
+    "title": "tu’be’lu’",
+    "description": "luchHa’lu’pu’ joq link motlhHa’. bIH tu’lu’bogh yIleng.",
+    "cta": "leng yIchegh"
+  }
+}

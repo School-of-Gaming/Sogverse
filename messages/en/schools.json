@@ -1,0 +1,28 @@
+{
+  "hero": {
+    "title": "Game clubs in your municipality",
+    "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what’s on offer.",
+    "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child’s school. A professional Game Educator is always there to guide the activity."
+  },
+  "search": {
+    "label": "Search for your municipality",
+    "placeholder": "Search municipalities…",
+    "noMatches": "No municipality matches “{query}”. Check the spelling, or try a nearby one."
+  },
+  "available": {
+    "empty": "Our first municipality clubs are on the way. Search for your municipality to check whether we’ve reached it yet."
+  },
+  "status": {
+    "available": "Clubs available",
+    "noClubs": "No clubs here"
+  },
+  "waitlistNote": "Spots are limited and clubs often have a waiting list. If your child stops attending, please remember to cancel the registration so the place can be offered to the next gamer.",
+  "notListed": {
+    "title": "Don’t see your municipality?",
+    "body": "Municipality clubs are arranged together with each municipality, and we’re adding new ones all the time. If yours isn’t on board yet, tell us about it:",
+    "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
+  },
+  "municipality": {
+    "heading": "{name} Clubs"
+  }
+}

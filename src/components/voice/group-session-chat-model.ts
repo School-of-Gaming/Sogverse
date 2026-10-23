@@ -4,7 +4,8 @@ import type {
   ChatMessage,
   ChatReactionEntry,
 } from "@/components/chat";
-import type { ChatChannelRoster, ChatHistory } from "@/services/chat";
+import type { ChatChannelRoster } from "@/services/chat/chat.contracts";
+import type { ChatHistory } from "@/services/chat/chat.service";
 import type { ChatMessageRow } from "@/types";
 
 /**

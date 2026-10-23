@@ -1,14 +1,14 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { breakName, type HolidayBreak } from "@/lib/holiday-breaks";
-import { formatCompactDateRange } from "@/lib/utils";
+import { formatCompactDateRange } from "@/lib/date-format";
 import type { ProductType } from "@/types";
 
 /**
  * The "Holiday breaks" list a family reads before and after signing up: on the
- * product page, on the purchase confirmation page and in the confirmation mail.
- * Three surfaces state one fact, so the span asked for, the breaks kept and the
- * words each break is drawn in are decided here, once.
+ * product page and in the confirmation mail. Two surfaces state one fact, so the
+ * span asked for, the breaks kept and the words each break is drawn in are
+ * decided here, once.
  *
  * Only clubs follow holiday calendars, so every other product type asks for
  * nothing and shows nothing.

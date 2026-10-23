@@ -7,13 +7,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuthoredBodies } from "@/components/ui/authored-body-editor";
 import { Button } from "@/components/ui/button";
 import { UnsavedChangesGuard } from "@/components/ui/unsaved-changes-guard";
-import { isSupportedCurrency } from "@/lib/constants";
+import { isSupportedCurrency } from "@/lib/constants/currency";
 import {
   isSupportedLocale,
   LOCALE_CONFIG,
   resolveLocale,
 } from "@/lib/constants/locales";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import { useLocale } from "next-intl";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";

@@ -8,7 +8,8 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn, formatTime, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatTime, formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import { getClient } from "@/lib/supabase/client";
 import {
@@ -16,7 +17,7 @@ import {
   useWhatsAppMessages,
   useSendWhatsAppMessage,
   whatsappKeys,
-} from "@/services/whatsapp";
+} from "@/services/whatsapp/whatsapp.queries";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   WHATSAPP_DIRECTION,

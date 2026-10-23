@@ -1,15 +1,21 @@
+import type { SupportedCurrency } from "@/lib/constants/currency";
+import { DEFAULT_PRODUCT_TIMEZONE } from "@/lib/constants/location-hierarchies";
 import {
-  DEFAULT_PRODUCT_TIMEZONE,
-  type SupportedCurrency,
-} from "@/lib/constants";
-import type { SupportedLocale } from "@/lib/constants/locales";
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import type { AuthoredBodies } from "@/lib/authored-bodies";
 import {
   newLocaleTabs,
   sameLocaleDrafts,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
-import type { ProductTag, ProductTopic, SpokenLanguageCode } from "@/types";
+import type {
+  ProductTag,
+  ProductTopic,
+  SpokenLanguageCode,
+  VoiceRoomMode,
+} from "@/types";
 import type { AttachableMarketingConsentType } from "@/lib/constants/marketing-consents";
 import type { AttachableGamerPhotoConsentType } from "@/lib/constants/gamer-photo-consents";
 import { effectiveBillingMode } from "./product-type-config";
@@ -96,17 +102,50 @@ export type SeatLimitMode = (typeof SEAT_LIMIT_MODE_VALUES)[number];
 // as markdown in the rich-text editor. A blank `longDescription` means "no long
 // description" and submits as SQL NULL — the column's CHECK refuses an empty
 // string, so the payload builder folds one rather than sending it.
+//
+// `voiceJoinInstructions` is plain text, written only for a product with no
+// voice room; a blank one submits as SQL NULL, and under any other mode it is
+// not sent at all (`draftsForMode`).
 export type TranslationDraft = {
   name: string;
   shortDescription: string;
   longDescription: string;
+  voiceJoinInstructions: string;
 };
 
 export const EMPTY_TRANSLATION: TranslationDraft = {
   name: "",
   shortDescription: "",
   longDescription: "",
+  voiceJoinInstructions: "",
 };
+
+/** Whether the join instructions are asked for at all: an online product with no voice room. */
+export function asksJoinInstructions(state: {
+  isRemote: boolean;
+  voiceRoomMode: VoiceRoomMode;
+}): boolean {
+  return state.isRemote && state.voiceRoomMode === "none";
+}
+
+/**
+ * The translation drafts as the save sees them: under any mode but "no voice
+ * room" the instructions field is hidden and not sent, so it is blanked here —
+ * which also keeps a tab holding nothing but stale instructions from counting
+ * as a written, incomplete language.
+ */
+export function draftsForMode(
+  state: Pick<FormState, "translations" | "isRemote" | "voiceRoomMode">,
+): FormState["translations"]["drafts"] {
+  const { drafts } = state.translations;
+  if (asksJoinInstructions(state)) return drafts;
+  const blanked: FormState["translations"]["drafts"] = {};
+  for (const locale of SUPPORTED_LOCALES) {
+    const draft = drafts[locale];
+    if (draft) blanked[locale] = { ...draft, voiceJoinInstructions: "" };
+  }
+  return blanked;
+}
 
 /** A complete language: a name and a short description. The long one is optional. */
 export function isCompleteTranslation(draft: TranslationDraft): boolean {
@@ -183,6 +222,15 @@ export interface FormState {
   // Where
   isRemote: boolean;
   locationId: string | null;
+  // How an online product's sessions are joined: the Sogverse voice room, a
+  // link to a meeting held elsewhere, or no room and join instructions, which
+  // are written per locale on the translation drafts. Offered only while
+  // `isRemote` is on; an in-person product is saved as `sogverse` whatever this
+  // holds, and the link and the instructions are sent only with the mode they
+  // belong to. Both stay as typed while hidden, so flipping to in person or to
+  // another mode and back loses nothing for as long as the form stays open.
+  voiceRoomMode: VoiceRoomMode;
+  externalVoiceUrl: string;
 
   // When
   //
@@ -359,6 +407,10 @@ export function initialState(
     spokenLanguageCode: "",
     isRemote: true,
     locationId: null,
+    // A Sogverse room until somebody says otherwise: the other two are a
+    // stopgap for audiences larger than a room holds.
+    voiceRoomMode: "sogverse",
+    externalVoiceUrl: "",
     // Finland unless the admin says otherwise — most of what we run is Finnish,
     // and every product that predates the picker carries this zone.
     timezone: DEFAULT_PRODUCT_TIMEZONE,

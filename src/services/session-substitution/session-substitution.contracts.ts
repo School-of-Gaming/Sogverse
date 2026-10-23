@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import {
+  voiceJoinInstructionsWireField,
+  voiceRoomWireFields,
+} from "@/lib/products/voice-room";
 
 /**
  * Wire contracts for session substitutions — "I can't make this session", the offers
@@ -146,6 +150,7 @@ const sessionProductTranslation = z.object({
   locale: z.string(),
   name: z.string(),
   description: z.string(),
+  ...voiceJoinInstructionsWireField,
 });
 
 /**
@@ -175,6 +180,8 @@ export const sessionProductDocument = z.object({
   spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
   timezone: z.string(),
   is_remote: z.boolean(),
+  /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
+  ...voiceRoomWireFields,
   start_date: z.string().nullable(),
   end_date: z.string().nullable(),
   /** The venue, on in-person products only; null on anything remote. */

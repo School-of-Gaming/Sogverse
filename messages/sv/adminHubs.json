@@ -1,0 +1,19 @@
+{
+  "titles": {
+    "products": "Klubbar, läger och evenemang",
+    "invoicing": "Fakturering",
+    "marketing": "Marknadsföring"
+  },
+  "tabs": {
+    "products": "Produkter",
+    "sites": "Lokaler",
+    "holidayCalendars": "Lovkalendrar",
+    "municipalities": "Kommuner",
+    "invoiceCustomers": "Faktureringskunder",
+    "gedus": "Geduer",
+    "landingPages": "Landningssidor",
+    "testimonials": "Omdömen",
+    "guides": "Guider",
+    "spotlights": "Spotlights"
+  }
+}

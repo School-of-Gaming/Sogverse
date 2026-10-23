@@ -7,7 +7,7 @@ import {
   useLockExplanation,
   type LockExplanation,
 } from "@/components/ui/locked-control";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { AttendanceMark } from "@/components/session-feed";
 import { isExpectedOnEntry } from "./entry-state";
 import type { AttendanceMarks, SessionFeedEntry, SessionFeedGamer } from "./types";

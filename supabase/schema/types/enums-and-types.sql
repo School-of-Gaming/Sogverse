@@ -17,6 +17,8 @@ CREATE TYPE public.catalogue_image_purpose AS ENUM (
     'product',
     'library_cover',
     'landing_image',
+    'landing_square_image',
+    'landing_portrait_image',
     'spotlight_image'
 );
 
@@ -25,7 +27,7 @@ CREATE TYPE public.catalogue_image_purpose AS ENUM (
 -- Name: TYPE catalogue_image_purpose; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.catalogue_image_purpose IS 'What a catalogue picture is for: ''product'', a product''s picture; ''library_cover'', a Library article''s cover; ''landing_image'', a picture on a landing page; or ''spotlight_image'', a spotlight''s picture. Each purpose has its own storage bucket (product-images, library-covers, landing-images, spotlight-images) and its own exact stored size; both live in the application''s one purpose map, and the size is enforced by the upload routes, which measure the bytes. No aspect ratio is stored: a purpose outlives any one crop.';
+COMMENT ON TYPE public.catalogue_image_purpose IS 'What a catalogue picture is for: ''product'', a product''s picture; ''library_cover'', a Library article''s cover; ''landing_image'', ''landing_square_image'' and ''landing_portrait_image'', a picture on a landing page, wide 16:9, square 1:1 or portrait 4:5; or ''spotlight_image'', a spotlight''s picture. Each purpose has its own storage bucket (product-images, library-covers, landing-images, landing-square-images, landing-portrait-images, spotlight-images) and its own exact stored size; both live in the application''s one purpose map, and the size is enforced by the upload routes, which measure the bytes. No size or ratio is stored beside it: the purpose is the shape.';
 
 
 --
@@ -376,5 +378,23 @@ CREATE TYPE public.user_role AS ENUM (
     'gamer',
     'gedu'
 );
+
+
+--
+-- Name: voice_room_mode; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.voice_room_mode AS ENUM (
+    'sogverse',
+    'external',
+    'none'
+);
+
+
+--
+-- Name: TYPE voice_room_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.voice_room_mode IS 'How an online product''s sessions are joined. sogverse: the Sogverse voice room, opened during each session''s window — the default, and the only value an in-person product may hold. external: a meeting held on another service, at products.external_voice_url. none: no room of any kind; a family is shown the product''s join instructions instead, written per locale in product_translations.voice_join_instructions. external and none are a STOPGAP for audiences larger than a Sogverse room holds (50 people), to be removed once Sogverse rooms can hold more — see docs/investigations/voice-room-scale.md.';
 
 

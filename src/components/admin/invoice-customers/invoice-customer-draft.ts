@@ -2,7 +2,7 @@ import {
   invoiceCustomerInput,
   type InvoiceCustomerInputParsed,
   type InvoiceCustomerRow,
-} from "@/services/invoice-customers";
+} from "@/services/invoice-customers/invoice-customers.contracts";
 import type { InvoiceBillingCadence } from "@/types";
 
 /**

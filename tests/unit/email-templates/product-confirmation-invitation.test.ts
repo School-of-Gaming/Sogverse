@@ -7,7 +7,7 @@ import {
 import { planSessions } from "../../mocks/planned-sessions";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**
@@ -806,16 +806,18 @@ describe("what the entry's notes say", () => {
   });
 
   /**
-   * News about what happens next goes stale where the mail it arrived in does
-   * not: a parent opening this entry in week six does not need to be told a
-   * group is coming. The mail's own "what happens next" bullet said it once,
-   * at the moment it was true.
+   * The mail's "what happens next" bullet points at My SOG, and the entry
+   * already carries the My SOG link itself, so the sentence is not repeated —
+   * and nothing in the entry talks about groups.
    */
-  it("leaves the placement sentence to the mail", () => {
-    expect(description(compose()!.ics)).not.toContain("group");
-    expect(
-      description(compose({ isSelfSeat: true, participantName: "Marja" })!.ics),
-    ).not.toContain("group");
+  it("leaves the sessions sentence to the mail", () => {
+    for (const ics of [
+      compose()!.ics,
+      compose({ isSelfSeat: true, participantName: "Marja" })!.ics,
+    ]) {
+      expect(description(ics)).not.toContain("You’ll find");
+      expect(description(ics)).not.toContain("group");
+    }
   });
 
   it("ends with the My SOG link and a way to reach a human", () => {
@@ -852,7 +854,7 @@ describe("what the entry's notes say", () => {
 describe("every locale composes a whole document", () => {
   const PINNED: Record<string, string> = {
     en: "the voice room opens",
-    fi: "puhehuone avautuu",
+    fi: "äänihuone avautuu",
     sv: "röstrummet öppnar",
     fr: "le salon vocal ouvre",
     tlh: "ghogh pa’",

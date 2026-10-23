@@ -6,8 +6,9 @@
 > me. This is mostly adding the convenience so I can export some UI as a single
 > view to share it in a review."
 
-Walk a list of pages across locales and widths — signed in as the staging admin,
-or signed out as a first-time visitor — and compose them into **a handful of
+Walk a list of pages across locales and widths — each signed in as the viewer it
+names (admin, parent, gamer or gedu), or signed out as a first-time visitor — and
+compose them into **a handful of
 images you can drop into a Slack thread**. The list of pages is the input — a
 *preset* — so a second review is a second preset, not a second script.
 
@@ -38,6 +39,7 @@ node scripts/preview-export/export.mjs --selftest   # no app, no login
 | `--locales` | Default `en,fi,sv,fr`. (Klingon, `tlh`, is our easter-egg locale, not one a review covers.) |
 | `--viewports` | `desktop` (1440×900), `mobile` (360×800), or both (the default). |
 | `--only <slug,…>` | Just these entries. |
+| `--stack local` | Only when the server cannot say what it runs against — see "Which accounts". |
 | `--selftest` | Composes placeholder pages, so the whole pipeline runs with no app. |
 
 Everything lands in one folder — dated, and suffixed `-2`, `-3` if that folder
@@ -95,9 +97,16 @@ export default {
     capture,              // "viewport" | "fullPage" | { selector }
     waitFor,              // optional selector to wait for before shooting
     banner,               // signed out only: "rejected" (default) | "up"
+    viewer,               // signed in only: "admin" (default) | "parent" | "gedu"
+                          //   | "gamer" (the parent's first) | "gamer:<first name>"
+    viewports,            // optional, e.g. ["desktop"]; narrows --viewports
   }] }],
+  viewer,                 // optional; the viewer of every entry naming none
 };
 ```
+
+`viewports` is how one run mixes an admin page, which is shot at desktop width
+only, with family pages shot at both.
 
 A route is the internal path. A public page's translated slug (`/fi/kauppa`) is
 reached by the proxy's own redirect from `/fi/shop`, so a preset never keeps a
@@ -113,19 +122,59 @@ real answer.
 its reader sees it, so a preset about the public pages is signed out by what it
 is rather than by what its caller remembers.
 
-- **Signed in** (the default) — `STAGING_ADMIN_EMAIL` and
-  `STAGING_ADMIN_PASSWORD`, an admin account on staging (which is what local dev
-  points at), used to drive the real login form once. They live in `.env.local`
-  **only**, and are deliberately not in `.env.local.example`: they are a local
-  convenience for driving a browser, not something anyone needs to run the
-  project. Neither value is ever printed. The consent banner is answered with a
-  stored refusal, so it never mounts.
+- **Signed in** (the default) — each entry is shot as its `viewer`. Each viewer
+  signs in through the real login form once, and its session is reused for every
+  shot it views. A parent is then PIN-unlocked; a gamer is the parent switched
+  into a child's session, as the profile switcher does it. Each viewer's sign-in
+  is proven on a page only that role is let into before the first shot, and a
+  shot bounced to the login page or the PIN unlock gate fails by name. The
+  consent banner is answered with a stored refusal, so it never mounts.
+- **A gamer viewer ends the parent account's other sessions.** The switch into
+  a child signs the parent out everywhere, not only in this browser, so the run
+  signs every gamer in before any parent. Against staging that means the
+  shared staging parent's sessions on other devices, and in other agents'
+  runs, end too.
 - **Signed out** (`signedOut: true`) — never loads `.env.local`, never reads the
   credentials, never visits the login form. Every shot is a first visit in a
   fresh browser context speaking the shot's locale, and a shot whose context
   ends up holding a Supabase session cookie fails by name. Needed because a
   signed-in reader of `/` is redirected to their dashboard, and the cookie banner
-  never appears to anyone who has answered it.
+  never appears to anyone who has answered it. A signed-out preset names no
+  viewer.
+
+## Which accounts — a local stack or staging
+
+**The server is asked, never assumed.** Before anything launches, a signed-in
+run fetches the login page at `--base` and reads the Supabase origin the server
+is configured with out of its `Content-Security-Policy` header, the URL
+straight after `'self'` in `connect-src`. A loopback origin (`http://127.0.0.1:<port>`) is a
+local stack (`npm run db -- up`); a hosted one is staging only when it is
+exactly `https://<SUPABASE_PROJECT_REF>.supabase.co` (that variable is staging by
+this repo's convention, read from `.env.local`), and any other origin, production
+included, is refused before anything is typed. The tool may run from a
+different checkout than the one serving, so its own `.env.local` never stands
+in for the server's answer; it only supplies the staging ref that answer is
+checked against.
+
+| Viewer | Local stack (the rich seed) | Staging (`.env.local`) |
+|---|---|---|
+| `admin` | `admin@example.com` | `STAGING_ADMIN_EMAIL` / `_PASSWORD` |
+| `parent` | `parent@example.com`, PIN 1111 | `STAGING_PARENT_EMAIL` / `_PASSWORD` / `_PIN` |
+| `gamer` | Milo, Nea or Otso, through `parent@example.com` | a gamer of the staging parent |
+| `gedu` | `gedu@example.com` | none — refused by name before launch |
+
+Every seed account's password is `password`. The staging variables live in
+`.env.local` **only**, and are deliberately not in `.env.local.example`: they are
+a local convenience for driving a browser, not something anyone needs to run the
+project. `.env.local` is not even loaded against a local stack. No value is ever
+printed.
+
+When the header names no Supabase origin, the run refuses and asks for
+`--stack local`. `--stack staging` is refused there, since staging is only signed
+in to once its origin has matched the ref. The flag never fills in an origin the
+header names but no rule recognises, and never overrides a detection: one
+that disagrees with the server is the refusal, since obeying it would type one
+backend's password into the other's login form.
 
 ## The cookie banner, in a signed-out run
 
@@ -133,7 +182,7 @@ Answered through its own buttons, never by writing the consent cookie. Per entry
 
 - `banner: "rejected"` (the default) — wait for the banner, press its "Reject
   all", wait for it to go, then shoot. The button's name comes from the locale's
-  own `messages/<locale>.json`, so the button pressed is the one a reader of that
+  own `messages/<locale>/consent.json`, so the button pressed is the one a reader of that
   language presses.
 - `banner: "up"` — shoot the first screen with the banner still showing, which is
   what a first visit looks like. Only a `"viewport"` capture may ask for it.
@@ -160,12 +209,15 @@ pass, so the header appears once, where it belongs.
 
 **A signed-in run's `--base` is checked against a hardcoded loopback allowlist —
 `localhost`, `127.0.0.1`, `[::1]`, any port, http or https — before the browser
-starts, and there is no override flag.** It types a real admin password into the
+starts, and there is no override flag.** It types a real password into the
 login form at whatever that flag names, so a typo or a pasted URL is all it would
 take to hand a working credential to a stranger's server, and the person running
 it would see nothing but an ordinary sign-in failure. A deployed origin, if one
-is ever wanted for a signed-in run, is added as a literal in `export.mjs` — never
-as a flag, an environment variable, or a suffix pattern.
+is ever wanted for a signed-in run, is added as a literal in `lib.mjs` — never
+as a flag, an environment variable, or a suffix pattern. The function that hands
+out a credential checks the host again itself, and hands the seed's password only
+to a server on a local stack and staging's only to one on staging. These guards
+are pure functions in `lib.mjs`, unit-tested in `tests/unit/`.
 
 A signed-out run types nothing, so it takes any `http` or `https` origin:
 production, a Vercel preview deployment, a local server.

@@ -1,0 +1,18 @@
+{
+  "dashboard": "Tableau de bord",
+  "users": "Utilisateurs",
+  "libraryContent": "Contenu de la Bibliothèque",
+  "analytics": "Statistiques",
+  "marketing": "Marketing",
+  "platformVision": "Vision de la plateforme",
+  "uiComponents": "Composants UI",
+  "uiPreviews": "Aperçus UI",
+  "testing": "Tests",
+  "tools": "Outils",
+  "expandSidebar": "Déplier la barre latérale",
+  "collapseSidebar": "Replier la barre latérale",
+  "substitutions": "Remplacements",
+  "feedback": "Avis",
+  "products": "Produits",
+  "invoicing": "Facturation"
+}

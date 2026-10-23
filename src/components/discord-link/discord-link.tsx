@@ -12,7 +12,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { codeTag } from "@/components/ui/inline-code";
 import { Link } from "@/i18n/navigation";
 import { parseJsonResponse, readApiError } from "@/lib/api/json-response";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   DISCORD_LINK_ERROR_CODES,
   discordLinkResponse,

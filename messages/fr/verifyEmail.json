@@ -1,0 +1,13 @@
+{
+  "successTitle": "Adresse e-mail vérifiée",
+  "successDescription": "Merci — nous savons désormais que cette adresse vous joint, et rien d’important ne se perdra.",
+  "goToDashboard": "Aller à Mon SOG",
+  "invalidTitle": "Ce lien ne fonctionne plus",
+  "invalidDescription": "Un lien de vérification cesse de fonctionner dès que l’adresse e-mail du compte change. Ouvrez vos paramètres et envoyez-vous-en un nouveau.",
+  "goToSettings": "Aller aux paramètres",
+  "gamerVerifiedTitle": "Ton adresse e-mail est confirmée",
+  "gamerChoosePasswordDescription": "Ensuite, choisis ton mot de passe — nous t’enverrons un lien par e-mail.",
+  "gamerSendPasswordLink": "Envoie-moi un lien pour le mot de passe",
+  "gamerPasswordLinkSent": "C’est envoyé. Regarde dans tes e-mails.",
+  "gamerPasswordLinkFailed": "Ça n’a pas marché. Réessaie."
+}

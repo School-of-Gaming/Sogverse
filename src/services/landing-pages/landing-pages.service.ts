@@ -1,6 +1,11 @@
+import { readApiError } from "@/lib/api/json-response";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
+  LANDING_PRODUCT_TYPES,
+  landingPickedProductIds,
+  landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
   missingInLandingVersion,
@@ -9,12 +14,16 @@ import {
 } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import { LibraryService } from "@/services/library/library.service";
+import { ProductsService } from "@/services/products/products.service";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
+import { TestimonialsService } from "@/services/testimonials/testimonials.service";
+import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 import type { AppSupabaseClient } from "@/types";
 import {
   defaultLandingSlug,
   hasUnpublishedChanges,
-  landingImagePaths,
+  landingCopyTitle,
+  landingPictures,
   landingPageInput,
   landingVersionInput,
   oauthClientNameRows,
@@ -35,6 +44,11 @@ import {
   siteSlugResolver,
   type LandingLinkRewrite,
 } from "./landing-pages.links";
+import {
+  landingProductPicks,
+  type LandingProductsSectionPicks,
+} from "./landing-pages.product-picks";
+import { testimonialsById } from "./landing-pages.testimonials";
 
 /** The shape Postgres accepts as a `uuid`, any case. */
 const UUID =
@@ -42,19 +56,19 @@ const UUID =
 
 /** A working version whole, with what comparing and publishing read off it. */
 const DRAFT_VERSION_COLUMNS =
-  "locale, title, summary, slug, section_texts, texts_md5, is_complete";
+  "locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
 /** A working version for the list: no words, but their digest and completeness. */
 const DRAFT_VERSION_LIST_COLUMNS =
-  "locale, title, summary, slug, texts_md5, is_complete";
+  "locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
-const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5)`;
+const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt)`;
 
-/** The published copy's columns for a list: no structure and no words. */
-const PUBLICATION_SUMMARY_COLUMNS = `page_id, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
+/** The published copy's columns for a list: the structure, and no words. */
+const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
 
 /** The published copy's columns for comparing, without its words. */
-const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5)`;
+const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt)`;
 
 /**
  * The last saver's profile, embedded by its constraint's name, since the
@@ -81,6 +95,9 @@ function publishable(row: {
     summary: string;
     slug: string;
     texts_md5: string | null;
+    share_title: string;
+    share_image_id: string | null;
+    share_image_alt: string;
     is_complete: boolean;
   }[];
 }): ComparableLandingCopy {
@@ -92,20 +109,23 @@ function publishable(row: {
 
 interface PublicationSummaryRow {
   page_id: string;
+  sections: unknown;
+  pictures: unknown;
   published_at: string;
   first_published_at: string;
   versions: readonly { locale: string; title: string; summary: string; slug: string }[];
 }
 
 interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
-  sections: unknown;
-  image_paths: unknown;
   versions: readonly {
     locale: string;
     title: string;
     summary: string;
     slug: string;
     section_texts: unknown;
+    share_title: string;
+    share_image_id: string | null;
+    share_image_alt: string;
   }[];
 }
 
@@ -114,6 +134,8 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
     id: row.page_id,
     firstPublishedAt: row.first_published_at,
     publishedAt: row.published_at,
+    sections: readSections(row.sections),
+    pictures: landingPictures.parse(row.pictures),
     versions: inLocaleOrder(row.versions).map(({ locale, title, summary, slug }) => ({
       locale,
       title,
@@ -124,18 +146,20 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
 }
 
 function toPublished(row: PublicationRow): PublishedLandingPage {
-  const sections = readSections(row.sections);
+  const summary = toPublishedSummary(row);
+  const { sections } = summary;
   return {
-    ...toPublishedSummary(row),
-    sections,
-    imagePaths: landingImagePaths.parse(row.image_paths),
+    ...summary,
     versions: inLocaleOrder(row.versions).map(
-      ({ locale, title, summary, slug, section_texts }) => ({
+      ({ locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt }) => ({
         locale,
         title,
         summary,
         slug,
         sectionTexts: readSectionTexts(sections, section_texts),
+        shareTitle: share_title,
+        shareImageId: share_image_id,
+        shareImageAlt: share_image_alt,
       }),
     ),
   };
@@ -150,6 +174,9 @@ function toVersionPayload(version: ParsedLandingVersion) {
     slug: version.slug ?? null,
     default_slug: defaultLandingSlug(version.title),
     section_texts: version.sectionTexts,
+    share_title: version.shareTitle,
+    share_image_id: version.shareImageId,
+    share_image_alt: version.shareImageAlt,
   };
 }
 
@@ -234,7 +261,10 @@ export class LandingPageService {
    * One page's working copy and its published copy, or `null` when no page
    * has that id. An id that is not a UUID is answered as not found without a
    * query. Each draft version carries what it still needs before publishing
-   * takes it, by the TypeScript half of the required-text rule.
+   * takes it, by the TypeScript half of the required-text rule; the page
+   * carries the current words of every testimonial its working copy places;
+   * and each products section of the working copy, which of its picks readers
+   * are shown now and why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -242,7 +272,7 @@ export class LandingPageService {
     const { data, error } = await this.supabase
       .from("landing_pages")
       .select(
-        `id, sections, sections_md5, image_paths, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
+        `id, sections, sections_md5, pictures, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -251,11 +281,11 @@ export class LandingPageService {
     if (!data) return null;
 
     const sections = readSections(data.sections);
-    const imagePaths = landingImagePaths.parse(data.image_paths);
+    const pictures = landingPictures.parse(data.pictures);
     const draft: LandingPageDraft = {
       id: data.id,
       sections,
-      imagePaths,
+      pictures,
       versions: inLocaleOrder(data.versions).map((version) => {
         const sectionTexts = readSectionTexts(sections, version.section_texts);
         return {
@@ -264,6 +294,9 @@ export class LandingPageService {
           summary: version.summary,
           slug: version.slug,
           sectionTexts,
+          shareTitle: version.share_title,
+          shareImageId: version.share_image_id,
+          shareImageAlt: version.share_image_alt,
           missing: missingInLandingVersion(sections, {
             title: version.title,
             summary: version.summary,
@@ -290,7 +323,45 @@ export class LandingPageService {
         publishable(data),
         data.publication,
       ),
+      testimonials: await this.testimonialWords(sections),
+      productPicks: await this.productPicksOf(sections),
     };
+  }
+
+  /**
+   * The words of the testimonials a structure places, read from the store
+   * under the admin's own policy; a structure placing none reads nothing.
+   */
+  private async testimonialWords(
+    sections: readonly LandingSection[],
+  ): Promise<Record<string, PublicTestimonial>> {
+    const ids = landingPlacedTestimonialIds(sections);
+    if (ids.length === 0) return {};
+    return testimonialsById(await new TestimonialsService(this.supabase).listTestimonialWords(ids));
+  }
+
+  /**
+   * Each products section's picks, shown or not and why: the listing of every
+   * product type asked about the picks — the answer the public page draws by —
+   * and the picks' own rows for the reasons. A structure with no products
+   * section reads nothing.
+   */
+  private async productPicksOf(
+    sections: readonly LandingSection[],
+  ): Promise<LandingProductsSectionPicks[]> {
+    const ids = landingPickedProductIds(sections);
+    if (ids.length === 0) return [];
+    const products = new ProductsService(this.supabase);
+    const [listed, facts] = await Promise.all([
+      products.listVisibleListingAmong(LANDING_PRODUCT_TYPES, ids),
+      products.getListingFacts(ids),
+    ]);
+    return landingProductPicks(
+      sections,
+      new Set(listed.map((row) => row.id)),
+      facts,
+      new Date(),
+    );
   }
 
   private async oauthClientNames(
@@ -360,9 +431,10 @@ export class LandingPageService {
   }
 
   /**
-   * Save one language version of the working copy — its title, summary, slug
-   * and every section's words in that language — creating it when the
-   * language is new. No other version, and not the structure, is touched.
+   * Save one language version of the working copy — its title, summary, slug,
+   * every section's words and the share card in that language — creating it
+   * when the language is new. No other version, and not the structure, is
+   * touched.
    *
    * The words are checked against the page's current structure, read first;
    * a page that does not exist is left to the database to refuse.
@@ -392,6 +464,9 @@ export class LandingPageService {
       p_slug: payload.slug ?? undefined,
       p_default_slug: payload.default_slug,
       p_section_texts: payload.section_texts,
+      p_share_title: payload.share_title,
+      p_share_image_id: payload.share_image_id ?? undefined,
+      p_share_image_alt: payload.share_image_alt,
     });
 
     if (error) throw error;
@@ -414,6 +489,44 @@ export class LandingPageService {
 
     if (error) throw error;
     if (!data) throw new Error("remove_landing_page_version returned no id");
+    return data;
+  }
+
+  /**
+   * Clone a page's working copy into a new, unpublished page, in one database
+   * call. Returns the new page's id.
+   *
+   * Everything is copied verbatim — the structure with its pictures, and each
+   * language's summary and words — except that every section and item takes
+   * a new id (the words re-keyed with them, by the database) and each
+   * language's title is marked as a copy in that language's own word, from
+   * `copyMarker`. Its slug is derived from the new title as any version
+   * without one takes its title's, and numbered by the database (`-2`, `-3`,
+   * …) when another page already holds it in that locale. Only `source`'s
+   * versions are named, and each must still be on the page; the database
+   * refuses an id no page has with `no_data_found`.
+   *
+   * No words are sent, so the link hook has nothing to see: the copied words'
+   * links were made canonical when they were saved.
+   */
+  async clonePage(
+    source: Pick<LandingPageDraft, "id" | "versions">,
+    copyMarker: (locale: SupportedLocale) => Promise<string>,
+  ): Promise<string> {
+    const versions = await Promise.all(
+      source.versions.map(async (version) => {
+        const title = landingCopyTitle(version.title, await copyMarker(version.locale));
+        return { locale: version.locale, title, default_slug: defaultLandingSlug(title) };
+      }),
+    );
+
+    const { data, error } = await this.supabase.rpc("clone_landing_page", {
+      p_id: source.id,
+      p_versions: versions,
+    });
+
+    if (error) throw error;
+    if (!data) throw new Error("clone_landing_page returned no id");
     return data;
   }
 
@@ -459,14 +572,44 @@ export class LandingPageService {
     if (error) throw error;
   }
 
+  /**
+   * Publish from the browser — the admin's status page. The publish runs on
+   * the server, through the admin's publication route, which then tells search
+   * engines what changed (`src/lib/indexnow/`); the server side calls
+   * `publishPage` there. A refusal arrives as an `ApiError` carrying the
+   * database's sentence and code, so `landingWriteFailure` reads it as it
+   * would the database's own.
+   */
+  async publishPageViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "PUT", "Failed to publish the page");
+  }
+
+  /** Unpublish from the browser, through the same route as `publishPageViaRoute`. */
+  async unpublishPageViaRoute(id: string): Promise<void> {
+    await this.changePublicationViaRoute(id, "DELETE", "Failed to unpublish the page");
+  }
+
+  private async changePublicationViaRoute(
+    id: string,
+    method: "PUT" | "DELETE",
+    fallback: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/landing-pages/${encodeURIComponent(id)}/publication`,
+      { method },
+    );
+    if (!response.ok) throw await readApiError(response, fallback);
+  }
+
   // -------------------------------------------------------------------------
   // Public reads
   // -------------------------------------------------------------------------
 
   /**
    * Every published page, newest first by the date it first went live, with
-   * every live version's short fields and no structure or words — what the
-   * sitemap and `llms.txt` read. Walked, because pages only grow.
+   * its live structure and every live version's short fields, and no words —
+   * what the `/discover` index, the sitemap and `llms.txt` read. Walked,
+   * because pages only grow.
    */
   async listPublishedPages(): Promise<PublishedLandingPageSummary[]> {
     const rows = await walkPages("listPublishedLandingPages", (from, to) =>

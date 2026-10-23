@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, TriangleAlert } from "lucide-react";
 import { CollapsibleRegion } from "@/components/gedu/session-feed/CollapsibleRegion";
 import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 
 /**
  * The pieces every invoicing ledger is drawn from — the municipality invoice

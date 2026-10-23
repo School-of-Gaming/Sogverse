@@ -1,6 +1,6 @@
 import "server-only";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
@@ -39,7 +39,7 @@ import {
 import { HolidayBreaksService } from "@/services/holiday-breaks/holiday-breaks.service";
 import { formatFirstChargeDate } from "@/lib/stripe/first-charge-anchor";
 import { getOrigin } from "@/lib/url";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { formatCurrencyFromCents } from "@/lib/money";
 import type { AppSupabaseClient } from "@/types";
 
 /**
@@ -187,8 +187,8 @@ async function send({
   // SELECT to `authenticated` with policies for admins and gedus only, so on a
   // waitlist join that embed comes back silently empty. The rest of the read is
   // anon-readable — the schedule rows and a location's own names are what the
-  // public browse grid paints — so the "Good to know" facts the mail mirrors
-  // from the confirmation page arrive on every mode. Every enrolled mode
+  // public browse grid paints — so the mail's "Good to know" facts arrive on
+  // every mode. Every enrolled mode
   // arrives on the admin client (the checkout route, the Stripe webhook and the
   // seat-offer answer all pass one), which is what makes the site's address and
   // note readable exactly where a calendar entry is about to state them.
@@ -202,9 +202,8 @@ async function send({
     client
       .from("products")
       .select(
-        // The last five are the "Good to know" facts the mail states because
-        // the confirmation page states them — the mail is that page's twin, so
-        // its overview card reads the same columns through the same formatters.
+        // The last five are the "Good to know" facts the mail states, read
+        // through the same formatters the product page's card uses.
         // `topic` is the "Before the first session" guide's one input beyond
         // `is_remote`: which guide the mail carries, if any. It states no row
         // of its own and is not one of the "Good to know" facts.
@@ -263,9 +262,8 @@ async function send({
   //
   // The club's holiday breaks ride the same second round trip, beside it: their
   // span is the product's own too — from today to the end of the term, or a
-  // year ahead of an open-ended club's today — and every mode states them, because the confirmation page
-  // lists them on every outcome. A failed read costs the list, not the mail:
-  // it is a row of the facts list, and the page drops it on the same failure.
+  // year ahead of an open-ended club's today — and every mode states them. A
+  // failed read costs the list, not the mail: it is a row of the facts list.
   const breaksSpan = holidayBreaksSpan(product, now);
   const [plannedSessions, holidayBreakRows] = await Promise.all([
     wantsSchedule
@@ -413,7 +411,7 @@ async function send({
         : await resolvePriceAmount(client, { productId, mode, currency, locale }),
       // Only a deferred subscription has one, and only the Stripe webhook knows
       // it — see the input's own note. Rendered through the same rule the
-      // confirmation page renders it with, in the product's zone, because a mail
+      // signup panel states it with, in the product's zone, because a mail
       // has no viewer zone to project a clamped instant into. The child's copy
       // states no billing bullet at all, so it composes none.
       firstChargeDate:
@@ -428,9 +426,10 @@ async function send({
           : null,
       dashboardUrl,
       gamerCopy,
-      // The page's "Good to know" card, from the same columns and through the
-      // same formatters. The location goes through the shared rule rather than
-      // being re-derived here, so "Where" says what the page says. Both copies
+      // The "Good to know" facts the product page states, from the same columns
+      // and through the same formatters. The location goes through the shared
+      // rule rather than being re-derived here, so "Where" says what every
+      // page says. Both copies
       // carry it, each resolved in its own reader's locale.
       overview: {
         timezone: product.timezone,
@@ -449,7 +448,7 @@ async function send({
         spokenLanguageCode: product.spoken_language_code,
         now,
       },
-      // The confirmation page's list, by the same rule, in this reader's
+      // The product page's list, by the same rule, in this reader's
       // locale: the same breaks, the same names, the same compact ranges.
       holidayBreaks: holidayBreakLines(holidayBreakRows, {
         today: breaksToday,

@@ -19,12 +19,19 @@ import { GameAccountCard } from "@/components/game-account";
 // for the sake of one card, and none of the three is reachable from this page.
 import { GamerSignInCard } from "@/components/family/gamer-sign-in-card";
 import { GamerPhotoConsentCard } from "@/components/family/gamer-photo-consent-card";
-import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
-import { useGamerPhotoConsents } from "@/services/gamer-photo-consents";
-import { useMinecraftAccount } from "@/services/minecraft";
-import { useRobloxAccount } from "@/services/roblox";
-import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
-import { computeAge } from "@/lib/utils";
+import {
+  useMyGamers,
+  useUpdateGamer,
+  useGamerProfile,
+} from "@/services/gamers/gamers.queries";
+import {
+  useGamerPhotoConsents,
+} from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
+import { useMinecraftAccount } from "@/services/minecraft/minecraft.queries";
+import { useRobloxAccount } from "@/services/roblox/roblox.queries";
+import { DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
+import { computeAge } from "@/lib/gamer-age-eligibility";
 import { useTimezone } from "@/providers";
 
 export default function GamerDetailsPage() {

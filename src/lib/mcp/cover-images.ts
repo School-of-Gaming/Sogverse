@@ -93,9 +93,13 @@ export async function coverImage(
   }
 }
 
-/** A picture to put in an answer: its stored path, and the line that names it. */
+/**
+ * A picture to put in an answer: its stored path, the catalogue purpose it is
+ * of — which names the bucket it is read from — and the line that names it.
+ */
 export interface CoverToShow {
   path: string;
+  purpose: CatalogueImagePurpose;
   caption: string;
 }
 
@@ -104,18 +108,16 @@ export interface CoverToShow {
  * picture as its caption followed by its picture, in order, until the count or
  * the budget runs out. A picture past either limit, or one that could not be
  * read, keeps its caption and says why it has no picture, so the text alone
- * always names every one. `purpose` is the catalogue purpose every path is
- * of, which names the bucket it is read from.
+ * always names every one.
  */
 export async function answerWithCovers<T extends Record<string, unknown>>(
   value: T,
   covers: readonly CoverToShow[],
   size: CoverImageSize,
-  purpose: CatalogueImagePurpose = "library_cover",
 ): Promise<CallToolResult> {
   const shown = covers.slice(0, MAX_IMAGES_PER_RESULT);
   const images = await Promise.all(
-    shown.map(({ path }) => coverImage(path, size, purpose)),
+    shown.map(({ path, purpose }) => coverImage(path, size, purpose)),
   );
 
   const content: ContentBlock[] = [{ type: "text", text: JSON.stringify(value, null, 2) }];

@@ -96,21 +96,22 @@ test.describe("Security Headers", () => {
     }
   });
 
+  // A nonce repeated across requests is one an attacker can read off one page
+  // and reuse in a script injected into the next, so the policy is only as good
+  // as this difference.
   test("each request should receive a unique CSP nonce", async ({ request }) => {
-    const res1 = await request.get("/");
-    const res2 = await request.get("/");
+    const nonceOf = async () => {
+      const response = await request.get("/");
+      const csp = response.headers()["content-security-policy"] ?? "";
+      return /'nonce-([^']+)'/.exec(csp)?.[1];
+    };
 
-    const csp1 = res1.headers()["content-security-policy"];
-    const csp2 = res2.headers()["content-security-policy"];
+    const first = await nonceOf();
+    const second = await nonceOf();
 
-    // Both should have CSP
-    expect(csp1).toBeTruthy();
-    expect(csp2).toBeTruthy();
-
-    // In production, nonces differ per request; in dev, CSP is static (no nonce)
-    // so this test just verifies the header is present on every request
-    expect(csp1).toContain("default-src 'self'");
-    expect(csp2).toContain("default-src 'self'");
+    expect(first).toBeTruthy();
+    expect(second).toBeTruthy();
+    expect(first).not.toBe(second);
   });
   // The public folder's video: served from the build's own origin, cacheable
   // for a year because a changed file always ships under a new versioned name,

@@ -46,3 +46,11 @@ export function written(value: string | undefined): string | null {
   const trimmed = value?.trim() ?? "";
   return trimmed === "" ? null : trimmed;
 }
+
+/**
+ * The outline level of a section's item titles: H3s under the section's H2, or
+ * H2s themselves where the section has no heading written.
+ */
+export function itemHeadingLevel(heading: string | undefined): 2 | 3 {
+  return written(heading) === null ? 2 : 3;
+}

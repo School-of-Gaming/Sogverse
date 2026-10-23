@@ -34,15 +34,20 @@ import type { BillingAccount } from "./billing.service";
  * get-or-create path use) and can legitimately carry no subscriptions — it
  * still holds their saved cards and invoice history.
  *
- * Returns `[]` on any failure, so a dashboard prefetch degrades to the plain
- * single-button billing card rather than failing the page.
+ * `[]` means the parent genuinely has no Stripe customer, and the dashboard
+ * drops its billing section for it. So any failure — no signed-in user, either
+ * read erroring — throws rather than returning `[]`: the caller has to be able
+ * to tell "no account" from "could not read", because a parent who has an
+ * account must not lose the way to it over one failed read.
  */
 export async function resolveBillingAccountsViaRls(
   supabase: AppSupabaseClient,
 ): Promise<BillingAccount[]> {
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub;
-  if (!userId) return [];
+  if (!userId) {
+    throw new Error("resolveBillingAccountsViaRls: no signed-in user");
+  }
 
   const [
     { data: profile, error: profileError },
@@ -76,21 +81,13 @@ export async function resolveBillingAccountsViaRls(
       .order("created_at", { ascending: true }),
   ]);
 
-  if (error) {
-    console.error("resolveBillingAccountsViaRls: subscription lookup failed", error);
-    return [];
-  }
-  // Not fatal — the subscriptions alone still produce working buttons. But it
-  // silently drops the profile-bound customer, which is the one that carries a
-  // migrated family's saved cards and invoice history and often no
-  // subscription at all. Without this line the account just isn't there and
-  // nothing anywhere says why.
-  if (profileError) {
-    console.error(
-      "resolveBillingAccountsViaRls: customer profile lookup failed",
-      profileError,
-    );
-  }
+  if (error) throw error;
+  // Fatal too, though the subscriptions alone would still produce buttons: the
+  // profile-bound customer is the one that carries a migrated family's saved
+  // cards and invoice history and often no subscription at all, so a list
+  // without it is wrong — and for a parent with no subscriptions it would be
+  // `[]`, which hides the billing section outright.
+  if (profileError) throw profileError;
 
   const accounts = new Map<string, BillingAccount>();
   if (profile?.stripe_customer_id) {

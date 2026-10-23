@@ -4,7 +4,8 @@ import type { ComponentProps, ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { monthsAfter } from "@/lib/calendar-date";
-import { cn, formatDateOnly } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { formatDateOnly } from "@/lib/date-format";
 
 /** A link target the app's own typed `Link` accepts. */
 export type MonthHref = ComponentProps<typeof Link>["href"];

@@ -15,11 +15,14 @@ import {
 import type { ReactNode } from "react";
 import { act, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enSettings from "@/../messages/en/settings.json";
+import enCommon from "@/../messages/en/common.json";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { createMockProfile } from "../../mocks/supabase";
 import type { NotificationPreference, Profile } from "@/types";
+
+const messages = { settings: enSettings, common: enCommon };
 
 /**
  * **The viewer chooses which notifications reach them, by channel, and every
@@ -36,16 +39,18 @@ const read: { data: NotificationPreference[] | undefined; isError: boolean } = {
 const setPreference = vi.fn();
 
 vi.mock("@/providers", () => providersModule(() => auth.profile));
-vi.mock("@/services/users", () => usersServiceModule());
-vi.mock("@/services/locations", () => locationsServiceModule());
-vi.mock("@/services/minecraft", () => minecraftServiceModule());
-vi.mock("@/services/roblox", () => robloxServiceModule());
-vi.mock("@/services/notification-preferences", () => ({
+vi.mock("@/services/users/users.queries", () => usersServiceModule());
+vi.mock("@/services/locations/locations.queries", () => locationsServiceModule());
+vi.mock("@/services/minecraft/minecraft.queries", () => minecraftServiceModule());
+vi.mock("@/services/roblox/roblox.queries", () => robloxServiceModule());
+vi.mock("@/services/notification-preferences/notification-preferences.service", () => ({
   NOTIFICATION_TOGGLES: { email: ["session_report_copy"] },
+}));
+vi.mock("@/services/notification-preferences/notification-preferences.queries", () => ({
   useMyNotificationPreferences: () => read,
   useSetNotificationPreference: () => ({ mutateAsync: setPreference }),
 }));
-vi.mock("@/services/marketing-consents", () =>
+vi.mock("@/services/marketing-consents/marketing-consents.queries", () =>
   marketingConsentsServiceModule(),
 );
 vi.mock("@/components/game-account", () => gameAccountModule());

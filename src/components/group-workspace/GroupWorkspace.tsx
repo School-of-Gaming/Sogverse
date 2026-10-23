@@ -26,19 +26,23 @@ import {
   type SessionFeedGamer,
   type SessionReportSendResult,
 } from "@/components/gedu/session-feed";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { sessionEntryId } from "@/lib/session-occurrence";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type {
   GameAccountStatus,
   GamePlatform,
 } from "@/components/game-account";
-import type { RobloxRenderMap } from "@/services/roblox";
+import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { platformForTopic } from "@/lib/products/topics";
+import {
+  productVoiceRoom,
+  type ProductVoiceRoom,
+} from "@/lib/products/voice-room";
 import type { Withheld } from "@/lib/withheld";
 import type { GamerCreation } from "@/types";
 import {
@@ -581,6 +585,12 @@ export function GroupWorkspace({
    */
   const platform = platformForTopic(data.product.topic);
 
+  /** How this product's sessions are joined — one answer for every group. */
+  const voiceRoom = useMemo(
+    () => productVoiceRoom(data.product, data.product.translations),
+    [data.product],
+  );
+
   const { assignedGroup, peerGroups } = useMemo(() => {
     // The reader's own group is always drawn in full; a name-only row is only
     // ever a sister group, so it can never be the one found here.
@@ -844,6 +854,7 @@ export function GroupWorkspace({
               group={assignedGroup}
               heading={groupHeading}
               isRemote={data.product.is_remote}
+              voiceRoom={voiceRoom}
               voiceIsOpen={ownVoiceState.voiceIsOpen}
               opensDate={ownVoiceState.opensDate}
               opensTime={ownVoiceState.opensTime}
@@ -862,6 +873,7 @@ export function GroupWorkspace({
           <OtherGroupsRailCard
             peerGroups={peerGroups}
             isRemote={data.product.is_remote}
+            voiceRoom={voiceRoom}
             voiceIsOpen={voiceState.voiceIsOpen}
             opensDate={voiceState.opensDate}
             opensTime={voiceState.opensTime}
@@ -1087,6 +1099,7 @@ function ParticipantCount({ count }: { count: number }) {
 function OtherGroupsRailCard({
   peerGroups,
   isRemote,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -1100,6 +1113,7 @@ function OtherGroupsRailCard({
    */
   peerGroups: readonly WorkspaceGroupRow[];
   isRemote: boolean;
+  voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
@@ -1168,6 +1182,7 @@ function OtherGroupsRailCard({
               {isRemote && (
                 <div className="flex justify-center pt-0.5">
                   <JoinVoiceButton
+                    voiceRoom={voiceRoom}
                     voiceIsOpen={voiceIsOpen}
                     voiceHref={ROUTES.voice.groupSession(group.id)}
                     opensDate={opensDate}
@@ -1258,6 +1273,7 @@ function GroupRailCard({
   group,
   heading,
   isRemote,
+  voiceRoom,
   voiceIsOpen,
   opensDate,
   opensTime,
@@ -1275,6 +1291,7 @@ function GroupRailCard({
   /** The card's heading, or `undefined` for the gedu's "My Group". */
   heading?: string;
   isRemote: boolean;
+  voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
@@ -1329,6 +1346,7 @@ function GroupRailCard({
       {isRemote && (
         <div className="flex justify-center">
           <JoinVoiceButton
+            voiceRoom={voiceRoom}
             voiceIsOpen={voiceIsOpen}
             voiceHref={ROUTES.voice.groupSession(group.id)}
             opensDate={opensDate}

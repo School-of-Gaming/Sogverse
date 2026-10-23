@@ -73,6 +73,7 @@ export function ProductBrowseCardView({
   detailHref,
   tag,
   imageSrc,
+  titleLevel = 3,
 }: ProductBrowseCardViewProps) {
   // Openability, the card's class string, and the footer's inputs — all of it
   // shared rather than restated here.
@@ -124,7 +125,7 @@ export function ProductBrowseCardView({
               which is the point of the media-top layout and is what the
               long-name fixture on the shop scene is there to check. */}
           <div className="line-clamp-2">
-            <Heading level={3} step="card-title">
+            <Heading level={titleLevel} step="card-title">
               {name}
             </Heading>
           </div>

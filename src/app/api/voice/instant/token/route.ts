@@ -5,7 +5,7 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**

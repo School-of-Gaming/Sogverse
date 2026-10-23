@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGamer from "@/../messages/en/gamer.json";
+import enDashboardSections from "@/../messages/en/dashboardSections.json";
+import enHelpSection from "@/../messages/en/helpSection.json";
+import enProductType from "@/../messages/en/productType.json";
+import enActivityCard from "@/../messages/en/activityCard.json";
+import enSessionBadge from "@/../messages/en/sessionBadge.json";
+import enFamilyEnrollment from "@/../messages/en/familyEnrollment.json";
+import enParent from "@/../messages/en/parent.json";
+import enVoiceButton from "@/../messages/en/voiceButton.json";
+import enTopicPrep from "@/../messages/en/topicPrep.json";
 import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { GamerDashboardPageBody } from "@/components/gamer/gamer-dashboard-page-body";
 import {
@@ -14,6 +23,19 @@ import {
   QueryProvider,
   TimezoneProvider,
 } from "@/providers";
+
+const messages = {
+  gamer: enGamer,
+  dashboardSections: enDashboardSections,
+  helpSection: enHelpSection,
+  productType: enProductType,
+  activityCard: enActivityCard,
+  sessionBadge: enSessionBadge,
+  familyEnrollment: enFamilyEnrollment,
+  parent: enParent,
+  voiceButton: enVoiceButton,
+  topicPrep: enTopicPrep,
+};
 
 /**
  * **The gamer dashboard ends in Help, and the pill never exceeds four chips.**

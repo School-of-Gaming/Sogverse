@@ -1,0 +1,41 @@
+{
+  "offer": {
+    "title": "Paikka vapautui",
+    "child": "Paikka vapautui: {participantName} pääsee mukaan – {productName}. Haluatko paikan edelleen?",
+    "self": "Paikka vapautui sinulle – {productName}. Haluatko paikan edelleen?",
+    "deadline": "Vastaa viimeistään {deadline}. Sen jälkeen paikka siirtyy jonossa seuraavalle perheelle.",
+    "accept": "Otan paikan",
+    "decline": "Ei kiitos",
+    "confirmTitle": "Luovutko paikasta?",
+    "confirmBody": "Tarjoamme paikkaa jonotuslistalla seuraavalle perheelle, eikä tätä tarjousta voi avata uudelleen.",
+    "confirmAction": "Kyllä, olen varma",
+    "confirmCancel": "Palaa takaisin",
+    "error": "Jokin meni pieleen, eikä vastaustasi tallennettu. Yritä uudelleen tai kirjoita meille osoitteeseen {supportEmail}."
+  },
+  "accepted": {
+    "title": "Paikka on varattu",
+    "body": "Tallensimme paikan teille. Löydät sen Oma SOG -sivulta muiden perheesi ilmoittautumisten joukosta.",
+    "action": "Siirry Oma SOG -sivulle"
+  },
+  "declined": {
+    "title": "Kiitos, kun kerroit",
+    "body": "Poistimme paikan listaltasi. Koska vastasit, voimme antaa sen tänään toiselle perheelle sen sijaan, että se jäisi tyhjäksi."
+  },
+  "expired": {
+    "title": "Tarjouksen aika umpeutui",
+    "body": "Paikkatarjous on voimassa {days} päivää, ja tämä ehti umpeutua ennen kuin saimme vastauksesi.",
+    "declinePrompt": "Olet edelleen jonotuslistalla. Jos perheesi ei enää tarvitse paikkaa, voit kertoa siitä nyt, niin se vapautuu jollekin toiselle.",
+    "declineAction": "Luovun paikasta",
+    "confirmTitle": "Luovutko paikastasi?",
+    "confirmBody": "Poistamme sinut jonotuslistalta. Jos liityt myöhemmin uudelleen, aloitat jonon lopusta."
+  },
+  "used": {
+    "title": "Tämä linkki on jo käytetty",
+    "body": "Tämä kutsu ei ole enää voimassa. Löydät Oma SOG -sivulta kaikki perheesi ilmoittautumiset ja jonotuspaikat.",
+    "action": "Siirry Oma SOG -sivulle"
+  },
+  "invalid": {
+    "title": "Linkki ei toiminut",
+    "body": "Linkki on voinut katketa sähköpostiohjelmassa tai kopioitua vain osittain. Avaa se uudelleen sähköpostista tai kirjoita meille osoitteeseen {supportEmail}, niin autamme."
+  }
+}

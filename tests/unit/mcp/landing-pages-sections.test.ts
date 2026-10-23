@@ -3,6 +3,8 @@ import {
   LANDING_ICONS,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
+  LANDING_TESTIMONIAL_ARRANGEMENTS,
+  LANDING_TESTIMONIAL_SLOTS,
   landingSections,
   type LandingSectionType,
 } from "@/lib/landing-pages/sections";
@@ -52,12 +54,17 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "hero", imageId: "nope" },
     { id: "nope", type: "hero" },
     { id: ID, type: "hero", extra: true },
+    { id: ID, type: "hero", background: "default" },
+    { id: ID, type: "hero", background: "card" },
   ],
   text: [
     { id: ID, type: "text", imageSide: "start" },
     { id: ID, type: "text", imageSide: "end", imageId: ID2 },
     { id: ID, type: "text" },
     { id: ID, type: "text", imageSide: "left" },
+    { id: ID, type: "text", imageSide: "start", background: "card" },
+    { id: ID, type: "text", imageSide: "start", background: "default" },
+    { id: ID, type: "text", imageSide: "start", background: "tinted" },
   ],
   image: [
     { id: ID, type: "image", images: [{ id: ID2, imageId: ID3 }] },
@@ -67,6 +74,8 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "image", images: [{ id: ID2, imageId: ID3 }, { id: ID2, imageId: ID }] },
     { id: ID, type: "image", images: [{ id: ID2 }] },
     { id: ID, type: "image", imageIds: [ID2] },
+    { id: ID, type: "image", images: [{ id: ID2, imageId: ID3 }], background: "card" },
+    { id: ID, type: "image", images: [{ id: ID2, imageId: ID3 }], background: null },
   ],
   points: [
     { id: ID, type: "points", items: ids(2).map((id) => ({ id, icon: "star" })) },
@@ -75,6 +84,8 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "points", items: ids(1).map((id) => ({ id, icon: "star" })) },
     { id: ID, type: "points", items: ids(2).map((id) => ({ id, icon: "unicorn" })) },
     { id: ID, type: "points", items: [{ id: ID2, icon: "star" }, { id: ID2, icon: "heart" }] },
+    { id: ID, type: "points", items: ids(2).map((id) => ({ id, icon: "star" })), background: "card" },
+    { id: ID, type: "points", items: ids(2).map((id) => ({ id, icon: "star" })), background: 1 },
   ],
   steps: [
     { id: ID, type: "steps", items: ids(2).map((id) => ({ id })) },
@@ -82,6 +93,45 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "steps", items: ids(7).map((id) => ({ id })) },
     { id: ID, type: "steps", items: ids(1).map((id) => ({ id })) },
     { id: ID, type: "steps", items: [{ id: ID2 }, { id: ID2 }] },
+    { id: ID, type: "steps", items: ids(2).map((id) => ({ id })), background: "card" },
+    { id: ID, type: "steps", items: ids(2).map((id) => ({ id })), background: "Card" },
+  ],
+  testimonials: [
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: [ID2] },
+    { id: ID, type: "testimonials", arrangement: "pair", testimonialIds: [ID2, ID3] },
+    { id: ID, type: "testimonials", arrangement: "row", testimonialIds: ids(3) },
+    { id: ID, type: "testimonials", arrangement: "showcase", testimonialIds: ids(6) },
+    { id: ID, type: "testimonials", arrangement: "showcase", testimonialIds: [` ${ID2.toUpperCase()} `] },
+    { id: ID, type: "testimonials", arrangement: "pair", testimonialIds: [ID2, ID2] },
+    { id: ID, type: "testimonials", arrangement: "grid", testimonialIds: [ID2] },
+    { id: ID, type: "testimonials", testimonialIds: [ID2] },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: ["nope"] },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonials: [ID2] },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: [ID2], background: "card" },
+    { id: ID, type: "testimonials", arrangement: "feature", testimonialIds: [ID2], background: "tinted" },
+  ],
+  products: [
+    { id: ID, type: "products", productIds: [ID2] },
+    { id: ID, type: "products", productIds: [` ${ID2.toUpperCase()} `, ID3] },
+    { id: ID, type: "products", productIds: ids(40) },
+    { id: ID, type: "products", productIds: [] },
+    { id: ID, type: "products" },
+    { id: ID, type: "products", productIds: [ID2, ID2] },
+    { id: ID, type: "products", productIds: ["not a product"] },
+    { id: ID, type: "products", productIds: [{ id: ID2 }] },
+    { id: ID, type: "products", productIds: [ID2], items: [] },
+    { id: ID, type: "products", productIds: [ID2], background: "card" },
+    { id: ID, type: "products", productIds: [ID2], background: null },
+  ],
+  guide: [
+    { id: ID, type: "guide", guideId: ID2 },
+    { id: ID, type: "guide", guideId: ` ${ID2.toUpperCase()} `, imageId: ID3 },
+    { id: ID, type: "guide" },
+    { id: ID, type: "guide", guideId: "nope" },
+    { id: ID, type: "guide", guideId: ID2, imageId: "nope" },
+    { id: ID, type: "guide", guideIds: [ID2] },
+    { id: ID, type: "guide", guideId: ID2, background: "card" },
+    { id: ID, type: "guide", guideId: ID2, background: "tinted" },
   ],
   faq: [
     { id: ID, type: "faq", items: ids(1).map((id) => ({ id })) },
@@ -89,6 +139,16 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "faq", items: ids(21).map((id) => ({ id })) },
     { id: ID, type: "faq", items: [] },
     { id: ID, type: "faq", items: [{ id: ID2, question: "?" }] },
+    { id: ID, type: "faq", items: ids(1).map((id) => ({ id })), background: "card" },
+    { id: ID, type: "faq", items: ids(1).map((id) => ({ id })), background: "lifted" },
+  ],
+  subscribe: [
+    { id: ID, type: "subscribe" },
+    { id: ` ${ID.toUpperCase()} `, type: "subscribe" },
+    { id: ID, type: "subscribe", listId: 3 },
+    { id: ID, type: "subscribe", button: internal },
+    { id: ID, type: "subscribe", background: "card" },
+    { id: ID, type: "subscribe", background: "tinted" },
   ],
   cta: [
     { id: ID, type: "cta", button: internal },
@@ -97,6 +157,9 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "cta", button: { kind: "email", to: "a@b.c" } },
     { id: ID, type: "cta", button: { kind: "email", to: "a b@sog.gg" } },
     { id: ID, type: "cta", button: { kind: "external", url: "mailto:a@sog.gg" } },
+    { id: ID, type: "cta", button: internal, background: "card" },
+    { id: ID, type: "cta", button: internal, background: "default" },
+    { id: ID, type: "cta", button: internal, background: "" },
   ],
 };
 
@@ -130,10 +193,36 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
     { heading: "H", items: { [ID2]: { title: "T" } } },
     { items: { [ID2]: { icon: "star" } } },
   ],
+  testimonials: [
+    {},
+    { eyebrow: "Parents", heading: "What parents tell us", intro: "In their words." },
+    { heading: 3 },
+    { quote: "Words live in the store, never here" },
+  ],
+  products: [
+    {},
+    { eyebrow: " This term ", heading: "Clubs in Espoo", intro: "Pick one." },
+    { heading: ["Clubs"] },
+    { items: {} },
+    { body: "Not a products field" },
+  ],
+  guide: [
+    {},
+    { eyebrow: "Free", heading: "The parents' guide", description: "What a club is like.", imageAlt: "The cover" },
+    { description: 3 },
+    { body: "Not a guide field" },
+  ],
   faq: [
     { heading: "H", items: { [ID2]: { question: "Q?", answer: "A." } } },
     { items: { [ID2]: { title: "Q?" } } },
     { intro: "Not an faq field" },
+  ],
+  subscribe: [
+    {},
+    { eyebrow: " News ", heading: " Stay in touch ", intro: "Once a month.", buttonLabel: "Sign up" },
+    { heading: "H", body: "Not a sign-up field" },
+    { buttonLabel: 7 },
+    { heading: "H", emailSubject: "Not a sign-up field" },
   ],
   cta: [
     { heading: "H", body: "B", buttonLabel: "Go" },
@@ -196,6 +285,7 @@ describe("new sections and items", () => {
     expect(parsed[1]).toEqual({
       id: ID,
       type: "image",
+      background: "default",
       images: [
         { id: ids(10)[1], imageId: ID3 },
         { id: ID2, imageId: ID3 },
@@ -221,7 +311,25 @@ describe("the manual", () => {
     expect(describeRequiredWords("faq")).toBe(
       "heading; items.<item id>.question; items.<item id>.answer",
     );
+    expect(describeRequiredWords("subscribe")).toBe("heading; buttonLabel");
     expect(describeRequiredWords("cta")).toBe("heading; buttonLabel");
+    expect(describeRequiredWords("products")).toBe("none");
+    expect(describeRequiredWords("testimonials")).toBe("none");
+  });
+
+  it("states each testimonials arrangement with its slot count, from the registry", () => {
+    for (const arrangement of LANDING_TESTIMONIAL_ARRANGEMENTS) {
+      expect(SECTIONS_MANUAL).toContain(
+        `${arrangement} (exactly ${LANDING_TESTIMONIAL_SLOTS[arrangement]}:`,
+      );
+    }
+    expect(SECTIONS_MANUAL).toContain("list_testimonials");
+  });
+
+  it("describes the background: its values, that adjacent card sections group, and that the hero takes none", () => {
+    expect(SECTIONS_MANUAL).toContain("default or card");
+    expect(SECTIONS_MANUAL).toContain("adjacent card sections share one band");
+    expect(SECTIONS_MANUAL).toContain("The hero takes no background");
   });
 
   it("names every type, the arrangement rule and the icons", () => {

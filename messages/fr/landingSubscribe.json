@@ -1,0 +1,10 @@
+{
+  "firstName": "Prénom",
+  "lastName": "Nom",
+  "email": "Adresse e-mail",
+  "consent": "School of Gaming peut m’envoyer des actualités et des offres par e-mail. J’ai lu la <privacy>politique de confidentialité</privacy>.",
+  "error": "Une erreur est survenue et votre inscription n’est pas encore faite. Veuillez réessayer dans un instant.",
+  "invalid": "Vérifiez votre adresse e-mail et réessayez.",
+  "successTitle": "Votre inscription est confirmée",
+  "successBody": "Merci. Notre newsletter arrivera bientôt dans votre boîte de réception."
+}

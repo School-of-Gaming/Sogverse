@@ -2,7 +2,7 @@
 
 import { Ban } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 
 /**
  * What stands where a removed message was.

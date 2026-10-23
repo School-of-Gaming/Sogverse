@@ -29,7 +29,7 @@ import {
   writtenLocales,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
   NO_BREAK_NAMES,
   checkHolidayBreak,

@@ -4,6 +4,7 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { CATALOGUE_IMAGE_PURPOSES } from "./src/lib/images/catalogue-image-purposes";
 import { IMAGE_PURPOSES } from "./src/lib/images/image-purposes";
+import { isProductionDeployment } from "./src/lib/seo/deployment";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -208,6 +209,18 @@ const nextConfig: NextConfig = {
     // accepted (ruling of 2026-10-05).
     minimumCacheTTL: 31_536_000,
   },
+  // The IndexNow key file (`src/lib/indexnow/`) has to sit at the site root to
+  // vouch for every URL on the host, and its contents come from the
+  // environment, so the root path is a rewrite to the route that serves it.
+  // Before the filesystem, so the `[locale]` segment never claims the path;
+  // the proxy's matcher excludes it, so it is never locale-redirected.
+  async rewrites() {
+    return {
+      beforeFiles: [{ source: "/indexnow-key.txt", destination: "/api/indexnow/key" }],
+      afterFiles: [],
+      fallback: [],
+    };
+  },
   async headers() {
     return [
       {
@@ -238,6 +251,21 @@ const nextConfig: NextConfig = {
           // (nonce-based script-src blocks injected inline scripts in production)
         ],
       },
+      // Off production, every response is kept out of search and out of AI
+      // use: pages, images, API answers, files — anything a crawler could
+      // reach by a link (`src/lib/seo/deployment.ts`). A config header is the
+      // one mechanism that covers all of it; the proxy's matcher skips static
+      // files, and a page's metadata reaches only pages. Production's headers
+      // are untouched. Decided when the config is loaded, which on Vercel is
+      // the build, where `VERCEL_ENV` is already set.
+      ...(isProductionDeployment()
+        ? []
+        : [
+            {
+              source: "/:path*",
+              headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+            },
+          ]),
       // The public folder's video. Every file there is named with a version
       // (`hero-calm-wide-v1.mp4`), and changed bytes always ship under a new
       // name, so a URL there never changes meaning and can be cached for a year

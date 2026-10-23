@@ -1,0 +1,43 @@
+{
+  "addGamer": "Ajouter un joueur",
+  "manageGamer": "Gérer",
+  "manageGamerAria": "Gérer le profil de {name}",
+  "switchFailed": "Échec du changement de compte",
+  "loadFailed": "Échec du chargement de la famille",
+  "switchToParentToAddGamer": {
+    "title": "Passer au profil de {name} pour ajouter un joueur ?",
+    "oneWayWarning": "Vous serez déconnecté de votre compte joueur."
+  },
+  "switchGate": {
+    "pinTitle": "Demande à un parent de saisir son code PIN",
+    "pinDescription": "Le code PIN d’un parent est nécessaire pour basculer vers {name}.",
+    "pinNotSetTitle": "Pas encore de code PIN parent",
+    "pinNotSetDescription": "Un parent doit d’abord créer un code PIN depuis Mon SOG. Tu pourras ensuite changer de compte.",
+    "signOutTitle": "Déconnecte-toi d’abord",
+    "signOutOwnSession": "{name} est connecté avec son propre identifiant, donc ce compte ne peut pas passer à un autre. Ainsi, le compte de chacun reste privé.",
+    "signOutHow": "Déconnecte-toi, puis connecte-toi en tant que {name}.",
+    "signOutHowViaParent": "Déconnecte-toi, connecte-toi avec le compte de ton parent, puis bascule vers {name} depuis celui-ci."
+  },
+  "addGamerForm": {
+    "title": "Ajouter un joueur",
+    "firstNameLabel": "Prénom",
+    "firstNamePlaceholder": "ex. Lily",
+    "birthMonthLabel": "Mois de naissance",
+    "birthMonthPlaceholder": "Mois",
+    "birthYearLabel": "Année de naissance",
+    "birthYearPlaceholder": "Année",
+    "genderLabel": "Genre",
+    "genderBoy": "Garçon",
+    "genderGirl": "Fille",
+    "genderNonBinary": "Non binaire",
+    "submit": "Ajouter le joueur",
+    "submitting": "Ajout…",
+    "firstNameTooShort": "Le prénom doit contenir au moins 2 caractères.",
+    "firstNameTooLong": "Le prénom ne doit pas dépasser 32 caractères.",
+    "birthMonthRequired": "Choisissez un mois de naissance.",
+    "birthYearRequired": "Choisissez une année de naissance.",
+    "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer.",
+    "guardianAttestation": "{name} est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>.",
+    "guardianAttestationUnnamed": "Ce joueur est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>."
+  }
+}

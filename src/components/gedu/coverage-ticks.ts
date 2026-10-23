@@ -26,7 +26,7 @@
 import { formattingLocale } from "@/lib/constants/locales";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import type { LocationWithChain } from "@/services/locations";
+import type { LocationWithChain } from "@/services/locations/locations.service";
 import type { Json, LocationType } from "@/types";
 
 /** The subset of an ancestor both a saved chain and a picked one satisfy. */

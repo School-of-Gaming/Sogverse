@@ -11,7 +11,10 @@ import {
   type LandingTextByType,
   type LandingTextOf,
 } from "./landing-section-types";
-import type { LocalizedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
+import type {
+  LandingPicture,
+  LocalizedLandingPage,
+} from "@/services/landing-pages/landing-pages.contracts";
 import { markdownToPlainText } from "./markdown-plain-text";
 
 /**
@@ -32,10 +35,14 @@ import { markdownToPlainText } from "./markdown-plain-text";
  *   in the version's language.
  * - `question` — one question and its answer, as plain text; any question
  *   makes the page a `FAQPage`.
+ * - `products` — the products a section promotes, by id in its order; the
+ *   page lists those the shop lists, each pointing at its page, and repeats
+ *   none of a product's own markup, which stays on the product's page.
  */
 export type LandingStructuredPart =
   | { kind: "image"; imageId: string; alt: string | null }
-  | { kind: "question"; question: string; answer: string };
+  | { kind: "question"; question: string; answer: string }
+  | { kind: "products"; sectionId: string; productIds: readonly string[] };
 
 interface LandingSectionSeo<Type extends LandingSectionType> {
   structuredData: (
@@ -78,6 +85,22 @@ export const LANDING_SECTION_SEO: {
   steps: {
     structuredData: none,
   },
+  // Testimonials contribute nothing: review markup a site writes about itself
+  // earns no rich result, and the quotes are the page's own words to a reader.
+  testimonials: {
+    structuredData: none,
+  },
+  products: {
+    structuredData: (section) => [
+      { kind: "products", sectionId: section.id, productIds: section.productIds },
+    ],
+  },
+  // A guide contributes nothing. Describing it as a document would name a file
+  // a crawler cannot fetch — it downloads only for a signed-in reader — and
+  // earns no rich result; its heading and line are already the page's words.
+  guide: {
+    structuredData: none,
+  },
   faq: {
     structuredData: (section, text) =>
       section.items.flatMap((item) => {
@@ -88,6 +111,9 @@ export const LANDING_SECTION_SEO: {
           ? []
           : [{ kind: "question" as const, question, answer }];
       }),
+  },
+  subscribe: {
+    structuredData: none,
   },
   cta: {
     structuredData: none,
@@ -114,18 +140,31 @@ export function landingStructuredParts(
 
 /**
  * The picture a live page leads with — the hero's — as its stored path and
- * alt text, or null when the hero has none. The page's structured data and
- * its link preview both name this one picture, so they cannot disagree. A
- * picture with no path is treated as none: the database derives the paths
- * and unlinks a removed picture, so it should not arise, and naming no
- * picture is the safe answer if it does.
+ * purpose and its alt text, or null when the hero has none. A hero's picture
+ * is wide, which the database keeps true. The page's structured data names
+ * this picture, and so does its link preview unless the shown version sets
+ * a share picture of its own (`landingShareCard`). A picture with no path is
+ * treated as none: the database derives the paths and unlinks a removed
+ * picture, so it should not arise, and naming no picture is the safe answer
+ * if it does.
  */
 export function landingLeadPicture(
-  page: LocalizedLandingPage,
-): { path: string; alt: string | null } | null {
+  page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "pictures">,
+): (LandingPicture & { alt: string | null }) | null {
   const part = landingStructuredParts(page.sections, page.sectionTexts).find(
     (candidate) => candidate.kind === "image",
   );
-  if (part === undefined || !Object.hasOwn(page.imagePaths, part.imageId)) return null;
-  return { path: page.imagePaths[part.imageId], alt: part.alt };
+  if (part === undefined || !Object.hasOwn(page.pictures, part.imageId)) return null;
+  return { ...page.pictures[part.imageId], alt: part.alt };
+}
+
+/**
+ * The path of the picture a live page leads with, read from its structure
+ * alone — for a list, which carries no words and so no alt text. The same
+ * picture `landingLeadPicture` names.
+ */
+export function landingLeadPicturePath(
+  page: Pick<LocalizedLandingPage, "sections" | "pictures">,
+): string | null {
+  return landingLeadPicture({ ...page, sectionTexts: {} })?.path ?? null;
 }

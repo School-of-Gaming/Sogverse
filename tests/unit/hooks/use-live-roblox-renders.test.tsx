@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
-import { useLiveRobloxRenders } from "@/services/roblox";
+import { useLiveRobloxRenders } from "@/services/roblox/roblox.queries";
 
 /**
  * The renders for a list whose membership moves while the page is open — a

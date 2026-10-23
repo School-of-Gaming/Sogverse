@@ -24,11 +24,11 @@
 // src/i18n/CLAUDE.md.
 //
 // Adding a locale is a checklist, not a one-liner: `LOCALE_CONFIG` entry → flag
-// registration → messages loader → `messages/<code>.json` → a slug column in
-// the pathnames map → the indexed-or-not decision → phone-country decision. The
-// full checklist lives in src/i18n/CLAUDE.md ("Adding a locale").
-// The translation-completeness CI script discovers `messages/*.json` on its own
-// and needs no edit.
+// registration → messages loader → the `messages/<code>/` directory → a slug
+// column in the pathnames map → the indexed-or-not decision → phone-country
+// decision. The full checklist lives in src/i18n/CLAUDE.md ("Adding a locale").
+// The translation-completeness CI script discovers each locale directory under
+// `messages/` on its own and needs no edit.
 
 import type Stripe from "stripe";
 import type { FlagCountry } from "@/components/ui/flags";

@@ -30,18 +30,20 @@ import {
 } from "@/components/layout/own-nav-item";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { trackDashboardNav } from "@/lib/analytics";
-import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
+import { ROUTES } from "@/lib/constants/routes";
 import { byFirstName } from "@/lib/family-order";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
+import { commitAccountSwitch } from "@/services/family/switch-account";
+import { switchGateFor, type SwitchGate } from "@/services/family/switch-gate";
 import {
-  commitAccountSwitch,
-  switchGateFor,
   useFamily,
   useSessionProvenance,
+} from "@/services/family/family.queries";
+import {
   type FamilyMember,
   type SwitchAccountCredentials,
-  type SwitchGate,
-} from "@/services/family";
+} from "@/services/family/family.service";
 // The module, not the family barrel: the header mounts on every page for every
 // role, and the barrel would drag the profile selector and the add-gamer form
 // into that bundle for the sake of one dialog most viewers never open.

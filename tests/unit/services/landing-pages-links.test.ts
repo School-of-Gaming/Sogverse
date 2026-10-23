@@ -77,7 +77,7 @@ describe("canonicaliseLandingLinks", () => {
       { resolver, siteUrl: SITE },
     );
     const [hero] = result.sections ?? [];
-    const cta = result.sections?.at(-1);
+    const cta = result.sections?.find((section) => section.type === "cta");
     expect(hero).toMatchObject({ button: { kind: "internal", path: `/library/${ARTICLE}` } });
     expect(cta).toMatchObject({ button: { kind: "external", url: "https://example.com/x" } });
   });
@@ -88,7 +88,7 @@ describe("canonicaliseLandingLinks", () => {
       section.type === "cta" ? { ...section, button: { kind: "email", to: "hello@sog.gg" } } : section,
     );
     const result = await canonicaliseLandingLinks(write(sections), { resolver: lookups, siteUrl: SITE });
-    expect(result.sections?.at(-1)).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
+    expect(result.sections?.find((section) => section.type === "cta")).toMatchObject({ button: { kind: "email", to: "hello@sog.gg" } });
     expect(lookups).not.toHaveBeenCalled();
   });
 
@@ -132,7 +132,7 @@ describe("canonicaliseLandingLinks", () => {
     );
     await expect(attempt).rejects.toThrow(
       "The button in section 1 (Hero) leads to /no-such-page, which doesn't lead to a page on the site. " +
-        'The link "the guide" to /fi/kirjasto/ei-julkaistu, in the English words of section 6 (Questions and answers), doesn\'t lead to a page on the site.',
+        'The link "the guide" to /fi/kirjasto/ei-julkaistu, in the English words of section 7 (Questions and answers), doesn\'t lead to a page on the site.',
     );
   });
 
@@ -189,8 +189,9 @@ describe("the rewrites a write reports", () => {
       write(withButtons("/fi/kirjasto/opas", `${SITE}/sv/butik/123?x=1`)),
       { resolver, siteUrl: SITE },
     );
-    const [hero] = everySection();
-    const cta = everySection().at(-1);
+    const sections = everySection();
+    const [hero] = sections;
+    const cta = sections.findIndex((section) => section.type === "cta");
     expect(result.rewrites).toEqual([
       {
         sectionId: hero.id,
@@ -202,8 +203,8 @@ describe("the rewrites a write reports", () => {
         to: `/library/${ARTICLE}`,
       },
       {
-        sectionId: cta?.id,
-        section: `section ${everySection().length} (Call to action)`,
+        sectionId: sections[cta].id,
+        section: `section ${cta + 1} (Call to action)`,
         locale: null,
         field: "button",
         text: null,
@@ -227,7 +228,7 @@ describe("the rewrites a write reports", () => {
       expect.objectContaining({ sectionId: I.text, field: "body", text: "Espoo", from: "/en/discover/espoo", to: `/discover/${PAGE}` }),
       expect.objectContaining({
         sectionId: I.faq,
-        section: "section 6 (Questions and answers)",
+        section: `section ${everySection().findIndex((section) => section.id === I.faq) + 1} (Questions and answers)`,
         locale: "en",
         field: `items.${I.faqA}.answer`,
         text: "the guide",

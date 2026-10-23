@@ -7,11 +7,11 @@ CREATE TABLE public.landing_pages (
     author_id uuid,
     sections jsonb NOT NULL,
     sections_md5 text GENERATED ALWAYS AS (md5((sections)::text)) STORED,
-    image_paths jsonb DEFAULT '{}'::jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     last_saved_by uuid,
-    last_saved_via uuid
+    last_saved_via uuid,
+    pictures jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
@@ -44,13 +44,6 @@ COMMENT ON COLUMN public.landing_pages.sections_md5 IS 'md5 of sections, generat
 
 
 --
--- Name: COLUMN landing_pages.image_paths; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.landing_pages.image_paths IS 'Each catalogue entry the sections show, as {entry id: object name in the landing-images bucket}, derived from sections by apply_landing_image_paths and never written by anything else.';
-
-
---
 -- Name: COLUMN landing_pages.updated_at; Type: COMMENT; Schema: public; Owner: -
 --
 
@@ -72,6 +65,13 @@ COMMENT ON COLUMN public.landing_pages.last_saved_via IS 'The OAuth client — a
 
 
 --
+-- Name: COLUMN landing_pages.pictures; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.landing_pages.pictures IS 'Each catalogue entry the sections and every version''s share picture show, as {entry id: {"path": object name in its purpose''s bucket, "purpose": landing_image (wide 16:9), landing_square_image (square 1:1) or landing_portrait_image (portrait 4:5)}}, derived by apply_landing_pictures and never written by anything else.';
+
+
+--
 -- Name: landing_pages landing_pages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -87,10 +87,10 @@ CREATE TRIGGER landing_pages_updated_at BEFORE UPDATE OF sections, updated_at ON
 
 
 --
--- Name: landing_pages trg_landing_pages_apply_image_paths; Type: TRIGGER; Schema: public; Owner: -
+-- Name: landing_pages trg_landing_pages_apply_pictures; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_landing_pages_apply_image_paths BEFORE INSERT OR UPDATE ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.apply_landing_image_paths();
+CREATE TRIGGER trg_landing_pages_apply_pictures BEFORE INSERT OR UPDATE ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.apply_landing_pictures();
 
 
 --
@@ -98,6 +98,27 @@ CREATE TRIGGER trg_landing_pages_apply_image_paths BEFORE INSERT OR UPDATE ON pu
 --
 
 CREATE TRIGGER trg_landing_pages_cascade_structure AFTER UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.cascade_landing_structure();
+
+
+--
+-- Name: landing_pages trg_landing_pages_check_guide_picks; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_landing_pages_check_guide_picks BEFORE INSERT OR UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks('guide', 'guideId', 'guides', 'guide', 'places');
+
+
+--
+-- Name: landing_pages trg_landing_pages_check_product_picks; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_landing_pages_check_product_picks BEFORE INSERT OR UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks('products', 'productIds', 'products', 'product', 'picks');
+
+
+--
+-- Name: landing_pages trg_landing_pages_check_testimonial_picks; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_landing_pages_check_testimonial_picks BEFORE INSERT OR UPDATE OF sections ON public.landing_pages FOR EACH ROW EXECUTE FUNCTION public.check_landing_section_picks('testimonials', 'testimonialIds', 'testimonials', 'testimonial', 'places');
 
 
 --

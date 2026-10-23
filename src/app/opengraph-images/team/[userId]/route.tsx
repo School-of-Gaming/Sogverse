@@ -21,8 +21,6 @@ import {
   TEAM_CARD_LAYOUT,
   teamCardFrame,
 } from "@/lib/og/team-card";
-// The modules directly rather than the feature barrel: the barrel carries
-// browser-only React Query hooks.
 import { readPublicTeamPhoto } from "@/services/team-profiles/public-team-photo";
 import { TeamProfilesService } from "@/services/team-profiles/team-profiles.service";
 

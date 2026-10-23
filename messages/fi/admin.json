@@ -1,0 +1,2040 @@
+{
+  "dashboard": {
+    "title": "Hallintapaneeli",
+    "description": "Mikä vaatii ylläpitäjää tänään, keitä alustalla on ja mitä on käynnissä.",
+    "loadError": "Hallintapaneelin lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+    "loadErrorWithReason": "Hallintapaneelin lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
+    "users": {
+      "label": "Käyttäjät",
+      "roles": {
+        "customer": "Vanhemmat",
+        "gamer": "Pelaajat",
+        "gedu": "Gedut",
+        "admin": "Ylläpitäjät"
+      },
+      "verified": "{count} vahvistettua",
+      "certified": "{count} hyväksyttyä"
+    },
+    "attention": {
+      "title": "Vaatii huomiota",
+      "allClearTitle": "Kaikki kunnossa",
+      "allClearLine": "Sogversessa on rauha. Voit levätä nyt, ylläpitäjäseikkailija.",
+      "productsLabel": "Huomiota vaativat tuotteet",
+      "productsHeading": "Tuotteet",
+      "issues": {
+        "unassignedGamers": "{count, plural, one {# sijoittamaton pelaaja} other {# sijoittamatonta pelaajaa}}",
+        "groupWithoutGedu": "Ryhmällä {group} ei ole Gedua",
+        "emptyGroupWithoutGedu": "Tyhjällä ryhmällä {group} ei ole Gedua",
+        "waitlistOpenSeats": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana",
+        "missingGeduFee": "Gedun palkkio puuttuu",
+        "missingMunicipalityFee": "Kunnan maksu puuttuu",
+        "missingInvoiceCustomer": "Laskutusasiakas puuttuu",
+        "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
+      }
+    },
+    "certification": {
+      "title": "Gedujen hyväksyntä",
+      "justNow": "Hyväksytty juuri nyt: {count}",
+      "empty": "Yksikään Gedu ei odota hyväksyntää.",
+      "unnamed": "Nimetön Gedu",
+      "registered": "rekisteröitynyt {when}",
+      "certify": "Hyväksy",
+      "certifying": "Hyväksytään…",
+      "failed": "Hyväksyntä epäonnistui – yritä uudelleen."
+    },
+    "schedule": {
+      "title": "Aikataulu",
+      "thisWeekLabel": "Tämä viikko",
+      "previousWeek": "Edellinen viikko",
+      "nextWeek": "Seuraava viikko",
+      "today": "Tänään",
+      "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
+      "timesIn": "ajat aikavyöhykkeellä {zone}",
+      "nothingOn": "Ei mitään",
+      "needsAttention": "Vaatii huomiota – tämä tuote on sivun yläreunan jonossa",
+      "chipTitle": "{type} · {name} · klo {time}, {minutes} min · {counts}",
+      "holiday": "Loma",
+      "holidayTitle": "Loma – {name}. Tänä päivänä ei ole kertaa."
+    },
+    "cancellation": {
+      "allTitle": "Tämän päivän kerta on peruttu kaikilta ryhmiltä",
+      "some": "Peruttu: {cancelled}/{groups} ryhmää",
+      "allComingUp": {
+        "starts": "ensimmäinen kerta peruttu",
+        "ends": "viimeinen kerta peruttu",
+        "runs": "peruttu"
+      }
+    },
+    "comingUp": {
+      "label": "Tulossa",
+      "heading": "Tulossa",
+      "empty": "Mikään ei ala eikä pääty tulevien kuukausien aikana.",
+      "cohort": {
+        "starts": {
+          "consumerClub": "{count, plural, one {# kuluttajakerho alkaa} other {# kuluttajakerhoa alkaa}}",
+          "municipalityClub": "{count, plural, one {# kuntakerho alkaa} other {# kuntakerhoa alkaa}}",
+          "camp": "{count, plural, one {# leiri alkaa} other {# leiriä alkaa}}",
+          "event": "{count, plural, one {# tapahtuma alkaa} other {# tapahtumaa alkaa}}"
+        },
+        "runs": {
+          "consumerClub": "{count, plural, one {# kuluttajakerho järjestetään} other {# kuluttajakerhoa järjestetään}}",
+          "municipalityClub": "{count, plural, one {# kuntakerho järjestetään} other {# kuntakerhoa järjestetään}}",
+          "camp": "{count, plural, one {# leiri järjestetään} other {# leiriä järjestetään}}",
+          "event": "{count, plural, one {# tapahtuma järjestetään} other {# tapahtumaa järjestetään}}"
+        },
+        "ends": {
+          "consumerClub": "{count, plural, one {# kuluttajakerho päättyy} other {# kuluttajakerhoa päättyy}}",
+          "municipalityClub": "{count, plural, one {# kuntakerho päättyy} other {# kuntakerhoa päättyy}}",
+          "camp": "{count, plural, one {# leiri päättyy} other {# leiriä päättyy}}",
+          "event": "{count, plural, one {# tapahtuma päättyy} other {# tapahtumaa päättyy}}"
+        }
+      },
+      "itemVerb": {
+        "starts": "alkaa",
+        "runs": "järjestetään",
+        "ends": "päättyy"
+      }
+    },
+    "productTypeKey": {
+      "label": "Tuotetyyppien selite",
+      "heading": "Tuotetyypit"
+    }
+  },
+  "municipalityInvoicing": {
+    "description": "Kuukauden kuntakerhot: montako kertaa kukin kokoontui ja mitä kunta maksaa niistä.",
+    "previousMonth": "Edellinen kuukausi",
+    "nextMonth": "Seuraava kuukausi",
+    "expandAll": "Avaa kaikki",
+    "collapseAll": "Sulje kaikki",
+    "monthTotal": "Kuukauden summa",
+    "municipalityCount": "{count, plural, one {# kunta} other {# kuntaa}}",
+    "clubCount": "{count, plural, one {# kerho} other {# kerhoa}}",
+    "sessionCount": "{count, plural, one {# kerta} other {# kertaa}}",
+    "columnClub": "Kerho",
+    "columnSchedule": "Aikataulu",
+    "columnFee": "Kertamaksu",
+    "columnSessions": "Kerrat",
+    "columnTotal": "Summa",
+    "recorded": "Kirjattu",
+    "emptyMonth": "Yhdelläkään kuntakerholla ei ole tälle kuukaudelle kirjattuja tai aikataulutettuja kertoja.",
+    "excludedClubs": "{count, plural, one {Summasta puuttuu # kerho, jolle ei ole asetettu maksua} other {Summasta puuttuu # kerhoa, joille ei ole asetettu maksua}}",
+    "feeNotSet": "Maksua ei ole asetettu",
+    "billedNotRecorded": "Laskutettu, ei kirjattu",
+    "upcoming": "Tulossa",
+    "cancelled": "Peruttu",
+    "holiday": "Loma",
+    "holidayNamed": "Loma – {name}",
+    "unrecordedSessions": "{count, plural, one {# kirjaamatta} other {# kirjaamatta}}",
+    "sessionsFor": "Kerhon {club} kerrat",
+    "clubsIn": "Kerhot: {municipality}",
+    "clubsWithoutCustomer": "{count, plural, one {# kerholta puuttuu laskutusasiakas} other {# kerholta puuttuu laskutusasiakas}}",
+    "customerNotSet": "Laskutusasiakasta ei ole asetettu",
+    "downloadInvoiceFor": "Lataa Finvoice-tiedosto asiakkaalle {customer}",
+    "fileBlockedByFee": "{count, plural, one {Ei tiedostoa: # kerho kokoontui ilman maksua} other {Ei tiedostoa: # kerhoa kokoontui ilman maksua}}",
+    "fileBlockedByNothingToInvoice": "Ei tiedostoa: ei laskutettavaa",
+    "downloadPeriodInvoiceFor": "Lataa jakson {period} {year} Finvoice-tiedosto asiakkaalle {customer}",
+    "periodFile": "{period} · {total}",
+    "invoicedInMonth": "{cadence} · laskutetaan jakson lopussa ({month})",
+    "periodNotRead": "Jakson muita kuukausia luetaan",
+    "periodBlockedByFee": "{count, plural, one {Ei tiedostoa: # kerho kokoontui ilman maksua ({month})} other {Ei tiedostoa: # kerhoa kokoontui ilman maksua ({month})}}",
+    "periodBlockedByNothingToInvoice": "Ei tiedostoa: jaksolla {period} ei laskutettavaa",
+    "quarterName": "Q{ordinal}",
+    "halfYearName": "H{ordinal}",
+    "periodFilesWithoutClub": "Tähän kuuhun päättyvät jaksot asiakkaille, joilla ei ole kerhoa tässä kuussa",
+    "loadError": "Laskutuskuukauden lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
+    "loadErrorWithReason": "Laskutuskuukauden lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen."
+  },
+  "invoiceCustomers": {
+    "subtitle": "Fennoa-asiakkaat, joille kuntakerhojen kerrat laskutetaan.",
+    "addCustomer": "Lisää asiakas",
+    "columns": {
+      "number": "Fennoa-nro",
+      "invoiceName": "Laskutusnimi",
+      "city": "Postitoimipaikka",
+      "reference": "Viite",
+      "billingCadence": "Laskutus"
+    },
+    "hasReference": "Viite on asetettu",
+    "noReference": "Ei viitettä",
+    "empty": "Ei vielä laskutusasiakkaita. Lisää ensimmäinen.",
+    "backToList": "Takaisin laskutusasiakkaisiin",
+    "notFound": "Tällä tunnuksella ei ole laskutusasiakasta.",
+    "newPage": {
+      "title": "Uusi laskutusasiakas",
+      "submit": "Luo asiakas"
+    },
+    "editPage": {
+      "title": "Muokkaa laskutusasiakasta"
+    },
+    "fields": {
+      "number": "Fennoan asiakasnumero",
+      "invoiceName": "Laskutusnimi",
+      "street": "Katuosoite",
+      "postalCode": "Postinumero",
+      "city": "Postitoimipaikka",
+      "country": "Maa",
+      "yourReference": "Asiakkaan viite",
+      "invoiceText": "Laskun teksti",
+      "billingCadence": "Laskutusväli"
+    },
+    "hints": {
+      "number": "Fennoan asiakaskortilla oleva numero, esimerkiksi F0037. Fennoa yhdistää tuodun laskun asiakkaaseen tällä numerolla.",
+      "invoiceName": "Täsmälleen samassa muodossa kuin Fennoan asiakaskortilla.",
+      "yourReference": "Ostotilauksen numero tai yhteyshenkilö, jonka asiakas haluaa jokaiseen laskuun.",
+      "invoiceText": "Lisärivit laskun tekstin alkuun, esimerkiksi puitesopimuksen viite. Pelkkää tekstiä – se päätyy laskulle juuri niin kuin sen kirjoitat.",
+      "billingCadence": "Kuinka usein asiakasta laskutetaan. Neljännesvuosittain tai puolivuosittain laskutettavan asiakkaan lasku kattaa koko kalenterijakson, ja se ladataan laskutussivulta jakson viimeisenä kuukautena."
+    },
+    "cadence": {
+      "monthly": "Kuukausittain",
+      "quarterly": "Neljännesvuosittain",
+      "halfYearly": "Puolivuosittain"
+    },
+    "errors": {
+      "required": "Täytä kenttä {field}.",
+      "countryShape": "Käytä kaksikirjaimista maatunnusta, esimerkiksi FI.",
+      "duplicateNumber": "Fennoan asiakasnumero {number} on jo toisella asiakkaalla.",
+      "saveFailed": "Asiakkaan tallennus epäonnistui. Yritä uudelleen.",
+      "saveFailedWithReason": "Asiakkaan tallennus epäonnistui – {reason}",
+      "listUnavailable": "Asiakaslistaa ei voitu ladata. Päivitä sivu, jotta voit valita asiakkaan."
+    },
+    "picker": {
+      "label": "Laskutusasiakas",
+      "hint": "Asiakas, jolle tämän kerhon kerrat laskutetaan. Ilman asiakasta kerho merkitään laskutussivulla puutteelliseksi, eikä siitä synny laskutiedostoa.",
+      "manage": "Hallinnoi laskutusasiakkaita",
+      "option": "{name} ({number})"
+    }
+  },
+  "holidayCalendars": {
+    "subtitle": "Koulujen lomat ja muut tauot, joita kerho voi noudattaa. Kerholla ei ole kertoja tauon päivinä.",
+    "addCalendar": "Lisää kalenteri",
+    "columns": {
+      "name": "Nimi",
+      "breaks": "Tauot",
+      "nextBreak": "Seuraava tauko",
+      "clubs": "Kerhot"
+    },
+    "noUpcomingBreak": "Ei tulevia",
+    "empty": "Lomakalentereita ei vielä ole. Lisää ensimmäinen.",
+    "backToList": "Takaisin lomakalentereihin",
+    "notFound": "Tällä tunnisteella ei löydy lomakalenteria.",
+    "newPage": {
+      "title": "Uusi lomakalenteri",
+      "submit": "Luo kalenteri"
+    },
+    "editPage": {
+      "title": "Muokkaa lomakalenteria"
+    },
+    "sections": {
+      "calendar": "Kalenteri",
+      "breaks": "Tauot",
+      "breaksDescription": "Tauko kestää ensimmäisestä päivästään viimeiseen, molemmat mukaan lukien, ja sillä on nimi jokaisella kalenterin kielellä. Perheet näkevät nimen niiden kertojen paikalla, jotka tauko poistaa.",
+      "products": "Kalenteria noudattavat kerhot",
+      "productsDescription": "Taukoihin tallennettu muutos muuttaa nämä kerhot heti, myös menneet kuukaudet."
+    },
+    "fields": {
+      "name": "Nimi",
+      "languages": "Kielet",
+      "firstDay": "Ensimmäinen päivä",
+      "lastDay": "Viimeinen päivä",
+      "breakName": "Nimi: {language}"
+    },
+    "hints": {
+      "name": "Vain ylläpitäjät näkevät tämän nimen, esimerkiksi Helsingin koulut. Perheet näkevät vain taukojen nimet.",
+      "languages": "Kielet ovat koko kalenterin: kun lisäät tai poistat kielen tässä, se koskee jokaista taukoa. Jokainen tauko tarvitsee nimen jokaisella kielellä. Perheet lukevat nimen omalla kielellään, jos se on kirjoitettu, muuten englanniksi tai ensimmäisellä kirjoitetulla kielellä."
+    },
+    "noBreaks": "Taukoja ei vielä ole.",
+    "checkLine": "{range} · {days, plural, one {# päivä} other {# päivää}} · viikko {week}",
+    "checkLineWeeks": "{range} · {days, plural, one {# päivä} other {# päivää}} · viikot {first}–{last}",
+    "addBreak": "Lisää tauko",
+    "removeBreak": "Poista: {name}",
+    "noProducts": "Mikään kerho ei vielä noudata tätä kalenteria. Kerhon kalenterit valitaan kerhon omalla sivulla.",
+    "errors": {
+      "nameRequired": "Anna kalenterille nimi.",
+      "datesRequired": "{name} tarvitsee ensimmäisen ja viimeisen päivän.",
+      "endBeforeStart": "{name} päättyy ennen kuin se alkaa.",
+      "breakNameMissing": "{name} tarvitsee nimen kielellä {language}.",
+      "overlap": "{first} ja {second} menevät päällekkäin. Päivä voi kuulua vain yhteen taukoon.",
+      "saveFailed": "Kalenteria ei voitu tallentaa. Yritä uudelleen.",
+      "saveFailedWithReason": "Kalenteria ei voitu tallentaa – {reason}"
+    },
+    "impact": {
+      "title": "Tallennetaanko muutokset?",
+      "description": "{count, plural, one {Tämä kerho muuttuu} other {Nämä # kerhoa muuttuvat}} heti, kun tallennat.",
+      "futureRemoved": "Perheet eivät näe kertaa {count, plural, one {# päivänä} other {# päivänä}}: {dates}.",
+      "futureRestored": "Perheet näkevät kerrat taas {count, plural, one {# päivänä} other {# päivänä}}: {dates}.",
+      "pastRemoved": "{count, plural, one {Mennyt kerta katoaa} other {Menneet kerrat # päivältä katoavat}} perheiden historiasta: {dates}.",
+      "pastRestored": "{count, plural, one {Mennyt kerta palaa} other {Menneet kerrat # päivältä palaavat}} perheiden historiaan: {dates}.",
+      "recordsHidden": "{count, plural, one {# kirjattu kerta piilotetaan} other {# kirjattua kertaa piilotetaan}} perheiltä.",
+      "recordsShown": "{count, plural, one {# kirjattu kerta näytetään} other {# kirjattua kertaa näytetään}} perheille taas.",
+      "requestsStopped": "{count, plural, one {# sijaispyyntö jää} other {# sijaispyyntöä jää}} ilman tuurattavaa kertaa.",
+      "requestsReopened": "{count, plural, one {# sijaispyynnöllä} other {# sijaispyynnöllä}} on taas tuurattava kerta."
+    },
+    "editBreak": "Muokkaa: {name}",
+    "unnamedBreak": "Nimetön tauko",
+    "dialog": {
+      "editTitle": "Muokkaa taukoa",
+      "saveAndAddAnother": "Tallenna ja lisää toinen"
+    },
+    "breakErrors": {
+      "datesRequired": "Valitse ensimmäinen ja viimeinen päivä.",
+      "endBeforeStart": "Viimeinen päivä on ennen ensimmäistä.",
+      "nameMissing": "Anna tauolle nimi kielellä {language}."
+    }
+  },
+  "library": {
+    "title": "Kirjaston sisältö",
+    "subtitle": "Julkisen Kirjaston artikkelit vanhemmille.",
+    "newArticle": "Uusi artikkeli",
+    "lastSaved": "Tallennettu {date}",
+    "search": {
+      "label": "Haku",
+      "placeholder": "Hae otsikolla tai aiheella…",
+      "showing": "Näytetään {count} / {total}",
+      "clear": "Tyhjennä",
+      "noMatches": "Yksikään artikkeli ei vastaa hakua."
+    },
+    "noCategory": "Ei aihetta",
+    "empty": "Artikkeleita ei vielä ole. Kirjoita ensimmäinen.",
+    "backToList": "Takaisin Kirjaston sisältöön",
+    "notFound": "Tällä tunnisteella ei ole artikkelia.",
+    "loadError": "Artikkelia ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+    "newPage": {
+      "title": "Uusi artikkeli",
+      "submit": "Tallenna luonnos"
+    },
+    "editPage": {
+      "title": "Muokkaa artikkelia"
+    },
+    "status": {
+      "draft": "Luonnos",
+      "published": "Julkaistu",
+      "changed": "Julkaisemattomia muutoksia"
+    },
+    "statusPanel": {
+      "label": "Julkaiseminen",
+      "publishedLine": "Julkaistu {date}.",
+      "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+      "savedLine": "Tallennettu viimeksi {date}.",
+      "savedByLine": "Tallentanut viimeksi {name} {date}.",
+      "savedByViaLine": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta.",
+      "savedByViaUnnamedLine": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta."
+    },
+    "viewLive": "Näytä Kirjastossa",
+    "preview": "Esikatselu",
+    "publish": "Julkaise",
+    "publishChanges": "Julkaise muutokset",
+    "unpublish": "Poista julkaisu",
+    "readiness": {
+      "missing": "Jotta artikkelin voi julkaista, lisää {fields}.",
+      "leftOut": "{count, plural, one {{languages}: kieliversio on kesken, joten sitä ei julkaista.} other {{languages}: kieliversiot ovat kesken, joten niitä ei julkaista.}}"
+    },
+    "missing": {
+      "category": "aihe",
+      "completeVersion": "kieliversio, jossa on otsikko, tiivistelmä ja artikkelin teksti"
+    },
+    "unpublishConfirm": {
+      "title": "Poistetaanko artikkelin julkaisu?",
+      "description": "Lukijat eivät enää löydä artikkelia Kirjastosta, eivätkä linkit siihen enää toimi. Artikkeli säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+      "confirm": "Poista julkaisu"
+    },
+    "fields": {
+      "languages": "Kielet",
+      "title": "Otsikko",
+      "summary": "Tiivistelmä",
+      "category": "Aihe",
+      "cover": "Kansikuva",
+      "body": "Artikkelin teksti"
+    },
+    "hints": {
+      "languages": "Kirjoita jokainen kieliversio itse. Julkaistessa kaikki valmiit kieliversiot tulevat näkyviin: ne, joissa on otsikko, tiivistelmä ja artikkelin teksti.",
+      "summary": "Pelkkää tekstiä. Näkyy otsikon alla ja artikkelin kortissa Kirjastossa.",
+      "cover": "Näkyy artikkelin yläpuolella ja sen kortissa, rajattuna muotoon 16:9. Ilman kansikuvaa lukijat näkevät paikkamerkin.",
+      "body": "Lukijat näkevät tekstin kansikuvan alla muotoiltuna niin kuin se näkyy tässä."
+    },
+    "categoryPlaceholder": "Valitse aihe",
+    "bodyPlaceholder": "Kirjoita artikkeli…",
+    "actions": {
+      "save": "Tallenna",
+      "cancel": "Peruuta"
+    },
+    "errors": {
+      "titleRequired": "Artikkelilla on oltava otsikko.",
+      "saveFailed": "Artikkelia ei voitu tallentaa. Yritä uudelleen.",
+      "saveFailedWithReason": "Artikkelia ei voitu tallentaa – {reason}",
+      "publishFailed": "Artikkelia ei voitu julkaista. Yritä uudelleen.",
+      "publishFailedWithReason": "Artikkelia ei voitu julkaista – {reason}",
+      "unpublishFailed": "Artikkelin julkaisua ei voitu poistaa. Yritä uudelleen.",
+      "unpublishFailedWithReason": "Artikkelin julkaisua ei voitu poistaa – {reason}",
+      "versionTitleRequired": "{language}: kieliversiolta puuttuu otsikko."
+    },
+    "languagesLabel": "Kielet"
+  },
+  "spotlights": {
+    "subtitle": "Vanhemmat näkevät jokaisen päällä olevan noston jokaisen heille lähetetyn sessioraportin sähköpostin lopussa, uusin ensin. Kukin lukija saa sen omalla kielellään, tai englanniksi, jos hänen kieltään ei ole kirjoitettu, tai muuten jollakin kirjoitetulla kielellä.",
+    "newSpotlight": "Uusi nosto",
+    "empty": "Ei vielä nostoja. Kirjoita ensimmäinen.",
+    "backToList": "Takaisin nostoihin",
+    "notFound": "Tällä tunnisteella ei ole nostoa.",
+    "loadError": "Nostoa ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+    "listLoadError": "Nostoja ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+    "newPage": {
+      "title": "Uusi nosto",
+      "submit": "Tallenna"
+    },
+    "editPage": {
+      "title": "Muokkaa nostoa"
+    },
+    "fields": {
+      "languages": "Kielet",
+      "title": "Otsikko",
+      "body": "Teksti",
+      "picture": "Kuva"
+    },
+    "hints": {
+      "languages": "Kirjoita jokainen kieli itse. Jokainen kieli tarvitsee otsikon ja tekstin.",
+      "body": "Näkyy sähköpostissa otsikon alla, muotoiltuna kuten tässä. Linkit ovat sallittuja.",
+      "picture": "Näkyy sähköpostissa otsikon yläpuolella, rajattuna suhteeseen 2:1. Noston voi tallentaa ilman kuvaa, mutta päälle kytkeminen vaatii kuvan."
+    },
+    "bodyPlaceholder": "Kirjoita nosto…",
+    "actions": {
+      "save": "Tallenna",
+      "cancel": "Peruuta",
+      "delete": "Poista"
+    },
+    "errors": {
+      "noVersion": "Nosto tarvitsee otsikon ja tekstin vähintään yhdellä kielellä.",
+      "versionIncomplete": "Kielelle {language} tarvitaan sekä otsikko että teksti.",
+      "saveFailed": "Nostoa ei voitu tallentaa. Yritä uudelleen.",
+      "saveFailedWithReason": "Nostoa ei voitu tallentaa — {reason}",
+      "deleteFailed": "Nostoa ei voitu poistaa. Yritä uudelleen.",
+      "deleteFailedWithReason": "Nostoa ei voitu poistaa — {reason}"
+    },
+    "languagesLabel": "Kielet",
+    "created": "Luotu {date}",
+    "status": {
+      "on": "Sähköposteissa",
+      "off": "Ei sähköposteissa"
+    },
+    "switchLabel": "Sessioraporttien sähköposteissa",
+    "needsPicture": "Lisää kuva, niin voit kytkeä sen päälle.",
+    "deleteConfirm": {
+      "title": "Poistetaanko tämä nosto?",
+      "descriptionOn": "Se poistuu sessioraporttien sähköposteista heti, eikä sitä voi palauttaa. Sen kuva jää kuvakirjastoon.",
+      "descriptionOff": "Sitä ei voi palauttaa. Sen kuva jää kuvakirjastoon.",
+      "confirm": "Poista"
+    }
+  },
+  "landingPages": {
+    "subtitle": "Sivut koululle, kaupungille, yritykselle tai tapahtumalle – kirjoitettu hakukoneiden ja tekoälysovellusten löydettäviksi.",
+    "empty": "Laskeutumissivuja ei vielä ole. Sivut kirjoitetaan Sogverseen yhdistetyllä tekoälysovelluksella.",
+    "lastSaved": "Tallennettu viimeksi {date}",
+    "languagesLabel": "Kielet",
+    "versionComplete": "valmis",
+    "versionIncomplete": "ei vielä valmis",
+    "search": {
+      "label": "Haku",
+      "placeholder": "Hae otsikolla tai osoitteella…",
+      "showing": "Näytetään {count}/{total}",
+      "clear": "Tyhjennä",
+      "noMatches": "Haullasi ei löytynyt laskeutumissivuja."
+    },
+    "backToList": "Takaisin laskeutumissivuihin",
+    "notFound": "Tällä tunnisteella ei ole laskeutumissivua.",
+    "loadError": "Laskeutumissivua ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+    "statusPage": {
+      "title": "Laskeutumissivu",
+      "authoring": "Jos haluat muuttaa sivua, pyydä sitä Sogverseen yhdistetyltä tekoälysovellukselta.",
+      "languagesHeading": "Kielet",
+      "readiness": {
+        "noCompleteLanguage": "Yksikään kieli ei ole vielä valmis, joten julkaistavaa ei ole.",
+        "upToDate": "Lukijat näkevät jo viimeksi tallennetun version."
+      },
+      "language": {
+        "complete": "Valmis",
+        "incomplete": "Ei valmis",
+        "live": "Julkaistu sivustolla.",
+        "notLive": "Ei sivustolla.",
+        "stillNeeded": "Vielä puuttuu:",
+        "address": "Osoite:",
+        "noAddress": "ei vielä osoitetta",
+        "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi."
+      },
+      "missing": {
+        "inSection": "Osio {number} ({type}): {field}",
+        "inItem": "Osio {number} ({type}), {item}: {field}",
+        "goneSection": "Osio, jota sivulla ei enää ole: {field}"
+      },
+      "shareCard": {
+        "heading": "Linkin esikatselu",
+        "picture": {
+          "custom": "Kuva: tämän kieliversion oma jakokuva.",
+          "hero": "Kuva: avausosion kuva.",
+          "site": "Kuva: koko sivuston yhteinen kortti, koska avausosiossa ei ole kuvaa."
+        },
+        "title": {
+          "custom": "Otsikko: tämän kieliversion oma jako-otsikko.",
+          "page": "Otsikko: sivun otsikko."
+        },
+        "description": "Kuvaus: kunkin kieliversion tiivistelmä.",
+        "stale": "Oma otsikko tai kuva pysyy ennallaan, vaikka sivun otsikko tai avausosion kuva muuttuisi. Jos se ei enää sovi sivulle, pyydä tekoälysovellusta poistamaan se."
+      },
+      "products": {
+        "heading": "Valitut tuotteet",
+        "section": "Osio {number} ({type})",
+        "allShown": "{count, plural, one {Sen tuote näkyy.} other {Kaikki sen # tuotetta näkyvät.}}",
+        "noneShown": "Mikään sen tuotteista ei näy, joten lukijat eivät näe tätä osiota. Vaihda tilalle listattuja tuotteita.",
+        "someHidden": "{shown}/{total} näkyy. Ei näy:",
+        "unnamed": "Nimetön tuote",
+        "hiddenItem": "{name}: {reasons}",
+        "reasons": {
+          "gone": "tällä tunnisteella ei ole enää tuotetta",
+          "notListed": "ei listattu",
+          "ended": "päättynyt"
+        }
+      },
+      "testimonials": {
+        "heading": "Asiakaskokemukset",
+        "hint": "Niiden sanoja muokataan Asiakaskokemukset-osiossa, ja muutos näkyy julkaistulla sivulla heti.",
+        "section": "Osio {number} ({type}): {arrangement}",
+        "arrangements": {
+          "feature": "yksi suuri lainaus",
+          "pair": "kaksi rinnakkain",
+          "row": "kolme rivissä",
+          "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
+        },
+        "missing": "Asiakaskokemus, jota ei enää ole tallessa"
+      }
+    },
+    "status": {
+      "draft": "Luonnos",
+      "live": "Julkaistu",
+      "changed": "Julkaisemattomia muutoksia"
+    },
+    "statusPanel": {
+      "publishedLine": "Julkaistu {date}.",
+      "changedLine": "Lukijat näkevät version, joka julkaistiin {date}.",
+      "savedLine": "Tallennettu viimeksi {date}.",
+      "savedByLine": "Tallentanut viimeksi {name} {date}.",
+      "savedByViaLine": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta.",
+      "savedByViaUnnamedLine": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta."
+    },
+    "viewLive": "Näytä sivustolla",
+    "preview": "Esikatsele",
+    "publish": "Julkaise",
+    "publishChanges": "Julkaise muutokset",
+    "unpublish": "Poista julkaisusta",
+    "publishConfirm": {
+      "title": "Julkaistaanko laskeutumissivu?",
+      "changesTitle": "Julkaistaanko muutokset?",
+      "goesLive": "Julkaistaan: {languages}.",
+      "takenDown": "{count, plural, one {Poistetaan sivustolta, koska se ei ole enää valmis: {languages}.} other {Poistetaan sivustolta, koska ne eivät ole enää valmiita: {languages}.}}",
+      "leftOut": "{count, plural, one {Jätetään pois, koska se ei ole valmis: {languages}.} other {Jätetään pois, koska ne eivät ole valmiita: {languages}.}}",
+      "changing": "{count, plural, one {Tämä julkaistu osoite muuttuu, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi:} other {Nämä julkaistut osoitteet muuttuvat, eivätkä vanhoihin osoitteisiin johtavat linkit enää toimi:}}",
+      "changingItem": "{language}: {from} muuttuu osoitteeksi {to}"
+    },
+    "unpublishConfirm": {
+      "title": "Poistetaanko laskeutumissivu julkaisusta?",
+      "description": "Lukijat ja hakukoneet eivät enää löydä sitä, ja linkit siihen lakkaavat toimimasta. Sivu säilyy täällä, ja voit julkaista sen uudelleen milloin tahansa.",
+      "confirm": "Poista julkaisusta"
+    },
+    "actions": {
+      "cancel": "Peruuta"
+    },
+    "errors": {
+      "publishFailed": "Laskeutumissivua ei voitu julkaista. Yritä uudelleen.",
+      "publishFailedWithReason": "Laskeutumissivua ei voitu julkaista – {reason}",
+      "unpublishFailed": "Laskeutumissivua ei voitu poistaa julkaisusta. Yritä uudelleen.",
+      "unpublishFailedWithReason": "Laskeutumissivua ei voitu poistaa julkaisusta – {reason}"
+    },
+    "sectionTypes": {
+      "hero": "Avausosio",
+      "text": "Teksti",
+      "image": "Kuvat",
+      "points": "Kohdat",
+      "steps": "Vaiheet",
+      "faq": "Kysymykset ja vastaukset",
+      "subscribe": "Sähköpostitilaus",
+      "cta": "Toimintakehote",
+      "products": "Tuotteet",
+      "testimonials": "Asiakaskokemukset",
+      "guide": "Opas"
+    },
+    "items": {
+      "image": "Kuva {number}",
+      "points": "Kohta {number}",
+      "steps": "Vaihe {number}",
+      "faq": "Kysymys {number}"
+    },
+    "fields": {
+      "title": "Otsikko",
+      "summary": "Tiivistelmä",
+      "slug": "Osoite",
+      "headline": "Pääotsikko",
+      "heading": "Otsikko",
+      "body": "Teksti",
+      "buttonLabel": "Painikkeen teksti",
+      "imageAlt": "Kuvan vaihtoehtoinen teksti",
+      "alt": "Vaihtoehtoinen teksti",
+      "question": "Kysymys",
+      "answer": "Vastaus"
+    },
+    "copyMarker": "(kopio)"
+  },
+  "geduRole": {
+    "primary": "Vastaava Gedu",
+    "assistant": "Avustava Gedu",
+    "selectAria": "{name} – rooli"
+  },
+  "geduContract": {
+    "heading": "Gedu-sopimus",
+    "accepted": "Sopimus hyväksytty",
+    "acceptedDetail": "Versio {version}, hyväksytty {date}",
+    "notAccepted": "Ei ole hyväksynyt Gedu-sopimusta",
+    "notCurrentVersion": "Ei ole hyväksynyt voimassa olevaa sopimusta ({version})",
+    "previousVersion": "Hyväksynyt aiemmin version {version} {date}.",
+    "queueAccepted": "Sopimus hyväksytty {date}",
+    "queueNotAccepted": "Sopimusta ei ole hyväksytty",
+    "rowNotAccepted": "Ei ole hyväksynyt voimassa olevaa sopimusta"
+  },
+  "geduCriminalRecordCheck": {
+    "heading": "Rikostaustan selvitys",
+    "recorded": "Rikosrekisteriote kirjattu",
+    "recordedOn": "Rikosrekisteriote kirjattu {date}",
+    "recordedByOn": "Rikosrekisteriotteen kirjasi {name} {date}",
+    "notRecorded": "Rikosrekisteriotetta ei ole kirjattu",
+    "processDetail": "Gedu hankkii otteen itse Oikeusrekisterikeskuksesta ja esittää sen sinulle. Otteen on oltava esitettäessä alle kuusi kuukautta vanha. Emme säilytä siitä kopiota – vain merkinnän siitä, että asianmukainen ote on esitetty.",
+    "recordLabel": "Olen nähnyt tämän Gedun asianmukaisen rikosrekisteriotteen",
+    "error": "Rikostaustan selvityksen päivitys epäonnistui. Yritä uudelleen.",
+    "queueRecorded": "Ote kirjattu {date}",
+    "queueNotRecorded": "Otetta ei ole kirjattu",
+    "rowNotRecorded": "Ei ole esittänyt rikosrekisteriotetta"
+  },
+  "geduQualifications": {
+    "title": "Pätevyydet",
+    "neuroinclusive": "Pätevä ohjaamaan ryhmiä neuroinklusiivisiksi merkityissä tuotteissa.",
+    "consumer_products": "Saa ohjata kuntakerhojen lisäksi kerhoja, leirejä ja tapahtumia, jotka perheet maksavat itse.",
+    "grantedOn": "Myönnetty {date}",
+    "grantedOnBy": "Myöntänyt {name} {date}",
+    "notGranted": "Ei myönnetty",
+    "error": "Pätevyyden päivitys epäonnistui. Yritä uudelleen."
+  },
+  "geduLanguages": {
+    "title": "Kielet",
+    "note": "Hänelle tarjotaan tuurauksia vain kerroille, joiden kieli on valittu tässä. Jos yhtään kieltä ei ole valittu, tuurauksia ei tarjota lainkaan.",
+    "error": "Kielten tallentaminen epäonnistui. Yritä uudelleen."
+  },
+  "missingRequirements": {
+    "qualification": "Tällä Gedulla ei ole pätevyyttä, jota tämä tuote edellyttää: {qualification}.",
+    "language": "Tämän tuotteen kieli on {language}, mutta tämä Gedu ei ole ilmoittanut puhuvansa sitä.",
+    "coverage": "Tämä tuote pidetään paikan päällä kohteessa {site}, joka on tämän Gedun kattamien alueiden ulkopuolella.",
+    "coverageUnnamed": "Tämä tuote pidetään paikan päällä tämän Gedun kattamien alueiden ulkopuolella."
+  },
+  "geduCertifyWarnings": {
+    "title": "Hyväksytäänkö silti?",
+    "body": "Hyväksyntä ei edellytä kumpaakaan näistä, joten voit hyväksyä hänet silti.",
+    "action": "Hyväksy silti",
+    "contractWarning": "Tämä Gedu ei ole hyväksynyt voimassa olevaa sopimusta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin hän on hyväksynyt työehtonsa.",
+    "checkWarning": "Tämä Gedu ei ole esittänyt rikosrekisteriotetta. Hyväksyttynä hänet voidaan liittää ryhmiin ennen kuin kukaan on nähnyt otetta."
+  },
+  "products": {
+    "types": {
+      "consumerClub": {
+        "label": "Kuluttajakerho",
+        "plural": "Kuluttajakerhot"
+      },
+      "municipalityClub": {
+        "label": "Kuntakerho",
+        "plural": "Kuntakerhot"
+      },
+      "camp": {
+        "label": "Leiri",
+        "plural": "Leirit"
+      },
+      "event": {
+        "label": "Tapahtuma",
+        "plural": "Tapahtumat"
+      }
+    },
+    "list": {
+      "subtitle": "Hallinnoi ylläpitäjien luomia kerhoja, leirejä ja tapahtumia.",
+      "new": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}",
+      "empty": "{type, select, consumerClub {Ei vielä kuluttajakerhoja. Luo uusi painamalla Uusi kuluttajakerho.} municipalityClub {Ei vielä kuntakerhoja. Luo uusi painamalla Uusi kuntakerho.} camp {Ei vielä leirejä. Luo uusi painamalla Uusi leiri.} other {Ei vielä tapahtumia. Luo uusi painamalla Uusi tapahtuma.}}",
+      "emptyAll": "Kerhoja, leirejä tai tapahtumia ei ole vielä.",
+      "ageRange": "{min}–{max} v",
+      "seats": "{count} paikkaa",
+      "online": "Etänä",
+      "unlisted": "ei listattu",
+      "untitled": "(nimetön)",
+      "missingGeduFee": "Gedun palkkio puuttuu",
+      "missingMunicipalityFee": "Kunnan maksu puuttuu",
+      "pendingHint": {
+        "registrationOpens": "Ilmoittautuminen aukeaa {date}",
+        "startDate": "Alkaa {date}"
+      },
+      "newAny": "Uusi",
+      "newDialogTitle": "Luo kerho, leiri tai tapahtuma"
+    },
+    "translations": {
+      "label": "Kielet",
+      "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty."
+    },
+    "newPage": {
+      "back": "Takaisin {type, select, consumerClub {kuluttajakerhoihin} municipalityClub {kuntakerhoihin} camp {leireihin} other {tapahtumiin}}",
+      "title": "Uusi {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
+    },
+    "detailsPage": {
+      "title": "Tuotteen tiedot",
+      "notFound": "Tuotetta ei löytynyt.",
+      "uncapped": "Ei paikkarajaa",
+      "listed": "Listattu julkisesti",
+      "unlisted": "Ei listattu – vain suoralla linkillä",
+      "waitlistOn": "jonotuslista käytössä",
+      "minutes": "{count} min",
+      "perMonth": "{amount} / kk",
+      "billingMode": {
+        "paid": "Maksullinen",
+        "free": "Maksuton",
+        "external_contract": "Ulkoinen sopimus (kunta)"
+      },
+      "requiresGamerCreations": {
+        "required": "Vaaditaan",
+        "notRequired": "Ei vaadita"
+      },
+      "fields": {
+        "topic": "Aihe",
+        "materialUrl": "Oppimateriaali",
+        "voiceRoom": "Liittyminen",
+        "startDate": "Alkamispäivä",
+        "endDate": "Päättymispäivä",
+        "firstSession": "Ensimmäinen kerta",
+        "lastSession": "Viimeinen kerta",
+        "termDates": "Kausi",
+        "billingMode": "Laskutus",
+        "seats": "Paikat",
+        "waitlist": "Jonotuslista",
+        "prices": "Hinnat",
+        "primaryGeduFee": "Vastaavan Gedun palkkio / kerta",
+        "assistantGeduFee": "Avustavan Gedun palkkio / kerta",
+        "municipalityFee": "Kunnan maksu / kerta",
+        "timezone": "Aikavyöhyke",
+        "registrationOpensAt": "Ilmoittautuminen aukeaa",
+        "tag": "Kenelle suunniteltu",
+        "regionLock": "Maakohtainen rajaus",
+        "requiredConsents": "Vaaditut suostumukset",
+        "requiresGamerCreations": "Pelaajien teokset",
+        "visibility": "Näkyvyys",
+        "gamerPhotoConsents": "Valokuvakysymykset",
+        "marketingConsents": "Markkinointikysymykset",
+        "format": "Muoto",
+        "ageRange": "Ikähaarukka",
+        "publicLink": "Julkinen linkki",
+        "createdBy": "Luonut",
+        "createdOn": "Luotu"
+      },
+      "copyLink": "Kopioi julkinen linkki",
+      "copied": "Kopioitu",
+      "sections": {
+        "schedule": "Aikataulu",
+        "placeAndAudience": "Paikka ja kohderyhmä",
+        "seatsAndRegistration": "Paikat ja ilmoittautuminen",
+        "pricing": "Hinnoittelu",
+        "requirements": "Vaatimukset ja suostumukset",
+        "record": "Luontitiedot"
+      },
+      "unknownCreator": "Tuntematon"
+    },
+    "holidayCalendars": {
+      "label": "Lomakalenterit",
+      "hint": "Kerholla ei ole kertoja minkään sen noudattamien kalenterien tauon päivinä. Perheet näkevät tauon niiden kertojen kohdalla, jotka jäävät pitämättä.",
+      "manage": "Hallinnoi lomakalentereita",
+      "nextBreak": "Seuraava: {name}, {dates}",
+      "noUpcomingBreak": "Ei tulevia taukoja",
+      "empty": "Lomakalentereita ei vielä ole.",
+      "listUnavailable": "Lomakalentereita ei voitu ladata. Kerhon nykyiset kalenterit säilyvät, kun tallennat.",
+      "none": "Ei mitään"
+    },
+    "editPage": {
+      "back": "Takaisin tuotteeseen",
+      "kicker": "Muokkaa {type, select, consumerClub {kuluttajakerhoa} municipalityClub {kuntakerhoa} camp {leiriä} other {tapahtumaa}}",
+      "title": "Muokkaa: {name}"
+    },
+    "clonePage": {
+      "back": "Takaisin tuotteeseen",
+      "kicker": "Kloonaa {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}",
+      "title": "Kloonataan: {name}",
+      "copySuffix": " (kopio)"
+    },
+    "sections": {
+      "identity": "Perustiedot",
+      "identityDescription": "Mikä tämän nimi on ja mistä se kertoo.",
+      "audience": "Kohderyhmä",
+      "audienceDescription": "Kenelle tämä on tarkoitettu.",
+      "where": "Missä",
+      "whereDescription": {
+        "consumerClub": "Verkossa tai paikan päällä. Lähikerhot pidetään tietyssä toimipisteessä.",
+        "municipalityClub": "Tietty kunta maksaa. Verkkokerhoissa valitaan kunta suoraan; lähikerhoissa toimipiste sen sisältä.",
+        "camp": "Verkossa tai paikan päällä. Lähileirit pidetään tietyssä toimipisteessä.",
+        "event": "Verkossa tai paikan päällä. Lähitapahtumat pidetään tietyssä toimipisteessä."
+      },
+      "when": "Ajankohta",
+      "whenDescription": {
+        "consumerClub": "Yksi päivä viikossa, yksi aika. Jätä loppupäivä tyhjäksi jatkuvalle kerholle.",
+        "municipalityClub": "Yksi päivä viikossa, yksi aika. Käynnissä alku- ja loppupäivän välillä.",
+        "camp": "Useita päiviä viikossa, jokaisella oma alkamisaika ja kesto.",
+        "event": "Yksi päivä ja alkamisaika."
+      },
+      "billing": "Paikat ja hinnoittelu",
+      "billingDescription": {
+        "consumerClub": "Vanhemmat maksavat jokaisesta lapsen osallistumiskerrasta. Laskutus tapahtuu automaattisesti viikoittain.",
+        "municipalityClub": "School of Gaming laskuttaa kuntaa suoraan. Vanhemmat ilmoittavat lapsensa maksutta paikkarajaan saakka.",
+        "camp": "Leirit voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja. Maksullisesta leiristä maksetaan koko hinta ilmoittautuessa, ja se on palautettavissa tiettyyn hetkeen asti.",
+        "event": "Tapahtumat voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja."
+      },
+      "registration": "Ilmoittautumisaika",
+      "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
+      "consents": "Suostumukset",
+      "consentsDescription": "Mitä vanhempi hyväksyy ja mitä häneltä kysytään ilmoittautumisen yhteydessä. Pakolliset asiakirjat on hyväksyttävä ennen paikan varaamista; sekä valokuvakysymyksestä että markkinointikysymyksestä voi kieltäytyä.",
+      "visibility": "Listaus",
+      "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
+    },
+    "labels": {
+      "name": "Nimi",
+      "shortDescription": "Lyhyt kuvaus",
+      "longDescription": "Pitkä kuvaus",
+      "voiceJoinInstructions": "Liittymisohjeet",
+      "topic": "Aihe",
+      "materialUrl": "Oppimateriaalin osoite",
+      "externalVoiceUrl": "Kokouslinkki",
+      "requiresGamerCreations": "Jokaiselta pelaajalta vaaditaan linkki omaan teokseensa",
+      "seatAudience": "Kuka voi ottaa paikan",
+      "tag": "Kenelle suunniteltu",
+      "regionLock": "Maakohtainen rajaus",
+      "forGamers": "Pelaajille",
+      "forParents": "Vanhemmille",
+      "minAge": "Alaikäraja",
+      "maxAge": "Yläikäraja",
+      "spokenLanguage": "Puhuttu kieli",
+      "online": "Verkossa",
+      "inPerson": "Paikan päällä",
+      "municipality": "Mille kunnalle tämä on",
+      "site": "Toimipiste",
+      "startDate": "Alkupäivä",
+      "date": "Päivämäärä",
+      "endDate": "Loppupäivä",
+      "eventDate": "Tapahtumapäivä",
+      "seasonEndDate": "Lukukauden loppupäivä",
+      "schedule": "Aikataulu",
+      "dayAndTime": "Päivä & aika",
+      "daysAndTimes": "Päivät & ajat",
+      "time": "Aika",
+      "timezone": "Aikavyöhyke",
+      "pricing": "Hinta",
+      "free": "Ilmainen",
+      "paid": "Maksullinen",
+      "billing": "Laskutus",
+      "paidByMunicipality": "Kunta maksaa",
+      "seatCount": "Paikkamäärä",
+      "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
+      "makeVisible": "Listaa tuote Kauppa- ja Kuntakerhot-sivuille",
+      "seatLimit": "Paikkaraja"
+    },
+    "placeholders": {
+      "selectTopic": "Valitse aihe…",
+      "materialUrl": "https://drive.sog.gg/...",
+      "externalVoiceUrl": "https://",
+      "name": {
+        "consumerClub": "esim. Minecraft Redstone -kerho",
+        "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
+        "camp": "esim. Pelisuunnitteluleiri · Syysloma",
+        "event": "esim. Pokémon GO -yhteisökävely · Helsinki"
+      },
+      "description": {
+        "consumerClub": "Mitä joka viikko tapahtuu, kenelle, mitä opitaan.",
+        "municipalityClub": "Missä koulussa, minkä lukukauden aikana, millä kielellä.",
+        "camp": "Päivät, kokonaistunnit, viikon teema.",
+        "event": "Yksirivinen kuvaus tapahtumasta — mitä, missä, kenelle."
+      }
+    },
+    "longDescription": {
+      "placeholder": "Kirjoita tuotteen koko esittely…"
+    },
+    "locationPicker": {
+      "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
+      "change": "Vaihda",
+      "noSiteHint": "Ei fyysistä toimipistettä. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
+      "chooseMunicipality": "Valitse kunta",
+      "municipalityPickerTitle": "Valitse kunta",
+      "chooseSite": "Valitse toimipiste",
+      "sitePickerTitle": "Valitse toimipiste",
+      "sitePickerDescription": "Hae toimipistettä nimellä, niin löydät sen suoraan, tai selaa sen kuntaan asti ja katso siellä olevat toimipisteet. Jos toimipistettä ei vielä ole, voit avata uuden.",
+      "sitesIn": "Toimipisteet kunnassa {name}",
+      "sitesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
+      "sitesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
+      "addSite": "Lisää toimipiste",
+      "changeMunicipality": "Valitse toinen kunta"
+    },
+    "pricing": {
+      "perMonthLabel": "Hinta per kuukausi",
+      "totalLabel": "Kokonaishinta"
+    },
+    "fees": {
+      "sectionTitle": "Kertakohtaiset palkkiot ja maksut",
+      "sectionDescription": "Mitä maksamme Geduille jokaiselta kerralta ja — kuntakerhojen osalta — mitä kunta maksaa meille. Nämä ovat sisäisiä lukuja, erillään siitä mitä vanhemmat maksavat yllä.",
+      "primaryGeduLabel": "Vastaavan Gedun palkkio",
+      "primaryGeduHint": "Maksetaan vastaavalle Gedulle jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin, tai Vapaaehtoinen, jos hän ohjaa ilmaiseksi.",
+      "assistantGeduLabel": "Avustavan Gedun palkkio",
+      "assistantGeduHint": "Maksetaan avustavalle Gedulle jokaiselta kerralta. Valitse Ei ole, jos avustajaa ei ole.",
+      "municipalityLabel": "Kunnan maksu",
+      "municipalityHint": "Mitä kunta maksaa meille jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin.",
+      "amountLabel": "Summa per kerta euroina",
+      "status": {
+        "unknown": "Ei tiedossa — asetetaan myöhemmin",
+        "none": "Ei ole",
+        "volunteer": "Vapaaehtoinen (ilmainen)",
+        "fee": "Aseta summa"
+      }
+    },
+    "registrationModes": {
+      "label": "Milloin ilmoittautuminen avautuu?",
+      "immediately": "Heti",
+      "immediatelyDescription": "Vanhemmat voivat ilmoittautua heti, kun tuote tulee näkyviin.",
+      "scheduled": "Tiettyyn aikaan",
+      "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
+    },
+    "voiceRoomModes": {
+      "label": "Miten perheet liittyvät mukaan?",
+      "sogverse": "Sogversen äänihuone",
+      "sogverseDescription": "Äänihuone luodaan automaattisesti, ja se avautuu jokaista kertaa varten.",
+      "external": "Linkki muualla pidettävään kokoukseen",
+      "externalDescription": "Perheet liittyvät kokoukseen, jonka järjestät toisessa palvelussa. Suuremmalle yleisölle kuin Sogversen äänihuoneeseen mahtuu (50 henkeä).",
+      "none": "Ei äänihuonetta",
+      "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
+    },
+    "endDateModes": {
+      "ongoing": "Ei loppupäivää",
+      "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
+      "dated": "Aseta loppupäivä",
+      "datedDescription": "Kerho jatkuu tiettyyn päivään asti ja päättyy sitten automaattisesti."
+    },
+    "tagOptions": {
+      "none": "Ei merkintää"
+    },
+    "regionLock": {
+      "none": "Ei maakohtaista rajausta"
+    },
+    "consents": {
+      "version": "Versio {version}",
+      "noVersion": "Ei julkaistua versiota",
+      "none": "Ei mitään",
+      "gamerPhoto": {
+        "lynxEducate": {
+          "label": "Valokuvat ja videot (Lynx Educate)",
+          "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, saako heidän lapsestaan ottaa valokuvia ja videoita ja saavatko School of Gaming, Lynx Educate ja Roblox käyttää niitä. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan. Kysytään lapsikohtaisesti ja uudelleen jokaisen ilmoittautumisen yhteydessä."
+        }
+      },
+      "marketing": {
+        "lynxEducate": {
+          "label": "Lynx Educate",
+          "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, saako heidän sähköpostiosoitteensa jakaa Lynx Educaten kanssa. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan."
+        }
+      }
+    },
+    "hints": {
+      "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
+      "longDescription": "Valinnainen. Koko esittely, joka näkyy vain tuotteen tuotesivulla. Käytettävissä ovat otsikot, luettelot, korostukset ja linkit.",
+      "voiceJoinInstructionsHint": "Miten perheet liittyvät kerroille, tällä kielellä kirjoitettuna. Julkinen: kuka tahansa voi lukea ohjeet, myös kirjautumattomat vierailijat.",
+      "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
+      "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
+      "requiresGamerCreationsHint": "Tuotteille, joilta sopimus sitä vaatii. Viimeinen kerta pysyy huomiota vaativana, kunnes jokaiselta ryhmän pelaajalta on kirjattu teos. Perheille ei näy mitään eroa.",
+      "seatAudienceHint": "Valitse vähintään yksi. Molempien valitseminen tarkoittaa toimintaa, johon vanhempi ja pelaaja osallistuvat yhdessä — kaupassa se näkyy merkinnällä ”Perheille”.",
+      "forGamersHint": "Vanhempi ilmoittaa pelaajan, ja pelaaja ottaa paikan. Vaatii ala- ja yläikärajan.",
+      "forParentsHint": "Vanhempi ottaa paikan itselleen ja osallistuu toimintaan. Ei ikärajoja – ikä koskee lapsia, ei aikuisia.",
+      "tagHint": "Valinnainen. Perheet näkevät sen merkintänä selauskortissa ja tuotesivulla. Se kertoo, kenelle kerrat on suunniteltu – ei sitä, kuka voi ottaa paikan.",
+      "regionLockHint": "Vain valitussa maassa asuvat perheet voivat ilmoittautua. Sijainti perustuu perheen omaan ilmoitukseen, joten tämä on kaupan opaste eikä ehdoton este – jo ilmoittautuneet säilyttävät paikkansa, vaikka muuttaisivat.",
+      "spokenLanguageHint": "Pääkieli, jota kerroilla puhutaan.",
+      "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
+      "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
+      "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
+      "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
+      "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
+      "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",
+      "timezoneIs": "Ajat ovat aikavyöhykkeellä {timezone}. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
+      "billingHint": "Maksuttomilla tuotteilla on oletuksena paikkaraja, maksullisilla ei.",
+      "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
+      "paidDetailMonthly": "Veloitetaan kuukausittain tilauksena.",
+      "paidDetailUpfront": "Kertamaksu ilmoittautumisen yhteydessä.",
+      "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
+      "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
+      "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
+      "seatHintWaitlist": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
+      "seatHintNoWaitlist": "Kun täynnä, uudet ilmoittautumiset hylätään.",
+      "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
+      "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
+      "startDateBillingAnchor": "Kerhon aloituspäivä ja samalla perheiden ensimmäisen maksun päivä. Päivän muuttaminen jälkikäteen ei siirrä jo ilmoittautuneiden ensimmäistä maksua — korjaa nuo tilaukset Stripessä.",
+      "startNotSessionDay": "Tälle päivälle ei osu kertaa. Ensimmäinen kerta on {date}.",
+      "endNotSessionDay": "Tälle päivälle ei osu kertaa. Viimeinen kerta on {date}."
+    },
+    "errors": {
+      "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
+      "translationIncomplete": "Täytä sekä nimi että kuvaus välilehdellä {locale} tai poista välilehti.",
+      "topicRequired": "Aihe vaaditaan",
+      "spokenLanguageRequired": "Kieli vaaditaan",
+      "audienceRequired": "Valitse vähintään yksi kohderyhmä: pelaajat, vanhemmat tai molemmat",
+      "minAgeRequired": "Alaikäraja vaaditaan",
+      "maxAgeRequired": "Yläikäraja vaaditaan",
+      "minAgeInvalid": "Alaikärajan on oltava ei-negatiivinen kokonaisluku",
+      "maxAgeInvalid": "Yläikärajan on oltava vähintään alaikärajan suuruinen",
+      "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
+      "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
+      "externalVoiceUrlRequired": "Anna kokouslinkki",
+      "externalVoiceUrlInvalid": "Kokouslinkin on oltava verkko-osoite, joka alkaa http:// tai https://",
+      "voiceJoinInstructionsRequired": "Kirjoita liittymisohjeet vähintään yhdellä kielellä",
+      "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
+      "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
+      "startDateRequired": "Alkupäivä vaaditaan",
+      "endDateRequired": "Loppupäivä vaaditaan",
+      "seatCountRequired": "Paikkamäärä vaaditaan",
+      "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
+      "priceSessionMissing": "Anna kertahinta valuutassa {currency}",
+      "priceSessionInvalid": "Kertahinnan on oltava vähintään {minimum}",
+      "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
+      "priceMonthInvalid": "Kuukausihinnan on oltava vähintään {minimum}",
+      "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
+      "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
+      "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",
+      "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
+      "createFailed": "Tuotteen luonti epäonnistui"
+    },
+    "actions": {
+      "cancel": "Peruuta",
+      "createLabel": "Luo {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}}"
+    },
+    "status": {
+      "pending": "Odottaa alkua",
+      "running": "Käynnissä",
+      "completed": "Päättynyt"
+    },
+    "schedule": {
+      "day": "Päivä",
+      "hour": "Tunti",
+      "minute": "Minuutti",
+      "startHour": "Alkamistunti",
+      "startMinute": "Alkamisminuutti",
+      "endHour": "Päättymistunti",
+      "endMinute": "Päättymisminuutti",
+      "to": "–",
+      "addDay": "Lisää toinen päivä",
+      "removeSlot": "Poista",
+      "sameAsEventDate": "Sama kuin tapahtumapäivä",
+      "oneSessionEvent": "Yksi kerta tapahtumapäivänä.",
+      "oneSessionPerWeek": "Yksi kerta viikossa."
+    },
+    "weekdays": {
+      "mon": "Ma",
+      "tue": "Ti",
+      "wed": "Ke",
+      "thu": "To",
+      "fri": "Pe",
+      "sat": "La",
+      "sun": "Su",
+      "monLong": "Maanantai",
+      "tueLong": "Tiistai",
+      "wedLong": "Keskiviikko",
+      "thuLong": "Torstai",
+      "friLong": "Perjantai",
+      "satLong": "Lauantai",
+      "sunLong": "Sunnuntai"
+    },
+    "imagePicker": {
+      "label": "Kuva",
+      "formats": "JPEG, PNG tai WebP.",
+      "chooseFile": "Valitse tiedosto",
+      "uploading": "Lisätään…",
+      "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat. Kuva rajataan 3:2-kehykseen. Kuvat ovat tuotteiden yhteisiä, joten valinta tässä ei muuta muita tuotteita.",
+      "forPurpose": {
+        "product": {
+          "change": "Vaihda kuva",
+          "remove": "Poista tästä tuotteesta",
+          "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 3:2-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tässä tuotteessa.",
+          "outcomeAdded": "Lisätty kirjastoon ja valittu tähän tuotteeseen.",
+          "outcomeExisting": "Kuva on jo kirjastossa – valittu tähän tuotteeseen."
+        },
+        "libraryCover": {
+          "change": "Vaihda kansikuva",
+          "remove": "Poista kansikuva",
+          "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 16:9-kehykseen, se lisätään kirjastoon ja siitä tulee tämän artikkelin kansikuva.",
+          "outcomeAdded": "Lisätty kirjastoon ja valittu tämän artikkelin kansikuvaksi.",
+          "outcomeExisting": "Kuva on jo kirjastossa – valittu tämän artikkelin kansikuvaksi."
+        },
+        "landingImage": {
+          "change": "Vaihda kuva",
+          "remove": "Poista kuva",
+          "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen kehykseensä, se lisätään kirjastoon ja otetaan käyttöön tällä laskeutumissivulla.",
+          "outcomeAdded": "Lisätty kirjastoon ja valittu tälle laskeutumissivulle.",
+          "outcomeExisting": "Kuva on jo kirjastossa — valittu tälle laskeutumissivulle."
+        },
+        "spotlightImage": {
+          "change": "Vaihda kuva",
+          "remove": "Poista kuva",
+          "dropPrompt": "Pudota tiedosto tähän tai valitse se, niin rajaat sen 2:1-kehykseen, se lisätään kirjastoon ja otetaan käyttöön tässä nostossa.",
+          "outcomeAdded": "Lisätty kirjastoon ja valittu tähän nostoon.",
+          "outcomeExisting": "Kuva on jo kirjastossa — valittu tähän nostoon."
+        }
+      }
+    },
+    "imageCatalogue": {
+      "upload": "Lisää kuva",
+      "uploading": "Lisätään…",
+      "emptyCatalogue": "Kirjastossa ei ole vielä kuvia. Lisää ensimmäinen.",
+      "columnEmpty": "Valitse kuva",
+      "use": "Käytä tätä kuvaa",
+      "nameLabel": "Kuvan nimi",
+      "rename": "Nimeä uudelleen",
+      "live": "Julkaistu",
+      "hidden": "Piilotettu",
+      "draft": "Luonnos",
+      "switchedOff": "Pois päältä",
+      "replace": "Korvaa kuva",
+      "remove": "Poista kirjastosta",
+      "replaceConfirm": {
+        "title": "Korvaa ”{label}”",
+        "choose": "Valitse uusi kuva",
+        "confirmUnused": "Korvaa kuva"
+      },
+      "removeConfirm": {
+        "title": "Poista ”{label}”",
+        "confirmUnused": "Poista kirjastosta"
+      },
+      "errors": {
+        "tooLarge": "Tiedosto on liian suuri. Kuvan enimmäiskoko on 4 Mt.",
+        "unsupportedType": "Tiedosto ei ole JPEG-kuva. Rajaa kuva täällä ja yritä uudelleen.",
+        "wrongSize": "Kuva ei ole tarkalleen kehyksen vaatiman kokoinen. Rajaa se täällä ja yritä uudelleen.",
+        "nameRequired": "Anna kuvalle nimi, jossa on 1–120 merkkiä."
+      },
+      "forPurpose": {
+        "product": {
+          "title": "Tuotekuvat",
+          "description": "Sama kuva voi olla monessa tuotteessa. Valinta koskee vain tätä tuotetta, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä tuotteita.",
+          "usedBadge": "{count, plural, one {# tuote} other {# tuotetta}}",
+          "usedBy": "Kuvaa käyttävät tuotteet",
+          "usedByNone": "Mikään tuote ei käytä tätä kuvaa.",
+          "replaceConsequence": "{count, plural, one {Alla oleva tuote näyttää jatkossa uuden kuvan.} other {Kaikki # alla olevaa tuotetta näyttävät jatkossa uuden kuvan.}}",
+          "replaceUnused": "Mikään tuote ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+          "replaceConfirm": "Korvaa {count, plural, one {# tuotteessa} other {# tuotteessa}}",
+          "removeConsequence": "{count, plural, one {Alla oleva tuote jää ilman kuvaa, kunnes valitset uuden.} other {Kaikki # alla olevaa tuotetta jäävät ilman kuvaa, kunnes valitset uuden.}}",
+          "removeUnused": "Mikään tuote ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+          "removeConfirm": "Poista {count, plural, one {# tuotteesta} other {# tuotteesta}}"
+        },
+        "libraryCover": {
+          "title": "Kirjaston kansikuvat",
+          "description": "Sama kuva voi olla useamman artikkelin kansikuva. Valinta koskee vain tätä artikkelia, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä artikkeleita, myös julkaistuja.",
+          "usedBadge": "{count, plural, one {# artikkeli} other {# artikkelia}}",
+          "usedBy": "Kuvaa käyttävät artikkelit",
+          "usedByNone": "Mikään artikkeli ei käytä tätä kuvaa.",
+          "replaceConsequence": "{count, plural, one {Alla oleva artikkeli näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa artikkelia näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+          "replaceUnused": "Mikään artikkeli ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+          "replaceConfirm": "Korvaa {count, plural, one {# artikkelissa} other {# artikkelissa}}",
+          "removeConsequence": "{count, plural, one {Alla oleva artikkeli jää ilman kansikuvaa, kunnes valitset uuden, myös julkaistuna.} other {Kaikki # alla olevaa artikkelia jäävät ilman kansikuvaa, kunnes valitset uuden, myös julkaistut.}}",
+          "removeUnused": "Mikään artikkeli ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+          "removeConfirm": "Poista {count, plural, one {# artikkelista} other {# artikkelista}}"
+        },
+        "landingImage": {
+          "title": "Laskeutumissivujen kuvat",
+          "description": "Sama kuva voi olla usealla laskeutumissivulla ja useammassa kohdassa samaa sivua. Valinta koskee vain tätä kohtaa, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä laskeutumissivuja, myös julkaistuja.",
+          "usedBadge": "{count, plural, one {# sivu} other {# sivua}}",
+          "usedBy": "Kuvaa käyttävät laskeutumissivut",
+          "usedByNone": "Mikään laskeutumissivu ei käytä tätä kuvaa.",
+          "replaceConsequence": "{count, plural, one {Alla oleva laskeutumissivu näyttää jatkossa uuden kuvan, julkaistuna heti.} other {Kaikki # alla olevaa laskeutumissivua näyttävät jatkossa uuden kuvan, julkaistut heti.}}",
+          "replaceUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+          "replaceConfirm": "Korvaa {count, plural, one {# sivulla} other {# sivulla}}",
+          "removeConsequence": "{count, plural, one {Kuva poistuu alla olevalta laskeutumissivulta, myös julkaistulta. Kuvaosio, johon ei jää kuvia, poistetaan.} other {Kuva poistuu kaikilta # alla olevalta laskeutumissivulta, myös julkaistuilta. Kuvaosio, johon ei jää kuvia, poistetaan.}}",
+          "removeUnused": "Mikään laskeutumissivu ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+          "removeConfirm": "Poista {count, plural, one {# sivulta} other {# sivulta}}"
+        },
+        "spotlightImage": {
+          "title": "Nostojen kuvat",
+          "description": "Sama kuva voi olla usean noston kuvana. Valinta koskee vain tätä nostoa, mutta kuvan korvaaminen tai poistaminen koskee kaikkia sitä käyttäviä nostoja, myös sessioraporttien sähköposteissa näkyviä.",
+          "usedBadge": "{count, plural, one {# nosto} other {# nostoa}}",
+          "usedBy": "Kuvaa käyttävät nostot",
+          "usedByNone": "Mikään nosto ei käytä tätä kuvaa.",
+          "replaceConsequence": "{count, plural, one {Alla oleva nosto näyttää jatkossa uuden kuvan, seuraavassa sähköpostissa, jos se on päällä.} other {Kaikki # alla olevaa nostoa näyttävät jatkossa uuden kuvan, päällä olevat seuraavassa sähköpostissa.}}",
+          "replaceUnused": "Mikään nosto ei käytä tätä kuvaa. Uusi kuva tulee sen tilalle kirjastoon.",
+          "replaceConfirm": "Korvaa {count, plural, one {# nostossa} other {# nostossa}}",
+          "removeConsequence": "{count, plural, one {Alla oleva nosto menettää tämän kuvan ja kytketään pois päältä, joten se jää pois sessioraporttien sähköposteista, kunnes valitset uuden kuvan ja kytket sen takaisin päälle.} other {Kaikki # alla olevaa nostoa menettävät tämän kuvan ja kytketään pois päältä, joten ne jäävät pois sessioraporttien sähköposteista, kunnes valitset uuden kuvan ja kytket kunkin takaisin päälle.}}",
+          "removeUnused": "Mikään nosto ei käytä tätä kuvaa. Se poistetaan kirjastosta pysyvästi.",
+          "removeConfirm": "Poista {count, plural, one {# nostosta} other {# nostosta}}"
+        }
+      }
+    },
+    "filters": {
+      "day": "Viikonpäivä",
+      "allDays": "Kaikki päivät",
+      "gedu": "Gedu",
+      "language": "Kieli",
+      "allLanguages": "Kaikki kielet",
+      "municipality": "Kunta",
+      "searchGedu": "Hae Geduja…",
+      "searchMunicipality": "Hae kuntia…",
+      "noResults": "Ei osumia.",
+      "type": "Tyyppi",
+      "allTypes": "Kaikki",
+      "search": "Haku",
+      "searchPlaceholder": "Hae nimellä…",
+      "showing": "Näytetään {count} / {total}",
+      "clear": "Tyhjennä",
+      "noMatches": "Yksikään {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}} ei vastaa hakua ja valittuja suodattimia.",
+      "noMatchesAll": "Mikään ei vastaa hakua ja valittuja suodattimia."
+    },
+    "geduPicker": {
+      "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
+      "speaks": "Puhuu",
+      "any": "Mikä tahansa",
+      "countSummary": "Näytetään {filtered} / {total} Geduja",
+      "noResults": "Hakuehdoilla ei löytynyt Geduja.",
+      "current": "Nykyinen",
+      "alreadyAssigned": "Jo nimetty",
+      "alreadyExpected": "Jo tällä kerralla",
+      "absentGedu": "Tuurattava Gedu",
+      "notCertified": "Ei hyväksytty",
+      "alreadyTrainee": "Jo harjoittelijana",
+      "traineeInstead": "Voidaan lisätä harjoittelijaksi.",
+      "notQualified": "Pätevyys puuttuu: {qualification}",
+      "doesNotSpeak": "Ei puhu kieltä: {language}",
+      "outsideCoverage": "Ei kata tätä aluetta"
+    },
+    "participantPicker": {
+      "title": "Lisää osallistuja",
+      "description": "Lisää lapsi tai vanhempi suoraan tähän tuotteeseen ohittaen maksun. Vanhempi voi ottaa paikan vain tuotteesta, joka on avoin vanhemmille.",
+      "searchPlaceholder": "Hae vanhempaa tai pelaajaa nimellä, sähköpostilla, puhelinnumerolla tai pelin käyttäjänimellä…",
+      "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
+      "noParents": "Ei vielä yhtään vanhempaa.",
+      "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
+      "unnamedParent": "Nimetön vanhempi",
+      "unnamedGamer": "Nimetön pelaaja",
+      "add": "Lisää",
+      "adding": "Lisätään…",
+      "added": "Lisätty",
+      "alreadyAdded": "Jo lisätty",
+      "addFailed": "Osallistujan lisääminen epäonnistui."
+    },
+    "groupsPanel": {
+      "title": "Ryhmät",
+      "attendanceAndReports": "Läsnäolot ja koosteet",
+      "subtitle": "Vedä jokainen osallistuja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
+      "addGroup": "Lisää ryhmä",
+      "loading": "Ladataan…",
+      "genderBoy": "poika",
+      "genderGirl": "tyttö",
+      "genderNonBinary": "muu",
+      "chip": {
+        "age": "{age}v",
+        "parent": "Vanhempi: {name}",
+        "participantEmail": "Yhteystieto: {email}"
+      },
+      "unassigned": {
+        "title": "Nimeämättömät",
+        "subtitle": "Osallistujat, jotka eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
+        "empty": "Kaikilla on ryhmä.",
+        "addParticipant": "Lisää osallistuja",
+        "removeParticipant": "Poista osallistuja"
+      },
+      "empty": {
+        "title": "Ei vielä ryhmiä",
+        "description": "Lisää ryhmä, kun olet valmis sijoittelemaan osallistujia.",
+        "addFirst": "Lisää ensimmäinen ryhmä"
+      },
+      "group": {
+        "defaultName": "Ryhmä {letter}",
+        "nameLabel": "Ryhmän nimi",
+        "namePlaceholder": "Anna ryhmälle nimi",
+        "nameRequired": "Ryhmä tarvitsee nimen.",
+        "editAria": "Nimeä {name} uudelleen",
+        "saveNameAria": "Tallenna nimi",
+        "cancelEditAria": "Peruuta",
+        "deleteAria": "Poista {name}",
+        "participantCount": "{count, plural, =0 {Ei osallistujia} =1 {1 osallistuja} other {# osallistujaa}}",
+        "assignedGedus": "Gedut",
+        "noGedus": "Ei vielä Geduja.",
+        "addGedu": "Lisää Gedu",
+        "participantsLabel": "Osallistujat",
+        "empty": "Ei osallistujia vielä — vedä joku tähän.",
+        "deleteConfirmTitle": "Poistetaanko {name}?",
+        "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poistaminen vain poistaa Gedu-nimitykset.",
+        "deleteConfirmWithParticipants": "{count, plural, =1 {Tässä ryhmässä on 1 osallistuja} other {Tässä ryhmässä on # osallistujaa}}. He siirtyvät Nimeämättömiin."
+      },
+      "gedu": {
+        "removeAria": "Poista {name}"
+      },
+      "picker": {
+        "addTitle": "Lisää Gedu ryhmään {name}",
+        "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina.",
+        "addTraineeTitle": "Lisää harjoittelija ryhmään {name}",
+        "addTraineeDescription": "Harjoittelija seuraa ryhmän toimintaa eikä hänen tarvitse olla hyväksytty. Tämän tuotteen Gedut ja harjoittelijat näkyvät harmaina."
+      },
+      "trainee": {
+        "role": "Harjoittelija",
+        "add": "Lisää harjoittelija",
+        "removeAria": "Poista harjoittelija {name}"
+      },
+      "removeParticipant": {
+        "confirmTitle": "Poistetaanko {name} tästä tuotteesta?",
+        "confirmDescription": "{name} poistetaan ilmoittautuneista, ja hän menettää pääsyn välittömästi.",
+        "noRefundWarning": "Hyvitystä ei makseta. Jos tämä asiakas on maksanut, hän ei saa rahojaan takaisin.",
+        "confirmCta": "Poista osallistuja"
+      },
+      "waitlist": {
+        "title": "Jonotuslista",
+        "subtitle": "Paikkaa odottavat osallistujat liittymisjärjestyksessä numeroituina. Vedä osallistuja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen osallistuja tähän siirtääksesi hänet jonon perälle.",
+        "empty": "Jonotuslistalla ei ole ketään.",
+        "seatOffer": {
+          "invite": "Kutsu",
+          "inviteAgain": "Kutsu uudelleen",
+          "noAnswer": "Ei vastausta",
+          "leftDays": "{count, plural, one {# päivä jäljellä} other {# päivää jäljellä}}",
+          "leftHours": "{count, plural, one {# tunti jäljellä} other {# tuntia jäljellä}}",
+          "leftLastHour": "Alle tunti jäljellä",
+          "liveTitle": "Kutsuttu. Tarjous on voimassa {deadline} asti.",
+          "expiredTitle": "Tarjous umpeutui {deadline}, eikä vastausta tullut.",
+          "needsOneGroup": "Kutsuminen edellyttää, että tuotteessa on täsmälleen yksi ryhmä, jotta paikan ottava perhe voidaan sijoittaa. Nyt ryhmiä on {count, plural, =0 {nolla} one {#} other {#}}."
+        }
+      },
+      "seatsOverfilled": "{count} / {total} paikkaa – {over} yli",
+      "blockedMove": {
+        "acknowledge": "Selvä",
+        "promoteUnpaid": {
+          "title": "Paikka vaatii tilauksen",
+          "description": "{name} on jonotuslistalla ilman tilausta, ja tämän kerhon paikka laskutetaan kuukausittain. Jos annat paikan nyt, hän pääsee mukaan ilmaiseksi.",
+          "nextStep": "Pyydä perhettä ottamaan paikka itse: kun paikka on vapaana, kerho näkyy kaupassa avoimena. Perhe voi poistua jonotuslistalta Oma SOG -korttinsa kautta ja tehdä tilauksen kassalla."
+        },
+        "demoteSubscribed": {
+          "title": "Tilaus on yhä voimassa",
+          "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota sillä ei enää ole.",
+          "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
+        },
+        "removeSubscribed": {
+          "title": "Tilaus on yhä voimassa",
+          "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
+          "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
+        }
+      },
+      "switchClub": {
+        "dropZone": "Vaihda kerhoa",
+        "title": "Vaihda kerhoa",
+        "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
+        "searchPlaceholder": "Hae kerhoja nimellä",
+        "picker": {
+          "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
+          "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
+          "alreadyHolds": "On jo paikka"
+        },
+        "facts": {
+          "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",
+          "ageRangeWithGamer": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}} · {name} on {age}-vuotias",
+          "seats": "Paikkoja varattu {taken}/{capacity}",
+          "regionLocked": "Maarajoitus: {country}",
+          "notStarted": "Alkaa {date}. Perhe maksaa tästä päivästä, ei alkamispäivästä.",
+          "subscriptionEnding": "Perhe on irtisanonut tilauksen, ja se päättyy {date}. Tämän kuukauden hintaeroa ei laskuteta."
+        },
+        "prices": {
+          "current": "Maksaa nyt",
+          "target": "Uusi hinta",
+          "proration": "Seuraava lasku lisää tai hyvittää erotuksen tämän kuukauden loppuosalta.",
+          "nothingPaid": "Ennen {date} ei veloiteta enää mitään. Sen jälkeen perhe maksaa uuden kerhon hinnan, josta vähennetään perheen mahdollinen nykyinen alennus.",
+          "unavailable": "Ei hintaa näytettäväksi",
+          "error": "Hintatietoja ei saatu. Valitse kerho uudelleen ja yritä uudestaan."
+        },
+        "back": "Takaisin",
+        "group": {
+          "label": "Ryhmä",
+          "unassigned": "Jätä ilman ryhmää",
+          "members": "{count, plural, one {# pelaaja} other {# pelaajaa}}"
+        },
+        "refusals": {
+          "latestInvoiceNotPaid": "Perheen viimeisintä laskua ei ole maksettu, joten siirrettävää maksettua aikaa ei ole. Selvitä tämä ensin Stripessä.",
+          "subscriptionNotSingleItem": "Tilauksella on useampi rivi, joten vaihdettavaa yksittäistä hintaa ei ole. Selvitä tämä ensin Stripessä.",
+          "noTargetPriceInCurrency": "Tälle kerholle ei ole hintaa siinä valuutassa, jolla tilausta laskutetaan. Kerhot hinnoitellaan euroina, joten Stripen toisessa valuutassa luomaa tilausta ei voi vaihtaa täällä — selvitä tämä ensin Stripessä.",
+          "participationNotActive": "Tämä paikka ei ole aktiivinen, joten siirrettävää ei ole.",
+          "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
+          "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
+          "sameProduct": "Pelaaja on jo tässä kerhossa.",
+          "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+        },
+        "commit": {
+          "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
+          "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
+          "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
+        },
+        "confirm": "Vaihda kerhoa"
+      },
+      "requirementGaps": {
+        "title": "Lisätäänkö silti?",
+        "action": "Lisää silti"
+      }
+    },
+    "seatLimitModes": {
+      "limited": "Rajattu määrä paikkoja",
+      "limitedDescription": "Rajaa, kuinka moni pelaaja voi liittyä. Kun paikat täyttyvät, uudet ilmoittautujat voivat siirtyä jonotuslistalle.",
+      "unlimited": "Ei paikkarajaa",
+      "unlimitedDescription": "Kuka tahansa ilmoittautunut pääsee mukaan — ei rajaa."
+    },
+    "vat": {
+      "headline": {
+        "reduced": "Alennettu alv-kanta – {rate}",
+        "standard": "Yleinen alv-kanta – {rate}"
+      },
+      "reason": {
+        "reduced": "Leirit kuuluvat Suomen alennetun verokannan piiriin – talousjohdon linjaus, joka koskee kaikkia leirejä. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä.",
+        "standard": "Kerhot ja maksulliset tapahtumat myydään Suomen yleisellä verokannalla. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä."
+      },
+      "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
+    },
+    "staffing": {
+      "menuLabel": "Lisää toimintoja tälle kerralle",
+      "setSubstitute": "Aseta tuuraaja",
+      "changeSubstitute": "Vaihda tuuraajaa",
+      "changeSubstituteFor": "Vaihda Gedun {name} tuuraajaa",
+      "clearSubstitute": "Poista tuuraaja",
+      "clearSubstituteFor": "Poista Gedun {name} tuuraaja",
+      "withdrawRequest": "Peru pyyntö",
+      "withdrawRequestFor": "Peru Gedun {name} pyyntö",
+      "withRole": "{name} · {role}",
+      "absentLabel": "Poissa",
+      "subLabel": "Tuuraaja",
+      "changeChoice": "Vaihda",
+      "absentStepTitle": "Kuka on poissa?",
+      "absentStepBody": "Kerralla {date} on merkittynä useampi gedu. Valitse se, joka ei pääse.",
+      "pickerTitle": "Valitse tuuraaja",
+      "pickerDescription": "Valitse, kuka tuuraa Gedua {name}. Jos gedu ei voi tuurata, syy näkyy rivillä.",
+      "confirmTitle": "Aseta tuuraaja",
+      "confirmBody": "Merkitse, kuka pitää kerran {date} poissaolevan gedun sijasta.",
+      "approvesOpenRequest": "Tämä hyväksyy avoimen pyynnön eikä luo uutta.",
+      "replacesCurrentSub": "Tämä korvaa tuuraajan {name}, joka on nyt merkitty tälle kerralle.",
+      "reasonKept": "Poissaololle jo kirjattu syy säilyy ennallaan.",
+      "reasonLabel": "Syy",
+      "reasonSick": "Sairaana",
+      "reasonOther": "Jokin muu",
+      "noteLabel": "Viesti toimistolle",
+      "notePlaceholder": "Mitä toimiston olisi hyvä tietää tästä tuurauksesta.",
+      "noteRemaining": "{count} merkkiä jäljellä",
+      "confirmAction": "Aseta tuuraaja",
+      "setFailed": "Tuuraajan asettaminen ei onnistunut. Yritä uudelleen.",
+      "clearTitle": "Poistetaanko tuuraaja?",
+      "clearBody": "{sub} ei enää tuuraa Gedua {name} kerralla {date}, ja kerta palaa jonoon tuuraajaa vaille.",
+      "clearConfirm": "Poista tuuraaja",
+      "clearFailed": "Tuuraajan poistaminen ei onnistunut. Yritä uudelleen.",
+      "withdrawTitle": "Perutaanko pyyntö?",
+      "withdrawBody": "{name} pääseekään kerralle {date}. Pyynnön tarjoukset raukeavat eikä ketkään jää tuuraajaksi.",
+      "withdrawConfirm": "Peru pyyntö",
+      "withdrawFailed": "Pyynnön peruminen ei onnistunut. Yritä uudelleen."
+    },
+    "sessions": {
+      "loadFailed": "Kertojen kirjauksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+      "loading": "Ladataan tämän tuotteen kertojen kirjauksia.",
+      "railGroupHeading": "Ryhmä"
+    },
+    "cancellation": {
+      "menuLabel": "Lisää toimintoja tälle perutulle kerralle",
+      "cancelSession": "Peru kerta",
+      "addReason": "Lisää syy",
+      "changeReason": "Muuta syytä",
+      "restoreSession": "Palauta kerta",
+      "cancelTitle": "Perutaanko kerta?",
+      "cancelBody": "{date}. Perheet ja Gedut näkevät kerran perutuksi, eikä sille voi kirjata mitään. Kenellekään ei ilmoiteta.",
+      "reasonTitle": "Muuta syytä",
+      "reasonBody": "{date}. Kerta pysyy peruttuna.",
+      "reasonLabel": "Syy",
+      "reasonHint": "Vain ylläpitäjät näkevät syyn. {count} merkkiä jäljellä",
+      "reasonPlaceholder": "Miksi istunto perutaan?",
+      "keepSession": "Pidä kerta",
+      "cancelConfirm": "Peru kerta",
+      "reasonConfirm": "Tallenna syy",
+      "recordKept": "Kerralle jo kirjatut muistiinpanot, kuvat ja läsnäolot säilyvät. Perheet eivät näe niitä, kun kerta on peruttu, ja ne palaavat, jos kerta palautetaan.",
+      "recordKeptEmailed": "Kerralle jo kirjatut muistiinpanot, kuvat ja läsnäolot säilyvät. Perheet eivät näe niitä, kun kerta on peruttu, ja ne palaavat, jos kerta palautetaan. Raportti on jo lähetetty perheille sähköpostilla, eikä viestiä voi perua.",
+      "cancelFailed": "Tallentaminen ei onnistunut. Yritä uudelleen.",
+      "restoreTitle": "Palautetaanko kerta?",
+      "restoreBody": "{date}. Perheet ja Gedut näkevät kerran taas aikataulussa, ja sille voi kirjata tavalliseen tapaan. Kenellekään ei ilmoiteta.",
+      "restoreConfirm": "Palauta kerta",
+      "restoreFailed": "Kerran palauttaminen ei onnistunut. Yritä uudelleen."
+    }
+  },
+  "users": {
+    "title": "Käyttäjät",
+    "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
+    "searchPlaceholder": "Hae nimellä, sähköpostilla, puhelinnumerolla tai pelin käyttäjänimellä…",
+    "searchAriaLabel": "Hae käyttäjiä",
+    "roleFilterLabel": "Rooli",
+    "all": "Kaikki",
+    "noFilterResults": "Suodattimiasi vastaavia käyttäjiä ei löytynyt.",
+    "noUsers": "Käyttäjiä ei löytynyt.",
+    "backToUsers": "Takaisin käyttäjiin",
+    "userNotFound": "Käyttäjää ei löytynyt.",
+    "joined": "Liittynyt",
+    "unknown": "Tuntematon",
+    "linkedGamers": "Liitetyt pelaajat",
+    "linkedParents": "Liitetyt vanhemmat",
+    "unnamedGamer": "Nimetön pelaaja",
+    "unnamedUser": "Nimetön käyttäjä",
+    "noConnectedGamers": "Ei liitettyjä pelaajia",
+    "assignedProducts": "Liitetyt tuotteet",
+    "noAssignedProducts": "Ei liitettyjä tuotteita",
+    "unassignedGroup": "Ei ryhmää määritetty",
+    "needsGroup": "Tarvitsee ryhmän",
+    "untitledProduct": "Nimetön tuote",
+    "gamerDetails": {
+      "title": "Henkilötiedot",
+      "edit": "Muokkaa henkilötietoja",
+      "birthMonthLabel": "Syntymäkuukausi",
+      "birthYearLabel": "Syntymävuosi",
+      "genderLabel": "Sukupuoli",
+      "genderUnset": "Ei määritelty",
+      "saveError": "Tietojen tallentaminen epäonnistui. Yritä uudelleen.",
+      "gender": {
+        "boy": "Poika",
+        "girl": "Tyttö",
+        "non_binary": "Muunsukupuolinen"
+      },
+      "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
+      "usernameLabel": "Käyttäjätunnus",
+      "usernameHint": "Vain kirjaimia ja numeroita, 3–20 merkkiä. Tästä lähtien lapsi kirjautuu uudella käyttäjätunnuksella.",
+      "usernameInvalid": "Käytä 3–20 kirjainta tai numeroa ilman välilyöntejä.",
+      "usernameTaken": "Käyttäjätunnus on jo varattu. Kokeile toista.",
+      "usernameSaveError": "Käyttäjätunnuksen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
+      "usernameSavedDetailsFailed": "Käyttäjätunnus vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen.",
+      "emailHint": "Tästä lähtien lapsi kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen.",
+      "emailSaveError": "Sähköpostiosoitteen vaihtaminen epäonnistui, joten mitään ei tallennettu. Yritä uudelleen.",
+      "emailSavedDetailsFailed": "Sähköpostiosoite vaihdettiin, mutta syntymäaikaa ja sukupuolta ei tallennettu. Yritä uudelleen."
+    },
+    "emailEdit": {
+      "edit": "Vaihda sähköpostiosoite",
+      "title": "Vaihda sähköpostiosoite",
+      "description": "Tästä lähtien käyttäjä kirjautuu uudella osoitteella. Osoite näkyy vahvistamattomana, kunnes hän vahvistaa sen.",
+      "label": "Sähköpostiosoite",
+      "invalid": "Anna kelvollinen sähköpostiosoite.",
+      "taken": "Osoite kuuluu jo toiselle tilille. Toisen tilin yhdistämistä tai poistamista ei voi tehdä täällä – pyydä kehittäjää hoitamaan asia.",
+      "saveError": "Sähköpostiosoitteen vaihtaminen epäonnistui. Yritä uudelleen."
+    },
+    "gameAccounts": {
+      "title": "Pelitilit",
+      "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
+    },
+    "marketing": {
+      "title": "Markkinointi",
+      "attribution": "Lähdetiedot",
+      "preferences": "Asetukset",
+      "schoolOfGaming": "School of Gaming",
+      "lynxEducate": "Lynx Educate",
+      "granted": "Sallittu",
+      "notGranted": "Ei sallittu",
+      "since": "{date} alkaen"
+    },
+    "photoConsent": {
+      "title": "Kuvauslupa",
+      "labels": {
+        "lynx_educate": "Lynx Educate"
+      },
+      "granted": "Sallittu",
+      "notGranted": "Ei sallittu",
+      "since": "{date} alkaen"
+    },
+    "participationStatus": {
+      "active": "Aktiivinen",
+      "waitlisted": "Jonossa",
+      "reserving": "Odottaa maksua",
+      "completed": "Päättynyt"
+    },
+    "emailVerified": "Sähköposti vahvistettu",
+    "emailNotVerified": "Sähköpostia ei ole vahvistettu",
+    "certification": {
+      "title": "Hyväksyntä",
+      "certified": "Hyväksytty",
+      "notCertified": "Ei hyväksytty",
+      "notCertifiedNote": "Tätä Gedua ei ole vielä hyväksytty. Häntä ei voi liittää ryhmään ennen hyväksyntää.",
+      "certifiedOn": "Hyväksytty {date}",
+      "certifiedByOn": "Hyväksynyt {name} {date}",
+      "certifyAction": "Hyväksy",
+      "uncertifyAction": "Poista hyväksyntä",
+      "saving": "Tallennetaan…",
+      "error": "Hyväksynnän päivitys epäonnistui. Yritä uudelleen."
+    },
+    "usernameLabel": "Käyttäjätunnus",
+    "discordNotLinked": "Ei yhdistetty",
+    "slackNotLinked": "Ei yhdistetty"
+  },
+  "locations": {
+    "editName": "Muokkaa: {name}",
+    "addChildUnder": "Lisää {type} kohteen {parent} alle",
+    "location": "Sijainti",
+    "nameRequired": "Nimi on pakollinen",
+    "name": "Nimi",
+    "enterTypeName": "Syötä {type} nimi",
+    "enterName": "Syötä nimi",
+    "adding": "Lisätään...",
+    "addType": "Lisää {type}"
+  },
+  "sites": {
+    "subtitle": "Kaikki alustan toimipisteet ja kussakin pyörivät tuotteet.",
+    "addSite": "Lisää toimipiste",
+    "searchPlaceholder": "Hae toimipistettä nimellä…",
+    "searchAriaLabel": "Hae toimipisteitä",
+    "columnSite": "Toimipiste",
+    "columnPlace": "Sijainti",
+    "columnProducts": "Tuotteet",
+    "searchCapped": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
+    "noResults": "Hakua ”{query}” vastaavaa ei löydy.",
+    "empty": "Ei vielä toimipisteitä. Lisää ensimmäinen.",
+    "backToSites": "Takaisin toimipisteisiin",
+    "notFound": "Tällä tunnuksella ei ole toimipistettä.",
+    "notASite": "Tämä sijainti ei ole toimipiste, joten sillä ei ole omaa sivua.",
+    "productsHeading": "Tämän toimipisteen tuotteet",
+    "noProducts": "Täällä ei vielä pyöri mitään."
+  },
+  "testing": {
+    "title": "Testaus",
+    "description": "Sisäiset testaus- ja kehitystyökalut",
+    "emailTool": "Sähköpostin testaustyökalu",
+    "emailToolDescription": "Lähetä testisähköposteja Brevo-palvelun (SMTP) kautta toimituksen ja mallien varmistamiseksi.",
+    "template": "Malli",
+    "language": "Kieli",
+    "toEmail": "Vastaanottajan sähköposti",
+    "toEmailPlaceholder": "vastaanottaja@example.com",
+    "templateParameters": "Malliparametrit",
+    "subject": "Aihe",
+    "sendTestEmail": "Lähetä testisähköposti",
+    "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
+    "failedToSendRequest": "Pyynnön lähettäminen epäonnistui",
+    "preview": "Esikatselu",
+    "previewError": "Mallin hahmontaminen epäonnistui: {message}",
+    "previewWidth": {
+      "label": "Esikatselun leveys",
+      "desktop": "Työpöytä",
+      "mobile": "Mobiili"
+    },
+    "attachment": "Liite: {name}",
+    "sentAttachment": "Mitä lähetettiin: {name}",
+    "discord": {
+      "tool": "Discord-testaustyökalu",
+      "toolDescription": "Lähetä tämän ympäristön Discord-botilta yksityisviesti linkitetylle tilille ja varmista, että lähetys toimii.",
+      "recipient": "Vastaanottaja",
+      "recipientOption": "{name} ({discordUsername})",
+      "noLinkedAccounts": "Yhdelläkään tilillä ei ole vielä linkitettyä Discord-tiliä. Linkitä tili ensin Discordissa komennolla /link.",
+      "message": "Viesti",
+      "messagePlaceholder": "Pelkkää tekstiä, enintään 2 000 merkkiä",
+      "send": "Lähetä testiviesti",
+      "sent": "Viesti lähetetty.",
+      "templatePlain": "Pelkkä teksti",
+      "templateSubFlow": "/sub ja tuurausviestit: kaikki viestit",
+      "subPreviewSent": "Kaikki vaiheet lähetetty."
+    },
+    "slack": {
+      "tool": "Slack-testaustyökalu",
+      "toolDescription": "Lähetä tämän ympäristön Slack-botilla viesti kanavalle ja varmista, että lähetys toimii.",
+      "channel": "Kanava",
+      "channelPlaceholder": "Kanavan tunnus, esim. C0123456789",
+      "message": "Viesti",
+      "messagePlaceholder": "Pelkkää tekstiä, enintään 4 000 merkkiä",
+      "send": "Lähetä testiviesti",
+      "sent": "Viesti lähetetty.",
+      "templatePlain": "Pelkkä teksti",
+      "templateSubFlow": "Tuurausviestit: kaikki tilat",
+      "subPreviewSent": "Kaikki viestit lähetetty."
+    }
+  },
+  "tools": {
+    "title": "Työkalut"
+  },
+  "whatsapp": {
+    "title": "WhatsApp",
+    "description": "Näytä ja vastaa WhatsApp-keskusteluihin",
+    "searchContacts": "Hae kontakteja...",
+    "noConversations": "Ei keskusteluja vielä.",
+    "selectConversation": "Valitse keskustelu aloittaaksesi viestinnän",
+    "typeMessage": "Kirjoita viesti...",
+    "notDelivered": "Ei toimitettu",
+    "today": "Tänään",
+    "yesterday": "Eilen"
+  },
+  "substitutions": {
+    "title": "Tuuraukset",
+    "description": "Kerrat, joilta joku on poissa, ja niiden tuuraajat.",
+    "descriptionWithZone": "Kerrat, joilta joku on poissa, ja niiden tuuraajat. Ajat näkyvät aikavyöhykkeellä {zone}.",
+    "listLabel": "Kerrat, jotka tarvitsevat tuuraajan",
+    "allClear": "Yksikään kerta ei tarvitse tuuraajaa.",
+    "substitutedLabel": "Kerrat, joilla on tuuraaja",
+    "substitute": "Tuuraaja:",
+    "approvedBy": "Hyväksynyt {name} · {when}",
+    "substitutedEmpty": "Tulevilla kerroilla ei ole tuuraajia.",
+    "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
+    "offersLabel": "Tuuraamista tarjoavat Gedut",
+    "away": "Poissa:",
+    "unnamed": "Nimetön Gedu",
+    "reason": {
+      "sick": "Sairaus",
+      "other": "Muu"
+    },
+    "noOffers": "Ei vielä tarjouksia.",
+    "declinedBy": "Kieltäytyneet: {names}",
+    "openGroup": "Avaa ryhmä",
+    "seatSomeoneElse": "Valitse muu tuuraaja",
+    "approve": "Hyväksy",
+    "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
+    "loadError": "Tuurauksia ei voitu ladata.",
+    "loadErrorWithReason": "Tuurauksia ei voitu ladata: {reason}",
+    "approveConfirmTitle": "Hyväksytäänkö {name} tuuraajaksi?",
+    "approveConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu muiden tarjoutuneiden listalta, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+    "approveFailedOfferGone": "{name} on perunut tarjouksensa, joten hyväksyttävää ei ole.",
+    "approveFailedAlreadySettled": "Joku muu on jo hoitanut tämän kerran.",
+    "approveFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+    "approveFailedIneligible": "{name} ei voi enää ottaa tätä kertaa.",
+    "seatConfirmTitle": "Asetetaanko {name} tuuraajaksi?",
+    "seatConfirmBody": "{name} ottaa kerran {product} — {group} {when}, Gedun {absent} tilalla. Kerta näkyy hänen Tuuraukset-sivullaan ja Oma SOG -näkymässä heti, ja ryhmän työtila avautuu hänelle 48 tuntia ennen kerran alkua. Jos hänen Discord-tilinsä on yhdistetty, hän saa tiedon myös Discordissa. Kerta poistuu listalta, jolta Gedut tarjoutuvat tuuraamaan, Slackin viestissä näkyy, kuka sen otti, ja sen kortilla lukee nyt, että {name} tuuraa henkilöä {absent}.",
+    "seatConfirm": "Aseta tuuraaja",
+    "seatReasonLabel": "Ilmoitettu syy",
+    "seatFailed": "Tuuraajan asettaminen epäonnistui – yritä uudelleen.",
+    "seatFailedIneligible": "{name} ei voi ottaa tätä kertaa – hän on jo merkitty sille tai ei voi enää tuurata.",
+    "seatFailedSeatGone": "{absent} ei ole enää tässä kerrassa, joten tuurattavaa ei ole.",
+    "seatFailedRequestWithdrawn": "{absent} on perunut tuurauspyyntönsä, joten tuurattavaa ei ole.",
+    "seatFailedNotScheduled": "Ryhmällä ei ole enää kertaa tänä päivänä."
+  },
+  "feedback": {
+    "title": "Palaute",
+    "sources": {
+      "gamerOnline": "Pelaajilta verkkotapaamisten jälkeen"
+    },
+    "empty": "Palautetta ei ole vielä annettu.",
+    "loadError": "Palautetta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "loadErrorWithReason": "Palautetta ei voitu ladata: {reason}",
+    "noAnswers": "Ei vastauksia",
+    "answers": "{count, plural, one {# vastaus} other {# vastausta}}",
+    "skipped": "Ohitettu",
+    "belowAverage": "Alle keskiarvon",
+    "belowAverageOn": "Alle keskiarvon väitteessä: {statement}",
+    "statementLabels": {
+      "learned": "Oppi uutta",
+      "fun": "Oli kivaa",
+      "geduKnowledgeable": "Gedu osasi",
+      "geduKind": "Gedu ystävällinen",
+      "groupListens": "Tuli kuulluksi"
+    },
+    "timeline": {
+      "byWeek": "Myönteiset vastaukset viikoittain",
+      "byMonth": "Myönteiset vastaukset kuukausittain",
+      "platform": "Koko alusta"
+    },
+    "back": {
+      "overview": "Takaisin palautteeseen",
+      "list": {
+        "product": "Takaisin tuotteisiin",
+        "gedu": "Takaisin geduihin"
+      },
+      "responses": "Takaisin pelaajien vastauksiin",
+      "detail": {
+        "product": "Takaisin tuotteeseen",
+        "group": "Takaisin ryhmään",
+        "gedu": "Takaisin geduun",
+        "gamer": "Takaisin pelaajaan"
+      }
+    },
+    "hero": {
+      "positive": "myönteisiä",
+      "definition": "Vastaus Kyllä tai Ehdottomasti",
+      "responseRate": "{share} paikalla olleista pelaajista vastasi"
+    },
+    "statements": {
+      "heading": "Väitteittäin",
+      "legend": "Kielteinen on Ei tai Vähän, myönteinen on Kyllä tai Ehdottomasti.",
+      "positive": "{share} myönteisiä",
+      "negative": "{share} kielteisiä",
+      "saidPositive": "{positive}/{answers} vastasi {yes} tai {definitely}"
+    },
+    "explore": {
+      "heading": "Tutki tarkemmin",
+      "titles": {
+        "product": "Tuotteet",
+        "gedu": "Gedut",
+        "responses": "Pelaajat"
+      },
+      "counts": {
+        "product": "{count, plural, one {# tuote} other {# tuotetta}}",
+        "gedu": "{count, plural, one {# Gedu} other {# Gedua}}",
+        "responses": "{count, plural, one {# vastaus} other {# vastausta}}"
+      }
+    },
+    "rows": {
+      "none": "Täällä ei ole vielä mitään.",
+      "answers": "Vastaukset",
+      "positive": "Myönteiset",
+      "positiveAgainst": "Myönteiset (koko alusta {share})"
+    },
+    "lists": {
+      "titles": {
+        "product": "Tuotteet",
+        "gedu": "Gedut"
+      },
+      "subtitle": "Heikoin ensin, verrattuna koko alustan keskiarvoon"
+    },
+    "detail": {
+      "kinds": {
+        "product": "Tuote",
+        "group": "Ryhmä",
+        "gedu": "Gedu",
+        "gamer": "Pelaaja"
+      },
+      "open": {
+        "product": "Avaa tuote",
+        "group": "Avaa ryhmä",
+        "gedu": "Avaa gedun tili",
+        "gamer": "Avaa pelaajan tili"
+      },
+      "none": "Tästä ei ole vielä vastattu mitään.",
+      "platform": "Koko alusta {share}",
+      "groupsHeading": "Ryhmät",
+      "productsHeading": "Tuotteet",
+      "gedusHeading": "Gedut",
+      "gamersHeading": "Vastanneet pelaajat",
+      "responsesHeading": "Mitä pelaajat sanoivat"
+    },
+    "responses": {
+      "title": "Mitä pelaajat sanoivat",
+      "none": "Täällä ei ole vastauksia.",
+      "noneWorthReading": "Ei mitään poimittavaa: ei kielteisiä vastauksia eikä viestejä.",
+      "noGedu": "Gedua ei ole kirjattu",
+      "who": "Vastaus",
+      "filterLabel": "Näytettävät vastaukset",
+      "worthReading": "Lukemisen arvoiset ({count})",
+      "all": "Kaikki ({count})"
+    }
+  },
+  "analytics": {
+    "title": "Analytiikka",
+    "subtitle": "Kuinka moni sivustolle tulee, mitä he lukevat ja mitkä kampanjat heidät tuovat. Jokainen tämän sivun päivä on UTC-päivä.",
+    "range": {
+      "label": "Aikaväli",
+      "preset": "Viimeiset {days} päivää",
+      "from": "Alkaen",
+      "to": "Asti",
+      "apply": "Näytä",
+      "showing": "Näytetään {from} – {to}.",
+      "dataStarts": "Vercelin luvut alkavat {date}."
+    },
+    "readAt": "Luettu Vercelistä klo {time}. Säilytetään enintään tunnin.",
+    "noLanguage": "Osoitteessa ei ole kieltä",
+    "languageCount": "{language} {count}",
+    "showAll": "Näytä kaikki {count}",
+    "showFewer": "Näytä vähemmän",
+    "errors": {
+      "unconfigured": "Vercel ei ole yhdistettynä tässä ympäristössä, joten näitä lukuja ei voi lukea.",
+      "refused": "Vercel ei antanut näitä lukuja tämän sivuston käyttöavaimelle. Avain tarvitsee niihin pääsyn, ennen kuin ne voivat näkyä tässä.",
+      "failed": "Näitä lukuja ei juuri nyt voitu lukea. Yritä uudelleen muutaman minuutin päästä."
+    },
+    "traffic": {
+      "heading": "Liikenne",
+      "chart": "Liikenne päivittäin",
+      "visitors": "Kävijät (arvio)",
+      "caption": "Mukana ovat vain kävijät, jotka hyväksyivät analytiikan evästebannerissa. Kävijät lasketaan laitteittain, joten heidän määränsä on suuntaa antava.",
+      "series": {
+        "pageviews": "Sivunkatselut",
+        "visitors": "Kävijät"
+      }
+    },
+    "landing": {
+      "heading": "Laskeutumissivut",
+      "caption": "Kunkin laskeutumissivun katselut, sivun kaikki kielet yhteensä. Mukana vain analytiikan hyväksyneet kävijät.",
+      "columns": {
+        "page": "Sivu",
+        "pageviews": "Katselut"
+      },
+      "unmatched": "Mikään laskeutumissivu ei enää käytä tätä osoitetta",
+      "empty": "Yhtään laskeutumissivua ei katseltu tällä aikavälillä."
+    },
+    "campaigns": {
+      "heading": "Kampanjat",
+      "caption": "Sivunkatselut linkin kampanjan mukaan. Mukana vain analytiikan hyväksyneet kävijät.",
+      "columns": {
+        "campaign": "Kampanja",
+        "sources": "Lähde",
+        "mediums": "Media",
+        "pageviews": "Katselut"
+      },
+      "none": "Ei kampanjaa",
+      "noValue": "ei mitään",
+      "empty": "Tällä aikavälillä ei ollut katseluita."
+    },
+    "pages": {
+      "heading": "Suosituimmat sivut",
+      "caption": "Katselut sivuittain, sivun kaikki kielet yhdellä rivillä. Avaa rivi nähdäksesi, millä kielillä sitä luettiin. Mukana vain analytiikan hyväksyneet kävijät.",
+      "columns": {
+        "page": "Sivu",
+        "pageviews": "Katselut"
+      },
+      "noSplit": "Kielijako ei ole saatavilla tälle lukukerralle.",
+      "empty": "Yhtään sivua ei katseltu tällä aikavälillä."
+    },
+    "breakdowns": {
+      "heading": "Mistä kävijät tulevat",
+      "caption": "Katselut sen sivuston mukaan, jolta kävijä tuli, sekä maan ja laitteen mukaan. Mukana vain analytiikan hyväksyneet kävijät.",
+      "referrers": "Viittaajat",
+      "countries": "Maat",
+      "devices": "Laitteet",
+      "noReferrer": "Suoraan, tai tietoa ei välitetty",
+      "unknown": "Tuntematon",
+      "empty": "Tällä aikavälillä ei ole näytettävää.",
+      "deviceTypes": {
+        "desktop": "Tietokone",
+        "mobile": "Puhelin",
+        "tablet": "Tabletti"
+      }
+    }
+  },
+  "testimonials": {
+    "subtitle": "Vanhempien, pelaajien ja gedujen omat sanat yhdessä paikassa. Laskeutumissivut lainaavat niistä sinne sijoitettuja.",
+    "newTestimonial": "Uusi asiakaskokemus",
+    "backToList": "Takaisin asiakaskokemuksiin",
+    "newPage": {
+      "title": "Uusi asiakaskokemus",
+      "submit": "Luo asiakaskokemus"
+    },
+    "editPage": {
+      "title": "Muokkaa asiakaskokemusta"
+    },
+    "listLoadError": "Asiakaskokemuksia ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "loadError": "Tätä asiakaskokemusta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "notFound": "Tällä osoitteella ei ole asiakaskokemusta.",
+    "empty": "Asiakaskokemuksia ei ole vielä.",
+    "allHeading": "Kaikki asiakaskokemukset",
+    "languagesLabel": "Kielet",
+    "saved": "Tallennettu {date}",
+    "quoteHasMarks": "Jätä lainausmerkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
+    "fields": {
+      "languages": "Kielet",
+      "from": "Keneltä",
+      "quote": "Lainaus"
+    },
+    "hints": {
+      "languages": "Kirjoita se kaikilla kielillä, joilla se sinulla on. Jokainen kieli tarvitsee lainauksen ja tiedon siitä, keneltä se on.",
+      "from": "Keneltä lainaus on, niin kuin se näytetään — esimerkiksi Äiti, Suomi.",
+      "quote": "Hänen sanansa sellaisinaan, ilman lainausmerkkejä: sivusto lisää kunkin kielen omat. Kääntäminen toiselle kielelle on sallittua, muuttaminen ei."
+    },
+    "usage": {
+      "heading": "Missä sitä käytetään",
+      "none": "Sitä ei vielä näytetä missään.",
+      "editNote": "Tallentaminen muuttaa sen sanat kaikkialla, missä se näkyy.",
+      "landingPage": "Laskeutumissivu: {title}",
+      "landingPageState": {
+        "both": "Lukijat näkevät sen siellä nyt.",
+        "liveOnly": "Lukijat näkevät sen siellä seuraavaan julkaisuun asti, joka poistaa sen.",
+        "workingOnly": "Ei vielä lukijoiden nähtävissä: seuraava julkaisu tuo sen sinne."
+      }
+    },
+    "record": {
+      "created": "Luotu {date}",
+      "createdBy": "Luonut {name} {date}",
+      "createdByVia": "Luonut {name} {date} sovelluksen {app} kautta",
+      "createdByViaUnnamed": "Luonut {name} {date} tekoälysovelluksen kautta",
+      "saved": "Tallennettu viimeksi {date}",
+      "savedBy": "Tallentanut viimeksi {name} {date}",
+      "savedByVia": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta",
+      "savedByViaUnnamed": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta"
+    },
+    "actions": {
+      "save": "Tallenna",
+      "cancel": "Peruuta"
+    },
+    "errors": {
+      "noVersion": "Kirjoita asiakaskokemus vähintään yhdellä kielellä.",
+      "versionIncomplete": "Kielelle {language} tarvitaan sekä lainaus että tieto siitä, keneltä se on.",
+      "quoted": "{language}: lainaus alkaa tai päättyy lainausmerkkiin. Jätä merkit pois: sivusto lisää ne kunkin kielen omalla tavalla.",
+      "saveFailed": "Asiakaskokemusta ei voitu tallentaa. Yritä uudelleen.",
+      "saveFailedWithReason": "Asiakaskokemusta ei voitu tallentaa: {reason}"
+    },
+    "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}"
+  },
+  "guides": {
+    "subtitle": "PDF-tiedostot, joita laskeutumissivut jakavat, yksi tiedosto kieltä kohden. Kirjautunut lukija lataa tiedoston omalla kielellään.",
+    "newGuide": "Uusi opas",
+    "backToList": "Takaisin oppaisiin",
+    "newPage": {
+      "title": "Uusi opas",
+      "submit": "Luo opas"
+    },
+    "editPage": {
+      "title": "Opas"
+    },
+    "listLoadError": "Oppaita ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "loadError": "Tätä opasta ei voitu ladata. Lataa sivu uudelleen ja yritä uudestaan.",
+    "notFound": "Tällä osoitteella ei ole opasta.",
+    "empty": "Oppaita ei ole vielä.",
+    "allHeading": "Kaikki oppaat",
+    "languagesLabel": "Kielet",
+    "saved": "Tallennettu {date}",
+    "onLandingPages": "{count, plural, one {# laskeutumissivulla} other {# laskeutumissivulla}}",
+    "fields": {
+      "label": "Nimi",
+      "language": "Kieli",
+      "file": "PDF-tiedosto",
+      "files": "Tiedostot"
+    },
+    "hints": {
+      "label": "Nimi, jolla ylläpitäjät tuntevat sen listoissaan. Lukijat eivät näe sitä: laskeutumissivun osio kertoo, mikä opas on.",
+      "language": "Kieli, jolla PDF on kirjoitettu. Muunkieliset tiedostot lisätään oppaan sivulla.",
+      "file": "PDF, enintään {limit}.",
+      "files": "Yksi PDF kieltä kohden. Lukija lataa oman kielensä tiedoston, muuten englanninkielisen, muuten sen, joka on sivuston kielijärjestyksessä ensimmäisellä kielellä, jolla tiedosto on."
+    },
+    "file": {
+      "uploaded": "Ladattu {date}",
+      "uploadedBy": "Ladannut {name} {date}",
+      "uploadedByVia": "Ladannut {name} {date} sovelluksen {app} kautta",
+      "uploadedByViaUnnamed": "Ladannut {name} {date} tekoälysovelluksen kautta",
+      "open": "Avaa PDF",
+      "none": "Kielellä {language} ei ole vielä tiedostoa. Lataa sellainen, niin opas on tarjolla kielellä {language}.",
+      "upload": "Lataa PDF",
+      "replace": "Korvaa PDF",
+      "replaceNote": "Uusi tiedosto korvaa tämän heti kaikkialla, missä opas on tarjolla.",
+      "remove": "Poista tämä kieli",
+      "lastFile": "Oppaalla on aina vähintään yksi kieli, joten sen ainoaa tiedostoa ei voi poistaa."
+    },
+    "removeDialog": {
+      "title": "Poistetaanko kielen {language} tiedosto?",
+      "description": "Kielen {language} lukijat saavat oppaan sen sijaan toisella kielellä kaikkialla, missä se on tarjolla. Voit ladata kielen {language} tiedoston uudelleen milloin tahansa.",
+      "confirm": "Poista"
+    },
+    "usage": {
+      "heading": "Missä sitä käytetään",
+      "none": "Sitä ei ole vielä tarjolla millään laskeutumissivulla.",
+      "editNote": "Uusi tiedosto tai poistettu kieli muuttaa sen heti kaikkialla, missä se on tarjolla.",
+      "landingPage": "Laskeutumissivu: {title}",
+      "landingPageState": {
+        "both": "Lukijat voivat ladata sen sieltä nyt.",
+        "liveOnly": "Lukijat voivat ladata sen sieltä seuraavaan julkaisuun asti, joka poistaa sen.",
+        "workingOnly": "Ei vielä lukijoiden saatavilla: seuraava julkaisu tuo sen sinne."
+      }
+    },
+    "record": {
+      "created": "Luotu {date}",
+      "createdBy": "Luonut {name} {date}",
+      "createdByVia": "Luonut {name} {date} sovelluksen {app} kautta",
+      "createdByViaUnnamed": "Luonut {name} {date} tekoälysovelluksen kautta",
+      "saved": "Tallennettu viimeksi {date}",
+      "savedBy": "Tallentanut viimeksi {name} {date}",
+      "savedByVia": "Tallentanut viimeksi {name} {date} sovelluksen {app} kautta",
+      "savedByViaUnnamed": "Tallentanut viimeksi {name} {date} tekoälysovelluksen kautta"
+    },
+    "actions": {
+      "save": "Tallenna",
+      "cancel": "Peruuta"
+    },
+    "errors": {
+      "labelMissing": "Anna oppaalle nimi.",
+      "labelTooLong": "Nimessä voi olla enintään {max} merkkiä.",
+      "noFile": "Valitse PDF-tiedosto.",
+      "tooLarge": "Tämä PDF on {size}, ja oppaan tiedosto voi olla enintään {limit}. Vie se pienempänä — Canvan ”Compress file” tai Acrobatin ”Reduce file size” — ja lataa se uudelleen.",
+      "notPdf": "Tiedosto ei ole PDF. Opas on PDF-tiedosto.",
+      "empty": "Tiedosto on tyhjä.",
+      "uploadFailed": "Tiedostoa ei voitu ladata. Yritä uudelleen.",
+      "uploadFailedWithReason": "Tiedostoa ei voitu ladata: {reason}",
+      "saveFailed": "Nimeä ei voitu tallentaa. Yritä uudelleen.",
+      "saveFailedWithReason": "Nimeä ei voitu tallentaa: {reason}",
+      "removeFailed": "Tiedostoa ei voitu poistaa. Yritä uudelleen.",
+      "removeFailedWithReason": "Tiedostoa ei voitu poistaa: {reason}"
+    }
+  }
+}

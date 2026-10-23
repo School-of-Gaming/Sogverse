@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
+import { commitAccountSwitch } from "@/services/family/switch-account";
+import { switchGateFor } from "@/services/family/switch-gate";
 import {
-  commitAccountSwitch,
-  switchGateFor,
   useFamily,
   useSessionProvenance,
+} from "@/services/family/family.queries";
+import {
   type FamilyMember,
   type SwitchAccountCredentials,
-} from "@/services/family";
+} from "@/services/family/family.service";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AddGamerDialog } from "./AddGamerDialog";
 import { SwitchProfileDialog } from "./SwitchProfileDialog";
@@ -22,7 +24,8 @@ import {
   SkeletonTile,
 } from "./ProfileTiles";
 import type { SessionProvenance } from "@/lib/session-provenance";
-import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
+import { ROUTES } from "@/lib/constants/routes";
 import { byFirstName } from "@/lib/family-order";
 
 /**

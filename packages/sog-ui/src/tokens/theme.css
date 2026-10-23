@@ -92,6 +92,9 @@
   --text-card-title: 1.125rem;
   --text-card-title--line-height: 1.4;
   --text-card-title--font-weight: 600;
+  --text-item-title: 1rem;
+  --text-item-title--line-height: 1.5;
+  --text-item-title--font-weight: 600;
   --text-label: 0.875rem;
   --text-label--line-height: 1.4;
   --text-label--font-weight: 600;

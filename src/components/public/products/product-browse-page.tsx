@@ -2,11 +2,15 @@
 
 import { useMemo, type ComponentProps } from "react";
 import { useTranslations } from "next-intl";
-import { useVisibleProductsByTypes } from "@/services/products";
+import {
+  useVisibleProductsByTypes,
+} from "@/services/products/products.queries";
 import {
   useParticipationCounts,
+} from "@/services/participations/participations.queries";
+import {
   type ParticipationCounts,
-} from "@/services/participations";
+} from "@/services/participations/participations.service";
 import type { ProductBrowseRow } from "@/types";
 import {
   CATEGORY_TYPE,

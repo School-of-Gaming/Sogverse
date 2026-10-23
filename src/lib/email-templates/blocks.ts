@@ -2,7 +2,19 @@ import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
 import { MARKDOWN_LOOK } from "@/lib/authored-markdown";
 import { MAIL_SPACE, MAIL_WEIGHT, mailText } from "./type-scale";
-import { BODY_TEXT_STYLE, groundFill, pinnedFill } from "./utils";
+import {
+  BODY_TEXT_STYLE,
+  TEXT_PINS,
+  framedCell,
+  holdBlock,
+  holdInline,
+  holdRuns,
+  holdText,
+  listMarkers,
+  markerColumnList,
+  needsRunHolds,
+  pinnedFill,
+} from "./utils";
 
 /**
  * The composed blocks a template reaches for rather than builds. `utils.ts`
@@ -69,33 +81,22 @@ interface RowButtonOptions extends CtaButtonOptions {
   variant: Exclude<CtaVariant, "primary">;
 }
 
-/**
- * The outlined button's fill, which is the ground rather than a colour of its
- * own — so it comes from the one table in `utils.ts` that every ground-following
- * surface in this directory takes both of its halves from, and the shell's own
- * media query restates it against the card.
- */
-const OUTLINE_GROUND = groundFill("match");
-
 const VARIANTS = {
   primary: {
     fill: pinnedFill(BRAND.act),
-    surfaceClass: "",
     label: BRAND.actForeground,
     bordered: false,
     // The only label dark enough for the pin to help rather than hurt.
-    labelClass: "cta-on-brand",
+    labelClass: TEXT_PINS.dark.className,
   },
   secondary: {
     fill: pinnedFill(BRAND.world),
-    surfaceClass: "",
     label: BRAND.worldForeground,
     bordered: false,
     labelClass: "",
   },
   outline: {
-    fill: OUTLINE_GROUND.fill,
-    surfaceClass: OUTLINE_GROUND.className,
+    fill: "",
     label: DARK_THEME.foreground,
     bordered: true,
     labelClass: "",
@@ -105,54 +106,28 @@ const VARIANTS = {
 /**
  * The button's look, in one place, so a half-width one is the same button.
  *
- * **Every button declares a background, and the outlined one declares the
- * ground it is standing on rather than nothing.** In a client that renders the
- * mail as written the declaration changes nothing — its whole job is to tell
- * Gmail's dark theme that this region was designed.
+ * **Each variant meets Gmail iOS differently, by what it is made of.** That
+ * client inverts every plain colour and leaves gradients alone, and the three
+ * buttons are three cases of it:
  *
- * *Which* colour that is depends on where the shell has put the button, which
- * is why the outlined variant takes the shared "matches the ground" tone rather
- * than naming a value: on a phone the content sits straight on the dark ground
- * and the button declares that, and above the shell's breakpoint the same
- * button is inside the card and declares the card. It used to name the card
- * unconditionally, under a comment saying that was the colour behind it — true
- * while the card was the only ground a mail had, and false on a phone from the
- * moment the shell went card-less.
- * Gmail runs a contrast pass over regions whose background it cannot read off a
- * declaration: it lightens the undeclared region, then, finding light where it
- * has just put light, darkens the text on it. That is how an outlined button
- * ends up with a near-black label on a slightly-off surface while the filled
- * button beside it is untouched — the filled one always declared its orange.
- * A label pin cannot reach this on its own, because the surface Gmail recolours
- * is the cell, not the anchor the pin is on.
+ * - `primary` is a pinned amber fill under a pinned dark label — both
+ *   gradients, so nothing on it is touched, and nothing on it is held.
+ * - `secondary` is a pinned violet fill under a plain white label. The fill
+ *   survives on its own; the label is a plain colour and would come back dark,
+ *   so it alone is held, inside the anchor, with the fill outside the hold.
+ * - `outline` is a plain border grey and a plain body ink and **no fill at
+ *   all**, so the whole button is held. It declares no ground of its own
+ *   because a fill inside a hold is screened a few shades lighter in every
+ *   Gmail; with nothing painted it is the ground it stands on in every client.
  *
- * **Only the dark label is pinned, and that asymmetry is the whole lesson.**
- * `cta-on-brand` carries the near-black label on the brand fill through the
- * Gmail-only `background-clip:text` rule in `layout.ts`, which fixed a real
- * fault: that label used to arrive white in one inbox and black in the next.
- * The light label on the outlined button carries no class and needs none — its
- * inline colour arrives intact on its own.
- *
- * It did not always. It used to carry a `cta-on-card` pin built the same way,
- * and **the pin was what broke it.** `background-clip:text` works by restating
- * a text colour as a *background* colour, and a client's dark theme leaves dark
- * backgrounds alone while darkening light ones — that is the one thing dark
- * mode is for. So the same mechanism that protects `#121212` destroys
- * `#ededed`: the pin hands a near-white value to precisely the pass that exists
- * to darken near-white values, and the label arrives dark. Measured against
- * the client rather than reasoned about: the same colour pinned three
- * different ways came back wrong every time, and unpinned came back right.
- * That is why the rule below is about luminance rather than about which
- * element is being styled.
- *
- * **Rule: never pin a light colour through `background-clip:text`.** The pin is
- * safe only for a colour dark enough that a client's dark theme would not
- * touch it as a background — the brand fill's near-black label, the brand
- * orange in the header. For anything lighter, the inline colour is both the
- * simplest answer and the one that survives; adding protection makes it worse.
+ * **Only the dark label is pinned.** `background-clip:text` restates a text
+ * colour as a background, and a client's dark theme leaves dark backgrounds
+ * alone while darkening light ones — so the mechanism that carries `#121212`
+ * intact is the one that turns `#ededed` dark on Gmail Android. A light label
+ * is held instead, which is the protection that works on a light colour.
  */
 function buttonStyles(variant: CtaVariant, width: CtaWidth) {
-  const { fill, surfaceClass, label, bordered, labelClass } = VARIANTS[variant];
+  const { fill, label, bordered, labelClass } = VARIANTS[variant];
   const isHalf = width === "half";
   return {
     surface: [
@@ -160,10 +135,36 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
       bordered ? `border:1px solid ${DARK_THEME.border};` : "",
       `border-radius:${RADIUS.md};`,
     ].join(""),
-    surfaceClass,
     labelClass,
     label: `display:${isHalf ? "block" : "inline-block"};padding:12px ${isHalf ? "8px" : "32px"};${mailText("action", label)}text-decoration:none;`,
   };
+}
+
+/** The anchor a button is pressed through, with the violet label held inside it. */
+function buttonAnchor(href: string, label: string, variant: CtaVariant, labelStyle: string, labelClass: string): string {
+  const text = variant === "secondary" ? holdInline(label, "inline-block") : label;
+  return `<a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">${text}</a>`;
+}
+
+/**
+ * The button's own table: the painted cell and the anchor in it. The outlined
+ * one is held whole, since everything on it is a plain neutral.
+ */
+function buttonTable(
+  { href, label, variant }: Required<CtaButtonOptions>,
+  width: CtaWidth,
+): string {
+  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, width);
+  // An auto-width table centres itself: the outlined one's hold sits between
+  // it and the centring cell around it, so that cell's alignment cannot reach it.
+  const table = `<table role="presentation" cellpadding="0" cellspacing="0"${width === "half" ? ' width="100%"' : ' align="center"'}>
+            <tr>
+              <td align="center" style="${surface}">
+                ${buttonAnchor(href, label, variant, labelStyle, labelClass)}
+              </td>
+            </tr>
+          </table>`;
+  return variant === "outline" ? holdBlock(table) : table;
 }
 
 /**
@@ -171,23 +172,11 @@ function buttonStyles(variant: CtaVariant, width: CtaWidth) {
  * because that is the shape Outlook renders as a button.
  */
 export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions): string {
-  const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
-    variant,
-    "auto",
-  );
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 ${MAIL_SPACE.block}px;">
       <tr>
         <td align="center">
-          <table role="presentation" cellpadding="0" cellspacing="0">
-            <tr>
-              <td align="center"${surfaceClass ? ` class="${surfaceClass}"` : ""} style="${surface}">
-                <a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">
-                  ${label}
-                </a>
-              </td>
-            </tr>
-          </table>
+          ${buttonTable({ href, label, variant }, "auto")}
         </td>
       </tr>
     </table>`;
@@ -215,10 +204,16 @@ export function ctaButton({ href, label, variant = "primary" }: CtaButtonOptions
  * - A label too long for one line **wraps**, and is expected to. There is no
  *   width at which every locale's longest label fits on one line, so wrapping is
  *   the designed behaviour rather than a failure of one.
- * - The buttons are the row's own cells, not nested tables inside them, which is
- *   what keeps a wrapped label from making one button taller than its
- *   neighbour: cells in a table row are the height of the row, so the surface
- *   paints to the same height on both sides and the labels sit centred in it.
+ * - A filled half is the row's own cell, which is what keeps a wrapped label
+ *   from making one button taller than its neighbour: cells in a table row are
+ *   the height of the row, so the fill paints to the same height on both sides
+ *   and the labels sit centred in it. An outlined half cannot be: its border has
+ *   to be held, and a hold around the row's cell would take the neighbour's
+ *   fill in with it, so its border is drawn on a table of its own inside the
+ *   cell, held there. Beside any half whose label wraps to more lines, filled
+ *   or outlined, the outlined one is therefore shorter — `height:100%` on its
+ *   table was tried on Gmail iOS and did not stretch it. Accepted, because the
+ *   labels the mails carry fit on one line at phone widths.
  * - `cellspacing` is the gutter, because it is the one gap Outlook has never
  *   argued with.
  */
@@ -242,12 +237,14 @@ export function ctaButtonRow(left: RowButtonOptions, right: RowButtonOptions): s
  * reaches that one shape only — two `secondary` halves still compile.
  */
 function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
-  const { surface, surfaceClass, labelClass, label: labelStyle } = buttonStyles(
-    variant,
-    "half",
-  );
-  return `<td width="50%"${surfaceClass ? ` class="${surfaceClass}"` : ""} align="center" valign="middle" style="${surface}">
-          <a href="${href}" target="_blank"${labelClass ? ` class="${labelClass}"` : ""} style="${labelStyle}">${label}</a>
+  if (variant === "outline") {
+    return `<td width="50%" valign="middle">
+          ${buttonTable({ href, label, variant }, "half")}
+        </td>`;
+  }
+  const { surface, labelClass, label: labelStyle } = buttonStyles(variant, "half");
+  return `<td width="50%" align="center" valign="middle" style="${surface}">
+          ${buttonAnchor(href, label, variant, labelStyle, labelClass)}
         </td>`;
 }
 
@@ -262,13 +259,14 @@ function halfButtonCell({ href, label, variant }: RowButtonOptions): string {
  * case ending on the word ("asetuksissa") keeps it inside the link text.
  */
 export function inlineLink(href: string, label: string): string {
-  // Deliberately unpinned, unlike the header lockup, which paints the same
-  // colour. The pin works by setting `color: transparent` and painting the
-  // glyphs out of a background — and `text-decoration-color` defaults to
-  // `currentColor`, so a pinned anchor keeps its colour and loses its
-  // underline. The underline is the affordance that says "link", so it
-  // outranks the colour arriving exactly in Gmail's dark theme.
-  return `<a href="${href}" target="_blank" style="color:${BRAND.act};text-decoration:underline;">${label}</a>`;
+  // Pinned, like the header lockup, which paints the same colour: unpinned,
+  // the amber drifts darker on Gmail iOS, and a link is a colour that cannot be
+  // held — a hold would turn it blue. The pin sets `color: transparent` and
+  // paints the glyphs out of a background, and `text-decoration-color`
+  // defaults to `currentColor`, so the underline's colour is stated on its own
+  // or the pinned link loses its underline. The sentence around the link is
+  // held run by run, with the link outside every hold (`holdRuns`).
+  return `<a href="${href}" target="_blank" class="${TEXT_PINS.act.className}" style="color:${BRAND.act};text-decoration:underline;text-decoration-color:${BRAND.act};">${label}</a>`;
 }
 
 /**
@@ -280,14 +278,36 @@ export function inlineLink(href: string, label: string): string {
  * Outlook's Word engine ignores `padding-left` on a list and draws the markers
  * flush against the column's edge, which is why the markdown definition's mail
  * half writes it as a margin too.
+ *
+ * **Two paths, by what the items carry.** A list of plain items is a real
+ * `<ol>`/`<ul>`, held whole, markers and all. A list whose items carry a link —
+ * or a list of their own, already held — cannot be held whole, since the hold
+ * would turn the link blue on Gmail iOS; and a list element left in plain ink
+ * has its markers inverted there to roughly the ground, so the step numbers
+ * vanish. That list is drawn as a table instead (`markerColumnList`): each
+ * marker held as text in a column as wide as the list's indent, each item's
+ * runs held around its link beside it. The table is no list to a screen reader
+ * — the accepted cost, since a list whose numbers cannot be seen is worse.
  */
 function list(tag: "ul" | "ol", items: string[]): string {
   const look = MARKDOWN_LOOK[tag];
+  if (items.some(needsRunHolds)) {
+    return markerColumnList({
+      markers: listMarkers(tag, items.length),
+      items: items.map(holdRuns),
+      indent: look.indent,
+      itemGap: MAIL_SPACE.item,
+      margin: `0 0 ${MAIL_SPACE.block}px`,
+      textStyle: BODY_TEXT_STYLE,
+    });
+  }
   const last = items.length - 1;
   const rendered = items
     .map((item, i) => `<li style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.item}px;">${item}</li>`)
     .join("");
-  return `<${tag} style="margin:0 0 ${MAIL_SPACE.block}px ${look.indent}px;padding:0;${BODY_TEXT_STYLE}">${rendered}</${tag}>`;
+  return holdBlock(
+    `<${tag} style="margin:0 0 ${MAIL_SPACE.block}px ${look.indent}px;padding:0;${BODY_TEXT_STYLE}">${rendered}</${tag}>`,
+  );
 }
 
 /** A bulleted list of already-composed (and already-escaped) HTML snippets. */
@@ -301,10 +321,10 @@ export function bulletList(items: string[]): string {
  *
  * Styled identically to `bulletList` down to the margins, because the two are
  * one construct with two markers: a mail carrying both would otherwise space
- * them differently for no reason a reader could name. The marker itself is the
- * client's own `<ol>` numbering rather than a number written into each item,
- * so it stays a list to a screen reader and the numbers cannot fall out of step
- * with the items after an edit.
+ * them differently for no reason a reader could name. The numbers are counted
+ * from the items either way — the client's own `<ol>` numbering for plain
+ * items, written out by `list` for items carrying a link — so they cannot fall
+ * out of step with the items after an edit.
  */
 export function numberedList(items: string[]): string {
   return list("ol", items);
@@ -411,11 +431,17 @@ export function factList(
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${margin};border-top:1px solid ${DARK_THEME.border};">
       ${rendered}
     </table>`;
-  if (leadIn === undefined) return table(`${MAIL_SPACE.furniture}px 0`);
-  return `
+  // Rules, labels and values are all plain neutrals, so the block is held
+  // whole — the lead-in with it, as the one piece of furniture it is.
+  if (leadIn === undefined) return holdBlock(table(`${MAIL_SPACE.furniture}px 0`));
+  return holdBlock(`
     <div style="margin:${MAIL_SPACE.furniture}px 0;">
-      ${sectionLabel(leadIn)}${table("0")}
-    </div>`;
+      ${sectionLabelMarkup(leadIn)}${table("0")}
+    </div>`);
+}
+
+function sectionLabelMarkup(text: string): string {
+  return `<p style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("leadIn", DARK_THEME.foreground)}">${text}</p>`;
 }
 
 /**
@@ -424,7 +450,7 @@ export function factList(
  * introduces, so it reads as the first line of that block.
  */
 export function sectionLabel(text: string): string {
-  return `<p style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("leadIn", DARK_THEME.foreground)}">${text}</p>`;
+  return holdBlock(sectionLabelMarkup(text));
 }
 
 /**
@@ -443,12 +469,48 @@ export function sectionLabel(text: string): string {
  * space takes no room.
  */
 export function hairlineRule(): string {
-  return `
+  // Held: the border grey is a plain colour, and Gmail iOS draws it near-white.
+  return holdBlock(`
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${MAIL_SPACE.furniture}px 0;">
       <tr>
         <td style="border-top:1px solid ${DARK_THEME.border};font-size:0;line-height:0;">&nbsp;</td>
       </tr>
-    </table>`;
+    </table>`);
+}
+
+/**
+ * Someone's own words, quoted in a box a tone off the ground — the message a
+ * person typed into the help form, in the staff mail that carries it.
+ *
+ * What the box is for is separating the reader's words from ours, which is a
+ * tonal step and not a colour, so its fill is the shared `step` tone and the
+ * shell restates it against the card. Its edge is a fill as well
+ * (`framedCell`), because a box with a fill cannot be held and a plain border
+ * grey comes back near-white on Gmail iOS; the words inside are held on their
+ * own. The message goes in composed and escaped — the caller's, as everywhere
+ * here.
+ */
+export function quotedMessage(html: string): string {
+  return framedCell({
+    edge: DARK_THEME.border,
+    radius: RADIUS.lg,
+    ground: "step",
+    tableAttrs: 'width="100%"',
+    tableStyle: "",
+    cellStyle: `padding:${MAIL_SPACE.block}px;${BODY_TEXT_STYLE}`,
+    content: holdBlock(html),
+  });
+}
+
+/**
+ * A line of small print under the block it qualifies — a staff-facing note,
+ * set at the small level in the muted ink, the block step above it.
+ */
+export function smallNote(text: string): string {
+  return holdText(
+    (inner) => `<p style="margin:${MAIL_SPACE.block}px 0 0;${mailText("small", DARK_THEME.mutedFg)}">${inner}</p>`,
+    text,
+  );
 }
 
 interface CalloutPanelOptions {
@@ -488,11 +550,11 @@ interface CalloutPanelOptions {
  * **The border carries the status, at full value.** The app's alerts do the
  * same thing and for the same reason: with no tinted ground left, an edge in
  * the status hue is what brings the eye to a panel whose whole job is to be
- * noticed, and an edge is one of the roles a brand colour may take. It stays a
- * 1px solid line on the cell — the most robust border email has, and the one
- * construct Outlook's Word engine and Gmail's Android renderer both draw
- * without argument — so what changed is one colour and nothing about the
- * markup.
+ * noticed, and an edge is one of the roles a brand colour may take. It is drawn
+ * as a fill (`framedCell`) rather than as a `border`: a status colour cannot
+ * be held, and a plain border colour drifts on Gmail iOS. The label is pinned
+ * in the same status colour for the same reason, and the sentences, which are
+ * plain ink, are held.
  *
  * **The label takes the colour and the sentences stay ink.** That is the app's
  * rule for this construct — coloured ink only on a label, never on something a
@@ -514,18 +576,23 @@ interface CalloutPanelOptions {
 export function calloutPanel({ label, paragraphs, opening = false }: CalloutPanelOptions): string {
   const last = paragraphs.length - 1;
   const body = paragraphs
-    .map(
-      (text, i) =>
-        `<p style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.block}px;${BODY_TEXT_STYLE}">${text}</p>`,
+    .map((text, i) =>
+      holdText(
+        (inner) =>
+          `<p style="margin:0 0 ${i === last ? 0 : MAIL_SPACE.block}px;${BODY_TEXT_STYLE}">${inner}</p>`,
+        text,
+      ),
     )
     .join("");
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:${opening ? `0 0 ${MAIL_SPACE.furniture}px` : `${MAIL_SPACE.furniture}px 0`};">
-      <tr>
-        <td style="border:1px solid ${STATUS.info};border-radius:${RADIUS.lg};padding:${MAIL_SPACE.block}px;">
-          <p style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("small", STATUS.info, MAIL_WEIGHT.bold)}letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
-          ${body}
-        </td>
-      </tr>
-    </table>`;
+    ${framedCell({
+      edge: STATUS.info,
+      radius: RADIUS.lg,
+      ground: "match",
+      tableAttrs: 'width="100%"',
+      tableStyle: `margin:${opening ? `0 0 ${MAIL_SPACE.furniture}px` : `${MAIL_SPACE.furniture}px 0`};`,
+      cellStyle: `padding:${MAIL_SPACE.block}px;`,
+      content: `<p class="${TEXT_PINS.info.className}" style="margin:0 0 ${MAIL_SPACE.tight}px;${mailText("small", STATUS.info, MAIL_WEIGHT.bold)}letter-spacing:0.5px;text-transform:uppercase;">${label}</p>
+          ${body}`,
+    })}`;
 }

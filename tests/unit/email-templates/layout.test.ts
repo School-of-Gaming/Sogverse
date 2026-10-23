@@ -3,11 +3,18 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { wrapInLayout, BRAND_MARK } from "@/lib/email-templates/layout";
-import { GROUND_TONES, pinnedFill } from "@/lib/email-templates/utils";
+import {
+  GROUND_TONES,
+  HOLD_CLASS,
+  HOLD_GROUND,
+  TEXT_PINS,
+  pinnedFill,
+} from "@/lib/email-templates/utils";
+import { unhold } from "../../helpers/email-holds";
 import { mailText } from "@/lib/email-templates/type-scale";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { RADIUS } from "@/lib/constants/radius";
-import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants";
+import { BRAND_LOCKUP, BRAND_LOCKUP_TAIL, SENDER_NAME } from "@/lib/constants/brand";
 import {
   MAIL_FONT_STACK,
   MAIL_WORD_ENGINE_FONT_STACK,
@@ -85,6 +92,73 @@ describe("the brand mark supplements the header", () => {
   });
 });
 
+/**
+ * The two Gmail mechanisms the shell's stylesheet carries. Both sit behind
+ * `u + .body`, which matches every Gmail's render wrapper and nothing else, so
+ * a client that is not Gmail never sees a blend or a clipped background.
+ */
+describe("the shell's Gmail rules", () => {
+  function styleBlock(): string {
+    return /<style>([\s\S]*?)<\/style>/.exec(render())![1];
+  }
+
+  it("carries the hold pair, Gmail-scoped, on black", () => {
+    const block = styleBlock();
+    expect(block).toContain(
+      `u + .body .${HOLD_CLASS.screen} { background: ${HOLD_GROUND} !important; mix-blend-mode: screen !important; }`,
+    );
+    expect(block).toContain(
+      `u + .body .${HOLD_CLASS.difference} { background: ${HOLD_GROUND} !important; mix-blend-mode: difference !important; }`,
+    );
+    // Black, because black is what makes both blends the identity everywhere
+    // but Gmail iOS.
+    expect(HOLD_GROUND).toBe("#000000");
+  });
+
+  it("pins every colour in the pin table, and nothing else", () => {
+    const block = styleBlock();
+    const pinned = [...block.matchAll(/u \+ \.body \.([\w-]+) \{\s*background-image: linear-gradient\((#[0-9a-fA-F]{6}),/g)].map(
+      ([, className, color]) => ({ className, color }),
+    );
+    expect(pinned).toEqual(Object.values(TEXT_PINS));
+  });
+
+  it("holds the lockup's tail inline and leaves its pinned amber half outside", () => {
+    const html = render();
+    const tail = html.indexOf(BRAND_LOCKUP_TAIL);
+    const amber = html.indexOf(`<span class="${TEXT_PINS.act.className}"`);
+    expect(html.slice(amber, tail)).toContain(`<span class="${HOLD_CLASS.screen}"><span class="${HOLD_CLASS.difference}">`);
+    expect(html.slice(amber, html.indexOf(SENDER_NAME, amber))).not.toContain(HOLD_CLASS.screen);
+  });
+});
+
+/**
+ * The inbox preview. A mail that states one gets it as the first thing in the
+ * body, hidden and escaped; a mail that states none gets no block at all, so
+ * every other mail is the document it was.
+ */
+describe("the preheader", () => {
+  const bodyOpened = (html: string) => {
+    const body = html.slice(html.indexOf("<body"));
+    return body.slice(body.indexOf(">") + 1);
+  };
+
+  it("is the body's first content, hidden, escaped and padded", () => {
+    const html = wrapInLayout({ title: "Title", content: "<p>Body</p>", preheader: "Aino & <you>" });
+    const opened = bodyOpened(html);
+    expect(opened.startsWith('<div style="display:none;')).toBe(true);
+    const block = opened.slice(0, opened.indexOf("</div>"));
+    expect(block).toContain("Aino &amp; &lt;you&gt;");
+    expect(block).toContain("mso-hide:all");
+    expect(block).toContain("&#847;&zwnj;&nbsp;");
+  });
+
+  it("emits nothing where a mail states none", () => {
+    expect(render()).not.toContain("display:none;max-height:0");
+    expect(bodyOpened(render()).startsWith("\n")).toBe(true);
+  });
+});
+
 describe("the header's text lockup", () => {
   /**
    * The header is the one place in this directory that does not emit
@@ -98,7 +172,7 @@ describe("the header's text lockup", () => {
    */
   it("reads as BRAND_LOCKUP exactly, built from two coloured spans", () => {
     const spans =
-      /<span class="brand-act"[^>]*>([^<]*)<\/span><span[^>]*>([^<]*)<\/span>/.exec(render());
+      /<span class="brand-act"[^>]*>([^<]*)<\/span><span[^>]*>([^<]*)<\/span>/.exec(unhold(render()));
     expect(spans, "the lockup's two spans are no longer adjacent").not.toBeNull();
     // Every character of the lockup, the en dash above all, still comes from
     // the constants module — nothing about either name is typed in the markup.
@@ -203,7 +277,7 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
    */
   it("rules off the footer on a phone and hides the rule where the card ends the mail", () => {
     const html = render();
-    const rowClass = /<tr class="([\w-]+)">\s*<td style="[^"]*border-bottom:1px solid ([^;"]+);/.exec(html);
+    const rowClass = /<tr class="([\w-]+)">\s*<td>[\s\S]*?<td style="[^"]*border-bottom:1px solid ([^;"]+);/.exec(html);
     expect(rowClass, "no hairline row above the footer").not.toBeNull();
     expect(rowClass![2]).toBe(DARK_THEME.border);
     // Between the content and the footer: after the body, before the small type.
@@ -221,7 +295,8 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
    * The other thing the ground changing has to move: every fill chosen *in
    * relation to* what is behind it. There are two intents — a tone off the
    * ground (a photo's well, the quoted box in the staff help-request mail) and a
-   * fill that means to *be* the ground (the outlined button) — and both come
+   * fill that means to *be* the ground (the inside of a box whose edge is a
+   * fill, such as the callout) — and both come
    * from one table, so the query cannot restate one and forget the other.
    *
    * They are a re-tone rather than a layout the block holds up: each inline

@@ -1,0 +1,24 @@
+{
+  "heading": "Tarvitsetko apua?",
+  "faqHeading": "Usein kysytyt kysymykset",
+  "form": {
+    "messageLabel": "Viesti",
+    "charactersNeeded": "{count} merkkiä vielä tarvitaan",
+    "submit": "Lähetä viesti",
+    "adult": {
+      "description": "Pyydä meiltä apua – jokainen viesti tulee School of Gamingin tiimille. Voit myös lähettää meille sähköpostia osoitteeseen <link>{email}</link>.",
+      "placeholder": "Missä voimme auttaa?",
+      "thankYou": "Kiitos – viestisi on perillä, ja on hienoa, että kirjoitit.",
+      "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
+      "tooManyRequests": "Olet lähettänyt jo useita viestejä. Yritä hetken kuluttua uudelleen."
+    },
+    "gamer": {
+      "description": "Jäitkö jumiin johonkin? Kirjoita meille tähän, niin autamme.",
+      "replyNote": "Jos vastaamme, lähetämme sähköpostia vanhemmallesi.",
+      "placeholder": "Missä tarvitset apua?",
+      "thankYou": "Kiitos — saimme viestisi.",
+      "failed": "Viestin lähettäminen epäonnistui. Yritä uudelleen.",
+      "tooManyRequests": "Olet lähettänyt jo muutaman viestin. Yritä hetken kuluttua uudelleen."
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { notFound } from "next/navigation";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { teamMemberAddress } from "@/components/team/team-address";
 import { teamMemberLocales } from "@/components/team/public/team-member-metadata";
@@ -10,13 +11,14 @@ import {
 } from "@/components/landing-pages/landing-page-address";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { getPathname } from "@/i18n/navigation";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StaticAppHref } from "@/lib/constants/routes";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 import { translatedPageLocales } from "@/lib/metadata/translated-page";
 import { productPagePath } from "@/lib/products/product-metadata";
+import { isProductionDeployment } from "@/lib/seo/deployment";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import { LibraryService } from "@/services/library/library.service";
 import { ProductsService } from "@/services/products/products.service";
@@ -56,6 +58,7 @@ const ROUTE_ENTRIES: { pathname: StaticAppHref; entry: Omit<MetadataRoute.Sitema
   { pathname: "/about", entry: { changeFrequency: "monthly", priority: 0.7 } },
   { pathname: "/team", entry: { changeFrequency: "weekly", priority: 0.6 } },
   { pathname: "/library", entry: { changeFrequency: "weekly", priority: 0.6 } },
+  { pathname: "/discover", entry: { changeFrequency: "weekly", priority: 0.6 } },
   { pathname: "/login", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/register", entry: { changeFrequency: "yearly", priority: 0.5 } },
   { pathname: "/privacy", entry: { changeFrequency: "yearly", priority: 0.3 } },
@@ -260,8 +263,12 @@ async function productEntries(): Promise<MetadataRoute.Sitemap> {
  * is what it would do with a `lastmod` it distrusted anyway. An article and a
  * landing page are the exceptions because publishing is what changes them,
  * and the publish time is stored.
+ *
+ * Production only: a sitemap is a list whose purpose is pointing machines at
+ * pages, and no other deployment may be found (`src/lib/seo/deployment.ts`).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (!isProductionDeployment()) notFound();
   const routes = ROUTE_ENTRIES.flatMap(({ pathname, entry }) =>
     localizedEntries(INDEXED_LOCALES, (locale) => urlFor(pathname, locale), entry),
   );

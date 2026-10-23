@@ -1,0 +1,23 @@
+{
+  "heading": "Yksityisyysvalintasi",
+  "body": "Käytämme evästeitä sivuston toimintaan. Suostumuksellasi mittaamme myös, miten sivustoa käytetään, ja jaamme tietoja mainoskumppaneillemme kohdennettua mainontaa ja sen mittaamista varten. Voit muuttaa valintaasi milloin tahansa sivun alalaidasta. Lisätietoja on <link>tietosuojaselosteessamme</link>.",
+  "rejectAll": "Hylkää kaikki",
+  "acceptAll": "Hyväksy kaikki",
+  "customise": "Muokkaa valintoja",
+  "saveChoices": "Tallenna valinnat",
+  "alwaysOn": "Aina päällä",
+  "purposes": {
+    "necessary": {
+      "title": "Välttämättömät",
+      "description": "Pitävät sivuston toiminnassa ja muistavat tämän valinnan."
+    },
+    "analytics": {
+      "title": "Analytiikka",
+      "description": "Laskee käynnit ja mittaa sivujen latausnopeuden tietämättä, kuka olet."
+    },
+    "marketing": {
+      "title": "Markkinointi",
+      "description": "Antaa mainosalustoille, joiden kanssa teemme yhteistyötä, nähdä, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä niistä toimivat. Ei koskaan päällä, kun pelaaja on kirjautuneena."
+    }
+  }
+}

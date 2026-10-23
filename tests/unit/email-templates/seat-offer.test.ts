@@ -74,16 +74,21 @@ describe("buildSeatOfferEmail", () => {
     // buttons and nothing else on the page. Asserting on the border rather than
     // on a colour keeps this test about the arrangement rather than the palette,
     // which `house-style.test.ts` already owns: the outlined button is the one
-    // that draws a border, the emphasized one is the one that does not.
-    const cells = [
-      ...html.matchAll(/<td width="50%"[^>]*style="([^"]*)"[^>]*>\s*<a href="([^"]*)"/g),
-    ].map((match) => ({ style: match[1], href: match[2] }));
+    // that draws a border (on a table of its own inside the cell, so it can be
+    // held), the emphasized one is the one that does not.
+    const cells = html
+      .split('<td width="50%"')
+      .slice(1)
+      .map((cell) => ({
+        href: /<a href="([^"]*)"/.exec(cell)?.[1],
+        bordered: cell.slice(0, cell.indexOf("<a ")).includes("border:1px solid"),
+      }));
 
     expect(cells).toHaveLength(2);
     expect(cells[0].href).toBe(DECLINE_URL);
-    expect(cells[0].style).toContain("border:1px solid");
+    expect(cells[0].bordered).toBe(true);
     expect(cells[1].href).toBe(ACCEPT_URL);
-    expect(cells[1].style).not.toContain("border:1px solid");
+    expect(cells[1].bordered).toBe(false);
   });
 
   /**
@@ -98,11 +103,11 @@ describe("buildSeatOfferEmail", () => {
     const html = buildSeatOfferEmail(t, "en", offer);
     expect(html).toContain(`href="${DASHBOARD_URL}"`);
 
-    // The primary fill is the one variant that carries the `cta-on-brand` pin
+    // The primary fill is the one variant that carries the `pin-dark` pin
     // (a near-black label on the brand orange), so counting the pin counts the
     // primary buttons — and there must be exactly one.
     const pinned = [
-      ...html.matchAll(/<a href="([^"]*)"[^>]*class="cta-on-brand"/g),
+      ...html.matchAll(/<a href="([^"]*)"[^>]*class="pin-dark"/g),
     ].map((match) => match[1]);
     expect(pinned).toEqual([DASHBOARD_URL]);
   });

@@ -294,7 +294,38 @@ if ($DryRun) {
 }
 else {
   try { Remove-TreeNoFollow -Root $target }
-  catch { Die "$($_.Exception.Message)`n  Something stopped the delete: a running process holding a file (dev server, build, editor), a path too long to remove, or denied access. Stop any process in the worktree and rerun." }
+  catch {
+    # A folder that survives the delete is usually some process's current
+    # directory, and most often the session's own: the Claude app keeps an idle
+    # shell open where a session last ran commands, and it is still sitting in
+    # the worktree after the session has left it. Such a shell — a bare shell the
+    # app started, running nothing — belongs to whoever worked in this worktree,
+    # which is the session tearing it down, so it is stopped and the delete is
+    # tried once more. Anything else is named rather than touched.
+    $firstError = $_.Exception.Message
+    . (Join-Path $scriptDir 'process-cwd.ps1')
+    $holders = @(Get-ProcessesInDirectory $target)
+    $idleShells = @($holders | Where-Object {
+        $_.Name -in @('powershell.exe', 'pwsh.exe', 'bash.exe', 'cmd.exe') -and
+        $_.Parent -like 'claude*' -and -not $_.HasChildren
+      })
+    foreach ($s in $idleShells) {
+      Stop-Process -Id $s.Id -Force
+      Step "stopped idle $($s.Name) $($s.Id) (started by $($s.Parent)), whose current directory was $($s.Cwd)"
+    }
+    $others = @($holders | Where-Object { $_.Id -notin $idleShells.Id })
+    if ($idleShells.Count -gt 0 -and $others.Count -eq 0) {
+      Start-Sleep -Milliseconds 500
+      try { Remove-TreeNoFollow -Root $target }
+      catch { Die "$($_.Exception.Message)`n  Still held after stopping the idle shell above, by something whose current directory is not inside the worktree: an open file (an editor, a build) or denied access." }
+    }
+    else {
+      $named = if ($others.Count -gt 0) {
+        "`n  Held as the current directory of:" + (($others | ForEach-Object { "`n    $($_.Id) $($_.Name) (parent $($_.Parent)) in $($_.Cwd)" }) -join '')
+      } else { '' }
+      Die "$firstError$named`n  Something stopped the delete: a running process holding a file (dev server, build, editor), a path too long to remove, or denied access. Stop the process and rerun."
+    }
+  }
   git -C $root worktree prune
   Ok "removed and pruned"
   Assert-MainIntact $canaries $links 'after removal'

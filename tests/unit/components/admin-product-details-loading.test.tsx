@@ -1,12 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enAdmin from "@/../messages/en/admin.json";
+import enCommon from "@/../messages/en/common.json";
+import enProductTag from "@/../messages/en/productTag.json";
+import enConsentDocuments from "@/../messages/en/consentDocuments.json";
+import enProductDetail from "@/../messages/en/productDetail.json";
+import enProductAudience from "@/../messages/en/productAudience.json";
 import { NowProvider } from "@/providers/now-provider";
 import { TimezoneProvider } from "@/providers/timezone-provider";
 import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
 import type { PlannedSession } from "@/lib/planned-sessions";
-import type { ProductAdminDetailRow } from "@/services/products";
+import type {
+  ProductAdminDetailRow,
+} from "@/services/products/products.service";
+
+const messages = {
+  admin: enAdmin,
+  common: enCommon,
+  productTag: enProductTag,
+  consentDocuments: enConsentDocuments,
+  productDetail: enProductDetail,
+  productAudience: enProductAudience,
+};
 
 /**
  * ============================================================================
@@ -36,7 +52,7 @@ const reads = vi.hoisted(() => ({
 /** Every `voiceAvailable` the groups panel was rendered with, in order. */
 const voiceSeen = vi.hoisted(() => ({ value: [] as boolean[] }));
 
-vi.mock("@/services/products", () => ({
+vi.mock("@/services/products/products.queries", () => ({
   useProductAdmin: () => reads.product,
   usePlannedSessions: () => reads.plan,
 }));
@@ -62,6 +78,8 @@ function remoteClub(): ProductAdminDetailRow {
     tag: null,
     region_lock_country: null,
     requires_gamer_creations: false,
+    voice_room_mode: "sogverse",
+    external_voice_url: null,
     spoken_language_code: "en",
     image_id: null,
     image_path: null,
@@ -92,6 +110,7 @@ function remoteClub(): ProductAdminDetailRow {
         name: "Build Club",
         short_description: "Build castles together.",
         long_description: null,
+        voice_join_instructions: null,
         created_at: "2025-12-01T08:00:00.000Z",
         updated_at: "2025-12-01T08:00:00.000Z",
       },

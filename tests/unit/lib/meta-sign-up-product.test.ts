@@ -93,6 +93,7 @@ describe("signUpProductFor — names nothing", () => {
     ["the shop listing", "/en/shop"],
     ["the confirmation page", "/en/shop/confirmation"],
     ["a municipality club page", `/en/schools/helsinki/${PRODUCT_ID}`],
+    ["a landing page", `/fi/tutustu/${PRODUCT_ID}`],
     ["a path climbing out of the shop", `/en/shop/../admin`],
     ["an id that is not a uuid", "/en/shop/not-a-uuid"],
   ])("for %s, without reading anything", async (_label, redirect) => {

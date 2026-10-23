@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enLibrary from "@/../messages/en/library.json";
 import { TimezoneProvider } from "@/providers";
 import {
   createFetchStubbedClient,
@@ -49,6 +49,8 @@ import LibraryIndexPage from "@/app/[locale]/(public)/library/page";
 import LibraryArticlePage, {
   generateMetadata as articleMetadata,
 } from "@/app/[locale]/(public)/library/[idOrSlug]/page";
+
+const messages = { library: enLibrary };
 
 const ID = "482f0c6f-0fbc-4202-8790-a73a4520fb47";
 const OTHER_ID = "5e0c7a3b-2f14-4e8d-9b6a-1d3c8f7e2a90";

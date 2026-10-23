@@ -1359,6 +1359,123 @@ export type Database = {
           },
         ]
       }
+      guide_files: {
+        Row: {
+          byte_size: number
+          file_name: string
+          guide_id: string
+          locale: string
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+          uploaded_via: string | null
+        }
+        Insert: {
+          byte_size: number
+          file_name: string
+          guide_id: string
+          locale: string
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_via?: string | null
+        }
+        Update: {
+          byte_size?: number
+          file_name?: string
+          guide_id?: string
+          locale?: string
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_via?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_files_guide_id_fkey"
+            columns: ["guide_id"]
+            isOneToOne: false
+            referencedRelation: "guides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guides: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_via: string | null
+          id: string
+          label: string
+          last_saved_by: string | null
+          last_saved_via: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          label: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          label?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guides_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       help_requests: {
         Row: {
           created_at: string
@@ -1533,6 +1650,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt: string
+          share_image_id: string | null
+          share_title: string
           slug: string
           summary: string
           texts_md5: string | null
@@ -1542,6 +1662,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug: string
           summary: string
           texts_md5?: string | null
@@ -1551,6 +1674,9 @@ export type Database = {
           locale?: string
           page_id?: string
           section_texts?: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1569,24 +1695,24 @@ export type Database = {
       landing_page_publications: {
         Row: {
           first_published_at: string
-          image_paths: Json
           page_id: string
+          pictures: Json
           published_at: string
           sections: Json
           sections_md5: string | null
         }
         Insert: {
           first_published_at: string
-          image_paths?: Json
           page_id: string
+          pictures?: Json
           published_at: string
           sections: Json
           sections_md5?: string | null
         }
         Update: {
           first_published_at?: string
-          image_paths?: Json
           page_id?: string
+          pictures?: Json
           published_at?: string
           sections?: Json
           sections_md5?: string | null
@@ -1607,6 +1733,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts: Json
+          share_image_alt: string
+          share_image_id: string | null
+          share_title: string
           slug: string
           summary: string
           texts_md5: string | null
@@ -1617,6 +1746,9 @@ export type Database = {
           locale: string
           page_id: string
           section_texts?: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1627,6 +1759,9 @@ export type Database = {
           locale?: string
           page_id?: string
           section_texts?: Json
+          share_image_alt?: string
+          share_image_id?: string | null
+          share_title?: string
           slug?: string
           summary?: string
           texts_md5?: string | null
@@ -1647,9 +1782,9 @@ export type Database = {
           author_id: string | null
           created_at: string
           id: string
-          image_paths: Json
           last_saved_by: string | null
           last_saved_via: string | null
+          pictures: Json
           sections: Json
           sections_md5: string | null
           updated_at: string
@@ -1658,9 +1793,9 @@ export type Database = {
           author_id?: string | null
           created_at?: string
           id?: string
-          image_paths?: Json
           last_saved_by?: string | null
           last_saved_via?: string | null
+          pictures?: Json
           sections: Json
           sections_md5?: string | null
           updated_at?: string
@@ -1669,9 +1804,9 @@ export type Database = {
           author_id?: string | null
           created_at?: string
           id?: string
-          image_paths?: Json
           last_saved_by?: string | null
           last_saved_via?: string | null
+          pictures?: Json
           sections?: Json
           sections_md5?: string | null
           updated_at?: string
@@ -2608,6 +2743,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at: string
+          voice_join_instructions: string | null
         }
         Insert: {
           created_at?: string
@@ -2617,6 +2753,7 @@ export type Database = {
           product_id: string
           short_description: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Update: {
           created_at?: string
@@ -2626,6 +2763,7 @@ export type Database = {
           product_id?: string
           short_description?: string
           updated_at?: string
+          voice_join_instructions?: string | null
         }
         Relationships: [
           {
@@ -2644,6 +2782,7 @@ export type Database = {
           created_at: string
           created_by: string
           end_date: string | null
+          external_voice_url: string | null
           for_gamers: boolean
           for_parents: boolean
           id: string
@@ -2668,6 +2807,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
+          voice_room_mode: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled: boolean
         }
         Insert: {
@@ -2676,6 +2816,7 @@ export type Database = {
           created_at?: string
           created_by: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2700,6 +2841,7 @@ export type Database = {
           timezone: string
           topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Update: {
@@ -2708,6 +2850,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           end_date?: string | null
+          external_voice_url?: string | null
           for_gamers?: boolean
           for_parents?: boolean
           id?: string
@@ -2732,6 +2875,7 @@ export type Database = {
           timezone?: string
           topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
+          voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           waitlist_enabled?: boolean
         }
         Relationships: [
@@ -3665,6 +3809,94 @@ export type Database = {
           },
         ]
       }
+      testimonial_translations: {
+        Row: {
+          attribution: string
+          locale: string
+          quote: string
+          testimonial_id: string
+        }
+        Insert: {
+          attribution: string
+          locale: string
+          quote: string
+          testimonial_id: string
+        }
+        Update: {
+          attribution?: string
+          locale?: string
+          quote?: string
+          testimonial_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_translations_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "testimonials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_via: string | null
+          id: string
+          last_saved_by: string | null
+          last_saved_via: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_via?: string | null
+          id?: string
+          last_saved_by?: string | null
+          last_saved_via?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_last_saved_by_fkey"
+            columns: ["last_saved_by"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verification_email_requests: {
         Row: {
           created_at: string
@@ -4190,6 +4422,15 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: string[]
       }
+      check_guide_file: {
+        Args: { p_byte_size: number; p_file_name: string; p_locale: string }
+        Returns: undefined
+      }
+      check_guide_label: { Args: { p_label: string }; Returns: undefined }
+      check_testimonial_version: {
+        Args: { p_attribution: string; p_locale: string; p_quote: string }
+        Returns: undefined
+      }
       claim_expired_seat_offer_notifications: {
         Args: { p_participation_id?: string }
         Returns: Json
@@ -4208,6 +4449,10 @@ export type Database = {
       clear_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
+      }
+      clone_landing_page: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
       }
       confirm_paid_participation: {
         Args: {
@@ -4230,14 +4475,21 @@ export type Database = {
           p_gender?: Database["public"]["Enums"]["gender_type"]
           p_guardian_attested?: boolean
           p_last_name: string
-          p_minecraft_username?: string
-          p_minecraft_uuid?: string
           p_parent_id: string
-          p_roblox_user_id?: number
-          p_roblox_username?: string
           p_sign_in?: Database["public"]["Enums"]["gamer_sign_in"]
         }
         Returns: undefined
+      }
+      create_guide: {
+        Args: {
+          p_byte_size: number
+          p_file_name: string
+          p_id: string
+          p_label: string
+          p_locale: string
+          p_storage_path: string
+        }
+        Returns: string
       }
       create_holiday_calendar: {
         Args: { p_breaks: Json; p_name: string }
@@ -4285,6 +4537,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -4311,6 +4564,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -4319,6 +4573,7 @@ export type Database = {
         Args: { p_enabled: boolean; p_image_id?: string; p_versions: Json }
         Returns: string
       }
+      create_testimonial: { Args: { p_versions: Json }; Returns: string }
       decline_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -4528,6 +4783,15 @@ export type Database = {
         Returns: string[]
       }
       get_group_staff_overlay: { Args: { p_group_id: string }; Returns: Json }
+      get_guide_download_files: {
+        Args: { p_guide_id: string }
+        Returns: {
+          byte_size: number
+          file_name: string
+          locale: string
+          storage_path: string
+        }[]
+      }
       get_live_substitution_requests_for_discord_user: {
         Args: { p_discord_user_id: string }
         Returns: Json
@@ -4830,6 +5094,19 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      list_landing_page_guides: {
+        Args: { p_page_id: string }
+        Returns: {
+          guide_id: string
+        }[]
+      }
+      list_landing_page_testimonials: {
+        Args: { p_page_id: string }
+        Returns: {
+          testimonial_id: string
+          versions: Json
+        }[]
+      }
       list_public_team_profiles: {
         Args: never
         Returns: {
@@ -4976,11 +5253,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      remove_guide_file: {
+        Args: { p_id: string; p_locale: string }
+        Returns: string
+      }
       remove_landing_page_version: {
         Args: { p_id: string; p_locale: string }
         Returns: string
       }
+      remove_testimonial_version: {
+        Args: { p_id: string; p_locale: string }
+        Returns: string
+      }
       replace_spotlight_versions: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: undefined
+      }
+      replace_testimonial_versions: {
         Args: { p_id: string; p_versions: Json }
         Returns: undefined
       }
@@ -5049,6 +5338,20 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
       }
+      save_guide_file: {
+        Args: {
+          p_byte_size: number
+          p_file_name: string
+          p_id: string
+          p_locale: string
+          p_storage_path: string
+        }
+        Returns: string
+      }
+      save_guide_label: {
+        Args: { p_id: string; p_label: string }
+        Returns: string
+      }
       save_holiday_calendar: {
         Args: { p_breaks: Json; p_id: string; p_name: string }
         Returns: string
@@ -5067,6 +5370,9 @@ export type Database = {
           p_id: string
           p_locale: string
           p_section_texts?: Json
+          p_share_image_alt?: string
+          p_share_image_id?: string
+          p_share_title?: string
           p_slug?: string
           p_summary?: string
           p_title: string
@@ -5110,6 +5416,19 @@ export type Database = {
           p_title?: string
           p_translations: Json
           p_user_id: string
+        }
+        Returns: string
+      }
+      save_testimonial: {
+        Args: { p_id: string; p_versions: Json }
+        Returns: string
+      }
+      save_testimonial_version: {
+        Args: {
+          p_attribution: string
+          p_id: string
+          p_locale: string
+          p_quote: string
         }
         Returns: string
       }
@@ -5334,6 +5653,7 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
@@ -5360,6 +5680,7 @@ export type Database = {
           p_timezone: string
           p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
+          p_voice_room_mode?: Database["public"]["Enums"]["voice_room_mode"]
           p_waitlist_enabled?: boolean
         }
         Returns: string
@@ -5383,6 +5704,9 @@ export type Database = {
           p_id: string
           p_locale: string
           p_section_texts: Json
+          p_share_image_alt: string
+          p_share_image_id: string
+          p_share_title: string
           p_slug: string
           p_summary: string
           p_title: string
@@ -5396,6 +5720,8 @@ export type Database = {
         | "product"
         | "library_cover"
         | "landing_image"
+        | "landing_square_image"
+        | "landing_portrait_image"
         | "spotlight_image"
       chat_channel_type: "group_session"
       effective_product_status: "pending" | "running" | "completed"
@@ -5442,6 +5768,7 @@ export type Database = {
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
       user_role: "admin" | "customer" | "gamer" | "gedu"
+      voice_room_mode: "sogverse" | "external" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5574,6 +5901,8 @@ export const Constants = {
         "product",
         "library_cover",
         "landing_image",
+        "landing_square_image",
+        "landing_portrait_image",
         "spotlight_image",
       ],
       chat_channel_type: ["group_session"],
@@ -5624,6 +5953,7 @@ export const Constants = {
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],
       user_role: ["admin", "customer", "gamer", "gedu"],
+      voice_room_mode: ["sogverse", "external", "none"],
     },
   },
 } as const

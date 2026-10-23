@@ -15,13 +15,17 @@ import { WITHHELD } from "@/lib/withheld";
 import { useNow } from "@/providers";
 import {
   useTraineeAssignedProduct,
+} from "@/services/assignments/assignments.queries";
+import {
   type TraineeAssignedProduct,
-} from "@/services/assignments";
+} from "@/services/assignments/assignments.contracts";
 import {
   useTraineeGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.queries";
+import {
   type TraineeGroupFeed,
-} from "@/services/gedu-sessions";
-import { useRobloxRenders } from "@/services/roblox";
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+import { useRobloxRenders } from "@/services/roblox/roblox.queries";
 import { GeduProductPageSkeleton } from "./GeduProductPageSkeleton";
 import { NotAssignedState } from "./NotAssignedState";
 import {

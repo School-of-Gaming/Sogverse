@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { Heading, type HeadingLevel } from "@sog/ui";
 
 export interface FaqAccordionItem {
   /** Stable React key — the caller's own message key for the entry. */
@@ -21,6 +22,13 @@ interface FaqAccordionProps {
    * sequence.
    */
   items: readonly FaqAccordionItem[];
+  /**
+   * The heading level each question is drawn at: one below the heading the
+   * caller draws over the list, or 2 where the list has none of its own. Stated
+   * at every call site because only the caller can see the page's outline, and
+   * a guessed default skips a level on whichever page it guesses wrong for.
+   */
+  questionLevel: Exclude<HeadingLevel, 1>;
 }
 
 /**
@@ -30,6 +38,19 @@ interface FaqAccordionProps {
  * answers are readable and keyboard-operable before hydration and with no
  * client JS at all, which is the right shape under a nonce-based CSP and on a
  * public page a stranger may meet on a slow connection.
+ *
+ * **Each question is a heading inside its `<summary>`, not a plain span.**
+ * Search engines and AI assistants tie an answer to its question through the
+ * page's headings, and a span gives them nothing to tie it to. The cost is
+ * accepted, by the owner: some screen readers — VoiceOver in particular —
+ * flatten a heading inside `<summary>` into the button, so the row is announced
+ * as a button carrying the question and does not appear in the headings list,
+ * while NVDA and JAWS announce both. The row stays fully operable and its
+ * question is still read out everywhere, which is what matters. Going back to a
+ * span gives up the outline, and swapping in an ARIA disclosure widget to get
+ * both gives up everything the native element is here for. The heading takes
+ * the `item-title` step, the body size the old span was set at, so the row
+ * looks exactly as it did.
  *
  * Expanding an answer pushes the rows below it down. That is the direct result
  * of the reader's own tap, on the surface they tapped, so the layout rule is
@@ -53,7 +74,7 @@ interface FaqAccordionProps {
  * pulling any of them in here is what turns a shared list into per-call-site
  * configuration.
  */
-export function FaqAccordion({ items }: FaqAccordionProps) {
+export function FaqAccordion({ items, questionLevel }: FaqAccordionProps) {
   if (items.length === 0) return null;
 
   return (
@@ -64,8 +85,10 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
               `::-webkit-details-marker` rule in WebKit; the chevron below
               replaces it so the affordance sits on the side the reader's thumb
               is already on. */}
-          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md px-3 py-4 text-left font-semibold transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act sm:px-4 sm:py-5 [&::-webkit-details-marker]:hidden">
-            <span>{item.question}</span>
+          <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-md px-3 py-4 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act sm:px-4 sm:py-5 [&::-webkit-details-marker]:hidden">
+            <Heading level={questionLevel} step="item-title">
+              {item.question}
+            </Heading>
             <ChevronDown
               aria-hidden="true"
               className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"

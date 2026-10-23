@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { LANDING_PICTURE_SHAPES } from "../picture-shapes";
 import {
   isWritten,
+  landingBackgroundField,
   landingId,
   markdownText,
   plainText,
@@ -15,6 +17,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("text"),
+    ...landingBackgroundField,
     imageId: landingId.optional(),
     imageSide: z.enum(LANDING_IMAGE_SIDES),
   })
@@ -24,7 +27,7 @@ const text = z
   .object({
     eyebrow: plainText,
     heading: plainText,
-    /** Authored markdown, the `landing` use case. */
+    /** Authored markdown, rendered under its `markdownFields` entry's use case. */
     body: markdownText,
     imageAlt: plainText,
   })
@@ -42,5 +45,6 @@ export const textSection = {
       ? ["imageAlt"]
       : []),
   ],
-  markdownFields: [{ field: "body" }],
+  markdownFields: [{ field: "body", useCase: "landing" }],
+  pictureShapes: LANDING_PICTURE_SHAPES,
 } as const satisfies LandingSectionDefinition<"text", typeof section, typeof text>;

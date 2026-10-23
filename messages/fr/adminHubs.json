@@ -1,0 +1,19 @@
+{
+  "titles": {
+    "products": "Clubs, stages et événements",
+    "invoicing": "Facturation",
+    "marketing": "Marketing"
+  },
+  "tabs": {
+    "products": "Produits",
+    "sites": "Sites",
+    "holidayCalendars": "Calendriers de vacances",
+    "municipalities": "Municipalités",
+    "invoiceCustomers": "Clients de facturation",
+    "gedus": "Gedus",
+    "landingPages": "Pages d’atterrissage",
+    "testimonials": "Témoignages",
+    "guides": "Guides",
+    "spotlights": "Mises en avant"
+  }
+}

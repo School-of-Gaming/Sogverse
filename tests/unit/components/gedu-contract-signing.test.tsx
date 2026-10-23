@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/../messages/en.json";
+import enGedu from "@/../messages/en/gedu.json";
 import { GeduContractPageBody } from "@/components/gedu/contract/gedu-contract-page-body";
 import {
   geduContractStoredVersion,
@@ -11,6 +11,8 @@ import {
 import type { GeduContractDocument } from "@/components/gedu/contract/contract-document";
 import { NowProvider, TimezoneProvider } from "@/providers";
 import type { GeduContractAcceptance } from "@/types";
+
+const messages = { gedu: enGedu };
 
 /**
  * **The signing dialog's close on success is a derivation, and this pins it.**

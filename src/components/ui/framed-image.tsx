@@ -1,12 +1,12 @@
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import type { CatalogueImagePurpose } from "@/types";
 import { COVER_HOVER_ZOOM } from "./cover-hover-zoom";
 
 /**
  * The frame each catalogue purpose is painted in: 3:2 for a product picture,
- * 16:9 for a Library cover and for a landing page picture, 2:1 for a spotlight
- * picture. A picture is cut for exactly one purpose, so a
+ * 16:9 for a Library cover and for a wide landing page picture, 1:1 and 4:5
+ * for a square and a portrait one, 2:1 for a spotlight picture. A picture is cut for exactly one purpose, so a
  * frame is chosen by naming the purpose, and there is no ratio here for a
  * caller to pick. The ratio matches the purpose's stored size in
  * `CATALOGUE_IMAGE_PURPOSES`; the two change together.
@@ -15,6 +15,8 @@ const FRAME: Record<CatalogueImagePurpose, string> = {
   product: "aspect-[3/2] w-full",
   library_cover: "aspect-video w-full",
   landing_image: "aspect-video w-full",
+  landing_square_image: "aspect-square w-full",
+  landing_portrait_image: "aspect-[4/5] w-full",
   spotlight_image: "aspect-[2/1] w-full",
 };
 
@@ -30,6 +32,8 @@ const PLACEHOLDER_BOX: Record<
   product: { width: 150, height: 100 },
   library_cover: { width: 160, height: 90 },
   landing_image: { width: 160, height: 90 },
+  landing_square_image: { width: 160, height: 160 },
+  landing_portrait_image: { width: 160, height: 200 },
   spotlight_image: { width: 160, height: 80 },
 };
 

@@ -10,10 +10,19 @@ CREATE TABLE public.product_translations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     long_description text,
+    voice_join_instructions text,
     CONSTRAINT product_translations_long_description_check CHECK (((long_description IS NULL) OR (btrim(long_description, ' 	
 '::text) <> ''::text))),
-    CONSTRAINT product_translations_name_check CHECK ((length(TRIM(BOTH FROM name)) > 0))
+    CONSTRAINT product_translations_name_check CHECK ((length(TRIM(BOTH FROM name)) > 0)),
+    CONSTRAINT product_translations_voice_join_instructions_check CHECK (((voice_join_instructions IS NULL) OR (voice_join_instructions ~ '[^[:space:]]'::text)))
 );
+
+
+--
+-- Name: COLUMN product_translations.voice_join_instructions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_translations.voice_join_instructions IS 'PUBLIC TO EVERYONE, LOGGED-OUT VISITORS INCLUDED. product_translations carries a table-level SELECT grant for anon and its read policy admits the translations of every product, so anybody can read these instructions through the Data API without an account or a seat. That is a KNOWN AND ACCEPTED RISK, decided by the owner: do not write anything here that must stay private. How to join the product''s sessions in this locale when the product''s voice_room_mode is none, as plain text the team writes per locale; NULL where this locale has none, never blank. A reader is shown one locale''s version through the app''s translation picker, like the rest of the row. create_product and update_product refuse mode none with instructions in no translation, and instructions in any translation under another mode — a rule across two tables, so it is theirs rather than a CHECK. A STOPGAP like products.external_voice_url, to be removed with the none mode once Sogverse rooms can hold more than 50 people — see docs/investigations/voice-room-scale.md.';
 
 
 --

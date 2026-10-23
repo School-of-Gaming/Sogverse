@@ -24,10 +24,10 @@ vi.mock("@/services/library/library.service", () => ({
     saveArticle() {
       return Promise.resolve({});
     }
-    publishArticle() {
+    publishArticleViaRoute() {
       return Promise.resolve({});
     }
-    unpublishArticle() {
+    unpublishArticleViaRoute() {
       return Promise.resolve({});
     }
   },
