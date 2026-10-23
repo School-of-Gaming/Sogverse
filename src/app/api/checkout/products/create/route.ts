@@ -10,7 +10,7 @@ import {
   resolveLocale,
   stripeLocaleOrAuto,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   createCheckoutBody,
   createParticipationResponse,
@@ -105,14 +105,6 @@ export const POST = defineRoute({
 
     const locale = resolveLocale(profile.locale);
 
-    // The last resort of both name resolves below, named once so that "the two
-    // chains end in the same string" is structural rather than a claim a reader
-    // has to verify by comparing two literals ten lines apart. It reaches Stripe
-    // — a receipt, the hosted portal, an internal Slack message — never
-    // `messages/`, so no locale sweep will ever translate it, and the brand name
-    // is the right shape for a string in that position.
-    const fallbackProductName = "School of Gaming product";
-
     // The same field resolved twice, for two audiences that want different
     // answers. Both names come out of the one `product_translations` array
     // already read above — two resolves, no second query. The variables are
@@ -125,8 +117,7 @@ export const POST = defineRoute({
     // items now name the shared Stripe Product, whose name is resolved at the
     // default locale and shared across every locale.
     const parentLocaleProductName =
-      resolveTranslation(product.product_translations, locale)?.name ??
-      fallbackProductName;
+      resolveRequiredTranslation(product.product_translations, locale).name;
     // The default-locale name, for the session metadata a Stripe Workflow turns
     // into an internal Slack notification. Its audience is staff in one channel,
     // where one stable name per product is the whole point — resolving it in the
@@ -134,8 +125,7 @@ export const POST = defineRoute({
     // depending on who happened to buy it. It is the same pick the shared Stripe
     // Product is named with, so the two never disagree.
     const defaultLocaleProductName =
-      resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
-      fallbackProductName;
+      resolveRequiredTranslation(product.product_translations, DEFAULT_LOCALE).name;
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid
     // shape family: free→'free', external_contract→'external', paid→

@@ -21,7 +21,10 @@ import {
   resolveFamilyRecipients,
   type FamilyRecipient,
 } from "@/lib/email/family-recipients.server";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  resolveRequiredTranslation,
+  resolveTranslation,
+} from "@/lib/i18n/resolve-translation";
 import { formatDate, formatTimeRange } from "@/lib/date-format";
 import { getOrigin } from "@/lib/url";
 import { ApiError } from "@/lib/api/api-error";
@@ -697,8 +700,10 @@ async function sendFamilyMail(
   facts: SessionFacts,
 ): Promise<void> {
   const t = await getEmailTranslator(recipient.locale);
-  const productName =
-    resolveTranslation(facts.productTranslations, recipient.locale)?.name ?? "";
+  const productName = resolveRequiredTranslation(
+    facts.productTranslations,
+    recipient.locale,
+  ).name;
   const gamerCopy = recipient.kind === "gamer";
 
   const params = {
@@ -781,8 +786,7 @@ async function sendStaffCopy({
   workspacePath: string;
 }): Promise<void> {
   const t = await getEmailTranslator(senderLocale);
-  const productName =
-    resolveTranslation(facts.productTranslations, senderLocale)?.name ?? "";
+  const productName = resolveRequiredTranslation(facts.productTranslations, senderLocale).name;
 
   const params = {
     gamerName: facts.groupName,

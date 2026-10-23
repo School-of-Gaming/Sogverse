@@ -6,7 +6,7 @@ import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   translatedPageMetadataAlternates,
   type TranslatedPagePath,
@@ -108,11 +108,10 @@ export function productPagePath(id: string): TranslatedPagePath {
  * scraper carries no cookie, so it would have got the default anyway, and
  * saying so beat leaving it to a coincidence. The URL carries the locale now, so
  * a `/fi/kauppa/<id>` shared into a Finnish group unfurls with the Finnish name
- * and short description. `resolveTranslation` walks
+ * and short description. The translation pick walks
  * locale → `en` → first row from there, so a product without that language
  * degrades exactly as the page body does rather than falling back to the
- * site-wide card. A product with no translation at all is DB-impossible, but
- * costs nothing to survive here. The picture is the product's own and is not
+ * site-wide card. The picture is the product's own and is not
  * localized; only the text moves.
  *
  * A missing product — which now means only a bad id, since every product that
@@ -141,9 +140,8 @@ export async function buildProductMetadata(
   }
 
   const locale = resolveLocale(await getLocale());
-  const translation =
-    product && resolveTranslation(product.product_translations, locale);
-  if (!product || !translation) return PRODUCT_ROBOTS_ONLY;
+  if (!product) return PRODUCT_ROBOTS_ONLY;
+  const translation = resolveRequiredTranslation(product.product_translations, locale);
 
   // The product's name and nothing else. It used to be an absolute
   // `… | School of Gaming` string built by hand to bypass a root template that

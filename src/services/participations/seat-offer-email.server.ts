@@ -21,7 +21,7 @@ import {
   type SeatOfferStaffReason,
 } from "@/lib/email-templates/seat-offer-staff";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { createSeatOfferToken } from "@/lib/seat-offer-token";
 import {
   claimedSeatOfferExpiries,
@@ -350,34 +350,10 @@ async function sendOffer({
 
   // The parent's mail goes first, and a child's copy only follows a parent's
   // that went: a copy saying "we have written to your parent" must not be the
-  // one mail that arrives. That ordering is load-bearing for the skip below,
-  // which is why this counts what has actually left rather than assuming.
-  let sent = 0;
+  // one mail that arrives, and a failed send throws out of the loop.
   for (const recipient of recipients) {
     const locale = recipient.locale;
-    const productName = resolveTranslation(product.product_translations, locale)?.name;
-    if (!productName) {
-      // The two recipients resolve the name in DIFFERENT locales, so a product
-      // missing one translation can name itself for the parent and not for the
-      // child — which makes this a per-recipient failure, not a per-send one.
-      // It used to `return` unconditionally, abandoning the child's copy after
-      // the parent's had already gone out while logging it as "skipping the
-      // send", which read as though nothing had been mailed at all.
-      console.error("[seat-offer email] nothing to name — skipping this recipient", {
-        productId,
-        participantId,
-        recipientKind: recipient.kind,
-        locale,
-        anySent: sent > 0,
-      });
-      // Nothing has left yet, so there is nothing for a child's copy to be the
-      // follow-up to — and a copy saying "we have written to your parent" must
-      // not be the only mail that arrives. Give up on the whole send. Once
-      // something HAS gone out, skipping this one recipient is the honest
-      // remainder.
-      if (sent === 0) return;
-      continue;
-    }
+    const productName = resolveRequiredTranslation(product.product_translations, locale).name;
     const deadline = formatDeadline(sentAt, locale, product.timezone);
     const t = await getEmailTranslator(locale);
 
@@ -400,7 +376,6 @@ async function sendOffer({
         // Product mail TO a person, like the parent's: replies go to support.
         replyToEmail: SUPPORT_EMAIL,
       });
-      sent++;
       continue;
     }
 
@@ -429,7 +404,6 @@ async function sendOffer({
       // the unattended sending address.
       replyToEmail: SUPPORT_EMAIL,
     });
-    sent++;
   }
 }
 
@@ -452,10 +426,9 @@ async function sendStaff({
   // ourselves: the recipient is the support inbox, and a mail that changed
   // language with the family's own setting is a mail nobody could search.
   const locale = DEFAULT_LOCALE;
-  const productName =
-    resolveTranslation(product.product_translations, locale)?.name;
+  const productName = resolveRequiredTranslation(product.product_translations, locale).name;
   const participantName = participant?.first_name.trim();
-  if (!productName || !participantName) {
+  if (!participantName) {
     console.error("[seat-offer staff email] nothing to name — skipping the send", {
       productId,
       participantId,

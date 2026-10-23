@@ -12,7 +12,7 @@ import {
 import { DEFAULT_LOCALE, resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
 import { getOrigin } from "@/lib/url";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { stripe } from "@/lib/stripe/client";
 import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import {
@@ -55,14 +55,6 @@ const OCCUPIED_STATUSES = ["active", "waitlisted", "completed"] as const;
 /** The target product columns every step of the switch needs. */
 const TARGET_PRODUCT_COLUMNS =
   "id, product_type, billing_mode, spoken_language_code, start_date, end_date, product_translations(locale, name)";
-
-/**
- * The last resort of both name resolves below. It reaches Stripe — a receipt,
- * the hosted portal — never `messages/`, so no locale sweep will translate it,
- * and the brand name is the right shape for a string in that position. The same
- * string the checkout route falls back to, for the same reason.
- */
-const FALLBACK_PRODUCT_NAME = "School of Gaming product";
 
 /**
  * Stripe's own ceilings on the two free-text fields the rewrite composes: 500
@@ -721,8 +713,7 @@ function rewrittenSubscriptionMetadata(
   // alert is the worst place for a spoofed origin.
   const origin = getOrigin(request);
   const defaultLocaleName =
-    resolveTranslation(target.product_translations, DEFAULT_LOCALE)?.name ??
-    FALLBACK_PRODUCT_NAME;
+    resolveRequiredTranslation(target.product_translations, DEFAULT_LOCALE).name;
 
   // Cut to Stripe's ceiling here, at the one place these values are composed,
   // rather than at each key: `productName` is an authored translation and is
@@ -737,7 +728,7 @@ function rewrittenSubscriptionMetadata(
       adminProductUrl: `${origin}${ROUTES.admin.productPath(target.product_type, target.id)}`,
       shopProductUrl: `${origin}${ROUTES.shopProductPath(target.id)}`,
       spoken_language_code: target.spoken_language_code,
-      delivery_start: target.start_date ?? "",
+      delivery_start: target.start_date,
       delivery_end: target.end_date ?? "",
     }).map(([key, value]) => [
       key,
@@ -769,10 +760,10 @@ async function rewrittenSubscriptionDescription(
   const isSelfSeat = facts.participantId === facts.customerId;
 
   const name =
-    resolveTranslation(
+    resolveRequiredTranslation(
       facts.targetProduct.product_translations,
       resolveLocale(customer?.locale ?? null),
-    )?.name ?? FALLBACK_PRODUCT_NAME;
+    ).name;
   // The same audience-aware fallback checkout uses: a parent buying for a child
   // reads "your child", a parent holding the seat themselves reads "you".
   const who = participant?.first_name || (isSelfSeat ? "you" : "your child");

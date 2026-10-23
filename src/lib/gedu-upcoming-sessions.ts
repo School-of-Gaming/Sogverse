@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { addCalendarDays, mondayOf } from "@/lib/calendar-date";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   OPEN_ENDED_OCCURRENCE_CAP,
   trimOpenEndedFuture,
@@ -127,7 +127,7 @@ export function buildGeduUpcomingSessions({
         timezone,
         productId: row.product.id,
         productName:
-          resolveTranslation(row.product.translations, locale)?.name ?? "",
+          resolveRequiredTranslation(row.product.translations, locale).name,
         productType: row.product.productType,
         groupName: row.groupName,
         isRemote: row.product.isRemote,

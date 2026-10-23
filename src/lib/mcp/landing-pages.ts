@@ -20,7 +20,10 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { siteDocumentTitle } from "@/lib/metadata/site-title";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  resolveRequiredTranslation,
+  resolveTranslation,
+} from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
   landingSectionName,
@@ -701,11 +704,11 @@ export function registerLandingPageTools(server: McpServer): void {
       asLandingAdmin(ctx, async ({ service, origin }) => {
         const page = await service.getAdminPage(id);
         if (page === null) return refusal(NOT_FOUND);
-        const shown = resolveTranslation(page.draft.versions, at);
+        const shown = resolveRequiredTranslation(page.draft.versions, at);
         return answer({
           pageId: id,
           locale: at,
-          shows: shown?.locale ?? at,
+          shows: shown.locale,
           previewLink: previewLink(origin, id, at),
         });
       }),

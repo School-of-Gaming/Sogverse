@@ -4,7 +4,7 @@ import {
   formattingLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { breakName } from "@/lib/holiday-breaks";
 import { formatDate } from "@/lib/date-format";
 import type {
@@ -764,12 +764,11 @@ export function productCancellations(
 
 /**
  * A product's name in the reader's locale, through the admin surfaces' own
- * fallback chain (locale → English → whatever exists). Every product is
- * DB-guaranteed at least one translation, so the empty fallback is defensive.
+ * fallback chain (locale → English → whatever exists).
  */
 function productName(
   translations: readonly { locale: string; name: string }[],
   locale: SupportedLocale,
 ): string {
-  return resolveTranslation(translations, locale)?.name ?? "";
+  return resolveRequiredTranslation(translations, locale).name;
 }

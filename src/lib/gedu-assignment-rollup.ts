@@ -1,7 +1,7 @@
 import { fromZonedTime } from "date-fns-tz";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { runEndedOn } from "@/lib/product-run";
 import {
   buildSessionFacts,
@@ -255,7 +255,7 @@ export function rollUpGeduAssignments({
       productId: row.product.id,
       groupId: row.groupId,
       productName:
-        resolveTranslation(row.product.translations, locale)?.name ?? "",
+        resolveRequiredTranslation(row.product.translations, locale).name,
       productType: row.product.productType,
       groupName: row.groupName,
       groupParticipantCount: row.groupParticipantCount,

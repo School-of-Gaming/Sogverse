@@ -27,7 +27,7 @@ import {
   resolveFamilyRecipients,
   type FamilyRecipient,
 } from "@/lib/email/family-recipients.server";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { plannedSessionRows, type PlannedSession } from "@/lib/planned-sessions";
 import { formatProductLocation } from "@/lib/products/format-product-location";
@@ -341,44 +341,11 @@ async function send({
   const site = scheduleResult.data.locations;
   const slots = scheduleResult.data.schedule_slots;
 
-  // The parent's mail goes first, and a child's copy only follows a parent's
-  // that went. That ordering is load-bearing for the skip below, which is why
-  // this counts what has actually left rather than assuming.
-  let sent = 0;
   for (const recipient of recipients) {
     const locale = recipient.locale;
-    const translation = resolveTranslation(product.product_translations, locale);
-    const productName = translation?.name;
-    // Read here rather than beside the invitation below, because the guard on
-    // `productName` narrows the row it comes from and the optional access would
-    // then read as dead code.
-    const shortDescription = translation?.short_description ?? null;
-
-    // A product has at least one translation row, so an empty name here is the
-    // same impossible shape as an empty person above — except that the two
-    // recipients resolve the name in DIFFERENT locales, so a product missing one
-    // translation can name itself for the parent and not for the child. That
-    // makes it a per-recipient failure, not a per-send one. It used to `return`
-    // unconditionally, abandoning the child's copy after the parent's had
-    // already gone out while logging it as "skipping the send", which read as
-    // though nothing had been mailed at all.
-    if (!productName) {
-      console.error(
-        "[product-confirmation email] nothing to name — skipping this recipient",
-        {
-          productId,
-          participantId,
-          recipientKind: recipient.kind,
-          locale,
-          anySent: sent > 0,
-        },
-      );
-      // Nothing has left yet, so there is nothing for a child's copy to be the
-      // follow-up to. Give up on the whole send. Once something HAS gone out,
-      // skipping this one recipient is the honest remainder.
-      if (sent === 0) return;
-      continue;
-    }
+    const translation = resolveRequiredTranslation(product.product_translations, locale);
+    const productName = translation.name;
+    const shortDescription = translation.short_description;
 
     const gamerCopy = recipient.kind === "gamer";
     // One link, read twice: the mail's button and the calendar entry's own URL.
@@ -510,7 +477,6 @@ async function send({
       // the unattended sending address.
       replyToEmail: SUPPORT_EMAIL,
     });
-    sent++;
   }
 }
 
