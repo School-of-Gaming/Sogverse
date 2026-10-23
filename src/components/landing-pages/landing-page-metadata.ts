@@ -9,7 +9,7 @@ import {
   type PublishedLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
 import { landingPagePaths } from "./landing-page-address";
-import { landingShareCard, type LandingSharePicture } from "./landing-share-card";
+import { landingShareCard } from "./landing-share-card";
 
 /*
  * **What a landing page tells search engines and link previews** — decided
@@ -56,9 +56,6 @@ export interface LandingCardImage {
 /** The site-wide card at a locale; a page reads it from the catalog (`ogCardImage`). */
 export type SiteCardImage = (locale: SupportedLocale) => Promise<LandingCardImage>;
 
-/** Where a share card's picture comes from: the version's override, the hero's, or the site's. */
-export type LandingCardImageSource = "share-picture" | "hero" | "site-card";
-
 /** Everything a landing page's metadata is made of, read at one locale. */
 export interface LandingPageSeo {
   /** The shown version's own title: the `<title>` through the template. */
@@ -73,14 +70,9 @@ export interface LandingPageSeo {
   card: {
     /** The version's share title, else its title. */
     title: string;
-    titleSource: "share-title" | "page-title";
     image: LandingCardImage;
-    imageSource: LandingCardImageSource;
   };
 }
-
-const CARD_IMAGE_SOURCE: Readonly<Record<LandingSharePicture["source"], LandingCardImageSource>> =
-  { custom: "share-picture", hero: "hero", site: "site-card" };
 
 /**
  * The page's metadata read at `requestLocale`, or null for a page with no
@@ -103,12 +95,10 @@ export async function landingPageSeo(
     locale: shown.locale,
     card: {
       title: card.title,
-      titleSource: card.titleSource === "custom" ? "share-title" : "page-title",
       image:
         card.picture.source === "site"
           ? await siteCard(locale)
           : ogPictureImage(card.picture.purpose, card.picture.path, card.picture.alt),
-      imageSource: CARD_IMAGE_SOURCE[card.picture.source],
     },
   };
 }
@@ -166,15 +156,8 @@ export interface RenderedLandingSeo {
   shareCard: {
     title: string;
     description: string;
-    /** `share-title` for the version's override, `page-title` for its title. */
-    titleSource: LandingPageSeo["card"]["titleSource"];
     imageUrl: string;
     imageAlt: string;
-    /**
-     * `share-picture` for the version's override, `hero` for the hero's
-     * picture, `site-card` for the site-wide card.
-     */
-    image: LandingCardImageSource;
   };
 }
 
@@ -191,11 +174,9 @@ export function renderedLandingSeo(seo: LandingPageSeo, siteUrl: string): Render
     ),
     shareCard: {
       title: seo.card.title,
-      titleSource: seo.card.titleSource,
       description: seo.description,
       imageUrl: absolute(seo.card.image.url),
       imageAlt: seo.card.image.alt,
-      image: seo.card.imageSource,
     },
   };
 }

@@ -409,16 +409,14 @@ describe("renderedLandingSeo", () => {
       },
       shareCard: {
         title: "Pelikerhot Espoossa",
-        titleSource: "page-title",
         description: "Iltapäiväkerhot.",
         imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/club.jpg`,
         imageAlt: "Lapsia",
-        image: "hero",
       },
     });
   });
 
-  it("names the site card when the hero has no picture", async () => {
+  it("serves the site card when the hero has no picture", async () => {
     const seo = await landingPageSeo(
       { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
       "en",
@@ -428,11 +426,10 @@ describe("renderedLandingSeo", () => {
     expect(renderedLandingSeo(seo, SITE).shareCard).toMatchObject({
       imageUrl: `${SITE}/opengraph-images/site?locale=en`,
       imageAlt: "en:metadata.og.site.alt",
-      image: "site-card",
     });
   });
 
-  it("reports the version's own share card, naming the override as its source", async () => {
+  it("serves the version's own share card when it sets one", async () => {
     const seo = await landingPageSeo(SHARED, "en");
     if (seo === null) throw new Error("no version");
 
@@ -441,11 +438,9 @@ describe("renderedLandingSeo", () => {
       title: "Gaming clubs in Espoo | School of Gaming",
       shareCard: {
         title: "Join a gaming club in Espoo",
-        titleSource: "share-title",
         description: "After-school clubs for Espoo families.",
         imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/share.jpg`,
         imageAlt: "A club room",
-        image: "share-picture",
       },
     });
   });

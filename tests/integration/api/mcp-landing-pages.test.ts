@@ -1592,25 +1592,22 @@ describe("what a publish now would serve", () => {
       },
       shareCard: {
         title: "Gaming clubs in Espoo",
-        titleSource: "page-title",
         description: "After-school clubs.",
         // The hero's picture, with the title for want of alt text.
         imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/castle.jpg`,
         imageAlt: "Gaming clubs in Espoo",
-        image: "hero",
       },
       // Live now with no hero picture, so readers are shared the site card.
       liveDiffers: {
         "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
         "shareCard.imageAlt": "en:metadata.og.site.alt",
-        "shareCard.image": "site-card",
       },
     });
     // A version a publish would leave out serves nothing.
     expect(fi.seo).toBeNull();
   });
 
-  it("reports a language's own share card, naming the override, as the page serves it", async () => {
+  it("reports a language's own share card as the page serves it", async () => {
     const SHARE = "b1000000-0000-4000-8000-000000000099";
     const [en, fi] = PAGE.draft.versions;
     landing.getAdminPage.mockResolvedValue({
@@ -1643,15 +1640,13 @@ describe("what a publish now would serve", () => {
       title: `Gaming clubs in Espoo${SUFFIX}`,
       shareCard: {
         title: "Join a gaming club in Espoo",
-        titleSource: "share-title",
         imageUrl: `${ORIGIN}/opengraph-images/picture/landing_image/share.jpg`,
         imageAlt: "A club room",
-        image: "share-picture",
       },
       liveDiffers: {
         "shareCard.title": "Gaming clubs in Espoo",
-        "shareCard.titleSource": "page-title",
-        "shareCard.image": "site-card",
+        "shareCard.imageUrl": `${ORIGIN}/opengraph-images/site?locale=en`,
+        "shareCard.imageAlt": "en:metadata.og.site.alt",
       },
     });
   });
@@ -1687,13 +1682,13 @@ describe("what a publish now would serve", () => {
       title: `A much longer title for the Espoo gaming clubs page than fits${SUFFIX}`,
       titleLength: 80,
       hreflang,
-      shareCard: { image: "site-card", imageUrl: expect.stringMatching(/locale=en$/) },
+      shareCard: { imageUrl: `${ORIGIN}/opengraph-images/site?locale=en` },
     });
     expect(fiSeo).toMatchObject({
       title: `Pelikerhot Espoossa${SUFFIX}`,
       canonical: `${ORIGIN}/fi/tutustu/pelikerhot-espoossa`,
       hreflang,
-      shareCard: { image: "site-card", imageUrl: expect.stringMatching(/locale=fi$/) },
+      shareCard: { imageUrl: `${ORIGIN}/opengraph-images/site?locale=fi` },
     });
     // Not live: nothing to differ from.
     expect(enSeo).not.toHaveProperty("liveDiffers");
@@ -1709,8 +1704,7 @@ describe("what a publish now would serve", () => {
     const get = tools.find((t) => t.name === "get_landing_page")?.description;
     expect(get).toContain(`"<title>${SUFFIX}"`);
     expect(get).toContain("Check these instead of fetching the page");
-    expect(get).toContain("share-picture when the card is the language's own share picture");
-    expect(get).toContain("site-card when there is neither");
+    expect(get).toContain("the version's own shareCard, beside seo");
     expect(get).toContain("liveDiffers");
   });
 });
