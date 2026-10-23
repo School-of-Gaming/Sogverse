@@ -64,13 +64,21 @@ export async function canonicalizeMarkdownLinks(
   const resolve = (href: string): Promise<ResolvedHref> =>
     resolveCanonicalHref(href, resolver, siteUrl);
   const linkResults = await Promise.all(links.map((link) => resolve(link.url)));
-  const usedDefinitions = [...definitions.values()].filter((definition) =>
-    references.some((reference) => reference.identifier === definition.identifier),
-  );
+  const firstReferences = new Map<string, LinkReference>();
+  for (const reference of references) {
+    if (!firstReferences.has(reference.identifier)) {
+      firstReferences.set(reference.identifier, reference);
+    }
+  }
+  // Each definition some link uses, with the first link using it.
+  const usedDefinitions = [...definitions.values()].flatMap((definition) => {
+    const first = firstReferences.get(definition.identifier);
+    return first === undefined ? [] : [{ definition, first }];
+  });
   const definitionResults = new Map(
     await Promise.all(
       usedDefinitions.map(
-        async (definition) => [definition.identifier, await resolve(definition.url)] as const,
+        async ({ definition }) => [definition.identifier, await resolve(definition.url)] as const,
       ),
     ),
   );
@@ -91,19 +99,14 @@ export async function canonicalizeMarkdownLinks(
       });
     }
   });
-  for (const definition of usedDefinitions) {
+  for (const { definition, first } of usedDefinitions) {
     const result = definitionResults.get(definition.identifier);
     if (result?.kind === "internal" && result.path !== definition.url) {
       edits.push(definitionEdit(markdown, definition, result.path));
       // Named by the words of the first link that uses it.
-      const first = references.find((reference) => reference.identifier === definition.identifier);
       rewrites.push({
-        offset: first === undefined ? offsetOf(definition) : offsetOf(first),
-        link: {
-          text: first === undefined ? "" : textOf(first),
-          from: definition.url,
-          to: result.path,
-        },
+        offset: offsetOf(first),
+        link: { text: textOf(first), from: definition.url, to: result.path },
       });
     }
   }

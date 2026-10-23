@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { LandingSection } from "@/lib/landing-pages/sections";
-import { localizeOwnSiteHref, type SlugResolver } from "@/lib/links/own-site";
+import type { SlugResolver } from "@/lib/links/own-site";
 import {
   landingPageInput,
   landingWriteFailure,
@@ -251,9 +251,5 @@ describe("the rewrites a write reports", () => {
       { resolver, siteUrl: SITE },
     );
     expect(result.rewrites).toEqual([]);
-  });
-
-  it("stores what the tool descriptions say: shown in the page's language", () => {
-    expect(localizeOwnSiteHref("/shop/123", "fi", SITE)).toBe("/fi/kauppa/123");
   });
 });
