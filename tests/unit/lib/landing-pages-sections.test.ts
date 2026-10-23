@@ -11,6 +11,7 @@ import {
   landingSections,
   landingSectionTextsSchema,
   landingStickySections,
+  landingStructureProblem,
   LANDING_STICKY_SIDES,
   LANDING_STICKY_TYPES,
   missingInLandingVersion,
@@ -60,7 +61,7 @@ describe("a section's shared fields", () => {
 
   it("refuses a field the type does not have", () => {
     expect(
-      landingSection.safeParse({ id: I.cta, type: "cta", button: { kind: "internal", path: "/" }, imageId: I.picture })
+      landingSection.safeParse({ id: I.cta, type: "cta", background: "default", button: { kind: "internal", path: "/" }, imageId: I.picture })
         .success,
     ).toBe(false);
   });
@@ -72,7 +73,7 @@ describe("a section's shared fields", () => {
   it.each(BUTTON_TARGET_CASES.map((c) => [c.name, c.target, c.valid] as const))(
     "judges a button target, %s, by the verdict SQL is held to",
     (_, target, valid) => {
-      const parsed = landingSection.safeParse({ id: I.cta, type: "cta", button: target });
+      const parsed = landingSection.safeParse({ id: I.cta, type: "cta", background: "default", button: target });
       expect(parsed.success).toBe(valid);
     },
   );
@@ -104,6 +105,7 @@ describe("a section's shared fields", () => {
       landingSection.safeParse({
         id: I.points,
         type: "points",
+        background: "default",
         items: Array.from({ length: n }, (_, i) => ({
           id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
           icon: "star",
@@ -118,6 +120,7 @@ describe("a section's shared fields", () => {
       landingSection.safeParse({
         id: I.image,
         type: "image",
+        background: "default",
         images: Array.from({ length: n }, (_, i) => ({
           id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
           imageId: I.picture,
@@ -133,6 +136,7 @@ describe("a section's shared fields", () => {
       landingSection.safeParse({
         id: I.steps,
         type: "steps",
+        background: "default",
         items: [{ id: I.stepA }, { id: I.stepA }],
       }).success,
     ).toBe(false);
@@ -143,6 +147,7 @@ describe("a section's shared fields", () => {
       landingSection.safeParse({
         id: I.points,
         type: "points",
+        background: "default",
         items: [
           { id: I.pointA, icon: name },
           { id: I.pointB, icon: "star" },
@@ -193,7 +198,7 @@ describe("the sticky sections", () => {
     const second = crypto.randomUUID();
     const parsed = landingSections.parse([
       ...marked([I.subscribe], "right"),
-      { id: second, type: "subscribe", sticky: "left" },
+      { id: second, type: "subscribe", background: "default", sticky: "left" },
     ]);
     expect(landingStickySections(parsed).map(({ id, sticky }) => [id, sticky])).toEqual([
       [I.subscribe, "right"],
@@ -210,10 +215,21 @@ describe("the sticky sections", () => {
     }
   });
 
-  it("is refused on any other type, saying which types may be", () => {
-    expect(messages(marked([I.faq]))).toEqual([
-      `Section ${I.faq} (Questions and answers) cannot be sticky: only Guide, Email sign-up, Call to action sections can`,
+  const issues = (structure: unknown[]) => {
+    const parsed = landingSections.safeParse(structure);
+    return parsed.success
+      ? []
+      : parsed.error.issues.map(({ path, message }) => ({ path, message }));
+  };
+
+  it("is refused on any other type, at the section's index, naming the type keys that may be", () => {
+    const faq = sections.findIndex((section) => section.id === I.faq);
+    expect(issues(marked([I.faq]))).toEqual([
+      { path: [faq], message: "Only a section of type guide, subscribe or cta can be sticky" },
     ]);
+    expect(landingStructureProblem(landingSection.array().parse(marked([I.faq])))).toBe(
+      `Section ${faq + 1}: only a section of type guide, subscribe or cta can be sticky`,
+    );
     for (const type of LANDING_SECTION_TYPES.filter((t) => !LANDING_STICKY_TYPES.includes(t))) {
       const section = sections.find((candidate) => candidate.type === type);
       if (section === undefined) throw new Error(`no ${type} case`);
@@ -221,11 +237,18 @@ describe("the sticky sections", () => {
     }
   });
 
-  it("is one per side, and on a side the field has", () => {
+  it("is one per side, the second named at its index with the side and the first's number", () => {
+    const first = sections.findIndex((section) => section.id === I.subscribe);
     for (const side of LANDING_STICKY_SIDES) {
-      expect(
-        messages([...marked([I.subscribe], side), { id: crypto.randomUUID(), type: "subscribe", sticky: side }]),
-      ).toEqual(["A page has at most one sticky section on each side"]);
+      const structure = [
+        ...marked([I.subscribe], side),
+        { id: crypto.randomUUID(), type: "subscribe" as const, background: "default" as const, sticky: side },
+      ];
+      const message = `A page has at most one sticky section on each side, and section ${first + 1} is already sticky on the ${side}`;
+      expect(issues(structure)).toEqual([{ path: [sections.length], message }]);
+      expect(landingStructureProblem(landingSection.array().parse(structure))).toBe(
+        `Section ${sections.length + 1}: ${message.charAt(0).toLowerCase()}${message.slice(1)}`,
+      );
     }
     expect(messages(marked([I.subscribe], "top"))).toHaveLength(1);
   });
@@ -250,13 +273,9 @@ describe("a section's background", () => {
     expect(cases.filter((c) => c.name.startsWith("the hero")).every((c) => !c.valid)).toBe(true);
   });
 
-  it("reads a stored section without one as default, and the hero as default always", () => {
-    const stored = everySection().map((section) =>
-      Object.fromEntries(Object.entries(section).filter(([key]) => key !== "background")),
-    );
-    const [hero, ...rest] = landingSections.parse(stored);
+  it("reads the hero, which takes none, as default", () => {
+    const [hero] = landingSections.parse(everySection());
     expect(landingSectionBackground(hero)).toBe("default");
-    for (const section of rest) expect(landingSectionBackground(section)).toBe("default");
   });
 
   it("allows adjacent card sections", () => {
@@ -270,7 +289,7 @@ describe("a section's background", () => {
 describe("a products section", () => {
   const product = (n: number) => `00000000-0000-4000-8000-${(0x5000 + n).toString(16).padStart(12, "0")}`;
   const products = (productIds: unknown) =>
-    landingSection.safeParse({ id: I.products, type: "products", productIds });
+    landingSection.safeParse({ id: I.products, type: "products", background: "default", productIds });
 
   it("picks at least one product, with no upper bound, keeping the admin's order", () => {
     expect(products([]).success).toBe(false);
@@ -411,6 +430,7 @@ describe("a testimonials section", () => {
     const parsed = landingSection.safeParse({
       id: I.testimonials,
       type: "testimonials",
+      background: "default",
       arrangement: "pair",
       testimonialIds: [I.testimonialA, I.testimonialA],
     });
@@ -425,6 +445,7 @@ describe("a testimonials section", () => {
       landingSection.safeParse({
         id: I.testimonials,
         type: "testimonials",
+        background: "default",
         arrangement: "grid",
         testimonialIds: [I.testimonialA],
       }).success,
@@ -443,8 +464,8 @@ describe("a testimonials section", () => {
   it("lists every placed testimonial once, in page order", () => {
     const sections = landingSections.parse([
       { id: I.hero, type: "hero" },
-      { id: I.testimonials, type: "testimonials", arrangement: "pair", testimonialIds: [I.testimonialB, I.testimonialA] },
-      { id: I.text, type: "testimonials", arrangement: "feature", testimonialIds: [I.testimonialA] },
+      { id: I.testimonials, type: "testimonials", background: "default", arrangement: "pair", testimonialIds: [I.testimonialB, I.testimonialA] },
+      { id: I.text, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [I.testimonialA] },
     ]);
     expect(landingPlacedTestimonialIds(sections)).toEqual([I.testimonialB, I.testimonialA]);
   });

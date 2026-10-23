@@ -441,6 +441,7 @@
     "backToList": "Tillbaka till landningssidorna",
     "notFound": "Det finns ingen landningssida med detta id.",
     "loadError": "Landningssidan kunde inte laddas. Uppdatera för att försöka igen.",
+    "listLoadError": "Landningssidorna kunde inte laddas. Uppdatera för att försöka igen.",
     "statusPage": {
       "title": "Landningssida",
       "authoring": "Be en AI-app som är kopplad till Sogverse om du vill ändra sidan.",
@@ -457,7 +458,8 @@
         "stillNeeded": "Saknas fortfarande:",
         "address": "Adress:",
         "noAddress": "ingen än",
-        "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera."
+        "addressChanging": "Publicerad på {address} nu. Nästa publicering flyttar den till den här adressen, och länkar till den gamla slutar fungera.",
+        "removed": "Borttagen från sidan, men fortfarande publicerad på webbplatsen. Nästa publicering tar bort den från webbplatsen."
       },
       "missing": {
         "inSection": "Avsnitt {number} ({type}): {field}",
@@ -476,7 +478,8 @@
           "page": "Rubrik: sidrubriken."
         },
         "description": "Beskrivning: varje språkversions sammanfattning.",
-        "stale": "En egen rubrik eller bild ligger kvar som den är när sidrubriken eller inledningens bild ändras. Om den inte längre passar sidan, be AI-appen att ta bort den."
+        "stale": "En egen rubrik eller bild ligger kvar som den är när sidrubriken eller inledningens bild ändras. Om den inte längre passar sidan, be AI-appen att ta bort den.",
+        "nextPublish": "Fram till nästa publicering visar länkar som delas på det här språket fortfarande förhandsvisningen som är publicerad nu."
       },
       "products": {
         "heading": "Utvalda produkter",

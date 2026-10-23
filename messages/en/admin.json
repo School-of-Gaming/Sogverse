@@ -441,6 +441,7 @@
     "backToList": "Back to landing pages",
     "notFound": "There is no landing page with this id.",
     "loadError": "Could not load this landing page. Refresh to try again.",
+    "listLoadError": "Could not load the landing pages. Refresh to try again.",
     "statusPage": {
       "title": "Landing page",
       "authoring": "To change this page, ask an AI app connected to Sogverse.",
@@ -457,7 +458,8 @@
         "stillNeeded": "Still needed:",
         "address": "Address:",
         "noAddress": "none yet",
-        "addressChanging": "Live at {address} now. The next publish moves it to this address, and links to the old one will stop working."
+        "addressChanging": "Live at {address} now. The next publish moves it to this address, and links to the old one will stop working.",
+        "removed": "Removed from this page, but still live on the site. The next publish takes it off the site."
       },
       "missing": {
         "inSection": "Section {number} ({type}): {field}",
@@ -476,7 +478,8 @@
           "page": "Title: the page title."
         },
         "description": "Description: each language's summary.",
-        "stale": "A custom title or picture stays as it is when the page title or the opening section's picture changes. If it no longer fits the page, ask the AI app to clear it."
+        "stale": "A custom title or picture stays as it is when the page title or the opening section's picture changes. If it no longer fits the page, ask the AI app to clear it.",
+        "nextPublish": "Until the next publish, links shared in this language still show the preview that is live now."
       },
       "products": {
         "heading": "Picked products",

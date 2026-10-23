@@ -1209,7 +1209,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: {
           kind: "public",
           reason:
-            "a landing page's reader signs up for email with no account and no session. It stores nothing about them and writes the address to Klaviyo's single opt-in newsletter list, behind a honeypot, answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
+            "a landing page's reader signs up for email with no account and no session. It stores nothing about them and writes the address to Klaviyo's single opt-in newsletter list, answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
         },
         body: { kind: "json", schema: "landingSubscribeBody" },
         test: TESTS.landingSubscribe,

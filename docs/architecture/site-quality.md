@@ -69,10 +69,11 @@ key off.
    shows (owner, 2026-10-01). The rules are in
    `src/services/library/CLAUDE.md`. **A landing page follows the same rule** (owner,
    2026-10-05), with two differences: its slug is stored per language rather than derived
-   from the title, so no two pages contest one, and its link card is the site-wide one —
-   the admin writes a title, a summary and a slug, and every other affordance is the
-   system's. **Every live landing page is listed on the `/discover` index and linked from
-   it** (owner, 2026-10-15): the pages are for promotion reached through advertising, and
+   from the title, so no two pages contest one, and its link card is derived from the
+   page — the hero's picture and the shown version's title and summary — unless that
+   language overrides its share title or share picture
+   (`src/services/landing-pages/CLAUDE.md`). **Every live landing page is listed on the
+   `/discover` index and linked from it** (owner, 2026-10-15): the pages are for promotion reached through advertising, and
    what matters is that crawlers find and trust them, so none may be an orphan only the
    sitemap names. The footer links the index from every page; the header and the tab bar
    do not, since people are not expected to browse there. Every link is visible to every

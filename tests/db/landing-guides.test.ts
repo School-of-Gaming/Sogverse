@@ -162,11 +162,11 @@ describe("landing page guides", () => {
   describe("the structure", () => {
     it("takes a guide's id and an optional picture, in SQL as in TypeScript", async () => {
       const cases: [string, { [key: string]: Json }, boolean][] = [
-        ["a guide", { id: GUIDE, type: "guide", guideId: MISSING }, true],
-        ["a guide with a picture", { id: GUIDE, type: "guide", guideId: MISSING, imageId: MISSING }, true],
-        ["no guide", { id: GUIDE, type: "guide" }, false],
-        ["a guide that is not an id", { id: GUIDE, type: "guide", guideId: "parents" }, false],
-        ["a picture that is not an id", { id: GUIDE, type: "guide", guideId: MISSING, imageId: "cover" }, false],
+        ["a guide", { id: GUIDE, type: "guide", background: "default", guideId: MISSING }, true],
+        ["a guide with a picture", { id: GUIDE, type: "guide", background: "default", guideId: MISSING, imageId: MISSING }, true],
+        ["no guide", { id: GUIDE, type: "guide", background: "default" }, false],
+        ["a guide that is not an id", { id: GUIDE, type: "guide", background: "default", guideId: "parents" }, false],
+        ["a picture that is not an id", { id: GUIDE, type: "guide", background: "default", guideId: MISSING, imageId: "cover" }, false],
       ];
       for (const [name, section, accepted] of cases) {
         const sections = [{ id: HERO, type: "hero" }, section];
@@ -178,7 +178,7 @@ describe("landing page guides", () => {
       const { data } = await admin.rpc("landing_sections_problem", {
         p_sections: [{ id: HERO, type: "hero" }, { id: GUIDE, type: "guide" }],
       });
-      expect(data).toBe(`Section ${GUIDE} needs its guide, as a guide's lowercase uuid`);
+      expect(data).toBe("Section 2 needs its guide, as a guide's lowercase uuid");
     });
   });
 

@@ -12,8 +12,8 @@ import { everySection } from "./landing-required-text-cases";
  *
  * The cases are generated from `everySection()`, one section of every type,
  * so a type added there is covered here too: each non-hero type is tried with
- * no background, with each value and with a wrong one; the hero with any
- * background at all.
+ * each value, with a wrong one and with none, which both halves refuse; the
+ * hero with any background at all.
  */
 export interface BackgroundCase {
   name: string;
@@ -48,7 +48,7 @@ export function backgroundCases(): BackgroundCase[] {
       withBackground(section, background),
     ];
     return [
-      { name: `${section.type} with no background`, sections: page(undefined), valid: true, reads: "default" },
+      { name: `${section.type} with no background`, sections: page(undefined), valid: false },
       { name: `${section.type} on default`, sections: page("default"), valid: true, reads: "default" },
       { name: `${section.type} on card`, sections: page("card"), valid: true, reads: "card" },
       { name: `${section.type} on a ground there is none of`, sections: page("tinted"), valid: false },

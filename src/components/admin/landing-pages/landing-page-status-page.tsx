@@ -9,7 +9,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { landingPageHref } from "@/components/landing-pages/landing-page-address";
-import { draftShareCard } from "@/components/landing-pages/landing-share-card";
+import {
+  draftShareCard,
+  landingShareCard,
+  sameSharedCard,
+} from "@/components/landing-pages/landing-share-card";
 import { FramedImage } from "@/components/ui/framed-image";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
@@ -74,7 +78,8 @@ export interface LandingPageStatusActions {
  * not; then one card per written language — complete or what it still needs,
  * its address (and, when that differs from the live one, that the next
  * publish moves it), its preview of the saved working copy and, while it is
- * live, its live page.
+ * live, its live page — and after them one per live language no longer
+ * written, which the next publish takes down.
  *
  * **Publish says what it would do before it does it**: the confirm lists the
  * languages going live, those left out as incomplete, the live ones taken
@@ -91,7 +96,9 @@ export function LandingPageStatusPage({
   const t = useTranslations("admin.landingPages");
   const uiLocale = resolveLocale(useLocale());
   const version = resolveTranslation(page.draft.versions, uiLocale);
-  const liveLocales = new Set(page.publication?.versions.map((v) => v.locale) ?? []);
+  const { publication } = page;
+  const liveLocales = new Set(publication?.versions.map((v) => v.locale) ?? []);
+  const writtenLocales = new Set(page.draft.versions.map((v) => v.locale));
   // The card's address warning is the publish confirmation's, so the two
   // never disagree: a live language the publish would take down moves nowhere.
   const { slugsChanging } = landingPublishForecast(page);
@@ -116,7 +123,7 @@ export function LandingPageStatusPage({
 
       <Publishing page={page} actions={actions} />
 
-      <ShareCard draft={page.draft} />
+      <ShareCard page={page} />
 
       {testimonialSections.length > 0 && (
         <PlacedTestimonials sections={testimonialSections} />
@@ -141,6 +148,19 @@ export function LandingPageStatusPage({
             }
           />
         ))}
+        {/* A live language its writer removed from the working copy stays
+            live until the next publish, which takes it down. */}
+        {publication !== null &&
+          publication.versions
+            .filter((live) => !writtenLocales.has(live.locale))
+            .map((live) => (
+              <RemovedLanguageCard
+                key={live.locale}
+                locale={live.locale}
+                title={live.title}
+                publication={publication}
+              />
+            ))}
       </section>
     </div>
   );
@@ -360,15 +380,29 @@ function slugPath(slug: string, locale: SupportedLocale): string {
  * admin's AI app sets. An override does not follow later edits to the page
  * title or the hero, so it is stated plainly here, where a stale one would be
  * noticed. The languages are rows of one card: facts about one page.
+ *
+ * The card shown is the working copy's, so a language that is live and
+ * complete, whose card differs from the one its live version shares, says the
+ * shown card is not shared yet. A language not live shares nothing, and an
+ * incomplete one leaves the page at the next publish, which its own card
+ * below says; neither gets the note.
  */
-function ShareCard({ draft }: { draft: LandingPageDraft }) {
+function ShareCard({ page }: { page: Pick<AdminLandingPage, "draft" | "publication"> }) {
   const t = useTranslations("admin.landingPages.statusPage.shareCard");
   const languageName = useLanguageNames();
+  const { draft, publication } = page;
 
-  const cards = draft.versions.map((version) => ({
-    locale: version.locale,
-    card: draftShareCard(draft, version),
-  }));
+  const cards = draft.versions.map((version) => {
+    const card = draftShareCard(draft, version);
+    // exact-locale: the card this language's own live version shares
+    const live = publication?.versions.find((v) => v.locale === version.locale);
+    const awaitsPublish =
+      publication !== null &&
+      live !== undefined &&
+      version.missing.length === 0 &&
+      !sameSharedCard(card, landingShareCard({ ...publication, ...live }));
+    return { locale: version.locale, card, awaitsPublish };
+  });
   const overridden = cards.some(
     ({ card }) => card.titleSource === "custom" || card.picture.source === "custom",
   );
@@ -381,7 +415,7 @@ function ShareCard({ draft }: { draft: LandingPageDraft }) {
       <Card>
         <CardContent className="space-y-4 p-6">
           <ul className="divide-y divide-border">
-            {cards.map(({ locale, card }) => (
+            {cards.map(({ locale, card, awaitsPublish }) => (
               <li
                 key={locale}
                 aria-label={languageName(locale, LOCALE_CONFIG[locale].label)}
@@ -406,6 +440,7 @@ function ShareCard({ draft }: { draft: LandingPageDraft }) {
                   <p className="font-medium">{card.title}</p>
                   <p>{t(`picture.${card.picture.source}`)}</p>
                   <p>{t(`title.${card.titleSource}`)}</p>
+                  {awaitsPublish && <p className="text-muted-foreground">{t("nextPublish")}</p>}
                 </div>
               </li>
             ))}
@@ -664,6 +699,56 @@ function LanguageCard({
             </StatusLine>
           )}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * A live language no longer written in the working copy — removed by its own
+ * writer, and still live until the next publish takes it down (the publish
+ * confirm names it among those taken down). Drawn as a language card, with its
+ * live title and its live page, so the admin can still see what readers do.
+ */
+function RemovedLanguageCard({
+  locale,
+  title,
+  publication,
+}: {
+  locale: SupportedLocale;
+  /** Its live title. */
+  title: string;
+  /** The live copy, which this language is in. */
+  publication: NonNullable<AdminLandingPage["publication"]>;
+}) {
+  const t = useTranslations("admin.landingPages");
+  const languageName = useLanguageNames();
+  const headingId = useId();
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6" role="region" aria-labelledby={headingId}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Heading level={3} step="label" id={headingId}>
+              {languageName(locale, LOCALE_CONFIG[locale].label)}
+            </Heading>
+            <p className="truncate text-sm text-muted-foreground">{title}</p>
+          </div>
+          <div className="flex shrink-0 flex-col-reverse gap-3 sm:flex-row">
+            <Link
+              href={landingPageHref(publication, locale)}
+              locale={locale}
+              target="_blank"
+              rel="noopener"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              {t("viewLive")}
+            </Link>
+          </div>
+        </div>
+        <StatusLine status="warning">{t("statusPage.language.removed")}</StatusLine>
       </CardContent>
     </Card>
   );

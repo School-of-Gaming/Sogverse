@@ -9,6 +9,7 @@ import type {
 } from "@/components/public/products/product-rail-selection";
 import { useProductRail } from "@/components/public/products/use-product-rail";
 import { cn } from "@/lib/cn";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import { LANDING_PRODUCT_TYPES } from "@/lib/landing-pages/sections";
 import { LANDING_SECTION, SectionHeader, hasSectionHeader } from "./landing-section-header";
 import { itemHeadingLevel } from "./landing-section-types";
@@ -19,6 +20,12 @@ interface LandingProductsSectionProps {
   eyebrow?: string;
   heading?: string;
   intro?: string;
+  /**
+   * The `lang` the cards are marked with: the page's locale, where the body
+   * around them is marked with the version's — the cards are the shop's, in
+   * the page's language.
+   */
+  railLang: SupportedLocale | undefined;
   /** The page's prefetch, narrowed to this section (`productRailSeed`). */
   seed: ProductRailSeed;
 }
@@ -55,6 +62,7 @@ export function LandingProductsSection({
   eyebrow,
   heading,
   intro,
+  railLang,
   seed,
 }: LandingProductsSectionProps) {
   const t = useTranslations("productBrowse.rail");
@@ -68,7 +76,7 @@ export function LandingProductsSection({
   return (
     <section className={LANDING_SECTION}>
       <SectionHeader eyebrow={eyebrow} heading={heading} intro={intro} />
-      <div className={cn(hasSectionHeader({ eyebrow, heading, intro }) && "mt-12")}>
+      <div lang={railLang} className={cn(hasSectionHeader({ eyebrow, heading, intro }) && "mt-12")}>
         <ProductRail
           products={products}
           counts={counts}

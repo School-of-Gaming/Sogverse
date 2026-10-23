@@ -5,10 +5,12 @@ import { effectiveStatus, type LifecycleInputs } from "@/lib/products/effective-
 import type { ProductListingFactsRow } from "@/services/products/products.service";
 
 /*
- * **Which of a page's picked products readers are shown, and why the others
- * are not** — what the admin's status page and the MCP read tools report per
- * products section, so a pick that has gone stale over a term is found and
- * swapped rather than silently missing from the page.
+ * **Which of a structure's picked products would be drawn, and why the
+ * others would not** — what the admin's status page and the MCP read tools
+ * report per products section of the working copy, so a pick that has gone
+ * stale over a term is found and swapped rather than silently missing from the
+ * page. The listing's answer is live, so for a structure already published it
+ * is also what readers are shown now.
  *
  * Pure: the service reads the listing of every product type
  * (`LANDING_PRODUCT_TYPES`) and the picks' facts, and this decides. Whether a
@@ -34,10 +36,10 @@ export interface LandingProductPick {
   productId: string;
   /** Its name in each language written, in `SUPPORTED_LOCALES` order; empty when gone. */
   names: { locale: SupportedLocale; name: string }[];
-  /** Whether readers are shown its card now. */
+  /** Whether the listing holds it now, so the structure draws its card. */
   shown: boolean;
   /**
-   * Why it is not shown, every reason that holds; empty when shown. A pick
+   * Why it is not drawn, every reason that holds; empty when drawn. A pick
    * the listing leaves out with no reason here — a change landing between the
    * two reads — reports `notListed`.
    */
@@ -50,7 +52,7 @@ export interface LandingProductsSectionPicks {
   /** The section's position in the structure, from one. */
   sectionNumber: number;
   picks: LandingProductPick[];
-  /** How many picks are shown; at none the section is not drawn at all. */
+  /** How many picks are drawn; at none the section is not drawn at all. */
   shownCount: number;
 }
 
