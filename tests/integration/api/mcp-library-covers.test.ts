@@ -21,8 +21,8 @@ import type { CatalogueImage } from "@/types";
  * the public bucket answered by a stubbed `fetch` with real JPEGs, so the
  * pictures in an answer are real re-encodes: what is under test is how a
  * cover reaches the model (as a picture, within the size budget, always named
- * in text), the writes the tools send, the uploader's refusals before
- * anything is stored, and the view the uploader is served as.
+ * in text), the writes the tools send, the uploader's opening and its
+ * refusals before anything is stored, and the view the uploader is served as.
  */
 
 const mockGetClaims = vi.fn();
@@ -462,47 +462,28 @@ describe("the uploader", () => {
     expect(resultText(result)).toBe("Sogverse could not store the picture. Try uploading it again.");
   });
 
-  it("opens on an article it can find, telling a client without views where else to upload", async () => {
-    const result = await tool("open_cover_uploader", { articleId: ID });
+  it("opens the uploader to add covers to the catalogue, ending with the next step and telling a client without views where else to upload", async () => {
+    const result = await tool("open_cover_uploader");
 
+    expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toEqual({
-      articleId: ID,
-      title: "Screen time is not the enemy",
-      currentCover: { catalogueId: COVER_ID, label: "Clock", publicUrl: `${BUCKET}/clock.jpg` },
       // What the shared picture uploader reads: the one frame a cover may
-      // be, what a picture of another shape is told, and the store-then-set
-      // calls it makes.
+      // be, what a picture of another shape is told, and what the model does
+      // with the new covers.
       uploader: {
         kind: "picture",
-        heading: "Library cover",
-        subject: "For “Screen time is not the enemy”",
-        frames: [
-          {
-            purpose: "library_cover",
-            name: "16:9",
-            width: 1600,
-            height: 900,
-            refusal: null,
-          },
-        ],
+        heading: "Library covers",
+        subject: expect.any(String),
+        frames: [{ purpose: "library_cover", name: "16:9", width: 1600, height: 900 }],
         noFrame: "A Library cover must be 16:9.",
         maxBytes: expect.any(Number),
-        place: expect.objectContaining({
-          tool: "set_library_article_cover",
-          arguments: { articleId: ID },
-          imageArgument: "coverImageId",
-        }),
+        nextStep: expect.stringContaining("set_library_article_cover"),
       },
     });
+    expect(resultText(result)).toContain("set_library_article_cover");
     expect(resultText(result)).toContain("the admin can upload the cover in the Sogverse editor");
-  });
-
-  it("refuses to open on an article that does not exist", async () => {
-    library.getAdminArticle.mockResolvedValue(null);
-
-    const result = await tool("open_cover_uploader", { articleId: ID });
-
-    expect(result.isError).toBe(true);
+    // It names no article, so none is read.
+    expect(library.getAdminArticle).not.toHaveBeenCalled();
   });
 });
 
@@ -517,7 +498,7 @@ describe("the uploader as an MCP Apps view", () => {
       })
       .parse((await rpc("tools/list")).result);
 
-    const uri = "ui://sogverse/picture-uploader-2.html";
+    const uri = "ui://sogverse/picture-uploader-3.html";
     expect(tools.find((t) => t.name === "open_cover_uploader")?._meta).toEqual({
       ui: { resourceUri: uri },
       "ui/resourceUri": uri,
@@ -529,7 +510,7 @@ describe("the uploader as an MCP Apps view", () => {
   });
 
   it("serves the built view as an MCP Apps resource", async () => {
-    const uri = "ui://sogverse/picture-uploader-2.html";
+    const uri = "ui://sogverse/picture-uploader-3.html";
 
     const listed = z
       .object({ resources: z.array(z.object({ uri: z.string(), mimeType: z.string() })) })

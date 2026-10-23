@@ -10,6 +10,9 @@ import {
   type LandingSectionDefinition,
 } from "./shared";
 
+/** The most pictures an image section shows. */
+export const IMAGE_SECTION_MAX_PICTURES = 4;
+
 /**
  * One to four pictures of one shape, with an optional heading and caption.
  * Each picture is an item with an id of its own, so its alt text — one per
@@ -24,7 +27,7 @@ const section = z
     images: z
       .array(z.object({ id: landingId, imageId: landingId }).strict())
       .min(1, "An image section shows at least one picture")
-      .max(4, "An image section shows at most four pictures")
+      .max(IMAGE_SECTION_MAX_PICTURES, "An image section shows at most four pictures")
       .refine(distinctIds, "Two pictures share an id"),
   })
   .strict();

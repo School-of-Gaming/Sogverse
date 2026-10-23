@@ -70,19 +70,69 @@ input[type="file"] {
   color: var(--muted-foreground);
 }
 
-figure {
+main[data-over="true"] {
+  outline: 2px dashed var(--act);
+  outline-offset: -6px;
+}
+
+.hint {
+  font-size: 12px;
+}
+
+/* One row per picked file: its picture as it will be saved, and its state. */
+#files {
   margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#files li {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card);
+}
+
+#files img {
+  display: block;
+  width: 96px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+#files li > div {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
-figure img {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+#files img[hidden] + div {
+  grid-column: 1 / -1;
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.state {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.state[data-tone="error"] {
+  color: var(--destructive);
+}
+
+.state[data-tone="done"] {
+  color: var(--foreground);
 }
 
 .actions {

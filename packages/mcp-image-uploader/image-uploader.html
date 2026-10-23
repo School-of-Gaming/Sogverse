@@ -6,26 +6,19 @@
     <title>Uploader</title>
   </head>
   <body>
-    <main>
+    <main id="drop">
       <h1 id="heading">Upload</h1>
       <p id="subject" class="quiet">Waiting for Sogverse…</p>
 
       <label class="field">
         <span id="file-caption">File</span>
         <input id="file" type="file" disabled />
+        <span id="file-hint" class="quiet hint" hidden></span>
       </label>
 
-      <figure id="preview" hidden>
-        <img id="preview-image" alt="The picture as it will be saved" />
-        <figcaption id="preview-note" class="quiet"></figcaption>
-      </figure>
+      <ol id="files" hidden></ol>
 
       <p id="file-note" class="quiet" hidden></p>
-
-      <label id="label-field" class="field" hidden>
-        <span>Label</span>
-        <input id="label" type="text" maxlength="200" disabled />
-      </label>
 
       <div class="actions">
         <button id="upload" type="button" disabled>Upload</button>

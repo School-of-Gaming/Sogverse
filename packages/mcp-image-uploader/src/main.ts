@@ -4,6 +4,7 @@ import { App } from "@modelcontextprotocol/ext-apps";
 import { BRAND, NEUTRALS, statusHex } from "@sog/ui/tokens/brand";
 import { FACES } from "@sog/ui/tokens/typography";
 import { z } from "zod";
+import { batchReport, type FileOutcome } from "./batch";
 import { judgePicture, sourceRect, type Frame } from "./frames";
 import "./style.css";
 
@@ -11,28 +12,32 @@ import "./style.css";
  * The uploader, shown inside the admin's AI app by an opening tool. It has two
  * modes, chosen by the opening's `uploader.kind`:
  *
- * - **A picture** — `open_cover_uploader` for a Library cover,
- *   `open_landing_image_uploader` for a landing page picture. The admin picks
- *   a picture and the view measures it. **It never crops**: a picture already
- *   the shape of one of the frames the opening offers, within 1%, is scaled to
- *   that frame's exact size as a JPEG — the size Sogverse's catalogue refuses
- *   anything else than — and a picture of no offered shape, or of one this
- *   destination does not take, is refused: nothing uploads, the view says
- *   why, and so is the model, which can explain it to the admin. A fitting
- *   JPEG goes, with its frame's purpose, to the one app-only picture upload
- *   tool and, when the opening names a placement, the entry it answers goes
- *   to that tool.
- * - **A PDF** — `open_guide_uploader` for a guide's file. The admin's file is
- *   sent as it is to the guide upload tool, after checking it is a PDF and
- *   fits the call: no crop, no re-encoding, so a file over the limit is
- *   refused here with the remedy.
+ * - **Pictures** — `open_cover_uploader` for Library covers,
+ *   `open_landing_image_uploader` for landing page pictures. The admin picks
+ *   as many pictures as they like, from the file picker or by dropping them
+ *   on the view, and the view measures each. **It never crops**: a picture
+ *   already the shape of one of the frames the opening offers, within 1%, is
+ *   scaled to that frame's exact size as a JPEG — the size Sogverse's
+ *   catalogue refuses anything else than — and a picture of no offered shape
+ *   is refused: it is not uploaded, and the view says why. One refused
+ *   picture never holds back the others. Each fitting JPEG goes, with its
+ *   frame's purpose, to the one app-only picture upload tool in a call of its
+ *   own — never two pictures in one request, which has a size limit — and
+ *   is only added to the catalogue: the model places the pictures afterwards.
+ *   It is told the whole batch at once — each file's new entry or why it was
+ *   refused — and then what to do with them, in the opening's sentence.
+ * - **A PDF** — `open_guide_uploader` for a guide's file. The admin's one file,
+ *   from the file picker or dropped on the view (the first, when several are
+ *   dropped), is sent as it is to the guide upload tool, after checking it is
+ *   a PDF and fits the call: no crop, no re-encoding, so a file over the limit
+ *   is refused here with the remedy. The model is then told what was stored.
  *
  * Every call goes through the host: the view holds no token and opens no
- * connection of its own. The model is then told what was stored. Everything
- * that differs by purpose (the frames, their sizes, which this destination
- * takes and why, the limits, the words) arrives in the opening tool's
- * `uploader` field, so the server is the one definition and this view
- * restates none of it.
+ * connection of its own. A new opening starts from nothing picked. Everything
+ * that differs by purpose (the frames, their sizes, the limits, the words,
+ * what the model does next) arrives in the
+ * opening tool's `uploader` field, so the server is the one definition and
+ * this view restates none of it.
  */
 
 // The colours and the face, from @sog/ui's tokens: SOG-UI's one theme.
@@ -64,22 +69,13 @@ const pictureOpening = z.object({
         name: z.string(),
         width: z.number().int().positive(),
         height: z.number().int().positive(),
-        refusal: z.string().nullable(),
       }),
     )
     .min(1),
   noFrame: z.string(),
   maxBytes: z.number(),
-  place: z
-    .object({
-      tool: z.string(),
-      arguments: z.record(z.string(), z.unknown()),
-      imageArgument: z.string(),
-      actionLabel: z.string(),
-      done: z.string(),
-      outcome: z.string(),
-    })
-    .nullable(),
+  /** What the model is told to do with the uploaded pictures, after the batch's report. */
+  nextStep: z.string(),
 });
 type PictureOpening = z.infer<typeof pictureOpening>;
 
@@ -123,29 +119,52 @@ function element<T extends HTMLElement>(id: string, type: new () => T): T {
   return found;
 }
 
+const drop = element("drop", HTMLElement);
 const heading = element("heading", HTMLHeadingElement);
 const subject = element("subject", HTMLParagraphElement);
 const fileCaption = element("file-caption", HTMLSpanElement);
+const fileHint = element("file-hint", HTMLSpanElement);
 const fileInput = element("file", HTMLInputElement);
 const fileNote = element("file-note", HTMLParagraphElement);
-const labelField = element("label-field", HTMLLabelElement);
-const labelInput = element("label", HTMLInputElement);
-const preview = element("preview", HTMLElement);
-const previewImage = element("preview-image", HTMLImageElement);
-const previewNote = element("preview-note", HTMLElement);
+const list = element("files", HTMLOListElement);
 const uploadButton = element("upload", HTMLButtonElement);
 const status = element("status", HTMLParagraphElement);
 
-/** The file to send, base64, the name it is uploaded under and, for a picture, the frame it fits. */
-type Picked =
-  | { kind: "picture"; base64: string; fileName: string; frame: Frame }
-  | { kind: "pdf"; base64: string; fileName: string };
+/** One picked picture, its row on screen, and what the checks made of it. */
+interface Row {
+  file: File;
+  image: HTMLImageElement;
+  state: HTMLParagraphElement;
+  label: HTMLInputElement;
+  /** The scaled JPEG, base64, the name it is uploaded under, and the frame it fits; null until checked, or when refused. */
+  picked: { base64: string; fileName: string; frame: Frame; soft: boolean } | null;
+  outcome: FileOutcome | null;
+}
+
+/** The picked PDF, base64, and the name it is uploaded under. */
+interface PickedPdf {
+  base64: string;
+  fileName: string;
+}
 
 let opening: Opening | null = null;
-let picked: Picked | null = null;
+/** Counts openings, so an upload begun under an earlier one leaves the new one's screen alone. */
+let openingNumber = 0;
+/** The pictures picked, in picture mode. */
+let rows: Row[] = [];
+/** The file picked, in PDF mode. */
+let pdf: PickedPdf | null = null;
+/** True while a pick of pictures is being checked. */
+let checking = false;
 /**
- * Set before the first call and cleared only where the admin has to retry,
- * so the button cannot re-enable between the click and the upload finishing.
+ * Counts picks, of pictures or of a PDF, so a newer pick (or a new opening)
+ * stops an older one still being checked or read.
+ */
+let pickNumber = 0;
+/**
+ * Set before the first call and cleared only where the admin may try again —
+ * a batch of pictures that stored nothing, or a PDF that failed — so the
+ * button cannot re-enable between the click and the upload finishing.
  */
 let committing = false;
 
@@ -154,11 +173,22 @@ function say(text: string, tone: "info" | "error" = "info"): void {
   status.dataset.tone = tone;
 }
 
+function show(row: Row, text: string, tone: "info" | "error" | "done" = "info"): void {
+  row.state.textContent = text;
+  row.state.dataset.tone = tone;
+}
+
+function ready(): Row[] {
+  return rows.filter((row) => row.picked !== null && row.outcome === null);
+}
+
 function refresh(): void {
-  const ready = opening !== null;
-  fileInput.disabled = !ready || committing;
-  labelInput.disabled = !ready || committing;
-  uploadButton.disabled = !ready || committing || picked === null;
+  const open = opening !== null && !committing;
+  fileInput.disabled = !open;
+  for (const row of rows) row.label.disabled = !open || row.picked === null || row.outcome !== null;
+  const nothingToSend =
+    opening?.kind === "pdf" ? pdf === null : checking || ready().length === 0;
+  uploadButton.disabled = !open || nothingToSend;
 }
 
 /** The text a tool answered with, joined: a refusal's sentence. */
@@ -249,192 +279,361 @@ app.ontoolresult = (result) => {
   heading.textContent = opening.heading;
   document.title = opening.heading;
   subject.textContent = opening.subject;
-  // A file picked under an earlier opening belongs to that opening's frames
-  // and placement, so a new opening starts from nothing picked.
-  picked = null;
-  preview.hidden = true;
+  // What was picked under an earlier opening belongs to that opening's
+  // frames, so a new opening starts from nothing picked — and with a batch of
+  // its own to make.
+  openingNumber += 1;
+  pickNumber += 1;
+  rows = [];
+  list.replaceChildren();
+  list.hidden = true;
+  checking = false;
+  pdf = null;
   fileNote.hidden = true;
+  committing = false;
   fileInput.value = "";
-  labelField.hidden = opening.kind !== "picture";
+  say("");
   if (opening.kind === "picture") {
-    fileCaption.textContent = "Picture";
     fileInput.accept = "image/*";
-    uploadButton.textContent = opening.place?.actionLabel ?? "Upload";
+    fileInput.multiple = true;
+    fileCaption.textContent = "Pictures";
+    fileHint.textContent = "Pick as many as you like, or drop them here.";
+    fileHint.hidden = false;
+    uploadButton.textContent = "Upload";
   } else {
-    fileCaption.textContent = "PDF";
     fileInput.accept = "application/pdf,.pdf";
+    fileInput.multiple = false;
+    fileCaption.textContent = "PDF";
+    fileHint.hidden = true;
     uploadButton.textContent = opening.actionLabel;
   }
   refresh();
 };
 
-/** Measure a picked picture, and scale it to the frame it fits or say why it does not fit. */
-async function pickPicture(file: File, current: PictureOpening): Promise<void> {
-  try {
-    // `createImageBitmap` applies the picture's own orientation, as an
-    // `<img>` would, so the size measured is the size the admin sees.
-    const bitmap = await createImageBitmap(file);
-    const verdict = judgePicture(bitmap.width, bitmap.height, current);
-    if (verdict.kind === "refused") {
-      bitmap.close();
-      say(`${verdict.reason} Nothing was uploaded.`, "error");
-      await tellTheModel(
-        `The admin picked a picture in the uploader and it was refused, so nothing was uploaded. ${verdict.reason}`,
-      );
-      return;
-    }
-    const { frame } = verdict;
-    let scaled: ReturnType<typeof scaleToFrame>;
-    try {
-      scaled = scaleToFrame(bitmap, frame, current.maxBytes);
-    } finally {
-      // Closed even when the picture is too large to encode.
-      bitmap.close();
-    }
-    const stem = file.name.replace(/\.[^.]+$/, "") || "picture";
-    picked = { kind: "picture", base64: scaled.base64, fileName: `${stem}.jpg`, frame };
-    if (!labelInput.value.trim()) labelInput.value = stem;
-    previewImage.src = scaled.dataUrl;
-    const saved = `${capitalised(frame.name)}, saved at ${frame.width} × ${frame.height}`;
-    previewNote.textContent =
-      scaled.drawnWidth < frame.width
-        ? `${saved}. The picture is smaller than that, so it will look soft.`
-        : `${saved}, as readers will see it.`;
-    preview.hidden = false;
-  } catch (error) {
-    say(
-      error instanceof PictureTooLarge
-        ? "That picture is too detailed to send even at a lower quality. Choose a simpler or smaller one."
-        : "That file could not be read as a picture. Choose a JPEG, PNG or WebP.",
-      "error",
-    );
-  }
-}
-
-/** Check a picked PDF and hold it as it is, or say why it cannot be sent. */
-async function pickPdf(file: File, current: PdfOpening): Promise<void> {
-  try {
-    picked = { kind: "pdf", base64: await readPdf(file, current), fileName: file.name };
-    fileNote.textContent = `${file.name}, ${megabytes(file.size)}.`;
-    fileNote.hidden = false;
-  } catch (error) {
-    say(error instanceof Error ? error.message : "That file could not be read.", "error");
-  }
-}
-
-fileInput.addEventListener("change", async () => {
-  const file = fileInput.files?.[0];
-  picked = null;
-  preview.hidden = true;
-  fileNote.hidden = true;
-  say("");
-  refresh();
-  if (!file || opening === null) return;
-  try {
-    if (opening.kind === "picture") await pickPicture(file, opening);
-    else await pickPdf(file, opening);
-  } finally {
-    refresh();
-  }
-});
-
 function capitalised(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Store the picked picture as its frame's purpose, place it if the opening says where, and tell the model. */
-async function uploadPicture(
-  { place }: PictureOpening,
-  file: Extract<Picked, { kind: "picture" }>,
-): Promise<void> {
-  const stored = await app.callServerTool({
-    name: PICTURE_UPLOAD_TOOL,
-    arguments: {
-      purpose: file.frame.purpose,
-      fileName: file.fileName,
-      label: labelInput.value.trim() || undefined,
-      jpegBase64: file.base64,
-    },
-  });
-  if (stored.isError) throw new Error(textOf(stored) || "The picture could not be stored.");
-  const answered = storedPictureSchema.safeParse(stored.structuredContent);
-  if (!answered.success) throw new Error("The picture could not be stored.");
-  const { image } = answered.data;
-  const entry = `catalogue entry ${image.catalogueId} ("${image.label}")`;
-
-  if (place === null) {
-    say("The picture is in the catalogue.");
-    await tellTheModel(
-      `The admin uploaded a picture in the uploader: it is ${entry}, and it is not placed anywhere yet.`,
-    );
-    return;
-  }
-
-  say("Placing the picture…");
-  const set = await app.callServerTool({
-    name: place.tool,
-    arguments: { ...place.arguments, [place.imageArgument]: image.catalogueId },
-  });
-  if (set.isError) {
-    throw new Error(
-      `The picture is in the catalogue as entry ${image.catalogueId}, but it could not be placed: ${textOf(set)}`,
-    );
-  }
-
-  say(place.done);
-  await tellTheModel(`The admin uploaded a picture in the uploader: ${entry}. ${place.outcome}`);
+/** A row on screen for a picked picture, waiting to be checked. */
+function addRow(file: File): Row {
+  const item = document.createElement("li");
+  const image = document.createElement("img");
+  image.alt = "";
+  image.hidden = true;
+  const body = document.createElement("div");
+  const name = document.createElement("p");
+  name.className = "name";
+  name.textContent = file.name;
+  const state = document.createElement("p");
+  state.className = "state";
+  const labelField = document.createElement("label");
+  labelField.className = "field";
+  labelField.hidden = true;
+  const caption = document.createElement("span");
+  caption.textContent = "Label";
+  const label = document.createElement("input");
+  label.type = "text";
+  label.maxLength = 200;
+  labelField.append(caption, label);
+  body.append(name, state, labelField);
+  item.append(image, body);
+  list.append(item);
+  const row: Row = { file, image, state, label, picked: null, outcome: null };
+  show(row, "Checking…");
+  return row;
 }
 
-/** Store the picked PDF as the opening's guide file, and tell the model. */
-async function uploadPdf(
-  pdf: PdfOpening,
-  file: Extract<Picked, { kind: "pdf" }>,
-): Promise<void> {
+/** Refuse a picked picture before anything is uploaded. */
+function refuse(row: Row, reason: string): void {
+  row.outcome = { kind: "refused", fileName: row.file.name, reason };
+  show(row, `Refused, not uploaded. ${reason}`, "error");
+}
+
+/**
+ * Check every picked picture in the order picked: measure it, judge it
+ * against the frames, and scale the ones that fit. A newer pick, or a new
+ * opening, replaces this one.
+ */
+async function pickPictures(files: readonly File[], current: PictureOpening): Promise<void> {
+  if (committing || files.length === 0) return;
+  const mine = ++pickNumber;
+  list.replaceChildren();
+  list.hidden = false;
+  say("");
+  const added = files.map(addRow);
+  rows = added;
+  checking = true;
+  refresh();
+
+  for (const row of added) {
+    if (mine !== pickNumber) return;
+    let bitmap: ImageBitmap;
+    try {
+      // `createImageBitmap` applies the picture's own orientation, as an
+      // `<img>` would, so the size measured is the size the admin sees.
+      bitmap = await createImageBitmap(row.file);
+    } catch {
+      refuse(row, "This file could not be read as a picture. Choose a JPEG, PNG or WebP.");
+      continue;
+    }
+    try {
+      if (mine !== pickNumber) return;
+      const verdict = judgePicture(bitmap.width, bitmap.height, current);
+      if (verdict.kind === "refused") {
+        refuse(row, verdict.reason);
+        continue;
+      }
+      const { frame } = verdict;
+      const scaled = scaleToFrame(bitmap, frame, current.maxBytes);
+      const stem = row.file.name.replace(/\.[^.]+$/, "") || "picture";
+      const soft = scaled.drawnWidth < frame.width;
+      row.picked = { base64: scaled.base64, fileName: `${stem}.jpg`, frame, soft };
+      row.label.value = stem;
+      row.image.src = scaled.dataUrl;
+      row.image.style.aspectRatio = `${frame.width} / ${frame.height}`;
+      row.image.hidden = false;
+      if (row.label.parentElement) row.label.parentElement.hidden = false;
+      const saved = `${capitalised(frame.name)}, saved at ${frame.width} × ${frame.height}`;
+      show(
+        row,
+        soft
+          ? `${saved}. The picture is smaller than that, so it will look soft.`
+          : `${saved}, as readers will see it.`,
+      );
+    } catch (error) {
+      refuse(
+        row,
+        error instanceof PictureTooLarge
+          ? "This picture is too detailed to send even at a lower quality. Choose a simpler or smaller one."
+          : "This file could not be read as a picture. Choose a JPEG, PNG or WebP.",
+      );
+    } finally {
+      bitmap.close();
+    }
+  }
+
+  if (mine !== pickNumber) return;
+  checking = false;
+  if (ready().length === 0) {
+    say(added.length === 1 ? "Nothing was uploaded." : "None of these can be uploaded.", "error");
+    await reportBatch(outcomesOf(added), current);
+  }
+  refresh();
+}
+
+/** Every row's outcome, in pick order. */
+function outcomesOf(of: readonly Row[]): FileOutcome[] {
+  return of.flatMap((row) => (row.outcome === null ? [] : [row.outcome]));
+}
+
+/**
+ * Check a picked PDF and hold it as it is, or say why it cannot be sent —
+ * from the picker or a drop alike, and with no file only clearing the last.
+ * A newer pick, or a new opening, while the file is read drops its result.
+ */
+async function pickPdf(file: File | undefined, current: PdfOpening): Promise<void> {
+  if (committing) return;
+  const mine = ++pickNumber;
+  pdf = null;
+  fileNote.hidden = true;
+  say("");
+  refresh();
+  if (!file) return;
+  try {
+    const base64 = await readPdf(file, current);
+    if (mine !== pickNumber) return;
+    pdf = { base64, fileName: file.name };
+    fileNote.textContent = `${file.name}, ${megabytes(file.size)}.`;
+    fileNote.hidden = false;
+  } catch (error) {
+    if (mine !== pickNumber) return;
+    say(error instanceof Error ? error.message : "That file could not be read.", "error");
+  }
+  refresh();
+}
+
+fileInput.addEventListener("change", async () => {
+  if (opening === null) return;
+  if (opening.kind === "picture") {
+    const files = Array.from(fileInput.files ?? []);
+    // Cleared, so picking the same files again (a retry after every upload
+    // failed, or a picture re-cropped under its old name) fires a change too.
+    fileInput.value = "";
+    await pickPictures(files, opening);
+    return;
+  }
+  await pickPdf(fileInput.files?.[0], opening);
+});
+
+/** Whether a drop is taken now: while there is an opening and nothing is being committed. */
+function takesDrops(): boolean {
+  return opening !== null && !committing;
+}
+
+// A file dragged over the frame is claimed everywhere, so a drop that misses
+// the view is never opened by the frame in place of it; only the view itself
+// takes one, and only while it takes files.
+document.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  if (event.dataTransfer && !(event.target instanceof Node && drop.contains(event.target))) {
+    event.dataTransfer.dropEffect = "none";
+  }
+});
+document.addEventListener("drop", (event) => event.preventDefault());
+
+drop.addEventListener("dragover", (event) => {
+  if (takesDrops()) {
+    drop.dataset.over = "true";
+  } else {
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+    delete drop.dataset.over;
+  }
+});
+drop.addEventListener("dragleave", (event) => {
+  if (event.relatedTarget instanceof Node && drop.contains(event.relatedTarget)) return;
+  delete drop.dataset.over;
+});
+// Pictures take every file dropped; a PDF opening takes the first, as its
+// picker would. Either way the drop goes the path a pick does.
+drop.addEventListener("drop", (event) => {
+  delete drop.dataset.over;
+  if (opening === null || !takesDrops()) return;
+  const files = Array.from(event.dataTransfer?.files ?? []);
+  if (files.length === 0) return;
+  // Cleared, so the picker no longer shows a file the drop replaced.
+  fileInput.value = "";
+  if (opening.kind === "picture") void pickPictures(files, opening);
+  else void pickPdf(files[0], opening);
+});
+
+/** Store one checked picture through the upload tool, with its frame's purpose: a request of its own. */
+async function storePicture(row: Row, picked: NonNullable<Row["picked"]>): Promise<FileOutcome> {
+  const fileName = row.file.name;
+  try {
+    const stored = await app.callServerTool({
+      name: PICTURE_UPLOAD_TOOL,
+      arguments: {
+        purpose: picked.frame.purpose,
+        fileName: picked.fileName,
+        label: row.label.value.trim() || undefined,
+        jpegBase64: picked.base64,
+      },
+    });
+    if (stored.isError) {
+      return { kind: "failed", fileName, reason: textOf(stored) || "The picture could not be stored." };
+    }
+    const answered = storedPictureSchema.safeParse(stored.structuredContent);
+    if (!answered.success) return { kind: "failed", fileName, reason: "The picture could not be stored." };
+    const { image } = answered.data;
+    return {
+      kind: "uploaded",
+      fileName,
+      catalogueId: image.catalogueId,
+      label: image.label,
+      shape: picked.frame.name,
+      soft: picked.soft,
+    };
+  } catch (error) {
+    // The host or the network failed this one call; the others go on.
+    return {
+      kind: "failed",
+      fileName,
+      reason: `The connection failed: ${error instanceof Error ? error.message : "no answer"}.`,
+    };
+  }
+}
+
+/** Store every ready picture, one call each, and tell the model the whole batch. */
+async function uploadPictures(current: PictureOpening, mine: number): Promise<void> {
+  const batch = rows;
+  say("Uploading…");
+
+  // One at a time, in pick order: each picture is a request of its own.
+  for (const row of batch) {
+    const { picked } = row;
+    if (picked === null || row.outcome !== null) continue;
+    show(row, "Uploading…");
+    const outcome = await storePicture(row, picked);
+    row.outcome = outcome;
+    if (outcome.kind === "uploaded") show(row, `Uploaded as catalogue entry ${outcome.catalogueId}.`, "done");
+    else show(row, `Could not be uploaded. ${outcome.reason}`, "error");
+  }
+
+  const outcomes = outcomesOf(batch);
+  const stored = outcomes.filter((each) => each.kind === "uploaded").length;
+
+  // A new opening took the screen while this batch ran: the model still
+  // hears what was stored, but the new opening's screen is left alone.
+  if (mine === openingNumber) {
+    if (stored === 0) {
+      // Nothing was stored, so nothing stands in the way of picking again.
+      committing = false;
+      say("Nothing was uploaded.", "error");
+    } else {
+      say(stored === 1 ? "The picture is in the catalogue." : "The pictures are in the catalogue.");
+    }
+  }
+  await reportBatch(outcomes, current);
+}
+
+/**
+ * Store the picked PDF as the opening's guide file, and tell the model. The
+ * model hears it even when a new opening took the screen meanwhile; that
+ * opening's screen is left alone.
+ */
+async function uploadPdf(current: PdfOpening, file: PickedPdf, mine: number): Promise<void> {
+  say("Uploading…");
   const stored = await app.callServerTool({
     name: PDF_UPLOAD_TOOL,
-    arguments: { ...pdf.arguments, fileName: file.fileName, pdfBase64: file.base64 },
+    arguments: { ...current.arguments, fileName: file.fileName, pdfBase64: file.base64 },
   });
   if (stored.isError) throw new Error(textOf(stored) || "The file could not be stored.");
   const answered = storedPdfSchema.safeParse(stored.structuredContent);
   if (!answered.success) throw new Error("The file could not be stored.");
   const { guideId, created, fileName } = answered.data;
 
-  say(pdf.done);
+  if (mine === openingNumber) say(current.done);
   await tellTheModel(
-    `The admin uploaded ${fileName} in the uploader as the ${pdf.language} file of ${created ? "a new guide" : "guide"} ${guideId}. ${pdf.outcome}`,
+    `The admin uploaded ${fileName} in the uploader as the ${current.language} file of ${created ? "a new guide" : "guide"} ${guideId}. ${current.outcome}`,
   );
 }
 
 uploadButton.addEventListener("click", async () => {
-  if (committing || opening === null || picked === null) return;
+  if (committing || checking || opening === null) return;
+  const current = opening;
+  const mine = openingNumber;
   committing = true;
   refresh();
-  say("Uploading…");
-  try {
-    if (opening.kind === "picture" && picked.kind === "picture") {
-      await uploadPicture(opening, picked);
-    } else if (opening.kind === "pdf" && picked.kind === "pdf") {
-      await uploadPdf(opening, picked);
-    } else {
-      // The opening changed after the file was picked.
-      throw new Error("Choose the file again.");
+  if (current.kind === "picture") {
+    await uploadPictures(current, mine);
+  } else if (pdf !== null) {
+    try {
+      await uploadPdf(current, pdf, mine);
+    } catch (error) {
+      if (mine === openingNumber) {
+        committing = false;
+        say(error instanceof Error ? error.message : "The file could not be uploaded.", "error");
+      }
     }
-  } catch (error) {
-    committing = false;
-    say(error instanceof Error ? error.message : "The file could not be uploaded.", "error");
-    refresh();
   }
+  if (mine === openingNumber) refresh();
 });
+
+/** Put a batch of pictures in the model's context, in one piece: the report and its structured form. */
+async function reportBatch(outcomes: readonly FileOutcome[], { nextStep }: PictureOpening): Promise<void> {
+  await tellTheModel(batchReport(outcomes, nextStep), { pictures: outcomes, nextStep });
+}
 
 /**
  * Put the outcome in the model's context. A host that takes context updates
- * holds it for the next turn; one that only takes messages gets it as one.
+ * holds the last one for the next turn; one that only takes messages gets it
+ * as one.
  */
-async function tellTheModel(text: string): Promise<void> {
+async function tellTheModel(text: string, structuredContent?: Record<string, unknown>): Promise<void> {
   const host = app.getHostCapabilities();
   try {
     if (host?.updateModelContext) {
-      await app.updateModelContext({ content: [{ type: "text", text }] });
+      await app.updateModelContext({ content: [{ type: "text", text }], structuredContent });
     } else if (host?.message) {
       await app.sendMessage({ role: "user", content: [{ type: "text", text }] });
     }

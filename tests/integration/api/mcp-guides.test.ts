@@ -326,7 +326,7 @@ describe("the uploader", () => {
           .result,
       );
 
-    const uri = "ui://sogverse/picture-uploader-2.html";
+    const uri = "ui://sogverse/picture-uploader-3.html";
     expect(tools.find((t) => t.name === "open_guide_uploader")?._meta).toEqual({
       ui: { resourceUri: uri },
       "ui/resourceUri": uri,

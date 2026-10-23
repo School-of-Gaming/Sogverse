@@ -33,15 +33,18 @@ import type { AppSupabaseClient } from "@/types";
  * through the model — it would have to read and repeat them, and a client
  * refuses a result that large anyway — so the model only opens the uploader,
  * and the uploader, a page the AI app renders in a sandboxed frame, reads the
- * admin's file, measures it, and finds the frame it already has the shape of
- * among the frames the opening offers. It never crops: a picture of no
- * offered shape is refused, on screen and to the model, so the admin can be
- * told why and re-crop it themselves. A picture that matches is scaled to
- * that frame's purpose's exact size and handed as a JPEG, with the frame's
- * purpose, to the one app-only upload tool through the AI app's own
- * connection, then placed with the tool the opening named. The view never holds a token: the AI app makes the
- * calls with its grant, so the gate in front of them is the endpoint's like
- * any other call.
+ * admin's files — as many as they like at once — measures each, and finds
+ * the frame it already has the shape of among the frames the opening offers.
+ * It never crops: a picture of no offered shape is refused, on screen and to
+ * the model, so the admin can be told why and re-crop it themselves, and the
+ * others go on. A picture that matches is scaled to that frame's purpose's
+ * exact size and handed as a JPEG, with the frame's purpose, to the one
+ * app-only upload tool through the AI app's own connection, one picture per
+ * call. The uploader only adds pictures to the catalogue: the model places
+ * them afterwards with the area's own tools, where a picture that does not
+ * fit is refused and stays in the catalogue. The view never holds a token:
+ * the AI app makes the calls with its grant, so the gate in front of them is
+ * the endpoint's like any other call.
  *
  * One view serves every purpose: what it uploads for, and how, arrives in the
  * opening tool's `uploader` field (`uploaderOpening` for a picture, the guide
@@ -52,7 +55,7 @@ import type { AppSupabaseClient } from "@/types";
  */
 
 /** The view's address. Hosts may cache a view by it, so a breaking change to the view's protocol names a new one. */
-export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader-2.html";
+export const PICTURE_UPLOADER_URI = "ui://sogverse/picture-uploader-3.html";
 
 /** What MCP Apps calls an HTML view. */
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
@@ -100,19 +103,6 @@ export const MAX_UPLOAD_BYTES = Math.min(
   Math.floor(((DEFAULT_MAX_REQUEST_BODY_SIZE - 64 * 1024) * 3) / 4),
 );
 
-/** Where the view puts a stored picture: a tool, its arguments, and the one the picture's id goes in. */
-export interface UploaderPlacement {
-  tool: string;
-  arguments: Record<string, unknown>;
-  imageArgument: string;
-  /** The upload button's words. */
-  actionLabel: string;
-  /** What the view tells the admin once the picture is placed. */
-  done: string;
-  /** What the model is told once it is, after the entry's id and label. */
-  outcome: string;
-}
-
 /**
  * The catalogue purposes an AI app uploads pictures of: those an opening tool
  * offers a frame of. The upload tool takes exactly these, and a frame can name
@@ -131,28 +121,25 @@ type UploaderPurpose = (typeof UPLOADER_PURPOSES)[number];
 /** The app-only tool the view stores every picture through; the view names it too. */
 const UPLOAD_TOOL = "upload_catalogue_picture";
 
-/** One shape the uploader knows for an area: a catalogue purpose, and whether this opening takes it. */
+/** One shape the uploader knows for an area: a catalogue purpose, and how the admin is told it. */
 export interface UploaderFrameSpec {
   purpose: UploaderPurpose;
   /** How the admin is told the shape: `wide 16:9`, `16:9`. */
   name: string;
-  /**
-   * Why this opening's destination does not take a picture of this shape, a
-   * sentence for the admin, or null when it does.
-   */
-  refusal: string | null;
 }
 
 /**
  * What the view is opened with, in the opening tool's result as `uploader`:
  * its words; every shape the area's pictures come in, each with its purpose's
- * exact size and whether this destination takes it;
- * what a picture of none of them is told; the largest JPEG a call carries;
- * and where the picture is placed — or null, when it is only added to the
- * catalogue and the model is told its id to place.
+ * exact size; what a picture of none of them is told; the largest JPEG a call
+ * carries; and the sentence the model's report of the batch ends with, saying
+ * what to do with the new catalogue entries.
  *
- * The view infers a picked picture's shape from these frames alone and
- * restates none of them.
+ * The uploader only ever adds pictures to the catalogue: every picture of a
+ * frame's shape is kept, and where it is shown is decided afterwards by the
+ * model, through the area's placing tools, where the database judges whether
+ * it fits. The view infers a picked picture's shape from these frames alone,
+ * and restates none of the rules.
  */
 export function uploaderOpening(view: {
   heading: string;
@@ -160,19 +147,20 @@ export function uploaderOpening(view: {
   frames: readonly UploaderFrameSpec[];
   /** What a picture of none of the frames' shapes is told, after its own size. */
   noFrame: string;
-  place: UploaderPlacement | null;
+  /** What the model is told to do with the uploaded pictures, at the end of the batch's report. */
+  nextStep: string;
 }) {
   return {
     kind: "picture" as const,
     heading: view.heading,
     subject: view.subject,
-    frames: view.frames.map(({ purpose, name, refusal }) => {
+    frames: view.frames.map(({ purpose, name }) => {
       const { width, height } = CATALOGUE_IMAGE_PURPOSES[purpose];
-      return { purpose, name, width, height, refusal };
+      return { purpose, name, width, height };
     }),
     noFrame: view.noFrame,
     maxBytes: MAX_UPLOAD_BYTES,
-    place: view.place,
+    nextStep: view.nextStep,
   };
 }
 
@@ -377,7 +365,7 @@ export function registerImageUploader(server: McpServer): void {
     {
       title: "Picture uploader",
       description:
-        "Where the admin picks a picture from their device to become a Library article's cover or a landing page's picture, or a PDF to become a guide's file.",
+        "Where the admin picks pictures from their device to add to the picture catalogue as Library covers or landing page pictures, or a PDF to become a guide's file.",
       mimeType: MCP_APP_MIME_TYPE,
     },
     async (uri) => ({
