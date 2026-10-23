@@ -132,9 +132,13 @@ BEGIN
   LOOP
     v_path := NULL;
     IF v_ref ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+      -- Locked so a removal of this entry waits for this save to commit, and
+      -- its unlink then sees the rows this save wrote: unlocked, a removal
+      -- racing the save leaves a picture named that no longer exists.
       SELECT path, purpose INTO v_path, v_purpose
         FROM public.catalogue_images
-       WHERE id = v_ref::uuid;
+       WHERE id = v_ref::uuid
+         FOR KEY SHARE;
     END IF;
 
     -- The reachable cause is an entry another admin removed after this one
