@@ -138,7 +138,10 @@ BEGIN
           -- Locked so a removal of this entry waits for this save to commit,
           -- and its unlink then sees the rows this save wrote: unlocked, a
           -- removal racing the save leaves a picture named that no longer
-          -- exists.
+          -- exists, which no tool can then clear. A removal locks the entry
+          -- before the page, the opposite order, so the two can deadlock in
+          -- that same window: one is aborted (40P01) and retried, which is
+          -- loud where the dangling picture was silent.
           SELECT path, purpose INTO v_path, v_purpose
             FROM public.catalogue_images
            WHERE id = v_ref::uuid
@@ -342,12 +345,12 @@ BEGIN
     RETURN OLD;
   END IF;
 
-  -- Taken out of both copies before the entry goes, so the picture trigger
-  -- re-deriving each copy never meets the entry it is removing; the structure
-  -- trigger drops the text of an image section this leaves with no picture.
-  -- The copies are found by their pictures before the share pictures are
-  -- unset, so a working copy whose only use was a share picture moves its
-  -- last-saved time too.
+  -- Taken out of both copies' sections first, then out of their versions'
+  -- share pictures, whose unset re-derives each copy without the entry; the
+  -- structure trigger drops the text of an image section this leaves with no
+  -- picture. The copies are found by their pictures before the share
+  -- pictures are unset, so a working copy whose only use was a share picture
+  -- moves its last-saved time too.
   UPDATE public.landing_pages
      SET sections = public.landing_sections_without_image(sections, OLD.id)
    WHERE pictures ? OLD.id::text;

@@ -49,7 +49,10 @@ BEGIN
           -- Locked so a removal of this entry waits for this save to commit,
           -- and its unlink then sees the rows this save wrote: unlocked, a
           -- removal racing the save leaves a picture named that no longer
-          -- exists.
+          -- exists, which no tool can then clear. A removal locks the entry
+          -- before the page, the opposite order, so the two can deadlock in
+          -- that same window: one is aborted (40P01) and retried, which is
+          -- loud where the dangling picture was silent.
           SELECT path, purpose INTO v_path, v_purpose
             FROM public.catalogue_images
            WHERE id = v_ref::uuid

@@ -11,12 +11,12 @@ BEGIN
     RETURN OLD;
   END IF;
 
-  -- Taken out of both copies before the entry goes, so the picture trigger
-  -- re-deriving each copy never meets the entry it is removing; the structure
-  -- trigger drops the text of an image section this leaves with no picture.
-  -- The copies are found by their pictures before the share pictures are
-  -- unset, so a working copy whose only use was a share picture moves its
-  -- last-saved time too.
+  -- Taken out of both copies' sections first, then out of their versions'
+  -- share pictures, whose unset re-derives each copy without the entry; the
+  -- structure trigger drops the text of an image section this leaves with no
+  -- picture. The copies are found by their pictures before the share
+  -- pictures are unset, so a working copy whose only use was a share picture
+  -- moves its last-saved time too.
   UPDATE public.landing_pages
      SET sections = public.landing_sections_without_image(sections, OLD.id)
    WHERE pictures ? OLD.id::text;
