@@ -22,9 +22,10 @@ afterAll(() => vi.unstubAllEnvs());
 /**
  * **A page's sticky section, as the body draws it.** jsdom has no layout, so
  * what is pinned is the markup the layout follows: the section drawn once,
- * after every other section, in the column that is sticky from `xl` on the
- * side the structure names; the sections clearing that side from `xl`; and
- * the jump button under the hero's content, hidden from `xl`, in the
+ * after every other section, in the gutter on the side the structure names,
+ * sticky from `2xl`; every other section in the grid's content track, never
+ * padded for the card, a band spanning every track; and the jump button
+ * under the hero's content, hidden from `2xl`, in the
  * section's own button's words, present only while the section offers
  * something, and scrolling to the column when tapped. Where the column
  * actually sits at each width was measured in a real browser.
@@ -114,21 +115,23 @@ describe("a page's sticky section", () => {
     expect(screen.getAllByRole("heading", { name: "Hear about new clubs first" })).toHaveLength(1);
   });
 
-  it("sits in the column that is sticky from xl, on the side the structure names", () => {
+  it("stands in the gutter on the side the structure names, sticky from 2xl", () => {
+    const floor = "minmax(calc(var(--landing-rail-width)+var(--landing-rail-gap)),1fr)";
     for (const side of ["right", "left"] as const) {
       const { unmount } = renderBody({ side });
       const rail = document.getElementById(LANDING_STICKY_ANCHOR);
-      expect(rail?.className).toContain("xl:sticky");
-      expect(rail?.className).toContain("xl:w-[var(--landing-rail-width)]");
+      expect(rail?.className).toContain("2xl:sticky");
+      expect(rail?.className).toContain("2xl:w-[var(--landing-rail-width)]");
+      // Pinned against the content: a left card pushed to its gutter's inner edge.
+      if (side === "left") expect(rail?.className).toContain("2xl:ml-auto");
+      else expect(rail?.className).not.toContain("ml-auto");
       expect(rail?.parentElement?.className).toContain(
-        side === "right" ? "xl:justify-end" : "xl:justify-start",
+        side === "right" ? "2xl:col-start-3" : "2xl:col-start-1",
       );
-      // The sections clear the column's side from xl, and only that side.
+      // The page's grid keeps the card's floor on its side and lets the other gutter close.
       const page = rail?.parentElement?.parentElement;
-      expect(page?.className).toContain(`xl:[--landing-rail-space-${side}:`);
-      expect(page?.className).not.toContain(
-        `--landing-rail-space-${side === "right" ? "left" : "right"}:`,
-      );
+      const columns = `2xl:grid-cols-[${side === "left" ? `${floor}_minmax(0,74rem)_minmax(0,1fr)` : `minmax(0,1fr)_minmax(0,74rem)_${floor}`}]`;
+      expect(page?.className).toContain(columns);
       expect(within(rail ?? document.body).getByRole("heading", { level: 2 }).textContent).toBe(
         "Hear about new clubs first",
       );
@@ -136,17 +139,30 @@ describe("a page's sticky section", () => {
     }
   });
 
-  it("lays a card band under the column, with the inset on the section inside it, and never bands the sticky card", () => {
+  it("never narrows or pads a section for the card: each sits in the content track of its own row", () => {
+    renderBody();
+    for (const name of ["Gaming clubs in Espoo", "Questions", "Ready?"]) {
+      const section = screen.getByRole("heading", { name }).closest("section");
+      expect(section?.className).toContain("container mx-auto px-4");
+      expect(section?.className).not.toContain("landing-rail");
+      expect(section?.parentElement?.className).toContain("2xl:grid-cols-subgrid");
+      expect(section?.parentElement?.className).toContain("2xl:*:col-start-2");
+    }
+  });
+
+  it("runs a card band across every track, the section inside it in the content one, and never bands the sticky card", () => {
     renderBody({ background: "card" });
     const faq = screen.getByRole("heading", { name: "Questions" }).closest("section");
-    // The band is the full-width wrapper; the section is the content box that clears the column.
-    expect(faq?.parentElement?.className).toBe("bg-card");
-    expect(faq?.className).toContain("var(--landing-rail-space-right)");
-    expect(faq?.parentElement?.className).not.toContain("container");
+    // The band is the full-width row; the section inside it is the content box.
+    const band = faq?.parentElement?.className;
+    expect(band).toContain("bg-card");
+    expect(band).toContain("2xl:col-span-full");
+    expect(band).toContain("2xl:grid-cols-subgrid");
+    expect(band).not.toContain("container");
     // The sticky section's own background is not drawn: it stands on the page as a card.
     const form = screen.getByRole("heading", { name: "Hear about new clubs first" }).closest("section");
     expect(document.getElementById(LANDING_STICKY_ANCHOR)?.contains(form ?? null)).toBe(true);
-    expect(form?.parentElement?.className).not.toBe("bg-card");
+    expect(form?.parentElement?.className).not.toContain("bg-card");
   });
 
   it("stacks the form's name fields in the column, which is narrower than the viewport says", () => {
@@ -161,11 +177,11 @@ describe("a page's sticky section", () => {
     expect(nameRow()).toContain("sm:grid-cols-2");
   });
 
-  it("draws the jump under the hero's content, hidden from xl, in the section's button's words", () => {
+  it("draws the jump under the hero's content, hidden from 2xl, in the section's button's words", () => {
     renderBody();
     const button = jump();
     expect(button).not.toBeNull();
-    expect(button?.className).toContain("xl:hidden");
+    expect(button?.className).toContain("2xl:hidden");
     // The hero's own button stays where it is, before the jump.
     const hero = heroOf();
     const controls = [...(hero?.querySelectorAll("a, button") ?? [])];

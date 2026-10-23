@@ -234,13 +234,14 @@ may carry it is declared in each type's section module (only the email sign-up t
 allowing another is that module's one line, plus the same type in the SQL structure check,
 and a DB test running every type through both halves fails until the two agree. The
 structure rule refuses a second sticky section and a type not allowed one, naming the types
-that are. From `xl` the sticky section leaves the flow and stands in a sticky column on its
-side, pinned under the header, beside every other section. The column is laid over the
-sections rather than given a track: a `card` section's band still runs the full width under
-it, and each section's content box clears it with its inline padding (`LANDING_CONTENT`),
-so the column is a card standing on the page. The sticky section is never on a band — a
-background stored on it is kept but not drawn, in the column and at the page's end alike,
-since the card carries its own edge. Below `xl` it is drawn at the
+that are. From `2xl` the sticky section leaves the flow and stands as a sticky card in the
+page's gutter on its side, outside the sections' content box and pinned under the header,
+as the shop's filter rail does: **a section is never narrowed or padded for the card** — the
+content keeps its full measure in the page's centre, moving away from the card only as far
+as the viewport makes it, and a `card` section's band still runs the full width, its
+content lined up with every other section's. The sticky section is never on a band — a
+background stored on it is kept but not drawn, in the gutter and at the page's end alike,
+since the card carries its own edge. Below `2xl` it is drawn at the
 page's end, after the last section, and the page — not the admin — puts a jump button to
 it under the hero, in the section's own button's words, and only while the section has
 something to offer (each type's renderer says what). It is drawn once, last in the

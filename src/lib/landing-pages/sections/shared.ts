@@ -156,7 +156,7 @@ export interface LandingSectionDefinition<
   readonly label: string;
   /**
    * Whether a section of this type may be the page's sticky section: on wide
-   * screens beside the other sections in a sticky side column, below that at
+   * screens a sticky card in the page's gutter beside the other sections, below that at
    * the bottom of the page with a jump button to it under the hero. Every
    * section takes the `sticky` shared field; the structure rule refuses it on a
    * type that says false here, and the SQL structure check names the same

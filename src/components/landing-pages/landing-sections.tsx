@@ -825,11 +825,11 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
  * form, in the reading column.
  *
  * **As the page's sticky section it is a card**, the closing card's world rule
- * along its top and the heading a step down: in the side column it is an
+ * along its top and the heading a step down: in the page's gutter it is an
  * object standing on the page beside the sections rather than one of them, so
- * it carries its own edge, and a section's band running under the column
- * passes behind it. The page gives it its place and its spacing — the column
- * from `xl`, the page's end below that — and the card is the same in both.
+ * it carries its own edge, and a section's band running across the gutter
+ * passes behind it. The page gives it its place and its spacing — the gutter
+ * from `2xl`, the page's end below that — and the card is the same in both.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
   const sticky = section.sticky !== undefined;

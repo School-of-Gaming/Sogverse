@@ -11,14 +11,12 @@ import { written } from "./landing-section-types";
  */
 
 /**
- * A section's content box: the page container, with its inline padding grown
- * on the side a sticky column takes from `xl` (the page body sets the two
- * spaces; both are zero otherwise), so the content clears the column. A
- * `card` section's band is the page body's wrapper around this box, so the
- * band runs the full width under the column and only the content moves.
+ * A section's content box: the page container, the same on every page. A
+ * `card` section's band is the page body's full-width wrapper around it, and
+ * a page's sticky card stands in the gutter outside it, so neither ever
+ * narrows or pads the content.
  */
-export const LANDING_CONTENT =
-  "container mx-auto pl-[calc(1rem+var(--landing-rail-space-left))] pr-[calc(1rem+var(--landing-rail-space-right))]";
+export const LANDING_CONTENT = "container mx-auto px-4";
 
 /** Vertical rhythm shared by every section after the hero. */
 export const LANDING_SECTION = `${LANDING_CONTENT} py-16 sm:py-24`;
