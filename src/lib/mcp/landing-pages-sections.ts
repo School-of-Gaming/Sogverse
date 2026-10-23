@@ -9,6 +9,8 @@ import {
   LANDING_SECTION_BACKGROUNDS,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
+  LANDING_STICKY_SIDES,
+  LANDING_STICKY_TYPES,
   LANDING_TESTIMONIAL_ARRANGEMENTS,
   LANDING_TESTIMONIAL_SLOTS,
   landingStructureProblem,
@@ -487,6 +489,28 @@ export const MCP_LANDING_SECTIONS: {
 // Inputs built from the record
 // ---------------------------------------------------------------------------
 
+/** The types that may be sticky, by their names as the tools write them. */
+const STICKY_TYPES = LANDING_STICKY_TYPES.map(
+  (type) => `${type} (${LANDING_SECTIONS[type].label})`,
+).join(", ");
+
+/** How a sticky section is drawn, for the AI app. */
+export const STICKY_MANUAL = `A page may mark a section sticky, by giving it sticky: ${LANDING_STICKY_SIDES.join(" or ")}; only these types may be: ${STICKY_TYPES}. A page has at most one sticky section on each side, so two at most, one left and one right. On wide screens (1536px and wider) a sticky section leaves the flow of the page and stands as a narrow card in the page's margin on its side, pinned under the site header as the reader scrolls. Every other section keeps its full width where the screen allows: with one card, the sections stay in the page's centre and move away from the card only as far as the screen requires; with a card on each side, they stay centred and are narrower until the screen is about 1870px wide. On narrower screens, phones included, the sticky sections are drawn at the bottom of the page, after the last section, in the order they have in the list. Otherwise where a sticky section sits in the list makes no difference to where it is drawn; removing the section, or leaving sticky out, unmarks it. A sticky section is drawn as a card of its own and never on a band, wherever it sits, so its background makes no difference. In the card its words are start-aligned under a smaller heading, and its button, form or download spans the card's width; a guide's cover picture runs across the card's top. A sticky guide readers cannot be offered draws no card, as a guide in the flow draws nothing.`;
+
+/**
+ * The shared field every section takes, as the registry's `stickyField`; the
+ * structure rule then refuses it on a type that may not be sticky, with a
+ * sentence naming the types that may.
+ */
+const sticky = {
+  sticky: z
+    .enum(LANDING_STICKY_SIDES)
+    .optional()
+    .describe(
+      `Makes this a sticky section, its card on this side on wide screens; at most one section per side. Only for ${STICKY_TYPES}; leave it out on every other section.`,
+    ),
+};
+
 const { hero, ...afterHero } = MCP_LANDING_SECTIONS;
 const others = Object.values(afterHero);
 
@@ -498,8 +522,8 @@ const others = Object.values(afterHero);
 export const mcpLandingStructure = z
   .array(
     z.discriminatedUnion("type", [
-      hero.structure,
-      ...others.map((section) => section.structure),
+      hero.structure.extend(sticky),
+      ...others.map((section) => section.structure.extend(sticky)),
     ]),
   )
   .describe(
@@ -585,6 +609,13 @@ const STRUCTURE_RULES = [
     { id: "a", type: "hero" },
     { id: "b", type: "hero" },
   ]),
+  ...LANDING_STICKY_TYPES.slice(0, 1).map((type) =>
+    landingStructureProblem([
+      { id: "a", type: "hero" },
+      { id: "b", type, sticky: "left" },
+      { id: "c", type, sticky: "left" },
+    ]),
+  ),
 ]
   .filter((rule) => rule !== null)
   .join("; ");
@@ -609,4 +640,5 @@ export const SECTIONS_MANUAL = [
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
   `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}, default when left out. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,
+  STICKY_MANUAL,
 ].join("\n");

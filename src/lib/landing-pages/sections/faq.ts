@@ -44,6 +44,7 @@ const text = z
 export const faqSection = {
   type: "faq",
   label: "Questions and answers",
+  sticky: false,
   section,
   text,
   missingText: (block, words) => [

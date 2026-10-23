@@ -10,8 +10,23 @@ import { written } from "./landing-section-types";
  * products section, which keeps its cards live) paint the same frame.
  */
 
+/**
+ * A section's content box: the page container, the same on every page. A
+ * `card` section's band is the page body's full-width wrapper around it, and
+ * a page's sticky card stands in the gutter outside it, so neither ever
+ * narrows or pads the content.
+ */
+export const LANDING_CONTENT = "container mx-auto px-4";
+
 /** Vertical rhythm shared by every section after the hero. */
-export const LANDING_SECTION = "container mx-auto px-4 py-16 sm:py-24";
+export const LANDING_SECTION = `${LANDING_CONTENT} py-16 sm:py-24`;
+
+/**
+ * A sticky card's action, whichever type draws it — the call to action's
+ * button, the guide's download, the sign-up's submit: the card's full width,
+ * its label wrapping where a long one is wider than the card's 20rem.
+ */
+export const LANDING_CARD_ACTION = "h-auto min-h-11 w-full whitespace-normal py-2.5 text-center";
 
 /** Small uppercase section label — furniture, so caps; act, as the Roblox page's. */
 export function Eyebrow({ children }: { children: ReactNode }) {
@@ -41,11 +56,14 @@ export function SectionHeader({
   heading,
   intro,
   centred = true,
+  compact = false,
 }: {
   eyebrow?: string;
   heading?: string;
   intro?: string;
   centred?: boolean;
+  /** The heading a step down, as a card's: for a section drawn in a card. */
+  compact?: boolean;
 }) {
   const label = written(eyebrow);
   const title = written(heading);
@@ -56,7 +74,7 @@ export function SectionHeader({
       {label !== null && <Eyebrow>{label}</Eyebrow>}
       {title !== null && (
         <div className={cn(label !== null && "mt-4")}>
-          <Heading level={2} step="display" align={centred ? "center" : "start"}>
+          <Heading level={2} step={compact ? "card-title" : "display"} align={centred ? "center" : "start"}>
             {title}
           </Heading>
         </div>

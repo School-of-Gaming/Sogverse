@@ -32,6 +32,7 @@ const text = z
 export const ctaSection = {
   type: "cta",
   label: "Call to action",
+  sticky: true,
   section,
   text,
   missingText: (_block, words) => [

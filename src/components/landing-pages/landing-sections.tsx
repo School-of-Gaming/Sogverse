@@ -39,7 +39,14 @@ import type { PublicTestimonial } from "@/services/testimonials/testimonials.con
 import { GuideDownload } from "./guide-download";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
-import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
+import {
+  Eyebrow,
+  hasSectionHeader,
+  LANDING_CARD_ACTION,
+  LANDING_CONTENT,
+  LANDING_SECTION,
+  SectionHeader,
+} from "./landing-section-header";
 import {
   itemHeadingLevel,
   written,
@@ -106,8 +113,6 @@ export interface LandingRenderContext {
    * live query fetches for itself.
    */
   products: ProductRailPrefetch | null;
-  /** Whether the read answered the placed guide with this id. */
-  hasGuide: (guideId: string) => boolean;
 }
 
 /** A picture as a renderer draws it: where it is, and the shape its box is reserved at. */
@@ -214,6 +219,36 @@ function LandingButton({
   }
 }
 
+/**
+ * **A sticky section's card** — the one frame every type that may be sticky is
+ * drawn in, so the cards beside a page read as one family: the closing card's
+ * world rule along its top, the card's own padding, the words start-aligned
+ * under a heading a step down (`SectionHeader`'s `compact`), and the action the
+ * card's full width. In the page's gutter it is an object standing on the page
+ * beside the sections rather than one of them, so it carries its own edge, and
+ * a section's band running across the gutter passes behind it. It replaces the
+ * section's own frame rather than holding it, since a card does not contain a
+ * card. The page gives it its place and its spacing — the gutter from `2xl`,
+ * the page's end below that — and the card is the same in both.
+ */
+function StickyCard({ children }: { children: ReactNode }) {
+  return (
+    <section>
+      <Card data-sticky-card className="relative mx-auto max-w-xl overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
+        <CardContent className="pt-8">{children}</CardContent>
+      </Card>
+    </section>
+  );
+}
+
+/**
+ * The CSS width a picture across a sticky card resolves to, stated as the
+ * card's own: 20rem in the gutter from `2xl`, and below that the card at the
+ * page's end, as wide as its 36rem measure or the viewport allows.
+ */
+const STICKY_CARD_PICTURE = "(min-width: 1536px) 20rem, (min-width: 608px) 36rem, 100vw";
+
 // ---------------------------------------------------------------------------
 // The sections
 // ---------------------------------------------------------------------------
@@ -231,7 +266,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
   const subline = written(text.subline);
   const buttonLabel = written(text.buttonLabel);
   return (
-    <section className="container mx-auto px-4 pb-16 pt-8 sm:py-24">
+    <section className={cn(LANDING_CONTENT, "pb-16 pt-8 sm:py-24")}>
       <div
         className={cn(
           "mx-auto",
@@ -698,11 +733,34 @@ function FaqSection({ section, text }: LandingSectionProps<"faq">) {
 /**
  * The closing call to action, as the home and Roblox pages close: the plain
  * card with one world rule along its top edge, a heading, a line, one button.
+ * As a sticky section it is the sticky card instead, the same words in it.
  */
 function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
   const eyebrow = written(text.eyebrow);
   const body = written(text.body);
   const buttonLabel = written(text.buttonLabel);
+  if (section.sticky !== undefined) {
+    return (
+      <StickyCard>
+        <SectionHeader
+          eyebrow={text.eyebrow}
+          heading={text.heading}
+          intro={text.body}
+          centred={false}
+          compact
+        />
+        {buttonLabel !== null && (
+          <LandingButton
+            target={section.button}
+            label={buttonLabel}
+            subject={text.emailSubject}
+            locale={context.locale}
+            className={cn("mt-6", LANDING_CARD_ACTION)}
+          />
+        )}
+      </StickyCard>
+    );
+  }
   return (
     <section className={LANDING_SECTION}>
       <Card className="relative mx-auto max-w-3xl overflow-hidden">
@@ -738,18 +796,42 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * from `lg`, start-aligned there and centred on a phone, the picture after
  * them.
  *
- * A guide the read did not answer leaves the section out, since there is
- * nothing to offer; one it answered has a file, and the download route picks
- * the reader's by the reader fallback. Whether the reader may download is
- * decided in the browser (`guide-download.tsx`); everything here is the same
- * for every reader.
+ * As a sticky section it is the sticky card: the cover picture across its
+ * top, the header and line under it, the download the card's full width.
+ *
+ * The page body leaves out a guide the read did not answer, so one drawn here
+ * has a file, and the download route picks the reader's by the reader
+ * fallback. Whether the reader may download is decided in the browser
+ * (`guide-download.tsx`); everything here is the same for every reader.
  */
 function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
-  if (!context.hasGuide(section.guideId)) return null;
   const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const eyebrow = written(text.eyebrow);
   const heading = written(text.heading);
   const description = written(text.description);
+  // exact-locale: resets the body's language mark for our own words
+  const ownLang = context.textLocale === context.locale ? undefined : context.locale;
+  if (section.sticky !== undefined) {
+    return (
+      <StickyCard>
+        {picture !== null && (
+          <div className="mb-6">
+            <LandingPicture picture={picture} alt={text.imageAlt} sizes={STICKY_CARD_PICTURE} />
+          </div>
+        )}
+        <SectionHeader
+          eyebrow={text.eyebrow}
+          heading={text.heading}
+          intro={text.description}
+          centred={false}
+          compact
+        />
+        <div lang={ownLang}>
+          <GuideDownload guideId={section.guideId} locale={context.locale} placement="card" />
+        </div>
+      </StickyCard>
+    );
+  }
   return (
     <section className={LANDING_SECTION}>
       <div
@@ -778,12 +860,11 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
           {description !== null && (
             <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
           )}
-          {/* exact-locale: resets the body's language mark for our own words */}
-          <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+          <div lang={ownLang}>
             <GuideDownload
               guideId={section.guideId}
               locale={context.locale}
-              besidePicture={picture !== null}
+              placement={picture === null ? "centred" : "beside-picture"}
             />
           </div>
         </div>
@@ -797,22 +878,40 @@ function GuideSection({ section, text, context }: LandingSectionProps<"guide">) 
 
 /**
  * An email sign-up: the heading and intro the page wrote over the site's own
- * form, in the reading column.
+ * form, in the reading column. As a sticky section it is the sticky card, the
+ * form's names stacked and its button the card's full width.
  */
 function SubscribeSection({ section, text, context }: LandingSectionProps<"subscribe">) {
+  const sticky = section.sticky !== undefined;
+  const form = (
+    <LandingSubscribeForm
+      pageId={context.pageId}
+      sectionId={section.id}
+      locale={context.locale}
+      buttonLabel={written(text.buttonLabel) ?? ""}
+      preview={context.preview}
+      inCard={sticky}
+    />
+  );
+  if (sticky) {
+    return (
+      <StickyCard>
+        <SectionHeader
+          eyebrow={text.eyebrow}
+          heading={text.heading}
+          intro={text.intro}
+          centred={false}
+          compact
+        />
+        <div className="mt-6">{form}</div>
+      </StickyCard>
+    );
+  }
   return (
     <section className={LANDING_SECTION}>
       <div className="mx-auto max-w-xl">
         <SectionHeader eyebrow={text.eyebrow} heading={text.heading} intro={text.intro} />
-        <div className="mt-10">
-          <LandingSubscribeForm
-            pageId={context.pageId}
-            sectionId={section.id}
-            locale={context.locale}
-            buttonLabel={written(text.buttonLabel) ?? ""}
-            preview={context.preview}
-          />
-        </div>
+        <div className="mt-10">{form}</div>
       </div>
     </section>
   );

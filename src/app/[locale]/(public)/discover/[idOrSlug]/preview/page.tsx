@@ -83,13 +83,15 @@ export default async function LandingPagePreviewPage({
 
   return (
     <>
-      <LandingPageBreadcrumb
-        trail={trail}
-        label={tDiscover("breadcrumbLabel")}
-        textLocale={version.locale}
-        locale={locale}
-      />
       <LandingPageBody
+        breadcrumb={
+          <LandingPageBreadcrumb
+            trail={trail}
+            label={tDiscover("breadcrumbLabel")}
+            textLocale={version.locale}
+            locale={locale}
+          />
+        }
         sections={draft.sections}
         pictures={draft.pictures}
         testimonials={page.testimonials}

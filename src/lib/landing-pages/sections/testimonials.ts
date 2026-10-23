@@ -93,6 +93,7 @@ const text = z
 export const testimonialsSection = {
   type: "testimonials",
   label: "Testimonials",
+  sticky: false,
   section,
   text,
   missingText: () => [],

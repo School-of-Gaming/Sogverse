@@ -10,6 +10,9 @@ import {
   landingSectionBackground,
   landingSections,
   landingSectionTextsSchema,
+  landingStickySections,
+  LANDING_STICKY_SIDES,
+  LANDING_STICKY_TYPES,
   missingInLandingVersion,
   landingPickedProductIds,
   type LandingMarkdownField,
@@ -164,6 +167,67 @@ describe("the structure", () => {
     ).toBe(false);
     expect(landingSections.safeParse([hero, { ...rest[0], id: hero.id }]).success).toBe(false);
     expect(landingSections.safeParse([]).success).toBe(false);
+  });
+});
+
+describe("the sticky sections", () => {
+  const sections = everySection();
+  const marked = (ids: readonly string[], side = "right") =>
+    sections.map((section) => (ids.includes(section.id) ? { ...section, sticky: side } : section));
+  const messages = (structure: unknown[]) => {
+    const parsed = landingSections.safeParse(structure);
+    return parsed.success ? [] : parsed.error.issues.map((issue) => issue.message);
+  };
+
+  it("may be a section of a type whose module allows it, on either side", () => {
+    for (const side of LANDING_STICKY_SIDES) {
+      const parsed = landingSections.parse(marked([I.subscribe], side));
+      expect(landingStickySections(parsed)).toEqual([
+        expect.objectContaining({ id: I.subscribe, type: "subscribe", sticky: side }),
+      ]);
+    }
+    expect(landingStickySections(landingSections.parse(sections))).toEqual([]);
+  });
+
+  it("may be one on each side, read back in the structure's order", () => {
+    const second = crypto.randomUUID();
+    const parsed = landingSections.parse([
+      ...marked([I.subscribe], "right"),
+      { id: second, type: "subscribe", sticky: "left" },
+    ]);
+    expect(landingStickySections(parsed).map(({ id, sticky }) => [id, sticky])).toEqual([
+      [I.subscribe, "right"],
+      [second, "left"],
+    ]);
+  });
+
+  it("is allowed on the email sign-up, the call to action and the guide alone, by each module's own declaration", () => {
+    expect(LANDING_STICKY_TYPES).toEqual(["guide", "subscribe", "cta"]);
+    for (const type of LANDING_SECTION_TYPES) {
+      const section = sections.find((candidate) => candidate.type === type);
+      if (section === undefined) throw new Error(`no ${type} case`);
+      expect(messages(marked([section.id])).length === 0, type).toBe(LANDING_SECTIONS[type].sticky);
+    }
+  });
+
+  it("is refused on any other type, saying which types may be", () => {
+    expect(messages(marked([I.faq]))).toEqual([
+      `Section ${I.faq} (Questions and answers) cannot be sticky: only Guide, Email sign-up, Call to action sections can`,
+    ]);
+    for (const type of LANDING_SECTION_TYPES.filter((t) => !LANDING_STICKY_TYPES.includes(t))) {
+      const section = sections.find((candidate) => candidate.type === type);
+      if (section === undefined) throw new Error(`no ${type} case`);
+      expect(messages(marked([section.id])), type).toHaveLength(1);
+    }
+  });
+
+  it("is one per side, and on a side the field has", () => {
+    for (const side of LANDING_STICKY_SIDES) {
+      expect(
+        messages([...marked([I.subscribe], side), { id: crypto.randomUUID(), type: "subscribe", sticky: side }]),
+      ).toEqual(["A page has at most one sticky section on each side"]);
+    }
+    expect(messages(marked([I.subscribe], "top"))).toHaveLength(1);
   });
 });
 

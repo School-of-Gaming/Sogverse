@@ -68,6 +68,7 @@ const text = z
 export const productsSection = {
   type: "products",
   label: "Products",
+  sticky: false,
   section,
   text,
   missingText: () => [],
