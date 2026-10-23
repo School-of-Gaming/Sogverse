@@ -9,15 +9,13 @@
  * other picture is refused, with a sentence saying why.
  */
 
-/** One frame the opening offers: a catalogue purpose's exact size, how it is named, and whether this destination takes it. */
+/** One frame the opening offers: a catalogue purpose's exact size, and how it is named. */
 export interface Frame {
   purpose: string;
   /** How the admin is told the shape: `wide 16:9`. */
   name: string;
   width: number;
   height: number;
-  /** Why this destination does not take this shape, or null when it does. */
-  refusal: string | null;
 }
 
 /** How far a picture's ratio may be from a frame's and still be that frame's shape: 1%. */
@@ -64,10 +62,9 @@ export type Verdict =
   | { kind: "refused"; reason: string };
 
 /**
- * Whether a picture of this size can be uploaded here, and as which frame:
- * a picture of an offered shape that this destination takes fits; one of an
- * offered shape it does not take, or of no offered shape, is refused with a
- * sentence naming its size, its shape and the rule.
+ * Whether a picture of this size can be uploaded, and as which frame: a
+ * picture of an offered shape fits; one of no offered shape is refused with a
+ * sentence naming its ratio, its size and the rule.
  */
 export function judgePicture(
   width: number,
@@ -75,11 +72,11 @@ export function judgePicture(
   opening: { frames: readonly Frame[]; noFrame: string },
 ): Verdict {
   const frame = matchFrame(width, height, opening.frames);
-  if (frame !== null && frame.refusal === null) return { kind: "fits", frame };
-  const size = `${width} × ${height}`;
-  return frame === null
-    ? { kind: "refused", reason: `This picture is ${describeRatio(width, height)} (${size}). ${opening.noFrame}` }
-    : { kind: "refused", reason: `This picture is ${frame.name} (${size}). ${frame.refusal}` };
+  if (frame !== null) return { kind: "fits", frame };
+  return {
+    kind: "refused",
+    reason: `This picture is ${describeRatio(width, height)} (${width} × ${height}). ${opening.noFrame}`,
+  };
 }
 
 /**

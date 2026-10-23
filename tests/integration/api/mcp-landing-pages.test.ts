@@ -1099,163 +1099,45 @@ describe("pictures", () => {
     expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
-  /** The page with its image section holding `count` pictures, all wide. */
-  function withGallery(count: number): AdminLandingPage {
-    const images = Array.from({ length: count }, (_, n) => ({
-      id: `b2000000-0000-4000-8000-${String(n + 10).padStart(12, "0")}`,
-      imageId: CASTLE,
-    }));
-    return {
-      ...PAGE,
-      draft: {
-        ...PAGE.draft,
-        sections: PAGE.draft.sections.map((section) =>
-          section.id === GALLERY ? { id: GALLERY, type: "image" as const, images } : section,
-        ),
-      },
-    };
-  }
+  it("opens the uploader to add landing pictures to the catalogue, of every shape, ending with the next step", async () => {
+    const result = await tool("open_landing_image_uploader");
 
-  /** The three frames, each refused with `refusals[shape]` (null: taken). */
-  function frames(refusals: { wide: string | null; square: string | null; portrait: string | null }) {
-    return [
-      { purpose: "landing_image", name: "wide 16:9", width: 1600, height: 900, refusal: refusals.wide },
-      { purpose: "landing_square_image", name: "square 1:1", width: 1200, height: 1200, refusal: refusals.square },
-      { purpose: "landing_portrait_image", name: "portrait 4:5", width: 1200, height: 1500, refusal: refusals.portrait },
-    ];
-  }
-
-  const EVERY_SHAPE = { wide: null, square: null, portrait: null };
-
-  it("opens the uploader to place a picture in a hero, which takes a wide picture alone", async () => {
-    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: HERO });
-
-    const heroRule = "A hero section's picture must be wide 16:9.";
+    const shapes = "wide 16:9, square 1:1 or portrait 4:5";
+    expect(result.isError).toBeFalsy();
     expect(result.structuredContent).toEqual({
-      pageId: ID,
-      title: "Gaming clubs in Espoo",
-      sectionId: HERO,
-      accepts: "wide 16:9",
+      accepts: shapes,
       uploader: {
         kind: "picture",
-        heading: "Landing page picture",
-        subject: "For “Gaming clubs in Espoo”",
-        frames: frames({ wide: null, square: heroRule, portrait: heroRule }),
-        noFrame: heroRule,
-        room: { pictures: 1, full: "A hero section shows one picture: only the first that fits is taken." },
-        oneShape: null,
+        heading: "Landing page pictures",
+        subject: expect.any(String),
+        frames: [
+          { purpose: "landing_image", name: "wide 16:9", width: 1600, height: 900 },
+          { purpose: "landing_square_image", name: "square 1:1", width: 1200, height: 1200 },
+          { purpose: "landing_portrait_image", name: "portrait 4:5", width: 1200, height: 1500 },
+        ],
+        noFrame: `A landing page picture must be ${shapes}.`,
         maxBytes: expect.any(Number),
-        place: expect.objectContaining({
-          tool: "set_landing_section_image",
-          arguments: { pageId: ID, sectionId: HERO },
-          imageArgument: "imageId",
-          list: false,
-        }),
+        nextStep: expect.any(String),
       },
     });
-    expect(resultText(result)).toContain("it takes pictures that are already wide 16:9, one picture");
+    // The next step names the placing tools, and the text result carries it too.
+    const { nextStep } = z.object({ uploader: z.object({ nextStep: z.string() }) }).parse(result.structuredContent).uploader;
+    expect(nextStep).toContain("set_landing_section_image");
+    expect(nextStep).toContain("save_landing_page_structure");
+    expect(resultText(result)).toContain(nextStep);
+    // It names no destination, so no page is read.
+    expect(landing.getAdminPage).not.toHaveBeenCalled();
   });
 
-  it("takes every shape for a text section, and for the catalogue alone", async () => {
-    const text = await tool("open_landing_image_uploader", { pageId: ID, sectionId: TEXT });
-    const alone = await tool("open_landing_image_uploader", { pageId: ID });
-
-    for (const result of [text, alone]) {
-      expect(result.structuredContent).toMatchObject({
-        accepts: "wide 16:9, square 1:1 or portrait 4:5",
-        uploader: {
-          frames: frames(EVERY_SHAPE),
-          noFrame: "A landing page picture must be wide 16:9, square 1:1 or portrait 4:5.",
-        },
-      });
-    }
-    expect(text.structuredContent).toMatchObject({
-      uploader: {
-        room: { pictures: 1, full: "A text section shows one picture: only the first that fits is taken." },
-        oneShape: null,
-        place: { imageArgument: "imageId", list: false },
-      },
-    });
-    // The catalogue alone takes any number, of any mix of shapes.
-    expect(alone.structuredContent).toMatchObject({
-      sectionId: null,
-      uploader: { room: null, oneShape: null, place: null },
-    });
-    expect(resultText(alone)).toContain("as many as they like at once");
-  });
-
-  it("takes as many pictures as an image section has room for, of one shape, placed in one call", async () => {
-    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
-
-    expect(result.structuredContent).toMatchObject({
-      uploader: {
-        room: {
-          pictures: 3,
-          full: "An image section shows at most four pictures, and this one has room for 3 more: the first 3 that fit are taken, in the order picked.",
-        },
-        oneShape: "An image section's pictures must all be one shape, so its grid lines up.",
-        place: {
-          tool: "set_landing_section_image",
-          arguments: { pageId: ID, sectionId: GALLERY },
-          imageArgument: "imageIds",
-          list: true,
-        },
-      },
-    });
-    expect(resultText(result)).toContain("up to 3 at once");
-
-    // One place left: the batch takes one picture, placed by its one id.
-    landing.getAdminPage.mockResolvedValue(withGallery(3));
-    const last = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
-    expect(last.structuredContent).toMatchObject({
-      uploader: {
-        room: {
-          pictures: 1,
-          full: "An image section shows at most four pictures, and this one has room for one more: only the first that fits is taken.",
-        },
-        place: { imageArgument: "imageId", list: false },
-      },
-    });
-
-    // Replacing one picture takes one, by imageId.
-    landing.getAdminPage.mockResolvedValue(PAGE);
-    const replacing = await tool("open_landing_image_uploader", {
-      pageId: ID,
-      sectionId: GALLERY,
-      pictureId: PICTURE_ITEM,
-    });
-    expect(replacing.structuredContent).toMatchObject({
-      uploader: {
-        room: { pictures: 1, full: "Replacing a picture takes one: only the first that fits is taken." },
-        oneShape: null,
-        place: { arguments: { pictureId: PICTURE_ITEM }, imageArgument: "imageId", list: false },
-      },
-    });
-  });
-
-  it("refuses to open on a full image section, before the admin picks anything", async () => {
-    landing.getAdminPage.mockResolvedValue(withGallery(4));
-
-    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
-
-    expect(result.isError).toBe(true);
-    expect(resultText(result)).toContain("at most four pictures");
-  });
-
-  it("tells the AI app that several pictures can be picked at once, and how many each destination takes", async () => {
+  it("takes no destination: the opening tool has no inputs", async () => {
     const { tools } = z
-      .object({ tools: z.array(z.object({ name: z.string(), description: z.string().optional() })) })
+      .object({ tools: z.array(z.object({ name: z.string(), inputSchema: z.object({ properties: z.record(z.string(), z.unknown()).optional() }) })) })
       .parse(
         (await readRpc(await POST(mcpRequest({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }))))
           .result,
       );
-    const opening = tools.find((t) => t.name === "open_landing_image_uploader")?.description;
-    expect(opening).toContain("several at once");
-    expect(opening).toContain("without a sectionId, any number");
-    expect(opening).toContain("as many as it has room for (it shows at most four), all of one shape");
-    expect(opening).toContain("each uploaded picture's new catalogue id, shape and the file name it came from");
-    const set = tools.find((t) => t.name === "set_landing_section_image")?.description;
-    expect(set).toContain("send imageIds in place of imageId");
+    const opening = tools.find((t) => t.name === "open_landing_image_uploader");
+    expect(Object.keys(opening?.inputSchema.properties ?? {})).toEqual([]);
   });
 
   it("adds several pictures to an image section in one write, in order, answering their item ids", async () => {
@@ -1306,32 +1188,21 @@ describe("pictures", () => {
     expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
-  it("takes only the shape an image section's other pictures already are", async () => {
-    const adding = await tool("open_landing_image_uploader", { pageId: ID, sectionId: GALLERY });
-    const rule =
-      "The other pictures of this image section are wide 16:9, and an image section's pictures must all be one shape.";
-    expect(adding.structuredContent).toMatchObject({
-      accepts: "wide 16:9",
-      uploader: { frames: frames({ wide: null, square: rule, portrait: rule }), noFrame: rule },
+  it("refuses several pictures for a guide section, which shows one, saving nothing", async () => {
+    const GUIDE = "a1000000-0000-4000-8000-000000000005";
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        sections: [...PAGE.draft.sections, { id: GUIDE, type: "guide" as const, guideId: QUESTION }],
+      },
     });
 
-    // Replacing the section's only picture leaves no other to match.
-    const replacing = await tool("open_landing_image_uploader", {
-      pageId: ID,
-      sectionId: GALLERY,
-      pictureId: PICTURE_ITEM,
-    });
-    expect(replacing.structuredContent).toMatchObject({
-      accepts: "wide 16:9, square 1:1 or portrait 4:5",
-      uploader: { frames: frames(EVERY_SHAPE) },
-    });
-  });
-
-  it("refuses to open on a placement that would be refused, before the admin picks a picture", async () => {
-    const result = await tool("open_landing_image_uploader", { pageId: ID, sectionId: FAQ });
+    const result = await tool("set_landing_section_image", { pageId: ID, sectionId: GUIDE, imageIds: [FIELD] });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe("A faq section has no picture.");
+    expect(resultText(result)).toBe("A guide section has one picture: send imageId, not imageIds.");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
   it("stores an uploaded picture as a landing page entry", async () => {

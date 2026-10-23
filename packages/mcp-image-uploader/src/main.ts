@@ -4,37 +4,28 @@ import { App } from "@modelcontextprotocol/ext-apps";
 import { BRAND, NEUTRALS, statusHex } from "@sog/ui/tokens/brand";
 import { FACES } from "@sog/ui/tokens/typography";
 import { z } from "zod";
-import {
-  batchReport,
-  judgeInBatch,
-  placeCalls,
-  type FileOutcome,
-  type PlacementOutcome,
-} from "./batch";
-import { sourceRect, type Frame } from "./frames";
+import { batchReport, type FileOutcome } from "./batch";
+import { judgePicture, sourceRect, type Frame } from "./frames";
 import "./style.css";
 
 /*
  * The uploader, shown inside the admin's AI app by an opening tool. It has two
  * modes, chosen by the opening's `uploader.kind`:
  *
- * - **Pictures** — `open_cover_uploader` for a Library cover,
+ * - **Pictures** — `open_cover_uploader` for Library covers,
  *   `open_landing_image_uploader` for landing page pictures. The admin picks
- *   pictures — several at once, where the destination takes more than one,
- *   from the file picker or by dropping them on the view — and the view
- *   measures each. **It never crops**: a picture already the shape of one of
- *   the frames the opening offers, within 1%, is scaled to that frame's exact
- *   size as a JPEG — the size Sogverse's catalogue refuses anything else than
- *   — and a picture of no offered shape, of one this destination does not
- *   take, of another shape than the batch's first where the destination needs
- *   one shape, or past the room the destination has, is refused: it is not
- *   uploaded, and the view says why. One refused picture never holds back the
- *   others. Each fitting JPEG goes, with its frame's purpose, to the one
- *   app-only picture upload tool in a call of its own — never two pictures in
- *   one request, which has a size limit — and, when the opening names a
- *   placement, the entries the uploads answer go to that tool together. The
- *   model is then told the whole batch at once: each file's new entry or why
- *   it was refused, and where the pictures went.
+ *   as many pictures as they like, from the file picker or by dropping them
+ *   on the view, and the view measures each. **It never crops**: a picture
+ *   already the shape of one of the frames the opening offers, within 1%, is
+ *   scaled to that frame's exact size as a JPEG — the size Sogverse's
+ *   catalogue refuses anything else than — and a picture of no offered shape
+ *   is refused: it is not uploaded, and the view says why. One refused
+ *   picture never holds back the others. Each fitting JPEG goes, with its
+ *   frame's purpose, to the one app-only picture upload tool in a call of its
+ *   own — never two pictures in one request, which has a size limit — and
+ *   is only added to the catalogue: the model places the pictures afterwards.
+ *   It is told the whole batch at once — each file's new entry or why it was
+ *   refused — and then what to do with them, in the opening's sentence.
  * - **A PDF** — `open_guide_uploader` for a guide's file. The admin's one file,
  *   from the file picker or dropped on the view (the first, when several are
  *   dropped), is sent as it is to the guide upload tool, after checking it is
@@ -43,8 +34,8 @@ import "./style.css";
  *
  * Every call goes through the host: the view holds no token and opens no
  * connection of its own. A new opening starts from nothing picked. Everything
- * that differs by purpose (the frames, their sizes, which this destination
- * takes and why, how many it takes, the limits, the words) arrives in the
+ * that differs by purpose (the frames, their sizes, the limits, the words,
+ * what the model does next) arrives in the
  * opening tool's `uploader` field, so the server is the one definition and
  * this view restates none of it.
  */
@@ -78,25 +69,13 @@ const pictureOpening = z.object({
         name: z.string(),
         width: z.number().int().positive(),
         height: z.number().int().positive(),
-        refusal: z.string().nullable(),
       }),
     )
     .min(1),
   noFrame: z.string(),
-  room: z.object({ pictures: z.number().int().positive(), full: z.string() }).nullable(),
-  oneShape: z.string().nullable(),
   maxBytes: z.number(),
-  place: z
-    .object({
-      tool: z.string(),
-      arguments: z.record(z.string(), z.unknown()),
-      imageArgument: z.string(),
-      list: z.boolean(),
-      actionLabel: z.string(),
-      done: z.string(),
-      outcome: z.string(),
-    })
-    .nullable(),
+  /** What the model is told to do with the uploaded pictures, after the batch's report. */
+  nextStep: z.string(),
 });
 type PictureOpening = z.infer<typeof pictureOpening>;
 
@@ -300,9 +279,9 @@ app.ontoolresult = (result) => {
   heading.textContent = opening.heading;
   document.title = opening.heading;
   subject.textContent = opening.subject;
-  // What was picked under an earlier opening belongs to that opening's frames,
-  // room and placement, so a new opening starts from nothing picked — and
-  // with a batch of its own to make.
+  // What was picked under an earlier opening belongs to that opening's
+  // frames, so a new opening starts from nothing picked — and with a batch of
+  // its own to make.
   openingNumber += 1;
   pickNumber += 1;
   rows = [];
@@ -315,17 +294,12 @@ app.ontoolresult = (result) => {
   fileInput.value = "";
   say("");
   if (opening.kind === "picture") {
-    const several = opening.room === null || opening.room.pictures > 1;
     fileInput.accept = "image/*";
-    fileInput.multiple = several;
-    fileCaption.textContent = several ? "Pictures" : "Picture";
-    fileHint.textContent = several
-      ? opening.room === null
-        ? "Pick as many as you like, or drop them here."
-        : `Pick up to ${opening.room.pictures}, or drop them here.`
-      : "Pick one, or drop it here.";
+    fileInput.multiple = true;
+    fileCaption.textContent = "Pictures";
+    fileHint.textContent = "Pick as many as you like, or drop them here.";
     fileHint.hidden = false;
-    uploadButton.textContent = opening.place?.actionLabel ?? "Upload";
+    uploadButton.textContent = "Upload";
   } else {
     fileInput.accept = "application/pdf,.pdf";
     fileInput.multiple = false;
@@ -377,8 +351,8 @@ function refuse(row: Row, reason: string): void {
 
 /**
  * Check every picked picture in the order picked: measure it, judge it
- * against the frames and against what the batch has already taken, and scale
- * the ones that fit. A newer pick, or a new opening, replaces this one.
+ * against the frames, and scale the ones that fit. A newer pick, or a new
+ * opening, replaces this one.
  */
 async function pickPictures(files: readonly File[], current: PictureOpening): Promise<void> {
   if (committing || files.length === 0) return;
@@ -390,7 +364,6 @@ async function pickPictures(files: readonly File[], current: PictureOpening): Pr
   rows = added;
   checking = true;
   refresh();
-  const taken: Frame[] = [];
 
   for (const row of added) {
     if (mine !== pickNumber) return;
@@ -405,14 +378,13 @@ async function pickPictures(files: readonly File[], current: PictureOpening): Pr
     }
     try {
       if (mine !== pickNumber) return;
-      const verdict = judgeInBatch(bitmap.width, bitmap.height, current, taken);
+      const verdict = judgePicture(bitmap.width, bitmap.height, current);
       if (verdict.kind === "refused") {
         refuse(row, verdict.reason);
         continue;
       }
       const { frame } = verdict;
       const scaled = scaleToFrame(bitmap, frame, current.maxBytes);
-      taken.push(frame);
       const stem = row.file.name.replace(/\.[^.]+$/, "") || "picture";
       const soft = scaled.drawnWidth < frame.width;
       row.picked = { base64: scaled.base64, fileName: `${stem}.jpg`, frame, soft };
@@ -444,7 +416,7 @@ async function pickPictures(files: readonly File[], current: PictureOpening): Pr
   checking = false;
   if (ready().length === 0) {
     say(added.length === 1 ? "Nothing was uploaded." : "None of these can be uploaded.", "error");
-    await reportBatch(outcomesOf(added), { kind: "none" });
+    await reportBatch(outcomesOf(added), current);
   }
   refresh();
 }
@@ -571,27 +543,8 @@ async function storePicture(row: Row, picked: NonNullable<Row["picked"]>): Promi
   }
 }
 
-/** Place the stored pictures as the opening names: together when its tool takes a list, else one call each. */
-async function placeAll(
-  ids: readonly string[],
-  place: NonNullable<PictureOpening["place"]>,
-): Promise<PlacementOutcome> {
-  try {
-    for (const args of placeCalls(ids, place)) {
-      const set = await app.callServerTool({ name: place.tool, arguments: args });
-      if (set.isError) return { kind: "refused", reason: textOf(set) || "The place tool refused." };
-    }
-    return { kind: "placed", outcome: place.outcome };
-  } catch (error) {
-    return {
-      kind: "refused",
-      reason: `The connection failed: ${error instanceof Error ? error.message : "no answer"}.`,
-    };
-  }
-}
-
-/** Store every ready picture, one call each, place the stored ones, and tell the model the whole batch. */
-async function uploadPictures({ place }: PictureOpening, mine: number): Promise<void> {
+/** Store every ready picture, one call each, and tell the model the whole batch. */
+async function uploadPictures(current: PictureOpening, mine: number): Promise<void> {
   const batch = rows;
   say("Uploading…");
 
@@ -607,35 +560,20 @@ async function uploadPictures({ place }: PictureOpening, mine: number): Promise<
   }
 
   const outcomes = outcomesOf(batch);
-  const ids = outcomes.flatMap((each) => (each.kind === "uploaded" ? [each.catalogueId] : []));
-  const current = mine === openingNumber;
-  let placement: PlacementOutcome = { kind: "none" };
-  if (ids.length > 0 && place !== null) {
-    if (current) say(ids.length === 1 ? "Placing the picture…" : "Placing the pictures…");
-    placement = await placeAll(ids, place);
-  }
+  const stored = outcomes.filter((each) => each.kind === "uploaded").length;
 
   // A new opening took the screen while this batch ran: the model still
   // hears what was stored, but the new opening's screen is left alone.
   if (mine === openingNumber) {
-    if (ids.length === 0) {
+    if (stored === 0) {
       // Nothing was stored, so nothing stands in the way of picking again.
       committing = false;
       say("Nothing was uploaded.", "error");
-    } else if (placement.kind === "refused") {
-      say(
-        ids.length === 1
-          ? `The picture is in the catalogue, but it could not be placed: ${placement.reason}`
-          : `The pictures are in the catalogue, but they could not be placed: ${placement.reason}`,
-        "error",
-      );
-    } else if (placement.kind === "placed") {
-      say(place?.done ?? "");
     } else {
-      say(ids.length === 1 ? "The picture is in the catalogue." : "The pictures are in the catalogue.");
+      say(stored === 1 ? "The picture is in the catalogue." : "The pictures are in the catalogue.");
     }
   }
-  await reportBatch(outcomes, placement);
+  await reportBatch(outcomes, current);
 }
 
 /**
@@ -682,8 +620,8 @@ uploadButton.addEventListener("click", async () => {
 });
 
 /** Put a batch of pictures in the model's context, in one piece: the report and its structured form. */
-async function reportBatch(outcomes: readonly FileOutcome[], placement: PlacementOutcome): Promise<void> {
-  await tellTheModel(batchReport(outcomes, placement), { pictures: outcomes, placement });
+async function reportBatch(outcomes: readonly FileOutcome[], { nextStep }: PictureOpening): Promise<void> {
+  await tellTheModel(batchReport(outcomes, nextStep), { pictures: outcomes, nextStep });
 }
 
 /**

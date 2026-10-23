@@ -117,51 +117,45 @@ carries `_meta.ui.resourceUri`
 naming a `ui://` resource of type `text/html;profile=mcp-app`, which the AI app renders in a
 sandboxed frame inside the chat. **One view serves every catalogue purpose.** The opening
 tool's `uploader` field says what it is for — the frames the area's pictures come in, each
-a purpose's exact size and, where this destination does not take that shape, the sentence
-saying why; what a picture of no frame's shape is told; how many pictures the destination
-takes at once and whether they must all be one shape; the largest JPEG a call may carry;
-and the tool and arguments that place them (or none, to add them to the catalogue alone) —
-so the view restates nothing the catalogue or an area defines. Every picture is stored
-through one app-only tool that takes the frame's purpose, so a new purpose is a new frame
-or a new opening tool — and an entry in the uploader's list of purposes it takes — never
-a new view or a new upload tool.
+a purpose's exact size; what a picture of no frame's shape is told; the largest JPEG a call
+may carry; and the sentence the model's report of the batch ends with, naming the tools
+that place or set the new pictures — so the view restates nothing the catalogue or an area
+defines. Every picture is stored through one app-only tool that takes the frame's purpose,
+so a new purpose is a new frame or a new opening tool — and an entry in the uploader's list
+of purposes it takes — never a new view or a new upload tool.
 A change to that protocol names a new view address, since hosts may cache a view by it.
 
 **Rule: the view never crops.** It measures the admin's picture and takes it as the frame
 it is already the shape of, within 1% of the frame's ratio, scaling it to that frame's
 exact size (the sliver under 1% is trimmed, which nobody can see); the admin never chooses
-a shape. A picture of no frame's shape, or of one the destination does not take, is
-refused: it is not uploaded, the view says why on screen, and the same sentence — the
-picture's measured ratio and size, and the rule — reaches the model in the batch's report,
-so the AI app can explain it and the admin can re-crop the picture themselves. A crop the admin
-cannot see would silently cut away what they meant to show, which is what this rule
-exists against; the in-app crop dialog, where the admin drags the frame, is the place for
-cropping. A picture smaller than its frame still uploads, with a warning that it will look
-soft, and the server's exact-size check stays the last gate.
+a shape. A picture of no frame's shape is refused: it is not uploaded, the view says why on
+screen, and the same sentence — the picture's measured ratio and size, and the rule —
+reaches the model in the batch's report, so the AI app can explain it and the admin can
+re-crop the picture themselves. A crop the admin cannot see would silently cut away what
+they meant to show, which is what this rule exists against; the in-app crop dialog, where
+the admin drags the frame, is the place for cropping. A picture smaller than its frame
+still uploads, with a warning that it will look soft, and the server's exact-size check
+stays the last gate.
 
-**The admin may pick several pictures at once, and the opening says how many** (`room`,
-with the sentence a picture past it is told). Adding to the catalogue alone takes any
-number; a single-picture destination — a Library cover, a hero or text section, a
-replaced picture item — takes one, and the view turns its multi-select off; adding to an
-image section takes the room it has left of its four. Each file is judged on its own, in
-the order picked, and a refused one never holds back the others. **Where a destination
-needs one shape (`oneShape`, an image section), the first picture taken fixes it**: the
-section's existing pictures already restrict the frames, so this only decides a batch for a
-section whose pictures have no known shape. Only pictures that pass count against the room,
-and **pictures past it are refused before anything uploads** — never stored unplaced in the
-catalogue, where nobody asked for them; the admin adds those through an opening without a
-placement. Each picture is stored by a call of its own, never two in one request, and the
-view shows each file's state: checking, ready, uploading, done, refused or failed with its
-reason. The stored pictures are then placed through the opening's place tool — in one call
-where it takes a list (`list`, `set_landing_section_image`'s `imageIds`), so the database
-judges the whole batch in one write and stays the final gate — and **the model is told the
-whole batch in one context update**, since a host keeps only the last: each file in pick
-order with its new catalogue id, label and shape, or the sentence it was refused with, then
-where the pictures went. A batch that stored something is final; one that stored nothing
-lets the admin pick again. A guide's opening has `uploader.kind` `pdf` instead: the view
-takes one file, checks it is a PDF within the call's cap and sends it untouched to
-`upload_guide`, and the store checks it again. The view holds no token and opens no
-connection of its own, so the gate in front of those calls is the endpoint's.
+**Rule: the uploader only adds pictures to the catalogue; the AI app places them.** Whether
+a picture is usable is the uploader's question, and whether it fits a section right now is
+the placing tool's, where the database already enforces each section's shapes and count and
+a refusal loses nothing — the picture stays in the catalogue for somewhere else. So an
+opening names no destination, every picture of a frame's shape is kept, and a request such
+as "add a gallery with these photos" is an upload followed by the placing tools (an image
+section cannot exist empty, so it is built from pictures already in the catalogue anyway).
+The admin picks any number of pictures at once, from the picker or by dropping them; each
+file is judged on its own, in the order picked, and a refused one never holds back the
+others. Each picture is stored by a call of its own, never two in one request, and the view
+shows each file's state: checking, ready, uploading, done, refused or failed with its
+reason. **The model is told the whole batch in one context update**, since a host keeps only
+the last: each file in pick order with its new catalogue id, label and shape, or the
+sentence it was refused with, then the opening's next-step sentence. A batch that stored
+something is final; one that stored nothing lets the admin pick again. A guide's opening
+has `uploader.kind` `pdf` instead: the view takes one file, checks it is a PDF within the
+call's cap and sends it untouched to `upload_guide`, and the store checks it again. The
+view holds no token and opens no connection of its own, so the gate in front of those
+calls is the endpoint's.
 
 **An app-only tool is a tool all the same.** The upload tools, `upload_catalogue_picture`
 and `upload_guide`, carry `_meta.ui.visibility: ["app"]`, which tells a host to keep them

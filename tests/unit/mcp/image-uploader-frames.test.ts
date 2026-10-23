@@ -15,10 +15,8 @@ import {
  * model can relay. The view never crops.
  */
 
-const HERO_RULE = "A hero section's picture must be wide 16:9.";
-
-function frame(name: string, width: number, height: number, refusal: string | null = null): Frame {
-  return { purpose: name, name, width, height, refusal };
+function frame(name: string, width: number, height: number): Frame {
+  return { purpose: name, name, width, height };
 }
 
 const WIDE = frame("wide 16:9", 1600, 900);
@@ -71,7 +69,7 @@ describe("describeRatio", () => {
 });
 
 describe("judgePicture", () => {
-  it("takes a picture of a shape the destination takes, as that shape's frame", () => {
+  it("takes a picture of an offered shape, as that shape's frame", () => {
     expect(judgePicture(1080, 1350, LANDING)).toEqual({ kind: "fits", frame: PORTRAIT });
   });
 
@@ -80,21 +78,6 @@ describe("judgePicture", () => {
       kind: "refused",
       reason:
         "This picture is 3:2 (1500 × 1000). A landing page picture must be wide 16:9, square 1:1 or portrait 4:5.",
-    });
-  });
-
-  it("refuses a picture of a shape this destination does not take, naming the shape and the rule", () => {
-    const hero = {
-      frames: [WIDE, frame("square 1:1", 1200, 1200, HERO_RULE), frame("portrait 4:5", 1200, 1500, HERO_RULE)],
-      noFrame: HERO_RULE,
-    };
-    expect(judgePicture(1200, 1200, hero)).toEqual({
-      kind: "refused",
-      reason: `This picture is square 1:1 (1200 × 1200). ${HERO_RULE}`,
-    });
-    expect(judgePicture(1500, 1000, hero)).toEqual({
-      kind: "refused",
-      reason: `This picture is 3:2 (1500 × 1000). ${HERO_RULE}`,
     });
   });
 

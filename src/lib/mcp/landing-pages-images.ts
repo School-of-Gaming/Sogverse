@@ -1,13 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
-import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
-import {
-  landingPictureDestination,
-  type LandingPictureDestination,
-} from "@/lib/landing-pages/picture-destination";
 import {
   LANDING_PICTURE_PURPOSES,
   LANDING_PICTURE_SHAPES,
@@ -31,16 +25,10 @@ import {
   MAX_IMAGES_PER_RESULT,
   answerWithCovers,
 } from "@/lib/mcp/cover-images";
-import {
-  UPLOADER_VIEW_META,
-  uploaderOpening,
-  type UploaderPlacement,
-  type UploaderRoom,
-} from "@/lib/mcp/image-uploader";
+import { UPLOADER_VIEW_META, uploaderOpening } from "@/lib/mcp/image-uploader";
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { NOT_FOUND, asLandingAdmin, pageId } from "@/lib/mcp/landing-pages-call";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
-import type { LandingPictures } from "@/services/landing-pages/landing-pages.contracts";
 import type { CatalogueImagePurpose } from "@/types";
 
 /*
@@ -71,6 +59,14 @@ const SECTION_SHAPES = LANDING_SECTION_TYPES.flatMap((type) => {
 }).join("; ");
 
 const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A hero, text or guide section shows one picture, an image section one to four. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also the page's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
+
+/**
+ * What the model is told to do with pictures the uploader has added to the
+ * catalogue, at the end of the batch's report: place them through the
+ * placing tools, choosing by the section rules, where the database is the
+ * final judge of whether a picture fits.
+ */
+const UPLOADED_NEXT_STEP = `Then place the uploaded pictures where the admin wants them: with set_landing_section_image — imageId for a hero, text or guide section, which shows one picture, or imageIds to add several to the end of an image section — or in a new section through save_landing_page_structure, choosing for each section only a shape it takes (${SECTION_SHAPES}; an image section's pictures all one shape), and write each one's alt text in every language with save_landing_page_text. A picture that does not fit where the admin wanted it stays in the catalogue, in list_landing_images, for another section: tell the admin so.`;
 
 const shape = z
   .enum(LANDING_PICTURE_SHAPES)
@@ -153,7 +149,7 @@ function placedAll(
   section: LandingSection,
   imageIds: readonly string[],
 ): { section: LandingSection; pictureIds: string[] } | { refusal: string } {
-  if (section.type === "hero" || section.type === "text") {
+  if (section.type === "hero" || section.type === "text" || section.type === "guide") {
     return { refusal: `A ${section.type} section has one picture: send imageId, not imageIds.` };
   }
   if (section.type !== "image") {
@@ -173,84 +169,6 @@ function placedAll(
     section: { ...section, images: [...section.images, ...added] },
     pictureIds: added.map((item) => item.id),
   };
-}
-
-/**
- * **How many pictures one opening of the uploader takes, and whether they
- * must share a shape.** Without a section, any number, each only added to the
- * catalogue. A hero or text section shows one picture, and replacing one
- * picture of an image section takes one. Adding to an image section takes as
- * many as it has room for, all of one shape: its other pictures' shape, which
- * the frames already hold the batch to, or — where none of them has a known
- * shape — the first picture the view takes. Pictures past the room are
- * refused before anything uploads, never stored in the catalogue unplaced.
- */
-function uploaderBatch(
-  section: LandingSection | undefined,
-  pictureId: string | undefined,
-): { room: UploaderRoom | null; oneShape: string | null } {
-  if (section === undefined) return { room: null, oneShape: null };
-  const one = (full: string) => ({ room: { pictures: 1, full }, oneShape: null });
-  if (section.type !== "image") {
-    return one(`A ${section.type} section shows one picture: only the first that fits is taken.`);
-  }
-  if (pictureId !== undefined) {
-    return one("Replacing a picture takes one: only the first that fits is taken.");
-  }
-  const room = roomLeft(section);
-  return {
-    room: {
-      pictures: room,
-      full:
-        room === 1
-          ? "An image section shows at most four pictures, and this one has room for one more: only the first that fits is taken."
-          : `An image section shows at most four pictures, and this one has room for ${room} more: the first ${room} that fit are taken, in the order picked.`,
-    },
-    oneShape: "An image section's pictures must all be one shape, so its grid lines up.",
-  };
-}
-
-/**
- * Where the uploader places what it stores in a section: through
- * set_landing_section_image, one picture by `imageId` where the opening takes
- * one, and a batch for an image section by `imageIds`, in one write.
- */
-function placement(
-  input: { pageId: string; sectionId?: string; pictureId?: string },
-  where: string,
-  room: UploaderRoom | null,
-): UploaderPlacement {
-  const base = {
-    tool: "set_landing_section_image",
-    arguments: {
-      pageId: input.pageId,
-      sectionId: input.sectionId,
-      ...(input.pictureId === undefined ? {} : { pictureId: input.pictureId }),
-    },
-    actionLabel: "Upload and place in the section",
-  };
-  if (room?.pictures === 1) {
-    return {
-      ...base,
-      imageArgument: "imageId",
-      list: false,
-      done: "The picture is in the section. Readers see it after the next publish.",
-      outcome: `It is now in ${where}'s working copy; write its alt text in every language with save_landing_page_text, and readers see it after the next publish.`,
-    };
-  }
-  return {
-    ...base,
-    imageArgument: "imageIds",
-    list: true,
-    done: "Placed in the section. Readers see the new pictures after the next publish.",
-    outcome: `Every picture uploaded is now in ${where}'s working copy, after its other pictures, in the order listed; write each one's alt text in every language with save_landing_page_text, and readers see them after the next publish.`,
-  };
-}
-
-/** A shown picture's shape by its catalogue id, from a copy's derived pictures. */
-function shapeIn(pictures: LandingPictures): (imageId: string) => LandingPictureShape | null {
-  return (imageId) =>
-    Object.hasOwn(pictures, imageId) ? landingPictureShapeOf(pictures[imageId].purpose) : null;
 }
 
 /** How a catalogue entry's shape is named, for a landing picture purpose. */
@@ -330,7 +248,7 @@ export function registerLandingImageTools(server: McpServer): void {
     "set_landing_section_image",
     {
       title: "Place a picture in a landing page section",
-      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a hero or text section it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An entry that is not a landing page picture, has left the catalogue, or is a shape the section does not take is refused, saying which.`,
+      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a hero, text or guide section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An entry that is not a landing page picture, has left the catalogue, or is a shape the section does not take is refused, saying which.`,
       inputSchema: z.object({
         pageId,
         sectionId,
@@ -402,65 +320,25 @@ export function registerLandingImageTools(server: McpServer): void {
     "open_landing_image_uploader",
     {
       title: "Upload landing page pictures",
-      description: `Show the admin an uploader, inside this chat, where they pick pictures from their device — several at once where the destination takes more than one, from the file picker or by dropping them on it. The uploader never crops: it measures each picture and takes it as the shape it already is, within 1% — ${SHAPES_WITH_SIZES} — scaled to that shape's exact size as a JPEG and saved in Sogverse's picture catalogue; the admin does not choose a shape. With a sectionId the pictures are then placed in that section as set_landing_section_image would (pictureId as there), and only the shapes that section takes are accepted; without one they are only added to the catalogue. How many it takes at once: without a sectionId, any number; a hero or text section, or a pictureId being replaced, one; adding to an image section, as many as it has room for (it shows at most four), all of one shape — its other pictures' shape, or where none has a known shape, the shape of the first picture taken. Each picture is judged on its own, and a refused one never holds back the others: a picture of no shape, of a shape the section does not take, of another shape than the batch's, or past the room, is refused and not uploaded. Pictures past the room are refused before anything uploads, so tell the admin to start a new upload for those, or to add them to the catalogue alone. Explain each refusal to the admin in plain words — they can crop a picture to an accepted shape themselves and pick it again — and never offer to pad, stretch or crop it on their behalf. The pictures never pass through you; once the admin has uploaded, you are told the whole batch at once, in the order picked: each uploaded picture's new catalogue id, shape and the file name it came from, and each refused file with why. Where the destination takes several, tell the admin they can pick them all at once rather than one at a time. Use it when the admin wants a picture that is not in list_landing_images yet. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
-      inputSchema: z.object({
-        pageId,
-        sectionId: sectionId.optional(),
-        pictureId: pictureItemId.optional(),
-      }),
+      description: `Show the admin an uploader, inside this chat, where they pick pictures from their device to add to Sogverse's picture catalogue as landing page pictures — as many as they like at once, from the file picker or by dropping them on it. It only adds them to the catalogue and places none: you place them afterwards. The uploader never crops: it measures each picture and takes it as the shape it already is, within 1% — ${SHAPES_WITH_SIZES} — scaled to that shape's exact size as a JPEG; the admin does not choose a shape. Each picture is judged on its own, and a refused one never holds back the others: a picture of none of those shapes is refused and not uploaded. Explain each refusal to the admin in plain words — they can crop a picture to one of the shapes themselves and pick it again — and never offer to pad, stretch or crop it on their behalf. The pictures never pass through you; once the admin has uploaded, you are told the whole batch at once, in the order picked: each uploaded picture's new catalogue id, label, shape and the file name it came from, and each refused file with why. ${UPLOADED_NEXT_STEP} Use it when the admin wants a picture that is not in list_landing_images yet — also when they ask for a section of their own photos, such as a gallery: upload first, then place the new ids. Only AI apps that show MCP Apps views can upload; in any other, tell the admin the picture has to be uploaded from an AI app that does, or choose one already in list_landing_images. ${PICTURE_RULES}`,
+      inputSchema: z.object({}),
       annotations: READ_ONLY,
       _meta: UPLOADER_VIEW_META,
     },
-    (input, ctx) =>
-      asLandingAdmin(ctx, async ({ service }) => {
-        const page = await service.getAdminPage(input.pageId);
-        if (page === null) return refusal(NOT_FOUND);
-        const title = resolveTranslation(page.draft.versions, DEFAULT_LOCALE)?.title ?? "";
-        let destination: LandingPictureDestination = { shapes: LANDING_PICTURE_SHAPES, rule: null };
-        let target: LandingSection | undefined;
-        if (input.sectionId !== undefined) {
-          target = page.draft.sections.find((s) => s.id === input.sectionId);
-          if (target === undefined) return refusal(`The page has no section ${input.sectionId}.`);
-          // Refused now, before the admin picks a picture, rather than after it is stored.
-          const check = placed(target, crypto.randomUUID(), input.pictureId);
-          if ("refusal" in check) return refusal(check.refusal);
-          destination = landingPictureDestination(
-            target,
-            input.pictureId,
-            shapeIn(page.draft.pictures),
-          );
-        }
-        const where =
-          input.sectionId === undefined
-            ? null
-            : `section ${input.sectionId} of landing page ${input.pageId}`;
-        const accepts = describeLandingPictureShapes(destination.shapes);
-        const batch = uploaderBatch(target, input.pictureId);
-        const takes =
-          batch.room === null
-            ? "as many as they like at once"
-            : batch.room.pictures === 1
-              ? "one picture"
-              : `up to ${batch.room.pictures} at once`;
+    (_input, ctx) =>
+      asLandingAdmin(ctx, async () => {
+        const accepts = describeLandingPictureShapes(LANDING_PICTURE_SHAPES);
         const value = {
-          pageId: input.pageId,
-          title,
-          sectionId: input.sectionId ?? null,
           accepts,
           uploader: uploaderOpening({
-            heading: "Landing page picture",
-            subject: title ? `For “${title}”` : "For this landing page",
+            heading: "Landing page pictures",
+            subject: "Added to the picture catalogue, ready to place on any landing page",
             frames: LANDING_PICTURE_SHAPES.map((each) => ({
               purpose: LANDING_PICTURE_PURPOSES[each],
               name: describeLandingPictureShape(each),
-              refusal: destination.shapes.includes(each) ? null : destination.rule,
             })),
-            noFrame:
-              destination.rule ??
-              `A landing page picture must be ${describeLandingPictureShapes(LANDING_PICTURE_SHAPES)}.`,
-            room: batch.room,
-            oneShape: batch.oneShape,
-            place: where === null ? null : placement(input, where, batch.room),
+            noFrame: `A landing page picture must be ${accepts}.`,
+            nextStep: UPLOADED_NEXT_STEP,
           }),
         };
         return {
@@ -468,7 +346,9 @@ export function registerLandingImageTools(server: McpServer): void {
           content: [
             {
               type: "text",
-              text: `The picture uploader for "${title}" is shown to the admin; it takes pictures that are already ${accepts}, ${takes}. Wait for them to pick; you will be told the whole batch at once, in the order picked: each stored picture's catalogue id, shape and file name${where === null ? "" : `, and that they are placed in ${where}`}, and each refused file's size and why, to explain to the admin. If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the picture from an AI app that does, or choose an existing one from list_landing_images.\n\n${JSON.stringify(value, null, 2)}`,
+              text: `The picture uploader is shown to the admin; it takes pictures that are already ${accepts}, as many as they like at once, and adds them to the picture catalogue. Wait for them to pick; you will be told the whole batch at once, in the order picked: each stored picture's catalogue id, label, shape and file name, and each refused file's size and why, to explain to the admin. ${UPLOADED_NEXT_STEP} If your app shows no uploader, it cannot render MCP Apps views: the admin can upload the picture from an AI app that does, or choose an existing one from list_landing_images.
+
+${JSON.stringify(value, null, 2)}`,
             },
           ],
         };
