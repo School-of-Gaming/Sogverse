@@ -124,11 +124,11 @@ export const gamerCreationList = z
  * One member's staff-only marks, as `get_group_staff_overlay` keys them by
  * participant id.
  *
- * The three nullable fields are nullable for three different reasons. A null
- * `group_joined_at` is a seat that predates the column (there was deliberately
- * no backfill) — never "not a club", because the join stamp is a **fact** and
- * the clubs-only newcomer rule is a presentation rule the client applies. A
- * null `note` is the absence of a row, which is what "no note" means
+ * `group_joined_at` is never null: every member is a seat in this group, and
+ * the schema holds a seat in a group to its stamp. It travels on every product
+ * type, because the join stamp is a **fact** and the clubs-only newcomer rule is
+ * a presentation rule the client applies. The two nullable fields are nullable
+ * for two different reasons. A null `note` is the absence of a row, which is what "no note" means
  * everywhere. A null `note_updated_by_first_name` alongside a note is an editor
  * whose account is gone (`updated_by` is ON DELETE SET NULL), and the surface
  * then shows the note with no editor line.
@@ -141,7 +141,7 @@ export const gamerCreationList = z
  * is identical in every mount, the voice room included.
  */
 export const groupStaffOverlayMember = z.object({
-  group_joined_at: z.string().nullable(),
+  group_joined_at: z.string(),
   note: z.string().nullable(),
   note_updated_by_first_name: z.string().nullable(),
   creations: gamerCreationList,
@@ -176,7 +176,7 @@ export const groupStaffOverlay = z.object({
  * sees, and a gamer sees only their own.
  */
 export const traineeGroupOverlayMember = z.object({
-  group_joined_at: z.string().nullable(),
+  group_joined_at: z.string(),
   has_note: z.boolean(),
   creations: gamerCreationList,
 });
