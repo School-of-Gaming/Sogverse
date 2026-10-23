@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { batchReport, type FileOutcome } from "../../../packages/mcp-image-uploader/src/batch";
+import {
+  batchReport,
+  batchSummary,
+  progressLine,
+  type FileOutcome,
+} from "../../../packages/mcp-image-uploader/src/batch";
 
 /*
  * How the MCP picture uploader tells the model about a batch: every file in
@@ -72,5 +77,35 @@ describe("batchReport", () => {
       "Nothing was uploaded; the admin can pick again in the same uploader.",
     ]);
     expect(report).not.toContain(NEXT_STEP);
+  });
+});
+
+describe("progressLine", () => {
+  it("counts the files answered of those sent, adding the failures once there is one", () => {
+    expect(progressLine(0, 3, 0)).toBe("Uploaded 0 of 3");
+    expect(progressLine(2, 3, 0)).toBe("Uploaded 2 of 3");
+    expect(progressLine(2, 3, 1)).toBe("Uploaded 2 of 3, 1 failed");
+  });
+});
+
+describe("batchSummary", () => {
+  it("says every picture landed when none failed", () => {
+    expect(batchSummary([castle, field])).toBe("All 2 pictures are in the catalogue.");
+  });
+
+  it("names how many landed and the files that failed", () => {
+    const sky: FileOutcome = { kind: "failed", fileName: "sky.png", reason: "No answer." };
+    expect(batchSummary([castle, tree, sky])).toBe(
+      "1 of 3 pictures is in the catalogue. Not uploaded: tree.jpg, sky.png.",
+    );
+    expect(batchSummary([castle, field, tree])).toBe(
+      "2 of 3 pictures are in the catalogue. Not uploaded: tree.jpg.",
+    );
+  });
+
+  it("speaks of one picture alone, and of nothing when nothing landed", () => {
+    expect(batchSummary([castle])).toBe("The picture is in the catalogue.");
+    expect(batchSummary([tree])).toBe("Nothing was uploaded.");
+    expect(batchSummary([tree, tree])).toBe("Nothing was uploaded.");
   });
 });
