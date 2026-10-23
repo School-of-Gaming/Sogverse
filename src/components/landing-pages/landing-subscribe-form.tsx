@@ -15,7 +15,6 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { utmRegistrationBody } from "@/lib/utm";
 import { useUtm } from "@/providers";
 import {
-  LANDING_SUBSCRIBE_HONEYPOT,
   LANDING_SUBSCRIBE_FIRST_NAME_MAX,
   LANDING_SUBSCRIBE_LAST_NAME_MAX,
   type LandingSubscribeBody,
@@ -79,9 +78,6 @@ export function LandingSubscribeForm({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [consent, setConsent] = useState(false);
-  // The honeypot's value. A person never sees the field, so it stays empty
-  // for them; it is read from state so a bot's fill is posted like any field.
-  const [trap, setTrap] = useState("");
   const [committing, setCommitting] = useState(false);
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   const [signedUp, setSignedUp] = useState(false);
@@ -115,7 +111,6 @@ export function LandingSubscribeForm({
       firstName,
       lastName,
       consent: true,
-      [LANDING_SUBSCRIBE_HONEYPOT]: trap,
       utm: utmRegistrationBody(utm),
     };
     try {
@@ -163,19 +158,6 @@ export function LandingSubscribeForm({
           autoComplete="email"
         />
       </Field>
-      {/* The honeypot: out of sight and out of the tab order and the
-          accessibility tree, so only something filling every input it finds
-          ever puts a value in it. */}
-      <div aria-hidden="true" className="hidden">
-        <input
-          type="text"
-          name={LANDING_SUBSCRIBE_HONEYPOT}
-          tabIndex={-1}
-          autoComplete="off"
-          value={trap}
-          onChange={(event) => setTrap(event.target.value)}
-        />
-      </div>
       <CheckboxRow
         checked={consent}
         onCheckedChange={setConsent}

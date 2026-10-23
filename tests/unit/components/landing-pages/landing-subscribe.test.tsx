@@ -171,7 +171,6 @@ describe("the email sign-up section", () => {
       firstName: "Aino",
       lastName: "Virtanen",
       consent: true,
-      website: "",
       utm: { source: "newsletter" },
     });
   });
