@@ -214,26 +214,19 @@ describe("landing pages", () => {
   }
 
   /**
-   * The whole save, `save_landing_page` — what `create_landing_page` runs in
-   * SQL: the structure and the version set together, the set replacing what is
-   * stored. No application writer sends it, so it is called here directly.
+   * A page's structure, then each named version, through the structure and
+   * one-language writers the application sends — the whole save
+   * (`save_landing_page`) is internal to create and clone.
    */
-  async function saveWhole(
+  async function writePage(
     id: string,
     page: {
       sections: LandingSection[];
-      versions: { locale: string; title: string; summary: string; slug: string; sectionTexts: Json }[];
+      versions: Parameters<LandingPageService["saveVersion"]>[1][];
     },
   ) {
-    const { error } = await adminAuth.rpc("save_landing_page", {
-      p_id: id,
-      p_sections: page.sections,
-      p_versions: page.versions.map(({ sectionTexts, ...rest }) => ({
-        ...rest,
-        section_texts: sectionTexts,
-      })),
-    });
-    if (error) throw error;
+    await service.saveStructure(id, page.sections);
+    for (const each of page.versions) await service.saveVersion(id, each);
   }
 
   async function draftVersions(id: string) {
@@ -376,30 +369,17 @@ describe("landing pages", () => {
       ]);
     });
 
-    it("reads as default on a section stored without one, in the working and the published copy", async () => {
+    it("is refused on a section saved without one, naming the section by its number", async () => {
       await reseed();
-      // A structure written before sections had a background: no section names one.
-      const bare = [
-        { id: HERO, type: "hero", imageId: PIC_A },
-        { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
-      ];
-      const stored = await admin.from("landing_pages").update({ sections: bare }).eq("id", PAGE_A);
-      expect(stored.error).toBeNull();
-      expect((await admin.rpc("landing_sections_problem", { p_sections: bare })).data).toBeNull();
-
-      const draft = await service.getAdminPage(PAGE_A);
-      expect(draft?.draft.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
-
-      await service.publishPage(PAGE_A);
-      const { data: published } = await admin
-        .from("landing_page_publications")
-        .select("sections")
-        .eq("page_id", PAGE_A)
-        .single();
-      expect(published?.sections).toEqual(bare);
-      const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
-      expect(live?.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
-      await service.unpublishPage(PAGE_A);
+      const { error } = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: [
+          { id: HERO, type: "hero", imageId: PIC_A },
+          { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+        ],
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toBe("Section 2 needs its background, default or card");
     });
   });
 
@@ -448,10 +428,9 @@ describe("landing pages", () => {
     });
 
     it("refuses a section of no known type, and a picture that is not a uuid", async () => {
-      const unknown = await adminAuth.rpc("save_landing_page", {
+      const unknown = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
         p_sections: [...structure(null), { id: GALLERY, type: "video" }],
-        p_versions: [{ locale: "en", title: "T" }],
       });
       expect(unknown.error?.code).toBe("23514");
       const badPicture = await adminAuth.rpc("save_landing_page_structure", {
@@ -562,28 +541,7 @@ describe("landing pages", () => {
       expect(error?.message).toContain(GALLERY);
     });
 
-    it("replaces the version set whole, removing a language left out", async () => {
-      await reseed();
-      await saveWhole(PAGE_A, {
-        sections: structure(),
-        versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
-      });
-      expect((await draftVersions(PAGE_A)).map((v) => v.locale)).toEqual(["en", "fi"]);
-
-      await saveWhole(PAGE_A, {
-        sections: structure(),
-        versions: [version("fi", "fixture-landing-a-fi")],
-      });
-      expect((await draftVersions(PAGE_A)).map((v) => v.locale)).toEqual(["fi"]);
-    });
-
     it("refuses an id no page has", async () => {
-      const { error } = await adminAuth.rpc("save_landing_page", {
-        p_id: PAGE_MISSING,
-        p_sections: structure(null),
-        p_versions: [{ locale: "en", title: "T" }],
-      });
-      expect(error?.code).toBe("P0002");
       const structureOnly = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_MISSING,
         p_sections: structure(null),
@@ -699,14 +657,14 @@ describe("landing pages", () => {
       expect((await draftVersions(PAGE_A))[0].slug).toBe("fixture-landing-a-renamed");
     });
 
-    it("writes a language again after a whole save removed it while live, its live slug still held from other pages", async () => {
+    it("writes a language again after its removal while live, its live slug still held from other pages", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
       await service.publishPage(PAGE_A);
-      await saveWhole(PAGE_A, { sections: structure(), versions: [version("en", SLUG_A)] });
+      await service.removeVersion(PAGE_A, "fi");
 
       // Another page cannot take the address the live Finnish version holds.
       const taken = await adminAuth.rpc("save_landing_page_version", {
@@ -744,7 +702,7 @@ describe("landing pages", () => {
   describe("partial writes", () => {
     it("a structure save drops a removed section's words from every language", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
@@ -760,7 +718,7 @@ describe("landing pages", () => {
       await reseed();
       await service.saveStructure(PAGE_A, [
         ...structure(),
-        { id: FAQ, type: "faq", items: [{ id: FAQ_1 }] },
+        { id: FAQ, type: "faq", background: "default", items: [{ id: FAQ_1 }] },
       ]);
       const [en] = await draftVersions(PAGE_A);
       expect(en.is_complete).toBe(false);
@@ -786,7 +744,7 @@ describe("landing pages", () => {
 
     it("a one-language save touches no other language and not the structure", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
@@ -907,7 +865,7 @@ describe("landing pages", () => {
 
     it("puts every complete version live at once and leaves an incomplete one out", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [
           version("en", SLUG_A),
@@ -983,11 +941,6 @@ describe("landing pages", () => {
             p_sections: structure(null),
             p_versions: [{ locale: "en", title: "T" }],
           }),
-          client.rpc("save_landing_page", {
-            p_id: PAGE_A,
-            p_sections: structure(null),
-            p_versions: [{ locale: "en", title: "T" }],
-          }),
           client.rpc("save_landing_page_structure", { p_id: PAGE_A, p_sections: structure(null) }),
           client.rpc("save_landing_page_version", { p_id: PAGE_A, p_locale: "en", p_title: "T" }),
           client.rpc("remove_landing_page_version", { p_id: PAGE_A, p_locale: "fi" }),
@@ -1002,6 +955,16 @@ describe("landing pages", () => {
         expect(data).toEqual([]);
       });
     }
+
+    it("keeps the whole save internal to create and clone: not even an admin may call it", async () => {
+      await reseed();
+      const { error } = await adminAuth.rpc("save_landing_page", {
+        p_id: PAGE_A,
+        p_sections: structure(),
+        p_versions: [version("en", SLUG_A)],
+      });
+      expect(error?.code).toBe("42501");
+    });
 
     it("lets anon read the published copy and nothing of the working one", async () => {
       await reseed();
@@ -1239,7 +1202,7 @@ describe("landing pages", () => {
         background: "default",
         images: [{ id: SHOT_1, imageId: PIC_DOOMED_TOO }],
       };
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: [...structure(PIC_DOOMED), gallery],
         versions: [
           {
@@ -1275,6 +1238,7 @@ describe("landing pages", () => {
         {
           id: GALLERY,
           type: "image",
+          background: "default",
           images: [
             { id: SHOT_1, imageId: PIC_DOOMED_TOO },
             { id: SHOT_2, imageId: PIC_B },
@@ -1625,7 +1589,7 @@ describe("landing pages", () => {
 
     it("derives each picture's purpose beside its path into both copies", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: [
           ...structure(),
           { id: GALLERY, type: "image", background: "default", images: [{ id: SHOT_1, imageId: PORTRAIT }] },
@@ -1654,6 +1618,7 @@ describe("landing pages", () => {
           {
             id: GALLERY,
             type: "image",
+            background: "default",
             images: [
               { id: SHOT_1, imageId: SQUARE },
               { id: SHOT_2, imageId: PIC_B },
@@ -1691,6 +1656,7 @@ describe("landing pages", () => {
         {
           id: GALLERY,
           type: "image",
+          background: "default",
           images: [
             { id: SHOT_1, imageId: SQUARE },
             { id: SHOT_2, imageId: SQUARE_TOO },
@@ -1715,7 +1681,7 @@ describe("landing pages", () => {
       await reseed();
       await service.saveStructure(PAGE_A, [
         ...structure(),
-        { id: GALLERY, type: "text", imageSide: "end", imageId: SQUARE_TOO },
+        { id: GALLERY, type: "text", background: "default", imageSide: "end", imageId: SQUARE_TOO },
       ]);
       const removed = await adminAuth.from("catalogue_images").delete().eq("id", SQUARE_TOO);
       expect(removed.error).toBeNull();

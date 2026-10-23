@@ -102,7 +102,9 @@ const buttonTarget = z
 
 /**
  * The background every section but the hero takes, spread into each of their
- * structures as the registry spreads its own.
+ * structures as the registry spreads its own. The registry requires one; an
+ * AI app may leave it out, and this is where the omission becomes `default`,
+ * before the registry reads the structure.
  */
 const backgroundField = {
   background: z
@@ -602,20 +604,18 @@ export function describeRequiredWords(type: LandingSectionType): string {
   return required.length === 0 ? "none" : required.join("; ");
 }
 
-/** What the arrangement rule refuses, from the rule itself. */
+/**
+ * What the arrangement rule refuses about the page as a whole, from the rule
+ * itself. The sticky rules are STICKY_MANUAL's: the rule's refusal of a
+ * second sticky section names the sections of one structure, so it reads as
+ * one refusal rather than as the rule.
+ */
 const STRUCTURE_RULES = [
   landingStructureProblem([{ id: "a", type: "text" }]),
   landingStructureProblem([
     { id: "a", type: "hero" },
     { id: "b", type: "hero" },
   ]),
-  ...LANDING_STICKY_TYPES.slice(0, 1).map((type) =>
-    landingStructureProblem([
-      { id: "a", type: "hero" },
-      { id: "b", type, sticky: "left" },
-      { id: "c", type, sticky: "left" },
-    ]),
-  ),
 ]
   .filter((rule) => rule !== null)
   .join("; ");
@@ -639,6 +639,6 @@ export const SECTIONS_MANUAL = [
       `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about}${describePictureShapes(type)} Required words in every language: ${describeRequiredWords(type)}.`,
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
-  `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}, default when left out. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,
+  `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}; a section sent without one is saved on default. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,
   STICKY_MANUAL,
 ].join("\n");

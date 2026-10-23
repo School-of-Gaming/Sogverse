@@ -15,6 +15,7 @@ import {
   mcpLandingStructure,
   withIds,
 } from "@/lib/mcp/landing-pages-sections";
+import { issueSentence } from "@/lib/mcp/landing-pages-call";
 
 /**
  * **The MCP tools' section schemas against the registry's.** The registry is
@@ -237,10 +238,13 @@ describe.each(LANDING_SECTION_TYPES)("the %s section", (type) => {
   const mcp = MCP_LANDING_SECTIONS[type];
 
   it.each(STRUCTURES[type].map((sample) => [JSON.stringify(sample), sample]))(
-    "judges the shared fields %s as the registry does",
+    "judges the shared fields %s as the registry judges what the tool hands it",
     (_, sample) => {
-      const expected = app.section.safeParse(sample);
+      // The tool's schema is what an AI app sends, a background left out
+      // handed on as default; the registry's is the stored shape, which
+      // requires one, and reads what the tool hands it.
       const actual = mcp.structure.safeParse(sample);
+      const expected = app.section.safeParse(actual.success ? actual.data : sample);
       expect(actual.success).toBe(expected.success);
       if (expected.success) expect(actual.data).toEqual(expected.data);
     },
@@ -275,10 +279,8 @@ describe("new sections and items", () => {
       { id: ID, type: "image", images: [{ imageId: ID3 }, { id: ID2, imageId: ID3 }] },
       { type: "points", items: [{ icon: "star" }, { icon: "heart" }] },
     ];
-    expect(mcpLandingStructure.safeParse(sent).success).toBe(true);
-
     let n = 0;
-    const filled = withIds(sent, () => ids(10)[n++]);
+    const filled = withIds(mcpLandingStructure.parse(sent), () => ids(10)[n++]);
 
     const parsed = landingSections.parse(filled);
     expect(parsed[0].id).toBe(ids(10)[0]);
@@ -342,10 +344,10 @@ describe("the manual", () => {
 
 describe("the sticky sections", () => {
   const hero = { id: ID, type: "hero" };
-  const subscribe = { id: ID2, type: "subscribe" };
-  const another = { id: ID3, type: "subscribe" };
-  const cta = { id: ID3, type: "cta", button: { kind: "internal", path: "/shop" } };
-  const guide = { id: ID3, type: "guide", guideId: ID2 };
+  const subscribe = { id: ID2, type: "subscribe", background: "default" };
+  const another = { id: ID3, type: "subscribe", background: "default" };
+  const cta = { id: ID3, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } };
+  const guide = { id: ID3, type: "guide", background: "default", guideId: ID2 };
 
   it("is written on the section, and judged by the tools' schema as by the registry's", () => {
     for (const structure of [
@@ -378,9 +380,13 @@ describe("the sticky sections", () => {
       subscribe,
     ]);
     expect(parsed.success).toBe(false);
-    expect(parsed.error?.issues.map((issue) => issue.message)).toEqual([
-      `Section ${ID} (Hero) cannot be sticky: only Guide, Email sign-up, Call to action sections can`,
-    ]);
+    // What the AI app is shown: the issue at the section's index, put in the
+    // words every landing answer uses.
+    expect(
+      parsed.error?.issues.map((issue) =>
+        issueSentence({ path: ["sections", ...issue.path], message: issue.message }, [hero, subscribe]),
+      ),
+    ).toEqual(["Section 1 (Hero): Only a section of type guide, subscribe or cta can be sticky"]);
   });
 
   it("tells the AI app what they are, which types may be, how many, and how they render on a phone", () => {

@@ -40,6 +40,7 @@ export function testimonialSlotCases(): TestimonialSlotCase[] {
         {
           id: SLOT_CASE_SECTION,
           type: "testimonials",
+          background: "default",
           arrangement,
           testimonialIds: Array.from({ length: count }, (_, i) => id(0x6000 + i)),
         },

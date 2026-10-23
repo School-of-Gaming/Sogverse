@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { landingSections } from "@/lib/landing-pages/sections";
 import { issueSentence } from "@/lib/mcp/landing-pages-call";
+import { mcpLandingStructure, withIds } from "@/lib/mcp/landing-pages-sections";
 
 /**
  * **A schema's refusal as a sentence.** Every landing tool says where an
@@ -57,16 +58,12 @@ describe("the structure rule's sticky refusals, as an AI app is told them", () =
   const faq = { type: "faq", items: [{}] };
   const subscribe = { type: "subscribe", sticky: "left" };
   const cta = { type: "cta", button: { kind: "internal", path: "/" }, sticky: "left" };
-  // As the tool reads a structure: ids minted for what was sent without one.
+  // As the tool reads a structure: through its own schema, which hands on a
+  // background left out as default, then ids minted for what was sent
+  // without one, then the registry's schema.
   const told = (sent: readonly Record<string, unknown>[]) => {
     const parsed = landingSections.safeParse(
-      sent.map((section) => ({
-        ...section,
-        id: crypto.randomUUID(),
-        ...(Array.isArray(section.items)
-          ? { items: section.items.map(() => ({ id: crypto.randomUUID() })) }
-          : {}),
-      })),
+      withIds(mcpLandingStructure.parse(sent), () => crypto.randomUUID()),
     );
     return parsed.success
       ? []
