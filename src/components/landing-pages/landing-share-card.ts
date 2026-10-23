@@ -4,7 +4,7 @@ import type {
   LandingPicture,
   LocalizedLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
-import { landingLeadPicture } from "./landing-section-seo";
+import { landingCopyPicture, landingLeadPicture } from "./landing-section-seo";
 
 /** What a share card is read from: one version of a page, live or working. */
 export type LandingShareCardSource = Pick<
@@ -44,10 +44,7 @@ export interface LandingShareCard {
  * version's share title, else its page title. **The picture** is the
  * version's share picture with its share alt text, else the hero's picture
  * (`landingLeadPicture`) with the hero's alt text, else none, and the card is
- * the site-wide one. A picture's alt text falls back to the card's title. A
- * share picture whose picture the copy does not carry is treated as none, as the
- * hero's is: the database derives the paths and unsets a removed picture, so
- * it should not arise, and the hero is the safe answer if it does.
+ * the site-wide one. A picture's alt text falls back to the card's title.
  *
  * The description is always the summary, so it is no part of this.
  */
@@ -58,10 +55,10 @@ export function landingShareCard(page: LandingShareCardSource): LandingShareCard
 }
 
 function sharePicture(page: LandingShareCardSource, title: string): LandingSharePicture {
-  if (page.shareImageId !== null && Object.hasOwn(page.pictures, page.shareImageId)) {
+  if (page.shareImageId !== null) {
     return {
       source: "custom",
-      ...page.pictures[page.shareImageId],
+      ...landingCopyPicture(page.pictures, page.shareImageId),
       alt: page.shareImageAlt === "" ? title : page.shareImageAlt,
     };
   }

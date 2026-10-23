@@ -211,12 +211,12 @@ describe("landingPageMetadata", () => {
     });
   });
 
-  it("takes the site card when the hero's picture has no path", async () => {
-    const metadata = await landingPageMetadata({ ...PAGE, pictures: {} }, "en");
-
-    expect(metadata.openGraph).toMatchObject({
-      images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],
-    });
+  it("throws for a hero picture the copy does not carry", async () => {
+    // The database derives a copy's pictures from everything it names, so a
+    // missing one is a broken invariant, never a page without a picture.
+    await expect(landingPageMetadata({ ...PAGE, pictures: {} }, "en")).rejects.toThrow(
+      /carries no path/,
+    );
   });
 
   describe("with the share card overridden", () => {
@@ -334,20 +334,20 @@ describe("landingPageMetadata", () => {
     });
 
     it("falls back to the hero's picture once the share picture has left the catalogue", async () => {
-      // The removal unsets the id; a copy still naming one whose path it does
-      // not carry is read the same way.
+      // The removal unsets the id.
       const unset = overridden({ en: { shareImageAlt: "A club room" } });
+      const metadata = await landingPageMetadata(unset, "en");
+      expect(metadata.openGraph).toMatchObject({
+        images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Children at a club" })],
+      });
+    });
+
+    it("throws for a share picture the copy names and does not carry", async () => {
       const pathless = {
         ...overridden({ en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" } }),
         pictures: PAGE.pictures,
       };
-
-      for (const page of [unset, pathless]) {
-        const metadata = await landingPageMetadata(page, "en");
-        expect(metadata.openGraph).toMatchObject({
-          images: [expect.objectContaining({ url: HERO_IMAGE, alt: "Children at a club" })],
-        });
-      }
+      await expect(landingPageMetadata(pathless, "en")).rejects.toThrow(/carries no path/);
     });
 
     it("keeps the page title in a language with no share title while another has one", async () => {

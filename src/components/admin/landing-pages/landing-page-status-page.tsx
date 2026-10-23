@@ -74,7 +74,8 @@ export interface LandingPageStatusActions {
  * not; then one card per written language — complete or what it still needs,
  * its address (and, when that differs from the live one, that the next
  * publish moves it), its preview of the saved working copy and, while it is
- * live, its live page.
+ * live, its live page — and after them one per live language no longer
+ * written, which the next publish takes down.
  *
  * **Publish says what it would do before it does it**: the confirm lists the
  * languages going live, those left out as incomplete, the live ones taken
@@ -91,7 +92,9 @@ export function LandingPageStatusPage({
   const t = useTranslations("admin.landingPages");
   const uiLocale = resolveLocale(useLocale());
   const version = resolveTranslation(page.draft.versions, uiLocale);
-  const liveLocales = new Set(page.publication?.versions.map((v) => v.locale) ?? []);
+  const { publication } = page;
+  const liveLocales = new Set(publication?.versions.map((v) => v.locale) ?? []);
+  const writtenLocales = new Set(page.draft.versions.map((v) => v.locale));
   // The card's address warning is the publish confirmation's, so the two
   // never disagree: a live language the publish would take down moves nowhere.
   const { slugsChanging } = landingPublishForecast(page);
@@ -141,6 +144,19 @@ export function LandingPageStatusPage({
             }
           />
         ))}
+        {/* A live language its writer removed from the working copy stays
+            live until the next publish, which takes it down. */}
+        {publication !== null &&
+          publication.versions
+            .filter((live) => !writtenLocales.has(live.locale))
+            .map((live) => (
+              <RemovedLanguageCard
+                key={live.locale}
+                locale={live.locale}
+                title={live.title}
+                publication={publication}
+              />
+            ))}
       </section>
     </div>
   );
@@ -664,6 +680,56 @@ function LanguageCard({
             </StatusLine>
           )}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * A live language no longer written in the working copy — removed by its own
+ * writer, and still live until the next publish takes it down (the publish
+ * confirm names it among those taken down). Drawn as a language card, with its
+ * live title and its live page, so the admin can still see what readers do.
+ */
+function RemovedLanguageCard({
+  locale,
+  title,
+  publication,
+}: {
+  locale: SupportedLocale;
+  /** Its live title. */
+  title: string;
+  /** The live copy, which this language is in. */
+  publication: NonNullable<AdminLandingPage["publication"]>;
+}) {
+  const t = useTranslations("admin.landingPages");
+  const languageName = useLanguageNames();
+  const headingId = useId();
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-6" role="region" aria-labelledby={headingId}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Heading level={3} step="label" id={headingId}>
+              {languageName(locale, LOCALE_CONFIG[locale].label)}
+            </Heading>
+            <p className="truncate text-sm text-muted-foreground">{title}</p>
+          </div>
+          <div className="flex shrink-0 flex-col-reverse gap-3 sm:flex-row">
+            <Link
+              href={landingPageHref(publication, locale)}
+              locale={locale}
+              target="_blank"
+              rel="noopener"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              {t("viewLive")}
+            </Link>
+          </div>
+        </div>
+        <StatusLine status="warning">{t("statusPage.language.removed")}</StatusLine>
       </CardContent>
     </Card>
   );

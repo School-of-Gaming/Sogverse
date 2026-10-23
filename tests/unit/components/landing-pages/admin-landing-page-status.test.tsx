@@ -201,6 +201,29 @@ describe("the landing page status page", () => {
     expect(live.getAttribute("locale")).toBe("en");
   });
 
+  it("keeps a live language removed from the working copy on the page, after the written ones, saying the next publish takes it down", () => {
+    renderStatus({
+      ...draftPage([EN]),
+      publication: publication(["en", "sv"]),
+      hasUnpublishedChanges: true,
+    });
+
+    const removed = card("Swedish");
+    expect(within(removed).getByText("Spelklubbar i Esbo")).toBeTruthy();
+    expect(within(removed).getByText("statusPage.language.removed")).toBeTruthy();
+    const live = within(removed).getByRole("link", { name: "viewLive" });
+    expect(live.getAttribute("href")).toBe("/discover/spelklubbar-i-esbo");
+    expect(live.getAttribute("locale")).toBe("sv");
+    // Nothing to preview: the working copy no longer has the language.
+    expect(within(removed).queryByRole("link", { name: "preview" })).toBeNull();
+    // After the written languages' cards.
+    expect(
+      card("English").compareDocumentPosition(removed) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // A written language is never drawn twice.
+    expect(screen.getAllByRole("region", { name: "English" })).toHaveLength(1);
+  });
+
   it("shows each address, warning where the saved one differs from the live one", () => {
     renderStatus({
       ...draftPage([{ ...EN, slug: "espoo-gaming-clubs" }, SV]),

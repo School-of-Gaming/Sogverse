@@ -52,7 +52,8 @@ afterEach(() => {
 function renderPage({
   utm = NO_UTM_ATTRIBUTION,
   preview = false,
-}: { utm?: UtmAttribution; preview?: boolean } = {}) {
+  textLocale = "fi",
+}: { utm?: UtmAttribution; preview?: boolean; textLocale?: "fi" | "en" } = {}) {
   return render(
     <NextIntlClientProvider locale="fi" messages={messages}>
       <UtmProvider initialUtm={utm}>
@@ -62,7 +63,7 @@ function renderPage({
           testimonials={{}}
           guideIds={[]}
           sectionTexts={TEXTS}
-          textLocale="fi"
+          textLocale={textLocale}
           locale="fi"
           products={null}
           pageId={PAGE}
@@ -94,6 +95,20 @@ async function submit() {
 }
 
 describe("the email sign-up section", () => {
+  it("marks the form's own words with the page's language inside a body in another, the button label with the version's", () => {
+    const { unmount } = renderPage({ textLocale: "en" });
+    const form = screen.getByRole("button", { name: "Keep me posted" }).closest("form");
+    expect(form?.closest("[lang]")?.getAttribute("lang")).toBe("fi");
+    expect(screen.getByText("Keep me posted").getAttribute("lang")).toBe("en");
+    // The page's own heading stays in the body's language.
+    const heading = screen.getByRole("heading", { name: "Hear about new clubs first" });
+    expect(heading.closest("[lang]")?.getAttribute("lang")).toBe("en");
+    unmount();
+    renderPage();
+    expect(screen.getByText("Keep me posted").hasAttribute("lang")).toBe(false);
+    expect(document.querySelector("[lang]")).toBeNull();
+  });
+
   it("draws the page's words over the form", () => {
     renderPage();
     expect(

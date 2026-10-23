@@ -191,6 +191,50 @@ describe("a page's sticky section", () => {
     expect(layer()).toContain("2xl:pt-24");
   });
 
+  it("spaces the first card from the last section drawn, past a section that draws nothing", () => {
+    const BAND = id(30);
+    const QUOTES = id(31);
+    const PICKS = id(32);
+    const layer = () => railOf("Hear about new clubs first").parentElement?.className;
+    // A band last among what is drawn, then a testimonials section the read
+    // answered none of and a products section none of whose picks is listed.
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
+          <LandingPageBody
+            sections={[
+              { id: HERO, type: "hero" },
+              { id: BAND, type: "faq", background: "card", items: [{ id: id(10) }] },
+              { id: QUOTES, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [id(40)] },
+              { id: PICKS, type: "products", background: "default", productIds: [id(41)] },
+              { id: FORM, type: "subscribe", background: "default", sticky: "right" },
+            ]}
+            pictures={{}}
+            testimonials={{}}
+            guideIds={[]}
+            sectionTexts={{
+              ...TEXTS,
+              [BAND]: TEXTS[FAQ],
+              [QUOTES]: { heading: "What parents say" },
+              [PICKS]: { heading: "Pick a club" },
+            }}
+            textLocale="en"
+            locale="en"
+            products={{ listing: [], counts: [] }}
+            pageId={id(500)}
+            preview={false}
+          />
+        </UtmProvider>
+      </NextIntlClientProvider>,
+    );
+    expect(screen.queryByRole("heading", { name: "What parents say" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Pick a club" })).toBeNull();
+    // Neither leaves a row of the grid behind.
+    const band = screen.getByRole("heading", { name: "Questions" }).closest("section")?.parentElement;
+    expect(band?.nextElementSibling).toBeNull();
+    expect(layer()).toMatch(/(?:^|\s)pt-16 sm:pt-24(?:\s|$)/);
+  });
+
   it("stacks the form's name fields in the column, which is narrower than the viewport says", () => {
     /** The grid holding the first and last name, as the form draws it. */
     const nameRow = () =>
@@ -262,6 +306,55 @@ describe("a sticky section on each side", () => {
     expect(first).toContain(FLOOR);
     expect(last).toContain(FLOOR);
     expect(content).toBe("minmax(0,74rem)");
+  });
+
+  it("states its pictures' sizes at the measure the two cards leave, and one card leaves the full one", () => {
+    const PIC = id(50);
+    const GALLERY = id(51);
+    const sizes = (sides: readonly LandingStickySide[]) => {
+      const { unmount } = render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
+            <LandingPageBody
+              sections={[
+                { id: HERO, type: "hero", imageId: PIC },
+                { id: GALLERY, type: "image", background: "default", images: [{ id: id(52), imageId: PIC }] },
+                ...sides.map((side, n): LandingSection => ({
+                  id: n === 0 ? FORM : DATES,
+                  type: "subscribe",
+                  background: "default",
+                  sticky: side,
+                })),
+              ]}
+              pictures={{ [PIC]: { path: "a.jpg", purpose: "landing_image" } }}
+              testimonials={{}}
+              guideIds={[]}
+              sectionTexts={{ ...TEXTS, [HERO]: { headline: "Clubs", imageAlt: "Hero" }, [GALLERY]: { alts: { [id(52)]: "Gallery" } } }}
+              textLocale="en"
+              locale="en"
+              products={null}
+              pageId={id(500)}
+              preview={false}
+            />
+          </UtmProvider>
+        </NextIntlClientProvider>,
+      );
+      const found = ["Hero", "Gallery"].map((alt) => screen.getByAltText(alt).getAttribute("sizes"));
+      unmount();
+      return found;
+    };
+    const page = [
+      "(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)",
+      "(min-width: 928px) 896px, calc(100vw - 2rem)",
+    ];
+    expect(sizes([])).toEqual(page);
+    expect(sizes(["right"])).toEqual(page);
+    // Between two cards the measure is the viewport less 720px from 2xl until
+    // it reaches 1152 at 1872; a picture narrower than that is fixed sooner.
+    expect(sizes(["right", "left"])).toEqual([
+      `(min-width: 1872px) 544px, (min-width: 1536px) calc(50vw - 392px), ${page[0]}`,
+      `(min-width: 1616px) 896px, (min-width: 1536px) calc(100vw - 720px), ${page[1]}`,
+    ]);
   });
 
   it("brings a band's spacing above the first card only, the first card's own spacing being the gap above the second", () => {

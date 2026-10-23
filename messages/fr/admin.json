@@ -441,6 +441,7 @@
     "backToList": "Retour aux pages d’atterrissage",
     "notFound": "Aucune page d’atterrissage ne porte cet identifiant.",
     "loadError": "Impossible de charger cette page d’atterrissage. Actualisez pour réessayer.",
+    "listLoadError": "Impossible de charger les pages d’atterrissage. Actualisez pour réessayer.",
     "statusPage": {
       "title": "Page d’atterrissage",
       "authoring": "Pour modifier cette page, demandez-le à une application d’IA connectée à Sogverse.",
@@ -457,7 +458,8 @@
         "stillNeeded": "Il manque encore :",
         "address": "Adresse :",
         "noAddress": "pas encore d’adresse",
-        "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner."
+        "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner.",
+        "removed": "Retirée de cette page, mais encore en ligne sur le site. La prochaine publication la retire du site."
       },
       "missing": {
         "inSection": "Section {number} ({type}) : {field}",

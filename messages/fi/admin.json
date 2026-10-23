@@ -441,6 +441,7 @@
     "backToList": "Takaisin laskeutumissivuihin",
     "notFound": "Tällä tunnisteella ei ole laskeutumissivua.",
     "loadError": "Laskeutumissivua ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
+    "listLoadError": "Laskeutumissivuja ei voitu ladata. Yritä uudelleen päivittämällä sivu.",
     "statusPage": {
       "title": "Laskeutumissivu",
       "authoring": "Jos haluat muuttaa sivua, pyydä sitä Sogverseen yhdistetyltä tekoälysovellukselta.",
@@ -457,7 +458,8 @@
         "stillNeeded": "Vielä puuttuu:",
         "address": "Osoite:",
         "noAddress": "ei vielä osoitetta",
-        "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi."
+        "addressChanging": "Nyt julkaistu osoitteessa {address}. Seuraava julkaisu siirtää sen tähän osoitteeseen, eivätkä vanhaan osoitteeseen johtavat linkit enää toimi.",
+        "removed": "Poistettu tältä sivulta, mutta yhä julkaistu sivustolla. Seuraava julkaisu poistaa sen sivustolta."
       },
       "missing": {
         "inSection": "Osio {number} ({type}): {field}",

@@ -52,7 +52,7 @@ const SECTIONS: LandingSection[] = [
     background: "default",
     images: [
       { id: ITEM(1), imageId: PIC_A },
-      { id: ITEM(2), imageId: id(99) },
+      { id: ITEM(2), imageId: PIC_B },
     ],
   },
   {
@@ -159,16 +159,32 @@ describe("the landing page renderers", () => {
     ]);
   });
 
-  it("paints pictures with their alt text and reserved size, skipping one that is gone", () => {
+  it("paints pictures with their alt text and reserved size", () => {
     renderBody();
     const hero = screen.getByAltText("Children playing together");
     expect(hero.getAttribute("width")).toBe("1600");
     expect(hero.getAttribute("height")).toBe("900");
     expect(hero.getAttribute("src")).toContain(encodeURIComponent("landing-images/a.jpg"));
-    // The image section's second picture has left the catalogue.
+    // The second picture's alt is not written, so it is decorative.
     const figure = enclosing(screen.getByText("From last term"), "figure");
-    expect(within(figure).getAllByRole("img")).toHaveLength(1);
+    expect(figure.querySelectorAll("img")).toHaveLength(2);
     expect(within(figure).getByAltText("A club room")).toBeTruthy();
+  });
+
+  it("throws for a picture the copy names and does not carry", () => {
+    // The database derives a copy's pictures from everything it names, so
+    // this is a broken invariant rather than a picture to leave out.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(() =>
+      renderBody({
+        sections: [
+          { id: HERO, type: "hero" },
+          { id: IMAGE, type: "image", background: "default", images: [{ id: ITEM(1), imageId: id(99) }] },
+        ],
+        texts: {},
+      }),
+    ).toThrow(/carries no path/);
+    vi.mocked(console.error).mockRestore();
   });
 
   it("reserves a square or portrait text picture's own box, held narrower than its column", () => {
@@ -240,6 +256,13 @@ describe("the landing page renderers", () => {
     expect(join.getAttribute("target")).toBe("_blank");
     expect(join.getAttribute("rel")).toBe("noopener noreferrer");
     expect(join.textContent).toContain(messages.richText.opensInNewTab);
+  });
+
+  it("says a button opens a new tab in the page's language, inside a body in another", () => {
+    renderBody({ locale: "sv", textLocale: "en" });
+    const said = screen.getByText(messages.richText.opensInNewTab);
+    expect(said.getAttribute("lang")).toBe("sv");
+    expect(screen.getByRole("link", { name: /Join/ }).closest("[lang]")?.getAttribute("lang")).toBe("en");
   });
 
   it("renders authored markdown through the landing use case, links localised", () => {

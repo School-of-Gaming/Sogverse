@@ -49,6 +49,7 @@ export function LandingSubscribeForm({
   sectionId,
   locale,
   buttonLabel,
+  buttonLabelLang,
   preview,
   inCard = false,
 }: {
@@ -57,6 +58,11 @@ export function LandingSubscribeForm({
   /** The page's locale: the language the reader signs up in. */
   locale: SupportedLocale;
   buttonLabel: string;
+  /**
+   * The language the button label is written in, where it is not the page's:
+   * the label is the page version's words, and every other word here is ours.
+   */
+  buttonLabelLang?: SupportedLocale;
   /** The admin's preview: the form is drawn, but its button is disabled and nothing is posted. */
   preview: boolean;
   /**
@@ -201,7 +207,7 @@ export function LandingSubscribeForm({
           className={inCard ? LANDING_CARD_ACTION : "w-full sm:w-auto"}
           disabled={committing || preview || !complete}
         >
-          {buttonLabel}
+          <span lang={buttonLabelLang}>{buttonLabel}</span>
           <Send aria-hidden="true" />
         </Button>
       </div>
