@@ -1561,7 +1561,6 @@
     "slackNotLinked": "Ei yhdistetty"
   },
   "locations": {
-    "editName": "Muokkaa: {name}",
     "addChildUnder": "Lisää {type} kohteen {parent} alle",
     "location": "Sijainti",
     "nameRequired": "Nimi on pakollinen",

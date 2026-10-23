@@ -1561,7 +1561,6 @@
     "slackNotLinked": "Inte kopplat"
   },
   "locations": {
-    "editName": "Redigera {name}",
     "addChildUnder": "Lägg till {type} under {parent}",
     "location": "Plats",
     "nameRequired": "Namn krävs",

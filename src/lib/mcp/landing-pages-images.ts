@@ -28,7 +28,7 @@ import {
 } from "@/lib/mcp/cover-images";
 import { UPLOADER_VIEW_META, uploaderOpening } from "@/lib/mcp/image-uploader";
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
-import { NOT_FOUND, asLandingAdmin, pageId } from "@/lib/mcp/landing-pages-call";
+import { NOT_FOUND, asLandingAdmin, pageId, savedPage } from "@/lib/mcp/landing-pages-call";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
 import type { CatalogueImagePurpose } from "@/types";
 
@@ -319,8 +319,7 @@ export function registerLandingImageTools(server: McpServer): void {
           input.pageId,
           sections.map((section) => (section === target ? result.section : section)),
         );
-        const after = await service.getAdminPage(input.pageId);
-        if (after === null) return refusal(NOT_FOUND);
+        const after = await savedPage(service, input.pageId);
         const prefix = `sections.${input.sectionId}.`;
         return answer({
           pageId: input.pageId,

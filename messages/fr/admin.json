@@ -1561,7 +1561,6 @@
     "slackNotLinked": "Non associé"
   },
   "locations": {
-    "editName": "Modifier {name}",
     "addChildUnder": "Ajouter {type} sous {parent}",
     "location": "Lieu",
     "nameRequired": "Le nom est obligatoire",

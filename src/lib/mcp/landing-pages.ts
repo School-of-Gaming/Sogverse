@@ -54,6 +54,7 @@ import {
   previewLink,
   publicLink,
   readableInput,
+  savedPage,
   slugLink,
 } from "@/lib/mcp/landing-pages-call";
 import {
@@ -773,8 +774,7 @@ ${SECTIONS_MANUAL}`,
             },
           ],
         });
-        const page = await service.getAdminPage(id);
-        if (page === null) return refusal(NOT_FOUND);
+        const page = await savedPage(service, id);
         // exact-locale: the tool reads the version it was asked for
         const version = page.draft.versions.find((v) => v.locale === input.locale);
         return answer({
@@ -812,8 +812,7 @@ ${SECTIONS_MANUAL}`,
         const source = await service.getAdminPage(id);
         if (source === null) return refusal(NOT_FOUND);
         const cloneId = await service.clonePage(source.draft, copyMarker);
-        const page = await service.getAdminPage(cloneId);
-        if (page === null) return refusal(NOT_FOUND);
+        const page = await savedPage(service, cloneId);
         return answer({
           pageId: cloneId,
           clonedFrom: id,
@@ -851,8 +850,7 @@ ${SECTIONS_MANUAL}`,
         const structure = readStructure(sections);
         if ("refusal" in structure) return structure.refusal;
         const { linkRewrites } = await service.saveStructure(id, structure.sections);
-        const after = await service.getAdminPage(id);
-        if (after === null) return refusal(NOT_FOUND);
+        const after = await savedPage(service, id);
         const kept = new Set(after.draft.sections.map((section) => section.id));
         return answer({
           pageId: id,
@@ -924,8 +922,7 @@ ${SECTIONS_MANUAL}`,
               : input.shareImageId,
           shareImageAlt: input.shareImageAlt ?? current?.shareImageAlt ?? "",
         });
-        const page = await service.getAdminPage(input.pageId);
-        if (page === null) return refusal(NOT_FOUND);
+        const page = await savedPage(service, input.pageId);
         // exact-locale: the tool writes the version it was asked for
         const saved = page.draft.versions.find((v) => v.locale === input.locale);
         return answer({
@@ -964,8 +961,7 @@ ${SECTIONS_MANUAL}`,
         const before = await service.getAdminPage(id);
         if (before === null) return refusal(NOT_FOUND);
         await service.removeVersion(id, removed);
-        const page = await service.getAdminPage(id);
-        if (page === null) return refusal(NOT_FOUND);
+        const page = await savedPage(service, id);
         return answer({
           pageId: id,
           removed,
@@ -994,8 +990,7 @@ ${SECTIONS_MANUAL}`,
         await publishLandingPage(service, id);
         // Read back from what the publish did, never forecast from the read
         // before it: a save landing in between changes what goes live.
-        const after = await service.getAdminPage(id);
-        if (after === null) return refusal(NOT_FOUND);
+        const after = await savedPage(service, id);
         const { publication } = after;
         const liveLocales = publication?.versions.map((v) => v.locale) ?? [];
         return answer({

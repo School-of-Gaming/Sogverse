@@ -41,6 +41,7 @@ import {
   articleId,
   asAdmin,
   refusal,
+  savedArticle,
 } from "@/lib/mcp/library-call";
 import {
   isCompleteVersion,
@@ -444,8 +445,7 @@ export function registerLibraryTools(server: McpServer): void {
           summary: input.summary,
           body: input.body,
         });
-        const article = await service.getAdminArticle(input.articleId);
-        if (article === null) return refusal(NOT_FOUND);
+        const article = await savedArticle(service, input.articleId);
         // exact-locale: the tool writes the version it was asked for
         const saved = article.draft.versions.find((v) => v.locale === input.locale);
         const liveSlug =
@@ -507,10 +507,9 @@ export function registerLibraryTools(server: McpServer): void {
         // from the read before it: a save landing in between changes what
         // goes live.
         const [after, published] = await Promise.all([
-          service.getAdminArticle(id),
+          savedArticle(service, id),
           service.listPublishedArticles(),
         ]);
-        if (after === null) return refusal(NOT_FOUND);
         const live = after.publication?.versions.map((v) => v.locale) ?? [];
         return answer({
           articleId: id,
