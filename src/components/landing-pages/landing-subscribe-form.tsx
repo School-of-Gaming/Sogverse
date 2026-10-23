@@ -20,6 +20,7 @@ import {
   LANDING_SUBSCRIBE_LAST_NAME_MAX,
   type LandingSubscribeBody,
 } from "@/services/landing-pages/landing-subscribe.contracts";
+import { LANDING_CARD_ACTION } from "./landing-section-header";
 
 /** Which refusal sentence a failed post reads. */
 type Refusal = "invalid" | "error";
@@ -197,7 +198,7 @@ export function LandingSubscribeForm({
         <Button
           type="submit"
           size="lg"
-          className={inCard ? "w-full" : "w-full sm:w-auto"}
+          className={inCard ? LANDING_CARD_ACTION : "w-full sm:w-auto"}
           disabled={committing || preview || !complete}
         >
           {buttonLabel}

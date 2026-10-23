@@ -21,6 +21,13 @@ export const LANDING_CONTENT = "container mx-auto px-4";
 /** Vertical rhythm shared by every section after the hero. */
 export const LANDING_SECTION = `${LANDING_CONTENT} py-16 sm:py-24`;
 
+/**
+ * A sticky card's action, whichever type draws it — the call to action's
+ * button, the guide's download, the sign-up's submit: the card's full width,
+ * its label wrapping where a long one is wider than the card's 20rem.
+ */
+export const LANDING_CARD_ACTION = "h-auto min-h-11 w-full whitespace-normal py-2.5 text-center";
+
 /** Small uppercase section label — furniture, so caps; act, as the Roblox page's. */
 export function Eyebrow({ children }: { children: ReactNode }) {
   return (

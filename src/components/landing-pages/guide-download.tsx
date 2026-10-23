@@ -12,6 +12,7 @@ import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/providers/auth-provider";
+import { LANDING_CARD_ACTION } from "./landing-section-header";
 
 /** Where a guide section draws its download. */
 export type GuideDownloadPlacement = "centred" | "beside-picture" | "card";
@@ -70,10 +71,7 @@ export function GuideDownload({
   // its edge.
   const buttonClass = buttonVariants({
     size: "lg",
-    className: cn(
-      "h-auto min-h-11 max-w-full gap-2 whitespace-normal py-2.5 text-center",
-      placement === "card" && "w-full",
-    ),
+    className: cn(LANDING_CARD_ACTION, "max-w-full", placement !== "card" && "w-auto"),
   });
   const redirectQuery = { redirect: pathname };
 

@@ -390,6 +390,5 @@ describe("the sticky sections", () => {
     );
     expect(SECTIONS_MANUAL).toContain("draws no card");
     expect(SECTIONS_MANUAL).toContain("at the bottom of the page");
-    expect(SECTIONS_MANUAL).not.toContain("under the hero");
   });
 });

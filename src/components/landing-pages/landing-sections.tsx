@@ -42,6 +42,7 @@ import { LandingProductsSection } from "./landing-products-section";
 import {
   Eyebrow,
   hasSectionHeader,
+  LANDING_CARD_ACTION,
   LANDING_CONTENT,
   LANDING_SECTION,
   SectionHeader,
@@ -111,8 +112,6 @@ export interface LandingRenderContext {
    * live query fetches for itself.
    */
   products: ProductRailPrefetch | null;
-  /** Whether the read answered the placed guide with this id. */
-  hasGuide: (guideId: string) => boolean;
 }
 
 /** A picture as a renderer draws it: where it is, and the shape its box is reserved at. */
@@ -234,19 +233,13 @@ function LandingButton({
 function StickyCard({ children }: { children: ReactNode }) {
   return (
     <section>
-      <Card className="relative mx-auto max-w-xl overflow-hidden">
+      <Card data-sticky-card className="relative mx-auto max-w-xl overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-[3px] bg-world" />
         <CardContent className="pt-8">{children}</CardContent>
       </Card>
     </section>
   );
 }
-
-/**
- * A sticky card's button: the card's full width, its label wrapping where a
- * long one is wider than the card's 20rem, as the guide's download does.
- */
-const STICKY_CARD_BUTTON = "h-auto min-h-11 w-full whitespace-normal py-2.5 text-center";
 
 /**
  * The CSS width a picture across a sticky card resolves to, stated as the
@@ -764,7 +757,7 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
             label={buttonLabel}
             subject={text.emailSubject}
             locale={context.locale}
-            className={cn("mt-6", STICKY_CARD_BUTTON)}
+            className={cn("mt-6", LANDING_CARD_ACTION)}
           />
         )}
       </StickyCard>
@@ -808,15 +801,12 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
  * As a sticky section it is the sticky card: the cover picture across its
  * top, the header and line under it, the download the card's full width.
  *
- * A guide the read did not answer leaves the section out, since there is
- * nothing to offer — and the page body leaves it out of the page before that,
- * so a sticky one leaves no empty card; one it answered has a file, and the
- * download route picks the reader's by the reader fallback. Whether the
- * reader may download is decided in the browser (`guide-download.tsx`);
- * everything here is the same for every reader.
+ * The page body leaves out a guide the read did not answer, so one drawn here
+ * has a file, and the download route picks the reader's by the reader
+ * fallback. Whether the reader may download is decided in the browser
+ * (`guide-download.tsx`); everything here is the same for every reader.
  */
 function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
-  if (!context.hasGuide(section.guideId)) return null;
   const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const eyebrow = written(text.eyebrow);
   const heading = written(text.heading);

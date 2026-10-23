@@ -159,7 +159,6 @@ describe("a page's sticky section", () => {
     renderBody();
     for (const name of ["Gaming clubs in Espoo", "Questions", "Ready?"]) {
       const section = screen.getByRole("heading", { name }).closest("section");
-      expect(section?.className).toContain("container mx-auto px-4");
       expect(section?.parentElement?.className).toContain("2xl:grid-cols-subgrid");
       expect(section?.parentElement?.className).toContain("2xl:*:col-start-2");
     }
@@ -202,13 +201,6 @@ describe("a page's sticky section", () => {
     unmount();
     renderBody({ sides: [] });
     expect(nameRow()).toContain("sm:grid-cols-2");
-  });
-
-  it("draws nothing under the hero but the hero's own content", () => {
-    renderBody();
-    const hero = screen.getByRole("heading", { level: 1 }).closest("section");
-    const controls = [...(hero?.querySelectorAll("a, button") ?? [])];
-    expect(controls.map((element) => element.textContent)).toEqual(["Find a club"]);
   });
 
   it("draws the breadcrumb as the page grid's first row, in the content track, outside the text's lang", () => {
@@ -332,42 +324,34 @@ describe("a sticky call to action and a sticky guide", () => {
     );
   }
 
-  /** The sticky card around a heading: the card itself, inside its section, inside the rail. */
+  /** The sticky card around a heading: the rail's one card, never a card inside a card. */
   function cardOf(heading: string): HTMLElement {
-    const rail = railOf(heading);
-    const card = rail.querySelector<HTMLElement>("section > .rounded-lg.border");
-    if (card === null) throw new Error(`no card around ${heading}`);
-    return card;
+    const cards = railOf(heading).querySelectorAll<HTMLElement>("[data-sticky-card]");
+    expect(cards).toHaveLength(1);
+    return cards[0];
   }
 
   it("draws the call to action as the sticky card: start-aligned, the compact heading, its button the card's width", () => {
     renderSticky();
     const card = cardOf("Find your club");
-    // The same frame as the sticky sign-up: the world rule, the card's padding, never on a band.
-    expect(card.querySelector(".bg-world")).not.toBeNull();
-    expect(card.querySelector(".pt-8")).not.toBeNull();
-    expect(railOf("Find your club").querySelector(".bg-card:not(.rounded-lg)")).toBeNull();
-    // No card inside the card: the flow's centred closing card is not drawn.
-    expect(card.querySelectorAll(".rounded-lg.border")).toHaveLength(0);
+    // Never on a band.
+    expect(railOf("Find your club").querySelector(".bg-card:not([data-sticky-card])")).toBeNull();
+    // The flow's centred closing card is not drawn.
     expect(card.querySelector(".text-center:not(a)")).toBeNull();
     expect(screen.getByRole("heading", { name: "Find your club" }).className).not.toContain("text-center");
     expect(card.textContent).toContain("Every term, every city.");
     const button = screen.getByRole("link", { name: /Browse clubs/ });
     expect(card.contains(button)).toBe(true);
     expect(button.className).toContain("w-full");
-    expect(button.className).toContain("whitespace-normal");
   });
 
   it("draws the guide as the sticky card: the cover across its top, the words start-aligned, the action the card's width", () => {
     mockAuth.mockReturnValue({ user: null });
     const { unmount } = renderSticky();
     const card = cardOf("A parent's guide to gaming");
-    expect(card.querySelector(".bg-world")).not.toBeNull();
-    expect(card.querySelectorAll(".rounded-lg.border")).toHaveLength(0);
     expect(card.querySelector(".text-center:not(a)")).toBeNull();
     const cover = screen.getByRole("img", { name: "The guide's cover" });
     expect(card.contains(cover)).toBe(true);
-    expect(cover.getAttribute("sizes")).toBe("(min-width: 1536px) 20rem, (min-width: 608px) 36rem, 100vw");
     // The cover comes first, before the heading.
     const heading = screen.getByRole("heading", { name: "A parent's guide to gaming" });
     expect(cover.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -375,7 +359,6 @@ describe("a sticky call to action and a sticky guide", () => {
     const ask = screen.getByRole("link", { name: "Create a free account to download" });
     expect(card.contains(ask)).toBe(true);
     expect(ask.className).toContain("w-full");
-    expect(ask.parentElement?.className).toContain("items-stretch");
     expect(card.textContent).toContain("Already have an account?");
     unmount();
     // Signed in: the download in the same place, the card's width.

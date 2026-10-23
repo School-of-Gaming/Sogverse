@@ -246,7 +246,6 @@ export function LandingPageBody({
     },
     testimonial: (id) => (Object.hasOwn(testimonials, id) ? testimonials[id] : null),
     products,
-    hasGuide: (id) => guides.has(id),
   };
   const render = (section: LandingSection) =>
     renderLandingSection(
