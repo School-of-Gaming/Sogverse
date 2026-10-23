@@ -82,14 +82,12 @@ const ALLOWED = {
   "--signup-rail-width": "layout: the product page's signup rail track",
   "--facts-rail-width": "layout: the product page's facts rail track",
   "--reading-column-width": "layout: the product page's reading column cap",
-  // A landing page's sticky column from `xl`: its width and gap, its measured
-  // height (written by a ResizeObserver, as the signup rail's is), and the
-  // inline space each section clears on either side for it. Layout, not colour.
-  "--landing-rail-width": "layout: a landing page's sticky column width",
-  "--landing-rail-gap": "layout: the gap between that column and the sections",
+  // A landing page's sticky card from `2xl`: its width, the gap between it and
+  // the sections, and its measured height (written by a ResizeObserver, as the
+  // signup rail's is). Layout, not colour.
+  "--landing-rail-width": "layout: a landing page's sticky card width",
+  "--landing-rail-gap": "layout: the gap between that card and the sections",
   "--landing-rail-height": "layout: a measured height JS writes",
-  "--landing-rail-space-left": "layout: the inline space sections clear for a left column",
-  "--landing-rail-space-right": "layout: the inline space sections clear for a right column",
   // The corner radius as one base step and the four utilities derived from it.
   // A radius arrives in the library with its first cornered component, which is
   // the Button adoption; until then the scale lives here.

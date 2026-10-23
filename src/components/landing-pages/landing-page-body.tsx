@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { ProductRailPrefetch } from "@/components/public/products/product-rail-selection";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
@@ -54,6 +54,12 @@ export interface LandingPageBodyProps {
   pageId: string;
   /** The admin's preview of a working copy: an email sign-up form cannot be sent. */
   preview: boolean;
+  /**
+   * The trail drawn above the sections, in the page's own language. The body
+   * draws it so that, on a page with a sticky section, it stands in the same
+   * content track as the sections and keeps their left edge.
+   */
+  breadcrumb?: ReactNode;
 }
 
 /**
@@ -107,7 +113,8 @@ export const LANDING_STICKY_ANCHOR = "landing-sticky";
 // the card's side by arithmetic. The card's layer takes the same grid row as
 // the sections, in its gutter, so it is as tall as they are: sticky travels
 // only within that, so the card can never reach the footer or run past the
-// page's end.
+// page's end. The breadcrumb is the grid's first row, a row like a section's,
+// so it keeps the content's left edge wherever the content slides.
 //
 // The card is what the email form inside it is fitted to: its inputs are
 // 270px, close to the 278 a 360px phone gives them, and that holds for the
@@ -126,24 +133,35 @@ const STICKY_PAGE: Record<LandingStickySide, string> = {
     "2xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,74rem)_minmax(calc(var(--landing-rail-width)+var(--landing-rail-gap)),1fr)]",
 };
 
-/** The sections: the page grid's one row, across all three tracks, which each section's row inherits. */
-const STICKY_SECTIONS = "2xl:col-span-full 2xl:row-start-1 2xl:grid 2xl:grid-cols-subgrid";
-
 /** One section's row — its band, when it has one: all three tracks, the section in the content one. */
 const STICKY_ROW = "2xl:col-span-full 2xl:grid 2xl:grid-cols-subgrid 2xl:*:col-start-2";
+
+/** The breadcrumb: the page grid's first row, drawn as a section's row is. */
+const STICKY_BREADCRUMB = `${STICKY_ROW} 2xl:row-start-1`;
+
+/** The sections: the page grid's second row, across all three tracks, which each section's row inherits. */
+const STICKY_SECTIONS = "2xl:col-span-full 2xl:row-start-2 2xl:grid 2xl:grid-cols-subgrid";
 
 /**
  * The layer that holds the card, by its side. Below `2xl` it is the page's
  * end: the container, with the bottom spacing a section has (the last
- * section's own bottom spacing is the gap above it). From `2xl` it is the
- * card's gutter in the sections' row, as tall as they are, starting and
- * ending with the hero's and the last section's spacing; a left card is
- * pushed to the gutter's inner edge, against the content.
+ * section's own bottom spacing is the gap above it, unless that section is a
+ * band — `STICKY_LAYER_AFTER_BAND`). From `2xl` it is the card's gutter in the
+ * sections' row, as tall as they are, starting and ending with the hero's and
+ * the last section's spacing; a left card is pushed to the gutter's inner
+ * edge, against the content.
  */
 const STICKY_LAYER: Record<LandingStickySide, string> = {
-  left: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-1 2xl:row-start-1 2xl:pt-24",
-  right: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-3 2xl:row-start-1 2xl:pt-24",
+  left: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-1 2xl:row-start-2 2xl:pt-24",
+  right: "container mx-auto px-4 pb-16 sm:pb-24 2xl:col-start-3 2xl:row-start-2 2xl:pt-24",
 };
+
+/**
+ * Below `2xl`, the gap above the card when the last section is a band: that
+ * section's bottom spacing is inside the band, so the layer brings a
+ * section's spacing of its own rather than meet the band's edge.
+ */
+const STICKY_LAYER_AFTER_BAND = "pt-16 sm:pt-24";
 
 /**
  * The card's holder: pinned under the site header from `2xl` with the
@@ -197,6 +215,7 @@ export function LandingPageBody({
   products,
   pageId,
   preview,
+  breadcrumb,
 }: LandingPageBodyProps) {
   const sticky = landingStickySection(sections);
   const offer =
@@ -253,16 +272,28 @@ export function LandingPageBody({
   // exact-locale: marks text written in another language than the page with lang
   const lang = textLocale === locale ? undefined : textLocale;
   if (sticky === null) {
-    return <div lang={lang}>{sections.map((section) => draw(section))}</div>;
+    return (
+      <>
+        {breadcrumb}
+        <div lang={lang}>{sections.map((section) => draw(section))}</div>
+      </>
+    );
   }
+  const flowed = sections.filter((section) => section.id !== sticky.id);
+  const last = flowed.at(-1);
+  const afterBand = last !== undefined && landingSectionBackground(last) === "card";
+  // The breadcrumb is in the page's language, so `lang` marks the sections
+  // and the card rather than the grid holding all three.
   return (
-    <div lang={lang} className={STICKY_PAGE[sticky.sticky]}>
-      <div className={STICKY_SECTIONS}>
-        {sections
-          .filter((section) => section.id !== sticky.id)
-          .map((section) => draw(section, STICKY_ROW))}
+    <div className={STICKY_PAGE[sticky.sticky]}>
+      {breadcrumb !== undefined && <div className={STICKY_BREADCRUMB}>{breadcrumb}</div>}
+      <div lang={lang} className={STICKY_SECTIONS}>
+        {flowed.map((section) => draw(section, STICKY_ROW))}
       </div>
-      <div className={STICKY_LAYER[sticky.sticky]}>
+      <div
+        lang={lang}
+        className={cn(STICKY_LAYER[sticky.sticky], afterBand && STICKY_LAYER_AFTER_BAND)}
+      >
         <LandingStickyRail id={LANDING_STICKY_ANCHOR} className={STICKY_RAIL[sticky.sticky]}>
           {/* Never on a band: the sticky section is a card standing on the page. */}
           {render(sticky)}

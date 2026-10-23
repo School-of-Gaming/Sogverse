@@ -142,13 +142,15 @@ export default async function LandingPage({ params }: PageProps) {
       <JsonLd
         data={landingBreadcrumbJsonLd({ siteUrl, locale, canonicalPath, trail })}
       />
-      <LandingPageBreadcrumb
-        trail={trail}
-        label={tDiscover("breadcrumbLabel")}
-        textLocale={shown.locale}
-        locale={locale}
-      />
       <LandingPageBody
+        breadcrumb={
+          <LandingPageBreadcrumb
+            trail={trail}
+            label={tDiscover("breadcrumbLabel")}
+            textLocale={shown.locale}
+            locale={locale}
+          />
+        }
         sections={shown.sections}
         pictures={shown.pictures}
         testimonials={testimonials}
