@@ -299,18 +299,18 @@ async function send({
         : "free"
       : sendMode;
 
-  const participantName = participant?.first_name.trim();
-
-  // Guaranteed by the schema — `profiles.first_name` is NOT NULL — so this is a
-  // shape the data model says cannot arrive. If it does, a mail whose subject
-  // line names an empty person is worse than no mail, so stop and say so.
-  if (!participant || !participantName) {
+  // An account erased since the seat was written takes the seat with it (ON
+  // DELETE CASCADE), leaving no one to name. The first name itself needs no
+  // check: the profiles CHECK stores it trimmed and at least two characters
+  // long.
+  if (!participant) {
     console.error(
       "[product-confirmation email] nothing to name — skipping the send",
       { productId, participantId },
     );
     return;
   }
+  const participantName = participant.first_name;
 
   // The same test the confirmation page makes on the row: participant equals
   // customer means the payer took the seat themselves, and every sentence

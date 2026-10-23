@@ -36,7 +36,6 @@
       "title": "Gedu certification",
       "justNow": "{count} certified just now",
       "empty": "No Gedus are awaiting certification.",
-      "unnamed": "Unnamed Gedu",
       "registered": "registered {when}",
       "certify": "Certify",
       "certifying": "Certifying…",
@@ -1209,8 +1208,6 @@
       "searchHint": "Type at least 2 characters to search.",
       "noParents": "No parents yet.",
       "noSearchResults": "No parents or gamers match your search.",
-      "unnamedParent": "Unnamed parent",
-      "unnamedGamer": "Unnamed gamer",
       "add": "Add",
       "adding": "Adding…",
       "added": "Added",
@@ -1472,8 +1469,6 @@
     "unknown": "Unknown",
     "linkedGamers": "Linked Gamers",
     "linkedParents": "Linked Parents",
-    "unnamedGamer": "Unnamed Gamer",
-    "unnamedUser": "Unnamed User",
     "noConnectedGamers": "No connected gamers",
     "assignedProducts": "Assigned Products",
     "noAssignedProducts": "No assigned products",
@@ -1664,7 +1659,6 @@
     "justNow": "{count, plural, one {# substitute approved just now} other {# substitutes approved just now}}",
     "offersLabel": "Gedus offering to substitute",
     "away": "Away:",
-    "unnamed": "Unnamed Gedu",
     "reason": {
       "sick": "Sick",
       "other": "Other"

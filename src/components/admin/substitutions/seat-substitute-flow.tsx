@@ -68,10 +68,9 @@ export function SeatSubstituteFlow({
   /** Resolves once the queue has been read again; rejects with the refusal. */
   onConfirm: (draft: SeatSubstituteDraft) => Promise<void>;
 }) {
-  const t = useTranslations("admin.substitutions");
   const tStaffing = useTranslations("admin.products.staffing");
   const { request, sub } = flow;
-  const absent = request.requesterName ?? t("unnamed");
+  const absent = request.requesterName;
 
   return (
     <>
@@ -184,8 +183,8 @@ function SeatSubstituteDialog({
 }) {
   const t = useTranslations("admin.substitutions");
 
-  const name = `${sub.firstName} ${sub.lastName}`.trim() || t("unnamed");
-  const absent = request.requesterName ?? t("unnamed");
+  const name = [sub.firstName, sub.lastName].filter(Boolean).join(" ");
+  const absent = request.requesterName;
 
   return (
     <ConfirmDialog

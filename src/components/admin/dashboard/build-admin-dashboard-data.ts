@@ -317,16 +317,10 @@ function toUncertifiedGedu(
   now: Date,
   viewerTimeZone: string,
 ): UncertifiedGedu {
-  const name = [candidate.first_name, candidate.last_name]
-    .filter((part) => part.trim().length > 0)
-    .join(" ");
-
   return {
     id: candidate.id,
-    // The account is real and the name may not be; an unnamed row still has to
-    // be actionable, and its identicon is keyed to the id either way. The
-    // stand-in wording belongs to the card, so the absence travels as `null`.
-    name: name.length > 0 ? name : null,
+    // The last name may be empty on an older account.
+    name: [candidate.first_name, candidate.last_name].filter(Boolean).join(" "),
     registeredAgo: relativeWait(candidate.created_at, now, locale),
     // The wire's null already means "not standing under the terms in force",
     // whether that is because nothing was ever signed or because what was

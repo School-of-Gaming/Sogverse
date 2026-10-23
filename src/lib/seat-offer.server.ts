@@ -158,16 +158,10 @@ export async function resolveSeatOfferLink(
     data.product.product_translations,
     locale,
   ).name;
-  const participantName = data.participant.first_name.trim();
-
-  // `profiles.first_name` can hold only spaces (its CHECK counts characters
-  // without trimming), and a page asking a family about an unnamed child is
-  // worse than one saying the link did not work.
-  if (!participantName) return { kind: "invalid" };
 
   return {
     kind: "offer",
-    participantName,
+    participantName: data.participant.first_name,
     isSelfSeat: data.participant_id === data.customer_id,
     productName,
     deadline: new Date(claims.sentAtMs + SEAT_OFFER_WINDOW_MS),

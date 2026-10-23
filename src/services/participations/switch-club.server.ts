@@ -757,16 +757,16 @@ async function rewrittenSubscriptionDescription(
 
   const participant = data.find((row) => row.id === facts.participantId);
   const customer = data.find((row) => row.id === facts.customerId);
-  const isSelfSeat = facts.participantId === facts.customerId;
+  if (!participant) {
+    throw new Error(`switch-club: participant ${facts.participantId} has no profile`);
+  }
 
   const name =
     resolveRequiredTranslation(
       facts.targetProduct.product_translations,
       resolveLocale(customer?.locale ?? null),
     ).name;
-  // The same audience-aware fallback checkout uses: a parent buying for a child
-  // reads "your child", a parent holding the seat themselves reads "you".
-  const who = participant?.first_name || (isSelfSeat ? "you" : "your child");
+  const who = participant.first_name;
 
   // Both halves are user-authored — a product translation and a profile's first
   // name — so the composed string is cut to Stripe's ceiling here rather than

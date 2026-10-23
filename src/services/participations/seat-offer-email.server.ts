@@ -308,14 +308,16 @@ async function sendOffer({
   // state the database permits, and there is nothing to report to anyone.
   if (!customer?.email) return;
 
-  const participantName = participant?.first_name.trim();
-  if (!participant || !participantName) {
+  // An account erased since the seat was written takes the seat with it (ON
+  // DELETE CASCADE), leaving no one to name.
+  if (!participant) {
     console.error("[seat-offer email] nothing to name — skipping the send", {
       productId,
       participantId,
     });
     return;
   }
+  const participantName = participant.first_name;
 
   // The same test the confirmation page and the signup mail make on the row:
   // participant equals customer means the payer took the seat themselves, and
@@ -427,17 +429,17 @@ async function sendStaff({
   // language with the family's own setting is a mail nobody could search.
   const locale = DEFAULT_LOCALE;
   const productName = resolveRequiredTranslation(product.product_translations, locale).name;
-  const participantName = participant?.first_name.trim();
-  if (!participantName) {
+  if (!participant) {
     console.error("[seat-offer staff email] nothing to name — skipping the send", {
       productId,
       participantId,
     });
     return;
   }
+  const participantName = participant.first_name;
 
   const contactName = customer
-    ? [customer.first_name, customer.last_name].filter(Boolean).join(" ").trim()
+    ? [customer.first_name, customer.last_name].filter(Boolean).join(" ")
     : "";
 
   const params = {

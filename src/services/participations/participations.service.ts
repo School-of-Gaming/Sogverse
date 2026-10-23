@@ -409,12 +409,8 @@ export interface ParticipationConfirmation {
    * names that address only when the payer is the one reading.
    */
   customerId: string;
-  /**
-   * The participant's first name — a child's, or the buyer's own on a self
-   * seat. Null → the page falls back to "Your child" / "You" depending on
-   * `isSelfSeat`.
-   */
-  participantName: string | null;
+  /** The participant's first name — a child's, or the buyer's own on a self seat. */
+  participantName: string;
   /**
    * Whether the seat is the buyer's own, i.e. `participant_id = customer_id`.
    *
@@ -754,7 +750,7 @@ export class ParticipationsService {
       status: data.status,
       productId: data.product_id,
       customerId: data.customer_id,
-      participantName: data.participant.first_name || null,
+      participantName: data.participant.first_name,
       isSelfSeat: data.participant_id === data.customer_id,
     };
   }
@@ -797,7 +793,7 @@ export class ParticipationsService {
       status: data.status,
       productId: data.product_id,
       customerId: data.customer_id,
-      participantName: data.participant.first_name || null,
+      participantName: data.participant.first_name,
       isSelfSeat: data.participant_id === data.customer_id,
     };
   }
@@ -1080,13 +1076,9 @@ function toMyUpcomingSessionRow(
 ): MyUpcomingSessionRow {
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
   const { product, participant } = row;
-  // Mirror the purchased-card fallback chain so a missing first_name still
-  // renders something readable. The seed comes from `participant_id` regardless,
-  // so the identicon stays stable across name edits.
-  const firstName = participant.first_name || row.participant_id.slice(0, 8);
   return {
     participationId: row.id,
-    participant: { id: row.participant_id, firstName },
+    participant: { id: row.participant_id, firstName: participant.first_name },
     product: {
       id: product.id,
       type: product.product_type,
@@ -1123,16 +1115,11 @@ function toMyWaitlistRow(
   row: RawMyWaitlistRow,
   position: number,
 ): MyWaitlistRow {
-  // Both non-null via the `!inner` joins in buildMyWaitlistQuery. Same
-  // first-name fallback as the sessions adapter, so a participant with no name
-  // set reads identically on a waitlist card and a session card.
+  // Both non-null via the `!inner` joins in buildMyWaitlistQuery.
   const { product, participant } = row;
   return {
     participationId: row.id,
-    participant: {
-      id: row.participant_id,
-      firstName: participant.first_name || row.participant_id.slice(0, 8),
-    },
+    participant: { id: row.participant_id, firstName: participant.first_name },
     product: {
       type: product.product_type,
       topic: product.topic,

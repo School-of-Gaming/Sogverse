@@ -560,7 +560,6 @@ export const POST = defineRoute({
           description: `${parentLocaleProductName} — ${await pickParticipantName(
             admin,
             participantId,
-            participantId === user.id,
           )}`,
         };
 
@@ -617,30 +616,16 @@ export const POST = defineRoute({
   },
 });
 
-/**
- * A short display name for whoever occupies the seat, for the Stripe
- * subscription description (what the parent reads in the billing portal).
- *
- * The fallback is deliberately audience-aware. It lands in Stripe receipts and
- * the hosted portal — outside `messages/`, so no locale sweep will ever reach
- * it — and "Parents' Evening — your child" would be a plainly wrong label on a
- * seat the payer holds themselves. A self seat therefore falls back to "you",
- * which answers the same "who is this for" question the child names answer, in
- * the same register as the child fallback beside it.
- *
- * `isSelfSeat` is passed in rather than re-derived here: the caller holds the
- * session user, and the participant-equals-customer test is the same one the
- * database's audience gate makes.
- */
+/** The seat holder's first name, for the subscription description the parent reads in the billing portal. */
 async function pickParticipantName(
   admin: ReturnType<typeof createAdminClient>,
   participantId: string,
-  isSelfSeat: boolean,
 ): Promise<string> {
-  const { data } = await admin
+  const { data, error } = await admin
     .from("profiles")
     .select("first_name")
     .eq("id", participantId)
-    .maybeSingle();
-  return data?.first_name || (isSelfSeat ? "you" : "your child");
+    .single();
+  if (error) throw error;
+  return data.first_name;
 }

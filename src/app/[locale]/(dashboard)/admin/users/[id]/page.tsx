@@ -605,7 +605,7 @@ export default async function AdminUserDetailPage({
                               </Avatar>
                               <div>
                                 <p className="text-sm font-medium">
-                                  {gamer.first_name || t('unnamedGamer')}
+                                  {gamer.first_name}
                                 </p>
                               </div>
                             </div>
@@ -653,7 +653,7 @@ export default async function AdminUserDetailPage({
                           </Avatar>
                           <div>
                             <p className="text-sm font-medium">
-                              {parent.first_name || t('unnamedUser')}
+                              {parent.first_name}
                             </p>
                             <p className="text-xs text-muted-foreground ">
                               {parent.email}

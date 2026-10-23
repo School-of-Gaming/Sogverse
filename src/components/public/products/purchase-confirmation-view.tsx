@@ -61,11 +61,8 @@ export type SignupOutcome = "enrolled" | "waitlisted";
 
 interface PurchaseConfirmationViewProps {
   product: ProductBrowseRow;
-  /**
-   * The participant's first name — a child's, or the buyer's own on a self
-   * seat. Null falls back to "Your child" / "You" per `isSelfSeat`.
-   */
-  participantName: string | null;
+  /** The participant's first name — a child's, or the buyer's own on a self seat. */
+  participantName: string;
   /**
    * True when the seat is the buyer's own (a for-parents product), which puts
    * every sentence naming the participant into the second person. Resolved from
@@ -106,7 +103,6 @@ export function PurchaseConfirmationView({
 
   const isWaitlist = outcome === "waitlisted";
   const productName = resolveRequiredTranslation(product.product_translations, locale).name;
-  const participant = participantName ?? t("fallbackGamer");
 
   // The schedule as the detail surfaces print it, minus the club's term range:
   // the start date below covers what a parent needs from it on this page, and
@@ -169,11 +165,11 @@ export function PurchaseConfirmationView({
   const subheading = isWaitlist
     ? isSelfSeat
       ? tSelf("waitlist.subheading", { product: productName })
-      : t("waitlist.subheading", { gamer: participant, product: productName })
+      : t("waitlist.subheading", { gamer: participantName, product: productName })
     : isSelfSeat
       ? tSelf(`subheading.${product.product_type}`, { product: productName })
       : t(`subheading.${product.product_type}`, {
-          gamer: participant,
+          gamer: participantName,
           product: productName,
         });
 
@@ -196,7 +192,7 @@ export function PurchaseConfirmationView({
     ? t("waitlist.next")
     : isSelfSeat
       ? tSelf("nextSessions")
-      : t("next.sessions", { gamer: participant });
+      : t("next.sessions", { gamer: participantName });
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-12">
