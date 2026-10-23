@@ -340,9 +340,10 @@ describe("the manual", () => {
   });
 });
 
-describe("the sticky section", () => {
+describe("the sticky sections", () => {
   const hero = { id: ID, type: "hero" };
   const subscribe = { id: ID2, type: "subscribe" };
+  const another = { id: ID3, type: "subscribe" };
 
   it("is written on the section, and judged by the tools' schema as by the registry's", () => {
     for (const structure of [
@@ -350,6 +351,7 @@ describe("the sticky section", () => {
       [hero, { ...subscribe, sticky: "right" }],
       [hero, { ...subscribe, sticky: "top" }],
       [hero, { ...subscribe, sticky: null }],
+      [hero, { ...subscribe, sticky: "left" }, { ...another, sticky: "right" }],
     ]) {
       const expected = landingSections.safeParse(structure);
       const actual = mcpLandingStructure.safeParse(structure);
@@ -369,10 +371,10 @@ describe("the sticky section", () => {
     ]);
   });
 
-  it("tells the AI app what it is, which types may be, and how it renders on a phone", () => {
-    expect(SECTIONS_MANUAL).toContain("A page has at most one sticky section");
+  it("tells the AI app what they are, which types may be, how many, and how they render on a phone", () => {
+    expect(SECTIONS_MANUAL).toContain("A page has at most one sticky section on each side");
     expect(SECTIONS_MANUAL).toContain("sticky: left or right; only these types may be: subscribe (Email sign-up)");
     expect(SECTIONS_MANUAL).toContain("at the bottom of the page");
-    expect(SECTIONS_MANUAL).toContain("directly under the hero");
+    expect(SECTIONS_MANUAL).not.toContain("under the hero");
   });
 });

@@ -111,12 +111,6 @@ export interface LandingRenderContext {
    * live query fetches for itself.
    */
   products: ProductRailPrefetch | null;
-  /**
-   * What the page places directly under the hero's own content: the jump
-   * button down to the page's sticky section, or null. The page decides it
-   * and its spacing; the hero only gives it its place, aligned with its words.
-   */
-  underHero: ReactNode;
   /** Whether the read answered the placed guide with this id. */
   hasGuide: (guideId: string) => boolean;
 }
@@ -297,17 +291,6 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
           <LandingPicture picture={picture} alt={text.imageAlt} sizes={HALF_COLUMN} eager />
         )}
       </div>
-      {context.underHero !== null && (
-        // Under the words' column where the words have one, centred otherwise.
-        <div
-          className={cn(
-            "mx-auto flex max-w-6xl justify-center",
-            picture !== null && "lg:justify-start",
-          )}
-        >
-          {context.underHero}
-        </div>
-      )}
     </section>
   );
 }
@@ -906,43 +889,4 @@ export function renderLandingSection<Type extends LandingSectionType>(
   const Renderer: (props: LandingSectionProps<Type>) => ReactNode =
     LANDING_SECTION_RENDERERS[type];
   return <Renderer section={section} text={text} context={context} />;
-}
-
-// ---------------------------------------------------------------------------
-// What a sticky section offers
-// ---------------------------------------------------------------------------
-
-/**
- * **What a sticky section of each type offers a reader**, as the words of the
- * jump button the page draws under the hero wherever the section is not
- * beside the sections: the section's own button's words, so the word tapped
- * at the top is the word waiting at the bottom — or null while the section
- * has nothing to act on, which withdraws the button rather than pointing it at
- * a section that cannot deliver. Exhaustive, so a type allowed to be sticky
- * already says what it offers; only the types whose module allows it are ever
- * asked.
- */
-export const LANDING_STICKY_OFFERS: {
-  [Type in LandingSectionType]: (text: LandingTextOf<Type>) => string | null;
-} = {
-  hero: () => null,
-  text: () => null,
-  image: () => null,
-  points: () => null,
-  steps: () => null,
-  testimonials: () => null,
-  products: () => null,
-  guide: () => null,
-  faq: () => null,
-  subscribe: (text) => written(text.buttonLabel),
-  cta: () => null,
-};
-
-/** The jump button's words for one sticky section, as `LANDING_STICKY_OFFERS` answers. */
-export function landingStickyOffer<Type extends LandingSectionType>(
-  type: Type,
-  text: LandingTextByType[Type],
-): string | null {
-  const offer: (text: LandingTextOf<Type>) => string | null = LANDING_STICKY_OFFERS[type];
-  return offer(text);
 }

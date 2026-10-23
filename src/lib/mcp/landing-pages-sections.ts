@@ -493,7 +493,7 @@ const STICKY_TYPES = LANDING_STICKY_TYPES.map(
 ).join(", ");
 
 /** How a sticky section is drawn, for the AI app. */
-export const STICKY_MANUAL = `A page may mark one section sticky, by giving it sticky: ${LANDING_STICKY_SIDES.join(" or ")}; only these types may be: ${STICKY_TYPES}. On wide screens (1536px and wider) the sticky section leaves the flow of the page and stands as a narrow card in the page's margin on that side, pinned under the site header as the reader scrolls; every other section keeps its full width, staying in the page's centre and moving away from the card only as far as the screen requires. On narrower screens, phones included, it is drawn at the bottom of the page, after the last section, and the page draws a button directly under the hero that jumps down to it, in the section's own button's words. Where it sits in the list of sections makes no difference to where it is drawn; removing the section, or leaving sticky out, makes the page have none. The sticky section is drawn as a card of its own and never on a band, wherever it sits, so its background makes no difference.`;
+export const STICKY_MANUAL = `A page may mark a section sticky, by giving it sticky: ${LANDING_STICKY_SIDES.join(" or ")}; only these types may be: ${STICKY_TYPES}. A page has at most one sticky section on each side, so two at most, one left and one right. On wide screens (1536px and wider) a sticky section leaves the flow of the page and stands as a narrow card in the page's margin on its side, pinned under the site header as the reader scrolls. Every other section keeps its full width where the screen allows: with one card, the sections stay in the page's centre and move away from the card only as far as the screen requires; with a card on each side, they stay centred and are narrower until the screen is about 1890px wide. On narrower screens, phones included, the sticky sections are drawn at the bottom of the page, after the last section, in the order they have in the list. Otherwise where a sticky section sits in the list makes no difference to where it is drawn; removing the section, or leaving sticky out, unmarks it. A sticky section is drawn as a card of its own and never on a band, wherever it sits, so its background makes no difference.`;
 
 /**
  * The shared field every section takes, as the registry's `stickyField`; the
@@ -505,7 +505,7 @@ const sticky = {
     .enum(LANDING_STICKY_SIDES)
     .optional()
     .describe(
-      `Makes this the page's one sticky section, its column on this side on wide screens. Only for ${STICKY_TYPES}; leave it out on every other section.`,
+      `Makes this a sticky section, its card on this side on wide screens; at most one section per side. Only for ${STICKY_TYPES}; leave it out on every other section.`,
     ),
 };
 
@@ -611,7 +611,7 @@ const STRUCTURE_RULES = [
     landingStructureProblem([
       { id: "a", type: "hero" },
       { id: "b", type, sticky: "left" },
-      { id: "c", type, sticky: "right" },
+      { id: "c", type, sticky: "left" },
     ]),
   ),
 ]

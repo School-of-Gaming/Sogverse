@@ -80,8 +80,9 @@ export type LandingStickySide = (typeof LANDING_STICKY_SIDES)[number];
 
 /**
  * The shared field every section takes, whatever its type: present, the
- * section is the page's sticky section, on that side. Which types may carry it
- * is each module's `sticky`, held by the structure rule.
+ * section is one of the page's sticky sections, on that side — at most one on
+ * each side. Which types may carry it is each module's `sticky`, held by the
+ * structure rule.
  */
 export const stickyField = {
   sticky: z.enum(LANDING_STICKY_SIDES).optional(),
@@ -155,13 +156,12 @@ export interface LandingSectionDefinition<
   /** The admin-facing name of the type. */
   readonly label: string;
   /**
-   * Whether a section of this type may be the page's sticky section: on wide
-   * screens a sticky card in the page's gutter beside the other sections, below that at
-   * the bottom of the page with a jump button to it under the hero. Every
-   * section takes the `sticky` shared field; the structure rule refuses it on a
-   * type that says false here, and the SQL structure check names the same
-   * types. A type says true only once its renderer reads well in that narrow
-   * column and offers something worth the jump.
+   * Whether a section of this type may be one of the page's sticky sections:
+   * on wide screens a sticky card in the page's gutter beside the other
+   * sections, below that at the bottom of the page. Every section takes the
+   * `sticky` shared field; the structure rule refuses it on a type that says
+   * false here, and the SQL structure check names the same types. A type says
+   * true only once its renderer reads well in that narrow column.
    */
   readonly sticky: boolean;
   /** The section in the page's structure: `id`, `type` and its shared fields. */

@@ -83,14 +83,15 @@
   --facts-rail-width: 16rem;
   --reading-column-width: 44rem;
 
-  /* A landing page's sticky card, from `2xl`, standing in the page's gutter
-     outside the sections' content box: its width, the gap between it and the
-     content's measure (the content box's 1rem inline padding and the card's
-     own 1rem, so the gutter's floor is the two added), and its measured height
-     for the same two-end sticky clamp as the signup rail's (zero until
-     measured, which pins it under the header). The sections are never
-     narrowed for it. The width budget is worked through in the landing page
-     body. */
+  /* A landing page's sticky cards, from `2xl`, each standing in the page's
+     gutter on its side outside the sections' content box: a card's width, the
+     gap between it and the content's measure (the content box's 1rem inline
+     padding and the card's own 1rem, so a card's gutter's floor is the two
+     added), and its measured height for the same two-end sticky clamp as the
+     signup rail's. Each card's rail writes its height on itself, so two cards
+     clamp by their own; this default is what they read until measured, zero,
+     which pins them under the header. The sections are never padded for a
+     card. The width budget is worked through in the landing page body. */
   --landing-rail-width: 20rem;
   --landing-rail-gap: 2rem;
   --landing-rail-height: 0px;

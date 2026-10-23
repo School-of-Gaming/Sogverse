@@ -227,26 +227,26 @@ accepted that over dropping the names; a flow or campaign that greets by name is
 admins' call with that in mind. A later section offering something on sign-up (a
 download) would add a shared field to this type, not a second form.
 
-**A page may have one sticky section, marked on the section itself** — a `sticky` side,
-`left` or `right`, in the structure — so it is copied, compared and cascaded with the rest
-of the structure, and removing the section is what leaves the page with none. Which types
+**A page may have a sticky section on each side, marked on the section itself** — a
+`sticky` side, `left` or `right`, in the structure — so it is copied, compared and cascaded
+with the rest of the structure, and removing the section is what unmarks it. Which types
 may carry it is declared in each type's section module (only the email sign-up today):
 allowing another is that module's one line, plus the same type in the SQL structure check,
 and a DB test running every type through both halves fails until the two agree. The
-structure rule refuses a second sticky section and a type not allowed one, naming the types
-that are. From `2xl` the sticky section leaves the flow and stands as a sticky card in the
-page's gutter on its side, outside the sections' content box and pinned under the header,
-as the shop's filter rail does: **a section is never narrowed or padded for the card** — the
-content keeps its full measure in the page's centre, moving away from the card only as far
-as the viewport makes it, and a `card` section's band still runs the full width, its
-content lined up with every other section's. The sticky section is never on a band — a
-background stored on it is kept but not drawn, in the gutter and at the page's end alike,
-since the card carries its own edge. Below `2xl` it is drawn at the
-page's end, after the last section, and the page — not the admin — puts a jump button to
-it under the hero, in the section's own button's words, and only while the section has
-something to offer (each type's renderer says what). It is drawn once, last in the
-document, so its heading keeps its level and the outline its reading order wherever it is
-painted; the structured data does not depend on where it sits.
+structure rule refuses a second sticky section on a side that has one and a type not
+allowed one, naming the types that are. From `2xl` each sticky section leaves the flow and
+stands as a sticky card in the page's gutter on its side, outside the sections' content box
+and pinned under the header, as the shop's filter rail does: **a section is never narrowed
+or padded for a card** — with one card the content keeps its full measure, moving away from
+the card only as far as the viewport makes it; with a card on each side both gutters hold
+their floor, so the content stays centred and its track narrows (an 800px measure at 1536,
+the full one from 1888). A `card` section's band still runs the full width, its content
+lined up with every other section's. A sticky section is never on a band — a background
+stored on it is kept but not drawn, in the gutter and at the page's end alike, since the
+card carries its own edge. Below `2xl` the sticky sections are drawn at the page's end,
+after the last section and in the structure's order. Each is drawn once, after every other
+section in the document, so its heading keeps its level and the outline its reading order
+wherever it is painted; the structured data does not depend on where it sits.
 
 **The public page lives in `src/components/landing-pages/`, and every link to a landing
 page is built by its address module** — the slug a locale's live version stores, else the

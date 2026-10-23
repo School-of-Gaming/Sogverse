@@ -12,7 +12,8 @@ import { useEffect, type RefObject } from "react";
  * cannot measure a box, so JS supplies the one number CSS cannot derive and
  * CSS does the rest, which keeps the whole mechanism a single declaration
  * rather than a scroll handler. The product page's signup rail and a landing
- * page's sticky section use it.
+ * page's sticky cards use it; each element carries its own value, so two
+ * columns on one page never share a height.
  *
  * **Written to the DOM rather than held in React state, deliberately.** The
  * value feeds nothing but a sticky inset, and a sticky inset changes where a

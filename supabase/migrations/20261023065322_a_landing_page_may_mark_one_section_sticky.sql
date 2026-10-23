@@ -1,19 +1,21 @@
--- A landing page may mark one section sticky.
+-- A landing page may mark one section sticky on each side.
 --
 -- WHAT THIS CHANGES
 --
 -- Any section of a page's structure may carry sticky, left or right: that
--- section is the page's sticky one, drawn on wide screens in a sticky column
--- on that side beside the other sections, and below that at the page's end.
+-- section is one of the page's sticky ones, drawn on wide screens in a sticky
+-- column on that side beside the other sections, and below that at the page's
+-- end. A page has at most one on each side, so two at most.
 -- landing_sections_problem refuses sticky on any type but subscribe (the email
--- sign-up), a side other than left or right, and a second sticky section. The
+-- sign-up), a side other than left or right, and a second sticky section on a
+-- side that already has one. The
 -- TypeScript half is the section registry's structure rule, where each type's
 -- module says whether it may be sticky; a DB test runs every type through both.
 --
 -- The flag lives in the sections themselves, so everything that already
 -- copies, compares or cascades the structure — publishing, the unpublished
 -- changes digest, a structure save that drops a section — carries it with no
--- change, and removing the sticky section is what makes a page have none.
+-- change, and removing a sticky section is what unmarks it.
 --
 -- The function keeps its signature, owner and grants; the grants are restated
 -- after the replace all the same. Its body is the current one — testimonials,
@@ -32,7 +34,7 @@ DECLARE
   v_type     text;
   v_ids      text[] := ARRAY[]::text[];
   v_heroes   integer := 0;
-  v_sticky   integer := 0;
+  v_sides    text[] := ARRAY[]::text[];
   v_key      text;
   v_min      integer;
   v_max      integer;
@@ -70,9 +72,9 @@ BEGIN
     END IF;
     v_ids := array_append(v_ids, v_id);
 
-    -- The page's one sticky section, of a type that may be: every type takes
-    -- the field, and the types allowed it are the section modules' that say
-    -- sticky: true. A DB test holds this list to theirs.
+    -- A sticky section, of a type that may be, at most one on each side: every
+    -- type takes the field, and the types allowed it are the section modules'
+    -- that say sticky: true. A DB test holds this list to theirs.
     IF v_section ? 'sticky' THEN
       IF v_type IS DISTINCT FROM 'subscribe' THEN
         RETURN format('Section %s cannot be sticky: only an email sign-up section can', v_id);
@@ -81,10 +83,10 @@ BEGIN
          OR v_section->>'sticky' NOT IN ('left', 'right') THEN
         RETURN format('The sticky side of section %s is left or right', v_id);
       END IF;
-      v_sticky := v_sticky + 1;
-      IF v_sticky > 1 THEN
-        RETURN 'A page has at most one sticky section';
+      IF v_section->>'sticky' = ANY (v_sides) THEN
+        RETURN 'A page has at most one sticky section on each side';
       END IF;
+      v_sides := array_append(v_sides, v_section->>'sticky');
     END IF;
 
     -- A single picture, where a type takes one, is optional and a uuid.
@@ -229,7 +231,7 @@ BEGIN
 END;
 $_$;
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. sticky, left or right, marks the page''s one sticky section and its side, and only a subscribe section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. sticky, left or right, marks a sticky section and its side, at most one on each side, and only a subscribe section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
 
 REVOKE ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.landing_sections_problem(p_sections jsonb) TO service_role;

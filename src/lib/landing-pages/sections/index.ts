@@ -15,6 +15,7 @@ import {
   stickyField,
   type LandingMarkdownField,
   type LandingMarkdownUseCase,
+  LANDING_STICKY_SIDES,
   type LandingSectionBackground,
   type LandingStickySide,
   type TextReading,
@@ -121,7 +122,7 @@ export type LandingSectionText = {
 /** One language's words for every section, by section id. */
 export type LandingSectionTexts = Record<string, LandingSectionText>;
 
-/** The types a page's sticky section may be, in registry order. */
+/** The types a page's sticky sections may be, in registry order. */
 export const LANDING_STICKY_TYPES: readonly LandingSectionType[] = LANDING_SECTION_TYPES.filter(
   (type) => LANDING_SECTIONS[type].sticky,
 );
@@ -131,9 +132,10 @@ const STICKY_LABELS = LANDING_STICKY_TYPES.map((type) => LANDING_SECTIONS[type].
 
 /**
  * What is wrong with a structure's arrangement, or null: the hero comes
- * first and there is only the one, no two sections share an id, and at most
- * one section is sticky, of a type whose module allows it. The SQL structure
- * check (`landing_sections_problem`) holds the same rules.
+ * first and there is only the one, no two sections share an id, and a sticky
+ * section is of a type whose module allows it, at most one on each side — so
+ * two at most, one left and one right. The SQL structure check
+ * (`landing_sections_problem`) holds the same rules.
  */
 export function landingStructureProblem(
   sections: readonly { id: string; type: LandingSectionType; sticky?: LandingStickySide }[],
@@ -150,18 +152,20 @@ export function landingStructureProblem(
   if (misplaced !== undefined) {
     return `Section ${misplaced.id} (${LANDING_SECTIONS[misplaced.type].label}) cannot be sticky: only ${STICKY_LABELS} sections can`;
   }
-  if (sticky.length > 1) return "A page has at most one sticky section";
+  const doubled = LANDING_STICKY_SIDES.some(
+    (side) => sticky.filter((section) => section.sticky === side).length > 1,
+  );
+  if (doubled) return "A page has at most one sticky section on each side";
   return null;
 }
 
-/** The page's sticky section, if it has one. */
-export function landingStickySection<Section extends { sticky?: LandingStickySide }>(
+/** The page's sticky sections, in structure order: none, one, or one on each side. */
+export function landingStickySections<Section extends { sticky?: LandingStickySide }>(
   sections: readonly Section[],
-): (Section & { sticky: LandingStickySide }) | null {
-  for (const section of sections) {
-    if (section.sticky !== undefined) return { ...section, sticky: section.sticky };
-  }
-  return null;
+): (Section & { sticky: LandingStickySide })[] {
+  return sections.flatMap((section) =>
+    section.sticky === undefined ? [] : [{ ...section, sticky: section.sticky }],
+  );
 }
 
 /**

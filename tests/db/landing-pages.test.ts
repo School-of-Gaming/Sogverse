@@ -462,9 +462,10 @@ describe("landing pages", () => {
       expect(data).toBeNull();
     });
 
-    it("lets a section be sticky exactly where the registry does, once per page and on a side", async () => {
+    it("lets a section be sticky exactly where the registry does, once per side and on a side", async () => {
       // Every type marked sticky alone, then a second sticky section beside
-      // each type that may be one, then no sticky section at all.
+      // each type that may be one — on the other side, then on the same side —
+      // then no sticky section at all.
       const sections = everySection();
       const marked = (id: string, side: string): Json[] =>
         sections.map((section) => (section.id === id ? { ...section, sticky: side } : section));
@@ -475,13 +476,15 @@ describe("landing pages", () => {
         })),
         ...sections
           .filter((section) => LANDING_STICKY_TYPES.includes(section.type))
-          .map((section) => ({
-            name: `two sticky sections, one a ${section.type}`,
-            structure: [
-              ...marked(section.id, "left"),
-              { ...section, id: crypto.randomUUID(), sticky: "right" },
-            ],
-          })),
+          .flatMap((section) =>
+            (["right", "left"] as const).map((second) => ({
+              name: `a ${section.type} sticky on the left and another on the ${second}`,
+              structure: [
+                ...marked(section.id, "left"),
+                { ...section, id: crypto.randomUUID(), sticky: second },
+              ],
+            })),
+          ),
         { name: "no sticky section", structure: sections },
       ];
       const answers = await Promise.all(
@@ -500,6 +503,16 @@ describe("landing pages", () => {
       const lone = answers.slice(0, sections.length).map(({ data }) => data === null);
       expect(lone).toContain(true);
       expect(lone).toContain(false);
+      // A pair on two sides is accepted and a pair on one side refused, so
+      // the parity above is not two refusals agreeing.
+      const pairs = (second: string) =>
+        cases.flatMap((testCase, index) =>
+          testCase.name.endsWith(`and another on the ${second}`) ? [answers[index].data] : [],
+        );
+      expect(new Set(pairs("right"))).toEqual(new Set([null]));
+      expect(new Set(pairs("left"))).toEqual(
+        new Set(["A page has at most one sticky section on each side"]),
+      );
 
       const [allowed] = sections.filter((section) => LANDING_STICKY_TYPES.includes(section.type));
       const side = marked(allowed.id, "top");

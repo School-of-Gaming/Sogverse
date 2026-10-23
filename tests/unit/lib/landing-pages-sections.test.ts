@@ -10,7 +10,7 @@ import {
   landingSectionBackground,
   landingSections,
   landingSectionTextsSchema,
-  landingStickySection,
+  landingStickySections,
   LANDING_STICKY_SIDES,
   LANDING_STICKY_TYPES,
   missingInLandingVersion,
@@ -170,7 +170,7 @@ describe("the structure", () => {
   });
 });
 
-describe("the sticky section", () => {
+describe("the sticky sections", () => {
   const sections = everySection();
   const marked = (ids: readonly string[], side = "right") =>
     sections.map((section) => (ids.includes(section.id) ? { ...section, sticky: side } : section));
@@ -182,9 +182,23 @@ describe("the sticky section", () => {
   it("may be a section of a type whose module allows it, on either side", () => {
     for (const side of LANDING_STICKY_SIDES) {
       const parsed = landingSections.parse(marked([I.subscribe], side));
-      expect(landingStickySection(parsed)).toMatchObject({ id: I.subscribe, type: "subscribe", sticky: side });
+      expect(landingStickySections(parsed)).toEqual([
+        expect.objectContaining({ id: I.subscribe, type: "subscribe", sticky: side }),
+      ]);
     }
-    expect(landingStickySection(landingSections.parse(sections))).toBeNull();
+    expect(landingStickySections(landingSections.parse(sections))).toEqual([]);
+  });
+
+  it("may be one on each side, read back in the structure's order", () => {
+    const second = crypto.randomUUID();
+    const parsed = landingSections.parse([
+      ...marked([I.subscribe], "right"),
+      { id: second, type: "subscribe", sticky: "left" },
+    ]);
+    expect(landingStickySections(parsed).map(({ id, sticky }) => [id, sticky])).toEqual([
+      [I.subscribe, "right"],
+      [second, "left"],
+    ]);
   });
 
   it("is allowed on the email sign-up alone, by its module's own declaration", () => {
@@ -202,10 +216,12 @@ describe("the sticky section", () => {
     ]);
   });
 
-  it("is one per page, and on a side the field has", () => {
-    expect(
-      messages([...marked([I.subscribe]), { id: crypto.randomUUID(), type: "subscribe", sticky: "left" }]),
-    ).toEqual(["A page has at most one sticky section"]);
+  it("is one per side, and on a side the field has", () => {
+    for (const side of LANDING_STICKY_SIDES) {
+      expect(
+        messages([...marked([I.subscribe], side), { id: crypto.randomUUID(), type: "subscribe", sticky: side }]),
+      ).toEqual(["A page has at most one sticky section on each side"]);
+    }
     expect(messages(marked([I.subscribe], "top"))).toHaveLength(1);
   });
 });
