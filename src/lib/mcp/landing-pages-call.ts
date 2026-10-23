@@ -59,14 +59,21 @@ export function unpublishedChanges(isLive: boolean, hasUnpublishedChanges: boole
   return isLive ? hasUnpublishedChanges : null;
 }
 
+/** What a refused write says first, as the application's own structure check says it. */
+const NOTHING_SAVED = "Nothing was saved";
+
+/** What a refused publish or unpublish says first: it moves no working copy. */
+export const NOTHING_CHANGED_ON_SITE = "Nothing changed on the site";
+
 /**
  * A failed call as the AI app reads it: a database refusal written for an
- * admin quoted as is, anything else logged and answered without its
+ * admin quoted after a line saying nothing changed, so it reads like the
+ * application's own refusals; anything else logged and answered without its
  * developer-facing detail.
  */
-function failure(error: unknown): CallToolResult {
+function failure(error: unknown, unchanged: string): CallToolResult {
   const read = landingWriteFailure(error);
-  if (read.kind === "reason") return refusal(read.reason);
+  if (read.kind === "reason") return refusal(`${unchanged}: ${read.reason}`);
   console.error("[mcp] landing page tool failed:", error);
   return refusal(
     "Sogverse could not complete this. Read the page again with get_landing_page to see what was saved before retrying.",
@@ -82,10 +89,15 @@ export interface LandingCall {
   origin: string;
 }
 
-/** Run a tool body as the admin the gate let through, on their own token. */
+/**
+ * Run a tool body as the admin the gate let through, on their own token. A
+ * database refusal is answered after `unchanged`, the line saying what the
+ * refusal left as it was: a save by default, the site for a publish.
+ */
 export async function asLandingAdmin(
   ctx: ServerContext,
   run: (call: LandingCall) => Promise<CallToolResult>,
+  unchanged: string = NOTHING_SAVED,
 ): Promise<CallToolResult> {
   const authInfo = ctx.http?.authInfo;
   const request = ctx.http?.req;
@@ -101,7 +113,7 @@ export async function asLandingAdmin(
       origin: getOrigin(request),
     });
   } catch (error) {
-    return failure(error);
+    return failure(error, unchanged);
   }
 }
 

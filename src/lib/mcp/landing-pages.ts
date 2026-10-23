@@ -44,6 +44,7 @@ import {
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import {
   NOT_FOUND,
+  NOTHING_CHANGED_ON_SITE,
   UNPUBLISHED_CHANGES,
   adminLink,
   asLandingAdmin,
@@ -1049,7 +1050,7 @@ ${SECTIONS_MANUAL}`,
             publicLink: publication === null ? null : publicLink(origin, publication, l),
           })),
         });
-      }),
+      }, NOTHING_CHANGED_ON_SITE),
   );
 
   server.registerTool(
@@ -1066,7 +1067,7 @@ ${SECTIONS_MANUAL}`,
         if (before === null) return refusal(NOT_FOUND);
         await unpublishLandingPage(service, id);
         return answer({ pageId: id, wasLive: before.publication !== null, live: false });
-      }),
+      }, NOTHING_CHANGED_ON_SITE),
   );
 }
 

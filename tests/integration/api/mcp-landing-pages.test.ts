@@ -995,7 +995,7 @@ describe("cloning", () => {
     const result = await tool("clone_landing_page", { pageId: ID });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("tells the AI app a clone is a structure to rewrite, never a page to publish as it is", async () => {
@@ -1205,7 +1205,7 @@ describe("saving", () => {
       { id: PICKS, type: "products", background: "default", productIds: [GONE] },
     ]);
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("refuses a products section with no picks before anything is sent", async () => {
@@ -1235,7 +1235,7 @@ describe("saving", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("answers anything else with a generic line", async () => {
@@ -1290,7 +1290,7 @@ describe("removing a language", () => {
     const result = await tool("remove_landing_page_language", { pageId: ID, locale: "en" });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("answers an id no page has as a tool error, removing nothing", async () => {
@@ -1346,7 +1346,17 @@ describe("publishing", () => {
 
     const result = await tool("publish_landing_page", { pageId: ID });
 
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing changed on the site: ${sentence}`);
+  });
+
+  it("says nothing changed on the site when the database refuses an unpublish", async () => {
+    const sentence = "No landing page has that id";
+    landing.unpublishPage.mockRejectedValue(dbError("P0002", sentence));
+
+    const result = await tool("unpublish_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(`Nothing changed on the site: ${sentence}`);
   });
 
   it("unpublishes, keeping the working copy", async () => {
@@ -1537,7 +1547,9 @@ describe("pictures", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe("An image section's pictures must all be one shape: wide 16:9 and square 1:1.");
+    expect(resultText(result)).toBe(
+      "Nothing was saved: An image section's pictures must all be one shape: wide 16:9 and square 1:1.",
+    );
   });
 
   it.each([
@@ -1949,8 +1961,8 @@ describe("testimonials sections", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toContain(
-      `Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
+    expect(resultText(result)).toBe(
+      `Nothing was saved: Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
     );
   });
 
