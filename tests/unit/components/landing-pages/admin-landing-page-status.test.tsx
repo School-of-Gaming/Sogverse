@@ -538,6 +538,38 @@ describe("the link preview it states", () => {
     expect(within(preview()).getByText("stale")).toBeTruthy();
   });
 
+  it("says a live language's changed card is shared only from the next publish", () => {
+    const changedSv = { ...SV, shareTitle: "Gå med i en klubb" };
+    renderStatus({
+      ...draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }, FI, changedSv]),
+      publication: publication(["en", "sv"]),
+    });
+
+    expect(row("English").lines.at(-1)).toBe("nextPublish");
+    // Finnish is not live, so nothing is shared yet; Swedish is incomplete, so
+    // the next publish takes it down rather than sharing this card.
+    expect(row("Finnish").lines).not.toContain("nextPublish");
+    expect(row("Swedish").lines).not.toContain("nextPublish");
+  });
+
+  it("adds no note where a live language's card is the one it shares", () => {
+    const page = draftPage([{ ...EN, shareImageId: HERO_PICTURE }]);
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      { id: HERO_ID, type: "hero", imageId: HERO_PICTURE },
+      ...SECTIONS.slice(1),
+    ];
+    const pictures = { [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" as const } };
+    // The working copy names the hero's picture as its share picture, and the
+    // live copy shares the hero's: the same card either way.
+    renderStatus({
+      ...page,
+      draft: { ...page.draft, sections, pictures },
+      publication: { ...publication(["en"]), sections, pictures },
+    });
+
+    expect(row("English").lines).not.toContain("nextPublish");
+  });
+
   it("warns for a custom title alone", () => {
     renderStatus(draftPage([{ ...EN, shareTitle: "Join a club in Espoo" }]));
 

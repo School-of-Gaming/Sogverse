@@ -405,13 +405,11 @@ function seoFields(seo: RenderedLandingSeo): Record<string, unknown> {
 }
 
 async function servedAt(
-  copy: PublishedLandingPage | null,
+  copy: PublishedLandingPage,
   locale: SupportedLocale,
   siteUrl: string,
-): Promise<RenderedLandingSeo | null> {
-  if (copy === null) return null;
-  const seo = await landingPageSeo(copy, locale);
-  return seo === null ? null : renderedLandingSeo(seo, siteUrl);
+): Promise<RenderedLandingSeo> {
+  return renderedLandingSeo(await landingPageSeo(copy, locale), siteUrl);
 }
 
 /** Each written version's `seo`, by locale: null for one a publish would leave out. */
@@ -420,14 +418,19 @@ async function versionsSeo(
   siteUrl: string,
 ): Promise<Map<SupportedLocale, VersionSeo | null>> {
   const next = landingPublishedCopy(page);
+  // No version complete: a publish now would leave every one out (and is refused).
+  if (next === null) {
+    return new Map(page.draft.versions.map((version) => [version.locale, null]));
+  }
+  const { publication } = page;
   const entries = await Promise.all(
     page.draft.versions.map(async (version): Promise<[SupportedLocale, VersionSeo | null]> => {
       if (version.missing.length > 0) return [version.locale, null];
       const served = await servedAt(next, version.locale, siteUrl);
-      if (served === null) return [version.locale, null];
       // exact-locale: what this language's own live version serves
-      const isLive = page.publication?.versions.some((v) => v.locale === version.locale) ?? false;
-      const live = isLive ? await servedAt(page.publication, version.locale, siteUrl) : null;
+      const live = publication?.versions.some((v) => v.locale === version.locale)
+        ? await servedAt(publication, version.locale, siteUrl)
+        : null;
       if (live === null) return [version.locale, served];
       const liveFields = seoFields(live);
       const differs = Object.entries(seoFields(served)).filter(

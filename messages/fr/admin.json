@@ -478,7 +478,8 @@
           "page": "Titre : le titre de la page."
         },
         "description": "Description : le résumé dans chaque langue.",
-        "stale": "Un titre ou une image personnalisés restent tels quels quand le titre de la page ou l'image de la section d'ouverture change. S'ils ne correspondent plus à la page, demandez à l'application d'IA de les retirer."
+        "stale": "Un titre ou une image personnalisés restent tels quels quand le titre de la page ou l'image de la section d'ouverture change. S'ils ne correspondent plus à la page, demandez à l'application d'IA de les retirer.",
+        "nextPublish": "Jusqu'à la prochaine publication, les liens partagés dans cette langue affichent toujours l'aperçu actuellement en ligne."
       },
       "products": {
         "heading": "Produits choisis",

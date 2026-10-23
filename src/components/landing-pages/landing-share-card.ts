@@ -67,6 +67,24 @@ function sharePicture(page: LandingShareCardSource, title: string): LandingShare
   return { source: "hero", path: hero.path, purpose: hero.purpose, alt: hero.alt ?? title };
 }
 
+/**
+ * Whether two cards look the same where the page is shared: the same title,
+ * the same picture (or both the site-wide card) and the same alt text. Where
+ * each half comes from is not compared, so a share picture that is the hero's
+ * own picture shares as the hero's does.
+ */
+export function sameSharedCard(a: LandingShareCard, b: LandingShareCard): boolean {
+  if (a.title !== b.title) return false;
+  if (a.picture.source === "site" || b.picture.source === "site") {
+    return a.picture.source === b.picture.source;
+  }
+  return (
+    a.picture.path === b.picture.path &&
+    a.picture.purpose === b.picture.purpose &&
+    a.picture.alt === b.picture.alt
+  );
+}
+
 /** Which halves of a share card are the page's own overrides, as one name. */
 export type LandingShareCardInUse =
   | "derived"

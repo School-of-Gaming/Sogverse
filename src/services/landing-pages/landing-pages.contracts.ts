@@ -443,13 +443,21 @@ export function localizeLandingPageSummary(
   return version === null ? null : { ...shared, ...version };
 }
 
+/**
+ * The version a reader of `locale` is shown, as `localizeLandingPageSummary`
+ * picks it. Every published copy has a version — publishing copies only the
+ * complete ones and refuses when there are none, and the working copy as a
+ * publish would leave it is null without one — so a copy with none is a
+ * broken invariant and throws.
+ */
 export function localizeLandingPage(
   page: PublishedLandingPage,
   locale: SupportedLocale,
-): LocalizedLandingPage | null {
+): LocalizedLandingPage {
   const { versions, ...shared } = page;
   const version = resolveTranslation(versions, locale);
-  return version === null ? null : { ...shared, ...version };
+  if (version === null) throw new Error(`Landing page ${page.id} has no version`);
+  return { ...shared, ...version };
 }
 
 // ---------------------------------------------------------------------------

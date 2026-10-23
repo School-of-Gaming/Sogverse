@@ -478,7 +478,8 @@
           "page": "Rubrik: sidrubriken."
         },
         "description": "Beskrivning: varje språkversions sammanfattning.",
-        "stale": "En egen rubrik eller bild ligger kvar som den är när sidrubriken eller inledningens bild ändras. Om den inte längre passar sidan, be AI-appen att ta bort den."
+        "stale": "En egen rubrik eller bild ligger kvar som den är när sidrubriken eller inledningens bild ändras. Om den inte längre passar sidan, be AI-appen att ta bort den.",
+        "nextPublish": "Fram till nästa publicering visar länkar som delas på det här språket fortfarande förhandsvisningen som är publicerad nu."
       },
       "products": {
         "heading": "Utvalda produkter",

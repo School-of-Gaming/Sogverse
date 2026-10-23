@@ -478,7 +478,8 @@
           "page": "Otsikko: sivun otsikko."
         },
         "description": "Kuvaus: kunkin kieliversion tiivistelmä.",
-        "stale": "Oma otsikko tai kuva pysyy ennallaan, vaikka sivun otsikko tai avausosion kuva muuttuisi. Jos se ei enää sovi sivulle, pyydä tekoälysovellusta poistamaan se."
+        "stale": "Oma otsikko tai kuva pysyy ennallaan, vaikka sivun otsikko tai avausosion kuva muuttuisi. Jos se ei enää sovi sivulle, pyydä tekoälysovellusta poistamaan se.",
+        "nextPublish": "Seuraavaan julkaisuun asti tällä kielellä jaetut linkit näyttävät yhä nyt julkaistun esikatselun."
       },
       "products": {
         "heading": "Valitut tuotteet",

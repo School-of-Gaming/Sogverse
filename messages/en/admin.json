@@ -478,7 +478,8 @@
           "page": "Title: the page title."
         },
         "description": "Description: each language's summary.",
-        "stale": "A custom title or picture stays as it is when the page title or the opening section's picture changes. If it no longer fits the page, ask the AI app to clear it."
+        "stale": "A custom title or picture stays as it is when the page title or the opening section's picture changes. If it no longer fits the page, ask the AI app to clear it.",
+        "nextPublish": "Until the next publish, links shared in this language still show the preview that is live now."
       },
       "products": {
         "heading": "Picked products",

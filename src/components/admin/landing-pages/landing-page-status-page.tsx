@@ -9,7 +9,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { landingPageHref } from "@/components/landing-pages/landing-page-address";
-import { draftShareCard } from "@/components/landing-pages/landing-share-card";
+import {
+  draftShareCard,
+  landingShareCard,
+  sameSharedCard,
+} from "@/components/landing-pages/landing-share-card";
 import { FramedImage } from "@/components/ui/framed-image";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { getPathname, Link } from "@/i18n/navigation";
@@ -119,7 +123,7 @@ export function LandingPageStatusPage({
 
       <Publishing page={page} actions={actions} />
 
-      <ShareCard draft={page.draft} />
+      <ShareCard page={page} />
 
       {testimonialSections.length > 0 && (
         <PlacedTestimonials sections={testimonialSections} />
@@ -376,15 +380,29 @@ function slugPath(slug: string, locale: SupportedLocale): string {
  * admin's AI app sets. An override does not follow later edits to the page
  * title or the hero, so it is stated plainly here, where a stale one would be
  * noticed. The languages are rows of one card: facts about one page.
+ *
+ * The card shown is the working copy's, so a language that is live and
+ * complete, whose card differs from the one its live version shares, says the
+ * shown card is not shared yet. A language not live shares nothing, and an
+ * incomplete one leaves the page at the next publish, which its own card
+ * below says; neither gets the note.
  */
-function ShareCard({ draft }: { draft: LandingPageDraft }) {
+function ShareCard({ page }: { page: Pick<AdminLandingPage, "draft" | "publication"> }) {
   const t = useTranslations("admin.landingPages.statusPage.shareCard");
   const languageName = useLanguageNames();
+  const { draft, publication } = page;
 
-  const cards = draft.versions.map((version) => ({
-    locale: version.locale,
-    card: draftShareCard(draft, version),
-  }));
+  const cards = draft.versions.map((version) => {
+    const card = draftShareCard(draft, version);
+    // exact-locale: the card this language's own live version shares
+    const live = publication?.versions.find((v) => v.locale === version.locale);
+    const awaitsPublish =
+      publication !== null &&
+      live !== undefined &&
+      version.missing.length === 0 &&
+      !sameSharedCard(card, landingShareCard({ ...publication, ...live }));
+    return { locale: version.locale, card, awaitsPublish };
+  });
   const overridden = cards.some(
     ({ card }) => card.titleSource === "custom" || card.picture.source === "custom",
   );
@@ -397,7 +415,7 @@ function ShareCard({ draft }: { draft: LandingPageDraft }) {
       <Card>
         <CardContent className="space-y-4 p-6">
           <ul className="divide-y divide-border">
-            {cards.map(({ locale, card }) => (
+            {cards.map(({ locale, card, awaitsPublish }) => (
               <li
                 key={locale}
                 aria-label={languageName(locale, LOCALE_CONFIG[locale].label)}
@@ -422,6 +440,7 @@ function ShareCard({ draft }: { draft: LandingPageDraft }) {
                   <p className="font-medium">{card.title}</p>
                   <p>{t(`picture.${card.picture.source}`)}</p>
                   <p>{t(`title.${card.titleSource}`)}</p>
+                  {awaitsPublish && <p className="text-muted-foreground">{t("nextPublish")}</p>}
                 </div>
               </li>
             ))}

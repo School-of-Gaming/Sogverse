@@ -74,18 +74,14 @@ export interface LandingPageSeo {
   };
 }
 
-/**
- * The page's metadata read at `requestLocale`, or null for a page with no
- * version — which a published one never is.
- */
+/** The page's metadata read at `requestLocale`. */
 export async function landingPageSeo(
   page: PublishedLandingPage,
   requestLocale: string,
   siteCard: SiteCardImage = (locale) => ogCardImage("site", locale),
-): Promise<LandingPageSeo | null> {
+): Promise<LandingPageSeo> {
   const locale = resolveLocale(requestLocale);
   const shown = localizeLandingPage(page, locale);
-  if (shown === null) return null;
   const { title, summary: description } = shown;
   const card = landingShareCard(shown);
   return {
@@ -133,8 +129,7 @@ export async function landingPageMetadata(
   page: PublishedLandingPage,
   requestLocale: string,
 ): Promise<Metadata> {
-  const seo = await landingPageSeo(page, requestLocale);
-  return seo === null ? {} : landingSeoMetadata(seo);
+  return landingSeoMetadata(await landingPageSeo(page, requestLocale));
 }
 
 /**
